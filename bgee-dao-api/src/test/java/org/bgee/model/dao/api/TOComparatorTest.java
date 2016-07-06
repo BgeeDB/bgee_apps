@@ -3,8 +3,12 @@ package org.bgee.model.dao.api;
 import static org.junit.Assert.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.Month;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,6 +37,11 @@ import org.bgee.model.dao.api.keyword.KeywordDAO.KeywordTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType;
+import org.bgee.model.dao.api.source.SourceDAO.SourceTO;
+import org.bgee.model.dao.api.source.SourceDAO.SourceTO.SourceCategory;
+import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO;
+import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO.DataType;
+import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO.InfoType;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
 import org.junit.Test;
@@ -40,9 +49,10 @@ import org.junit.Test;
 /**
  * Test the functionalities of {@link TOComparator}.
  *  
- * @author Frederic Bastian
- * @version Bgee 13
- * @since Bgee 13
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13, June 2016
+ * @since   Bgee 13
  */
 public class TOComparatorTest extends TestAncestor {
     /**
@@ -616,6 +626,72 @@ public class TOComparatorTest extends TestAncestor {
 
         to2 = new EntityToKeywordTO("ID:1", "SP:2");
         assertFalse(TOComparator.areTOsEqual(to1, to2));
+    }
+
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * using {@code SourceTO}s.
+     */
+    @Test
+    public void testAreSourceTOEqual() {
+        Date date  = Date.from(LocalDate.of(2012, Month.SEPTEMBER, 19)
+                .atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
+        Date date2 = Date.from(LocalDate.of(2013, Month.SEPTEMBER, 19)
+                .atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
+        Integer displayOrder = 1;
+        Integer displayOrder2 = 1;
+        SourceTO to1 = new SourceTO("1", "First DataSource", "My custom data source", "XRefUrl", 
+                "experimentUrl", "evidenceUrl", "baseUrl", date, "1.0", false, 
+                SourceCategory.GENOMICS, displayOrder);
+        SourceTO to2 = new SourceTO("1", "First DataSource", "My custom data source", "XRefUrl", 
+                "experimentUrl", "evidenceUrl", "baseUrl", date, "1.0", false, 
+                SourceCategory.GENOMICS, displayOrder);
+        assertTrue(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new SourceTO("1", "Second DataSource", "My custom data source", "XRefUrl", 
+                "experimentUrl", "evidenceUrl", "baseUrl", date, "1.0", false, 
+                SourceCategory.GENOMICS, displayOrder);
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new SourceTO("1", "First DataSource", "My custom data source", "XRefUrl", 
+                "experimentUrl", "evidenceUrl", "baseUrl", date2, "1.0", true, 
+                SourceCategory.GENOMICS, displayOrder);
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+        
+        to2 = new SourceTO("1", "First DataSource", "My custom data source", "XRefUrl", 
+                "experimentUrl", "evidenceUrl", "baseUrl", date, "1.0", false, 
+                SourceCategory.GENOMICS, displayOrder2);
+        assertTrue(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new SourceTO("2", "First DataSource", "My custom data source", "XRefUrl", 
+                "experimentUrl", "evidenceUrl", "baseUrl", date, "1.0", false, 
+                SourceCategory.GENOMICS, displayOrder);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+    }
+
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * using {@code SourceToSpeciesTO}s.
+     */
+    @Test
+    public void testAreSourceToSpeciesTOEqual() {
+        SourceToSpeciesTO to1 = new SourceToSpeciesTO("1", "11", DataType.EST, InfoType.DATA);
+        SourceToSpeciesTO to2 = new SourceToSpeciesTO("1", "11", DataType.EST, InfoType.DATA);
+        assertTrue(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new SourceToSpeciesTO("1", "11", DataType.AFFYMETRIX, InfoType.DATA);
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new SourceToSpeciesTO("1", "11", DataType.EST, InfoType.ANNOTATION);
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+        
+        to2 = new SourceToSpeciesTO("1", "21", DataType.EST, InfoType.DATA);
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new SourceToSpeciesTO("2", "11", DataType.EST, InfoType.DATA);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        assertFalse(TOComparator.areTOsEqual(to1, to2, false));
     }
 
     /**

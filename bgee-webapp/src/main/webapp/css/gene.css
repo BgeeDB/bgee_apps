@@ -33,6 +33,19 @@ div#table-container label {
     font-weight: normal;
 }
 
+
+div.sources {
+    margin-top: 3em;
+    margin-bottom: 0.5em;
+    font-size: 0.9em;
+    /* padding disabled when max.width < 992px (bootstrap manages the placement afterwards) */
+    padding-left: 2%;
+}
+div.source-info {
+    margin-right: 40px;
+    display: inline-block;
+}
+
 div.legend {
 	border-left: 1px solid #ccc;
 	margin-top: 2em;
@@ -42,6 +55,9 @@ div.legend {
 	div.legend {
 	   border: none;
 	}
+	div.sources {
+        padding-left: 0;
+    }
 }
 
 div.legend span.quality {

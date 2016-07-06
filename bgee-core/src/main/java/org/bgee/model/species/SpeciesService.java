@@ -1,15 +1,25 @@
 package org.bgee.model.species;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
+import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
+import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO;
+import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO.InfoType;
 import org.bgee.model.dao.api.species.SpeciesDAO;
-
-import java.util.Set;
-import java.util.stream.Collectors;
+import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.source.Source;
+import org.bgee.model.source.SourceService;
 
 /**
  * A {@link Service} to obtain {@link Species} objects. 
@@ -18,13 +28,18 @@ import java.util.stream.Collectors;
  * @author  Philippe Moret
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13 Nov. 2015
- * @since   Bgee 13 Sept. 2015
+ * @version Bgee 13, July 2016
+ * @since   Bgee 13, Sept. 2015
  */
 public class SpeciesService extends Service {
     
     private static final Logger log = LogManager.getLogger(SpeciesService.class.getName());
     
+    /**
+     * The {@code SourceService} to obtain {@code Source} objects.
+     */
+    private final SourceService sourceService;
+
     /**
      * 0-arg constructor that will cause this {@code SpeciesService} to use 
      * the default {@code DAOManager} returned by {@link DAOManager#getDAOManager()}. 
@@ -40,41 +55,136 @@ public class SpeciesService extends Service {
      * @throws IllegalArgumentException If {@code daoManager} is {@code null}.
      */
     public SpeciesService(DAOManager daoManager) {
+        this(daoManager, null);
+    }
+    
+    /**
+     * @param daoManager    The {@code DAOManager} to be used by this {@code SpeciesService} 
+     *                      to obtain {@code DAO}s.
+     * @param sourceService The {@code SourceService} to obtain {@code Source} objects.
+     * @throws IllegalArgumentException If {@code daoManager} is {@code null}.
+     */
+    public SpeciesService(DAOManager daoManager, SourceService sourceService) {
         super(daoManager);
+        this.sourceService = sourceService;
     }
 
     /**
      * Loads all species that are part of at least one 
      * {@link org.bgee.model.file.SpeciesDataGroup SpeciesDataGroup}.
      * 
-     * @return  A {@code Set} containing the {@code Species} part of some {@code SpeciesDataGroup}s.
+     * @param withSpeciesInfo   A {@code boolean}s defining whether data sources of the species
+     *                          is retrieved or not.
+     * @return                  A {@code Set} containing the {@code Species} part of some 
+     *                          {@code SpeciesDataGroup}s.
      * @throws DAOException                 If an error occurred while accessing a {@code DAO}.
      * @throws QueryInterruptedException    If a query to a {@code DAO} was intentionally interrupted.
      * @see org.bgee.model.file.SpeciesDataGroup
      */
-    public Set<Species> loadSpeciesInDataGroups() throws DAOException, QueryInterruptedException {
-        log.entry();
-        return log.exit(this.getDaoManager().getSpeciesDAO().getSpeciesFromDataGroups()
-                .stream()
+    public Set<Species> loadSpeciesInDataGroups(boolean withSpeciesInfo)
+            throws DAOException, QueryInterruptedException {
+        log.entry(withSpeciesInfo);
+        Set<Species> species = this.getDaoManager().getSpeciesDAO().getSpeciesFromDataGroups().stream()
                 .map(SpeciesService::mapFromTO)
-                .collect(Collectors.toSet()));
+                .collect(Collectors.toSet());
+        if (withSpeciesInfo) {
+            species = this.loadDataSourceInfo(species);
+        }
+        return log.exit(species);
     }
 
     /**
      * Loads species for a given set of species IDs .
      * 
-     * @param speciesIds    A {@code Set} of {@code String}s that are IDs of species 
-     *                      for which to return the {@code Species}s.
-     * @return              A {@code Set} containing the {@code Species} with one of the 
-     *                      provided species IDs.
+     * @param speciesIds        A {@code Set} of {@code String}s that are IDs of species 
+     *                          for which to return the {@code Species}s.
+     * @param withSpeciesInfo   A {@code boolean}s defining whether data sources of the species
+     *                          is retrieved or not.
+     * @return                  A {@code Set} containing the {@code Species} with one of the 
+     *                          provided species IDs.
      * @throws DAOException                 If an error occurred while accessing a {@code DAO}.
      * @throws QueryInterruptedException    If a query to a {@code DAO} was intentionally interrupted.
      */
-    public Set<Species> loadSpeciesByIds(Set<String> speciesIds) throws DAOException, QueryInterruptedException {
-        log.entry(speciesIds);
-        return log.exit(this.getDaoManager().getSpeciesDAO().getSpeciesByIds(speciesIds).stream()
+    public Set<Species> loadSpeciesByIds(Set<String> speciesIds, boolean withSpeciesInfo)
+            throws DAOException, QueryInterruptedException {
+        log.entry(speciesIds, withSpeciesInfo);
+        Set<Species> species = this.getDaoManager().getSpeciesDAO().getSpeciesByIds(speciesIds).stream()
                 .map(SpeciesService::mapFromTO)
-                .collect(Collectors.toSet()));
+                .collect(Collectors.toSet());
+        if (withSpeciesInfo) {
+            species = this.loadDataSourceInfo(species);
+        }
+        return log.exit(species);
+    }
+
+    /**
+     * Retrieve {@code Species} with data source information.
+     * 
+     * @param   A {@code Set} of {@code Species} that are species to be completed.
+     * @return  A {@code Set} of {@code Species} that are the species with data source information.
+     */
+    private Set<Species> loadDataSourceInfo(Set<Species> allSpecies) {
+        log.entry(allSpecies);
+        
+        final List<SourceToSpeciesTO> sourceToSpeciesTOs = getDaoManager().getSourceToSpeciesDAO()
+                .getSourceToSpecies(null, 
+                        allSpecies.stream().map(s -> s.getId()).collect(Collectors.toSet()),
+                        null, null, null).stream()
+                .collect(Collectors.toList());
+        
+        List<Source> sources = sourceService.loadAllSources(false);
+        
+        Set<Species> completedSpecies = new HashSet<>();
+        for (Species species : allSpecies) {
+            Map<Source, Set<DataType>> forData = getDataTypesByDataSource(
+                    sourceToSpeciesTOs, sources, species.getId(), InfoType.DATA);
+            Map<Source, Set<DataType>> forAnnotation = getDataTypesByDataSource(
+                    sourceToSpeciesTOs, sources, species.getId(), InfoType.ANNOTATION);
+            completedSpecies.add(new Species(species.getId(), species.getName(), species.getDescription(),
+                    species.getGenus(), species.getSpeciesName(), species.getGenomeVersion(),
+                    forData.isEmpty() ? null : forData, forAnnotation.isEmpty() ? null : forAnnotation));
+        }
+
+        return log.exit(completedSpecies);
+    }
+    
+    /** 
+     * Retrieve data types by species from {@code SourceToSpeciesTO}.
+     * 
+     * @param sourceToSpeciesTOs    A {@code List} of {@code SourceToSpeciesTO}s that are sources 
+     *                              to species to be grouped.
+     * @param sources               A {@code List} of {@code Source}s that are sources to be grouped.
+     * @param infoType              An {@code InfoType} that is the information type for which
+     *                              to return data types by species.
+     * @return                      A {@code Map} where keys are {@code String}s corresponding to 
+     *                              species IDs, the associated values being a {@code Set} of 
+     *                              {@code DataType}s corresponding to data types of {@code infoType}
+     *                              data of the provided {@code sourceId}.
+     */
+    private Map<Source, Set<DataType>> getDataTypesByDataSource(
+            final List<SourceToSpeciesTO> sourceToSpeciesTOs, List<Source> sources, 
+            String speciesId, InfoType infoType) {
+        log.entry(sourceToSpeciesTOs, sources, speciesId, infoType);
+        
+        final Map<String, Source> sourcesByIds = sources.stream()
+                .collect(Collectors.toMap(
+                        s -> s.getId(),
+                        s -> s, 
+                        (v1, v2) -> {
+                            throw log.throwing(new IllegalStateException("Two sources with the same ID"));
+                        })); 
+
+        Map<Source, Set<DataType>> map = sourceToSpeciesTOs.stream()
+                .filter(to -> to.getInfoType().equals(infoType))
+                .filter(to -> to.getSpeciesId().equals(speciesId))
+                .collect(Collectors.toMap(to -> sourcesByIds.get(to.getDataSourceId()), 
+                        to -> new HashSet<DataType>(Arrays.asList(convertDaoDataTypeToDataType(to.getDataType()))), 
+                        (v1, v2) -> {
+                            Set<DataType> newSet = new HashSet<>(v1);
+                            newSet.addAll(v2);
+                            return newSet;
+                        }));
+        return log.exit(map);
     }
 
     /**
@@ -88,5 +198,22 @@ public class SpeciesService extends Service {
         return log.exit(new Species(speciesTO.getId(), speciesTO.getName(), 
                 speciesTO.getDescription(), speciesTO.getGenus(), speciesTO.getSpeciesName(), 
                 speciesTO.getGenomeVersion()));
+    }
+    
+    //FIXME: DRY see SourceService
+    private static DataType convertDaoDataTypeToDataType(SourceToSpeciesTO.DataType dt) {
+        log.entry(dt);
+        switch(dt) {
+            case AFFYMETRIX: 
+                return log.exit(DataType.AFFYMETRIX);
+            case EST:
+                return log.exit(DataType.EST);
+            case IN_SITU: 
+                return log.exit(DataType.IN_SITU);
+            case RNA_SEQ: 
+                return log.exit(DataType.RNA_SEQ);
+        default: 
+            throw log.throwing(new IllegalStateException("Unsupported SourceToSpeciesTO.DataType: " + dt));
+        }
     }
 }

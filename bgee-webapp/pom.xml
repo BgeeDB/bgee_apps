@@ -359,6 +359,7 @@
                                 <cssSourceFile>general.css</cssSourceFile>
                                 <cssSourceFile>topanat.css</cssSourceFile>
                                 <cssSourceFile>gene.css</cssSourceFile>
+                                <cssSourceFile>source.css</cssSourceFile>
                             </cssSourceFiles>
                             <suffix>${filter.org.bgee.webapp.css.version.extension}</suffix>
                         </configuration>

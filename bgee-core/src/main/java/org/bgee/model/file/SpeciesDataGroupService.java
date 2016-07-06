@@ -22,10 +22,11 @@ import java.util.stream.Collectors;
  * A {@link Service} to obtain {@link SpeciesDataGroup} objects. 
  * Users should use the {@link org.bgee.model.ServiceFactory} to obtain {@code SpeciesDataGroupService}s.
  *
- * @author Philippe Moret
- * @author Frederic bastian
- * @version Bgee 13 Sept. 2015
- * @since Bgee 13
+ * @author  Philippe Moret
+ * @author  Frederic bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13, July 2016
+ * @since   Bgee 13
  */
 public class SpeciesDataGroupService extends Service {
 
@@ -101,7 +102,7 @@ public class SpeciesDataGroupService extends Service {
         orderAttrs.put(SpeciesToGroupOrderingAttribute.DISTANCE_TO_SPECIES, DAO.Direction.ASC);
         final Map<String, List<Species>> groupIdToSpeciesMap = buildSpeciesMap(
                 getDaoManager().getSpeciesDataGroupDAO().getAllSpeciesToDataGroup(orderAttrs), 
-                speciesService.loadSpeciesInDataGroups());
+                speciesService.loadSpeciesInDataGroups(false));
         
         if (groupIdToSpeciesMap.size() != groupIdToDownloadFilesMap.size()) {
             throw log.throwing(new IllegalStateException("The number of data groups "

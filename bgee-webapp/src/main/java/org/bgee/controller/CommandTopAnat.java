@@ -66,7 +66,7 @@ import org.bgee.view.ViewFactory;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13 Dec. 2015
+ * @version Bgee 13, July 2015
  * @since   Bgee 13
  */
 public class CommandTopAnat extends CommandParent {
@@ -751,7 +751,7 @@ public class CommandTopAnat extends CommandParent {
         // Retrieve detected species, and create a new Map Species -> Long
         final Map<Species, Long> speciesToGeneCount = speciesIdToGeneCount.isEmpty()? new HashMap<>(): 
                 this.serviceFactory.getSpeciesService()
-                .loadSpeciesByIds(speciesIdToGeneCount.keySet())
+                .loadSpeciesByIds(speciesIdToGeneCount.keySet(), false)
                 .stream()
                 .collect(Collectors.toMap(spe -> spe, spe -> speciesIdToGeneCount.get(spe.getId())));
         // Determine selected species ID. 

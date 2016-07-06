@@ -3,7 +3,7 @@
  * 
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
- * @version Bgee 13, June 2016
+ * @version Bgee 13, July 2016
  * @since   Bgee 13
  */
 
@@ -67,10 +67,12 @@ $( document ).ready( function(){
            { responsivePriority: 4, targets: 4 }  // Quality
         ],
         columns: [ // sorting definition
-           null, // Anatomical entity - null = default sorting
-           null, // Anat. entity ID - null = default sorting
-           { "orderable": false },  // Developmental stage(s) - ordering disabled
-           { "orderDataType": "dom-text", "type": "score" }, // Score - custom function
+           { "orderable": false }, // Anatomical entity - null = default sorting
+           { "orderable": false }, // Anat. entity ID - null = default sorting
+           { "orderable": false }, // Developmental stage(s) - ordering disabled
+           { "orderable": false},  //score - ordering disabled
+           //score ordering disabled, otherwise, use: 
+           //{ "orderDataType": "dom-text", "type": "score" }, // Score - custom function
            { "orderable": false } // Quality - ordering disabled
         ]
     });
@@ -89,23 +91,30 @@ $( document ).ready( function(){
     } );
     
     jQuery.fn.dataTableExt.oSort['score-asc'] = function(a, b) {
-    	// Example: "1,037.0
-    	//           <ul class="masked score-list">
-    	//               <li class="score">1,037.0</li>
-    	//               <li class="score">21,200.0</li>
-    	//           </ul>"
-    	//substring: start including, end excluded
-    	//parseFloat: doesn't deal with US comma separator for thousands
-    	var x = parseFloat(a.substring(0, a.indexOf('<ul')).replace(/,/g,''));
-    	var y = parseFloat(b.substring(0, b.indexOf('<ul')).replace(/,/g,''));
+    	var x = parseHtmlScore(a);
+    	var y = parseHtmlScore(b);
+    	
     	return ((x < y) ? -1 : ((x > y) ? 1 : 0));
     };
      
     jQuery.fn.dataTableExt.oSort['score-desc'] = function(a, b) {
-    	var x = parseFloat(a.substring(0, a.indexOf('<ul')).replace(/,/g,''));
-    	var y = parseFloat(b.substring(0, b.indexOf('<ul')).replace(/,/g,''));
+    	var x = parseHtmlScore(a);
+    	var y = parseHtmlScore(b);
+    	
         return ((x < y) ? 1 : ((x > y) ? -1 : 0));
     };
 
     loadAutocompleteGene();
 } );
+
+function parseHtmlScore(htmlScore) {
+	// Example: "<span class="low-qual-score">1,037.0</span>
+	//           <ul class="masked score-list">
+	//               <li class="score">1,037.0</li>
+	//               <li class="score">21,200.0</li>
+	//           </ul>"
+	//substring: start including, end excluded
+	//parseFloat: doesn't deal with US comma separator for thousands
+	return parseFloat(htmlScore.substring(0, htmlScore.indexOf('<ul'))
+			.replace(/<span class="low-qual-score">/g,'').replace(/<\/span>/g,'').replace(/,/g,''));
+}

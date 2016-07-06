@@ -533,7 +533,7 @@ public class GenerateRankFile {
         ServiceFactory serviceFactory = this.serviceFactorySupplier.get();
         //Retrieve requested species, or all species if none were requested
         Set<String> retrievedSpeciesIds = serviceFactory.getSpeciesService().loadSpeciesByIds(
-                speciesIds).stream().map(s -> s.getId()).collect(Collectors.toSet());
+                speciesIds, false).stream().map(s -> s.getId()).collect(Collectors.toSet());
         if (speciesIds != null && !speciesIds.isEmpty() && !retrievedSpeciesIds.containsAll(speciesIds)) {
             throw log.throwing(new IllegalArgumentException("Some species IDs were not recognized: "
                     + speciesIds.stream().filter(id -> !retrievedSpeciesIds.contains(id))
@@ -581,7 +581,7 @@ public class GenerateRankFile {
         Species species = null;
         try {
             species = serviceFactory.getSpeciesService().loadSpeciesByIds(
-                    new HashSet<>(Arrays.asList(speciesId))).stream().findFirst().get();
+                    new HashSet<>(Arrays.asList(speciesId)), false).stream().findFirst().get();
         } catch (NoSuchElementException e) {
             throw log.throwing(new IllegalArgumentException("No species with ID " + speciesId));
         }

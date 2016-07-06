@@ -179,10 +179,10 @@ public class GenerateRankFileTest extends TestAncestor {
         
         SpeciesService speciesService = mock(SpeciesService.class);
         when(serviceFactory.getSpeciesService()).thenReturn(speciesService);
-        when(speciesService.loadSpeciesByIds(null)).thenReturn(new HashSet<>(Arrays.asList(spe1, spe2)));
-        when(speciesService.loadSpeciesByIds(new HashSet<>(Arrays.asList(spe1.getId()))))
+        when(speciesService.loadSpeciesByIds(null, false)).thenReturn(new HashSet<>(Arrays.asList(spe1, spe2)));
+        when(speciesService.loadSpeciesByIds(new HashSet<>(Arrays.asList(spe1.getId())), false))
         .thenReturn(new HashSet<>(Arrays.asList(spe1)));
-        when(speciesService.loadSpeciesByIds(new HashSet<>(Arrays.asList(spe2.getId()))))
+        when(speciesService.loadSpeciesByIds(new HashSet<>(Arrays.asList(spe2.getId())), false))
         .thenReturn(new HashSet<>(Arrays.asList(spe2)));
         
         OntologyService ontService = mock(OntologyService.class);

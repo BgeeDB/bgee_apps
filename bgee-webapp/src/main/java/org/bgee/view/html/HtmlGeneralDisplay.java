@@ -120,7 +120,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	    this.writeln("<div id='bgee_hero' class='row'>");
 	    
 	    //TODO: manage the version either from database, or from bgee-webapp.properties file.
-	    this.writeln("<span id='bgee_version'>version 13.1</span>");
+	    this.writeln("<span id='bgee_version'>version 13.2</span>");
 
 	    this.writeln("<div id='bgee_hp_logo'><img src='" + this.prop.getLogoImagesRootDirectory() 
 	            + "bgee13_hp_logo.png' alt='Bgee logo'></div>");
@@ -292,6 +292,9 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         
         RequestParameters urlGenePage = this.getNewRequestParameters();
         urlGenePage.setPage(RequestParameters.PAGE_GENE);
+
+        RequestParameters urlSourcePage = this.getNewRequestParameters();
+        urlSourcePage.setPage(RequestParameters.PAGE_SOURCE);
 	    
 	    this.writeln("<div id='bgee_news' class='panel panel-default'>");
 	    this.writeln("<div class='panel-heading'>");
@@ -301,6 +304,25 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	    this.writeln("</div>"); // close panel-heading
 	    
 	    this.writeln("<div class='panel-body'>");
+	    
+	    this.writeOneNews("2016-07-06", "Release of Bgee version 13.2: "
+                + "<ul>"
+                + "<li>Major update of our gene page and ranking algorithm: "
+                  + "<ul>"
+                  + "<li>We are happy to announce that we have updated our ranking algorithm allowing "
+                  + "to discover the most relevant anatomical entities and life stages where "
+                  + "a gene is expressed. We hope that you will appreciate the noticeable improvements.</li>"
+                  + "<li>The gene page has been updated to display the rank scores of conditions "
+                  + "where a gene is expressed, allowing to easily identify major functional shifts "
+                  + "in gene expression.</li>"
+                  + "</ul>"
+                + "Give a try to this updated ranking by searching for your favorite gene, "
+                + "or by using the example links, on the <a href='" + urlGenePage.getRequestURL() 
+                + "'>gene search page</a>.</li>"
+                + "<li>We now display more information about the sources of data used in Bgee, "
+                + "see the new <a href='" + urlSourcePage.getRequestURL() + "'>data source page</a>, "
+                + "and new information added to the gene pages.</li>"
+                + "</ul>");
         
         this.writeOneNews("2016-03-22", "Various improvements of our new interface.");
         
@@ -319,7 +341,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	                      + "the Web-Team  of the SIB Swiss Institute of Bioinformatics. Check it out!");
 	    this.writeOneNews("2015-08-26", "update of the home page.");
 	    
-	    this.writeOneNews("2015-06-08", "release of Bgee release 13.1: "
+	    this.writeOneNews("2015-06-08", "release of Bgee version 13.1: "
 	                      + "<ul>"
 	                      + "<li>Update of the website interfaces.</li>"
 	                      + "<li><a href='" + urlDownloadProcValues.getRequestURL()

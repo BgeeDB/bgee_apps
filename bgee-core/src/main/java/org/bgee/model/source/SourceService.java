@@ -57,7 +57,6 @@ public class SourceService extends Service {
      */
     public List<Source> loadAllSources(boolean withSpeciesInfo) {
         log.entry(withSpeciesInfo);
-        System.err.println(withSpeciesInfo);
         List<Source> sources = getDaoManager().getSourceDAO().getAllDataSources(null).stream()
                 .map(SourceService::mapFromTO)
                 .collect(Collectors.toList());

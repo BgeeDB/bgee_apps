@@ -166,7 +166,9 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		this.writeln("<h2>Expression</h2>");
 		this.writeln("<div id='expr_intro'>Calls of presence of expression, "
 		        + "ordered by the normalized rank score of the gene in the conditions. "
-		        + "A lower rank score means that the gene is more highly expressed in the condition. </div>");
+		        + "A lower rank score means that the gene is more highly expressed in the condition. "
+		        + "The max rank score in all species for the current release is: 47,947.00. "
+		        + "The min rank score varies between species.</div>");
 		
 		this.writeln("<div id='expr_data' class='row'>");
 		
@@ -198,8 +200,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 //                "<tr><td><span class='quality high'>high quality</span></td></tr>" +
 //                "<tr><td><span class='quality low'>low quality</span></td></tr>" +
 //                "<tr><td><span class='quality nodata'>no data</span></td></tr></table>");
-                + "<caption>Data support</caption>" +
-                  "<tr><td><span class='quality high'>data</span></td></tr>" +
+                + "<tr><td><span class='quality high'>data</span></td></tr>" +
                   "<tr><td><span class='quality nodata'>no data</span></td></tr></table>");
         this.writeln("<table class='col-xs-offset-2 col-xs-5 col-sm-offset-1 col-sm-4 col-md-offset-0 col-md-12'>"
                 + "<caption>Rank scores</caption>"

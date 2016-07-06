@@ -22,7 +22,11 @@ table#geneinfo td {
 
 div#expr_intro {
 	display: inline-flex;
-    margin: 0 2% 1.5em;
+    margin-top: 2em;
+    margin-bottom: 2em;
+    font-size: 0.9em;
+    /* padding disabled when max.width < 992px (bootstrap manages the placement afterwards) */
+    padding-left: 2%;
 }
 
 div#table-container {
@@ -35,7 +39,7 @@ div#table-container label {
 
 
 div.sources {
-    margin-top: 3em;
+    margin-top: 2em;
     margin-bottom: 0.5em;
     font-size: 0.9em;
     /* padding disabled when max.width < 992px (bootstrap manages the placement afterwards) */
@@ -56,6 +60,9 @@ div.legend {
 	   border: none;
 	}
 	div.sources {
+        padding-left: 0;
+    }
+    div#expr_intro {
         padding-left: 0;
     }
 }

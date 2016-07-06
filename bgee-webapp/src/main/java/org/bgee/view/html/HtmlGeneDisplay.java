@@ -164,11 +164,6 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		
         //Expression data
 		this.writeln("<h2>Expression</h2>");
-		this.writeln("<div id='expr_intro'>Calls of presence of expression, "
-		        + "ordered by the normalized rank score of the gene in the conditions. "
-		        + "A lower rank score means that the gene is more highly expressed in the condition. "
-		        + "The max rank score in all species for the current release is: 4.79e4. "
-		        + "The min rank score varies between species.</div>");
 		
 		this.writeln("<div id='expr_data' class='row'>");
 		
@@ -212,7 +207,14 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         
 		this.writeln("</div>"); // end expr_data 
 
+		//other info
+		this.writeln("<div class='row'>");
 
+        this.writeln("<div id='expr_intro' class='col-xs-offset-1 col-sm-offset-2 col-sm-9 col-md-offset-0 col-md-10'>"
+                + "Rank scores of expression calls are normalized across genes, conditions and species. "
+                + "Low score means that the gene is highly expressed in the condition. "
+                + "Max rank score in all species: 4.79e4. Min rank score varies across species.</div>");
+        
 		//Source info
 		Set<DataType> allowedDataTypes = geneResponse.getExprCalls().stream()
 		        .flatMap(call -> call.getCallData().stream())
@@ -225,7 +227,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		        !gene.getSpecies().getDataTypesByDataSourcesForData().isEmpty();
 
 		if (hasSourcesForAnnot && hasSourcesForData) {
-		      this.writeln("<div class='row'><div class='sources col-xs-offset-1 col-sm-offset-2 col-md-offset-0 row'>");
+		      this.writeln("<div class='sources col-xs-offset-1 col-sm-offset-2 col-md-offset-0 row'>");
 		}
 		if (hasSourcesForAnnot) {
 		    this.writeSources(gene.getSpecies().getDataTypesByDataSourcesForAnnotation(), 
@@ -237,8 +239,9 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		}
 		
 		if (hasSourcesForAnnot && hasSourcesForData) {
-		    this.writeln("</div></div>"); // end info_sources 
+		    this.writeln("</div>"); // end info_sources 
 		}
+		this.writeln("</div>"); // end other info
 		
 		this.endDisplay();
 		log.exit();

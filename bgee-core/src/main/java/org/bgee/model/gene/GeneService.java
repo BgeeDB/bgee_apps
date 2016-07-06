@@ -117,6 +117,7 @@ public class GeneService extends Service {
      * @param term A {@code String} containing the query 
      * @return A {@code List} of results (ordered).
      */
+    //XXX: is it really needed to create Genes twice?...
     public List<GeneMatch> searchByTerm(final String term) {
         log.entry(term);
         GeneDAO dao = getDaoManager().getGeneDAO();
@@ -134,9 +135,10 @@ public class GeneService extends Service {
         
         Set<String> geneIds = matchedGeneList.stream().map(Gene::getId).collect(Collectors.toSet());
         
-        for (Gene g: matchedGeneList) {
-            g = new Gene(g.getId(), g.getSpeciesId(), g.getName(), g.getDescription(), speciesMap.get(g.getSpeciesId()));
-        }
+        //give Species objects to new Gene objects
+        matchedGeneList = matchedGeneList.stream().map(g -> new Gene(g.getId(), g.getSpeciesId(), 
+                g.getName(), g.getDescription(), speciesMap.get(g.getSpeciesId())))
+                .collect(Collectors.toList());
 
         final Map<String, List<String>> synonymMap = getDaoManager().getGeneNameSynonymDAO().getGeneNameSynonyms(geneIds)
                 .stream()

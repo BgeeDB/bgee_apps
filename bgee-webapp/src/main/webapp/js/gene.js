@@ -107,6 +107,8 @@ $( document ).ready( function(){
     loadAutocompleteGene();
 } );
 
+//XXX: certainly the parsing needs to be udpated now that rank scores are displayed 
+//in scientific notation (only for those >= 1000).
 function parseHtmlScore(htmlScore) {
 	// Example: "<span class="low-qual-score">1,037.0</span>
 	//           <ul class="masked score-list">

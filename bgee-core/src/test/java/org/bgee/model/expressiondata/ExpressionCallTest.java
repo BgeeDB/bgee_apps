@@ -195,4 +195,33 @@ public class ExpressionCallTest extends TestAncestor {
         assertEquals("Incorrect redundant calls identified", 
                 expectedRedundants, ExpressionCall.identifyRedundantCalls(withRedundancy, condUtils));
     }
+    
+    /**
+     * Test {@link ExpressionCall#getFormattedGlobalMeanRank()}
+     */
+    @Test
+    public void shouldFormatRankScore() {
+        ExpressionCall c = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("2"));
+        assertEquals("Incorrect score formatting", "2.00", c.getFormattedGlobalMeanRank());
+        c = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("2.23"));
+        assertEquals("Incorrect score formatting", "2.23", c.getFormattedGlobalMeanRank());
+        c = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("20"));
+        assertEquals("Incorrect score formatting", "20.0", c.getFormattedGlobalMeanRank());
+        c = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("20.23"));
+        assertEquals("Incorrect score formatting", "20.2", c.getFormattedGlobalMeanRank());
+        c = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("200"));
+        assertEquals("Incorrect score formatting", "200", c.getFormattedGlobalMeanRank());
+        c = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("200.23"));
+        assertEquals("Incorrect score formatting", "200", c.getFormattedGlobalMeanRank());
+        c = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("2000"));
+        assertEquals("Incorrect score formatting", "2.00e3", c.getFormattedGlobalMeanRank());
+        c = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("2000.23"));
+        assertEquals("Incorrect score formatting", "2.00e3", c.getFormattedGlobalMeanRank());
+        c = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("20000"));
+        assertEquals("Incorrect score formatting", "2.00e4", c.getFormattedGlobalMeanRank());
+        c = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("20000.23"));
+        assertEquals("Incorrect score formatting", "2.00e4", c.getFormattedGlobalMeanRank());
+        c = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("20100.23"));
+        assertEquals("Incorrect score formatting", "2.01e4", c.getFormattedGlobalMeanRank());
+    }
 }

@@ -2,6 +2,7 @@ package org.bgee.model.expressiondata;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -15,6 +16,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
@@ -757,6 +759,33 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         }
         
         
+        /**
+         * A {@code Function} accepting a {@code BigDecimal} and returning a formatted {@code String}. 
+         * It is more convenient than directly using a {@code NumberFormat}, as we might need 
+         * additional formatting operation. It is not taken into account for equals/hashCode.
+         */
+        private static final Function<BigDecimal, String> FORMATTER = d -> {
+            NumberFormat formatter = NumberFormat.getInstance(Locale.US);
+            formatter.setRoundingMode(RoundingMode.HALF_UP);
+            if (d.compareTo(new BigDecimal(10)) < 0) {
+                formatter.setMaximumFractionDigits(2);
+                formatter.setMinimumFractionDigits(2);
+            } else if (d.compareTo(new BigDecimal(100)) < 0) {
+                formatter.setMaximumFractionDigits(1);
+                formatter.setMinimumFractionDigits(1);
+            } else if (d.compareTo(new BigDecimal(1000)) < 0) {
+                formatter.setMaximumFractionDigits(0);
+                formatter.setMinimumFractionDigits(0);
+            } else if (formatter instanceof DecimalFormat) {
+                ((DecimalFormat) formatter).applyPattern("0.00E0");
+            } else {
+                throw log.throwing(new AssertionError("No formatter could be defined"));
+            }
+            //1E2 to 1e2
+            return formatter.format(d).toLowerCase(Locale.ENGLISH);
+        };
+
+
         //*******************************************
         // INSTANCE ATTRIBUTES AND METHODS
         //*******************************************
@@ -766,33 +795,17 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         //TODO: Maybe create a new RankScore class, storing the rank, 
         //plus an information of confidence about it.
         private final BigDecimal globalMeanRank;
-        /**
-         * A {@code NumberFormat} used to format {@link #globalMeanRank} 
-         * (see {@link #getFormattedGlobalMeanRank()}). It is not taken into account for equals/hashCode.
-         */
-        private final NumberFormat formatter;
-        
         public ExpressionCall(String geneId, Condition condition, DataPropagation dataPropagation, 
                 ExpressionSummary summaryCallType, DataQuality summaryQual, 
                 Collection<ExpressionCallData> callData, BigDecimal globalMeanRank) {
             super(geneId, condition, dataPropagation, summaryCallType, summaryQual, callData);
             
+            if (globalMeanRank != null && globalMeanRank.compareTo(new BigDecimal(0)) <= 0) {
+                throw log.throwing(new IllegalArgumentException(
+                        "A rank cannot be less than or equal to 0."));
+            }
             //BigDecimal are immutable, no need to copy it
             this.globalMeanRank = globalMeanRank;
-            //set up a formatter for nice display of the score
-            if (globalMeanRank != null) {
-                if (globalMeanRank.compareTo(new BigDecimal(0)) <= 0) {
-                    throw log.throwing(new IllegalArgumentException(
-                            "A rank cannot be less than or equal to 0."));
-                }
-                NumberFormat formatter = NumberFormat.getInstance(Locale.US);
-                formatter.setMaximumFractionDigits(2);
-                formatter.setMinimumFractionDigits(2);
-                formatter.setRoundingMode(RoundingMode.HALF_UP);
-                this.formatter = formatter;
-            } else {
-                this.formatter = null;
-            }
         }
         
         /**
@@ -806,33 +819,17 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             return this.globalMeanRank;
         }
         /**
-         * @return  A {@code String} formatted by default, corresponding to the {@code BigDecimal} 
-         *          allowing to rank this {@code ExpressionCall}. 
+         * @return  A {@code String} corresponding to the rank score of this call, formatted 
+         *          with always 3 digits displayed, e.g.: 1.23, 12.3, 123, 1.23e3, ... 
          *          
          * @see #getGlobalMeanRank()
-         * @see #getFormattedGlobalMeanRank(NumberFormat)
          */
         public String getFormattedGlobalMeanRank() {
             log.entry();
-            return log.exit(this.getFormattedGlobalMeanRank(this.formatter));
-        }
-        /**
-         * Format the score allowing to rank this {@code ExpressionCall}, according to the provided 
-         * {@code NumberFormat}.
-         * 
-         * @param formatter The {@code NumberFormat} used to format the score returned by 
-         *                  {@link #getGlobalMeanRank()}.
-         * @return          A {@code String} formatted by {@code formatter}, corresponding to 
-         *                  the {@code BigDecimal} allowing to rank this {@code ExpressionCall}. 
-         * @throws IllegalStateException    If no ranking score was provided at instantiation.
-         * @see #getGlobalMeanRank()
-         * @see #getFormattedGlobalMeanRank()
-         */
-        public String getFormattedGlobalMeanRank(NumberFormat formatter) {
             if (this.globalMeanRank == null) {
                 throw log.throwing(new IllegalStateException("No rank was provided for this call."));
             }
-            return log.exit(formatter.format(this.globalMeanRank));
+            return log.exit(FORMATTER.apply(this.globalMeanRank));
         }
         
         @Override

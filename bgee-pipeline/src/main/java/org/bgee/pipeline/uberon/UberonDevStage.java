@@ -93,16 +93,17 @@ public class UberonDevStage extends UberonCommon {
      *   and to propagate their incoming edges to their outgoing edges. These IDs must be 
      *   separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}. 
      *   See {@link #setClassIdsToRemove(Collection)}.
+     *   <li>A list of OBO-like IDs of {@code OWLClass}es for which we want to remove 
+     *   all their children, reachable by any path in their graph closure. 
+     *   The {@code OWLClass}es themselves will not be removed. 
+     *   See {@link #setChildrenOfToRemove(Collection)}.
      *   <li>a map specifying specific relations to remove between pairs of {@code OWLClass}es. 
      *   In a key-value pair, the key should be the OBO-like ID of the source of relations 
      *   to remove, the value being the target of the relations to remove. Key-value pairs 
      *   must be separated by {@link CommandRunner#LIST_SEPARATOR}, keys must be  
      *   separated from their associated value by {@link CommandRunner#KEY_VALUE_SEPARATOR}. 
      *   A key can be associated to several values. See {@link #setRelsBetweenToRemove(Map)}.
-     *   <li>A list of OBO-like IDs of {@code OWLClass}es for which we want to remove 
-     *   all their children, reachable by any path in their graph closure. 
-     *   The {@code OWLClass}es themselves will not be removed. 
-     *   See {@link #setChildrenOfToRemove(Collection)}.
+     *   <li>A List of OBO-like IDs of the relations to consider
      *   <li>A list of OBO-like IDs of the {@code OWLClass}es that are the roots 
      *   of the subgraphs that will be kept in the ontology. These IDs must be 
      *   separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}. 
@@ -112,11 +113,11 @@ public class UberonDevStage extends UberonCommon {
      *   already generated, so that you don't need the "in_taxon" relations): 
      *   {@code java -Xmx2g -jar myJar 
      *   UberonDevStage generateStageOntology ext.owl dev_stage_ont  
-     *   UBERON:0000067,UBERON:0000071,UBERON:0000105,UBERON:0000000,BFO:0000003,MmusDv:0000041 
+     *   UBERON:0000067,UBERON:0000071,UBERON:0000105,UBERON:0000000,BFO:0000003,MmusDv:0000041,ZFS:0000000,UBERON:0035944,UBERON:0035945
      *   - 
-     *   UBERON:0000481/NCBITaxon:6072 
-     *   BFO:0000050,BFO:0000062,RO:0002087
-     *   UBERON:0000104,FBdv:00000000,NCBITaxon:1}
+     *   UBERON:0000481//NCBITaxon:6072 
+     *   BFO:0000050,BFO:0000062,RO:0002087,RO:0002162
+     *   UBERON:0000104,WBls:0000075,NCBITaxon:1}
      * </ul>
      * @param args  An {@code Array} of {@code String}s containing the requested parameters.
      * @throws IllegalArgumentException If {@code args} does not contain the proper 

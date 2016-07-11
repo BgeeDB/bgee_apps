@@ -62,15 +62,12 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
         
         boolean hasSpecies  = speciesIds != null && !speciesIds.isEmpty();
         
-        String sql = "SELECT DISTINCT t1.OMANodeId, t3.geneId "
-                + "FROM OMAHierarchicalGroup AS t1 "
-                + "INNER JOIN OMAHierarchicalGroup AS t2 "
-                + "ON t2.OMANodeLeftBound >= t1.OMANodeLeftBound AND "
-                + "t2.OMANodeRightBound <= t1.OMANodeRightBound "
-                + "INNER JOIN gene AS t3 ON t2.OMANodeId = t3.OMAParentNodeId "
-                + "WHERE t1.taxonId = ? ";
+        String sql = "SELECT geneToOma.OMANodeId, geneToOma.geneId "
+                + "FROM geneToOma "
+                + "INNER JOIN gene AS g ON geneToOma.geneId = g.geneId "
+                + "WHERE taxonId = ? ";
         if (hasSpecies) {
-            sql += "AND t3.speciesId IN (" +
+            sql += "AND g.speciesId IN (" +
                     BgeePreparedStatement.generateParameterizedQueryString(
                             speciesIds.size()) + ")";
         }

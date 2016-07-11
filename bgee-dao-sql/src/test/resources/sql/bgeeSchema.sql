@@ -501,6 +501,12 @@ create table geneToGeneOntologyTerm (
     goEvidenceCode varchar(20) not null default '' COMMENT 'Gene Ontology Evidence Code'
 ) engine = innodb;
 
+create table geneToOma ( 
+    geneId varchar(20) not null COMMENT 'Gene Id',
+    OMANodeId int unsigned not null COMMENT 'OMA Hierarchical Orthologous node id',
+    taxonId mediumint unsigned not null default '0'
+) engine = innodb;
+
 
 -- ****************************************************
 -- RAW EST DATA

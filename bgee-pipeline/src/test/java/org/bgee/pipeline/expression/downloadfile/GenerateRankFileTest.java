@@ -93,8 +93,8 @@ public class GenerateRankFileTest extends TestAncestor {
         DevStage devStage2 = new DevStage("stage2", "Stage name 2", null);
         Condition cond1 = new Condition(anatEntity1.getId(), devStage1.getId());
         Condition cond2 = new Condition(anatEntity2.getId(), devStage2.getId());
-        Species spe1 = new Species("spe1", "my species1", null, "my", "species1", null);
-        Species spe2 = new Species("spe2", "my species2", null, "my", "species2", null);
+        Species spe1 = new Species("spe1", "my species1", null, "my", "species1", null, null);
+        Species spe2 = new Species("spe2", "my species2", null, "my", "species2", null, null);
         Gene gene1 = new Gene("gene1", spe1.getId(), "gene 1");
         Gene gene2 = new Gene("gene2", spe1.getId(), "gene 2");
         Gene gene3 = new Gene("gene3", spe2.getId(), "gene 3");

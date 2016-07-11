@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.anatdev.DevStageService;
+import org.bgee.model.anatdev.TaxonConstraintService;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.file.DownloadFileService;
@@ -43,10 +44,10 @@ import org.bgee.model.species.SpeciesService;
  * during their static initialization, then using these cached data rather than {@code DAO}s.
  * <ul>
  * 
- * @author Frederic Bastian
- * @author Valentine Rech de Laval
- * @version Bgee 13, Nov. 2015
- * @since Bgee 13
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13, May 2016
+ * @since   Bgee 13
  */
 //XXX: should we put all Services in a same package, so that the constructors are protected 
 //and can only be obtained through the ServiceFactory?
@@ -168,11 +169,21 @@ public class ServiceFactory implements AutoCloseable {
     }
     
     /**
-     * @return A newly instantiated {@code SourceService}
+     * @return  A newly instantiated {@code SourceService}, using the same {@code DAOManager} 
+     *          as the one selected by this {@code ServiceFactory}.
      */
     public SourceService getSourceService() {
         log.entry();
         return log.exit(new SourceService(this.daoManager));
+    }
+    
+    /**
+     * @return  A newly instantiated {@code TaxonConstraintService}, using the same {@code DAOManager} 
+     *          as the one selected by this {@code ServiceFactory}.
+     */
+    public TaxonConstraintService getTaxonConstraintService() {
+        log.entry();
+        return log.exit(new TaxonConstraintService(this.daoManager));
     }
     
     /**

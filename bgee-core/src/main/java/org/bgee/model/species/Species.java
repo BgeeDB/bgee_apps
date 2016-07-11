@@ -32,6 +32,8 @@ public class Species extends NamedEntity {
     /**@see #getDataTypesByDataSourcesForAnnotation() */
     private Map<Source, Set<DataType>> dataTypesByDataSourcesForAnnotation;
 
+    private final String parentTaxonId;
+    
     /**
      * 0-arg constructor private, at least an ID must be provided, see {@link #Species(String)}.
      */
@@ -59,7 +61,7 @@ public class Species extends NamedEntity {
      * @param description   A {@code String} description of this {@code Species}.
      */
     public Species(String id, String name, String description) throws IllegalArgumentException {
-        this(id, name, description, null, null, null);
+        this(id, name, description, null, null, null, null);
     }
     
     /**
@@ -74,13 +76,11 @@ public class Species extends NamedEntity {
      *                      {@code Species} (e.g., "sapiens" for human).
      * @param genomeVersion A {@code String} representing the genome version used for 
      *                      this {@code Species}.
+     * @param parentTaxonId A {@code String} representing the ID of the parent Taxon of this species
      */
     public Species(String id, String name, String description, String genus, String speciesName,
-            String genomeVersion) throws IllegalArgumentException {
-        super(id, name, description);
-        this.genus = genus;
-        this.speciesName = speciesName;
-        this.genomeVersion = genomeVersion;
+            String genomeVersion, String parentTaxonId) throws IllegalArgumentException {
+        this(id, name, description, genus, speciesName, genomeVersion, parentTaxonId, null, null);
     }
     
     /**
@@ -107,7 +107,38 @@ public class Species extends NamedEntity {
     public Species(String id, String name, String description, String genus, String speciesName,
             String genomeVersion, Map<Source, Set<DataType>> dataTypesByDataSourcesForData, 
             Map<Source, Set<DataType>> dataTypesByDataSourcesForAnnotation) throws IllegalArgumentException {
-        this(id, name, description, genus, speciesName, genomeVersion);
+        this(id, name, description, genus, speciesName, genomeVersion, null, 
+                dataTypesByDataSourcesForData, dataTypesByDataSourcesForAnnotation);
+    }
+    /**
+     * Constructor of {@code Species}.
+     * @param id            A {@code String} representing the ID of this {@code Species}. 
+     *                      Cannot be blank.
+     * @param name          A {@code String} representing the (common) name of this {@code Species}.
+     * @param description   A {@code String} description of this {@code Species}.
+     * @param genus         A {@code String} representing the genus of this {@code Species} 
+     *                      (e.g., "Homo" for human).
+     * @param speciesName   A {@code String} representing the species name of this 
+     *                      {@code Species} (e.g., "sapiens" for human).
+     * @param genomeVersion A {@code String} representing the genome version used for 
+     *                      this {@code Species}.
+     * @param dataTypesByDataSourcesForData         A {@code Map} where keys are {@code Source}s 
+     *                                              corresponding to data sources, the associated values 
+     *                                              being a {@code Set} of {@code DataType}s corresponding
+     *                                              to data types of raw data of this species.
+     * @param dataTypesByDataSourcesForAnnotation   A {@code Map} where keys are {@code Source}s
+     *                                              corresponding to data sources, the associated values 
+     *                                              being a {@code Set} of {@code DataType}s corresponding
+     *                                              to data types of annotation data of this data source.
+     */
+    public Species(String id, String name, String description, String genus, String speciesName,
+            String genomeVersion, String parentTaxonId, Map<Source, Set<DataType>> dataTypesByDataSourcesForData, 
+            Map<Source, Set<DataType>> dataTypesByDataSourcesForAnnotation) throws IllegalArgumentException {
+        super(id, name, description);
+        this.genus = genus;
+        this.speciesName = speciesName;
+        this.genomeVersion = genomeVersion;
+        this.parentTaxonId = parentTaxonId;
         this.dataTypesByDataSourcesForData = dataTypesByDataSourcesForData;
         this.dataTypesByDataSourcesForAnnotation = dataTypesByDataSourcesForAnnotation;
     }
@@ -160,6 +191,14 @@ public class Species extends NamedEntity {
     	if (genus == null || speciesName == null) return "";
     	return genus.toUpperCase().charAt(0) +". "+speciesName;
     }
+    
+    /**
+     * @return A {@code String} representing the ID of the parent Taxon of this species
+     */
+    public String getParentTaxonId() {
+        return this.parentTaxonId;
+    }
+
 	
     /**
      * A {@code Map} where keys are {@code Source}s corresponding to data sources,

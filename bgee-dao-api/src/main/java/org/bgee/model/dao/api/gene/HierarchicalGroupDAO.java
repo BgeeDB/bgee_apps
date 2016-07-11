@@ -326,5 +326,10 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
             }
             return true;
         }
+        
+        @Override
+        public String toString() {
+            return "HierarchicalGroupToGeneTO[groupId="+this.groupId+",geneId="+this.geneId+"]";
+        }
     }
 }

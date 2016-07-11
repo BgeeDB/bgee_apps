@@ -27,9 +27,10 @@ import org.junit.Test;
 /**
  * Unit tests for {@link ConditionUtils}.
  * 
- * @author Frederic Bastian
- * @version Bgee 13 June 2016
- * @since Bgee 13 Dec. 2015
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13, June 2016
+ * @since   Bgee 13, Dec. 2015
  */
 public class ConditionUtilsTest extends TestAncestor {
     private final static Logger log = LogManager.getLogger(ConditionUtilsTest.class.getName());
@@ -47,20 +48,24 @@ public class ConditionUtilsTest extends TestAncestor {
      *                      should be loaded from the {@code ServiceFactory}, 
      *                      {@code false} if it should be loaded directly from {@code Ontology}s.
      */
-    public void loadConditionUtils(boolean fromService) {
+    private void loadConditionUtils(boolean fromService) {
         String anatEntityId1 = "anat1";
         AnatEntity anatEntity1 = new AnatEntity(anatEntityId1);
         String anatEntityId2 = "anat2";
         AnatEntity anatEntity2 = new AnatEntity(anatEntityId2);
         String anatEntityId3 = "anat3";
         AnatEntity anatEntity3 = new AnatEntity(anatEntityId3);
+        String anatEntityId4 = "anat4";
+        AnatEntity anatEntity4 = new AnatEntity(anatEntityId4);
         String devStageId1 = "stage1";
         DevStage devStage1 = new DevStage(devStageId1);
         String devStageId2 = "stage2";
         DevStage devStage2 = new DevStage(devStageId2);
         String devStageId3 = "stage3";
         DevStage devStage3 = new DevStage(devStageId3);
-        
+        String devStageId4 = "stage4";
+        DevStage devStage4 = new DevStage(devStageId4);
+
         Condition cond1 = new Condition(anatEntityId1, devStageId1);
         Condition cond2 = new Condition(anatEntityId2, devStageId2);
         Condition cond3 = new Condition(anatEntityId3, devStageId3);
@@ -68,11 +73,12 @@ public class ConditionUtilsTest extends TestAncestor {
         Condition cond5 = new Condition(anatEntityId1, devStageId3);
         Condition cond6 = new Condition(anatEntityId2, devStageId3);
         Condition cond7 = new Condition(anatEntityId3, devStageId2);
+        Condition cond8 = new Condition(anatEntityId4, devStageId4);
         Condition cond1_anatOnly = new Condition(anatEntityId1, null);
         Condition cond2_anatOnly = new Condition(anatEntityId2, null);
         Condition cond1_stageOnly = new Condition(null, devStageId1);
         Condition cond3_stageOnly = new Condition(null, devStageId3);
-        this.conditions = Arrays.asList(cond1, cond2, cond3, cond4, cond5, cond6, cond7, 
+        this.conditions = Arrays.asList(cond1, cond2, cond3, cond4, cond5, cond6, cond7, cond8, 
                 cond1_anatOnly, cond2_anatOnly, cond1_stageOnly, cond3_stageOnly);
         
         ServiceFactory mockFact = mock(ServiceFactory.class);
@@ -89,48 +95,56 @@ public class ConditionUtilsTest extends TestAncestor {
         @SuppressWarnings("unchecked")
         Ontology<DevStage> devStageOnt = mock(Ontology.class);
         
-        when(ontService.getAnatEntityOntology(Arrays.asList("9606"), 
-                new HashSet<>(Arrays.asList(anatEntityId1, anatEntityId2, anatEntityId3)), 
-                EnumSet.of(RelationType.ISA_PARTOF), false, false, anatEntityService))
+        when(ontService.getAnatEntityOntology(new HashSet<>(Arrays.asList("9606")), 
+                new HashSet<>(Arrays.asList(anatEntityId1, anatEntityId2, anatEntityId3, anatEntityId4)), 
+                EnumSet.of(RelationType.ISA_PARTOF), false, false, mockFact))
         .thenReturn(anatEntityOnt);
-        when(ontService.getDevStageOntology(Arrays.asList("9606"), 
-                new HashSet<>(Arrays.asList(devStageId1, devStageId2, devStageId3)), 
-                false, false, devStageService))
+        when(ontService.getDevStageOntology(new HashSet<>(Arrays.asList("9606")), 
+                new HashSet<>(Arrays.asList(devStageId1, devStageId2, devStageId3, devStageId4)), 
+                false, false, mockFact))
         .thenReturn(devStageOnt);
         
         when(anatEntityOnt.getElements()).thenReturn(
-                new HashSet<>(Arrays.asList(anatEntity1, anatEntity2, anatEntity3)));
+                new HashSet<>(Arrays.asList(anatEntity1, anatEntity2, anatEntity3, anatEntity4)));
         when(anatEntityOnt.getElement(anatEntityId1)).thenReturn(anatEntity1);
         when(anatEntityOnt.getElement(anatEntityId2)).thenReturn(anatEntity2);
         when(anatEntityOnt.getElement(anatEntityId3)).thenReturn(anatEntity3);
+        when(anatEntityOnt.getElement(anatEntityId4)).thenReturn(anatEntity4);
         when(devStageOnt.getElements()).thenReturn(
-                new HashSet<>(Arrays.asList(devStage1, devStage2, devStage3)));
+                new HashSet<>(Arrays.asList(devStage1, devStage2, devStage3, devStage4)));
         when(devStageOnt.getElement(devStageId1)).thenReturn(devStage1);
         when(devStageOnt.getElement(devStageId2)).thenReturn(devStage2);
         when(devStageOnt.getElement(devStageId3)).thenReturn(devStage3);
+        when(devStageOnt.getElement(devStageId4)).thenReturn(devStage4);
         
-        //TODO: should add calls using the boolean directRelOnly
         when(anatEntityOnt.getAncestors(anatEntity1)).thenReturn(new HashSet<>());
         when(anatEntityOnt.getAncestors(anatEntity2)).thenReturn(new HashSet<>(Arrays.asList(anatEntity1)));
         when(anatEntityOnt.getAncestors(anatEntity3)).thenReturn(new HashSet<>(Arrays.asList(anatEntity1)));
+        when(anatEntityOnt.getAncestors(anatEntity4)).thenReturn(new HashSet<>(Arrays.asList(anatEntity1, anatEntity3)));
         when(devStageOnt.getAncestors(devStage1)).thenReturn(new HashSet<>());
         when(devStageOnt.getAncestors(devStage2)).thenReturn(new HashSet<>(Arrays.asList(devStage1)));
         when(devStageOnt.getAncestors(devStage3)).thenReturn(new HashSet<>(Arrays.asList(devStage1)));
+        when(devStageOnt.getAncestors(devStage4)).thenReturn(new HashSet<>(Arrays.asList(devStage1, devStage3)));
+
+        when(anatEntityOnt.getAncestors(anatEntity1, false, null)).thenReturn(new HashSet<>());
+        when(anatEntityOnt.getAncestors(anatEntity2, false, null)).thenReturn(new HashSet<>(Arrays.asList(anatEntity1)));
+        when(anatEntityOnt.getAncestors(anatEntity3, false, null)).thenReturn(new HashSet<>(Arrays.asList(anatEntity1)));
+        when(anatEntityOnt.getAncestors(anatEntity4, false, null)).thenReturn(new HashSet<>(Arrays.asList(anatEntity1, anatEntity3)));
+        when(devStageOnt.getAncestors(devStage1, false, null)).thenReturn(new HashSet<>());
+        when(devStageOnt.getAncestors(devStage2, false, null)).thenReturn(new HashSet<>(Arrays.asList(devStage1)));
+        when(devStageOnt.getAncestors(devStage3, false, null)).thenReturn(new HashSet<>(Arrays.asList(devStage1)));
+        when(devStageOnt.getAncestors(devStage4, false, null)).thenReturn(new HashSet<>(Arrays.asList(devStage1, devStage3)));
         
-        when(anatEntityOnt.getDescendants(anatEntity1, false)).thenReturn(
-                new HashSet<>(Arrays.asList(anatEntity2, anatEntity3)));
-        when(devStageOnt.getDescendants(devStage1, false)).thenReturn(
-                new HashSet<>(Arrays.asList(devStage2, devStage3)));
+        when(anatEntityOnt.getDescendants(anatEntity1, false, null)).thenReturn(
+                new HashSet<>(Arrays.asList(anatEntity2, anatEntity3, anatEntity4)));
+        when(devStageOnt.getDescendants(devStage1, false, null)).thenReturn(
+                new HashSet<>(Arrays.asList(devStage2, devStage3, devStage4)));
         
         if (fromService) {
-            this.conditionUtils = new ConditionUtils("9606", 
-                    Arrays.asList(cond1, cond2, cond3, cond4, cond5, cond6, cond7, 
-                            cond1_anatOnly, cond2_anatOnly, cond1_stageOnly, cond3_stageOnly), 
+            this.conditionUtils = new ConditionUtils(Arrays.asList("9606"), this.conditions, 
                     mockFact);
         } else {
-            this.conditionUtils = new ConditionUtils("9606", 
-                    Arrays.asList(cond1, cond2, cond3, cond4, cond5, cond6, cond7, 
-                            cond1_anatOnly, cond2_anatOnly, cond1_stageOnly, cond3_stageOnly), 
+            this.conditionUtils = new ConditionUtils(Arrays.asList("9606"), this.conditions, 
                     anatEntityOnt, devStageOnt);
         }
     }
@@ -148,25 +162,25 @@ public class ConditionUtilsTest extends TestAncestor {
     /**
      * Test the method {@link ConditionUtils#isConditionMorePrecise(Condition, Condition)}.
      */
-    public void testIsConditionMorePrecise() {
+    private void testIsConditionMorePrecise() {
         assertTrue("Incorrect determination of precision for more precise condition", 
                 this.conditionUtils.isConditionMorePrecise(this.conditions.get(0), this.conditions.get(1)));
         assertTrue("Incorrect determination of precision for more precise condition", 
-                this.conditionUtils.isConditionMorePrecise(this.conditions.get(7), this.conditions.get(8)));
+                this.conditionUtils.isConditionMorePrecise(this.conditions.get(8), this.conditions.get(9)));
         assertFalse("Incorrect determination of precision for less precise condition", 
                 this.conditionUtils.isConditionMorePrecise(this.conditions.get(1), this.conditions.get(0)));
         assertFalse("Incorrect determination of precision for less precise condition", 
-                this.conditionUtils.isConditionMorePrecise(this.conditions.get(8), this.conditions.get(7)));
+                this.conditionUtils.isConditionMorePrecise(this.conditions.get(9), this.conditions.get(8)));
         assertTrue("Incorrect determination of precision for more precise condition", 
                 this.conditionUtils.isConditionMorePrecise(this.conditions.get(0), this.conditions.get(2)));
         assertTrue("Incorrect determination of precision for more precise condition", 
-                this.conditionUtils.isConditionMorePrecise(this.conditions.get(9), this.conditions.get(10)));
+                this.conditionUtils.isConditionMorePrecise(this.conditions.get(10), this.conditions.get(11)));
         assertFalse("Incorrect determination of precision for less precise condition", 
                 this.conditionUtils.isConditionMorePrecise(this.conditions.get(2), this.conditions.get(0)));
         assertFalse("Incorrect determination of precision for less precise condition", 
-                this.conditionUtils.isConditionMorePrecise(this.conditions.get(10), this.conditions.get(9)));
+                this.conditionUtils.isConditionMorePrecise(this.conditions.get(11), this.conditions.get(10)));
         assertFalse("Incorrect determination of precision for less precise condition", 
-                this.conditionUtils.isConditionMorePrecise(this.conditions.get(7), this.conditions.get(10)));
+                this.conditionUtils.isConditionMorePrecise(this.conditions.get(8), this.conditions.get(11)));
         assertFalse("Incorrect determination of precision for as precise conditions", 
                 this.conditionUtils.isConditionMorePrecise(this.conditions.get(1), this.conditions.get(2)));
 
@@ -211,7 +225,7 @@ public class ConditionUtilsTest extends TestAncestor {
     /**
      * Test {@link ConditionUtils#compare(Condition, Condition)}
      */
-    public void testCompare() {
+    private void testCompare() {
         assertEquals("Incorrect comparison based on rels between Conditions", 1, 
                 this.conditionUtils.compare(this.conditions.get(0), this.conditions.get(1)));
         assertEquals("Incorrect comparison based on rels between Conditions", -1, 
@@ -254,9 +268,9 @@ public class ConditionUtilsTest extends TestAncestor {
     /**
      * Test the method {@link ConditionUtils#getDescendantConditions(Condition)}.
      */
-    public void shouldGetDescendantConditions() {
+    private void shouldGetDescendantConditions() {
         Set<Condition> expectedDescendants = conditions.stream()
-                .filter(e -> !e.equals(this.conditions.get(0)) && this.conditions.indexOf(e) <= 6)
+                .filter(e -> !e.equals(this.conditions.get(0)) && this.conditions.indexOf(e) <= 7)
                 .collect(Collectors.toSet());
         assertEquals("Incorrect descendants retrieved", expectedDescendants, 
                 this.conditionUtils.getDescendantConditions(this.conditions.get(0)));
@@ -273,12 +287,44 @@ public class ConditionUtilsTest extends TestAncestor {
         assertEquals("Incorrect descendants retrieved", expectedDescendants, 
                 this.conditionUtils.getDescendantConditions(this.conditions.get(6)));
         
-        expectedDescendants = new HashSet<>(Arrays.asList(this.conditions.get(8)));
+        expectedDescendants = new HashSet<>(Arrays.asList(this.conditions.get(9)));
         assertEquals("Incorrect descendants retrieved", expectedDescendants, 
-                this.conditionUtils.getDescendantConditions(this.conditions.get(7)));
+                this.conditionUtils.getDescendantConditions(this.conditions.get(8)));
         
-        expectedDescendants = new HashSet<>(Arrays.asList(this.conditions.get(10)));
+        expectedDescendants = new HashSet<>(Arrays.asList(this.conditions.get(11)));
         assertEquals("Incorrect descendants retrieved", expectedDescendants, 
-                this.conditionUtils.getDescendantConditions(this.conditions.get(9)));
+                this.conditionUtils.getDescendantConditions(this.conditions.get(10)));
+    }
+
+    /**
+     * Test the method {@link ConditionUtils#getAncestorConditions(Condition, boolean)}.
+     */
+    @Test
+    public void shouldGetAncestorConditionsDifferentLoadings() {
+        this.loadConditionUtils(true);
+        this.shouldGetAncestorConditions();
+        this.loadConditionUtils(false);
+        this.shouldGetAncestorConditions();
+    }
+    /**
+     * Test the method {@link ConditionUtils#getAncestorConditions(Condition, boolean)}.
+     */
+    private void shouldGetAncestorConditions() {
+        Set<Condition> expectedAncestors = new HashSet<>(Arrays.asList(this.conditions.get(0)));
+        assertEquals("Incorrect ancestors retrieved", expectedAncestors, 
+                this.conditionUtils.getAncestorConditions(this.conditions.get(6), false));
+        
+        expectedAncestors = new HashSet<>(Arrays.asList(this.conditions.get(0)));
+        assertEquals("Incorrect ancestors retrieved", expectedAncestors, 
+                this.conditionUtils.getAncestorConditions(this.conditions.get(3), false));
+
+        expectedAncestors = new HashSet<>();
+        assertEquals("Incorrect ancestors retrieved", expectedAncestors, 
+                this.conditionUtils.getAncestorConditions(this.conditions.get(0), false));
+        
+        expectedAncestors = new HashSet<>(Arrays.asList(
+                this.conditions.get(0), this.conditions.get(2), this.conditions.get(4)));
+        assertEquals("Incorrect ancestors retrieved", expectedAncestors, 
+                this.conditionUtils.getAncestorConditions(this.conditions.get(7), false));
     }
 }

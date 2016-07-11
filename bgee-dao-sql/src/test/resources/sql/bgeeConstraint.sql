@@ -201,6 +201,11 @@ alter table geneToGeneOntologyTerm
 add primary key (geneId, goId);
 /*!40000 ALTER TABLE `geneToGeneOntologyTerm` ENABLE KEYS */;
 
+/*!40000 ALTER TABLE `geneToOma` DISABLE KEYS */;
+alter table geneToOma
+add primary key (geneId, omaNodeId, taxonId);
+/*!40000 ALTER TABLE `geneToOma` ENABLE KEYS */;
+
 -- ****************************************************
 -- EXPRESSION DATA
 -- ****************************************************

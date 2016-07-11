@@ -71,6 +71,15 @@ BEGIN
                ('ID2','synonym2'),
                ('ID3','syno3');
                
+        -- load existing groups in the new table
+        INSERT INTO geneToOma SELECT DISTINCT t3.geneId, t1.OMANodeId, t1.taxonId 
+          FROM OMAHierarchicalGroup AS t1         
+            INNER JOIN OMAHierarchicalGroup AS t2     
+                  ON t2.OMANodeLeftBound >= t1.OMANodeLeftBound AND       
+                     t2.OMANodeRightBound <= t1.OMANodeRightBound        
+                        INNER JOIN gene AS t3 ON t2.OMANodeId = t3.OMAParentNodeId
+        WHERE t1.taxonId IS NOT NULL;
+        
 --               --1 Stage_id1 36 ----------------------------------------------------------------------------------------------------
 --              /            |                                                         \                                              \
 -- 2 Stage_id2 7             8 Stage_id5 17--------------                            18 Stage_id10 25-------------                    26 Stage_id14 35-----------
@@ -122,6 +131,20 @@ BEGIN
                ('Stage_id16', 11), 
                ('Stage_id17', 31), 
                ('Stage_id18', 11);
+
+--               Anat_id1 ----------------
+--                   |                    \
+--           --- Anat_id2 ----         Anat_id6
+--          /        |        \            |
+--         /         |         \       Anat_id7
+--        /          |          \          |   \
+--       /           |           \         |    Anat_id8
+--      /            |            \        |   /
+--  Anat_id3     Anat_id4          --- Anat_id5 -------
+--                                         |           \
+--                                     Anat_id9     Anat_id10
+--                                                      |
+--                                                  Anat_id11
 
         INSERT INTO anatEntity(anatEntityId,anatEntityName,anatEntityDescription,startStageId,endStageId,nonInformative)
         VALUES ('Anat_id1','anatStruct','anatStruct desc','Stage_id1','Stage_id2',true),

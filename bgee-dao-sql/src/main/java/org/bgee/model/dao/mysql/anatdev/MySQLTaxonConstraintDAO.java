@@ -3,6 +3,7 @@ package org.bgee.model.dao.mysql.anatdev;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.Map.Entry;
 
 import org.apache.logging.log4j.LogManager;
@@ -19,10 +20,10 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 /**
  * A {@code TaxonConstraintDAO} for MySQL. 
  * 
- * @author Valentine Rech de Laval
- * @version Bgee 13
- * @see org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO
- * @since Bgee 13
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13, May 2016
+ * @see     org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO
+ * @since   Bgee 13
  */
 public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribute> 
                                      implements TaxonConstraintDAO {
@@ -41,6 +42,148 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
      */
     public MySQLTaxonConstraintDAO(MySQLDAOManager manager) throws IllegalArgumentException {
         super(manager);
+    }
+
+    @Override
+    public TaxonConstraintTOResultSet getAnatEntityTaxonConstraints(
+            Collection<String> speciesIds, Collection<TaxonConstraintDAO.Attribute> attributes)
+            throws DAOException {
+        log.entry(speciesIds, attributes);
+
+        return log.exit(this.getTaxonConstraints(
+                speciesIds, attributes, "anatEntityTaxonConstraint", "anatEntityId"));
+    }
+    
+    @Override
+    /*
+     * (non-javadoc)
+     * That method is not factorize with other select method because of table names, 
+     * entity ID column names, and, most important of all, types of this column 
+     * (int or string) are different.
+     */
+    public TaxonConstraintTOResultSet getAnatEntityRelationTaxonConstraints(
+            Collection<String> speciesIds, Collection<TaxonConstraintDAO.Attribute> attributes)
+            throws DAOException {
+        log.entry(speciesIds, attributes);
+        
+        boolean filterBySpeciesIDs = speciesIds != null && !speciesIds.isEmpty();
+
+        String tableName = "anatEntityRelationTaxonConstraint";
+        String sql = "";
+        if (attributes == null || attributes.isEmpty()) {
+            attributes = EnumSet.allOf(TaxonConstraintDAO.Attribute.class);
+        }
+        for (TaxonConstraintDAO.Attribute attribute: attributes) {
+            if (sql.isEmpty()) {
+                sql += "SELECT DISTINCT ";
+            } else {
+                sql += ", ";
+            }
+            sql += tableName + ".";
+            if (attribute.equals(TaxonConstraintDAO.Attribute.ENTITY_ID)) {
+                sql += "anatEntityRelationId";
+            } else if (attribute.equals(TaxonConstraintDAO.Attribute.SPECIES_ID)) {
+                sql += "speciesId";
+            } else {
+                throw log.throwing(new IllegalArgumentException("The attribute provided (" + 
+                        attribute.toString() + ") is unknown for " + TaxonConstraintDAO.class.getName()));
+            }
+        }
+
+        sql += " FROM " + tableName;
+        
+        if (filterBySpeciesIDs) {
+            sql += " WHERE (" + tableName + ".speciesId IS NULL OR " + tableName + ".speciesId IN (" + 
+                    BgeePreparedStatement.generateParameterizedQueryString(speciesIds.size()) + "))";            
+        }
+
+        // we don't use a try-with-resource, because we return a pointer to the results,
+        // not the actual results, so we should not close this BgeePreparedStatement.
+        try {
+            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
+            if (filterBySpeciesIDs) {
+                stmt.setStringsToIntegers(1, speciesIds, true);
+            }
+            return log.exit(new MySQLTaxonConstraintTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+
+    @Override
+    public TaxonConstraintTOResultSet getStageTaxonConstraints(
+            Collection<String> speciesIds, Collection<TaxonConstraintDAO.Attribute> attributes)
+            throws DAOException {
+        log.entry(speciesIds, attributes);
+        return log.exit(this.getTaxonConstraints(
+                speciesIds, attributes, "stageTaxonConstraint", "stageId"));
+    }
+
+    /** 
+     * Retrieve taxon constrains from data source in {@code tableName}.
+     * The constrains can be filtered by species IDs.
+     * <p>
+     * The taxon constrains are retrieved and returned as a {@code TaxonConstraintTOResultSet}.
+     * It is the responsibility of the caller to close this {@code DAOResultSet}
+     * once results are retrieved.
+     * 
+     * @param speciesIds        A {@code Collection} of {@code String}s that are the IDs of species 
+     *                          to retrieve taxon constrains for.
+     * @param attributes        A {@code Collection} of {@code TaxonConstraintDAO.Attribute}s defining  
+     *                          the attributes to populate in the returned {@code TaxonConstraintTO}s.
+     *                          If {@code null} or empty, all attributes are populated. 
+     * @param tableName         A {@code String} that is the name of the table to be used.
+     * @param entityColumnName  A {@code String} that is the name of entity ID column.
+     * @return                  A {@code TaxonConstraintTOResultSet} allowing to retrieve 
+     *                          taxon constrains from data source.
+     * @throws DAOException     If an error occurred when accessing the data source. 
+     */
+    private TaxonConstraintTOResultSet getTaxonConstraints(Collection<String> speciesIds,
+            Collection<TaxonConstraintDAO.Attribute> attributes, String tableName,
+            String entityColumnName) throws DAOException {
+        log.entry(speciesIds, attributes, tableName, entityColumnName);
+        
+        boolean filterBySpeciesIDs = speciesIds != null && !speciesIds.isEmpty();
+
+        String sql = "";
+        if (attributes == null || attributes.isEmpty()) {
+            attributes = EnumSet.allOf(TaxonConstraintDAO.Attribute.class);
+        }
+        for (TaxonConstraintDAO.Attribute attribute: attributes) {
+            if (sql.isEmpty()) {
+                sql += "SELECT DISTINCT ";
+            } else {
+                sql += ", ";
+            }
+            sql += tableName + ".";
+            if (attribute.equals(TaxonConstraintDAO.Attribute.ENTITY_ID)) {
+                sql += entityColumnName;
+            } else if (attribute.equals(TaxonConstraintDAO.Attribute.SPECIES_ID)) {
+                sql += "speciesId";
+            } else {
+                throw log.throwing(new IllegalArgumentException("The attribute provided (" + 
+                        attribute.toString() + ") is unknown for " + TaxonConstraintDAO.class.getName()));
+            }
+        }
+
+        sql += " FROM " + tableName;
+        
+        if (filterBySpeciesIDs) {
+            sql += " WHERE (" + tableName + ".speciesId IS NULL OR " + tableName + ".speciesId IN (" + 
+                    BgeePreparedStatement.generateParameterizedQueryString(speciesIds.size()) + "))";            
+        }
+
+        // we don't use a try-with-resource, because we return a pointer to the results,
+        // not the actual results, so we should not close this BgeePreparedStatement.
+        try {
+            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
+            if (filterBySpeciesIDs) {
+                stmt.setStringsToIntegers(1, speciesIds, true);
+            }
+            return log.exit(new MySQLTaxonConstraintTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
     }
 
     @Override

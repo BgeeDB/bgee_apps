@@ -126,7 +126,7 @@ public abstract class NestedSetModelEntity extends NamedEntity implements Compar
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append(super.toString())
-                .append("leftBound=").append(leftBound)
+                .append(", leftBound=").append(leftBound)
                 .append(", rightBound=").append(rightBound)
                 .append(", level=").append(level);
         return builder.toString();

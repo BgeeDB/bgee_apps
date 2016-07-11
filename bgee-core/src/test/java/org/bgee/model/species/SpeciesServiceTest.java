@@ -66,8 +66,8 @@ public class SpeciesServiceTest extends TestAncestor {
 		        new HashSet<String>(Arrays.asList("9606", "1234")), null, null, null)).thenReturn(sToSpRS);
 
 		Set<Species> expectedSpecies = new HashSet<>(Arrays.asList(
-		        new Species("9606", "human", null, "Homo", "sapiens", "version1"), 
-		        new Species("1234", "name", null, "genus", "someSpecies", "versionA")));
+		        new Species("9606", "human", null, "Homo", "sapiens", "version1", "4312"), 
+		        new Species("1234", "name", null, "genus", "someSpecies", "versionA", "1123")));
 
 		SourceService sourceService = mock(SourceService.class);
 		when(sourceService.loadAllSources(false)).thenReturn(
@@ -131,8 +131,8 @@ public class SpeciesServiceTest extends TestAncestor {
 	    // actual use of the service
 	    SpeciesService service = new SpeciesService(managerMock, sourceService);
 	    Set<Species> expected = new HashSet<>(Arrays.asList(
-	            new Species("9606", "human", null, "Homo", "sapiens", "version1"),
-	            new Species("1234", "name", null, "genus", "someSpecies", "versionA")));
+	            new Species("9606", "human", null, "Homo", "sapiens", "version1", "4312"),
+	            new Species("1234", "name", null, "genus", "someSpecies", "versionA", "1123")));
         assertEquals(expected, service.loadSpeciesByIds(speciesIds, false));
         
         Map<Source, Set<DataType>> forData9606 = new HashMap<>();

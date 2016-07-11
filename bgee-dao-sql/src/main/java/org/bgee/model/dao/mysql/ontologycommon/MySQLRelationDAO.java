@@ -223,7 +223,118 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         return log.exit(this.getAnatEntityRelations(speciesIds, true, null, null, true, 
                 relationTypes, relationStatus, this.getAttributes()));
     }
-     
+    
+    
+    @Override
+    //FIXME: broken on purpose, WIP
+    public RelationTOResultSet getTaxonRelations( 
+            Collection<String> speciesIds, boolean onlyCommonAncestor, Collection<RelationDAO.Attribute> attributes) {
+        
+        if (true) {
+            throw new UnsupportedOperationException("Incorrect SQL query, it should be fixed before using this method"); 
+        }
+        //*******************************
+        // SELECT CLAUSE
+        //*******************************
+        String sql = null;
+        EnumSet<RelationDAO.Attribute> clonedAttrs = Optional.ofNullable(attributes)
+                .map(e -> e.isEmpty()? null: EnumSet.copyOf(e)).orElse(null);
+        if (clonedAttrs == null || clonedAttrs.isEmpty()) {
+            sql = "SELECT tempTable.*";
+        } else {
+            for (RelationDAO.Attribute attribute: clonedAttrs) {
+                if (sql == null) {
+                    sql = "SELECT DISTINCT ";
+                } else {
+                    sql += ", ";
+                }
+                sql += this.attributeStageRelationToString(attribute);
+            }
+        }
+        
+        //*******************************
+        // FROM CLAUSE
+        //*******************************
+        sql += " FROM ";
+        
+        //OK, we create a query that will emulate a temporary table similar to
+        //the retrieval of relations between anatomical entities.
+        sql += 
+            // no relationId, provide 0 for all
+            "(SELECT DISTINCT 0 AS taxonRelationId, " +
+            "t3.taxonId AS taxonSourceId, " +
+            "t1.taxonId AS taxonTargetId, " +
+            //no other parenthood relations between taxons other than is_a
+            "'" + RelationType.ISA_PARTOF.getStringRepresentation() + "' AS relationType, " +
+            //emulate RelationStatus
+            "IF (t1.taxonId = t3.taxonId, " + 
+                "'" + RelationStatus.REFLEXIVE.getStringRepresentation() + "', " +
+                "IF (t3.taxonLevel = t1.taxonLevel + 1, " + 
+                "'" + RelationStatus.DIRECT.getStringRepresentation() + "', " +
+                "'" + RelationStatus.INDIRECT.getStringRepresentation() + "')) AS relationStatus " +
+            "FROM taxon AS t1 " +
+            "INNER JOIN taxon AS t3 " +
+                "ON t3.taxonLeftBound >= t1.taxonLeftBound " +
+                "AND t3.taxonRightBound <= t1.taxonRightBound " ;
+          
+        /*if (isSpeciesFilter) {
+            sql += "WHERE ";
+            if  (realAnySpecies) {
+                //a case is not covered in this where clause: for instance, if we query relations 
+                //for species 1 or species 2, while stage 1 exists in species 1, and stqge2 
+                //in species 2. With only this where clause, we could retrieve 
+                //an incorrect relation between stage 1 an stage 2. But this is not possible 
+                //thanks to the join clause above between t4 and t2. 
+                sql += "(t2.speciesId IS NULL OR t2.speciesId IN (" +
+                            BgeePreparedStatement.generateParameterizedQueryString(
+                                clonedSpeIds.size()) + ")) " +
+                        "AND (t4.speciesId IS NULL OR t4.speciesId IN (" +
+                             BgeePreparedStatement.generateParameterizedQueryString(
+                                clonedSpeIds.size()) + ")) ";
+            } else {
+                String existsPart = "SELECT 1 FROM stageTaxonConstraint AS tc WHERE "
+                        + "tc.stageId = t1.stageId AND tc.speciesId ";
+                sql += getAllSpeciesExistsClause(existsPart, clonedSpeIds.size());
+                existsPart = "SELECT 1 FROM stageTaxonConstraint AS tc WHERE "
+                        + "tc.stageId = t3.stageId AND tc.speciesId ";
+                sql += "AND " + getAllSpeciesExistsClause(existsPart, clonedSpeIds.size());
+            }
+        }*/
+        sql += ") AS tempTable ";
+
+        //*******************************
+        // WHERE CLAUSE (species already filtered in FROM clause subquery)
+        //*******************************
+       
+
+        //*******************************
+        // PREPARE STATEMENT
+        //*******************************
+         //we don't use a try-with-resource, because we return a pointer to the results, 
+         //not the actual results, so we should not close this BgeePreparedStatement.
+         try {
+             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
+             int startIndex = 1;
+             /*if (isSpeciesFilter) {
+                 List<Integer> orderedSpeciesIds = clonedSpeIds.stream()
+                         .map(e -> e == null? null: Integer.parseInt(e))
+                         .collect(Collectors.toList());
+                 Collections.sort(orderedSpeciesIds);
+                 stmt.setIntegers(startIndex, orderedSpeciesIds, false);
+                 startIndex += orderedSpeciesIds.size();
+                 //we set the species IDs twice, once for the parent stages, 
+                 //once for the child stages
+                 stmt.setIntegers(startIndex, orderedSpeciesIds, false);
+                 startIndex += orderedSpeciesIds.size();
+             }*/
+             
+             return log.exit(new MySQLRelationTOResultSet(stmt));
+         } catch (SQLException e) {
+             throw log.throwing(new DAOException(e));
+         }
+         
+    }
+    
     @Override
     public RelationTOResultSet getStageRelations(Collection<String> speciesIds, Boolean anySpecies, 
             Collection<String> sourceDevStageIds, Collection<String> targetDevStageIds, Boolean sourceOrTarget, 

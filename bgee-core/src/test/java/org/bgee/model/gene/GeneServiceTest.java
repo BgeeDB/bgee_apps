@@ -6,8 +6,10 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.bgee.model.TestAncestor;
@@ -15,6 +17,11 @@ import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTOResultSet;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTOResultSet;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTOResultSet;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTO;
+
 import org.junit.Test;
 
 /**
@@ -70,5 +77,28 @@ public class GeneServiceTest extends TestAncestor {
         
         when(dao.getGeneBySearchTerm("Name", null, 1, 25)).thenReturn(mockGeneRs);
         
+    }
+    
+
+    
+    @Test
+    public void testGetOrthologies() {
+        DAOManager managerMock = mock(DAOManager.class);
+        HierarchicalGroupDAO dao = mock(HierarchicalGroupDAO.class);
+        when(managerMock.getHierarchicalGroupDAO()).thenReturn(dao);
+        HierarchicalGroupToGeneTOResultSet resultSet = getMockResultSet(HierarchicalGroupToGeneTOResultSet.class, 
+                Arrays.asList(new HierarchicalGroupToGeneTO("1", "123"),
+                        new HierarchicalGroupToGeneTO("1", "124"),
+                        new HierarchicalGroupToGeneTO("2", "223")
+
+                        ));
+        when(dao.getGroupToGene("1234", null)).thenReturn(resultSet);
+        
+        GeneService service = new GeneService(managerMock);
+        Map<String, Set<String>> expected = new HashMap<>();
+        expected.put("1", new HashSet<>(Arrays.asList("123","124")));
+        expected.put("2", new HashSet<>(Arrays.asList("223")));
+        Map<String, Set<String>> actual = service.getOrthologies("1234", null);
+        assertEquals(expected, actual);
     }
 }

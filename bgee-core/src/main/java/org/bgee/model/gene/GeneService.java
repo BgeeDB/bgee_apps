@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -16,6 +17,9 @@ import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneNameSynonymDAO.GeneNameSynonymTO;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTO;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTOResultSet;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
 
@@ -59,8 +63,8 @@ public class GeneService extends Service {
     }
     
     public GeneService(DAOManager daoManager, SpeciesService speciesService) {
-    	super(daoManager);
-    	this.speciesService = speciesService;
+        super(daoManager);
+        this.speciesService = speciesService;
     }
 
     /**
@@ -109,7 +113,26 @@ public class GeneService extends Service {
     	speciesIds.add(gene.getSpeciesId());
     	Species species = speciesService.loadSpeciesByIds(speciesIds, true).iterator().next();
     	gene = new Gene(gene.getId(), gene.getSpeciesId(), gene.getName(), gene.getDescription(), species);
-		return log.exit(gene);  		
+		return log.exit(gene);
+    }
+
+    /**
+     * Gets the orthologies for a given taxon.
+     * @param taxonId     The {@code String} id of  taxon for which to retrieve the orthology groups
+     * @param speciesIds  A {@code Set} of {@code String} representing the species id. If null, all species available for the taxon are used.
+     * @return A {@code Map} of OMA Node Ids to a set of gene id
+     */
+    public Map<String, Set<String>> getOrthologies(String taxonId, Set<String> speciesIds){
+        log.entry(taxonId, speciesIds);
+        HierarchicalGroupToGeneTOResultSet resultSet = getDaoManager().getHierarchicalGroupDAO().getGroupToGene(taxonId, speciesIds);
+        Map <String, Set<String>> results = resultSet.stream()
+                .collect(Collectors.groupingBy((HierarchicalGroupToGeneTO hg) -> hg.getGroupId()))
+                .entrySet().stream()
+                .collect(Collectors.toMap( (Entry<String, List<HierarchicalGroupToGeneTO>> e) -> e.getKey(), 
+                        (Entry<String, List<HierarchicalGroupToGeneTO>> e) ->  e.getValue().stream().map(to -> to.getGeneId()).collect(Collectors.toSet()) 
+                        ));
+        
+        return log.exit(results);
     }
 
     /**

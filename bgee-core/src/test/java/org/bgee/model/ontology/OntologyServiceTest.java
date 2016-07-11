@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import org.bgee.model.ServiceFactory;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
@@ -30,7 +31,7 @@ import org.junit.Test;
  * This class holds the unit tests for the {@code OntologyService} class.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Jan. 2016
+ * @version Bgee 13, May 2016
  * @since   Bgee 13, Dec. 2015
  */
 public class OntologyServiceTest extends TestAncestor {
@@ -94,7 +95,9 @@ public class OntologyServiceTest extends TestAncestor {
         		daoRelationTypes23, EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE)), null))
         	.thenReturn(mockRelationRs3);
 
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
         AnatEntityService anatEntityService = mock(AnatEntityService.class);
+        when(serviceFactory.getAnatEntityService()).thenReturn(anatEntityService);
         
         Set<AnatEntity> anatEntities1 = new HashSet<>(Arrays.asList(
         		new AnatEntity("1", "UBERON:0001", "desc1"),
@@ -136,22 +139,25 @@ public class OntologyServiceTest extends TestAncestor {
         OntologyService service = new OntologyService(managerMock);
 
         Ontology<AnatEntity> expectedOntology1 = 
-        		new Ontology<>(anatEntities1, new HashSet<>(relationTOs1), expRelationTypes1);
+        		new Ontology<>(anatEntities1, new HashSet<>(relationTOs1), expRelationTypes1, 
+        		        serviceFactory, AnatEntity.class);
         assertEquals("Incorrect anatomical entity ontology",
                 expectedOntology1, service.getAnatEntityOntology(speciesIds, anatEntityIds,
-                		expRelationTypes1, true, true, anatEntityService));
+                		expRelationTypes1, true, true, serviceFactory));
         
         Ontology<AnatEntity> expectedOntology2 = 
-        		new Ontology<>(anatEntities2, new HashSet<>(relationTOs2), expRelationTypes23);
+        		new Ontology<>(anatEntities2, new HashSet<>(relationTOs2), expRelationTypes23,
+        		        serviceFactory, AnatEntity.class);
         assertEquals("Incorrect anatomical entity ontology",
                 expectedOntology2, service.getAnatEntityOntology(speciesIds, anatEntityIds,
-                		expRelationTypes23, true, false, anatEntityService));
+                		expRelationTypes23, true, false, serviceFactory));
         
         Ontology<AnatEntity> expectedOntology3 = 
-        		new Ontology<>(anatEntities3, new HashSet<>(relationTOs3), expRelationTypes23);
+        		new Ontology<>(anatEntities3, new HashSet<>(relationTOs3), expRelationTypes23,
+        		        serviceFactory, AnatEntity.class);
         assertEquals("Incorrect anatomical entity ontology",
                 expectedOntology3, service.getAnatEntityOntology(speciesIds, anatEntityIds,
-                		expRelationTypes23, false, false, anatEntityService));
+                		expRelationTypes23, false, false, serviceFactory));
     }
 
     /**
@@ -210,7 +216,10 @@ public class OntologyServiceTest extends TestAncestor {
         		false, EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE)), null))
         	.thenReturn(mockRelationRs3);
 
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
         DevStageService devStageService = mock(DevStageService.class);
+        when(serviceFactory.getDevStageService()).thenReturn(devStageService);
+
         Set<DevStage> devStages1 = new HashSet<>(Arrays.asList(
         		new DevStage("1", "Stage_id1", "desc1", 0, 0, 0, false, false),
         		new DevStage("2", "Stage_id2", "desc2", 0, 0, 0, false, false),
@@ -243,18 +252,21 @@ public class OntologyServiceTest extends TestAncestor {
         OntologyService service = new OntologyService(managerMock);
 
         Ontology<DevStage> expectedOntology1 = 
-        		new Ontology<>(devStages1, new HashSet<>(relationTOs1), expRelationTypes);
+        		new Ontology<>(devStages1, new HashSet<>(relationTOs1), expRelationTypes,
+        		        serviceFactory, DevStage.class);
         assertEquals("Incorrect dev. stage ontology", expectedOntology1,
-        		service.getDevStageOntology(speciesIds, stageIds, true, true, devStageService));
+        		service.getDevStageOntology(speciesIds, stageIds, true, true, serviceFactory));
 
         Ontology<DevStage> expectedOntology2 = 
-        		new Ontology<>(devStages2, new HashSet<>(relationTOs2), expRelationTypes);
+        		new Ontology<>(devStages2, new HashSet<>(relationTOs2), expRelationTypes,
+                        serviceFactory, DevStage.class);
         assertEquals("Incorrect dev. stage ontology", expectedOntology2,
-        		service.getDevStageOntology(speciesIds, stageIds, false, true, devStageService));
+        		service.getDevStageOntology(speciesIds, stageIds, false, true, serviceFactory));
 
         Ontology<DevStage> expectedOntology3 = 
-        		new Ontology<>(devStages3, new HashSet<>(relationTOs3), expRelationTypes);
+        		new Ontology<>(devStages3, new HashSet<>(relationTOs3), expRelationTypes,
+                        serviceFactory, DevStage.class);
         assertEquals("Incorrect dev. stage ontology", expectedOntology3, 
-        		service.getDevStageOntology(speciesIds, stageIds, false, false, devStageService));
+        		service.getDevStageOntology(speciesIds, stageIds, false, false, serviceFactory));
     }
 }

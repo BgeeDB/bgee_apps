@@ -11,10 +11,10 @@ import org.bgee.model.dao.api.exception.DAOException;
 /**
  * DAO defining queries using or retrieving {@link TaxonConstraintTO}s. 
  *
- * @author Valentine Rech de Laval
- * @version Bgee 13
- * @see TaxonConstraintTO
- * @since Bgee 13
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13, May 2016
+ * @see     TaxonConstraintTO
+ * @since   Bgee 13
  */
 public interface TaxonConstraintDAO {
 
@@ -32,6 +32,69 @@ public interface TaxonConstraintDAO {
     public enum Attribute implements DAO.Attribute {
         ENTITY_ID, SPECIES_ID;
     }
+
+    /**
+     * Retrieve anatomical entity taxon constrains from data source.
+     * The constrains can be filtered by species IDs.
+     * <p>
+     * The taxon constrains are retrieved and returned as a {@code TaxonConstraintTOResultSet}.
+     * It is the responsibility of the caller to close this {@code DAOResultSet}
+     * once results are retrieved.
+     * 
+     * @param speciesIds    A {@code Collection} of {@code String}s that are the IDs of species 
+     *                      to retrieve taxon constrains for.
+     * @param attributes    A {@code Collection} of {@code TaxonConstraintDAO.Attribute}s defining  
+     *                      the attributes to populate in the returned {@code TaxonConstraintTO}s.
+     *                      If {@code null} or empty, all attributes are populated. 
+     * @return              A {@code TaxonConstraintTOResultSet} allowing to retrieve 
+     *                      anatomical entity taxon constrains from data source.
+     * @throws DAOException If an error occurred when accessing the data source. 
+     */
+    public TaxonConstraintTOResultSet getAnatEntityTaxonConstraints(
+            Collection<String> speciesIds, Collection<TaxonConstraintDAO.Attribute> attributes)
+            throws DAOException;
+    
+    /**
+     * Retrieve anatomical entity relation taxon constrains from data source.
+     * The constrains can be filtered by species IDs.
+     * <p>
+     * The taxon constrains are retrieved and returned as a {@code TaxonConstraintTOResultSet}.
+     * It is the responsibility of the caller to close this {@code DAOResultSet}
+     * once results are retrieved.
+     * 
+     * @param speciesIds    A {@code Collection} of {@code String}s that are the IDs of species 
+     *                      to retrieve taxon constrains for.
+     * @param attributes    A {@code Collection} of {@code TaxonConstraintDAO.Attribute}s defining  
+     *                      the attributes to populate in the returned {@code TaxonConstraintTO}s.
+     *                      If {@code null} or empty, all attributes are populated. 
+     * @return              A {@code TaxonConstraintTOResultSet} allowing to retrieve 
+     *                      anatomical entity taxon constrains from data source.
+     * @throws DAOException If an error occurred when accessing the data source. 
+     */
+    public TaxonConstraintTOResultSet getAnatEntityRelationTaxonConstraints(
+            Collection<String> speciesIds, Collection<TaxonConstraintDAO.Attribute> attributes)
+            throws DAOException;
+
+    /**
+     * Retrieve developmental stage taxon constrains from data source.
+     * The constrains can be filtered by species IDs.
+     * <p>
+     * The taxon constrains are retrieved and returned as a {@code TaxonConstraintTOResultSet}.
+     * It is the responsibility of the caller to close this {@code DAOResultSet}
+     * once results are retrieved.
+     * 
+     * @param speciesIds    A {@code Collection} of {@code String}s that are the IDs of species 
+     *                      to retrieve taxon constrains for.
+     * @param attributes    A {@code Collection} of {@code TaxonConstraintDAO.Attribute}s defining  
+     *                      the attributes to populate in the returned {@code TaxonConstraintTO}s.
+     *                      If {@code null} or empty, all attributes are populated. 
+     * @return              A {@code TaxonConstraintTOResultSet} allowing to retrieve 
+     *                      developmental stage taxon constrains from data source.
+     * @throws DAOException If an error occurred when accessing the data source. 
+     */
+    public TaxonConstraintTOResultSet getStageTaxonConstraints(
+            Collection<String> speciesIds, Collection<TaxonConstraintDAO.Attribute> attributes)
+            throws DAOException;
 
     /**
      * Inserts the provided developmental stage taxon constraints into the Bgee database, 

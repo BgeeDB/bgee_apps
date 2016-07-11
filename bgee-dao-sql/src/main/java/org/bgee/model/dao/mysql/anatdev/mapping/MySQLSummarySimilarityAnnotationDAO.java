@@ -51,6 +51,7 @@ public class MySQLSummarySimilarityAnnotationDAO
     @Override
     public SummarySimilarityAnnotationTOResultSet getAllSummarySimilarityAnnotations()
             throws DAOException {
+        
         log.entry();
         
         String tableName = "summarySimilarityAnnotation";
@@ -73,8 +74,14 @@ public class MySQLSummarySimilarityAnnotationDAO
 
     @Override
     public SummarySimilarityAnnotationTOResultSet getSummarySimilarityAnnotations(
-            String taxonId) throws DAOException, IllegalArgumentException {
-        log.entry(taxonId);
+            String taxonId)  throws DAOException, IllegalArgumentException {
+        return this.getSummarySimilarityAnnotations(taxonId, false);
+    }
+            
+    @Override
+    public SummarySimilarityAnnotationTOResultSet getSummarySimilarityAnnotations(
+            String taxonId, boolean onlyTrusted) throws DAOException, IllegalArgumentException {
+        log.entry(taxonId, onlyTrusted);
         
         if (StringUtils.isEmptyOrWhitespaceOnly(taxonId)) {
             throw log.throwing(new IllegalArgumentException("Taxon ID must be provided"));
@@ -86,7 +93,10 @@ public class MySQLSummarySimilarityAnnotationDAO
                 + "t2.taxonRightBound >= t1.taxonRightBound "
                 + "INNER JOIN summarySimilarityAnnotation AS t3 "
                 + "ON t3.taxonId = t2.taxonId "
-                + "WHERE t1.taxonId = ?";
+                + "INNER JOIN CIOStatement AS t4 "
+                + "ON t3.CIOId = t4.CIOId "
+                + "WHERE t1.taxonId = ? "
+                + (onlyTrusted ? " AND t4.trusted <> 0 " : "");
         
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.
@@ -589,3 +599,4 @@ public class MySQLSummarySimilarityAnnotationDAO
         }
     }
 }
+

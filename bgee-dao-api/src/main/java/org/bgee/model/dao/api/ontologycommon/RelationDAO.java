@@ -182,6 +182,12 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
             Collection<String> sourceDevStageIds, Collection<String> targetDevStageIds, Boolean sourceOrTarget, 
             Collection<RelationStatus> relationStatus, 
             Collection<RelationDAO.Attribute> attributes) throws DAOException;
+    
+    //TODO: javadoc
+    //XXX: WIP check signature is what we need
+    RelationTOResultSet getTaxonRelations(Collection<String> speciesIds,
+            boolean onlyCommonAncestor, Collection<RelationDAO.Attribute> attributes);
+    
 
     /**
      * Inserts the provided anatomical entity relations into the Bgee database, represented as a 
@@ -589,4 +595,5 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
             return true;
         }
     }
+
 }

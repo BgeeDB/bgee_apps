@@ -524,8 +524,6 @@ public class Ontology<T extends NamedEntity & OntologyElement<T>> {
         
         final Set<T> curElements = isSpeciesSpecific ? 
                 this.getElements(speciesIds): Collections.unmodifiableSet(elements); 
-        System.err.println(isSpeciesSpecific);
-        System.err.println("    "+ curElements);
         if (!curElements.contains(element)) {
             throw log.throwing(new IllegalArgumentException("Unrecognized element: " + element));
         }

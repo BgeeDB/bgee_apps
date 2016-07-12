@@ -49,9 +49,10 @@ import org.bgee.model.species.TaxonomyFilter;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, June 2016
+ * @version Bgee 13, July 2016
  * @since   Bgee 13, Oct. 2015
  */
+/// XXX: Check in bgee14 if speciesId is retrieved in CallTO
 public class CallService extends Service {
     private final static Logger log = LogManager.getLogger(CallService.class.getName());
     
@@ -720,9 +721,7 @@ public class CallService extends Service {
                     "Some ExpressionTOs has already been propagated: " + alreadyPropagatedTOs ));
         }
         
-        return log.exit(
-                this.propagateTOs(noExprTOs, conditionFilter, conditionUtils,
-                        NoExpressionCallTO.class, speciesIds));
+        return log.exit(this.propagateTOs(noExprTOs, conditionFilter, conditionUtils, NoExpressionCallTO.class));
     }
     
     /**
@@ -744,9 +743,8 @@ public class CallService extends Service {
     // TODO: set to private because argument are TOs? 
     // NOTE: No update ExpressionCalls, to provide better unicity of the method, and allow better unit testing
     public Set<ExpressionCall> propagateExpressionTOs(Collection<ExpressionCallTO> exprTOs,
-            Collection<ConditionFilter> conditionFilter, ConditionUtils conditionUtils,
-            Collection<String> speciesIds) {
-        log.entry(exprTOs, conditionFilter, conditionUtils, speciesIds);
+            Collection<ConditionFilter> conditionFilter, ConditionUtils conditionUtils) {
+        log.entry(exprTOs, conditionFilter, conditionUtils);
         
         // Check that TOs are not empty and not already propagated
         if (exprTOs == null || exprTOs.isEmpty()) {
@@ -763,24 +761,13 @@ public class CallService extends Service {
         }
         
         return log.exit(
-                this.propagateTOs(exprTOs, conditionFilter, conditionUtils,
-                        ExpressionCallTO.class, speciesIds));
+                this.propagateTOs(exprTOs, conditionFilter, conditionUtils, ExpressionCallTO.class));
     }
     
     private <T extends CallTO> Set<ExpressionCall> propagateTOs(Collection<T> callTOs,
             Collection<ConditionFilter> conditionFilter, ConditionUtils conditionUtils, 
-            Class<T> type, Collection<String> speciesIds)
-                    throws IllegalArgumentException {
-        log.entry(callTOs, conditionFilter, conditionUtils, speciesIds);
-        
-        final Collection<String> curSpecies = speciesIds != null && !speciesIds.isEmpty() ? 
-                Collections.unmodifiableCollection(speciesIds) : null; 
-
-        // Check conditionUtils contains all species of speciesIds
-        if (curSpecies != null && !conditionUtils.getSpeciesIds().containsAll(curSpecies)) {
-            throw log.throwing(new IllegalArgumentException(
-                    "Species IDs are not registered to provided ConditionUtils"));
-        }
+            Class<T> type) throws IllegalArgumentException {
+        log.entry(callTOs, conditionFilter, conditionUtils);
         
         // Check conditionUtils contains all conditions of callTOs
         Set<Condition> conditions = callTOs.stream()
@@ -835,12 +822,10 @@ public class CallService extends Service {
             // Retrieve conditions of the species keeping conditions in allowed organs and stages only
             Set<Condition> propagatedConditions = null;
             if (type.equals(ExpressionCallTO.class)) {
-                propagatedConditions = 
-                        conditionUtils.getAncestorConditions(call.getCondition(), true, curSpecies);
+                propagatedConditions = conditionUtils.getAncestorConditions(call.getCondition(), true);
                 
             } else if (type.equals(NoExpressionCallTO.class)) {
-                propagatedConditions = 
-                        conditionUtils.getDescendantConditions(call.getCondition(), true, curSpecies);
+                propagatedConditions = conditionUtils.getDescendantConditions(call.getCondition(), true);
             }
             
             assert propagatedConditions != null;

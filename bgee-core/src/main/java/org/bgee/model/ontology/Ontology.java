@@ -1,5 +1,6 @@
 package org.bgee.model.ontology;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -7,7 +8,6 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,20 +19,324 @@ import org.bgee.model.anatdev.TaxonConstraint;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 
 /**
- * Class allowing to describe an ontology, or the sub-graph of an ontology.
- * <p>
- * The ontology can be multi-species but it can characterize only one species.
+ * Abstract class allowing to describe an ontology, or the sub-graph of an ontology.
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 13, June 2016
+ * @version Bgee 13, July 2016
  * @since   Bgee 13, Dec. 2015
  * @param <T>   The type of element in this ontology or sub-graph.
  */
-public class Ontology<T extends NamedEntity & OntologyElement<T>> {
+public abstract class Ontology<T extends NamedEntity & OntologyElement<T>> {
 
     private static final Logger log = LogManager.getLogger(Ontology.class.getName());
     
+    /**
+     * Class allowing to describe a single-species ontology, or the sub-graph of an ontology.
+     * 
+     * @author  Valentine Rech de Laval
+     * @version Bgee 13, July 2016
+     * @since   Bgee 13, July 2016
+     * @param <T>   The type of element in this ontology or sub-graph.
+     */
+    public static class SingleSpeciesOntology<T extends NamedEntity & OntologyElement<T>>
+        extends Ontology<T> {
+        
+        /**
+         * @see #getSpeciesId()
+         */
+        private final String speciesId;
+
+        /** 
+         * Constructor providing the species IDs, the elements, the relations, the relations types, 
+         * the service factory, and the type of elements of this ontology.
+         * 
+         * @param speciesId         A {@code String} that is the ID of the species describing this 
+         *                          single-species ontology.
+         * @param elements          A {@code Collection} of {@code T}s that are
+         *                          the elements of this ontology.
+         * @param relations         A {@code Collection} of {@code RelationTO}s that are
+         *                          the relations between elements of the ontology.
+         * @param relationTypes     A {@code Collection} of {@code RelationType}s that were
+         *                          considered to build this ontology or sub-graph.
+         * @param serviceFactory    A {@code ServiceFactory} to acquire {@code Service}s from.
+         * @param type              A {@code Class<T>} that is the type of {@code elements} 
+         *                          to be store by this {@code Ontology}.
+         */
+        protected SingleSpeciesOntology(String speciesId, Collection<T> elements,
+                Collection<RelationTO> relations, Collection<Ontology.RelationType> relationTypes,
+                ServiceFactory serviceFactory, Class<T> type) {
+            super(elements, relations, relationTypes, serviceFactory, type);
+            this.speciesId = speciesId;
+        }
+        
+        /**
+         * @return  The {@code String} that is the ID of the species that was considered
+         *          to build of this ontology or sub-graph.
+         */
+        public String getSpeciesId() {
+            return speciesId;
+        }
+    }
+
+    /**
+     * Class allowing to describe a multi-species ontology, or the sub-graph of an ontology.
+     * 
+     * @author  Valentine Rech de Laval
+     * @version Bgee 13, July 2016
+     * @since   Bgee 13, July 2016
+     * @param <T>   The type of element in this ontology or sub-graph.
+     */
+    public static class MultiSpeciesOntology<T extends NamedEntity & OntologyElement<T>> 
+        extends Ontology<T> {
+
+        private static final Logger log = LogManager.getLogger(MultiSpeciesOntology.class.getName());
+
+        /**
+         * @see #getRealtionTaxonConstraints()
+         */
+        private final Set<TaxonConstraint> relationTaxonConstraints;
+
+        /**
+         * @see #getTaxonConstraints()
+         */
+        private final Set<TaxonConstraint> taxonConstraints;
+
+        /**
+         * @see #getSpeciesIds()
+         */
+        private final Set<String> speciesIds;
+
+        /** 
+         * Constructor providing the species IDs, the elements, the relations, the relations types, 
+         * the service factory, and the type of elements of this ontology.
+         * 
+         * @param speciesIds        A {@code Collection} of {@code String}s that are the IDs of 
+         *                          the species describing this multi-species ontology.
+         * @param elements          A {@code Collection} of {@code T}s that are
+         *                          the elements of this ontology.
+         * @param relations         A {@code Collection} of {@code RelationTO}s that are
+         *                          the relations between elements of the ontology.
+         * @param relationTypes     A {@code Collection} of {@code RelationType}s that were
+         *                          considered to build this ontology or sub-graph.
+         * @param serviceFactory    A {@code ServiceFactory} to acquire {@code Service}s from.
+         * @param type              A {@code Class<T>} that is the type of {@code elements} 
+         *                          to be store by this {@code Ontology}.
+         */
+        protected MultiSpeciesOntology(Collection<String> speciesIds, Collection<T> elements, 
+                Collection<RelationTO> relations, Collection<Ontology.RelationType> relationTypes,
+                ServiceFactory serviceFactory, Class<T> type) {
+            super(elements, relations, relationTypes, serviceFactory, type);
+            this.speciesIds =  Collections.unmodifiableSet(
+                    speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds));
+
+            Set<TaxonConstraint> relationTaxonConstraints = new HashSet<>();
+            Set<TaxonConstraint> taxonConstraints = new HashSet<>();
+            if (type.equals(AnatEntity.class)) {
+                relationTaxonConstraints = serviceFactory.getTaxonConstraintService()
+                        .loadAnatEntityRelationTaxonConstraintBySpeciesIds(speciesIds)
+                        .collect(Collectors.toSet());
+                taxonConstraints = serviceFactory.getTaxonConstraintService()
+                        .loadAnatEntityTaxonConstraintBySpeciesIds(speciesIds)
+                        .collect(Collectors.toSet());
+            } else if (type.equals(DevStage.class)) {
+                taxonConstraints = serviceFactory.getTaxonConstraintService()
+                        .loadDevStageTaxonConstraintBySpeciesIds(speciesIds)
+                        .collect(Collectors.toSet());
+            } else {
+                throw log.throwing(new IllegalArgumentException("Unsupported OntologyElement"));
+            }
+            this.relationTaxonConstraints = Collections.unmodifiableSet(
+                    relationTaxonConstraints == null? new HashSet<>(): new HashSet<>(relationTaxonConstraints));
+            this.taxonConstraints = Collections.unmodifiableSet(
+                    taxonConstraints == null? new HashSet<>(): new HashSet<>(taxonConstraints));
+        }
+        
+        /**
+         * @return  The {@code Set} of {@code String}s that are the IDs of the species
+         *          that were considered to build of this ontology or sub-graph.
+         */
+        public Set<String> getSpeciesIds() {
+            return speciesIds;
+        }
+
+        /**
+         * Get elements that were considered to build this ontology or sub-graph,
+         * filtered by {@code speciesIds}.
+         * 
+         * @param speciesIds    A {@code Collection} of {@code String}s that is the IDs of species
+         *                      allowing to filter the elements to retrieve.
+         * @return              The {@code Set} of {@code T}s that are the elements that were considered 
+         *                      to build this ontology or sub-graph, filtered by {@code speciesId}.
+         */
+        public  Set<T> getElements(Collection<String> speciesIds) {
+            log.entry(speciesIds);
+            
+            // Get stage or anat. entity IDs according to taxon constraints
+            Set<String> entityIds = taxonConstraints.stream()
+                    .filter(tc -> tc.getSpeciesId() == null || speciesIds.contains(tc.getSpeciesId()))
+                    .map(tc -> tc.getEntityId())
+                    .collect(Collectors.toSet());
+                    
+            // Filter elements according to taxon constraints
+            return log.exit(this.getElements().stream()
+                    .filter(e -> entityIds.contains(e.getId()))
+                    .collect(Collectors.toSet()));
+        }
+        
+        /**
+         * Get relations that were considered to build this ontology or sub-graph,
+         * filtered by {@code speciesIds}.
+         * 
+         * @param speciesIds    A {@code Collection} of {@code String}s that is the IDs of species
+         *                      allowing to filter the relations to retrieve.
+         * @return              The {@code Set} of {@code RelationTO}s that are the relations that were
+         *                      considered to build this ontology or sub-graph, filtered by {@code speciesId}.
+         */
+        public  Set<RelationTO> getRelations(Collection<String> speciesIds) {
+            log.entry(speciesIds);
+            
+            // Get relation IDs according to taxon constraints
+            Set<String> relationsIds = relationTaxonConstraints.stream()
+                    .filter(tc -> tc.getSpeciesId() == null || speciesIds.contains(tc.getSpeciesId()))
+                    .map(tc -> tc.getEntityId())
+                    .collect(Collectors.toSet());
+                    
+            // Filter relations according to taxon constraints
+            return log.exit(this.getRelations().stream()
+                    .filter(r -> relationsIds.contains(r.getId()))
+                    .collect(Collectors.toSet()));
+        }
+        
+        /**
+         * Get ancestors of the given {@code element} in this ontology and in {@code speciesIds},
+         * according to any {@code RelationType}s that were considered to build this {@code Ontology}.
+         * <p>
+         * If {@code directRelOnly} is {@code true}, only direct relations incoming from or outgoing to 
+         * {@code element} are considered, in order to only retrieve direct parents of {@code element}.
+         * 
+         * @param element       A {@code T} that is the element for which ancestors are retrieved.
+         * @param directRelOnly A {@code boolean} defining whether only direct parents
+         *                      of {@code element} should be returned.
+         * @param speciesIds    A {@code Collection} of {@code String}s that is the IDs of species
+         *                      allowing to filter the elements to retrieve.
+         * @return              A {@code Set} of {@code T}s that are the ancestors
+         *                      of the given {@code element}. Can be empty if {@code element} 
+         *                      has no ancestors according to the requested parameters.
+         * @throws IllegalArgumentException If {@code element} is {@code null} or is not found 
+         *                                  in this {@code Ontology}.
+         */
+        public Set<T> getAncestors(T element, boolean directRelOnly, Collection<String> speciesIds) {
+            log.entry(element, directRelOnly, speciesIds);
+            return log.exit(this.getAncestors(element, null, directRelOnly, speciesIds));
+        }
+
+        /**
+         * Get ancestors of {@code element} in this ontology based on relations of types 
+         * {@code relationTypes}, filtered by {@code speciesIds}.  
+         * <p>
+         * If {@code directRelOnly} is {@code true}, only direct relations incoming from or outgoing to 
+         * {@code element} are considered, in order to only retrieve direct parents of {@code element}.
+         * 
+         * @param element       A {@code T} that is the element for which ancestors are retrieved.
+         * @param relationTypes A {@code Set} of {@code RelationType}s that are the relation
+         *                      types to consider.
+         * @param directRelOnly A {@code boolean} defining whether only direct parents
+         *                      of {@code element} should be returned.
+         * @param speciesIds    A {@code Collection} of {@code String}s that is the IDs of species
+         *                      allowing to filter the elements to retrieve.
+         * @return              A {@code Set} of {@code T}s that are the ancestors
+         *                      of {@code element} in this ontology. Can be empty if {@code element} 
+         *                      has no ancestors according to the requested parameters.
+         * @throws IllegalArgumentException If {@code element} is {@code null} or is not found 
+         *                                  in this {@code Ontology}.
+         */
+        public Set<T> getAncestors(T element, Collection<RelationType> relationTypes, 
+                boolean directRelOnly, Collection<String> speciesIds) {
+            log.entry(element, relationTypes, directRelOnly, speciesIds);
+            return log.exit(this.getRelatives(element, true, relationTypes, directRelOnly, 
+                    speciesIds, relationTaxonConstraints));
+            
+            
+        }
+        
+        /**
+         * Get descendants of the given {@code element} in this ontology in {@code speciesIds}, 
+         * according to any {@code RelationType}s that were considered to build this {@code Ontology}.
+         * <p>
+         * If {@code directRelOnly} is {@code true}, only direct relations incoming from or outgoing to 
+         * {@code element} are considered, in order to only retrieve direct children of {@code element}.
+         * 
+         * @param element       A {@code T} that is the element for which descendants are retrieved.
+         * @param directRelOnly A {@code boolean} defining whether only direct children
+         *                      of {@code element} should be returned.
+         * @param speciesIds    A {@code Collection} of {@code String}s that is the IDs of species
+         *                      allowing to filter the elements to retrieve.
+         * @return              A {@code Set} of {@code T}s that are the descendants
+         *                      of the given {@code element} in this ontology. Can be empty if {@code element} 
+         *                      has no descendants according to the requested parameters.
+         * @throws IllegalArgumentException If {@code element} is {@code null} or is not found 
+         *                                  in this {@code Ontology}.
+         */
+        public Set<T> getDescendants(T element, boolean directRelOnly, Collection<String> speciesIds) {
+            log.entry(element, directRelOnly, speciesIds);
+            return log.exit(this.getDescendants(element, null, directRelOnly,speciesIds));
+        }
+        
+        /**
+         * Get descendants of {@code element} in this ontology based on relations of types
+         * {@code relationTypes}, filtered by {@code speciesIds}.
+         * <p>
+         * If {@code directRelOnly} is {@code true}, only direct relations incoming from or outgoing to 
+         * {@code element} are considered, in order to only retrieve direct children of {@code element}.
+         * 
+         * @param element       A {@code T} that is the element for which descendants are retrieved.
+         * @param relationTypes A {@code Set} of {@code RelationType}s that are the relation
+         *                      types allowing to filter the relations to retrieve.
+         * @param directRelOnly A {@code boolean} defining whether only direct children
+         *                      of {@code element} should be returned.
+         * @param speciesIds    A {@code Collection} of {@code String}s that are the IDs of species
+         *                      allowing to filter the elements to retrieve.
+         * @return              A {@code Collection} of {@code T}s that are the descendants
+         *                      of the given {@code element}. Can be empty if {@code element} 
+         *                      has no descendants according to the requested parameters.
+         * @throws IllegalArgumentException If {@code element} is {@code null} or is not found 
+         *                                  in this {@code Ontology}.
+         */
+        public Set<T> getDescendants(T element, Collection<RelationType> relationTypes, 
+                boolean directRelOnly, Collection<String> speciesIds) {
+            log.entry(element, relationTypes, directRelOnly, speciesIds);
+            return log.exit(this.getRelatives(element, false, relationTypes, directRelOnly, 
+                    speciesIds, relationTaxonConstraints));
+        }
+
+        /** 
+         * Get the {@code SingleSpeciesOntology} of the provided {@code speciesId} 
+         * from this {@code MultiSpeciesOntology}.
+         * 
+         * @param speciesId A {@code String} that is the ID of species of 
+         *                  which the ontology should be retrieved.
+         * @return          The {@code SingleSpeciesOntology} of the provided {@code speciesId}.
+         * @throws IllegalArgumentException If {@code speciesId} is {@code null} or if 
+         *                                  the {@code speciesId} is not in this {@code Ontology}.
+         */
+        public SingleSpeciesOntology<T> getAsSingleSpeciesOntology(String speciesId) {
+            log.entry(speciesId);
+            if (speciesId == null) {
+                throw log.throwing(new IllegalArgumentException("A species ID should be provided"));
+            }
+
+            if (!this.getSpeciesIds().contains(speciesId)) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Species ID should be in this multi-species ontology"));
+            }
+           
+            return log.exit(new SingleSpeciesOntology<>(speciesId, this.getElements(Arrays.asList(speciesId)),
+                    this.getRelations(Arrays.asList(speciesId)), this.getRelationTypes(),
+                    this.getServiceFactory(), this.getType()));
+        }
+    }
+
     /**
      * List the relation types considered in Bgee. 
      * Bgee makes no distinction between is_a and part_of relations, so they are merged 
@@ -72,7 +376,7 @@ public class Ontology<T extends NamedEntity & OntologyElement<T>> {
     private final ServiceFactory serviceFactory;
 
     /**
-     * The {@code Class<T>} that is the type of {@code elements} to be store by this {@code Ontology}.
+     * @see #getType()
      */
     private final Class<T> type;
 
@@ -98,8 +402,7 @@ public class Ontology<T extends NamedEntity & OntologyElement<T>> {
     //to retrieve direct parents or children of terms. See method 'getRelatives' 
     //already capable of considering only direct relations.
     protected Ontology(Collection<T> elements, Collection<RelationTO> relations,
-            Collection<RelationType> relationTypes, ServiceFactory serviceFactory,
-            Class<T> type) {
+            Collection<RelationType> relationTypes, ServiceFactory serviceFactory, Class<T> type) {
         log.entry(elements, relations, relationTypes, serviceFactory, type);
         if (elements == null || elements.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Some elements must be considered."));
@@ -135,48 +438,26 @@ public class Ontology<T extends NamedEntity & OntologyElement<T>> {
         log.exit();
     }
     
+    //**********************************************
+    //   GETTERS
+    //**********************************************
+
     /**
-     * Get elements that were considered to build this ontology or sub-graph.
-     * 
      * @return  The {@code Set} of {@code T}s that are the elements that were considered to build 
      *          this ontology or sub-graph.
      */
     public Set<T> getElements() {
         return elements;
     }
-    
-    /**
-     * Get elements that were considered to build this ontology or sub-graph,
-     * filtered by {@code speciesIds}.
-     * 
-     * @param speciesIds    A {@code Collection} of {@code String}s that is the IDs of species
-     *                      allowing to filter the elements to retrieve.
-     * @return              The {@code Set} of {@code T}s that are the elements that were considered 
-     *                      to build this ontology or sub-graph, filtered by {@code speciesId}.
-     */
-    public Set<T> getElements(Collection<String> speciesIds) {
-        log.entry(speciesIds);
-        
-        // Get stage or anat. entity taxon constraints
-        Stream<TaxonConstraint> taxonConstraints;
-        if (AnatEntity.class.isAssignableFrom(type)) {
-            taxonConstraints = serviceFactory.getTaxonConstraintService()
-                    .loadAnatEntityTaxonConstraintBySpeciesIds(speciesIds);
-        } else if (DevStage.class.isAssignableFrom(type)) {
-            taxonConstraints = serviceFactory.getTaxonConstraintService()
-                    .loadDevStageTaxonConstraintBySpeciesIds(speciesIds);
-        } else {
-            throw log.throwing(new IllegalArgumentException("Unsupported OntologyElement"));
-        }
 
-        Set<String> entityIds = taxonConstraints.map(ds -> ds.getEntityId()).collect(Collectors.toSet());
-                
-        // Filter elements according to taxon constraints
-        return log.exit(this.getElements().stream()
-                .filter(e -> entityIds.contains(e.getId()))
-                .collect(Collectors.toSet()));
+    /**
+     * @return  The {@code Set} of {@code RelationTO}s that are the relations that were considered
+     *          to build this ontology or sub-graph.
+     */
+    protected Set<RelationTO> getRelations() {
+        return relations;
     }
-    
+
     /**
      * @return  The {@code Set} of {@code RelationType}s that were considered to build 
      *          this ontology or sub-graph.
@@ -184,6 +465,25 @@ public class Ontology<T extends NamedEntity & OntologyElement<T>> {
     public Set<RelationType> getRelationTypes() {
         return relationTypes;
     }
+    
+    /**
+     * @return  The {@code ServiceFactory} to acquire {@code Service}s from.
+     */
+    protected ServiceFactory getServiceFactory() {
+        return serviceFactory;
+    }
+
+    /**
+     * @return  The {@code Class<T>} that is the type of {@code elements} stored by this {@code Ontology}.
+     */
+    protected Class<T> getType() {
+        return type;
+    }
+
+
+    //**********************************************
+    //   INSTANCE METHODS
+    //**********************************************
 
     /**
      * Get the element corresponding to the given {@code id}.
@@ -255,29 +555,6 @@ public class Ontology<T extends NamedEntity & OntologyElement<T>> {
     }
     
     /**
-     * Get ancestors of the given {@code element} in this ontology and in {@code speciesIds},
-     * according to any {@code RelationType}s that were considered to build this {@code Ontology}.
-     * <p>
-     * If {@code directRelOnly} is {@code true}, only direct relations incoming from or outgoing to 
-     * {@code element} are considered, in order to only retrieve direct parents of {@code element}.
-     * 
-     * @param element       A {@code T} that is the element for which ancestors are retrieved.
-     * @param directRelOnly A {@code boolean} defining whether only direct parents
-     *                      of {@code element} should be returned.
-     * @param speciesIds    A {@code Collection} of {@code String}s that is the IDs of species
-     *                      allowing to filter the elements to retrieve.
-     * @return              A {@code Set} of {@code T}s that are the ancestors
-     *                      of the given {@code element}. Can be empty if {@code element} 
-     *                      has no ancestors according to the requested parameters.
-     * @throws IllegalArgumentException If {@code element} is {@code null} or is not found 
-     *                                  in this {@code Ontology}.
-     */
-    public Set<T> getAncestors(T element, boolean directRelOnly, Collection<String> speciesIds) {
-        log.entry(element, directRelOnly, speciesIds);
-        return log.exit(this.getAncestors(element, null, directRelOnly, speciesIds));
-    }
-
-    /**
      * Get ancestors of {@code element} in this ontology based on relations of types {@code relationTypes}.
      * <p>
      * If {@code directRelOnly} is {@code true}, only direct relations incoming from or outgoing to 
@@ -296,34 +573,7 @@ public class Ontology<T extends NamedEntity & OntologyElement<T>> {
      */
     public Set<T> getAncestors(T element, Collection<RelationType> relationTypes, boolean directRelOnly) {
         log.entry(element, relationTypes, directRelOnly);
-        return log.exit(this.getRelatives(element, true, relationTypes, directRelOnly));
-    }
-
-    /**
-     * Get ancestors of {@code element} in this ontology based on relations of types 
-     * {@code relationTypes}, filtered by {@code speciesIds}.  
-     * <p>
-     * If {@code directRelOnly} is {@code true}, only direct relations incoming from or outgoing to 
-     * {@code element} are considered, in order to only retrieve direct parents of {@code element}.
-     * 
-     * @param element       A {@code T} that is the element for which ancestors are retrieved.
-     * @param relationTypes A {@code Set} of {@code RelationType}s that are the relation
-     *                      types to consider.
-     * @param directRelOnly A {@code boolean} defining whether only direct parents
-     *                      of {@code element} should be returned.
-     * @param speciesIds    A {@code Collection} of {@code String}s that is the IDs of species
-     *                      allowing to filter the elements to retrieve.
-     * @return              A {@code Set} of {@code T}s that are the ancestors
-     *                      of {@code element} in this ontology. Can be empty if {@code element} 
-     *                      has no ancestors according to the requested parameters.
-     * @throws IllegalArgumentException If {@code element} is {@code null} or is not found 
-     *                                  in this {@code Ontology}.
-     */
-    public Set<T> getAncestors(T element, Collection<RelationType> relationTypes, 
-            boolean directRelOnly, Collection<String> speciesIds) {
-        log.entry(element, relationTypes, directRelOnly, speciesIds);
-        
-        return log.exit(this.getRelatives(element, true, relationTypes, directRelOnly, speciesIds));
+        return log.exit(this.getRelatives(element, true, relationTypes, directRelOnly, null, null));
     }
 
 
@@ -381,28 +631,6 @@ public class Ontology<T extends NamedEntity & OntologyElement<T>> {
         return log.exit(this.getDescendants(element, null, directRelOnly));
     }
 
-    /**
-     * Get descendants of the given {@code element} in this ontology in {@code speciesIds}, 
-     * according to any {@code RelationType}s that were considered to build this {@code Ontology}.
-     * <p>
-     * If {@code directRelOnly} is {@code true}, only direct relations incoming from or outgoing to 
-     * {@code element} are considered, in order to only retrieve direct children of {@code element}.
-     * 
-     * @param element       A {@code T} that is the element for which descendants are retrieved.
-     * @param directRelOnly A {@code boolean} defining whether only direct children
-     *                      of {@code element} should be returned.
-     * @param speciesIds    A {@code Collection} of {@code String}s that is the IDs of species
-     *                      allowing to filter the elements to retrieve.
-     * @return              A {@code Set} of {@code T}s that are the descendants
-     *                      of the given {@code element} in this ontology. Can be empty if {@code element} 
-     *                      has no descendants according to the requested parameters.
-     * @throws IllegalArgumentException If {@code element} is {@code null} or is not found 
-     *                                  in this {@code Ontology}.
-     */
-    public Set<T> getDescendants(T element, boolean directRelOnly, Collection<String> speciesIds) {
-        log.entry(element, directRelOnly, speciesIds);
-        return log.exit(this.getDescendants(element, null, directRelOnly, speciesIds));
-    }
 
     /**
      * Get descendants of {@code element} in this ontology based on relations of types {@code relationTypes}.
@@ -423,32 +651,7 @@ public class Ontology<T extends NamedEntity & OntologyElement<T>> {
      */
     public Set<T> getDescendants(T element, Collection<RelationType> relationTypes, boolean directRelOnly) {
         log.entry(element, relationTypes, directRelOnly);
-        return log.exit(this.getRelatives(element, false, relationTypes, directRelOnly));
-    }
-    /**
-     * Get descendants of {@code element} in this ontology based on relations of types
-     * {@code relationTypes}, filtered by {@code speciesIds}.
-     * <p>
-     * If {@code directRelOnly} is {@code true}, only direct relations incoming from or outgoing to 
-     * {@code element} are considered, in order to only retrieve direct children of {@code element}.
-     * 
-     * @param element       A {@code T} that is the element for which descendants are retrieved.
-     * @param relationTypes A {@code Set} of {@code RelationType}s that are the relation
-     *                      types allowing to filter the relations to retrieve.
-     * @param directRelOnly A {@code boolean} defining whether only direct children
-     *                      of {@code element} should be returned.
-     * @param speciesIds    A {@code Collection} of {@code String}s that is the IDs of species
-     *                      allowing to filter the elements to retrieve.
-     * @return              A {@code Collection} of {@code T}s that are the descendants
-     *                      of the given {@code element}. Can be empty if {@code element} 
-     *                      has no descendants according to the requested parameters.
-     * @throws IllegalArgumentException If {@code element} is {@code null} or is not found 
-     *                                  in this {@code Ontology}.
-     */
-    public Set<T> getDescendants(T element, Collection<RelationType> relationTypes, 
-            boolean directRelOnly, Collection<String> speciesIds) {
-        log.entry(element, relationTypes, directRelOnly, speciesIds);
-        return log.exit(this.getRelatives(element, false, relationTypes, directRelOnly, speciesIds));
+        return log.exit(this.getRelatives(element, false, relationTypes, directRelOnly, null, null));
     }
 
     /**
@@ -470,6 +673,8 @@ public class Ontology<T extends NamedEntity & OntologyElement<T>> {
      *                              relation types allowing to filter the relations to consider.
      * @param directRelOnly         A {@code boolean} defining whether only direct parents 
      *                              or children of {@code element} should be returned.
+     * @param speciesIds            A {@code Collection} of {@code String}s that is the IDs of species
+     *                              allowing to filter the elements to retrieve.
      * @return                      A {@code Set} of {@code T}s that are either the sources 
      *                              or the ancestors or descendants of {@code element}, 
      *                              depending on {@code isAncestor}.
@@ -477,53 +682,16 @@ public class Ontology<T extends NamedEntity & OntologyElement<T>> {
      *                                  in this {@code Ontology}.
      */
     // XXX could be used in BgeeDBUtils.getIsAPartOfRelativesFromDb()
-    private Set<T> getRelatives(T element, boolean isAncestor, Collection<RelationType> relationTypes, 
-            boolean directRelOnly) {
-        log.entry(element, isAncestor, relationTypes, directRelOnly);
-        return log.exit(this.getRelatives(element, isAncestor, relationTypes, directRelOnly, null));
-    }
-    
-    /**
-     * Get relatives from the {@code Ontology} filtered by {@code speciesIds}.
-     * <p>
-     * The returned {@code Set} contains ancestor or descendants of the provided {@code element}, 
-     * of provided {@code speciesIds}, and retrieved from {@code relations} of this ontology.
-     * If {@code isAncestors} is {@code true}, the returned {@code Set} contains ancestors the
-     * {@code element}. If it is {@code false}, the returned {@code Set} contains descendants the
-     * {@code element}. 
-     * <p>
-     * If {@code directRelOnly} is {@code true}, only direct relations incoming from or 
-     * outgoing to {@code element} are considered, in order to only retrieve direct parents 
-     * or direct children of {@code element}.
-     * 
-     * @param element           A {@code T} that is the element for which relatives are retrieved.
-     * @param isAncestor        A {@code boolean} defining whether the returned {@code Set}
-     *                          are ancestors or descendants. If {@code true},
-     *                          it will retrieved ancestors.
-     * @param relationTypes     A {@code Collection} of {@code RelationType}s that are the
-     *                          relation types allowing to filter the relations to consider.
-     * @param directRelOnly     A {@code boolean} defining whether only direct parents 
-     *                          or children of {@code element} should be returned.
-     * @param speciesIds        A {@code Collection} of {@code String}s that is the IDs of species
-     *                          allowing to filter the elements to retrieve.
-     * @return                  A {@code Set} of {@code T}s that are either the sources 
-     *                          or the ancestors or descendants of {@code element}, 
-     *                          depending on {@code isAncestor}.
-     * @throws IllegalArgumentException If {@code element} is {@code null} or is not found 
-     *                                  in this {@code Ontology}.
-     */
-    private Set<T> getRelatives(T element, boolean isAncestor, Collection<RelationType> relationTypes,
-            boolean directRelOnly, Collection<String> speciesIds) {
+    protected Set<T> getRelatives(T element, boolean isAncestor, Collection<RelationType> relationTypes,
+            boolean directRelOnly, Collection<String> speciesIds, 
+            Collection<TaxonConstraint> anatEntityRelationTaxonConstraints) {
         log.entry(element, isAncestor, relationTypes, directRelOnly, speciesIds);
-        
-        if (element == null) {
-            throw log.throwing(new IllegalArgumentException("Element cannot be null."));
-        }
         
         boolean isSpeciesSpecific = speciesIds != null && !speciesIds.isEmpty();
         
         final Set<T> curElements = isSpeciesSpecific ? 
-                this.getElements(speciesIds): Collections.unmodifiableSet(elements); 
+                ((MultiSpeciesOntology<T>)this).getElements(speciesIds) : Collections.unmodifiableSet(elements); 
+
         if (!curElements.contains(element)) {
             throw log.throwing(new IllegalArgumentException("Unrecognized element: " + element));
         }
@@ -535,15 +703,15 @@ public class Ontology<T extends NamedEntity & OntologyElement<T>> {
                 .collect(Collectors.toCollection(() -> EnumSet.noneOf(RelationTO.RelationType.class)));
 
         final Set<String> allowedRelationIds;
-        if (isSpeciesSpecific && AnatEntity.class.isAssignableFrom(type)) {
-            Stream<TaxonConstraint> taxonConstraints = serviceFactory.getTaxonConstraintService()
-                        .loadAnatEntityRelationTaxonConstraintBySpeciesIds(speciesIds);
-            allowedRelationIds = taxonConstraints.map(ds -> ds.getEntityId()).collect(Collectors.toSet());
+        if (isSpeciesSpecific && type.equals(AnatEntity.class)) {
+            allowedRelationIds = anatEntityRelationTaxonConstraints.stream()
+                    .filter(tc -> tc.getSpeciesId() == null || speciesIds.contains(tc.getSpeciesId()))
+                    .map(ds -> ds.getEntityId()).collect(Collectors.toSet());
         } else {
             allowedRelationIds = null;
         }
-   
-        final Set<RelationTO> filteredRelations = this.relations.stream()
+
+        final Set<RelationTO> filteredRelations = relations.stream()
                 .filter(r -> usedRelationTypes.contains(r.getRelationType()) && 
                              (!directRelOnly || 
                                   RelationTO.RelationStatus.DIRECT.equals(r.getRelationStatus())))
@@ -566,9 +734,9 @@ public class Ontology<T extends NamedEntity & OntologyElement<T>> {
                     .map(r -> this.getElement(r.getSourceId()))
                     .filter(e -> e != null)
                     .filter(e -> allowedEntityIds.contains(e.getId()))
-                    .collect(Collectors.toSet());
-        }
-        return log.exit(relatives);
+                     .collect(Collectors.toSet());
+         }
+         return log.exit(relatives);
     }
 
     /**

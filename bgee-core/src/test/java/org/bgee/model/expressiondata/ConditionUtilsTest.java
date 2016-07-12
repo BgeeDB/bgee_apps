@@ -1,6 +1,9 @@
 package org.bgee.model.expressiondata;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -19,9 +22,9 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.DevStageService;
-import org.bgee.model.ontology.Ontology;
-import org.bgee.model.ontology.OntologyService;
 import org.bgee.model.ontology.Ontology.RelationType;
+import org.bgee.model.ontology.Ontology.SingleSpeciesOntology;
+import org.bgee.model.ontology.OntologyService;
 import org.junit.Test;
 
 /**
@@ -29,7 +32,7 @@ import org.junit.Test;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, June 2016
+ * @version Bgee 13, July 2016
  * @since   Bgee 13, Dec. 2015
  */
 public class ConditionUtilsTest extends TestAncestor {
@@ -66,18 +69,20 @@ public class ConditionUtilsTest extends TestAncestor {
         String devStageId4 = "stage4";
         DevStage devStage4 = new DevStage(devStageId4);
 
-        Condition cond1 = new Condition(anatEntityId1, devStageId1);
-        Condition cond2 = new Condition(anatEntityId2, devStageId2);
-        Condition cond3 = new Condition(anatEntityId3, devStageId3);
-        Condition cond4 = new Condition(anatEntityId2, devStageId1);
-        Condition cond5 = new Condition(anatEntityId1, devStageId3);
-        Condition cond6 = new Condition(anatEntityId2, devStageId3);
-        Condition cond7 = new Condition(anatEntityId3, devStageId2);
-        Condition cond8 = new Condition(anatEntityId4, devStageId4);
-        Condition cond1_anatOnly = new Condition(anatEntityId1, null);
-        Condition cond2_anatOnly = new Condition(anatEntityId2, null);
-        Condition cond1_stageOnly = new Condition(null, devStageId1);
-        Condition cond3_stageOnly = new Condition(null, devStageId3);
+        String speciesId = "9606";
+        
+        Condition cond1 = new Condition(anatEntityId1, devStageId1, speciesId);
+        Condition cond2 = new Condition(anatEntityId2, devStageId2, speciesId);
+        Condition cond3 = new Condition(anatEntityId3, devStageId3, speciesId);
+        Condition cond4 = new Condition(anatEntityId2, devStageId1, speciesId);
+        Condition cond5 = new Condition(anatEntityId1, devStageId3, speciesId);
+        Condition cond6 = new Condition(anatEntityId2, devStageId3, speciesId);
+        Condition cond7 = new Condition(anatEntityId3, devStageId2, speciesId);
+        Condition cond8 = new Condition(anatEntityId4, devStageId4, speciesId);
+        Condition cond1_anatOnly = new Condition(anatEntityId1, null, speciesId);
+        Condition cond2_anatOnly = new Condition(anatEntityId2, null, speciesId);
+        Condition cond1_stageOnly = new Condition(null, devStageId1, speciesId);
+        Condition cond3_stageOnly = new Condition(null, devStageId3, speciesId);
         this.conditions = Arrays.asList(cond1, cond2, cond3, cond4, cond5, cond6, cond7, cond8, 
                 cond1_anatOnly, cond2_anatOnly, cond1_stageOnly, cond3_stageOnly);
         
@@ -91,17 +96,16 @@ public class ConditionUtilsTest extends TestAncestor {
         
         //suppress warning as we cannot specify generic type for a mock
         @SuppressWarnings("unchecked")
-        Ontology<AnatEntity> anatEntityOnt = mock(Ontology.class);
+        SingleSpeciesOntology<AnatEntity> anatEntityOnt = mock(SingleSpeciesOntology.class);
         @SuppressWarnings("unchecked")
-        Ontology<DevStage> devStageOnt = mock(Ontology.class);
+        SingleSpeciesOntology<DevStage> devStageOnt = mock(SingleSpeciesOntology.class);
         
-        when(ontService.getAnatEntityOntology(new HashSet<>(Arrays.asList("9606")), 
-                new HashSet<>(Arrays.asList(anatEntityId1, anatEntityId2, anatEntityId3, anatEntityId4)), 
+        when(ontService.getAnatEntityOntology("9606", new HashSet<>(Arrays.asList(
+                anatEntityId1, anatEntityId2, anatEntityId3, anatEntityId4)), 
                 EnumSet.of(RelationType.ISA_PARTOF), false, false, mockFact))
         .thenReturn(anatEntityOnt);
-        when(ontService.getDevStageOntology(new HashSet<>(Arrays.asList("9606")), 
-                new HashSet<>(Arrays.asList(devStageId1, devStageId2, devStageId3, devStageId4)), 
-                false, false, mockFact))
+        when(ontService.getDevStageOntology("9606", new HashSet<>(Arrays.asList(
+                devStageId1, devStageId2, devStageId3, devStageId4)), false, false, mockFact))
         .thenReturn(devStageOnt);
         
         when(anatEntityOnt.getElements()).thenReturn(
@@ -126,26 +130,24 @@ public class ConditionUtilsTest extends TestAncestor {
         when(devStageOnt.getAncestors(devStage3)).thenReturn(new HashSet<>(Arrays.asList(devStage1)));
         when(devStageOnt.getAncestors(devStage4)).thenReturn(new HashSet<>(Arrays.asList(devStage1, devStage3)));
 
-        when(anatEntityOnt.getAncestors(anatEntity1, false, null)).thenReturn(new HashSet<>());
-        when(anatEntityOnt.getAncestors(anatEntity2, false, null)).thenReturn(new HashSet<>(Arrays.asList(anatEntity1)));
-        when(anatEntityOnt.getAncestors(anatEntity3, false, null)).thenReturn(new HashSet<>(Arrays.asList(anatEntity1)));
-        when(anatEntityOnt.getAncestors(anatEntity4, false, null)).thenReturn(new HashSet<>(Arrays.asList(anatEntity1, anatEntity3)));
-        when(devStageOnt.getAncestors(devStage1, false, null)).thenReturn(new HashSet<>());
-        when(devStageOnt.getAncestors(devStage2, false, null)).thenReturn(new HashSet<>(Arrays.asList(devStage1)));
-        when(devStageOnt.getAncestors(devStage3, false, null)).thenReturn(new HashSet<>(Arrays.asList(devStage1)));
-        when(devStageOnt.getAncestors(devStage4, false, null)).thenReturn(new HashSet<>(Arrays.asList(devStage1, devStage3)));
+        when(anatEntityOnt.getAncestors(anatEntity1, false)).thenReturn(new HashSet<>());
+        when(anatEntityOnt.getAncestors(anatEntity2, false)).thenReturn(new HashSet<>(Arrays.asList(anatEntity1)));
+        when(anatEntityOnt.getAncestors(anatEntity3, false)).thenReturn(new HashSet<>(Arrays.asList(anatEntity1)));
+        when(anatEntityOnt.getAncestors(anatEntity4, false)).thenReturn(new HashSet<>(Arrays.asList(anatEntity1, anatEntity3)));
+        when(devStageOnt.getAncestors(devStage1, false)).thenReturn(new HashSet<>());
+        when(devStageOnt.getAncestors(devStage2, false)).thenReturn(new HashSet<>(Arrays.asList(devStage1)));
+        when(devStageOnt.getAncestors(devStage3, false)).thenReturn(new HashSet<>(Arrays.asList(devStage1)));
+        when(devStageOnt.getAncestors(devStage4, false)).thenReturn(new HashSet<>(Arrays.asList(devStage1, devStage3)));
         
-        when(anatEntityOnt.getDescendants(anatEntity1, false, null)).thenReturn(
+        when(anatEntityOnt.getDescendants(anatEntity1, false)).thenReturn(
                 new HashSet<>(Arrays.asList(anatEntity2, anatEntity3, anatEntity4)));
-        when(devStageOnt.getDescendants(devStage1, false, null)).thenReturn(
+        when(devStageOnt.getDescendants(devStage1, false)).thenReturn(
                 new HashSet<>(Arrays.asList(devStage2, devStage3, devStage4)));
         
         if (fromService) {
-            this.conditionUtils = new ConditionUtils(Arrays.asList("9606"), this.conditions, 
-                    mockFact);
+            this.conditionUtils = new ConditionUtils(this.conditions, mockFact);
         } else {
-            this.conditionUtils = new ConditionUtils(Arrays.asList("9606"), this.conditions, 
-                    anatEntityOnt, devStageOnt);
+            this.conditionUtils = new ConditionUtils(this.conditions, anatEntityOnt, devStageOnt);
         }
     }
 

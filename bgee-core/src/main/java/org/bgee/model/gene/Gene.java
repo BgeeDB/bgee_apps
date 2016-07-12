@@ -6,10 +6,10 @@ import org.bgee.model.species.Species;
 /**
  * Class allowing to describe genes. 
  * 
- * @author Frederic Bastian
- * @author Valentine Rech de Laval
- * @version Bgee 13, Nov. 2013
- * @since Bgee 01
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13, July 2016
+ * @since   Bgee 01
  */
 public class Gene extends NamedEntity {
 	/**
@@ -109,15 +109,13 @@ public class Gene extends NamedEntity {
 	 * Return the ID of the species this {@code Gene} belongs to. 
 	 * <p>
 	 * If the method {@link #getSpecies()} returned an object not {@code null}, 
-	 * then this method is equivalent to calling {@code getId()} 
-	 * on this {@code Species} object. Otherwise, it returns the value previously set 
-	 * by using {@link #setSpeciesId(String)}.
+	 * then this method is equivalent to calling {@code getId()} on this {@code Species} object.
+	 * Otherwise, it returns the value sets at the instantiation.
 	 * 
-	 * @return 	A {@code String} corresponding to the ID of the species 
+	 * @return 	The {@code String} corresponding to the ID of the species 
 	 * 			this {@code Gene} belongs to. Equivalent to calling {@code getId()} 
 	 * 			on the {@code Species} returned by the {@code getSpecies()} method, 
-	 * 			if not null. Otherwise, returns the value previously set 
-	 * 			by calling {@code setSpeciesId(String)}.
+	 * 			if not {@code null}. Otherwise, returns the value sets at the instantiation.
 	 */
 	public String getSpeciesId() {
 		if (this.getSpecies() != null) {

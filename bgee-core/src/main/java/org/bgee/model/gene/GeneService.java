@@ -17,16 +17,14 @@ import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneNameSynonymDAO.GeneNameSynonymTO;
-import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTOResultSet;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
 
-
 /**
  * A {@link Service} to obtain {@link Gene} objects. Users should use the
- * {@link ServiceFactory} to obtain {@code GeneService}s.
+ * {@link org.bgee.model.ServiceFactory ServiceFactory} to obtain {@code GeneService}s.
  * 
  * @author  Philippe Moret
  * @author  Frederic Bastian
@@ -34,6 +32,8 @@ import org.bgee.model.species.SpeciesService;
  * @version Bgee 13, July 2016
  * @since   Bgee 13, Sept. 2015
  */
+// Either remove species attribute from Gene class (not speciesId attribute) or add boolean 
+// to all methods defining if species object should be retrieved or not. 
 public class GeneService extends Service {
     
     private static final Logger log = LogManager.getLogger(GeneService.class.getName());
@@ -69,6 +69,8 @@ public class GeneService extends Service {
 
     /**
      * Retrieve {@code Gene}s for a given set of species IDs and a given set of gene IDs.
+     * <p>
+     * Only the {@code speciesId} attribute is retrieved in returned {@code Gene}s.
      * 
      * @param geneIds       A {@code Collection} of {@code String}s that are IDs of genes 
      *                      for which to return the {@code Gene}s.
@@ -93,8 +95,11 @@ public class GeneService extends Service {
     
     /**
      * Loads a single gene by Id.
-     * @param geneId    The {@String} representation of the ID.
-     * @return          A {@code Gene} instance representing this gene.
+     * <p>
+     * Both {@code speciesId} and {@code species} attributes are retrieved in returned {@code Gene}.
+     * 
+     * @param geneId    A {@code String} that is the ID of the gene to retrieve.
+     * @return          The {@code Gene} instance representing this gene.
      */
     public Gene loadGeneById(String geneId) {
     	log.entry(geneId);
@@ -202,11 +207,10 @@ public class GeneService extends Service {
 
 
     /**
-     * Maps {@link GeneTO} to a {@link Gene}.
+     * Maps {@code GeneTO} to a {@code Gene}.
      * 
-     * @param geneTO
-     *            The {@link GeneTO} to map.
-     * @return The mapped {@link Gene}.
+     * @param geneTO    The {@code GeneTO} to map.
+     * @return          The mapped {@code Gene}.
      */
     private static Gene mapFromTO(GeneTO geneTO) {
         log.entry(geneTO);

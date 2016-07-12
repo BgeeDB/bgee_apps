@@ -16,9 +16,10 @@ import org.apache.logging.log4j.Logger;
  * simple comparisons based on the attributes of this class. For an ordering based 
  * on the relations between {@code Condition}s, see {@link ConditionUtils#compare(Condition, Condition)}.
  * 
- * @author Frederic Bastian
- * @version Bgee 13 June 2016
- * @since Bgee 13 Sept. 2015
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13, July 2016
+ * @since   Bgee 13. Sept. 2015
  */
 //XXX: how to manage multi-species conditions? Should we have a class SingleSpeciesCondition 
 //and a class MultiSpeciesCondition? Or, only a Condition, using a "SingleSpeciesAnatEntity" 
@@ -36,7 +37,8 @@ public class Condition implements Comparable<Condition> {
      */
     private static final Comparator<Condition> COND_COMPARATOR = Comparator
             .comparing(Condition::getAnatEntityId, Comparator.nullsLast(String::compareTo))
-            .thenComparing(Condition::getDevStageId, Comparator.nullsLast(String::compareTo));
+            .thenComparing(Condition::getDevStageId, Comparator.nullsLast(String::compareTo))
+            .thenComparing(Condition::getSpeciesId, Comparator.nullsLast(String::compareTo));
     
     /**
      * @see #getAnatEntityId()
@@ -48,6 +50,11 @@ public class Condition implements Comparable<Condition> {
     private final String devStageId;
     
     /**
+     * @see #getSpeciesId()
+     */
+    private final String speciesId;
+
+    /**
      * Constructor providing the IDs of the anatomical entity and the developmental stage 
      * of this {@code Condition}.
      * 
@@ -58,12 +65,29 @@ public class Condition implements Comparable<Condition> {
      * @throws IllegalArgumentException if both {@code anatEntity} and {@code devStage} are blank. 
      */
     public Condition(String anatEntityId, String devStageId) throws IllegalArgumentException {
+        this(anatEntityId, devStageId, null);
+    }
+    
+    /**
+     * Constructor providing the IDs of the anatomical entity, the developmental stage, 
+     * and species ID of this {@code Condition}.
+     * 
+     * @param anatEntityId  A {@code String} that is the ID of the anatomical entity 
+     *                      used in this gene expression condition.
+     * @param devStageId    A {@code String} that is the ID of the developmental stage  
+     *                      used in this gene expression condition.
+     * @param speciesId     A {@code String} that is the ID of the species  
+     *                      used in this gene expression condition.
+     * @throws IllegalArgumentException if both {@code anatEntity} and {@code devStage} are blank. 
+     */
+    public Condition(String anatEntityId, String devStageId, String speciesId) throws IllegalArgumentException {
         if (StringUtils.isBlank(anatEntityId) && StringUtils.isBlank(devStageId)) {
             throw log.throwing(new IllegalArgumentException(
                     "The anat. entity ID and the dev. stage ID cannot be both blank."));
         }
         this.anatEntityId = anatEntityId;
         this.devStageId   = devStageId;
+        this.speciesId    = speciesId;
     }
     
     /**
@@ -103,6 +127,13 @@ public class Condition implements Comparable<Condition> {
     public String getDevStageId() {
         return devStageId;
     }
+    /**
+     * @return  A {@code String} that is the ID of the species 
+     *          used in this gene expression condition.
+     */
+    public String getSpeciesId() {
+        return speciesId;
+    }
 
     //*********************************
     //  COMPARETO/HASHCODE/EQUALS/TOSTRING
@@ -127,6 +158,7 @@ public class Condition implements Comparable<Condition> {
         int result = 1;
         result = prime * result + ((anatEntityId == null) ? 0 : anatEntityId.hashCode());
         result = prime * result + ((devStageId == null) ? 0 : devStageId.hashCode());
+        result = prime * result + ((speciesId == null) ? 0 : speciesId.hashCode());
         return result;
     }
     @Override
@@ -155,11 +187,19 @@ public class Condition implements Comparable<Condition> {
         } else if (!devStageId.equals(other.devStageId)) {
             return false;
         }
+        if (speciesId == null) {
+            if (other.speciesId != null) {
+                return false;
+            }
+        } else if (!speciesId.equals(other.speciesId)) {
+            return false;
+        }
         return true;
     }
     
     @Override
     public String toString() {
-        return "Condition [anatEntityId=" + anatEntityId + ", devStageId=" + devStageId + "]";
+        return "Condition [anatEntityId=" + anatEntityId + ", devStageId=" + devStageId + 
+                ", speciesId=" + speciesId + "]";
     }
 }

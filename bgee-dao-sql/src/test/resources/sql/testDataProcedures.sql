@@ -22,12 +22,13 @@ BEGIN
                (4,'ZFIN','http://zfin.org/cgi-bin/ZFIN_jump?record=[xref_id]','http://zfin.org/cgi-bin/ZFIN_jump?record=[experiment_id]','http://zfin.org/cgi-bin/ZFIN_jump?record=[evidence_id]','http://zfin.org/',null,'rv:2','ZFIN desc',1,'In situ data source',2);
 
         INSERT INTO taxon (taxonId,taxonScientificName,taxonCommonName,taxonLeftBound,taxonRightBound,taxonLevel,bgeeSpeciesLCA) 
-        VALUES (111,'taxSName111','taxCName111',1,12,1,1),
+        VALUES (111,'taxSName111','taxCName111',1,14,1,1),
                (211,'taxSName211','taxCName211',2,3,2,0),
                (311,'taxSName311','taxCName311',4,11,2,0),
                (411,'taxSName411','taxCName411',5,6,1,1),
                (511,'taxSName511','taxCName511',7,10,1,1),
-               (611,'taxSName611','taxCName611',8,9,1,1);
+               (611,'taxSName611','taxCName611',8,9,1,1),
+               (711,'taxSName711','taxCName711',12,13,2,0);
 
         INSERT INTO OMAHierarchicalGroup (OMANodeId,OMAGroupId,OMANodeLeftBound,OMANodeRightBound,taxonId) 
         VALUES (1,'HOG:NAILDQY',1,8,111),

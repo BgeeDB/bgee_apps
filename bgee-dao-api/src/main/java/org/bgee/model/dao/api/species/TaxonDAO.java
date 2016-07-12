@@ -44,20 +44,6 @@ public interface TaxonDAO extends DAO<TaxonDAO.Attribute> {
     }
     
     /**
-     * Inserts the provided taxa into the Bgee database, represented as 
-     * a {@code Collection} of {@code TaxonTO}s.
-     * 
-     * @param taxa      a {@code Collection} of {@code TaxonTO}s to be inserted 
-     *                  into the database.
-     * @throws IllegalArgumentException If {@code taxa} is empty or null. 
-     * @throws DAOException     If a {@code SQLException} occurred while trying 
-     *                          to insert {@code taxa}. The {@code SQLException} 
-     *                          will be wrapped into a {@code DAOException} ({@code DAOs} 
-     *                          do not expose these kind of implementation details).
-     */
-    public int insertTaxa(Collection<TaxonTO> taxa) throws DAOException, IllegalArgumentException ;
-
-    /**
      * Retrieve all taxa from data source.
      * <p>
      * The taxa are retrieved and returned as a {@code TaxonTOResultSet}. 
@@ -68,6 +54,31 @@ public interface TaxonDAO extends DAO<TaxonDAO.Attribute> {
      * @throws DAOException If an error occurred when accessing the data source. 
      */
     public TaxonTOResultSet getAllTaxa() throws DAOException;
+    /**
+     * Retrieve taxa that are either least common ancestor or parent taxon of species in Bgee.
+     * For instance, "31414 Euarchontoglires" is the least common ancestor of human and mouse, 
+     * and "9605 Homo" the parent taxon of human. 
+     * <p>
+     * The taxa are retrieved and returned as a {@code TaxonTOResultSet}. 
+     * It is the responsibility of the caller to close this {@code DAOResultSet} once 
+     * results are retrieved.
+     * 
+     * @apiNote         This method does not accept species IDs as argument, to avoid to misinterpret it: 
+     *                  it would not return the least common ancestors of the requested species, 
+     *                  as {@link #getLeastCommonAncestor(Set, boolean)} does. 
+     *                  And because there are many ways to handle species IDs arguments: 
+     *                  do we want only taxa that are LCAs of at least 2 requested species? 
+     *                  do we want only the closest LCAs of pairs of requested species? 
+     *                  (complicated to handle in SQL). Etc. 
+     * @param attrs     A {@code Collection} of {@code TaxonDAO.Attribute}s defining the attributes 
+     *                  to populate in the returned {@code TaxonTO}s. If {@code null} or empty, 
+     *                  all attributes are populated. 
+     * @return          A {@code TaxonTOResultSet} containing least common ancestors and parent taxa 
+     *                  from data source.
+     * @throws DAOException If an error occurred when accessing the data source. 
+     */
+    public TaxonTOResultSet getAllLeastCommonAncestorAndParentTaxa(Collection<Attribute> attrs) 
+            throws DAOException;
     
     /**
      * Retrieve the LCA of the provided species. If {@code includeAncestors} is {@code true}, 
@@ -86,8 +97,23 @@ public interface TaxonDAO extends DAO<TaxonDAO.Attribute> {
      *                          {@code TaxonTO}s.
      * @throws DAOException     If an error occurred when accessing the data source. 
      */
+    //TODO: change signature to use Collection instead of Set
     public TaxonTOResultSet getLeastCommonAncestor(Set<String> speciesIds, 
             boolean includeAncestors) throws DAOException, IllegalArgumentException;
+
+    /**
+     * Inserts the provided taxa into the Bgee database, represented as 
+     * a {@code Collection} of {@code TaxonTO}s.
+     * 
+     * @param taxa      a {@code Collection} of {@code TaxonTO}s to be inserted 
+     *                  into the database.
+     * @throws IllegalArgumentException If {@code taxa} is empty or null. 
+     * @throws DAOException     If a {@code SQLException} occurred while trying 
+     *                          to insert {@code taxa}. The {@code SQLException} 
+     *                          will be wrapped into a {@code DAOException} ({@code DAOs} 
+     *                          do not expose these kind of implementation details).
+     */
+    public int insertTaxa(Collection<TaxonTO> taxa) throws DAOException, IllegalArgumentException ;
 
     /**
      * {@code DAOResultSet} specifics to {@code TaxonTO}s

@@ -2,6 +2,8 @@ package org.bgee.model.dao.mysql.species;
 
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.EnumSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.Map.Entry;
 
@@ -105,6 +107,34 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
         BgeePreparedStatement stmt = null;
         try {
             stmt = this.getManager().getConnection().prepareStatement(sql.toString());
+            return log.exit(new MySQLTaxonTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+
+    @Override
+    public TaxonTOResultSet getAllLeastCommonAncestorAndParentTaxa(Collection<TaxonDAO.Attribute> attrs) 
+            throws DAOException {
+        log.entry(attrs);
+
+        //argument fitering/preparation
+        Set<TaxonDAO.Attribute> filteredAttrs = Optional.ofNullable(attrs)
+                .map(e -> EnumSet.copyOf(e)).orElse(EnumSet.allOf(TaxonDAO.Attribute.class));
+        
+        //Construct sql query
+        String sql = this.generateSelectClause(filteredAttrs, "taxon");
+        sql += "FROM taxon WHERE ";
+        //keep taxa that are either a LCA of species in Bgee
+        sql += "bgeeSpeciesLCA = 1 ";
+        //or that are a parent taxon of a species in Bgee
+        sql += "OR EXISTS (SELECT 1 FROM species WHERE species.taxonId = taxon.taxonId) ";
+    
+        //we don't use a try-with-resource, because we return a pointer to the results, 
+        //not the actual results, so we should not close this BgeePreparedStatement.
+        BgeePreparedStatement stmt = null;
+        try {
+            stmt = this.getManager().getConnection().prepareStatement(sql);
             return log.exit(new MySQLTaxonTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

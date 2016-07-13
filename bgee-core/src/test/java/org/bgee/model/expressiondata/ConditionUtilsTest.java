@@ -22,9 +22,9 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.DevStageService;
-import org.bgee.model.ontology.Ontology.RelationType;
-import org.bgee.model.ontology.Ontology.SingleSpeciesOntology;
 import org.bgee.model.ontology.OntologyService;
+import org.bgee.model.ontology.RelationType;
+import org.bgee.model.ontology.Ontology;
 import org.junit.Test;
 
 /**
@@ -96,9 +96,9 @@ public class ConditionUtilsTest extends TestAncestor {
         
         //suppress warning as we cannot specify generic type for a mock
         @SuppressWarnings("unchecked")
-        SingleSpeciesOntology<AnatEntity> anatEntityOnt = mock(SingleSpeciesOntology.class);
+        Ontology<AnatEntity> anatEntityOnt = mock(Ontology.class);
         @SuppressWarnings("unchecked")
-        SingleSpeciesOntology<DevStage> devStageOnt = mock(SingleSpeciesOntology.class);
+        Ontology<DevStage> devStageOnt = mock(Ontology.class);
         
         when(ontService.getAnatEntityOntology("9606", new HashSet<>(Arrays.asList(
                 anatEntityId1, anatEntityId2, anatEntityId3, anatEntityId4)), 

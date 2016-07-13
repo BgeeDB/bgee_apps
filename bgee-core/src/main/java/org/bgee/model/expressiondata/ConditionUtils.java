@@ -14,8 +14,7 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.ontology.Ontology;
-import org.bgee.model.ontology.Ontology.RelationType;
-import org.bgee.model.ontology.Ontology.SingleSpeciesOntology;
+import org.bgee.model.ontology.RelationType;
 
 /**
  * Class providing convenience operations on {@link Condition}s.
@@ -43,11 +42,11 @@ public class ConditionUtils implements Comparator<Condition> {
     /**
      * @see #getAnatEntityOntology()
      */
-    private final SingleSpeciesOntology<AnatEntity> anatEntityOnt;
+    private final Ontology<AnatEntity> anatEntityOnt;
     /**
      * @see #getDevStageOntology()
      */
-    private final SingleSpeciesOntology<DevStage> devStageOnt;
+    private final Ontology<DevStage> devStageOnt;
     
     /**
      * @see #isInferredAncestralConditions()
@@ -96,17 +95,17 @@ public class ConditionUtils implements Comparator<Condition> {
      * 
      * @param conditions            A {@code Collection} of {@code Condition}s that will be managed 
      *                              by this {@code ConditionUtils}.
-     * @param anatEntityOnt         A {@code SingleSpeciesOntology} of {@code AnatEntity}s that is 
+     * @param anatEntityOnt         An {@code Ontology} of {@code AnatEntity}s that is 
      *                              the ontology of anatomical entities of a single species.
      *                              If {@code null}, the constructor retrieves the ontology.  
-     * @param devStageOnt           A {@code SingleSpeciesOntology} of {@code DevStage}s that is 
+     * @param devStageOnt           An {@code Ontology} of {@code DevStage}s that is 
      *                              the ontology of developmental stages of a single species.
      *                              If {@code null}, the constructor retrieves the ontology.  
      * @throws IllegalArgumentException If any of the arguments is {@code null} or empty, 
      *                                  or if {@code Condition}s does not exist in the same species.
      */
-    public ConditionUtils(Collection<Condition> conditions, SingleSpeciesOntology<AnatEntity> anatEntityOnt,
-            SingleSpeciesOntology<DevStage> devStageOnt) throws IllegalArgumentException {
+    public ConditionUtils(Collection<Condition> conditions, Ontology<AnatEntity> anatEntityOnt,
+            Ontology<DevStage> devStageOnt) throws IllegalArgumentException {
         this(conditions, false, anatEntityOnt, devStageOnt);
     }
     
@@ -120,17 +119,17 @@ public class ConditionUtils implements Comparator<Condition> {
      *                              by this {@code ConditionUtils}.
      * @param inferAncestralConds   A {@code boolean} defining whether the ancestral conditions
      *                              should be inferred.
-     * @param anatEntityOnt         A {@code SingleSpeciesOntology} of {@code AnatEntity}s that is 
+     * @param anatEntityOnt         An {@code Ontology} of {@code AnatEntity}s that is 
      *                              the ontology of anatomical entities of a single species.
      *                              If {@code null}, the constructor retrieves the ontology.  
-     * @param devStageOnt           A {@code SingleSpeciesOntology} of {@code DevStage}s that is 
+     * @param devStageOnt           An {@code Ontology} of {@code DevStage}s that is 
      *                              the ontology of developmental stages of a single species.
      *                              If {@code null}, the constructor retrieves the ontology.  
      * @throws IllegalArgumentException If any of the arguments is {@code null} or empty, 
      *                                  or if {@code Condition}s does not exist in the same species.
      */
     public ConditionUtils(Collection<Condition> conditions, boolean inferAncestralConds,
-            SingleSpeciesOntology<AnatEntity> anatEntityOnt, SingleSpeciesOntology<DevStage> devStageOnt) 
+            Ontology<AnatEntity> anatEntityOnt, Ontology<DevStage> devStageOnt) 
                     throws IllegalArgumentException {
         this(conditions, inferAncestralConds, null, anatEntityOnt, devStageOnt);
     }
@@ -145,10 +144,10 @@ public class ConditionUtils implements Comparator<Condition> {
      * @param inferAncestralConds   A {@code boolean} defining whether the ancestral conditions
      *                              should be inferred.
      * @param serviceFactory        A {@code ServiceFactory} to acquire {@code Service}s from.
-     * @param anatEntityOnt         A {@code SingleSpeciesOntology} of {@code AnatEntity}s that is 
+     * @param anatEntityOnt         An {@code Ontology} of {@code AnatEntity}s that is 
      *                              the ontology of anatomical entities of a single species.
      *                              If {@code null}, the constructor retrieves the ontology.  
-     * @param devStageOnt           A {@code SingleSpeciesOntology} of {@code DevStage}s that is 
+     * @param devStageOnt           An {@code Ontology} of {@code DevStage}s that is 
      *                              the ontology of developmental stages of a single species.
      *                              If {@code null}, the constructor retrieves the ontology.  
      * @throws IllegalArgumentException If any of the arguments is {@code null} or empty, 
@@ -159,8 +158,8 @@ public class ConditionUtils implements Comparator<Condition> {
     //TODO: unit test for ancestral condition inferences
     //TODO: refactor this constructor, methods getAncestorConditions and getDescendantConditions
     private ConditionUtils(Collection<Condition> conditions, boolean inferAncestralConds,
-            ServiceFactory serviceFactory, SingleSpeciesOntology<AnatEntity> anatEntityOnt,
-            SingleSpeciesOntology<DevStage> devStageOnt) throws IllegalArgumentException {
+            ServiceFactory serviceFactory, Ontology<AnatEntity> anatEntityOnt,
+            Ontology<DevStage> devStageOnt) throws IllegalArgumentException {
         log.entry(conditions, inferAncestralConds, serviceFactory, anatEntityOnt, devStageOnt);
         
         if (conditions == null || conditions.isEmpty()) {
@@ -272,7 +271,8 @@ public class ConditionUtils implements Comparator<Condition> {
      * @throws IllegalArgumentException If some elements in {@code entityIds} are not present in 
      *                                  {@code ont}.
      */
-    private void checkEntityExistence(Set<String> entityIds, Ontology<?> ont) throws IllegalArgumentException {
+    private void checkEntityExistence(Set<String> entityIds, Ontology<?> ont) 
+            throws IllegalArgumentException {
         log.entry(entityIds, ont);
         
         if (ont == null) {
@@ -590,7 +590,7 @@ public class ConditionUtils implements Comparator<Condition> {
      *          in the {@code Condition}s provided at instantiation.
      * @see #getDevStageOntology()
      */
-    public SingleSpeciesOntology<AnatEntity> getAnatEntityOntology() {
+    public Ontology<AnatEntity> getAnatEntityOntology() {
         return anatEntityOnt;
     }
     /**
@@ -599,7 +599,7 @@ public class ConditionUtils implements Comparator<Condition> {
      *          in the {@code Condition}s provided at instantiation.
      * @see #getAnatEntityOntology()
      */
-    public SingleSpeciesOntology<DevStage> getDevStageOntology() {
+    public Ontology<DevStage> getDevStageOntology() {
         return devStageOnt;
     }
     /** 

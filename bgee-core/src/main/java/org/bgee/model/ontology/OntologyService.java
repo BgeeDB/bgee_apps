@@ -20,12 +20,9 @@ import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
-import org.bgee.model.ontology.Ontology.MultiSpeciesOntology;
-import org.bgee.model.ontology.Ontology.RelationType;
-import org.bgee.model.ontology.Ontology.SingleSpeciesOntology;
 
 /**
- * A {@link Service} to obtain {@link Ontology} objects.
+ * A {@link Service} to obtain {@link Ontology} and {@link MultiSpeciesOntology} objects.
  * Users should use the {@link ServiceFactory} to obtain {@code OntologyService}s.
  * 
  * @author  Valentine Rech de Laval
@@ -74,7 +71,7 @@ public class OntologyService extends Service {
      * @return                  The {@code Ontology} of {@code AnatEntity}s for the requested species, 
      *                          anat. entity, relations types, and relation status.
      */
-    public SingleSpeciesOntology<AnatEntity> getAnatEntityOntology(String speciesId, 
+    public Ontology<AnatEntity> getAnatEntityOntology(String speciesId, 
             Collection<String> anatEntityIds, ServiceFactory serviceFactory) {
         log.entry(speciesId, anatEntityIds, serviceFactory);
         return log.exit(this.getAnatEntityOntology(speciesId, anatEntityIds,
@@ -105,7 +102,7 @@ public class OntologyService extends Service {
      * @return                  The {@code Ontology} of {@code AnatEntity}s for the requested species, 
      *                          anat. entity, relations types, and relation status.
      */
-    public SingleSpeciesOntology<AnatEntity> getAnatEntityOntology(String speciesId,
+    public Ontology<AnatEntity> getAnatEntityOntology(String speciesId,
             Collection<String> anatEntityIds, Collection<RelationType> relationTypes, 
             boolean getAncestors, boolean getDescendants, ServiceFactory serviceFactory) {
         log.entry(speciesId, anatEntityIds, getAncestors, getDescendants, relationTypes, serviceFactory);
@@ -116,10 +113,11 @@ public class OntologyService extends Service {
     }
 
     /**
-     * Retrieve the {@code Ontology} of {@code AnatEntity}s for the requested species and anatomical entities. 
+     * Retrieve the {@code MultiSpeciesOntology} of {@code AnatEntity}s for the requested species 
+     * and anatomical entities. 
      * <p>
-     * The returned {@code Ontology} contains only the selected anat. entities, and only the relations 
-     * between them with a {@code RelationType} {@code ISA_PARTOF} are included.
+     * The returned {@code MultiSpeciesOntology} contains only the selected anat. entities, 
+     * and only the relations between them with a {@code RelationType} {@code ISA_PARTOF} are included.
      * 
      * @param speciesIds        A {@code Collection} of {@code String}s that are IDs of species 
      *                          which to retrieve anat. entities for. If several IDs are provided, 
@@ -128,10 +126,10 @@ public class OntologyService extends Service {
      * @param anatEntityIds     A {@code Collection} of {@code String}s that are IDs of anat.
      *                          entity IDs to retrieve. Can be {@code null} or empty.
      * @param serviceFactory    A {@code ServiceFactory} to acquire {@code Service}s from. 
-     * @return                  The {@code Ontology} of {@code AnatEntity}s for the requested species 
+     * @return                  The {@code MultiSpeciesOntology} of {@code AnatEntity}s for the requested species 
      *                          and anat. entity.
      */
-    public Ontology<AnatEntity> getAnatEntityOntology(Collection<String> speciesIds, 
+    public MultiSpeciesOntology<AnatEntity> getAnatEntityOntology(Collection<String> speciesIds, 
             Collection<String> anatEntityIds, ServiceFactory serviceFactory) {
         log.entry(speciesIds, anatEntityIds, serviceFactory);
         return log.exit(this.getAnatEntityOntology(speciesIds, anatEntityIds,
@@ -139,10 +137,10 @@ public class OntologyService extends Service {
     }
 
     /**
-     * Retrieve the {@code Ontology} of {@code AnatEntity}s for the requested species, anatomical entities,
-     * relations types, and relation status. 
+     * Retrieve the {@code MultiSpeciesOntology} of {@code AnatEntity}s for the requested species, 
+     * anatomical entities, relations types, and relation status. 
      * <p>
-     * The returned {@code Ontology} contains ancestors and/or descendants of the selected anat. entities 
+     * The returned {@code MultiSpeciesOntology} contains ancestors and/or descendants of the selected anat. entities 
      * according to {@code getAncestors} and {@code getDescendants}, respectively. 
      * If both {@code getAncestors} and {@code getDescendants} are {@code false}, 
      * then only relations between the selected anat. entities are retrieved.
@@ -155,13 +153,13 @@ public class OntologyService extends Service {
      *                          entity IDs to retrieve. Can be {@code null} or empty.
      * @param relationTypes     A {@code Collection} of {@code RelationType}s that are the relation
      *                          types allowing to filter the relations between elements
-     *                          of the {@code Ontology}.
+     *                          of the {@code MultiSpeciesOntology}.
      * @param getAncestors      A {@code boolean} defining whether the ancestors of the selected 
      *                          anat. entities, and the relations leading to them, should be retrieved.
      * @param getDescendants    A {@code boolean} defining whether the descendants of the selected 
      *                          anat. entities, and the relations leading to them, should be retrieved.
      * @param serviceFactory    A {@code ServiceFactory} to acquire {@code Service}s from. 
-     * @return                  The {@code Ontology} of {@code AnatEntity}s for the requested species, 
+     * @return                  The {@code MultiSpeciesOntology} of {@code AnatEntity}s for the requested species, 
      *                          anat. entity, relations types, and relation status.
      */
     public MultiSpeciesOntology<AnatEntity> getAnatEntityOntology(Collection<String> speciesIds, 
@@ -193,7 +191,7 @@ public class OntologyService extends Service {
      * @return                  The {@code Ontology} of the {@code DevStage}s for the requested species 
      *                          and dev. stages.
      */
-    public SingleSpeciesOntology<DevStage> getDevStageOntology(String speciesId, 
+    public Ontology<DevStage> getDevStageOntology(String speciesId, 
             Collection<String> devStageIds, ServiceFactory serviceFactory) {
         log.entry(speciesId, devStageIds, serviceFactory);
         return this.getDevStageOntology(Arrays.asList(speciesId), devStageIds, false, false, 
@@ -221,7 +219,7 @@ public class OntologyService extends Service {
      * @return                  The {@code Ontology} of the {@code DevStage}s for the requested species, 
      *                          dev. stages, and relation status. 
      */
-    public SingleSpeciesOntology<DevStage> getDevStageOntology(String speciesId, 
+    public Ontology<DevStage> getDevStageOntology(String speciesId, 
             Collection<String> devStageIds, boolean getAncestors, boolean getDescendants, 
             ServiceFactory serviceFactory) {
         log.entry(speciesId, devStageIds, getAncestors, getDescendants, serviceFactory);
@@ -230,10 +228,10 @@ public class OntologyService extends Service {
     }
 
     /**
-     * Retrieve the {@code Ontology} of {@code DevStage}s for the requested species and 
+     * Retrieve the {@code MultiSpeciesOntology} of {@code DevStage}s for the requested species and 
      * developmental stages IDs.
      * <p>
-     * The returned {@code Ontology} contains only {@code DevStage}s corresponding to 
+     * The returned {@code MultiSpeciesOntology} contains only {@code DevStage}s corresponding to 
      * the provided dev. stages IDs, and only the relations between them 
      * with a {@code RelationType} {@code ISA_PARTOF} are included. 
      * 
@@ -242,9 +240,9 @@ public class OntologyService extends Service {
      *                          dev. stages existing in any of them will be retrieved. 
      *                          Can be {@code null} or empty.
      * @param devStageIds       A {@code Collection} of {@code String}s that are dev. stages IDs
-     *                          of the {@code Ontology} to retrieve. Can be {@code null} or empty.
+     *                          of the {@code MultiSpeciesOntology} to retrieve. Can be {@code null} or empty.
      * @param serviceFactory    A {@code ServiceFactory} to acquire {@code Service}s from. 
-     * @return                  The {@code Ontology} of the {@code DevStage}s for the requested species 
+     * @return                  The {@code MultiSpeciesOntology} of the {@code DevStage}s for the requested species 
      *                          and dev. stages.
      */
     public MultiSpeciesOntology<DevStage> getDevStageOntology(Collection<String> speciesIds, 
@@ -254,10 +252,10 @@ public class OntologyService extends Service {
     }
 
     /**
-     * Retrieve the {@code Ontology} of {@code DevStage}s for the requested species, dev. stage IDs,
+     * Retrieve the {@code MultiSpeciesOntology} of {@code DevStage}s for the requested species, dev. stage IDs,
      * and relation status. 
      * <p>
-     * The returned {@code Ontology} contains ancestors and/or descendants according to
+     * The returned {@code MultiSpeciesOntology} contains ancestors and/or descendants according to
      * {@code getAncestors} and {@code getDescendants}, respectively. 
      * If both {@code getAncestors} and {@code getDescendants} are {@code false}, 
      * then only relations between provided developmental stages are considered.
@@ -267,13 +265,13 @@ public class OntologyService extends Service {
      *                          dev. stages existing in any of them will be retrieved. 
      *                          Can be {@code null} or empty.
      * @param devStageIds       A {@code Collection} of {@code String}s that are dev. stages IDs
-     *                          of the {@code Ontology} to retrieve. Can be {@code null} or empty.
+     *                          of the {@code MultiSpeciesOntology} to retrieve. Can be {@code null} or empty.
      * @param getAncestors      A {@code boolean} defining whether the ancestors of the selected 
      *                          dev. stages, and the relations leading to them, should be retrieved.
      * @param getDescendants    A {@code boolean} defining whether the descendants of the selected 
      *                          dev. stages, and the relations leading to them, should be retrieved.
      * @param serviceFactory    A {@code ServiceFactory} to acquire {@code Service}s from. 
-     * @return                  The {@code Ontology} of the {@code DevStage}s for the requested species, 
+     * @return                  The {@code MultiSpeciesOntology} of the {@code DevStage}s for the requested species, 
      *                          dev. stages, and relation status. 
      */
     public MultiSpeciesOntology<DevStage> getDevStageOntology(Collection<String> speciesIds, 
@@ -293,7 +291,7 @@ public class OntologyService extends Service {
      * Convenience method to load any ontology. 
      * 
      * @param elementType           A {@code Class<T>} that is the type of the elements 
-     *                              in the returned {@code Ontology}.
+     *                              in the returned {@code SpeciesNeutralOntology}.
      * @param speciesIds            A {@code Collection} of {@code String}s that are IDs of species 
      *                              which to retrieve entities for. If several IDs are provided, 
      *                              entities existing in any of them will be retrieved. 
@@ -302,7 +300,7 @@ public class OntologyService extends Service {
      *                              entities to retrieve. Can be {@code null} or empty.
      * @param relationTypes         A {@code Collection} of {@code RelationType}s that are the relation
      *                              types allowing to filter the relations between elements
-     *                              of the {@code Ontology}.
+     *                              of the {@code SpeciesNeutralOntology}.
      * @param getAncestors          A {@code boolean} defining whether the ancestors of the selected 
      *                              entities, and the relations leading to them, should be retrieved.
      * @param getDescendants        A {@code boolean} defining whether the descendants of the selected 
@@ -312,9 +310,9 @@ public class OntologyService extends Service {
      *                              of {@code String}s that are the IDs of requested species, 
      *                              and as second argument a {@code Collection} of {@code String}s 
      *                              that are the IDs of selected entities.
-     * @return                      An {@code Ontology} of {@code T} properly loaded according to 
+     * @return                      A {@code SpeciesNeutralOntology} of {@code T} properly loaded according to 
      *                              the requested parameters.
-     * @param <T>                   The type of elements in the returned {@code Ontology}.
+     * @param <T>                   The type of elements in the returned {@code SpeciesNeutralOntology}.
      */
     private <T extends NamedEntity & OntologyElement<T>> MultiSpeciesOntology<T> loadOntology(
             Class<T> elementType, Collection<String> speciesIds, Collection<String> entityIds, 
@@ -353,7 +351,7 @@ public class OntologyService extends Service {
             relations = getDaoManager().getRelationDAO().getAnatEntityRelations(clonedSpeIds, true, 
                         sourceAnatEntityIds, targetAnatEntityIds, sourceOrTarget, 
                         relationTypes.stream()
-                                .map(Ontology::convertRelationType)
+                                .map(SpeciesNeutralOntology::convertRelationType)
                                 .collect(Collectors.toCollection(() -> 
                                     EnumSet.noneOf(RelationTO.RelationType.class))), 
                         relationStatus, 

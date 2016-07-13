@@ -22,13 +22,10 @@ import org.bgee.model.anatdev.TaxonConstraint;
 import org.bgee.model.anatdev.TaxonConstraintService;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
-import org.bgee.model.ontology.Ontology.MultiSpeciesOntology;
-import org.bgee.model.ontology.Ontology.RelationType;
-import org.bgee.model.ontology.Ontology.SingleSpeciesOntology;
 import org.junit.Test;
 
 /**
- * This class holds the unit tests for the {@code Ontology} class.
+ * This class holds the unit tests for the {@code SpeciesNeutralOntology} class.
  * 
  * @author  Valentine Rech de Laval
  * @version Bgee 13, July 2016
@@ -37,14 +34,14 @@ import org.junit.Test;
 public class OntologyTest extends TestAncestor {
   
     private static Set<RelationType> ALL_RELATIONS = EnumSet.allOf(RelationType.class);
-    private static Set<RelationType> ISA_RELATIONS = EnumSet.of(Ontology.RelationType.ISA_PARTOF);
+    private static Set<RelationType> ISA_RELATIONS = EnumSet.of(RelationType.ISA_PARTOF);
 
     /**
      * Test the methods:
-     * - {@link Ontology#getAncestors(Entity)},
-     * - {@link Ontology#getAncestors(NamedEntity, boolean)},
-     * - {@link Ontology#getAncestors(NamedEntity, Collection)}, and
-     * - {@link Ontology#getAncestors(NamedEntity, Collection, boolean)}
+     * - {@link SpeciesNeutralOntology#getAncestors(Entity)},
+     * - {@link SpeciesNeutralOntology#getAncestors(NamedEntity, boolean)},
+     * - {@link SpeciesNeutralOntology#getAncestors(NamedEntity, Collection)}, and
+     * - {@link SpeciesNeutralOntology#getAncestors(NamedEntity, Collection, boolean)}
      */
     @Test
     public void shouldGetAncestors() {
@@ -58,7 +55,7 @@ public class OntologyTest extends TestAncestor {
         Set<AnatEntity> elements = new HashSet<>(Arrays.asList(ae1, ae2, ae2p, ae3));
         Set<RelationTO> relations = this.getAnatEntityRelationTOs();
 
-        SingleSpeciesOntology<AnatEntity> ontology = new SingleSpeciesOntology<AnatEntity>("sp1",
+        Ontology<AnatEntity> ontology = new Ontology<AnatEntity>("sp1",
                 elements, relations, ALL_RELATIONS, serviceFactory, AnatEntity.class);
         
         Set<AnatEntity> ancestors = ontology.getAncestors(ae3);
@@ -89,7 +86,7 @@ public class OntologyTest extends TestAncestor {
     }
     
     /**
-     * Test the method {@link Ontology#getAncestors(Collection, NamedEntity, Collection, boolean)}.
+     * Test the method {@link SpeciesNeutralOntology#getAncestors(Collection, NamedEntity, Collection, boolean)}.
      */
     @Test
     public void shouldGetAncestors_multiSpecies() {
@@ -165,10 +162,10 @@ public class OntologyTest extends TestAncestor {
     
     /**
      * Test the methods:
-     * - {@link Ontology#getDescendants(Entity)},
-     * - {@link Ontology#getDescendants(NamedEntity, boolean)},
-     * - {@link Ontology#getDescendants(NamedEntity, Collection)}, and
-     * - {@link Ontology#getDescendants(NamedEntity, Collection, boolean)}
+     * - {@link SpeciesNeutralOntology#getDescendants(Entity)},
+     * - {@link SpeciesNeutralOntology#getDescendants(NamedEntity, boolean)},
+     * - {@link SpeciesNeutralOntology#getDescendants(NamedEntity, Collection)}, and
+     * - {@link SpeciesNeutralOntology#getDescendants(NamedEntity, Collection, boolean)}
      */
     @Test
     public void shouldGetDescendants() {
@@ -181,7 +178,7 @@ public class OntologyTest extends TestAncestor {
         Set<AnatEntity> elements = new HashSet<>(Arrays.asList(ae1, ae2, ae2p, ae3));
         Set<RelationTO> relations = this.getAnatEntityRelationTOs();
 
-        Ontology<AnatEntity> ontology = new SingleSpeciesOntology<>("sp1", elements, 
+        SpeciesNeutralOntology<AnatEntity> ontology = new Ontology<>("sp1", elements, 
                 relations, ALL_RELATIONS, mockFact, AnatEntity.class);
         
         Set<AnatEntity> descendants = ontology.getDescendants(ae1);
@@ -209,7 +206,7 @@ public class OntologyTest extends TestAncestor {
     }
     
     /**
-     * Test the method {@link Ontology#getDescendants(Collection, NamedEntity, Collection, boolean)}.
+     * Test the method {@link SpeciesNeutralOntology#getDescendants(Collection, NamedEntity, Collection, boolean)}.
      */
     @Test
     public void shouldGetDescendants_multiSpecies() {
@@ -296,7 +293,7 @@ public class OntologyTest extends TestAncestor {
     }
 
     /**
-     * Test the method {@link Ontology#getElement(String)}.
+     * Test the method {@link SpeciesNeutralOntology#getElement(String)}.
      */
     @Test
     public void shouldGetElement() {
@@ -307,7 +304,7 @@ public class OntologyTest extends TestAncestor {
         Set<RelationTO> relations = this.getAnatEntityRelationTOs();
 
         ServiceFactory mockFact = mock(ServiceFactory.class);
-        Ontology<AnatEntity> ontology = new SingleSpeciesOntology<>("sp1", elements,
+        SpeciesNeutralOntology<AnatEntity> ontology = new Ontology<>("sp1", elements,
                 relations, ALL_RELATIONS, mockFact, AnatEntity.class);
         
         assertEquals("Incorrect element", ae1, ontology.getElement("UBERON:0001"));
@@ -316,7 +313,7 @@ public class OntologyTest extends TestAncestor {
     }
     
     /**
-     * Test the method {@link Ontology#getElements(String)}.
+     * Test the method {@link SpeciesNeutralOntology#getElements(String)}.
      */
     @Test
     public void shouldGetElements() {

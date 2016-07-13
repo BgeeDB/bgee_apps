@@ -174,8 +174,8 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
      *                              defining the attributes to populate in the returned 
      *                              {@code RelationTO}s. If {@code null} or empty, 
      *                              all attributes are populated. 
-     * @return                      A {@code RelationTOResultSet} allowing to retrieve anatomical 
-     *                              entity relations from data source.
+     * @return                      A {@code RelationTOResultSet} allowing to retrieve 
+     *                              stage relations from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
     public RelationTOResultSet getStageRelations(Collection<String> speciesIds, Boolean anySpecies, 
@@ -183,10 +183,40 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
             Collection<RelationStatus> relationStatus, 
             Collection<RelationDAO.Attribute> attributes) throws DAOException;
     
-    //TODO: javadoc
-    //XXX: WIP check signature is what we need
-    RelationTOResultSet getTaxonRelations(Collection<String> speciesIds,
-            boolean onlyCommonAncestor, Collection<RelationDAO.Attribute> attributes);
+    /**
+     * Retrieve relations between taxa from data source. The relations can be filtered  
+     * by source and/or target taxon IDs, and {@code RelationStatus}.
+     * <p>
+     * The relations are retrieved and returned as a {@code RelationTOResultSet}. It is the 
+     * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
+     * 
+     * @param sourceTaxIds          A {@code Collection} of {@code String}s that are the IDs of taxa
+     *                              that should be the sources of the retrieved relations. 
+     *                              Can be {@code null} or empty.
+     * @param targetTaxIds          A {@code Collection} of {@code String}s that are the IDs of taxa
+     *                              that should be the targets of the retrieved relations. 
+     *                              Can be {@code null} or empty.
+     * @param sourceOrTarget        A {@code Boolean} defining, when both {@code sourceTaxIds} 
+     *                              and {@code targetTaxIds} are not empty, 
+     *                              whether the relations retrieved should have one of {@code sourceTaxIds} 
+     *                              as source <strong>and/or</strong> one of {@code targetTaxIds} as target 
+     *                              (if {@code true}), or, one of {@code sourceTaxIds} 
+     *                              as source <strong>and</strong> one of {@code targetTaxIds} as target 
+     *                              (if {@code false} or {@code null}).
+     * @param relationStatus        A {@code Collection} of {@code RelationStatus} that are the status
+     *                              allowing to filter the relations to retrieve.
+     *                              Can be {@code null} or empty.
+     * @param attributes            A {@code Collection} of {@code RelationDAO.Attribute}s 
+     *                              defining the attributes to populate in the returned 
+     *                              {@code RelationTO}s. If {@code null} or empty, 
+     *                              all attributes are populated. 
+     * @return                      A {@code RelationTOResultSet} allowing to retrieve 
+     *                              taxon relations from data source.
+     * @throws DAOException If an error occurred when accessing the data source. 
+     */
+    RelationTOResultSet getTaxonRelations(Collection<String> sourceTaxIds, Collection<String> targetTaxIds, 
+            Boolean sourceOrTarget, Collection<RelationStatus> relationStatus, 
+            Collection<RelationDAO.Attribute> attributes);
     
 
     /**

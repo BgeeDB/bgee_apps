@@ -25,9 +25,9 @@ BEGIN
         VALUES (111,'taxSName111','taxCName111',1,14,1,1),
                (211,'taxSName211','taxCName211',2,3,2,0),
                (311,'taxSName311','taxCName311',4,11,2,0),
-               (411,'taxSName411','taxCName411',5,6,1,1),
-               (511,'taxSName511','taxCName511',7,10,1,1),
-               (611,'taxSName611','taxCName611',8,9,1,1),
+               (411,'taxSName411','taxCName411',5,6,3,1),
+               (511,'taxSName511','taxCName511',7,10,3,1),
+               (611,'taxSName611','taxCName611',8,9,4,1),
                (711,'taxSName711','taxCName711',12,13,2,0);
 
         INSERT INTO OMAHierarchicalGroup (OMANodeId,OMAGroupId,OMANodeLeftBound,OMANodeRightBound,taxonId) 

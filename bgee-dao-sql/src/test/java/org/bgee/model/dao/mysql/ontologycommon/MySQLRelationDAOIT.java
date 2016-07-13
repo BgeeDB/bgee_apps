@@ -762,6 +762,139 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
         assertTrue("RelationTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
     }
+    
+    /**
+     * Test the method {@link MySQLRelationDAO#getTaxonRelations(Collection, Collection, Boolean,
+            Collection, Collection)}.
+     */
+    @Test
+    public void shouldGetTaxonRelations() throws SQLException {
+
+        this.useSelectDB();
+
+        MySQLRelationDAO dao = new MySQLRelationDAO(this.getMySQLDAOManager());
+        //XXX: for now, we don't generate any taxonRelationId (always set to 0), 
+        //so we don't retrieve it. This might change in the future.
+        
+        Collection<RelationTO> expectedRelations = Arrays.asList(
+            new RelationTO(null, "111", "111", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "211", "211", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "311", "311", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "411", "411", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "511", "511", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "611", "611", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "711", "711", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE), 
+            
+            new RelationTO(null, "211", "111", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            new RelationTO(null, "311", "111", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            new RelationTO(null, "711", "111", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            new RelationTO(null, "411", "311", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            new RelationTO(null, "511", "311", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            new RelationTO(null, "611", "511", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            
+            new RelationTO(null, "411", "111", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+            new RelationTO(null, "511", "111", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+            new RelationTO(null, "611", "111", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+            new RelationTO(null, "611", "311", RelationType.ISA_PARTOF, RelationStatus.INDIRECT));
+        RelationTOResultSet resultSet = dao.getTaxonRelations(null, null, null, null, null);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+
+        //Now, we stop requesting the relation type and ID
+        Collection<RelationDAO.Attribute> attrs = EnumSet.complementOf(
+                EnumSet.of(RelationDAO.Attribute.RELATION_ID, RelationDAO.Attribute.RELATION_TYPE));
+        expectedRelations = Arrays.asList(
+                new RelationTO(null, "111", "111", null, RelationStatus.REFLEXIVE),
+                new RelationTO(null, "211", "211", null, RelationStatus.REFLEXIVE),
+                new RelationTO(null, "311", "311", null, RelationStatus.REFLEXIVE),
+                new RelationTO(null, "411", "411", null, RelationStatus.REFLEXIVE),
+                new RelationTO(null, "511", "511", null, RelationStatus.REFLEXIVE),
+                new RelationTO(null, "611", "611", null, RelationStatus.REFLEXIVE),
+                new RelationTO(null, "711", "711", null, RelationStatus.REFLEXIVE), 
+                
+                new RelationTO(null, "211", "111", null, RelationStatus.DIRECT), 
+                new RelationTO(null, "311", "111", null, RelationStatus.DIRECT), 
+                new RelationTO(null, "711", "111", null, RelationStatus.DIRECT), 
+                new RelationTO(null, "411", "311", null, RelationStatus.DIRECT), 
+                new RelationTO(null, "511", "311", null, RelationStatus.DIRECT), 
+                new RelationTO(null, "611", "511", null, RelationStatus.DIRECT), 
+                
+                new RelationTO(null, "411", "111", null, RelationStatus.INDIRECT), 
+                new RelationTO(null, "511", "111", null, RelationStatus.INDIRECT), 
+                new RelationTO(null, "611", "111", null, RelationStatus.INDIRECT), 
+                new RelationTO(null, "611", "311", null, RelationStatus.INDIRECT));
+        resultSet = dao.getTaxonRelations(null, null, null, null, attrs);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+        
+        //now we add filtering on sources/targets
+        //filtering on sources only
+        expectedRelations = Arrays.asList(
+                new RelationTO(null, "111", "111", null, RelationStatus.REFLEXIVE),
+                new RelationTO(null, "611", "611", null, RelationStatus.REFLEXIVE),
+                
+                new RelationTO(null, "611", "511", null, RelationStatus.DIRECT), 
+                
+                new RelationTO(null, "611", "111", null, RelationStatus.INDIRECT), 
+                new RelationTO(null, "611", "311", null, RelationStatus.INDIRECT));
+        resultSet = dao.getTaxonRelations(Arrays.asList("111", "611"), null, null, null, attrs);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+
+        //filtering on targets only
+        expectedRelations = Arrays.asList(
+                new RelationTO(null, "111", "111", null, RelationStatus.REFLEXIVE),
+                new RelationTO(null, "611", "611", null, RelationStatus.REFLEXIVE),
+                
+                new RelationTO(null, "211", "111", null, RelationStatus.DIRECT), 
+                new RelationTO(null, "311", "111", null, RelationStatus.DIRECT), 
+                new RelationTO(null, "711", "111", null, RelationStatus.DIRECT), 
+                
+                new RelationTO(null, "411", "111", null, RelationStatus.INDIRECT), 
+                new RelationTO(null, "511", "111", null, RelationStatus.INDIRECT), 
+                new RelationTO(null, "611", "111", null, RelationStatus.INDIRECT));
+        resultSet = dao.getTaxonRelations(null, Arrays.asList("111", "611"), null, null, attrs);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+        
+        //OR condition on sources and targets
+        expectedRelations = Arrays.asList(
+                new RelationTO(null, "111", "111", null, RelationStatus.REFLEXIVE),
+                new RelationTO(null, "611", "611", null, RelationStatus.REFLEXIVE),
+                
+                new RelationTO(null, "211", "111", null, RelationStatus.DIRECT), 
+                new RelationTO(null, "311", "111", null, RelationStatus.DIRECT), 
+                new RelationTO(null, "711", "111", null, RelationStatus.DIRECT), 
+                new RelationTO(null, "611", "511", null, RelationStatus.DIRECT), 
+                
+                new RelationTO(null, "411", "111", null, RelationStatus.INDIRECT), 
+                new RelationTO(null, "511", "111", null, RelationStatus.INDIRECT), 
+                new RelationTO(null, "611", "111", null, RelationStatus.INDIRECT), 
+                new RelationTO(null, "611", "311", null, RelationStatus.INDIRECT));
+        resultSet = dao.getTaxonRelations(Arrays.asList("111", "611"), Arrays.asList("111", "611"), 
+                true, null, attrs);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+        
+        //AND condition on sources and targets
+        expectedRelations = Arrays.asList(
+                new RelationTO(null, "111", "111", null, RelationStatus.REFLEXIVE),
+                new RelationTO(null, "611", "611", null, RelationStatus.REFLEXIVE),
+                
+                new RelationTO(null, "611", "111", null, RelationStatus.INDIRECT));
+        resultSet = dao.getTaxonRelations(Arrays.asList("111", "611"), Arrays.asList("111", "611"), 
+                false, null, attrs);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+        
+        //add filter on relation status
+        expectedRelations = Arrays.asList(
+                new RelationTO(null, "611", "111", null, RelationStatus.INDIRECT));
+        resultSet = dao.getTaxonRelations(Arrays.asList("111", "611"), Arrays.asList("111", "611"), 
+                false, EnumSet.of(RelationStatus.DIRECT, RelationStatus.INDIRECT), attrs);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+    }
 
     /**
      * Test the insert method {@link MySQLRelationDAO#insertAnatEntityRelations()}.

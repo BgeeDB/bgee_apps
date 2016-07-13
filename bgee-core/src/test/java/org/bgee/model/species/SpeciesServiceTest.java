@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.bgee.model.ServiceFactory;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.source.SourceToSpeciesDAO;
@@ -72,9 +73,12 @@ public class SpeciesServiceTest extends TestAncestor {
 		SourceService sourceService = mock(SourceService.class);
 		when(sourceService.loadAllSources(false)).thenReturn(
 		        Arrays.asList(new Source("s1"), new Source("s2"), new Source("s3")));
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(managerMock);
+        when(serviceFactory.getSourceService()).thenReturn(sourceService);
 
 		// actual use of the service
-        SpeciesService speciesService = new SpeciesService(managerMock, sourceService);
+        SpeciesService speciesService = new SpeciesService(serviceFactory);
 		assertEquals(expectedSpecies, speciesService.loadSpeciesInDataGroups(false));
 		
 		Map<Source, Set<DataType>> forData9606 = new HashMap<>();
@@ -127,9 +131,12 @@ public class SpeciesServiceTest extends TestAncestor {
 	    SourceService sourceService = mock(SourceService.class);
 	    when(sourceService.loadAllSources(false)).thenReturn(
 	            Arrays.asList(new Source("s1"), new Source("s2"), new Source("s3")));
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(managerMock);
+        when(serviceFactory.getSourceService()).thenReturn(sourceService);
 
 	    // actual use of the service
-	    SpeciesService service = new SpeciesService(managerMock, sourceService);
+	    SpeciesService service = new SpeciesService(serviceFactory);
 	    Set<Species> expected = new HashSet<>(Arrays.asList(
 	            new Species("9606", "human", null, "Homo", "sapiens", "version1", "4312"),
 	            new Species("1234", "name", null, "genus", "someSpecies", "versionA", "1123")));

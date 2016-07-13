@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.bgee.model.ServiceFactory;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.keyword.KeywordDAO;
@@ -36,6 +37,8 @@ public class KeywordServiceTest extends TestAncestor {
     public void shouldGetKeywordForSpecies() {
         // initialize mocks
         DAOManager managerMock = mock(DAOManager.class);
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(managerMock);
         KeywordDAO dao = mock(KeywordDAO.class);
         when(managerMock.getKeywordDAO()).thenReturn(dao);
         KeywordTOResultSet mockKeywordRs = getMockResultSet(KeywordTOResultSet.class, Arrays.asList(
@@ -53,7 +56,7 @@ public class KeywordServiceTest extends TestAncestor {
         Map<String, Set<String>> expectedMapping = new HashMap<>();
         expectedMapping.put("sp1", new HashSet<>(Arrays.asList("k1 k1", "k2")));
         expectedMapping.put("sp2", new HashSet<>(Arrays.asList("k33 33")));
-        KeywordService service = new KeywordService(managerMock);
+        KeywordService service = new KeywordService(serviceFactory);
         assertEquals("Incorrect species IDs to keywords mapping", expectedMapping, 
                 service.getKeywordForSpecies(speIds));
         

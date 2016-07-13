@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
-import org.bgee.model.dao.api.DAOManager;
+import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.keyword.KeywordDAO;
 import org.bgee.model.dao.api.keyword.KeywordDAO.EntityToKeywordTO;
@@ -26,14 +26,15 @@ import org.bgee.model.dao.api.keyword.KeywordDAO.EntityToKeywordTOResultSet;
 public class KeywordService extends Service {
 
     private final static Logger log = LogManager.getLogger(KeywordService.class.getName());
-	
-	/**
-	 * Constructs a {@code KeywordService}.
-	 * @param manager The {@code DAOManager} to be used by this service.
-	 */
-	public KeywordService(DAOManager manager) {
-		super(manager);
-	}
+
+    /**
+     * @param serviceFactory            The {@code ServiceFactory} to be used to obtain {@code Service}s 
+     *                                  and {@code DAOManager}.
+     * @throws IllegalArgumentException If {@code serviceFactory} is {@code null}.
+     */
+    public KeywordService(ServiceFactory serviceFactory) {
+        super(serviceFactory);
+    }
 	
 	/**
 	 * @return     A {@code Map} where keys are {@code String}s representing species Ids, 

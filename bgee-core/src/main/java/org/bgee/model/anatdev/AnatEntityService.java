@@ -16,7 +16,7 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
-import org.bgee.model.dao.api.DAOManager;
+import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SimAnnotToAnatEntityTO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO;
@@ -37,21 +37,12 @@ public class AnatEntityService extends Service {
     private final static Logger log = LogManager.getLogger(AnatEntityService.class.getName());
 
     /**
-     * 0-arg constructor that will cause this {@code AnatEntityService} to use 
-     * the default {@code DAOManager} returned by {@link DAOManager#getDAOManager()}. 
-     * 
-     * @see #CallService(DAOManager)
+     * @param serviceFactory            The {@code ServiceFactory} to be used to obtain {@code Service}s 
+     *                                  and {@code DAOManager}.
+     * @throws IllegalArgumentException If {@code serviceFactory} is {@code null}.
      */
-    public AnatEntityService() {
-        this(DAOManager.getDAOManager());
-    }
-    /**
-     * @param daoManager    The {@code DAOManager} to be used by this {@code AnatEntityService} 
-     *                      to obtain {@code DAO}s.
-     * @throws IllegalArgumentException If {@code daoManager} is {@code null}.
-     */
-    public AnatEntityService(DAOManager daoManager) {
-        super(daoManager);
+    public AnatEntityService(ServiceFactory serviceFactory) {
+        super(serviceFactory);
     }
     
     /**

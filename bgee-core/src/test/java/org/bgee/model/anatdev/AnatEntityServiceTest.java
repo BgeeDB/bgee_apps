@@ -8,13 +8,12 @@ import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.bgee.model.ServiceFactory;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
@@ -25,10 +24,6 @@ import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.Sim
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SimAnnotToAnatEntityTOResultSet;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTOResultSet;
-import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
-import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTO;
-import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTOResultSet;
-import org.bgee.model.gene.GeneService;
 import org.junit.Test;
 
 /**
@@ -44,6 +39,8 @@ public class AnatEntityServiceTest extends TestAncestor {
     public void shouldLoadAnatEntitiesBySpeciesIds() {
         // initialize mocks
         DAOManager managerMock = mock(DAOManager.class);
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(managerMock);
         AnatEntityDAO dao = mock(AnatEntityDAO.class);
         when(managerMock.getAnatEntityDAO()).thenReturn(dao);
         List<AnatEntityTO> anatEntityTOs = Arrays.asList(
@@ -70,7 +67,7 @@ public class AnatEntityServiceTest extends TestAncestor {
                 new AnatEntity("UBERON:0001687",  "stapes bone",  "stapes bone description"), 
                 new AnatEntity("UBERON:0001853", "utricle of membranous labyrinth", "utricle of membranous labyrinth description"), 
                 new AnatEntity("UBERON:0011606", "hyomandibular bone", "hyomandibular bone description"));
-        AnatEntityService service = new AnatEntityService(managerMock);
+        AnatEntityService service = new AnatEntityService(serviceFactory);
         assertEquals("Incorrect anat. entities", expectedAnatEntity,
                 service.loadAnatEntitiesBySpeciesIds(speciesIds).collect(Collectors.toList()));
     }
@@ -82,6 +79,8 @@ public class AnatEntityServiceTest extends TestAncestor {
     public void shouldLoadAnatEntities() {
         // initialize mocks
         DAOManager managerMock = mock(DAOManager.class);
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(managerMock);
         AnatEntityDAO dao = mock(AnatEntityDAO.class);
         when(managerMock.getAnatEntityDAO()).thenReturn(dao);
         List<AnatEntityTO> anatEntityTOs = Arrays.asList(
@@ -109,7 +108,7 @@ public class AnatEntityServiceTest extends TestAncestor {
                 new AnatEntity("UBERON:0001687",  "stapes bone",  "stapes bone description"), 
                 new AnatEntity("UBERON:0001853", "utricle of membranous labyrinth", "utricle of membranous labyrinth description"), 
                 new AnatEntity("UBERON:0011606", "hyomandibular bone", "hyomandibular bone description"));
-        AnatEntityService service = new AnatEntityService(managerMock);
+        AnatEntityService service = new AnatEntityService(serviceFactory);
         assertEquals("Incorrect anat. entities", expectedAnatEntity,
                 service.loadAnatEntities(speciesIds, true, anatEntityIds).collect(Collectors.toList()));
     }
@@ -117,6 +116,8 @@ public class AnatEntityServiceTest extends TestAncestor {
     @Test
     public void testGetSimilarities() {
         DAOManager managerMock = mock(DAOManager.class);
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(managerMock);
         SummarySimilarityAnnotationDAO dao = mock(SummarySimilarityAnnotationDAO.class);
         when(managerMock.getSummarySimilarityAnnotationDAO()).thenReturn(dao);
         
@@ -135,7 +136,7 @@ public class AnatEntityServiceTest extends TestAncestor {
         when(dao.getSummarySimilarityAnnotations("taxon1",true)).thenReturn(resultSetSim);
         when(dao.getSimAnnotToAnatEntity("taxon1", null)).thenReturn(resultSetSimToAnat);
         
-        AnatEntityService service = new AnatEntityService(managerMock);
+        AnatEntityService service = new AnatEntityService(serviceFactory);
         Collection<AnatEntitySimilarity> expected = new HashSet<>(Arrays.asList(
                 new AnatEntitySimilarity("sim1", new HashSet<>(Arrays.asList("anat1","anat2"))),
                 new AnatEntitySimilarity("sim2", new HashSet<>(Arrays.asList("anat3")))

@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.bgee.model.ServiceFactory;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.anatdev.StageDAO;
@@ -35,6 +36,8 @@ public class DevStageServiceTest extends TestAncestor {
     public void shouldLoadGroupingDevStages() {
         // initialize mocks
         DAOManager managerMock = mock(DAOManager.class);
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(managerMock);
         StageDAO dao = mock(StageDAO.class);
         when(managerMock.getStageDAO()).thenReturn(dao);
         
@@ -59,7 +62,7 @@ public class DevStageServiceTest extends TestAncestor {
                 new DevStage("Stage_id12", "stageN12", "stage Desc 12", 21, 22, 3, false, true), 
                 new DevStage("Stage_id13", "stageN13", "stage Desc 13", 23, 24, 3, false, true), 
                 new DevStage("Stage_id15", "stageN15", "stage Desc 15", 27, 32, 3, false, true)));
-        DevStageService service = new DevStageService(managerMock);
+        DevStageService service = new DevStageService(serviceFactory);
         assertEquals("Incorrect dev stages",
                 expectedDevStage, service.loadGroupingDevStages(speciesIds1, 3));
     }
@@ -71,6 +74,8 @@ public class DevStageServiceTest extends TestAncestor {
     public void shouldLoadDevStages() {
         // initialize mocks
         DAOManager managerMock = mock(DAOManager.class);
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(managerMock);
         StageDAO dao = mock(StageDAO.class);
         when(managerMock.getStageDAO()).thenReturn(dao);
         
@@ -92,7 +97,7 @@ public class DevStageServiceTest extends TestAncestor {
         Set<DevStage> expectedDevStage = new HashSet<>(Arrays.asList(
                 new DevStage("Stage_id3", "stageN3", "stage Desc 3", 3, 4, 3, true, false),
                 new DevStage("Stage_id12", "stageN12", "stage Desc 12", 21, 22, 3, false, true)));
-        DevStageService service = new DevStageService(managerMock);
+        DevStageService service = new DevStageService(serviceFactory);
         assertEquals("Incorrect dev stages", expectedDevStage, service.loadDevStages(
                 speciesIds, true, stageIds).collect(Collectors.toSet()));
     }

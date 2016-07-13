@@ -200,7 +200,7 @@ public class ConditionUtils implements Comparator<Condition> {
             } else if (serviceFactory != null) {
                 this.anatEntityOnt = serviceFactory.getOntologyService().getAnatEntityOntology(
                         speciesId, anatEntityIds, EnumSet.of(RelationType.ISA_PARTOF), 
-                        inferAncestralConds? true: false, false, serviceFactory);
+                        inferAncestralConds? true: false, false);
             } else {
                 throw log.throwing(new IllegalArgumentException(
                         "No ServiceFactory nor anatomical ontology provided."));
@@ -214,7 +214,7 @@ public class ConditionUtils implements Comparator<Condition> {
                 this.devStageOnt = devStageOnt;
             } else if (serviceFactory != null) {
                 this.devStageOnt = serviceFactory.getOntologyService().getDevStageOntology(
-                        speciesId, devStageIds, inferAncestralConds? true: false, false, serviceFactory);
+                        speciesId, devStageIds, inferAncestralConds? true: false, false);
             } else {
                 throw log.throwing(new IllegalArgumentException(
                         "No ServiceFactory nor developmental ontology provided."));

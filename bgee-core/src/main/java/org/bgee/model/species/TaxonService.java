@@ -4,7 +4,7 @@ package org.bgee.model.species;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
-import org.bgee.model.dao.api.DAOManager;
+import org.bgee.model.ServiceFactory;
 
 /**
  * A {@link Service} to obtain {@link Taxon} objects. 
@@ -19,20 +19,11 @@ public class TaxonService extends Service {
     private static final Logger log = LogManager.getLogger(TaxonService.class.getName());
 
     /**
-     * 0-arg constructor that will cause this {@code TaxonService} to use 
-     * the default {@code DAOManager} returned by {@link DAOManager#getDAOManager()}. 
-     * 
-     * @see #Service(DAOManager)
+     * @param serviceFactory            The {@code ServiceFactory} to be used to obtain {@code Service}s 
+     *                                  and {@code DAOManager}.
+     * @throws IllegalArgumentException If {@code serviceFactory} is {@code null}.
      */
-    public TaxonService() {
-        this(DAOManager.getDAOManager());
-    }
-    /**
-     * @param daoManager    The {@code DAOManager} to be used by this {@code TaxonService} 
-     *                      to obtain {@code DAO}s.
-     * @throws IllegalArgumentException If {@code daoManager} is {@code null}.
-     */
-    public TaxonService(DAOManager daoManager) {
-        super(daoManager);
+    public TaxonService(ServiceFactory serviceFactory) {
+        super(serviceFactory);
     }
 }

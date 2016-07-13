@@ -11,7 +11,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
 import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO;
@@ -19,7 +18,6 @@ import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO.InfoTy
 import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.source.Source;
-import org.bgee.model.source.SourceService;
 
 /**
  * A {@link Service} to obtain {@link Species} objects. 
@@ -34,39 +32,14 @@ import org.bgee.model.source.SourceService;
 public class SpeciesService extends Service {
     
     private static final Logger log = LogManager.getLogger(SpeciesService.class.getName());
-    
-    /**
-     * The {@code SourceService} to obtain {@code Source} objects.
-     */
-    private final SourceService sourceService;
 
     /**
-     * 0-arg constructor that will cause this {@code SpeciesService} to use 
-     * the default {@code DAOManager} returned by {@link DAOManager#getDAOManager()}. 
-     * 
-     * @see #SpeciesService(DAOManager)
+     * @param serviceFactory            The {@code ServiceFactory} to be used to obtain {@code Service}s 
+     *                                  and {@code DAOManager}.
+     * @throws IllegalArgumentException If {@code serviceFactory} is {@code null}.
      */
-    public SpeciesService() {
-        this(DAOManager.getDAOManager());
-    }
-    /**
-     * @param daoManager    The {@code DAOManager} to be used by this {@code SpeciesService} 
-     *                      to obtain {@code DAO}s.
-     * @throws IllegalArgumentException If {@code daoManager} is {@code null}.
-     */
-    public SpeciesService(DAOManager daoManager) {
-        this(daoManager, null);
-    }
-    
-    /**
-     * @param daoManager    The {@code DAOManager} to be used by this {@code SpeciesService} 
-     *                      to obtain {@code DAO}s.
-     * @param sourceService The {@code SourceService} to obtain {@code Source} objects.
-     * @throws IllegalArgumentException If {@code daoManager} is {@code null}.
-     */
-    public SpeciesService(DAOManager daoManager, SourceService sourceService) {
-        super(daoManager);
-        this.sourceService = sourceService;
+    public SpeciesService(ServiceFactory serviceFactory) {
+        super(serviceFactory);
     }
 
     /**
@@ -132,7 +105,7 @@ public class SpeciesService extends Service {
                         null, null, null).stream()
                 .collect(Collectors.toList());
         
-        List<Source> sources = sourceService.loadAllSources(false);
+        List<Source> sources = this.getServiceFactory().getSourceService().loadAllSources(false);
         
         Set<Species> completedSpecies = new HashSet<>();
         for (Species species : allSpecies) {

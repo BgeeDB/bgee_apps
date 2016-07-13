@@ -611,9 +611,9 @@ public class GenerateRankFile {
         //Load ontologies with all data for the requested species, will avoid to make one query 
         //for each gene
         Ontology<AnatEntity> anatEntityOnt = serviceFactory.getOntologyService()
-                .getAnatEntityOntology(speciesId, null, serviceFactory);
+                .getAnatEntityOntology(speciesId, null);
         Ontology<DevStage> devStageOnt = serviceFactory.getOntologyService()
-                .getDevStageOntology(speciesId, null, serviceFactory);
+                .getDevStageOntology(speciesId, null);
         
         //Query expression data for the species. 
         Iterator<ExpressionCall> callIt = this.getExpressionCalls(speciesId, anatEntityOnly, 

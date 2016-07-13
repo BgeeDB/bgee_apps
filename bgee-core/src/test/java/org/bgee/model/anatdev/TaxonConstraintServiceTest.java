@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.bgee.model.ServiceFactory;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO;
@@ -34,6 +35,8 @@ public class TaxonConstraintServiceTest extends TestAncestor {
     public void shouldLoadAnatEntityTaxonConstraintBySpeciesIds() {
 
         DAOManager managerMock = mock(DAOManager.class);
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(managerMock);
         TaxonConstraintDAO dao = mock(TaxonConstraintDAO.class);
         when(managerMock.getTaxonConstraintDAO()).thenReturn(dao);
         
@@ -55,7 +58,7 @@ public class TaxonConstraintServiceTest extends TestAncestor {
                 new TaxonConstraint("UBERON:0001853", "11"), 
                 new TaxonConstraint("UBERON:0001853", "41"), 
                 new TaxonConstraint("UBERON:0011606", null));
-        TaxonConstraintService service = new TaxonConstraintService(managerMock);
+        TaxonConstraintService service = new TaxonConstraintService(serviceFactory);
         assertEquals("Incorrect anat. entity taxon constraints", expectedTCs,
                 service.loadAnatEntityTaxonConstraintBySpeciesIds(speciesIds).collect(Collectors.toList()));
     }
@@ -68,6 +71,8 @@ public class TaxonConstraintServiceTest extends TestAncestor {
     public void shouldLoadAnatEntityRelationTaxonConstraintBySpeciesIds() {
 
         DAOManager managerMock = mock(DAOManager.class);
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(managerMock);
         TaxonConstraintDAO dao = mock(TaxonConstraintDAO.class);
         when(managerMock.getTaxonConstraintDAO()).thenReturn(dao);
         
@@ -89,7 +94,7 @@ public class TaxonConstraintServiceTest extends TestAncestor {
                 new TaxonConstraint("1", null), 
                 new TaxonConstraint("2", "11"), 
                 new TaxonConstraint("2", "21"));
-        TaxonConstraintService service = new TaxonConstraintService(managerMock);
+        TaxonConstraintService service = new TaxonConstraintService(serviceFactory);
         assertEquals("Incorrect anat. entity relation taxon constraints", expectedTCs,
                 service.loadAnatEntityRelationTaxonConstraintBySpeciesIds(speciesIds)
                     .collect(Collectors.toList()));
@@ -103,6 +108,8 @@ public class TaxonConstraintServiceTest extends TestAncestor {
     public void shouldLoadDevStageTaxonConstraintBySpeciesIds() {
 
         DAOManager managerMock = mock(DAOManager.class);
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(managerMock);
         TaxonConstraintDAO dao = mock(TaxonConstraintDAO.class);
         when(managerMock.getTaxonConstraintDAO()).thenReturn(dao);
         
@@ -126,7 +133,7 @@ public class TaxonConstraintServiceTest extends TestAncestor {
                 new TaxonConstraint("Stage_id2", null), 
                 new TaxonConstraint("Stage_id3", "21"), 
                 new TaxonConstraint("Stage_id4", "31"));
-        TaxonConstraintService service = new TaxonConstraintService(managerMock);
+        TaxonConstraintService service = new TaxonConstraintService(serviceFactory);
         assertEquals("Incorrect dev. stage taxon constraints", expectedTCs,
                 service.loadDevStageTaxonConstraintBySpeciesIds(speciesIds).collect(Collectors.toList()));
     }

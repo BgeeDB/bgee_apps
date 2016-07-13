@@ -6,7 +6,7 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
-import org.bgee.model.dao.api.DAOManager;
+import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
 
 /**
@@ -20,23 +20,14 @@ import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
 public class TaxonConstraintService extends Service {
     
     private static final Logger log = LogManager.getLogger(TaxonConstraintService.class.getName());
-    
+
     /**
-     * 0-arg constructor that will cause this {@code TaxonConstraintService} to use 
-     * the default {@code DAOManager} returned by {@link DAOManager#getDAOManager()}. 
-     * 
-     * @see #TaxonConstraintService(DAOManager)
+     * @param serviceFactory            The {@code ServiceFactory} to be used to obtain {@code Service}s 
+     *                                  and {@code DAOManager}.
+     * @throws IllegalArgumentException If {@code serviceFactory} is {@code null}.
      */
-    public TaxonConstraintService() {
-        this(DAOManager.getDAOManager());
-    }
-    /**
-     * @param daoManager    The {@code DAOManager} to be used by this {@code TaxonConstraintService} 
-     *                      to obtain {@code DAO}s.
-     * @throws IllegalArgumentException If {@code daoManager} is {@code null}.
-     */
-    public TaxonConstraintService(DAOManager daoManager) {
-        super(daoManager);
+    public TaxonConstraintService(ServiceFactory serviceFactory) {
+        super(serviceFactory);
     }
 
     /**

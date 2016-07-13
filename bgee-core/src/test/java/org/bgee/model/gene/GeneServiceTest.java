@@ -12,13 +12,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.bgee.model.ServiceFactory;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTOResultSet;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
-import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTOResultSet;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTOResultSet;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTO;
 
@@ -37,6 +37,8 @@ public class GeneServiceTest extends TestAncestor {
     public void shouldLoadGenes() {
         // initialize mocks
         DAOManager managerMock = mock(DAOManager.class);
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(managerMock);
         GeneDAO dao = mock(GeneDAO.class);
         when(managerMock.getGeneDAO()).thenReturn(dao);
         
@@ -58,7 +60,7 @@ public class GeneServiceTest extends TestAncestor {
         expectedGenes.add(new Gene("ID2", "22", "Name2"));
         expectedGenes.add(new Gene("ID4", "44", "Name4"));
         
-        GeneService service = new GeneService(managerMock);
+        GeneService service = new GeneService(serviceFactory);
         assertEquals("Incorrect gene to keywords mapping",
                 expectedGenes, service.loadGenesByIdsAndSpeciesIds(geneIds, speciesIds));
     }
@@ -84,6 +86,8 @@ public class GeneServiceTest extends TestAncestor {
     @Test
     public void testGetOrthologies() {
         DAOManager managerMock = mock(DAOManager.class);
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(managerMock);
         HierarchicalGroupDAO dao = mock(HierarchicalGroupDAO.class);
         when(managerMock.getHierarchicalGroupDAO()).thenReturn(dao);
         HierarchicalGroupToGeneTOResultSet resultSet = getMockResultSet(HierarchicalGroupToGeneTOResultSet.class, 
@@ -94,7 +98,7 @@ public class GeneServiceTest extends TestAncestor {
                         ));
         when(dao.getGroupToGene("1234", null)).thenReturn(resultSet);
         
-        GeneService service = new GeneService(managerMock);
+        GeneService service = new GeneService(serviceFactory);
         Map<String, Set<String>> expected = new HashMap<>();
         expected.put("1", new HashSet<>(Arrays.asList("123","124")));
         expected.put("2", new HashSet<>(Arrays.asList("223")));

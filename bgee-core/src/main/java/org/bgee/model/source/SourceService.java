@@ -12,7 +12,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.source.SourceDAO.SourceTO;
 import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO;
 import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO.InfoType;
@@ -31,21 +30,12 @@ public class SourceService extends Service {
     private static final Logger log = LogManager.getLogger(SourceService.class.getName());
 
     /**
-     * 0-arg constructor that will cause this {@code SourceService} to use 
-     * the default {@code DAOManager} returned by {@link DAOManager#getDAOManager()}. 
-     * 
-     * @see #SourceService(DAOManager)
+     * @param serviceFactory            The {@code ServiceFactory} to be used to obtain {@code Service}s 
+     *                                  and {@code DAOManager}.
+     * @throws IllegalArgumentException If {@code serviceFactory} is {@code null}.
      */
-    public SourceService() {
-        this(DAOManager.getDAOManager());
-    }
-    /**
-     * @param daoManager    The {@code DAOManager} to be used by this {@code SourceService} 
-     *                      to obtain {@code DAO}s.
-     * @throws IllegalArgumentException If {@code daoManager} is {@code null}.
-     */
-    public SourceService(DAOManager daoManager) {
-        super(daoManager);
+    public SourceService(ServiceFactory serviceFactory) {
+        super(serviceFactory);
     }
     
     /**

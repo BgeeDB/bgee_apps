@@ -187,8 +187,8 @@ public class GenerateRankFileTest extends TestAncestor {
         
         OntologyService ontService = mock(OntologyService.class);
         when(serviceFactory.getOntologyService()).thenReturn(ontService);
-        when(ontService.getAnatEntityOntology(any(String.class), any(), any())).thenReturn(mock(Ontology.class));
-        when(ontService.getDevStageOntology(any(String.class), any(), any())).thenReturn(mock(Ontology.class));
+        when(ontService.getAnatEntityOntology(any(String.class), any())).thenReturn(mock(Ontology.class));
+        when(ontService.getDevStageOntology(any(String.class), any())).thenReturn(mock(Ontology.class));
         
         
         CallService callService = mock(CallService.class);

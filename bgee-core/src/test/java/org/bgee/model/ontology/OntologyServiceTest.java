@@ -96,6 +96,7 @@ public class OntologyServiceTest extends TestAncestor {
         	.thenReturn(mockRelationRs3);
 
         ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(managerMock);
         AnatEntityService anatEntityService = mock(AnatEntityService.class);
         when(serviceFactory.getAnatEntityService()).thenReturn(anatEntityService);
         
@@ -178,28 +179,28 @@ public class OntologyServiceTest extends TestAncestor {
         Set<RelationType> expRelationTypes23 = new HashSet<>();
         expRelationTypes23.add(RelationType.ISA_PARTOF);
 
-        OntologyService service = new OntologyService(managerMock);
+        OntologyService service = new OntologyService(serviceFactory);
 
         SpeciesNeutralOntology<AnatEntity> expectedOntology1 = 
         		new MultiSpeciesOntology<>(speciesIds, anatEntities1, new HashSet<>(relationTOs1),
         		        expRelationTypes1, serviceFactory, AnatEntity.class);
         assertEquals("Incorrect anatomical entity ontology",
                 expectedOntology1, service.getAnatEntityOntology(speciesIds, anatEntityIds,
-                		expRelationTypes1, true, true, serviceFactory));
+                		expRelationTypes1, true, true));
         
         SpeciesNeutralOntology<AnatEntity> expectedOntology2 = 
         		new MultiSpeciesOntology<>(speciesIds, anatEntities2, new HashSet<>(relationTOs2),
         		        expRelationTypes23, serviceFactory, AnatEntity.class);
         assertEquals("Incorrect anatomical entity ontology",
                 expectedOntology2, service.getAnatEntityOntology(speciesIds, anatEntityIds,
-                		expRelationTypes23, true, false, serviceFactory));
+                		expRelationTypes23, true, false));
         
         SpeciesNeutralOntology<AnatEntity> expectedOntology3 = 
         		new MultiSpeciesOntology<>(speciesIds, anatEntities3, new HashSet<>(relationTOs3),
         		        expRelationTypes23, serviceFactory, AnatEntity.class);
         assertEquals("Incorrect anatomical entity ontology",
                 expectedOntology3, service.getAnatEntityOntology(speciesIds, anatEntityIds,
-                		expRelationTypes23, false, false, serviceFactory));
+                		expRelationTypes23, false, false));
     }
 
     /**
@@ -259,6 +260,7 @@ public class OntologyServiceTest extends TestAncestor {
         	.thenReturn(mockRelationRs3);
 
         ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(managerMock);
         DevStageService devStageService = mock(DevStageService.class);
         when(serviceFactory.getDevStageService()).thenReturn(devStageService);
 
@@ -312,24 +314,24 @@ public class OntologyServiceTest extends TestAncestor {
         Set<RelationType> expRelationTypes = new HashSet<>();
         expRelationTypes.add(RelationType.ISA_PARTOF);
 
-        OntologyService service = new OntologyService(managerMock);
+        OntologyService service = new OntologyService(serviceFactory);
 
         MultiSpeciesOntology<DevStage> expectedOntology1 = 
         		new MultiSpeciesOntology<>(speciesIds, devStages1, new HashSet<>(relationTOs1),
         		        expRelationTypes, serviceFactory, DevStage.class);
         assertEquals("Incorrect dev. stage ontology", expectedOntology1,
-        		service.getDevStageOntology(speciesIds, stageIds, true, true, serviceFactory));
+        		service.getDevStageOntology(speciesIds, stageIds, true, true));
 
         MultiSpeciesOntology<DevStage> expectedOntology2 = 
         		new MultiSpeciesOntology<>(speciesIds, devStages2, new HashSet<>(relationTOs2),
         		        expRelationTypes, serviceFactory, DevStage.class);
         assertEquals("Incorrect dev. stage ontology", expectedOntology2,
-        		service.getDevStageOntology(speciesIds, stageIds, false, true, serviceFactory));
+        		service.getDevStageOntology(speciesIds, stageIds, false, true));
 
         MultiSpeciesOntology<DevStage> expectedOntology3 = 
         		new MultiSpeciesOntology<>(speciesIds, devStages3, new HashSet<>(relationTOs3),
         		        expRelationTypes, serviceFactory, DevStage.class);
         assertEquals("Incorrect dev. stage ontology", expectedOntology3, 
-        		service.getDevStageOntology(speciesIds, stageIds, false, false, serviceFactory));
+        		service.getDevStageOntology(speciesIds, stageIds, false, false));
     }
 }

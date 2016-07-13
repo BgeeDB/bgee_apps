@@ -9,7 +9,7 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
-import org.bgee.model.dao.api.DAOManager;
+import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.anatdev.StageDAO.StageTO;
 import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO.GroupToStageTO;
 
@@ -26,23 +26,12 @@ public class DevStageService extends Service {
     private final static Logger log = LogManager.getLogger(DevStageService.class.getName());
 
     /**
-     * 0-arg constructor private, because it might be difficult to determine 
-     * the {@code Service}s and {@code DAOManager} to use by default, see 
-     * {@link #DevStageService(DAOManager)}.
+     * @param serviceFactory            The {@code ServiceFactory} to be used to obtain {@code Service}s 
+     *                                  and {@code DAOManager}.
+     * @throws IllegalArgumentException If {@code serviceFactory} is {@code null}.
      */
-    @SuppressWarnings("unused")
-    private DevStageService() {
-        this(DAOManager.getDAOManager());
-    }
-    
-    /**
-     *
-     * @param daoManager                The {@code DAOManager} to be used by this 
-     *                                  {@code DevStageService} to obtain {@code DAO}s.
-     * @throws IllegalArgumentException If {@code daoManager} is {@code null}.
-     */
-    public DevStageService(DAOManager daoManager) throws IllegalArgumentException {
-        super(daoManager);
+    public DevStageService(ServiceFactory serviceFactory) {
+        super(serviceFactory);
     }
 
     /**

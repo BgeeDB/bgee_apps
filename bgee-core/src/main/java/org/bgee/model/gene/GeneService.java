@@ -13,14 +13,13 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
-import org.bgee.model.dao.api.DAOManager;
+import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneNameSynonymDAO.GeneNameSynonymTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTOResultSet;
 import org.bgee.model.species.Species;
-import org.bgee.model.species.SpeciesService;
 
 /**
  * A {@link Service} to obtain {@link Gene} objects. Users should use the
@@ -37,34 +36,14 @@ import org.bgee.model.species.SpeciesService;
 public class GeneService extends Service {
     
     private static final Logger log = LogManager.getLogger(GeneService.class.getName());
-    
+
     /**
-     * The {@code SpeciesService} to obtain {@code Species} objects 
-     * used in {@code SpeciesDataGroup}.
+     * @param serviceFactory            The {@code ServiceFactory} to be used to obtain {@code Service}s 
+     *                                  and {@code DAOManager}.
+     * @throws IllegalArgumentException If {@code serviceFactory} is {@code null}.
      */
-    private final SpeciesService speciesService;
-    
-    /**
-     * 0-arg constructor that will cause this {@code GeneService} to use 
-     * the default {@code DAOManager} returned by {@link DAOManager#getDAOManager()}. 
-     * 
-     * @see #GeneService(DAOManager)
-     */
-    public GeneService() {
-        this(DAOManager.getDAOManager());
-    }
-    /**
-     * @param daoManager    The {@code DAOManager} to be used by this {@code GeneService} 
-     *                      to obtain {@code DAO}s.
-     * @throws IllegalArgumentException If {@code daoManager} is {@code null}.
-     */
-    public GeneService(DAOManager daoManager) {
-        this(daoManager, null);
-    }
-    
-    public GeneService(DAOManager daoManager, SpeciesService speciesService) {
-        super(daoManager);
-        this.speciesService = speciesService;
+    public GeneService(ServiceFactory serviceFactory) {
+        super(serviceFactory);
     }
 
     /**
@@ -116,7 +95,8 @@ public class GeneService extends Service {
     	Set<String> speciesIds = new HashSet<>();
     	assert gene.getSpeciesId() != null;
     	speciesIds.add(gene.getSpeciesId());
-    	Species species = speciesService.loadSpeciesByIds(speciesIds, true).iterator().next();
+    	Species species = this.getServiceFactory().getSpeciesService()
+    	        .loadSpeciesByIds(speciesIds, true).iterator().next();
     	gene = new Gene(gene.getId(), gene.getSpeciesId(), gene.getName(), gene.getDescription(), species);
 		return log.exit(gene);
     }
@@ -158,7 +138,8 @@ public class GeneService extends Service {
         }
         
         Set<String> speciesIds = matchedGeneList.stream().map(Gene::getSpeciesId).collect(Collectors.toSet());
-        Map<String, Species> speciesMap = speciesService.loadSpeciesByIds(speciesIds, false).stream()
+        Map<String, Species> speciesMap = this.getServiceFactory().getSpeciesService()
+                .loadSpeciesByIds(speciesIds, false).stream()
                 .collect(Collectors.toMap(Species::getId, Function.identity()));
         
         Set<String> geneIds = matchedGeneList.stream().map(Gene::getId).collect(Collectors.toSet());

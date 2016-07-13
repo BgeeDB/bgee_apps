@@ -20,8 +20,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
+import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.DAO;
-import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
 import org.bgee.model.dao.api.expressiondata.CallDAOFilter;
 import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
@@ -89,21 +89,12 @@ public class CallService extends Service {
     }
 
     /**
-     * 0-arg constructor that will cause this {@code CallService} to use 
-     * the default {@code DAOManager} returned by {@link DAOManager#getDAOManager()}. 
-     * 
-     * @see #CallService(DAOManager)
+     * @param serviceFactory            The {@code ServiceFactory} to be used to obtain {@code Service}s 
+     *                                  and {@code DAOManager}.
+     * @throws IllegalArgumentException If {@code serviceFactory} is {@code null}.
      */
-    public CallService() {
-        this(DAOManager.getDAOManager());
-    }
-    /**
-     * @param daoManager    The {@code DAOManager} to be used by this {@code CallService} 
-     *                      to obtain {@code DAO}s.
-     * @throws IllegalArgumentException If {@code daoManager} is {@code null}.
-     */
-    public CallService(DAOManager daoManager) {
-        super(daoManager);
+    public CallService(ServiceFactory serviceFactory) {
+        super(serviceFactory);
     }
     
     //XXX: example multi-species query, signature/returned value to be better defined. 

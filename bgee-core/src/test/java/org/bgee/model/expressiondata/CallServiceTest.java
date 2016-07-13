@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
+import org.bgee.model.ServiceFactory;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOManager;
@@ -83,6 +84,8 @@ public class CallServiceTest extends TestAncestor {
         //First test for one gene, no substructures no sub-stages. 
         //Retrieving geneId, anatEntityId, stageId, and data qualities, ordered by mean rank. 
         DAOManager manager = mock(DAOManager.class);
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(manager);
         ExpressionCallDAO dao = mock(ExpressionCallDAO.class);
         when(manager.getExpressionCallDAO()).thenReturn(dao);
         
@@ -152,7 +155,7 @@ public class CallServiceTest extends TestAncestor {
                 new LinkedHashMap<>();
         serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.DESC);
         
-        CallService service = new CallService(manager);
+        CallService service = new CallService(serviceFactory);
         List<ExpressionCall> actualResults = service.loadExpressionCalls("speciesId1", 
                 new ExpressionCallFilter(new GeneFilter("geneId1"), null, 
                         Arrays.asList(new ExpressionCallData(Expression.EXPRESSED))), 
@@ -194,6 +197,8 @@ public class CallServiceTest extends TestAncestor {
     public void shouldLoadExpressionCallsForSeveralGenes() {
         //Retrieving geneId, anatEntityId, unordered. 
         DAOManager manager = mock(DAOManager.class);
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(manager);
         ExpressionCallDAO dao = mock(ExpressionCallDAO.class);
         when(manager.getExpressionCallDAO()).thenReturn(dao);
         
@@ -242,7 +247,7 @@ public class CallServiceTest extends TestAncestor {
                         new HashSet<>(), null)
             );
         
-        CallService service = new CallService(manager);
+        CallService service = new CallService(serviceFactory);
         List<ExpressionCall> actualResults = service.loadExpressionCalls("speciesId1", 
                 new ExpressionCallFilter(null, null, 
                         Arrays.asList(new ExpressionCallData(Expression.EXPRESSED))), 
@@ -281,6 +286,8 @@ public class CallServiceTest extends TestAncestor {
     public void shouldLoadExpressionCallsWithFiltering() {
         //More complex query
         DAOManager manager = mock(DAOManager.class);
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(manager);
         ExpressionCallDAO dao = mock(ExpressionCallDAO.class);
         when(manager.getExpressionCallDAO()).thenReturn(dao);
         
@@ -357,7 +364,7 @@ public class CallServiceTest extends TestAncestor {
                 new LinkedHashMap<>();
         serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.DESC);
         
-        CallService service = new CallService(manager);
+        CallService service = new CallService(serviceFactory);
         List<ExpressionCall> actualResults = service.loadExpressionCalls("speciesId1", 
                 new ExpressionCallFilter(new GeneFilter("geneId1"), 
                         Arrays.asList(new ConditionFilter(Arrays.asList("anatEntityId1"), 
@@ -407,8 +414,10 @@ public class CallServiceTest extends TestAncestor {
     @Test
     public void shouldPropagateExpressionTOs() {
         DAOManager manager = mock(DAOManager.class);
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(manager);
 
-        CallService service = new CallService(manager);
+        CallService service = new CallService(serviceFactory);
         try {
             service.propagateExpressionTOs(null, null, null, null);
             fail("Should throw an IllegalArgumentException");
@@ -559,8 +568,10 @@ public class CallServiceTest extends TestAncestor {
     @Test
     public void shouldPropagateNoExpressionTOs() {
         DAOManager manager = mock(DAOManager.class);
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(manager);
 
-        CallService service = new CallService(manager);
+        CallService service = new CallService(serviceFactory);
         try {
             service.propagateNoExpressionTOs(null, null, null, null);
             fail("Should throw an IllegalArgumentException");

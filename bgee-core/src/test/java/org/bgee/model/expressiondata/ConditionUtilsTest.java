@@ -102,10 +102,10 @@ public class ConditionUtilsTest extends TestAncestor {
         
         when(ontService.getAnatEntityOntology("9606", new HashSet<>(Arrays.asList(
                 anatEntityId1, anatEntityId2, anatEntityId3, anatEntityId4)), 
-                EnumSet.of(RelationType.ISA_PARTOF), false, false, mockFact))
+                EnumSet.of(RelationType.ISA_PARTOF), false, false))
         .thenReturn(anatEntityOnt);
         when(ontService.getDevStageOntology("9606", new HashSet<>(Arrays.asList(
-                devStageId1, devStageId2, devStageId3, devStageId4)), false, false, mockFact))
+                devStageId1, devStageId2, devStageId3, devStageId4)), false, false))
         .thenReturn(devStageOnt);
         
         when(anatEntityOnt.getElements()).thenReturn(

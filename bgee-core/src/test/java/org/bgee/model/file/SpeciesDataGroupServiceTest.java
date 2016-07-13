@@ -1,5 +1,6 @@
 package org.bgee.model.file;
 
+import org.bgee.model.ServiceFactory;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
@@ -38,6 +39,10 @@ public class SpeciesDataGroupServiceTest extends TestAncestor {
 		SpeciesDataGroupDAO dao = mock(SpeciesDataGroupDAO.class);
         SpeciesService speciesService = mock(SpeciesService.class);
 		DownloadFileService downloadFileService = mock(DownloadFileService.class);
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(managerMock);
+        when(serviceFactory.getSpeciesService()).thenReturn(speciesService);
+        when(serviceFactory.getDownloadFileService()).thenReturn(downloadFileService);
 
 
 		// services return values
@@ -86,7 +91,7 @@ public class SpeciesDataGroupServiceTest extends TestAncestor {
         List<SpeciesDataGroup> expDataGroups = Arrays.asList(g1,g2);
 
 		// actual use of the service
-		SpeciesDataGroupService service = new SpeciesDataGroupService(downloadFileService, speciesService, managerMock);
+		SpeciesDataGroupService service = new SpeciesDataGroupService(serviceFactory);
         List<SpeciesDataGroup> dataGroups = service.loadAllSpeciesDataGroup();
         Assert.assertEquals(2, dataGroups.size());
         Assert.assertEquals(expDataGroups, dataGroups);

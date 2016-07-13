@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.bgee.model.ServiceFactory;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.source.SourceDAO;
@@ -41,6 +42,8 @@ public class SourceServiceTest extends TestAncestor {
     public void shouldLoadSources() {
         // initialize mocks
         DAOManager managerMock = mock(DAOManager.class);
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(managerMock);
         SourceDAO sourceDao = mock(SourceDAO.class);
         when(managerMock.getSourceDAO()).thenReturn(sourceDao);
         
@@ -82,7 +85,7 @@ public class SourceServiceTest extends TestAncestor {
                 "http://zfin.org/cgi-bin/ZFIN_jump?record=[evidence_id]", 
                 "http://zfin.org/", null, "rv:2", true, org.bgee.model.source.SourceCategory.IN_SITU, 2));
         
-        SourceService service = new SourceService(managerMock);
+        SourceService service = new SourceService(serviceFactory);
         assertEquals("Incorrect sources", expectedSources, service.loadAllSources(false));
 
         // Test getting data by species
@@ -112,6 +115,8 @@ public class SourceServiceTest extends TestAncestor {
         
         // initialize mocks
         DAOManager managerMock = mock(DAOManager.class);
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(managerMock);
         SourceDAO dao = mock(SourceDAO.class);
         when(managerMock.getSourceDAO()).thenReturn(dao);
          
@@ -141,7 +146,7 @@ public class SourceServiceTest extends TestAncestor {
                 "http://zfin.org/cgi-bin/ZFIN_jump?record=[evidence_id]", 
                 "http://zfin.org/", null, "rv:2", true, org.bgee.model.source.SourceCategory.IN_SITU, 2));
         
-        SourceService service = new SourceService(managerMock);
+        SourceService service = new SourceService(serviceFactory);
         assertEquals("Incorrect sources", expectedSources, service.loadDisplayableSources(false));
 
         Map<String, Set<DataType>> forAnnot4 = new HashMap<>();

@@ -16,7 +16,6 @@ import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
-import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
 
@@ -29,31 +28,19 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStat
  * @version Bgee 13, July 2016
  * @since   Bgee 13, Dec. 2015
  */
-//TODO: why do we inject AnatEntityService and DevStageService to methods, rather than injecting 
-//the ServiceFactory to the constructor? I don't remember. 
 public class OntologyService extends Service {
 
     private static final Logger log = LogManager.getLogger(OntologyService.class.getName());
 
     /**
-     * 0-arg constructor that will cause this {@code OntologyService} to use
-     * the default {@code DAOManager} returned by {@link DAOManager#getDAOManager()}.
-     * 
-     * @see #OntologyService(DAOManager)
-     */
-    public OntologyService() {
-        this(DAOManager.getDAOManager());
-    }
-
-    /**
      * Constructs a {@code OntologyService}.
      * 
-     * @param daoManager                The {@code DAOManager} to be used by this
-     *                                  {@code OntologyService} to obtain {@code DAO}s.
-     * @throws IllegalArgumentException If {@code daoManager} is {@code null}.
+     * @param serviceFactory            The {@code ServiceFactory} to be used to obtain {@code Service}s 
+     *                                  and {@code DAOManager}.
+     * @throws IllegalArgumentException If {@code serviceFactory} is {@code null}.
      */
-    public OntologyService(DAOManager daoManager) {
-        super(daoManager);
+    public OntologyService(ServiceFactory serviceFactory) {
+        super(serviceFactory);
     }
         
     /**
@@ -66,15 +53,13 @@ public class OntologyService extends Service {
      *                          which to retrieve anat. entities for. Can be {@code null}.
      * @param anatEntityIds     A {@code Collection} of {@code String}s that are IDs of anat.
      *                          entity IDs to retrieve. Can be {@code null} or empty.
-     * @param serviceFactory    A {@code ServiceFactory} to acquire {@code Service}s from. 
      * @return                  The {@code Ontology} of {@code AnatEntity}s for the requested species, 
      *                          anat. entity, relations types, and relation status.
      */
-    public Ontology<AnatEntity> getAnatEntityOntology(String speciesId, 
-            Collection<String> anatEntityIds, ServiceFactory serviceFactory) {
-        log.entry(speciesId, anatEntityIds, serviceFactory);
+    public Ontology<AnatEntity> getAnatEntityOntology(String speciesId, Collection<String> anatEntityIds) {
+        log.entry(speciesId, anatEntityIds);
         return log.exit(this.getAnatEntityOntology(speciesId, anatEntityIds,
-                EnumSet.of(RelationType.ISA_PARTOF), false, false, serviceFactory));
+                EnumSet.of(RelationType.ISA_PARTOF), false, false));
     }
 
     /**
@@ -97,17 +82,15 @@ public class OntologyService extends Service {
      *                          anat. entities, and the relations leading to them, should be retrieved.
      * @param getDescendants    A {@code boolean} defining whether the descendants of the selected 
      *                          anat. entities, and the relations leading to them, should be retrieved.
-     * @param serviceFactory    A {@code ServiceFactory} to acquire {@code Service}s from. 
      * @return                  The {@code Ontology} of {@code AnatEntity}s for the requested species, 
      *                          anat. entity, relations types, and relation status.
      */
-    public Ontology<AnatEntity> getAnatEntityOntology(String speciesId,
-            Collection<String> anatEntityIds, Collection<RelationType> relationTypes, 
-            boolean getAncestors, boolean getDescendants, ServiceFactory serviceFactory) {
-        log.entry(speciesId, anatEntityIds, getAncestors, getDescendants, relationTypes, serviceFactory);
+    public Ontology<AnatEntity> getAnatEntityOntology(String speciesId, Collection<String> anatEntityIds, 
+            Collection<RelationType> relationTypes, boolean getAncestors, boolean getDescendants) {
+        log.entry(speciesId, anatEntityIds, getAncestors, getDescendants, relationTypes);
         
         return log.exit(this.getAnatEntityOntology(Arrays.asList(speciesId), anatEntityIds, 
-                relationTypes, getAncestors, getDescendants, serviceFactory)
+                relationTypes, getAncestors, getDescendants)
                 .getAsSingleSpeciesOntology(speciesId));
     }
 
@@ -124,15 +107,14 @@ public class OntologyService extends Service {
      *                          Can be {@code null} or empty.
      * @param anatEntityIds     A {@code Collection} of {@code String}s that are IDs of anat.
      *                          entity IDs to retrieve. Can be {@code null} or empty.
-     * @param serviceFactory    A {@code ServiceFactory} to acquire {@code Service}s from. 
      * @return                  The {@code MultiSpeciesOntology} of {@code AnatEntity}s for the requested species 
      *                          and anat. entity.
      */
     public MultiSpeciesOntology<AnatEntity> getAnatEntityOntology(Collection<String> speciesIds, 
-            Collection<String> anatEntityIds, ServiceFactory serviceFactory) {
-        log.entry(speciesIds, anatEntityIds, serviceFactory);
+            Collection<String> anatEntityIds) {
+        log.entry(speciesIds, anatEntityIds);
         return log.exit(this.getAnatEntityOntology(speciesIds, anatEntityIds,
-                EnumSet.of(RelationType.ISA_PARTOF), false, false, serviceFactory));
+                EnumSet.of(RelationType.ISA_PARTOF), false, false));
     }
 
     /**
@@ -157,22 +139,21 @@ public class OntologyService extends Service {
      *                          anat. entities, and the relations leading to them, should be retrieved.
      * @param getDescendants    A {@code boolean} defining whether the descendants of the selected 
      *                          anat. entities, and the relations leading to them, should be retrieved.
-     * @param serviceFactory    A {@code ServiceFactory} to acquire {@code Service}s from. 
      * @return                  The {@code MultiSpeciesOntology} of {@code AnatEntity}s for the requested species, 
      *                          anat. entity, relations types, and relation status.
      */
     public MultiSpeciesOntology<AnatEntity> getAnatEntityOntology(Collection<String> speciesIds, 
             Collection<String> anatEntityIds, Collection<RelationType> relationTypes, 
-            boolean getAncestors, boolean getDescendants, ServiceFactory serviceFactory) {
-        log.entry(speciesIds, anatEntityIds, getAncestors, getDescendants, relationTypes, serviceFactory);
+            boolean getAncestors, boolean getDescendants) {
+        log.entry(speciesIds, anatEntityIds, getAncestors, getDescendants, relationTypes);
         
         Set<RelationTO> rels = this.getRelationTOs(AnatEntity.class, speciesIds, anatEntityIds, 
                 relationTypes, getAncestors, getDescendants);
         return log.exit(new MultiSpeciesOntology<AnatEntity>(speciesIds, 
-                serviceFactory.getAnatEntityService()
+                this.getServiceFactory().getAnatEntityService()
                 .loadAnatEntities(speciesIds, true, this.getRequestedEntityIds(anatEntityIds, rels))
                 .collect(Collectors.toSet()), 
-                rels, relationTypes, serviceFactory, AnatEntity.class));
+                rels, relationTypes, this.getServiceFactory(), AnatEntity.class));
     }
     
     /**
@@ -187,15 +168,13 @@ public class OntologyService extends Service {
      *                          dev. stages for. Can be {@code null}.
      * @param devStageIds       A {@code Collection} of {@code String}s that are dev. stages IDs
      *                          of the {@code Ontology} to retrieve. Can be {@code null} or empty.
-     * @param serviceFactory    A {@code ServiceFactory} to acquire {@code Service}s from. 
      * @return                  The {@code Ontology} of the {@code DevStage}s for the requested species 
      *                          and dev. stages.
      */
-    public Ontology<DevStage> getDevStageOntology(String speciesId, 
-            Collection<String> devStageIds, ServiceFactory serviceFactory) {
-        log.entry(speciesId, devStageIds, serviceFactory);
-        return this.getDevStageOntology(Arrays.asList(speciesId), devStageIds, false, false, 
-                serviceFactory).getAsSingleSpeciesOntology(speciesId);
+    public Ontology<DevStage> getDevStageOntology(String speciesId, Collection<String> devStageIds) {
+        log.entry(speciesId, devStageIds);
+        return this.getDevStageOntology(Arrays.asList(speciesId), devStageIds, false, false)
+                .getAsSingleSpeciesOntology(speciesId);
     }
 
     /**
@@ -215,16 +194,14 @@ public class OntologyService extends Service {
      *                          dev. stages, and the relations leading to them, should be retrieved.
      * @param getDescendants    A {@code boolean} defining whether the descendants of the selected 
      *                          dev. stages, and the relations leading to them, should be retrieved.
-     * @param serviceFactory    A {@code ServiceFactory} to acquire {@code Service}s from. 
      * @return                  The {@code Ontology} of the {@code DevStage}s for the requested species, 
      *                          dev. stages, and relation status. 
      */
-    public Ontology<DevStage> getDevStageOntology(String speciesId, 
-            Collection<String> devStageIds, boolean getAncestors, boolean getDescendants, 
-            ServiceFactory serviceFactory) {
-        log.entry(speciesId, devStageIds, getAncestors, getDescendants, serviceFactory);
+    public Ontology<DevStage> getDevStageOntology(String speciesId, Collection<String> devStageIds, 
+            boolean getAncestors, boolean getDescendants) {
+        log.entry(speciesId, devStageIds, getAncestors, getDescendants);
         return log.exit(getDevStageOntology(Arrays.asList(speciesId), devStageIds, getAncestors, 
-                getDescendants, serviceFactory).getAsSingleSpeciesOntology(speciesId));
+                getDescendants).getAsSingleSpeciesOntology(speciesId));
     }
 
     /**
@@ -241,14 +218,13 @@ public class OntologyService extends Service {
      *                          Can be {@code null} or empty.
      * @param devStageIds       A {@code Collection} of {@code String}s that are dev. stages IDs
      *                          of the {@code MultiSpeciesOntology} to retrieve. Can be {@code null} or empty.
-     * @param serviceFactory    A {@code ServiceFactory} to acquire {@code Service}s from. 
      * @return                  The {@code MultiSpeciesOntology} of the {@code DevStage}s for the requested species 
      *                          and dev. stages.
      */
     public MultiSpeciesOntology<DevStage> getDevStageOntology(Collection<String> speciesIds, 
-            Collection<String> devStageIds, ServiceFactory serviceFactory) {
-        log.entry(speciesIds, devStageIds, serviceFactory);
-        return this.getDevStageOntology(speciesIds, devStageIds, false, false, serviceFactory);
+            Collection<String> devStageIds) {
+        log.entry(speciesIds, devStageIds);
+        return this.getDevStageOntology(speciesIds, devStageIds, false, false);
     }
 
     /**
@@ -270,22 +246,20 @@ public class OntologyService extends Service {
      *                          dev. stages, and the relations leading to them, should be retrieved.
      * @param getDescendants    A {@code boolean} defining whether the descendants of the selected 
      *                          dev. stages, and the relations leading to them, should be retrieved.
-     * @param serviceFactory    A {@code ServiceFactory} to acquire {@code Service}s from. 
      * @return                  The {@code MultiSpeciesOntology} of the {@code DevStage}s for the requested species, 
      *                          dev. stages, and relation status. 
      */
     public MultiSpeciesOntology<DevStage> getDevStageOntology(Collection<String> speciesIds, 
-            Collection<String> devStageIds, boolean getAncestors, boolean getDescendants, 
-            ServiceFactory serviceFactory) {
-        log.entry(speciesIds, devStageIds, getAncestors, getDescendants, serviceFactory);
+            Collection<String> devStageIds, boolean getAncestors, boolean getDescendants) {
+        log.entry(speciesIds, devStageIds, getAncestors, getDescendants);
         
         Set<RelationTO> rels = this.getRelationTOs(DevStage.class, speciesIds, devStageIds, 
                 EnumSet.of(RelationType.ISA_PARTOF), getAncestors, getDescendants);
         return log.exit(new MultiSpeciesOntology<DevStage>(speciesIds, 
-                serviceFactory.getDevStageService()
+                this.getServiceFactory().getDevStageService()
                 .loadDevStages(speciesIds, true, this.getRequestedEntityIds(devStageIds, rels))
                 .collect(Collectors.toSet()), 
-                rels, EnumSet.of(RelationType.ISA_PARTOF), serviceFactory, DevStage.class));
+                rels, EnumSet.of(RelationType.ISA_PARTOF), this.getServiceFactory(), DevStage.class));
     }
     
     /**

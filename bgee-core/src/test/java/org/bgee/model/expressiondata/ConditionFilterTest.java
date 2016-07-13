@@ -36,7 +36,19 @@ public class ConditionFilterTest extends TestAncestor {
         
         Set<String> anatEntitieIds = new HashSet<>(Arrays.asList("ae1", "ae2", "ae5"));
         Set<String> devStageIds = new HashSet<>(Arrays.asList("ds1", "ds2", "ds5"));
-        ConditionFilter conditionFilter = new ConditionFilter(anatEntitieIds, devStageIds);
+        Set<String> speciesIds = new HashSet<>(Arrays.asList("speciesId1", "speciesId2"));
+        ConditionFilter conditionFilter = new ConditionFilter(anatEntitieIds, devStageIds, speciesIds);
+        assertTrue(conditionFilter.test(condition1));
+        assertFalse(conditionFilter.test(condition2));
+        assertTrue(conditionFilter.test(condition3));
+        assertFalse(conditionFilter.test(condition4));
+        assertFalse(conditionFilter.test(condition5));
+        assertFalse(conditionFilter.test(condition6));
+        assertFalse(conditionFilter.test(condition7));
+        assertFalse(conditionFilter.test(condition8));
+        assertFalse(conditionFilter.test(condition9));
+
+        conditionFilter = new ConditionFilter(anatEntitieIds, devStageIds, null);
         assertTrue(conditionFilter.test(condition1));
         assertTrue(conditionFilter.test(condition2));
         assertTrue(conditionFilter.test(condition3));
@@ -46,9 +58,43 @@ public class ConditionFilterTest extends TestAncestor {
         assertFalse(conditionFilter.test(condition7));
         assertFalse(conditionFilter.test(condition8));
         assertFalse(conditionFilter.test(condition9));
+
+        conditionFilter = new ConditionFilter(anatEntitieIds, null, speciesIds);
+        assertTrue(conditionFilter.test(condition1));
+        assertFalse(conditionFilter.test(condition2));
+        assertTrue(conditionFilter.test(condition3));
+        assertFalse(conditionFilter.test(condition4));
+        assertTrue(conditionFilter.test(condition5));
+        assertFalse(conditionFilter.test(condition6));
+        assertTrue(conditionFilter.test(condition7));
+        assertFalse(conditionFilter.test(condition8));
+        assertFalse(conditionFilter.test(condition9));
+        
+        conditionFilter = new ConditionFilter(null, devStageIds, speciesIds);
+        assertTrue(conditionFilter.test(condition1));
+        assertFalse(conditionFilter.test(condition2));
+        assertTrue(conditionFilter.test(condition3));
+        assertFalse(conditionFilter.test(condition4));
+        assertFalse(conditionFilter.test(condition5));
+        assertFalse(conditionFilter.test(condition6));
+        assertFalse(conditionFilter.test(condition7));
+        assertFalse(conditionFilter.test(condition8));
+        assertFalse(conditionFilter.test(condition9));
+
+        anatEntitieIds = new HashSet<>(Arrays.asList("ae3"));
+        conditionFilter = new ConditionFilter(anatEntitieIds, null, null);
+        assertFalse(conditionFilter.test(condition1));
+        assertFalse(conditionFilter.test(condition2));
+        assertFalse(conditionFilter.test(condition3));
+        assertFalse(conditionFilter.test(condition4));
+        assertFalse(conditionFilter.test(condition5));
+        assertTrue(conditionFilter.test(condition6));
+        assertFalse(conditionFilter.test(condition7));
+        assertFalse(conditionFilter.test(condition8));
+        assertFalse(conditionFilter.test(condition9));
         
         devStageIds = new HashSet<>(Arrays.asList("ds3"));
-        conditionFilter = new ConditionFilter(null, devStageIds);
+        conditionFilter = new ConditionFilter(null, devStageIds, null);
         assertFalse(conditionFilter.test(condition1));
         assertFalse(conditionFilter.test(condition2));
         assertFalse(conditionFilter.test(condition3));
@@ -59,16 +105,16 @@ public class ConditionFilterTest extends TestAncestor {
         assertFalse(conditionFilter.test(condition8));
         assertFalse(conditionFilter.test(condition9));
 
-        anatEntitieIds = new HashSet<>(Arrays.asList("ae3"));
-        conditionFilter = new ConditionFilter(anatEntitieIds, null);
+        speciesIds = new HashSet<>(Arrays.asList("speciesId5"));
+        conditionFilter = new ConditionFilter(null, null, speciesIds);
         assertFalse(conditionFilter.test(condition1));
         assertFalse(conditionFilter.test(condition2));
         assertFalse(conditionFilter.test(condition3));
         assertFalse(conditionFilter.test(condition4));
         assertFalse(conditionFilter.test(condition5));
-        assertTrue(conditionFilter.test(condition6));
+        assertFalse(conditionFilter.test(condition6));
         assertFalse(conditionFilter.test(condition7));
-        assertFalse(conditionFilter.test(condition8));
+        assertTrue(conditionFilter.test(condition8));
         assertFalse(conditionFilter.test(condition9));
     }
 }

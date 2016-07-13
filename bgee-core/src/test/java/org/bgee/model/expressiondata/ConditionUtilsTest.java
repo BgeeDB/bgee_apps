@@ -205,7 +205,7 @@ public class ConditionUtilsTest extends TestAncestor {
         //check that an Exception is correctly thrown if a condition used was not provided at instantiation
         try {
             this.conditionUtils.isConditionMorePrecise(this.conditions.get(0), 
-                    new Condition("test1", "test2"));
+                    new Condition("test1", "test2", "sp3"));
             //test fail
             fail("An exception should be thrown when a Condition was not provided at instantiation.");
         } catch (IllegalArgumentException e) {

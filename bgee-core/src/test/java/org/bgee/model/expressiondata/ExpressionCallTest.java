@@ -22,9 +22,10 @@ import org.junit.Test;
 /**
  * Unit tests for {@link ExpressionCall}.
  * 
- * @author Frederic Bastian
- * @version Bgee 13 June 2016
- * @since Bgee 13 June 2016
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13, July 2016
+ * @since   Bgee 13, June 2016
  */
 public class ExpressionCallTest extends TestAncestor {
     private final static Logger log = LogManager.getLogger(ExpressionCallTest.class.getName());
@@ -79,9 +80,9 @@ public class ExpressionCallTest extends TestAncestor {
         //These calls and conditions allow a regression test for management of equal ranks
         //cond2 and cond3 will be considered more precise than cond1, and unrelated to each other. 
         //It is important for the test that cond1 would be sorted first alphabetically. 
-        Condition cond1 = new Condition("Anat1", "stage1");
-        Condition cond2 = new Condition("Anat2", "stage1");
-        Condition cond3 = new Condition("Anat3", "stage1");
+        Condition cond1 = new Condition("Anat1", "stage1", "sp1");
+        Condition cond2 = new Condition("Anat2", "stage1", "sp1");
+        Condition cond3 = new Condition("Anat3", "stage1", "sp1");
         //we mock the ConditionUtils used to compare Conditions
         ConditionUtils condUtils = mock(ConditionUtils.class);
         Set<Condition> allConds = new HashSet<>(Arrays.asList(cond1, cond2, cond3));
@@ -154,9 +155,9 @@ public class ExpressionCallTest extends TestAncestor {
     public void shouldIdentifyRedundantCalls() {
       //These calls and conditions allow a regression test for management of equal ranks
         //cond2 and cond3 will be considered more precise than cond1, and unrelated to each other
-        Condition cond1 = new Condition("Anat1", "stage1");
-        Condition cond2 = new Condition("Anat2", "stage1");
-        Condition cond3 = new Condition("Anat3", "stage1");
+        Condition cond1 = new Condition("Anat1", "stage1", "sp1");
+        Condition cond2 = new Condition("Anat2", "stage1", "sp1");
+        Condition cond3 = new Condition("Anat3", "stage1", "sp1");
         //we mock the ConditionUtils used to compare Conditions
         ConditionUtils condUtils = mock(ConditionUtils.class);
         Set<Condition> allConds = new HashSet<>(Arrays.asList(cond1, cond2, cond3));

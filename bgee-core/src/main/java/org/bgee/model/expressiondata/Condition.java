@@ -53,20 +53,6 @@ public class Condition implements Comparable<Condition> {
      * @see #getSpeciesId()
      */
     private final String speciesId;
-
-    /**
-     * Constructor providing the IDs of the anatomical entity and the developmental stage 
-     * of this {@code Condition}.
-     * 
-     * @param anatEntityId  A {@code String} that is the ID of the anatomical entity 
-     *                      used in this gene expression condition.
-     * @param devStageId    A {@code String} that is the ID of the developmental stage  
-     *                      used in this gene expression condition.
-     * @throws IllegalArgumentException if both {@code anatEntity} and {@code devStage} are blank. 
-     */
-    public Condition(String anatEntityId, String devStageId) throws IllegalArgumentException {
-        this(anatEntityId, devStageId, null);
-    }
     
     /**
      * Constructor providing the IDs of the anatomical entity, the developmental stage, 
@@ -78,12 +64,17 @@ public class Condition implements Comparable<Condition> {
      *                      used in this gene expression condition.
      * @param speciesId     A {@code String} that is the ID of the species  
      *                      used in this gene expression condition.
-     * @throws IllegalArgumentException if both {@code anatEntity} and {@code devStage} are blank. 
+     * @throws IllegalArgumentException If both {@code anatEntity} and {@code devStage} are blank 
+     *                                  of if {@code speciesId} is blank. 
      */
     public Condition(String anatEntityId, String devStageId, String speciesId) throws IllegalArgumentException {
         if (StringUtils.isBlank(anatEntityId) && StringUtils.isBlank(devStageId)) {
             throw log.throwing(new IllegalArgumentException(
                     "The anat. entity ID and the dev. stage ID cannot be both blank."));
+        }
+        if (StringUtils.isBlank(speciesId)) {
+            throw log.throwing(new IllegalArgumentException(
+                    "The species ID cannot be blank."));
         }
         this.anatEntityId = anatEntityId;
         this.devStageId   = devStageId;

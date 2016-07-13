@@ -266,7 +266,8 @@ public class CallService extends Service {
                     .stream()
                     //allow mapping of the ExpressionCallTOs to ExpressionCalls. The Stream is still 
                     //not consumed at this point (map is a lazy operation as well). 
-                    .map(callTO -> mapCallTOToExpressionCall(callTO, callFilter.getDataPropagationFilter())
+                    .map(callTO -> mapCallTOToExpressionCall(callTO, 
+                            callFilter.getDataPropagationFilter(), speciesId)
                 ));
     }
 
@@ -274,8 +275,8 @@ public class CallService extends Service {
     // METHODS MAPPING CallTOs TO Calls
     //*************************************************************************
     private static ExpressionCall mapCallTOToExpressionCall(ExpressionCallTO callTO, 
-            DataPropagation callFilterPropag) {
-        log.entry(callTO, callFilterPropag);
+            DataPropagation callFilterPropag, String speciesId) {
+        log.entry(callTO, callFilterPropag, speciesId);
 
         //at this point, we cannot know the propagation status per data type, 
         //the expression tables only store a global propagation status 
@@ -311,7 +312,7 @@ public class CallService extends Service {
         
         return log.exit(new ExpressionCall(callTO.getGeneId(), 
                 callTO.getAnatEntityId() != null || callTO.getStageId() != null? 
-                        new Condition(callTO.getAnatEntityId(), callTO.getStageId()): null, 
+                        new Condition(callTO.getAnatEntityId(), callTO.getStageId(), speciesId): null, 
                 globalPropagation, 
                 //At this point, there can't be any ambiguity state, as we haven't compare 
                 //the expression calls to no-expression calls yet.
@@ -334,8 +335,8 @@ public class CallService extends Service {
     
     // TODO refactoring with previous method?
     private static ExpressionCall mapCallTOToExpressionCall(NoExpressionCallTO callTO, 
-            DataPropagation callFilterPropag) {
-        log.entry(callTO, callFilterPropag);
+            DataPropagation callFilterPropag, String speciesId) {
+        log.entry(callTO, callFilterPropag, speciesId);
         //at this point, we cannot know the propagation status per data type, 
         //the expression tables only store a global propagation status 
         //over all data types. To infer the status per data type, 
@@ -368,7 +369,7 @@ public class CallService extends Service {
         
         return log.exit(new ExpressionCall(callTO.getGeneId(), 
                 callTO.getAnatEntityId() != null || callTO.getStageId() != null? 
-                        new Condition(callTO.getAnatEntityId(), callTO.getStageId()): null, 
+                        new Condition(callTO.getAnatEntityId(), callTO.getStageId(), speciesId): null, 
                 globalPropagation, 
                 //At this point, there can't be any ambiguity state, as we haven't compare 
                 //the expression calls to no-expression calls yet.
@@ -699,14 +700,16 @@ public class CallService extends Service {
      *                          "OR" conditions. Can be {@code null} or empty. 
      * @param conditionUtils    A {@code ConditionUtils} containing at least anat. entity
      *                          {@code Ontology} to use for the propagation.
+     * @param speciesId         A {@code String} that is the ID of the species 
+     *                          which to propagate call for.
      * @return                  A {@code Set} of {@code ExpressionCall}s that are propagated calls.
      */
     // TODO: set to private because argument are TOs? 
     // NOTE: No update ExpressionCalls, to provide better unicity of the method, and allow better unit testing
     public Set<ExpressionCall> propagateNoExpressionTOs(Collection<NoExpressionCallTO> noExprTOs,
             Collection<ConditionFilter> conditionFilter, ConditionUtils conditionUtils,
-            Collection<String> speciesIds) {
-        log.entry(noExprTOs, conditionFilter, conditionUtils, speciesIds);
+            String speciesId) {
+        log.entry(noExprTOs, conditionFilter, conditionUtils, speciesId);
         
         // Check that TOs are not empty and not already propagated
         if (noExprTOs == null || noExprTOs.isEmpty()) {
@@ -718,10 +721,11 @@ public class CallService extends Service {
             .collect(Collectors.toSet());
         if (!alreadyPropagatedTOs.isEmpty()) {
             throw log.throwing(new IllegalArgumentException(
-                    "Some ExpressionTOs has already been propagated: " + alreadyPropagatedTOs ));
+                    "Some ExpressionTOs has already been propagated: " + alreadyPropagatedTOs));
         }
         
-        return log.exit(this.propagateTOs(noExprTOs, conditionFilter, conditionUtils, NoExpressionCallTO.class));
+        return log.exit(this.propagateTOs(noExprTOs, conditionFilter, conditionUtils,
+                speciesId, NoExpressionCallTO.class));
     }
     
     /**
@@ -743,8 +747,9 @@ public class CallService extends Service {
     // TODO: set to private because argument are TOs? 
     // NOTE: No update ExpressionCalls, to provide better unicity of the method, and allow better unit testing
     public Set<ExpressionCall> propagateExpressionTOs(Collection<ExpressionCallTO> exprTOs,
-            Collection<ConditionFilter> conditionFilter, ConditionUtils conditionUtils) {
-        log.entry(exprTOs, conditionFilter, conditionUtils);
+            Collection<ConditionFilter> conditionFilter, ConditionUtils conditionUtils,
+            String speciesId) {
+        log.entry(exprTOs, conditionFilter, conditionUtils, speciesId);
         
         // Check that TOs are not empty and not already propagated
         if (exprTOs == null || exprTOs.isEmpty()) {
@@ -761,17 +766,17 @@ public class CallService extends Service {
         }
         
         return log.exit(
-                this.propagateTOs(exprTOs, conditionFilter, conditionUtils, ExpressionCallTO.class));
+                this.propagateTOs(exprTOs, conditionFilter, conditionUtils, speciesId, ExpressionCallTO.class));
     }
     
     private <T extends CallTO> Set<ExpressionCall> propagateTOs(Collection<T> callTOs,
             Collection<ConditionFilter> conditionFilter, ConditionUtils conditionUtils, 
-            Class<T> type) throws IllegalArgumentException {
-        log.entry(callTOs, conditionFilter, conditionUtils);
+            String speciesId, Class<T> type) throws IllegalArgumentException {
+        log.entry(callTOs, conditionFilter, conditionUtils, speciesId, type);
         
         // Check conditionUtils contains all conditions of callTOs
         Set<Condition> conditions = callTOs.stream()
-            .map(to -> new Condition(to.getAnatEntityId(), to.getStageId()))
+            .map(to -> new Condition(to.getAnatEntityId(), to.getStageId(), speciesId))
             .collect(Collectors.toSet());
         
         if (!conditionUtils.getConditions().containsAll(conditions)) {
@@ -786,12 +791,14 @@ public class CallService extends Service {
         Set<ExpressionCall> inputCalls = null;
         if (type.equals(ExpressionCallTO.class)) {
             inputCalls = callTOs.stream()
-                    .map(to -> mapCallTOToExpressionCall((ExpressionCallTO) to, new DataPropagation()))
+                    .map(to -> mapCallTOToExpressionCall((ExpressionCallTO) to, 
+                            new DataPropagation(), speciesId))
                     .collect(Collectors.toSet());
     
         } else if (type.equals(NoExpressionCallTO.class)) {
             inputCalls = callTOs.stream()
-                    .map(to -> mapCallTOToExpressionCall((NoExpressionCallTO) to, new DataPropagation()))
+                    .map(to -> mapCallTOToExpressionCall((NoExpressionCallTO) to,
+                            new DataPropagation(), speciesId))
                     .collect(Collectors.toSet());
     
         } else {

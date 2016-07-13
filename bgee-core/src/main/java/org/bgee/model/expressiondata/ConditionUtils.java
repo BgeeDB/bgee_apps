@@ -246,10 +246,11 @@ public class ConditionUtils implements Comparator<Condition> {
                             .stream().map(e -> e.getId()).collect(Collectors.toSet()));
                 }
                 
-                return ancAnatEntityIds.stream().flatMap(ancAnatEntityId -> 
-                    ancStageIds.stream().map(ancStageId -> new Condition(ancAnatEntityId, ancStageId))
-                    ).filter(ancCond -> !cond.equals(ancCond));
-                
+                return ancAnatEntityIds.stream()
+                        .flatMap(ancAnatEntityId -> ancStageIds.stream().map(ancStageId -> 
+                            new Condition(ancAnatEntityId, ancStageId, speciesId)))
+                        .filter(ancCond -> !cond.equals(ancCond));
+
             }).collect(Collectors.toSet());
             
             tempConditions.addAll(ancConditions);

@@ -14,8 +14,8 @@ import org.apache.logging.log4j.Logger;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, May 2016
- * @since   Bgee 13 Oct. 2015
+ * @version Bgee 13, July 2016
+ * @since   Bgee 13, Oct. 2015
  */
 public class ConditionFilter implements Predicate<Condition> {
     private final static Logger log = LogManager.getLogger(ConditionFilter.class.getName());

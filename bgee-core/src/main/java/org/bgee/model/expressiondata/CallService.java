@@ -172,6 +172,10 @@ public class CallService extends Service {
             throw log.throwing(new UnsupportedOperationException(
                     "Management of diff. expression and no-expression queries not yet implemented."));
         }
+        if (clonedFilters.stream().anyMatch(filter -> filter.getConditionFilters() != null 
+                    || !filter.getConditionFilters().isEmpty())) {
+            log.warn("ExpressionDAO may not return what you expect");
+        }
 
         //OK, real work starts here
         //XXX: NO, should not returned processed Calls, only retrieve streams from DAOs
@@ -240,14 +244,15 @@ public class CallService extends Service {
                         //CallTOFilters
                         exprCallData.stream()
                             .flatMap(callData -> mapCallDataToExprCallTOFilters(callData, 
-                                    callFilter.getDataPropagationFilter()).stream())
+                                    new DataPropagation(PropagationState.SELF, 
+                                            PropagationState.SELF, true)).stream())
                             .collect(Collectors.toSet()), 
                         //includeSubstructures
-                        !PropagationState.SELF.equals(callFilter.getDataPropagationFilter()
-                                .getAnatEntityPropagationState()), 
+                        //FIXME for the moment, only not propagated calls
+                        false,
                         //includeSubStages
-                        !PropagationState.SELF.equals(callFilter.getDataPropagationFilter()
-                                .getDevStagePropagationState()), 
+                        //FIXME for the moment, only not propagated calls
+                        false,
                         //global gene filter
                         Optional.ofNullable(callFilter.getGeneFilter())
                             .map(geneFilter -> geneFilter.getGeneIds()).orElse(new HashSet<>()), 
@@ -267,8 +272,7 @@ public class CallService extends Service {
                     .stream()
                     //allow mapping of the ExpressionCallTOs to ExpressionCalls. The Stream is still 
                     //not consumed at this point (map is a lazy operation as well). 
-                    .map(callTO -> mapCallTOToExpressionCall(callTO, 
-                            callFilter.getDataPropagationFilter(), speciesId)
+                    .map(callTO -> mapCallTOToExpressionCall(callTO, new DataPropagation(), speciesId)
                 ));
     }
 
@@ -282,7 +286,7 @@ public class CallService extends Service {
         //at this point, we cannot know the propagation status per data type, 
         //the expression tables only store a global propagation status 
         //over all data types. To infer the status per data type, 
-        //we would need two queries, one including sub-stages/subtructures, 
+        //we would need two queries, one including sub-stages/substructures, 
         //and another one not including them. 
         //so here, we provide the only thing we know: the propagation status 
         //requested to the DAO.
@@ -705,9 +709,10 @@ public class CallService extends Service {
      *                          which to propagate call for.
      * @return                  A {@code Set} of {@code ExpressionCall}s that are propagated calls.
      */
-    // TODO: set to private because argument are TOs? 
+    // NOTE: This method is protected to keep units tests even if there are TOs as arguments 
     // NOTE: No update ExpressionCalls, to provide better unicity of the method, and allow better unit testing
-    public Set<ExpressionCall> propagateNoExpressionTOs(Collection<NoExpressionCallTO> noExprTOs,
+    // TODO: Replace TOs as arguments by ExpressionCall
+    protected Set<ExpressionCall> propagateNoExpressionTOs(Collection<NoExpressionCallTO> noExprTOs,
             Collection<ConditionFilter> conditionFilter, ConditionUtils conditionUtils,
             String speciesId) {
         log.entry(noExprTOs, conditionFilter, conditionUtils, speciesId);
@@ -745,9 +750,10 @@ public class CallService extends Service {
      *                          {@code Ontology}s to use for the propagation. 
      * @return                  A {@code Set} of {@code ExpressionCall}s that are propagated calls.
      */
-    // TODO: set to private because argument are TOs? 
+    // NOTE: This method is protected to keep units tests even if there are TOs as arguments 
     // NOTE: No update ExpressionCalls, to provide better unicity of the method, and allow better unit testing
-    public Set<ExpressionCall> propagateExpressionTOs(Collection<ExpressionCallTO> exprTOs,
+    // TODO: Replace TOs as arguments by ExpressionCall
+    protected Set<ExpressionCall> propagateExpressionTOs(Collection<ExpressionCallTO> exprTOs,
             Collection<ConditionFilter> conditionFilter, ConditionUtils conditionUtils,
             String speciesId) {
         log.entry(exprTOs, conditionFilter, conditionUtils, speciesId);
@@ -770,6 +776,7 @@ public class CallService extends Service {
                 this.propagateTOs(exprTOs, conditionFilter, conditionUtils, speciesId, ExpressionCallTO.class));
     }
     
+    // TODO: Replace TOs as arguments by ExpressionCall
     private <T extends CallTO> Set<ExpressionCall> propagateTOs(Collection<T> callTOs,
             Collection<ConditionFilter> conditionFilter, ConditionUtils conditionUtils, 
             String speciesId, Class<T> type) throws IllegalArgumentException {
@@ -973,8 +980,9 @@ public class CallService extends Service {
      * @return      The representative {@code ExpressionCall} (with reconciled quality per data types,
      *              observed data state, conflict status etc. But not with organId-stageId)
      */
-    public ExpressionCall reconcileSingleGeneCalls(Collection<ExpressionCall> calls) {
     // TODO add unit test for management of global mean ranks
+    // TODO to be added to ExpressionCallUtils see TODOs into ExpressionCall
+    public static ExpressionCall reconcileSingleGeneCalls(Collection<ExpressionCall> calls) {
         log.entry(calls);
         
         // Check calls have same gene ID
@@ -991,11 +999,11 @@ public class CallService extends Service {
                 .collect(Collectors.toSet());
 
         // DataPropagation
-        PropagationState anatEntityPropagationState = this.summarizePropagationState(
+        PropagationState anatEntityPropagationState = CallService.summarizePropagationState(
                 callData.stream()
                     .map(c -> c.getDataPropagation().getAnatEntityPropagationState())
                     .collect(Collectors.toSet()));
-        PropagationState devStagePropagationState = this.summarizePropagationState(
+        PropagationState devStagePropagationState = CallService.summarizePropagationState(
                 callData.stream()
                     .map(c -> c.getDataPropagation().getDevStagePropagationState())
                     .collect(Collectors.toSet()));
@@ -1077,7 +1085,7 @@ public class CallService extends Service {
      *                                  For instance, {@code PropagationState.DESCENDANT} and 
      *                                  {@code PropagationState.SELF_OR_ANCESTOR} combination.
      */
-    private PropagationState summarizePropagationState(Set<PropagationState> propStates) 
+    private static PropagationState summarizePropagationState(Set<PropagationState> propStates) 
             throws IllegalArgumentException {
         log.entry(propStates);
         

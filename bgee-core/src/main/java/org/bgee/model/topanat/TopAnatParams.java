@@ -540,9 +540,7 @@ public class TopAnatParams {
                     this.submittedBackgroundIds != null? new GeneFilter(this.submittedBackgroundIds): null, 
                     //condition filter
                     StringUtils.isBlank(this.devStageId)? null: 
-                        Arrays.asList(new ConditionFilter(null, Arrays.asList(this.devStageId))), 
-                    //data propagation
-                    new DataPropagation(PropagationState.SELF, PropagationState.SELF_OR_DESCENDANT), 
+                        Arrays.asList(new ConditionFilter(null, Arrays.asList(this.devStageId))),
                     this.getExpressionCallData()
                 ));
         }

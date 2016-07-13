@@ -28,7 +28,6 @@ import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.ConditionUtils;
 import org.bgee.model.expressiondata.baseelements.CallType.Expression;
-import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.view.GeneDisplay;
@@ -40,7 +39,7 @@ import org.bgee.view.ViewFactory;
  * @author  Philippe Moret
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, May 2016
+ * @version Bgee 13, July 2016
  * @since   Bgee 13, Nov. 2015
  */
 public class CommandGene extends CommandParent {
@@ -364,7 +363,7 @@ public class CommandGene extends CommandParent {
 		CallService service = serviceFactory.getCallService();
 		return log.exit(service.loadExpressionCalls(
 		        gene.getSpeciesId(), 
-                new ExpressionCallFilter(new GeneFilter(gene.getId()), null, new DataPropagation(), 
+                new ExpressionCallFilter(new GeneFilter(gene.getId()), null, 
                         Arrays.asList(new ExpressionCallData(Expression.EXPRESSED))), 
                 EnumSet.of(CallService.Attribute.GENE_ID, CallService.Attribute.ANAT_ENTITY_ID, 
                         CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.CALL_DATA, 

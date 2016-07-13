@@ -29,15 +29,15 @@ public class MultiSpeciesOntology<T extends NamedEntity & OntologyElement<T>>
 
     private static final Logger log = LogManager.getLogger(MultiSpeciesOntology.class.getName());
 
-    //FIXME: no getter, add javadoc
     /**
-     * @see #getRealtionTaxonConstraints()
+     * A {@code Set} of {@code TaxonConstraint}s that are taxon constrains on relations 
+     * between {@code OntologyElement}s in this ontology.
      */
     private final Set<TaxonConstraint> relationTaxonConstraints;
 
-    //FIXME: no getter, add javadoc
     /**
-     * @see #getTaxonConstraints()
+     * A {@code Set} of {@code TaxonConstraint}s that are taxon constrains on 
+     * {@code OntologyElement}s in this ontology.
      */
     private final Set<TaxonConstraint> taxonConstraints;
 

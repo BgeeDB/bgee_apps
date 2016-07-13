@@ -187,8 +187,8 @@ public class GenerateRankFileTest extends TestAncestor {
         
         OntologyService ontService = mock(OntologyService.class);
         when(serviceFactory.getOntologyService()).thenReturn(ontService);
-        when(ontService.getAnatEntityOntology(any(), any(), any())).thenReturn(mock(Ontology.class));
-        when(ontService.getDevStageOntology(any(), any(), any())).thenReturn(mock(Ontology.class));
+        when(ontService.getAnatEntityOntology(any(String.class), any(), any())).thenReturn(mock(Ontology.class));
+        when(ontService.getDevStageOntology(any(String.class), any(), any())).thenReturn(mock(Ontology.class));
         
         
         CallService callService = mock(CallService.class);
@@ -244,7 +244,7 @@ public class GenerateRankFileTest extends TestAncestor {
         
         //*** Launch test ***
         GenerateRankFile generate = new GenerateRankFile(() -> serviceFactory, uberon, 
-                ((speId, conds, anatOnt, devOnt) -> condUtils), 
+                ((conds, anatOnt, devOnt) -> condUtils), 
                 (cu -> comparator), redundantCallsFuncSupplier);
         File folder1 = testFolder.newFolder("f1");
         File folder2 = testFolder.newFolder("f2");

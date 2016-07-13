@@ -228,7 +228,7 @@ public class CommandGene extends CommandParent {
 	                 new LinkedHashMap<>(), new HashMap<>(), new HashMap<>(), null));
 	    }
         
-        ConditionUtils conditionUtils = new ConditionUtils(Arrays.asList(gene.getSpeciesId()), 
+        ConditionUtils conditionUtils = new ConditionUtils(
                 exprCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()), 
                 serviceFactory);
         

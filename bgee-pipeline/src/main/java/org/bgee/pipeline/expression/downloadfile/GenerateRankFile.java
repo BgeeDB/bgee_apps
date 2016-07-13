@@ -79,8 +79,8 @@ public class GenerateRankFile {
      * TODO: to remove once we'll have created an UtilsFactory in bgee-core 
      */
     @FunctionalInterface
-    protected static interface QuadriFunction<T, U, V, W, R> {
-        public R apply(T t, U u, V v, W w);
+    protected static interface TriFunction<T, U, V, R> {
+        public R apply(T t, U u, V v);
     }
     
     /**
@@ -457,7 +457,7 @@ public class GenerateRankFile {
      * for injection purposes. 
      * TODO: to remove once we'll have created an UtilsFactory in bgee-core 
      */
-    private final QuadriFunction<Collection<String>, Collection<Condition>, Ontology<AnatEntity>, 
+    private final TriFunction<Collection<Condition>, Ontology<AnatEntity>, 
     Ontology<DevStage>, ConditionUtils> condUtilsSupplier;
     /**
      * A {@code Function} matching the constructor of {@code ExpressionCall.RankComparator}, 
@@ -504,7 +504,7 @@ public class GenerateRankFile {
      */
     //TODO: stop using these functional interfaces once we'll have created an UtilsFactory in bgee-core
     protected GenerateRankFile(Supplier<ServiceFactory> serviceFactorySupplier, Uberon uberonOnt, 
-            QuadriFunction<Collection<String>, Collection<Condition>, Ontology<AnatEntity>, Ontology<DevStage>, 
+            TriFunction<Collection<Condition>, Ontology<AnatEntity>, Ontology<DevStage>, 
             ConditionUtils> condUtilsSupplier, 
             Function<ConditionUtils, ExpressionCall.RankComparator> rankComparatorSupplier, 
             BiFunction<List<ExpressionCall>, ConditionUtils, Set<ExpressionCall>> redundantCallsFuncSupplier) {
@@ -611,11 +611,9 @@ public class GenerateRankFile {
         //Load ontologies with all data for the requested species, will avoid to make one query 
         //for each gene
         Ontology<AnatEntity> anatEntityOnt = serviceFactory.getOntologyService()
-                .getAnatEntityOntology(Arrays.asList(speciesId), null, 
-                        serviceFactory);
+                .getAnatEntityOntology(speciesId, null, serviceFactory);
         Ontology<DevStage> devStageOnt = serviceFactory.getOntologyService()
-                .getDevStageOntology(Arrays.asList(speciesId), null, 
-                        serviceFactory);
+                .getDevStageOntology(speciesId, null, serviceFactory);
         
         //Query expression data for the species. 
         Iterator<ExpressionCall> callIt = this.getExpressionCalls(speciesId, anatEntityOnly, 
@@ -796,7 +794,7 @@ public class GenerateRankFile {
         log.entry(singleGeneExprCalls, gene, anatEntityOnt, devStageOnt);
         
         //Instantiate a ConditionUtils for computations and for display purpose
-        ConditionUtils conditionUtils = this.condUtilsSupplier.apply(Arrays.asList(gene.getSpeciesId()), 
+        ConditionUtils conditionUtils = this.condUtilsSupplier.apply( 
                 singleGeneExprCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()), 
                 anatEntityOnt, devStageOnt);
 

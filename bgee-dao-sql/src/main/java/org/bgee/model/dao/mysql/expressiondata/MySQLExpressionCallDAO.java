@@ -50,6 +50,12 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 //      If including substages, the mean rank (over the GROUP BY) of the mean rank 
 //      (over the requested data types) should be used.
 //TODO: manage ancestralTaxonId in new method getExpressionCalls
+//TODO: FINAL SOLUTION!! the DAO should never "merge" calls when include substructures 
+//or substages is true, it should return ALL calls. Meaning that it should not be possible to query, 
+//e.g. includeSubstructures=true AND EST=HIGH AND Affy=HIGH, because this information needs call "merging". 
+//Rather, all calls, in a structure should be retrieved, including calls in substructures, 
+//that satisfy EST=HIGH OR Affy=HIGH. Call merging should be performed solely in bgee-core.
+//=> NO MORE GROUP BY NOR HAVING CLAUSES NEEDED!!
 public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute> 
 implements ExpressionCallDAO {
     

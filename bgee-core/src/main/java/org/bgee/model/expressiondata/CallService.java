@@ -1,6 +1,7 @@
 package org.bgee.model.expressiondata;
 
 import java.util.AbstractMap.SimpleEntry;
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -935,8 +936,11 @@ public class CallService extends Service {
             
             // Add propagated expression call.
             Set<ExpressionCallData> currentCallData = null;
+            BigDecimal currentGlobalMeanRank = null;
             if (inputCondition.equals(condition)) {
                 currentCallData = selfCallData;
+                // The global mean rank is kept only when it is not a propagated call
+                currentGlobalMeanRank = call.getGlobalMeanRank();
             } else {
                 currentCallData = relativeCallData;
             }
@@ -948,7 +952,7 @@ public class CallService extends Service {
                     null, // ExpressionSummary (update after the propagation of all TOs)
                     null, // DataQuality (update after the propagation of all TOs)
                     currentCallData, 
-                    null);
+                    currentGlobalMeanRank);
 
             log.debug("Add the propagated call: {}", propagatedCall);
             globalCalls.add(propagatedCall);
@@ -970,6 +974,7 @@ public class CallService extends Service {
      *              observed data state, conflict status etc. But not with organId-stageId)
      */
     public ExpressionCall reconcileSingleGeneCalls(Collection<ExpressionCall> calls) {
+    // TODO add unit test for management of global mean ranks
         log.entry(calls);
         
         // Check calls have same gene ID
@@ -1052,8 +1057,14 @@ public class CallService extends Service {
             dataQuality = null;
         }
 
+        // Global mean rank
+        Optional<BigDecimal> bestGlobalMeanRank = calls.stream()
+            .filter(c -> c.getGlobalMeanRank() != null)
+            .map(c -> c.getGlobalMeanRank())
+            .max((r1, r2) -> r1.compareTo(r2));
+        
         return log.exit(new ExpressionCall(geneId, null, callDataProp, expressionSummary, 
-                dataQuality, callData, null));
+                dataQuality, callData, bestGlobalMeanRank.orElse(null)));
     }
     
     /**

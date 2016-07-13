@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -167,12 +166,13 @@ public class OntologyService extends Service {
             boolean getAncestors, boolean getDescendants, ServiceFactory serviceFactory) {
         log.entry(speciesIds, anatEntityIds, getAncestors, getDescendants, relationTypes, serviceFactory);
         
-        return log.exit(this.loadOntology(AnatEntity.class, speciesIds, anatEntityIds, 
-                relationTypes, getAncestors, getDescendants, 
-                (speIds, entityIds) -> serviceFactory.getAnatEntityService()
-                    .loadAnatEntities(speIds, true, entityIds)
-                    .collect(Collectors.toSet()),
-                serviceFactory));
+        Set<RelationTO> rels = this.getRelationTOs(AnatEntity.class, speciesIds, anatEntityIds, 
+                relationTypes, getAncestors, getDescendants);
+        return log.exit(new MultiSpeciesOntology<AnatEntity>(speciesIds, 
+                serviceFactory.getAnatEntityService()
+                .loadAnatEntities(speciesIds, true, this.getRequestedEntityIds(anatEntityIds, rels))
+                .collect(Collectors.toSet()), 
+                rels, relationTypes, serviceFactory, AnatEntity.class));
     }
     
     /**
@@ -279,48 +279,41 @@ public class OntologyService extends Service {
             ServiceFactory serviceFactory) {
         log.entry(speciesIds, devStageIds, getAncestors, getDescendants, serviceFactory);
         
-        return log.exit(this.loadOntology(DevStage.class, speciesIds, devStageIds, 
-                EnumSet.of(RelationType.ISA_PARTOF), getAncestors, getDescendants, 
-                (speIds, entityIds) -> serviceFactory.getDevStageService()
-                    .loadDevStages(speIds, true, entityIds)
-                    .collect(Collectors.toSet()),
-                serviceFactory));
+        Set<RelationTO> rels = this.getRelationTOs(DevStage.class, speciesIds, devStageIds, 
+                EnumSet.of(RelationType.ISA_PARTOF), getAncestors, getDescendants);
+        return log.exit(new MultiSpeciesOntology<DevStage>(speciesIds, 
+                serviceFactory.getDevStageService()
+                .loadDevStages(speciesIds, true, this.getRequestedEntityIds(devStageIds, rels))
+                .collect(Collectors.toSet()), 
+                rels, EnumSet.of(RelationType.ISA_PARTOF), serviceFactory, DevStage.class));
     }
-
+    
     /**
-     * Convenience method to load any ontology. 
+     * Convenience method to retrieve {@code RelationTO}s for any {@code OntologyElement} type. 
      * 
      * @param elementType           A {@code Class<T>} that is the type of the elements 
-     *                              in the returned {@code SpeciesNeutralOntology}.
+     *                              for which to retrieve {@code RelationTO}s.
      * @param speciesIds            A {@code Collection} of {@code String}s that are IDs of species 
-     *                              which to retrieve entities for. If several IDs are provided, 
-     *                              entities existing in any of them will be retrieved. 
+     *                              which to retrieve relations for. If several IDs are provided, 
+     *                              relations valid in any of them will be retrieved. 
      *                              Can be {@code null} or empty.
      * @param entityIds             A {@code Collection} of {@code String}s that are IDs of 
-     *                              entities to retrieve. Can be {@code null} or empty.
+     *                              entities to retrieve relations for. Can be {@code null} or empty.
      * @param relationTypes         A {@code Collection} of {@code RelationType}s that are the relation
-     *                              types allowing to filter the relations between elements
-     *                              of the {@code SpeciesNeutralOntology}.
+     *                              types allowing to filter the relations to retrieve.
      * @param getAncestors          A {@code boolean} defining whether the ancestors of the selected 
      *                              entities, and the relations leading to them, should be retrieved.
      * @param getDescendants        A {@code boolean} defining whether the descendants of the selected 
      *                              entities, and the relations leading to them, should be retrieved.
-     * @param loadEntityFunction    A {@code BiFunction} responsible for returning a {@code Collection} 
-     *                              of {@code T}s, accepting as first argument a {@code Collection} 
-     *                              of {@code String}s that are the IDs of requested species, 
-     *                              and as second argument a {@code Collection} of {@code String}s 
-     *                              that are the IDs of selected entities.
-     * @return                      A {@code SpeciesNeutralOntology} of {@code T} properly loaded according to 
-     *                              the requested parameters.
-     * @param <T>                   The type of elements in the returned {@code SpeciesNeutralOntology}.
+     * @return                      A {@code Set} of {@code RelationTO}s that are relations between 
+     *                              requested entities, and potentially also to their ancestors 
+     *                              and/or their descendants.
+     * @param <T>                   The type of elements for which to retrieve {@code RelationTO}s.
      */
-    private <T extends NamedEntity & OntologyElement<T>> MultiSpeciesOntology<T> loadOntology(
+    private <T extends NamedEntity & OntologyElement<T>> Set<RelationTO> getRelationTOs(
             Class<T> elementType, Collection<String> speciesIds, Collection<String> entityIds, 
-            Collection<RelationType> relationTypes, boolean getAncestors, boolean getDescendants, 
-            BiFunction<Collection<String>, Collection<String>, Collection<T>> loadEntityFunction,
-            ServiceFactory serviceFactory) {
-        log.entry(elementType, speciesIds, entityIds, relationTypes, getAncestors, getDescendants,
-                loadEntityFunction, serviceFactory);
+            Collection<RelationType> relationTypes, boolean getAncestors, boolean getDescendants) {
+        log.entry(elementType, speciesIds, entityIds, relationTypes, getAncestors, getDescendants);
         
         final Set<String> filteredEntities = Collections.unmodifiableSet(
                 entityIds == null? new HashSet<>(): new HashSet<>(entityIds));
@@ -331,8 +324,8 @@ public class OntologyService extends Service {
         Set<RelationStatus> relationStatus = EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE));
         
         //by default, include all ancestors and descendants of selected entities
-        Set<String> sourceAnatEntityIds = filteredEntities;
-        Set<String> targetAnatEntityIds = filteredEntities;
+        Set<String> sourceIds = filteredEntities;
+        Set<String> targetIds = filteredEntities;
         boolean sourceOrTarget = true;
         if (!getAncestors && !getDescendants) {
             //request only relations between selected entities (constraints both sources and targets 
@@ -340,36 +333,54 @@ public class OntologyService extends Service {
             sourceOrTarget = false;
         } else if (!getAncestors) {
             //to not get ancestors, we don't select relations where selected entities are sources
-            sourceAnatEntityIds = null;
+            sourceIds = null;
         } else if (!getDescendants) {
             //opposite if we don't want the descendants
-            targetAnatEntityIds = null;
+            targetIds = null;
         }
+        log.trace("speciesIds: {} - sourceIds: {} - targetIds: {} - sourceOrTarget: {} - relationStatus: {}", 
+                clonedSpeIds, sourceIds, targetIds, sourceOrTarget, relationStatus);
         
-        Collection<RelationTO> relations = null;
+        Set<RelationTO> relations = null;
         if (AnatEntity.class.isAssignableFrom(elementType)) {
-            relations = getDaoManager().getRelationDAO().getAnatEntityRelations(clonedSpeIds, true, 
-                        sourceAnatEntityIds, targetAnatEntityIds, sourceOrTarget, 
-                        relationTypes.stream()
-                                .map(SpeciesNeutralOntology::convertRelationType)
-                                .collect(Collectors.toCollection(() -> 
-                                    EnumSet.noneOf(RelationTO.RelationType.class))), 
-                        relationStatus, 
-                        null)
-                    .getAllTOs();
+            relations = new HashSet<>(getDaoManager().getRelationDAO().getAnatEntityRelations(
+                    clonedSpeIds, true, sourceIds, targetIds, sourceOrTarget, 
+                    relationTypes.stream()
+                            .map(SpeciesNeutralOntology::convertRelationType)
+                            .collect(Collectors.toCollection(() -> 
+                    EnumSet.noneOf(RelationTO.RelationType.class))), 
+                    relationStatus, 
+                    null)
+                    .getAllTOs());
         } else if (DevStage.class.isAssignableFrom(elementType)) {
-            relations = getDaoManager().getRelationDAO().getStageRelations(clonedSpeIds, true, 
-                        sourceAnatEntityIds, targetAnatEntityIds, sourceOrTarget, relationStatus, null)
-                    .getAllTOs();
+            relations = new HashSet<>(getDaoManager().getRelationDAO().getStageRelations(
+                    clonedSpeIds, true, sourceIds, targetIds, sourceOrTarget, relationStatus, null)
+                    .getAllTOs());
         } else {
             throw log.throwing(new IllegalArgumentException("Unsupported type: " + elementType));
         }
         
+        return log.exit(relations);
+    }
+    /**
+     * Convenience method to retrieve IDs of {@code OntologyElement}s to load, 
+     * based on requested {@code OntologyElement} IDs and relations 
+     * leading to other {@code OntologyElement}s
+     * 
+     * @param entityIds             A {@code Collection} of {@code String}s that are IDs of 
+     *                              requested {@code OntologyElement}s. Can be {@code null} or empty.
+     * @param relations             A {@code Collection} of {@code RelationTO}s that are relations 
+     *                              between {@code OntologyElement}s.
+     * @return                      A {@code Set} of {@code String}s that are IDs of 
+     *                              {@code OntologyElement}s to load.
+     */
+    private Set<String> getRequestedEntityIds(Collection<String> entityIds, Collection<RelationTO> relations) {
+        log.entry(entityIds, relations);
         //we retrieve objects corresponding to all the requested entities, 
         //plus their ancestors/descendants depending on the parameters. 
         //We cannot simply use the retrieved relations, as some entities 
-        //might have no relations according to the requested parameters. 
-        Set<String> requestedEntityIds = new HashSet<>(filteredEntities);
+        //might have no relations according to the requested parameters
+        Set<String> requestedEntityIds = entityIds == null? new HashSet<>(): new HashSet<>(entityIds);
         //Warning: if filteredEntities is empty, then all entities are requested 
         //and we should not restrain the entities using the relations
         if (!requestedEntityIds.isEmpty()) {
@@ -377,8 +388,6 @@ public class OntologyService extends Service {
                     .flatMap(rel -> Stream.of(rel.getSourceId(), rel.getTargetId()))
                     .collect(Collectors.toSet()));
         }
-        return log.exit(new MultiSpeciesOntology<T>(speciesIds, 
-                loadEntityFunction.apply(clonedSpeIds, requestedEntityIds), 
-                relations, relationTypes, serviceFactory, elementType));
+        return log.exit(requestedEntityIds);
     }
 }

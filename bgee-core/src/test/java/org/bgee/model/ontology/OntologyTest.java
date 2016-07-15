@@ -25,7 +25,7 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStat
 import org.junit.Test;
 
 /**
- * This class holds the unit tests for the {@code SpeciesNeutralOntology} class.
+ * This class holds the unit tests for the {@code OntologyBase} class.
  * 
  * @author  Valentine Rech de Laval
  * @version Bgee 13, July 2016
@@ -38,10 +38,10 @@ public class OntologyTest extends TestAncestor {
 
     /**
      * Test the methods:
-     * - {@link SpeciesNeutralOntology#getAncestors(Entity)},
-     * - {@link SpeciesNeutralOntology#getAncestors(NamedEntity, boolean)},
-     * - {@link SpeciesNeutralOntology#getAncestors(NamedEntity, Collection)}, and
-     * - {@link SpeciesNeutralOntology#getAncestors(NamedEntity, Collection, boolean)}
+     * - {@link OntologyBase#getAncestors(Entity)},
+     * - {@link OntologyBase#getAncestors(NamedEntity, boolean)},
+     * - {@link OntologyBase#getAncestors(NamedEntity, Collection)}, and
+     * - {@link OntologyBase#getAncestors(NamedEntity, Collection, boolean)}
      */
     @Test
     public void shouldGetAncestors() {
@@ -86,7 +86,7 @@ public class OntologyTest extends TestAncestor {
     }
     
     /**
-     * Test the method {@link SpeciesNeutralOntology#getAncestors(Collection, NamedEntity, Collection, boolean)}.
+     * Test the method {@link OntologyBase#getAncestors(Collection, NamedEntity, Collection, boolean)}.
      */
     @Test
     public void shouldGetAncestors_multiSpecies() {
@@ -162,10 +162,10 @@ public class OntologyTest extends TestAncestor {
     
     /**
      * Test the methods:
-     * - {@link SpeciesNeutralOntology#getDescendants(Entity)},
-     * - {@link SpeciesNeutralOntology#getDescendants(NamedEntity, boolean)},
-     * - {@link SpeciesNeutralOntology#getDescendants(NamedEntity, Collection)}, and
-     * - {@link SpeciesNeutralOntology#getDescendants(NamedEntity, Collection, boolean)}
+     * - {@link OntologyBase#getDescendants(Entity)},
+     * - {@link OntologyBase#getDescendants(NamedEntity, boolean)},
+     * - {@link OntologyBase#getDescendants(NamedEntity, Collection)}, and
+     * - {@link OntologyBase#getDescendants(NamedEntity, Collection, boolean)}
      */
     @Test
     public void shouldGetDescendants() {
@@ -178,7 +178,7 @@ public class OntologyTest extends TestAncestor {
         Set<AnatEntity> elements = new HashSet<>(Arrays.asList(ae1, ae2, ae2p, ae3));
         Set<RelationTO> relations = this.getAnatEntityRelationTOs();
 
-        SpeciesNeutralOntology<AnatEntity> ontology = new Ontology<>("sp1", elements, 
+        OntologyBase<AnatEntity> ontology = new Ontology<>("sp1", elements, 
                 relations, ALL_RELATIONS, mockFact, AnatEntity.class);
         
         Set<AnatEntity> descendants = ontology.getDescendants(ae1);
@@ -206,7 +206,7 @@ public class OntologyTest extends TestAncestor {
     }
     
     /**
-     * Test the method {@link SpeciesNeutralOntology#getDescendants(Collection, NamedEntity, Collection, boolean)}.
+     * Test the method {@link OntologyBase#getDescendants(Collection, NamedEntity, Collection, boolean)}.
      */
     @Test
     public void shouldGetDescendants_multiSpecies() {
@@ -293,7 +293,7 @@ public class OntologyTest extends TestAncestor {
     }
 
     /**
-     * Test the method {@link SpeciesNeutralOntology#getElement(String)}.
+     * Test the method {@link OntologyBase#getElement(String)}.
      */
     @Test
     public void shouldGetElement() {
@@ -304,7 +304,7 @@ public class OntologyTest extends TestAncestor {
         Set<RelationTO> relations = this.getAnatEntityRelationTOs();
 
         ServiceFactory mockFact = mock(ServiceFactory.class);
-        SpeciesNeutralOntology<AnatEntity> ontology = new Ontology<>("sp1", elements,
+        OntologyBase<AnatEntity> ontology = new Ontology<>("sp1", elements,
                 relations, ALL_RELATIONS, mockFact, AnatEntity.class);
         
         assertEquals("Incorrect element", ae1, ontology.getElement("UBERON:0001"));
@@ -313,7 +313,7 @@ public class OntologyTest extends TestAncestor {
     }
     
     /**
-     * Test the method {@link SpeciesNeutralOntology#getElements(String)}.
+     * Test the method {@link OntologyBase#getElements(String)}.
      */
     @Test
     public void shouldGetElements() {

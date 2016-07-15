@@ -25,9 +25,9 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
  * @since   Bgee 13, Dec. 2015
  * @param <T>   The type of element in this ontology or sub-graph.
  */
-public abstract class SpeciesNeutralOntology<T extends NamedEntity & OntologyElement<T>> {
+public abstract class OntologyBase<T extends NamedEntity & OntologyElement<T>> {
 
-    private static final Logger log = LogManager.getLogger(SpeciesNeutralOntology.class.getName());
+    private static final Logger log = LogManager.getLogger(OntologyBase.class.getName());
     
     /**
      * @see #getElements()
@@ -59,7 +59,7 @@ public abstract class SpeciesNeutralOntology<T extends NamedEntity & OntologyEle
      * and the type of elements of the ontology.
      * <p>
      * This constructor is protected to not expose the {@code RelationTO} objects 
-     * from the {@code bgee-dao-api} layer. {@code SpeciesNeutralOntology} objects can only be obtained 
+     * from the {@code bgee-dao-api} layer. {@code OntologyBase} objects can only be obtained 
      * through {@code OntologyService}s.
      * 
      * @param elements          A {@code Collection} of {@code T}s that are
@@ -70,12 +70,12 @@ public abstract class SpeciesNeutralOntology<T extends NamedEntity & OntologyEle
      *                          considered to build this ontology or sub-graph.
      * @param serviceFactory    A {@code ServiceFactory} to acquire {@code Service}s from.
      * @param type              A {@code Class<T>} that is the type of {@code elements} 
-     *                          to be store by this {@code SpeciesNeutralOntology}.
+     *                          to be store by this {@code OntologyBase}.
      */
     //XXX: when needed, we could add a parameter 'directRelOnly', in case we only want 
     //to retrieve direct parents or children of terms. See method 'getRelatives' 
     //already capable of considering only direct relations.
-    protected SpeciesNeutralOntology(Collection<T> elements, Collection<RelationTO> relations,
+    protected OntologyBase(Collection<T> elements, Collection<RelationTO> relations,
             Collection<RelationType> relationTypes, ServiceFactory serviceFactory, Class<T> type) {
         log.entry(elements, relations, relationTypes, serviceFactory, type);
         if (elements == null || elements.isEmpty()) {
@@ -148,7 +148,7 @@ public abstract class SpeciesNeutralOntology<T extends NamedEntity & OntologyEle
     }
 
     /**
-     * @return  The {@code Class<T>} that is the type of {@code elements} stored by this {@code SpeciesNeutralOntology}.
+     * @return  The {@code Class<T>} that is the type of {@code elements} stored by this {@code OntologyBase}.
      */
     protected Class<T> getType() {
         return type;
@@ -373,7 +373,7 @@ public abstract class SpeciesNeutralOntology<T extends NamedEntity & OntologyEle
         final EnumSet<RelationTO.RelationType> usedRelationTypes = (relationTypes == null?
                 EnumSet.allOf(RelationType.class): new HashSet<>(relationTypes))
                 .stream()
-                .map(SpeciesNeutralOntology::convertRelationType)
+                .map(OntologyBase::convertRelationType)
                 .collect(Collectors.toCollection(() -> EnumSet.noneOf(RelationTO.RelationType.class)));
 
         final Set<String> allowedRelationIds;
@@ -414,7 +414,7 @@ public abstract class SpeciesNeutralOntology<T extends NamedEntity & OntologyEle
     }
 
     /**
-     * Convert a {@code RelationType} from {@code SpeciesNeutralOntology} to a {@code RelationType} 
+     * Convert a {@code RelationType} from {@code OntologyBase} to a {@code RelationType} 
      * from {@code RelationTO}.
      * 
      * @param relType   The {@code RelationType} to convert.
@@ -457,7 +457,7 @@ public abstract class SpeciesNeutralOntology<T extends NamedEntity & OntologyEle
             return false;
         if (getClass() != obj.getClass())
             return false;
-        SpeciesNeutralOntology<?> other = (SpeciesNeutralOntology<?>) obj;
+        OntologyBase<?> other = (OntologyBase<?>) obj;
         if (elements == null) {
             if (other.elements != null)
                 return false;

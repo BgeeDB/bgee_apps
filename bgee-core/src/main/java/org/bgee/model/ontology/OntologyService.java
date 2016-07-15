@@ -320,7 +320,7 @@ public class OntologyService extends Service {
             relations = new HashSet<>(getDaoManager().getRelationDAO().getAnatEntityRelations(
                     clonedSpeIds, true, sourceIds, targetIds, sourceOrTarget, 
                     relationTypes.stream()
-                            .map(SpeciesNeutralOntology::convertRelationType)
+                            .map(OntologyBase::convertRelationType)
                             .collect(Collectors.toCollection(() -> 
                     EnumSet.noneOf(RelationTO.RelationType.class))), 
                     relationStatus, 

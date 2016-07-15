@@ -25,7 +25,7 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
  * @param <T>   The type of element in this ontology or sub-graph.
  */
 public class MultiSpeciesOntology<T extends NamedEntity & OntologyElement<T>> 
-    extends SpeciesNeutralOntology<T> {
+    extends OntologyBase<T> {
 
     private static final Logger log = LogManager.getLogger(MultiSpeciesOntology.class.getName());
 
@@ -60,7 +60,7 @@ public class MultiSpeciesOntology<T extends NamedEntity & OntologyElement<T>>
      *                          considered to build this ontology or sub-graph.
      * @param serviceFactory    A {@code ServiceFactory} to acquire {@code Service}s from.
      * @param type              A {@code Class<T>} that is the type of {@code elements} 
-     *                          to be store by this {@code SpeciesNeutralOntology}.
+     *                          to be store by this {@code MultiSpeciesOntology}.
      */
     protected MultiSpeciesOntology(Collection<String> speciesIds, Collection<T> elements, 
             Collection<RelationTO> relations, Collection<RelationType> relationTypes,
@@ -149,7 +149,7 @@ public class MultiSpeciesOntology<T extends NamedEntity & OntologyElement<T>>
     
     /**
      * Get ancestors of the given {@code element} in this ontology and in {@code speciesIds},
-     * according to any {@code RelationType}s that were considered to build this {@code SpeciesNeutralOntology}.
+     * according to any {@code RelationType}s that were considered to build this {@code MultiSpeciesOntology}.
      * <p>
      * If {@code directRelOnly} is {@code true}, only direct relations incoming from or outgoing to 
      * {@code element} are considered, in order to only retrieve direct parents of {@code element}.
@@ -163,7 +163,7 @@ public class MultiSpeciesOntology<T extends NamedEntity & OntologyElement<T>>
      *                      of the given {@code element}. Can be empty if {@code element} 
      *                      has no ancestors according to the requested parameters.
      * @throws IllegalArgumentException If {@code element} is {@code null} or is not found 
-     *                                  in this {@code SpeciesNeutralOntology}.
+     *                                  in this {@code MultiSpeciesOntology}.
      */
     public Set<T> getAncestors(T element, boolean directRelOnly, Collection<String> speciesIds) {
         log.entry(element, directRelOnly, speciesIds);
@@ -188,7 +188,7 @@ public class MultiSpeciesOntology<T extends NamedEntity & OntologyElement<T>>
      *                      of {@code element} in this ontology. Can be empty if {@code element} 
      *                      has no ancestors according to the requested parameters.
      * @throws IllegalArgumentException If {@code element} is {@code null} or is not found 
-     *                                  in this {@code SpeciesNeutralOntology}.
+     *                                  in this {@code MultiSpeciesOntology}.
      */
     public Set<T> getAncestors(T element, Collection<RelationType> relationTypes, 
             boolean directRelOnly, Collection<String> speciesIds) {
@@ -201,7 +201,7 @@ public class MultiSpeciesOntology<T extends NamedEntity & OntologyElement<T>>
     
     /**
      * Get descendants of the given {@code element} in this ontology in {@code speciesIds}, 
-     * according to any {@code RelationType}s that were considered to build this {@code SpeciesNeutralOntology}.
+     * according to any {@code RelationType}s that were considered to build this {@code MultiSpeciesOntology}.
      * <p>
      * If {@code directRelOnly} is {@code true}, only direct relations incoming from or outgoing to 
      * {@code element} are considered, in order to only retrieve direct children of {@code element}.
@@ -215,7 +215,7 @@ public class MultiSpeciesOntology<T extends NamedEntity & OntologyElement<T>>
      *                      of the given {@code element} in this ontology. Can be empty if {@code element} 
      *                      has no descendants according to the requested parameters.
      * @throws IllegalArgumentException If {@code element} is {@code null} or is not found 
-     *                                  in this {@code SpeciesNeutralOntology}.
+     *                                  in this {@code MultiSpeciesOntology}.
      */
     public Set<T> getDescendants(T element, boolean directRelOnly, Collection<String> speciesIds) {
         log.entry(element, directRelOnly, speciesIds);
@@ -240,7 +240,7 @@ public class MultiSpeciesOntology<T extends NamedEntity & OntologyElement<T>>
      *                      of the given {@code element}. Can be empty if {@code element} 
      *                      has no descendants according to the requested parameters.
      * @throws IllegalArgumentException If {@code element} is {@code null} or is not found 
-     *                                  in this {@code SpeciesNeutralOntology}.
+     *                                  in this {@code MultiSpeciesOntology}.
      */
     public Set<T> getDescendants(T element, Collection<RelationType> relationTypes, 
             boolean directRelOnly, Collection<String> speciesIds) {
@@ -257,7 +257,7 @@ public class MultiSpeciesOntology<T extends NamedEntity & OntologyElement<T>>
      *                  which the ontology should be retrieved.
      * @return          The {@code Ontology} of the provided {@code speciesId}.
      * @throws IllegalArgumentException If {@code speciesId} is {@code null} or if 
-     *                                  the {@code speciesId} is not in this {@code SpeciesNeutralOntology}.
+     *                                  the {@code speciesId} is not in this {@code MultiSpeciesOntology}.
      */
     public Ontology<T> getAsSingleSpeciesOntology(String speciesId) {
         log.entry(speciesId);

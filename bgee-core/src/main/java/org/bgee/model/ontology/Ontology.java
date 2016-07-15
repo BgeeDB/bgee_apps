@@ -16,7 +16,7 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
  * @param <T>   The type of element in this ontology or sub-graph.
  */
 public class Ontology<T extends NamedEntity & OntologyElement<T>>
-    extends SpeciesNeutralOntology<T> {
+    extends OntologyBase<T> {
     
     /**
      * @see #getSpeciesId()

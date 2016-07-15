@@ -181,21 +181,21 @@ public class OntologyServiceTest extends TestAncestor {
 
         OntologyService service = new OntologyService(serviceFactory);
 
-        SpeciesNeutralOntology<AnatEntity> expectedOntology1 = 
+        OntologyBase<AnatEntity> expectedOntology1 = 
         		new MultiSpeciesOntology<>(speciesIds, anatEntities1, new HashSet<>(relationTOs1),
         		        expRelationTypes1, serviceFactory, AnatEntity.class);
         assertEquals("Incorrect anatomical entity ontology",
                 expectedOntology1, service.getAnatEntityOntology(speciesIds, anatEntityIds,
                 		expRelationTypes1, true, true));
         
-        SpeciesNeutralOntology<AnatEntity> expectedOntology2 = 
+        OntologyBase<AnatEntity> expectedOntology2 = 
         		new MultiSpeciesOntology<>(speciesIds, anatEntities2, new HashSet<>(relationTOs2),
         		        expRelationTypes23, serviceFactory, AnatEntity.class);
         assertEquals("Incorrect anatomical entity ontology",
                 expectedOntology2, service.getAnatEntityOntology(speciesIds, anatEntityIds,
                 		expRelationTypes23, true, false));
         
-        SpeciesNeutralOntology<AnatEntity> expectedOntology3 = 
+        OntologyBase<AnatEntity> expectedOntology3 = 
         		new MultiSpeciesOntology<>(speciesIds, anatEntities3, new HashSet<>(relationTOs3),
         		        expRelationTypes23, serviceFactory, AnatEntity.class);
         assertEquals("Incorrect anatomical entity ontology",

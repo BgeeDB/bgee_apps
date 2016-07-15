@@ -39,7 +39,7 @@ public class MultiSpeciesOntology<T extends NamedEntity & OntologyElement<T>>
      * A {@code Set} of {@code TaxonConstraint}s that are taxon constrains on 
      * {@code OntologyElement}s in this ontology.
      */
-    private final Set<TaxonConstraint> taxonConstraints;
+    private final Set<TaxonConstraint> entityTaxonConstraints;
 
     /**
      * @see #getSpeciesIds()
@@ -82,12 +82,15 @@ public class MultiSpeciesOntology<T extends NamedEntity & OntologyElement<T>>
             taxonConstraints = serviceFactory.getTaxonConstraintService()
                     .loadDevStageTaxonConstraintBySpeciesIds(speciesIds)
                     .collect(Collectors.toSet());
+            //there is no relation IDs for nested set models, so no TaxonConstraints. 
+            //Relations simply exist if both the source and target of the relations 
+            //exists in the targeted species.
         } else {
             throw log.throwing(new IllegalArgumentException("Unsupported OntologyElement"));
         }
         this.relationTaxonConstraints = Collections.unmodifiableSet(
                 relationTaxonConstraints == null? new HashSet<>(): new HashSet<>(relationTaxonConstraints));
-        this.taxonConstraints = Collections.unmodifiableSet(
+        this.entityTaxonConstraints = Collections.unmodifiableSet(
                 taxonConstraints == null? new HashSet<>(): new HashSet<>(taxonConstraints));
     }
     
@@ -112,7 +115,7 @@ public class MultiSpeciesOntology<T extends NamedEntity & OntologyElement<T>>
         log.entry(speciesIds);
         
         // Get stage or anat. entity IDs according to taxon constraints
-        Set<String> entityIds = taxonConstraints.stream()
+        Set<String> entityIds = entityTaxonConstraints.stream()
                 .filter(tc -> tc.getSpeciesId() == null || speciesIds.contains(tc.getSpeciesId()))
                 .map(tc -> tc.getEntityId())
                 .collect(Collectors.toSet());
@@ -132,7 +135,7 @@ public class MultiSpeciesOntology<T extends NamedEntity & OntologyElement<T>>
      * @return              The {@code Set} of {@code RelationTO}s that are the relations that were
      *                      considered to build this ontology or sub-graph, filtered by {@code speciesId}.
      */
-    public  Set<RelationTO> getRelations(Collection<String> speciesIds) {
+    private  Set<RelationTO> getRelations(Collection<String> speciesIds) {
         log.entry(speciesIds);
         
         // Get relation IDs according to taxon constraints
@@ -193,8 +196,8 @@ public class MultiSpeciesOntology<T extends NamedEntity & OntologyElement<T>>
     public Set<T> getAncestors(T element, Collection<RelationType> relationTypes, 
             boolean directRelOnly, Collection<String> speciesIds) {
         log.entry(element, relationTypes, directRelOnly, speciesIds);
-        return log.exit(this.getRelatives(element, true, relationTypes, directRelOnly, 
-                speciesIds, relationTaxonConstraints));
+        return log.exit(this.getRelatives(element, this.getElements(speciesIds), 
+                true, relationTypes, directRelOnly, speciesIds, this.relationTaxonConstraints));
         
         
     }
@@ -245,8 +248,8 @@ public class MultiSpeciesOntology<T extends NamedEntity & OntologyElement<T>>
     public Set<T> getDescendants(T element, Collection<RelationType> relationTypes, 
             boolean directRelOnly, Collection<String> speciesIds) {
         log.entry(element, relationTypes, directRelOnly, speciesIds);
-        return log.exit(this.getRelatives(element, false, relationTypes, directRelOnly, 
-                speciesIds, relationTaxonConstraints));
+        return log.exit(this.getRelatives(element, this.getElements(speciesIds), false, 
+                relationTypes, directRelOnly, speciesIds, this.relationTaxonConstraints));
     }
 
     /** 

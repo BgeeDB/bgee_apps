@@ -7,6 +7,8 @@ package org.bgee.model.anatdev;
  * @version Bgee 13, May 2016
  * @since   Bgee 13, May 2016
  */
+//TODO: actually, shouldn't it use a Set<String> speciesIds? We don't have to stick 
+//to the design in the database...
 public class TaxonConstraint {
     
     /**

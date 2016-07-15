@@ -12,7 +12,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.NamedEntity;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.TaxonConstraint;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 
@@ -84,6 +83,9 @@ public abstract class OntologyBase<T extends NamedEntity & OntologyElement<T>> {
         if (relationTypes == null || relationTypes.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Some relation types must be considered."));
         }
+        if (serviceFactory == null) {
+            throw log.throwing(new IllegalArgumentException("A ServiceFactory must be provided."));
+        }
         
         //it is acceptable to have no relations provided: maybe there is no valid relations 
         //for the requested parameters.
@@ -153,7 +155,6 @@ public abstract class OntologyBase<T extends NamedEntity & OntologyElement<T>> {
     protected Class<T> getType() {
         return type;
     }
-
 
     //**********************************************
     //   INSTANCE METHODS
@@ -247,7 +248,8 @@ public abstract class OntologyBase<T extends NamedEntity & OntologyElement<T>> {
      */
     public Set<T> getAncestors(T element, Collection<RelationType> relationTypes, boolean directRelOnly) {
         log.entry(element, relationTypes, directRelOnly);
-        return log.exit(this.getRelatives(element, true, relationTypes, directRelOnly, null, null));
+        return log.exit(this.getRelatives(element, this.getElements(), true, relationTypes, directRelOnly, 
+                null, null));
     }
 
 
@@ -325,7 +327,8 @@ public abstract class OntologyBase<T extends NamedEntity & OntologyElement<T>> {
      */
     public Set<T> getDescendants(T element, Collection<RelationType> relationTypes, boolean directRelOnly) {
         log.entry(element, relationTypes, directRelOnly);
-        return log.exit(this.getRelatives(element, false, relationTypes, directRelOnly, null, null));
+        return log.exit(this.getRelatives(element, this.getElements(), false, relationTypes, directRelOnly, 
+                null, null));
     }
 
     /**
@@ -339,60 +342,86 @@ public abstract class OntologyBase<T extends NamedEntity & OntologyElement<T>> {
      * outgoing to {@code element} are considered, in order to only retrieve direct parents 
      * or direct children of {@code element}.
      * 
-     * @param element               A {@code T} that is the element for which relatives are retrieved.
-     * @param isAncestor            A {@code boolean} defining whether the returned {@code Set}
-     *                              are ancestors or descendants. If {@code true},
-     *                              it will retrieved ancestors.
-     * @param relationTypes         A {@code Collection} of {@code RelationType}s that are the
-     *                              relation types allowing to filter the relations to consider.
-     * @param directRelOnly         A {@code boolean} defining whether only direct parents 
-     *                              or children of {@code element} should be returned.
-     * @param speciesIds            A {@code Collection} of {@code String}s that is the IDs of species
-     *                              allowing to filter the elements to retrieve.
-     * @return                      A {@code Set} of {@code T}s that are either the sources 
-     *                              or the ancestors or descendants of {@code element}, 
-     *                              depending on {@code isAncestor}.
+     * @param element                   A {@code T} that is the element for which relatives are retrieved.
+     * @param elements                  A {@code Set} of {@code T}s that are all elements 
+     *                                  that can be considered as relatives. 
+     * @param isAncestor                A {@code boolean} defining whether the returned {@code Set}
+     *                                  are ancestors or descendants. If {@code true},
+     *                                  it will retrieved ancestors.
+     * @param relationTypes             A {@code Collection} of {@code RelationType}s that are the
+     *                                  relation types allowing to filter the relations to consider.
+     * @param directRelOnly             A {@code boolean} defining whether only direct parents 
+     *                                  or children of {@code element} should be returned.
+     * @param speciesIds                A {@code Collection} of {@code String}s that is the IDs of species
+     *                                  allowing to filter the elements to retrieve.
+     * @param relationTaxonConstraints  A {@code Set} of {@code TaxonConstraint}s about relations. 
+     *                                  Can be {@code null} for relations inside a nested set model 
+     *                                  (e.g., for dev. stage ontology), or for single species ontologies.
+     * @return                          A {@code Set} of {@code T}s that are either the sources 
+     *                                  or the ancestors or descendants of {@code element}, 
+     *                                  depending on {@code isAncestor}.
      * @throws IllegalArgumentException If {@code element} is {@code null} or is not found 
      *                                  in this ontology.
      */
     // XXX could be used in BgeeDBUtils.getIsAPartOfRelativesFromDb()
-    protected Set<T> getRelatives(T element, boolean isAncestor, Collection<RelationType> relationTypes,
-            boolean directRelOnly, Collection<String> speciesIds, 
-            Collection<TaxonConstraint> anatEntityRelationTaxonConstraints) {
-        log.entry(element, isAncestor, relationTypes, directRelOnly, speciesIds);
+    //TODO: unit test with multi-species nested set model ontologies (e.g., DevStageOntology)
+    protected Set<T> getRelatives(T element, Set<T> elements, boolean isAncestor, 
+            Collection<RelationType> relationTypes, boolean directRelOnly, Collection<String> speciesIds, 
+            Set<TaxonConstraint> relationTaxonConstraints) {
+        log.entry(element, elements, isAncestor, relationTypes, directRelOnly, speciesIds, 
+                relationTaxonConstraints);
         
-        boolean isSpeciesSpecific = speciesIds != null && !speciesIds.isEmpty();
+        final Set<String> filteredSpeciesIds = speciesIds == null? null: new HashSet<>(speciesIds);
+        boolean isMultiSpecies = filteredSpeciesIds != null && !filteredSpeciesIds.isEmpty();
         
-        final Set<T> curElements = isSpeciesSpecific ? 
-                ((MultiSpeciesOntology<T>)this).getElements(speciesIds) : Collections.unmodifiableSet(elements); 
-
-        if (!curElements.contains(element)) {
-            throw log.throwing(new IllegalArgumentException("Unrecognized element: " + element));
+        if (isMultiSpecies && relationTaxonConstraints == null) {
+            //could be empty if no valid relations with provided parameters, 
+            //but should not be null
+            throw log.throwing(new IllegalArgumentException("Relation taxon constraints not provided."));
+        }
+        if (elements == null) {
+            //could be empty if no valid relations with provided parameters, 
+            //but should not be null
+            throw log.throwing(new IllegalArgumentException("Valid entities not provided."));
+        }
+        if (!elements.contains(element)) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Element does not exist in the requested species or ontology: " + element));
         }
 
-        final EnumSet<RelationTO.RelationType> usedRelationTypes = (relationTypes == null?
-                EnumSet.allOf(RelationType.class): new HashSet<>(relationTypes))
+        final Set<RelationTO.RelationType> usedRelationTypes = (relationTypes == null?
+                EnumSet.allOf(RelationType.class): relationTypes)
                 .stream()
                 .map(OntologyBase::convertRelationType)
                 .collect(Collectors.toCollection(() -> EnumSet.noneOf(RelationTO.RelationType.class)));
 
-        final Set<String> allowedRelationIds;
-        if (isSpeciesSpecific && type.equals(AnatEntity.class)) {
-            allowedRelationIds = anatEntityRelationTaxonConstraints.stream()
-                    .filter(tc -> tc.getSpeciesId() == null || speciesIds.contains(tc.getSpeciesId()))
-                    .map(ds -> ds.getEntityId()).collect(Collectors.toSet());
+        final Set<String> allowedEntityIds = elements.stream().map(e -> e.getId()).collect(Collectors.toSet());   
+        final Set<String> allowedRelIds;
+        final boolean relIdFiltering;
+        if (isMultiSpecies && !relationTaxonConstraints.isEmpty()) {
+            allowedRelIds = relationTaxonConstraints.stream()
+                    .filter(tc -> tc.getSpeciesId() == null || filteredSpeciesIds.contains(tc.getSpeciesId()))
+                    .map(tc -> tc.getEntityId()).collect(Collectors.toSet());
+            relIdFiltering = true;
         } else {
-            allowedRelationIds = null;
+            //there is no relation IDs for nested set models, so no TaxonConstraints for relations. 
+            //Relations simply exist if both the source and target of the relations 
+            //exists in the targeted species.
+            allowedRelIds = null;
+            relIdFiltering = false;
         }
 
         final Set<RelationTO> filteredRelations = relations.stream()
                 .filter(r -> usedRelationTypes.contains(r.getRelationType()) && 
                              (!directRelOnly || 
                                   RelationTO.RelationStatus.DIRECT.equals(r.getRelationStatus())))
-                .filter(r -> allowedRelationIds == null || allowedRelationIds.contains(r.getId()))
+                .filter(r -> !isMultiSpecies || //not multi-species, take all
+                        relIdFiltering && allowedRelIds.contains(r.getId()) || //allowed rel
+                        !relIdFiltering && allowedEntityIds.contains(r.getSourceId()) && 
+                                allowedEntityIds.contains(r.getTargetId())) //or, both the source and target 
+                                                                            //are allowed entities
                 .collect(Collectors.toSet());
 
-        Set<String> allowedEntityIds = curElements.stream().map(e -> e.getId()).collect(Collectors.toSet());
 
         Set<T> relatives = new HashSet<>();
         if (isAncestor) {
@@ -443,7 +472,6 @@ public abstract class OntologyBase<T extends NamedEntity & OntologyElement<T>> {
         result = prime * result + ((elements == null) ? 0 : elements.hashCode());
         result = prime * result + ((relations == null) ? 0 : relations.hashCode());
         result = prime * result + ((relationTypes == null) ? 0 : relationTypes.hashCode());
-        result = prime * result + ((serviceFactory == null) ? 0 : serviceFactory.hashCode());
         result = prime * result + ((type == null) ? 0 : type.hashCode());
         return result;
     }
@@ -473,11 +501,6 @@ public abstract class OntologyBase<T extends NamedEntity & OntologyElement<T>> {
                 return false;
         } else if (!relationTypes.equals(other.relationTypes))
             return false;
-        if (serviceFactory == null) {
-            if (other.serviceFactory != null)
-                return false;
-        } else if (!serviceFactory.equals(other.serviceFactory))
-            return false;
         if (type == null) {
             if (other.type != null)
                 return false;
@@ -490,7 +513,7 @@ public abstract class OntologyBase<T extends NamedEntity & OntologyElement<T>> {
     @Override
     public String toString() {
         return "Elements: " + elements + " - Relations: " + relations +
-                " - Relation types: " + relationTypes +" - Service factory: " + serviceFactory +
+                " - Relation types: " + relationTypes +
                 " - Type: " + type;
     }
 }

@@ -33,9 +33,7 @@ import org.bgee.model.dao.api.expressiondata.CallDAOFilter;
 import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
-import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO.OriginOfLine;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTOResultSet;
-import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
@@ -409,17 +407,17 @@ public class CallServiceTest extends TestAncestor {
     
     /**
      * Test the method 
-     * {@link CallService#propagateExpressionTOs(Collection, Collection, ConditionUtils, String)}.
+     * {@link CallService#propagateExpressionCalls(Collection, Collection, ConditionUtils, String)}.
      */
     @Test
-    public void shouldPropagateExpressionTOs() {
+    public void shouldPropagateExpressedCalls() {
         DAOManager manager = mock(DAOManager.class);
         ServiceFactory serviceFactory = mock(ServiceFactory.class);
         when(serviceFactory.getDAOManager()).thenReturn(manager);
 
         CallService service = new CallService(serviceFactory);
         try {
-            service.propagateExpressionTOs(null, null, null, null);
+            service.propagateExpressionCalls(null, null, null, null);
             fail("Should throw an IllegalArgumentException");
         } catch (IllegalArgumentException e) {
             // test passed
@@ -429,7 +427,7 @@ public class CallServiceTest extends TestAncestor {
         String speciesId = "speciesId1";
         
         Set<Condition> conditions = new HashSet<>(Arrays.asList(
-                new Condition("organA", "stageA",speciesId),
+                new Condition("organA", "stageA", speciesId),
                 new Condition("organA", "parentStageA1", speciesId),
                 new Condition("parentOrganA1", "stageA", speciesId),
                 new Condition("parentOrganA1", "parentStageA1", speciesId),
@@ -457,30 +455,38 @@ public class CallServiceTest extends TestAncestor {
         ancestorConds = new HashSet<>(Arrays.asList(new Condition("organB", "parentStageB1", speciesId)));
         when(mockConditionUtils.getAncestorConditions(childCond, true)).thenReturn(ancestorConds);
 
-        Collection<ExpressionCallTO> exprTOs = Arrays.asList(
-                // ExpressionCallTO 1
-                new ExpressionCallTO("1", "geneA", "organA", "stageA", null,
-                        DataState.LOWQUALITY, null, DataState.NODATA, null,
-                        DataState.NODATA, null, DataState.HIGHQUALITY, null,
-                        false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                // ExpressionCallTO 2
-                new ExpressionCallTO("2", "geneA", "organA", "parentStageA1", null,
-                        DataState.NODATA,  null, DataState.HIGHQUALITY, null,
-                        DataState.HIGHQUALITY, null, DataState.NODATA, null,
-                        false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                // ExpressionCallTO 3
-                new ExpressionCallTO("3", "geneB", "parentOrganA1", "parentStageA1", null,
-                        DataState.NODATA, null, DataState.NODATA, null,
-                        DataState.NODATA, null, DataState.LOWQUALITY, null,
-                        false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                // ExpressionCallTO 4
-                new ExpressionCallTO("4", "geneB", "organB", "stageB", null,
-                        DataState.HIGHQUALITY, null, DataState.NODATA, null,
-                        DataState.NODATA, null, DataState.NODATA, null,
-                        false, false, OriginOfLine.SELF, OriginOfLine.SELF, true));
+        Collection<ExpressionCall> exprCalls = Arrays.asList(
+                // ExpressionCall 1
+                new ExpressionCall("geneA", new Condition("organA", "stageA", speciesId),
+                        dpSelfAndSelf, ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
+                                new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW,
+                                        DataType.AFFYMETRIX, dpSelfAndSelf),
+                                new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH,
+                                        DataType.RNA_SEQ, dpSelfAndSelf)),
+                        null),
+                // ExpressionCall 2
+                new ExpressionCall("geneA", new Condition("organA", "parentStageA1", speciesId),
+                        dpSelfAndSelf, ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
+                                new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH,
+                                        DataType.EST, dpSelfAndSelf),
+                                new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH,
+                                        DataType.IN_SITU, dpSelfAndSelf)),
+                        null),
+                // ExpressionCall 3
+                new ExpressionCall("geneB", new Condition("parentOrganA1", "parentStageA1", speciesId),
+                        dpSelfAndSelf, ExpressionSummary.EXPRESSED, DataQuality.LOW, Arrays.asList(
+                                new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW,
+                                        DataType.RNA_SEQ, dpSelfAndSelf)),
+                        null),
+                // ExpressionCall 4
+                new ExpressionCall("geneB", new Condition("organB", "stageB", speciesId),
+                        dpSelfAndSelf, ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
+                                new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH,
+                                        DataType.AFFYMETRIX, dpSelfAndSelf)),
+                        null));
 
         Set<ExpressionCall> allResults = new HashSet<>(Arrays.asList(
-                // From ExpressionCallTO 1
+                // From ExpressionCall 1
                 new ExpressionCall("geneA", new Condition("organA", "stageA", speciesId),
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndSelf),
@@ -505,7 +511,7 @@ public class CallServiceTest extends TestAncestor {
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpDescAndDesc)), 
                         null), 
 
-                // From ExpressionCallTO 2
+                // From ExpressionCall 2
                 new ExpressionCall("geneA", new Condition("organA", "parentStageA1", speciesId),
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.EST, dpSelfAndSelf),
@@ -517,13 +523,13 @@ public class CallServiceTest extends TestAncestor {
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.IN_SITU, dpDescAndSelf)), 
                         null), 
 
-                // From ExpressionCallTO 3
+                // From ExpressionCall 3
                 new ExpressionCall("geneB", new Condition("parentOrganA1", "parentStageA1", speciesId),
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.RNA_SEQ, dpSelfAndSelf)), 
                         null), 
 
-                // From ExpressionCallTO 4
+                // From ExpressionCall 4
                 new ExpressionCall("geneB", new Condition("organB", "stageB", speciesId),
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndSelf)), 
@@ -533,15 +539,15 @@ public class CallServiceTest extends TestAncestor {
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndDesc)), 
                         null)));
 
-        Set<ExpressionCall> actualResults = service.propagateExpressionTOs(
-                exprTOs, null, mockConditionUtils, speciesId);
+        Set<ExpressionCall> actualResults = service.propagateExpressionCalls(
+                exprCalls, null, mockConditionUtils, speciesId);
         assertEquals("Incorrect ExpressionCalls generated", allResults, actualResults);
         
         Set<String> allowedOrganIds = new HashSet<>(Arrays.asList("organA"));
         Set<ExpressionCall> expectedResults = allResults.stream()
                 .filter(c -> allowedOrganIds.contains(c.getCondition().getAnatEntityId()))
                 .collect(Collectors.toSet());
-        actualResults = service.propagateExpressionTOs(exprTOs, Arrays.asList(
+        actualResults = service.propagateExpressionCalls(exprCalls, Arrays.asList(
                 new ConditionFilter(allowedOrganIds, null)), mockConditionUtils, speciesId);
         assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
 
@@ -549,7 +555,7 @@ public class CallServiceTest extends TestAncestor {
         expectedResults = allResults.stream()
                 .filter(c -> allowedStageIds.contains(c.getCondition().getDevStageId()))
                 .collect(Collectors.toSet());
-        actualResults = service.propagateExpressionTOs(exprTOs, Arrays.asList(
+        actualResults = service.propagateExpressionCalls(exprCalls, Arrays.asList(
                 new ConditionFilter(null, allowedStageIds)), mockConditionUtils, speciesId);
         assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
 
@@ -557,23 +563,23 @@ public class CallServiceTest extends TestAncestor {
                 .filter(c -> allowedOrganIds.contains(c.getCondition().getAnatEntityId()))
                 .filter(c -> allowedStageIds.contains(c.getCondition().getDevStageId()))
                 .collect(Collectors.toSet());
-        actualResults = service.propagateExpressionTOs(exprTOs, Arrays.asList(
+        actualResults = service.propagateExpressionCalls(exprCalls, Arrays.asList(
                 new ConditionFilter(allowedOrganIds, allowedStageIds)), mockConditionUtils, speciesId);
         assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
     }
     
     /**
-     * Test the method {@link CallService#propagateNoExpressionTOs(Collection, Set, Set, ConditionUtils)}.
+     * Test the method {@link CallService#propagateExpressionCalls(Collection, Collection, ConditionUtils, String)}.
      */
     @Test
-    public void shouldPropagateNoExpressionTOs() {
+    public void shouldPropagateNotExpressedCalls() {
         DAOManager manager = mock(DAOManager.class);
         ServiceFactory serviceFactory = mock(ServiceFactory.class);
         when(serviceFactory.getDAOManager()).thenReturn(manager);
 
         CallService service = new CallService(serviceFactory);
         try {
-            service.propagateNoExpressionTOs(null, null, null, null);
+            service.propagateExpressionCalls(null, null, null, null);
             fail("Should throw an IllegalArgumentException");
         } catch (IllegalArgumentException e) {
             // test passed
@@ -613,40 +619,56 @@ public class CallServiceTest extends TestAncestor {
                 new Condition("organB", "stageB", speciesId)));
         when(mockConditionUtils.getDescendantConditions(parentCond, true)).thenReturn(descendantConds);
 
-        Collection<NoExpressionCallTO> noExprTOs = Arrays.asList(
-                // NoExpressionCallTO 1
-                new NoExpressionCallTO("1", "geneA", "organA", "stageA",
-                        DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.NODATA, DataState.NODATA,
-                        false, NoExpressionCallTO.OriginOfLine.SELF),
-                // NoExpressionCallTO 2
-                new NoExpressionCallTO("2", "geneA", "organA", "parentStageA1",
-                        DataState.LOWQUALITY, DataState.NODATA,  DataState.NODATA, DataState.HIGHQUALITY,
-                        false, NoExpressionCallTO.OriginOfLine.SELF),
-                // NoExpressionCallTO 3
-                new NoExpressionCallTO("3", "geneA", "parentOrganA2", "parentStageA1",
-                        DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, DataState.LOWQUALITY,
-                        false, NoExpressionCallTO.OriginOfLine.SELF),
-                // NoExpressionCallTO 4
-                new NoExpressionCallTO("4", "geneB", "parentOrganB2", "stageB",
-                        DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, DataState.NODATA,
-                        false, NoExpressionCallTO.OriginOfLine.SELF));
+        Collection<ExpressionCall> noExprCalls = Arrays.asList(
+                // ExpressionCall 1
+                new ExpressionCall("geneA", new Condition("organA", "stageA", speciesId),
+                        dpSelfAndSelf, ExpressionSummary.NOT_EXPRESSED, DataQuality.LOW, Arrays.asList(
+                                new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW,
+                                        DataType.AFFYMETRIX, dpSelfAndSelf),
+                                new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW,
+                                        DataType.IN_SITU, dpSelfAndSelf)),
+                        null),
+                // ExpressionCall 2
+                new ExpressionCall("geneA", new Condition("organA", "parentStageA1", speciesId),
+                        dpSelfAndSelf, ExpressionSummary.NOT_EXPRESSED, DataQuality.HIGH, Arrays.asList(
+                                new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW,
+                                        DataType.AFFYMETRIX, dpSelfAndSelf),
+                                new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH,
+                                        DataType.RNA_SEQ, dpSelfAndSelf)),
+                        null),
+                // ExpressionCall 3
+                new ExpressionCall("geneA", new Condition("parentOrganA2", "parentStageA1", speciesId),
+                        dpSelfAndSelf, ExpressionSummary.NOT_EXPRESSED, DataQuality.HIGH, Arrays.asList(
+                                new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH,
+                                        DataType.AFFYMETRIX, dpSelfAndSelf),
+                                new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW,
+                                        DataType.IN_SITU, dpSelfAndSelf),
+                                new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW,
+                                        DataType.RNA_SEQ, dpSelfAndSelf)),
+                        null),
+                // ExpressionCall 4
+                new ExpressionCall("geneB", new Condition("parentOrganB2", "stageB", speciesId),
+                        dpSelfAndSelf, ExpressionSummary.NOT_EXPRESSED, DataQuality.HIGH, Arrays.asList(
+                                new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH,
+                                        DataType.AFFYMETRIX, dpSelfAndSelf)),
+                        null));
 
         Set<ExpressionCall> allResults = new HashSet<>(Arrays.asList(
-                // From NoExpressionCallTO 1
+                // From ExpressionCall 1
                 new ExpressionCall("geneA", new Condition("organA", "stageA", speciesId), 
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndSelf),
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.IN_SITU, dpSelfAndSelf)), 
                         null), 
                 
-                // From NoExpressionCallTO 2
+                // From ExpressionCall 2
                 new ExpressionCall("geneA", new Condition("organA", "parentStageA1", speciesId),
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndSelf),
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf)), 
                         null), 
 
-                // From NoExpressionCallTO 3
+                // From ExpressionCall 3
                 new ExpressionCall("geneA", new Condition("parentOrganA2", "parentStageA1", speciesId),
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndSelf),
@@ -668,7 +690,7 @@ public class CallServiceTest extends TestAncestor {
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.RNA_SEQ, dpAncAndSelf)), 
                         null), 
 
-                // From NoExpressionCallTO 4
+                // From ExpressionCall 4
                 new ExpressionCall("geneB", new Condition("parentOrganB2", "stageB", speciesId),
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndSelf)), 
@@ -684,16 +706,16 @@ public class CallServiceTest extends TestAncestor {
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpAncAndSelf)), 
                         null)));
 
-        Set<ExpressionCall> actualResults = service.propagateNoExpressionTOs(
-                noExprTOs, null, mockConditionUtils, speciesId);
+        Set<ExpressionCall> actualResults = service.propagateExpressionCalls(
+                noExprCalls, null, mockConditionUtils, speciesId);
         assertEquals("Incorrect ExpressionCalls generated", allResults, actualResults);
         
         Set<String> allowedOrganIds = new HashSet<>(Arrays.asList("organA"));
         Set<ExpressionCall> expectedResults = allResults.stream()
                 .filter(c -> allowedOrganIds.contains(c.getCondition().getAnatEntityId()))
                 .collect(Collectors.toSet());
-        actualResults = service.propagateNoExpressionTOs(
-                noExprTOs, Arrays.asList(new ConditionFilter(allowedOrganIds, null)),
+        actualResults = service.propagateExpressionCalls(
+                noExprCalls, Arrays.asList(new ConditionFilter(allowedOrganIds, null)),
                 mockConditionUtils, speciesId);
         assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
 
@@ -701,8 +723,8 @@ public class CallServiceTest extends TestAncestor {
         expectedResults = allResults.stream()
                 .filter(c -> allowedStageIds.contains(c.getCondition().getDevStageId()))
                 .collect(Collectors.toSet());
-        actualResults = service.propagateNoExpressionTOs(
-                noExprTOs, Arrays.asList(new ConditionFilter(null, allowedStageIds)),
+        actualResults = service.propagateExpressionCalls(
+                noExprCalls, Arrays.asList(new ConditionFilter(null, allowedStageIds)),
                 mockConditionUtils, speciesId);
         assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
 
@@ -710,16 +732,17 @@ public class CallServiceTest extends TestAncestor {
                 .filter(c -> allowedOrganIds.contains(c.getCondition().getAnatEntityId()))
                 .filter(c -> allowedStageIds.contains(c.getCondition().getDevStageId()))
                 .collect(Collectors.toSet());
-        actualResults = service.propagateNoExpressionTOs(
-                noExprTOs, Arrays.asList(new ConditionFilter(allowedOrganIds, allowedStageIds)),
+        actualResults = service.propagateExpressionCalls(
+                noExprCalls, Arrays.asList(new ConditionFilter(allowedOrganIds, allowedStageIds)),
                 mockConditionUtils, speciesId);
         assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
     }
     
     /**
-     * @return  the {@code Set} of {@code ExpressionCall}s from propagated {@code ExpressionCallTO}s,
+     * @return  the {@code Set} of {@code ExpressionCall}s from 
+     * not expressed propagated {@code ExpressionCall}s,
      */
-    private Set<ExpressionCall> getPropagationFromNoExpressionTOs(String speciesId) {
+    private Set<ExpressionCall> getPropagationFromNotExpressedCalls(String speciesId) {
         return new HashSet<>(Arrays.asList(
                 new ExpressionCall("ID1", new Condition("Anat_id1", "Stage_id1", speciesId),
                         null, null, null, Arrays.asList(
@@ -786,9 +809,10 @@ public class CallServiceTest extends TestAncestor {
     }
     
     /**
-     * @return  the {@code Set} of {@code NoExpressionCall}s from propagated {@code ExpressionCallTO}s,
+     * @return  the {@code Set} of not expressed {@code ExpressionCall}s 
+     * from not expressed propagated {@code ExpressionCall}s,
      */
-    private Set<ExpressionCall> getPropagationFromExpressionTOs(String speciesId) {
+    private Set<ExpressionCall> getPropagationFromExpressedCalls(String speciesId) {
         
         return new HashSet<>(Arrays.asList(
                 new ExpressionCall("ID1", new Condition("Anat_id1", "Stage_id1", speciesId),
@@ -894,7 +918,7 @@ public class CallServiceTest extends TestAncestor {
      * Test the method {@link CallService#reconcileSingleGeneCalls(Set)}.
      */
     @Test
-    public void shouldReconcileCalls() {
+    public void shouldReconcileSingleGeneCalls() {
         String speciesId = "speciesId1";
 
         // EXPRESSED - HIGH quality - observed
@@ -1099,12 +1123,12 @@ public class CallServiceTest extends TestAncestor {
      * Test the method {@link CallService#reconcileSingleGeneCalls(Set)}.
      */
     @Test
-    public void shouldReconcileCalls_pipelineTest() {
+    public void shouldReconcileSingleGeneCalls_pipelineTest() {
         String geneId = "ID1";
         String speciesId = "speciesId1";
         Condition cond = new Condition("Anat_id1", "Stage_id1", speciesId);
-        Set<ExpressionCall> inputCalls = filterExprTOs(geneId, cond, speciesId);
-        inputCalls.addAll(filterNoExprTOs(geneId, cond, speciesId));
+        Set<ExpressionCall> inputCalls = filterExprCalls(geneId, cond, speciesId);
+        inputCalls.addAll(filterNotExprCalls(geneId, cond, speciesId));
         ExpressionCall expectedResult = new ExpressionCall(geneId, null, 
                 dpSelfAndSelf, ExpressionSummary.STRONG_AMBIGUITY, null, Arrays.asList(
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndSelf),
@@ -1116,8 +1140,8 @@ public class CallServiceTest extends TestAncestor {
         assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
         
         cond = new Condition("Anat_id1", "ParentStage_id1", speciesId);
-        inputCalls = filterExprTOs(geneId, cond, speciesId);
-        inputCalls.addAll(filterNoExprTOs(geneId, cond, speciesId));
+        inputCalls = filterExprCalls(geneId, cond, speciesId);
+        inputCalls.addAll(filterNotExprCalls(geneId, cond, speciesId));
         expectedResult = new ExpressionCall(geneId, null, 
                 dpSelfAndDesc, ExpressionSummary.EXPRESSED, DataQuality.LOW, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.EST, dpSelfAndDesc),
@@ -1128,8 +1152,8 @@ public class CallServiceTest extends TestAncestor {
         assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
 
         cond = new Condition("Anat_id1", "ParentStage_id2", speciesId);
-        inputCalls = filterExprTOs(geneId, cond, speciesId);
-        inputCalls.addAll(filterNoExprTOs(geneId, cond, speciesId));
+        inputCalls = filterExprCalls(geneId, cond, speciesId);
+        inputCalls.addAll(filterNotExprCalls(geneId, cond, speciesId));
         expectedResult = new ExpressionCall(geneId, null, 
                 dpSelfAndSelf, ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndSelf),
@@ -1140,8 +1164,8 @@ public class CallServiceTest extends TestAncestor {
         assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
 
         cond = new Condition("Anat_id1", "Stage_id2", speciesId);
-        inputCalls = filterExprTOs(geneId, cond, speciesId);
-        inputCalls.addAll(filterNoExprTOs(geneId, cond, speciesId));
+        inputCalls = filterExprCalls(geneId, cond, speciesId);
+        inputCalls.addAll(filterNotExprCalls(geneId, cond, speciesId));
         expectedResult = new ExpressionCall(geneId, null, 
                 dpSelfAndSelf, ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndSelf),
@@ -1153,8 +1177,8 @@ public class CallServiceTest extends TestAncestor {
         
         geneId = "ID2";
         cond = new Condition("Anat_id1", "Stage_id2", speciesId);
-        inputCalls = filterExprTOs(geneId, cond, speciesId);
-        inputCalls.addAll(filterNoExprTOs(geneId, cond, speciesId));
+        inputCalls = filterExprCalls(geneId, cond, speciesId);
+        inputCalls.addAll(filterNotExprCalls(geneId, cond, speciesId));
         expectedResult = new ExpressionCall(geneId, null, 
                 dpSelfAndSelf, ExpressionSummary.STRONG_AMBIGUITY, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.EST, dpSelfAndSelf), 
@@ -1164,8 +1188,8 @@ public class CallServiceTest extends TestAncestor {
         assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
 
         cond = new Condition("Anat_id1", "ParentStage_id2", speciesId);
-        inputCalls = filterExprTOs(geneId, cond, speciesId);
-        inputCalls.addAll(filterNoExprTOs(geneId, cond, speciesId));
+        inputCalls = filterExprCalls(geneId, cond, speciesId);
+        inputCalls.addAll(filterNotExprCalls(geneId, cond, speciesId));
         expectedResult = new ExpressionCall(geneId, null, 
                 dpSelfDescAndDesc, ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfDescAndDesc),
@@ -1176,8 +1200,8 @@ public class CallServiceTest extends TestAncestor {
         assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
 
         cond = new Condition("Anat_id2", "Stage_id2", speciesId);
-        inputCalls = filterExprTOs(geneId, cond, speciesId);
-        inputCalls.addAll(filterNoExprTOs(geneId, cond, speciesId));
+        inputCalls = filterExprCalls(geneId, cond, speciesId);
+        inputCalls.addAll(filterNotExprCalls(geneId, cond, speciesId));
         expectedResult = new ExpressionCall(geneId, null, 
                 dpAncAndSelf, ExpressionSummary.NOT_EXPRESSED, DataQuality.HIGH, Arrays.asList(
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpAncAndSelf)), 
@@ -1186,8 +1210,8 @@ public class CallServiceTest extends TestAncestor {
         assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
 
         cond = new Condition("Anat_id2", "ParentStage_id2", speciesId);
-        inputCalls = filterExprTOs(geneId, cond, speciesId);
-        inputCalls.addAll(filterNoExprTOs(geneId, cond, speciesId));
+        inputCalls = filterExprCalls(geneId, cond, speciesId);
+        inputCalls.addAll(filterNotExprCalls(geneId, cond, speciesId));
         expectedResult = new ExpressionCall(geneId, null, 
                 dpDescAndSelf, ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpDescAndSelf),
@@ -1197,8 +1221,8 @@ public class CallServiceTest extends TestAncestor {
         assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
 
         cond = new Condition("Anat_id3", "ParentStage_id2", speciesId);
-        inputCalls = filterExprTOs(geneId, cond, speciesId);
-        inputCalls.addAll(filterNoExprTOs(geneId, cond, speciesId));
+        inputCalls = filterExprCalls(geneId, cond, speciesId);
+        inputCalls.addAll(filterNotExprCalls(geneId, cond, speciesId));
         expectedResult = new ExpressionCall(geneId, null, 
                 dpSelfAndSelf, ExpressionSummary.STRONG_AMBIGUITY, null, Arrays.asList(
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf), 
@@ -1210,8 +1234,8 @@ public class CallServiceTest extends TestAncestor {
 
         geneId = "ID3";
         cond = new Condition("Anat_id1", "Stage_id2", speciesId);
-        inputCalls = filterExprTOs(geneId, cond, speciesId);
-        inputCalls.addAll(filterNoExprTOs(geneId, cond, speciesId));
+        inputCalls = filterExprCalls(geneId, cond, speciesId);
+        inputCalls.addAll(filterNotExprCalls(geneId, cond, speciesId));
         expectedResult = new ExpressionCall(geneId, null, 
                 dpSelfDescAndSelf, ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfDescAndSelf),
@@ -1223,8 +1247,8 @@ public class CallServiceTest extends TestAncestor {
         assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
 
         cond = new Condition("Anat_id4", "Stage_id2", speciesId);
-        inputCalls = filterExprTOs(geneId, cond, speciesId);
-        inputCalls.addAll(filterNoExprTOs(geneId, cond, speciesId));
+        inputCalls = filterExprCalls(geneId, cond, speciesId);
+        inputCalls.addAll(filterNotExprCalls(geneId, cond, speciesId));
         expectedResult = new ExpressionCall(geneId, null, 
                 dpDescAndSelf, ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpDescAndSelf),
@@ -1236,8 +1260,8 @@ public class CallServiceTest extends TestAncestor {
         assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
         
         cond = new Condition("Anat_id5", "Stage_id2", speciesId);
-        inputCalls = filterExprTOs(geneId, cond, speciesId);
-        inputCalls.addAll(filterNoExprTOs(geneId, cond, speciesId));
+        inputCalls = filterExprCalls(geneId, cond, speciesId);
+        inputCalls.addAll(filterNotExprCalls(geneId, cond, speciesId));
         expectedResult = new ExpressionCall(geneId, null, 
                 dpSelfAndSelf, ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndSelf),
@@ -1250,8 +1274,8 @@ public class CallServiceTest extends TestAncestor {
 
         geneId = "ID4";
         cond = new Condition("Anat_id1", "Stage_id5", speciesId);
-        inputCalls = filterExprTOs(geneId, cond, speciesId);
-        inputCalls.addAll(filterNoExprTOs(geneId, cond, speciesId));
+        inputCalls = filterExprCalls(geneId, cond, speciesId);
+        inputCalls.addAll(filterNotExprCalls(geneId, cond, speciesId));
         expectedResult = new ExpressionCall(geneId, null, 
                 dpSelfAndSelf, ExpressionSummary.NOT_EXPRESSED, DataQuality.HIGH, Arrays.asList(
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.IN_SITU, dpSelfAndSelf),
@@ -1261,8 +1285,8 @@ public class CallServiceTest extends TestAncestor {
         assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
 
         cond = new Condition("Anat_id4", "Stage_id5", speciesId);
-        inputCalls = filterExprTOs(geneId, cond, speciesId);
-        inputCalls.addAll(filterNoExprTOs(geneId, cond, speciesId));
+        inputCalls = filterExprCalls(geneId, cond, speciesId);
+        inputCalls.addAll(filterNotExprCalls(geneId, cond, speciesId));
         expectedResult = new ExpressionCall(geneId, null, 
                 dpSelfAncAndSelf, ExpressionSummary.NOT_EXPRESSED, DataQuality.HIGH, Arrays.asList(
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAncAndSelf), 
@@ -1273,8 +1297,8 @@ public class CallServiceTest extends TestAncestor {
         assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
         
         cond = new Condition("Anat_id5", "Stage_id5", speciesId);
-        inputCalls = filterExprTOs(geneId, cond, speciesId);
-        inputCalls.addAll(filterNoExprTOs(geneId, cond, speciesId));
+        inputCalls = filterExprCalls(geneId, cond, speciesId);
+        inputCalls.addAll(filterNotExprCalls(geneId, cond, speciesId));
         expectedResult = new ExpressionCall(geneId, null, 
                 dpAncAndSelf, ExpressionSummary.NOT_EXPRESSED, DataQuality.HIGH, Arrays.asList(
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpAncAndSelf), 
@@ -1286,8 +1310,8 @@ public class CallServiceTest extends TestAncestor {
 
         geneId = "ID5";
         cond = new Condition("Anat_id1", "Stage_id5", speciesId);
-        inputCalls = filterExprTOs(geneId, cond, speciesId);
-        inputCalls.addAll(filterNoExprTOs(geneId, cond, speciesId));
+        inputCalls = filterExprCalls(geneId, cond, speciesId);
+        inputCalls.addAll(filterNotExprCalls(geneId, cond, speciesId));
         expectedResult = new ExpressionCall(geneId, null, 
                 dpSelfDescAndSelf, ExpressionSummary.STRONG_AMBIGUITY, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpDescAndSelf),
@@ -1299,8 +1323,8 @@ public class CallServiceTest extends TestAncestor {
         assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
 
         cond = new Condition("Anat_id1", "ParentStage_id5", speciesId);
-        inputCalls = filterExprTOs(geneId, cond, speciesId);
-        inputCalls.addAll(filterNoExprTOs(geneId, cond, speciesId));
+        inputCalls = filterExprCalls(geneId, cond, speciesId);
+        inputCalls.addAll(filterNotExprCalls(geneId, cond, speciesId));
         expectedResult = new ExpressionCall(geneId, null, 
                 dpDescAndDesc, ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpDescAndDesc),
@@ -1311,8 +1335,8 @@ public class CallServiceTest extends TestAncestor {
         assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
         
         cond = new Condition("Anat_id4", "Stage_id5", speciesId);
-        inputCalls = filterExprTOs(geneId, cond, speciesId);
-        inputCalls.addAll(filterNoExprTOs(geneId, cond, speciesId));
+        inputCalls = filterExprCalls(geneId, cond, speciesId);
+        inputCalls.addAll(filterNotExprCalls(geneId, cond, speciesId));
         expectedResult = new ExpressionCall(geneId, null, 
                 dpSelfAndSelf, ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndSelf),
@@ -1323,8 +1347,8 @@ public class CallServiceTest extends TestAncestor {
         assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
 
         cond = new Condition("Anat_id4", "ParentStage_id5", speciesId);
-        inputCalls = filterExprTOs(geneId, cond, speciesId);
-        inputCalls.addAll(filterNoExprTOs(geneId, cond, speciesId));
+        inputCalls = filterExprCalls(geneId, cond, speciesId);
+        inputCalls.addAll(filterNotExprCalls(geneId, cond, speciesId));
         expectedResult = new ExpressionCall(geneId, null, 
                 dpSelfAndDesc, ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndDesc),
@@ -1336,8 +1360,8 @@ public class CallServiceTest extends TestAncestor {
 
         geneId = "ID6";
         cond = new Condition("Anat_id9", "Stage_id7", speciesId);
-        inputCalls = filterExprTOs(geneId, cond, speciesId);
-        inputCalls.addAll(filterNoExprTOs(geneId, cond, speciesId));
+        inputCalls = filterExprCalls(geneId, cond, speciesId);
+        inputCalls.addAll(filterNotExprCalls(geneId, cond, speciesId));
         expectedResult = new ExpressionCall(geneId, null, 
                 dpSelfAndSelf, ExpressionSummary.NOT_EXPRESSED, DataQuality.HIGH, Arrays.asList(
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf)), 
@@ -1346,8 +1370,8 @@ public class CallServiceTest extends TestAncestor {
         assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
 
         cond = new Condition("Anat_id8", "Stage_id6", speciesId);
-        inputCalls = filterExprTOs(geneId, cond, speciesId);
-        inputCalls.addAll(filterNoExprTOs(geneId, cond, speciesId));
+        inputCalls = filterExprCalls(geneId, cond, speciesId);
+        inputCalls.addAll(filterNotExprCalls(geneId, cond, speciesId));
         expectedResult = new ExpressionCall(geneId, null, 
                 dpAncAndSelf, ExpressionSummary.NOT_EXPRESSED, DataQuality.HIGH, Arrays.asList(
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpAncAndSelf)), 
@@ -1356,16 +1380,16 @@ public class CallServiceTest extends TestAncestor {
         assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
     }
 
-    private Set<ExpressionCall> filterExprTOs(String geneId, Condition cond, String speciesId) {
-        Set<ExpressionCall> inputCalls = getPropagationFromExpressionTOs(speciesId).stream()
+    private Set<ExpressionCall> filterExprCalls(String geneId, Condition cond, String speciesId) {
+        Set<ExpressionCall> inputCalls = getPropagationFromExpressedCalls(speciesId).stream()
                 .filter(c -> c.getGeneId().equals(geneId))
                 .filter(c -> c.getCondition().equals(cond))
                 .collect(Collectors.toSet());
         return inputCalls;
     }
     
-    private Set<ExpressionCall> filterNoExprTOs(String geneId, Condition cond, String speciesId) {
-        Set<ExpressionCall> inputCalls = getPropagationFromNoExpressionTOs(speciesId).stream()
+    private Set<ExpressionCall> filterNotExprCalls(String geneId, Condition cond, String speciesId) {
+        Set<ExpressionCall> inputCalls = getPropagationFromNotExpressedCalls(speciesId).stream()
                 .filter(c -> c.getGeneId().equals(geneId))
                 .filter(c -> c.getCondition().equals(cond))
                 .collect(Collectors.toSet());

@@ -683,13 +683,13 @@ public class CallService extends Service {
     //*************************************************************************
 
     /**
-     * Propagate {@code NoExpressionTO}s to descendant conditions from {@code conditionUtils} 
-     * and valid for {@code conditionFilter}.
+     * Propagate {@code ExpressionCall}s to descendant or ancestor conditions 
+     * from {@code conditionUtils} and valid for {@code conditionFilter}.
      * <p>
      * Return {@code ExpressionCall}s have {@code DataPropagation}, {@code ExpressionSummary}, 
      * and {@code DataQuality} equal to {@code null}. 
      *  
-     * @param noExprTOs         A {@code Collection} of {@code NoExpressionTO} to be propagated.
+     * @param calls             A {@code Collection} of {@code ExpressionCall}s to be propagated.
      * @param conditionFilter   A {@code Collection} of {@code ConditionFilter}s to configure 
      *                          the filtering of conditions in propagated calls. 
      *                          If several {@code ConditionFilter}s are provided, they are seen as
@@ -699,84 +699,92 @@ public class CallService extends Service {
      * @param speciesId         A {@code String} that is the ID of the species 
      *                          which to propagate call for.
      * @return                  A {@code Set} of {@code ExpressionCall}s that are propagated calls.
+     * @throws IllegalArgumentException If {@code calls} is null, empty, or 
+     *                                  contains already propagated calls.
      */
-    // NOTE: This method is protected to keep units tests even if there are TOs as arguments 
     // NOTE: No update ExpressionCalls, to provide better unicity of the method, and allow better unit testing
-    // TODO: Replace TOs as arguments by ExpressionCall
-    protected Set<ExpressionCall> propagateNoExpressionTOs(Collection<NoExpressionCallTO> noExprTOs,
-            Collection<ConditionFilter> conditionFilter, ConditionUtils conditionUtils,
-            String speciesId) {
-        log.entry(noExprTOs, conditionFilter, conditionUtils, speciesId);
+    public Set<ExpressionCall> propagateExpressionCalls(Collection<ExpressionCall> calls,
+            Collection<ConditionFilter> conditionFilter, ConditionUtils conditionUtils, 
+            String speciesId) throws IllegalArgumentException {
+        log.entry(calls, conditionFilter, conditionUtils, speciesId);
         
-        // Check that TOs are not empty and not already propagated
-        if (noExprTOs == null || noExprTOs.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("No NoExpressionTOs provided"));
+        if (calls == null || calls.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("No ExpressionCalls provided"));
         }
-        Set<NoExpressionCallTO> alreadyPropagatedTOs = noExprTOs.stream()
-            .filter(to -> to.getOriginOfLine() != NoExpressionCallTO.OriginOfLine.SELF 
-                            || to.isIncludeParentStructures())
-            .collect(Collectors.toSet());
-        if (!alreadyPropagatedTOs.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException(
-                    "Some ExpressionTOs has already been propagated: " + alreadyPropagatedTOs));
+
+        // Check that ExpressionCalls are expressed or not expressed calls
+        if (calls.stream()
+                .anyMatch(c -> c.getSummaryCallType() == null 
+                    && !c.getSummaryCallType().equals(ExpressionSummary.EXPRESSED) 
+                    && !c.getSummaryCallType().equals(ExpressionSummary.NOT_EXPRESSED))) {
+                throw log.throwing(new IllegalArgumentException(
+                        "All provided ExpressionCalls should be expressed or not expressed calls"));
         }
         
-        return log.exit(this.propagateTOs(noExprTOs, conditionFilter, conditionUtils,
-                speciesId, NoExpressionCallTO.class));
+        // Check that ExpressionCalls are not propagated
+        if (calls.stream()
+                .anyMatch(c -> c.getDataPropagation() == null 
+                || c.getDataPropagation().equals(DataPropagation.PropagationState.SELF))) {
+                throw log.throwing(new IllegalArgumentException(
+                        "All provided ExpressionCalls should be not propagated"));
+        }
+
+        // Propagate ExpressionCalls according their ExpressionSummary.
+        Set<ExpressionCall> propagatedCalls = new HashSet<>();
+        
+        Set<ExpressionCall> propagatedNotExpressedCalls = this.propagateExpressionCalls(calls.stream()
+                .filter(c -> c.getSummaryCallType().equals(ExpressionSummary.EXPRESSED))
+                .collect(Collectors.toSet()), conditionFilter, conditionUtils, speciesId, true);
+        if (propagatedNotExpressedCalls != null) {
+            propagatedCalls.addAll(propagatedNotExpressedCalls);
+        }
+        
+        Set<ExpressionCall> propagatedExpressedCalls = this.propagateExpressionCalls(calls.stream()
+                .filter(c -> c.getSummaryCallType().equals(ExpressionSummary.NOT_EXPRESSED))
+                .collect(Collectors.toSet()), conditionFilter, conditionUtils, speciesId, false);
+        if (propagatedExpressedCalls != null) {
+            propagatedCalls.addAll(propagatedExpressedCalls);
+        }
+    
+        return log.exit(propagatedCalls);
     }
     
     /**
-     * Propagate {@code ExpressionTO}s to ancestor conditions from {@code conditionUtils} 
-     * and valid for {@code conditionFilter}.
+     * Propagate {@code ExpressionCall}s to descendant or ancestor conditions, according to 
+     * {@code areExpressedCalls}, from {@code conditionUtils} and valid for {@code conditionFilter}.
      * <p>
      * Return {@code ExpressionCall}s have {@code DataPropagation}, {@code ExpressionSummary}, 
-     * and {@code DataQuality} equal to {@code null}. 
-     *  
-     * @param exprTOs           A {@code Collection} of {@code ExpressionCallTO} to be propagated.
+     * and {@code DataQuality} equal to {@code null}.
+     * 
+     * @param calls             A {@code Collection} of {@code ExpressionCall}s to be propagated.
      * @param conditionFilter   A {@code Collection} of {@code ConditionFilter}s to configure 
      *                          the filtering of conditions in propagated calls. 
      *                          If several {@code ConditionFilter}s are provided, they are seen as
      *                          "OR" conditions. Can be {@code null} or empty. 
-     * @param conditionUtils    A {@code ConditionUtils} containing anat. entity and dev. stage
-     *                          {@code Ontology}s to use for the propagation. 
+     * @param conditionUtils    A {@code ConditionUtils} containing at least anat. entity
+     *                          {@code Ontology} to use for the propagation.
+     * @param speciesId         A {@code String} that is the ID of the species 
+     *                          which to propagate call for.
+     * @param areExpressedCalls A {@code boolean} defining whether propagation should be done to
+     *                          to descendant or ancestor conditions. If {@code true}, the propagation
+     *                          is done to descendants. 
      * @return                  A {@code Set} of {@code ExpressionCall}s that are propagated calls.
+     * @throws IllegalArgumentException
      */
-    // NOTE: This method is protected to keep units tests even if there are TOs as arguments 
-    // NOTE: No update ExpressionCalls, to provide better unicity of the method, and allow better unit testing
-    // TODO: Replace TOs as arguments by ExpressionCall
-    protected Set<ExpressionCall> propagateExpressionTOs(Collection<ExpressionCallTO> exprTOs,
-            Collection<ConditionFilter> conditionFilter, ConditionUtils conditionUtils,
-            String speciesId) {
-        log.entry(exprTOs, conditionFilter, conditionUtils, speciesId);
-        
-        // Check that TOs are not empty and not already propagated
-        if (exprTOs == null || exprTOs.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("No ExpressionTOs provided"));
-        }
-        Set<ExpressionCallTO> alreadyPropagatedTOs = exprTOs.stream()
-            .filter(to -> to.getAnatOriginOfLine() != ExpressionCallTO.OriginOfLine.SELF 
-                            || to.getStageOriginOfLine() != ExpressionCallTO.OriginOfLine.SELF 
-                            || !to.isObservedData())
-            .collect(Collectors.toSet());
-        if (!alreadyPropagatedTOs.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException(
-                    "Some ExpressionTOs has already been propagated: " + alreadyPropagatedTOs ));
-        }
-        
-        return log.exit(
-                this.propagateTOs(exprTOs, conditionFilter, conditionUtils, speciesId, ExpressionCallTO.class));
-    }
-    
-    // TODO: Replace TOs as arguments by ExpressionCall
-    private <T extends CallTO> Set<ExpressionCall> propagateTOs(Collection<T> callTOs,
+    private Set<ExpressionCall> propagateExpressionCalls(Collection<ExpressionCall> calls,
             Collection<ConditionFilter> conditionFilter, ConditionUtils conditionUtils, 
-            String speciesId, Class<T> type) throws IllegalArgumentException {
-        log.entry(callTOs, conditionFilter, conditionUtils, speciesId, type);
+            String speciesId, boolean areExpressedCalls) throws IllegalArgumentException {
+        log.entry(calls, conditionFilter, conditionUtils, speciesId, areExpressedCalls);
         
+        // TODO: asserts
+        // Check that TOs are not empty and not already propagated
+        if (calls == null || calls.isEmpty()) {
+            log.trace("No calls to propagate");
+            return log.exit(null);
+        }
+
         // Check conditionUtils contains all conditions of callTOs
-        Set<Condition> conditions = callTOs.stream()
-            .map(to -> new Condition(to.getAnatEntityId(), to.getStageId(), speciesId))
-            .collect(Collectors.toSet());
+        Set<Condition> conditions = calls.stream().map(c -> c.getCondition()).collect(Collectors.toSet());
         
         if (!conditionUtils.getConditions().containsAll(conditions)) {
             throw log.throwing(new IllegalArgumentException(
@@ -784,40 +792,20 @@ public class CallService extends Service {
         }
         
         log.trace("Generating propagated expression calls...");
-    
-        // Convert exprTOs into calls before propagation 
-        // to be able to set dataPropagation in ExpressionCallData during propagation 
-        Set<ExpressionCall> inputCalls = null;
-        if (type.equals(ExpressionCallTO.class)) {
-            inputCalls = callTOs.stream()
-                    .map(to -> mapCallTOToExpressionCall((ExpressionCallTO) to, 
-                            new DataPropagation(), speciesId))
-                    .collect(Collectors.toSet());
-    
-        } else if (type.equals(NoExpressionCallTO.class)) {
-            inputCalls = callTOs.stream()
-                    .map(to -> mapCallTOToExpressionCall((NoExpressionCallTO) to,
-                            new DataPropagation(), speciesId))
-                    .collect(Collectors.toSet());
-    
-        } else {
-            throw log.throwing(new IllegalArgumentException("There is no propagation " +
-                    "implemented for CallTO " + type.getClass() + "."));
-        }
         
         // Here, no calls should have PropagationState which is not SELF
-        assert !inputCalls.stream().anyMatch(c -> c.getDataPropagation().getAllPropagationStates()
+        assert !calls.stream().anyMatch(c -> c.getDataPropagation().getAllPropagationStates()
                 .contains(EnumSet.complementOf(EnumSet.of(PropagationState.SELF)))); 
         // Here, no calls should include non-observed data
-        assert !inputCalls.stream().anyMatch(c -> !c.getDataPropagation().getIncludingObservedData()); 
+        assert !calls.stream().anyMatch(c -> !c.getDataPropagation().getIncludingObservedData()); 
         
         // Counts for log tracing 
-        int callCount = inputCalls.size();
+        int callCount = calls.size();
         int analyzedCallCount = 0;
 
         // Propagate species by species
         Set<ExpressionCall> allPropagatedCalls = new HashSet<>();
-        for (ExpressionCall call: inputCalls) {
+        for (ExpressionCall call: calls) {
             analyzedCallCount++;
             if (log.isDebugEnabled() && analyzedCallCount % 100000 == 0) {
                 log.debug("{}/{} expression calls analyzed.", analyzedCallCount, callCount);
@@ -827,11 +815,13 @@ public class CallService extends Service {
     
             // Retrieve conditions of the species keeping conditions in allowed organs and stages only
             Set<Condition> propagatedConditions = null;
-            if (type.equals(ExpressionCallTO.class)) {
+            if (areExpressedCalls) {
                 propagatedConditions = conditionUtils.getAncestorConditions(call.getCondition(), true);
+                log.debug("Ancestor conditions for {}: {}", call.getCondition(), propagatedConditions);
                 
-            } else if (type.equals(NoExpressionCallTO.class)) {
+            } else {
                 propagatedConditions = conditionUtils.getDescendantConditions(call.getCondition(), true);
+                log.debug("Descendant conditions for {}: {}",  call.getCondition(), propagatedConditions);
             }
             
             assert propagatedConditions != null;
@@ -853,7 +843,7 @@ public class CallService extends Service {
      * Propagate {@code ExpressionCall} to provided {@code parentConditions}.
      * 
      * @param call              An {@code ExpressionCall} that is the call to be propagated.
-     * @param conditions        A {@code Set} of {@code Condition}s that are the conditions 
+     * @param conditions        A {@code Collection} of {@code Condition}s that are the conditions 
      *                          in which the propagation have to be done.
      * @param conditionFilters  A {@code Collection} of {@code ConditionFilter}s to configure 
      *                          the filtering of conditions in propagated calls. 
@@ -863,7 +853,7 @@ public class CallService extends Service {
      *                          from provided {@code childCall}.
      */
     private Set<ExpressionCall> propagateExpressionCall(ExpressionCall call,
-            Set<Condition> conditions, Collection<ConditionFilter> conditionFilters) {
+            Collection<Condition> conditions, Collection<ConditionFilter> conditionFilters) {
         log.entry(call, conditions, conditionFilters);
         
         log.trace("Propagation for call: {}", call);

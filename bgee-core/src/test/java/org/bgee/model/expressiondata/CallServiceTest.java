@@ -967,7 +967,6 @@ public class CallServiceTest extends TestAncestor {
         assertEquals("Incorrect ExpressionCall generated", expectedResult, actualResult);
 
         // EXPRESSED - LOW quality - not observed
-        // FIXME this does not include observed data, no?
         inputCalls = new HashSet<>(Arrays.asList(
                 new ExpressionCall("geneA", new Condition("organA", "stageA", speciesId),
                         null, null, null, Arrays.asList(
@@ -978,7 +977,7 @@ public class CallServiceTest extends TestAncestor {
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.EST, dpSelfAndDesc)), 
                         null)));
         expectedResult = new ExpressionCall("geneA", null, 
-                new DataPropagation(PropagationState.SELF_AND_DESCENDANT, PropagationState.SELF_AND_DESCENDANT, true), 
+                new DataPropagation(PropagationState.SELF_AND_DESCENDANT, PropagationState.SELF_AND_DESCENDANT, false), 
                 ExpressionSummary.EXPRESSED, DataQuality.LOW, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpDescAndSelf),
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.EST, dpSelfAndDesc)), 
@@ -1005,8 +1004,7 @@ public class CallServiceTest extends TestAncestor {
         actualResult = CallService.reconcileSingleGeneCalls(inputCalls);
         assertEquals("Incorrect ExpressionCall generated", expectedResult, actualResult);
 
-        // WEAK_AMBIGUITY - null - observed
-        // FIXME this does not include observed data, no?
+        // WEAK_AMBIGUITY - null - not observed
         inputCalls = new HashSet<>(Arrays.asList(
                 new ExpressionCall("geneA", new Condition("organA", "stageA", speciesId),
                         null, null, null, Arrays.asList(
@@ -1017,7 +1015,7 @@ public class CallServiceTest extends TestAncestor {
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndDesc)), 
                         null)));
         expectedResult = new ExpressionCall("geneA", null, 
-                new DataPropagation(PropagationState.SELF_AND_ANCESTOR, PropagationState.SELF_AND_DESCENDANT, true), 
+                new DataPropagation(PropagationState.SELF_AND_ANCESTOR, PropagationState.SELF_AND_DESCENDANT, false), 
                 ExpressionSummary.WEAK_AMBIGUITY, null, Arrays.asList(
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpAncAndSelf),
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndDesc)), 

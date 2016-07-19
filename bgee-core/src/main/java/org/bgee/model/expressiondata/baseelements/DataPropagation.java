@@ -132,9 +132,18 @@ public class DataPropagation {
                 e -> PropagationState.ANCESTOR.equals(e) || PropagationState.DESCENDANT.equals(e) || 
                 PropagationState.ANCESTOR_AND_DESCENDANT.equals(e)) ||
                 
+            // Here, we cannot check consistency of PropagationState.SELF_AND_ANCESTOR,
+            // PropagationState.SELF_AND_DESCENDANT, and PropagationState.ALL due to 
+            // reconciliation of calls. For instance, if we reconcile following ExpressionCalls:
+            // - call with anat. entity propa. state equals to SELF and 
+            // dev. stage propa. state equals to ANCESTOR
+            // - call with anat. entity propa. state equals to ANCESTOR and 
+            // dev. stage propa. state equals to SELF
+            // ExpressionCall will have anat. entity propa. state equals to SELF_AND_ANCESTOR and 
+            // dev. stage propa. state equals to SELF_AND_ANCESTOR
+            // with includingObservedData equals to true
             new Boolean(false).equals(includingObservedData) && Arrays.stream(states).allMatch(
-                e -> PropagationState.SELF.equals(e) || PropagationState.SELF_AND_ANCESTOR.equals(e) || 
-                PropagationState.SELF_AND_DESCENDANT.equals(e) || PropagationState.ALL.equals(e))) {
+                e -> PropagationState.SELF.equals(e))) {
             
             throw log.throwing(new IllegalArgumentException("The provided observed data state ("
                     + includingObservedData + ") is incompatible with the provided PropagationStates ("

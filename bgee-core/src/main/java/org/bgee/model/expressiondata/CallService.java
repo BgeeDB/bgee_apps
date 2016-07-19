@@ -988,14 +988,8 @@ public class CallService extends Service {
                 callData.stream()
                     .map(c -> c.getDataPropagation().getDevStagePropagationState())
                     .collect(Collectors.toSet()));
-        
-        HashSet<PropagationState> selfStates = new HashSet<>(Arrays.asList(
-                PropagationState.SELF, PropagationState.SELF_AND_DESCENDANT,
-                PropagationState.SELF_AND_ANCESTOR, PropagationState.ALL));
-        Boolean includingObservedData = false;
-        if (selfStates.contains(anatEntityPropagationState) && selfStates.contains(devStagePropagationState)) {
-            includingObservedData = true;
-        }
+        boolean includingObservedData = callData.stream()
+                .anyMatch(c -> c.getDataPropagation().getIncludingObservedData() == true);
         DataPropagation callDataProp = new DataPropagation(
                 anatEntityPropagationState, devStagePropagationState, includingObservedData);
 

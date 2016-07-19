@@ -238,6 +238,16 @@ public class TaxonConstraints {
                     CommandRunner.parseMapArgumentAsInteger(args[6]).entrySet().stream()
                     .collect(Collectors.toMap(Entry::getKey, e -> new HashSet<Integer>(e.getValue()))), 
                     args[7], storeDir);
+        } else if (args[0].equalsIgnoreCase("mergeUberonAndTaxonomy")) {
+        
+            if (args.length != 4) {
+                throw log.throwing(new IllegalArgumentException("Incorrect number of arguments " +
+                        "provided, expected 4 arguments, " + args.length + 
+                        " provided."));
+            }
+            TaxonConstraints generate = new TaxonConstraints(args[1], args[2]);
+            generate.saveUberonToFile(args[3]);
+            
         } else {
             throw log.throwing(new UnsupportedOperationException("The following action " +
                     "is not recognized: " + args[0]));
@@ -367,6 +377,25 @@ public class TaxonConstraints {
         this.uberonOntWrapper.mergeOntology(this.taxOntWrapper.getSourceOntology());
         
         this.uberonOntWrapper.clearCachedEdges();
+        log.exit();
+    }
+    
+    /**
+     * 
+     * @param fileNamePrefix            A {@code String} that is the prefix of the dir to use to store 
+     *                                  merged Uberon version as OBO and OWL.
+     * @throws IllegalArgumentException
+     * @throws IOException
+     * @throws OWLOntologyStorageException 
+     */
+    public void saveUberonToFile(String fileNamePrefix) throws IllegalArgumentException, IOException, 
+    OWLOntologyStorageException {
+        log.entry(fileNamePrefix);
+        
+        OntologyUtils utils = new OntologyUtils(this.uberonOntWrapper);
+        utils.saveAsOBO(fileNamePrefix + ".obo");
+        utils.saveAsOWL(fileNamePrefix + ".owl");
+        
         log.exit();
     }
     

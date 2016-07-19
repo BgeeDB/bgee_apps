@@ -1,7 +1,7 @@
 package org.bgee.model.expressiondata;
 
-import java.util.AbstractMap.SimpleEntry;
 import java.math.BigDecimal;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -9,8 +9,9 @@ import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -34,6 +35,7 @@ import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.CallFilter.DiffExpressionCallFilter;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
+import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.CallType.DiffExpression;
 import org.bgee.model.expressiondata.baseelements.CallType.Expression;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
@@ -110,15 +112,246 @@ public class CallService extends Service {
         return null;
     }
     
+    //TODO test attributes and orderingAttributes 
     public Stream<ExpressionCall> loadExpressionCalls(String speciesId, 
             ExpressionCallFilter callFilter, Collection<Attribute> attributes, 
             LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes) throws IllegalArgumentException {
         log.entry(speciesId, callFilter, attributes, orderingAttributes);
-        return log.exit(this.loadCalls(speciesId, Arrays.asList(callFilter), 
-                    attributes, orderingAttributes)
-                .map(call -> (ExpressionCall) call));
+        
+        // We need to retrieved all attributes to be able to build the ConditionUtils and
+        // propagate, reconcile and filter calls.
+        Set<ExpressionCall> calls = this.loadCalls(speciesId, callFilter, attributes, orderingAttributes)
+                    .map(call -> (ExpressionCall) call)
+                    .collect(Collectors.toSet());
+                                
+        ConditionUtils conditionUtils = new ConditionUtils(
+                calls.stream().map(c -> c.getCondition()).collect(Collectors.toSet()),
+                this.getServiceFactory());
+
+        Set<ExpressionCall> propagatedCalls = this.propagateExpressionCalls(calls, 
+                callFilter.getConditionFilters(), conditionUtils, speciesId);
+        
+        Map<String, Set<ExpressionCall>> propagatedCallsByGeneId = propagatedCalls.stream()
+            .collect(Collectors.toMap(c -> c.getGeneId(), 
+                c -> new HashSet<ExpressionCall>(Arrays.asList(c)),
+                (v1, v2) -> {
+                    Set<ExpressionCall> newSet = new HashSet<>(v1);
+                    newSet.addAll(v2);
+                    return newSet;
+                }));
+        
+        List<ExpressionCall> reconciledCalls = propagatedCallsByGeneId.entrySet().stream()
+        // Reconcile calls
+            .map(e -> CallService.reconcileSingleGeneCalls(e.getValue()))
+        // Filter calls according CallFilter
+            .filter(c -> CallService.testCallFilter(c, callFilter))
+        // Keep provided attributes
+            .map(c -> CallService.getClonedExpressionCall(c, attributes, speciesId))
+            // Order according to provided orderingAttributes with convertServiceOrdering
+            .sorted(CallService.convertServiceOrdering(orderingAttributes))
+            .collect(Collectors.toList());
+        
+        return log.exit(reconciledCalls.stream());
+    }
+
+    /** 
+     * Evaluates this {@code ExpressionCallFilter} on the given {@code ExpressionCall}.
+     * 
+     * @param call          An {@code ExpressionCall} that is the expression call to be evaluated.
+     * @param callFilter    An {@code ExpressionCallFilter} that is the filter 
+     *                      to be used to evaluate {@call}.
+     * @return              {@code true} if the {@code call} matches {@code callFilter}.
+     */
+    // TODO to be added to ExpressionCallUtils see TODOs into ExpressionCall
+    private static boolean testCallFilter(ExpressionCall call, ExpressionCallFilter callFilter) {
+        log.entry(call, callFilter);
+        
+        // Filter according GeneFilter
+        if (callFilter.getGeneFilter() != null
+                && !callFilter.getGeneFilter().getGeneIds().contains(call.getGeneId())) {
+            return log.exit(false);
+        }
+
+        // Filter according ConditionFilters
+        if (callFilter.getConditionFilters() != null
+                && !callFilter.getConditionFilters().stream().anyMatch(f -> f.test(call.getCondition()))) {
+            return log.exit(false);
+        }
+
+        // Filter according CallDataFilters (cannot be null or empty, if several filters are provided,
+        // they are seen as "OR" conditions)
+        for (ExpressionCallData callDataFilter: callFilter.getCallDataFilters()) {
+            // Filter on DataType (AFFYMETRIX, EST, IN_SITU, RNA_SEQ)
+            boolean isDataTypeValid = false;
+            boolean isCallTypeValid = false;
+            boolean isDataQualityValid = false;
+            if ((callDataFilter.getDataType() == null && callDataFilter.getDataQuality().equals(DataQuality.LOW))
+                    || !Collections.disjoint(
+                            callDataFilter.getDataType() != null?
+                                    EnumSet.of(callDataFilter.getDataType()): EnumSet.allOf(DataType.class),
+                            call.getCallData().stream().map(x -> x.getDataType()).collect(Collectors.toSet()))) {
+                isDataTypeValid = true;
+            }
+            
+            // Filter on DataType (EXPRESSED, NOT_EXPRESSED)
+            if (callDataFilter.getCallType() == null
+                    || !call.getCallData().stream()
+                            .anyMatch(x -> callDataFilter.getCallType().equals(x.getCallType()))) {
+                isCallTypeValid = true;
+            }
+            
+            // Filter on DataQuality (NODATA, LOW, HIGH)
+            if (callDataFilter.getDataQuality() == null
+                    || !call.getCallData().stream()
+                            .anyMatch(x -> callDataFilter.getDataQuality().equals(x.getDataQuality()))) {
+                isDataQualityValid = true;
+            }
+            if (isDataTypeValid && isCallTypeValid && isDataQualityValid) {
+                return log.exit(true);
+            }
+        }
+        return log.exit(false);
+    }
+
+    /**
+     * Return an {@code ExpressionCall} populated according to {@code attributes}.
+     * 
+     * @param call          An {@code ExpressionCall} to be cloned only, with provided {@code attributes}.
+     * @param attributes    A {@code Collection} of {@code Attribute}s defining the attributes
+     *                      to populate in the returned {@code ExpressionCall}s.
+     *                      If {@code null} or empty, all attributes are populated. 
+     * @param speciesId     A {@code String} that is the ID of the species.
+     * @return              The clones {@code ExpressionCall} populated according to {@code attributes}.
+     */
+    private static ExpressionCall getClonedExpressionCall(ExpressionCall call, Collection<Attribute> attributes, 
+            String speciesId) {
+        log.entry(call, attributes, speciesId);
+        
+        Set<Attribute> clonedAttrs = Optional.ofNullable(attributes)
+                .map(e -> EnumSet.copyOf(e)).orElse(EnumSet.allOf(Attribute.class));
+
+        String geneId = null;
+        if (clonedAttrs.contains(Attribute.GENE_ID)) {
+            geneId = call.getGeneId();
+        }
+        Condition condition = null;
+        if (clonedAttrs.contains(Attribute.ANAT_ENTITY_ID) || 
+                clonedAttrs.contains(Attribute.DEV_STAGE_ID)) {
+            String anatEntityId = null;
+            if (clonedAttrs.contains(Attribute.ANAT_ENTITY_ID) ) {
+                anatEntityId = call.getCondition().getAnatEntityId();
+            }
+            String devStageId = null;
+            if (clonedAttrs.contains(Attribute.DEV_STAGE_ID) ) {
+                devStageId = call.getCondition().getDevStageId();
+            }
+            condition = new Condition(anatEntityId, devStageId, speciesId);
+        }
+        DataQuality summaryQual = null; 
+        if (clonedAttrs.contains(Attribute.GLOBAL_DATA_QUALITY)) {
+            summaryQual = call.getSummaryQuality();
+        }
+        BigDecimal globalMeanRank = null;
+        if (clonedAttrs.contains(Attribute.GLOBAL_RANK)) {
+            globalMeanRank = call.getGlobalMeanRank();
+        }
+        DataPropagation dataPropagation = null; 
+        if (clonedAttrs.contains(Attribute.GLOBAL_ANAT_PROPAGATION) || 
+                clonedAttrs.contains(Attribute.GLOBAL_STAGE_PROPAGATION) || 
+                clonedAttrs.contains(Attribute.GLOBAL_OBSERVED_DATA)) {
+            PropagationState anatPropa = null;
+            if (clonedAttrs.contains(Attribute.GLOBAL_ANAT_PROPAGATION) ) {
+                anatPropa = call.getDataPropagation().getAnatEntityPropagationState();
+            }
+            PropagationState stagePropa = null;
+            if (clonedAttrs.contains(Attribute.GLOBAL_STAGE_PROPAGATION) ) {
+                stagePropa = call.getDataPropagation().getDevStagePropagationState();
+            }
+            Boolean includingObservedData = null;
+            if (clonedAttrs.contains(Attribute.GLOBAL_OBSERVED_DATA) ) {
+                includingObservedData = call.getDataPropagation().getIncludingObservedData();
+            }
+            dataPropagation = new DataPropagation(anatPropa, stagePropa, includingObservedData);
+        }
+        Collection<ExpressionCallData> callData = null;
+        if (clonedAttrs.contains(Attribute.CALL_DATA)) {
+            callData = call.getCallData();
+        }
+        // FIXME: Take into account Attribute.CALL_DATA_OBSERVED_DATA ??
+
+        // FIXME: Create Attribute.GLOBAL_SUMMARY or always fill the summary ??
+        ExpressionSummary summaryCallType = call.getSummaryCallType();
+        
+        return log.exit(new ExpressionCall(geneId, condition, dataPropagation, summaryCallType,
+                summaryQual, callData, globalMeanRank));
     }
     
+    /** 
+     * Return the {@code Comparator} of {@code ExpressionCall}s, performing the comparisons
+     * in order provided by {@code orderingAttributes}.
+     * 
+     * @param orderingAttributes    A {@code LinkedHashMap} where keys are 
+     *                              {@code CallService.OrderingAttribute}s defining the attributes
+     *                              used to order the returned {@code ExpressionCall}s, 
+     *                              the associated value being a {@code Service.Direction} defining 
+     *                              whether the ordering should be ascendant or descendant.
+     * @return                      The {@code Comparator} of {@code ExpressionCall}s.
+     */
+    // TODO to be added to ExpressionCallUtils see TODOs into ExpressionCall
+    private static Comparator<ExpressionCall> convertServiceOrdering(
+            LinkedHashMap<CallService.OrderingAttribute, Service.Direction> orderingAttributes) {
+        log.entry(orderingAttributes);
+        
+        Comparator<ExpressionCall> comparator = null;
+        
+        for (Entry<CallService.OrderingAttribute, Service.Direction> entry: orderingAttributes.entrySet()) {
+            Comparator<String> compStr = null;
+            Comparator<BigDecimal> compBigD = null;
+            switch (entry.getValue()) {
+            case ASC:
+                compStr = Comparator.nullsLast(Comparator.naturalOrder());
+                compBigD = Comparator.nullsLast(Comparator.naturalOrder());
+                break;
+            case DESC:
+                compStr = Comparator.nullsLast(Comparator.reverseOrder());
+                compBigD = Comparator.nullsLast(Comparator.reverseOrder());
+                break;
+            default: 
+                throw log.throwing(new IllegalStateException("Unsupported Service.Direction: " +
+                        entry.getValue()));
+            }
+
+            Comparator<ExpressionCall> tmpComp = null;
+            switch (entry.getKey()) {
+            case GENE_ID:
+                //Order by genes
+                tmpComp = Comparator.comparing(ExpressionCall::getGeneId, compStr);
+                break;
+            case ANAT_ENTITY_ID:
+                tmpComp = Comparator.comparing(c -> c.getCondition().getAnatEntityId(), compStr);
+                break;
+            case DEV_STAGE_ID:
+                tmpComp = Comparator.comparing(c -> c.getCondition().getDevStageId(), compStr);
+                break;
+            case GLOBAL_RANK:
+                tmpComp = Comparator.comparing(c -> c.getGlobalMeanRank(), compBigD);
+
+                break;
+            default: 
+                throw log.throwing(new IllegalStateException("Unsupported OrderingAttribute: " + 
+                        entry.getKey()));
+            }
+            
+            if (comparator == null) {
+                comparator = tmpComp;
+            } else {
+                comparator.thenComparing(tmpComp);
+            }
+        }
+        
+        return log.exit(comparator);
+    }
+
     public Stream<DiffExpressionCall> loadDiffExpressionCalls(String speciesId, 
             DiffExpressionCallFilter callFilter) {
         //TODO
@@ -127,26 +360,36 @@ public class CallService extends Service {
     
     //XXX: example single-species query, signature/returned value to be better defined
     //XXX: would several CallFilters represent AND or OR conditions?
-    
     //XXX: this method should not return Call objects, it should only take care
     //of the dispatch to different DAOs, and return a Map<CallFilter, Stream<TO>> or similar.
     //no post-processing of the results returned by DAOs.
-    public Stream<? extends Call<?, ?>> loadCalls(String speciesId, 
+    // FIXME Accept only one CallFilter. For the moment, we keep a Collection of CallFilters
+    // to not modify TopAnatAnalysis before determining final signature.
+    public <T extends Enum<T> & CallType, U extends Enum<U> & SummaryCallType, V extends Call<U, CallData<T>>> 
+    Stream<V> loadCalls(String speciesId, 
             Collection<CallFilter<?>> callFilters, Collection<Attribute> attributes, 
             LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes) 
                     throws IllegalArgumentException {
         log.entry(speciesId, callFilters, attributes, orderingAttributes);
+        
+        if (callFilters == null || callFilters.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("At least one CallFilter must be provided."));
+        }
+        
+        if (callFilters.size() > 1) {
+            throw log.throwing(new UnsupportedOperationException(
+                    "Management of several filters not yet implemented."));            
+        }
+        CallFilter<?> callFilter = callFilters.iterator().next();
+        
         //sanity checks
         if (StringUtils.isBlank(speciesId)) {
             throw log.throwing(new IllegalArgumentException("A speciesID must be provided"));
         }
-        if (callFilters == null || callFilters.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("At least one CallFilter must be provided."));
+        if (callFilter == null) {
+            throw log.throwing(new IllegalArgumentException("A CallFilter must be provided."));
         }
-        if (callFilters.stream().anyMatch(Objects::isNull)) {
-            throw log.throwing(new IllegalArgumentException("No CallFilter can be null"));
-        }
-        final Set<CallFilter<?>> clonedFilters = Collections.unmodifiableSet(new HashSet<>(callFilters));
+
         final Set<Attribute> clonedAttrs = Collections.unmodifiableSet(
                 attributes == null? EnumSet.noneOf(Attribute.class): EnumSet.copyOf(attributes));
         LinkedHashMap<OrderingAttribute, Service.Direction> clonedOrderingAttrs = 
@@ -157,45 +400,21 @@ public class CallService extends Service {
             throw log.throwing(new UnsupportedOperationException(
                     "Retrieval of observed data state per data type not yet implemented."));
         }
-        if (clonedFilters.stream().flatMap(filter -> filter.getCallDataFilters().stream())
+        if (callFilter.getCallDataFilters().stream()
                 .anyMatch(callData -> Expression.NOT_EXPRESSED.equals(callData.getCallType()) || 
                         EnumSet.allOf(DiffExpression.class).contains(callData.getCallType()))) {
             throw log.throwing(new UnsupportedOperationException(
                     "Management of diff. expression and no-expression queries not yet implemented."));
         }
-        if (clonedFilters.stream().anyMatch(filter -> filter.getConditionFilters() != null 
-                    || !filter.getConditionFilters().isEmpty())) {
+                
+        if (callFilter.getConditionFilters() != null || !callFilter.getConditionFilters().isEmpty()) {
             log.warn("ExpressionDAO may not return what you expect");
         }
 
         //OK, real work starts here
-        //XXX: NO, should not returned processed Calls, only retrieve streams from DAOs
-        Set<Stream<? extends Call<?, ?>>> streamsJoinAnd = new HashSet<>();
-        for (CallFilter<?> filter: clonedFilters) { 
-            //dispatch the CallData per DAO needed. 
-            Set<Stream<? extends Call<?, ?>>> streamsJoinOr = new HashSet<>();
-            streamsJoinOr.add(this.performsExpressionQueries(speciesId, filter, clonedAttrs, 
-                    clonedOrderingAttrs));
-            assert streamsJoinOr.size() > 0;
-            
-            if (streamsJoinOr.size() > 1) {
-                throw log.throwing(new UnsupportedOperationException("Merge of results "
-                        + "form several OR queries not yet implemented"));
-            }
-            
-            //TODO: here, we need to implement an InterleaveMergeSpliterator.
-            //in the mean time, simply add the current stream
-            streamsJoinAnd.addAll(streamsJoinOr);
-        }
-        if (streamsJoinAnd.size() > 1) {
-            throw log.throwing(new UnsupportedOperationException("Merge of results "
-                    + "from several AND queries not yet implemented."));
-        }
-        
-        //TODO: here, we need to implement a spliterator avoiding to put all data in memory 
-        //to check whether a Call is present in all streams.
-        //in the mean time, simply return the stream
-        return log.exit(streamsJoinAnd.iterator().next());
+        //XXX: NO, should not returned processed Calls, only retrieve stream from DAO
+        return log.exit(this.performsExpressionQueries(speciesId, callFilter, clonedAttrs, 
+                clonedOrderingAttrs));
     }
 
     //*************************************************************************
@@ -776,7 +995,9 @@ public class CallService extends Service {
             String speciesId, boolean areExpressedCalls) throws IllegalArgumentException {
         log.entry(calls, conditionFilter, conditionUtils, speciesId, areExpressedCalls);
         
-        // TODO: asserts
+        // TODO: it's a private method, we can assume that provided parameters
+        // have already been checked but we can add asserts
+        
         // Check that TOs are not empty and not already propagated
         if (calls == null || calls.isEmpty()) {
             log.trace("No calls to propagate");
@@ -866,7 +1087,7 @@ public class CallService extends Service {
         allConditions.add(inputCondition);
         
         for (Condition condition : allConditions) {
-            if (conditionFilters!=null && !conditionFilters.stream().anyMatch(f -> f.test(condition))) {
+            if (conditionFilters != null && !conditionFilters.stream().anyMatch(f -> f.test(condition))) {
                 continue;
             }
             

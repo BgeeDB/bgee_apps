@@ -463,7 +463,7 @@ public class CallServiceTest extends TestAncestor {
                                         DataType.AFFYMETRIX, dpSelfAndSelf),
                                 new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH,
                                         DataType.RNA_SEQ, dpSelfAndSelf)),
-                        null),
+                        new BigDecimal("1.25")),
                 // ExpressionCall 2
                 new ExpressionCall("geneA", new Condition("organA", "parentStageA1", speciesId),
                         dpSelfAndSelf, ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
@@ -471,19 +471,19 @@ public class CallServiceTest extends TestAncestor {
                                         DataType.EST, dpSelfAndSelf),
                                 new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH,
                                         DataType.IN_SITU, dpSelfAndSelf)),
-                        null),
+                        new BigDecimal("1250")),
                 // ExpressionCall 3
                 new ExpressionCall("geneB", new Condition("parentOrganA1", "parentStageA1", speciesId),
                         dpSelfAndSelf, ExpressionSummary.EXPRESSED, DataQuality.LOW, Arrays.asList(
                                 new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW,
                                         DataType.RNA_SEQ, dpSelfAndSelf)),
-                        null),
+                        new BigDecimal("10")),
                 // ExpressionCall 4
                 new ExpressionCall("geneB", new Condition("organB", "stageB", speciesId),
                         dpSelfAndSelf, ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
                                 new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH,
                                         DataType.AFFYMETRIX, dpSelfAndSelf)),
-                        null));
+                        new BigDecimal("111")));
 
         Set<ExpressionCall> allResults = new HashSet<>(Arrays.asList(
                 // From ExpressionCall 1
@@ -491,7 +491,7 @@ public class CallServiceTest extends TestAncestor {
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndSelf),
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf)), 
-                        null), 
+                        new BigDecimal("1.25")), 
                 
                 new ExpressionCall("geneA", new Condition("organA", "parentStageA1", speciesId),
                         null, null, null, Arrays.asList(
@@ -516,7 +516,8 @@ public class CallServiceTest extends TestAncestor {
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.EST, dpSelfAndSelf),
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.IN_SITU, dpSelfAndSelf)), 
-                        null), 
+                        new BigDecimal("1250")),
+                
                 new ExpressionCall("geneA", new Condition("parentOrganA1", "parentStageA1", speciesId),
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.EST, dpDescAndSelf),
@@ -527,13 +528,13 @@ public class CallServiceTest extends TestAncestor {
                 new ExpressionCall("geneB", new Condition("parentOrganA1", "parentStageA1", speciesId),
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.RNA_SEQ, dpSelfAndSelf)), 
-                        null), 
+                        new BigDecimal("10")), 
 
                 // From ExpressionCall 4
                 new ExpressionCall("geneB", new Condition("organB", "stageB", speciesId),
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndSelf)), 
-                        null), 
+                        new BigDecimal("111")), 
                 new ExpressionCall("geneB", new Condition("organB", "parentStageB1", speciesId),
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndDesc)), 
@@ -627,7 +628,7 @@ public class CallServiceTest extends TestAncestor {
                                         DataType.AFFYMETRIX, dpSelfAndSelf),
                                 new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW,
                                         DataType.IN_SITU, dpSelfAndSelf)),
-                        null),
+                        new BigDecimal("2.25")),
                 // ExpressionCall 2
                 new ExpressionCall("geneA", new Condition("organA", "parentStageA1", speciesId),
                         dpSelfAndSelf, ExpressionSummary.NOT_EXPRESSED, DataQuality.HIGH, Arrays.asList(
@@ -635,7 +636,7 @@ public class CallServiceTest extends TestAncestor {
                                         DataType.AFFYMETRIX, dpSelfAndSelf),
                                 new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH,
                                         DataType.RNA_SEQ, dpSelfAndSelf)),
-                        null),
+                        new BigDecimal("2250")),
                 // ExpressionCall 3
                 new ExpressionCall("geneA", new Condition("parentOrganA2", "parentStageA1", speciesId),
                         dpSelfAndSelf, ExpressionSummary.NOT_EXPRESSED, DataQuality.HIGH, Arrays.asList(
@@ -645,13 +646,13 @@ public class CallServiceTest extends TestAncestor {
                                         DataType.IN_SITU, dpSelfAndSelf),
                                 new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW,
                                         DataType.RNA_SEQ, dpSelfAndSelf)),
-                        null),
+                        new BigDecimal("20")),
                 // ExpressionCall 4
                 new ExpressionCall("geneB", new Condition("parentOrganB2", "stageB", speciesId),
                         dpSelfAndSelf, ExpressionSummary.NOT_EXPRESSED, DataQuality.HIGH, Arrays.asList(
                                 new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH,
                                         DataType.AFFYMETRIX, dpSelfAndSelf)),
-                        null));
+                        new BigDecimal("211")));
 
         Set<ExpressionCall> allResults = new HashSet<>(Arrays.asList(
                 // From ExpressionCall 1
@@ -659,14 +660,14 @@ public class CallServiceTest extends TestAncestor {
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndSelf),
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.IN_SITU, dpSelfAndSelf)), 
-                        null), 
+                        new BigDecimal("2.25")), 
                 
                 // From ExpressionCall 2
                 new ExpressionCall("geneA", new Condition("organA", "parentStageA1", speciesId),
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndSelf),
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf)), 
-                        null), 
+                        new BigDecimal("2250")), 
 
                 // From ExpressionCall 3
                 new ExpressionCall("geneA", new Condition("parentOrganA2", "parentStageA1", speciesId),
@@ -674,7 +675,7 @@ public class CallServiceTest extends TestAncestor {
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndSelf),
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.IN_SITU, dpSelfAndSelf), 
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.RNA_SEQ, dpSelfAndSelf)), 
-                        null), 
+                        new BigDecimal("20")), 
 
                 new ExpressionCall("geneA", new Condition("parentOrganA1", "parentStageA1", speciesId),
                         null, null, null, Arrays.asList(
@@ -694,7 +695,7 @@ public class CallServiceTest extends TestAncestor {
                 new ExpressionCall("geneB", new Condition("parentOrganB2", "stageB", speciesId),
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndSelf)), 
-                        null), 
+                        new BigDecimal("211")), 
 
                 new ExpressionCall("geneB", new Condition("parentOrganB1", "stageB", speciesId),
                         null, null, null, Arrays.asList(
@@ -927,22 +928,22 @@ public class CallServiceTest extends TestAncestor {
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndSelf),
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf)), 
-                        null), 
+                        new BigDecimal("1.25")), 
                 new ExpressionCall("geneA", new Condition("organA", "stageA", speciesId),
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndSelf)), 
-                        null), 
+                         new BigDecimal("12.5")), 
                 new ExpressionCall("geneA", new Condition("organB", "parentStageB1", speciesId),
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndDesc)), 
-                        null)));
+                        new BigDecimal("125"))));
         ExpressionCall expectedResult = new ExpressionCall("geneA", null, 
                 new DataPropagation(PropagationState.SELF, PropagationState.SELF_AND_DESCENDANT, true), 
                 ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndSelf),
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndDesc),
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf)), 
-                null);
+                new BigDecimal("1.25"));
         ExpressionCall actualResult = CallService.reconcileSingleGeneCalls(inputCalls);
         assertEquals("Incorrect ExpressionCall generated", expectedResult, actualResult);
         
@@ -951,7 +952,7 @@ public class CallServiceTest extends TestAncestor {
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpDescAndSelf),
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf)), 
-                        null), 
+                        new BigDecimal("1.25")), 
                 new ExpressionCall("geneA", new Condition("organB", "parentStageB1", speciesId),
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndSelfDesc)), 
@@ -962,7 +963,7 @@ public class CallServiceTest extends TestAncestor {
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpDescAndSelf),
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf),
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndSelfDesc)), 
-                null);
+                new BigDecimal("1.25"));
         actualResult = CallService.reconcileSingleGeneCalls(inputCalls);
         assertEquals("Incorrect ExpressionCall generated", expectedResult, actualResult);
 
@@ -990,17 +991,17 @@ public class CallServiceTest extends TestAncestor {
                 new ExpressionCall("geneA", new Condition("organA", "stageA", speciesId),
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpAncAndSelf)), 
-                        null), 
+                        new BigDecimal("1.25")), 
                 new ExpressionCall("geneA", new Condition("organB", "parentStageB1", speciesId),
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.IN_SITU, dpAncAndSelf)), 
-                        null)));
+                        new BigDecimal("1.25"))));
         expectedResult = new ExpressionCall("geneA", null, 
                 new DataPropagation(PropagationState.ANCESTOR, PropagationState.SELF, false), 
                 ExpressionSummary.NOT_EXPRESSED, DataQuality.HIGH, Arrays.asList(
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpAncAndSelf),
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.IN_SITU, dpAncAndSelf)), 
-                null);
+                new BigDecimal("1.25"));
         actualResult = CallService.reconcileSingleGeneCalls(inputCalls);
         assertEquals("Incorrect ExpressionCall generated", expectedResult, actualResult);
 

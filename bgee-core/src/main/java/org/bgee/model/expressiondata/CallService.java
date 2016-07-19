@@ -961,7 +961,6 @@ public class CallService extends Service {
      * @return      The representative {@code ExpressionCall} (with reconciled quality per data types,
      *              observed data state, conflict status etc. But not with organId-stageId)
      */
-    // TODO add unit test for management of global mean ranks
     // TODO to be added to ExpressionCallUtils see TODOs into ExpressionCall
     public static ExpressionCall reconcileSingleGeneCalls(Collection<ExpressionCall> calls) {
         log.entry(calls);
@@ -1044,7 +1043,7 @@ public class CallService extends Service {
         Optional<BigDecimal> bestGlobalMeanRank = calls.stream()
             .filter(c -> c.getGlobalMeanRank() != null)
             .map(c -> c.getGlobalMeanRank())
-            .max((r1, r2) -> r1.compareTo(r2));
+            .min((r1, r2) -> r1.compareTo(r2));
         
         return log.exit(new ExpressionCall(geneId, null, callDataProp, expressionSummary, 
                 dataQuality, callData, bestGlobalMeanRank.orElse(null)));

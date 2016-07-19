@@ -465,7 +465,6 @@ public abstract class OntologyBase<T extends NamedEntity & OntologyElement<T>> {
     }
 
     @Override
-    // TODO : Is hashCode() should be calculated considering serviceFactory and type?
     public int hashCode() {
         final int prime = 31;
         int result = 1;
@@ -477,7 +476,6 @@ public abstract class OntologyBase<T extends NamedEntity & OntologyElement<T>> {
     }
 
     @Override
-    // TODO : Is equals() should be calculated considering serviceFactory and type?
     public boolean equals(Object obj) {
         if (this == obj)
             return true;

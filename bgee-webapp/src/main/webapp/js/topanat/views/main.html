@@ -1,6 +1,11 @@
 <div ng-cloak class="container-fluid">
 
-    <h1>TopAnat - Gene Expression Enrichment <span class='alert'>(BETA VERSION)</span></h1>
+    <h1>TopAnat - Gene Expression Enrichment</h1>
+
+    <div id='bgee_introduction'>
+	   <p>GO-like enrichment of anatomical terms, mapped to genes by expression patterns</p>
+    </div>
+
 
     <form id="queryForm" style="font-size: 14px;" name="queryForm" ng-submit="vm.postForm()" novalidate>
 
@@ -12,23 +17,50 @@
         </div>
 
         <!-- <div class="row vert-offset horiz-offset" style="padding-bottom: 20px;"> -->
-        <ul ng-cloak class="nav nav-pills">
-            <li ng-class="{'active': vm.showRecentJobsPanel}">
-                <a role="button" ng-click="vm.toggleRecentJobs();">
-                    <span style="vertical-align: middle;" class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
-                    Recent Jobs
-                    <span ng-if="vm.recentJobs.length > 0" class="badge">{{vm.recentJobs.length}}</span>
-                </a>
-            </li>
-            <li  ng-class="{'active': vm.showHelp}">
-            <a role="button" ng-click="vm.updateShowHelp(!vm.showHelp)">
-                <span style="vertical-align: middle;" class="glyphicon glyphicon-education" aria-hidden="true"></span>
-                Quickstart
-            </a>
-            </li>
-        </ul>
+        <div class="row">
+	        <ul ng-cloak class="nav nav-pills">
+	            <li ng-class="{'active': vm.showRecentJobsPanel}">
+	                <a role="button" ng-click="vm.toggleRecentJobs();">
+	                    <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
+	                    Recent Jobs
+	                    <span ng-if="vm.recentJobs.length > 0" class="badge">{{vm.recentJobs.length}}</span>
+	                </a>
+	            </li>
+	            <li>
+	                <a href="?page=doc&action=top_anat" role="button">
+	                    <span class="glyphicon glyphicon-education" aria-hidden="true"></span>
+	                    Documentation
+	                </a>
+	            </li>
+	        </ul>
+            <span class="examples">
+                <!--  See popover text in help.json -->
+                <span class="glyphicon glyphicon-pushpin"></span> Examples 
+                <!-- Do not add a trailing slash to the example URLs, see comments in topanat.js -->
+                <a class="bgee-loading" href="?page=top_anat#/result/7919f27d143667bc6c137401ce0c91b51e257538"
+                   uib-popover="{{vm.help}}" popover-trigger="mouseenter" popover-placement="bottom"
+                   popover-append-to-body="true" popover-title="Example 1"
+                   ng-mouseover="vm.getOnlineHelpForItem('Example 1')">1</a>
+                <a class="bgee-loading" href="?page=top_anat#/result/8fce889da7b4519c5792573ed3933032c8122819"
+                   uib-popover="{{vm.help}}" popover-trigger="mouseenter" popover-placement="bottom"
+                   popover-append-to-body="true" popover-title="Example 2"
+                   ng-mouseover="vm.getOnlineHelpForItem('Example 2')">2</a>
+                <a class="bgee-loading" href="?page=top_anat#/result/e37009ba698919c75d06e81b3eca5d48f78210a0"
+                   uib-popover="{{vm.help}}" popover-trigger="mouseenter" popover-placement="bottom"
+                   popover-append-to-body="true" popover-title="Example 3"
+                   ng-mouseover="vm.getOnlineHelpForItem('Example 3')">3</a>
+                <a class="bgee-loading" href="?page=top_anat#/result/7e8c74c073be03be4c40810c16c6be06c0bef1be"
+                   uib-popover="{{vm.help}}" popover-trigger="mouseenter" popover-placement="bottom"
+                   popover-append-to-body="true" popover-title="Example 4"
+                   ng-mouseover="vm.getOnlineHelpForItem('Example 4')">4</a>
+                <a class="bgee-loading" href="?page=top_anat#/result/5fc8ff1fcfed7cfba0f82f82a67b418ce8a709b6"
+                   uib-popover="{{vm.help}}" popover-trigger="mouseenter" popover-placement="bottom"
+                   popover-append-to-body="true" popover-title="Example 5"
+                   ng-mouseover="vm.getOnlineHelpForItem('Example 5')">5</a>
+            </span>
+        </div>
 
-        <div uib-collapse="!vm.showRecentJobsPanel" id="recentjobs" >
+        <div uib-collapse="!vm.showRecentJobsPanel" id="recentjobs" class="row" >
 
             <div ng-show="vm.recentJobs.length > 0">
                 <ul class="list-group" >
@@ -47,93 +79,6 @@
             </div>
         </div>
 
-
-        <!-- HELP -->
-        <div class="row horiz-offset" id="helpContainer" style="margin-top: 20px;">
-            <div class="repeat-animation hide-fade" ng-show="vm.showHelp">
-                <div id="helpPanel" class="panel panel-info">
-                    <div class="panel-heading">
-                        <h3 class="panel-title">TopAnat - Quickstart</h3>
-                    </div>
-
-                    <div class="row panel-body">
-                        <div class="col-sm-12">
-                            <p>TopAnat is a tool to identify and visualize enriched anatomical terms,
-                                from the expression patterns of a list of genes.
-                            </p>
-                            <p>It allows to discover where genes from a set are preferentially expressed,
-                                as compared to a background, represented by default by all expression data in Bgee
-                                for the requested species. It is is similar to a Gene Ontology enrichment test,
-                                except that it analyzes the anatomical structures where genes are expressed,
-                                rather than their GO functional annotations.
-                            </p>
-                            <p>See also our <a href="https://bgeedb.wordpress.com/2015/11/24/topanat-go-like-enrichment-of-anatomical-terms-mapped-to-genes-by-expression-patterns/"
-                                               title="Link to the Bgee Wordpress blog" target="_blank">blog post</a>
-                                about TopAnat for more information.
-                            </p>
-                            <p><strong>Please note that the results can be slow to compute</strong>,
-                                typically from 1 to 30 minutes, depending on the amount of data to process.
-                            </p>
-                        </div>
-                        <div class="col-sm-6">
-                            <p><span class="list_element_title">See examples: </span>
-                            <ul>
-                                <!-- Do not add a trailing slash to the example URLs, see comments in topanat.js -->
-                                <li><a class="bgee-loading" href="?page=top_anat#/result/7919f27d143667bc6c137401ce0c91b51e257538"
-                                       title="TopAnat example">Mouse genes mapped to the GO term "spermatogenesis"</a>.</li>
-                                <li><a class="bgee-loading" href="?page=top_anat#/result/e37009ba698919c75d06e81b3eca5d48f78210a0"
-                                       title="TopAnat example">Mouse genes mapped to the GO term "neurological system process", 
-                                       with decorrelation and high quality data only</a>.</li>
-                                <li><a class="bgee-loading" href="?page=top_anat#/result/7e8c74c073be03be4c40810c16c6be06c0bef1be"
-                                       title="TopAnat example">Cow genes with the keyword "muscle" 
-                                       in their UniProtKB/Swiss-Prot description</a>.</li>
-                                <li><a class="bgee-loading" href="?page=top_anat#/result/5fc8ff1fcfed7cfba0f82f82a67b418ce8a709b6"
-                                       title="TopAnat example">Platypus genes located on X chromosome</a>.</li>
-                            </ul>
-                            </p>
-                            <p>
-                                <!-- To be resurrected once we have a link to a comprehensive doc -->
-                                <!--<a href="">More...</a>-->
-                            </p>
-
-                        </div>
-
-                        <div class="col-sm-6">
-                            <span class="list_element_title">How to use: </span>
-                            <ul class="help">
-                                <li>Enter a list of Ensembl identifiers into the first form field,</li>
-                                <li>Optionally, enter a list of background genes,</li>
-                                <li>Optionally, change the program parameters with the dropdown menu.</li>
-                                <li>Click the 'Submit your job' button.</li>
-                            </ul>
-                        </div>
-
-                        <div class="col-sm-12">
-                            <p>A note of caution: in your analyses, you should be extremely careful 
-                               about the definition of your universe (i.e., your background genes). 
-                               The cases where it is correct to use the default background (i.e., all genes 
-                               with data in Bgee for the selected species) should be actually rare. 
-                               For instance, if you are studying a list of genes assigned to a specific 
-                               GO category, then your universe should be "all genes with a GO annotation", 
-                               and not "all genes with data in Bgee". Of course, it is still useful 
-                               to use the default background, for preliminary analyses, or when 
-                               the biological signal extracted from your gene list is very strong. 
-                               But it should often be more rigorously defined for data used in publications.
-                            </p>
-                        </div>
-
-                        <div class="col-sm-12">
-                            <p>TopAnat is based on
-                                <a href="http://www.bioconductor.org/packages/release/bioc/html/topGO.html"
-                                   title="TopGO package in Bioconductor" target="_blank">topGO</a>.
-                                Adaptation of topGO courtesy of Adrian Alexa.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- GENE LIST + BACKGROUND + ADVANCED OPTIONS -->
         <div class="row" style="margin-top: 15px;">
 
@@ -146,12 +91,11 @@
                         <img ng-src="{{vm.species_img(vm.selected_taxid)}}" class="img-responsive img-topanat-small pull-right" ng-show="vm.selected_taxid !==''" uib-tooltip="Detected species: {{vm.selected_species}}">
 
 
-                    <div class="media-body ng-cloak">
+                    <div id="gene-list-media" class="media-body ng-cloak">
 
                         <h4 class="media-heading gl-sizetransformable" ng-class="{'smaller_head':vm.selected_taxid, 'bigger':!vm.selected_taxid || ((vm.uploader.isUploading || vm.fg_list) && !vm.selected_species)}">Gene list</h4>
 
-
-                        <p ng-show="(vm.uploader.isUploading || vm.fg_list !== '') && !vm.selected_species && !vm.showDevStageError" ng-hide="(!vm.uploader.isUploading && vm.fg_list == '') || vm.selected_species !== '' || vm.showDevStageError" class="smaller">
+						<p ng-show="(vm.uploader.isUploading || vm.fg_list !== '') && !vm.selected_species && !vm.showDevStageError" ng-hide="(!vm.uploader.isUploading && vm.fg_list == '') || vm.selected_species !== '' || vm.showDevStageError" class="smaller">
 
                             <span>
                                 <i class="fa fa-circle-o-notch fa-spin" ></i>
@@ -228,12 +172,12 @@
 
                     <div class="media-body ng-cloak">
 
+                        <h4 class="media-heading smaller_head">Background<span style="padding-left: 10px; font-size: 13px;" class="glyphicon glyphicon-question-sign" uib-popover="{{vm.help}}" popover-trigger="mouseenter" popover-placement="bottom" popover-append-to-body="true" popover-title="Custom background" ng-mouseover="vm.getOnlineHelpForItem('Custom background')"></span></h4>
+
                         <span class="pull-right btn-group btn-group-xs" style="padding: 10px 5px 0 0;">
                         <button type="button" class="btn" ng-model="vm.isBackgroundChecked" ng-click="vm.selectBackground('checked')" ng-disabled="vm.formSubmitted" ng-class="{'active': vm.isBackgroundChecked === 'checked', 'btn-default': vm.isBackgroundChecked === ''}">Bgee data for {{vm.selected_species}}</button>
                         <button type="button" class="btn" ng-model="vm.isBackgroundChecked" ng-click="vm.selectBackground('')" ng-disabled="vm.formSubmitted" ng-class="{'active': vm.isBackgroundChecked === '', 'btn-default': vm.isBackgroundChecked === 'checked'}">Custom data</button>
                         </span>
-
-                        <h4 class="media-heading smaller_head">Background<span style="padding-left: 10px; font-size: 13px;" class="glyphicon glyphicon-question-sign" uib-popover="{{vm.help}}" popover-trigger="mouseenter" popover-placement="bottom" popover-append-to-body="true" popover-title="Custom background" ng-mouseover="vm.getOnlineHelpForItem('Custom background')"></span></h4>
 
                         <p style="margin: 5px 5px 0 0;" ng-show="(vm.uploader.isUploading || vm.bg_list) && !vm.background_species" ng-hide="(!vm.uploader.isUploading && !vm.bg_list) || vm.background_species || (vm.background_species == '' &&
                     vm.isBackgroundChecked == 'checked')">

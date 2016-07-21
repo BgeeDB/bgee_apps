@@ -92,7 +92,8 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
         this.startDisplay("Invalid request!");
 
         this.writeln("<p class='alert'>" + htmlEntities(e.getMessage()) + "</p>");
-        
+
+        this.endDisplay();
         log.exit();
     }
 
@@ -121,7 +122,8 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
         this.startDisplay("Invalid request!");
 
         this.writeln("<p class='alert'>Request maximum size exceeded.</p>");
-        
+
+        this.endDisplay();
         log.exit();
     }
 
@@ -136,7 +138,8 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
         this.writeln("<p class='alert'>One of the request parameters exceeded "
                 + "its maximum allowed length.</p>");
         this.writeln("<p>Incorrect parameter: " + htmlEntities(e.getURLParameter().getName()) + "</p>");
-        
+
+        this.endDisplay();
         log.exit();
     }
 
@@ -148,7 +151,8 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
         this.startDisplay("404 not found");
         this.writeln("<p class='alert'>Something wrong happened!</p>");
         this.writeln("<p>404 not found. We could not understand your query.</p> ");
-        
+
+        this.endDisplay();
         log.exit();
     }
 
@@ -164,7 +168,8 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
                 + "or we were not able to save these parameters. Your query should be rebuilt "
                 + "by setting all the parameters again. We apologize for any inconvenience.</p>");
         this.writeln("<p>Invalid key: " + htmlEntities(e.getKey()) + "</p>");
-        
+
+        this.endDisplay();
         log.exit();
     }
 
@@ -177,7 +182,8 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
         this.writeln("<p class='alert'>Something wrong happened!</p>");
         this.writeln("<p>We could not store your parameters, or a key could not be generated to retrieve them. "
                 + "We apologize for any inconvenience.</p>");
-        
+
+        this.endDisplay();
         log.exit();
     }
 
@@ -189,8 +195,9 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
         this.startDisplay("Invalid request!");
         this.writeln("<p class='alert'>Something wrong happened!</p>");
         this.writeln("<p>This operation is not supported "
-                + "for the requesed view or the requested parameters..</p>");
-        
+                + "for the requesed view or the requested parameters.</p>");
+
+        this.endDisplay();
         log.exit();
     }
 

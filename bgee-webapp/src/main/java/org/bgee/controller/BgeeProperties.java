@@ -4,6 +4,7 @@ import java.util.Properties;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.expressiondata.Call.ExpressionCall;
 
 /**
  * This class loads the properties for Bgee webapp and extends {@link BgeeProperties} from
@@ -56,6 +57,23 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      */
     public final static boolean MINIFY_DEFAULT = false;
         
+    /**
+     * A {@code String} that is a warning message to be displayed on all pages. 
+     * Useful, e.g., to warn users about a downtime to come.
+     * 
+     * @see #WARNING_MESSAGE_DEFAULT
+     * @see #getWarningMessage()
+     */
+    public final static String WARNING_MESSAGE_KEY = "org.bgee.webapp.warning.message";
+
+    /**
+     * A {@code String} that is the default value of the warning message to be displayed on all pages. 
+     * 
+     * @see #WARNING_MESSAGE_KEY
+     * @see #getWarningMessage()
+     */
+    public final static String WARNING_MESSAGE_DEFAULT = "";
+
     /**
      * A {@code String} that is the key to access to the System property that is read at the 
      * initialization of {@code BgeeProperties} to set the request parameters storage directory.
@@ -484,6 +502,46 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * @see #getTopAnatFromPersonal()
      */
     public final static String TOPANAT_FROM_PERSONAL_DEFAULT = null;  
+    
+
+    /**
+     * A {@code String} that is the key to access to the property containing 
+     * the clustering method to use to cluster {@code ExpressionCall}s based on 
+     * their global mean rank.
+     * 
+     * @see #GENE_SCORE_CLUSTERING_METHOD_DEFAULT
+     * @see #getGeneScoreClusteringMethod()
+     */
+    public final static String GENE_SCORE_CLUSTERING_METHOD_KEY = "org.bgee.webapp.geneScoreClusteringMethod";
+    /**
+     * A {@code String} that is the default value of the property containing 
+     * the clustering method to use to cluster {@code ExpressionCall}s based on 
+     * their global mean rank.
+     * 
+     * @see #GENE_SCORE_CLUSTERING_METHOD_KEY
+     * @see #getGeneScoreClusteringMethod()
+     */
+    public final static String GENE_SCORE_CLUSTERING_METHOD_DEFAULT = 
+            ExpressionCall.DEFAULT_CLUSTERING_METHOD.name();  
+    /**
+     * A {@code String} that is the key to access to the property containing 
+     * the distance threshold used when clustering {@code ExpressionCall}s based on 
+     * their global mean rank.
+     * 
+     * @see #GENE_SCORE_CLUSTERING_THRESHOLD_DEFAULT
+     * @see #getGeneScoreClusteringThreshold()
+     */
+    public final static String GENE_SCORE_CLUSTERING_THRESHOLD_KEY = "org.bgee.webapp.geneScoreClusteringThreshold";
+    /**
+     * A {@code String} that is the default value of the property containing 
+     * the distance threshold used when clustering {@code ExpressionCall}s based on 
+     * their global mean rank.
+     * 
+     * @see #GENE_SCORE_CLUSTERING_THRESHOLD_KEY
+     * @see #getGeneScoreClusteringThreshold()
+     */
+    public final static Double GENE_SCORE_CLUSTERING_THRESHOLD_DEFAULT = 
+            ExpressionCall.DEFAULT_DISTANCE_THRESHOLD; 
 
     /**
      * @return  An instance of {@code BgeeProperties} with values based on the System properties
@@ -523,6 +581,12 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * {@code boolean} defining whether CSS and JS files were minified. 
      */
     private final boolean minify;
+    
+    /**
+     * @see #getWarningMessage()
+     */
+    private final String warningMessage;
+
     /**
      * {@code String} that defines the directory where query strings holding storable parameters  
      * from previous large queries are stored. 
@@ -597,7 +661,7 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * 
      */
     private final String javascriptVersionExtension;
-
+    
     /**
      * A {@code String} that defines the root directory where are located css files, 
      * to be added to the {@code bgeeRootDirectory} to generate URL to obtain css files.
@@ -684,6 +748,15 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * @see #getTopAnatFromPersonal()
      */
     private final String topAnatFromPersonal;
+    
+    /**
+     * @see #getGeneScoreClusteringMethod()
+     */
+    private final String geneScoreClusteringMethod;
+    /**
+     * @see #getGeneScoreClusteringThreshold()
+     */
+    private final Double geneScoreClusteringThreshold;
 
     /**
      * Private constructor, can be only called through the use of one of the
@@ -706,6 +779,8 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
         // properties and then the file. The default value provided will be use if none of the
         // previous solutions contain the property
         minify = getBooleanOption(prop, SYS_PROPS, FILE_PROPS, MINIFY_KEY, MINIFY_DEFAULT);
+        warningMessage = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
+                WARNING_MESSAGE_KEY, WARNING_MESSAGE_DEFAULT);
         requestParametersStorageDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY,  
                 REQUEST_PARAMETERS_STORAGE_DIRECTORY_DEFAULT);
@@ -761,6 +836,10 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
                 TOPANAT_FROM_ADDRESS_KEY, TOPANAT_FROM_ADDRESS_DEFAULT);
         topAnatFromPersonal = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 TOPANAT_FROM_PERSONAL_KEY, TOPANAT_FROM_PERSONAL_DEFAULT);
+        geneScoreClusteringMethod = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
+                GENE_SCORE_CLUSTERING_METHOD_KEY, GENE_SCORE_CLUSTERING_METHOD_DEFAULT);
+        geneScoreClusteringThreshold = getDoubleOption(prop, SYS_PROPS, FILE_PROPS, 
+                GENE_SCORE_CLUSTERING_THRESHOLD_KEY, GENE_SCORE_CLUSTERING_THRESHOLD_DEFAULT);
         log.debug("Initialization done.");
         log.exit();
     }
@@ -771,6 +850,18 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
     public boolean isMinify() {
         return minify;
     }
+    
+    /**
+     * @return  A {@code String} that is a warning message to be displayed on all pages.
+     *          Useful, e.g., to warn users about a downtime to come.
+     * 
+     * @see #WARNING_MESSAGE_KEY
+     * @see #WARNING_MESSAGE_DEFAULT
+     */
+    public String getWarningMessage() {
+        return warningMessage;
+    }
+
     /**
      * @return  A {@code String} that defines the directory where query strings holding storable 
      *          parameters from previous large queries are stored. 
@@ -1004,5 +1095,29 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      */
     public String getTopAnatFromPersonal() {
         return topAnatFromPersonal;
+    }
+    
+    /**
+     * @return  A {@code String} corresponding to the name of the clustering method to use 
+     *          to cluster {@code ExpressionCall}s based on their mean rank score. 
+     *          See {@code org.bgee.model.expressiondata.Call.ExpressionCall.ClusteringMethod} 
+     *          for list of valid method names. 
+     * @see #GENE_SCORE_CLUSTERING_METHOD_KEY
+     * @see #GENE_SCORE_CLUSTERING_METHOD_DEFAULT
+     */
+    public String getGeneScoreClusteringMethod() {
+        return geneScoreClusteringMethod;
+    }
+    /**
+     * @return  A {@code Double} corresponding to the distance threshold used by methods 
+     *          for clustering {@code ExpressionCall}s, based on their mean rank score. 
+     *          See {@code org.bgee.model.expressiondata.Call.ExpressionCall
+     *          .generateMeanRankScoreClustering(Collection, ClusteringMethod, double)}. 
+     * @see #GENE_SCORE_CLUSTERING_THRESHOLD_KEY
+     * @see #GENE_SCORE_CLUSTERING_THRESHOLD_DEFAULT
+     * @see #getGeneScoreClusteringMethod()
+     */
+    public Double getGeneScoreClusteringThreshold() {
+        return geneScoreClusteringThreshold;
     }
 }

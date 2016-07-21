@@ -105,7 +105,7 @@ public class AnnotationCommonTest extends TestAncestor {
      */
     @Test
     public void shouldExecuteParseMultipleStringValues() {
-        CsvContext mockContext = mock(CsvContext.class);  
+        CsvContext context = new CsvContext(0, 0, 0); 
         //to test that next processor in the chain is called
         CellProcessor next = mock(CellProcessor.class);
         
@@ -113,26 +113,26 @@ public class AnnotationCommonTest extends TestAncestor {
         //The next processor will simply pass the value it received.
         //Note that if the test fails, the assertEquals will not be able to display 
         //the "actual" result, because the next CellProcessor would have returned null.
-        when(next.execute(expectedValue, mockContext)).thenReturn(expectedValue);
+        when(next.execute(expectedValue, context)).thenReturn(expectedValue);
         assertEquals("Incorrect List generated from separated-value string.", 
                expectedValue, 
                new AnnotationCommon.ParseMultipleStringValues(next).execute(
                        " abcd  123  " + Utils.VALUE_SEPARATORS.get(1) + " dfgd2" 
-                       + Utils.VALUE_SEPARATORS.get(0) + "qwe rty", mockContext));
+                       + Utils.VALUE_SEPARATORS.get(0) + "qwe rty", context));
         //verification a bit useless, if the test succeeded this processor has 
         //to have returned a value
-        verify(next).execute(expectedValue, mockContext);
+        verify(next).execute(expectedValue, context);
         
         next = mock(CellProcessor.class);
         expectedValue = Arrays.asList(" abcd  123  ");
         //The next processor will simply pass the value it received.
         //Note that if the test fails, the assertEquals will not be able to display 
         //the "actual" result, because the next CellProcessor would have returned null.
-        when(next.execute(expectedValue, mockContext)).thenReturn(expectedValue);
+        when(next.execute(expectedValue, context)).thenReturn(expectedValue);
         assertEquals("Incorrect List generated from separated-value string.", 
                expectedValue, 
                new AnnotationCommon.ParseMultipleStringValues(next).execute(
-                       " abcd  123  ", mockContext));
+                       " abcd  123  ", context));
         //verification a bit useless, if the test succeeded this processor has 
         //to have returned a value
         
@@ -141,14 +141,14 @@ public class AnnotationCommonTest extends TestAncestor {
         //The next processor will simply pass the value it received.
         //Note that if the test fails, the assertEquals will not be able to display 
         //the "actual" result, because the next CellProcessor would have returned null.
-        when(next.execute(expectedValue, mockContext)).thenReturn(expectedValue);
+        when(next.execute(expectedValue, context)).thenReturn(expectedValue);
         assertEquals("Incorrect List generated from separated-value string.", 
                expectedValue, 
                new AnnotationCommon.ParseMultipleStringValues(next).execute(
-                       "", mockContext));
+                       "", context));
         //verification a bit useless, if the test succeeded this processor has 
         //to have returned a value
-        verify(next).execute(expectedValue, mockContext);
+        verify(next).execute(expectedValue, context);
     }
     
     /**

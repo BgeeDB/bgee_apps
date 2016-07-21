@@ -28,7 +28,9 @@ import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.file.DownloadFileDAO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
+import org.bgee.model.dao.api.gene.GeneNameSynonymDAO;
 import org.bgee.model.dao.api.keyword.KeywordDAO;
+import org.bgee.model.dao.api.source.SourceToSpeciesDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLAnatEntityDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLTaxonConstraintDAO;
@@ -44,6 +46,7 @@ import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqResultD
 import org.bgee.model.dao.mysql.file.MySQLDownloadFileDAO;
 import org.bgee.model.dao.mysql.file.MySQLSpeciesDataGroupDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
+import org.bgee.model.dao.mysql.gene.MySQLGeneNameSynonymDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneOntologyDAO;
 import org.bgee.model.dao.mysql.gene.MySQLHierarchicalGroupDAO;
 import org.bgee.model.dao.mysql.keyword.MySQLKeywordDAO;
@@ -51,6 +54,7 @@ import org.bgee.model.dao.mysql.ontologycommon.MySQLCIOStatementDAO;
 import org.bgee.model.dao.mysql.ontologycommon.MySQLEvidenceOntologyDAO;
 import org.bgee.model.dao.mysql.ontologycommon.MySQLRelationDAO;
 import org.bgee.model.dao.mysql.source.MySQLSourceDAO;
+import org.bgee.model.dao.mysql.source.MySQLSourceToSpeciesDAO;
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO;
 import org.bgee.model.dao.mysql.species.MySQLTaxonDAO;
 
@@ -965,8 +969,8 @@ public class MySQLDAOManager extends DAOManager {
     //******************************************
     @Override
     protected MySQLSourceDAO getNewSourceDAO() {
-        throw log.throwing(new UnsupportedOperationException("Operation not yet implemented "
-                + "in MySQLDAOManager."));
+        log.entry();
+        return log.exit(new MySQLSourceDAO(this));
     }
     @Override
     protected MySQLSpeciesDAO getNewSpeciesDAO() {
@@ -1087,5 +1091,15 @@ public class MySQLDAOManager extends DAOManager {
         return log.exit(new MySQLKeywordDAO(this));
 	}
 
+	@Override
+	protected GeneNameSynonymDAO getNewGeneNameSynonymDAO() {
+		log.entry();
+        return log.exit(new MySQLGeneNameSynonymDAO(this));
+	}
 
+    @Override
+    protected SourceToSpeciesDAO getNewSourceToSpeciesDAO() {
+        log.entry();
+        return log.exit(new MySQLSourceToSpeciesDAO(this));
+    }
 }

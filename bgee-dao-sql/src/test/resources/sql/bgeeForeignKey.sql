@@ -1,5 +1,14 @@
 -- this file contains the foreign key constraints. 
 
+-- ****************************************************
+-- GENERAL
+-- ****************************************************
+/*!40000 ALTER TABLE `dataSourceToSpecies` DISABLE KEYS */;
+alter table dataSourceToSpecies 
+add foreign key (dataSourceId) references dataSource(dataSourceId) on delete cascade, 
+add foreign key (speciesId) references species(speciesId) on delete cascade;
+/*!40000 ALTER TABLE `dataSourceToSpecies` ENABLE KEYS */;
+
 --  ****************************************************
 --  TAXONOMY
 --  ****************************************************

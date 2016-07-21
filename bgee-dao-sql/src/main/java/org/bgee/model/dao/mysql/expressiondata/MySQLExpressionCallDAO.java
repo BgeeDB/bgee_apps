@@ -150,7 +150,7 @@ implements ExpressionCallDAO {
                     throws DAOException, IllegalArgumentException {
         log.entry(callFilters, includeSubstructures, includeSubStages, globalGeneIds, taxonId, 
                 attributes, orderingAttributes);
-        
+
         //needs a LinkedHashSet for consistent settings of the parameters. 
         LinkedHashSet<CallDAOFilter> clonedCallFilters = Optional.ofNullable(callFilters)
                 .map(e -> new LinkedHashSet<>(e)).orElse(new LinkedHashSet<>());
@@ -290,17 +290,31 @@ implements ExpressionCallDAO {
                     log.trace("GROUP BY needed because of AND conditions between data types. {}", 
                             filteringDataTypesPerCallTO);
                 }
-                havingClauseNeeded = true;
+
+                //FIXME: Actually, if it is needed to compute some rank scores, the filtering must be done 
+                //in the WHERE clause. Otherwise, if we want to compute ranks only based on, e.g., Affymetrix, 
+                //filtering in the HAVING clause would lead to consider all calls for, e.g., a gene-anat, 
+                //as long as at least one is supported by Affymetrix data.
+                if (updatedAttrs.stream()
+                        .anyMatch(attr -> attr.isDataTypeAttribute() || attr.isPropagationAttribute()) || 
+                        filteringDataTypesPerCallTO.stream().flatMap(attrs -> attrs.stream())
+                        .collect(Collectors.toSet()).size() > 1) {
+                    havingClauseNeeded = true;
+                    //add in the SELECT clause the columns we will need in the HAVING clause, 
+                    //to avoid over-verbose HAVING clause.
+                    updatedAttrs.addAll(filteringDataTypesPerCallTO.stream()
+                            .flatMap(Set::stream)
+                            .collect(Collectors.toSet()));
+                }
                 groupingByNeeded = true;
-                //add in the SELECT clause the columns we will need in the HAVING clause, 
-                //to avoid over-verbose HAVING clause.
-                updatedAttrs.addAll(filteringDataTypesPerCallTO.stream()
-                        .flatMap(Set::stream)
-                        .collect(Collectors.toSet()));
             }
             
             if ((includeSubStages || includeSubstructures) && 
                     clonedCallTOFilters.stream().anyMatch(e -> e.isObservedData() != null)) {
+                //FIXME: opposite problem: if we request Affymetrix data only, with the HAVING clause 
+                //we will determine whether a call having *some* affymetrix data has been observed 
+                //*somewhere* (maybe somewhere else). Is it really what we want?
+                log.warn("having clause needed");
                 havingClauseNeeded = true;
                 groupingByNeeded = true;
                 //add in the SELECT clause the columns we will need in the HAVING clause, 
@@ -310,6 +324,8 @@ implements ExpressionCallDAO {
             }
             if (includeSubstructures && 
                     clonedCallTOFilters.stream().anyMatch(e -> e.getAnatOriginOfLine() != null)) {
+                //FIXME: same here
+                log.warn("having clause needed");
                 havingClauseNeeded = true;
                 groupingByNeeded = true;
                 //add in the SELECT clause the columns we will need in the HAVING clause, 
@@ -319,6 +335,8 @@ implements ExpressionCallDAO {
             }
             if (includeSubStages && 
                     clonedCallTOFilters.stream().anyMatch(e -> e.getStageOriginOfLine() != null)) {
+                //FIXME: same here
+                log.warn("having clause needed");
                 havingClauseNeeded = true;
                 groupingByNeeded = true;
                 //add in the SELECT clause the columns we will need in the HAVING clause, 
@@ -326,8 +344,16 @@ implements ExpressionCallDAO {
                 updatedAttrs.add(ExpressionCallDAO.Attribute.STAGE_ORIGIN_OF_LINE);
                 log.trace("GROUP BY needed because of filtering based on STAGE_ORIGIN_OF_LINE.");
             }
+
+            //FIXME: THIS ALL GROUP BY / INCLUDE SUBSTAGES STUFF IS BROKEN. Let's think 
+            //if it is needed if we manage propagation in bgee-core.
+            //Poor fix meanwhile.
+            if (havingClauseNeeded && updatedAttrs.stream().anyMatch(attr -> attr.isRankAttribute())) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Retrieval of ranks when a HAVING clause is needed is not supported."));
+            }
             
-            if (log.isWarnEnabled() && groupingByNeeded && 
+            if (log.isWarnEnabled() && includeSubStages && groupingByNeeded && 
                     (geneIds.isEmpty() || geneIds.size() > this.getManager().getExprPropagationGeneCount())) {
                 log.warn("IncludeSubStages is true and some parameters highly costly to compute "
                         + "are needed, this will take lots of time... "
@@ -485,9 +511,20 @@ implements ExpressionCallDAO {
         // Construct sql query
         final String exprTableName = includeSubstructures? "globalExpression": "expression";
         final String propagatedStageTableName = "propagatedStage";
+        //if no filtering based on stage ID is requested, and no group by on stage is needed, 
+        //then we don't need the join to stage table
+        final boolean realIncludeSubStages = includeSubStages && 
+                (updatedAttrs.contains(ExpressionCallDAO.Attribute.ID) || 
+                 updatedAttrs.contains(ExpressionCallDAO.Attribute.STAGE_ID) 
+                ||
+                callFilters.stream().anyMatch(
+                        callFilter -> callFilter.getConditionFilters().stream().anyMatch(
+                                condFilter -> !condFilter.getDevStageIds().isEmpty())) 
+                || 
+                groupByAttrs != null);
 
         //determine whether to use DISTINCT keyword.
-        boolean distinct = !(groupByAttrs != null || (!includeSubStages && 
+        boolean distinct = !(groupByAttrs != null || (!realIncludeSubStages && 
                 (updatedAttrs.contains(ExpressionCallDAO.Attribute.ID) || 
                 (updatedAttrs.contains(ExpressionCallDAO.Attribute.GENE_ID) && 
                  updatedAttrs.contains(ExpressionCallDAO.Attribute.ANAT_ENTITY_ID) && 
@@ -496,11 +533,11 @@ implements ExpressionCallDAO {
                 updatedAttrs, 
                 //Attributes corresponding to data types used for filtering the results
                 callTOFilters.stream()
-                    .flatMap(callTO -> callTO.extractDataTypesToDataStates().keySet().stream())
+                    .flatMap(callTO -> callTO.extractFilteringDataTypes().keySet().stream())
                     .collect(Collectors.toCollection(() -> 
                              EnumSet.noneOf(ExpressionCallDAO.Attribute.class))), 
                 distinct, groupByAttrs != null, 
-                includeSubstructures, includeSubStages, exprTableName, propagatedStageTableName);
+                includeSubstructures, realIncludeSubStages, exprTableName, propagatedStageTableName);
         
         sql += " FROM " + exprTableName;
 
@@ -508,7 +545,7 @@ implements ExpressionCallDAO {
         //to perform the query in several iterations, because includeSubStages is true 
         //and a high number of genes has to be considered. 
         boolean genesAndSpeciesFilteredForPropagation = false;
-        if (includeSubStages) {
+        if (realIncludeSubStages) {
             //propagate expression calls to parent stages.
             sql += " INNER JOIN stage ON " + exprTableName + ".stageId = stage.stageId " +
                    " INNER JOIN stage AS " + propagatedStageTableName + " ON " +
@@ -577,7 +614,7 @@ implements ExpressionCallDAO {
         String callDAOFilterClause = this.generateCallDAOFilterClause(callFilters, 
                 !globalGeneFilter, !globalSpeciesFilter, 
                 exprTableName, 
-                includeSubStages? propagatedStageTableName: exprTableName,
+                realIncludeSubStages? propagatedStageTableName: exprTableName,
                 "gene");
         if (!callDAOFilterClause.isEmpty()) {
             if (!whereClauseStarted) {
@@ -590,10 +627,10 @@ implements ExpressionCallDAO {
         }
 
         //The filtering based on CallTOs must be done in a HAVING clause in case of GROUP BY, 
-        //otherwise, in the WHERE clause
+        //otherwise, in the WHERE clause. 
         String callTOFilterClause = this.generateCallTOFilterClause(callTOFilters, 
                 havingClauseNeeded? null: exprTableName, 
-                includeSubstructures, includeSubStages, groupByAttrs != null);
+                includeSubstructures, includeSubStages, groupByAttrs != null, havingClauseNeeded);
         if (!havingClauseNeeded && !callTOFilterClause.isEmpty()) {
             if (!whereClauseStarted) {
                 sql += "WHERE ";
@@ -616,7 +653,7 @@ implements ExpressionCallDAO {
                     case ANAT_ENTITY_ID: 
                         return exprTableName + ".anatEntityId";
                     case STAGE_ID: 
-                        return (includeSubStages? propagatedStageTableName: exprTableName) 
+                        return (realIncludeSubStages? propagatedStageTableName: exprTableName) 
                                 + ".stageId";
                     default: 
                         throw log.throwing(new IllegalStateException("GROUP BY Attribute not supported: "
@@ -637,6 +674,16 @@ implements ExpressionCallDAO {
                     switch(entry.getKey()) {
                     case MEAN_RANK: 
                         orderBy = "globalMeanRank";
+                        break;
+                    case GENE_ID: 
+                        orderBy = exprTableName + ".geneId";
+                        break;
+                    case ANAT_ENTITY_ID: 
+                        orderBy = exprTableName + ".anatEntityId";
+                        break;
+                    case STAGE_ID: 
+                        orderBy = (realIncludeSubStages? propagatedStageTableName: exprTableName) 
+                                + ".stageId";
                         break;
                     default: 
                         throw log.throwing(new IllegalStateException("Unsupported OrderingAttribute: " 
@@ -666,7 +713,7 @@ implements ExpressionCallDAO {
             
             int index = 1;
             int offsetParamIndex = 0;
-            if (includeSubStages && groupByAttrs != null && (allGeneIds.isEmpty() || 
+            if (realIncludeSubStages && groupByAttrs != null && (allGeneIds.isEmpty() || 
                     allGeneIds.size() > this.getManager().getExprPropagationGeneCount())) {
                     
                 if (!allSpeciesIds.isEmpty()) {
@@ -907,49 +954,39 @@ implements ExpressionCallDAO {
         String stageOriginIfClause = "IF(" + exprTableName + ".stageId =" + 
             propagatedStageTableName + ".stageId" + ", 1, 0)";
         
-        
         //Ranks: 
-        Map<ExpressionCallDAO.Attribute, String> dataTypeToSql = new HashMap<>();
-        String affyRank = exprTableName + ".affymetrixMeanRankNorm ";
-        if (groupByClause) {
-            affyRank = "AVG(" + exprTableName + ".affymetrixMeanRankNorm) ";
-        }
-        dataTypeToSql.put(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA, affyRank);
-        //for the global mean rank clause, we don't want the AS part, but we need it for the main query
-        if (groupByClause) {
-            affyRank += "AS affymetrixMeanRank ";
-        }
+        Map<ExpressionCallDAO.Attribute, String> dataTypeToNormRankSql = new HashMap<>();
+        dataTypeToNormRankSql.put(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA, 
+                exprTableName + ".affymetrixMeanRankNorm ");
+        dataTypeToNormRankSql.put(ExpressionCallDAO.Attribute.EST_DATA, 
+                exprTableName + ".estRankNorm ");
+        dataTypeToNormRankSql.put(ExpressionCallDAO.Attribute.IN_SITU_DATA, 
+                exprTableName + ".inSituRankNorm ");
+        dataTypeToNormRankSql.put(ExpressionCallDAO.Attribute.RNA_SEQ_DATA, 
+                exprTableName + ".rnaSeqMeanRankNorm ");
         
-        String estRank = exprTableName + ".estMeanRankNorm ";
-        if (groupByClause) {
-            estRank = "AVG(" + exprTableName + ".estMeanRankNorm) ";
-        }
-        dataTypeToSql.put(ExpressionCallDAO.Attribute.EST_DATA, estRank);
-        //for the global mean rank clause, we don't want the AS part, but we need it for the main query
-        if (groupByClause) {
-            estRank += "AS estMeanRank ";
-        }
-        
-        String inSituRank = exprTableName + ".inSituMeanRankNorm ";
-        if (groupByClause) {
-            inSituRank = "AVG(" + exprTableName + ".inSituMeanRankNorm) ";
-        }
-        dataTypeToSql.put(ExpressionCallDAO.Attribute.IN_SITU_DATA, inSituRank);
-        //for the global mean rank clause, we don't want the AS part, but we need it for the main query
-        if (groupByClause) {
-            inSituRank += "AS inSituMeanRank ";
-        }
-        
-        String rnaSeqRank = exprTableName + ".rnaSeqMeanRankNorm ";
-        if (groupByClause) {
-            rnaSeqRank = "AVG(" + exprTableName + ".rnaSeqMeanRankNorm) ";
-        }
-        dataTypeToSql.put(ExpressionCallDAO.Attribute.RNA_SEQ_DATA, rnaSeqRank);
-        //for the global mean rank clause, we don't want the AS part, but we need it for the main query
-        if (groupByClause) {
-            rnaSeqRank += "AS rnaSeqMeanRank ";
-        }
-        
+        //for weighted mean computation: sum of numbers of distinct ranks for data using 
+        //fractional ranking (Affy and RNA-Seq), max ranks for data using dense ranking 
+        //and pooling of all samples in a condition (EST and in situ)
+        Map<ExpressionCallDAO.Attribute, String> dataTypeToWeightSql = new HashMap<>();
+        dataTypeToWeightSql.put(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA, 
+                exprTableName + ".affymetrixDistinctRankSum ");
+        dataTypeToWeightSql.put(ExpressionCallDAO.Attribute.RNA_SEQ_DATA, 
+                exprTableName + ".rnaSeqDistinctRankSum ");
+        dataTypeToWeightSql.put(ExpressionCallDAO.Attribute.EST_DATA, 
+                exprTableName + ".estMaxRank ");
+        dataTypeToWeightSql.put(ExpressionCallDAO.Attribute.IN_SITU_DATA, 
+                exprTableName + ".inSituMaxRank ");
+
+        Set<ExpressionCallDAO.Attribute> attributesForRank = 
+                (filteringDataTypes == null || filteringDataTypes.isEmpty()? 
+                        EnumSet.allOf(ExpressionCallDAO.Attribute.class): filteringDataTypes)
+                .stream()
+                //in case we retrieved all Attributes because no filtering on data types
+                .filter(dataType -> dataType.isDataTypeAttribute())
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(ExpressionCallDAO.Attribute.class)));
+        //use for dividing afterwards, don't want a division by 0 :p
+        assert attributesForRank.size() > 0;
         
         for (ExpressionCallDAO.Attribute attribute: attributes) {
             if (sql.isEmpty()) {
@@ -1123,35 +1160,27 @@ implements ExpressionCallDAO {
                 
             } else if (attribute.equals(ExpressionCallDAO.Attribute.GLOBAL_MEAN_RANK)) {
                 
-                Set<ExpressionCallDAO.Attribute> attributesForRank = (filteringDataTypes.isEmpty()? 
-                        EnumSet.allOf(ExpressionCallDAO.Attribute.class): filteringDataTypes)
-                    .stream()
-                    //in case we retrieved all Attributes because no filtering on data types
-                    .filter(dataType -> dataType.isDataTypeAttribute())
-                    .collect(Collectors.toCollection(() -> 
-                             EnumSet.noneOf(ExpressionCallDAO.Attribute.class)));
-                //use for dividing afterwards, don't want a division by 0 :p
-                assert attributesForRank.size() > 0;
-                Set<String> sqlRanks = attributesForRank.stream()
-                        .map(dataType -> {
-                            String rankSql = dataTypeToSql.get(dataType);
-                            if (rankSql == null) {
-                                throw log.throwing(new IllegalStateException(
-                                        "No rank clause associated to data type: " + dataType));
-                            }
-                            return rankSql;
-                        }).collect(Collectors.toSet());
-
-                // use if expressions to handle the case where a mean rank is null
-                sql +=
-                        sqlRanks.stream()
-                                .map(r -> "if ("+r+" is null, 0,"+r+")")
-                                .collect(Collectors.joining("+ ", "((",
-                                ")")) +
-                        sqlRanks.stream()
-                                .map(r -> "if ("+r+" is null, 0, 1)")
-                                .collect(Collectors.joining("+ ", "/ (",
-                                                ")) AS globalMeanRank "));
+                //in case several raws are grouped, we retrieve the min value of the ranking score
+                sql +=  (groupByClause? "MIN(": "") + attributesForRank.stream()
+                            .map(attr -> {
+                                String rankSql = dataTypeToNormRankSql.get(attr);
+                                String weightSql = dataTypeToWeightSql.get(attr);
+                                if (rankSql == null || weightSql == null) {
+                                    throw log.throwing(new IllegalStateException(
+                                        "No rank clause associated to data type: " + attr));
+                                }
+                                return "if (" + convertDataTypeAttrToColName(attr) + " + 0 = " 
+                                           + convertDataStateToInt(DataState.NODATA) + ", 0, "
+                                           + rankSql + " * " + weightSql + ")";
+                            })
+                            .collect(Collectors.joining(" + ", "((", ")")) 
+                            
+                      + attributesForRank.stream()
+                            .map(attr -> "if (" + convertDataTypeAttrToColName(attr) + " + 0 = " 
+                                                + convertDataStateToInt(DataState.NODATA) + ", 0, "
+                                         + dataTypeToWeightSql.get(attr) + ")")
+                            .collect(Collectors.joining(" + ", "/ (", 
+                                     (groupByClause? ")": "") + ")) AS globalMeanRank "));
 
             } else if (attribute.equals(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA)) {
                 if (!groupByClause) {
@@ -1164,7 +1193,14 @@ implements ExpressionCallDAO {
                 sql += "AS affymetrixData ";
             } else if (attribute.equals(ExpressionCallDAO.Attribute.AFFYMETRIX_MEAN_RANK)) {
                 
-                sql += affyRank;
+                if (attributesForRank.contains(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA)) {
+                    sql += (groupByClause? "MIN(": "") 
+                            + dataTypeToNormRankSql.get(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA) 
+                            + (groupByClause? ")": "");
+                } else {
+                    sql += "NULL";
+                }
+                sql += " AS affymetrixRank ";
                 
             } else if (attribute.equals(ExpressionCallDAO.Attribute.EST_DATA)) {
                 if (!groupByClause) {
@@ -1177,7 +1213,14 @@ implements ExpressionCallDAO {
                 sql += "AS estData ";
             } else if (attribute.equals(ExpressionCallDAO.Attribute.EST_MEAN_RANK)) {
                 
-                sql += estRank;
+                if (attributesForRank.contains(ExpressionCallDAO.Attribute.EST_DATA)) {
+                    sql += (groupByClause? "MIN(": "") 
+                            + dataTypeToNormRankSql.get(ExpressionCallDAO.Attribute.EST_DATA) 
+                            + (groupByClause? ")": "");
+                } else {
+                    sql += "NULL";
+                }
+                sql += " AS estRank ";
                 
             } else if (attribute.equals(ExpressionCallDAO.Attribute.IN_SITU_DATA)) {
                 if (!groupByClause) {
@@ -1190,7 +1233,14 @@ implements ExpressionCallDAO {
                 sql += "AS inSituData ";
             } else if (attribute.equals(ExpressionCallDAO.Attribute.IN_SITU_MEAN_RANK)) {
                 
-                sql += inSituRank;
+                if (attributesForRank.contains(ExpressionCallDAO.Attribute.IN_SITU_DATA)) {
+                    sql += (groupByClause? "MIN(": "") 
+                            + dataTypeToNormRankSql.get(ExpressionCallDAO.Attribute.IN_SITU_DATA) 
+                            + (groupByClause? ")": "");
+                } else {
+                    sql += "NULL";
+                }
+                sql += " AS inSituRank ";
                 
             } else if (attribute.equals(ExpressionCallDAO.Attribute.RNA_SEQ_DATA)) {
                 if (!groupByClause) {
@@ -1203,7 +1253,14 @@ implements ExpressionCallDAO {
                 sql += "AS rnaSeqData ";
             } else if (attribute.equals(ExpressionCallDAO.Attribute.RNA_SEQ_MEAN_RANK)) {
                 
-                sql += rnaSeqRank;
+                if (attributesForRank.contains(ExpressionCallDAO.Attribute.RNA_SEQ_DATA)) {
+                    sql += (groupByClause? "MIN(": "") 
+                            + dataTypeToNormRankSql.get(ExpressionCallDAO.Attribute.RNA_SEQ_DATA) 
+                            + (groupByClause? ")": "");
+                } else {
+                    sql += "NULL";
+                }
+                sql += " AS rnaSeqRank ";
                 
             } else {
                 throw log.throwing(new IllegalArgumentException("The attribute provided (" +
@@ -1336,11 +1393,12 @@ implements ExpressionCallDAO {
      */
     private String generateCallTOFilterClause(LinkedHashSet<ExpressionCallTO> callTOFilters, 
             String exprTableName, 
-            boolean includeSubstructures, boolean includeSubStages, boolean groupByClause) {
+            boolean includeSubstructures, boolean includeSubStages, boolean groupByClause, 
+            boolean havingClauseNeeded) {
         log.entry(callTOFilters, exprTableName, 
-                includeSubstructures, includeSubStages, groupByClause);
+                includeSubstructures, includeSubStages, groupByClause, havingClauseNeeded);
         
-        if (groupByClause && exprTableName!= null && !exprTableName.isEmpty()) {
+        if (havingClauseNeeded && exprTableName!= null && !exprTableName.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("A table name should not be used "
                     + "in a HAVING clause."));
         }
@@ -1812,25 +1870,25 @@ implements ExpressionCallDAO {
             if (colName.equals("affymetrixData")) {
                 return log.exit(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA);
             } 
-            if (colName.equals("affymetrixMeanRankNorm")) {
+            if (colName.equals("affymetrixRank")) {
                 return log.exit(ExpressionCallDAO.Attribute.AFFYMETRIX_MEAN_RANK);
             } 
             if (colName.equals("estData")) {
                 return log.exit(ExpressionCallDAO.Attribute.EST_DATA);
             } 
-            if (colName.equals("estMeanRankNorm")) {
+            if (colName.equals("estRank")) {
                 return log.exit(ExpressionCallDAO.Attribute.EST_MEAN_RANK);
             } 
             if (colName.equals("inSituData")) {
                 return log.exit(ExpressionCallDAO.Attribute.IN_SITU_DATA);
             } 
-            if (colName.equals("inSituMeanRankNorm")) {
+            if (colName.equals("inSituRank")) {
                 return log.exit(ExpressionCallDAO.Attribute.IN_SITU_MEAN_RANK);
             } 
             if (colName.equals("rnaSeqData")) {
                 return log.exit(ExpressionCallDAO.Attribute.RNA_SEQ_DATA);
             } 
-            if (colName.equals("rnaSeqMeanRankNorm")) {
+            if (colName.equals("rnaSeqRank")) {
                 return log.exit(ExpressionCallDAO.Attribute.RNA_SEQ_MEAN_RANK);
             } 
             if (colName.equals("originOfLine") || colName.equals("anatOriginOfLine")) {

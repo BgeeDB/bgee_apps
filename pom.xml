@@ -128,6 +128,21 @@
     <dependencyManagement>
         <dependencies>
 
+            <!-- To read/write CSV/TSV files in pipeline, 
+                 and write CSV/TSV files in webapp -->
+            <dependency>
+                <groupId>net.sf.supercsv</groupId>
+                <artifactId>super-csv</artifactId>
+                <version>2.4.0</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>net.sf.supercsv</groupId>
+                <artifactId>super-csv-dozer</artifactId>
+                <version>2.4.0</version>
+                <scope>compile</scope>
+            </dependency>
+
             <!-- bgee-dao-api, used by many modules -->
             <dependency>
                 <groupId>${project.groupId}</groupId>
@@ -181,20 +196,6 @@
                 <groupId>sbc</groupId>
                 <artifactId>orthoxml</artifactId>
                 <version>0.1b</version>
-                <scope>compile</scope>
-            </dependency>
-
-            <!-- To parse CSV/TSV files -->
-            <dependency>
-                <groupId>net.sf.supercsv</groupId>
-                <artifactId>super-csv</artifactId>
-                <version>2.1.0</version>
-                <scope>compile</scope>
-            </dependency>
-            <dependency>
-                <groupId>net.sf.supercsv</groupId>
-                <artifactId>super-csv-dozer</artifactId>
-                <version>2.3.1</version>
                 <scope>compile</scope>
             </dependency>
 
@@ -302,6 +303,13 @@
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
                 <version>2.4</version>
+                <scope>compile</scope>
+            </dependency>
+            
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-math3</artifactId>
+                <version>3.6.1</version>
                 <scope>compile</scope>
             </dependency>
             

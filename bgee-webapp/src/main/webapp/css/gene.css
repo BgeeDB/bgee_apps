@@ -1,13 +1,10 @@
-h1.gene_title {
-    display: inline-block;
-    vertical-align: middle;
-    text-align: center;
-    width: 100%;
-	margin: 0;
-}
+
 h1.gene_title img {
     margin-right: 20px;
     vertical-align: middle;
+    height: 50px;
+    width: 50px;
+    border-radius: 8px;
 }
 
 table#geneinfo {
@@ -25,33 +22,61 @@ table#geneinfo td {
 
 div#expr_intro {
 	display: inline-flex;
-    margin: 0 2% 1.5em;
-}
-div#expr_data {
-    display: inline-flex;
-    /*align-items: baseline;*/
-    width: 100%;
+    margin-top: 2em;
+    margin-bottom: 2em;
+    font-size: 0.9em;
+    /* padding disabled when max.width < 992px (bootstrap manages the placement afterwards) */
+    padding-left: 2%;
 }
 
 div#table-container {
-	width: 85%;
 	margin-left: 2%;
 }
 
-div.legend {
-	width: 14%;
-    margin-left: 1%;
+div#table-container label {
+    font-weight: normal;
+}
+
+
+div.sources {
     margin-top: 2em;
+    margin-bottom: 0.5em;
+    font-size: 0.9em;
+    /* padding disabled when max.width < 992px (bootstrap manages the placement afterwards) */
+    padding-left: 2%;
+}
+div.source-info {
+    margin-right: 40px;
+    display: inline-block;
+}
+
+div.legend {
 	border-left: 1px solid #ccc;
+	margin-top: 2em;
 	font-size: 0.85em;
 }
+@media (max-width: 992px) {
+	div.legend {
+	   border: none;
+	}
+	div.sources {
+        padding-left: 0;
+    }
+    div#expr_intro {
+        padding-left: 0;
+    }
+}
+
 div.legend span.quality {
 	font-size: 1em;
+	display: inline-block;
+	
+ /* XXX: temporarily "hide" qualities, as they are so incorrect at the moment. 
+    for now we only report presence/absence of data per data type. 
+    This width will need to be made greater to display quality info */
+	width: 6em !important;
 }
-div.legend table {
-    margin: 10%;
-    width: 80%;
-}
+
 div.legend table caption {
     text-align: left;
     font-weight: bold;
@@ -59,8 +84,9 @@ div.legend table caption {
     border-width: 0px 0px 1px;
     border-style: solid;
 }
-div.legend table th {
-    min-width: 14%;
+
+#table-container table {
+	width: 100% !important;
 }
 
 table th, table td {
@@ -68,47 +94,41 @@ table th, table td {
     padding: 0.2em;
 }
 th.anat-entity-id {
-	width: 15%;
+	width: 12% !important;
 }
 th.anat-entity {
-	width: 33%;
+	width: 29% !important;
 }
 th.dev-stages {
-	width: 42%;
+	width: 40% !important;
+}
+th.score {
+	width: 7% !important;
 }
 th.quality {
-	width: 10%;
-}
-
-/* We need div#table-container to override datatables jquery plugin */
-div#table-container table.expression thead td {
-    padding-left : 8px;
+	width: 10% !important;
 }
 
 table.expression td {
 	vertical-align:text-top;
 }
 
-
-table.stage {
-	width: 100%;
-	table-layout: fixed;
-}
-
 div.gene {
 	margin: 1em 2%;
-}
-
-td.right {
-	text-align: right;
-	padding-right: .8em;
-	font-weight: 300;
 }
 
 td > ul {
     margin: 0;
     padding: 0;
     list-style-type: none;
+}
+
+table.dataTable.dtr-inline.collapsed.compact > tbody > tr > td:first-child::before {
+    text-indent: 4px;
+}
+
+table.dataTable.dtr-inline.collapsed > tbody > tr > td:first-child::before {
+    background-color: #920209;
 }
 
 ul.dev-stage-list {
@@ -126,28 +146,11 @@ span.quality {
 	border-style: solid;
 	font-size: .8em;
 	font-family: monospace;
+	text-align: center;
 }
 
 span.expandable {
 	cursor: pointer;
-}
-
-span.show_extra {
-	font-size: .85em;
-	text-decoration: underline;
-	margin-left: 7em;	
-}
-
-span.show_masked {
-	font-size: .85em;
-	text-decoration: underline;
-	margin-left: 7em;	
-}
-
-span.show_more {
-	font-size: .85em;
-	text-decoration: underline;
-	margin-left: 2em;	
 }
 
 .details {
@@ -161,12 +164,12 @@ span.show_more {
     font-size: .9em;
 }
 
-.invisible {
+.masked {
     display: none;
 }
 
-.masked {
-	font-style: italic;
+.dtr-modal tr > td:first-child {
+    font-weight: bold;
 }
 
 .high {
@@ -186,3 +189,25 @@ span.show_more {
 	color: #b8b8b8;
 	border-color: #b8b8b8;
 }
+
+div.dtr-modal div.dtr-modal-display {
+    height: 95% !important;
+}
+
+.gene-score-shift {
+	border-top: 1px dotted #920209;
+}
+.low-qual-score {
+	/* same color as class .nodata, see above */
+	color: #b8b8b8;
+	font-weight: normal !important;
+}
+
+table.dataTable {
+    border-collapse: collapse !important;
+}
+
+.dotted-line {
+    border-top: 2px dotted #920209;
+    width: 2em;
+}	

@@ -198,7 +198,15 @@ public class FrontController extends HttpServlet {
                 controller = new CommandJob(response, requestParameters, this.prop, factory, 
                         serviceFactory);
             } else if (requestParameters.isAGenePageCategory()){
-            	controller = new CommandGene(response, requestParameters, this.prop, factory, serviceFactory);
+                controller = new CommandGene(response, requestParameters, this.prop, factory, serviceFactory);      
+            } else if (requestParameters.isASourcePageCategory()){
+                controller = new CommandSource(response, requestParameters, this.prop, factory, serviceFactory);      
+            } else if (requestParameters.getAction() != null &&
+                		requestParameters.getAction().equals(RequestParameters.ACTION_AUTO_COMPLETE_GENE_SEARCH)) {
+            		controller = new CommandSearch(response, requestParameters, prop, factory, serviceFactory);
+            } else if (requestParameters.isDAOPageCategory()) {
+                controller = new CommandDAO(response, requestParameters, this.prop, factory, 
+                        serviceFactory);
             } else {
                 throw log.throwing(new PageNotFoundException("Request not recognized."));
             }

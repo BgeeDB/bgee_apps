@@ -16,7 +16,7 @@ import org.bgee.view.ViewFactory;
  * Controller handling requests relative to species.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13 Nov 2015
+ * @version Bgee 13, July 2015
  * @since   Bgee 13 Nov 2015
  */
 public class CommandSpecies extends CommandParent {
@@ -56,7 +56,7 @@ public class CommandSpecies extends CommandParent {
 
         // Load detected species
         Set<Species> species = this.serviceFactory.getSpeciesService().
-                loadSpeciesByIds(submittedSpeciesIds);
+                loadSpeciesByIds(submittedSpeciesIds, false);
         if (species.isEmpty()) {
             throw log.throwing(new IllegalStateException(
                     "A SpeciesService did not allow to obtain any Species."));

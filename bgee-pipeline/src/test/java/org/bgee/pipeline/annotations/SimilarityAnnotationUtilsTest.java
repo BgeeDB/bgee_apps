@@ -54,7 +54,7 @@ public class SimilarityAnnotationUtilsTest {
      */
     @Test
     public void shouldExecuteParseQualifier() {
-        CsvContext mockContext = mock(CsvContext.class);  
+        CsvContext context = new CsvContext(0, 0, 0);  
         //to test that next processor in the chain is called
         CellProcessor next = mock(CellProcessor.class);
         
@@ -62,57 +62,57 @@ public class SimilarityAnnotationUtilsTest {
         //The next processor will simply pass the value it received.
         //Note that if the test fails, the assertEquals will not be able to display 
         //the "actual" result, because the next CellProcessor would have returned null.
-        when(next.execute(expectedValue, mockContext)).thenReturn(expectedValue);
+        when(next.execute(expectedValue, context)).thenReturn(expectedValue);
         assertEquals("Incorrect boolean generated from QUALIFIER", 
                expectedValue, 
-               new SimilarityAnnotationUtils.ParseQualifier(next).execute(null, mockContext));
+               new SimilarityAnnotationUtils.ParseQualifier(next).execute(null, context));
         //verification a bit useless, if the test succeeded this processor has 
         //to have returned a value
-        verify(next).execute(expectedValue, mockContext);
+        verify(next).execute(expectedValue, context);
         
         next = mock(CellProcessor.class);
         expectedValue = false;
         //The next processor will simply pass the value it received.
         //Note that if the test fails, the assertEquals will not be able to display 
         //the "actual" result, because the next CellProcessor would have returned null.
-        when(next.execute(expectedValue, mockContext)).thenReturn(expectedValue);
+        when(next.execute(expectedValue, context)).thenReturn(expectedValue);
         assertEquals("Incorrect boolean generated from QUALIFIER", 
                expectedValue, 
-               new SimilarityAnnotationUtils.ParseQualifier(next).execute("", mockContext));
+               new SimilarityAnnotationUtils.ParseQualifier(next).execute("", context));
         //verification a bit useless, if the test succeeded this processor has 
         //to have returned a value
-        verify(next).execute(expectedValue, mockContext);
+        verify(next).execute(expectedValue, context);
         
         next = mock(CellProcessor.class);
         expectedValue = false;
         //The next processor will simply pass the value it received.
         //Note that if the test fails, the assertEquals will not be able to display 
         //the "actual" result, because the next CellProcessor would have returned null.
-        when(next.execute(expectedValue, mockContext)).thenReturn(expectedValue);
+        when(next.execute(expectedValue, context)).thenReturn(expectedValue);
         assertEquals("Incorrect boolean generated from QUALIFIER", 
                expectedValue, 
-               new SimilarityAnnotationUtils.ParseQualifier(next).execute("dfdf<<", mockContext));
+               new SimilarityAnnotationUtils.ParseQualifier(next).execute("dfdf<<", context));
         //verification a bit useless, if the test succeeded this processor has 
         //to have returned a value
-        verify(next).execute(expectedValue, mockContext);
+        verify(next).execute(expectedValue, context);
         
         next = mock(CellProcessor.class);
         expectedValue = true;
         //The next processor will simply pass the value it received.
         //Note that if the test fails, the assertEquals will not be able to display 
         //the "actual" result, because the next CellProcessor would have returned null.
-        when(next.execute(expectedValue, mockContext)).thenReturn(expectedValue);
+        when(next.execute(expectedValue, context)).thenReturn(expectedValue);
         assertEquals("Incorrect boolean generated from QUALIFIER", 
                expectedValue, 
                new SimilarityAnnotationUtils.ParseQualifier(next).execute(
-                       SimilarityAnnotationUtils.NEGATE_QUALIFIER, mockContext));
+                       SimilarityAnnotationUtils.NEGATE_QUALIFIER, context));
         //verification a bit useless, if the test succeeded this processor has 
         //to have returned a value
-        verify(next).execute(expectedValue, mockContext);
+        verify(next).execute(expectedValue, context);
         
         try {
             new SimilarityAnnotationUtils.ParseQualifier().execute(1, 
-                    mockContext);
+                    context);
             throw log.throwing(new AssertionError("An exception should have been thrown "
                     + "when using a non-String object"));
         } catch (Exception e) {
@@ -120,7 +120,7 @@ public class SimilarityAnnotationUtilsTest {
         }
         try {
             new SimilarityAnnotationUtils.ParseQualifier().execute(new ArrayList<String>(), 
-                    mockContext);
+                    context);
             throw log.throwing(new AssertionError("An exception should have been thrown "
                     + "when using a non-String object"));
         } catch (Exception e) {

@@ -16,6 +16,11 @@ modify dataSourceId smallInt unsigned not null auto_increment primary key,
 add unique(dataSourceName);
 /*!40000 ALTER TABLE `dataSource` ENABLE KEYS */;
 
+/*!40000 ALTER TABLE `dataSourceToSpecies` DISABLE KEYS */;
+alter table dataSourceToSpecies 
+add primary key(speciesId, dataSourceId, dataType, infoType);
+/*!40000 ALTER TABLE `dataSourceToSpecies` ENABLE KEYS */;
+
 /*!40000 ALTER TABLE `keyword` DISABLE KEYS */;
 alter table keyword 
 modify keywordId int unsigned not null auto_increment primary key, 
@@ -35,6 +40,7 @@ add unique(taxonRightBound);
 /*!40000 ALTER TABLE `species` DISABLE KEYS */;
 alter table species 
 add primary key(speciesId), 
+add unique(speciesDisplayOrder), 
 add unique(species, genus);
 /*!40000 ALTER TABLE `species` ENABLE KEYS */;
 

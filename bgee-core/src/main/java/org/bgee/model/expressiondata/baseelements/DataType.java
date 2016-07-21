@@ -1,5 +1,6 @@
 package org.bgee.model.expressiondata.baseelements;
 
+import java.util.Collection;
 import java.util.Set;
 
 import org.bgee.model.BgeeEnum;
@@ -27,29 +28,37 @@ import org.bgee.model.BgeeEnum.BgeeEnumField;
  * @version Bgee 13 Sept. 2015
  * @since Bgee 13
  */
+//TODO: why don't we have a "ALL" data type?? This would be much cleaner than having to provide "null" 
+//everywhere...
 public enum DataType implements BgeeEnumField {
-    AFFYMETRIX, EST, IN_SITU, RNA_SEQ;
+    AFFYMETRIX("Affymetrix"), EST("EST"), IN_SITU("in situ hybridization"), RNA_SEQ("RNA-Seq");
+    
+    private final String representation;
+    
+    private DataType(String representation) {
+        this.representation = representation;
+    }
 
     @Override
     public String getStringRepresentation() {
-        return this.name();
+        return this.representation;
     }
     
     /**
-     * Convert the {@code Set} of {@code String}s that are string representations of data types
+     * Convert the {@code Collection} of {@code String}s that are string representations of data types
      * into a {@code Set} of {@code DataType}s.
      * Operation performed by calling {@link BgeeEnum#convertStringSetToEnumSet(Class, Set)} with 
      * {@code DataType} as the {@code Class} argument, and {@code representation} 
      * as the {@code String} argument.
      * 
-     * @param representations           A {@code Set} of {@code String}s that are string
+     * @param representations           A {@code Collection} of {@code String}s that are string
      *                                  representations of data types.
      * @return                          A {@code Set} of {@code DataType}s corresponding 
      *                                  to {@code representations}.
      * @throw IllegalArgumentException  If a representation does not correspond 
      *                                  to any {@code DataType}.
      */
-    public static final Set<DataType> convertToDataTypeSet(Set<String> representations) {
+    public static final Set<DataType> convertToDataTypeSet(Collection<String> representations) {
         return BgeeEnum.convertStringSetToEnumSet(DataType.class, representations);
     }
 }

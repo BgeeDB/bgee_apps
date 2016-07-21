@@ -16,12 +16,12 @@ import org.bgee.controller.RequestParameters;
  * @author Mathieu Seppey
  * @author Frederic Bastian
  * @author Valentine Rech de Laval
- * @version Bgee 13 Aug 2014
+ * @version Bgee 13, Feb. 2016
  * @since   Bgee 1
  * 
  * @see org.bgee.view.html.HtmlFactory
  * @see org.bgee.view.xml.XmlFactory
- * @see org.bgee.view.dsv.DsvFactory
+ * @see org.bgee.view.csv.CsvFactory
  * @see ViewFactoryProvider
  * 
  */
@@ -135,4 +135,30 @@ public abstract class ViewFactory {
      *                      response output.
      */
     public abstract SpeciesDisplay getSpeciesDisplay() throws IOException;
+
+    /**
+     *                              
+     * @return A {@code SearchDisplay} instance of the appropriate display type.
+     * 
+     * @throws IOException  If an error occurs with the {@code PrintWriter} when writing the
+     *                      response output.
+     */
+    public abstract SearchDisplay getSearchDisplay() throws IOException;
+
+    /**
+     *                              
+     * @return A {@code SourceDisplay} instance of the appropriate display type.
+     * 
+     * @throws IOException  If an error occurs with the {@code PrintWriter} when writing the
+     *                      response output.
+     */
+    public abstract SourceDisplay getSourceDisplay() throws IOException;
+
+    /**                      
+     * @return A {@code DAODisplay} instance of the appropriate display type.
+     * 
+     * @throws IOException  If an error occurs with the {@code PrintWriter} when writing the
+     *                      response output.
+     */
+    public abstract DAODisplay getDAODisplay() throws IOException;
 }

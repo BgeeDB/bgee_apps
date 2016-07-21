@@ -25,9 +25,15 @@ public interface DAO<T extends Enum<T> & DAO.Attribute> {
      * @version Bgee 13
      * @since Bgee 13
      */
-    ////XXX: when all DAOs will be immutable, will we still actually need this interface?
     public static interface Attribute {
-        //nothing here, it is only used for typing the Enum classes.
+        /**
+         * @return  A {@code String} that is the name of the field corresponding to 
+         *          this {@code Attribute}, in the {@code TransferObject} class 
+         *          related to this {@code DAO}.
+         */
+        default String getTOFieldName() {
+            throw new UnsupportedOperationException("Method getTOFieldName not implemented");
+        }
     }
     
     /**

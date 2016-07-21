@@ -54,6 +54,8 @@ public abstract class BgeePropertiesParentTest {
      * Clear the common properties to be cleared before and after tests.
      */
     private void clearCommonProperties() {
+        System.clearProperty(BgeeProperties.MINIFY_KEY);
+        System.clearProperty(BgeeProperties.WARNING_MESSAGE_KEY);
         System.clearProperty(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.URL_MAX_LENGTH_KEY);
         System.clearProperty(BgeeProperties.REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY);

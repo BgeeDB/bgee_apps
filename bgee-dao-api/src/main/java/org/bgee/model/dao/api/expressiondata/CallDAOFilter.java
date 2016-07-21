@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -56,7 +57,9 @@ public class CallDAOFilter {
                 speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds));
         //we'll use defensive copying for those ones, no unmodifiableLinkedHashSet method
         this.conditionFilters = conditionFilters == null? new LinkedHashSet<>(): 
-            new LinkedHashSet<>(conditionFilters);
+            new LinkedHashSet<>(
+                conditionFilters.stream().filter(filter -> filter != null).collect(Collectors.toSet())
+            );
         
         log.exit();
     }

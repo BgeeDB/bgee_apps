@@ -50,15 +50,19 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements CallDAO.Attribute {
-        ID(false, false, false), GENE_ID(false, false, false), STAGE_ID(false, false, false), 
-        ANAT_ENTITY_ID(false, false, false), GLOBAL_MEAN_RANK(false, true, false), 
-        AFFYMETRIX_DATA(true, false, false), AFFYMETRIX_MEAN_RANK(false, true, false), 
-        EST_DATA(true, false, false), EST_MEAN_RANK(false, true, false), 
-        IN_SITU_DATA(true, false, false), IN_SITU_MEAN_RANK(false, true, false), 
-        RNA_SEQ_DATA(true, false, false), RNA_SEQ_MEAN_RANK(false, true, false), 
-        INCLUDE_SUBSTRUCTURES(false, false, true), INCLUDE_SUBSTAGES(false, false, true), 
-        ANAT_ORIGIN_OF_LINE(false, false, true), STAGE_ORIGIN_OF_LINE(false, false, true), 
-        OBSERVED_DATA(false, false, true);
+        ID(false, false, false, "id"), GENE_ID(false, false, false, "geneId"), 
+        STAGE_ID(false, false, false, "stageId"), ANAT_ENTITY_ID(false, false, false, "anatEntityId"), 
+        GLOBAL_MEAN_RANK(false, true, false, "globalMeanRank"), 
+        AFFYMETRIX_DATA(true, false, false, "affymetrixData"), 
+        AFFYMETRIX_MEAN_RANK(false, true, false, "affymetrixMeanRank"), 
+        EST_DATA(true, false, false, "estData"), EST_MEAN_RANK(false, true, false, "estMeanRank"), 
+        IN_SITU_DATA(true, false, false, "inSituData"), IN_SITU_MEAN_RANK(false, true, false, "inSituMeanRank"), 
+        RNA_SEQ_DATA(true, false, false, "rNASeqData"), RNA_SEQ_MEAN_RANK(false, true, false, "rNASeqMeanRank"), 
+        INCLUDE_SUBSTRUCTURES(false, false, true, "includeSubstructures"), 
+        INCLUDE_SUBSTAGES(false, false, true, "includeSubStages"), 
+        ANAT_ORIGIN_OF_LINE(false, false, true, "anatOriginOfLine"), 
+        STAGE_ORIGIN_OF_LINE(false, false, true, "stageOriginOfLine"), 
+        OBSERVED_DATA(false, false, true, "observedData");
         
         /**
          * @see #isDataTypeAttribute()
@@ -72,11 +76,18 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
          * @see #isPropagationAttribute()
          */
         private final boolean propagationAttribute;
+        /**
+         * A {@code String} that is the corresponding field name in {@code ExpressionCallTO} class.
+         * @see {@link Attribute#getTOFieldName()}
+         */
+        private final String fieldName;
         
-        private Attribute(boolean dataTypeAttribute, boolean rankAttribute, boolean propagationAttribute) {
+        private Attribute(boolean dataTypeAttribute, boolean rankAttribute, boolean propagationAttribute, 
+                String fieldName) {
             this.dataTypeAttribute = dataTypeAttribute;
             this.rankAttribute = rankAttribute;
             this.propagationAttribute = propagationAttribute;
+            this.fieldName = fieldName;
         }
         
         @Override
@@ -96,6 +107,11 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
          */
         public boolean isPropagationAttribute() {
             return propagationAttribute;
+        }
+        
+        @Override
+        public String getTOFieldName() {
+            return this.fieldName;
         }
     }
     /**
@@ -160,7 +176,7 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
      *                              to configure the minimum quality level for each data type, etc. 
      *                              If several {@code ExpressionCallTO}s are provided, 
      *                              they are seen as "OR" conditions. Attributes inside 
-     *                              a same {@code ExpressionCallTO} are seend as AND conditions. 
+     *                              a same {@code ExpressionCallTO} are seen as AND conditions. 
      *                              Can be {@code null} or empty.
      * @param includeSubstructures  A {@code boolean} defining whether the expression calls 
      *                              retrieved should be based on calls generated using data 

@@ -488,11 +488,12 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
     public void shouldDeleteBasicNoExprCalls() throws SQLException {
         
         this.useEmptyDB();
-        this.populateAndUseDatabase();
         
         Set<String> noExprIds = new HashSet<>(Arrays.asList("1", "5", "1111"));
         
         try {
+            this.populateAndUseDatabase();
+            
             MySQLNoExpressionCallDAO dao = new MySQLNoExpressionCallDAO(this.getMySQLDAOManager());
             assertEquals("Incorrect nummber of rows deleted", 
                     2, dao.deleteNoExprCalls(noExprIds, false));
@@ -577,11 +578,12 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
     public void shouldDeleteGlobalNoExprCalls() throws SQLException {
         
         this.useEmptyDB();
-        this.populateAndUseDatabase();
         
         Set<String> globalNoExprIds = new HashSet<>(Arrays.asList("2", "7", "13", "99"));
         
         try {
+            this.populateAndUseDatabase();
+            
             MySQLNoExpressionCallDAO dao = new MySQLNoExpressionCallDAO(this.getMySQLDAOManager());
 
             assertEquals("Incorrect nummber of rows deleted", 
@@ -656,7 +658,6 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
     public void shouldUpdateNoExprCalls() throws SQLException {
         
         this.useEmptyDB();
-        this.populateAndUseDatabase();
 
         Collection<NoExpressionCallTO> noExprCallTOs = Arrays.asList(
                 // Basic no-expression
@@ -693,6 +694,8 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
 //                        DataState.LOWQUALITY, DataState.HIGHQUALITY, 
 //                        DataState.NODATA, DataState.HIGHQUALITY, true, OriginOfLine.SELF));
         try {
+            this.populateAndUseDatabase();
+            
             MySQLNoExpressionCallDAO dao = new MySQLNoExpressionCallDAO(this.getMySQLDAOManager());            
             assertEquals("Incorrect nummber of rows updated", 
                     5, dao.updateNoExprCalls(noExprCallTOs));

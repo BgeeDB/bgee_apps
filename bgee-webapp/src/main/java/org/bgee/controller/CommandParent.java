@@ -5,14 +5,21 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URLEncoder;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.utils.MailSender;
+import org.bgee.model.BgeeEnum;
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.expressiondata.baseelements.DataQuality;
+import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.view.ViewFactory;
 
 /**
@@ -222,6 +229,53 @@ abstract class CommandParent {
         outStream.close();
         
         log.exit();
+    }
+    
+    /**
+     * Check and retrieve the data types requested in the {@code RequestParameters} object 
+     * provided at instantiation. 
+     * 
+     * @return  A {@code Set} of {@code DataType}s retrieved from the request parameters.
+     * @throws InvalidRequestException  If the data type request parameter is incorrectly used.
+     */
+    protected Set<DataType> checkAndGetDataTypes() throws InvalidRequestException {
+        log.entry();
+        
+        List<String> rqDatatypes  = this.requestParameters.getDataType();
+        if (rqDatatypes != null && 
+                rqDatatypes.size() == 1 && rqDatatypes.get(0).equals(RequestParameters.ALL_VALUE)) {
+            return log.exit(EnumSet.allOf(DataType.class));
+        }
+        if (rqDatatypes != null && !BgeeEnum.areAllInEnum(DataType.class, rqDatatypes)) {
+            throw log.throwing(new InvalidRequestException("Incorrect data types provided: "
+                    + rqDatatypes));
+        }
+        return log.exit(DataType.convertToDataTypeSet(rqDatatypes));
+    }
+    /**
+     * Check and retrieve the data quality requested in the {@code RequestParameters} object 
+     * provided at instantiation. 
+     * 
+     * @return  A {@code DataQuality} retrieved from the request parameters.
+     * @throws InvalidRequestException  If the data quality request parameter is incorrectly used.
+     */
+    protected DataQuality checkAndGetDataQuality() throws InvalidRequestException {
+        log.entry();
+        
+        String rqDataQual = this.requestParameters.getDataQuality();
+        DataQuality dataQuality = null; 
+        if (rqDataQual != null) {
+            if (rqDataQual.equalsIgnoreCase(DataQuality.HIGH.name())) {
+                dataQuality = DataQuality.HIGH;
+            } else if (rqDataQual.equalsIgnoreCase(DataQuality.LOW.name()) || 
+                    rqDataQual.equalsIgnoreCase(RequestParameters.ALL_VALUE)) {
+                dataQuality = DataQuality.LOW;
+            } else {
+                throw log.throwing(new InvalidRequestException("Incorrect data quality provided: "
+                        + rqDataQual));
+            }
+        }
+        return log.exit(dataQuality);
     }
 
 }

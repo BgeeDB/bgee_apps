@@ -39,6 +39,7 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
+import org.semanticweb.owlapi.search.EntitySearcher;
 import org.supercsv.cellprocessor.Optional;
 import org.supercsv.cellprocessor.constraint.NotNull;
 import org.supercsv.cellprocessor.constraint.UniqueHashCode;
@@ -877,6 +878,9 @@ public class Uberon extends UberonCommon {
             Set<OWLAnnotationProperty> annotProps = this.getTaxonAnnotationProperties(wrapper);
             
             for (OWLClass cls: ont.getClassesInSignature()) {
+                if (wrapper.isOboAltId(cls)) {
+                    continue;
+                }
                 //try to get taxa from any object properties that can lead to a taxon.
                 //this is will also capture taxon used in equivalence axioms to owl:nothing 
                 //(formal way of representing never_in_taxon in owl)
@@ -892,7 +896,7 @@ public class Uberon extends UberonCommon {
                     }
                 }
                 //and from any annotation properties that can lead to a taxon
-                for (OWLAnnotation annot: cls.getAnnotations(ont)) {
+                for (OWLAnnotation annot: EntitySearcher.getAnnotations(cls, ont)) {
                     if (annotProps.contains(annot.getProperty()) && 
                             annot.getValue() instanceof IRI) {
                         log.trace("Taxon {} captured through annotation property in annotation {}", 
@@ -1164,7 +1168,7 @@ public class Uberon extends UberonCommon {
 //        Set<OWLObjectPropertyExpression> props = wrapper.getSubPropertyReflexiveClosureOf(relProp);
 //        Set<OWLGraphEdge> edges = new HashSet<OWLGraphEdge>();
 //        
-//        for (OWLClass iterateClass: wrapper.getAllOWLClasses()) {
+//        for (OWLClass iterateClass: wrapper.getAllRealOWLClasses()) {
 //            for (OWLGraphEdge edge: wrapper.getOutgoingEdges(iterateClass)) {
 //                if (edge.getSingleQuantifiedProperty() != null && 
 //                        props.contains(edge.getSingleQuantifiedProperty().getProperty())) {

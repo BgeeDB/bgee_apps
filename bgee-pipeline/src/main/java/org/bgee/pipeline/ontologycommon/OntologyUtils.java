@@ -26,7 +26,7 @@ import org.obolibrary.obo2owl.Owl2Obo;
 import org.obolibrary.oboformat.model.OBODoc;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.obolibrary.oboformat.writer.OBOFormatWriter;
-import org.semanticweb.owlapi.io.RDFXMLOntologyFormat;
+import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
@@ -898,12 +898,11 @@ public class OntologyUtils {
         
         File rdfFile = new File(outputFile); 
         OWLOntologyManager manager = this.ontology.getOWLOntologyManager();
-        RDFXMLOntologyFormat owlRdfFormat = new RDFXMLOntologyFormat();
+        RDFXMLDocumentFormat owlRdfFormat = new RDFXMLDocumentFormat();
         if (owlRdfFormat.isPrefixOWLOntologyFormat()) {
             owlRdfFormat.copyPrefixesFrom(owlRdfFormat.asPrefixOWLOntologyFormat());
         } 
-        manager.saveOntology(this.ontology, 
-                owlRdfFormat, IRI.create(rdfFile.toURI()));
+        manager.saveOntology(this.ontology, owlRdfFormat, IRI.create(rdfFile.toURI()));
         
         log.exit();
     }
@@ -967,18 +966,18 @@ public class OntologyUtils {
             //first, we obtained the mappings, then we will make them unmodifiable
             Map<String, Set<String>> modifiableXRefMappings = 
                     new HashMap<String, Set<String>>();
-            for (OWLOntology ont: this.getWrapper().getAllOntologies()) {
-                for (OWLClass cls: ont.getClassesInSignature()) {
-
-                    String clsId = this.getWrapper().getIdentifier(cls);
-                    for (String xref: this.getWrapper().getXref(cls)) {
-                        Set<String> associatedClassIds = modifiableXRefMappings.get(xref);
-                        if (associatedClassIds == null) {
-                            associatedClassIds = new HashSet<String>();
-                            modifiableXRefMappings.put(xref, associatedClassIds);
-                        }
-                        associatedClassIds.add(clsId);
+            for (OWLClass cls: this.getWrapper().getAllOWLClasses()) {
+                if (this.getWrapper().isOboAltId(cls)) {
+                    continue;
+                }
+                String clsId = this.getWrapper().getIdentifier(cls);
+                for (String xref: this.getWrapper().getXref(cls)) {
+                    Set<String> associatedClassIds = modifiableXRefMappings.get(xref);
+                    if (associatedClassIds == null) {
+                        associatedClassIds = new HashSet<String>();
+                        modifiableXRefMappings.put(xref, associatedClassIds);
                     }
+                    associatedClassIds.add(clsId);
                 }
             }
             log.trace("Original XRef mapping: {}", modifiableXRefMappings);
@@ -1270,26 +1269,27 @@ public class OntologyUtils {
         this.replacedByMappings = new HashMap<String, Set<String>>();
         this.considerMappings = new HashMap<String, Set<String>>();
         
-        for (OWLOntology ont: this.getWrapper().getAllOntologies()) {
-            for (OWLClass cls: ont.getClassesInSignature()) {
-                
-                //consider only obsolete OWLClasses
-                if (!this.getWrapper().isObsolete(cls) && 
-                        !this.getWrapper().getIsObsolete(cls)) {
-                    continue;
-                }
-                
-                String clsId = this.getWrapper().getIdentifier(cls);
-                List<String> replacedBy = this.getWrapper().getReplacedBy(cls);
-                if (!replacedBy.isEmpty()) {
-                    this.replacedByMappings.put(clsId, Collections.unmodifiableSet(
-                            new HashSet<String>(replacedBy)));
-                }
-                List<String> consider = this.getWrapper().getConsider(cls);
-                if (!consider.isEmpty()) {
-                    this.considerMappings.put(clsId, Collections.unmodifiableSet(
-                            new HashSet<String>(consider)));
-                }
+        for (OWLClass cls: this.getWrapper().getAllOWLClasses()) {
+
+            if (this.getWrapper().isOboAltId(cls)) {
+                continue;
+            }
+            //consider only obsolete OWLClasses
+            if (!this.getWrapper().isObsolete(cls) && 
+                    !this.getWrapper().getIsObsolete(cls)) {
+                continue;
+            }
+            
+            String clsId = this.getWrapper().getIdentifier(cls);
+            List<String> replacedBy = this.getWrapper().getReplacedBy(cls);
+            if (!replacedBy.isEmpty()) {
+                this.replacedByMappings.put(clsId, Collections.unmodifiableSet(
+                        new HashSet<String>(replacedBy)));
+            }
+            List<String> consider = this.getWrapper().getConsider(cls);
+            if (!consider.isEmpty()) {
+                this.considerMappings.put(clsId, Collections.unmodifiableSet(
+                        new HashSet<String>(consider)));
             }
         }
         this.replacedByMappings = Collections.unmodifiableMap(this.replacedByMappings);

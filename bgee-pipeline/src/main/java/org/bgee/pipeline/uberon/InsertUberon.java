@@ -33,6 +33,7 @@ import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLPropertyExpression;
+import org.semanticweb.owlapi.model.parameters.Imports;
 
 import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
@@ -390,7 +391,7 @@ public class InsertUberon extends MySQLDAOUser {
         OWLGraphWrapper wrapper = utils.getWrapper();
         
         for (OWLOntology ont: wrapper.getAllOntologies()) {
-            for (OWLClass cls: ont.getClassesInSignature(true)) {
+            for (OWLClass cls: ont.getClassesInSignature(Imports.INCLUDED)) {
                 log.trace("Iterating OWLClass {}", cls);
                 if (!this.isValidClass(cls, uberon, classesToIgnore, speciesIds)) {
                     log.trace("Class discarded because invalid");
@@ -566,7 +567,7 @@ public class InsertUberon extends MySQLDAOUser {
         
         log.info("Generating RelationTOs (first pass)...");
         for (OWLOntology ont: wrapper.getAllOntologies()) {
-            Set<OWLClass> allClasses = ont.getClassesInSignature(true);
+            Set<OWLClass> allClasses = ont.getClassesInSignature(Imports.INCLUDED);
             //for logging purpose
             int allClassesSize = allClasses.size();
             int i = 0;

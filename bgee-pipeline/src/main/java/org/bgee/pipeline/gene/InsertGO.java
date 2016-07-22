@@ -181,7 +181,7 @@ public class InsertGO extends MySQLDAOUser {
         log.info("Retrieving terms...");
         
         Set<GOTermTO> goTermTOs = new HashSet<GOTermTO>();
-        for (OWLClass goTerm: goWrapper.getAllOWLClasses()) {
+        for (OWLClass goTerm: goWrapper.getAllRealOWLClasses()) {
             goTermTOs.add(new GOTermTO(
                     goWrapper.getIdentifier(goTerm), 
                     goWrapper.getLabel(goTerm), 
@@ -233,7 +233,7 @@ public class InsertGO extends MySQLDAOUser {
                 goWrapper.getOWLObjectPropertyByIdentifier(OntologyUtils.PART_OF_ID);
         
         //now we get each term relations.
-        for (OWLClass goTerm: goWrapper.getAllOWLClasses()) {
+        for (OWLClass goTerm: goWrapper.getAllRealOWLClasses()) {
             Set<OWLGraphEdge> edges = goWrapper.getOutgoingEdgesNamedClosureOverSupProps(goTerm);
             //generate the RelationTOs from the OWLGraphEdges. For the GO, we do not 
             //care about the exact type of the relation, and whether the relations 

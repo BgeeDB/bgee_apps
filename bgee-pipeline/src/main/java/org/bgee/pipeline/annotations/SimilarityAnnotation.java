@@ -49,6 +49,7 @@ import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLPropertyExpression;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
+import org.semanticweb.owlapi.search.EntitySearcher;
 import org.supercsv.cellprocessor.FmtBool;
 import org.supercsv.cellprocessor.FmtDate;
 import org.supercsv.cellprocessor.Optional;
@@ -3679,7 +3680,7 @@ public class SimilarityAnnotation {
         log.debug("Searching for IntersectionOf expressions composed of annotated classes...");
         
         Map<String, Set<String>> intersectMapping = new HashMap<String, Set<String>>();
-        for (OWLClass cls: uberonOntWrapper.getAllOWLClasses()) {
+        for (OWLClass cls: uberonOntWrapper.getAllRealOWLClasses()) {
             log.trace("Examining {}", cls);
             String clsId = uberonOntWrapper.getIdentifier(cls);
             if (entityIdToAnnots.containsKey(clsId)) {
@@ -3687,7 +3688,7 @@ public class SimilarityAnnotation {
                 continue;
             }
             for (OWLClassExpression clsExpr: 
-                cls.getEquivalentClasses(uberonOntWrapper.getAllOntologies())) {
+                EntitySearcher.getEquivalentClasses(cls, uberonOntWrapper.getAllOntologies())) {
                 if (clsExpr instanceof OWLObjectIntersectionOf) {
                     log.trace("Examining IntersectionOf expression: {}", clsExpr);
                     boolean allClassesAnnotated = true;

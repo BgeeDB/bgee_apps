@@ -138,7 +138,7 @@ public class InsertECO extends MySQLDAOUser {
                     + "does not contain any 'evidence' term with ID " + EVIDENCE_ID));
         }
         
-        for (OWLClass cls: ecoWrapper.getAllOWLClasses()) {
+        for (OWLClass cls: ecoWrapper.getAllRealOWLClasses()) {
             log.trace("Examining class {}", cls);
             //we retrieve only "evidence" terms, not "assertion method" terms.
             //we also discard obsolete terms.

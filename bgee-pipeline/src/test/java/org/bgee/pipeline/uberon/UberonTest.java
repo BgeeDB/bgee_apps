@@ -265,7 +265,7 @@ public class UberonTest extends TestAncestor {
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         
         String toWrite = "";
-        for (OWLClass cls: wrapper.getAllOWLClasses()) {
+        for (OWLClass cls: wrapper.getAllRealOWLClasses()) {
             if (!Collections.disjoint(
                     Arrays.asList("efo_slim", "uberon_slim", "organ_slim", 
                             "anatomical_site_slim", "cell_slim", "vertebrate_core"), 

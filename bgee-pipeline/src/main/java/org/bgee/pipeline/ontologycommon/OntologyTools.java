@@ -173,14 +173,13 @@ public class OntologyTools {
         Set<String> obsoleteIds = new HashSet<String>();
         
         try (OWLGraphWrapper goWrapper = new OWLGraphWrapper(ont)) {
-            for (OWLOntology myOnt: goWrapper.getAllOntologies()) {
-                //we do not use goWrapper.getAllOWLClasses(), because it does not return 
-                //deprecated classes
-                for (OWLClass goTerm: myOnt.getClassesInSignature()) {
-                    if (goWrapper.isObsolete(goTerm) || goWrapper.getIsObsolete(goTerm)) {
-                        obsoleteIds.add(goWrapper.getIdentifier(goTerm));
-                        obsoleteIds.addAll(goWrapper.getAltIds(goTerm));
-                    }
+            for (OWLClass goTerm: goWrapper.getAllOWLClasses()) {
+                if (goWrapper.isOboAltId(goTerm)) {
+                    continue;
+                }
+                if (goWrapper.isObsolete(goTerm) || goWrapper.getIsObsolete(goTerm)) {
+                    obsoleteIds.add(goWrapper.getIdentifier(goTerm));
+                    obsoleteIds.addAll(goWrapper.getAltIds(goTerm));
                 }
             }
         }
@@ -232,7 +231,7 @@ public class OntologyTools {
         log.entry(ontWrapper);
         Set<String> allIds = new HashSet<String>();
         
-        for (OWLClass owlClass: ontWrapper.getAllOWLClasses()) {
+        for (OWLClass owlClass: ontWrapper.getAllRealOWLClasses()) {
             allIds.add(ontWrapper.getIdentifier(owlClass));
         }
         

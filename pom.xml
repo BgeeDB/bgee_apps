@@ -180,14 +180,14 @@
             <dependency>
                 <groupId>org.bbop</groupId>
                 <artifactId>OWLTools-all</artifactId>
-                <version>0.2.1-SNAPSHOT</version>
+                <version>0.3.0-SNAPSHOT</version>
                 <scope>compile</scope>
             </dependency>
             <!-- Used to generate our custom NCBI taxonomy ontology -->
             <dependency>
                 <groupId>org.bbop</groupId>
                 <artifactId>OWLTools-ncbi</artifactId>
-                <version>0.2.1-SNAPSHOT</version>
+                <version>0.3.0-SNAPSHOT</version>
                 <scope>compile</scope>
             </dependency>
 

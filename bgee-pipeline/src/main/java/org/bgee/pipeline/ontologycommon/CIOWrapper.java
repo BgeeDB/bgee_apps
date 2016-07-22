@@ -748,7 +748,7 @@ public class CIOWrapper {
 //        List<OWLClass> confidenceLevels = new ArrayList<OWLClass>();
 //        Set<OWLClass> evidenceConcordances = new HashSet<OWLClass>();
 //        Set<OWLClass> evidenceTypeConcordances = new HashSet<OWLClass>();
-//        for (OWLClass cls: this.wrapper.getAllOWLClasses()) {
+//        for (OWLClass cls: this.wrapper.getAllRealOWLClasses()) {
 //            log.trace("Iterating {}", cls);
 //            Set<OWLClass> ancestors = this.wrapper.getAncestorsThroughIsA(cls);
 //            if (ancestors.contains(this.getConfidenceStatement()) || 
@@ -846,7 +846,7 @@ public class CIOWrapper {
 //        //now, we wrap and store all OWLClasses in CIOTerms
 //        Map<OWLClass, CIOTerm> classesTOCIOTerm = new HashMap<OWLClass, CIOTerm>();
 //        boolean hasStatement = false;
-//        for (OWLClass cls: this.wrapper.getAllOWLClasses()) {
+//        for (OWLClass cls: this.wrapper.getAllRealOWLClasses()) {
 //            CIOTerm cioTerm = new CIOTerm(cls, this);
 //            if (cioTerm.isConfidenceStatement()) {
 //                hasStatement = true;
@@ -960,7 +960,7 @@ public class CIOWrapper {
 //        log.entry(ancestors);
 //        
 //        Set<OWLClass> intersectingClasses = new HashSet<OWLClass>();
-//        for (OWLClass cls: this.wrapper.getAllOWLClasses()) {
+//        for (OWLClass cls: this.wrapper.getAllRealOWLClasses()) {
 //            Set<OWLClass> relatedClasses = new HashSet<OWLClass>();
 //            relatedClasses.add(cls);
 //            relatedClasses.addAll(this.wrapper.getAncestorsThroughIsA(cls));
@@ -1556,7 +1556,7 @@ public class CIOWrapper {
         //we do not retrieve all classes to check for errors, we stop iteration 
         //as soon as a class is found, it is too slow to iterate all classes each time
         Set<OWLClass> identifiedClasses = new HashSet<OWLClass>();
-        for (OWLClass cls: this.wrapper.getAllOWLClasses()) {
+        for (OWLClass cls: this.wrapper.getAllRealOWLClasses()) {
             if (!this.isConfidenceStatement(cls)) {
                 continue;
             }

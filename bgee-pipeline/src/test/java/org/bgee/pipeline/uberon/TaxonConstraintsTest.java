@@ -532,12 +532,12 @@ public class TaxonConstraintsTest extends TestAncestor {
                 new OWLGraphWrapper(OntologyUtils.loadOntology(ontFile.getPath()))) {
             //the taxonomy ontology will have been added in this intermediate ontology as well
             assertEquals("Incorrect OWLCLasses contained in intermediate ontology, "
-                    + "contained classes: " + wrapper.getAllOWLClasses(), 
+                    + "contained classes: " + wrapper.getAllRealOWLClasses(), 
                     expectedClassIds.size() + TAXONIDS.size() 
                     //+1 because there is an additional taxon in the taxonomy ontology 
                     //for which we don't want to generate constraints (NCBITaxon:100)
                     + 1, 
-                    wrapper.getAllOWLClasses().size());
+                    wrapper.getAllRealOWLClasses().size());
             for (String classId: expectedClassIds) {
                 assertNotNull("Missing class " + classId, 
                         wrapper.getOWLClassByIdentifier(classId));

@@ -654,7 +654,7 @@ public class InsertTaxa extends MySQLDAOUser {
         };
         //now we create a List with OWLClass order based on the comparator
         List<OWLClass> classOrder = 
-                new ArrayList<OWLClass>(this.taxOntWrapper.getAllOWLClasses());
+                new ArrayList<OWLClass>(this.taxOntWrapper.getAllRealOWLClasses());
         Collections.sort(classOrder, comparator);
         
         //get the parameters for the nested set model
@@ -672,7 +672,7 @@ public class InsertTaxa extends MySQLDAOUser {
         
         //OK, now we have everything to instantiate the TaxonTOs
         Set<TaxonTO> taxonTOs = new HashSet<TaxonTO>();
-        for (OWLClass taxon: this.taxOntWrapper.getAllOWLClasses()) {
+        for (OWLClass taxon: this.taxOntWrapper.getAllRealOWLClasses()) {
             //get the NCBI ID of this taxon.
             //we retrieve the Integer value of the ID used on the NCBI website, 
             //because this is how we store this ID in the database. But we convert it 

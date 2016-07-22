@@ -398,6 +398,9 @@ public abstract class UberonCommon {
         for (OWLOntology ont: this.getOntologyUtils().getWrapper().getAllOntologies()) {
             OWLDataFactory fac = ont.getOWLOntologyManager().getOWLDataFactory();
             for (OWLClass cls: ont.getClassesInSignature()) {
+                if (this.getOntologyUtils().getWrapper().isOboAltId(cls)) {
+                    continue;
+                }
                 log.trace("Examining class {} in ontology {}", cls, ont);
                 //if there are taxonomy ECA for this cls, it will be removed
                 boolean clsToRemove = false;
@@ -485,8 +488,7 @@ public abstract class UberonCommon {
                     }
                     //remove class
                     OWLOntologyManager manager = ont.getOWLOntologyManager();
-                    OWLEntityRemover remover = new OWLEntityRemover(manager, 
-                            wrapper.getAllOntologies());
+                    OWLEntityRemover remover = new OWLEntityRemover(wrapper.getAllOntologies());
                     cls.accept(remover);
                     manager.applyChanges(remover.getChanges());
                     log.trace("Class {} removed.", cls);

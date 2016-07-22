@@ -48,6 +48,7 @@ import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
+import org.semanticweb.owlapi.model.parameters.ChangeApplied;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.supercsv.cellprocessor.FmtBool;
 import org.supercsv.cellprocessor.ParseBool;
@@ -365,7 +366,7 @@ public class TaxonConstraints {
         log.entry();
         log.info("Merging Uberon and taxonomy ontology...");
         //we need to merge the import closure, otherwise the classes in the imported ontologies 
-        //will be seen by the method #getAllOWLClasses(), but not by the reasoner.
+        //will be seen by the method #getAllRealOWLClasses(), but not by the reasoner.
         this.uberonOntWrapper.mergeImportClosure(true);
         
         //then, we remove any "is_a" relations and disjoint classes axioms between taxa 
@@ -418,7 +419,7 @@ public class TaxonConstraints {
         GenerateTaxonOntology disjointAxiomGenerator = new GenerateTaxonOntology();
         Set<OWLAxiom> axiomsToRemove = new HashSet<OWLAxiom>();
         
-        for (OWLClass taxon: this.taxOntWrapper.getAllOWLClasses()) {
+        for (OWLClass taxon: this.taxOntWrapper.getAllRealOWLClasses()) {
             //check that this taxon exists in Uberon
             if (!uberonOnt.containsClassInSignature(taxon.getIRI())) {
                 continue;
@@ -456,11 +457,10 @@ public class TaxonConstraints {
             }
             
         }
-        int axiomsRemoved = uberonOnt.getOWLOntologyManager().removeAxioms(uberonOnt, 
-                axiomsToRemove).size();
+        ChangeApplied axiomsRemoved = uberonOnt.getOWLOntologyManager().removeAxioms(uberonOnt, 
+                axiomsToRemove);
         
-        log.debug("{} axioms between taxa removed from Uberon.", 
-                axiomsRemoved);
+        log.debug("Axioms between taxa removed from Uberon: {}", axiomsRemoved);
         log.exit();
     }
     /**
@@ -625,7 +625,7 @@ public class TaxonConstraints {
         if (StringUtils.isNotBlank(completeUberonFile)) {
             refWrapper = new OWLGraphWrapper(OntologyUtils.loadOntology(completeUberonFile));
         }
-        Set<String> refClassIds = refWrapper.getAllOWLClasses().stream()
+        Set<String> refClassIds = refWrapper.getAllRealOWLClasses().stream()
                 .filter(e ->!this.taxOntWrapper.getSourceOntology().containsClassInSignature(e.getIRI()))
                 .map(refWrapper::getIdentifier).collect(Collectors.toSet());
         
@@ -762,7 +762,7 @@ public class TaxonConstraints {
                 this.taxOntWrapper, idStartsToOverridingTaxonIds);
         //then we get the IDs of all OWLClasses existing in the Uberon ontology 
         //used to generate taxon constraints. 
-        Set<String> existingClassIds = this.uberonOntWrapper.getAllOWLClasses().stream()
+        Set<String> existingClassIds = this.uberonOntWrapper.getAllRealOWLClasses().stream()
                 .filter(e ->!this.taxOntWrapper.getSourceOntology().containsClassInSignature(e.getIRI()))
                 .map(this.uberonOntWrapper::getIdentifier).collect(Collectors.toSet());
         log.trace("Existing OWLClasses in source Uberon ontology: {}", existingClassIds);
@@ -1003,7 +1003,7 @@ public class TaxonConstraints {
         }
 
         log.info("Done examining ontology for taxon {} - removeOtherTaxa: {}.", taxClass, removeOtherTaxa);
-        return log.exit(ontWrapper.getAllOWLClassesFromSource());
+        return log.exit(ontWrapper.getAllRealOWLClassesFromSource());
     }
     
 

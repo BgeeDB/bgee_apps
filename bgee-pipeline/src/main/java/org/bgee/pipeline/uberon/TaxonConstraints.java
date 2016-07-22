@@ -142,14 +142,6 @@ public class TaxonConstraints {
      *   to generate the taxon constraints, corresponding to the NCBI ID (e.g., 9606 
      *   for human). The first line should be a header line, defining a column to get 
      *   IDs from, named exactly "taxon ID" (other columns are optional and will be ignored).
-     *   <li>path to a version of the Uberon ontology different to the one 
-     *   containing taxon constraints. The taxon constraints will be produced 
-     *   for the classes present in this ontology. If equal to {@link CommandRunner#EMPTY_ARG}, 
-     *   then the Uberon ontology containing taxon constraints will be used. 
-     *   <li>A {@code Map} to potentially override taxon constraints, see {@link 
-     *   org.bgee.pipeline.CommandRunner#parseMapArgumentAsInteger(String)} to see 
-     *   how to provide it. Can be empty (see {@link CommandRunner#EMPTY_LIST}). Example 
-     *   of command line argument: {@code EV:/9606,MA:/10090}.
      *   <li>a map specifying whether the ontology should first be simplified in several steps 
      *   before generating the constraints, for some taxa. Keys should be the NCBI IDs 
      *   of taxa for which constraints will be requested, values should be a list 
@@ -163,6 +155,14 @@ public class TaxonConstraints {
      *   values must be separated by {@link CommandRunner#VALUE_SEPARATOR}. 
      *   Example of command line argument: 
      *   {@code 7712/7742--89593,6040/7742--89593--33511--33213--6072}.
+     *   <li>path to a version of the Uberon ontology different to the one 
+     *   containing taxon constraints. The taxon constraints will be produced 
+     *   for the classes present in this ontology. If equal to {@link CommandRunner#EMPTY_ARG}, 
+     *   then the Uberon ontology containing taxon constraints will be used. 
+     *   <li>A {@code Map} to potentially override taxon constraints, see {@link 
+     *   org.bgee.pipeline.CommandRunner#parseMapArgumentAsInteger(String)} to see 
+     *   how to provide it. Can be empty (see {@link CommandRunner#EMPTY_LIST}). Example 
+     *   of command line argument: {@code EV:/9606,MA:/10090}.
      *   <li>path to the generated TSV file, output of the method.
      *   <li>OPTIONNAL: a path to a directory where to store the intermediate generated 
      *   ontologies. If this parameter is provided, an ontology will be generated 
@@ -363,6 +363,7 @@ public class TaxonConstraints {
      */
     private void prepareUberon() throws OWLOntologyCreationException {
         log.entry();
+        log.info("Merging Uberon and taxonomy ontology...");
         //we need to merge the import closure, otherwise the classes in the imported ontologies 
         //will be seen by the method #getAllOWLClasses(), but not by the reasoner.
         this.uberonOntWrapper.mergeImportClosure(true);
@@ -377,6 +378,7 @@ public class TaxonConstraints {
         this.uberonOntWrapper.mergeOntology(this.taxOntWrapper.getSourceOntology());
         
         this.uberonOntWrapper.clearCachedEdges();
+        log.info("Done merging Uberon and taxonomy ontology.");
         log.exit();
     }
     
@@ -577,11 +579,38 @@ public class TaxonConstraints {
         final Map<Integer, List<Integer>> clonedSteps = 
                 taxaSimplificationSteps == null? new LinkedHashMap<>(): 
                     new LinkedHashMap<>(taxaSimplificationSteps);
+        //Now, we expand the keys of the simplification steps to use the same steps 
+        //for all their sub-taxa
+       Map<Integer, List<Integer>> propagatedSteps = clonedSteps.entrySet().stream().flatMap(e -> {
+            int taxId = e.getKey();
+            OWLClass taxCls = taxOntWrapper.getOWLClassByIdentifier(
+                    OntologyUtils.getTaxOntologyId(taxId), true);
+            if (taxCls == null) {
+                throw log.throwing(new IllegalArgumentException("A taxon provided "
+                        + "in overriding constraints is not present in the taxonomy ontology: "
+                        + taxId));
+            }
+            Map<Integer, List<Integer>> newSteps = taxOntWrapper.getDescendantsThroughIsA(taxCls).stream()
+                    .map(c -> OntologyUtils.getTaxNcbiId(taxOntWrapper.getIdentifier(c)))
+                    //we add the simplification steps to a descendant only if not already defined
+                    .filter(id -> !clonedSteps.containsKey(id))
+                    .collect(Collectors.toMap(id -> id, id -> e.getValue()));
+            newSteps.put(taxId, e.getValue());
+            
+            return newSteps.entrySet().stream();
+        })
+        .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(), 
+                //in case we have several taxa provided on a same lineage, 
+                //we'll have duplicates; we take the longest simplification step, 
+                //although it's not optimal as we can override steps provided as argument
+                (u, v) -> u.size() > v.size()? u: v, 
+                LinkedHashMap::new)
+        );
         //Now, generate a Map associating each taxon in taxonIds to its potential simplification steps.
         //Again, use a LinkedHashMap in case the generation order must be predicatable. 
         Map<Integer, List<Integer>> taxIdsWithSteps = taxonIds.stream()
                 .collect(Collectors.toMap(Function.identity(), 
-                     e -> clonedSteps.get(e) != null? clonedSteps.get(e): new ArrayList<Integer>(), 
+                     e -> propagatedSteps.get(e) != null? propagatedSteps.get(e): new ArrayList<Integer>(), 
                      (u, v) -> {throw new IllegalStateException("Duplicate key: " + u);}, 
                      LinkedHashMap::new));
         
@@ -692,7 +721,7 @@ public class TaxonConstraints {
             String storeOntologyDir) throws IllegalArgumentException, IOException, 
             OWLOntologyCreationException, OWLOntologyStorageException {
         log.entry(taxonIds, refClassIds, idStartsToOverridingTaxonIds, storeOntologyDir);
-        log.info("Start generating taxon constraints...");
+        log.info("Start generating taxon constraints: {}", taxonIds);
         
         //if we want to store the intermediate ontologies
         if (storeOntologyDir != null) {

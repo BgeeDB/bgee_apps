@@ -28,7 +28,9 @@ import org.bgee.pipeline.ontologycommon.OntologyUtils;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
 
+import static org.mockito.Mockito.anyObject;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -280,6 +282,44 @@ public class TaxonConstraintsTest extends TestAncestor {
 
         //now, check resulting taxon constraints and intermediate ontologies
         this.checkConstraints(constraints);
+    }
+    
+    /**
+     * Test that {@link TaxonConstraints#generateTaxonConstraints(String, Map, String, Map, String, String)} 
+     * correctly launch generation of taxon constraints.
+     */
+    @Test
+    public void shouldLaunchGenerateTaxonConstraints() throws OBOFormatParserException, 
+    UnknownOWLOntologyException, OWLOntologyCreationException, IOException, IllegalArgumentException, 
+    OWLOntologyStorageException {
+        TaxonConstraints test = spy(new TaxonConstraints(
+                new OWLGraphWrapper(OntologyUtils.loadOntology(UBERONFILE)), 
+                new OWLGraphWrapper(OntologyUtils.loadOntology(TAXONTFILE))));
+        
+        //we don't want the real method to be called, just to verify its arguments
+        Map<String, Set<Integer>> constraints = new HashMap<>();
+        constraints.put(UBERON_IDS.iterator().next(), new HashSet<>(TAXONIDS.iterator().next()));
+        Mockito.doReturn(constraints).when(test)
+        .generateTaxonConstraints(anyObject(), anyObject(), anyObject(), anyObject());
+        
+        Map<Integer, List<Integer>> taxaSimplificationSteps = new LinkedHashMap<>();
+        taxaSimplificationSteps.put(8, Arrays.asList(15));
+        taxaSimplificationSteps.put(13, Arrays.asList(15, 100));
+        String outputTSV = testFolder.newFile("testtemp.tsv").getPath();
+        test.generateTaxonConstraints(TAXONFILE, taxaSimplificationSteps, 
+                UBERONFILE, ID_STARTS_TO_OVERRIDING_TAX_IDS, outputTSV, null);
+
+        Map<Integer, List<Integer>> propagatedSimplificationSteps = new LinkedHashMap<>();
+        propagatedSimplificationSteps.put(8, Arrays.asList(15));
+        propagatedSimplificationSteps.put(13, Arrays.asList(15, 100));
+        propagatedSimplificationSteps.put(14, Arrays.asList(15, 100));
+        propagatedSimplificationSteps.put(15, new ArrayList<>());
+        Set<String> ids = new HashSet<>(UBERON_IDS);
+        ids.remove("FAKE:1");
+        ids.remove("FAKE:2");
+        ids.add("U:6");
+        verify(test).generateTaxonConstraints(propagatedSimplificationSteps, ids, 
+                ID_STARTS_TO_OVERRIDING_TAX_IDS, null);
     }
     
     /**

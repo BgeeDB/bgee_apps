@@ -515,7 +515,8 @@ public class UberonDevStage extends UberonCommon {
      *              for details about values returned. 
      * @see org.bgee.pipeline.OntologyUtils#computeNestedSetModelParams(List)
      */
-    public Map<OWLClass, Map<String, Integer>> generateStageNestedSetModel(OWLClass root) {
+    public Map<OWLClass, Map<String, Integer>> generateStageNestedSetModel(OWLClass root) 
+            throws IllegalStateException {
         log.entry(root, this.getTaxonConstraints());
         
         //check if we have a nested set model in cache for this root
@@ -608,11 +609,19 @@ public class UberonDevStage extends UberonCommon {
                                 sameSpeciesChildren.getValue());
                     }
                 }
-                for (Set<OWLClass> sameSpeciesChildren: filteredChildren.values()) {
-                    List<OWLClass> orderedSameSpeciesChildren = 
-                            this.orderByPrecededBy(sameSpeciesChildren);
-                    globalOrdering = OntologyUtils.mergeLists(globalOrdering, 
-                            orderedSameSpeciesChildren);
+                for (Entry<Integer, Set<OWLClass>> sameSpeciesChildren: filteredChildren.entrySet()) {
+                    try {
+                        log.debug("Ordering same species children for species with ID: {}", 
+                                sameSpeciesChildren.getKey());
+                        List<OWLClass> orderedSameSpeciesChildren = 
+                                this.orderByPrecededBy(sameSpeciesChildren.getValue());
+                        globalOrdering = OntologyUtils.mergeLists(globalOrdering, 
+                                orderedSameSpeciesChildren);
+                    } catch (IllegalStateException e) {
+                        log.error("Exception was thrown in species with ID: {}", 
+                                sameSpeciesChildren.getKey());
+                        throw log.throwing(e);
+                    }
                 }
             }
         }
@@ -835,7 +844,7 @@ public class UberonDevStage extends UberonCommon {
      *                          first occurring {@code OWLClass} at first position, last 
      *                          occurring {@code OWLClass} at last position.
      */
-    public List<OWLClass> orderByPrecededBy(Set<OWLClass> classesToOrder) {
+    public List<OWLClass> orderByPrecededBy(Set<OWLClass> classesToOrder) throws IllegalStateException {
         log.entry(classesToOrder);
         
         OWLGraphWrapper wrapper = this.getOntologyUtils().getWrapper();

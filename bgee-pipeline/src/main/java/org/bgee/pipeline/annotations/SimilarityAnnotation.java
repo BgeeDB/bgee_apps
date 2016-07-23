@@ -2853,7 +2853,7 @@ public class SimilarityAnnotation {
                 throw log.throwing(new IllegalArgumentException("All provided annotations "
                         + "must have a CIO ID defined. Offending annotation: " + annot));
             }
-            OWLClass cls = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
+            OWLClass cls = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifierNoAltIds(
                     annot.getCioId().trim());
             if (cls == null) {
                 throw log.throwing(new IllegalArgumentException("Unrecognized CIO ID "
@@ -3504,7 +3504,7 @@ public class SimilarityAnnotation {
                             relatedAnnot);
                     continue;
                 }
-                intersectTaxCls.add(taxOntWrapper.getOWLClassByIdentifier(
+                intersectTaxCls.add(taxOntWrapper.getOWLClassByIdentifierNoAltIds(
                         OntologyUtils.getTaxOntologyId(relatedAnnot.getNcbiTaxonId())));
             }
 
@@ -3646,7 +3646,7 @@ public class SimilarityAnnotation {
                 Set<Integer> selfAndAncestorsIds = new HashSet<Integer>();
                 selfAndAncestorsIds.add(annot.getNcbiTaxonId());
                 for (OWLClass ancestor: taxOntWrapper.getAncestorsThroughIsA(
-                        taxOntWrapper.getOWLClassByIdentifier(
+                        taxOntWrapper.getOWLClassByIdentifierNoAltIds(
                                 OntologyUtils.getTaxOntologyId(annot.getNcbiTaxonId())))) {
                     selfAndAncestorsIds.add(OntologyUtils.getTaxNcbiId(
                             taxOntWrapper.getIdentifier(ancestor)));
@@ -3769,7 +3769,7 @@ public class SimilarityAnnotation {
                     Set<OWLClass> confs = new HashSet<OWLClass>();
                     for (CuratorAnnotationBean annot: relatedAnnots) {
                         if (!annot.isNegated()) {
-                            confs.add(cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
+                            confs.add(cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifierNoAltIds(
                                     annot.getCioId().trim()));
                             annotationsUsed.add(annot);
                         }
@@ -3811,7 +3811,7 @@ public class SimilarityAnnotation {
                             
                             //we consider only confidence of negative annotations 
                             //to compute the confidence level of the inferred annotation
-                            confs.add(cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
+                            confs.add(cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifierNoAltIds(
                                     annot.getCioId().trim()));
                             negAnnots.add(annot);
                         } else {
@@ -4013,7 +4013,7 @@ public class SimilarityAnnotation {
             } else {
                 //otherwise, if only one evidence, we use the original confidence statement
                 RawAnnotationBean annot = relatedAnnotsEntry.getValue().iterator().next();
-                summaryConf = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
+                summaryConf = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifierNoAltIds(
                         annot.getCioId());
                 newAnnot.setCioId(annot.getCioId());
                 newAnnot.setCioLabel(annot.getCioLabel());
@@ -4105,7 +4105,7 @@ public class SimilarityAnnotation {
         //positive annotations on one hand, or negative annotations on the other hand, 
         //have same or multiple evidence types). Otherwise, we check that over all evidence lines. 
         //XXX: should we really consider ECOs 'author statement' as a 'different type'?
-        OWLClass evidenceTypeConcordance = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
+        OWLClass evidenceTypeConcordance = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifierNoAltIds(
                 CIOWrapper.SAME_TYPE_EVIDENCE_CONCORDANCE_ID);
         if ((positiveAnnotCount > 0 && negativeAnnotCount > 0 && 
                 ecoUtils.containsUnrelatedClassesByIsAPartOf(positiveECOs, negativeECOs)) || 
@@ -4113,12 +4113,12 @@ public class SimilarityAnnotation {
                         ecoUtils.containsUnrelatedClassesByIsAPartOf(positiveECOs)) || 
                 (negativeAnnotCount > 0 && 
                         ecoUtils.containsUnrelatedClassesByIsAPartOf(negativeECOs))) {
-                evidenceTypeConcordance = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
+                evidenceTypeConcordance = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifierNoAltIds(
                         CIOWrapper.DIFFERENT_TYPES_EVIDENCE_CONCORDANCE_ID);
         } 
         //Determine the best confidence level, and if we have conflicting evidence lines, 
         //determine the conflict level (weak or strong). 
-        OWLClass evidenceConcordance = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
+        OWLClass evidenceConcordance = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifierNoAltIds(
                 CIOWrapper.CONGRUENT_CONCORDANCE_ID);
         OWLClass confidenceLevel = null;
         if (positiveAnnotCount > 0 && negativeAnnotCount > 0) {
@@ -4135,12 +4135,12 @@ public class SimilarityAnnotation {
                                     bestNegativeTerm))) || 
                 negativeAnnotCount > positiveAnnotCount) {
                 
-                evidenceConcordance = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
+                evidenceConcordance = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifierNoAltIds(
                         CIOWrapper.STRONGLY_CONFLICTING_CONCORDANCE_ID);
                 //for strongly conflicting evidence lines, there is no confidence level associated.
                 //confidenceLevel = null;
             } else {
-                evidenceConcordance = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
+                evidenceConcordance = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifierNoAltIds(
                         CIOWrapper.WEAKLY_CONFLICTING_CONCORDANCE_ID);
                 //for weakly conflicting evidence lines, we take the confidence level 
                 //from the best supporting evidence
@@ -4255,7 +4255,7 @@ public class SimilarityAnnotation {
                 if (!relatedAnnot.isTrusted()) {
                     continue;
                 }
-                taxClasses.add(taxOntWrapper.getOWLClassByIdentifier(
+                taxClasses.add(taxOntWrapper.getOWLClassByIdentifierNoAltIds(
                         OntologyUtils.getTaxOntologyId(relatedAnnot.getNcbiTaxonId())));
             }
             if (taxClasses.isEmpty()) {

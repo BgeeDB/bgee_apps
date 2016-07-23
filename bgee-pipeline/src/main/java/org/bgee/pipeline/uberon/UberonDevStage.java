@@ -176,9 +176,6 @@ public class UberonDevStage extends UberonCommon {
      * A {@code Set} of {@code OWLPropertyExpression} that can be conveniently used 
      * to query for relations and/or relatives only over part_of relations,
      */
-    //suppress warning because the getAncestors method of owltools uses unparameterized 
-    //generic OWLPropertyExpression, so we need to do the same. 
-    @SuppressWarnings("rawtypes")
     private final Set<OWLPropertyExpression> overPartOf;
     
     
@@ -246,9 +243,6 @@ public class UberonDevStage extends UberonCommon {
      * @throws OWLOntologyCreationException If an error occurred while merging 
      *                                      the import closure of the ontology.
      */
-    //suppress warning because OWLGraphWrapper uses non-parameterized generic types, 
-    //so we need to do the same.
-    @SuppressWarnings("rawtypes")
     public UberonDevStage(OntologyUtils ontUtils, Map<String, Set<Integer>> taxonConstraints) 
             throws OWLOntologyCreationException {
         super(ontUtils);

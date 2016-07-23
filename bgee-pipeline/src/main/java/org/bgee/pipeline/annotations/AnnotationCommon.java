@@ -383,7 +383,7 @@ public class AnnotationCommon {
         //and it is easier to have a shorter list of terms to review. 
         //So, the following code is disabled: 
 //        for (String annotatedId: annotatedAnatEntityIds) {
-//            OWLClass cls = wrapper.getOWLClassByIdentifier(annotatedId);
+//            OWLClass cls = wrapper.getOWLClassByIdentifierNoAltIds(annotatedId);
 //            if (cls == null) {
 //                //maybe was not an OBO-like ID but an IRI
 //                cls = wrapper.getOWLClass(annotatedId);

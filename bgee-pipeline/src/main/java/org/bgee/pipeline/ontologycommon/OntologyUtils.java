@@ -1355,7 +1355,7 @@ public class OntologyUtils {
         Set<OWLClass> subgraphMembers = new HashSet<OWLClass>();
         if (subgraphRootIds != null) {
             for (String subgraphRootId: new HashSet<String>(subgraphRootIds)) {
-                OWLClass subgraphRoot = this.getWrapper().getOWLClassByIdentifier(
+                OWLClass subgraphRoot = this.getWrapper().getOWLClassByIdentifierNoAltIds(
                         subgraphRootId);
                 
                 if (subgraphRoot != null) {

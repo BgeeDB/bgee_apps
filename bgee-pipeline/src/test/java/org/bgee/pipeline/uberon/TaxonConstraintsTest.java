@@ -540,7 +540,7 @@ public class TaxonConstraintsTest extends TestAncestor {
                     wrapper.getAllRealOWLClasses().size());
             for (String classId: expectedClassIds) {
                 assertNotNull("Missing class " + classId, 
-                        wrapper.getOWLClassByIdentifier(classId));
+                        wrapper.getOWLClassByIdentifierNoAltIds(classId));
             }
         }
         log.exit();

@@ -63,11 +63,11 @@ public class UberonDevStageTest extends TestAncestor {
         OntologyUtils utils = new OntologyUtils(wrapper);
         UberonDevStage uberon = new UberonDevStage(utils);
 
-        OWLClass cls0 = wrapper.getOWLClassByIdentifier("MmulDv:0000002");
-        OWLClass cls1 = wrapper.getOWLClassByIdentifier("MmulDv:0000007");
-        OWLClass cls2 = wrapper.getOWLClassByIdentifier("MmulDv:0000008");
-        OWLClass cls3 = wrapper.getOWLClassByIdentifier("MmulDv:0000009");
-        OWLClass cls4 = wrapper.getOWLClassByIdentifier("MmulDv:0000010");
+        OWLClass cls0 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000002");
+        OWLClass cls1 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000007");
+        OWLClass cls2 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000008");
+        OWLClass cls3 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000009");
+        OWLClass cls4 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000010");
         
         List<OWLClass> expectedOrderedClasses = Arrays.asList(cls1, cls2, cls3, cls4);
         assertEquals("Incorrect ordering of sibling OWLClasses", expectedOrderedClasses, 
@@ -92,11 +92,11 @@ public class UberonDevStageTest extends TestAncestor {
         OntologyUtils utils = new OntologyUtils(wrapper);
         UberonDevStage uberon = new UberonDevStage(utils);
 
-        OWLClass cls0 = wrapper.getOWLClassByIdentifier("MmulDv:0000000");
-        OWLClass cls1 = wrapper.getOWLClassByIdentifier("MmulDv:0000007");
-        OWLClass cls2 = wrapper.getOWLClassByIdentifier("MmulDv:0000008");
-        OWLClass cls3 = wrapper.getOWLClassByIdentifier("MmulDv:0000009");
-        OWLClass cls4 = wrapper.getOWLClassByIdentifier("MmulDv:0000010");
+        OWLClass cls0 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000000");
+        OWLClass cls1 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000007");
+        OWLClass cls2 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000008");
+        OWLClass cls3 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000009");
+        OWLClass cls4 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000010");
         
         assertEquals("Incorrect last class returned", cls4, 
                 uberon.getLastClassByPrecededBy(
@@ -133,10 +133,10 @@ public class UberonDevStageTest extends TestAncestor {
         UberonDevStage uberon = new UberonDevStage(utils);
         
         uberon.generatePrecededByFromComments(new HashSet<OWLClass>(Arrays.asList(
-                wrapper.getOWLClassByIdentifier("FBdv:00000000"), 
-                wrapper.getOWLClassByIdentifier("FBdv:00000001"), 
-                wrapper.getOWLClassByIdentifier("FBdv:00000002"), 
-                wrapper.getOWLClassByIdentifier("FBdv:00000003"))));
+                wrapper.getOWLClassByIdentifierNoAltIds("FBdv:00000000"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("FBdv:00000001"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("FBdv:00000002"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("FBdv:00000003"))));
         
         //check that the desired edges were created. 
         OWLDataFactory factory = ont.getOWLOntologyManager().getOWLDataFactory();
@@ -147,26 +147,26 @@ public class UberonDevStageTest extends TestAncestor {
         
         assertTrue("missing preceded_by relations generated from comments", 
                 ont.containsAxiom(factory.getOWLSubClassOfAxiom(
-                    wrapper.getOWLClassByIdentifier("FBdv:00000003"), 
+                    wrapper.getOWLClassByIdentifierNoAltIds("FBdv:00000003"), 
                     factory.getOWLObjectSomeValuesFrom(precededBy, 
-                        wrapper.getOWLClassByIdentifier("FBdv:00000002")))));
+                        wrapper.getOWLClassByIdentifierNoAltIds("FBdv:00000002")))));
         assertTrue("missing preceded_by relations generated from comments", 
                 ont.containsAxiom(factory.getOWLSubClassOfAxiom(
-                    wrapper.getOWLClassByIdentifier("FBdv:00000002"), 
+                    wrapper.getOWLClassByIdentifierNoAltIds("FBdv:00000002"), 
                     factory.getOWLObjectSomeValuesFrom(precededBy, 
-                        wrapper.getOWLClassByIdentifier("FBdv:00000001")))));
+                        wrapper.getOWLClassByIdentifierNoAltIds("FBdv:00000001")))));
         assertTrue("missing preceded_by relations generated from comments", 
                 ont.containsAxiom(factory.getOWLSubClassOfAxiom(
-                    wrapper.getOWLClassByIdentifier("FBdv:00000001"), 
+                    wrapper.getOWLClassByIdentifierNoAltIds("FBdv:00000001"), 
                     factory.getOWLObjectSomeValuesFrom(precededBy, 
-                        wrapper.getOWLClassByIdentifier("FBdv:00000000")))));
+                        wrapper.getOWLClassByIdentifierNoAltIds("FBdv:00000000")))));
         
         //check that the already existing immediately_preceded_by relation was not removed
         assertTrue("An existing relation was incorrectly removed", 
                 ont.containsAxiom(factory.getOWLSubClassOfAxiom(
-                    wrapper.getOWLClassByIdentifier("FBdv:00000002"), 
+                    wrapper.getOWLClassByIdentifierNoAltIds("FBdv:00000002"), 
                     factory.getOWLObjectSomeValuesFrom(immPrecededBy, 
-                        wrapper.getOWLClassByIdentifier("FBdv:00000001")))));
+                        wrapper.getOWLClassByIdentifierNoAltIds("FBdv:00000001")))));
     }
     
     /**
@@ -181,23 +181,23 @@ public class UberonDevStageTest extends TestAncestor {
         OntologyUtils utils = new OntologyUtils(wrapper);
         UberonDevStage uberon = new UberonDevStage(utils);
 
-        OWLClass lifeCycle = wrapper.getOWLClassByIdentifier("MmulDv:0000001");
-        OWLClass prenatal = wrapper.getOWLClassByIdentifier("MmulDv:0000002");
-        OWLClass immature = wrapper.getOWLClassByIdentifier("MmulDv:0000003");
-        OWLClass prenatal1 = wrapper.getOWLClassByIdentifier("MmulDv:0000004");
-        OWLClass prenatal2 = wrapper.getOWLClassByIdentifier("MmulDv:0000005");
-        OWLClass prenatal3 = wrapper.getOWLClassByIdentifier("MmulDv:0000006");
-        OWLClass immature1 = wrapper.getOWLClassByIdentifier("MmulDv:0000007");
-        OWLClass immature2 = wrapper.getOWLClassByIdentifier("MmulDv:0000008");
-        OWLClass immature3 = wrapper.getOWLClassByIdentifier("MmulDv:0000009");
-        OWLClass immature4 = wrapper.getOWLClassByIdentifier("MmulDv:0000010");
-        OWLClass prenatal1_1 = wrapper.getOWLClassByIdentifier("MmulDv:0000011");
-        OWLClass prenatal1_2 = wrapper.getOWLClassByIdentifier("MmulDv:0000012");
-        OWLClass prenatal2_1 = wrapper.getOWLClassByIdentifier("MmulDv:0000013");
-        OWLClass prenatal2_2 = wrapper.getOWLClassByIdentifier("MmulDv:0000014");
-        OWLClass immature1_1 = wrapper.getOWLClassByIdentifier("MmulDv:0000015");
-        OWLClass immature1_2 = wrapper.getOWLClassByIdentifier("MmulDv:0000016");
-        OWLClass immature1_3 = wrapper.getOWLClassByIdentifier("MmulDv:0000017");
+        OWLClass lifeCycle = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000001");
+        OWLClass prenatal = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000002");
+        OWLClass immature = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000003");
+        OWLClass prenatal1 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000004");
+        OWLClass prenatal2 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000005");
+        OWLClass prenatal3 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000006");
+        OWLClass immature1 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000007");
+        OWLClass immature2 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000008");
+        OWLClass immature3 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000009");
+        OWLClass immature4 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000010");
+        OWLClass prenatal1_1 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000011");
+        OWLClass prenatal1_2 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000012");
+        OWLClass prenatal2_1 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000013");
+        OWLClass prenatal2_2 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000014");
+        OWLClass immature1_1 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000015");
+        OWLClass immature1_2 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000016");
+        OWLClass immature1_3 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000017");
         
         Map<OWLClass, Map<String, Integer>> expectedModel = 
                 new HashMap<OWLClass, Map<String, Integer>>();
@@ -403,21 +403,21 @@ public class UberonDevStageTest extends TestAncestor {
         
         UberonDevStage uberon = new UberonDevStage(utils, taxonConstraints);
         
-        OWLClass id1 = wrapper.getOWLClassByIdentifier("ID:0000001");
-        OWLClass id2 = wrapper.getOWLClassByIdentifier("ID:0000002");
-        OWLClass id3 = wrapper.getOWLClassByIdentifier("ID:0000003");
-        OWLClass spe1_4 = wrapper.getOWLClassByIdentifier("SPE1:0000004");
-        OWLClass spe1_11 = wrapper.getOWLClassByIdentifier("SPE1:0000011");
-        OWLClass spe1_12 = wrapper.getOWLClassByIdentifier("SPE1:0000012");
-        OWLClass spe1_5 = wrapper.getOWLClassByIdentifier("SPE1:0000005");
-        OWLClass spe1_13 = wrapper.getOWLClassByIdentifier("SPE1:0000013");
-        OWLClass spe1_14 = wrapper.getOWLClassByIdentifier("SPE1:0000014");
-        OWLClass spe1_7 = wrapper.getOWLClassByIdentifier("SPE1:0000007");
-        OWLClass spe1_8 = wrapper.getOWLClassByIdentifier("SPE1:0000008");
-        OWLClass spe2_6 = wrapper.getOWLClassByIdentifier("SPE2:0000006");
-        OWLClass spe2_106 = wrapper.getOWLClassByIdentifier("SPE2:0000106");
-        OWLClass spe2_9 = wrapper.getOWLClassByIdentifier("SPE2:0000009");
-        OWLClass spe2_10 = wrapper.getOWLClassByIdentifier("SPE2:0000010");
+        OWLClass id1 = wrapper.getOWLClassByIdentifierNoAltIds("ID:0000001");
+        OWLClass id2 = wrapper.getOWLClassByIdentifierNoAltIds("ID:0000002");
+        OWLClass id3 = wrapper.getOWLClassByIdentifierNoAltIds("ID:0000003");
+        OWLClass spe1_4 = wrapper.getOWLClassByIdentifierNoAltIds("SPE1:0000004");
+        OWLClass spe1_11 = wrapper.getOWLClassByIdentifierNoAltIds("SPE1:0000011");
+        OWLClass spe1_12 = wrapper.getOWLClassByIdentifierNoAltIds("SPE1:0000012");
+        OWLClass spe1_5 = wrapper.getOWLClassByIdentifierNoAltIds("SPE1:0000005");
+        OWLClass spe1_13 = wrapper.getOWLClassByIdentifierNoAltIds("SPE1:0000013");
+        OWLClass spe1_14 = wrapper.getOWLClassByIdentifierNoAltIds("SPE1:0000014");
+        OWLClass spe1_7 = wrapper.getOWLClassByIdentifierNoAltIds("SPE1:0000007");
+        OWLClass spe1_8 = wrapper.getOWLClassByIdentifierNoAltIds("SPE1:0000008");
+        OWLClass spe2_6 = wrapper.getOWLClassByIdentifierNoAltIds("SPE2:0000006");
+        OWLClass spe2_106 = wrapper.getOWLClassByIdentifierNoAltIds("SPE2:0000106");
+        OWLClass spe2_9 = wrapper.getOWLClassByIdentifierNoAltIds("SPE2:0000009");
+        OWLClass spe2_10 = wrapper.getOWLClassByIdentifierNoAltIds("SPE2:0000010");
         
         Map<OWLClass, Map<String, Integer>> expectedModel = 
                 new HashMap<OWLClass, Map<String, Integer>>();

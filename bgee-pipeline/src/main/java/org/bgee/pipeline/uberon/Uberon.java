@@ -116,6 +116,12 @@ public class Uberon extends UberonCommon {
      *   <li>A list of OBO-like IDs or {@code IRI}s of relations to be filtered 
      *   and mapped to parent relations. These IDs must be separated by the {@code String} 
      *   {@link CommandRunner#LIST_SEPARATOR}. See {@link #setRelIds(Collection)}.
+     *   <li>a map specifying specific relations to remove between pairs of {@code OWLClass}es. 
+     *   In a key-value pair, the key should be the OBO-like ID of the source of relations 
+     *   to remove, the value being the target of the relations to remove. Key-value pairs 
+     *   must be separated by {@link CommandRunner#LIST_SEPARATOR}, keys must be  
+     *   separated from their associated value by {@link CommandRunner#KEY_VALUE_SEPARATOR}. 
+     *   A key can be associated to several values. See {@link #setRelsBetweenToRemove(Map)}.
      *   <li>A list of OBO-like IDs of the {@code OWLClass}es that are the roots 
      *   of the subgraphs to be removed from the ontology. These IDs must be 
      *   separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}. 
@@ -131,12 +137,6 @@ public class Uberon extends UberonCommon {
      *   <li>A list of OBO-like IDs of {@code OWLClass}es whose incoming edges 
      *   should not be removed, even if member of a subset listed in the previous argument. 
      *   See {@link #setClassIdsExcludedFromSubsetRemoval(Collection)}.
-     *   <li>a map specifying specific relations to remove between pairs of {@code OWLClass}es. 
-     *   In a key-value pair, the key should be the OBO-like ID of the source of relations 
-     *   to remove, the value being the target of the relations to remove. Key-value pairs 
-     *   must be separated by {@link CommandRunner#LIST_SEPARATOR}, keys must be  
-     *   separated from their associated value by {@link CommandRunner#KEY_VALUE_SEPARATOR}. 
-     *   A key can be associated to several values. See {@link #setRelsBetweenToRemove(Map)}.
      *   </ol>
      *   Example of command line usage for this task: {@code java -Xmx2g -jar myJar 
      *   Uberon simplifyUberon composite-metazoan.owl custom_composite simplification_composite.tsv 
@@ -309,7 +309,7 @@ public class Uberon extends UberonCommon {
 ////        }
 ////        manipulator.filterSubgraphs(toFilterSubgraphRootIds);
 ////        for (String classIdToRemove: nonHumanAnatEntityIds) {
-////            if (manipulator.getOwlGraphWrapper().getOWLClassByIdentifier(classIdToRemove) != null) {
+////            if (manipulator.getOwlGraphWrapper().getOWLClassByIdentifierNoAltIds(classIdToRemove) != null) {
 ////                manipulator.removeClassAndPropagateEdges(classIdToRemove);
 ////            }
 ////        }
@@ -335,7 +335,7 @@ public class Uberon extends UberonCommon {
 ////        }
 ////        manipulator.filterSubgraphs(toFilterSubgraphRootIds);
 ////        for (String classIdToRemove: noHumanExpressionAnatEntityIds) {
-////            if (manipulator.getOwlGraphWrapper().getOWLClassByIdentifier(classIdToRemove) != null) {
+////            if (manipulator.getOwlGraphWrapper().getOWLClassByIdentifierNoAltIds(classIdToRemove) != null) {
 ////                manipulator.removeClassAndPropagateEdges(classIdToRemove);
 ////            }
 ////        }
@@ -349,14 +349,14 @@ public class Uberon extends UberonCommon {
 //        
 //        manipulator.removeUnrelatedRelations(relIds);
 //        for (String classIdToRemove: nonHumanAnatEntityIds) {
-//            if (manipulator.getOwlGraphWrapper().getOWLClassByIdentifier(classIdToRemove) != null) {
+//            if (manipulator.getOwlGraphWrapper().getOWLClassByIdentifierNoAltIds(classIdToRemove) != null) {
 //                manipulator.removeClassAndPropagateEdges(classIdToRemove);
 //            }
 //        }
 //        for (Entry<String, Set<String>> relsToRemove: relsBetweenToRemove.entrySet()) {
 //            for (String targetId: relsToRemove.getValue()) {
-//                if (manipulator.getOwlGraphWrapper().getOWLClassByIdentifier(relsToRemove.getKey()) != null && 
-//                        manipulator.getOwlGraphWrapper().getOWLClassByIdentifier(targetId) != null) {
+//                if (manipulator.getOwlGraphWrapper().getOWLClassByIdentifierNoAltIds(relsToRemove.getKey()) != null && 
+//                        manipulator.getOwlGraphWrapper().getOWLClassByIdentifierNoAltIds(targetId) != null) {
 //                    manipulator.removeDirectEdgesBetween(relsToRemove.getKey(), targetId);
 //                }
 //            }
@@ -380,14 +380,14 @@ public class Uberon extends UberonCommon {
 //        
 //        manipulator.removeUnrelatedRelations(relIds);
 //        for (String classIdToRemove: noHumanExpressionAnatEntityIds) {
-//            if (manipulator.getOwlGraphWrapper().getOWLClassByIdentifier(classIdToRemove) != null) {
+//            if (manipulator.getOwlGraphWrapper().getOWLClassByIdentifierNoAltIds(classIdToRemove) != null) {
 //                manipulator.removeClassAndPropagateEdges(classIdToRemove);
 //            }
 //        }
 //        for (Entry<String, Set<String>> relsToRemove: relsBetweenToRemove.entrySet()) {
 //            for (String targetId: relsToRemove.getValue()) {
-//                if (manipulator.getOwlGraphWrapper().getOWLClassByIdentifier(relsToRemove.getKey()) != null && 
-//                        manipulator.getOwlGraphWrapper().getOWLClassByIdentifier(targetId) != null) {
+//                if (manipulator.getOwlGraphWrapper().getOWLClassByIdentifierNoAltIds(relsToRemove.getKey()) != null && 
+//                        manipulator.getOwlGraphWrapper().getOWLClassByIdentifierNoAltIds(targetId) != null) {
 //                    manipulator.removeDirectEdgesBetween(relsToRemove.getKey(), targetId);
 //                }
 //            }

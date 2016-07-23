@@ -249,13 +249,13 @@ public class UberonTest extends TestAncestor {
         Uberon ub = new Uberon(utils);
         
         assertTrue(ub.isNonInformativeSubsetMember(
-                wrapper.getOWLClassByIdentifier("UBERON:0000001")));
+                wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000001")));
         assertFalse(ub.isNonInformativeSubsetMember(
-                wrapper.getOWLClassByIdentifier("UBERON:0000002")));
+                wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000002")));
         assertFalse(ub.isNonInformativeSubsetMember(
-                wrapper.getOWLClassByIdentifier("UBERON:0000003")));
+                wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000003")));
         assertFalse(ub.isNonInformativeSubsetMember(
-                wrapper.getOWLClassByIdentifier("UBERON:0000004")));
+                wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000004")));
     }
 
     @Ignore

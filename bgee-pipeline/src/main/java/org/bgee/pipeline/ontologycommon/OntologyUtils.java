@@ -222,13 +222,8 @@ public class OntologyUtils {
             
             Matcher m1 = ID_PATTERN.matcher(id1);
             Matcher m2 = ID_PATTERN.matcher(id2);
-            if (!m1.matches()) {
-                throw log.throwing(new IllegalArgumentException("Malformed ID in ontology, " +
-                        "could not be parsed: " + id1));
-            }
-            if (!m2.matches()) {
-                throw log.throwing(new IllegalArgumentException("Malformed ID in ontology, " +
-                        "could not be parsed: " + id2));
+            if (!m1.matches() || !m2.matches()) {
+                return id1.compareTo(id2);
             }
             
             String prefix1 = m1.group(1);

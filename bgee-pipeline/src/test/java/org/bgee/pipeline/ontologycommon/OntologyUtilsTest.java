@@ -733,12 +733,11 @@ public class OntologyUtilsTest extends TestAncestor {
     @Test
     public void testIdComparator() {
         List<String> idsUnsorted = Arrays.asList("ID:11", "ID:2", "ID:12", "ID_10", 
-                "ID:1", "ID1:1", "ID:13f");
+                "ID:1", "ID1:1", "ID:13f", "ID:A");
         List<String> expectedSortdIds = Arrays.asList("ID1:1", "ID:1", "ID:2", "ID:11", "ID:12", 
-                "ID:13f", "ID_10");
+                "ID:13f", "ID:A", "ID_10");
         Collections.sort(idsUnsorted, OntologyUtils.ID_COMPARATOR);
-        assertEquals("IDs were not sorted according to their natural ordering", 
-                expectedSortdIds, idsUnsorted);
+        assertEquals("IDs were not sorted correctly", expectedSortdIds, idsUnsorted);
     }
     
     /**

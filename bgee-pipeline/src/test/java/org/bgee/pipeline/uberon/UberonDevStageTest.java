@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -68,16 +69,19 @@ public class UberonDevStageTest extends TestAncestor {
         OWLClass cls2 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000008");
         OWLClass cls3 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000009");
         OWLClass cls4 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000010");
+        //quick fix for testing orderByPrecededBy assuming there is no GCI relation.
+        //TODO: properly add a taxonomy and test with GCI relations
+        Set<OWLClass> fakeTaxAndAncestors = Collections.singleton(cls4);
         
         List<OWLClass> expectedOrderedClasses = Arrays.asList(cls1, cls2, cls3, cls4);
         assertEquals("Incorrect ordering of sibling OWLClasses", expectedOrderedClasses, 
                 uberon.orderByPrecededBy(
-                        new HashSet<OWLClass>(Arrays.asList(cls3, cls2, cls1, cls4))));
+                        new HashSet<OWLClass>(Arrays.asList(cls3, cls2, cls1, cls4)), fakeTaxAndAncestors));
         
         expectedOrderedClasses = Arrays.asList(cls0, cls2, cls3, cls4);
         assertEquals("Incorrect ordering of sibling OWLClasses", expectedOrderedClasses, 
                 uberon.orderByPrecededBy(
-                        new HashSet<OWLClass>(Arrays.asList(cls3, cls2, cls0, cls4))));
+                        new HashSet<OWLClass>(Arrays.asList(cls3, cls2, cls0, cls4)), fakeTaxAndAncestors));
     }
     
     /**
@@ -97,27 +101,30 @@ public class UberonDevStageTest extends TestAncestor {
         OWLClass cls2 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000008");
         OWLClass cls3 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000009");
         OWLClass cls4 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000010");
+        //quick fix for testing orderByPrecededBy assuming there is no GCI relation.
+        //TODO: properly add a taxonomy and test with GCI relations
+        Set<OWLClass> fakeTaxAndAncestors = Collections.singleton(cls4);
         
         assertEquals("Incorrect last class returned", cls4, 
                 uberon.getLastClassByPrecededBy(
-                        new HashSet<OWLClass>(Arrays.asList(cls3, cls2, cls1, cls4))));
+                        new HashSet<OWLClass>(Arrays.asList(cls3, cls2, cls1, cls4)), fakeTaxAndAncestors));
         assertEquals("Incorrect last class returned", cls4, 
                 uberon.getLastClassByPrecededBy(
-                        new HashSet<OWLClass>(Arrays.asList(cls3, cls2, cls0, cls4))));
+                        new HashSet<OWLClass>(Arrays.asList(cls3, cls2, cls0, cls4)), fakeTaxAndAncestors));
         assertEquals("Incorrect last class returned", cls3, 
                 uberon.getLastClassByPrecededBy(
-                        new HashSet<OWLClass>(Arrays.asList(cls3, cls2, cls1))));
+                        new HashSet<OWLClass>(Arrays.asList(cls3, cls2, cls1)), fakeTaxAndAncestors));
         assertEquals("Incorrect last class returned", cls2, 
                 uberon.getLastClassByPrecededBy(
-                        new HashSet<OWLClass>(Arrays.asList(cls2, cls1))));
+                        new HashSet<OWLClass>(Arrays.asList(cls2, cls1)), fakeTaxAndAncestors));
         
         //test via indirect edges
         assertEquals("Incorrect last class returned", cls4, 
                 uberon.getLastClassByPrecededBy(
-                        new HashSet<OWLClass>(Arrays.asList(cls2, cls1, cls4))));
+                        new HashSet<OWLClass>(Arrays.asList(cls2, cls1, cls4)), fakeTaxAndAncestors));
         assertEquals("Incorrect last class returned", cls4, 
                 uberon.getLastClassByPrecededBy(
-                        new HashSet<OWLClass>(Arrays.asList(cls2, cls0, cls4))));
+                        new HashSet<OWLClass>(Arrays.asList(cls2, cls0, cls4)), fakeTaxAndAncestors));
     }
     
     /**
@@ -650,6 +657,7 @@ public class UberonDevStageTest extends TestAncestor {
                         "FBdv:00005335"), 
                 uberon.getStageIdsBetween("FBdv:00005324", "FBdv:00005335", 7227));
         
+        log.info("Computing nested set model for zebrafish");
         assertEquals("Incorrect stage range returned", 
                 Arrays.asList("ZFS:0000027", "ZFS:0000028", "ZFS:0000029"), 
                 uberon.getStageIdsBetween("ZFS:0000027", "ZFS:0000029", 7955));

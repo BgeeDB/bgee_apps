@@ -60,7 +60,8 @@ public class InsertUberon extends MySQLDAOUser {
      * see {@link #insertStageOntologyIntoDataSource(UberonDevStage, Collection)}.
      * Following elements in {@code args} must then be: 
      *   <ol>
-     *   <li>path to the file storing the Uberon ontology, see {@link #setPathToUberonOnt(String)}.
+     *   <li>path to the file storing the Uberon ontology.
+     *   <li>path to the file storing the taxonomy ontology.
      *   <li>path to a file storing the Uberon taxon constraints
      *   <li>A Map<String, Set<Integer>> to potentially override taxon constraints 
      *   (recommended for developmental stages), see {@link 
@@ -102,22 +103,22 @@ public class InsertUberon extends MySQLDAOUser {
         log.entry((Object[]) args);
         
         if (args[0].equalsIgnoreCase("insertStages")) {
-            if (args.length < 5 || args.length > 6) {
+            if (args.length < 6 || args.length > 7) {
                 throw log.throwing(new IllegalArgumentException(
                         "Incorrect number of arguments provided, expected " + 
-                        "5 or 6 arguments, " + args.length + " provided."));
+                        "6 or 7 arguments, " + args.length + " provided."));
             }
             
-            UberonDevStage ub = new UberonDevStage(args[1], args[2], 
-                    CommandRunner.parseMapArgumentAsInteger(args[3]).entrySet().stream()
+            UberonDevStage ub = new UberonDevStage(args[1], args[2], args[3], 
+                    CommandRunner.parseMapArgumentAsInteger(args[4]).entrySet().stream()
                     .collect(Collectors.toMap(Entry::getKey, e -> new HashSet<Integer>(e.getValue()))));
-            ub.setToIgnoreSubgraphRootIds(CommandRunner.parseListArgument(args[4]));
+            ub.setToIgnoreSubgraphRootIds(CommandRunner.parseListArgument(args[5]));
             
             InsertUberon insert = new InsertUberon();
             
             Collection<Integer> speciesIds = null;
-            if (args.length > 5 && StringUtils.isNotBlank(args[5])) {
-                speciesIds = AnnotationCommon.getTaxonIds(args[5]);
+            if (args.length > 6 && StringUtils.isNotBlank(args[6])) {
+                speciesIds = AnnotationCommon.getTaxonIds(args[6]);
             }
             insert.insertStageOntologyIntoDataSource(ub, speciesIds);
             
@@ -633,8 +634,6 @@ public class InsertUberon extends MySQLDAOUser {
                 }
                 //here we do something borderline: filter using a fake ObjectProperty, 
                 //to retain leaves only through is_a relations.
-                // owltools use generic OWLPropertyExpression, we have to do the same
-                @SuppressWarnings("rawtypes") 
                 Set<OWLPropertyExpression> fakeProps = new HashSet<OWLPropertyExpression>(
                         Arrays.asList(wrapper.getManager().getOWLDataFactory().
                                 getOWLObjectProperty(IRI.create(""))));

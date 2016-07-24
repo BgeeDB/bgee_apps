@@ -62,6 +62,14 @@ id: ID:8
 intersection_of: ID:4
 intersection_of: BFO:0000050 NCBITaxon:9606
 
+[Term]
+id: NCBITaxon:2
+is_a: NCBITaxon:1
+
+[Term]
+id: NCBITaxon:3
+is_a: NCBITaxon:1
+
 [Typedef]
 id: BFO:0000062
 name: preceded by

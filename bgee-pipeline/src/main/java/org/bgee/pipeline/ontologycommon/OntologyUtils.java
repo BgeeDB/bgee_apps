@@ -1466,12 +1466,25 @@ public class OntologyUtils {
      * Determines whether {@code edge} is a immediately_preceded_by relation (see 
      * {@link #IMMEDIATELY_PRECEDED_BY_ID}).
      * 
-     * @param edge  The {@code OWLGraphEdge} to test for being a immediately_preceded_by relation.
+     * @param edge          The {@code OWLGraphEdge} to test for being a immediately_preceded_by relation.
      * @return      {@code true} if {@code edge} is a immediately_preceded_by-related relation.
      */
     public boolean isImmediatelyPrecededByRelation(OWLGraphEdge edge) {
         log.entry(edge);
-        
+        return log.exit(this.isImmediatelyPrecededByRelation(edge, null));
+    }
+    /**
+     * Determines whether {@code edge} is a immediately_preceded_by relation (see 
+     * {@link #IMMEDIATELY_PRECEDED_BY_ID}) valid in the requested taxa.
+     * 
+     * @param edge          The {@code OWLGraphEdge} to test for being a immediately_preceded_by relation.
+     * @param validFillers  A {@code Set} of {@code OWLClass}es that are valid GCI filler for {@code edge}.
+     *                      Can be {@code null} if no filtering on GCI filler is requested.
+     * @return      {@code true} if {@code edge} is a immediately_preceded_by-related relation.
+     */
+    //TODO: unit test
+    public boolean isImmediatelyPrecededByRelation(OWLGraphEdge edge, Set<OWLClass> validFillers) {
+        log.entry(edge, validFillers);
         return log.exit(edge.getQuantifiedPropertyList().size() == 1 && 
 
                 edge.getSingleQuantifiedProperty().getProperty() != null &&
@@ -1479,7 +1492,10 @@ public class OntologyUtils {
                 IMMEDIATELY_PRECEDED_BY_ID).equals(
                         edge.getSingleQuantifiedProperty().getProperty()) &&
                         
-                    edge.getSingleQuantifiedProperty().isSomeValuesFrom());
+                edge.getSingleQuantifiedProperty().isSomeValuesFrom() && 
+                
+                (edge.getGCIFiller() == null || validFillers == null || 
+                        validFillers.contains(edge.getGCIFiller())));
     }
     
     /**
@@ -1487,11 +1503,32 @@ public class OntologyUtils {
      * having a {@code OWLObjectProperty} corresponding to "preceded_by" (see 
      * {@link #PRECEDED_BY_ID}) or any of its {@code OWLObjectProperty} children.
      * 
-     * @param edge  The {@code OWLGraphEdge} to test for being a preceded_by-related relation.
+     * @param edge          The {@code OWLGraphEdge} to test for being a preceded_by-related relation.
      * @return      {@code true} if {@code edge} is a preceded_by-related relation.
      */
     public boolean isPrecededByRelation(OWLGraphEdge edge) {
         log.entry(edge);
+        return log.exit(this.isPrecededByRelation(edge, null));
+    }
+    
+    /**
+     * Determines whether {@code edge} is a preceded_by-related relation, meaning, 
+     * having a {@code OWLObjectProperty} corresponding to "preceded_by" (see 
+     * {@link #PRECEDED_BY_ID}) or any of its {@code OWLObjectProperty} children, and valid 
+     * in the requested taxa.
+     * 
+     * @param edge          The {@code OWLGraphEdge} to test for being a preceded_by-related relation.
+     * @param validFillers  A {@code Set} of {@code OWLClass}es that are valid GCI filler for {@code edge}.
+     *                      Can be {@code null} if no filtering on GCI filler is requested.
+     * @return      {@code true} if {@code edge} is a preceded_by-related relation.
+     */
+    //TODO: unit test
+    public boolean isPrecededByRelation(OWLGraphEdge edge, Set<OWLClass> validFillers) {
+        log.entry(edge, validFillers);
+        
+        if (edge.getGCIFiller() != null && validFillers != null && !validFillers.contains(edge.getGCIFiller())) {
+            return log.exit(false);
+        }
         
         if (edge.getQuantifiedPropertyList().size() == 1) {
             return log.exit(

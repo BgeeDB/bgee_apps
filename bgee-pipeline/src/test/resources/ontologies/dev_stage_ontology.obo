@@ -9442,6 +9442,71 @@ namespace: zebrafish_stages
 relationship: immediately_preceded_by UBERON:0000109 ! gastrula stage
 relationship: part_of UBERON:0000068 ! embryo stage
 
+[Term]
+id: NCBITaxon:9606
+name: human
+
+[Term]
+id: NCBITaxon:10090
+name: mouse
+
+[Term]
+id: NCBITaxon:7955
+name: zebrafish
+
+[Term]
+id: NCBITaxon:8364
+name: Xenopus
+
+[Term]
+id: NCBITaxon:7227
+name: droso
+
+[Term]
+id: NCBITaxon:9031
+
+[Term]
+id: NCBITaxon:9593
+
+[Term]
+id: NCBITaxon:9544
+
+[Term]
+id: NCBITaxon:13616
+
+[Term]
+id: NCBITaxon:9258
+
+[Term]
+id: NCBITaxon:9598
+
+[Term]
+id: NCBITaxon:9597
+
+[Term]
+id: NCBITaxon:9600
+
+[Term]
+id: NCBITaxon:9913
+
+[Term]
+id: NCBITaxon:10116
+
+[Term]
+id: NCBITaxon:28377
+
+[Term]
+id: NCBITaxon:99883
+
+[Term]
+id: NCBITaxon:9823
+
+[Term]
+id: NCBITaxon:6239
+
+[Term]
+id: NCBITaxon:8090
+
 [Typedef]
 id: action_notes
 name: actions_notes

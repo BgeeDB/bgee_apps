@@ -47,6 +47,7 @@ public class UberonSocketTool {
      * Following elements in {@code args} must then be: 
      *   <ol>
      *   <li>path to the file storing the Uberon developmental ontology.
+     *   <li>path to the file storing the taxonomy ontology.
      *   <li>path to the taxon constraints file
      *   <li>A {@code Map} where keys are {@code String}s corresponding to OBO-like IDs 
      *   of {@code OWLClass}es, the associated value being a {@code Set} of {Integer}s 
@@ -74,11 +75,11 @@ public class UberonSocketTool {
         log.entry((Object[]) args);
         
         if (args[0].equalsIgnoreCase("stageRange")) {
-            UberonSocketTool tool = new UberonSocketTool(new UberonDevStage(args[1], args[2], 
-                    CommandRunner.parseMapArgumentAsInteger(args[3]).entrySet().stream()
+            UberonSocketTool tool = new UberonSocketTool(new UberonDevStage(args[1], args[2], args[3], 
+                    CommandRunner.parseMapArgumentAsInteger(args[4]).entrySet().stream()
                     .collect(Collectors.toMap(Entry::getKey, e -> new HashSet<Integer>(e.getValue())))), 
-                    Integer.parseInt(args[4]), 
-                    new ServerSocket(Integer.parseInt(args[5])));
+                    Integer.parseInt(args[5]), 
+                    new ServerSocket(Integer.parseInt(args[6])));
             tool.startListening();
         } else if (args[0].equalsIgnoreCase("idMapping")) {
             UberonSocketTool tool = new UberonSocketTool(new Uberon(args[1]), 

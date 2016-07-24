@@ -50,6 +50,7 @@ import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
 import org.semanticweb.owlapi.model.parameters.ChangeApplied;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
+import org.semanticweb.owlapi.util.OWLEntityRemover;
 import org.supercsv.cellprocessor.FmtBool;
 import org.supercsv.cellprocessor.ParseBool;
 import org.supercsv.cellprocessor.constraint.NotNull;
@@ -419,7 +420,22 @@ public class TaxonConstraints {
         GenerateTaxonOntology disjointAxiomGenerator = new GenerateTaxonOntology();
         Set<OWLAxiom> axiomsToRemove = new HashSet<OWLAxiom>();
         
-        for (OWLClass taxon: this.taxOntWrapper.getAllRealOWLClasses()) {
+        Set<OWLClass> taxClasses = this.taxOntWrapper.getAllRealOWLClasses();
+        //first, we identify any taxon present in Uberon but not in our taxonomy. 
+        //we will remove them afterwards (we cannot simply delete everything, otherwise GCI relations 
+        //would be deleted)
+        OWLClass rootTax = this.uberonOntWrapper.getOWLClassByIdentifierNoAltIds(UberonCommon.TAXONOMY_ROOT_ID);
+        Set<OWLClass> taxClassesToRemove = new HashSet<>();
+        if (rootTax != null) {
+            for (OWLClass tax: this.uberonOntWrapper.getDescendantsThroughIsA(rootTax)) {
+                if (!taxClasses.contains(tax)) {
+                    taxClassesToRemove.add(tax);
+                }
+            }
+        }
+        
+        //now, remove axioms related to the taxa in our taxonomy from Uberon
+        for (OWLClass taxon: taxClasses) {
             //check that this taxon exists in Uberon
             if (!uberonOnt.containsClassInSignature(taxon.getIRI())) {
                 continue;
@@ -459,6 +475,19 @@ public class TaxonConstraints {
         }
         ChangeApplied axiomsRemoved = uberonOnt.getOWLOntologyManager().removeAxioms(uberonOnt, 
                 axiomsToRemove);
+        
+
+        //finally we remove tax classes present in Uberon not our taxonomy
+        OWLEntityRemover remover = new OWLEntityRemover(this.uberonOntWrapper.getAllOntologies());
+        for (OWLClass uberonTax: taxClassesToRemove) {
+            log.info("Deleting taxon absent from our taxonomy: {}", uberonTax);
+            uberonTax.accept(remover);
+        }
+        ChangeApplied status = this.uberonOntWrapper.getManager().applyChanges(remover.getChanges());
+        if (status == ChangeApplied.UNSUCCESSFULLY) {
+            throw log.throwing(new IllegalStateException("Could not delete some taxa: " 
+                    + taxClassesToRemove));
+        }
         
         log.debug("Axioms between taxa removed from Uberon: {}", axiomsRemoved);
         log.exit();
@@ -1305,6 +1334,12 @@ public class TaxonConstraints {
     }
     
 
+    public OWLGraphWrapper getUberonOntWrapper() {
+        return uberonOntWrapper;
+    }
+    public OWLGraphWrapper getTaxOntWrapper() {
+        return taxOntWrapper;
+    }
     /**
      * Expand the providing overriding taxon constraints to also include all parent taxa 
      * of the taxa stored as values in {@code idStartsToOverridingTaxonIds}. This method returns 

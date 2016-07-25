@@ -769,10 +769,15 @@ public class InsertUberon extends MySQLDAOUser {
                         log.trace("OWLClass walked to produce the edge: {} - Mapped to OWLClass: {} - Exists in species: {}", 
                                 clsWalked, mappedClsWalked, inSpecies);
                         boolean changed = speciesIdsToConsider.retainAll(inSpecies);
-                        if (log.isWarnEnabled() && changed && outgoingEdge.isGCI()) {
-                            log.warn("A GCI relation holds between classes not existing " +
-                            		"in the taxon defined by the GCI filler. Class {}, " +
-                            		"existing in species {}. GCI relation: {}", mappedClsWalked, 
+                        if (log.isDebugEnabled() && changed && outgoingEdge.isGCI()) {
+                            //It's actually OK, the OWLGraphWrapper does not use taxon constraints, 
+                            //so it can't determine this. Here, this is an improvement 
+                            //for the Bgee pipeline.
+                            log.debug("A GCI relation is supposed to exist in taxon {}, "
+                                    + "but it was produced by combining edges going through "
+                                    + "classes not existing in this taxon, notably the class {}, " +
+                            		"existing in species {}. Offending GCI relation: {}", 
+                            		outgoingEdge.getGCIFiller(), mappedClsWalked, 
                             		inSpecies, outgoingEdge);
                         }
                     }

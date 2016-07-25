@@ -72,8 +72,7 @@ public class Uberon extends UberonCommon {
      * @see #INFORMATIVE_SUBSETS
      */
     public final static Set<String> NON_INFORMATIVE_SUBSETS = Collections.unmodifiableSet(
-            new HashSet<String>(Arrays.asList("grouping_class", "non_informative", 
-                    "ubprop:upper_level", "upper_level")));
+            new HashSet<String>(Arrays.asList("non_informative", "upper_level")));
     /**
      * An unmodifiable {@code Set} of {@code String}s that are the names 
      * of informative subsets in Uberon (terms belonging to these subsets should never 

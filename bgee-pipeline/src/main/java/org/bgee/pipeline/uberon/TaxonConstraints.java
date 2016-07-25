@@ -480,7 +480,7 @@ public class TaxonConstraints {
         //finally we remove tax classes present in Uberon not our taxonomy
         OWLEntityRemover remover = new OWLEntityRemover(this.uberonOntWrapper.getAllOntologies());
         for (OWLClass uberonTax: taxClassesToRemove) {
-            log.info("Deleting taxon absent from our taxonomy: {}", uberonTax);
+            log.debug("Deleting taxon absent from our taxonomy: {}", uberonTax);
             uberonTax.accept(remover);
         }
         ChangeApplied status = this.uberonOntWrapper.getManager().applyChanges(remover.getChanges());

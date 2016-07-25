@@ -1528,7 +1528,6 @@ public class TaxonConstraints {
         log.entry(taxonConstraintsFile);
         return log.exit(TaxonConstraints.extractTaxonConstraints(taxonConstraintsFile, null));
     }
-    
     /**
      * Extracts taxon constraints from the file {@code taxonConstraintsFile} and potentially 
      * overrides some of them. 
@@ -1566,9 +1565,60 @@ public class TaxonConstraints {
     //constraints. Or do we consider that it is still a useful feature, to be able 
     //to test different constraints without formally regenerating them all?
     public static Map<String, Set<Integer>> extractTaxonConstraints(String taxonConstraintsFile, 
-            Map<String, Set<Integer>> idStartsToOverridingTaxonIds) 
-                throws FileNotFoundException, IOException {
+            Map<String, Set<Integer>> idStartsToOverridingTaxonIds) throws FileNotFoundException, IOException {
         log.entry(taxonConstraintsFile, idStartsToOverridingTaxonIds);
+        return log.exit(extractTaxonConstraints(taxonConstraintsFile, idStartsToOverridingTaxonIds, null));
+    }
+    /**
+     * Extracts taxon constraints from the file {@code taxonConstraintsFile} and potentially 
+     * overrides some of them. 
+     * The returned {@code Map} contains the OBO-like IDs of all Uberon terms 
+     * present in the file, as keys, associated to a {@code Set} of {@code Integer}s, 
+     * that are the IDs of the taxa in which it exists, among the taxa present in the file. 
+     * If the {@code Set} is empty, then it means that the {@code OWLClass} existed 
+     * in none of the taxa. IDs of the taxa are {@code Integer}s representing 
+     * their NCBI IDs (for instance, 9606 for human).
+     * <p>
+     * When {@code idStartsToOverridingTaxonIds} is not null, it allows to override constraints 
+     * retrieved from the file: when the OBO-like ID of an Uberon term starts with 
+     * one of the key of {@code idStartsToOverridingTaxonIds}, its taxon constraints 
+     * are replaced with the associated value. If the start of the OBO-like ID matches 
+     * several keys, then the longest match will be considered. 
+     * 
+     * @param taxonConstraintsFile          A {@code String} that is the path to the 
+     *                                      taxon constraints file.
+     * @param idStartsToOverridingTaxonIds   A {@code Map} where keys are {@code String}s 
+     *                                      representing prefixes of uberon terms to match, 
+     *                                      the associated value being a {@code Set} 
+     *                                      of {@code Integer}s to replace taxon constraints 
+     *                                      of matching terms.
+     * @param allClassIds                   A {@code Set} of {@code String}s that are IDs 
+     *                                      of classes which to produce constraints for, 
+     *                                      even if absent from the taxon constraint file 
+     *                                      (but with a prefix present in 
+     *                                      {@code idStartsToOverridingTaxonIds})
+     * @return                          A {@code Map} where keys are IDs of the Uberon 
+     *                                  {@code OWLClass}es, and values are {@code Set}s 
+     *                                  of {@code Integer}s containing the IDs of taxa 
+     *                                  in which the {@code OWLClass} exists.
+     * @throws FileNotFoundException    If {@code taxonConstraintsFile} could not 
+     *                                  be found.
+     * @throws IOException              If {@code taxonConstraintsFile} could not 
+     *                                  be read.
+     */
+    //Should we keep this method, now that taxon constraints are directly produced 
+    //with overriding criteria? Maybe no other classes shoud now be allowed to override 
+    //constraints. Or do we consider that it is still a useful feature, to be able 
+    //to test different constraints without formally regenerating them all?
+    //=> Actually, yes it's usefule, because we don't want to mask the real constraints 
+    //from the taxon constraint file in some cases.
+    //TODO: unit test with non-null allClassIds
+    public static Map<String, Set<Integer>> extractTaxonConstraints(String taxonConstraintsFile, 
+            Map<String, Set<Integer>> idStartsToOverridingTaxonIds, Set<String> allClassIds) 
+                throws FileNotFoundException, IOException {
+        log.entry(taxonConstraintsFile, idStartsToOverridingTaxonIds, allClassIds);
+
+        Map<String, Set<Integer>> constraints = new HashMap<String, Set<Integer>>();
         
         try (ICsvMapReader mapReader = new CsvMapReader(new FileReader(taxonConstraintsFile), 
                 Utils.TSVCOMMENTED)) {
@@ -1585,7 +1635,6 @@ public class TaxonConstraints {
                 }
             }
 
-            Map<String, Set<Integer>> constraints = new HashMap<String, Set<Integer>>();
             Map<String, Object> lineMap;
             while( (lineMap = mapReader.read(header, processors)) != null ) {
                 
@@ -1609,7 +1658,24 @@ public class TaxonConstraints {
                     }
                 }
             }
-            return log.exit(constraints);
         }
+        
+        //now, we also add constraints for all classes that have overriding constraints 
+        //(maybe they were not present in the file)
+        if (allClassIds != null) {
+            for (String clsId: allClassIds) {
+                //constraints already defined, skip
+                if (constraints.containsKey(clsId)) {
+                    continue;
+                }
+                Set<Integer> replacementConstraints = getOverridingTaxonIds(clsId, 
+                        idStartsToOverridingTaxonIds);
+                if (replacementConstraints != null) {
+                    constraints.put(clsId, replacementConstraints);
+                }
+            }
+        }
+
+        return log.exit(constraints);
     }
 }

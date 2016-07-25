@@ -16,6 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.CommandRunner;
+import org.bgee.pipeline.ontologycommon.OntologyUtils;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
@@ -75,7 +76,8 @@ public class UberonSocketTool {
         log.entry((Object[]) args);
         
         if (args[0].equalsIgnoreCase("stageRange")) {
-            UberonSocketTool tool = new UberonSocketTool(new UberonDevStage(args[1], args[2], args[3], 
+            UberonSocketTool tool = new UberonSocketTool(new UberonDevStage(
+                    new OntologyUtils(args[1]), new OntologyUtils(args[2]), args[3], 
                     CommandRunner.parseMapArgumentAsInteger(args[4]).entrySet().stream()
                     .collect(Collectors.toMap(Entry::getKey, e -> new HashSet<Integer>(e.getValue())))), 
                     Integer.parseInt(args[5]), 

@@ -193,6 +193,17 @@ public class UberonDevStage extends UberonCommon {
         this(new OntologyUtils(pathToUberon));
     }
     /**
+     * Constructor providing the {@code OntologyUtils} used to perform operations, 
+     * wrapping the Uberon ontology that will be used. 
+     * 
+     * @param uberonOntUtils  the {@code OntologyUtils} that will be used for Uberon. 
+     * @throws OWLOntologyCreationException If an error occurred while merging 
+     *                                      the import closure of the ontology.
+     */
+    public UberonDevStage(OntologyUtils uberonOntUtils) throws OWLOntologyCreationException {
+        this(uberonOntUtils, (OntologyUtils) null);
+    }
+    /**
      * Constructor providing the path to the Uberon ontology to used to perform operations.
      * 
      * @param pathToUberon  A {@code String} that is the path to the Uberon ontology. 
@@ -204,6 +215,18 @@ public class UberonDevStage extends UberonCommon {
     public UberonDevStage(String pathToUberon, String pathToTaxOnt) throws OWLOntologyCreationException, 
     OBOFormatParserException, IOException {
         this(new OntologyUtils(pathToUberon), new OntologyUtils(pathToTaxOnt));
+    }
+    /**
+     * Constructor providing the {@code OntologyUtils} used to perform operations, 
+     * wrapping the Uberon ontology that will be used. 
+     * 
+     * @param uberonOntUtils  the {@code OntologyUtils} that will be used for Uberon. 
+     * @param taxOntUtils     the {@code OntologyUtils} that will be used for taxonomy ontology. 
+     * @throws OWLOntologyCreationException If an error occurred while merging 
+     *                                      the import closure of the ontology.
+     */
+    public UberonDevStage(OntologyUtils uberonOntUtils, OntologyUtils taxOntUtils) throws OWLOntologyCreationException {
+        this(uberonOntUtils, taxOntUtils, null);
     }
     /**
      * Constructor providing the path to the Uberon ontology to used to perform operations, 
@@ -225,12 +248,14 @@ public class UberonDevStage extends UberonCommon {
      * @throws OBOFormatParserException     If the ontology is malformed.
      * @throws IOException                  If the file could not be read. 
      */
-    public UberonDevStage(String pathToUberon, String pathToTaxonConstraints, 
+    public UberonDevStage(OntologyUtils uberonOntUtils, String pathToTaxonConstraints, 
             Map<String, Set<Integer>> idStartsToOverridenTaxonIds) 
             throws OWLOntologyCreationException, OBOFormatParserException, IOException {
-        this(new OntologyUtils(pathToUberon), 
-                TaxonConstraints.extractTaxonConstraints(pathToTaxonConstraints, 
-                        idStartsToOverridenTaxonIds));
+        this(uberonOntUtils, TaxonConstraints.extractTaxonConstraints(
+                pathToTaxonConstraints, idStartsToOverridenTaxonIds, 
+                uberonOntUtils.getWrapper().getAllRealOWLClasses()
+                        .stream().map(c -> uberonOntUtils.getWrapper().getIdentifier(c))
+                        .collect(Collectors.toSet())));
     }
     /**
      * Constructor providing the path to the Uberon ontology to used to perform operations, 
@@ -253,35 +278,15 @@ public class UberonDevStage extends UberonCommon {
      * @throws OBOFormatParserException     If the ontology is malformed.
      * @throws IOException                  If the file could not be read. 
      */
-    public UberonDevStage(String pathToUberon, String pathToTaxOnt, String pathToTaxonConstraints, 
+    public UberonDevStage(OntologyUtils uberonOntUtils, OntologyUtils taxOntUtils, String pathToTaxonConstraints, 
             Map<String, Set<Integer>> idStartsToOverridenTaxonIds) 
             throws OWLOntologyCreationException, OBOFormatParserException, IOException {
-        this(new OntologyUtils(pathToUberon), new OntologyUtils(pathToTaxOnt), 
-                TaxonConstraints.extractTaxonConstraints(pathToTaxonConstraints, 
-                        idStartsToOverridenTaxonIds));
-    }
-    /**
-     * Constructor providing the {@code OntologyUtils} used to perform operations, 
-     * wrapping the Uberon ontology that will be used. 
-     * 
-     * @param uberonOntUtils  the {@code OntologyUtils} that will be used for Uberon. 
-     * @throws OWLOntologyCreationException If an error occurred while merging 
-     *                                      the import closure of the ontology.
-     */
-    public UberonDevStage(OntologyUtils uberonOntUtils) throws OWLOntologyCreationException {
-        this(uberonOntUtils, (OntologyUtils) null);
-    }
-    /**
-     * Constructor providing the {@code OntologyUtils} used to perform operations, 
-     * wrapping the Uberon ontology that will be used. 
-     * 
-     * @param uberonOntUtils  the {@code OntologyUtils} that will be used for Uberon. 
-     * @param taxOntUtils     the {@code OntologyUtils} that will be used for taxonomy ontology. 
-     * @throws OWLOntologyCreationException If an error occurred while merging 
-     *                                      the import closure of the ontology.
-     */
-    public UberonDevStage(OntologyUtils uberonOntUtils, OntologyUtils taxOntUtils) throws OWLOntologyCreationException {
-        this(uberonOntUtils, taxOntUtils, null);
+        this(uberonOntUtils, taxOntUtils, 
+                TaxonConstraints.extractTaxonConstraints(
+                        pathToTaxonConstraints, idStartsToOverridenTaxonIds, 
+                        uberonOntUtils.getWrapper().getAllRealOWLClasses()
+                                .stream().map(c -> uberonOntUtils.getWrapper().getIdentifier(c))
+                                .collect(Collectors.toSet())));
     }
     /**
      * Constructor providing the {@code OntologyUtils} used to perform operations, 
@@ -299,7 +304,7 @@ public class UberonDevStage extends UberonCommon {
      */
     public UberonDevStage(OntologyUtils uberonOntUtils, 
             Map<String, Set<Integer>> taxonConstraints) throws OWLOntologyCreationException {
-        this(uberonOntUtils, null, taxonConstraints);
+        this(uberonOntUtils, (OntologyUtils) null, taxonConstraints);
     }
     /**
      * Constructor providing the {@code OntologyUtils} used to perform operations, 

@@ -458,7 +458,7 @@ public class Uberon extends UberonCommon {
      * This argument can be {@code null}, but as usage of the ontology 
      * requires precise taxon constraints, this is unlikely. 
      * 
-     * @param pathToUberon              A {@code String} that is the path to the Uberon ontology. 
+     * @param ontUtils                  An {@code OntologyUtils} containing the Uberon ontology. 
      * @param pathToTaxonConstraints    A {@code String} that is the path to the taxon constraints. 
      * @param idStartsToOverridenTaxonIds   A {@code Map} where keys are {@code String}s 
      *                                      representing prefixes of uberon terms to match, 
@@ -469,12 +469,14 @@ public class Uberon extends UberonCommon {
      * @throws OBOFormatParserException     If the ontology is malformed.
      * @throws IOException                  If the file could not be read. 
      */
-    public Uberon(String pathToUberon, String pathToTaxonConstraints, 
+    public Uberon(OntologyUtils ontUtils, String pathToTaxonConstraints, 
             Map<String, Set<Integer>> idStartsToOverridenTaxonIds) 
             throws OWLOntologyCreationException, OBOFormatParserException, IOException {
-        this(new OntologyUtils(pathToUberon), 
-                TaxonConstraints.extractTaxonConstraints(pathToTaxonConstraints, 
-                        idStartsToOverridenTaxonIds));
+        this(ontUtils, TaxonConstraints.extractTaxonConstraints(
+                pathToTaxonConstraints, idStartsToOverridenTaxonIds, 
+                ontUtils.getWrapper().getAllRealOWLClasses()
+                        .stream().map(c -> ontUtils.getWrapper().getIdentifier(c))
+                        .collect(Collectors.toSet())));
     }
     /**
      * Constructor providing the {@code OntologyUtils} used to perform operations, 

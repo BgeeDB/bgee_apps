@@ -1373,6 +1373,7 @@ public class SimilarityAnnotation {
                     OWLOntologyCreationException, IOException {
         this((taxonConstraintsFile == null? 
                 null: 
+                //FIXME: should provde all class IDs in Uberon to method
                 TaxonConstraints.extractTaxonConstraints(taxonConstraintsFile, 
                         idStartsToOverridenTaxonIds)), 
                 new OWLGraphWrapper(OntologyUtils.loadOntology(uberonOntFile)), 

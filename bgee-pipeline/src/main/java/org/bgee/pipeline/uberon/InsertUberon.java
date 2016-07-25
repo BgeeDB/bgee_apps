@@ -109,7 +109,8 @@ public class InsertUberon extends MySQLDAOUser {
                         "6 or 7 arguments, " + args.length + " provided."));
             }
             
-            UberonDevStage ub = new UberonDevStage(args[1], args[2], args[3], 
+            UberonDevStage ub = new UberonDevStage(new OntologyUtils(args[1]), 
+                    new OntologyUtils(args[2]), args[3], 
                     CommandRunner.parseMapArgumentAsInteger(args[4]).entrySet().stream()
                     .collect(Collectors.toMap(Entry::getKey, e -> new HashSet<Integer>(e.getValue()))));
             ub.setToIgnoreSubgraphRootIds(CommandRunner.parseListArgument(args[5]));
@@ -129,7 +130,7 @@ public class InsertUberon extends MySQLDAOUser {
                         "5 or 6 arguments, " + args.length + " provided."));
             }
             
-            Uberon ub = new Uberon(args[1], args[2], 
+            Uberon ub = new Uberon(new OntologyUtils(args[1]), args[2], 
                     CommandRunner.parseMapArgumentAsInteger(args[3]).entrySet().stream()
                     .collect(Collectors.toMap(Entry::getKey, e -> new HashSet<Integer>(e.getValue()))));
             ub.setToIgnoreSubgraphRootIds(CommandRunner.parseListArgument(args[4]));

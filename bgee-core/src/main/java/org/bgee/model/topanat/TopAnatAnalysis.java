@@ -28,6 +28,7 @@ import org.bgee.model.BgeeProperties;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
+import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
@@ -542,9 +543,9 @@ public class TopAnatAnalysis {
 
         try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(
                 geneToAnatEntitiesFile)))) {
-            this.callService.loadCalls(
+            this.callService.loadExpressionCalls(
                     this.params.getSpeciesId(), 
-                    Arrays.asList(this.params.convertRawParametersToCallFilter()), 
+                    (ExpressionCallFilter) this.params.convertRawParametersToCallFilter(), 
                     EnumSet.of(CallService.Attribute.GENE_ID, CallService.Attribute.ANAT_ENTITY_ID), 
                     null
                 ).forEach(

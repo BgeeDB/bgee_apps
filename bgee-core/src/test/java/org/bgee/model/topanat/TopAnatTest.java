@@ -40,6 +40,7 @@ import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.Call;
 import org.bgee.model.expressiondata.CallFilter;
+import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.baseelements.CallType;
@@ -147,7 +148,7 @@ public class TopAnatTest extends TestAncestor {
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> ordering = null;
         Stream callStream = Stream.of(mockExpressionCall1, mockExpressionCall2, mockExpressionCall3,
                 mockExpressionCall4,mockExpressionCall5);
-        when(mockCallService.loadCalls(anyString(), ((Collection<CallFilter<?>>) anyCollection()), 
+        when(mockCallService.loadExpressionCalls(anyString(), (ExpressionCallFilter) any(), 
                 anyCollectionOf(CallService.Attribute.class), eq(ordering))) // TODO be more specific here
         .thenReturn(callStream);    
         when(mockServiceFactory.getGeneService()).thenReturn(mockGeneService);

@@ -1083,9 +1083,9 @@ public class OntologyUtilsTest extends TestAncestor {
         OWLClass cls7 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0007");
         
         assertEquals("Incorrect merge of List of OWLClasses", 
-                Arrays.asList(cls1, cls5, cls2, cls4, cls3, cls6, cls7), 
+                Arrays.asList(cls1, cls2, cls4, cls3, cls6, cls7), 
                 OntologyUtils.mergeLists(Arrays.asList(cls1, cls2, cls3, cls6), 
-                        Arrays.asList(cls5, cls2, cls4, cls3, cls6, cls7)));
+                        Arrays.asList(cls2, cls4, cls3, cls6, cls7)));
     }
     
     /**

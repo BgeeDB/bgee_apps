@@ -670,7 +670,7 @@ public class UberonDevStage extends UberonCommon {
         walker.add(root);
         //we don't care of the ordering of non-sibling taxa, 
         //as long as sibling taxa are ordered. 
-        List<OWLClass> globalOrdering = new ArrayList<OWLClass>();
+        List<List<OWLClass>> allOrderedSameSpeciesChildren = new ArrayList<>();
         OWLClass classWalked = null;
         while ((classWalked = walker.pollFirst()) != null) {
             //order the direct children of a same species, or multi-species children together.
@@ -763,11 +763,9 @@ public class UberonDevStage extends UberonCommon {
                             log.trace("Taxon and ancestors: {}", taxAndAncestors);
                         }
                         
-                        List<OWLClass> orderedSameSpeciesChildren = 
-                                this.orderByPrecededBy(sameSpeciesChildren.getValue(), taxAndAncestors);
-                        globalOrdering = OntologyUtils.mergeLists(globalOrdering, 
-                                orderedSameSpeciesChildren);
-                    } catch (IllegalStateException e) {
+                        allOrderedSameSpeciesChildren.add(this.orderByPrecededBy(
+                                sameSpeciesChildren.getValue(), taxAndAncestors));
+                    } catch (IllegalStateException|IllegalArgumentException e) {
                         log.error("Exception was thrown in species with ID: {}", 
                                 sameSpeciesChildren.getKey());
                         throw log.throwing(e);
@@ -775,6 +773,12 @@ public class UberonDevStage extends UberonCommon {
                 }
             }
         }
+        Set<OWLClass> allClasses = allOrderedSameSpeciesChildren.stream().flatMap(l -> l.stream())
+                .collect(Collectors.toSet());
+        List<OWLClass> globalOrdering = new ArrayList<OWLClass>(allClasses);
+        log.trace("All classes to order: {}", globalOrdering);
+        OntologyUtils.ListMerger.sort(globalOrdering, 
+                new OntologyUtils.ListMerger<OWLClass>(allOrderedSameSpeciesChildren));
         
         nestedSetModel = this.getOntologyUtils().computeNestedSetModelParams(root, 
                 globalOrdering, this.overPartOf);
@@ -940,7 +944,8 @@ public class UberonDevStage extends UberonCommon {
             } else if (startLeftBound > endLeftBound) {
                 //illogical
                 throw log.throwing(new IllegalStateException("The start stage provided " +
-                		"is actually a successor of the end stage provided"));
+                		"is actually a successor of the end stage provided. Start stage: "
+                        + startStage + " - end stage: " + endStage));
             } else {
                 //retrieve actual stage range
                 for (Entry<OWLClass, Map<String, Integer>> entry: nestedModel.entrySet()) {

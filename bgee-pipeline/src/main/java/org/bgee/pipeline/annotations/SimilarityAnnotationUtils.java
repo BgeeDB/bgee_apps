@@ -127,7 +127,7 @@ public class SimilarityAnnotationUtils {
                 super(next);
         }
         @Override
-        public Object execute(Object value, CsvContext context) {
+        public <T extends Object> T execute(Object value, CsvContext context) {
             log.entry(value, context); 
             //this processor accepts null value
             if (value!= null && !(value instanceof String)) {
@@ -1780,7 +1780,7 @@ public class SimilarityAnnotationUtils {
      * 
      * @param similarityFile    A {@code String} that is the path to an ANCESTRAL TAXA 
      *                          annotation file. 
-     * @return                  A {@code List} of {@code SummaryAnnotationBean}s where each 
+     * @return                  A {@code List} of {@code AncestralTaxaAnnotationBean}s where each 
      *                          element represents a row in the file, ordered as 
      *                          they were read from the file.
      * @throws FileNotFoundException    If {@code similarityFile} could not be found.

@@ -557,7 +557,7 @@ public class UberonDevStageTest extends TestAncestor {
                 new HashSet<Integer>(Arrays.asList(7227)));
         //no mapping to neurula and organogenesis in FBdv and zfs
         overridenTaxonConstraints.put("UBERON:0000111", 
-                new HashSet<Integer>(Arrays.asList(9606, 10090, 8364, 9031, 
+                new HashSet<Integer>(Arrays.asList(9606, 10090, 7955, 8364, 9031, 
                         9593, 9544, 13616, 9258, 9598, 9597, 9600, 9913, 28377, 99883, 
                         9823, 6239, 10116)));
         //no mapping to neurula and organogenesis in FBdv
@@ -587,10 +587,10 @@ public class UberonDevStageTest extends TestAncestor {
                 new HashSet<Integer>(Arrays.asList(7227)));
         //UBERON:0007234 4-8 cell stage is used only in ZFS and XAO
         overridenTaxonConstraints.put("UBERON:0007234", 
-                new HashSet<Integer>(7955, 8364));
+                new HashSet<Integer>(Arrays.asList(7955, 8364)));
         //UBERON:0007232 2 cell stage used only in ZFS and XAO
         overridenTaxonConstraints.put("UBERON:0007232", 
-                new HashSet<Integer>(7955, 8364));
+                new HashSet<Integer>(Arrays.asList(10116, 6239, 7955, 8364)));
         //there is no definition of sexual maturity in FBdv, 
         //so no UBERON:0000112 sexually immature stage nor UBERON:0000113 post-juvenile adult stage, 
         //all adult stages are part_of UBERON:0000066 ! fully formed stage
@@ -630,7 +630,14 @@ public class UberonDevStageTest extends TestAncestor {
                 new HashSet<Integer>(Arrays.asList(10090, 7955, 8364, 7227, 
                         9593, 9544, 9258, 9598, 9597, 9600, 99883, 
                         9823, 6239, 10116)));
-        
+
+        overridenTaxonConstraints.put("UBERON:0007236", 
+                new HashSet<Integer>(Arrays.asList(7955, 8364, 6239)));
+        overridenTaxonConstraints.put("UBERON:0007233", 
+                new HashSet<Integer>(Arrays.asList(10116, 7955, 8364, 6239)));
+        overridenTaxonConstraints.put("UBERON:0018241", 
+                new HashSet<Integer>(Arrays.asList(9593, 9544, 9598, 9597, 9600, 9913, 9258, 8364, 9031, 
+                        10116, 7955, 8364, 6239)));
         
         
         //medaka needed?
@@ -646,9 +653,8 @@ public class UberonDevStageTest extends TestAncestor {
         //FBdv:00005289: embryonic stage
         //FBdv:00007026: mature adult stage
         assertEquals("Incorrect stage range returned", 
-                Arrays.asList("UBERON:0000068", "UBERON:0004730", "FBdv:00005343", "FBdv:00005344", 
-                        "FBdv:00005345", "FBdv:00005346", "FBdv:00005350", 
-                        "FBdv:00005353", "FBdv:00005354", "FBdv:00006011", "FBdv:00007075", "FBdv:00007026"), 
+                Arrays.asList("UBERON:0000068", "UBERON:0000069", "FBdv:00005342", 
+                        "UBERON:0000070", "FBdv:00006011", "UBERON:0000066"), 
                 uberon.getStageIdsBetween("FBdv:00005289", "FBdv:00007026", 7227));
         
         assertEquals("Incorrect stage range returned", 
@@ -661,6 +667,16 @@ public class UberonDevStageTest extends TestAncestor {
         assertEquals("Incorrect stage range returned", 
                 Arrays.asList("ZFS:0000027", "ZFS:0000028", "ZFS:0000029"), 
                 uberon.getStageIdsBetween("ZFS:0000027", "ZFS:0000029", 7955));
+        
+        //Important regression test, which justifies all the investment in the new sorting algorithm :p
+        //TODO: actually, we should also update all the taxon constraint in file (use the Bgee 14 file) 
+        //and in this method, for the new sorting algorithm to be necessary for correct result...
+        //currently, it works also with a classical sorting algorithm :(
+        log.info("Computing nested set model for Xenopus");
+        assertEquals("Incorrect stage range returned", 
+                Arrays.asList("XAO:1000028", "UBERON:0007232", "UBERON:0007233", "UBERON:0007236", 
+                        "XAO:1000015", "XAO:1000016", "XAO:1000029"), 
+                uberon.getStageIdsBetween("XAO:1000028", "XAO:1000029", 8364));
     /*    
         //reinit uberon to recompute the nested set model
         uberon = new UberonDevStage(utils, taxonConstraints);

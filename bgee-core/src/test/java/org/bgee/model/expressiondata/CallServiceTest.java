@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -59,7 +60,7 @@ import org.junit.Test;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, July 2016
+ * @version Bgee 13, Aug. 2016
  * @since   Bgee 13, Nov. 2015
  */
 public class CallServiceTest extends TestAncestor {
@@ -229,12 +230,70 @@ public class CallServiceTest extends TestAncestor {
     }
     
     /**
+     * Test the method {@link CallService#convertServiceOrdering(LinkedHashMap)}.
+     */
+    @Test
+    public void shouldConvertServiceOrdering() {
+        List<ExpressionCall> inputList = Arrays.asList(
+                new ExpressionCall("geneId2", new Condition("anatEntityId2", "stageId3", "speciesId1"),
+                        null, ExpressionSummary.EXPRESSED, null, null, null), 
+                new ExpressionCall("geneId2", new Condition("anatEntityId1", null, "speciesId1"), 
+                        null, ExpressionSummary.EXPRESSED, null, null, null), 
+                new ExpressionCall("geneId2", new Condition("anatEntityId1", "stageId1", "speciesId1"),
+                        null, ExpressionSummary.EXPRESSED, null, null, null), 
+                new ExpressionCall("geneId2", new Condition("anatEntityId1", "stageId3", "speciesId1"),
+                        null, ExpressionSummary.EXPRESSED, null, null, null), 
+                new ExpressionCall("geneId1", new Condition("anatEntityId1", "stageId3", "speciesId1"),
+                        null, ExpressionSummary.EXPRESSED, null, null, null), 
+                new ExpressionCall("geneId3", new Condition("anatEntityId2", "stageId3", "speciesId1"),
+                        null, ExpressionSummary.EXPRESSED, null, null, null));
+        
+        // Test provided order
+        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> orderingAttributes = new LinkedHashMap<>();
+        orderingAttributes.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.DESC);
+        orderingAttributes.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
+        orderingAttributes.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.DESC);
+        Comparator<ExpressionCall> comp = CallService.convertServiceOrdering(orderingAttributes);
+        List<ExpressionCall> sortedList = inputList.stream().sorted(comp).collect(Collectors.toList());
+        List<ExpressionCall> expectedList = Arrays.asList(
+                new ExpressionCall("geneId1", new Condition("anatEntityId1", "stageId3", "speciesId1"),
+                        null, ExpressionSummary.EXPRESSED, null, null, null), 
+                new ExpressionCall("geneId2", new Condition("anatEntityId2", "stageId3", "speciesId1"),
+                        null, ExpressionSummary.EXPRESSED, null, null, null), 
+                new ExpressionCall("geneId2", new Condition("anatEntityId1", "stageId3", "speciesId1"),
+                        null, ExpressionSummary.EXPRESSED, null, null, null), 
+                new ExpressionCall("geneId3", new Condition("anatEntityId2", "stageId3", "speciesId1"),
+                        null, ExpressionSummary.EXPRESSED, null, null, null), 
+                new ExpressionCall("geneId2", new Condition("anatEntityId1", "stageId1", "speciesId1"),
+                        null, ExpressionSummary.EXPRESSED, null, null, null), 
+                new ExpressionCall("geneId2", new Condition("anatEntityId1", null, "speciesId1"), 
+                        null, ExpressionSummary.EXPRESSED, null, null, null));
+        assertEquals("Incorrect order of ExpressionCalls", expectedList, sortedList);
+        
+        // Test default order (natural order of enum CallService.OrderingAttribute: 
+        // GENE_ID, ANAT_ENTITY_ID, DEV_STAGE_ID, GLOBAL_RANK)
+        comp = CallService.convertServiceOrdering(null);
+        sortedList = inputList.stream().sorted(comp).collect(Collectors.toList());
+        expectedList = Arrays.asList(
+                new ExpressionCall("geneId1", new Condition("anatEntityId1", "stageId3", "speciesId1"),
+                        null, ExpressionSummary.EXPRESSED, null, null, null), 
+                new ExpressionCall("geneId2", new Condition("anatEntityId1", "stageId1", "speciesId1"),
+                        null, ExpressionSummary.EXPRESSED, null, null, null), 
+                new ExpressionCall("geneId2", new Condition("anatEntityId1", "stageId3", "speciesId1"),
+                        null, ExpressionSummary.EXPRESSED, null, null, null), 
+                new ExpressionCall("geneId2", new Condition("anatEntityId1", null, "speciesId1"), 
+                        null, ExpressionSummary.EXPRESSED, null, null, null), 
+                new ExpressionCall("geneId2", new Condition("anatEntityId2", "stageId3", "speciesId1"),
+                        null, ExpressionSummary.EXPRESSED, null, null, null), 
+                new ExpressionCall("geneId3", new Condition("anatEntityId2", "stageId3", "speciesId1"),
+                        null, ExpressionSummary.EXPRESSED, null, null, null));
+    }
+    
+    /**
      * Test the method {@link CallService#loadExpressionCalls(String, ExpressionCallFilter, 
      * Collection, LinkedHashMap)}.
      */
-//    @Test
-    // FIXME: disable test because the ordering is OK when I launch it alone 
-    // BUT it fails when I launch the test with all tests of the class 
+    @Test
     public void shouldLoadExpressionCallsForSeveralGenes() {
         //Retrieving geneId, anatEntityId, unordered. 
         DAOManager manager = mock(DAOManager.class);

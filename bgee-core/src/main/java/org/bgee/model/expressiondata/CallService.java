@@ -51,7 +51,7 @@ import org.bgee.model.species.TaxonomyFilter;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, July 2016
+ * @version Bgee 13, Aug. 2016
  * @since   Bgee 13, Oct. 2015
  */
 /// XXX: Check in bgee14 if speciesId is retrieved in CallTO
@@ -347,7 +347,7 @@ public class CallService extends Service {
      * @return                      The {@code Comparator} of {@code ExpressionCall}s.
      */
     // TODO to be added to ExpressionCallUtils see TODOs into ExpressionCall
-    private static Comparator<ExpressionCall> convertServiceOrdering(
+    public static Comparator<ExpressionCall> convertServiceOrdering(
             LinkedHashMap<CallService.OrderingAttribute, Service.Direction> orderingAttributes) {
         log.entry(orderingAttributes);
         
@@ -395,7 +395,7 @@ public class CallService extends Service {
             if (comparator == null) {
                 comparator = tmpComp;
             } else {
-                comparator.thenComparing(tmpComp);
+                comparator = comparator.thenComparing(tmpComp);
             }
         }
         return log.exit(comparator);

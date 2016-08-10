@@ -140,7 +140,6 @@ public class CallService extends Service {
      * @return
      * @throws IllegalArgumentException If {@code callFilter} or {@code speciesID} are null or empty.
      */
-    //TODO test attributes and orderingAttributes 
     public Stream<ExpressionCall> loadExpressionCalls(String speciesId, 
             ExpressionCallFilter callFilter, Collection<Attribute> attributes, 
             LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes) throws IllegalArgumentException {
@@ -200,7 +199,9 @@ public class CallService extends Service {
                 // We order before removing attribute to be able to order on all orderingAttributes
                 .sorted(CallService.convertServiceOrdering(clonedOrderingAttrs))
                 // Keep provided attributes
-                .map(c -> CallService.getClonedExpressionCall(c, clonedAttrs));
+                .map(c -> CallService.getClonedExpressionCall(c, clonedAttrs))
+                // After removing of some attributes, some calls can be identical
+                .distinct();
 
         return log.exit(reconciledCalls);
     }

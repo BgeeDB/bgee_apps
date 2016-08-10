@@ -101,8 +101,8 @@ public class CallServiceTest extends TestAncestor {
      */
     @Test
     public void shouldLoadExpressionCallsForBasicGene() {
-        //First test for one gene, no substructures no sub-stages. 
-        //Retrieving geneId, anatEntityId, stageId, and data qualities, ordered by mean rank. 
+        //First test for one gene, with sub-stages but without substructures. 
+        //Retrieving all attributes, ordered by mean rank. 
         DAOManager manager = mock(DAOManager.class);
         ServiceFactory serviceFactory = mock(ServiceFactory.class);
         when(serviceFactory.getDAOManager()).thenReturn(manager);
@@ -262,7 +262,7 @@ public class CallServiceTest extends TestAncestor {
      */
     @Test
     public void shouldLoadExpressionCallsForSeveralGenes() {
-        //Retrieving geneId, anatEntityId, unordered. 
+        //Retrieving geneId, anatEntityId, unordered, with substructures but without sub-stages. 
         DAOManager manager = mock(DAOManager.class);
         ServiceFactory serviceFactory = mock(ServiceFactory.class);
         when(serviceFactory.getDAOManager()).thenReturn(manager);
@@ -315,25 +315,31 @@ public class CallServiceTest extends TestAncestor {
         Ontology<DevStage> devStageOnt = mock(Ontology.class);
 
         when(ontService.getAnatEntityOntology("speciesId1", new HashSet<>(Arrays.asList(
-                "anatEntityId1")), EnumSet.of(RelationType.ISA_PARTOF), false, false))
+                "anatEntityId1", "anatEntityId2")), EnumSet.of(RelationType.ISA_PARTOF), true, false))
         .thenReturn(anatEntityOnt);
         when(ontService.getDevStageOntology("speciesId1", new HashSet<>(Arrays.asList(
-                "stageId1", "stageId2")), false, false)).thenReturn(devStageOnt);
+                "stageId1", "stageId2")), true, false)).thenReturn(devStageOnt);
         String anatEntityId1 = "anatEntityId1";
         AnatEntity anatEntity1 = new AnatEntity(anatEntityId1);
+        String anatEntityId2 = "anatEntityId2";
+        AnatEntity anatEntity2 = new AnatEntity(anatEntityId2);
         String stageId1 = "stageId1";
         DevStage stage1 = new DevStage(stageId1);
         String stageId2 = "stageId2";
         DevStage stage2 = new DevStage(stageId2);
 
-        when(anatEntityOnt.getElements()).thenReturn(new HashSet<>(Arrays.asList(anatEntity1)));
+        when(anatEntityOnt.getElements()).thenReturn(new HashSet<>(Arrays.asList(anatEntity1, anatEntity2)));
         when(devStageOnt.getElements()).thenReturn(new HashSet<>(Arrays.asList(stage1, stage2)));
         when(anatEntityOnt.getElement(anatEntityId1)).thenReturn(anatEntity1);
         when(devStageOnt.getElement(stageId1)).thenReturn(stage1);
         when(devStageOnt.getElement(stageId2)).thenReturn(stage2);
-        // TODO: add relations to test propagation
-        when(anatEntityOnt.getAncestors(anatEntity1, true)).thenReturn(new HashSet<>());
-        when(devStageOnt.getAncestors(stage1, true)).thenReturn(new HashSet<>());
+        when(anatEntityOnt.getAncestors(anatEntity1)).thenReturn(new HashSet<>(Arrays.asList(anatEntity2)));
+        when(anatEntityOnt.getAncestors(anatEntity2)).thenReturn(new HashSet<>());
+        when(devStageOnt.getAncestors(stage1)).thenReturn(new HashSet<>(Arrays.asList(stage2)));
+        when(devStageOnt.getAncestors(stage2)).thenReturn(new HashSet<>());
+        when(anatEntityOnt.getAncestors(anatEntity1, true)).thenReturn(new HashSet<>(Arrays.asList(anatEntity2)));
+        when(anatEntityOnt.getAncestors(anatEntity2, true)).thenReturn(new HashSet<>());
+        when(devStageOnt.getAncestors(stage1, true)).thenReturn(new HashSet<>(Arrays.asList(stage2)));
         when(devStageOnt.getAncestors(stage2, true)).thenReturn(new HashSet<>());
 
         List<ExpressionCall> expectedResults = Arrays.asList(
@@ -342,6 +348,8 @@ public class CallServiceTest extends TestAncestor {
                 new ExpressionCall("geneId1", new Condition("anatEntityId2", null, "speciesId1"),
                         null, ExpressionSummary.EXPRESSED, null, null, null), 
                 new ExpressionCall("geneId2", new Condition("anatEntityId1", null, "speciesId1"), 
+                        null, ExpressionSummary.EXPRESSED, null, null, null), 
+                new ExpressionCall("geneId2", new Condition("anatEntityId2", null, "speciesId1"), 
                         null, ExpressionSummary.EXPRESSED, null, null, null)
             );
         

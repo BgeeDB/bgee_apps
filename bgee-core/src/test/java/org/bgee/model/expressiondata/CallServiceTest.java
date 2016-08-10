@@ -255,66 +255,6 @@ public class CallServiceTest extends TestAncestor {
     }
     
     /**
-     * Test the method {@link CallService#convertServiceOrdering(LinkedHashMap)}.
-     */
-    @Test
-    public void shouldConvertServiceOrdering() {
-        List<ExpressionCall> inputList = Arrays.asList(
-                new ExpressionCall("geneId2", new Condition("anatEntityId2", "stageId3", "speciesId1"),
-                        null, ExpressionSummary.EXPRESSED, null, null, null), 
-                new ExpressionCall("geneId2", new Condition("anatEntityId1", null, "speciesId1"), 
-                        null, ExpressionSummary.EXPRESSED, null, null, null), 
-                new ExpressionCall("geneId2", new Condition("anatEntityId1", "stageId1", "speciesId1"),
-                        null, ExpressionSummary.EXPRESSED, null, null, null), 
-                new ExpressionCall("geneId2", new Condition("anatEntityId1", "stageId3", "speciesId1"),
-                        null, ExpressionSummary.EXPRESSED, null, null, null), 
-                new ExpressionCall("geneId1", new Condition("anatEntityId1", "stageId3", "speciesId1"),
-                        null, ExpressionSummary.EXPRESSED, null, null, null), 
-                new ExpressionCall("geneId3", new Condition("anatEntityId2", "stageId3", "speciesId1"),
-                        null, ExpressionSummary.EXPRESSED, null, null, null));
-        
-        // Test provided order
-        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> orderingAttributes = new LinkedHashMap<>();
-        orderingAttributes.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.DESC);
-        orderingAttributes.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
-        orderingAttributes.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.DESC);
-        Comparator<ExpressionCall> comp = CallService.convertServiceOrdering(orderingAttributes);
-        List<ExpressionCall> sortedList = inputList.stream().sorted(comp).collect(Collectors.toList());
-        List<ExpressionCall> expectedList = Arrays.asList(
-                new ExpressionCall("geneId1", new Condition("anatEntityId1", "stageId3", "speciesId1"),
-                        null, ExpressionSummary.EXPRESSED, null, null, null), 
-                new ExpressionCall("geneId2", new Condition("anatEntityId2", "stageId3", "speciesId1"),
-                        null, ExpressionSummary.EXPRESSED, null, null, null), 
-                new ExpressionCall("geneId2", new Condition("anatEntityId1", "stageId3", "speciesId1"),
-                        null, ExpressionSummary.EXPRESSED, null, null, null), 
-                new ExpressionCall("geneId3", new Condition("anatEntityId2", "stageId3", "speciesId1"),
-                        null, ExpressionSummary.EXPRESSED, null, null, null), 
-                new ExpressionCall("geneId2", new Condition("anatEntityId1", "stageId1", "speciesId1"),
-                        null, ExpressionSummary.EXPRESSED, null, null, null), 
-                new ExpressionCall("geneId2", new Condition("anatEntityId1", null, "speciesId1"), 
-                        null, ExpressionSummary.EXPRESSED, null, null, null));
-        assertEquals("Incorrect order of ExpressionCalls", expectedList, sortedList);
-        
-        // Test default order (natural order of enum CallService.OrderingAttribute: 
-        // GENE_ID, ANAT_ENTITY_ID, DEV_STAGE_ID, GLOBAL_RANK)
-        comp = CallService.convertServiceOrdering(null);
-        sortedList = inputList.stream().sorted(comp).collect(Collectors.toList());
-        expectedList = Arrays.asList(
-                new ExpressionCall("geneId1", new Condition("anatEntityId1", "stageId3", "speciesId1"),
-                        null, ExpressionSummary.EXPRESSED, null, null, null), 
-                new ExpressionCall("geneId2", new Condition("anatEntityId1", "stageId1", "speciesId1"),
-                        null, ExpressionSummary.EXPRESSED, null, null, null), 
-                new ExpressionCall("geneId2", new Condition("anatEntityId1", "stageId3", "speciesId1"),
-                        null, ExpressionSummary.EXPRESSED, null, null, null), 
-                new ExpressionCall("geneId2", new Condition("anatEntityId1", null, "speciesId1"), 
-                        null, ExpressionSummary.EXPRESSED, null, null, null), 
-                new ExpressionCall("geneId2", new Condition("anatEntityId2", "stageId3", "speciesId1"),
-                        null, ExpressionSummary.EXPRESSED, null, null, null), 
-                new ExpressionCall("geneId3", new Condition("anatEntityId2", "stageId3", "speciesId1"),
-                        null, ExpressionSummary.EXPRESSED, null, null, null));
-    }
-    
-    /**
      * Test the method {@link CallService#loadExpressionCalls(String, ExpressionCallFilter, 
      * Collection, LinkedHashMap)}.
      */
@@ -515,7 +455,7 @@ public class CallServiceTest extends TestAncestor {
         when(anatEntityOnt.getElement(anatEntityId1)).thenReturn(anatEntity1);
         when(devStageOnt.getElement(stageId1)).thenReturn(stage1);
         when(devStageOnt.getElement(stageId2)).thenReturn(stage2);
-        // TODO: add relations to test propagation
+        // No relation to not propagate calls
         when(anatEntityOnt.getAncestors(anatEntity1, true)).thenReturn(new HashSet<>());
         when(devStageOnt.getAncestors(stage1, true)).thenReturn(new HashSet<>());
         when(devStageOnt.getAncestors(stage2, true)).thenReturn(new HashSet<>());
@@ -603,6 +543,66 @@ public class CallServiceTest extends TestAncestor {
                         ExpressionCallDAO.Attribute.STAGE_ORIGIN_OF_LINE,
                         ExpressionCallDAO.Attribute.OBSERVED_DATA)), 
                 eq(orderingAttrs));
+    }
+    
+    /**
+     * Test the method {@link CallService#convertServiceOrdering(LinkedHashMap)}.
+     */
+    @Test
+    public void shouldConvertServiceOrdering() {
+        List<ExpressionCall> inputList = Arrays.asList(
+                new ExpressionCall("geneId2", new Condition("anatEntityId2", "stageId3", "speciesId1"),
+                        null, ExpressionSummary.EXPRESSED, null, null, null), 
+                new ExpressionCall("geneId2", new Condition("anatEntityId1", null, "speciesId1"), 
+                        null, ExpressionSummary.EXPRESSED, null, null, null), 
+                new ExpressionCall("geneId2", new Condition("anatEntityId1", "stageId1", "speciesId1"),
+                        null, ExpressionSummary.EXPRESSED, null, null, null), 
+                new ExpressionCall("geneId2", new Condition("anatEntityId1", "stageId3", "speciesId1"),
+                        null, ExpressionSummary.EXPRESSED, null, null, null), 
+                new ExpressionCall("geneId1", new Condition("anatEntityId1", "stageId3", "speciesId1"),
+                        null, ExpressionSummary.EXPRESSED, null, null, null), 
+                new ExpressionCall("geneId3", new Condition("anatEntityId2", "stageId3", "speciesId1"),
+                        null, ExpressionSummary.EXPRESSED, null, null, null));
+        
+        // Test provided order
+        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> orderingAttributes = new LinkedHashMap<>();
+        orderingAttributes.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.DESC);
+        orderingAttributes.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
+        orderingAttributes.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.DESC);
+        Comparator<ExpressionCall> comp = CallService.convertServiceOrdering(orderingAttributes);
+        List<ExpressionCall> sortedList = inputList.stream().sorted(comp).collect(Collectors.toList());
+        List<ExpressionCall> expectedList = Arrays.asList(
+                new ExpressionCall("geneId1", new Condition("anatEntityId1", "stageId3", "speciesId1"),
+                        null, ExpressionSummary.EXPRESSED, null, null, null), 
+                new ExpressionCall("geneId2", new Condition("anatEntityId2", "stageId3", "speciesId1"),
+                        null, ExpressionSummary.EXPRESSED, null, null, null), 
+                new ExpressionCall("geneId2", new Condition("anatEntityId1", "stageId3", "speciesId1"),
+                        null, ExpressionSummary.EXPRESSED, null, null, null), 
+                new ExpressionCall("geneId3", new Condition("anatEntityId2", "stageId3", "speciesId1"),
+                        null, ExpressionSummary.EXPRESSED, null, null, null), 
+                new ExpressionCall("geneId2", new Condition("anatEntityId1", "stageId1", "speciesId1"),
+                        null, ExpressionSummary.EXPRESSED, null, null, null), 
+                new ExpressionCall("geneId2", new Condition("anatEntityId1", null, "speciesId1"), 
+                        null, ExpressionSummary.EXPRESSED, null, null, null));
+        assertEquals("Incorrect order of ExpressionCalls", expectedList, sortedList);
+        
+        // Test default order (natural order of enum CallService.OrderingAttribute: 
+        // GENE_ID, ANAT_ENTITY_ID, DEV_STAGE_ID, GLOBAL_RANK)
+        comp = CallService.convertServiceOrdering(null);
+        sortedList = inputList.stream().sorted(comp).collect(Collectors.toList());
+        expectedList = Arrays.asList(
+                new ExpressionCall("geneId1", new Condition("anatEntityId1", "stageId3", "speciesId1"),
+                        null, ExpressionSummary.EXPRESSED, null, null, null), 
+                new ExpressionCall("geneId2", new Condition("anatEntityId1", "stageId1", "speciesId1"),
+                        null, ExpressionSummary.EXPRESSED, null, null, null), 
+                new ExpressionCall("geneId2", new Condition("anatEntityId1", "stageId3", "speciesId1"),
+                        null, ExpressionSummary.EXPRESSED, null, null, null), 
+                new ExpressionCall("geneId2", new Condition("anatEntityId1", null, "speciesId1"), 
+                        null, ExpressionSummary.EXPRESSED, null, null, null), 
+                new ExpressionCall("geneId2", new Condition("anatEntityId2", "stageId3", "speciesId1"),
+                        null, ExpressionSummary.EXPRESSED, null, null, null), 
+                new ExpressionCall("geneId3", new Condition("anatEntityId2", "stageId3", "speciesId1"),
+                        null, ExpressionSummary.EXPRESSED, null, null, null));
     }
     
     /**

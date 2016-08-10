@@ -212,13 +212,24 @@ public class CallService extends Service {
      * @param callFilter    An {@code ExpressionCallFilter} that is the filter 
      *                      to be used to evaluate {@call}.
      * @return              {@code true} if the {@code call} matches {@code callFilter}.
+     * @throws IllegalArgumentException If {@code call}, call data of {@code call}
+     *                                  or {@code callFilter} are null.
      */
     // TODO to be added to ExpressionCallUtils see TODOs into ExpressionCall
-    private static boolean testCallFilter(ExpressionCall call, ExpressionCallFilter callFilter) {
+    public static boolean testCallFilter(ExpressionCall call, ExpressionCallFilter callFilter) 
+            throws IllegalArgumentException {
         log.entry(call, callFilter);
-        
-        assert callFilter != null;
-        
+
+        if (call == null) {
+            throw log.throwing(new IllegalArgumentException("ExpressionCall could not be null"));
+        }
+        if (call.getCallData() == null || call.getCallData().isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("ExpressionCallData could not be null or empty"));
+        }
+        if (callFilter == null) {
+            throw log.throwing(new IllegalArgumentException("ExpressionCallFilter could not be null"));
+        }
+
         // Filter according GeneFilter
         if (callFilter.getGeneFilter() != null
                 && !callFilter.getGeneFilter().getGeneIds().contains(call.getGeneId())) {
@@ -232,42 +243,48 @@ public class CallService extends Service {
             return log.exit(false);
         }
 
-        // Filter according CallDataFilters (cannot be null or empty, if several filters are provided,
-        // they are seen as "OR" conditions)
-        if (callFilter.getCallDataFilters() == null || callFilter.getCallDataFilters().isEmpty()) {
-            return log.exit(true);
-        }
-
+        // Filter according CallDataFilters, if several filters are provided, they are seen as "OR" conditions        
         for (ExpressionCallData callDataFilter: callFilter.getCallDataFilters()) {
-            // Filter on DataType (AFFYMETRIX, EST, IN_SITU, RNA_SEQ)
-            boolean isDataTypeValid = false;
-            boolean isCallTypeValid = false;
-            boolean isDataQualityValid = false;
-            if (callDataFilter.getDataType() == null 
-                    || !Collections.disjoint(
-                            callDataFilter.getDataType() != null?
-                                    EnumSet.of(callDataFilter.getDataType()): EnumSet.allOf(DataType.class),
-                            call.getCallData().stream().map(x -> x.getDataType()).collect(Collectors.toSet()))) {
-                isDataTypeValid = true;
-            }
-            
-            // Filter on CallType (EXPRESSED, NOT_EXPRESSED)
-            if (callDataFilter.getCallType() == null
-                    || !call.getSummaryCallType().equals(callDataFilter.getCallType())) {
-                isCallTypeValid = true;
-            }
-            
-            // Filter on DataQuality (NODATA, LOW, HIGH)
-            if (callDataFilter.getDataQuality() == null
-                    || callDataFilter.getDataQuality().equals(DataQuality.LOW) 
-                    || !Collections.disjoint(
-                            callDataFilter.getDataQuality() != null?
-                                    EnumSet.of(callDataFilter.getDataQuality()): EnumSet.allOf(DataType.class),
-                            call.getCallData().stream().map(x -> x.getDataQuality()).collect(Collectors.toSet()))) {
-                isDataQualityValid = true;
-            }
-            if (isDataTypeValid && isCallTypeValid && isDataQualityValid) {
-                return log.exit(true);
+            for (ExpressionCallData callData: call.getCallData()) {
+                boolean isDataTypeValid = false;
+                boolean isCallTypeValid = false;
+                boolean isDataQualityValid = false;
+
+                // Filter on DataType (AFFYMETRIX, EST, IN_SITU, RNA_SEQ)
+                if (callDataFilter.getDataType() == null 
+                        || !Collections.disjoint(
+                                callDataFilter.getDataType() == null?
+                                        EnumSet.allOf(DataType.class): EnumSet.of(callDataFilter.getDataType()),
+                                callData.getDataType() == null?
+                                        EnumSet.allOf(DataType.class): EnumSet.of(callData.getDataType()))) {
+                    isDataTypeValid = true;
+                } else {
+                    continue;
+                }
+                
+                // Filter on CallType (EXPRESSED, NOT_EXPRESSED)
+                if (callDataFilter.getCallType() == null
+                        || callData.getCallType().equals(callDataFilter.getCallType())) {
+                    isCallTypeValid = true;
+                } else {
+                    continue;
+                }
+                
+                // Filter on DataQuality (NODATA, LOW, HIGH)
+                if (callDataFilter.getDataQuality() == null
+                        || callDataFilter.getDataQuality().equals(DataQuality.LOW) 
+                        || !Collections.disjoint(
+                                callDataFilter.getDataQuality() == null?
+                                        EnumSet.allOf(DataQuality.class): EnumSet.of(callDataFilter.getDataQuality()),
+                                callData.getDataQuality() == null?
+                                        EnumSet.allOf(DataQuality.class): EnumSet.of(callData.getDataQuality()))) {
+                    isDataQualityValid = true;
+                } else {
+                    continue;
+                }
+                if (isDataTypeValid && isCallTypeValid && isDataQualityValid) {
+                    return log.exit(true);
+                }
             }
         }
         return log.exit(false);

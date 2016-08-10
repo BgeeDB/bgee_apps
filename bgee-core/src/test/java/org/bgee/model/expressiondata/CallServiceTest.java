@@ -1,6 +1,8 @@
 package org.bgee.model.expressiondata;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyCollectionOf;
@@ -605,6 +607,99 @@ public class CallServiceTest extends TestAncestor {
                         null, ExpressionSummary.EXPRESSED, null, null, null));
     }
     
+    /**
+     * Test the method {@link CallService#testCallFilter(ExpressionCall, ExpressionCallFilter)}.
+     */
+    @Test
+    public void shouldTestCallFilter() {
+        Collection<ExpressionCallData> callData = new HashSet<>();
+        callData.add(new ExpressionCallData(
+                Expression.EXPRESSED, DataQuality.HIGH, DataType.EST, new DataPropagation()));
+        callData.add(new ExpressionCallData(
+                Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, new DataPropagation()));
+
+        ExpressionCall call1 = new ExpressionCall("g1", new Condition("ae1", "ds1", "sp1"),
+                new DataPropagation(PropagationState.SELF, PropagationState.SELF, true),
+                ExpressionSummary.EXPRESSED, DataQuality.HIGH, callData, new BigDecimal(125.00));
+        
+        // Test with no ExpressionCallFilter 
+        try {
+            CallService.testCallFilter(call1, null);
+            fail("An IllegalArgumentException should be thrown when call filter is null");
+        } catch (IllegalArgumentException e){
+            // Test passed
+        }
+        
+        ExpressionCallData validCallDataFilter1 = new ExpressionCallData(
+                Expression.EXPRESSED, DataQuality.LOW, DataType.EST, new DataPropagation());
+        ExpressionCallData validCallDataFilter2 = new ExpressionCallData(
+                Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, 
+                new DataPropagation(PropagationState.DESCENDANT, PropagationState.SELF));
+        ExpressionCallData validCallDataFilter3 = new ExpressionCallData(
+                Expression.EXPRESSED, DataQuality.HIGH, null, new DataPropagation());
+
+        ExpressionCallData notValidCallDataFilter1 = new ExpressionCallData(
+                Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, new DataPropagation());
+        ExpressionCallData notValidCallDataFilter2 = new ExpressionCallData(
+                Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, new DataPropagation());
+
+        // Test with no GeneFilter and ConditionFilters 
+        Set<ExpressionCallData> callDataFilters = new HashSet<>(Arrays.asList(validCallDataFilter1));
+        ExpressionCallFilter callFilter = new ExpressionCallFilter(null, null, callDataFilters);
+        assertTrue("Call should pass the filter", CallService.testCallFilter(call1, callFilter));
+
+        callDataFilters = new HashSet<>(Arrays.asList(validCallDataFilter2));
+        callFilter = new ExpressionCallFilter(null, null, callDataFilters);
+        assertTrue("Call should pass the filter", CallService.testCallFilter(call1, callFilter));
+
+        callDataFilters = new HashSet<>(Arrays.asList(validCallDataFilter3));
+        callFilter = new ExpressionCallFilter(null, null, callDataFilters);
+        assertTrue("Call should pass the filter", CallService.testCallFilter(call1, callFilter));
+
+        callDataFilters = new HashSet<>(Arrays.asList(validCallDataFilter1, notValidCallDataFilter1));
+        callFilter = new ExpressionCallFilter(null, null, callDataFilters);
+        assertTrue("Call should pass the filter", CallService.testCallFilter(call1, callFilter));
+
+        callDataFilters = new HashSet<>(Arrays.asList(notValidCallDataFilter1));
+        callFilter = new ExpressionCallFilter(null, null, callDataFilters);
+        assertFalse("Call should not pass the filter", CallService.testCallFilter(call1, callFilter));
+
+        callDataFilters = new HashSet<>(Arrays.asList(notValidCallDataFilter2));
+        callFilter = new ExpressionCallFilter(null, null, callDataFilters);
+        assertFalse("Call should not pass the filter", CallService.testCallFilter(call1, callFilter));
+
+        callData.clear();
+        callData.add(new ExpressionCallData(
+                Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, new DataPropagation()));
+        ExpressionCall call2 = new ExpressionCall("g1", new Condition("ae1", "ds1", "sp1"),
+                new DataPropagation(PropagationState.SELF, PropagationState.SELF, true),
+                ExpressionSummary.EXPRESSED, DataQuality.HIGH, callData, new BigDecimal(125.00));
+        ExpressionCallData notValidCallDataFilter3 = new ExpressionCallData(
+                Expression.EXPRESSED, DataQuality.HIGH, null, new DataPropagation());
+        callDataFilters = new HashSet<>(Arrays.asList(notValidCallDataFilter3));
+        callFilter = new ExpressionCallFilter(null, null, callDataFilters);
+        assertFalse("Call should not pass the filter", CallService.testCallFilter(call2, callFilter));
+
+        // Test condition filter
+        callFilter = new ExpressionCallFilter(null, null, callDataFilters);
+        Set<ConditionFilter> validConditionFilters = new HashSet<>();
+        validConditionFilters.add(new ConditionFilter(Arrays.asList("ae1", "ae2"), Arrays.asList("ds1", "ds2")));
+        callFilter = new ExpressionCallFilter(new GeneFilter("g1"), validConditionFilters, 
+                new HashSet<>(Arrays.asList(validCallDataFilter1)));
+        assertTrue("Call should pass the filter", CallService.testCallFilter(call1, callFilter));
+
+        Set<ConditionFilter> notValidConditionFilters = new HashSet<>();
+        notValidConditionFilters.add(new ConditionFilter(Arrays.asList("ae1", "ae2"), Arrays.asList("ds2")));
+        callFilter = new ExpressionCallFilter(new GeneFilter("g1"), notValidConditionFilters, 
+                new HashSet<>(Arrays.asList(validCallDataFilter1)));
+        assertFalse("Call should not pass the filter", CallService.testCallFilter(call1, callFilter));
+
+        // Test gene filter
+        callFilter = new ExpressionCallFilter(new GeneFilter("g2"), validConditionFilters, 
+                new HashSet<>(Arrays.asList(validCallDataFilter1)));
+        assertFalse("Call should not pass the filter", CallService.testCallFilter(call1, callFilter));
+    }
+
     /**
      * Test the method 
      * {@link CallService#propagateExpressionCalls(Collection, Collection, ConditionUtils, String)}.

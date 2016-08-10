@@ -10,6 +10,7 @@ import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -165,19 +166,30 @@ public class CallService extends Service {
                 .collect(Collectors.toSet());
         ConditionUtils conditionUtils = new ConditionUtils(
                 calls.stream().map(c -> c.getCondition()).collect(Collectors.toSet()),
+                // We should infer ancestral condition to be able to propagate to condition without call.
+                true,
                 this.getServiceFactory());
 
         Set<ExpressionCall> propagatedCalls = this.propagateExpressionCalls(calls, 
                 callFilter.getConditionFilters(), conditionUtils, speciesId);
 
-        // For single species, we need to reconcile calls, one by one
+        // For single species, we need to reconcile calls with the same gene/organ/stage
         // Note: we need to convert Set into List to have a stable sort
         // (see Javadoc of java.util.stream.Stream.sorted)
-        Stream<ExpressionCall> reconciledCalls = new ArrayList<>(propagatedCalls).stream()
+        Map<ExpressionCall, List<ExpressionCall>> groupedCalls = propagatedCalls.stream().collect(Collectors.toMap(
+                c -> new ExpressionCall(c.getGeneId(), c.getCondition(), null, null, null, null, null), 
+                c -> new ArrayList<ExpressionCall>(Arrays.asList(c)), 
+                (v1, v2) -> {
+                    List<ExpressionCall> newList = new ArrayList<>(v1);
+                    newList.addAll(v2);
+                    return newList;
+                }));
+
+        Stream<ExpressionCall> reconciledCalls = groupedCalls.entrySet().stream()
                 // Reconcile calls
-                .map(c -> {
-                    ExpressionCall reconciledCall = CallService.reconcileSingleGeneCalls(Arrays.asList(c));
-                    return new ExpressionCall(reconciledCall.getGeneId(), c.getCondition(),
+                .map(e -> {
+                    ExpressionCall reconciledCall = CallService.reconcileSingleGeneCalls(e.getValue());
+                    return new ExpressionCall(reconciledCall.getGeneId(), e.getKey().getCondition(),
                             reconciledCall.getDataPropagation(), reconciledCall.getSummaryCallType(),
                             reconciledCall.getSummaryQuality(), reconciledCall.getCallData(),
                             reconciledCall.getGlobalMeanRank());
@@ -188,7 +200,7 @@ public class CallService extends Service {
                 // We order before removing attribute to be able to order on all orderingAttributes
                 .sorted(CallService.convertServiceOrdering(clonedOrderingAttrs))
                 // Keep provided attributes
-                .map(c -> CallService.getClonedExpressionCall(c, clonedAttrs, speciesId));
+                .map(c -> CallService.getClonedExpressionCall(c, clonedAttrs));
 
         return log.exit(reconciledCalls);
     }
@@ -265,18 +277,17 @@ public class CallService extends Service {
      * Return an {@code ExpressionCall} populated according to {@code attributes}.
      * 
      * @param call          An {@code ExpressionCall} to be cloned only, with provided {@code attributes}.
-     * @param attributes    A {@code Collection} of {@code Attribute}s defining the attributes
+     * @param attributes    A {@code Set} of {@code Attribute}s defining the attributes
      *                      to populate in the returned {@code ExpressionCall}s.
      *                      If {@code null} or empty, all attributes are populated. 
-     * @param speciesId     A {@code String} that is the ID of the species.
      * @return              The clones {@code ExpressionCall} populated according to {@code attributes}.
      */
-    private static ExpressionCall getClonedExpressionCall(ExpressionCall call, 
-            Collection<Attribute> attributes, String speciesId) {
-        log.entry(call, attributes, speciesId);
+    private static ExpressionCall getClonedExpressionCall(ExpressionCall call, Set<Attribute> attributes) {
+        log.entry(call, attributes);
         
-        Set<Attribute> clonedAttrs = Optional.ofNullable(attributes)
-                .map(e -> EnumSet.copyOf(e)).orElse(EnumSet.allOf(Attribute.class));
+        assert attributes != null;
+        
+        Set<Attribute> clonedAttrs = attributes.isEmpty()? EnumSet.allOf(Attribute.class): attributes;
 
         String geneId = null;
         if (clonedAttrs.contains(Attribute.GENE_ID)) {
@@ -293,7 +304,7 @@ public class CallService extends Service {
             if (clonedAttrs.contains(Attribute.DEV_STAGE_ID) ) {
                 devStageId = call.getCondition().getDevStageId();
             }
-            condition = new Condition(anatEntityId, devStageId, speciesId);
+            condition = new Condition(anatEntityId, devStageId, call.getCondition().getSpeciesId());
         }
         DataQuality summaryQual = null; 
         if (clonedAttrs.contains(Attribute.GLOBAL_DATA_QUALITY)) {
@@ -1312,10 +1323,10 @@ public class CallService extends Service {
 
         // Global mean rank
         Optional<BigDecimal> bestGlobalMeanRank = calls.stream()
-            .filter(c -> c.getGlobalMeanRank() != null)
-            .map(c -> c.getGlobalMeanRank())
-            .min((r1, r2) -> r1.compareTo(r2));
-        
+                .map(c -> c.getGlobalMeanRank())
+                .filter(r -> r != null)
+                .min((r1, r2) -> r1.compareTo(r2));
+
         return log.exit(new ExpressionCall(geneId, null, callDataProp, expressionSummary, 
                 dataQuality, callData, bestGlobalMeanRank.orElse(null)));
     }

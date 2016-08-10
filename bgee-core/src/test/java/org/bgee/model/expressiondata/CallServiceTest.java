@@ -67,16 +67,27 @@ public class CallServiceTest extends TestAncestor {
     
     private final static Logger log = LogManager.getLogger(CallServiceTest.class.getName());
     
-    private final static DataPropagation dpSelfAndSelf = new DataPropagation(PropagationState.SELF, PropagationState.SELF, true);
-    private final static DataPropagation dpSelfAndDesc = new DataPropagation(PropagationState.SELF, PropagationState.DESCENDANT, false);
-    private final static DataPropagation dpSelfAndSelfDesc = new DataPropagation(PropagationState.SELF, PropagationState.SELF_AND_DESCENDANT, true);
-    private final static DataPropagation dpSelfDescAndAll= new DataPropagation(PropagationState.SELF_AND_DESCENDANT, PropagationState.ALL, true);
-    private final static DataPropagation dpDescAndSelf = new DataPropagation(PropagationState.DESCENDANT, PropagationState.SELF, false);
-    private final static DataPropagation dpDescAndDesc = new DataPropagation(PropagationState.DESCENDANT, PropagationState.DESCENDANT, false);
-    private final static DataPropagation dpAncAndSelf = new DataPropagation(PropagationState.ANCESTOR, PropagationState.SELF, false);
-    private final static DataPropagation dpSelfAncAndSelf = new DataPropagation(PropagationState.SELF_AND_ANCESTOR, PropagationState.SELF, true);
-    private final static DataPropagation dpSelfDescAndDesc = new DataPropagation(PropagationState.SELF_AND_DESCENDANT, PropagationState.DESCENDANT, false);
-    private final static DataPropagation dpSelfDescAndSelf = new DataPropagation(PropagationState.SELF_AND_DESCENDANT, PropagationState.SELF, true);
+    private final static DataPropagation dpSelfAndSelf = 
+            new DataPropagation(PropagationState.SELF, PropagationState.SELF, true);
+    private final static DataPropagation dpSelfAndDesc = 
+            new DataPropagation(PropagationState.SELF, PropagationState.DESCENDANT, false);
+    private final static DataPropagation dpSelfAndSelfDesc = 
+            new DataPropagation(PropagationState.SELF, PropagationState.SELF_AND_DESCENDANT, true);
+    private final static DataPropagation dpSelfDescAndAll= 
+            new DataPropagation(PropagationState.SELF_AND_DESCENDANT, PropagationState.ALL, true);
+    private final static DataPropagation dpDescAndSelf = 
+            new DataPropagation(PropagationState.DESCENDANT, PropagationState.SELF, false);
+    private final static DataPropagation dpDescAndDesc = 
+            new DataPropagation(PropagationState.DESCENDANT, PropagationState.DESCENDANT, false);
+    private final static DataPropagation dpAncAndSelf = 
+            new DataPropagation(PropagationState.ANCESTOR, PropagationState.SELF, false);
+    private final static DataPropagation dpSelfAncAndSelf = 
+            new DataPropagation(PropagationState.SELF_AND_ANCESTOR, PropagationState.SELF, true);
+    private final static DataPropagation dpSelfDescAndDesc = 
+            new DataPropagation(PropagationState.SELF_AND_DESCENDANT, PropagationState.DESCENDANT, false);
+    private final static DataPropagation dpSelfDescAndSelf = 
+            new DataPropagation(PropagationState.SELF_AND_DESCENDANT, PropagationState.SELF, true);
+    
     @Override
     protected Logger getLogger() {
         return log;
@@ -106,13 +117,14 @@ public class CallServiceTest extends TestAncestor {
                         // but, real query return all attributes
                     new ExpressionCallTO(null, "geneId1", "anatEntityId1", "stageId1", 
                         new BigDecimal(1257.34), CallTO.DataState.LOWQUALITY, null,
-                        CallTO.DataState.HIGHQUALITY, null, CallTO.DataState.LOWQUALITY, null,
-                        CallTO.DataState.LOWQUALITY, null, false, false, OriginOfLine.SELF, 
+                        CallTO.DataState.HIGHQUALITY, null, CallTO.DataState.NODATA, null,
+                        CallTO.DataState.NODATA, null, false, false, OriginOfLine.SELF, 
                         OriginOfLine.SELF, true), 
                     new ExpressionCallTO(null, "geneId1", "anatEntityId1", "stageId2", 
-                        new BigDecimal(125.00), CallTO.DataState.LOWQUALITY, null,
-                        CallTO.DataState.HIGHQUALITY, null, CallTO.DataState.LOWQUALITY, null,
-                        CallTO.DataState.LOWQUALITY, null, null, null, null, null, null)));
+                        new BigDecimal(125.00), CallTO.DataState.NODATA, null,
+                        CallTO.DataState.LOWQUALITY, null, CallTO.DataState.LOWQUALITY, null,
+                        CallTO.DataState.NODATA, null, false, false, OriginOfLine.SELF, 
+                        OriginOfLine.SELF, true)));
         
         //we'll do the verify afterwards, it's easier to catch a problem in the parameters
         when(dao.getExpressionCalls(
@@ -145,55 +157,70 @@ public class CallServiceTest extends TestAncestor {
         Ontology<DevStage> devStageOnt = mock(Ontology.class);
 
         when(ontService.getAnatEntityOntology("speciesId1", new HashSet<>(Arrays.asList(
-                "anatEntityId1")), EnumSet.of(RelationType.ISA_PARTOF), false, false))
+                "anatEntityId1")), EnumSet.of(RelationType.ISA_PARTOF), true, false))
         .thenReturn(anatEntityOnt);
         when(ontService.getDevStageOntology("speciesId1", new HashSet<>(Arrays.asList(
-                "stageId1", "stageId2")), false, false)).thenReturn(devStageOnt);
+                "stageId1", "stageId2")), true, false)).thenReturn(devStageOnt);
         String anatEntityId1 = "anatEntityId1";
         AnatEntity anatEntity1 = new AnatEntity(anatEntityId1);
         String stageId1 = "stageId1";
         DevStage stage1 = new DevStage(stageId1);
         String stageId2 = "stageId2";
         DevStage stage2 = new DevStage(stageId2);
+        String stageId3 = "stageId3";
+        DevStage stage3 = new DevStage(stageId3);
 
         when(anatEntityOnt.getElements()).thenReturn(new HashSet<>(Arrays.asList(anatEntity1)));
-        when(devStageOnt.getElements()).thenReturn(new HashSet<>(Arrays.asList(stage1, stage2)));
+        when(devStageOnt.getElements()).thenReturn(new HashSet<>(Arrays.asList(stage1, stage2, stage3)));
         when(anatEntityOnt.getElement(anatEntityId1)).thenReturn(anatEntity1);
         when(devStageOnt.getElement(stageId1)).thenReturn(stage1);
         when(devStageOnt.getElement(stageId2)).thenReturn(stage2);
-        // TODO: add relations to test propagation
+        when(devStageOnt.getElement(stageId3)).thenReturn(stage3);
+        when(anatEntityOnt.getAncestors(anatEntity1)).thenReturn(new HashSet<>());
+        when(devStageOnt.getAncestors(stage1)).thenReturn(new HashSet<>(Arrays.asList(stage2, stage3)));
+        when(devStageOnt.getAncestors(stage2)).thenReturn(new HashSet<>(Arrays.asList(stage3)));
+        when(devStageOnt.getAncestors(stage3)).thenReturn(new HashSet<>());
         when(anatEntityOnt.getAncestors(anatEntity1, true)).thenReturn(new HashSet<>());
-        when(devStageOnt.getAncestors(stage1, true)).thenReturn(new HashSet<>());
-        when(devStageOnt.getAncestors(stage2, true)).thenReturn(new HashSet<>());
+        when(devStageOnt.getAncestors(stage1, true)).thenReturn(new HashSet<>(Arrays.asList(stage2, stage3)));
+        when(devStageOnt.getAncestors(stage2, true)).thenReturn(new HashSet<>(Arrays.asList(stage3)));
+        when(devStageOnt.getAncestors(stage3, true)).thenReturn(new HashSet<>());
 
         List<ExpressionCall> expectedResults = Arrays.asList(
                 new ExpressionCall("geneId1", new Condition("anatEntityId1", "stageId1", "speciesId1"), 
-                    null, 
+                    new DataPropagation(PropagationState.SELF, PropagationState.SELF, true), 
                     ExpressionSummary.EXPRESSED, DataQuality.HIGH, 
                     Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, 
                             new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)), 
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.EST, 
-                                new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)), 
-                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.IN_SITU, 
-                                new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)), 
-                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.RNA_SEQ, 
-                                new DataPropagation(PropagationState.SELF, PropagationState.SELF, true))), 
-                    null),
+                            new DataPropagation(PropagationState.SELF, PropagationState.SELF, true))), 
+                    new BigDecimal(1257.34)),
                 new ExpressionCall("geneId1", new Condition("anatEntityId1", "stageId2", "speciesId1"), 
-                    null, 
+                    new DataPropagation(PropagationState.SELF, PropagationState.SELF_AND_DESCENDANT, true),
                     ExpressionSummary.EXPRESSED, DataQuality.HIGH, 
                     Arrays.asList(
-                            new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, 
-                                    new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)), 
-                            new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.EST, 
-                                    new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)), 
-                            new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.IN_SITU, 
-                                    new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)), 
-                            new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.RNA_SEQ, 
-                                    new DataPropagation(PropagationState.SELF, PropagationState.SELF, true))), 
-                    null)
-            );
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, 
+                            new DataPropagation(PropagationState.SELF, PropagationState.DESCENDANT, false)), 
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.EST, 
+                            new DataPropagation(PropagationState.SELF, PropagationState.DESCENDANT, false)),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.EST,
+                            new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)), 
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.IN_SITU,
+                            new DataPropagation(PropagationState.SELF, PropagationState.SELF, true))), 
+                    new BigDecimal(125.00)),
+                new ExpressionCall("geneId1", new Condition("anatEntityId1", "stageId3", "speciesId1"), 
+                    new DataPropagation(PropagationState.SELF, PropagationState.DESCENDANT, false),
+                    ExpressionSummary.EXPRESSED, DataQuality.HIGH, 
+                    Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, 
+                            new DataPropagation(PropagationState.SELF, PropagationState.DESCENDANT, false)), 
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.EST, 
+                            new DataPropagation(PropagationState.SELF, PropagationState.DESCENDANT, false)),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.EST,
+                            new DataPropagation(PropagationState.SELF, PropagationState.DESCENDANT, false)), 
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.IN_SITU,
+                            new DataPropagation(PropagationState.SELF, PropagationState.DESCENDANT, false))), 
+                    null));
         
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
                 new LinkedHashMap<>();
@@ -203,9 +230,7 @@ public class CallServiceTest extends TestAncestor {
         List<ExpressionCall> actualResults = service.loadExpressionCalls("speciesId1", 
                 new ExpressionCallFilter(new GeneFilter("geneId1"), null, 
                         Arrays.asList(new ExpressionCallData(Expression.EXPRESSED))), 
-                EnumSet.of(CallService.Attribute.GENE_ID, CallService.Attribute.ANAT_ENTITY_ID, 
-                        CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.CALL_DATA, 
-                        CallService.Attribute.GLOBAL_DATA_QUALITY), 
+                null, // all attributes 
                 serviceOrdering)
                 .collect(Collectors.toList());
         assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);

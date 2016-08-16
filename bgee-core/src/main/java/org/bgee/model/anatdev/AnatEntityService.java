@@ -108,19 +108,29 @@ public class AnatEntityService extends Service {
     }
 
     /**
-     * Get summary similarity annotations for a given taxonId, optionally restricting species
-     * @param taxonId    A {@code String} representation of the taxonId
-     * @param speciesIds A {@code Set} of string ids of the species (if empty or null all available species are used)
-     * @return A {@code Set} of {@link AnatEntitySimilarity}
+     * Load anatomical entity similarities from provided {@code taxonId}, {@code speciesIds},
+     * and {@code onlyTrusted}.
+     * 
+     * @param taxonId       A {@code String} that is the NCBI ID of the taxon for which the similarity 
+     *                      annotations should be valid, including all its ancestral taxa.
+     * @param speciesIds    A {@code Set} of IDs of the species for which the similarity 
+     *                      annotations should be restricted.
+     *                      If empty or {@code null} all available species are used.
+     * @param onlyTrusted   A {@code boolean} defining whether results should be restricted 
+     *                      to "trusted" annotations.
+     * @return              The {@code Set} of {@link AnatEntitySimilarity} that are anat. entity 
+     *                      similarities from provided {@code taxonId}, {@code speciesIds},
+     *                      and {@code onlyTrusted}.
      */
-    public Set<AnatEntitySimilarity> getSimilarities(String taxonId, Set<String> speciesIds, boolean
-            onlyTrusted) {
-        log.entry(taxonId);
+    public Set<AnatEntitySimilarity> loadAnatEntitySimilarities(String taxonId,
+            Set<String> speciesIds, boolean onlyTrusted) {
+        log.entry(taxonId, speciesIds, onlyTrusted);
+        
         Map<String, SummarySimilarityAnnotationTO> simAnnotations = 
                 this.getDaoManager().getSummarySimilarityAnnotationDAO()
-                .getSummarySimilarityAnnotations(taxonId, onlyTrusted)
-        .stream().filter(to -> taxonId.equals(to.getTaxonId()))
-        .collect(Collectors.toMap(SummarySimilarityAnnotationTO::getId, Function.identity()));
+                .getSummarySimilarityAnnotations(taxonId, onlyTrusted).stream()
+                .filter(to -> taxonId.equals(to.getTaxonId()))
+                .collect(Collectors.toMap(SummarySimilarityAnnotationTO::getId, Function.identity()));
         
         Set<AnatEntitySimilarity> results = this.getDaoManager().getSummarySimilarityAnnotationDAO()
                 .getSimAnnotToAnatEntity(taxonId, speciesIds).stream()
@@ -131,8 +141,8 @@ public class AnatEntityService extends Service {
                                 // collect anatEntities as a set
                                 e.getValue().stream()
                                             .map(SimAnnotToAnatEntityTO::getAnatEntityId)
-                                            .collect(Collectors.toSet())) 
-                ).collect(Collectors.toSet());
+                                            .collect(Collectors.toSet())))
+                .collect(Collectors.toSet());
         
         return log.exit(results);
     }

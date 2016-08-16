@@ -76,22 +76,27 @@ public class DevStageService extends Service {
     }
 
     /**
-     * Load developmental stage similarities
-     * @param taxonId
-     * @param speciesIds
-     * @return
+     * Load developmental stage similarities from provided {@code taxonId} and {@code speciesIds}.
+     * 
+     * @param taxonId       A {@code String} that is the NCBI ID of the taxon for which the similarity 
+     *                      annotations should be valid, including all its ancestral taxa.
+     * @param speciesIds    A {@code Set} of IDs of the species for which the similarity 
+     *                      annotations should be restricted.
+     *                      If empty or {@code null} all available species are used.
+     * @return              The {@code Set} of {@link DevStageSimilarity} that are dev. stage 
+     *                      similarities from provided {@code taxonId} and {@code speciesIds}.
      */
-    public Set<DevStageSimilarity> getDevStageSimilarities(String taxonId, Set<String> speciesIds) {
+    // FIXME: unit tests
+    public Set<DevStageSimilarity> loadDevStageSimilarities(String taxonId, Set<String> speciesIds) {
        log.entry(taxonId, speciesIds);
        return log.exit(this.getDaoManager().getStageGroupingDAO().getGroupToStage(taxonId, speciesIds).stream()
              .collect(Collectors.groupingBy(GroupToStageTO::getGroupId)) // group by groupId
-              .entrySet().stream()
-              .map(e -> new DevStageSimilarity(e.getKey(),              // map to DevStageSimilarity
-                                              e.getValue().stream()
-                                                  .map(GroupToStageTO::getStageId)
-                                                  .collect(Collectors.toSet())
-                                             )
-             ).collect(Collectors.toSet()));
+                  .entrySet().stream()
+                  .map(e -> new DevStageSimilarity(e.getKey(),              // map to DevStageSimilarity
+                          e.getValue().stream()
+                              .map(GroupToStageTO::getStageId)
+                              .collect(Collectors.toSet())))
+                  .collect(Collectors.toSet()));
     }
 
     /**

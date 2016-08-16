@@ -2,17 +2,21 @@ package org.bgee.model.anatdev;
 
 import java.util.Set;
 
+import org.bgee.model.Entity;
+
 /**
- * This class represents a similarity group of anatomic entities.
+ * This class represents a similarity group of anatomical entities.
  * 
- * @author Philippe Moret
- * @version Bgee 13, Apr. 2016
+ * @author  Philippe Moret
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13, Aug. 2016
  * @since   Bgee 13, Apr. 2016
  */
-public class AnatEntitySimilarity {
+public class AnatEntitySimilarity extends Entity {
     
-    private final String groupId;
-    
+    /**
+     * @return The {@code Set} of {@code String}s that are anatomical entity IDs of this group.
+     */
     private final Set<String> anatEntityIds;
     
     //XXX: we might need to include these fields this at some point
@@ -20,21 +24,29 @@ public class AnatEntitySimilarity {
     //private String taxonId;
     
     /**
-     * 2-args constructor
-     * @param groupId        {@code String} representation of the group id 
-     * @param anatEntityIds  {@code Set} of anatomic entities IDs of group members
+     * Constructor providing the ID of this {@code AnatEntitySimilarity} and 
+     * the IDs of anat. entities constituting that group.
+     * 
+     * @param id            A {@code String} that is the ID of this {@code AnatEntitySimilarity}.
+     * @param anatEntityIds A {@code Set} of {@code String}s that are anatomical entity IDs of this group.
      */
-    public AnatEntitySimilarity(String groupId, Set<String> anatEntityIds) {
-        this.groupId = groupId;
+    public AnatEntitySimilarity(String id, Set<String> anatEntityIds) {
+        super(id);
         this.anatEntityIds = anatEntityIds;
+    }
+
+    /**
+     * @return The {@code Set} of {@code String}s that are anatomical entity IDs of this group.
+     */
+    public Set<String> getAnatEntityIds() {
+        return anatEntityIds;
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
-        int result = 1;
+        int result = super.hashCode();
         result = prime * result + ((anatEntityIds == null) ? 0 : anatEntityIds.hashCode());
-        result = prime * result + ((groupId == null) ? 0 : groupId.hashCode());
         return result;
     }
 
@@ -43,7 +55,7 @@ public class AnatEntitySimilarity {
         if (this == obj) {
             return true;
         }
-        if (obj == null) {
+        if (!super.equals(obj)) {
             return false;
         }
         if (getClass() != obj.getClass()) {
@@ -57,29 +69,11 @@ public class AnatEntitySimilarity {
         } else if (!anatEntityIds.equals(other.anatEntityIds)) {
             return false;
         }
-        if (groupId == null) {
-            if (other.groupId != null) {
-                return false;
-            }
-        } else if (!groupId.equals(other.groupId)) {
-            return false;
-        }
         return true;
     }
-    
-    
 
-    /**
-     * @return the {@code String} groupId
-     */
-    public String getGroupId() {
-        return groupId;
-    }
-
-    /**
-     * @return the {@code Set} of anatEntityIds
-     */
-    public Set<String> getAnatEntityIds() {
-        return anatEntityIds;
+    @Override
+    public String toString() {
+        return super.toString() + " - Anat. entity IDs: " + getAnatEntityIds();
     }
 }

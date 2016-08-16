@@ -102,21 +102,27 @@ public class GeneService extends Service {
     }
 
     /**
-     * Gets the orthologies for a given taxon.
-     * @param taxonId     The {@code String} id of  taxon for which to retrieve the orthology groups
-     * @param speciesIds  A {@code Set} of {@code String} representing the species id. If null, all species available for the taxon are used.
-     * @return A {@code Map} of OMA Node Ids to a set of gene id
+     * Get the orthologies for a given taxon.
+     * 
+     * @param taxonId       A {@code String} that is the ID of taxon for which
+     *                      to retrieve the orthology groups.
+     * @param speciesIds    A {@code Set} of {@code String} that are the IDs of species to be considered.
+     *                      If {@code null}, all species available for the taxon are used.
+     * @return              The {@code Map} where keys are {@code String}s corresponding to OMA Node IDs,
+     *                      the associated value being a {@code Set} of {@code String}s corresponding to
+     *                      their gene IDs
      */
-    public Map<String, Set<String>> getOrthologies(String taxonId, Set<String> speciesIds){
+    public Map<String, Set<String>> getOrthologies(String taxonId, Set<String> speciesIds) {
         log.entry(taxonId, speciesIds);
-        HierarchicalGroupToGeneTOResultSet resultSet = getDaoManager().getHierarchicalGroupDAO().getGroupToGene(taxonId, speciesIds);
-        Map <String, Set<String>> results = resultSet.stream()
+        HierarchicalGroupToGeneTOResultSet resultSet = getDaoManager().getHierarchicalGroupDAO()
+                .getGroupToGene(taxonId, speciesIds);
+        Map<String, Set<String>> results = resultSet.stream()
                 .collect(Collectors.groupingBy((HierarchicalGroupToGeneTO hg) -> hg.getGroupId()))
                 .entrySet().stream()
-                .collect(Collectors.toMap( (Entry<String, List<HierarchicalGroupToGeneTO>> e) -> e.getKey(), 
-                        (Entry<String, List<HierarchicalGroupToGeneTO>> e) ->  e.getValue().stream().map(to -> to.getGeneId()).collect(Collectors.toSet()) 
-                        ));
-        
+                .collect(Collectors.toMap(
+                        (Entry<String, List<HierarchicalGroupToGeneTO>> e) -> e.getKey(), 
+                        (Entry<String, List<HierarchicalGroupToGeneTO>> e) -> e.getValue().stream()
+                            .map(to -> to.getGeneId()).collect(Collectors.toSet())));
         return log.exit(results);
     }
 

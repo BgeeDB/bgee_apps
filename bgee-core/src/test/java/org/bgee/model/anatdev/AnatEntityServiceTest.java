@@ -114,7 +114,7 @@ public class AnatEntityServiceTest extends TestAncestor {
     }
     
     @Test
-    public void testGetSimilarities() {
+    public void shouldLoadAnatEntitySimilarities() {
         DAOManager managerMock = mock(DAOManager.class);
         ServiceFactory serviceFactory = mock(ServiceFactory.class);
         when(serviceFactory.getDAOManager()).thenReturn(managerMock);
@@ -142,7 +142,7 @@ public class AnatEntityServiceTest extends TestAncestor {
                 new AnatEntitySimilarity("sim2", new HashSet<>(Arrays.asList("anat3")))
                 ));
         
-        Collection<AnatEntitySimilarity> actual = service.getSimilarities("taxon1", null, true);
+        Collection<AnatEntitySimilarity> actual = service.loadAnatEntitySimilarities("taxon1", null, true);
         assertEquals(expected, actual);
         
     }

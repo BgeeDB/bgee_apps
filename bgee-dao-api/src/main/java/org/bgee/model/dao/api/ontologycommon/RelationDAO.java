@@ -316,8 +316,8 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
              * returned by {@link Enum#name()}, for each {@code RelationType}.
              * 
              * @param representation    A {@code String} representing a relation type.
-             * @return  A {@code RelationType} corresponding to {@code representation}.
-             * @throw IllegalArgumentException  If {@code representation} does not correspond 
+             * @return                  A {@code RelationType} corresponding to {@code representation}.
+             * @throws IllegalArgumentException If {@code representation} does not correspond 
              *                                  to any {@code RelationType}.
              */
             public static final RelationType convertToRelationType(String representation) {
@@ -380,8 +380,8 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
              * returned by {@link Enum#name()}, for each {@code RelationStatus}.
              * 
              * @param representation    A {@code String} representing a relation status.
-             * @return  A {@code RelationStatus} corresponding to {@code representation}.
-             * @throw IllegalArgumentException  If {@code representation} does not correspond 
+             * @return                  A {@code RelationStatus} corresponding to {@code representation}.
+             * @throws IllegalArgumentException If {@code representation} does not correspond 
              *                                  to any {@code RelationStatus}.
              */
             public static final RelationStatus convertToRelationStatus(String representation) {

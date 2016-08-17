@@ -44,7 +44,6 @@ public class CallDAOFilter {
      *                          the filtering of conditions with expression data. If several 
      *                          {@code ConditionFilter}s are provided, they are seen as "OR" conditions.
      *                          Can be {@code null} or empty.
-     * @param attributeType     The class type of the {@code Attribute}s of type {@code T}.
      */
     public CallDAOFilter(Collection<String> geneIds, Collection<String> speciesIds, 
             Collection<DAOConditionFilter> conditionFilters) 

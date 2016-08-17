@@ -36,7 +36,7 @@ public interface DiffExpressionCallDAO
      * <li>{@code DIFF_EXPR_CALL_AFFYMETRIX}: corresponds to 
      *                        {@link DiffExpressionCallTO#getDiffExprCallTypeAffymetrix()}.
      * <li>{@code DIFF_EXPR_AFFYMETRIX_DATA}: corresponds to 
-     *                        {@link DiffExpressionCallTO#getDiffExprAffymetrixData()}.
+     *                        {@link DiffExpressionCallTO#getAffymetrixData()}.
      * <li>{@code BEST_P_VALUE_AFFYMETRIX}: corresponds to 
      *                        {@link DiffExpressionCallTO#getBestPValueAffymetrix()}.
      * <li>{@code CONSISTENT_DEA_COUNT_AFFYMETRIX}: corresponds to 
@@ -46,7 +46,7 @@ public interface DiffExpressionCallDAO
      * <li>{@code DIFF_EXPR_CALL_RNA_SEQ}: corresponds to 
      *                        {@link DiffExpressionCallTO#getDiffExprCallTypeRNASeq()}.
      * <li>{@code DIFF_EXPR_RNA_SEQ_DATA}: corresponds to 
-     *                        {@link DiffExpressionCallTO#getDiffExprRNASeqData()}.
+     *                        {@link DiffExpressionCallTO#getRNASeqData()}.
      * <li>{@code BEST_P_VALUE_RNA_SEQ}: corresponds to 
      *                        {@link DiffExpressionCallTO#getBestPValueRNASeq()}.
      * <li>{@code CONSISTENT_DEA_COUNT_RNA_SEQ}: corresponds to 
@@ -126,7 +126,7 @@ public interface DiffExpressionCallDAO
      * homologous at the level of the provided taxon. To determine the homologous group 
      * being iterated, it is necessary to retrieve the mapping from gene IDs to 
      * homologous group IDs, see 
-     * {@link org.bgee.model.dao.api.gene.HierarchicalGroupDAO#getGroupToGene(String)}.
+     * {@link org.bgee.model.dao.api.gene.HierarchicalGroupDAO#getGroupToGene(String, java.util.Set)}.
      * <p>
      * The differential expression calls are returned through a
      * {@code DiffExpressionCallTOResultSet}. It is the responsibility of the caller to close 
@@ -209,7 +209,7 @@ public interface DiffExpressionCallDAO
              * @param representation            A {@code String} representing a differential 
              *                                  expression call type.
              * @return A {@code DiffExprCallType} corresponding to {@code representation}.
-             * @throw IllegalArgumentException  If {@code representation} does not correspond 
+             * @throws IllegalArgumentException If {@code representation} does not correspond 
              *                                  to any {@code DiffExprCallType}.
              * @see #convert(Class, String)
              */
@@ -268,7 +268,7 @@ public interface DiffExpressionCallDAO
              * 
              * @param representation            A {@code String} representing a comparison factor.
              * @return  A {@code ComparisonFactor} corresponding to {@code representation}.
-             * @throw IllegalArgumentException  If {@code representation} does not correspond 
+             * @throws IllegalArgumentException If {@code representation} does not correspond 
              *                                  to any {@code ComparisonFactor}.
              */
             public static final ComparisonFactor convertToComparisonFactor(String representation) {

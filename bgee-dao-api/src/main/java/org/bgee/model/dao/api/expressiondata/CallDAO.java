@@ -47,7 +47,7 @@ public interface CallDAO<T extends Enum<T> & CallDAO.Attribute> extends DAO<T> {
      * <li>{@code OMA_GROUP_ID}: order results by the OMA group genes belong to. 
      * If this {@code OrderingAttribute} is used in a query not specifying any targeted taxon 
      * for gene orthology, then the {@code OMAParentNodeId} of the gene is used (see 
-     * {@link org.bgee.model.dao.api.gene.GeneDAO.GeneTO.getOMAParentNodeId()}); otherwise, 
+     * {@link org.bgee.model.dao.api.gene.GeneDAO.GeneTO#getOMAParentNodeId()}); otherwise, 
      * the OMA group the gene belongs to at the level of the targeted taxon is used. 
      * <li>{@code MEAN_RANK}: order results by mean rank of the gene in the corresponding condition. 
      * Only the mean ranks computed from the data types requested in the query are considered. 
@@ -116,7 +116,7 @@ public interface CallDAO<T extends Enum<T> & CallDAO.Attribute> extends DAO<T> {
              * 
              * @param representation    A {@code String} representing a data state.
              * @return  A {@code DataState} corresponding to {@code representation}.
-             * @throw IllegalArgumentException  If {@code representation} does not correspond 
+             * @throws IllegalArgumentException If {@code representation} does not correspond 
              *                                  to any {@code DataState}.
              */
             public static final DataState convertToDataState(String representation) {

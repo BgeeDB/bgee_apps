@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
 
 /**
  * This class allows to provide the parameters to filter the calls used, when 

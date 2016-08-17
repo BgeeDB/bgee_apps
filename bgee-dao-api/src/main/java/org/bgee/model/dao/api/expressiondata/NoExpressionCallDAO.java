@@ -192,7 +192,7 @@ public interface NoExpressionCallDAO extends CallDAO<NoExpressionCallDAO.Attribu
 
         /**
          * A {@code Boolean} defining whether this no-expression call was generated 
-         * using the data from the anatomical entity with the ID {@link CallTO#getAnatEntityId()} 
+         * using the data from the anatomical entity with the ID {@link #getAnatEntityId()} 
          * alone, or by also considering all its parents by <em>is_a</em> or <em>part_of</em> 
          * relations, even indirect. If {@code true}, all its parents were considered. 
          * So for instance, if B is_a A, and absence of expression has been reported in A, 
@@ -227,7 +227,7 @@ public interface NoExpressionCallDAO extends CallDAO<NoExpressionCallDAO.Attribu
              * 
              * @param representation    A {@code String} representing a data state.
              * @return  A {@code OriginOfLine} corresponding to {@code representation}.
-             * @throw IllegalArgumentException  If {@code representation} does not correspond 
+             * @throws IllegalArgumentException  If {@code representation} does not correspond 
              *                                  to any {@code OriginOfLine}.
              */
             public static final OriginOfLine convertToOriginOfLine(String representation) {
@@ -336,7 +336,7 @@ public interface NoExpressionCallDAO extends CallDAO<NoExpressionCallDAO.Attribu
          * <p>
          * The data types are represented as {@code Attribute}s allowing to request a data type parameter 
          * (see {@link CallDAO.Attribute#isDataTypeAttribute()}). The {@code DataState}s 
-         * associated to each data type are retrieved using {@link CallTO#extractDataTypesToDataStates()}. 
+         * associated to each data type are retrieved using {@link #extractDataTypesToDataStates()}. 
          * A check is then performed to ensure that the {@code CallTO} will actually result 
          * in a filtering of the data. For instance, if all data qualities are {@code null},  
          * then it is equivalent to requesting no filtering at all, and the {@code EnumMap} returned 
@@ -364,7 +364,7 @@ public interface NoExpressionCallDAO extends CallDAO<NoExpressionCallDAO.Attribu
 
         /**
          * Returns the {@code Boolean} defining whether this no-expression call was generated 
-         * using the data from the anatomical entity with the ID {@link CallTO#getAnatEntityId()} 
+         * using the data from the anatomical entity with the ID {@link #getAnatEntityId()} 
          * alone, or by also considering all its parents by <em>is_a</em> or <em>part_of</em> 
          * relations, even indirect. If {@code true}, all its parents were considered. 
          * So for instance, if B is_a A, and absence of expression has been reported in A, 
@@ -391,7 +391,7 @@ public interface NoExpressionCallDAO extends CallDAO<NoExpressionCallDAO.Attribu
 
         /**
          * Sets the {@code boolean} defining whether this no-expression call was generated 
-         * using the data from the anatomical entity with the ID {@link CallTO#getAnatEntityId()} 
+         * using the data from the anatomical entity with the ID {@link #getAnatEntityId()} 
          * alone, or by also considering all its parents by <em>is_a</em> or <em>part_of</em> 
          * relations, even indirect. If {@code true}, all its parents were considered. 
          * So for instance, if B is_a A, and absence of expression has been reported in A, 

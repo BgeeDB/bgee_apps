@@ -62,7 +62,7 @@ public abstract class TransferObject implements Serializable {
      * @param representation    A {@code String} representing an element of {@code enumField}.
      * @return  An element of the {@code Enum} class {@code enumField}, 
      *          corresponding to {@code representation}.
-     * @throw IllegalArgumentException  If {@code representation} does not correspond 
+     * @throws IllegalArgumentException If {@code representation} does not correspond 
      *                                  to any element of {@code enumField}.
      */
     protected static final <T extends Enum<T> & EnumDAOField> T convert(Class<T> enumField, 
@@ -90,7 +90,7 @@ public abstract class TransferObject implements Serializable {
      * @param enums A {@code Set} of {@code EnumDAOField}s to be converted.
      * @return      A {@code Set} of {@code String}s that are the representation of 
      *              the {@code EnumDAOField}s contained in {@code enums}.
-     * @param T     The type of {@code EnumDAOField}
+     * @param <T>   The type of {@code EnumDAOField}
      * 
      */
     protected static final <T extends Enum<T> & EnumDAOField> Set<String> 

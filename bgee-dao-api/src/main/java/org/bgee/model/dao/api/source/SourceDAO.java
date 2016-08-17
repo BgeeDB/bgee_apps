@@ -34,8 +34,8 @@ public interface SourceDAO extends DAO<SourceDAO.Attribute> {
      * <li>{@code BASE_URL}: corresponds to {@link SourceTO#getBaseUrl()}.
      * <li>{@code RELEASE_DATE}: corresponds to {@link SourceTO#getReleaseDate()}.
      * <li>{@code RELEASE_VERSION}: corresponds to {@link SourceTO#getReleaseVersion()}.
-     * <li>{@code TO_DISPLAY}: corresponds to {@link SourceTO#getToDisplay()}.
-     * <li>{@code CATEGORY}: corresponds to {@link SourceTO#getCategory()}.
+     * <li>{@code TO_DISPLAY}: corresponds to {@link SourceTO#isToDisplay()}.
+     * <li>{@code CATEGORY}: corresponds to {@link SourceTO#getSourceCategory()}.
      * <li>{@code DISPLAY_ORDER}: corresponds to {@link SourceTO#getDisplayOrder()}.
      * </ul>
      * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
@@ -148,7 +148,7 @@ public interface SourceDAO extends DAO<SourceDAO.Attribute> {
              * 
              * @param representation    A {@code String} representing a data state.
              * @return                  The {@code Category} corresponding to {@code representation}.
-             * @throw IllegalArgumentException  If {@code representation} does not correspond 
+             * @throws IllegalArgumentException If {@code representation} does not correspond 
              *                                  to any {@code Category}.
              */
             public static final SourceCategory convertToSourceCategory(String representation) {

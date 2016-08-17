@@ -26,10 +26,10 @@ public interface SummarySimilarityAnnotationDAO extends
      * {@code SummarySimilarityAnnotationTO}s obtained from this 
      * {@code SummarySimilarityAnnotationDAO}.
      * <ul>
-     * <li>{@code ID}: corresponds to {@link SummarySimilarityAnnotationDAO#getId()}.
-     * <li>{@code TAXON_ID}: corresponds to {@link SummarySimilarityAnnotationDAO#getTaxonId()}.
-     * <li>{@code NEGATED}: corresponds to {@link SummarySimilarityAnnotationDAO#isNegated()}.
-     * <li>{@code CIO_ID}: corresponds to {@link SummarySimilarityAnnotationDAO#getCIOId()}.
+     * <li>{@code ID}: corresponds to {@link SummarySimilarityAnnotationTO#getId()}.
+     * <li>{@code TAXON_ID}: corresponds to {@link SummarySimilarityAnnotationTO#getTaxonId()}.
+     * <li>{@code NEGATED}: corresponds to {@link SummarySimilarityAnnotationTO#isNegated()}.
+     * <li>{@code CIO_ID}: corresponds to {@link SummarySimilarityAnnotationTO#getCIOId()}.
      * </ul>
      * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
      * @see org.bgee.model.dao.api.DAO#setAttributes(Enum[])

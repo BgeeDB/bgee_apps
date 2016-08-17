@@ -8,11 +8,11 @@ import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.exception.DAOException;
 
 /**
- * DAO defining queries using or retrieving {@link EvidenceOntologyTO}s. 
+ * DAO defining queries using or retrieving {@link ECOTermTO}s. 
  *
  * @author Valentine Rech de Laval
  * @version Bgee 13
- * @see EvidenceOntologyTO
+ * @see ECOTermTO
  * @since Bgee 13
  */
 public interface EvidenceOntologyDAO extends DAO<EvidenceOntologyDAO.Attribute> {
@@ -21,9 +21,9 @@ public interface EvidenceOntologyDAO extends DAO<EvidenceOntologyDAO.Attribute> 
      * {@code Enum} used to define the attributes to populate in the {@code ECOTermTO}s 
      * obtained from this {@code EvidenceOntologyDAO}.
      * <ul>
-     * <li>{@code ID}: corresponds to {@link EvidenceOntologyDAO#getId()}.
-     * <li>{@code NAME}: corresponds to {@link EvidenceOntologyDAO#getName()}.
-     * <li>{@code DESCRIPTION}: corresponds to {@link EvidenceOntologyDAO#getDescription()}.
+     * <li>{@code ID}: corresponds to {@link ECOTermTO#getId()}.
+     * <li>{@code NAME}: corresponds to {@link ECOTermTO#getName()}.
+     * <li>{@code DESCRIPTION}: corresponds to {@link ECOTermTO#getDescription()}.
      * </ul>
      * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
      * @see org.bgee.model.dao.api.DAO#setAttributes(Enum[])

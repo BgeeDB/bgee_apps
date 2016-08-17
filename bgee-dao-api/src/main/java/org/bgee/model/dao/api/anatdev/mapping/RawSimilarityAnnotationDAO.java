@@ -23,16 +23,17 @@ public interface RawSimilarityAnnotationDAO extends DAO<RawSimilarityAnnotationD
      * {@code Enum} used to define the attributes to populate in the 
      * {@code RawSimilarityAnnotationTO}s obtained from this {@code RawSimilarityAnnotationDAO}.
      * <ul>
-     * <li>{@code ID}: corresponds to {@link RawSimilarityAnnotationDAO#getId()}.
-     * <li>{@code NEGATED}: corresponds to {@link RawSimilarityAnnotationDAO#isNegated()}.
-     * <li>{@code ECOID}: corresponds to {@link RawSimilarityAnnotationDAO#getECOId()}.
-     * <li>{@code CIOID}: corresponds to {@link RawSimilarityAnnotationDAO#getCIOId()}.
-     * <li>{@code REFERENCEID}: corresponds to {@link RawSimilarityAnnotationDAO#getReferenceId()}.
-     * <li>{@code REFERENCETITLE}: corresponds to {@link RawSimilarityAnnotationDAO#getReferenceTitle()}.
-     * <li>{@code SUPPORTINGTEXT}: corresponds to {@link RawSimilarityAnnotationDAO#getSupportingText()}.
-     * <li>{@code ASSIGNEDBY}: corresponds to {@link RawSimilarityAnnotationDAO#getAssignedBy()}.
-     * <li>{@code CURATOR}: corresponds to {@link RawSimilarityAnnotationDAO#getCurator()}.
-     * <li>{@code ANNOTATIONDATE}: corresponds to {@link RawSimilarityAnnotationDAO#getAnnotationDate()}.
+     * <li>{@code SUMMARY_SIMILARITY_ANNOTATION_ID}: corresponds to
+     *  {@link RawSimilarityAnnotationTO#getSummarySimilarityAnnotationId()}.
+     * <li>{@code NEGATED}: corresponds to {@link RawSimilarityAnnotationTO#isNegated()}.
+     * <li>{@code ECOID}: corresponds to {@link RawSimilarityAnnotationTO#getECOId()}.
+     * <li>{@code CIOID}: corresponds to {@link RawSimilarityAnnotationTO#getCIOId()}.
+     * <li>{@code REFERENCEID}: corresponds to {@link RawSimilarityAnnotationTO#getReferenceId()}.
+     * <li>{@code REFERENCETITLE}: corresponds to {@link RawSimilarityAnnotationTO#getReferenceTitle()}.
+     * <li>{@code SUPPORTINGTEXT}: corresponds to {@link RawSimilarityAnnotationTO#getSupportingText()}.
+     * <li>{@code ASSIGNEDBY}: corresponds to {@link RawSimilarityAnnotationTO#getAssignedBy()}.
+     * <li>{@code CURATOR}: corresponds to {@link RawSimilarityAnnotationTO#getCurator()}.
+     * <li>{@code ANNOTATIONDATE}: corresponds to {@link RawSimilarityAnnotationTO#getAnnotationDate()}.
      * </ul>
      * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
      * @see org.bgee.model.dao.api.DAO#setAttributes(Enum[])
@@ -163,23 +164,23 @@ public interface RawSimilarityAnnotationDAO extends DAO<RawSimilarityAnnotationD
          * <p>
          * All of these parameters are optional, so they can be {@code null} when not used.
          * 
-         * @param id                A {@code String} that is the ID of the associated 'summary' 
-         *                          similarity annotation.
-         * @param negated           A {@code Boolean} defining whether this annotation is negated.
-         * @param ecoId             A {@code String} that is the ID of the Evidence Ontology 
-         *                          statement associated to this raw similarity annotation.
-         * @param cioId             A {@code String} that is the ID of the confidence statement
-         *                          associated to this raw similarity annotation.
-         * @param referenceId       A {@code String} that is the ID of the source cited as an 
-         *                          authority for asserting the relation. 
-         * @param referenceTitle    A {@code String} that is the title of the source cited as an 
-         *                          authority for asserting the relation.
-         * @param supportingText    A {@code String} that is a quote from the reference, 
-         *                          supporting this raw similarity annotation.
-         * @param assignedBy        A {@code String} that is the database which made this annotation.
-         * @param curator           A {@code String} that is the code allowing to identify the 
-         *                          curator who made this annotation.
-         * @param annotationDate    A {@code Date} that is the date when this annotation was made.
+         * @param summarySimilarityAnnotationId A {@code String} that is the ID of the associated
+         *                                      'summary' similarity annotation.
+         * @param negated                       A {@code Boolean} defining whether this annotation is negated.
+         * @param ecoId                         A {@code String} that is the ID of the Evidence Ontology 
+         *                                      statement associated to this raw similarity annotation.
+         * @param cioId                         A {@code String} that is the ID of the confidence 
+         *                                      statement associated to this raw similarity annotation.
+         * @param referenceId                   A {@code String} that is the ID of the source cited 
+         *                                      as an authority for asserting the relation. 
+         * @param referenceTitle                A {@code String} that is the title of the source  
+         *                                      cited as an authority for asserting the relation.
+         * @param supportingText                A {@code String} that is a quote from the reference, 
+         *                                      supporting this raw similarity annotation.
+         * @param assignedBy                    A {@code String} that is the database which made this annotation.
+         * @param curator                       A {@code String} that is the code allowing to  
+         *                                      identify the curator who made this annotation.
+         * @param annotationDate                A {@code Date} that is the date when this annotation was made.
          * @throws IllegalArgumentException
          */
         public RawSimilarityAnnotationTO(String summarySimilarityAnnotationId, Boolean negated, 

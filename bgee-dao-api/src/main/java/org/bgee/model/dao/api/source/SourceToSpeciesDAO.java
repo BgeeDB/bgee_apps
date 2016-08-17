@@ -132,7 +132,7 @@ public interface SourceToSpeciesDAO extends DAO<SourceToSpeciesDAO.Attribute> {
              * 
              * @param representation    A {@code String} representing a data type.
              * @return                  The {@code DataType} corresponding to {@code representation}.
-             * @throw IllegalArgumentException  If {@code representation} does not correspond 
+             * @throws IllegalArgumentException If {@code representation} does not correspond 
              *                                  to any {@code DataType}.
              */
             public static final DataType convertToDataType(String representation) {
@@ -182,7 +182,7 @@ public interface SourceToSpeciesDAO extends DAO<SourceToSpeciesDAO.Attribute> {
              * 
              * @param representation    A {@code String} representing a information type.
              * @return                  The {@code InfoType} corresponding to {@code representation}.
-             * @throw IllegalArgumentException  If {@code representation} does not correspond 
+             * @throws IllegalArgumentException If {@code representation} does not correspond 
              *                                  to any {@code InfoType}.
              */
             public static final InfoType convertToInfoType(String representation) {

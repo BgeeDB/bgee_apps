@@ -93,7 +93,7 @@ public interface CallSourceRawDataDAO extends DAO<CallSourceRawDataDAO.Attribute
              * @param representation    A {@code String} representing a detection flag.
              * @return                  A {@code DetectionFlag} corresponding to 
              *                          {@code representation}.
-             * @throw IllegalArgumentException  If {@code representation} does not correspond 
+             * @throws IllegalArgumentException If {@code representation} does not correspond 
              *                                  to any {@code DetectionFlag}.
              */
             public static final DetectionFlag convertToDetectionFlag(String representation) {
@@ -166,7 +166,7 @@ public interface CallSourceRawDataDAO extends DAO<CallSourceRawDataDAO.Attribute
              * @param representation    A {@code String} representing an exclusion reason.
              * @return                  A {@code ExclusionReason} corresponding to 
              *                          {@code representation}.
-             * @throw IllegalArgumentException  If {@code representation} does not correspond 
+             * @throws IllegalArgumentException If {@code representation} does not correspond 
              *                                  to any {@code ExclusionReason}.
              */
             public static final ExclusionReason convertToExclusionReason(String representation) {

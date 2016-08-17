@@ -21,7 +21,7 @@ public interface GeneNameSynonymDAO extends DAO<GeneNameSynonymDAO.Attribute> {
      * {@code Enum} used to define the attributes to populate in the {@code GeneNameSynonymTO}s 
      * obtained from this {@code GeneNameSynonymDAO}.
      * <ul>
-     * <li>{@code GENE_ID}: corresponds to {@link GeneNameSynonymTO#getId()}.
+     * <li>{@code GENE_ID}: corresponds to {@link GeneNameSynonymTO#getGeneId()}.
      * <li>{@code GENE_NAME_SYNONYM}: corresponds to {@link GeneNameSynonymTO#getGeneNameSynonym()}.
      * </ul>
      * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)

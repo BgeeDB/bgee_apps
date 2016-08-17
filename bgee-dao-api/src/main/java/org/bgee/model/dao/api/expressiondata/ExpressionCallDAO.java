@@ -31,22 +31,23 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
      * <li>{@code GENE_ID}: corresponds to {@link ExpressionCallTO#getGeneId()}.
      * <li>{@code STAGE_ID}: corresponds to {@link ExpressionCallTO#getStageId()}.
      * <li>{@code ANAT_ENTITY_ID}: corresponds to {@link ExpressionCallTO#getAnatEntityId()}.
+     * <li>{@code GLOBAL_MEAN_RANK}: corresponds to {@link ExpressionCallTO#getGlobalMeanRank()}.
      * <li>{@code AFFYMETRIX_DATA}: corresponds to {@link ExpressionCallTO#getAffymetrixData()}.
-     * <li>{@code AFFYMETRIX_RANK}: corresponds to {@link ExpressionCallTO#getAffymetrixRank()}.
+     * <li>{@code AFFYMETRIX_MEAN_RANK}: corresponds to {@link ExpressionCallTO#getAffymetrixMeanRank()}.
      * <li>{@code EST_DATA}: corresponds to {@link ExpressionCallTO#getESTData()}.
-     * <li>{@code EST_RANK}: corresponds to {@link ExpressionCallTO#getESTRank()}.
+     * <li>{@code EST_MEAN_RANK}: corresponds to {@link ExpressionCallTO#getESTMeanRank()}.
      * <li>{@code IN_SITU_DATA}: corresponds to {@link ExpressionCallTO#getInSituData()}.
-     * <li>{@code IN_SITU_RANK}: corresponds to {@link ExpressionCallTO#getInSituRank()}.
+     * <li>{@code IN_SITU_MEAN_RANK}: corresponds to {@link ExpressionCallTO#getInSituMeanRank()}.
      * <li>{@code RNA_SEQ_DATA}: corresponds to {@link ExpressionCallTO#getRNASeqData()}.
-     * <li>{@code RNA_SEQ_RANK}: corresponds to {@link ExpressionCallTO#getRNASeqRank()}.
-     * <li>{@code GLOBAL_RANK}: corresponds to {@link ExpressionCallTO#getGlobalRank()}.
-     * <li>{@code INCLUDE_SUBSTRUCTURES}: corresponds to 
-     * {@link ExpressionCallTO#isIncludeSubstructures()}.
+     * <li>{@code RNA_SEQ_MEAN_RANK}: corresponds to {@link ExpressionCallTO#getRNASeqMeanRank()}.
+     * <li>{@code INCLUDE_SUBSTRUCTURES}: corresponds to {@link ExpressionCallTO#isIncludeSubstructures()}.
      * <li>{@code INCLUDE_SUBSTAGES}: corresponds to {@link ExpressionCallTO#isIncludeSubStages()}.
-     * <li>{@code ANAT_ORIGIN_OF_LINE}: corresponds to {@link ExpressionCallTO#getOriginOfLine()}.
+     * <li>{@code ANAT_ORIGIN_OF_LINE}: corresponds to {@link ExpressionCallTO#getAnatOriginOfLine()}.
+     * <li>{@code STAGE_ORIGIN_OF_LINE}: corresponds to {@link ExpressionCallTO#getStageOriginOfLine()}.
+     * <li>{@code OBSERVED_DATA}: corresponds to {@link ExpressionCallTO#isObservedData()}.
      * </ul>
      * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
-     * @see org.bgee.model.dao.api.DAO#setAttributes(Enum[])
+     * @see org.bgee.model.dao.api.DAO#setAttributes(Enum...)
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements CallDAO.Attribute {
@@ -117,13 +118,13 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
     /**
      * The attributes available to order retrieved {@code ExpressionCallTO}s
      * <ul>
-     * <li>{@code GENE_ID}: corresponds to {@link CallTO#getGeneId()}.
-     * <li>{@code STAGE_ID}: corresponds to {@link CallTO#getStageId()}.
-     * <li>{@code ANAT_ENTITY_ID}: corresponds to {@link CallTO#getAnatEntityId()}.
+     * <li>{@code GENE_ID}: corresponds to {@link ExpressionCallTO#getGeneId()}.
+     * <li>{@code STAGE_ID}: corresponds to {@link ExpressionCallTO#getStageId()}.
+     * <li>{@code ANAT_ENTITY_ID}: corresponds to {@link ExpressionCallTO#getAnatEntityId()}.
      * <li>{@code OMA_GROUP_ID}: order results by the OMA group genes belong to. 
      * If this {@code OrderingAttribute} is used in a query not specifying any targeted taxon 
      * for gene orthology, then the {@code OMAParentNodeId} of the gene is used (see 
-     * {@link org.bgee.model.dao.api.gene.GeneDAO.GeneTO.getOMAParentNodeId()}); otherwise, 
+     * {@link org.bgee.model.dao.api.gene.GeneDAO.GeneTO#getOMAParentNodeId()}); otherwise, 
      * the OMA group the gene belongs to at the level of the targeted taxon is used. 
      * <li>{@code MEAN_RANK}: Corresponds to {@link ExpressionCallTO#getGlobalMeanRank()}. 
      * Order results by mean rank of the gene in the corresponding condition. 
@@ -339,8 +340,8 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
              * .
              * 
              * @param representation    A {@code String} representing a data state.
-             * @return  A {@code OriginOfLine} corresponding to {@code representation}.
-             * @throw IllegalArgumentException  If {@code representation} does not correspond 
+             * @return                  A {@code OriginOfLine} corresponding to {@code representation}.
+             * @throws IllegalArgumentException If {@code representation} does not correspond 
              *                                  to any {@code OriginOfLine}.
              */
             public static final OriginOfLine convertToOriginOfLine(String representation) {
@@ -555,35 +556,35 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
          *                              Affymetrix data, then this rank will be equal to the rank 
          *                              returned by {@link #getAffymetrixMeanRank()}. 
          *                              Note that this information is available only if 
-         *                              {@link isIncludeSubstructures()} returns {@code false} 
+         *                              {@link #isIncludeSubstructures()} returns {@code false} 
          *                              or {@code null}.
          * @param affymetrixData        A {@code DataSate} that is the contribution of Affymetrix  
          *                              data to the generation of this call.
          * @param affymetrixMeanRank    A {@code BigDecimal} that is the mean rank of the gene 
          *                              in the condition, based on Affymetrix expression levels. 
          *                              Note that this information is available only if 
-         *                              {@link isIncludeSubstructures()} returns {@code false} 
+         *                              {@link #isIncludeSubstructures()} returns {@code false} 
          *                              or {@code null}.
          * @param estData               A {@code DataSate} that is the contribution of EST data
          *                              to the generation of this call.
          * @param estMeanRank           A {@code BigDecimal} that is the mean rank of the gene 
          *                              in the condition, based on EST expression levels. 
          *                              Note that this information is available only if 
-         *                              {@link isIncludeSubstructures()} returns {@code false} 
+         *                              {@link #isIncludeSubstructures()} returns {@code false} 
          *                              or {@code null}.
          * @param inSituData            A {@code DataSate} that is the contribution of 
          *                              <em>in situ</em> data to the generation of this call.
          * @param inSituMeanRank        A {@code BigDecimal} that is the mean rank of the gene 
          *                              in the condition, based on in situ expression data. 
          *                              Note that this information is available only if 
-         *                              {@link isIncludeSubstructures()} returns {@code false} 
+         *                              {@link #isIncludeSubstructures()} returns {@code false} 
          *                              or {@code null}.
          * @param rnaSeqData            A {@code DataSate} that is the contribution of RNA-Seq data
          *                              to the generation of this call.
          * @param rnaSeqMeanRank        A {@code BigDecimal} that is the mean rank of the gene 
          *                              in the condition, based on RNA-Seq expression levels. 
          *                              Note that this information is available only if 
-         *                              {@link isIncludeSubstructures()} returns {@code false} 
+         *                              {@link #isIncludeSubstructures()} returns {@code false} 
          *                              or {@code null}.
          * @param includeSubstructures  A {@code Boolean} defining whether this expression call was 
          *                              generated using data from the anatomical entity with the ID 
@@ -648,7 +649,7 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
          * <p>
          * The data types are represented as {@code Attribute}s allowing to request a data type parameter 
          * (see {@link CallDAO.Attribute#isDataTypeAttribute()}). The {@code DataState}s 
-         * associated to each data type are retrieved using {@link CallTO#extractDataTypesToDataStates()}. 
+         * associated to each data type are retrieved using {@link #extractDataTypesToDataStates()}. 
          * A check is then performed to ensure that the {@code CallTO} will actually result 
          * in a filtering of the data. For instance, if all data qualities are {@code null},  
          * then it is equivalent to requesting no filtering at all, and the {@code EnumMap} returned 
@@ -676,7 +677,7 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
         
         /**
          * Sets the {@code boolean} defining whether this expression call was generated 
-         * using data from the anatomical entity with the ID {@link CallTO#getAnatEntityId()} 
+         * using data from the anatomical entity with the ID {@link #getAnatEntityId()} 
          * alone, or by also considering all its descendants by <em>is_a</em> or 
          * <em>part_of</em> relations, even indirect. If {@code true}, all its descendants 
          * were considered.
@@ -691,7 +692,7 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
         }
         /**
          * Returns the {@code Boolean} defining whether this expression call was generated 
-         * using data from the anatomical entity with the ID {@link CallTO#getAnatEntityId()} 
+         * using data from the anatomical entity with the ID {@link #getAnatEntityId()} 
          * alone, or by also considering all its descendants by <em>is_a</em> or 
          * <em>part_of</em> relations, even indirect. If {@code true}, all its descendants 
          * were considered. The returned {@code Boolean} can be {@code null} 
@@ -807,7 +808,7 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
         /**
          * @return  A {@code BigDecimal} that is the mean rank of the gene in the condition, 
          *          based on Affymetrix expression levels. Note that this information is available 
-         *          only if {@link isIncludeSubstructures()} returns {@code false} or {@code null}.
+         *          only if {@link #isIncludeSubstructures()} returns {@code false} or {@code null}.
          */
         public BigDecimal getAffymetrixMeanRank() {
             return affymetrixMeanRank;
@@ -815,7 +816,7 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
         /**
          * @return  A {@code BigDecimal} that is the mean rank of the gene in the condition, 
          *          based on EST expression levels. Note that this information is available 
-         *          only if {@link isIncludeSubstructures()} returns {@code false} or {@code null}.
+         *          only if {@link #isIncludeSubstructures()} returns {@code false} or {@code null}.
          */
         public BigDecimal getESTMeanRank() {
             return estMeanRank;
@@ -823,7 +824,7 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
         /**
          * @return  A {@code BigDecimal} that is the mean rank of the gene in the condition, 
          *          based on in situ expression data. Note that this information is available 
-         *          only if {@link isIncludeSubstructures()} returns {@code false} or {@code null}.
+         *          only if {@link #isIncludeSubstructures()} returns {@code false} or {@code null}.
          */
         public BigDecimal getInSituMeanRank() {
             return inSituMeanRank;
@@ -831,7 +832,7 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
         /**
          * @return  A {@code BigDecimal} that is the mean rank of the gene in the condition, 
          *          based on RNA-Seq expression levels. Note that this information is available 
-         *          only if {@link isIncludeSubstructures()} returns {@code false} or {@code null}.
+         *          only if {@link #isIncludeSubstructures()} returns {@code false} or {@code null}.
          */
         public BigDecimal getRNASeqMeanRank() {
             return rnaSeqMeanRank;
@@ -842,7 +843,7 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
          *          So for instance, if you configured an {@code ExpressionCallDAOFilter} 
          *          to only retrieved Affymetrix data, then this rank will be equal to the rank 
          *          returned by {@link #getAffymetrixMeanRank()}. Note that this information is available 
-         *          only if {@link isIncludeSubstructures()} returns {@code false} or {@code null}.
+         *          only if {@link #isIncludeSubstructures()} returns {@code false} or {@code null}.
          */
         public BigDecimal getGlobalMeanRank() {
             return globalMeanRank;

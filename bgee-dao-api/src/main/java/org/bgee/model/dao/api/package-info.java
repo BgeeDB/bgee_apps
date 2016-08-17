@@ -2,7 +2,8 @@
  * This package provides the API to access data sources. It notably provides 
  * DAO interfaces, with methods returning or accepting data by means of 
  * {@code TransferObject}s. The entry point to this API is the class 
- * {@link DAOManager}, see its Javadoc for detailed explanations about its use. 
+ * {@link org.bgee.model.dao.api.DAOManager DAOManager}, see its Javadoc for 
+ * detailed explanations about its use. 
  * <p>
  * This API can be used with any concrete implementation acting under the hood, 
  * specific to a data source, using the {@code Service Provider} mechanisms (see below). 

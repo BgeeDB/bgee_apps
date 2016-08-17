@@ -7,6 +7,7 @@ import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DiffExpressionFactor;
+import org.bgee.model.gene.Gene;
 import org.bgee.model.expressiondata.baseelements.CallType.DiffExpression;
 import org.bgee.model.expressiondata.baseelements.CallType.Expression;
 
@@ -150,7 +151,7 @@ public abstract class CallData<T extends Enum<T> & CallType> {
 	 * 
 	 * @param callType The {@code CallType} of this {@code CallData}.
      * @throws IllegalArgumentException    If {@code callType} is {@code null}.
-	 * @see #CallData(T, DataQuality, DataType, DataPropagation)
+	 * @see CallData#CallData(Enum, DataQuality, DataType, DataPropagation)
 	 */
 	protected CallData(T callType) throws IllegalArgumentException {
 	    this(callType, null);
@@ -165,7 +166,7 @@ public abstract class CallData<T extends Enum<T> & CallType> {
      * @throws IllegalArgumentException    If {@code callType} is {@code null}, 
      *                                     or if {@code dataType} is not {@code null} 
      *                                     and incompatible with {@code callType}.
-     * @see #CallData(T, DataQuality, DataType, DataPropagation)
+     * @see CallData#CallData(Enum, DataQuality, DataType, DataPropagation)
      */
     protected CallData(T callType, DataType dataType) throws IllegalArgumentException {
         this(callType, DataQuality.LOW, dataType);
@@ -216,7 +217,7 @@ public abstract class CallData<T extends Enum<T> & CallType> {
 	 * @throws IllegalArgumentException    If any of {@code callType}, {@code dataQual}, 
 	 *                                     or {@code dataPropagation} is {@code null}, 
 	 *                                     or if {@code dataPropagation} is incompatible 
-     *                                     with {@code callType, or if {@code dataType} 
+     *                                     with {@code callType}, or if {@code dataType} 
      *                                     is not {@code null} and incompatible with 
      *                                     {@code callType}.
 	 */

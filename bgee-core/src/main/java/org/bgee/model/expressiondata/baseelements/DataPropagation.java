@@ -9,7 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Defines the source of expression data of a {@link CallData} or {@code Call}, along 
+ * Defines the source of expression data of a {@code CallData} or {@code Call}, along 
  * the ontologies used to capture conditions. For instance, the expression of a gene 
  * in a given anatomical entity could have been observed in the anatomical entity itself, 
  * or only in some substructures of the entity, or in both. Similarly, expression in a given 

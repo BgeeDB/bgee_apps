@@ -40,7 +40,7 @@ public class KeywordService extends Service {
 	 * @return     A {@code Map} where keys are {@code String}s representing species Ids, 
      *             and values are {@code Set}s of {@code String}s that are the associated keywords.
      *             For species, keywords represent alternative names.
-	 * @see #getKeywordForAllSpecies(Collection)
+	 * @see #getKeywordForSpecies(Collection)
 	 */
 	public Map<String, Set<String>> getKeywordForAllSpecies() {
 		log.entry();

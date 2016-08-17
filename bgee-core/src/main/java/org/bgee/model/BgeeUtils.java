@@ -49,7 +49,7 @@ public class BgeeUtils {
      * Returns an unmodifiable view of a new {@code Map} initialized from the specified {@code Map}. 
      * This is a shallow copy operation. The returned {@code Map} will be empty if {@code m} is {@code null}.
      * 
-     * @param c     A {@code Map} to convert. Can be {@code null}.
+     * @param m     A {@code Map} to convert. Can be {@code null}.
      * @return      A new and unmodifiable {@code Map} initialized from {@code m}.
      */
     public static <T, U> Map<T, U> toMap(Map<T, U> m) {

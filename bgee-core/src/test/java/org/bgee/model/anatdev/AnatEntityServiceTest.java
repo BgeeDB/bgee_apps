@@ -113,6 +113,9 @@ public class AnatEntityServiceTest extends TestAncestor {
                 service.loadAnatEntities(speciesIds, true, anatEntityIds).collect(Collectors.toList()));
     }
     
+    /**
+     * Test the method {@link AnatEntityService#loadAnatEntitySimilarities(String, Set, boolean)}.
+     */
     @Test
     public void shouldLoadAnatEntitySimilarities() {
         DAOManager managerMock = mock(DAOManager.class);

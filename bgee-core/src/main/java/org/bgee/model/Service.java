@@ -2,6 +2,7 @@ package org.bgee.model;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOManager;
 
 /**
@@ -31,7 +32,7 @@ public abstract class Service {
     /**
      * Interface implemented by {@code Enum} classes allowing to select 
      * the fields used to order the results of a query to a {@code Service}. 
-     * This is a separate interface from {@link DAO.Attribute}, because 
+     * This is a separate interface from {@link org.bgee.model.dao.api.DAO.Attribute}, because 
      * the attributes to retrieve from a query, and the attributes to use to order 
      * the results of a query, are often different, and some attributes used for ordering 
      * can even be absent from the set of attributes retrievable from a query.

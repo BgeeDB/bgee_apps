@@ -829,7 +829,6 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          *          this {@code ExpressionCall}.
          *          
          * @see #getFormattedGlobalMeanRank()
-         * @see #getFormattedGlobalMeanRank(NumberFormat)
          */
         public BigDecimal getGlobalMeanRank() {
             return this.globalMeanRank;

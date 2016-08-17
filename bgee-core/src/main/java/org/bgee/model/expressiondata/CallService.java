@@ -123,7 +123,8 @@ public class CallService extends Service {
     }
     
     /** 
-     * Load expression calls with parameter provided through an {@code ExpressionCallFilter}.
+     * Load propagated and reconciled expression calls with parameter provided 
+     * through an {@code ExpressionCallFilter}.
      * 
      * @param speciesId             A {@code String} that is the ID of the species 
      *                              for which to return the {@code ExpressionCall}s.
@@ -137,7 +138,8 @@ public class CallService extends Service {
      *                              used to order the returned {@code ExpressionCall}s, 
      *                              the associated value being a {@code Service.Direction} defining 
      *                              whether the ordering should be ascendant or descendant.
-     * @return
+     * @return                      A {@code Stream} of {@code ExpressionCall}s that are propagated
+     *                              and reconciled expression calls.
      * @throws IllegalArgumentException If {@code callFilter} or {@code speciesID} are null or empty.
      */
     public Stream<ExpressionCall> loadExpressionCalls(String speciesId, 
@@ -211,7 +213,7 @@ public class CallService extends Service {
      * 
      * @param call          An {@code ExpressionCall} that is the expression call to be evaluated.
      * @param callFilter    An {@code ExpressionCallFilter} that is the filter 
-     *                      to be used to evaluate {@call}.
+     *                      to be used to evaluate {@code call}.
      * @return              {@code true} if the {@code call} matches {@code callFilter}.
      * @throws IllegalArgumentException If {@code call}, call data of {@code call}
      *                                  or {@code callFilter} are null.

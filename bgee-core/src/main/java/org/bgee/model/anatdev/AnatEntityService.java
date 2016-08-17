@@ -27,10 +27,10 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
  * A {@link Service} to obtain {@link AnatEntity} objects. 
  * Users should use the {@link org.bgee.model.ServiceFactory} to obtain {@code AnatEntityService}s.
  * 
- * @author Frederic Bastian
- * @author Valentine Rech de Laval
- * @author Philippe Moret
- * @version Bgee 13, Apr. 2016
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @author  Philippe Moret
+ * @version Bgee 13, Aug. 2016
  * @since   Bgee 13, Nov. 2015
 */
 public class AnatEntityService extends Service {

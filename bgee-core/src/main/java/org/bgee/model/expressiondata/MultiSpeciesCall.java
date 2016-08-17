@@ -27,13 +27,13 @@ public class MultiSpeciesCall<T extends Call<?, ?>> {
      * Constructor providing the anat entity similarity group, the dev. stage similarity group,
      * the OMA node ID and the single-species calls of this {@code MultiSpeciesCall}. 
      * 
-     * @param anatSimilarity        An {@code AnatEntitySimilarity} that is the group 
-     *                              of homologous organs of this call.
-     * @param devStageSimilarity    A {@code DevStageSimilarity} that is the group of stages of this call.
-     * @param omaNodeId             A {@code String} that is the ID of the OMA node of 
-     *                              orthologous genes of this call.
-     * @param calls                 A {@code Set} of {@code Call}s that are single-species calls
-     *                              used to constitute this {@code MultiSpeciesCall}.
+     * @param anatSimilarity    An {@code AnatEntitySimilarity} that is the group 
+     *                          of homologous organs of this call.
+     * @param stageSimilarity   A {@code DevStageSimilarity} that is the group of stages of this call.
+     * @param omaNodeId         A {@code String} that is the ID of the OMA node of 
+     *                          orthologous genes of this call.
+     * @param calls             A {@code Set} of {@code Call}s that are single-species calls
+     *                          used to constitute this {@code MultiSpeciesCall}.
      */
     public MultiSpeciesCall(AnatEntitySimilarity anatSimilarity, DevStageSimilarity stageSimilarity,
             String omaNodeId, Set<T> calls) {

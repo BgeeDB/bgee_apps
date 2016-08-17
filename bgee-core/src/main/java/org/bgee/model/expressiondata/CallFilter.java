@@ -55,7 +55,7 @@ public class CallFilter<T extends CallData<?>> {
          *                          based on the expression data generation (for instance, 
          *                          minimum quality level for each data type, or type of propagation allowed, 
          *                          e.g., propagation of expression calls from substructures).
-         * @see #ExpressionCallFilter(GeneFilter, Collection, Collection)
+         * @see ExpressionCallFilter#ExpressionCallFilter(GeneFilter, Collection, Collection)
          */
         public ExpressionCallFilter(ExpressionCallData callDataFilter) {
             this(null, null, new HashSet<>(Arrays.asList(callDataFilter)));
@@ -84,7 +84,7 @@ public class CallFilter<T extends CallData<?>> {
          * @param callDataFilter    A {@code DiffExpressionCallData} to configure the filtering 
          *                          based on the expression data generation (for instance, 
          *                          minimum quality level for each data type).
-         * @see #DiffExpressionCallFilter(GeneFilter, Collection, Collection)
+         * @see DiffExpressionCallFilter#DiffExpressionCallFilter(GeneFilter, Collection, Collection)
          */
         public DiffExpressionCallFilter(DiffExpressionCallData callDataFilter) {
             this(null, null, new HashSet<>(Arrays.asList(callDataFilter)));

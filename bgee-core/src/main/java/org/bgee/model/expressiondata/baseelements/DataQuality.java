@@ -36,7 +36,7 @@ public enum DataQuality implements BgeeEnumField {
      * @param representation            A {@code String} representing a data quality.
      * @return                          A {@code DataQuality} corresponding 
      *                                  to {@code representation}.
-     * @throw IllegalArgumentException  If {@code representation} does not correspond 
+     * @throws IllegalArgumentException If {@code representation} does not correspond 
      *                                  to any {@code DataQuality}.
      * @see #convert(Class, String)
      */

@@ -47,15 +47,15 @@ public enum DataType implements BgeeEnumField {
     /**
      * Convert the {@code Collection} of {@code String}s that are string representations of data types
      * into a {@code Set} of {@code DataType}s.
-     * Operation performed by calling {@link BgeeEnum#convertStringSetToEnumSet(Class, Set)} with 
-     * {@code DataType} as the {@code Class} argument, and {@code representation} 
+     * Operation performed by calling {@link BgeeEnum#convertStringSetToEnumSet(Class, Collection)}
+     * with {@code DataType} as the {@code Class} argument, and {@code representation} 
      * as the {@code String} argument.
      * 
      * @param representations           A {@code Collection} of {@code String}s that are string
      *                                  representations of data types.
      * @return                          A {@code Set} of {@code DataType}s corresponding 
      *                                  to {@code representations}.
-     * @throw IllegalArgumentException  If a representation does not correspond 
+     * @throws IllegalArgumentException If a representation does not correspond 
      *                                  to any {@code DataType}.
      */
     public static final Set<DataType> convertToDataTypeSet(Collection<String> representations) {

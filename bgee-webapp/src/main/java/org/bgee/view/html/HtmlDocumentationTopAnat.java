@@ -33,8 +33,8 @@ public class HtmlDocumentationTopAnat extends HtmlDocumentationDownloadFile {
      *                          current request.
      * @param prop              A {@code BgeeProperties} instance that contains the properties
      *                          to use.
-     * @param factory           The {@code HtmlFactory} that instantiated the {@link HtmlDocumentation} 
-     *                          object using this object.
+     * @param factory           The {@code HtmlFactory} that instantiated the
+     *                          {@link HtmlDocumentationDisplay} object using this object.
      * @throws IllegalArgumentException If {@code factory} is {@code null}.
      * @throws IOException              If there is an issue when trying to get or to use the
      *                                  {@code PrintWriter} 

@@ -75,7 +75,7 @@ public class FrontController extends HttpServlet {
 
     /**
      * Default constructor. It will use default implementations for all dependencies 
-     * (see {@link #FrontController(BgeeProperties, URLParameters, Supplier, ViewFactoryProvider)}).
+     * (see {@link #FrontController(BgeeProperties, URLParameters, Supplier, ViewFactoryProvider, MailSender)}).
      */
     public FrontController() {
         this(null);
@@ -84,7 +84,7 @@ public class FrontController extends HttpServlet {
     /**
      * Constructor that takes as parameter a {@code java.util.Properties} to create 
      * a {@code BgeeProperties} instance. It will use default implementations for all dependencies 
-     * (see {@link #FrontController(BgeeProperties, URLParameters, Supplier, ViewFactoryProvider)}).
+     * (see {@link #FrontController(BgeeProperties, URLParameters, Supplier, ViewFactoryProvider, MailSender)}).
      * 
      * @param prop  A {@code java.util.Properties} that will be use to create an instance of
      *              {@code BgeeProperties}

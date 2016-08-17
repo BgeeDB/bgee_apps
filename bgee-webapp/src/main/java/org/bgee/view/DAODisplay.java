@@ -18,7 +18,7 @@ import org.bgee.model.dao.api.TransferObject;
 public interface DAODisplay {
     /**
      * Display the {@code TransferObject}s returned by the provided {@code DAOResultSet}. 
-     * Only the fields corresponding to the provided {@Attribute}s are printed. 
+     * Only the fields corresponding to the provided {@code DAO.Attribute}s are printed. 
      * 
      * @param attributes    A {@code List} of {@code DAO.Attribute}s, specifying the fields 
      *                      of the {@code TransferObject}s to be printed, and their display order.

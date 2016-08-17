@@ -24,10 +24,10 @@ import java.util.stream.Stream;
  * This class handles the serialization of objects to JSON.
  * Current implementation rely on the google gson library.
  *
- * @author Philippe Moret
- * @author Frederic Bastian
- * @version Bgee 13 Nov. 2015
- * @sine Bgee 13
+ * @author  Philippe Moret
+ * @author  Frederic Bastian
+ * @version Bgee 13, Dec. 2015
+ * @since   Bgee 13, Oct. 2015
  */
 public class JsonHelper {
     

@@ -1138,7 +1138,7 @@ public class CommandTopAnat extends CommandParent {
     }
 
     /**
-     * A convenient class to be passed to {@link JsonHelper} for gene list upload responses. 
+     * A convenient class to be passed to {@link org.bgee.view.JsonHelper} for gene list upload responses. 
      */
     public static class GeneListResponse {
         /**
@@ -1306,7 +1306,7 @@ public class CommandTopAnat extends CommandParent {
     }
 
     /**
-     * A convenient class to be passed to {@link JsonHelper} for job responses. 
+     * A convenient class to be passed to {@link org.bgee.view.JsonHelper} for job responses. 
      */
     public static class JobResponse {
         /**

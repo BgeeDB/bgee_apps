@@ -18,8 +18,10 @@ import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO.GroupToStageTO;
  * Users should use the {@link org.bgee.model.ServiceFactory} to obtain {@code DevStageService}s.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Nov. 2013
- * @since   Bgee 13, Nov. 2013
+ * @author  Frederic Bastian
+ * @author  Philippe Moret
+ * @version Bgee 13, Aug. 2016
+ * @since   Bgee 13, Nov. 2015
  */
 public class DevStageService extends Service {
 
@@ -86,7 +88,6 @@ public class DevStageService extends Service {
      * @return              The {@code Set} of {@link DevStageSimilarity} that are dev. stage 
      *                      similarities from provided {@code taxonId} and {@code speciesIds}.
      */
-    // FIXME: unit tests
     public Set<DevStageSimilarity> loadDevStageSimilarities(String taxonId, Set<String> speciesIds) {
        log.entry(taxonId, speciesIds);
        return log.exit(this.getDaoManager().getStageGroupingDAO().getGroupToStage(taxonId, speciesIds).stream()

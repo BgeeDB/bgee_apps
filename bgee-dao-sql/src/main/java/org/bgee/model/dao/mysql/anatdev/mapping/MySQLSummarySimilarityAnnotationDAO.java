@@ -23,7 +23,7 @@ import com.mysql.jdbc.StringUtils;
  * @author Valentine Rech de Laval
  * @author Frederic Bastian
  * @version Bgee 13 Mar. 2015
- * @see org.bgee.model.dao.api.annotation.anatsimilarity.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO
+ * @see org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO
  * @since Bgee 13
  */
 public class MySQLSummarySimilarityAnnotationDAO 

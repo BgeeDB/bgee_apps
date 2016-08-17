@@ -56,10 +56,11 @@ public class MySQLGeneNameSynonymDAO extends MySQLDAO<GeneNameSynonymDAO.Attribu
 	}
 
 	/**
-	 * The MySQL implementation of {@link GeneNameSynonymTOResultSet}
+	 * The MySQL implementation of {@link org.bgee.model.dao.api.gene.GeneNameSynonymDAO.GeneNameSynonymTOResultSet}
+	 * 
      * @version Bgee 13.2
- 	 * @author Philippe Moret
- 	 * @since Bgee 13.2
+ 	 * @author  Philippe Moret
+ 	 * @since   Bgee 13.2
 	 */
 	public class MySQLGeneNameSynonymTOResultSet extends MySQLDAOResultSet<GeneNameSynonymTO>
 	        implements GeneNameSynonymTOResultSet {

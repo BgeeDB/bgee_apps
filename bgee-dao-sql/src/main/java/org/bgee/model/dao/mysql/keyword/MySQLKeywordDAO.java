@@ -26,7 +26,7 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
  * 
  * @author Frederic Bastian
  * @version Bgee 13 August 2015
- * @see org.bgee.model.dao.api.gene.KeywordDAO.KeywordTO
+ * @see org.bgee.model.dao.api.keyword.KeywordDAO.KeywordTO
  * @see org.bgee.model.dao.api.keyword.KeywordDAO.EntityToKeywordTO
  * @since Bgee 13
  */

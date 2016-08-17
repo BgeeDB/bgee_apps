@@ -337,7 +337,7 @@ public class BgeePreparedStatement implements AutoCloseable {
         log.exit();
     }
     /**
-     * Delegated to {@link java.sql.PreparedStatement#setLong(int, Long)}.
+     * Delegated to {@link java.sql.PreparedStatement#setLong(int, long)}.
      * <p>
      * If {@code x} is {@code null} delegated to {@link #setNull(int, Types.INTEGER)}.
      * 
@@ -513,7 +513,7 @@ public class BgeePreparedStatement implements AutoCloseable {
      *                          If these are the first parameters set for this 
      *                          {@code BgeePreparedStatement}, the first parameter is 1.
      * @param values            A {@code Collection} of {@code String}s that are values to be used 
-     *                          to set the parameters (see {@link #setDecimal(int, String)}).
+     *                          to set the parameters (see {@link #setBigDecimal(int, String)}).
      * @param toOrder           A {@code boolean} defining whether {@code values} should be ordered 
      *                          based on their natural ordering, to improve chances of cache hit. 
      *                          {@code values} will not be modified. Values will be converted 
@@ -560,11 +560,11 @@ public class BgeePreparedStatement implements AutoCloseable {
      *                          marker in the SQL statement; if a database access error 
      *                          occurs or this method is called on a closed PreparedStatement.
      */
-    public void setDate(int parameterIndex, Date x) throws SQLException {
-        if (x == null) {
+    public void setDate(int parameterIndex, Date date) throws SQLException {
+        if (date == null) {
             this.setNull(parameterIndex, Types.DATE);
         } else {
-            this.getRealPreparedStatement().setDate(parameterIndex, x);
+            this.getRealPreparedStatement().setDate(parameterIndex, date);
         }
     }
     

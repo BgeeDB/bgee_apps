@@ -81,8 +81,8 @@ implements SpeciesDataGroupDAO {
     /**
      * A {@code String} that is the ID of the species that the ordering 
      * of the {@code SpeciesToDatGroupTO}s will be based on, 
-     * when {@link SpeciesToGroupOrderingAttribute DISTANCE_TO_SPECIES} is used.
-     * @see SpeciesToGroupOrderingAttribute DISTANCE_TO_SPECIES
+     * when {@link SpeciesToGroupOrderingAttribute#DISTANCE_TO_SPECIES} is used.
+     * @see SpeciesToGroupOrderingAttribute#DISTANCE_TO_SPECIES
      */
     private final String speciesId;
     
@@ -103,16 +103,16 @@ implements SpeciesDataGroupDAO {
     /**
      * Constructor providing the {@code MySQLDAOManager} to use and the ID of the species 
      * to target, when ordering of {@code SpeciesToDataGroupTO}s is requested, using 
-     * {@link SpeciesToGroupOrderingAttribute DISTANCE_TO_SPECIES}.
+     * {@link SpeciesToGroupOrderingAttribute#DISTANCE_TO_SPECIES}.
      *
      * @param manager   The {@code MySQLDAOManager} to use.
      * @param speciesId A {@code String} that is the ID of the species that the ordering
      *                  of the {@code SpeciesToDataGroupTO}s will be based on, 
-     *                  when {@link SpeciesToGroupOrderingAttribute DISTANCE_TO_SPECIES} 
+     *                  when {@link SpeciesToGroupOrderingAttribute#DISTANCE_TO_SPECIES} 
      *                  is used. 
      * @throws IllegalArgumentException If {@code manager} is {@code null}, or {@code speciesId} 
      *                                  is blank.
-     * @see SpeciesToGroupOrderingAttribute DISTANCE_TO_SPECIES
+     * @see SpeciesToGroupOrderingAttribute#DISTANCE_TO_SPECIES
      */
     public MySQLSpeciesDataGroupDAO(MySQLDAOManager manager, String speciesId) throws IllegalArgumentException {
         super(manager);

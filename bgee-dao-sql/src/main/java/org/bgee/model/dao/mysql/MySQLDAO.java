@@ -166,7 +166,7 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
      * if no {@code Attribute} corresponding to {@code colName} could be found: this is 
      * the expected behavior of the {@code getNewTO} methods.
      * <p>
-     * See {@link #getSelectExprFromAttribute(T, Map)} for the opposite helper method, 
+     * See {@link #getSelectExprFromAttribute(Enum, Map)} for the opposite helper method, 
      * that can be used to generate the 'select_expr's in the SELECT clause of a query. 
      * Note that column names of a result set can correspond exactly to the 'select_expr's used 
      * in the query, or they can differ if aliases were used. In the latter case, this method 
@@ -182,7 +182,7 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
      * @return                      An {@code Attribute} {@code T} corresponding to {@code colName}.
      * @throws UnrecognizedColumnException  If {@code colName} does not correspond to 
      *                                      any {@code Attribute} in {@code colNamesToAttributes}.
-     * @see #getSelectExprFromAttribute(T, Map)
+     * @see #getSelectExprFromAttribute(Enum, Map)
      */
     protected T getAttributeFromColName(String colName, Map<String, T> colNamesToAttributes) 
             throws UnrecognizedColumnException {
@@ -197,7 +197,7 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
      * Get the 'select_expr' of a SELECT clause corresponding to the {@code Attribute} {@code attr}.
      * The mapping is retrieved from {@code selectExprsToAttributes}. This helper method  
      * is most likely used when writing a SQL query. See also the simple helper method 
-     * {@link #generateSelectClause(String, Map)}.
+     * {@link #generateSelectClause(String, Map, boolean)}.
      * <p>
      * See {@link #getAttributeFromColName(String, Map)} for the opposite helper method, 
      * that can be used to retrieve the {@code Attribute} corresponding to the column name of a result set. 
@@ -220,7 +220,7 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
      *                                  are mapped to a same {@code Attribute}.
      * @see #getAttributeFromColName(String, Map)
      * @see #reverseColNameMap(Map)
-     * @see #generateSelectClause(String, Map)
+     * @see #generateSelectClause(String, Map, boolean)
      */
     //FIXME: we shouldn't reverse the Map at each call to this method...
     protected String getSelectExprFromAttribute(T attr, Map<String, T> selectExprsToAttributes) 
@@ -249,7 +249,7 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
     /**
      * Helper method to generate the SELECT clause of a query, from the {@code Attribute}s 
      * returned by {@link #getAttributes()}, using the method 
-     * {@link #getSelectExprFromAttribute(T, Map)}. This method helps only in simple cases, 
+     * {@link #getSelectExprFromAttribute(Enum, Map)}. This method helps only in simple cases, 
      * more complex statements should be hand-written (for instance, when {@code Attribute}s 
      * correspond to columns in different tables, or to a sub-query). 
      * 
@@ -259,7 +259,7 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
      *                                  'select_expr's, associated to their corresponding 
      *                                  {@code Attribute} as values. This {@code Map} does not have  
      *                                  {@code Attribute}s as keys for coherence with the method 
-     *                                  {@link getAttributeFromColName(T, Map)}.
+     *                                  {@link #getAttributeFromColName(String, Map)}.
      * @param distinct                  A {@code boolean} defining whether the DISTINCT keyword 
      *                                  is needed in the SELECT clause.
      * @return                          A {@code String} that is the generated SELECT clause.
@@ -267,7 +267,7 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
      *                                  to an {@code Attribute} returned by {@link #getAttributes()}, 
      *                                  or if several 'select_expr's are mapped to a same {@code Attribute}.
      * @see #getAttributes()
-     * @see #getSelectExprFromAttribute(T, Map)
+     * @see #getSelectExprFromAttribute(Enum, Map)
      * @see #reverseColNameMap(Map)
      */
     protected String generateSelectClause(String tableName, Map<String, T> selectExprsToAttributes, 

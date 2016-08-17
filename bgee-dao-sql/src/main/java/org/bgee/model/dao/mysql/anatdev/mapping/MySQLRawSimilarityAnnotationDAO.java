@@ -21,7 +21,7 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
  *
  * @author Valentine Rech de Laval
  * @version Bgee 13
- * @see org.bgee.model.dao.api.annotation.anatsimilarity.RawSimilarityAnnotationDAO.RawSimilarityAnnotationTO
+ * @see org.bgee.model.dao.api.anatdev.mapping.RawSimilarityAnnotationDAO.RawSimilarityAnnotationTO
  * @since Bgee 13
  */
 public class MySQLRawSimilarityAnnotationDAO extends MySQLDAO<RawSimilarityAnnotationDAO.Attribute> 

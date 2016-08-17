@@ -375,8 +375,8 @@ public class GenerateRankFile {
      * Following elements in {@code args} must then be: 
      *   <ol>
      *   <li>A list of NCBI species IDs (e.g., {@code 9606}) to generate files for, separated by 
-     *   {@link org.bgee.pipeline.CommandRunner.LIST_SEPARATOR}. To select all species, provide 
-     *   an empty list by using {@link org.bgee.pipeline.CommandRunner.EMPTY_LIST}.
+     *   {@link org.bgee.pipeline.CommandRunner#LIST_SEPARATOR}. To select all species, provide 
+     *   an empty list by using {@link org.bgee.pipeline.CommandRunner#EMPTY_LIST}.
      *   <li>path to the Uberon ontology file to extract XRefs to BTO from.
      *   TODO: when Uberon xrefs will have been inserted into the database, use them, 
      *   rather than needing to provide an ontology. 

@@ -277,7 +277,7 @@ public class TaxonConstraints {
      * ontology, allowing to generate or retrieve taxon constraints. 
      * If it is requested to generate constraints, a default {@code SpeciesSubsetterUtil} 
      * will be used (see 
-     * {@link #TaxonConstraints(OWLGraphWrapper, OWLGraphWrapper, SpeciesSubsetterUtil)}).
+     * {@link #TaxonConstraints(OWLGraphWrapper, OWLGraphWrapper, Function)}).
      * 
      * @param uberonFile    A {@code String} that is the path to the Uberon ontology.
      * @param taxOntFile    A {@code String} that is the path to the taxonomy ontology.

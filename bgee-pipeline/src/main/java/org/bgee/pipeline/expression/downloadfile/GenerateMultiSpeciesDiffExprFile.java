@@ -255,7 +255,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
          * @param speciesId             See {@link #getSpeciesId()}.
          * @param overExprGeneCount     See {@link #getOverExprGeneCount()}.
          * @param underExprGeneCount    See {@link #getUnderExprGeneCount()}.
-         * @param notExprGeneCount      See {@link #getNotExprGeneCount()}.
+         * @param notDiffExprGeneCount  See {@link #getNotDiffExprGeneCount()}.
          * @param naGeneCount           See {@link #getNAGeneCount()}.
          */
         public SpeciesDiffExprCounts(String speciesId, Long overExprGeneCount, Long underExprGeneCount, 
@@ -429,14 +429,14 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         /**
          * Constructor providing all arguments of the class.
          *
-         * @param omaId             See {@link #getOmaId()}.
-         * @param geneIds           See {@link #getGeneIds()}.
-         * @param geneNames         See {@link #getGeneNames()}.
-         * @param entityIds         See {@link #getEntityIds()}.
-         * @param entityNames       See {@link #getEntityNames()}.
-         * @param stageIds          See {@link #getStageIds()}.
-         * @param stageNames        See {@link #getStageNames()}.
-         * @param speciesCounts     See {@link #getSpeciesDiffExprCounts()}.
+         * @param omaId                 See {@link #getOmaId()}.
+         * @param geneIds               See {@link #getGeneIds()}.
+         * @param geneNames             See {@link #getGeneNames()}.
+         * @param entityIds             See {@link #getEntityIds()}.
+         * @param entityNames           See {@link #getEntityNames()}.
+         * @param stageIds              See {@link #getStageIds()}.
+         * @param stageNames            See {@link #getStageNames()}.
+         * @param speciesDiffExprCounts See {@link #getSpeciesDiffExprCounts()}.
          */
         public MultiSpeciesSimpleDiffExprFileBean(String omaId, List<String> geneIds, 
                 List<String> geneNames, List<String> entityIds, List<String> entityNames, 
@@ -991,9 +991,9 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
          * @param representation    A {@code String} representing a differential expression data.
          * @return                  A {@code DiffExpressionData} corresponding to 
          *                          {@code representation}.
-         * @throw IllegalArgumentException  If {@code representation} does not correspond 
+         * @throws IllegalArgumentException If {@code representation} does not correspond 
          *                                  to any {@code DiffExprCallType}.
-         * @see #convert(Class, String)
+         * @see TransferObject#convert(Class, String)
          */
         //TODO: DRY from TransfertObject
         public static final DiffExpressionData convertToDiffExpressionData(String representation) {

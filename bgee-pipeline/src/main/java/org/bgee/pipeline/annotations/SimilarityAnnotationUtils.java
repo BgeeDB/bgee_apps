@@ -306,7 +306,7 @@ public class SimilarityAnnotationUtils {
         /**
          * @return  A {@code String} that is the ID of a term from the HOM ontology, 
          *          providing the evolutionary concept captured by this annotation.
-         * @see #getHOMLabel()
+         * @see #getHomLabel()
          */
         public String getHomId() {
             return homId;
@@ -329,7 +329,7 @@ public class SimilarityAnnotationUtils {
         }
         /**
          * @param homLabel  A {@code String} that is the name of a term from the HOM ontology.
-         * @see #getHOMLabel()
+         * @see #getHomLabel()
          */
         public void setHomLabel(String homLabel) {
             this.homLabel = homLabel;
@@ -339,7 +339,7 @@ public class SimilarityAnnotationUtils {
          * @return  A {@code List} of {@code String}s that are the IDs of the anatomical entities 
          *          targeted by this annotation. There is most of the time only one entity 
          *          targeted. When several are targeted, they are provided in alphabetical order.
-         * @see #getEntityLabels()
+         * @see #getEntityNames()
          */
         public List<String> getEntityIds() {
             return entityIds;
@@ -375,7 +375,7 @@ public class SimilarityAnnotationUtils {
     
         /**
          * @return  An {@code int} that is the NCBI ID of the taxon targeted by this annotation.
-         * @see getTaxonName()
+         * @see #getTaxonName()
          */
         public int getNcbiTaxonId() {
             return ncbiTaxonId;

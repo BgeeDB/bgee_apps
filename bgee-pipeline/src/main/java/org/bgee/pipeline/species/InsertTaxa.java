@@ -167,7 +167,7 @@ public class InsertTaxa extends MySQLDAOUser {
      * to modify to add/remove a species. The first line should be a header line, 
      * defining 7 columns, named exactly as: {@link #SPECIES_ID_KEY}, 
      * {@link #SPECIES_GENUS_KEY}, {@link #SPECIES_NAME_KEY}, {@link #SPECIES_COMMON_NAME_KEY}, 
-     * {@link #SPECIES_GENOME_FILE_KEY}, {@link SPECIES_GENOME_VERSION_KEY},
+     * {@link #SPECIES_GENOME_FILE_KEY}, {@link #SPECIES_GENOME_VERSION_KEY},
      * {@link #SPECIES_GENOME_ID_KEY}, {@link #SPECIES_FAKE_GENE_PREFIX_KEY} (in whatever order).
      * the IDs should correspond to the NCBI taxonomy ID (e.g., 9606 for human).
      * <li>path to the tsv files containing the IDs of the taxa to be inserted in Bgee, 
@@ -219,7 +219,7 @@ public class InsertTaxa extends MySQLDAOUser {
      * to modify to add/remove a species. The first line should be a header line, 
      * defining 7 columns, named exactly as: {@link #SPECIES_ID_KEY}, 
      * {@link #SPECIES_GENUS_KEY}, {@link #SPECIES_NAME_KEY}, {@link #SPECIES_COMMON_NAME_KEY}, 
-     * {@link #SPECIES_GENOME_FILE_KEY}, {@link SPECIES_GENOME_VERSION_KEY},
+     * {@link #SPECIES_GENOME_FILE_KEY}, {@link #SPECIES_GENOME_VERSION_KEY},
      * {@link #SPECIES_GENOME_ID_KEY}, {@link #SPECIES_FAKE_GENE_PREFIX_KEY} (in whatever order).
      * the IDs should correspond to the NCBI taxonomy ID (e.g., 9606 for human).
      * <li>the path to a TSV file containing the NCBI taxonomy IDs of additional taxa 

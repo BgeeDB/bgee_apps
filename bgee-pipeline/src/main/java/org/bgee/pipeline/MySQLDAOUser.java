@@ -96,7 +96,7 @@ public abstract class MySQLDAOUser {
      * {@code MySQLDAOManager}. Subclasses willing to provide this feature needs 
      * to override this constructor to make it public.
      * 
-     * @param manager   The {@code MySQLDAOManager} that will be used by this object.
+     * @param providedManager   The {@code MySQLDAOManager} that will be used by this object.
      */
     protected MySQLDAOUser(MySQLDAOManager providedManager) {
         if (providedManager == null) {

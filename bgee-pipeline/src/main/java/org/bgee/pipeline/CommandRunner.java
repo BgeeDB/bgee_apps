@@ -62,8 +62,7 @@ public class CommandRunner {
     public static final String JDK_LOG_CONFIG_FILE = "/jdkLogConfig.properties";
     /**
      * A {@code String} that is used to separate elements from a list when providing 
-     * a response to a socket client (see {@link #socketUberonStagesBetween(Uberon, 
-     * int)}).
+     * a response to a socket client (see {@link #socketUberonStagesBetween(Uberon, int)}).
      */
     public static final String SOCKET_RESPONSE_SEPARATOR = "\t";
 
@@ -284,8 +283,7 @@ public class CommandRunner {
     
     /**
      * Return a filtered value of {@code arg}: if {@code arg} is equal to {@link #EMPTY_ARG}, 
-     * this method returns {@code null}; all substrings equal to {@link #SPACE_IN_ARG} 
-     * will be replaced by a space; the returned {@code String} is trimmed.
+     * this method returns {@code null}; the returned {@code String} is trimmed.
      * 
      * 
      * @param arg   A {@code String} that is an argument from a command line usage.

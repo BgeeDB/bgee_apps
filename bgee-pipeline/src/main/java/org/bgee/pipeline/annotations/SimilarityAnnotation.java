@@ -407,8 +407,8 @@ public class SimilarityAnnotation {
     private final static int REF_TITLE_PATTERN_GROUP = 2;
     
     /**
-     * A {@code String} that is the value to fill the column {@link #ASSIGN_COL_NAME} 
-     * when annotation was produced by the Bgee team.
+     * A {@code String} that is the value to fill the column 
+     * {@link SimilarityAnnotationUtils#ASSIGN_COL_NAME} when annotation was produced by the Bgee team.
      */
     public final static String BGEE_ASSIGNMENT = "Bgee";
     /**
@@ -422,8 +422,8 @@ public class SimilarityAnnotation {
      */
     public final static String AUTOMATIC_ASSERTION_ECO = "ECO:0000501";
     /**
-     * A {@code String} that is the value to use in the column {@link #ASSIGN_COL_NAME} 
-     * for non-reviewed annotations.
+     * A {@code String} that is the value to use in the column 
+     * {@link SimilarityAnnotationUtils#ASSIGN_COL_NAME} for non-reviewed annotations.
      */
     public final static String AUTOMATIC_ASSIGNED_BY = "bgee";
     /**
@@ -458,16 +458,16 @@ public class SimilarityAnnotation {
      * <li>If the first element in {@code args} is "generateReleaseFile", the action 
      * will be to generate proper annotations from the curator annotation file, and 
      * to write them into different release files, see 
-     * {@link #generateReleaseFile(String, String, String, String)}.
+     * {@link #generateReleaseFiles(String, String, String, String)}.
      * Following elements in {@code args} must then be: 
      *   <ol>
-     *   <li>the path to the file containing taxon constraints. See {@link 
-     *   org.bgee.pipeline.uberon.TaxonConstraints}. Can be empty (see 
+     *   <li>the path to the file containing taxon constraints. See 
+     *   {@link org.bgee.pipeline.uberon.TaxonConstraints}. Can be empty (see 
      *   {@link org.bgee.pipeline.CommandRunner#parseArgument(String)}).
      *   <li>A {@code Map<String, Set<Integer>>} to potentially override taxon constraints, 
      *   see {@link org.bgee.pipeline.CommandRunner#parseMapArgumentAsInteger(String)} to see 
-     *   how to provide it in command line. See constructor {@link SimilarityAnnotation#
-     *   SimilarityAnnotation(String, Map, String, String, String, String, String)} 
+     *   how to provide it in command line. See constructor 
+     *   {@link SimilarityAnnotation#SimilarityAnnotation(String, Map, String, String, String, String, String)} 
      *   for more details about overriding taxon constraints. Can be empty (see 
      *   {@link org.bgee.pipeline.CommandRunner#EMPTY_LIST}).
      *   <li>the path to the Uberon ontology.
@@ -1348,9 +1348,8 @@ public class SimilarityAnnotation {
      *                                      of {@code Integer}s to replace taxon constraints 
      *                                      of matching terms, if {@code taxonConstraintsFile} 
      *                                      is not {@code null}. See 
-     *                                      {@link org.bgee.pipeline.uberon.TaxonConstraints#
-     *                                      extractTaxonConstraints(String, Map)} for example 
-     *                                      of use. Can be {@code null}.
+     *                                      {@link org.bgee.pipeline.uberon.TaxonConstraints#extractTaxonConstraints(String, Map)}
+     *                                      for example of use. Can be {@code null}.
      * @param uberonOntFile                 A {@code String} that is the path to the Uberon 
      *                                      ontology.
      * @param taxOntFile                    A {@code String} that is the path to the taxonomy 
@@ -1497,8 +1496,8 @@ public class SimilarityAnnotation {
      * but might be potential errors.
      * 
      * @param annots            A {@code Collection} of {@code T}s, where each {@code Map} 
-     *                          represents a line of annotation. See {@link 
-     *                          #extractAnnotations(String, GeneratedFileType)} for more details.
+     *                          represents a line of annotation. See 
+     *                          {@link #extractAnnotations(String, GeneratedFileType)} for more details.
      * @param checkWarn         A {@code boolean} defining whether potential errors should be 
      *                          checked (formal errors are always checked). 
      * @param <T>               The type of {@code AnnotationBean} to check.
@@ -2492,7 +2491,7 @@ public class SimilarityAnnotation {
      * Generate {@code RawAnnotationBean}s from the provided {@code CuratorAnnotationBean}s. 
      * This method takes annotations from curators, and transform them into clean RAW 
      * annotations. Notably, this method will: i) verify the validity of the provided 
-     * annotations (see {@link #checkAnnotations(Collection)}); ii) infer new annotations 
+     * annotations (see {@link #checkAnnotations(Collection, boolean)}); ii) infer new annotations 
      * (see {@link #generateInferredAnnotations(Collection)}); iii) create 
      * {@code RawAnnotationBean}s with correct label information and ordered entity IDs; 
      * iv) check the validity of the {@code RawAnnotationBean}s generated; v) sort these 
@@ -3916,7 +3915,7 @@ public class SimilarityAnnotation {
      * Generate {@code SummaryAnnotationBean}s from the provided {@code RawAnnotationBean}s. 
      * This method takes single-evidende annotations, and transform them into aggregated 
      * summary annotations. Notably, this method will: i) verify the validity of the provided 
-     * annotations (see {@link #checkAnnotations(Collection)}); ii) create summary annotations;
+     * annotations (see {@link #checkAnnotations(Collection, boolean)}); ii) create summary annotations;
      * iii) check the validity of the {@code SummaryAnnotationBean}s generated; iv) sort these 
      * {@code SummaryAnnotationBean}s (see {@link #sortAnnotations(List)}).
      * 
@@ -4180,7 +4179,7 @@ public class SimilarityAnnotation {
      * {@link #HISTORICAL_HOMOLOGY_ID}).
      * <p>
      * This method will: i) verify the validity of the provided 
-     * annotations (see {@link #checkAnnotations(Collection)}); ii) identify ancestral taxa 
+     * annotations (see {@link #checkAnnotations(Collection, boolean)}); ii) identify ancestral taxa 
      * annotations; iii) check the validity of the {@code AncestralTaxaAnnotationBean}s 
      * generated; iv) sort these {@code AncestralTaxaAnnotationBean}s (see 
      * {@link #sortAnnotations(List)}).

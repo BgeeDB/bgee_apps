@@ -59,7 +59,7 @@ public class InsertUberon extends MySQLDAOUser {
      * see {@link #insertStageOntologyIntoDataSource(UberonDevStage, Collection)}.
      * Following elements in {@code args} must then be: 
      *   <ol>
-     *   <li>path to the file storing the Uberon ontology, see {@link #setPathToUberonOnt(String)}.
+     *   <li>path to the file storing the Uberon ontology, see {@link UberonCommon#setPathToUberonOnt(String)}.
      *   <li>path to a file storing the Uberon taxon constraints
      *   <li>A Map<String, Set<Integer>> to potentially override taxon constraints 
      *   (recommended for developmental stages), see {@link 
@@ -74,17 +74,17 @@ public class InsertUberon extends MySQLDAOUser {
      *   InsertUberon insertStages dev_stage_ontology.owl taxonConstraints.tsv 
      *   HsapDv:/9606,MmusDv:/10090 
      *   NCBITaxon:1 
-     *   bgeeSpecies.tsv
+     *   bgeeSpecies.tsv}
      * <li>If the first element in {@code args} is "insertAnatomy", the action 
      * will be to insert the anatomical ontology into the database, 
      * see {@link #insertAnatOntologyIntoDataSource(Uberon, Collection)}.
      * Following elements in {@code args} must then be:
      *   <ol>
-     *   <li>path to the file storing the Uberon ontology, see {@link #setPathToUberonOnt(String)}.
+     *   <li>path to the file storing the Uberon ontology, see {@link UberonCommon#setPathToUberonOnt(String)}.
      *   <li>path to a file storing the Uberon taxon constraints
      *   <li>A Map<String, Set<Integer>> to potentially override taxon constraints 
-     *   (recommended for developmental stages), see {@link 
-     *   org.bgee.pipeline.CommandRunner#parseMapArgumentAsInteger(String)} to see 
+     *   (recommended for developmental stages), see 
+     *   {@link org.bgee.pipeline.CommandRunner#parseMapArgumentAsInteger(String)} to see 
      *   how to provided it. Can be empty.
      *   <li>A list of OBO-like IDs of terms that are roots of subgraph to ignore, 
      *   see {@link UberonCommon#getToIgnoreSubgraphRootIds()}. Can be empty.

@@ -74,7 +74,7 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
      *     in the {@code Map}s defined as first and third arguments. Categories should all be present
      *     in the key set of the {@code Map} provided either as fourth or fifth argument. 
      *     The {@code String}s provided as categories must be mappable using 
-     *     {@link DownloadFileTO.CategoryEnum.convertToCategoryEnum(String)}.
+     *     {@link CategoryEnum#convertToCategoryEnum(String)}.
      * <li>groupsToReplacement: A {@code LinkedHashMap} where keys are {@code String}s
      *     that are names given to the species data groups, the associated value being 
      *     a {@code String} to be used to replace {@link #STRING_TO_REPLACE} in the patterns provided 
@@ -265,8 +265,8 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
      *                                      {@code groupToReplacement}. Categories should all be present
      *                                      either in the key set of {@code singleSpCatToFilePattern}, or
      *                                      in the key set of {@code multiSpCatToFilePattern}. 
-     *                                      The {@code String}s provided as categories must be mappable 
-     *                                      using {@link DownloadFileTO.CategoryEnum.convertToCategoryEnum(String)}.
+     *                                      The {@code String}s provided as categories must be mappable using 
+     *                                      {@link org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO.CategoryEnum#convertToCategoryEnum(String)}.
      * @param groupToReplacement            A {@code LinkedHashMap} where keys are {@code String}s
      *                                      that are names given to a group of species, the associated
      *                                      values being a {@code String} to be used to replace 

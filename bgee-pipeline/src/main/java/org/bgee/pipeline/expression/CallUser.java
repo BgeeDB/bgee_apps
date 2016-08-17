@@ -63,7 +63,7 @@ public abstract class CallUser extends MySQLDAOUser {
         private static final long serialVersionUID = 3537157597163398354L;
         
         /**
-         * See {@link #CallTOComparator(boolean) constructor}.
+         * See {@link #CallTOComparator(boolean)} constructor.
          */
         private final boolean byAnatomy;
         
@@ -138,8 +138,6 @@ public abstract class CallUser extends MySQLDAOUser {
      * 
      * @param speciesIds        A {@code Set} of {@code String}s that are the IDs of species 
      *                          allowing to filter the expression calls to use.
-     * @param exprCallDAO       A {@code ExpressionCallDAO} to use to retrieve information about 
-     *                          expression calls from the Bgee data source.
      * @return                  A {@code LinkedHashMap} associating gene IDs to 
      *                          {@code ExpressionCallTO}s of the given species. Returns a 
      *                          {@code LinkedHashMap} to keep the order in which 
@@ -183,8 +181,6 @@ public abstract class CallUser extends MySQLDAOUser {
      * 
      * @param speciesIds        A {@code Set} of {@code String}s that are the IDs of species 
      *                          allowing to filter the no-expression calls to use.
-     * @param noExprCallDAO     A {@code NoExpressionCallDAO} to use to retrieve information about 
-     *                          no-expression calls from the Bgee data source.
      * @return                  A {@code LinkedHashMap} associating gene IDs to 
      *                          {@code NoExpressionCallTO}s of the given species. Returns a 
      *                          {@code LinkedHashMap} to keep the order in which 
@@ -436,14 +432,14 @@ public abstract class CallUser extends MySQLDAOUser {
      * for these propagated {@code ExpressionCallTO}s.
      * <p>
      * If {@code anatomyPropagation} is {@code true}, {@code parentsFromChildren} 
-     * should contain the relations {@code IS_A PART_OF} between anatomical entities, 
-     * of all status ({@code REFLEXIVE}, {@code INDIRECT}, {@code DIRECT}), with child IDs 
-     * as keys, see {@link BgeeDBUtils#getAnatEntityParentsFromChildren(Set, RelationDAO)}.
+     * should contain the relations {@code IS_A PART_OF} between anatomical entities, of all status 
+     * ({@code REFLEXIVE}, {@code INDIRECT}, {@code DIRECT}), with child IDs as keys, see 
+     * {@link org.bgee.pipeline.BgeeDBUtils#getAnatEntityParentsFromChildren(Set, org.bgee.model.dao.api.ontologycommon.RelationDAO)}.
      * <p>
      * If {@code anatomyPropagation} is {@code false}, {@code parentsFromChildren} 
-     * should contain the relations {@code IS_A PART_OF} between stages, 
-     * of all status ({@code REFLEXIVE}, {@code INDIRECT}, {@code DIRECT}), with child IDs 
-     * as keys, see {@link BgeeDBUtils#getStageChildrenFromParents(Set, RelationDAO)}.
+     * should contain the relations {@code IS_A PART_OF} between stages, of all status 
+     * ({@code REFLEXIVE}, {@code INDIRECT}, {@code DIRECT}), with child IDs as keys, see 
+     * {@link org.bgee.pipeline.BgeeDBUtils#getStageChildrenFromParents(Set, org.bgee.model.dao.api.ontologycommon.RelationDAO)}.
      * 
      * @param expressionTOs         A {@code Collection} of {@code ExpressionCallTO}s containing 
      *                              all expression calls to propagate. It is a {@code Collection} 

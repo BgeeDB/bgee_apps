@@ -272,9 +272,10 @@ public class GenerateExprFile extends GenerateDownloadFile {
      * If an empty list is provided (see {@link CommandRunner#EMPTY_LIST}), all species contained 
      * in database will be used.
      * <li>a list of files types that will be generated ('expr-simple' for
-     * {@link FileType EXPR_SIMPLE}, and 'expr-complete' for {@link FileType EXPR_COMPLETE}), 
-     * separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}. If an empty list is 
-     * provided (see {@link CommandRunner#EMPTY_LIST}), all possible file types will be generated.
+     * {@link SingleSpExprFileType#EXPR_SIMPLE}, and 'expr-complete' for 
+     * {@link SingleSpExprFileType#EXPR_COMPLETE}), separated by the {@code String} 
+     * {@link CommandRunner#LIST_SEPARATOR}. If an empty list is provided 
+     * (see {@link CommandRunner#EMPTY_LIST}), all possible file types will be generated.
      * <li>the directory path that will be used to generate download files.
      * </ol>
      * 
@@ -379,11 +380,6 @@ public class GenerateExprFile extends GenerateDownloadFile {
      * Generate expression files, for the types defined by {@code fileTypes}, for species
      * defined by {@code speciesIds}, in the directory {@code directory}.
      * 
-     * @param speciesIds    A {@code List} of {@code String}s that are the IDs of species for
-     *                      which files are generated.
-     * @param fileTypes     A {@code Set} of {@code FileType}s containing file types to be generated.
-     * @param directory     A {@code String} that is the directory path directory to store the
-     *                      generated files.
      * @throws IOException  If an error occurred while trying to write generated files.
      */
     //TODO: add OMA node ID in complete files

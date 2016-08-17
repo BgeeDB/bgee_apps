@@ -427,9 +427,8 @@ public abstract class GenerateDownloadFile extends CallUser {
     /**
      * Format the provided {@code string} replacing whitespace by "_".
      *
-     * @param string    A {@code String} that is the word to be used. 
-     * @return          A {@code String} that is the modified word where whitespace 
-     *                  are replaced by "_".
+     * @param word  A {@code String} that is the word to be used. 
+     * @return      A {@code String} that is the modified word where whitespace are replaced by "_".
      */
     protected String formatString(String word) {
         log.entry(word);

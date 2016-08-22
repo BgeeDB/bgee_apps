@@ -15,6 +15,7 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.TaxonConstraint;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
+import org.bgee.model.species.Taxon;
 
 /**
  * Class allowing to describe a multi-species ontology, or the sub-graph of a multi-species ontology.
@@ -85,6 +86,8 @@ public class MultiSpeciesOntology<T extends NamedEntity & OntologyElement<T>>
             //there is no relation IDs for nested set models, so no TaxonConstraints. 
             //Relations simply exist if both the source and target of the relations 
             //exists in the targeted species.
+        } else if (type.equals(Taxon.class)) {
+            //there is no taxon constraints for taxonomy ontology
         } else {
             throw log.throwing(new IllegalArgumentException("Unsupported OntologyElement"));
         }

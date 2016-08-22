@@ -14,6 +14,7 @@ import org.bgee.model.keyword.KeywordService;
 import org.bgee.model.ontology.OntologyService;
 import org.bgee.model.source.SourceService;
 import org.bgee.model.species.SpeciesService;
+import org.bgee.model.species.TaxonService;
 
 /**
  * Factory allowing to obtain {@link Service}s. 
@@ -176,6 +177,14 @@ public class ServiceFactory implements AutoCloseable {
         return log.exit(new TaxonConstraintService(this));
     }
     
+    /**
+     * @return  A newly instantiated {@code TaxonService}
+     */
+    public TaxonService getTaxonService() {
+        log.entry();
+        return log.exit(new TaxonService(this));
+    }
+
     /**
      * @return  The {@code DAOManager} used by this {@code ServiceFactory} to instantiate services.
      */

@@ -2,7 +2,9 @@ package org.bgee.model.dao.mysql.species;
 
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Map.Entry;
@@ -143,9 +145,12 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
 
     @Override
     //TODO: integration test - test also a case where species are member of a same taxon leaf
-    public TaxonTOResultSet getLeastCommonAncestor(Set<String> speciesIds, 
+    public TaxonTOResultSet getLeastCommonAncestor(Collection<String> speciesIds, 
             boolean includeAncestors) throws DAOException, IllegalArgumentException {
         log.entry(speciesIds, includeAncestors);
+        
+        final Set<String> clonedSpeIds = Collections.unmodifiableSet(
+                speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds));
         
         String sql = this.generateSelectClause(this.getAttributes(), "t1");
         sql += "FROM taxon AS t1 INNER JOIN ";
@@ -157,10 +162,10 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
                 + "MAX(taxonRightBound) AS maxRightBound FROM taxon "
                 + "INNER JOIN species on taxon.taxonId = species.taxonId ";
         //no species requested: find the LCA of all species in Bgee. Otherwise, parameterize. 
-        if (speciesIds != null && !speciesIds.isEmpty()) {
+        if (!clonedSpeIds.isEmpty()) {
             sql += "WHERE speciesId IN (" + 
                     BgeePreparedStatement.generateParameterizedQueryString(
-                            speciesIds.size()) + ")";
+                            clonedSpeIds.size()) + ")";
         }
         //it is important to compare using greater/lower than *or equal to*, 
         //otherwise we would miss the LCA if species are all member of a same taxon leaf.
@@ -176,8 +181,8 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
         //not the actual results, so we should not close this BgeePreparedStatement.
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
-            if (speciesIds != null && !speciesIds.isEmpty()) {
-                stmt.setStringsToIntegers(1, speciesIds, true);
+            if (!clonedSpeIds.isEmpty()) {
+                stmt.setStringsToIntegers(1, clonedSpeIds, true);
             }
             
             return log.exit(new MySQLTaxonTOResultSet(stmt));

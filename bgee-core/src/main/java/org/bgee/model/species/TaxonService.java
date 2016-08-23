@@ -1,18 +1,23 @@
 package org.bgee.model.species;
 
 
+import java.util.Collection;
+import java.util.stream.Stream;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
 
 /**
  * A {@link Service} to obtain {@link Taxon} objects. 
  * Users should use the {@link ServiceFactory} to obtain {@code TaxonService}.
  * 
- * @author Frederic Bastian
- * @version Bgee 13 Sept. 2015
- * @since Bgee 13 Sept. 2015
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13, Aug. 2016
+ * @since   Bgee 13, Sept. 2015
  */
 public class TaxonService extends Service {
 
@@ -25,5 +30,35 @@ public class TaxonService extends Service {
      */
     public TaxonService(ServiceFactory serviceFactory) {
         super(serviceFactory);
+    }
+    
+    /**
+     * Retrieve {@code Taxon}s that are LCA of the provided species.
+     * If {@code commonAncestor} is {@code true}, all ancestors of the LCA will also be retrieved.
+     * 
+     * @param speciesIds        A {@code Collection} of {@code String}s that are the IDs of species 
+     *                          to filter taxa to retrieve. Can be {@code null} or empty.
+     * @param commonAncestor    A {@code boolean} defining whether the entities retrieved
+     *                          should be common ancestor.
+     * @return                  A {@code Stream} of {@code Taxon}s retrieved for
+     *                          the requested parameters.
+     */
+    // FIXME: I'm not sure of the interpretation of the boolean commonAncestor
+    public Stream<Taxon> loadTaxa(Collection<String> speciesIds, boolean commonAncestor) {
+        log.entry(speciesIds, commonAncestor);
+        return log.exit(this.getDaoManager().getTaxonDAO()
+                .getLeastCommonAncestor(speciesIds, commonAncestor).stream()
+                .map(TaxonService::mapFromTO));
+    }
+
+    /**
+     * Maps a {@code TaxonTO} to an {@code Taxon} instance (Can be passed as a {@code Function}). 
+     * 
+     * @param taxonTO   The {@code TaxonTO} to be mapped
+     * @return          The mapped {@code Taxon}
+     */
+    private static Taxon mapFromTO(TaxonTO taxonTO) {
+        log.entry(taxonTO);
+        return log.exit(new Taxon(taxonTO.getId(), taxonTO.getName(), taxonTO.getDescription()));
     }
 }

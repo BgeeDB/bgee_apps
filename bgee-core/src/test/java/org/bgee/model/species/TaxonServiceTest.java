@@ -54,7 +54,34 @@ public class TaxonServiceTest extends TestAncestor {
                 new Taxon("40674", "mammals", null), 
                 new Taxon("7742", "vertebrates", null));
         TaxonService service = new TaxonService(serviceFactory);
-        assertEquals("Incorrect anat. entities", expectedTaxa,
+        assertEquals("Incorrect taxa", expectedTaxa,
                 service.loadTaxa(speciesIds, true).collect(Collectors.toList()));
     }
+    
+    @Test
+    public void testLoadAllLeastCommonAncestorAndParentTaxa() {
+        
+        // initialize mocks
+        DAOManager managerMock = mock(DAOManager.class);
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(managerMock);
+        TaxonDAO dao = mock(TaxonDAO.class);
+        when(managerMock.getTaxonDAO()).thenReturn(dao);
+        List<TaxonTO> taxonTOs = Arrays.asList(
+                new TaxonTO("9443", "primates", "Primates", 3, 4, 3, true),
+                new TaxonTO("40674", "mammals", "Mammalia", 2, 5, 2, false),
+                new TaxonTO("7742", "vertebrates", "Vertebrata", 1, 6, 1, true));
+        
+        TaxonTOResultSet mockTaxonRs1 = getMockResultSet(TaxonTOResultSet.class, taxonTOs);
+        when(dao.getAllLeastCommonAncestorAndParentTaxa(null)).thenReturn(mockTaxonRs1);
+        
+        List<Taxon> expectedTaxa = Arrays.asList(
+                new Taxon("9443",  "primates", null), 
+                new Taxon("40674", "mammals", null), 
+                new Taxon("7742", "vertebrates", null));
+        TaxonService service = new TaxonService(serviceFactory);
+        assertEquals("Incorrect taxa", expectedTaxa,
+                service.loadAllLeastCommonAncestorAndParentTaxa().collect(Collectors.toList()));
+    }
+
 }

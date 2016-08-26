@@ -44,10 +44,28 @@ public class TaxonService extends Service {
      *                          the requested parameters.
      */
     // FIXME: I'm not sure of the interpretation of the boolean commonAncestor
-    public Stream<Taxon> loadTaxa(Collection<String> speciesIds, boolean commonAncestor) {
-        log.entry(speciesIds, commonAncestor);
+    // on the shitty figure of the issue 125
+    public Stream<Taxon> loadTaxa(Collection<String> speciesIds, boolean includeAncestors) {
+        log.entry(speciesIds, includeAncestors);
         return log.exit(this.getDaoManager().getTaxonDAO()
-                .getLeastCommonAncestor(speciesIds, commonAncestor).stream()
+                .getLeastCommonAncestor(speciesIds, includeAncestors).stream()
+                .map(TaxonService::mapFromTO));
+    }
+    
+    /**
+     * Retrieve {@code Taxon}s that are LCA of the provided species.
+     * If {@code commonAncestor} is {@code true}, all ancestors of the LCA will also be retrieved.
+     * 
+     * @param speciesIds        A {@code Collection} of {@code String}s that are the IDs of species 
+     *                          to filter taxa to retrieve. Can be {@code null} or empty.
+     * @param commonAncestor    A {@code boolean} defining whether the entities retrieved
+     *                          should be common ancestor.
+     * @return                  A {@code Stream} of {@code Taxon}s retrieved for
+     *                          the requested parameters.
+     */
+    public Stream<Taxon> loadAllLeastCommonAncestorAndParentTaxa() {
+        return log.exit(this.getDaoManager().getTaxonDAO()
+                .getAllLeastCommonAncestorAndParentTaxa(null).stream()
                 .map(TaxonService::mapFromTO));
     }
 

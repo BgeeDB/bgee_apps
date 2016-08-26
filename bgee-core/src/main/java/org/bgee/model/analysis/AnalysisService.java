@@ -57,8 +57,8 @@ public class AnalysisService extends Service {
         if (gene == null) {
             throw new IllegalArgumentException("Provided gene should not be null");
         }
-        if (gene.getSpeciesId() == null) {
-            throw new IllegalArgumentException("Expecting a species ID in provided gene:" + gene);
+        if (gene.getSpeciesId() == null || gene.getSpecies() == null) {
+            throw new IllegalArgumentException("Expecting species info in provided gene:" + gene);
         }
         
         final Set<String> clonedSpeIds = Collections.unmodifiableSet(
@@ -89,7 +89,7 @@ public class AnalysisService extends Service {
                     .getOrthologies(taxonId, clonedSpeIds);
             // XXX filter by Gene should be done in GeneService or DAO?
             Set<String> orthologousGeneIds = omaToGeneIds.entrySet().stream()
-                    .filter(e -> e.getValue().contains(gene.getSpeciesId()))
+                    .filter(e -> e.getValue().contains(gene.getId()))
                     .map(e -> e.getValue())
                     .flatMap(Set::stream)
                     .collect(Collectors.toSet());
@@ -126,7 +126,6 @@ public class AnalysisService extends Service {
             taxaToCalls.put(taxonId, this.groupCalls(
                     omaToGeneIds, anatEntitySimilarities, devStageSimilarities, calls)); 
         }
-
         return taxaToCalls;
     }
 
@@ -198,12 +197,11 @@ public class AnalysisService extends Service {
                 continue;
             }
             DevStageSimilarity dsSimilarity = curDSSimilarities.iterator().next();
-            
             Set<String> omaNodeIds = omaToGeneIds.entrySet().stream()
                     .filter(e -> e.getValue().contains(call.getGeneId()))
                     .map(e -> e.getKey())
                     .collect(Collectors.toSet());
-            if (omaNodeIds.size() != 1) {
+            if (omaNodeIds.size() > 1) {
                 throw new IllegalArgumentException(
                         "A gene is contained in more than one OMA node ID: " +
                                 call.getGeneId() + " found in " + omaNodeIds);

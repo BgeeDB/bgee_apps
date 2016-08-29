@@ -752,6 +752,12 @@
         		// Uncheck stages when click on 'All stages'
         		angular.forEach(vm.developmentStages, function(stage, key) {
                     stage.checked = '';
+                    vm.isFormValidDevStages = 'yes';
+                });
+        	} else {
+        		// Check all stages when click on 'Custom stages'
+        		angular.forEach(vm.developmentStages, function(stage, key) {
+                    stage.checked = true;
                 });
         	}
             vm.isStageChecked = value;

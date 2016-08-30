@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -75,8 +76,10 @@ public class AnalysisService extends Service {
             throw new IllegalStateException("Taxon ID " + gene.getSpecies().getParentTaxonId() +
                     "not found in retrieved taxonomy");
         }
-        Set<String> taxonIds = taxonOnt.getElements().stream()
-                .map(t -> t.getId()).collect(Collectors.toSet());
+        List<String> taxonIds = taxonOnt.getOrderedAncestors(
+                    taxonOnt.getElement(gene.getSpecies().getParentTaxonId())).stream()
+                .map(t -> t.getId())
+                .collect(Collectors.toList());
         
         Map<String, Set<MultiSpeciesCall<ExpressionCall>>> taxaToCalls = new HashMap<>();
         
@@ -86,7 +89,7 @@ public class AnalysisService extends Service {
         for (String taxonId : taxonIds) {
             // Retrieve homologous organ groups with gene IDs
             Map<String, Set<String>> omaToGeneIds = this.getServiceFactory().getGeneService()
-                    .getOrthologies(taxonId, clonedSpeIds);
+                    .getOrthologs(taxonId, clonedSpeIds);
             // XXX filter by Gene should be done in GeneService or DAO?
             Set<String> orthologousGeneIds = omaToGeneIds.entrySet().stream()
                     .filter(e -> e.getValue().contains(gene.getId()))
@@ -123,7 +126,7 @@ public class AnalysisService extends Service {
                         spId, callFilter, null, orderAttrs).collect(Collectors.toSet()));
             }
 
-            taxaToCalls.put(taxonId, this.groupCalls(
+            taxaToCalls.put(taxonId, this.groupCalls(taxonId,
                     omaToGeneIds, anatEntitySimilarities, devStageSimilarities, calls)); 
         }
         return taxaToCalls;
@@ -147,11 +150,12 @@ public class AnalysisService extends Service {
      *                                  multi-species calls.
      * @throws IllegalArgumentException If an {@code ExpressionCall} has no condition.
      */
-    private Set<MultiSpeciesCall<ExpressionCall>> groupCalls(Map<String, Set<String>> omaToGeneIds,
-            Set<AnatEntitySimilarity> anatEntitySimilarities,
+    // TODO to be added to ExpressionCallUtils see TODOs into ExpressionCall
+    private Set<MultiSpeciesCall<ExpressionCall>> groupCalls(String taxonId,
+            Map<String, Set<String>> omaToGeneIds, Set<AnatEntitySimilarity> anatEntitySimilarities,
             Set<DevStageSimilarity> devStageSimilarities, Set<ExpressionCall> calls)
                     throws IllegalArgumentException {
-        log.entry(omaToGeneIds, anatEntitySimilarities, devStageSimilarities, calls);
+        log.entry(taxonId, omaToGeneIds, anatEntitySimilarities, devStageSimilarities, calls);
         
         Map<MultiSpeciesCall<ExpressionCall>, Set<ExpressionCall>> multiSpCallToCalls = new HashMap<>();
         
@@ -213,7 +217,8 @@ public class AnalysisService extends Service {
             String omaNodeId = omaNodeIds.iterator().next();
 
             MultiSpeciesCall<ExpressionCall> multiSpeciesCall = new MultiSpeciesCall<ExpressionCall>(
-                    aeSimilarity, dsSimilarity, omaNodeId, null);
+                    aeSimilarity, dsSimilarity, taxonId, omaNodeId, omaToGeneIds.get(omaNodeId), null,
+                    null, this.getServiceFactory());
             Set<ExpressionCall> associatedCalls = multiSpCallToCalls.get(multiSpeciesCall);
             if (associatedCalls == null) {
                 log.trace("Create new map key: {}", multiSpeciesCall);
@@ -224,9 +229,32 @@ public class AnalysisService extends Service {
         }
         
         return log.exit(multiSpCallToCalls.entrySet().stream()
-                .map(e -> new MultiSpeciesCall<ExpressionCall>(
-                        e.getKey().getAnatEntitySimilarity(), e.getKey().getDevStageSimilarity(),
-                        e.getKey().getOMANodeId(), new HashSet<>(e.getValue())))
+                .map(e -> {
+                    MultiSpeciesCall<ExpressionCall> call = e.getKey();
+                    return this.computeConservationScore(new MultiSpeciesCall<ExpressionCall>(
+                            call.getAnatEntitySimilarity(), call.getDevStageSimilarity(),
+                            call.getTaxonId(), call.getOMANodeId(), call.getOrthologousGeneIds(),
+                            new HashSet<>(e.getValue()), null, this.getServiceFactory()));
+                })
                 .collect(Collectors.toSet()));
+    }
+    
+    /**
+     * Compute conservation score of {@code inputCall}.
+     * 
+     * @param inputCall A {@code MultiSpeciesCall} that is the multi-species call expression calls
+     *                  for which to compute conservation score.
+     * @return          The {@code MultiSpeciesCall} that is the multi-species call expression calls
+     *                  with computed conservation score.
+     */
+    public MultiSpeciesCall<ExpressionCall> computeConservationScore(MultiSpeciesCall<ExpressionCall> inputCall) {
+        log.entry(inputCall);
+        
+        // FIXME to be implemented
+        throw new UnsupportedOperationException("Method not implemented yet");
+//        return log.exit(new MultiSpeciesCall<ExpressionCall>(
+//                inputCall.getAnatEntitySimilarity(), inputCall.getDevStageSimilarity(),
+//                inputCall.getTaxonId(), inputCall.getOMANodeId(), inputCall.getOrthologousGeneIds(),
+//                inputCall.getCalls(), null, this.getServiceFactory()));
     }
 }

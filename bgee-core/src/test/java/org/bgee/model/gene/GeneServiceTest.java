@@ -102,7 +102,7 @@ public class GeneServiceTest extends TestAncestor {
         Map<String, Set<String>> expected = new HashMap<>();
         expected.put("1", new HashSet<>(Arrays.asList("123","124")));
         expected.put("2", new HashSet<>(Arrays.asList("223")));
-        Map<String, Set<String>> actual = service.getOrthologies("1234", null);
+        Map<String, Set<String>> actual = service.getOrthologs("1234", null);
         assertEquals(expected, actual);
     }
 }

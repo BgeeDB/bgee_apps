@@ -112,7 +112,7 @@ public class GeneService extends Service {
      *                      the associated value being a {@code Set} of {@code String}s corresponding to
      *                      their gene IDs
      */
-    public Map<String, Set<String>> getOrthologies(String taxonId, Set<String> speciesIds) {
+    public Map<String, Set<String>> getOrthologs(String taxonId, Set<String> speciesIds) {
         log.entry(taxonId, speciesIds);
         HierarchicalGroupToGeneTOResultSet resultSet = getDaoManager().getHierarchicalGroupDAO()
                 .getGroupToGene(taxonId, speciesIds);

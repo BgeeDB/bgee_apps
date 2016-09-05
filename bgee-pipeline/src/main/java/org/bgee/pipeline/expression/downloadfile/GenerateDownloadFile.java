@@ -18,8 +18,12 @@ import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
+import org.bgee.model.expressiondata.baseelements.CallType.Expression;
+import org.bgee.model.expressiondata.baseelements.DataQuality;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.file.DownloadFile.CategoryEnum;
 import org.bgee.pipeline.expression.CallUser;
+import org.bgee.pipeline.expression.downloadfile.GenerateExprFile2.ExpressionData;
 
 
 /**
@@ -244,6 +248,60 @@ public abstract class GenerateDownloadFile extends CallUser {
         }
         return log.exit(DataState.NODATA);
     }
+
+    /** TODO
+     * @param sum
+     * @return
+     */
+    protected static String convertExpressionSummaryToString(ExpressionSummary sum) {
+        log.entry(sum);
+        switch (sum) {
+        case EXPRESSED:
+            return log.exit(ExpressionData.EXPRESSION.getStringRepresentation());
+        case NOT_EXPRESSED:
+            return log.exit(ExpressionData.NO_EXPRESSION.getStringRepresentation());
+        case WEAK_AMBIGUITY:
+            return log.exit(ExpressionData.WEAK_AMBIGUITY.getStringRepresentation());
+        case STRONG_AMBIGUITY:
+            return log.exit(ExpressionData.HIGH_AMBIGUITY.getStringRepresentation());
+        default:
+            throw log.throwing(new IllegalArgumentException("Unrecognized Expression: " 
+                    + sum));
+        }
+    }
+    
+    /** TODO
+     * @param expr
+     * @return
+     */
+    protected static String convertExpressionToString(Expression expr) {
+        log.entry(expr);
+        switch (expr) {
+        case EXPRESSED:
+            return log.exit(ExpressionData.EXPRESSION.getStringRepresentation());
+        case NOT_EXPRESSED:
+            return log.exit(ExpressionData.NO_EXPRESSION.getStringRepresentation());
+        default:
+            throw log.throwing(new IllegalArgumentException("Unrecognized Expression: " 
+                    + expr));
+        }
+    }
+
+    /** TODO
+     * @param sum
+     * @return
+     */
+    protected static String convertDataQualityToString(DataQuality qual) {
+        log.entry(qual);
+        if (DataQuality.HIGH.equals(qual)) {
+            return log.exit(HIGH_QUALITY_TEXT);
+        }
+        if (DataQuality.LOW.equals(qual)) {
+            return log.exit(LOW_QUALITY_TEXT);
+        }
+        return log.exit(NA_VALUE);
+    }
+
 
     /**
      * A {@code List} of {@code String}s that are the IDs of species allowing 

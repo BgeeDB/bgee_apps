@@ -6,8 +6,8 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -84,6 +84,24 @@ public class AnatEntityService extends Service {
                     anatEntitiesIds == null? null: new HashSet<>(anatEntitiesIds), 
                     null)
                 .stream()
+                .map(AnatEntityService::mapFromTO));
+    }
+    
+    /**
+     * Retrieves non-informative anatomical entities for the requested species. They
+     * correspond to anatomical entities belonging to non-informative subsets in Uberon,
+     * and with no observed data from Bgee (no basic calls of any type in them).
+     * 
+     * @param speciesIds    A {@code Collection} of {@code String}s that are the IDs of species 
+     *                      allowing to filter the non-informative anatomical entities to use
+     * @return              A {@code Stream} of {@code AnatEntity}s retrieved for
+     *                      the requested species IDs.
+     */
+    public Stream<AnatEntity> loadNonInformativeAnatEntitiesBySpeciesIds(Collection<String> speciesIds) {
+        log.entry(speciesIds);
+        
+        return log.exit(this.getDaoManager().getAnatEntityDAO().getNonInformativeAnatEntitiesBySpeciesIds(
+                    speciesIds == null? null: new HashSet<>(speciesIds)).stream()
                 .map(AnatEntityService::mapFromTO));
     }
 

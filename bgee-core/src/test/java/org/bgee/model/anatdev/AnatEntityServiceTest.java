@@ -114,6 +114,41 @@ public class AnatEntityServiceTest extends TestAncestor {
     }
     
     /**
+     * Test the method {@link AnatEntityService#loadNonInformativeAnatEntitiesBySpeciesIds(Collection)}
+     */
+    @Test
+    public void shouldLoadNonInformativeAnatEntitiesBySpeciesIds() {
+        // initialize mocks
+        DAOManager managerMock = mock(DAOManager.class);
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(managerMock);
+        AnatEntityDAO dao = mock(AnatEntityDAO.class);
+        when(managerMock.getAnatEntityDAO()).thenReturn(dao);
+        List<AnatEntityTO> anatEntityTOs = Arrays.asList(
+                new AnatEntityTO("UBERON:0001687", "stapes bone",
+                        "stapes bone description", "Stage_id1", "Stage_id2", false),
+                new AnatEntityTO("UBERON:0011606", "hyomandibular bone", 
+                        "hyomandibular bone description", "Stage_id1", "Stage_id2", false));
+
+        // Filter on species IDs is not tested here (tested in AnatEntityDAO)
+        // but we need a variable to mock DAO answer
+        Set<String> speciesIds = new HashSet<String>();
+        speciesIds.add("11");
+
+        AnatEntityTOResultSet mockAnatEntRs1 = 
+                getMockResultSet(AnatEntityTOResultSet.class, anatEntityTOs);
+        when(dao.getNonInformativeAnatEntitiesBySpeciesIds(speciesIds)).thenReturn(mockAnatEntRs1);
+        
+        // Test without defined level
+        List<AnatEntity> expectedAnatEntity = Arrays.asList(
+                new AnatEntity("UBERON:0001687",  "stapes bone",  "stapes bone description"), 
+                new AnatEntity("UBERON:0011606", "hyomandibular bone", "hyomandibular bone description"));
+        AnatEntityService service = new AnatEntityService(serviceFactory);
+        assertEquals("Incorrect anat. entities", expectedAnatEntity,
+                service.loadNonInformativeAnatEntitiesBySpeciesIds(speciesIds).collect(Collectors.toList()));
+    }
+    
+    /**
      * Test the method {@link AnatEntityService#loadAnatEntitySimilarities(String, Set, boolean)}.
      */
     @Test

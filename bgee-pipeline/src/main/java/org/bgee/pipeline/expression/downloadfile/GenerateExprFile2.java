@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -21,17 +22,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
-import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTOResultSet;
-import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
-import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.baseelements.CallType.Expression;
+import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.file.DownloadFile.CategoryEnum;
@@ -175,88 +174,6 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         public boolean isSimpleFileType() {
             return this.simpleFileType;
         }
-        @Override
-        public String toString() {
-            return this.getStringRepresentation();
-        }
-    }
-
-    /**
-     * An {@code Enum} used to define, for each data type (Affymetrix, RNA-Seq, ...),
-     * as well as for the summary column, the data state of the call.
-     * <ul>
-     * <li>{@code NO_DATA}:         no data from the associated data type allowed to produce the call.
-     * <li>{@code NO_EXPRESSION}:   no-expression was detected from the associated data type.
-     * <li>{@code EXPRESSION}:      expression was detected from the associated data type.
-     * <li>{@code WEAK_AMBIGUITY}:  different data types are not coherent with an inferred
-     *                              no-expression call (for instance, Affymetrix data reveals an 
-     *                              expression while <em>in situ</em> data reveals an inferred
-     *                              no-expression).
-     * <li>{@code HIGH_AMBIGUITY}:  different data types are not coherent without at least
-     *                              an inferred no-expression call (for instance, Affymetrix data 
-     *                              reveals expression while <em>in situ</em> data reveals a 
-     *                              no-expression without been inferred).
-     * </ul>
-     * 
-     * @author Valentine Rech de Laval
-     * @version Bgee 13
-     * @since Bgee 13
-     */
-    public enum ExpressionData {
-        NO_DATA("no data"), NO_EXPRESSION("absent"), EXPRESSION("present"),
-        WEAK_AMBIGUITY("weak ambiguity"), HIGH_AMBIGUITY("high ambiguity");
-
-        private final String stringRepresentation;
-
-        /**
-         * Constructor providing the {@code String} representation of this {@code ExpressionData}.
-         * 
-         * @param stringRepresentation A {@code String} corresponding to this {@code ExpressionData}.
-         */
-        private ExpressionData(String stringRepresentation) {
-            this.stringRepresentation = stringRepresentation;
-        }
-
-        public String getStringRepresentation() {
-            return this.stringRepresentation;
-        }
-
-        @Override
-        public String toString() {
-            return this.getStringRepresentation();
-        }
-    }
-
-    /**
-     * An {@code Enum} used to define whether the call has been observed. This is to distinguish
-     * from propagated data only, that should provide a lower confidence in the call.
-     * <ul>
-     * <li>{@code OBSERVED}:    the call has been observed at least once.
-     * <li>{@code NOTOBSERVED}: the call has never been observed.
-     * </ul>
-     * 
-     * @author Valentine Rech de Laval
-     * @version Bgee 13
-     * @since Bgee 13
-     */
-    public enum ObservedData {
-        OBSERVED("yes"), NOT_OBSERVED("no");
-
-        private final String stringRepresentation;
-
-        /**
-         * Constructor providing the {@code String} representation of this {@code ObservedData}.
-         * 
-         * @param stringRepresentation A {@code String} corresponding to this {@code ObservedData}.
-         */
-        private ObservedData(String stringRepresentation) {
-            this.stringRepresentation = stringRepresentation;
-        }
-
-        public String getStringRepresentation() {
-            return this.stringRepresentation;
-        }
-
         @Override
         public String toString() {
             return this.getStringRepresentation();
@@ -465,38 +382,6 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
     }
 
     /**
-     * Retrieves non-informative anatomical entities for the requested species. They
-     * correspond to anatomical entities belonging to non-informative subsets in Uberon,
-     * and with no observed data from Bgee (no basic calls of any type in them).
-     * 
-     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species
-     *                      allowing to filter the non-informative anatomical entities to use.
-     * @return              A {@code Set} of {@code String}s containing all non-informative 
-     *                      anatomical entity IDs of the given species.
-     * @throws DAOException If an error occurred while getting the data from the Bgee data source.
-     */
-    // FIXME add loadNonInformativeAnatEntitiesBySpeciesIds (or similar method) in AnatEntityService
-    private Set<String> loadNonInformativeAnatEntities(Set<String> speciesIds) throws DAOException {
-        log.entry(speciesIds);
-
-        log.debug("Start retrieving non-informative anatomical entities for the species IDs {}...",
-            speciesIds);
-
-        AnatEntityDAO dao = this.getAnatEntityDAO();
-        dao.setAttributes(AnatEntityDAO.Attribute.ID);
-        Set<String> anatEntities = new HashSet<String>();
-        try (AnatEntityTOResultSet rs = dao.getNonInformativeAnatEntitiesBySpeciesIds(speciesIds)) {
-            while (rs.next()) {
-                anatEntities.add(rs.getTO().getId());
-            }
-        }
-
-        log.debug("Done retrieving non-informative anatomical entities, {} entities found",
-            anatEntities.size());
-
-        return log.exit(anatEntities);
-    }
-    /**
      * Generate download files (simple and/or advanced) containing absence/presence of
      * expression, for species defined by {@code speciesId}. This method is responsible
      * for retrieving data from the data source, and then to write them into files, in the
@@ -532,14 +417,19 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         //********************************
         // RETRIEVE DATA FROM DATA SOURCE
         //********************************
+        ServiceFactory serviceFactory = this.serviceFactorySupplier.get();
+
         Set<String> speciesFilter = new HashSet<String>();
         speciesFilter.add(speciesId);
 
         // Load non-informative anatomical entities: 
         // calls occurring in these anatomical entities, and generated from 
         // data propagation only (no observed data in them), will be discarded.
-        // FIXME filter by non informative anat. entities in ExpressionCallFilter instead of 
-        Set<String> nonInformativeAnatEntities = this.loadNonInformativeAnatEntities(speciesFilter);
+        // FIXME filter by non informative anat. entities in ExpressionCallFilter instead of filter stream 
+        Set<String> nonInformativeAnatEntities = serviceFactory.getAnatEntityService()
+                .loadNonInformativeAnatEntitiesBySpeciesIds(speciesFilter)
+                .map(AnatEntity::getId)
+                .collect(Collectors.toSet());
 
         log.trace("Start retrieving data for expression files for the species {}...", speciesId);
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
@@ -551,9 +441,11 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         serviceOrdering.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
         serviceOrdering.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.ASC);
         
-        ServiceFactory serviceFactory = this.serviceFactorySupplier.get();
         Stream<ExpressionCall> calls = serviceFactory.getCallService().loadExpressionCalls(speciesId, 
-                new ExpressionCallFilter(new ExpressionCallData(Expression.EXPRESSED)),
+                
+                new ExpressionCallFilter(null, null, new HashSet<>(Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED),
+                        new ExpressionCallData(Expression.NOT_EXPRESSED)))),
                 null, serviceOrdering)
                 .filter(c-> !nonInformativeAnatEntities.contains(c.getCondition().getAnatEntityId()));
 
@@ -658,21 +550,26 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             SingleSpExprFileType2 fileType, String[] header) throws IllegalArgumentException {
         log.entry(fileType, header);
 
-        List<Object> expressionValues = new ArrayList<Object>();
-        for (ExpressionData data : ExpressionData.values()) {
-            expressionValues.add(data.getStringRepresentation());
+        List<Object> expressionSummaries = new ArrayList<Object>();
+        for (ExpressionSummary sum : ExpressionSummary.values()) {
+            expressionSummaries.add(convertExpressionSummaryToString(sum));
         }
+        
+        List<Object> expressions = new ArrayList<Object>();
+        for (Expression expr : Expression.values()) {
+            expressions.add(convertExpressionToString(expr));
+        }
+        expressions.add(GenerateDownloadFile.NO_DATA_VALUE);
 
-        List<Object> specificTypeQualities = new ArrayList<Object>();
-        specificTypeQualities.add(convertDataStateToString(DataState.HIGHQUALITY));
-        specificTypeQualities.add(convertDataStateToString(DataState.LOWQUALITY));
-        specificTypeQualities.add(GenerateDownloadFile.NA_VALUE);
-
-        List<Object> resumeQualities = new ArrayList<Object>();
-        resumeQualities.add(convertDataStateToString(DataState.HIGHQUALITY));
-        resumeQualities.add(convertDataStateToString(DataState.LOWQUALITY));
-        resumeQualities.add(GenerateDownloadFile.NA_VALUE);
-
+        List<Object> qualities = new ArrayList<Object>();
+        for (DataQuality quality : DataQuality.values()) {
+            qualities.add(convertDataQualityToString(quality));
+        }
+        List<Object> qualitySummaries = new ArrayList<Object>();
+        qualitySummaries.add(convertDataQualityToString(DataQuality.HIGH));
+        qualitySummaries.add(convertDataQualityToString(DataQuality.LOW));
+        qualitySummaries.add(GenerateDownloadFile.NA_VALUE);
+        
         List<Object> originValues = new ArrayList<Object>();
         for (ObservedData data : ObservedData.values()) {
             originValues.add(data.getStringRepresentation());
@@ -694,10 +591,10 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 	processors[i] = new NotNull();
                     break;
                 case EXPRESSION_COLUMN_NAME:
-                	processors[i] = new IsElementOf(expressionValues);
+                	processors[i] = new IsElementOf(expressionSummaries);
                     break;
                 case QUALITY_COLUMN_NAME:
-                	processors[i] = new IsElementOf(resumeQualities);
+                	processors[i] = new IsElementOf(qualitySummaries);
                     break;
             }
 
@@ -714,13 +611,13 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             	    case EST_DATA_COLUMN_NAME:
             	    case INSITU_DATA_COLUMN_NAME:
             	    case RNASEQ_DATA_COLUMN_NAME:
-            	        processors[i] = new IsElementOf(expressionValues);
+            	        processors[i] = new IsElementOf(expressions);
             	        break;
             	    case AFFYMETRIX_CALL_QUALITY_COLUMN_NAME:
             	    case EST_CALL_QUALITY_COLUMN_NAME:
             	    case INSITU_CALL_QUALITY_COLUMN_NAME:
             	    case RNASEQ_CALL_QUALITY_COLUMN_NAME:
-            	        processors[i] = new IsElementOf(specificTypeQualities);
+            	        processors[i] = new IsElementOf(qualities);
             	        break;
             	    case AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME:
             	    case EST_OBSERVED_DATA_COLUMN_NAME:
@@ -992,12 +889,12 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
 
         calls.forEachOrdered(c -> {
             for (Entry<SingleSpExprFileType2, ICsvDozerBeanWriter> writerFileType : writersUsed.entrySet()) {
-                
-                if (writerFileType.getKey().isSimpleFileType()) {
+                // TODO why it's doesn't bug before?
+                String geneName = geneNamesByIds.containsKey(c.getGeneId())? geneNamesByIds.get(c.getGeneId()) : "";
+                if (writerFileType.getKey().isSimpleFileType()  
+                        && c.getDataPropagation().getIncludingObservedData()) {
                     SingleSpeciesSimpleExprFileBean bean = new SingleSpeciesSimpleExprFileBean(
-                            c.getGeneId(),
-                            // TODO why it's doesn't bug before?
-                            geneNamesByIds.containsKey(geneNamesByIds)? geneNamesByIds.get(geneNamesByIds) : "",
+                            c.getGeneId(), geneName,
                             c.getCondition().getAnatEntityId(),
                             anatEntityNamesByIds.get(c.getCondition().getAnatEntityId()),
                             c.getCondition().getDevStageId(),
@@ -1005,84 +902,110 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                             convertExpressionSummaryToString(c.getSummaryCallType()), // FIXME 
                             convertDataQualityToString(c.getSummaryQuality()));
                     try {
-                        writerFileType.getValue().write(bean, processors.get(writerFileType.getKey()) );
+                        writerFileType.getValue().write(bean, processors.get(writerFileType.getKey()));
                     } catch (Exception e) {
                         // TODO Auto-generated catch block
                         e.printStackTrace();
                     }
-                } else {
+                } else if (!writerFileType.getKey().isSimpleFileType()) {
                     Set<ExpressionCallData> callData = c.getCallData();
-                    String affymetrixData = NA_VALUE, affymetrixCallQuality = NA_VALUE,
-                            estData = NA_VALUE, estCallQuality = NA_VALUE,
-                            inSituData = NA_VALUE, inSituCallQuality = NA_VALUE,
-                            rnaSeqData = NA_VALUE, rnaSeqCallQuality = NA_VALUE;
+                    String affymetrixData = NO_DATA_VALUE, affymetrixCallQuality = NO_DATA_VALUE,
+                            estData = NO_DATA_VALUE, estCallQuality = NO_DATA_VALUE,
+                            inSituData = NO_DATA_VALUE, inSituCallQuality = NO_DATA_VALUE,
+                            rnaSeqData = NO_DATA_VALUE, rnaSeqCallQuality = NO_DATA_VALUE,
+                            includingAffymetrixObservedData = ObservedData.NOT_OBSERVED.getStringRepresentation(),
+                            includingEstObservedData = ObservedData.NOT_OBSERVED.getStringRepresentation(),
+                            includingInSituObservedData =  ObservedData.NOT_OBSERVED.getStringRepresentation(),
+                            includingRnaSeqObservedData = ObservedData.NOT_OBSERVED.getStringRepresentation();
                     
-                    Boolean includingAffymetrixObservedData = false, includingEstObservedData = false,
-                            includingInSituObservedData = false, includingRnaSeqObservedData = false;
-                    Set<ExpressionCallData> affyCallData = callData.stream().filter(d -> DataType.AFFYMETRIX.equals(d.getDataType())).collect(Collectors.toSet());
-                    if (affyCallData.size() > 1) {
-                        // TODO throw
-                    } else if (affyCallData.size() == 1) {
-                        ExpressionCallData e = affyCallData.iterator().next();
-                        affymetrixData = convertExpressionToString(e.getCallType());
-                        affymetrixCallQuality = convertDataQualityToString(e.getDataQuality());
-                        includingAffymetrixObservedData = e.getDataPropagation().getIncludingObservedData();
+                    Set<ExpressionCallData> affyCallData = callData.stream()
+                            .filter(d -> DataType.AFFYMETRIX.equals(d.getDataType())).collect(Collectors.toSet());
+                    if (affyCallData.size() > 0) {
+                        affymetrixData = resumeType(affyCallData);
+                        affymetrixCallQuality = resumeQualities(affyCallData);
+                        includingAffymetrixObservedData = resumeIncludingObservedData(affyCallData);
                     }
                     
-                    Set<ExpressionCallData> estCallData = callData.stream().filter(d -> DataType.EST.equals(d.getDataType())).collect(Collectors.toSet());
-                    if (estCallData.size() > 1) {
-                        // TODO throw
-                    } else if (estCallData.size() == 1) {
-                        ExpressionCallData e = estCallData.iterator().next();
-                        estData = convertExpressionToString(e.getCallType());
-                        estCallQuality = convertDataQualityToString(e.getDataQuality());
-                        includingEstObservedData = e.getDataPropagation().getIncludingObservedData();
+                    Set<ExpressionCallData> estCallData = callData.stream()
+                            .filter(d -> DataType.EST.equals(d.getDataType())).collect(Collectors.toSet());
+                    if (estCallData.size() > 0) {
+                        estData = resumeType(estCallData);
+                        estCallQuality = resumeQualities(estCallData);
+                        includingEstObservedData = resumeIncludingObservedData(estCallData);
                     }
                     
-                    Set<ExpressionCallData> inSituCallData = callData.stream().filter(d -> DataType.IN_SITU.equals(d.getDataType())).collect(Collectors.toSet());
-                    if (inSituCallData.size() > 1) {
-                        // TODO throw
-                    } else if (inSituCallData.size() == 1) {
-                        ExpressionCallData e = inSituCallData.iterator().next();
-                        inSituData = convertExpressionToString(e.getCallType());
-                        inSituCallQuality = convertDataQualityToString(e.getDataQuality());
-                        includingInSituObservedData = e.getDataPropagation().getIncludingObservedData();
+                    Set<ExpressionCallData> inSituCallData = callData.stream()
+                            .filter(d -> DataType.IN_SITU.equals(d.getDataType())).collect(Collectors.toSet());
+                    if (inSituCallData.size() > 0) {
+                        inSituData = resumeType(inSituCallData);
+                        inSituCallQuality = resumeQualities(inSituCallData);
+                        includingInSituObservedData = resumeIncludingObservedData(inSituCallData);
                     }
                     
-                    Set<ExpressionCallData> rnaSeqCallData = callData.stream().filter(d -> DataType.RNA_SEQ.equals(d.getDataType())).collect(Collectors.toSet());
-                    if (rnaSeqCallData.size() > 1) {
-                        // TODO throw
-                    } else if (rnaSeqCallData.size() == 1) {
-                        ExpressionCallData e = rnaSeqCallData.iterator().next();
-                        rnaSeqData = convertExpressionToString(e.getCallType());
-                        rnaSeqCallQuality = convertDataQualityToString(e.getDataQuality());
-                        includingRnaSeqObservedData = e.getDataPropagation().getIncludingObservedData();
+                    Set<ExpressionCallData> rnaSeqCallData = callData.stream()
+                            .filter(d -> DataType.RNA_SEQ.equals(d.getDataType())).collect(Collectors.toSet());
+                    if (rnaSeqCallData.size() > 0) {
+                        rnaSeqData = resumeType(rnaSeqCallData);
+                        rnaSeqCallQuality = resumeQualities(rnaSeqCallData);
+                        includingRnaSeqObservedData = resumeIncludingObservedData(rnaSeqCallData);
                     }
 
-                    SingleSpeciesCompleteExprFileBean bean = new SingleSpeciesCompleteExprFileBean(c.getGeneId(), geneNamesByIds.get(geneNamesByIds),
+                    SingleSpeciesCompleteExprFileBean bean = new SingleSpeciesCompleteExprFileBean(
+                            c.getGeneId(), geneName,
                             c.getCondition().getAnatEntityId(),
                             anatEntityNamesByIds.get(c.getCondition().getAnatEntityId()),
                             c.getCondition().getDevStageId(),
                             stageNamesByIds.get(c.getCondition().getDevStageId()),
-                            c.getSummaryCallType().toString(), // FIXME
-                            c.getSummaryQuality().getStringRepresentation(),
-                            c.getDataPropagation().getIncludingObservedData(),
+                            convertExpressionSummaryToString(c.getSummaryCallType()), 
+                            convertDataQualityToString(c.getSummaryQuality()),
+                            convertObservedDataToString(c.getDataPropagation().getIncludingObservedData()),
                             affymetrixData, affymetrixCallQuality, includingAffymetrixObservedData,
                             estData, estCallQuality, includingEstObservedData,
                             inSituData, inSituCallQuality, includingInSituObservedData,
                             rnaSeqData, rnaSeqCallQuality, includingRnaSeqObservedData);
                     try {
                         writerFileType.getValue().write(bean, processors.get(writerFileType.getKey()) );
-                    } catch (Exception e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
+                    } catch (IOException e) {
+                        // TODO Manage exception
+//                        throw new IOException("An error occurred while trying to write " 
+//                                + writerFileType.getKey() + ": " + e.printStackTrace()");
                     }
                 }
             }            
         });
         log.exit();
     }
+
+    private String resumeType(Set<ExpressionCallData> callData) {
+        log.entry(callData);
+        Set<Expression> types = callData.stream().map(d -> d.getCallType()).collect(Collectors.toSet());
+        if (types.size() == 0) {
+            throw new IllegalArgumentException("One call data type should be found");
+        }
+        if (types.size() > 1) {
+            throw new IllegalArgumentException("Several call data types could not be found "
+                    + "for the same data type: " + callData);
+        }
+        return log.exit(convertExpressionToString(types.iterator().next()));
+    }
+
+    private String resumeQualities(Set<ExpressionCallData> callData) {
+        log.entry(callData);
+        Set<DataQuality> curQualities = callData.stream()
+                .map(d -> d.getDataQuality())
+                .collect(Collectors.toSet());
+        if (curQualities.contains(DataQuality.HIGH)) {
+            return log.exit(convertDataQualityToString(DataQuality.HIGH));
+        }
+        return log.exit(convertDataQualityToString(DataQuality.LOW));
+    }
     
+    private String resumeIncludingObservedData(Set<ExpressionCallData> callData) {
+        log.entry(callData);
+        return log.exit(convertObservedDataToString(callData.parallelStream()
+                .anyMatch(d -> Boolean.TRUE.equals(d.getDataPropagation().getIncludingObservedData()))));
+    }
+
     /**
      * Class parent of bean storing simple-species expression calls, holding parameters common to all of them.
      *
@@ -1299,19 +1222,19 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      */
     public static class SingleSpeciesCompleteExprFileBean extends SingleSpeciesExprFileBean {
 
-        private Boolean includingObservedData;
+        private String includingObservedData;
         private String affymetrixData;
         private String affymetrixCallQuality;
-        private Boolean includingAffymetrixObservedData;
+        private String includingAffymetrixObservedData;
         private String estData;
         private String estCallQuality;
-        private Boolean includingEstObservedData;
+        private String includingEstObservedData;
         private String inSituData;
         private String inSituCallQuality;
-        private Boolean includingInSituObservedData;
+        private String includingInSituObservedData;
         private String rnaSeqData;
         private String rnaSeqCallQuality;
-        private Boolean includingRnaSeqObservedData;
+        private String includingRnaSeqObservedData;
 
         /**
          * 0-argument constructor of the bean.
@@ -1330,27 +1253,27 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
          * @param devStageName                      A {@code String} that is the name of the developmental stage.
          * @param expression                        A {@code String} that is the expression.
          * @param callQuality                       A {@code String} that is the call quality.
-         * @param includingObservedData             A {@code Boolean} defining whether include observed data.
+         * @param includingObservedData             A {@code String} defining whether include observed data.
          * @param affymetrixData                    A {@code String} that is the affymetrix data.
          * @param affymetrixCallQuality             A {@code String} that is the affymetrix call quality.
-         * @param includingAffymetrixObservedData   A {@code Boolean} defining whether include affymetrix observed data.
+         * @param includingAffymetrixObservedData   A {@code String} defining whether include affymetrix observed data.
          * @param estData                           A {@code String} that is the EST data.
          * @param estCallQuality                    A {@code String} that is the EST call quality.
-         * @param includingEstObservedData          A {@code Boolean} defining whether include EST observed data.
+         * @param includingEstObservedData          A {@code String} defining whether include EST observed data.
          * @param inSituData                        A {@code String} that is the <em>in situ</em> data.
          * @param inSituCallQuality                 A {@code String} that is the <em>in situ</em> call quality.
-         * @param includingInSituObservedData       A {@code Boolean} defining whether include <em>in situ</em> observed data.
+         * @param includingInSituObservedData       A {@code String} defining whether include <em>in situ</em> observed data.
          * @param rnaSeqData                        A {@code String} that is the RNA-seq data.
          * @param rnaSeqCallQuality                 A {@code String} that is the RNA-seq call quality.
-         * @param includingRnaSeqObservedData       A {@code Boolean} defining whether include RNA-seq observed data.
+         * @param includingRnaSeqObservedData       A {@code String} defining whether include RNA-seq observed data.
          */
         protected SingleSpeciesCompleteExprFileBean(String geneId, String geneName,
                 String anatEntityId, String anatEntityName, String devStageId, String devStageName,
-                String expression, String callQuality, Boolean includingObservedData,
-                String affymetrixData, String affymetrixCallQuality, Boolean includingAffymetrixObservedData,
-                String estData, String estCallQuality, Boolean includingEstObservedData,
-                String inSituData, String inSituCallQuality, Boolean includingInSituObservedData,
-                String rnaSeqData, String rnaSeqCallQuality, Boolean includingRnaSeqObservedData) {
+                String expression, String callQuality, String includingObservedData,
+                String affymetrixData, String affymetrixCallQuality, String includingAffymetrixObservedData,
+                String estData, String estCallQuality, String includingEstObservedData,
+                String inSituData, String inSituCallQuality, String includingInSituObservedData,
+                String rnaSeqData, String rnaSeqCallQuality, String includingRnaSeqObservedData) {
             super(geneId, geneName, anatEntityId, anatEntityName, devStageId, devStageName, expression, callQuality);
             this.includingObservedData = includingObservedData;
             this.affymetrixData = affymetrixData;
@@ -1367,7 +1290,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             this.includingRnaSeqObservedData = includingRnaSeqObservedData;
         }
 
-        public Boolean getIncludingObservedData() {
+        public String getIncludingObservedData() {
             return includingObservedData;
         }
         public String getAffymetrixData() {
@@ -1376,7 +1299,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         public String getAffymetrixCallQuality() {
             return affymetrixCallQuality;
         }
-        public Boolean getIncludingAffymetrixObservedData() {
+        public String getIncludingAffymetrixObservedData() {
             return includingAffymetrixObservedData;
         }
         public String getEstData() {
@@ -1385,7 +1308,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         public String getEstCallQuality() {
             return estCallQuality;
         }
-        public Boolean getIncludingEstObservedData() {
+        public String getIncludingEstObservedData() {
             return includingEstObservedData;
         }
         public String getInSituData() {
@@ -1394,7 +1317,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         public String getInSituCallQuality() {
             return inSituCallQuality;
         }
-        public Boolean getIncludingInSituObservedData() {
+        public String getIncludingInSituObservedData() {
             return includingInSituObservedData;
         }
         public String getRnaSeqData() {
@@ -1403,10 +1326,10 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         public String getRnaSeqCallQuality() {
             return rnaSeqCallQuality;
         }
-        public Boolean getIncludingRnaSeqObservedData() {
+        public String getIncludingRnaSeqObservedData() {
             return includingRnaSeqObservedData;
         }
-        public void setIncludingObservedData(Boolean includingObservedData) {
+        public void setIncludingObservedData(String includingObservedData) {
             this.includingObservedData = includingObservedData;
         }
         public void setAffymetrixData(String affymetrixData) {
@@ -1415,7 +1338,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         public void setAffymetrixCallQuality(String affymetrixCallQuality) {
             this.affymetrixCallQuality = affymetrixCallQuality;
         }
-        public void setIncludingAffymetrixObservedData(Boolean includingAffymetrixObservedData) {
+        public void setIncludingAffymetrixObservedData(String includingAffymetrixObservedData) {
             this.includingAffymetrixObservedData = includingAffymetrixObservedData;
         }
         public void setEstData(String estData) {
@@ -1424,7 +1347,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         public void setEstCallQuality(String estCallQuality) {
             this.estCallQuality = estCallQuality;
         }
-        public void setIncludingEstObservedData(Boolean includingEstObservedData) {
+        public void setIncludingEstObservedData(String includingEstObservedData) {
             this.includingEstObservedData = includingEstObservedData;
         }
         public void setInSituData(String inSituData) {
@@ -1433,7 +1356,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         public void setInSituCallQuality(String inSituCallQuality) {
             this.inSituCallQuality = inSituCallQuality;
         }
-        public void setIncludingInSituObservedData(Boolean includingInSituObservedData) {
+        public void setIncludingInSituObservedData(String includingInSituObservedData) {
             this.includingInSituObservedData = includingInSituObservedData;
         }
         public void setRnaSeqData(String rnaSeqData) {
@@ -1442,7 +1365,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         public void setRnaSeqCallQuality(String rnaSeqCallQuality) {
             this.rnaSeqCallQuality = rnaSeqCallQuality;
         }
-        public void setIncludingRnaSeqObservedData(Boolean includingRnaSeqObservedData) {
+        public void setIncludingRnaSeqObservedData(String includingRnaSeqObservedData) {
             this.includingRnaSeqObservedData = includingRnaSeqObservedData;
         }
 

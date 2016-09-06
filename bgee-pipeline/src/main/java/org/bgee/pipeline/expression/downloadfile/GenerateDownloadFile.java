@@ -23,7 +23,6 @@ import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.file.DownloadFile.CategoryEnum;
 import org.bgee.pipeline.expression.CallUser;
-import org.bgee.pipeline.expression.downloadfile.GenerateExprFile2.ExpressionData;
 
 
 /**
@@ -118,7 +117,11 @@ public abstract class GenerateDownloadFile extends CallUser {
      * A {@code String} that is the extension of download files to be generated.
      */
     public final static String EXTENSION = ".tsv";
-
+    /**
+     * A {@code String} that is the value of the cell containing not applicable,
+     * in the download file.
+     */
+    public final static String NO_DATA_VALUE = "no data";
     /**
      * A {@code String} that is the low quality data text, in the download file.
      */
@@ -129,6 +132,14 @@ public abstract class GenerateDownloadFile extends CallUser {
     public final static String HIGH_QUALITY_TEXT = "high quality";
 
     /**
+     * A {@code String} that is the presence of expression text for a call data, in the download file.
+     */
+    public final static String PRESENT_TEXT = "present";
+    /**
+     * A {@code String} that is the absence of expression text for a call data, in the download file.
+     */
+    public final static String ABSENT_TEXT = "absent";
+    /**
      * A {@code String} that is the weak ambiguity text for a call data, in the download file.
      */
     public final static String WEAK_AMBIGUITY = "weak ambiguity";
@@ -136,6 +147,42 @@ public abstract class GenerateDownloadFile extends CallUser {
      * A {@code String} that is the strong ambiguity text for a call data, in the download file.
      */
     public final static String STRONG_AMBIGUITY= "strong ambiguity";
+
+    /**
+     * An {@code Enum} used to define whether the call has been observed. This is to distinguish
+     * from propagated data only, that should provide a lower confidence in the call.
+     * <ul>
+     * <li>{@code OBSERVED}:    the call has been observed at least once.
+     * <li>{@code NOTOBSERVED}: the call has never been observed.
+     * </ul>
+     * 
+     * @author Valentine Rech de Laval
+     * @version Bgee 13
+     * @since Bgee 13
+     */
+    public enum ObservedData {
+        OBSERVED("yes"), NOT_OBSERVED("no");
+
+        private final String stringRepresentation;
+
+        /**
+         * Constructor providing the {@code String} representation of this {@code ObservedData}.
+         * 
+         * @param stringRepresentation A {@code String} corresponding to this {@code ObservedData}.
+         */
+        private ObservedData(String stringRepresentation) {
+            this.stringRepresentation = stringRepresentation;
+        }
+
+        public String getStringRepresentation() {
+            return this.stringRepresentation;
+        }
+
+        @Override
+        public String toString() {
+            return this.getStringRepresentation();
+        }
+    }
 
     /**
      * An {@code interface} that must be implemented by {@code Enum}s representing a file type.
@@ -228,7 +275,7 @@ public abstract class GenerateDownloadFile extends CallUser {
         if (DataState.LOWQUALITY.equals(dataState)) {
             return log.exit(LOW_QUALITY_TEXT);
         }
-        return log.exit(NA_VALUE);
+        return log.exit(NO_DATA_VALUE);
     }
 
     /**
@@ -249,59 +296,100 @@ public abstract class GenerateDownloadFile extends CallUser {
         return log.exit(DataState.NODATA);
     }
 
-    /** TODO
-     * @param sum
-     * @return
+    /**
+     * Convert an {@code org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary ExpressionSummary}
+     * into a {@code String}.
+     * <p>  
+     * This is because its method {@code getStringRepresentation} is not available for display in files.
+     * 
+     * @param sum   An {@code ExpressionSummary} to be converted.
+     * @return      The {@code String} corresponding to {@code sum}, to be used in files
      */
     protected static String convertExpressionSummaryToString(ExpressionSummary sum) {
         log.entry(sum);
+        if (sum == null) {
+            throw new IllegalArgumentException("ExpressionSummary could not be null");
+        }
         switch (sum) {
         case EXPRESSED:
-            return log.exit(ExpressionData.EXPRESSION.getStringRepresentation());
+            return log.exit(PRESENT_TEXT);
         case NOT_EXPRESSED:
-            return log.exit(ExpressionData.NO_EXPRESSION.getStringRepresentation());
+            return log.exit(ABSENT_TEXT);
         case WEAK_AMBIGUITY:
-            return log.exit(ExpressionData.WEAK_AMBIGUITY.getStringRepresentation());
+            return log.exit(WEAK_AMBIGUITY);
         case STRONG_AMBIGUITY:
-            return log.exit(ExpressionData.HIGH_AMBIGUITY.getStringRepresentation());
+            return log.exit(STRONG_AMBIGUITY);
         default:
-            throw log.throwing(new IllegalArgumentException("Unrecognized Expression: " 
-                    + sum));
+            throw new IllegalArgumentException("Unrecognized ExpressionSummary: " + sum);
         }
     }
     
-    /** TODO
-     * @param expr
-     * @return
+    /**
+     * Convert an {@code org.bgee.model.expressiondata.baseelements.CallType.Expression Expression}
+     * into a {@code String}.
+     * <p>  
+     * This is because its method {@code getStringRepresentation} is not available for display in files.
+     * 
+     * @param expr  An {@code Expression} to be converted.
+     * @return      The {@code String} corresponding to {@code expr}, to be used in files
      */
     protected static String convertExpressionToString(Expression expr) {
         log.entry(expr);
+        if (expr == null) {
+            return log.exit(NO_DATA_VALUE);
+        }
         switch (expr) {
         case EXPRESSED:
-            return log.exit(ExpressionData.EXPRESSION.getStringRepresentation());
+            return log.exit(PRESENT_TEXT);
         case NOT_EXPRESSED:
-            return log.exit(ExpressionData.NO_EXPRESSION.getStringRepresentation());
+            return log.exit(ABSENT_TEXT);
         default:
-            throw log.throwing(new IllegalArgumentException("Unrecognized Expression: " 
-                    + expr));
+            throw new IllegalArgumentException("Unrecognized Expression: " + expr);
         }
     }
 
-    /** TODO
-     * @param sum
-     * @return
+    /**
+     * Convert a {@code org.bgee.model.expressiondata.baseelements.DataQuality DataQuality}
+     * into a {@code String}.
+     * <p>  
+     * This is because its method {@code getStringRepresentation} is not available for display in files.
+     * 
+     * @param qual  A {@code DataQuality} to be converted.
+     * @return      The {@code String} corresponding to {@code qual}, to be used in files
      */
     protected static String convertDataQualityToString(DataQuality qual) {
         log.entry(qual);
-        if (DataQuality.HIGH.equals(qual)) {
+        if (qual == null) {
+            return log.exit(NA_VALUE);
+        }
+        switch (qual) {
+        case HIGH:
             return log.exit(HIGH_QUALITY_TEXT);
-        }
-        if (DataQuality.LOW.equals(qual)) {
+        case LOW:
             return log.exit(LOW_QUALITY_TEXT);
+        case NODATA:
+            return log.exit(NO_DATA_VALUE);
+        default:
+            throw new IllegalArgumentException("Unrecognized DataQuality: " + qual);
         }
-        return log.exit(NA_VALUE);
     }
 
+    /**
+     * Convert a {@code org.bgee.model.expressiondata.baseelements.DataQuality DataQuality}
+     * into a {@code String}.
+     * <p>  
+     * This is because its method {@code getStringRepresentation} is not available for display in files.
+     * 
+     * @param qual  A {@code DataQuality} to be converted.
+     * @return      The {@code String} corresponding to {@code qual}, to be used in files
+     */
+    protected static String convertObservedDataToString(Boolean includingObservedData) {
+        log.entry(includingObservedData);
+        if (Boolean.TRUE.equals(includingObservedData)) {
+            return log.exit(ObservedData.OBSERVED.getStringRepresentation());
+        }
+        return log.exit(ObservedData.NOT_OBSERVED.getStringRepresentation());
+    }
 
     /**
      * A {@code List} of {@code String}s that are the IDs of species allowing 

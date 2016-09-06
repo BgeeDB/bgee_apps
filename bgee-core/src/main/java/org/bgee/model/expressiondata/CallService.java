@@ -31,6 +31,7 @@ import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.NoExpressionCallParams;
 import org.bgee.model.expressiondata.Call.DiffExpressionCall;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
@@ -165,6 +166,7 @@ public class CallService extends Service {
         Set<ExpressionCall> calls = this.performsExpressionQueries(speciesId, callFilter, 
                 EnumSet.complementOf(EnumSet.of(Attribute.CALL_DATA_OBSERVED_DATA)), clonedOrderingAttrs)
                 .collect(Collectors.toSet());
+        
         ConditionUtils conditionUtils = new ConditionUtils(
                 calls.stream().map(c -> c.getCondition()).collect(Collectors.toSet()),
                 // We should infer ancestral condition to be able to propagate to condition without call.
@@ -483,10 +485,9 @@ public class CallService extends Service {
                     "Retrieval of observed data state per data type not yet implemented."));
         }
         if (callFilter.getCallDataFilters().stream()
-                .anyMatch(callData -> Expression.NOT_EXPRESSED.equals(callData.getCallType()) || 
-                        EnumSet.allOf(DiffExpression.class).contains(callData.getCallType()))) {
+                .anyMatch(callData -> EnumSet.allOf(DiffExpression.class).contains(callData.getCallType()))) {
             throw log.throwing(new UnsupportedOperationException(
-                    "Management of diff. expression and no-expression queries not yet implemented."));
+                    "Management of diff. expression queries not yet implemented."));
         }
                 
         if (callFilter.getConditionFilters() != null || !callFilter.getConditionFilters().isEmpty()) {
@@ -502,56 +503,67 @@ public class CallService extends Service {
                 .collect(Collectors.toSet());
         
         //now, do one query for each combination of propagation states
-        final ExpressionCallDAO dao = this.getDaoManager().getExpressionCallDAO();
-        return log.exit(
-                dao.getExpressionCalls(Arrays.asList(
-                        //generate an ExpressionCallDAOFilter from callFilter 
-                        new CallDAOFilter(
-                            //we will provide the gene IDs to the getExpressionCalls method 
-                            //as a global gene filter, not through the CallDAOFilter. 
-                            null, 
-                            //species
-                            Arrays.asList(speciesId), 
-                            //ConditionFilters
-                            callFilter.getConditionFilters().stream()
-                                .map(condFilter -> new DAOConditionFilter(
-                                        condFilter.getAnatEntitieIds(), 
-                                        condFilter.getDevStageIds()))
-                                .collect(Collectors.toSet())
-                        )),  
-                        //CallTOFilters
-                        exprCallData.stream()
-                            .flatMap(callData -> mapCallDataToExprCallTOFilters(callData, 
-                                    new DataPropagation(PropagationState.SELF, 
-                                            PropagationState.SELF, true)).stream())
-                            .collect(Collectors.toSet()), 
-                        //includeSubstructures
-                        //FIXME for the moment, only not propagated calls
-                        false,
-                        //includeSubStages
-                        //FIXME for the moment, only not propagated calls
-                        false,
-                        //global gene filter
-                        Optional.ofNullable(callFilter.getGeneFilter())
-                            .map(geneFilter -> geneFilter.getGeneIds()).orElse(new HashSet<>()), 
-                        //no gene orthology requested
-                        null, 
-                        //Attributes
-                        convertServiceAttrsToExprDAOAttrs(attributes, exprCallData.stream()
-                                    .flatMap(callData -> callData.getDataType() != null? 
-                                        EnumSet.of(callData.getDataType()).stream(): 
-                                        EnumSet.allOf(DataType.class).stream())
-                                    .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)))), 
-                        //OrderingAttributes
-                        convertServiceOrderingAttrsToExprDAOOrderingAttrs(orderingAttributes)
-                    )
-                    //retrieve the Stream resulting from the query. Note that the query is not executed 
-                    //as long as the Stream is not consumed (lazy-loading).
-                    .stream()
-                    //allow mapping of the ExpressionCallTOs to ExpressionCalls. The Stream is still 
-                    //not consumed at this point (map is a lazy operation as well). 
-                    .map(callTO -> mapCallTOToExpressionCall(callTO, new DataPropagation(), speciesId)
-                ));
+        final ExpressionCallDAO exprDao = this.getDaoManager().getExpressionCallDAO();
+        Stream<ExpressionCall> expr = exprDao.getExpressionCalls(Arrays.asList(
+                //generate an ExpressionCallDAOFilter from callFilter 
+                new CallDAOFilter(
+                    //we will provide the gene IDs to the getExpressionCalls method 
+                    //as a global gene filter, not through the CallDAOFilter. 
+                    null, 
+                    //species
+                    Arrays.asList(speciesId), 
+                    //ConditionFilters
+                    callFilter.getConditionFilters().stream()
+                        .map(condFilter -> new DAOConditionFilter(
+                                condFilter.getAnatEntitieIds(), 
+                                condFilter.getDevStageIds()))
+                        .collect(Collectors.toSet())
+                )),  
+                //CallTOFilters
+                exprCallData.stream()
+                    .flatMap(callData -> mapCallDataToExprCallTOFilters(callData, 
+                            new DataPropagation(PropagationState.SELF, 
+                                    PropagationState.SELF, true)).stream())
+                    .collect(Collectors.toSet()), 
+                //includeSubstructures
+                //FIXME for the moment, only not propagated calls
+                false,
+                //includeSubStages
+                //FIXME for the moment, only not propagated calls
+                false,
+                //global gene filter
+                Optional.ofNullable(callFilter.getGeneFilter())
+                    .map(geneFilter -> geneFilter.getGeneIds()).orElse(new HashSet<>()), 
+                //no gene orthology requested
+                null, 
+                //Attributes
+                convertServiceAttrsToExprDAOAttrs(attributes, exprCallData.stream()
+                            .flatMap(callData -> callData.getDataType() != null? 
+                                EnumSet.of(callData.getDataType()).stream(): 
+                                EnumSet.allOf(DataType.class).stream())
+                            .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)))), 
+                //OrderingAttributes
+                convertServiceOrderingAttrsToExprDAOOrderingAttrs(orderingAttributes)
+            )
+                //retrieve the Stream resulting from the query. Note that the query is not executed 
+                //as long as the Stream is not consumed (lazy-loading).
+                .stream()
+                //allow mapping of the ExpressionCallTOs to ExpressionCalls. The Stream is still 
+                //not consumed at this point (map is a lazy operation as well). 
+                .map(callTO -> mapCallTOToExpressionCall(callTO, new DataPropagation(), speciesId));
+
+        final NoExpressionCallDAO noExprDao = this.getDaoManager().getNoExpressionCallDAO();
+        NoExpressionCallParams params = new NoExpressionCallParams();
+        params.addSpeciesId(speciesId);
+        Stream<ExpressionCall> noExpr = noExprDao.getNoExpressionCalls(params)
+                //retrieve the Stream resulting from the query. Note that the query is not executed 
+                //as long as the Stream is not consumed (lazy-loading).
+                .stream()
+                //allow mapping of the ExpressionCallTOs to ExpressionCalls. The Stream is still 
+                //not consumed at this point (map is a lazy operation as well). 
+                .map(callTO -> mapCallTOToExpressionCall(callTO, new DataPropagation(), speciesId));
+
+        return log.exit(Stream.concat(expr, noExpr));
     }
 
     //*************************************************************************
@@ -1336,9 +1348,6 @@ public class CallService extends Service {
             } else {
                 dataQuality = DataQuality.LOW;
             }
-        } else {
-            // Ambiguity
-            dataQuality = null;
         }
 
         // Global mean rank

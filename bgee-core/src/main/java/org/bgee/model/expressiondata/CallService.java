@@ -1117,10 +1117,10 @@ public class CallService extends Service {
             // Retrieve conditions of the species keeping conditions in allowed organs and stages only
             Set<Condition> propagatedConditions = null;
             if (areExpressedCalls) {
-                propagatedConditions = conditionUtils.getAncestorConditions(call.getCondition(), true);
+                propagatedConditions = conditionUtils.getAncestorConditions(call.getCondition(), false);
                 log.debug("Ancestor conditions for {}: {}", call.getCondition(), propagatedConditions);
             } else {
-                propagatedConditions = conditionUtils.getDescendantConditions(call.getCondition(), true);
+                propagatedConditions = conditionUtils.getDescendantConditions(call.getCondition(), false);
                 log.debug("Descendant conditions for {}: {}",  call.getCondition(), propagatedConditions);
             }
             propagatedConditions.add(call.getCondition());

@@ -182,10 +182,10 @@ public class CallServiceTest extends TestAncestor {
         when(devStageOnt.getAncestors(stage1)).thenReturn(new HashSet<>(Arrays.asList(stage2, stage3)));
         when(devStageOnt.getAncestors(stage2)).thenReturn(new HashSet<>(Arrays.asList(stage3)));
         when(devStageOnt.getAncestors(stage3)).thenReturn(new HashSet<>());
-        when(anatEntityOnt.getAncestors(anatEntity1, true)).thenReturn(new HashSet<>());
-        when(devStageOnt.getAncestors(stage1, true)).thenReturn(new HashSet<>(Arrays.asList(stage2, stage3)));
-        when(devStageOnt.getAncestors(stage2, true)).thenReturn(new HashSet<>(Arrays.asList(stage3)));
-        when(devStageOnt.getAncestors(stage3, true)).thenReturn(new HashSet<>());
+        when(anatEntityOnt.getAncestors(anatEntity1, false)).thenReturn(new HashSet<>());
+        when(devStageOnt.getAncestors(stage1, false)).thenReturn(new HashSet<>(Arrays.asList(stage2, stage3)));
+        when(devStageOnt.getAncestors(stage2, false)).thenReturn(new HashSet<>(Arrays.asList(stage3)));
+        when(devStageOnt.getAncestors(stage3, false)).thenReturn(new HashSet<>());
 
         List<ExpressionCall> expectedResults = Arrays.asList(
                 new ExpressionCall("geneId1", new Condition("anatEntityId1", "stageId1", "speciesId1"), 
@@ -337,10 +337,10 @@ public class CallServiceTest extends TestAncestor {
         when(anatEntityOnt.getAncestors(anatEntity2)).thenReturn(new HashSet<>());
         when(devStageOnt.getAncestors(stage1)).thenReturn(new HashSet<>(Arrays.asList(stage2)));
         when(devStageOnt.getAncestors(stage2)).thenReturn(new HashSet<>());
-        when(anatEntityOnt.getAncestors(anatEntity1, true)).thenReturn(new HashSet<>(Arrays.asList(anatEntity2)));
-        when(anatEntityOnt.getAncestors(anatEntity2, true)).thenReturn(new HashSet<>());
-        when(devStageOnt.getAncestors(stage1, true)).thenReturn(new HashSet<>(Arrays.asList(stage2)));
-        when(devStageOnt.getAncestors(stage2, true)).thenReturn(new HashSet<>());
+        when(anatEntityOnt.getAncestors(anatEntity1, false)).thenReturn(new HashSet<>(Arrays.asList(anatEntity2)));
+        when(anatEntityOnt.getAncestors(anatEntity2, false)).thenReturn(new HashSet<>());
+        when(devStageOnt.getAncestors(stage1, false)).thenReturn(new HashSet<>(Arrays.asList(stage2)));
+        when(devStageOnt.getAncestors(stage2, false)).thenReturn(new HashSet<>());
 
         List<ExpressionCall> expectedResults = Arrays.asList(
                 new ExpressionCall("geneId1", new Condition("anatEntityId1", null, "speciesId1"),
@@ -743,20 +743,20 @@ public class CallServiceTest extends TestAncestor {
                 new Condition("organA", "parentStageA1", speciesId),
                 new Condition("parentOrganA1", "stageA", speciesId),
                 new Condition("parentOrganA1", "parentStageA1", speciesId)));
-        when(mockConditionUtils.getAncestorConditions(childCond, true)).thenReturn(ancestorConds);
+        when(mockConditionUtils.getAncestorConditions(childCond, false)).thenReturn(ancestorConds);
         
         childCond = new Condition("organA", "parentStageA1", speciesId);
         ancestorConds = new HashSet<>(Arrays.asList(
                 new Condition("parentOrganA1", "parentStageA1", speciesId)));
-        when(mockConditionUtils.getAncestorConditions(childCond, true)).thenReturn(ancestorConds);
+        when(mockConditionUtils.getAncestorConditions(childCond, false)).thenReturn(ancestorConds);
 
         childCond = new Condition("parentOrganA1", "parentStageA1", speciesId);
         ancestorConds = new HashSet<>();
-        when(mockConditionUtils.getAncestorConditions(childCond, true)).thenReturn(ancestorConds);
+        when(mockConditionUtils.getAncestorConditions(childCond, false)).thenReturn(ancestorConds);
 
         childCond = new Condition("organB", "stageB", speciesId);
         ancestorConds = new HashSet<>(Arrays.asList(new Condition("organB", "parentStageB1", speciesId)));
-        when(mockConditionUtils.getAncestorConditions(childCond, true)).thenReturn(ancestorConds);
+        when(mockConditionUtils.getAncestorConditions(childCond, false)).thenReturn(ancestorConds);
 
         Collection<ExpressionCall> exprCalls = Arrays.asList(
                 // ExpressionCall 1
@@ -905,23 +905,23 @@ public class CallServiceTest extends TestAncestor {
         
         Condition parentCond = new Condition("organA", "stageA", speciesId);
         Set<Condition> descendantConds = new HashSet<>();
-        when(mockConditionUtils.getDescendantConditions(parentCond, true)).thenReturn(descendantConds);
+        when(mockConditionUtils.getDescendantConditions(parentCond, false)).thenReturn(descendantConds);
         
         parentCond = new Condition("organA", "parentStageA1", speciesId);
         descendantConds = new HashSet<>();
-        when(mockConditionUtils.getDescendantConditions(parentCond, true)).thenReturn(descendantConds);
+        when(mockConditionUtils.getDescendantConditions(parentCond, false)).thenReturn(descendantConds);
 
         parentCond = new Condition("parentOrganA2", "parentStageA1", speciesId);
         descendantConds = new HashSet<>(Arrays.asList(
                 new Condition("parentOrganA1", "parentStageA1", speciesId),
                 new Condition("organA", "parentStageA1", speciesId)));
-        when(mockConditionUtils.getDescendantConditions(parentCond, true)).thenReturn(descendantConds);
+        when(mockConditionUtils.getDescendantConditions(parentCond, false)).thenReturn(descendantConds);
 
         parentCond = new Condition("parentOrganB2", "stageB", speciesId);
         descendantConds = new HashSet<>(Arrays.asList(
                 new Condition("parentOrganB1", "stageB", speciesId),
                 new Condition("organB", "stageB", speciesId)));
-        when(mockConditionUtils.getDescendantConditions(parentCond, true)).thenReturn(descendantConds);
+        when(mockConditionUtils.getDescendantConditions(parentCond, false)).thenReturn(descendantConds);
 
         Collection<ExpressionCall> noExprCalls = Arrays.asList(
                 // ExpressionCall 1

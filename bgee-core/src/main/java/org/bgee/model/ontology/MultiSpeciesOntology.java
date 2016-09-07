@@ -138,16 +138,23 @@ public class MultiSpeciesOntology<T extends NamedEntity & OntologyElement<T>>
     private  Set<RelationTO> getRelations(Collection<String> speciesIds) {
         log.entry(speciesIds);
         
-        // Get relation IDs according to taxon constraints
-        Set<String> relationsIds = relationTaxonConstraints.stream()
-                .filter(tc -> tc.getSpeciesId() == null || speciesIds.contains(tc.getSpeciesId()))
-                .map(tc -> tc.getEntityId())
-                .collect(Collectors.toSet());
-                
-        // Filter relations according to taxon constraints
-        return log.exit(this.getRelations().stream()
-                .filter(r -> relationsIds.contains(r.getId()))
-                .collect(Collectors.toSet()));
+        // XXX: according to type of according to if relationTaxonConstraints is null?
+        if (this.getType().equals(AnatEntity.class)) {
+            // Get relation IDs according to taxon constraints
+            Set<String> relationsIds = relationTaxonConstraints.stream()
+                    .filter(tc -> tc.getSpeciesId() == null || speciesIds.contains(tc.getSpeciesId()))
+                    .map(tc -> tc.getEntityId())
+                    .collect(Collectors.toSet());
+                    
+            // Filter relations according to taxon constraints
+            return log.exit(this.getRelations().stream()
+                    .filter(r -> relationsIds.contains(r.getId()))
+                    .collect(Collectors.toSet()));
+        } else if (this.getType().equals(DevStage.class)) {
+            return log.exit(this.getRelations());
+        } else {
+            throw log.throwing(new IllegalArgumentException("Unsupported OntologyElement"));
+        }
     }
     
     /**

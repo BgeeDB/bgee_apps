@@ -441,12 +441,12 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         serviceOrdering.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
         serviceOrdering.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.ASC);
         
-        Stream<ExpressionCall> calls = serviceFactory.getCallService().loadExpressionCalls(speciesId, 
-                
-                new ExpressionCallFilter(null, null, new HashSet<>(Arrays.asList(
-                        new ExpressionCallData(Expression.EXPRESSED),
-                        new ExpressionCallData(Expression.NOT_EXPRESSED)))),
-                null, serviceOrdering)
+        ExpressionCallFilter callFilter = new ExpressionCallFilter(null, null, new HashSet<>(Arrays.asList(
+                new ExpressionCallData(Expression.EXPRESSED),
+                new ExpressionCallData(Expression.NOT_EXPRESSED))));
+
+        Stream<ExpressionCall> calls = serviceFactory.getCallService().loadExpressionCalls(
+                speciesId, callFilter, null, serviceOrdering)
                 .filter(c-> !nonInformativeAnatEntities.contains(c.getCondition().getAnatEntityId()));
 
 
@@ -889,26 +889,29 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
 
         calls.forEachOrdered(c -> {
             for (Entry<SingleSpExprFileType2, ICsvDozerBeanWriter> writerFileType : writersUsed.entrySet()) {
+                String geneId = c.getGeneId();
                 // TODO why it's doesn't bug before?
-                String geneName = geneNamesByIds.containsKey(c.getGeneId())? geneNamesByIds.get(c.getGeneId()) : "";
+                String geneName = geneNamesByIds.containsKey(geneId)? geneNamesByIds.get(geneId) : "";
+                String anatEntityId = c.getCondition().getAnatEntityId();
+                String anatEntityName = anatEntityNamesByIds.get(anatEntityId);
+                String devStageId = c.getCondition().getDevStageId();
+                String devStageName = stageNamesByIds.get(c.getCondition().getDevStageId());
+                String summaryCallType = convertExpressionSummaryToString(c.getSummaryCallType()); 
+                String summaryQuality = convertDataQualityToString(c.getSummaryQuality());
+                Boolean includingObservedData =c.getDataPropagation().getIncludingObservedData();
+                
                 if (writerFileType.getKey().isSimpleFileType()  
-                        && c.getDataPropagation().getIncludingObservedData()) {
+                        && Boolean.TRUE.equals(includingObservedData)) {
                     SingleSpeciesSimpleExprFileBean bean = new SingleSpeciesSimpleExprFileBean(
-                            c.getGeneId(), geneName,
-                            c.getCondition().getAnatEntityId(),
-                            anatEntityNamesByIds.get(c.getCondition().getAnatEntityId()),
-                            c.getCondition().getDevStageId(),
-                            stageNamesByIds.get(c.getCondition().getDevStageId()),
-                            convertExpressionSummaryToString(c.getSummaryCallType()), // FIXME 
-                            convertDataQualityToString(c.getSummaryQuality()));
+                            geneId, geneName, anatEntityId, anatEntityName,
+                            devStageId, devStageName, summaryCallType, summaryQuality);
                     try {
                         writerFileType.getValue().write(bean, processors.get(writerFileType.getKey()));
                     } catch (Exception e) {
-                        // TODO Auto-generated catch block
+                        // TODO Manage exception in stream
                         e.printStackTrace();
                     }
                 } else if (!writerFileType.getKey().isSimpleFileType()) {
-                    Set<ExpressionCallData> callData = c.getCallData();
                     String affymetrixData = NO_DATA_VALUE, affymetrixCallQuality = NO_DATA_VALUE,
                             estData = NO_DATA_VALUE, estCallQuality = NO_DATA_VALUE,
                             inSituData = NO_DATA_VALUE, inSituCallQuality = NO_DATA_VALUE,
@@ -917,7 +920,8 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                             includingEstObservedData = ObservedData.NOT_OBSERVED.getStringRepresentation(),
                             includingInSituObservedData =  ObservedData.NOT_OBSERVED.getStringRepresentation(),
                             includingRnaSeqObservedData = ObservedData.NOT_OBSERVED.getStringRepresentation();
-                    
+                    Set<ExpressionCallData> callData = c.getCallData();
+
                     Set<ExpressionCallData> affyCallData = callData.stream()
                             .filter(d -> DataType.AFFYMETRIX.equals(d.getDataType())).collect(Collectors.toSet());
                     if (affyCallData.size() > 0) {
@@ -951,13 +955,8 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     }
 
                     SingleSpeciesCompleteExprFileBean bean = new SingleSpeciesCompleteExprFileBean(
-                            c.getGeneId(), geneName,
-                            c.getCondition().getAnatEntityId(),
-                            anatEntityNamesByIds.get(c.getCondition().getAnatEntityId()),
-                            c.getCondition().getDevStageId(),
-                            stageNamesByIds.get(c.getCondition().getDevStageId()),
-                            convertExpressionSummaryToString(c.getSummaryCallType()), 
-                            convertDataQualityToString(c.getSummaryQuality()),
+                            geneId, geneName, anatEntityId, anatEntityName,
+                            devStageId, devStageName, summaryCallType, summaryQuality,
                             convertObservedDataToString(c.getDataPropagation().getIncludingObservedData()),
                             affymetrixData, affymetrixCallQuality, includingAffymetrixObservedData,
                             estData, estCallQuality, includingEstObservedData,
@@ -966,9 +965,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     try {
                         writerFileType.getValue().write(bean, processors.get(writerFileType.getKey()) );
                     } catch (IOException e) {
-                        // TODO Manage exception
-//                        throw new IOException("An error occurred while trying to write " 
-//                                + writerFileType.getKey() + ": " + e.printStackTrace()");
+                        // TODO Manage exception in stream
                     }
                 }
             }            

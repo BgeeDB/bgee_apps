@@ -1221,12 +1221,16 @@ public class CallService extends Service {
                     devStagePropagationState = PropagationState.SELF;
                 }
                 
+                assert anatEntityPropagationState != null;
+                if (devStagePropagationState == null) {
+                    throw new IllegalArgumentException("Dev. stages should not be propagated to children");
+                }
+                
                 boolean includingObservedData = false;
                 if (anatEntityPropagationState == PropagationState.SELF 
                         && devStagePropagationState == PropagationState.SELF) {
                     includingObservedData = true;
                 }
-                assert anatEntityPropagationState != null && devStagePropagationState != null;
 
                 // NOTE: we do not manage includingObservedData here, 
                 // it's should be done during the grouping of ExpressionCalls

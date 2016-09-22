@@ -1,5 +1,7 @@
 package org.bgee.model.species;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -77,10 +79,7 @@ public class Species extends NamedEntity {
      */
     public Species(String id, String name, String description, String genus, String speciesName,
             String genomeVersion) throws IllegalArgumentException {
-        super(id, name, description);
-        this.genus = genus;
-        this.speciesName = speciesName;
-        this.genomeVersion = genomeVersion;
+        this(id, name, description, genus, speciesName, genomeVersion, null, null);
     }
     
     /**
@@ -107,9 +106,14 @@ public class Species extends NamedEntity {
     public Species(String id, String name, String description, String genus, String speciesName,
             String genomeVersion, Map<Source, Set<DataType>> dataTypesByDataSourcesForData, 
             Map<Source, Set<DataType>> dataTypesByDataSourcesForAnnotation) throws IllegalArgumentException {
-        this(id, name, description, genus, speciesName, genomeVersion);
-        this.dataTypesByDataSourcesForData = dataTypesByDataSourcesForData;
-        this.dataTypesByDataSourcesForAnnotation = dataTypesByDataSourcesForAnnotation;
+        super(id, name, description);
+        this.genus = genus;
+        this.speciesName = speciesName;
+        this.genomeVersion = genomeVersion;
+        this.dataTypesByDataSourcesForData = dataTypesByDataSourcesForData == null ? 
+                null: Collections.unmodifiableMap(new HashMap<>(dataTypesByDataSourcesForData));
+        this.dataTypesByDataSourcesForAnnotation = dataTypesByDataSourcesForAnnotation == null ? 
+                null: Collections.unmodifiableMap(new HashMap<>(dataTypesByDataSourcesForAnnotation));
     }
 
     /**
@@ -162,19 +166,25 @@ public class Species extends NamedEntity {
     }
 	
     /**
-     * A {@code Map} where keys are {@code Source}s corresponding to data sources,
-     * the associated values being a {@code Set} of {@code DataType}s corresponding to 
-     * data types of raw data in this species.
+     * @return  A {@code Map} where keys are {@code Source}s corresponding to data sources,
+     *          the associated values being a {@code Set} of {@code DataType}s corresponding to 
+     *          data types of raw data in this species. Is {@code null} if this information 
+     *          was not requested.
      */
+    //XXX: good candidate for using Java 8 Optional, null if not requested, 
+    //empty if requested but no data types
 	public Map<Source, Set<DataType>> getDataTypesByDataSourcesForData() {
         return dataTypesByDataSourcesForData;
     }
 
     /**
-     * A {@code Map} where keys are {@code Source}s corresponding to data sources,
-     * the associated values being a {@code Set} of {@code DataType}s corresponding to 
-     * data types of annotation data in this species.
+     * @return  A {@code Map} where keys are {@code Source}s corresponding to data sources,
+     *          the associated values being a {@code Set} of {@code DataType}s corresponding to 
+     *          data types of annotation data in this species. Is {@code null} if this information 
+     *          was not requested.
      */
+    //XXX: good candidate for using Java 8 Optional, null if not requested, 
+    //empty if requested but no data types
     public Map<Source, Set<DataType>> getDataTypesByDataSourcesForAnnotation() {
         return dataTypesByDataSourcesForAnnotation;
     }

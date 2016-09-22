@@ -1,6 +1,6 @@
 package org.bgee.view;
 
-import java.util.Set;
+import java.util.List;
 
 import org.bgee.model.species.Species;
 
@@ -9,7 +9,7 @@ import org.bgee.model.species.Species;
  * has to implements
  *
  * @author  Valentine Rech de Laval
- * @version Bgee 13 Nov. 15
+ * @version Bgee 13 Sep. 2016
  * @since   Bgee 13 Nov. 15
  */
 public interface SpeciesDisplay {
@@ -17,6 +17,6 @@ public interface SpeciesDisplay {
     /**
      * Display the species page.
      */
-    public void sendSpeciesResponse(Set<Species> species);
+    public void sendSpeciesResponse(List<Species> species);
    
 }

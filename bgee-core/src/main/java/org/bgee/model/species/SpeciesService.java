@@ -1,6 +1,7 @@
 package org.bgee.model.species;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -105,10 +106,11 @@ public class SpeciesService extends Service {
      * @throws DAOException                 If an error occurred while accessing a {@code DAO}.
      * @throws QueryInterruptedException    If a query to a {@code DAO} was intentionally interrupted.
      */
-    public Set<Species> loadSpeciesByIds(Set<String> speciesIds, boolean withSpeciesInfo)
+    public Set<Species> loadSpeciesByIds(Collection<String> speciesIds, boolean withSpeciesInfo)
             throws DAOException, QueryInterruptedException {
         log.entry(speciesIds, withSpeciesInfo);
-        Set<Species> species = this.getDaoManager().getSpeciesDAO().getSpeciesByIds(speciesIds).stream()
+        Set<String> filteredSpecieIds = speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds);
+        Set<Species> species = this.getDaoManager().getSpeciesDAO().getSpeciesByIds(filteredSpecieIds).stream()
                 .map(SpeciesService::mapFromTO)
                 .collect(Collectors.toSet());
         if (withSpeciesInfo) {
@@ -142,7 +144,7 @@ public class SpeciesService extends Service {
                     sourceToSpeciesTOs, sources, species.getId(), InfoType.ANNOTATION);
             completedSpecies.add(new Species(species.getId(), species.getName(), species.getDescription(),
                     species.getGenus(), species.getSpeciesName(), species.getGenomeVersion(),
-                    forData.isEmpty() ? null : forData, forAnnotation.isEmpty() ? null : forAnnotation));
+                    forData, forAnnotation));
         }
 
         return log.exit(completedSpecies);

@@ -1,7 +1,7 @@
 package org.bgee.view;
 
 import java.io.IOException;
-import java.util.Set;
+import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -25,7 +25,7 @@ public class FakeSpeciesDisplay extends FakeParentDisplay implements SpeciesDisp
     }
 
     @Override
-    public void sendSpeciesResponse(Set<Species> species) {
+    public void sendSpeciesResponse(List<Species> species) {
         this.out.println("Test topAnat container");
     }
 

@@ -201,6 +201,8 @@ public class FrontController extends HttpServlet {
                 controller = new CommandGene(response, requestParameters, this.prop, factory, serviceFactory);      
             } else if (requestParameters.isASourcePageCategory()){
                 controller = new CommandSource(response, requestParameters, this.prop, factory, serviceFactory);      
+            } else if (requestParameters.isASpeciesPageCategory()){
+                controller = new CommandSpecies(response, requestParameters, this.prop, factory, serviceFactory);      
             } else if (requestParameters.getAction() != null &&
                 		requestParameters.getAction().equals(RequestParameters.ACTION_AUTO_COMPLETE_GENE_SEARCH)) {
             		controller = new CommandSearch(response, requestParameters, prop, factory, serviceFactory);

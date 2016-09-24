@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -40,8 +41,10 @@ import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
 import org.semanticweb.owlapi.search.EntitySearcher;
+import org.supercsv.cellprocessor.FmtBool;
 import org.supercsv.cellprocessor.Optional;
 import org.supercsv.cellprocessor.constraint.NotNull;
+import org.supercsv.cellprocessor.constraint.Unique;
 import org.supercsv.cellprocessor.constraint.UniqueHashCode;
 import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.io.CsvMapWriter;
@@ -84,6 +87,19 @@ public class Uberon extends UberonCommon {
                     "anatomical_site_slim", "cell_slim", "vertebrate_core")));
 
     /**
+     * A {@code String} that is the OBO-like ID of the term "hermaphroditic organism".
+     */
+    public final static String HERMAPHRODITE_ORGANISM_ID = "UBERON:0007197";
+    /**
+     * A {@code String} that is the OBO-like ID of the term "female organism".
+     */
+    public final static String FEMALE_ORGANISM_ID = "UBERON:0003100";
+    /**
+     * A {@code String} that is the OBO-like ID of the term "male organism".
+     */
+    public final static String MALE_ORGANISM_ID = "UBERON:0003101";
+
+    /**
      * Several actions can be launched from this main method, depending on the first 
      * element in {@code args}: 
      * <ul>
@@ -96,6 +112,14 @@ public class Uberon extends UberonCommon {
      *   <ol>
      *   <li>path to the Uberon ontology (a version making use of such restrictions...).
      *   <li>path to the output file where to write taxon IDs into, one per line.
+     *   </ol>
+     * <li>If the first element in {@code args} is "extractSexInfo", the action 
+     * will be to extract from the Uberon ontology sex-related information about anatomical terms, 
+     * and to write them in a file (see {@link #extractSexInfoToFile(String)}).
+     * Following elements in {@code args} must then be: 
+     *   <ol>
+     *   <li>path to the Uberon ontology.
+     *   <li>path to the output file where to write sex-related info.
      *   </ol>
      * <li>If the first element in {@code args} is "simplifyUberon", the action 
      * will be to simplify the Uberon ontology and to save it to files in OBO and OWL formats, 
@@ -216,6 +240,13 @@ public class Uberon extends UberonCommon {
             new Uberon(args[1]).saveXRefMappingsToFile(args[2]);
 //        } else if (args[0].equalsIgnoreCase("test")) {
 //            Uberon.test();
+        } else if (args[0].equalsIgnoreCase("extractSexInfo")) {
+            if (args.length != 3) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Incorrect number of arguments provided, expected " + 
+                        "3 arguments, " + args.length + " provided."));
+            }
+            new Uberon(args[1]).extractSexInfoToFile(args[2]);
         } else {
             throw log.throwing(new UnsupportedOperationException("The following action " +
                     "is not recognized: " + args[0]));
@@ -946,15 +977,10 @@ public class Uberon extends UberonCommon {
      * @param outputFile        A {@code String} that is the path to the generated output file.
      * @throws IOException      If an error occurred while writing in the output file, 
      *                          or when reading the ontology file.
-     * @throws OBOFormatParserException     If {@code pathToUberonOnt} was in OBO and could not 
-     *                                      be parsed.
-     * @throws OWLOntologyCreationException If {@code pathToUberonOnt} was in OWL and could not 
-     *                                      be parsed.
      * 
      * @see org.bgee.pipeline.OntologyUtils#getXRefMappings()
      */
-    public void saveXRefMappingsToFile(String outputFile) 
-            throws IOException {
+    public void saveXRefMappingsToFile(String outputFile) throws IOException {
         log.entry(outputFile);
         
         //create the header of the file, and the conditions on the columns
@@ -979,6 +1005,86 @@ public class Uberon extends UberonCommon {
                     mapWriter.write(row, header, processors);
                 }
             }
+        }
+        
+        log.exit();
+    }
+    
+    /**
+     * Extract sex information about anatomical terms to a TSV file. 
+     * Retrieves all descendants of the terms with OBO-like IDs {@link #HERMAPHRODITE_ORGANISM_ID}, 
+     * {@link #FEMALE_ORGANISM_ID}, {@link #MALE_ORGANISM_ID}, then write a TSV file 
+     * containing all classes, and for each class, 3 columns indicating whether the class 
+     * is a descendant of the hermaphrodite, male, female terms.
+     * 
+     * @param outputFile    A {@code String} that is the path the the output TSV file.
+     * @throws IOException  If an error occurred while writing in the output file.
+     */
+    public void extractSexInfoToFile(String outputFile) throws IOException {
+        log.entry(outputFile);
+        
+        final OWLGraphWrapper wrapper = this.getOntologyUtils().getWrapper();
+        
+        //Retrieve root classes of sex-related terms
+        OWLClass hermaphroditeCls = wrapper.getOWLClassByIdentifierNoAltIds(HERMAPHRODITE_ORGANISM_ID);
+        OWLClass femaleCls = wrapper.getOWLClassByIdentifierNoAltIds(FEMALE_ORGANISM_ID);
+        OWLClass maleCls = wrapper.getOWLClassByIdentifierNoAltIds(MALE_ORGANISM_ID);
+        if (hermaphroditeCls == null || femaleCls == null || maleCls == null) {
+            throw log.throwing(new IllegalStateException("Could not find some sex-related terms"));
+        }
+        
+        //Retrieve descendants of sex-related terms
+        Set<OWLClass> hermaphroditeClasses = wrapper.getOWLClassDescendantsWithGCI(hermaphroditeCls, 
+                this.getOntologyUtils().getGenericPartOfProps());
+        Set<OWLClass> femaleClasses = wrapper.getOWLClassDescendantsWithGCI(femaleCls, 
+                this.getOntologyUtils().getGenericPartOfProps());
+        Set<OWLClass> maleClasses = wrapper.getOWLClassDescendantsWithGCI(maleCls, 
+                this.getOntologyUtils().getGenericPartOfProps());
+        if (hermaphroditeClasses.isEmpty() || femaleClasses.isEmpty() || maleClasses.isEmpty()) {
+            throw log.throwing(new IllegalStateException("No descendants for some sex-related terms"));
+        }
+        hermaphroditeClasses.add(hermaphroditeCls);
+        femaleClasses.add(femaleCls);
+        maleClasses.add(maleCls);
+        
+        //Retrieve all OWLClasses and order them by ID for consistent diffs between releases
+        List<OWLClass> allClasses = wrapper.getAllRealOWLClasses().stream()
+                .sorted(Comparator.comparing(c -> wrapper.getIdentifier(c), OntologyUtils.ID_COMPARATOR))
+                .collect(Collectors.toList());
+        
+        //generate output file containing all classes
+        //create the header of the file, and the conditions on the columns
+        String[] header = new String[5];
+        header[0] = UBERON_ENTITY_ID_COL;
+        header[1] = ANAT_ENTITY_NAME_COL;
+        header[2] = "female";
+        header[3] = "male";
+        header[4] = "hermaphrodite";
+        CellProcessor[] processors = new CellProcessor[5];
+        processors[0] = new NotNull(new Unique());
+        processors[1] = null;
+        processors[2] = new NotNull(new FmtBool("T", "F"));
+        processors[3] = new NotNull(new FmtBool("T", "F"));
+        processors[4] = new NotNull(new FmtBool("T", "F"));
+        
+        //write output file
+        try (ICsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(outputFile),
+                Utils.TSVCOMMENTED)) {
+            
+            mapWriter.writeHeader(header);
+            
+            for (OWLClass cls: allClasses) {
+                Map<String, Object> row = new HashMap<String, Object>();
+                row.put(header[0], wrapper.getIdentifier(cls));
+                row.put(header[1], wrapper.getLabel(cls));
+                row.put(header[2], femaleClasses.contains(cls));
+                row.put(header[3], maleClasses.contains(cls));
+                row.put(header[4], hermaphroditeClasses.contains(cls));
+                
+                mapWriter.write(row, header, processors);
+            }
+            
+            mapWriter.flush();
         }
         
         log.exit();

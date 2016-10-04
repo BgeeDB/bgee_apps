@@ -32,7 +32,7 @@ import org.junit.Test;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, July 2016
+ * @version Bgee 13, Oct. 2016
  * @since   Bgee 13, Dec. 2015
  */
 public class ConditionUtilsTest extends TestAncestor {
@@ -141,8 +141,8 @@ public class ConditionUtilsTest extends TestAncestor {
         
         when(anatEntityOnt.getDescendants(anatEntity1, false)).thenReturn(
                 new HashSet<>(Arrays.asList(anatEntity2, anatEntity3, anatEntity4)));
-        when(devStageOnt.getDescendants(devStage1, false)).thenReturn(
-                new HashSet<>(Arrays.asList(devStage2, devStage3, devStage4)));
+        // We should not propagate to dev. stages child conditions
+        when(devStageOnt.getDescendants(devStage1, false)).thenReturn(new HashSet<>());
         
         if (fromService) {
             this.conditionUtils = new ConditionUtils(this.conditions, mockFact);
@@ -271,13 +271,11 @@ public class ConditionUtilsTest extends TestAncestor {
      * Test the method {@link ConditionUtils#getDescendantConditions(Condition)}.
      */
     private void shouldGetDescendantConditions() {
-        Set<Condition> expectedDescendants = conditions.stream()
-                .filter(e -> !e.equals(this.conditions.get(0)) && this.conditions.indexOf(e) <= 7)
-                .collect(Collectors.toSet());
+        Set<Condition> expectedDescendants = new HashSet<>(Arrays.asList(this.conditions.get(3)));
         assertEquals("Incorrect descendants retrieved", expectedDescendants, 
                 this.conditionUtils.getDescendantConditions(this.conditions.get(0)));
         
-        expectedDescendants = new HashSet<>(Arrays.asList(this.conditions.get(1), this.conditions.get(5)));
+        expectedDescendants = new HashSet<>();
         assertEquals("Incorrect descendants retrieved", expectedDescendants, 
                 this.conditionUtils.getDescendantConditions(this.conditions.get(3)));
         
@@ -293,7 +291,7 @@ public class ConditionUtilsTest extends TestAncestor {
         assertEquals("Incorrect descendants retrieved", expectedDescendants, 
                 this.conditionUtils.getDescendantConditions(this.conditions.get(8)));
         
-        expectedDescendants = new HashSet<>(Arrays.asList(this.conditions.get(11)));
+        expectedDescendants = new HashSet<>();
         assertEquals("Incorrect descendants retrieved", expectedDescendants, 
                 this.conditionUtils.getDescendantConditions(this.conditions.get(10)));
     }

@@ -25,7 +25,7 @@ import org.junit.Test;
  * This class holds the unit tests for the {@code OntologyBase} class.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, July 2016
+ * @version Bgee 13, Oct. 2016
  * @since   Bgee 13, Dec. 2015
  */
 public class OntologyTest extends TestAncestor {
@@ -96,8 +96,7 @@ public class OntologyTest extends TestAncestor {
         Set<AnatEntity> elements = new HashSet<>(Arrays.asList(ae1, ae2, ae2p, ae3));
         Set<RelationTO> relations = this.getAnatEntityRelationTOs();
 
-        when(tcService.loadAnatEntityTaxonConstraintBySpeciesIds(Arrays.asList("sp1", "sp2", "sp3")))
-            .thenReturn(new HashSet<>(Arrays.asList(
+        Set<TaxonConstraint> taxonConstraint = new HashSet<>(Arrays.asList(
                     // UBERON:0001 sp1/sp2/sp3 --------------------
                     // |                    \                      |
                     // UBERON:0002 sp1/sp2   UBERON:0002p sp2/sp3  | 
@@ -109,10 +108,9 @@ public class OntologyTest extends TestAncestor {
                     new TaxonConstraint("UBERON:0002p", "sp2"),
                     new TaxonConstraint("UBERON:0002p", "sp3"),
                     new TaxonConstraint("UBERON:0003", "sp1"),
-                    new TaxonConstraint("UBERON:0003", "sp2"))).stream());
+                    new TaxonConstraint("UBERON:0003", "sp2")));
         
-        when(tcService.loadAnatEntityRelationTaxonConstraintBySpeciesIds(Arrays.asList("sp1", "sp2", "sp3")))
-            .thenReturn(new HashSet<>(Arrays.asList(
+        Set<TaxonConstraint> relationTaxonConstraint = new HashSet<>(Arrays.asList(
                     // UBERON:0001 ------------------
                     // | sp1/sp2   \ sp2            |
                     // UBERON:0002   UBERON:0002p   | sp2/sp1 (indirect)
@@ -124,10 +122,11 @@ public class OntologyTest extends TestAncestor {
                     new TaxonConstraint("3", "sp1"),
                     new TaxonConstraint("4", "sp2"),
                     new TaxonConstraint("5", "sp1"),
-                    new TaxonConstraint("5", "sp2"))).stream());
+                    new TaxonConstraint("5", "sp2")));
 
         MultiSpeciesOntology<AnatEntity> ontology = new MultiSpeciesOntology<AnatEntity>(
-                Arrays.asList("sp1", "sp2", "sp3"), elements, relations, ALL_RELATIONS, 
+                Arrays.asList("sp1", "sp2", "sp3"), elements, relations,
+                taxonConstraint, relationTaxonConstraint, ALL_RELATIONS, 
                 mockFact, AnatEntity.class);
 
         List<String> speciesIds = Arrays.asList("sp1");
@@ -213,17 +212,16 @@ public class OntologyTest extends TestAncestor {
 
         Set<String> speciesIds = new HashSet<>(Arrays.asList("sp2"));
         // Get stage taxon constraints
-        when(tcService.loadDevStageTaxonConstraintBySpeciesIds(speciesIds))
-            .thenReturn( // stage1 sp1/sp2 -------
-                    // |               \     \    
-                    // stage2 sp1/sp2   |     stage2p sp2
-                    // |               /      | 
-                    // stage3 sp1             stage3p sp2
-                    new HashSet<>(Arrays.asList(
-                            new TaxonConstraint("stage1", null),
-                            new TaxonConstraint("stage2", null),
-                            new TaxonConstraint("stage2p", "sp2"),
-                            new TaxonConstraint("stage3p", "sp2"))).stream());
+        Set<TaxonConstraint> taxonConstraint = new HashSet<>(Arrays.asList(
+        // stage1 sp1/sp2 -------
+        // |               \     \    
+        // stage2 sp1/sp2   |     stage2p sp2
+        // |               /      | 
+        // stage3 sp1             stage3p sp2
+                new TaxonConstraint("stage1", null),
+                new TaxonConstraint("stage2", null),
+                new TaxonConstraint("stage2p", "sp2"),
+                new TaxonConstraint("stage3p", "sp2")));
 
         DevStage ds1 = new DevStage("stage1"), ds2 = new DevStage("stage2"), 
                 ds3 = new DevStage("stage3"), ds2p = new DevStage("stage2p"), 
@@ -245,7 +243,7 @@ public class OntologyTest extends TestAncestor {
                 new RelationTO("6", "stage3p", "stage1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT)));
 
         MultiSpeciesOntology<DevStage> ontology = new MultiSpeciesOntology<>(speciesIds,
-                elements, relations, ALL_RELATIONS, mockFact, DevStage.class);
+                elements, relations, taxonConstraint, null, ALL_RELATIONS, mockFact, DevStage.class);
 
         Set<DevStage> descendants = ontology.getDescendants(ds1, ISA_RELATIONS);
         Set<DevStage> expDescendants = new HashSet<>(Arrays.asList(ds2, ds3, ds3p));
@@ -324,19 +322,17 @@ public class OntologyTest extends TestAncestor {
         // UBERON:0003 sp1/sp2 ------------------------
 
         List<String> speciesIds = Arrays.asList("sp1", "sp2", "sp3");
-        when(tcService.loadAnatEntityRelationTaxonConstraintBySpeciesIds(speciesIds)).thenReturn(
-                new HashSet<>(Arrays.asList(
-                        new TaxonConstraint("rel1", "sp3"))).stream());
+        Set<TaxonConstraint> relationTaxonConstraint = new HashSet<>(
+                Arrays.asList(new TaxonConstraint("rel1", "sp3")));
 
-        when(tcService.loadAnatEntityTaxonConstraintBySpeciesIds(speciesIds)).thenReturn(
-                new HashSet<>(Arrays.asList(
-                        new TaxonConstraint("UBERON:0001", null),
-                        new TaxonConstraint("UBERON:0002", "sp1"),
-                        new TaxonConstraint("UBERON:0002", "sp2"),
-                        new TaxonConstraint("UBERON:0002p", "sp2"),
-                        new TaxonConstraint("UBERON:0002p", "sp3"),
-                        new TaxonConstraint("UBERON:0003", "sp2"),
-                        new TaxonConstraint("UBERON:0003", "sp3"))).stream());
+        Set<TaxonConstraint> taxonConstraints = new HashSet<>(Arrays.asList(
+                new TaxonConstraint("UBERON:0001", null),
+                new TaxonConstraint("UBERON:0002", "sp1"),
+                new TaxonConstraint("UBERON:0002", "sp2"),
+                new TaxonConstraint("UBERON:0002p", "sp2"),
+                new TaxonConstraint("UBERON:0002p", "sp3"),
+                new TaxonConstraint("UBERON:0003", "sp2"),
+                new TaxonConstraint("UBERON:0003", "sp3")));
 
         AnatEntity ae1 = new AnatEntity("UBERON:0001"), ae2 = new AnatEntity("UBERON:0002"), 
                 ae2p = new AnatEntity("UBERON:0002p"), ae3 = new AnatEntity("UBERON:0003"); 
@@ -345,7 +341,8 @@ public class OntologyTest extends TestAncestor {
         Set<RelationTO> relations = this.getAnatEntityRelationTOs();
 
         MultiSpeciesOntology<AnatEntity> ontology = new MultiSpeciesOntology<>(speciesIds,
-                elements, relations, ALL_RELATIONS, mockFact, AnatEntity.class);
+                elements, relations, taxonConstraints, relationTaxonConstraint, ALL_RELATIONS, 
+                mockFact, AnatEntity.class);
 
         HashSet<AnatEntity> expectedAE = new HashSet<>(Arrays.asList(ae1, ae2, ae2p, ae3));
         assertEquals("Incorrect element", expectedAE, ontology.getElements());

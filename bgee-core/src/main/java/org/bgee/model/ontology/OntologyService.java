@@ -16,8 +16,11 @@ import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
+import org.bgee.model.anatdev.TaxonConstraint;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTOResultSet;
+import org.bgee.model.function.QuadriFunction;
 
 /**
  * A {@link Service} to obtain {@link Ontology} and {@link MultiSpeciesOntology} objects.
@@ -25,7 +28,7 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStat
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 13, July 2016
+ * @version Bgee 13, Oct. 2016
  * @since   Bgee 13, Dec. 2015
  */
 public class OntologyService extends Service {
@@ -147,13 +150,20 @@ public class OntologyService extends Service {
             boolean getAncestors, boolean getDescendants) {
         log.entry(speciesIds, anatEntityIds, getAncestors, getDescendants, relationTypes);
         
-        Set<RelationTO> rels = this.getRelationTOs(AnatEntity.class, speciesIds, anatEntityIds, 
+        Set<RelationTO> rels = this.getAnatEntityRelationTOs(speciesIds, anatEntityIds,
                 relationTypes, getAncestors, getDescendants);
+        Set<TaxonConstraint> relationTaxonConstraints = getServiceFactory().getTaxonConstraintService()
+                    .loadAnatEntityRelationTaxonConstraintBySpeciesIds(speciesIds)
+                    .collect(Collectors.toSet());
+        Set<TaxonConstraint> taxonConstraints = getServiceFactory().getTaxonConstraintService()
+                    .loadAnatEntityTaxonConstraintBySpeciesIds(speciesIds)
+                    .collect(Collectors.toSet());
         return log.exit(new MultiSpeciesOntology<AnatEntity>(speciesIds, 
                 this.getServiceFactory().getAnatEntityService()
-                .loadAnatEntities(speciesIds, true, this.getRequestedEntityIds(anatEntityIds, rels))
-                .collect(Collectors.toSet()), 
-                rels, relationTypes, this.getServiceFactory(), AnatEntity.class));
+                    .loadAnatEntities(speciesIds, true, this.getRequestedEntityIds(anatEntityIds, rels))
+                    .collect(Collectors.toSet()), 
+                rels, taxonConstraints, relationTaxonConstraints, relationTypes,
+                this.getServiceFactory(), AnatEntity.class));
     }
     
     /**
@@ -253,13 +263,42 @@ public class OntologyService extends Service {
             Collection<String> devStageIds, boolean getAncestors, boolean getDescendants) {
         log.entry(speciesIds, devStageIds, getAncestors, getDescendants);
         
-        Set<RelationTO> rels = this.getRelationTOs(DevStage.class, speciesIds, devStageIds, 
-                EnumSet.of(RelationType.ISA_PARTOF), getAncestors, getDescendants);
+        Set<RelationTO> rels = this.getDevStageRelationTOs(speciesIds, devStageIds, 
+                getAncestors, getDescendants);
+
+        Set<TaxonConstraint> taxonConstraints = getServiceFactory().getTaxonConstraintService()
+                .loadDevStageTaxonConstraintBySpeciesIds(speciesIds)
+                .collect(Collectors.toSet());
+        //there is no relation IDs for nested set models, so no TaxonConstraints. 
+        //Relations simply exist if both the source and target of the relations 
+        //exists in the targeted species.
         return log.exit(new MultiSpeciesOntology<DevStage>(speciesIds, 
                 this.getServiceFactory().getDevStageService()
                 .loadDevStages(speciesIds, true, this.getRequestedEntityIds(devStageIds, rels))
                 .collect(Collectors.toSet()), 
-                rels, EnumSet.of(RelationType.ISA_PARTOF), this.getServiceFactory(), DevStage.class));
+                rels, taxonConstraints, null, EnumSet.of(RelationType.ISA_PARTOF), this.getServiceFactory(), DevStage.class));
+    }
+    
+    private Set<RelationTO> getAnatEntityRelationTOs(Collection<String> speciesIds, Collection<String> entityIds, 
+            Collection<RelationType> relationTypes, boolean getAncestors, boolean getDescendants) {
+        QuadriFunction<Set<String>, Set<String>, Boolean, Set<RelationStatus>, RelationTOResultSet> fun = (s, t, b, r) ->
+            getDaoManager().getRelationDAO().getAnatEntityRelations(
+                speciesIds, true, s, t, b, 
+                relationTypes.stream()
+                .map(OntologyBase::convertRelationType)
+                .collect(Collectors.toCollection(() -> 
+                EnumSet.noneOf(RelationTO.RelationType.class))), 
+                r, 
+                null);
+        return log.exit(getRelationTOs(fun, entityIds, getAncestors, getDescendants));
+    }
+    
+    private Set<RelationTO> getDevStageRelationTOs(Collection<String> speciesIds, Collection<String> entityIds, 
+            boolean getAncestors, boolean getDescendants) {
+        QuadriFunction<Set<String>, Set<String>, Boolean, Set<RelationStatus>, RelationTOResultSet> fun = (s, t, b, r) ->
+        getDaoManager().getRelationDAO().getStageRelations(
+                speciesIds, true, s, t, b, r, null);
+        return log.exit(getRelationTOs(fun, entityIds, getAncestors, getDescendants));
     }
     
     /**
@@ -285,16 +324,16 @@ public class OntologyService extends Service {
      * @param <T>                   The type of elements for which to retrieve {@code RelationTO}s.
      */
     private <T extends NamedEntity & OntologyElement<T>> Set<RelationTO> getRelationTOs(
-            Class<T> elementType, Collection<String> speciesIds, Collection<String> entityIds, 
-            Collection<RelationType> relationTypes, boolean getAncestors, boolean getDescendants) {
-        log.entry(elementType, speciesIds, entityIds, relationTypes, getAncestors, getDescendants);
+            QuadriFunction<Set<String>, Set<String>, Boolean, Set<RelationStatus>, RelationTOResultSet> relationRetrievalFun, 
+            Collection<String> entityIds, boolean getAncestors, boolean getDescendants) {
+        log.entry(relationRetrievalFun, entityIds, getAncestors, getDescendants);
         
         final Set<String> filteredEntities = Collections.unmodifiableSet(
                 entityIds == null? new HashSet<>(): new HashSet<>(entityIds));
-        final Set<String> clonedSpeIds = Collections.unmodifiableSet(
-                speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds));
     
         // Currently, we use all non reflexive relations.
+        //Warning: we absolutely need to retrieve indirect relations in case getAncestors is true 
+        //or getDescendants is true
         Set<RelationStatus> relationStatus = EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE));
         
         //by default, include all ancestors and descendants of selected entities
@@ -312,26 +351,45 @@ public class OntologyService extends Service {
             //opposite if we don't want the descendants
             targetIds = null;
         }
-        log.trace("speciesIds: {} - sourceIds: {} - targetIds: {} - sourceOrTarget: {} - relationStatus: {}", 
-                clonedSpeIds, sourceIds, targetIds, sourceOrTarget, relationStatus);
+        log.trace("sourceIds: {} - targetIds: {} - sourceOrTarget: {} - relationStatus: {}", 
+                sourceIds, targetIds, sourceOrTarget, relationStatus);
         
-        Set<RelationTO> relations = null;
-        if (AnatEntity.class.isAssignableFrom(elementType)) {
-            relations = new HashSet<>(getDaoManager().getRelationDAO().getAnatEntityRelations(
-                    clonedSpeIds, true, sourceIds, targetIds, sourceOrTarget, 
-                    relationTypes.stream()
-                            .map(OntologyBase::convertRelationType)
-                            .collect(Collectors.toCollection(() -> 
-                    EnumSet.noneOf(RelationTO.RelationType.class))), 
-                    relationStatus, 
-                    null)
+        Set<RelationTO> relations = new HashSet<>();
+        relations.addAll(relationRetrievalFun.apply(sourceIds, targetIds, sourceOrTarget, relationStatus)
                     .getAllTOs());
-        } else if (DevStage.class.isAssignableFrom(elementType)) {
-            relations = new HashSet<>(getDaoManager().getRelationDAO().getStageRelations(
-                    clonedSpeIds, true, sourceIds, targetIds, sourceOrTarget, relationStatus, null)
-                    .getAllTOs());
-        } else {
-            throw log.throwing(new IllegalArgumentException("Unsupported type: " + elementType));
+        //if it is requested to infer entities,  
+        if (getAncestors || getDescendants) {
+            assert sourceOrTarget: "Incorrect source/target condition status: sourceOrTarget should be true";
+        
+            Set<String> newSourceIds = new HashSet<>();
+            Set<String> newTargetIds = new HashSet<>();
+            if (getAncestors) {
+                log.debug("get targets IDs of retrieved relations that become new source IDs");
+                //get targets IDs of retrieved relations that become new source IDs
+                newSourceIds.addAll(relations.stream().map(r -> r.getTargetId()).collect(Collectors.toSet()));
+            }
+            if (getDescendants) {
+                log.debug("get source IDs of retrieved relations that become new target IDs");
+                //get source IDs of retrieved relations that become new target IDs
+                newTargetIds.addAll(relations.stream().map(r -> r.getSourceId()).collect(Collectors.toSet()));
+            }
+            if (getAncestors && getDescendants) {
+                log.debug("getAncestors && getDescendants");
+                // if we infer ancestors and descendants, we need to retrieve all relations of 
+                // retrieved ancestors and descendants.
+                newTargetIds.addAll(relations.stream().map(r -> r.getTargetId()).collect(Collectors.toSet()));
+                newSourceIds.addAll(relations.stream().map(r -> r.getSourceId()).collect(Collectors.toSet()));
+            }
+
+            //Query only if new terms have been discovered
+            if (!newSourceIds.isEmpty() || !newTargetIds.isEmpty()) {
+                if (!newSourceIds.isEmpty()) newSourceIds.removeAll(sourceIds);
+                if (!newTargetIds.isEmpty()) newTargetIds.removeAll(targetIds);
+                log.debug("relationRetrievalFun={}, newSourceIds={}, newTargetIds={}",
+                        relationRetrievalFun, newSourceIds, newTargetIds);
+                relations.addAll(relationRetrievalFun.apply(newSourceIds, newTargetIds, 
+                        sourceOrTarget, relationStatus).getAllTOs());
+            }
         }
         
         return log.exit(relations);

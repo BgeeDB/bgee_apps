@@ -1152,10 +1152,10 @@ public class CallService extends Service {
             Set<Condition> propagatedConditions = null;
             if (areExpressedCalls) {
                 propagatedConditions = conditionUtils.getAncestorConditions(call.getCondition(), false);
-                log.debug("Ancestor conditions for {}: {}", call.getCondition(), propagatedConditions);
+                log.trace("Ancestor conditions for {}: {}", call.getCondition(), propagatedConditions);
             } else {
                 propagatedConditions = conditionUtils.getDescendantConditions(call.getCondition(), false);
-                log.debug("Descendant conditions for {}: {}",  call.getCondition(), propagatedConditions);
+                log.trace("Descendant conditions for {}: {}",  call.getCondition(), propagatedConditions);
             }
             propagatedConditions.add(call.getCondition());
             
@@ -1282,7 +1282,7 @@ public class CallService extends Service {
                     currentCallData, 
                     currentGlobalMeanRank);
 
-            log.debug("Add the propagated call: {}", propagatedCall);
+            log.trace("Add the propagated call: {}", propagatedCall);
             globalCalls.add(propagatedCall);
         }
     

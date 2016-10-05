@@ -265,7 +265,6 @@ public class OntologyService extends Service {
         
         Set<RelationTO> rels = this.getDevStageRelationTOs(speciesIds, devStageIds, 
                 getAncestors, getDescendants);
-
         Set<TaxonConstraint> taxonConstraints = getServiceFactory().getTaxonConstraintService()
                 .loadDevStageTaxonConstraintBySpeciesIds(speciesIds)
                 .collect(Collectors.toSet());
@@ -274,13 +273,15 @@ public class OntologyService extends Service {
         //exists in the targeted species.
         return log.exit(new MultiSpeciesOntology<DevStage>(speciesIds, 
                 this.getServiceFactory().getDevStageService()
-                .loadDevStages(speciesIds, true, this.getRequestedEntityIds(devStageIds, rels))
-                .collect(Collectors.toSet()), 
-                rels, taxonConstraints, null, EnumSet.of(RelationType.ISA_PARTOF), this.getServiceFactory(), DevStage.class));
+                    .loadDevStages(speciesIds, true, this.getRequestedEntityIds(devStageIds, rels))
+                    .collect(Collectors.toSet()), 
+                rels, taxonConstraints, new HashSet<>(), EnumSet.of(RelationType.ISA_PARTOF),
+                this.getServiceFactory(), DevStage.class));
     }
     
     private Set<RelationTO> getAnatEntityRelationTOs(Collection<String> speciesIds, Collection<String> entityIds, 
             Collection<RelationType> relationTypes, boolean getAncestors, boolean getDescendants) {
+        log.entry(speciesIds, entityIds, relationTypes, getAncestors, getDescendants);
         QuadriFunction<Set<String>, Set<String>, Boolean, Set<RelationStatus>, RelationTOResultSet> fun = (s, t, b, r) ->
             getDaoManager().getRelationDAO().getAnatEntityRelations(
                 speciesIds, true, s, t, b, 
@@ -295,6 +296,7 @@ public class OntologyService extends Service {
     
     private Set<RelationTO> getDevStageRelationTOs(Collection<String> speciesIds, Collection<String> entityIds, 
             boolean getAncestors, boolean getDescendants) {
+        log.entry(speciesIds, entityIds, getAncestors, getDescendants);
         QuadriFunction<Set<String>, Set<String>, Boolean, Set<RelationStatus>, RelationTOResultSet> fun = (s, t, b, r) ->
         getDaoManager().getRelationDAO().getStageRelations(
                 speciesIds, true, s, t, b, r, null);
@@ -364,27 +366,25 @@ public class OntologyService extends Service {
             Set<String> newSourceIds = new HashSet<>();
             Set<String> newTargetIds = new HashSet<>();
             if (getAncestors) {
-                log.debug("get targets IDs of retrieved relations that become new source IDs");
                 //get targets IDs of retrieved relations that become new source IDs
                 newSourceIds.addAll(relations.stream().map(r -> r.getTargetId()).collect(Collectors.toSet()));
             }
             if (getDescendants) {
-                log.debug("get source IDs of retrieved relations that become new target IDs");
                 //get source IDs of retrieved relations that become new target IDs
                 newTargetIds.addAll(relations.stream().map(r -> r.getSourceId()).collect(Collectors.toSet()));
             }
             if (getAncestors && getDescendants) {
-                log.debug("getAncestors && getDescendants");
                 // if we infer ancestors and descendants, we need to retrieve all relations of 
                 // retrieved ancestors and descendants.
                 newTargetIds.addAll(relations.stream().map(r -> r.getTargetId()).collect(Collectors.toSet()));
                 newSourceIds.addAll(relations.stream().map(r -> r.getSourceId()).collect(Collectors.toSet()));
             }
 
+            if (!newSourceIds.isEmpty()) newSourceIds.removeAll(sourceIds);
+            if (!newTargetIds.isEmpty()) newTargetIds.removeAll(targetIds);
+
             //Query only if new terms have been discovered
             if (!newSourceIds.isEmpty() || !newTargetIds.isEmpty()) {
-                if (!newSourceIds.isEmpty()) newSourceIds.removeAll(sourceIds);
-                if (!newTargetIds.isEmpty()) newTargetIds.removeAll(targetIds);
                 log.debug("relationRetrievalFun={}, newSourceIds={}, newTargetIds={}",
                         relationRetrievalFun, newSourceIds, newTargetIds);
                 relations.addAll(relationRetrievalFun.apply(newSourceIds, newTargetIds, 

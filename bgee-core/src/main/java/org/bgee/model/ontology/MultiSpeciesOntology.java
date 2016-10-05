@@ -11,6 +11,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.NamedEntity;
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.TaxonConstraint;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 
@@ -121,7 +123,9 @@ public class MultiSpeciesOntology<T extends NamedEntity & OntologyElement<T>>
     private  Set<RelationTO> getRelations(Collection<String> speciesIds) {
         log.entry(speciesIds);
         
-        if (relationTaxonConstraints != null) {
+        // XXX: according to type of according to if relationTaxonConstraints is null?
+        // No, we should inspect why but I'm just lasy to do it now
+        if (this.getType().equals(AnatEntity.class)) {
             // Get relation IDs according to taxon constraints
             Set<String> relationsIds = relationTaxonConstraints.stream()
                     .filter(tc -> tc.getSpeciesId() == null || speciesIds.contains(tc.getSpeciesId()))
@@ -132,8 +136,11 @@ public class MultiSpeciesOntology<T extends NamedEntity & OntologyElement<T>>
             return log.exit(this.getRelations().stream()
                     .filter(r -> relationsIds.contains(r.getId()))
                     .collect(Collectors.toSet()));
+        } else if (this.getType().equals(DevStage.class)) {
+            return log.exit(this.getRelations());
+        } else {
+            throw log.throwing(new IllegalArgumentException("Unsupported OntologyElement"));
         }
-        return log.exit(this.getRelations());
     }
     
     /**

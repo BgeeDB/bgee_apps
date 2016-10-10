@@ -385,8 +385,6 @@ public class OntologyService extends Service {
 
             //Query only if new terms have been discovered
             if (!newSourceIds.isEmpty() || !newTargetIds.isEmpty()) {
-                log.debug("relationRetrievalFun={}, newSourceIds={}, newTargetIds={}",
-                        relationRetrievalFun, newSourceIds, newTargetIds);
                 relations.addAll(relationRetrievalFun.apply(newSourceIds, newTargetIds, 
                         sourceOrTarget, relationStatus).getAllTOs());
             }

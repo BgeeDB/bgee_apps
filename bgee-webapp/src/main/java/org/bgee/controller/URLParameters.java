@@ -339,11 +339,16 @@ public class URLParameters {
             false, false, null, true, DEFAULT_IS_SECURE, 
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Double.class);
     /**
-     * A {@code Parameter<String>} containing the key associated to one TopAnat analysis. 
+     * A {@code Parameter<String>} containing the key associated to a specific analysis. 
+     * It is usually a hash of the analysis parameters. 
      */
     private static final Parameter<String> ANALYSIS_ID = new Parameter<String>("analysis_id",
-            false, false, null, true , DEFAULT_IS_SECURE, 
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+            false, false, null,
+            true,              //can be stored as data parameter for retrieving cached analyses
+            DEFAULT_IS_SECURE, 
+            128,               //length of 128 for SHA512 hexa representation 
+            "^[a-zA-Z0-9]*$",  //accept only ASCII characters for SHA512 hexa representation 
+            String.class);
     /**
      * A {@code Parameter<Integer>} that contains the job ID to be used to track a job.
      * Corresponds to the URL parameter "job_id".
@@ -454,7 +459,9 @@ public class URLParameters {
             FOREGROUND_LIST, FOREGROUND_FILE, BACKGROUND_LIST, BACKGROUND_FILE,
             EXPRESSION_TYPE, DATA_QUALITY, DATA_TYPE, DEV_STAGE, DECORRELATION_TYPE,
             NODE_SIZE, FDR_THRESHOLD, P_VALUE_THRESHOLD, NB_NODE, 
-            GENE_INFO, ANALYSIS_ID, 
+            GENE_INFO, 
+            //ID to identify a specific analysis
+            ANALYSIS_ID, 
             //DAO as webservice
             ATTRIBUTE_LIST, 
 //            ALL_ORGANS,

@@ -2183,6 +2183,17 @@ public class RequestParameters {
     public Boolean getGeneInfo() {
         return this.getFirstValue(this.getUrlParametersInstance().getParamGeneInfo());
     }
+    /**
+     * Convenient method to retrieve value of the parameter returned by 
+     * {@link URLParameters#getParamApiKey()}. Equivalent to calling 
+     * {@link #getFirstValue(Parameter)} for this parameter.
+     * 
+     * @return  A {@code String} that is the value of the {@code api_key} URL parameter.
+     *          Can be {@code null}. 
+     */
+    public String getApiKey() {
+        return this.getFirstValue(this.getUrlParametersInstance().getParamApiKey());
+    }
 
     /**
      * This method has a js counterpart in {@code requestparameters.js} that should be kept 

@@ -374,7 +374,7 @@ public class URLParameters {
     private static final Parameter<String> EMAIL = new Parameter<String>("email",
             false, false, null, false, true, DEFAULT_MAX_SIZE, DEFAULT_FORMAT, 
             String.class);
-
+    
     /**
      * A {@code Parameter<String>} that contains the attributes to retrieve when performing 
      * a webservice query.
@@ -383,6 +383,18 @@ public class URLParameters {
     private static final Parameter<String> ATTRIBUTE_LIST = new Parameter<String>("attr_list",
             true, false, DEFAULT_SEPARATORS, true, DEFAULT_IS_SECURE, 
             10000, DEFAULT_LIST_FORMAT, String.class);
+
+    /**
+     * A {@code Parameter<String>} that contains the API key sent when using a Bgee webservice.
+     * Corresponds to the URL parameter "api_key".
+     */
+    private static final Parameter<String> API_KEY = new Parameter<String>("api_key",
+            false, false, null, 
+            false, //is storable: false, don't store user's API keys and don't change 'data' param based on them
+            true,  //is secure: yes, avoid sharing user's API keys
+            128,   //length of 128 for SHA512 hexa representation used in the BgeeDB R package
+            "^[a-zA-Z0-9]*$", //accept only ASCII characters for SHA512 hexa representation used in the BgeeDB R package
+            String.class);
 
     //    /**
 //     * A {@code Parameter<Boolean>} to determine whether all anatomical structures of 
@@ -453,6 +465,8 @@ public class URLParameters {
             JOB_TITLE, JOB_ID, EMAIL, JOB_CREATION_DATE, 
             DISPLAY_TYPE,
             DATA, 
+            //webservice parameter
+            API_KEY, 
             DISPLAY_REQUEST_PARAMS, 
             AJAX
             );
@@ -737,6 +751,14 @@ public class URLParameters {
      */
     public Parameter<String> getParamAttributeList() {
         return ATTRIBUTE_LIST;
+    }
+    
+    /**
+     * @return  A {@code Parameter<String>} that contains the API key sent when using a Bgee webservice.
+     *          Corresponds to the URL parameter "api_key".
+     */
+    public Parameter<String> getParamApiKey() {
+        return API_KEY;
     }
 
     /**

@@ -13,7 +13,7 @@ import org.junit.Test;
  * @author Mathieu Seppey
  * @author Valentine Rech de Laval
  * @author Frederic Bastian
- * @version Bgee 13, June 2015
+ * @version Bgee 13, Oct 2016
  * @since Bgee 13
  * @see BgeePropertiesParentTest
  * @see BgeePropertiesFirstTest
@@ -42,5 +42,7 @@ public class BgeePropertiesSecondTest extends BgeePropertiesParentTest {
                 "/filefunctionfile", bgeeProp.getTopAnatFunctionFile());
         assertEquals("Wrong property value retrieved", 
                 "/filewd", bgeeProp.getTopAnatResultsWritingDirectory());
+        assertEquals("Wrong property value retrieved", 
+                5, bgeeProp.getMaxJobCountPerUser());
     }
 }

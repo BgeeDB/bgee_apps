@@ -13,7 +13,7 @@ import org.junit.Test;
  * @author Mathieu Seppey
  * @author Valentine Rech de Laval
  * @author Frederic Bastian
- * @version Bgee 13, June 2015
+ * @version Bgee 13, Oct 2016
  * @since Bgee 13
  * @see BgeePropertiesParentTest
  * @see BgeePropertiesFirstTest
@@ -33,6 +33,7 @@ public class BgeePropertiesFourthTest extends BgeePropertiesParentTest {
         System.clearProperty(BgeeProperties.TOP_ANAT_R_WORKING_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.TOP_ANAT_FUNCTION_FILE_KEY);
         System.clearProperty(BgeeProperties.TOP_ANAT_RESULTS_WRITING_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.MAX_JOB_COUNT_PER_USER_KEY);
         
         // Also, set the properties file to an non-existing file, 
         // so that no property file is used (otherwise, property files in src/test/resources/ 
@@ -53,5 +54,8 @@ public class BgeePropertiesFourthTest extends BgeePropertiesParentTest {
         assertEquals("Wrong property value retrieved",
                 BgeeProperties.TOP_ANAT_RESULTS_WRITING_DIRECTORY_DEFAULT, 
                 bgeeProp.getTopAnatResultsWritingDirectory());
+        assertEquals("Wrong property value retrieved",
+                BgeeProperties.MAX_JOB_COUNT_PER_USER_DEFAULT, 
+                bgeeProp.getMaxJobCountPerUser());
     }
 }

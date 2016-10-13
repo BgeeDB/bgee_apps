@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.bgee.controller.utils.MailSender;
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.job.JobService;
 import org.bgee.view.FakeFactoryProvider;
 import org.bgee.view.ViewFactoryProvider;
 import org.junit.Before;
@@ -109,6 +110,7 @@ public class ControllerTest {
         final List<ServiceFactory> mockFactories = new ArrayList<ServiceFactory>();
         MailSender mailSender = mock(MailSender.class);
         FrontController front = new FrontController(this.testProperties, new TestURLParameters(), 
+                new JobService(this.testProperties), 
                 () -> {
                     ServiceFactory mockFactory = mock(ServiceFactory.class); 
                     mockFactories.add(mockFactory);

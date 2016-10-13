@@ -20,6 +20,7 @@ import org.bgee.model.BgeeEnum;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.job.JobService;
 import org.bgee.view.ViewFactory;
 
 /**
@@ -51,6 +52,11 @@ abstract class CommandParent {
      */
     protected final ViewFactory viewFactory;
     protected final ServiceFactory serviceFactory;
+    /**
+     * The {@code JobService} instance allowing to manage jobs between threads 
+     * across the entire webapp. 
+     */
+    protected final JobService jobService;
     /**
      * The {@code MailSender} used to send emails.
      */
@@ -87,42 +93,10 @@ abstract class CommandParent {
      *                          to use.
      * @param viewFactory       A {@code ViewFactory} that provides the display type to be used.
      * @param serviceFactory    A {@code ServiceFactory} that provides the services (might be null)
-     * @param context           The {@code ServletContext} of the servlet using this object. 
-     *                          Notably used when forcing file download.
-     * @param mailSender        A {@code MailSender} instance used to send mails to users.
-     */
-    public CommandParent(HttpServletResponse response, RequestParameters requestParameters,
-                         BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory, 
-                         ServletContext context, MailSender mailSender) {
-        log.entry(response, requestParameters, prop, viewFactory, context, mailSender);
-        this.response = response;
-        this.context = context;
-        this.requestParameters = requestParameters;
-        this.prop = prop;
-        this.viewFactory = viewFactory;
-        this.serviceFactory = serviceFactory;
-        this.mailSender = mailSender;
-        this.serverRoot = prop.getBgeeRootDirectory();
-        this.homePage   = prop.getBgeeRootDirectory();
-        this.bgeeRoot   = prop.getBgeeRootDirectory();
-        log.exit();
-    }
-
-    /**
-     * Constructor
-     * 
-     * @param response          A {@code HttpServletResponse} that will be used to display the 
-     *                          page to the client
-     * @param requestParameters The {@code RequestParameters} that handles the parameters of the 
-     *                          current request.
-     * @param prop              A {@code BgeeProperties} instance that contains the properties
-     *                          to use.
-     * @param viewFactory       A {@code ViewFactory} that provides the display type to be used.
-     * @param serviceFactory    A {@code ServiceFactory} that provides the services (might be null)
      */
     public CommandParent(HttpServletResponse response, RequestParameters requestParameters,
                          BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory) {
-        this(response, requestParameters, prop, viewFactory, serviceFactory, null, null);
+        this(response, requestParameters, prop, viewFactory, serviceFactory, null, null, null);
     }
 
     /**
@@ -139,6 +113,41 @@ abstract class CommandParent {
     public CommandParent(HttpServletResponse response, RequestParameters requestParameters,
                          BgeeProperties prop, ViewFactory viewFactory) {
         this(response, requestParameters, prop, viewFactory, null);
+    }
+
+    /**
+     * Constructor
+     * 
+     * @param response          A {@code HttpServletResponse} that will be used to display the 
+     *                          page to the client
+     * @param requestParameters The {@code RequestParameters} that handles the parameters of the 
+     *                          current request.
+     * @param prop              A {@code BgeeProperties} instance that contains the properties
+     *                          to use.
+     * @param viewFactory       A {@code ViewFactory} that provides the display type to be used.
+     * @param jobService        A {@code JobService} instance allowing to manage jobs between threads 
+     *                          across the entire webapp.
+     * @param serviceFactory    A {@code ServiceFactory} that provides the services (might be null)
+     * @param context           The {@code ServletContext} of the servlet using this object. 
+     *                          Notably used when forcing file download.
+     * @param mailSender        A {@code MailSender} instance used to send mails to users.
+     */
+    public CommandParent(HttpServletResponse response, RequestParameters requestParameters,
+                         BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory, 
+                         JobService jobService, ServletContext context, MailSender mailSender) {
+        log.entry(response, requestParameters, prop, viewFactory, serviceFactory, jobService, context, mailSender);
+        this.response = response;
+        this.context = context;
+        this.requestParameters = requestParameters;
+        this.prop = prop;
+        this.viewFactory = viewFactory;
+        this.serviceFactory = serviceFactory;
+        this.jobService = jobService;
+        this.mailSender = mailSender;
+        this.serverRoot = prop.getBgeeRootDirectory();
+        this.homePage   = prop.getBgeeRootDirectory();
+        this.bgeeRoot   = prop.getBgeeRootDirectory();
+        log.exit();
     }
 
     /**

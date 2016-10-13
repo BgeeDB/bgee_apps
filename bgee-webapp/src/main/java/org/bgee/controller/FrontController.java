@@ -22,6 +22,7 @@ import org.bgee.controller.utils.MailSender;
 import org.bgee.controller.exception.InvalidFormatException;
 import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.job.JobService;
 import org.bgee.view.ErrorDisplay;
 import org.bgee.view.ViewFactory;
 import org.bgee.view.ViewFactoryProvider;
@@ -51,12 +52,17 @@ public class FrontController extends HttpServlet {
      * The {@code BgeeProperties} instance that will be used in the whole application
      * and re injected in all classes that will need it eventually.
      */
-    private final BgeeProperties prop ;
+    private final BgeeProperties prop;
     /**
      * The {@code URLParameters} instance that will provide the parameters list available 
      * within the application
      */
-    private final URLParameters urlParameters ;
+    private final URLParameters urlParameters;
+    /**
+     * The {@code JobService} instance that will allow to manage jobs between threads 
+     * across the entire webapp. 
+     */
+    private final JobService jobService;
     /**
      * A {@code Supplier} of {@code ServiceFactory}s, allowing to obtain a new {@code ServiceFactory} 
      * instance at each call to the {@code doRequest} method.
@@ -66,7 +72,7 @@ public class FrontController extends HttpServlet {
      * The {@code ViewFactoryProvider} instance that will provide the appropriate 
      * {@code ViewFactory} depending on the display type
      */
-    private final ViewFactoryProvider viewFactoryProvider ;
+    private final ViewFactoryProvider viewFactoryProvider;
     /**
      * The {@code MailSender} used to send emails.
      */
@@ -90,7 +96,7 @@ public class FrontController extends HttpServlet {
      *              {@code BgeeProperties}
      */
     public FrontController(Properties prop) {
-        this(BgeeProperties.getBgeeProperties(prop), null, null, null, null);
+        this(BgeeProperties.getBgeeProperties(prop), null, null, null, null, null);
     }
 
     /**
@@ -103,6 +109,8 @@ public class FrontController extends HttpServlet {
      * @param urlParameters             A {@code urlParameters} instance to be used in the whole 
      *                                  application, to be used by {@code RequestParameters} objects 
      *                                  to read/write URLs. 
+     * @param jobService                A {@code JobService} instance allowing to manage jobs 
+     *                                  between threads across the entire webapp. 
      * @param serviceFactoryProvider    A {@code Supplier} of {@code ServiceFactory}s, allowing 
      *                                  to obtain a new {@code ServiceFactory} instance 
      *                                  at each call to the {@code doRequest} method. If {@code null}, 
@@ -112,10 +120,10 @@ public class FrontController extends HttpServlet {
      *                                  display type. 
      * @param mailSender                A {@code MailSender} instance used to send mails to users.
      */
-    public FrontController(BgeeProperties prop, URLParameters urlParameters, 
+    public FrontController(BgeeProperties prop, URLParameters urlParameters, JobService jobService, 
             Supplier<ServiceFactory> serviceFactoryProvider, ViewFactoryProvider viewFactoryProvider, 
             MailSender mailSender) {
-        log.entry(prop, urlParameters, serviceFactoryProvider, viewFactoryProvider, mailSender);
+        log.entry(prop, urlParameters, jobService, serviceFactoryProvider, viewFactoryProvider, mailSender);
 
         // If the URLParameters object is null, just use a new instance
         this.urlParameters = urlParameters != null? urlParameters: new URLParameters();
@@ -123,11 +131,14 @@ public class FrontController extends HttpServlet {
         // If the bgee prop object is null, just get the default instance from BgeeProperties
         this.prop = prop != null? prop: BgeeProperties.getBgeeProperties();
         
+        this.jobService = jobService != null? jobService: new JobService(this.prop);
+        
         // If the viewFactoryProvider object is null, just use a new instance, 
         //injecting the properties obtained above. 
         //XXX: if viewFactoryProvider is not null, we currently don't check that it uses 
         //the same BgeeProperties instance. Maybe it's OK to allow to use different BgeeProperties instances? 
         this.viewFactoryProvider = viewFactoryProvider != null? viewFactoryProvider: new ViewFactoryProvider(this.prop);
+        
         
         //If serviceFactoryProvider is null, use default constructor of ServiceFactory
         this.serviceFactoryProvider = serviceFactoryProvider != null? serviceFactoryProvider: 

@@ -51,12 +51,6 @@ public class FakeTopAnatDisplay extends FakeParentDisplay implements TopAnatDisp
     }
 
     @Override
-    public void sendJobErrorResponse(Job job) {
-        // TODO Auto-generated method stub
-        
-    }
-
-    @Override
     public void sendTrackingJobResponse(LinkedHashMap<String, Object> data,
             String msg) {
         // TODO Auto-generated method stub

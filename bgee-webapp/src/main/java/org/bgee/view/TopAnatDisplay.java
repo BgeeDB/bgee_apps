@@ -2,8 +2,6 @@ package org.bgee.view;
 
 import java.util.LinkedHashMap;
 
-import org.bgee.model.job.Job;
-
 /**
  * Interface defining the methods that views related to topAnat must implemented. 
  * 
@@ -57,12 +55,6 @@ public interface TopAnatDisplay {
      *              to be displayed.
      * @param msg   A {@code String} that is the text message resuming the response.
      */
+    //TODO: certainly to be moved to JobDisplay interface
     public void sendTrackingJobResponse(LinkedHashMap<String, Object> data, String msg);
-    
-    /**
-     * Send the response following an error in a TopAnat job.
-     * 
-     * @param job   A {@code Job} tracking a TopAnat analysis.
-     */
-    public void sendJobErrorResponse(Job job);
 }

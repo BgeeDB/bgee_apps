@@ -426,7 +426,7 @@
                         ng-show="!vm.formSubmitted && !vm.jobDone">
                     Submit your job
                 </button>
-                <button class="btn btn-danger btn-lg" ng-click="vm.cancelJob()" ng-show="vm.formSubmitted && !vm.jobDone" type="button">
+                <button class="btn btn-danger btn-lg" ng-click="vm.cancelJob()" ng-show="vm.formSubmitted && !vm.jobDone" ng-disabled="!vm.jobId || vm.jobId <= 0" type="button">
                     Cancel your job
                 </button>
                 <button class="btn btn-success btn-lg" ng-click="vm.startNewJob()" ng-show="vm.jobDone" type="button">

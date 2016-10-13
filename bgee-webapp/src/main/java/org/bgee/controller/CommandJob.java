@@ -7,14 +7,16 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.TaskManager;
+import org.bgee.model.job.Job;
+import org.bgee.model.job.JobService;
+import org.bgee.view.JobDisplay;
 import org.bgee.view.ViewFactory;
 
 /**
  * Controller handling requests related to job management.
  * 
  * @author  Frederic Bastian
- * @version Bgee 13 Dec 2015
+ * @version Bgee 13 Oct 2016
  * @since   Bgee 13 Dec 2015
  */
 public class CommandJob extends CommandParent {
@@ -38,8 +40,8 @@ public class CommandJob extends CommandParent {
      * @param serviceFactory    A {@code ServiceFactory} that provides bgee services.
      */
     public CommandJob(HttpServletResponse response, RequestParameters requestParameters, 
-            BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory) {
-        super(response, requestParameters, prop, viewFactory, serviceFactory);
+            BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory, JobService jobService) {
+        super(response, requestParameters, prop, viewFactory, serviceFactory, jobService, null, null);
     }
 
 
@@ -47,20 +49,23 @@ public class CommandJob extends CommandParent {
     public void processRequest() throws Exception {
         log.entry();
         
+        JobDisplay display = this.viewFactory.getJobDisplay();
+        
         if (this.requestParameters.isACancelJob()) {
-            Integer jobID = this.requestParameters.getJobId(); 
+            Integer jobId = this.requestParameters.getJobId(); 
             
-            if (jobID == null || jobID < 1) {
+            if (jobId == null || jobId < 1) {
                 throw log.throwing(new InvalidRequestException("A job ID must be provided"));
             }
             
-            // Retrieve task manager associated to the provided ID
-            TaskManager taskManager = TaskManager.getTaskManager(jobID);
-            if (taskManager != null) {
+            // Retrieve job associated to the provided ID
+            Job job = this.jobService.getJob(jobId);
+            if (job != null) {
                 //Retrieve the underlying Thread running the Task, and gently request interruption
-                taskManager.interrupt();
+                job.interrupt();
             }
-            //TODO: we should have some kind of response sent.
+            //If job is null it is OK, maybe the job is simply already gone
+            display.cancelJob(job);
         } else {
             throw log.throwing(new PageNotFoundException("Incorrect " 
                     + this.requestParameters.getUrlParametersInstance().getParamAction() 

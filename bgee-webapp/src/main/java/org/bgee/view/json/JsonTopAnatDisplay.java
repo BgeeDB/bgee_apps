@@ -9,7 +9,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
-import org.bgee.model.job.Job;
 import org.bgee.view.JsonHelper;
 import org.bgee.view.TopAnatDisplay;
 
@@ -76,10 +75,5 @@ public class JsonTopAnatDisplay extends JsonParentDisplay implements TopAnatDisp
         log.entry(data, msg);        
         this.sendResponse(msg, data);
         log.exit();
-    }
-
-    @Override
-    public void sendJobErrorResponse(Job job) {
-        // TODO Auto-generated method stub
     }
 }

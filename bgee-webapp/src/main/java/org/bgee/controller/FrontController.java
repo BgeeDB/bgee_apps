@@ -207,7 +207,7 @@ public class FrontController extends HttpServlet {
                         serviceFactory, this.jobService, this.getServletContext(), this.mailSender);
             } else if (requestParameters.isAJobPageCategory()) {
                 controller = new CommandJob(response, requestParameters, this.prop, factory, 
-                        serviceFactory);
+                        serviceFactory, this.jobService);
             } else if (requestParameters.isAGenePageCategory()){
                 controller = new CommandGene(response, requestParameters, this.prop, factory, serviceFactory);      
             } else if (requestParameters.isASourcePageCategory()){

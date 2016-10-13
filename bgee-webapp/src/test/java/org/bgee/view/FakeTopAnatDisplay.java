@@ -7,7 +7,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
-import org.bgee.model.TaskManager;
+import org.bgee.model.job.Job;
 
 /**
  * Fake view used for tests related to topAnat display. 
@@ -15,7 +15,7 @@ import org.bgee.model.TaskManager;
  * @author  Frederic Bastian
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
- * @version Bgee 13 Nov 2015
+ * @version Bgee 13 Oct 2016
  * @since   Bgee 13
  */
 public class FakeTopAnatDisplay extends FakeParentDisplay implements TopAnatDisplay {
@@ -51,7 +51,7 @@ public class FakeTopAnatDisplay extends FakeParentDisplay implements TopAnatDisp
     }
 
     @Override
-    public void sendJobErrorResponse(TaskManager taskManager) {
+    public void sendJobErrorResponse(Job job) {
         // TODO Auto-generated method stub
         
     }

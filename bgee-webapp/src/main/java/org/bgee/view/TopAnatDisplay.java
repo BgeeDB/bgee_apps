@@ -2,14 +2,14 @@ package org.bgee.view;
 
 import java.util.LinkedHashMap;
 
-import org.bgee.model.TaskManager;
+import org.bgee.model.job.Job;
 
 /**
  * Interface defining the methods that views related to topAnat must implemented. 
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13 Nov 2015
+ * @version Bgee 13 Oct 2016
  * @since   Bgee 13
  */
 //XXX, FB: Actually, I think these methods should not take Maps as arguments, 
@@ -62,7 +62,7 @@ public interface TopAnatDisplay {
     /**
      * Send the response following an error in a TopAnat job.
      * 
-     * @param taskManager   A {@code TaskManager} that is the task manager tracking a TopAnat job.
+     * @param job   A {@code Job} tracking a TopAnat analysis.
      */
-    public void sendJobErrorResponse(TaskManager taskManager);
+    public void sendJobErrorResponse(Job job);
 }

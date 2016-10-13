@@ -204,7 +204,7 @@ public class FrontController extends HttpServlet {
                 controller = new CommandAbout(response, requestParameters, this.prop, factory);
             } else if (requestParameters.isATopAnatPageCategory()) {
                 controller = new CommandTopAnat(response, requestParameters, this.prop, factory, 
-                        serviceFactory, this.getServletContext(), this.mailSender);
+                        serviceFactory, this.jobService, this.getServletContext(), this.mailSender);
             } else if (requestParameters.isAJobPageCategory()) {
                 controller = new CommandJob(response, requestParameters, this.prop, factory, 
                         serviceFactory);

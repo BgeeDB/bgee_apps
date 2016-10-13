@@ -9,7 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
-import org.bgee.model.TaskManager;
+import org.bgee.model.job.Job;
 import org.bgee.view.JsonHelper;
 import org.bgee.view.TopAnatDisplay;
 
@@ -17,7 +17,7 @@ import org.bgee.view.TopAnatDisplay;
  * This class generates the JSON views relative to topAnat.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Nov 2015
+ * @version Bgee 13, Oct 2016
  * @since   Bgee 13
  */
 public class JsonTopAnatDisplay extends JsonParentDisplay implements TopAnatDisplay {
@@ -79,7 +79,7 @@ public class JsonTopAnatDisplay extends JsonParentDisplay implements TopAnatDisp
     }
 
     @Override
-    public void sendJobErrorResponse(TaskManager taskManager) {
+    public void sendJobErrorResponse(Job job) {
         // TODO Auto-generated method stub
     }
 }

@@ -277,7 +277,8 @@ public class TopAnatAnalysis {
 
             try {
                 this.rManager.performRFunction(this.getRScriptConsoleFilePath());
-            } catch (rcaller.exception.ParseException e) {
+            //TODO: This exception specific to RCaller should be encapsulated into RManager    
+            } catch (com.github.rcaller.exception.ParseException e) {
                 log.catching(e);
                 //RCaller throws an exception when there is no result, with a message 
                 //corresponding to the regex: 
@@ -298,8 +299,9 @@ public class TopAnatAnalysis {
                 }
                 //we don't create an empty result file: either it was created by R if there was no result, 
                 //or, if there was an error, then we don't want to prevent re-runnning the analysis.
-                
-            } catch (rcaller.exception.ExecutionException e) {
+
+            //TODO: This exception specific to RCaller should be encapsulated into RManager    
+            } catch (com.github.rcaller.exception.ExecutionException e) {
                 throw log.throwing(new RAnalysisException("The R analysis threw an Exception ", e));
             }
 

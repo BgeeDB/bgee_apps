@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Stream;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
@@ -163,9 +164,11 @@ public class TopAnatController {
                         
                         return results;
                     } catch (Throwable e) {
-                        log.catching(e);
+                        //catch and throw this error in DEBUG level because we don't want 
+                        //to log those as errors when we requested a Thread interruption
+                        log.catching(Level.DEBUG, e);
                         this.job.ifPresent(t -> t.complete());
-                        throw log.throwing(new RuntimeException(e));
+                        throw log.throwing(Level.DEBUG, new RuntimeException(e));
                     }
                 }));
     }

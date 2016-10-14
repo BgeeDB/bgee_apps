@@ -1,5 +1,6 @@
 package org.bgee.model.job;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.StartUpShutdown;
@@ -232,8 +233,8 @@ public class Job {
             this.complete();
             //reset interrupt flag, just in case
             this.executor.interrupt();
-            //throw
-            throw log.throwing(new InterruptedException());
+            //throw. We don't log it as an error
+            throw log.throwing(Level.DEBUG, new InterruptedException());
         }
         log.exit();
     }

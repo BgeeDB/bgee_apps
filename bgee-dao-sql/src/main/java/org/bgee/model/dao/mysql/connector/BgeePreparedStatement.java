@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.TransferObject.EnumDAOField;
@@ -623,7 +624,7 @@ public class BgeePreparedStatement implements AutoCloseable {
         if (this.isCanceled()) {
             //we throw an exception even if the query was not "interrupted" as such, 
             //to let know our thread that it should not pursue its execution.
-            throw log.throwing(new QueryInterruptedException());
+            throw log.throwing(Level.DEBUG, new QueryInterruptedException());
         }
         
         //now we launch the query. Maybe another thread is requesting cancellation 
@@ -640,7 +641,7 @@ public class BgeePreparedStatement implements AutoCloseable {
             //check that we did not return from the executeQuery method because of 
             //a cancellation
             if (this.isCanceled()) {
-                throw log.throwing(new QueryInterruptedException());
+                throw log.throwing(Level.DEBUG, new QueryInterruptedException());
             }
         }
     }

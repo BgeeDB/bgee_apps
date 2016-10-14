@@ -39,9 +39,11 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.InvalidRequestException;
+import org.bgee.controller.exception.JobResultNotFoundException;
 import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.controller.utils.MailSender;
 import org.bgee.model.BgeeEnum;
@@ -190,7 +192,7 @@ public class CommandTopAnat extends CommandParent {
                     log.trace("{} results in {} analyses", resultCount, analysesWithResultCount);
                 }
             } catch (Exception e) {
-                log.catching(e);
+                log.catching(Level.DEBUG, e); //will be rethrown later, don't log as error
                 exceptionThrown = e;
                 //The exception will be thrown after sending the mail. We cannot simply 
                 //send the mail in the finally clause, otherwise we won't have access to this exception.
@@ -232,14 +234,17 @@ public class CommandTopAnat extends CommandParent {
                     }
                 }
             } catch (InterruptedException e) {
-                log.catching(e);
+                log.catching(Level.DEBUG, e); //not really an error
                 if (exceptionThrown == null) {
                     exceptionThrown = e;
                 }
             }
             
             //if there was an error during the analyses, we throw it after sending the mail
-            if (exceptionThrown != null) {
+            if (exceptionThrown != null && 
+                //if it was a requested interruption, we don't throw an exception
+                !job.isInterruptRequested()) {
+                
                 throw log.throwing(new IllegalStateException(exceptionThrown));
             }
             
@@ -427,8 +432,8 @@ public class CommandTopAnat extends CommandParent {
     }
 
     @Override
-    public void processRequest() throws IOException, PageNotFoundException, InvalidRequestException,
-            MissingParameterException {
+    public void processRequest() throws IOException, JobResultNotFoundException, PageNotFoundException, 
+    InvalidRequestException, MissingParameterException {
         log.entry();
         
         //we initialize the display only if there is no file to download requested, 
@@ -508,8 +513,13 @@ public class CommandTopAnat extends CommandParent {
             
             TopAnatController controller = this.loadTopAnatController();
             if (!controller.areAnalysesDone()) {
-                throw log.throwing(new InvalidRequestException(
-                        "No results available for the provided parameters."));
+                //Maybe the results are not present simply because the job was canceled by the user, 
+                //not because of an error. One way of being sure would be to store the Job 
+                //running the analysis even after completion, to make sure an interruption was requested.
+                //In the meantime, we don't consider this an error. 
+                throw log.throwing(Level.DEBUG, new JobResultNotFoundException(
+                        "No results available for the provided parameters. Did you cancel your job? "
+                        + "Otherwise it means there was an error during the analysis."));
             }
             Stream<TopAnatResults> topAnatResults = controller.proceedToTopAnatAnalyses();
 

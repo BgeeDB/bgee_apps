@@ -21,7 +21,9 @@ import org.bgee.controller.servletutils.BgeeHttpServletRequest;
 import org.bgee.controller.utils.MailSender;
 import org.bgee.controller.exception.InvalidFormatException;
 import org.bgee.controller.exception.InvalidRequestException;
+import org.bgee.controller.exception.JobResultNotFoundException;
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.dao.api.exception.QueryInterruptedException;
 import org.bgee.model.job.JobService;
 import org.bgee.view.ErrorDisplay;
 import org.bgee.view.ViewFactory;
@@ -35,7 +37,7 @@ import org.bgee.view.ViewFactoryProvider.DisplayType;
  * @author Mathieu Seppey
  * @author Frederic Bastian
  *
- * @version Bgee 13, Dec. 2015
+ * @version Bgee 13, Oct 2016
  * @since Bgee 13
  */
 public class FrontController extends HttpServlet {
@@ -227,7 +229,12 @@ public class FrontController extends HttpServlet {
             
         //=== process errors ===
         } catch (Exception e) {
-            log.catching(e);
+            Level logLevel = Level.ERROR;
+            if (e instanceof QueryInterruptedException || e instanceof JobResultNotFoundException) {
+                logLevel = Level.DEBUG;
+            }
+            log.catching(logLevel, e);
+            
             //get an ErrorDisplay of the appropriate display type. 
             //We don't acquire the ErrorDisplay before any Exception is thrown, 
             //because we might need to use the response outputstream directly; 

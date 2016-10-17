@@ -23,6 +23,7 @@ import java.util.Spliterators;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.Stream.Builder;
 import java.util.stream.StreamSupport;
 
 import org.apache.commons.lang3.StringUtils;
@@ -32,6 +33,7 @@ import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
+import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.ComparisonFactor;
 import org.bgee.model.dao.api.expressiondata.CallDAOFilter;
 import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
@@ -52,6 +54,7 @@ import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.gene.Gene;
 import org.bgee.model.species.TaxonomyFilter;
 
 /**
@@ -150,6 +153,8 @@ public class CallService extends Service {
         private T next2;
         private boolean isInitiated;
         private boolean isClosed;
+        private boolean isFirstItaration;
+        private T lastCall;
 
         public CallSpliterator(Stream<T> stream1, Stream<T> stream2, Comparator<? super T> comparator) {
             super(Long.MAX_VALUE, Spliterator.ORDERED | Spliterator.IMMUTABLE 
@@ -166,6 +171,7 @@ public class CallService extends Service {
             this.isInitiated = false;
             this.isClosed = true; // Open initiation
             this.comparator = comparator;
+            this.isFirstItaration = true;
         }
      
         @Override
@@ -201,10 +207,17 @@ public class CallService extends Service {
                 T currentCall = null;
                 String currentGeneId = null;
                 if (doIteration) {
-                    // FIXME We should not call getNext() if it is not the first call to tryAdvance()
-                    currentCall = this.getNext();
+                    // TODO unit test
+                    // We should not call getNext() if it is not the first call to tryAdvance()
+                    // but it is the first time of iterations
+                    if (!this.isFirstItaration && geneCalls.isEmpty()) {
+                        currentCall = this.lastCall;
+                    } else {
+                        currentCall = this.getNext();
+                    }
                     currentGeneId = currentCall.getGeneId();
                 }
+                this.isFirstItaration = false;
                 log.trace("Previous gene ID={} - Current gene ID={}", previousGeneId, currentGeneId);
 
                 //if the gene ID changes, or if it is the latest iteration
@@ -237,6 +250,7 @@ public class CallService extends Service {
                     
                     log.trace("Done generating data for gene ID {}", previousGeneId);
                     
+                    lastCall = currentCall;
                     break;
                 }
                 if (doIteration) {
@@ -797,7 +811,8 @@ public class CallService extends Service {
             LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes)
                     throws IllegalArgumentException {
         log.entry(speciesId, callFilter, attributes, orderingAttributes);
-        
+        log.debug("Start retrieving expressed data");
+
         //UnsupportedOperationExceptions (for now)
         if (attributes.contains(Attribute.CALL_DATA_OBSERVED_DATA)) {
             throw log.throwing(new UnsupportedOperationException(
@@ -873,36 +888,11 @@ public class CallService extends Service {
                     //not consumed at this point (map is a lazy operation as well). 
                     .map(callTO -> mapCallTOToExpressionCall(callTO, new DataPropagation(), speciesId));
         }
+        log.debug("Done retrieving expressed data");
 
-        //Extract only the CallData related to no-expression queries
-        Set<ExpressionCallData> noExprCallData = callFilter.getCallDataFilters().stream()
-                //consider only callData for the ExpressionCallDAO
-                .filter(callData -> Expression.NOT_EXPRESSED.equals(callData.getCallType()))
-                .map(callData -> (ExpressionCallData) callData)
-                .collect(Collectors.toSet());
-        
-        if (noExprCallData.isEmpty()) {
-            return log.exit(expr);
-        }
-        log.warn("NoExpressionDAO may not return what you expect, "
-                + "filters are not taken into account (except species ID)");
-
-        final NoExpressionCallDAO noExprDao = this.getDaoManager().getNoExpressionCallDAO();
-        NoExpressionCallParams params = new NoExpressionCallParams();
-        // FIXME Manage no-expression params into NoExpressionCallDAO.
-        params.addSpeciesId(speciesId);
-        Stream<ExpressionCall> noExpr = noExprDao.getNoExpressionCalls(params)
-                //retrieve the Stream resulting from the query. Note that the query is not executed 
-                //as long as the Stream is not consumed (lazy-loading).
-                .stream()
-                //allow mapping of the ExpressionCallTOs to ExpressionCalls. The Stream is still 
-                //not consumed at this point (map is a lazy operation as well). 
-                .map(callTO -> mapCallTOToExpressionCall(callTO, new DataPropagation(), speciesId));
-
-        return log.exit(Stream.concat(expr, noExpr));
+        return log.exit(expr);
     }
 
-    //*************************************************************************
     /**
      * Perform expression queries without the post-processing of the results returned by {@code DAO}s.
      * 
@@ -929,6 +919,8 @@ public class CallService extends Service {
                     throws IllegalArgumentException {
         log.entry(speciesId, attributes, orderingAttributes);
         
+        log.debug("Start retrieving not-expressed data");
+        
         //UnsupportedOperationExceptions (for now)
         if (attributes.contains(Attribute.CALL_DATA_OBSERVED_DATA)) {
             throw log.throwing(new UnsupportedOperationException(
@@ -947,6 +939,8 @@ public class CallService extends Service {
                 .map(callTO -> mapCallTOToExpressionCall(callTO, new DataPropagation(), speciesId))
                 // TODO remove sort when it will be done by DAO
                 .sorted((e1, e2) -> e1.getGeneId().compareTo(e2.getGeneId()));
+        
+        log.debug("Done retrieving not-expressed data");
 
         return log.exit(noExpr);
     }

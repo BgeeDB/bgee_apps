@@ -143,6 +143,9 @@ public class CallService extends Service {
      * @author  Valentine Rech de Laval
      * @version Bgee 13, Oct. 2016
      * @since   Bgee 13, Oct. 2016
+     * 
+     * @param <T>   The type of {@code Call}.
+     * @param <U>   The type of {@code Set} of {@code T}.
      */
     public class CallSpliterator<U extends Set<T>, T extends Call<?,?>> 
         extends Spliterators.AbstractSpliterator<U> {

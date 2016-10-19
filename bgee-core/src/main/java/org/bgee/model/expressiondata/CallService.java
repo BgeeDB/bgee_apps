@@ -1634,6 +1634,14 @@ public class CallService extends Service {
     protected static ExpressionCall reconcileSingleGeneCalls(Collection<ExpressionCall> calls) {
         log.entry(calls);
         
+        if (calls == null || calls.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("Provided no calls"));
+        }
+        if (calls.stream().anyMatch(c -> c.getCallData() == null || c.getCallData().isEmpty())) {
+            throw log.throwing(new IllegalArgumentException(
+                    "At least one ExpressionCall has not ExpressionCallData"));
+        }
+
         // Check calls have same gene ID
         Set<String> geneIds = calls.stream().map(c -> c.getGeneId()).collect(Collectors.toSet());
         if (geneIds.size() != 1) {
@@ -1679,6 +1687,9 @@ public class CallService extends Service {
                     throw log.throwing(new IllegalArgumentException("Unsupported Expression"));
             }
         } else {
+            // FIXME throw an IllegalStateException if an expressed call and a not-expressed call
+            // are found for the same data type
+
             long notPropagatedNoExprCount = callData.stream()
                 .filter(c -> Boolean.TRUE.equals(c.getDataPropagation().getIncludingObservedData()) &&
                         c.getCallType().equals(Expression.NOT_EXPRESSED))

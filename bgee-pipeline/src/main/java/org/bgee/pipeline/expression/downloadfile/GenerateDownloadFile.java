@@ -275,7 +275,7 @@ public abstract class GenerateDownloadFile extends CallUser {
         if (DataState.LOWQUALITY.equals(dataState)) {
             return log.exit(LOW_QUALITY_TEXT);
         }
-        return log.exit(NO_DATA_VALUE);
+        return log.exit(NA_VALUE);
     }
 
     /**
@@ -595,6 +595,7 @@ public abstract class GenerateDownloadFile extends CallUser {
             Map<T, String> generatedFileNames, String tmpExtension) {
         log.entry(generatedFileNames, tmpExtension);
         
+        // FIXME delete tmp file if contains only header
         for (String fileName: generatedFileNames.values()) {
             //if temporary file exists, rename it.
             File tmpFile = new File(this.directory, fileName + tmpExtension);

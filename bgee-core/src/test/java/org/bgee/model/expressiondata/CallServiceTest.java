@@ -97,8 +97,9 @@ public class CallServiceTest extends TestAncestor {
     
     /**
      * Test the method {@link CallService#loadExpressionCalls(String, ExpressionCallFilter, 
-     * Collection, LinkedHashMap)}.
+     * Collection, LinkedHashMap, boolean)}.
      */
+    // Keep in this test only one gene: it allows to detect if only one iteration is possible
     @Test
     public void shouldLoadExpressionCallsForBasicGene() {
         //First test for one gene, with sub-stages but without substructures. 
@@ -233,7 +234,8 @@ public class CallServiceTest extends TestAncestor {
                 new ExpressionCallFilter(new GeneFilter("geneId1"), null, 
                         Arrays.asList(new ExpressionCallData(Expression.EXPRESSED))), 
                 null, // all attributes 
-                serviceOrdering)
+                serviceOrdering,
+                true)
                 .collect(Collectors.toList());
         assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
         
@@ -258,8 +260,10 @@ public class CallServiceTest extends TestAncestor {
     
     /**
      * Test the method {@link CallService#loadExpressionCalls(String, ExpressionCallFilter, 
-     * Collection, LinkedHashMap)}.
-     */
+     * Collection, LinkedHashMap, boolean)}.
+     */    
+    // Keep in this test empty stream for no-expression calls:
+    // it allows to detect if all calls are read when only one query has calls
     @Test
     public void shouldLoadExpressionCallsForSeveralGenes() {
         //Retrieving geneId, anatEntityId, unordered, with substructures but without sub-stages. 
@@ -273,13 +277,12 @@ public class CallServiceTest extends TestAncestor {
                 Arrays.asList(
                     // To not overload tests, we put null for not used attributes 
                     // but, real query return all attributes
-
                     new ExpressionCallTO(null, "geneId1", "anatEntityId1", "stageId1",  
                         null, CallTO.DataState.HIGHQUALITY, null, null, null, null, null, null, null, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true), 
                     new ExpressionCallTO(null, "geneId1", "anatEntityId2", "stageId1",  
-                        null, CallTO.DataState.HIGHQUALITY, null, null, null, null, null, null, null, 
-                        false, false, OriginOfLine.SELF, OriginOfLine.SELF, true), 
+                            null, CallTO.DataState.HIGHQUALITY, null, null, null, null, null, null, null, 
+                            false, false, OriginOfLine.SELF, OriginOfLine.SELF, true), 
                     new ExpressionCallTO(null, "geneId2", "anatEntityId1", "stageId2",  
                         null, CallTO.DataState.HIGHQUALITY, null, null, null, null, null, null, null, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true)));
@@ -316,7 +319,7 @@ public class CallServiceTest extends TestAncestor {
 
         when(ontService.getAnatEntityOntology("speciesId1", new HashSet<>(Arrays.asList(
                 "anatEntityId1", "anatEntityId2")), EnumSet.of(RelationType.ISA_PARTOF), true, false))
-        .thenReturn(anatEntityOnt);
+            .thenReturn(anatEntityOnt);
         when(ontService.getDevStageOntology("speciesId1", new HashSet<>(Arrays.asList(
                 "stageId1", "stageId2")), true, false)).thenReturn(devStageOnt);
         String anatEntityId1 = "anatEntityId1";
@@ -358,7 +361,7 @@ public class CallServiceTest extends TestAncestor {
                 new ExpressionCallFilter(null, null, 
                         Arrays.asList(new ExpressionCallData(Expression.EXPRESSED))), 
                 EnumSet.of(CallService.Attribute.GENE_ID, CallService.Attribute.ANAT_ENTITY_ID), 
-                null)
+                null, true)
                 .collect(Collectors.toList());
         assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
         
@@ -392,7 +395,7 @@ public class CallServiceTest extends TestAncestor {
 
     /**
      * Test the method {@link CallService#loadExpressionCalls(String, ExpressionCallFilter, 
-     * Collection, LinkedHashMap)}.
+     * Collection, LinkedHashMap, boolean)}.
      */
     @Test
     public void shouldLoadExpressionCallsWithFiltering() {
@@ -520,7 +523,7 @@ public class CallServiceTest extends TestAncestor {
                 EnumSet.of(CallService.Attribute.GENE_ID, CallService.Attribute.GLOBAL_ANAT_PROPAGATION, 
                         CallService.Attribute.GLOBAL_STAGE_PROPAGATION, CallService.Attribute.CALL_DATA, 
                         CallService.Attribute.GLOBAL_DATA_QUALITY, CallService.Attribute.GLOBAL_RANK),
-                serviceOrdering)
+                serviceOrdering, true)
                 .collect(Collectors.toList());
         assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
         

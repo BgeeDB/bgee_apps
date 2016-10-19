@@ -417,6 +417,8 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         //********************************
         // RETRIEVE DATA FROM DATA SOURCE
         //********************************
+        log.trace("Start retrieving data for expression files for the species {}...", speciesId);
+
         ServiceFactory serviceFactory = this.serviceFactorySupplier.get();
 
         Set<String> speciesFilter = new HashSet<String>();
@@ -431,7 +433,6 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 .map(AnatEntity::getId)
                 .collect(Collectors.toSet());
 
-        log.trace("Start retrieving data for expression files for the species {}...", speciesId);
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
                 new LinkedHashMap<>();
         //The ordering by gene ID is essential here, because we will load into memory 
@@ -446,7 +447,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 new ExpressionCallData(Expression.NOT_EXPRESSED))));
 
         Stream<ExpressionCall> calls = serviceFactory.getCallService().loadExpressionCalls(
-                speciesId, callFilter, null, serviceOrdering)
+                speciesId, callFilter, null, serviceOrdering, true)
                 .filter(c-> !nonInformativeAnatEntities.contains(c.getCondition().getAnatEntityId()));
 
 
@@ -890,7 +891,6 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         calls.forEachOrdered(c -> {
             for (Entry<SingleSpExprFileType2, ICsvDozerBeanWriter> writerFileType : writersUsed.entrySet()) {
                 String geneId = c.getGeneId();
-                // TODO why it's doesn't bug before?
                 String geneName = geneNamesByIds.containsKey(geneId)? geneNamesByIds.get(geneId) : "";
                 String anatEntityId = c.getCondition().getAnatEntityId();
                 String anatEntityName = anatEntityNamesByIds.get(anatEntityId);

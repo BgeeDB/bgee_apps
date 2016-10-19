@@ -23,7 +23,6 @@ import java.util.Spliterators;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.Stream.Builder;
 import java.util.stream.StreamSupport;
 
 import org.apache.commons.lang3.StringUtils;
@@ -33,7 +32,6 @@ import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
-import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.ComparisonFactor;
 import org.bgee.model.dao.api.expressiondata.CallDAOFilter;
 import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
@@ -54,7 +52,6 @@ import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
-import org.bgee.model.gene.Gene;
 import org.bgee.model.species.TaxonomyFilter;
 
 /**
@@ -137,9 +134,15 @@ public class CallService extends Service {
         return null;
     }
 
-    
     /**
-     * TODO javadoc
+     * A {@code Spliterator} allowing to stream over {@code Call}s grouped according
+     * to provided {@code Comparator} obtained from two {@code Stream}s.
+     * This {@code Spliterator} is ordered, immutable, unsized, and 
+     * contains unique and not {@code null} elements. 
+     * 
+     * @author  Valentine Rech de Laval
+     * @version Bgee 13, Oct. 2016
+     * @since   Bgee 13, Oct. 2016
      */
     public class CallSpliterator<U extends Set<T>, T extends Call<?,?>> 
         extends Spliterators.AbstractSpliterator<U> {
@@ -153,14 +156,21 @@ public class CallService extends Service {
         private T next2;
         private boolean isInitiated;
         private boolean isClosed;
-        private boolean isFirstItaration;
+        private boolean isFirstIteration;
         private T lastCall;
 
+        /**
+         * Constructor providing the two {@code Stream}s and the {@code Comparator} of {@code T}s.
+         * 
+         * @param stream1       A {@code Stream} of {@code T} that is the first stream.
+         * @param stream2       A {@code Stream} of {@code T} that is the second stream.
+         * @param comparator    A {@code Comparator} of {@code T}s that is the comparator of elements.
+         */
         public CallSpliterator(Stream<T> stream1, Stream<T> stream2, Comparator<? super T> comparator) {
             super(Long.MAX_VALUE, Spliterator.ORDERED | Spliterator.IMMUTABLE 
                     | Spliterator.DISTINCT | Spliterator.NONNULL 
                     // FIXME should be sorted? if yes, we should override getComparator() 
-                    // building a comparator of List<Call>??
+                    // building a comparator of List<Call>, how??
 //                    | Spliterator.SORTED 
                     );
             if (stream1 == null || stream2 == null) {
@@ -171,7 +181,7 @@ public class CallService extends Service {
             this.isInitiated = false;
             this.isClosed = true; // Open initiation
             this.comparator = comparator;
-            this.isFirstItaration = true;
+            this.isFirstIteration = true;
         }
      
         @Override
@@ -184,17 +194,9 @@ public class CallService extends Service {
                 this.iter1 = stream1.iterator();
                 this.iter2 = stream2.iterator();
 
-                // TODO refactor
-                try {
-                    next1 = iter1.next();
-                } catch (NoSuchElementException e) {
-                    next1 = null;    
-                }
-                try {
-                    next2 = iter2.next();
-                } catch (NoSuchElementException e) {
-                    next2 = null;    
-                }
+                next1 = this.iterate(null, next1, iter1);
+                next2 = this.iterate(null, next2, iter2);
+                
                 isInitiated = true;
                 isClosed = false;
             }
@@ -208,17 +210,28 @@ public class CallService extends Service {
                 String currentGeneId = null;
                 if (doIteration) {
                     // TODO unit test
-                    // We should not call getNext() if it is not the first call to tryAdvance()
+                    // We should not get next element if it is not the first call to tryAdvance()
                     // but it is the first time of iterations
-                    if (!this.isFirstItaration && geneCalls.isEmpty()) {
+                    if (!this.isFirstIteration && geneCalls.isEmpty()) {
                         currentCall = this.lastCall;
                     } else {
                         currentCall = this.getNext();
                     }
                     currentGeneId = currentCall.getGeneId();
+                } else {
+                    // If there is no more element, we should get next element if it is
+                    // the first iteration or the last call if it is not 
+                    if (this.isFirstIteration) {
+                        currentCall = this.getNext();
+                    } else {
+                        currentCall = this.lastCall;
+                    }
+                    previousGeneId = currentCall.getGeneId();
+                    geneCalls.add(currentCall);
                 }
-                this.isFirstItaration = false;
                 log.trace("Previous gene ID={} - Current gene ID={}", previousGeneId, currentGeneId);
+                
+                this.isFirstIteration = false;
 
                 //if the gene ID changes, or if it is the latest iteration
                 if (!doIteration || //doIteration is false for the latest iteration, 
@@ -227,7 +240,7 @@ public class CallService extends Service {
                     log.trace("Start generating data for gene ID {}", previousGeneId);
 
                     assert (doIteration && currentGeneId != null && currentCall != null) || 
-                                (!doIteration && currentGeneId == null && currentCall == null);
+                                (!doIteration && currentGeneId == null && currentCall != null);
                     
                     //the calls are supposed to be ordered by ascending gene ID
                     if (currentGeneId != null && currentGeneId.compareTo(previousGeneId) < 0) {
@@ -250,7 +263,7 @@ public class CallService extends Service {
                     
                     log.trace("Done generating data for gene ID {}", previousGeneId);
                     
-                    lastCall = currentCall;
+                    this.lastCall = currentCall;
                     break;
                 }
                 if (doIteration) {
@@ -258,11 +271,13 @@ public class CallService extends Service {
                     geneCalls.add(currentCall);
                     // We store the current gene ID to be compare with the next one
                     previousGeneId = currentGeneId;
+                    this.lastCall = currentCall;
                 }
             }
-            if (next1 != null || next2 != null) return log.exit(true);
+            if (next1 != null || next2 != null || doIteration) {
+                return log.exit(true);
+            }
 
-            this.close();
             return log.exit(false);
         }
         
@@ -272,44 +287,51 @@ public class CallService extends Service {
          * @return  The {@code T} that is the next element.
          */
         private T getNext() {
+            log.entry();
             // can use half the code at the expense of some readability
             boolean useIterator1 = (next1 != null && next2 == null)  ||
                                  (next1 != null && next2 != null 
                                      && comparator.compare(next1, next2) <= 0);
 
-            T returnObject = null;
+            T currentElement = null;
             if (useIterator1) {
-                returnObject = next1;
-                next1 = refactoring(returnObject, next1, iter1);
+                currentElement = next1;
+                next1 = this.iterate(currentElement, next1, iter1);
             } else {
-                returnObject = next2;
-                next2 = refactoring(returnObject, next2, iter2);
+                currentElement = next2;
+                next2 = this.iterate(currentElement, next2, iter2);
             }
             if (next1 == null && next2 == null) {
                 this.close();
             }
-            assert returnObject != null;
-            return returnObject;
+            assert currentElement != null;
+            return log.exit(currentElement);
         }
         
         /** 
-         * TODO javadoc and rename method
+         * Gets next element from provided iterator.
+         * <p>
+         * Provided {@code iterator} is modified.
          * 
-         * @param returnObject
-         * @param nextObject
-         * @param iter
-         * @return
+         * @param currentElement    A {@code T} that is the current element used to
+         *                          check ascending order. 
+         * @param nextElement       A {@code T} that is the next element used to
+         *                          check ascending order. 
+         * @param iterator          An {@code Iterator} of {@code T} that is the iterator from 
+         *                          which next element is retrieved. 
+         * @return                  A {@code T} that is the new next element to be saved.
+         *                          Returns {@code null}, if iteration has no more elements.
          */
-        private T refactoring(T returnObject, T nextObject, Iterator<T> iter) {
-            log.entry(returnObject, nextObject, iter);
+        private T iterate(T currentElement, T nextElement, Iterator<T> iterator) {
+            log.entry(currentElement, nextElement, iterator);
             T next;
             try {
-                next = iter.next();
-                if (returnObject != null && comparator.compare(returnObject, nextObject) > 0 ) {
+                next = iterator.next();
+                if (currentElement != null && comparator.compare(currentElement, nextElement) > 0 ) {
                     throw new IllegalArgumentException("The calls "
                             + "were not retrieved by gene ID ascending order, which "
                             + "is mandatory for proper generation of data: previous gene ID: " 
-                            + returnObject.getGeneId() + ", current gene ID: " + next.getGeneId());
+                            + currentElement.getGeneId() + ", current gene ID: " + next.getGeneId());
                 }
             } catch (NoSuchElementException e) {
                 next = null;    
@@ -330,7 +352,7 @@ public class CallService extends Service {
         }
         
         /** 
-         * TODO javadoc
+         * Close the two {@code Stream}s provided at instantiation.
          */
         // TODO add unit test to be sure that streams are closed
         public void close() {
@@ -359,14 +381,17 @@ public class CallService extends Service {
      *                              used to order the returned {@code ExpressionCall}s, 
      *                              the associated value being a {@code Service.Direction} defining 
      *                              whether the ordering should be ascendant or descendant.
+     * @param doPropagation         A {@code boolean} defining whether propagation should be done or not.
      * @return                      A {@code Stream} of {@code ExpressionCall}s that are propagated
      *                              and reconciled expression calls.
      * @throws IllegalArgumentException If {@code callFilter} or {@code speciesID} are null or empty.
      */
+    // TODO Add unit tests with combination of expressed and not-expressed calls
     public Stream<ExpressionCall> loadExpressionCalls(String speciesId, 
             ExpressionCallFilter callFilter, Collection<Attribute> attributes, 
-            LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes) throws IllegalArgumentException {
-        log.entry(speciesId, callFilter, attributes, orderingAttributes);
+            LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes, boolean doPropagation)
+                    throws IllegalArgumentException {
+        log.entry(speciesId, callFilter, attributes, orderingAttributes, doPropagation);
         
         //sanity checks
         if (callFilter == null) {
@@ -383,98 +408,21 @@ public class CallService extends Service {
 
         // We need to retrieved all attributes to be able to build the ConditionUtils and
         // propagate, reconcile and filter calls.
-        Set<ExpressionCall> calls = this.performsExpressedCallQuery(speciesId, callFilter, 
-                EnumSet.complementOf(EnumSet.of(Attribute.CALL_DATA_OBSERVED_DATA)), clonedOrderingAttrs)
-                .collect(Collectors.toSet());
+        boolean doExpressedQuery = callFilter.getCallDataFilters().stream()
+                .anyMatch(callData -> Expression.EXPRESSED.equals(callData.getCallType()));
+
+        Stream<ExpressionCall> streamExpressedCalls = doExpressedQuery?
+                this.performsExpressedCallQuery(speciesId, callFilter, 
+                        EnumSet.complementOf(EnumSet.of(Attribute.CALL_DATA_OBSERVED_DATA)), clonedOrderingAttrs) :
+                Stream.empty();
         
-        ConditionUtils conditionUtils = new ConditionUtils(
-                calls.stream().map(c -> c.getCondition()).collect(Collectors.toSet()),
-                // We should infer ancestral condition to be able to propagate to condition without call.
-                true,
-                this.getServiceFactory());
-
-        Set<ExpressionCall> propagatedCalls = this.propagateExpressionCalls(calls, 
-                callFilter.getConditionFilters(), conditionUtils, speciesId);
-
-        // For single species, we need to reconcile calls with the same gene/organ/stage
-        // Note: we need to convert Set into List to have a stable sort
-        // (see Javadoc of java.util.stream.Stream.sorted)
-        Map<ExpressionCall, List<ExpressionCall>> groupedCalls = propagatedCalls.stream().collect(Collectors.toMap(
-                c -> new ExpressionCall(c.getGeneId(), c.getCondition(), null, null, null, null, null), 
-                c -> new ArrayList<ExpressionCall>(Arrays.asList(c)), 
-                (v1, v2) -> {
-                    List<ExpressionCall> newList = new ArrayList<>(v1);
-                    newList.addAll(v2);
-                    return newList;
-                }));
-
-        Stream<ExpressionCall> reconciledCalls = groupedCalls.entrySet().stream()
-                // Reconcile calls
-                .map(e -> {
-                    ExpressionCall reconciledCall = CallService.reconcileSingleGeneCalls(e.getValue());
-                    return new ExpressionCall(reconciledCall.getGeneId(), e.getKey().getCondition(),
-                            reconciledCall.getDataPropagation(), reconciledCall.getSummaryCallType(),
-                            reconciledCall.getSummaryQuality(), reconciledCall.getCallData(),
-                            reconciledCall.getGlobalMeanRank());
-                })
-                // Filter calls according CallFilter
-                .filter(c -> CallService.testCallFilter(c, callFilter))
-                // Order according to provided orderingAttributes with convertServiceOrdering
-                // We order before removing attribute to be able to order on all orderingAttributes
-                .sorted(CallService.convertServiceOrdering(clonedOrderingAttrs))
-                // Keep provided attributes
-                .map(c -> CallService.getClonedExpressionCall(c, clonedAttrs))
-                // After removing of some attributes, some calls can be identical
-                .distinct();
-
-        return log.exit(reconciledCalls);
-    }
-
-    /** 
-     * Load propagated and reconciled expression calls with parameter provided 
-     * through an {@code ExpressionCallFilter}.
-     * 
-     * @param speciesId             A {@code String} that is the ID of the species 
-     *                              for which to return the {@code ExpressionCall}s.
-     * @param callFilter            An {@code ExpressionCallFilter} allowing 
-     *                              to filter retrieving of data.
-     * @param attributes            A {@code Collection} of {@code Attribute}s defining the
-     *                              attributes to populate in the returned {@code ExpressionCall}s.
-     *                              If {@code null} or empty, all attributes are populated. 
-     * @param orderingAttributes    A {@code LinkedHashMap} where keys are 
-     *                              {@code CallService.OrderingAttribute}s defining the attributes
-     *                              used to order the returned {@code ExpressionCall}s, 
-     *                              the associated value being a {@code Service.Direction} defining 
-     *                              whether the ordering should be ascendant or descendant.
-     * @return                      A {@code Stream} of {@code ExpressionCall}s that are propagated
-     *                              and reconciled expression calls.
-     * @throws IllegalArgumentException If {@code callFilter} or {@code speciesID} are null or empty.
-     */
-    // TODO Add unit tests
-    public Stream<ExpressionCall> loadExpressionCalls_stream(String speciesId, 
-            ExpressionCallFilter callFilter, Collection<Attribute> attributes, 
-            LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes) throws IllegalArgumentException {
-        log.entry(speciesId, callFilter, attributes, orderingAttributes);
-        
-        //sanity checks
-        if (callFilter == null) {
-            throw log.throwing(new IllegalArgumentException("A CallFilter must be provided."));
-        }
-        if (StringUtils.isBlank(speciesId)) {
-            throw log.throwing(new IllegalArgumentException("A speciesID must be provided"));
-        }
-        
-        final Set<Attribute> clonedAttrs = Collections.unmodifiableSet(
-                attributes == null? EnumSet.noneOf(Attribute.class): EnumSet.copyOf(attributes));
-        LinkedHashMap<OrderingAttribute, Service.Direction> clonedOrderingAttrs = 
-                orderingAttributes == null? new LinkedHashMap<>(): new LinkedHashMap<>(orderingAttributes);
-
-        // We need to retrieved all attributes to be able to build the ConditionUtils and
-        // propagate, reconcile and filter calls.
-        Stream<ExpressionCall> streamExpressedCalls = this.performsExpressedCallQuery(speciesId, callFilter, 
-                EnumSet.complementOf(EnumSet.of(Attribute.CALL_DATA_OBSERVED_DATA)), clonedOrderingAttrs);
-        Stream<ExpressionCall> streamNotExpressedCalls = this.performsNotExpressedCallQuery(speciesId,
-                EnumSet.complementOf(EnumSet.of(Attribute.CALL_DATA_OBSERVED_DATA)), clonedOrderingAttrs);
+        //Check if callFilter ask not-expressed call
+        boolean doNotExpressedQuery = callFilter.getCallDataFilters().stream()
+        .anyMatch(callData -> Expression.NOT_EXPRESSED.equals(callData.getCallType()));
+        Stream<ExpressionCall> streamNotExpressedCalls = doNotExpressedQuery ?
+                this.performsNotExpressedCallQuery(speciesId, EnumSet.complementOf(
+                        EnumSet.of(Attribute.CALL_DATA_OBSERVED_DATA)), clonedOrderingAttrs) :
+                Stream.empty();
 
         // FIXME : we should use conditionForPropagation but to test current implementation
         // (loadExpressionCalls using CallSpliterator) we store calls
@@ -492,52 +440,70 @@ public class CallService extends Service {
         Stream<Set<ExpressionCall>> callsByGene = StreamSupport.stream(spliterator, false)
                 .onClose(() -> spliterator.close());
         
-        ConditionUtils conditionUtils = new ConditionUtils(
-                // FIXME use conditionsForPropagation when it will be implemented
-                tmpCondForPropagation,
-                // We should infer ancestral condition to be able to propagate to condition without call.
-                true,
-                this.getServiceFactory());
+        Stream<ExpressionCall> reconciledCalls;
+        if (doPropagation) {
+            ConditionUtils conditionUtils = new ConditionUtils(
+                    // FIXME use conditionsForPropagation when it will be implemented
+                    tmpCondForPropagation,
+                    // We should infer ancestral condition to be able to propagate to condition without call.
+                    true,
+                    this.getServiceFactory());
 
-        Stream<ExpressionCall> reconciledCalls = callsByGene
-            .map(g -> this.propagateExpressionCalls(g, callFilter.getConditionFilters(), conditionUtils, speciesId)) 
-            .map(g -> {
-                // For single species, we need to reconcile calls with the same gene/organ/stage
-                // Note: we need to use List to have a stable sort in next step
-                // (see Javadoc of java.util.stream.Stream.sorted)
-                Map<ExpressionCall, List<ExpressionCall>> groupedCalls = 
-                        new HashMap<ExpressionCall, List<ExpressionCall>>();
-                for (ExpressionCall c: g) {
-                    ExpressionCall key = new ExpressionCall(c.getGeneId(), c.getCondition(), null, null, null, null, null);
-                    List<ExpressionCall> calls = groupedCalls.get(key);
-                    if (calls == null) {
-                        calls = new ArrayList<>();
-                        groupedCalls.put(key, calls);
-                    }
-                    calls.add(c);
-                }
-                return groupedCalls;
-            })
-            .map(m -> m.entrySet().stream()
-                    // Reconcile calls
-                    .map(e -> {
-                        ExpressionCall reconciledCall = CallService.reconcileSingleGeneCalls(e.getValue());
-                        return new ExpressionCall(reconciledCall.getGeneId(), e.getKey().getCondition(),
-                                reconciledCall.getDataPropagation(), reconciledCall.getSummaryCallType(),
-                                reconciledCall.getSummaryQuality(), reconciledCall.getCallData(),
-                                reconciledCall.getGlobalMeanRank());
+            reconciledCalls = callsByGene
+                    .map(g -> this.propagateExpressionCalls(g, callFilter.getConditionFilters(), conditionUtils, speciesId))
+                    .map(g -> {
+                        // For single species, we need to reconcile calls with the same gene/organ/stage
+                        // Note: we need to use List to have a stable sort in next step
+                        // (see Javadoc of java.util.stream.Stream.sorted)
+                        Map<ExpressionCall, List<ExpressionCall>> groupedCalls = 
+                                new HashMap<ExpressionCall, List<ExpressionCall>>();
+                        for (ExpressionCall c: g) {
+                            ExpressionCall key = new ExpressionCall(c.getGeneId(), c.getCondition(), null, null, null, null, null);
+                            List<ExpressionCall> calls = groupedCalls.get(key);
+                            if (calls == null) {
+                                calls = new ArrayList<>();
+                                groupedCalls.put(key, calls);
+                            }
+                            calls.add(c);
+                        }
+                        return groupedCalls;
                     })
-                    // Filter calls according CallFilter
-                    .filter(c -> CallService.testCallFilter(c, callFilter))
-                    // Order according to provided orderingAttributes with convertServiceOrdering
-                    // We order before removing attribute to be able to order on all orderingAttributes
-                    .sorted(CallService.convertServiceOrdering(clonedOrderingAttrs))
-                    // Keep provided attributes
-                    .map(c -> CallService.getClonedExpressionCall(c, clonedAttrs))
-                    // After removing of some attributes, some calls can be identical
-                    .distinct()
-                    .collect(Collectors.toList()))
-            .flatMap(List::stream);
+                    .map(m -> m.entrySet().stream()
+                            // Reconcile calls
+                            .map(e -> {
+                                ExpressionCall reconciledCall = CallService.reconcileSingleGeneCalls(e.getValue());
+                                return new ExpressionCall(reconciledCall.getGeneId(), e.getKey().getCondition(),
+                                        reconciledCall.getDataPropagation(), reconciledCall.getSummaryCallType(),
+                                        reconciledCall.getSummaryQuality(), reconciledCall.getCallData(),
+                                        reconciledCall.getGlobalMeanRank());
+                            })
+                            // Filter calls according CallFilter
+                            .filter(c -> CallService.testCallFilter(c, callFilter))
+                            // Order according to provided orderingAttributes with convertServiceOrdering
+                            // We order before removing attribute to be able to order on all orderingAttributes
+                            .sorted(CallService.convertServiceOrdering(clonedOrderingAttrs))
+                            // Keep provided attributes
+                            .map(c -> CallService.getClonedExpressionCall(c, clonedAttrs))
+                            // After removing of some attributes, some calls can be identical
+                            .distinct()
+                            .collect(Collectors.toList()))
+                    .flatMap(List::stream);
+
+        } else {
+            reconciledCalls = callsByGene
+                    .map(m -> m.stream()
+                            // Filter calls according CallFilter
+                            .filter(c -> CallService.testCallFilter(c, callFilter))
+                            // Order according to provided orderingAttributes with convertServiceOrdering
+                            // We order before removing attribute to be able to order on all orderingAttributes
+                            .sorted(CallService.convertServiceOrdering(clonedOrderingAttrs))
+                            // Keep provided attributes
+                            .map(c -> CallService.getClonedExpressionCall(c, clonedAttrs))
+                            // After removing of some attributes, some calls can be identical
+                            .distinct()
+                            .collect(Collectors.toList()))
+                    .flatMap(List::stream);
+        }
 
         return log.exit(reconciledCalls);
     }
@@ -786,7 +752,8 @@ public class CallService extends Service {
     // METHODS PERFORMING THE QUERIES TO THE DAOs
     //*************************************************************************
     /**
-     * Perform expression queries without the post-processing of the results returned by {@code DAO}s.
+     * Perform query to retrieve expressed calls without the post-processing of 
+     * the results returned by {@code DAO}s.
      * 
      * @param speciesId             A {@code String} that is the ID of the species 
      *                              for which to return the {@code ExpressionCall}s.
@@ -801,11 +768,10 @@ public class CallService extends Service {
      *                              used to order the returned {@code ExpressionCall}s, 
      *                              the associated value being a {@code Service.Direction} defining 
      *                              whether the ordering should be ascendant or descendant.
-     * @return                      A {@code Stream} of {@code ExpressionCall}s.
+     * @return                      The {@code Stream} of {@code ExpressionCall}s.
      * @throws IllegalArgumentException If the {@code callFilter} provided define multiple 
      *                                  expression propagation states requested.
      */
-    // TODO Update javadoc
     private Stream<ExpressionCall> performsExpressedCallQuery(String speciesId, 
             CallFilter<?> callFilter, Set<Attribute> attributes, 
             LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes)
@@ -894,13 +860,11 @@ public class CallService extends Service {
     }
 
     /**
-     * Perform expression queries without the post-processing of the results returned by {@code DAO}s.
+     * Perform query to retrieve not-expressed calls without the post-processing of
+     * the results returned by {@code DAO}s.
      * 
      * @param speciesId             A {@code String} that is the ID of the species 
      *                              for which to return the {@code ExpressionCall}s.
-     * @param callFilter            An {@code ExpressionCallFilter} allowing 
-     *                              to configure retrieving of data throw {@code DAO}s.
-     *                              Cannot be {@code null} or empty (check by calling methods).
      * @param attributes            A {@code Set} of {@code Attribute}s defining the attributes
      *                              to populate in the returned {@code ExpressionCall}s.
      *                              If {@code null} or empty, all attributes are populated. 
@@ -909,7 +873,7 @@ public class CallService extends Service {
      *                              used to order the returned {@code ExpressionCall}s, 
      *                              the associated value being a {@code Service.Direction} defining 
      *                              whether the ordering should be ascendant or descendant.
-     * @return                      A {@code Stream} of {@code ExpressionCall}s.
+     * @return                      The {@code Stream} of {@code ExpressionCall}s.
      * @throws IllegalArgumentException If the {@code callFilter} provided define multiple 
      *                                  expression propagation states requested.
      */

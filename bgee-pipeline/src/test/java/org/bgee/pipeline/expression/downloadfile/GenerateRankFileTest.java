@@ -210,35 +210,35 @@ public class GenerateRankFileTest extends TestAncestor {
         
         when(callService.loadExpressionCalls(eq(spe1.getId()), 
                 eq(new ExpressionCallFilter(new ExpressionCallData(Expression.EXPRESSED, null))), 
-                eq(attrsNoDev), (LinkedHashMap<OrderingAttribute, Direction>) anyObject()))
+                eq(attrsNoDev), (LinkedHashMap<OrderingAttribute, Direction>) anyObject(), eq(false)))
         .thenReturn(Stream.of(c1, c2, c3));
         when(callService.loadExpressionCalls(eq(spe1.getId()), 
                 eq(new ExpressionCallFilter(new ExpressionCallData(Expression.EXPRESSED, DataType.AFFYMETRIX))), 
-                eq(attrsNoDevNoCall), (LinkedHashMap<OrderingAttribute, Direction>) anyObject()))
+                eq(attrsNoDevNoCall), (LinkedHashMap<OrderingAttribute, Direction>) anyObject(), eq(false)))
         .thenReturn(Stream.of(c1bis, c3));
         when(callService.loadExpressionCalls(eq(spe2.getId()), 
                 eq(new ExpressionCallFilter(new ExpressionCallData(Expression.EXPRESSED, null))), 
-                eq(attrsNoDev), (LinkedHashMap<OrderingAttribute, Direction>) anyObject()))
+                eq(attrsNoDev), (LinkedHashMap<OrderingAttribute, Direction>) anyObject(), eq(false)))
         .thenReturn(Stream.of(c4));
         when(callService.loadExpressionCalls(eq(spe2.getId()), 
                 eq(new ExpressionCallFilter(new ExpressionCallData(Expression.EXPRESSED, DataType.AFFYMETRIX))), 
-                eq(attrsNoDevNoCall), (LinkedHashMap<OrderingAttribute, Direction>) anyObject()))
+                eq(attrsNoDevNoCall), (LinkedHashMap<OrderingAttribute, Direction>) anyObject(), eq(false)))
         .thenReturn(Stream.of());
         when(callService.loadExpressionCalls(eq(spe1.getId()), 
                 eq(new ExpressionCallFilter(new ExpressionCallData(Expression.EXPRESSED, null))), 
-                eq(attrsWithDev), (LinkedHashMap<OrderingAttribute, Direction>) anyObject()))
+                eq(attrsWithDev), (LinkedHashMap<OrderingAttribute, Direction>) anyObject(), eq(false)))
         .thenReturn(Stream.of(c1, c2, c3));
         when(callService.loadExpressionCalls(eq(spe1.getId()), 
                 eq(new ExpressionCallFilter(new ExpressionCallData(Expression.EXPRESSED, DataType.AFFYMETRIX))), 
-                eq(attrsWithDevNoCall), (LinkedHashMap<OrderingAttribute, Direction>) anyObject()))
+                eq(attrsWithDevNoCall), (LinkedHashMap<OrderingAttribute, Direction>) anyObject(), eq(false)))
         .thenReturn(Stream.of(c1bis, c3));
         when(callService.loadExpressionCalls(eq(spe2.getId()), 
                 eq(new ExpressionCallFilter(new ExpressionCallData(Expression.EXPRESSED, null))), 
-                eq(attrsWithDev), (LinkedHashMap<OrderingAttribute, Direction>) anyObject()))
+                eq(attrsWithDev), (LinkedHashMap<OrderingAttribute, Direction>) anyObject(), eq(false)))
         .thenReturn(Stream.of(c4));
         when(callService.loadExpressionCalls(eq(spe2.getId()), 
                 eq(new ExpressionCallFilter(new ExpressionCallData(Expression.EXPRESSED, DataType.AFFYMETRIX))), 
-                eq(attrsWithDevNoCall), (LinkedHashMap<OrderingAttribute, Direction>) anyObject()))
+                eq(attrsWithDevNoCall), (LinkedHashMap<OrderingAttribute, Direction>) anyObject(), eq(false)))
         .thenReturn(Stream.of());
         
         

@@ -368,7 +368,8 @@ public class CommandGene extends CommandParent {
                 EnumSet.of(CallService.Attribute.GENE_ID, CallService.Attribute.ANAT_ENTITY_ID, 
                         CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.CALL_DATA, 
                         CallService.Attribute.GLOBAL_DATA_QUALITY, CallService.Attribute.GLOBAL_RANK), 
-                serviceOrdering)
+                serviceOrdering,
+                false)
             .collect(Collectors.toList()));
 	}
 	

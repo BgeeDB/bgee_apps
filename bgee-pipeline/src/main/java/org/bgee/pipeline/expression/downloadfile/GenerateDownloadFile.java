@@ -368,7 +368,7 @@ public abstract class GenerateDownloadFile extends CallUser {
         case LOW:
             return log.exit(LOW_QUALITY_TEXT);
         case NODATA:
-            return log.exit(NO_DATA_VALUE);
+            return log.exit(NA_VALUE);
         default:
             throw new IllegalArgumentException("Unrecognized DataQuality: " + qual);
         }

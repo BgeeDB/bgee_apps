@@ -912,10 +912,10 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                         e.printStackTrace();
                     }
                 } else if (!writerFileType.getKey().isSimpleFileType()) {
-                    String affymetrixData = NO_DATA_VALUE, affymetrixCallQuality = NO_DATA_VALUE,
-                            estData = NO_DATA_VALUE, estCallQuality = NO_DATA_VALUE,
-                            inSituData = NO_DATA_VALUE, inSituCallQuality = NO_DATA_VALUE,
-                            rnaSeqData = NO_DATA_VALUE, rnaSeqCallQuality = NO_DATA_VALUE,
+                    String affymetrixData = NO_DATA_VALUE, affymetrixCallQuality = NA_VALUE,
+                            estData = NO_DATA_VALUE, estCallQuality = NA_VALUE,
+                            inSituData = NO_DATA_VALUE, inSituCallQuality = NA_VALUE,
+                            rnaSeqData = NO_DATA_VALUE, rnaSeqCallQuality = NA_VALUE,
                             includingAffymetrixObservedData = ObservedData.NOT_OBSERVED.getStringRepresentation(),
                             includingEstObservedData = ObservedData.NOT_OBSERVED.getStringRepresentation(),
                             includingInSituObservedData =  ObservedData.NOT_OBSERVED.getStringRepresentation(),

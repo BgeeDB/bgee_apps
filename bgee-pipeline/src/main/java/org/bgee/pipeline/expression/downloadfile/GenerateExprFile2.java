@@ -3,6 +3,7 @@ package org.bgee.pipeline.expression.downloadfile;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -330,10 +331,10 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      * defined by {@code speciesIds}, in the directory {@code directory}.
      * 
      * @param serviceFactory    A {@code ServiceFactory} to retrieve Bgee services from.
-     * @throws IOException  If an error occurred while trying to write generated files.
+     * @throws UncheckedIOException If an error occurred while trying to write the {@code outputFile}.
      */
     //TODO: add OMA node ID in complete files
-    public void generateExprFiles() throws IOException {
+    public void generateExprFiles() throws UncheckedIOException {
         log.entry();
 
         Set<String> setSpecies = Collections.unmodifiableSet(this.speciesIds == null?
@@ -367,9 +368,8 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             try {
                 this.generateExprFilesForOneSpecies(speciesNamesForFilesByIds.get(speciesId), 
                         speciesId, geneNamesByIds, stageNamesByIds, anatEntityNamesByIds);
-            } catch (Exception e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
             } finally {
                 // close connection to database between each species, to avoid idle
                 // connection reset
@@ -404,11 +404,12 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      * @param anatEntityNamesByIds  A {@code Map} where keys are {@code String}s corresponding to 
      *                              anatomical entity IDs, the associated values being 
      *                              {@code String}s corresponding to anatomical entity names. 
-     * @throws IOException  If an error occurred while trying to write the {@code outputFile}.
+     * @throws UncheckedIOException If an error occurred while trying to write the {@code outputFile}.
+     * @throws IOException          If an error occurred while trying to delete the {@code outputFile}.
      */
     private void generateExprFilesForOneSpecies(String fileNamePrefix, String speciesId,
             Map<String, String> geneNamesByIds, Map<String, String> stageNamesByIds,
-            Map<String, String> anatEntityNamesByIds) throws IOException {
+            Map<String, String> anatEntityNamesByIds) throws UncheckedIOException, IOException {
         log.entry(fileNamePrefix, speciesId, geneNamesByIds, stageNamesByIds, anatEntityNamesByIds);
 
         log.debug("Start generating expression files for the species {} and file types {}...", 
@@ -449,7 +450,6 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         Stream<ExpressionCall> calls = serviceFactory.getCallService().loadExpressionCalls(
                 speciesId, callFilter, null, serviceOrdering, true)
                 .filter(c-> !nonInformativeAnatEntities.contains(c.getCondition().getAnatEntityId()));
-
 
         log.trace("Done retrieving data for expression files for the species {}.", speciesId);
 
@@ -877,14 +877,14 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      *                              to produce the header.
      * @param calls                 A {@code Stream} of {@code ExpressionCall}s that are propagated
      *                              and reconciled expression calls.
-     * @throws IOException  If an error occurred while trying to write the {@code outputFile}.
+     * @throws UncheckedIOException If an error occurred while trying to write the {@code outputFile}.
      */
     private void writeRows(Map<String, String> geneNamesByIds, 
             Map<String, String> stageNamesByIds, Map<String, String> anatEntityNamesByIds, 
             Map<SingleSpExprFileType2, ICsvDozerBeanWriter> writersUsed, 
             Map<SingleSpExprFileType2, CellProcessor[]> processors, 
             Map<SingleSpExprFileType2, String[]> headers,
-            Stream<ExpressionCall> calls) throws IOException {
+            Stream<ExpressionCall> calls) throws UncheckedIOException {
         log.entry(geneNamesByIds, stageNamesByIds, anatEntityNamesByIds, writersUsed, 
                 processors, headers, calls);
 
@@ -905,11 +905,11 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     SingleSpeciesSimpleExprFileBean bean = new SingleSpeciesSimpleExprFileBean(
                             geneId, geneName, anatEntityId, anatEntityName,
                             devStageId, devStageName, summaryCallType, summaryQuality);
-                    try {
-                        writerFileType.getValue().write(bean, processors.get(writerFileType.getKey()));
-                    } catch (Exception e) {
-                        // TODO Manage exception in stream
-                        e.printStackTrace();
+                        try {
+                            writerFileType.getValue().write(bean, processors.get(writerFileType.getKey()));
+                        } catch (IOException e) {
+                            throw new UncheckedIOException(e);
+                        }
                     }
                 } else if (!writerFileType.getKey().isSimpleFileType()) {
                     String affymetrixData = NO_DATA_VALUE, affymetrixCallQuality = NA_VALUE,
@@ -965,7 +965,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     try {
                         writerFileType.getValue().write(bean, processors.get(writerFileType.getKey()) );
                     } catch (IOException e) {
-                        // TODO Manage exception in stream
+                        throw new UncheckedIOException(e);
                     }
                 }
             }            

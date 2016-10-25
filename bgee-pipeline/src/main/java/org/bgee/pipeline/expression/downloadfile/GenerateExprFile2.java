@@ -929,32 +929,32 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     Set<ExpressionCallData> affyCallData = callData.stream()
                             .filter(d -> DataType.AFFYMETRIX.equals(d.getDataType())).collect(Collectors.toSet());
                     if (affyCallData.size() > 0) {
-                        affymetrixData = resumeType(affyCallData);
-                        affymetrixCallQuality = resumeQualities(affyCallData);
+                        affymetrixData = resumeCallType(affyCallData);
+                        affymetrixCallQuality = resumeDataQualities(affyCallData);
                         includingAffymetrixObservedData = resumeIncludingObservedData(affyCallData);
                     }
                     
                     Set<ExpressionCallData> estCallData = callData.stream()
                             .filter(d -> DataType.EST.equals(d.getDataType())).collect(Collectors.toSet());
                     if (estCallData.size() > 0) {
-                        estData = resumeType(estCallData);
-                        estCallQuality = resumeQualities(estCallData);
+                        estData = resumeCallType(estCallData);
+                        estCallQuality = resumeDataQualities(estCallData);
                         includingEstObservedData = resumeIncludingObservedData(estCallData);
                     }
                     
                     Set<ExpressionCallData> inSituCallData = callData.stream()
                             .filter(d -> DataType.IN_SITU.equals(d.getDataType())).collect(Collectors.toSet());
                     if (inSituCallData.size() > 0) {
-                        inSituData = resumeType(inSituCallData);
-                        inSituCallQuality = resumeQualities(inSituCallData);
+                        inSituData = resumeCallType(inSituCallData);
+                        inSituCallQuality = resumeDataQualities(inSituCallData);
                         includingInSituObservedData = resumeIncludingObservedData(inSituCallData);
                     }
                     
                     Set<ExpressionCallData> rnaSeqCallData = callData.stream()
                             .filter(d -> DataType.RNA_SEQ.equals(d.getDataType())).collect(Collectors.toSet());
                     if (rnaSeqCallData.size() > 0) {
-                        rnaSeqData = resumeType(rnaSeqCallData);
-                        rnaSeqCallQuality = resumeQualities(rnaSeqCallData);
+                        rnaSeqData = resumeCallType(rnaSeqCallData);
+                        rnaSeqCallQuality = resumeDataQualities(rnaSeqCallData);
                         includingRnaSeqObservedData = resumeIncludingObservedData(rnaSeqCallData);
                     }
 
@@ -977,7 +977,15 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         log.exit();
     }
 
-    private String resumeType(Set<ExpressionCallData> callData) {
+    /**
+     * Check that all {@code CallType}s of a {code Set} of {@code ExpressionCallData},
+     * check that are equals and return the unique value as {@code String}. 
+     * 
+     * @param callData  A {code Set} of {@code ExpressionCallData} that are the expression call data. 
+     * @return          The {@code String} resuming {@code CallType}s.
+     * @throws IllegalArgumentException If no {@code CallType} or more than one are found.
+     */
+    private String resumeCallType(Set<ExpressionCallData> callData) throws IllegalArgumentException {
         log.entry(callData);
         Set<Expression> types = callData.stream().map(d -> d.getCallType()).collect(Collectors.toSet());
         if (types.size() == 0) {
@@ -990,20 +998,29 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         return log.exit(convertExpressionToString(types.iterator().next()));
     }
 
-    private String resumeQualities(Set<ExpressionCallData> callData) {
+    /** 
+     * Return the resume of data qualities of a {code Set} of {@code ExpressionCallData}.
+     * 
+     * @param callData  A {code Set} of {@code ExpressionCallData} that are the expression call data.
+     * @return          The {@code String} resuming {@code DataQuality}s.
+     */
+    private String resumeDataQualities(Set<ExpressionCallData> callData) {
         log.entry(callData);
-        Set<DataQuality> curQualities = callData.stream()
-                .map(d -> d.getDataQuality())
-                .collect(Collectors.toSet());
-        if (curQualities.contains(DataQuality.HIGH)) {
+        if (callData.stream().anyMatch(d -> DataQuality.HIGH.equals(d.getDataQuality()))) {
             return log.exit(convertDataQualityToString(DataQuality.HIGH));
         }
         return log.exit(convertDataQualityToString(DataQuality.LOW));
     }
     
+    /**
+     * Return the resume of observed data values of a {code Set} of {@code ExpressionCallData}.
+     * 
+     * @param callData  A {code Set} of {@code ExpressionCallData} that are the expression call data.
+     * @return          The {@code String} resuming observed data values.
+     */
     private String resumeIncludingObservedData(Set<ExpressionCallData> callData) {
         log.entry(callData);
-        return log.exit(convertObservedDataToString(callData.parallelStream()
+        return log.exit(convertObservedDataToString(callData.stream()
                 .anyMatch(d -> Boolean.TRUE.equals(d.getDataPropagation().getIncludingObservedData()))));
     }
 

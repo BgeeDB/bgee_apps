@@ -31,6 +31,7 @@ import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.baseelements.CallType.Expression;
+import org.bgee.model.expressiondata.baseelements.DataPropagation.PropagationState;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
@@ -899,12 +900,15 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 String summaryCallType = convertExpressionSummaryToString(c.getSummaryCallType()); 
                 String summaryQuality = convertDataQualityToString(c.getSummaryQuality());
                 Boolean includingObservedData =c.getDataPropagation().getIncludingObservedData();
-                
-                if (writerFileType.getKey().isSimpleFileType()  
-                        && Boolean.TRUE.equals(includingObservedData)) {
-                    SingleSpeciesSimpleExprFileBean bean = new SingleSpeciesSimpleExprFileBean(
-                            geneId, geneName, anatEntityId, anatEntityName,
-                            devStageId, devStageName, summaryCallType, summaryQuality);
+
+                if (writerFileType.getKey().isSimpleFileType()) {
+                    PropagationState aePropaState = c.getDataPropagation().getAnatEntityPropagationState();
+                    if (Boolean.TRUE.equals(includingObservedData) 
+                            || (!observedDataOnly && (PropagationState.SELF.equals(aePropaState) 
+                                        || PropagationState.SELF_AND_ANCESTOR.equals(aePropaState)))) {
+                        SingleSpeciesSimpleExprFileBean bean = new SingleSpeciesSimpleExprFileBean(
+                                geneId, geneName, anatEntityId, anatEntityName,
+                                devStageId, devStageName, summaryCallType, summaryQuality);
                         try {
                             writerFileType.getValue().write(bean, processors.get(writerFileType.getKey()));
                         } catch (IOException e) {

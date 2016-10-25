@@ -51,8 +51,8 @@ import org.supercsv.io.dozer.ICsvDozerBeanWriter;
  * the Bgee database.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Sept 2016
- * @since   Bgee 13
+ * @version Bgee 13, Oct. 2016
+ * @since   Bgee 13, 
  */
 public class GenerateExprFile2 extends GenerateDownloadFile {
 
@@ -226,7 +226,6 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      * A {@code boolean} defining whether the filter for simple file keeps observed data only 
      * if {@code true} or organ observed data only (propagated stages are allowed) if {@code false}.
      */
-    // FIXME not used do we need to manage that?
     protected final boolean observedDataOnly;
 
     /**
@@ -360,7 +359,6 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         Map<String, String> anatEntityNamesByIds = 
                 BgeeDBUtils.getAnatEntityNamesByIds(setSpecies, this.getAnatEntityDAO());
 
-
         // Generate expression files, species by species.
         // The generation of files are independent, so we can safely go multi-threading
         speciesNamesForFilesByIds.keySet().parallelStream().forEach(speciesId -> {
@@ -473,6 +471,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
 
         // In order to close all writers in a finally clause
         Map<SingleSpExprFileType2, ICsvDozerBeanWriter> writersUsed = new HashMap<>();
+        int numberOfRows = 0;
         try {
             //**************************
             // OPEN FILES, CREATE WRITERS, WRITE HEADERS
@@ -520,7 +519,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             // ****************************
             // WRITE ROWS
             // ****************************
-            this.writeRows(geneNamesByIds, stageNamesByIds, anatEntityNamesByIds,
+            numberOfRows = this.writeRows(geneNamesByIds, stageNamesByIds, anatEntityNamesByIds,
                     writersUsed, processors, headers, calls);
         } catch (Exception e) {
             this.deleteTempFiles(generatedFileNames, tmpExtension);
@@ -530,8 +529,12 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 writer.close();
             }
         }
-        // now, if everything went fine, we rename the temporary files
-        this.renameTempFiles(generatedFileNames, tmpExtension);
+        // now, if everything went fine, we rename or delete the temporary files
+        if (numberOfRows > 0) {
+            this.renameTempFiles(generatedFileNames, tmpExtension);            
+        } else {
+            this.deleteTempFiles(generatedFileNames, tmpExtension);
+        }
 
         log.exit();
     }
@@ -880,7 +883,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      *                              and reconciled expression calls.
      * @throws UncheckedIOException If an error occurred while trying to write the {@code outputFile}.
      */
-    private void writeRows(Map<String, String> geneNamesByIds, 
+    private int writeRows(Map<String, String> geneNamesByIds, 
             Map<String, String> stageNamesByIds, Map<String, String> anatEntityNamesByIds, 
             Map<SingleSpExprFileType2, ICsvDozerBeanWriter> writersUsed, 
             Map<SingleSpExprFileType2, CellProcessor[]> processors, 
@@ -889,7 +892,8 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         log.entry(geneNamesByIds, stageNamesByIds, anatEntityNamesByIds, writersUsed, 
                 processors, headers, calls);
 
-        calls.forEachOrdered(c -> {
+        return log.exit(calls.map(c -> {
+            int i = 0;
             for (Entry<SingleSpExprFileType2, ICsvDozerBeanWriter> writerFileType : writersUsed.entrySet()) {
                 String geneId = c.getGeneId();
                 String geneName = geneNamesByIds.containsKey(geneId)? geneNamesByIds.get(geneId) : "";
@@ -911,6 +915,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                                 devStageId, devStageName, summaryCallType, summaryQuality);
                         try {
                             writerFileType.getValue().write(bean, processors.get(writerFileType.getKey()));
+                            i++;
                         } catch (IOException e) {
                             throw new UncheckedIOException(e);
                         }
@@ -968,13 +973,14 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                             rnaSeqData, rnaSeqCallQuality, includingRnaSeqObservedData);
                     try {
                         writerFileType.getValue().write(bean, processors.get(writerFileType.getKey()) );
+                        i++;
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
                     }
                 }
-            }            
-        });
-        log.exit();
+            }
+            return i;
+        }).mapToInt(Integer::intValue).sum());
     }
 
     /**

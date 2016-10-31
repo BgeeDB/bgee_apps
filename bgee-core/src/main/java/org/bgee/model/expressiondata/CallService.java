@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -204,23 +205,20 @@ public class CallService extends Service {
                 isClosed = false;
             }
             
-            Set<T> geneCalls = new HashSet<T>();
+            Set<T> keyCalls = new HashSet<T>();
             boolean doIteration = true;
-            String previousGeneId = null;
+            T previousCall= null;
             while (doIteration) {
                 doIteration = next1 != null || next2 != null; // has next;
                 T currentCall = null;
-                String currentGeneId = null;
                 if (doIteration) {
-                    // TODO unit test
                     // We should not get next element if it is not the first call to tryAdvance()
                     // but it is the first time of iterations
-                    if (!this.isFirstIteration && geneCalls.isEmpty()) {
+                    if (!this.isFirstIteration && keyCalls.isEmpty()) {
                         currentCall = this.lastCall;
                     } else {
                         currentCall = this.getNext();
                     }
-                    currentGeneId = currentCall.getGeneId();
                 } else {
                     // If there is no more element, we should get next element if it is
                     // the first iteration or the last call if it is not 
@@ -229,51 +227,50 @@ public class CallService extends Service {
                     } else {
                         currentCall = this.lastCall;
                     }
-                    previousGeneId = currentCall.getGeneId();
-                    geneCalls.add(currentCall);
+                    previousCall = currentCall;
+                    keyCalls.add(currentCall);
                 }
-                log.trace("Previous gene ID={} - Current gene ID={}", previousGeneId, currentGeneId);
+                log.trace("Previous call={} - Current call={}", previousCall, currentCall);
                 
                 this.isFirstIteration = false;
 
-                //if the gene ID changes, or if it is the latest iteration
+                //if the key changes, or if it is the latest iteration
                 if (!doIteration || //doIteration is false for the latest iteration, 
                                     // AFTER retrieving the last call
-                      (previousGeneId != null && !previousGeneId.equals(currentGeneId))) {
-                    log.trace("Start generating data for gene ID {}", previousGeneId);
+                      (previousCall != null && comparator.compare(currentCall, previousCall) != 0)) {
+                    log.trace("Start generating data for key {}", previousCall);
 
-                    assert (doIteration && currentGeneId != null && currentCall != null) || 
-                                (!doIteration && currentGeneId == null && currentCall != null);
+                    assert (doIteration && currentCall != null) || 
+                                (!doIteration && currentCall != null);
                     
-                    //the calls are supposed to be ordered by ascending gene ID
-                    if (currentGeneId != null && currentGeneId.compareTo(previousGeneId) < 0) {
+                    //the calls are supposed to be ordered by key
+                    if (currentCall != null && comparator.compare(currentCall, previousCall) < 0) {
                         throw log.throwing(new IllegalStateException("The expression calls "
-                                + "were not retrieved by gene ID ascending order, which "
-                                + "is mandatory for proper generation of data: previousGeneId: "
-                                + previousGeneId + ", currentGeneId: " + currentGeneId));
+                                + "were not retrieved in good order, which "
+                                + "is mandatory for proper generation of data: previous key: "
+                                + previousCall + ", current key: " + currentCall));
                     }
 
-                    if (previousGeneId == null) {
+                    if (previousCall == null) {
                         //if we reach this code block, it means there were no results at all 
                         //retrieved from the list. This is not formally an error, 
-                        //maybe there is no homologous genes with expression 
-                        //for the selected species...
+                        //maybe there is no expression with key
                         log.warn("No calls retrieved");
                         break;
                     }
 
-                    action.accept((U) geneCalls);
+                    action.accept((U) keyCalls);
                     
-                    log.trace("Done generating data for gene ID {}", previousGeneId);
+                    log.trace("Done generating data for element {}", previousCall);
                     
                     this.lastCall = currentCall;
                     break;
                 }
                 if (doIteration) {
                     // We add the current call to the group
-                    geneCalls.add(currentCall);
-                    // We store the current gene ID to be compare with the next one
-                    previousGeneId = currentGeneId;
+                    keyCalls.add(currentCall);
+                    // We store the current key to be compare with the next one
+                    previousCall = currentCall;
                     this.lastCall = currentCall;
                 }
             }
@@ -316,10 +313,8 @@ public class CallService extends Service {
          * <p>
          * Provided {@code iterator} is modified.
          * 
-         * @param currentElement    A {@code T} that is the current element used to
-         *                          check ascending order. 
-         * @param nextElement       A {@code T} that is the next element used to
-         *                          check ascending order. 
+         * @param currentElement    A {@code T} that is the current element used to check order. 
+         * @param nextElement       A {@code T} that is the next element used to check order. 
          * @param iterator          An {@code Iterator} of {@code T} that is the iterator from 
          *                          which next element is retrieved. 
          * @return                  A {@code T} that is the new next element to be saved.
@@ -330,12 +325,6 @@ public class CallService extends Service {
             T next;
             try {
                 next = iterator.next();
-                if (currentElement != null && comparator.compare(currentElement, nextElement) > 0 ) {
-                    throw new IllegalArgumentException("The calls "
-                            + "were not retrieved by gene ID ascending order, which "
-                            + "is mandatory for proper generation of data: previous gene ID: " 
-                            + currentElement.getGeneId() + ", current gene ID: " + next.getGeneId());
-                }
             } catch (NoSuchElementException e) {
                 next = null;    
             }

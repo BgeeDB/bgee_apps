@@ -13,6 +13,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -22,6 +23,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,6 +48,7 @@ import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTOR
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
+import org.bgee.model.expressiondata.CallService.CallSpliterator;
 import org.bgee.model.expressiondata.baseelements.CallType.Expression;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataPropagation.PropagationState;
@@ -62,7 +66,7 @@ import org.junit.Test;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Aug. 2016
+ * @version Bgee 13, Oct. 2016
  * @since   Bgee 13, Nov. 2015
  */
 public class CallServiceTest extends TestAncestor {
@@ -1699,5 +1703,112 @@ public class CallServiceTest extends TestAncestor {
                 .filter(c -> c.getCondition().equals(cond))
                 .collect(Collectors.toSet());
         return inputCalls;
+    }
+    
+    @Test
+    public void shouldTryAdvance() {
+        
+        // Two streams well defined
+        List<ExpressionCall> calls1 = new ArrayList<ExpressionCall>();
+        calls1.add(new ExpressionCall("ID1", new Condition("ae1", "s1", "1"), null, null, null, null, null));
+        calls1.add(new ExpressionCall("ID1", new Condition("ae2", "s1", "1"), null, null, null, null, null));
+        calls1.add(new ExpressionCall("ID2", new Condition("ae1", "s1", "1"), null, null, null, null, null));
+        calls1.add(new ExpressionCall("ID2", new Condition("ae2", "s1", "1"), null, null, null, null, null));
+        Stream<ExpressionCall> stream1 = calls1.stream();
+
+        List<ExpressionCall> calls2 = new ArrayList<ExpressionCall>(); 
+        calls2.add(new ExpressionCall("ID1", new Condition("ae3", "s1", "1"), null, null, null, null, null));
+        calls2.add(new ExpressionCall("ID4", new Condition("ae1", "s1", "1"), null, null, null, null, null));
+        Stream<ExpressionCall> stream2 = calls2.stream();
+
+        DAOManager manager = mock(DAOManager.class);
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(manager);
+        CallService service = new CallService(serviceFactory);
+        final CallSpliterator<Set<ExpressionCall>, ExpressionCall> spliterator1 = service.new CallSpliterator<>(
+                stream1, stream2,
+                Comparator.comparing(ExpressionCall::getGeneId, Comparator.nullsLast(Comparator.naturalOrder())));
+        List<Set<ExpressionCall>> callsByGene = StreamSupport.stream(spliterator1, false)
+                .onClose(() -> spliterator1.close())
+                .collect(Collectors.toList());
+        
+        assertEquals(3, callsByGene.size());
+        Set<ExpressionCall> gp1 = new HashSet<>();
+        gp1.add(new ExpressionCall("ID1", new Condition("ae1", "s1", "1"), null, null, null, null, null));
+        gp1.add(new ExpressionCall("ID1", new Condition("ae2", "s1", "1"), null, null, null, null, null));
+        gp1.add(new ExpressionCall("ID1", new Condition("ae3", "s1", "1"), null, null, null, null, null));
+        assertEquals(gp1, callsByGene.get(0));
+     
+        Set<ExpressionCall> gp2 = new HashSet<>();
+        gp2.add(new ExpressionCall("ID2", new Condition("ae1", "s1", "1"), null, null, null, null, null));
+        gp2.add(new ExpressionCall("ID2", new Condition("ae2", "s1", "1"), null, null, null, null, null));
+        assertEquals(gp2, callsByGene.get(1));
+        
+        Set<ExpressionCall> gp3 = new HashSet<>();
+        gp3.add(new ExpressionCall("ID4", new Condition("ae1", "s1", "1"), null, null, null, null, null));
+        assertEquals(gp3, callsByGene.get(2));
+
+        // One stream well defined and an empty stream
+        stream1 = calls1.stream();
+        stream2 = Stream.empty();
+        final CallSpliterator<Set<ExpressionCall>, ExpressionCall> spliterator2 =
+                service.new CallSpliterator<>(stream1, stream2, Comparator.comparing(
+                        ExpressionCall::getGeneId, Comparator.nullsLast(Comparator.naturalOrder())));
+        callsByGene = StreamSupport.stream(spliterator2, false)
+                .onClose(() -> spliterator2.close())
+                .collect(Collectors.toList());
+        assertEquals(2, callsByGene.size());
+        gp1.clear();
+        gp1.add(new ExpressionCall("ID1", new Condition("ae1", "s1", "1"), null, null, null, null, null));
+        gp1.add(new ExpressionCall("ID1", new Condition("ae2", "s1", "1"), null, null, null, null, null));
+        assertEquals(gp1, callsByGene.get(0));
+        assertEquals(gp2, callsByGene.get(1));
+        
+        // Different comparator
+        calls1.clear();
+        calls1.add(new ExpressionCall("ID2", new Condition("ae2", "s1", "1"), null, null, null, null, null));
+        calls1.add(new ExpressionCall("ID1", new Condition("ae2", "s1", "1"), null, null, null, null, null));
+        calls1.add(new ExpressionCall("ID2", new Condition("ae1", "s1", "1"), null, null, null, null, null));
+        calls1.add(new ExpressionCall("ID1", new Condition("ae1", "s1", "1"), null, null, null, null, null));
+        calls2.clear(); 
+        calls2.add(new ExpressionCall("ID4", new Condition("ae2", "s1", "1"), null, null, null, null, null));
+        calls2.add(new ExpressionCall("ID1", new Condition("ae1", "s1", "1"), null, null, null, null, null));
+
+        stream1 = calls1.stream();
+        stream2 = calls2.stream();
+        final CallSpliterator<Set<ExpressionCall>, ExpressionCall> spliterator3 =
+                service.new CallSpliterator<>(stream1, stream2, Comparator.comparing(
+                        (call) -> call.getCondition().getAnatEntityId(),
+                        Comparator.nullsLast(Comparator.reverseOrder())));
+        callsByGene = StreamSupport.stream(spliterator3, false)
+                .onClose(() -> spliterator3.close())
+                .collect(Collectors.toList());
+        assertEquals(2, callsByGene.size());
+        
+        gp1.clear();
+        gp2.clear();
+        gp1.add(new ExpressionCall("ID2", new Condition("ae2", "s1", "1"), null, null, null, null, null));
+        gp1.add(new ExpressionCall("ID1", new Condition("ae2", "s1", "1"), null, null, null, null, null));
+        gp1.add(new ExpressionCall("ID4", new Condition("ae2", "s1", "1"), null, null, null, null, null));
+        gp2.add(new ExpressionCall("ID2", new Condition("ae1", "s1", "1"), null, null, null, null, null));
+        gp2.add(new ExpressionCall("ID1", new Condition("ae1", "s1", "1"), null, null, null, null, null));
+        gp2.add(new ExpressionCall("ID1", new Condition("ae1", "s1", "1"), null, null, null, null, null));
+
+        assertEquals(gp1, callsByGene.get(0));
+        assertEquals(gp2, callsByGene.get(1));
+        
+        
+        // Bad order
+        final CallSpliterator<Set<ExpressionCall>, ExpressionCall> spliterator4 =
+                service.new CallSpliterator<>(stream1, stream2, Comparator.comparing(
+                        ExpressionCall::getGeneId, Comparator.nullsLast(Comparator.naturalOrder())));
+        try {
+            callsByGene = StreamSupport.stream(spliterator4, false)
+                    .onClose(() -> spliterator3.close())
+                    .collect(Collectors.toList());
+            fail("Should throw an exception due to bad orderof calls");
+        } catch (IllegalStateException e) {
+            // Test passed
+        }
     }
 }

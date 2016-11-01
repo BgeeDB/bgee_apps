@@ -2,6 +2,7 @@ package org.bgee.model.ontology;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -245,22 +246,25 @@ public abstract class OntologyBase<T extends NamedEntity & OntologyElement<T>> {
      * @param element       A {@code T} that is the element for which ancestors are retrieved.
      * @param relationTypes A {@code Set} of {@code RelationType}s that are the relation
      *                      types to consider.
-     * @param directRelOnly A {@code boolean} defining whether only direct parents
-     *                      of {@code element} should be returned.
      * @return              A {@code Set} of {@code T}s that are the ancestors
      *                      of {@code element} in this ontology. Can be empty if {@code element} 
      *                      has no ancestors according to the requested parameters.
      * @throws IllegalArgumentException If {@code element} is {@code null} or is not found 
      *                                  in this ontology.
      */
-    // FIXME: implement method and add unit test
     public List<T> getOrderedAncestors(T element, Collection<RelationType> relationTypes) {
         log.entry(element, relationTypes);
-        Set<T> ancestors = this.getAncestors(element, relationTypes, true);
-        List<RelationTO> orderedRelations = this.getOrderedRelations(element);
-        // Get ordered relatives using by ordered relations
-        throw new UnsupportedOperationException("Method not implemented yet");
-        //        return log.exit(orderedRelatives);
+        if (element == null) {
+            throw new IllegalArgumentException("Provided element is null");
+        }
+        if (getElement(element.getId()) == null) {
+            throw new IllegalArgumentException("Provided element is not found in this ontology");
+        }
+        Set<T> ancestors = this.getAncestors(element, relationTypes, false);
+        return log.exit(this.getOrderedRelations(element).stream()
+            .map(r -> getElement(r.getTargetId()))
+            .filter(e -> ancestors.contains(e))
+            .collect(Collectors.toList()));
     }
 
     /**

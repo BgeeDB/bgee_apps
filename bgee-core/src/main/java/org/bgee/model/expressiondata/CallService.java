@@ -378,7 +378,6 @@ public class CallService extends Service {
      *                              and reconciled expression calls.
      * @throws IllegalArgumentException If {@code callFilter} or {@code speciesID} are null or empty.
      */
-    // TODO Add unit tests with combination of expressed and not-expressed calls
     public Stream<ExpressionCall> loadExpressionCalls(String speciesId, 
             ExpressionCallFilter callFilter, Collection<Attribute> attributes, 
             LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes, boolean doPropagation)

@@ -429,7 +429,7 @@ public class ConditionUtils implements Comparator<Condition> {
         anatEntityIds.add(cond.getAnatEntityId());
         if (this.anatEntityOnt != null && cond.getAnatEntityId() != null) {
             log.trace("Retrieving anat. entity IDs from ontology for stageId {} - relOnly {}.", 
-                    cond.getDevStageId(), directRelOnly);
+                    cond.getAnatEntityId(), directRelOnly);
             anatEntityIds.addAll(this.anatEntityOnt.getAncestors(
                     this.anatEntityOnt.getElement(cond.getAnatEntityId()), directRelOnly)
                     .stream().map(e -> e.getId()).collect(Collectors.toSet()));
@@ -477,13 +477,7 @@ public class ConditionUtils implements Comparator<Condition> {
         
         Set<String> devStageIds = new HashSet<>();
         devStageIds.add(cond.getDevStageId());
-        if (this.devStageOnt != null && cond.getDevStageId() != null) {
-            log.trace("Retrieving dev. stage IDs from ontology for stageId {} - relOnly {}.", 
-                    cond.getDevStageId(), directRelOnly);
-            devStageIds.addAll(this.devStageOnt.getDescendants(
-                    this.devStageOnt.getElement(cond.getDevStageId()), directRelOnly)
-                    .stream().map(e -> e.getId()).collect(Collectors.toSet()));
-        }
+        // NOTE: We should not propagate to descendant stages.
         
         Set<String> anatEntityIds = new HashSet<>();
         anatEntityIds.add(cond.getAnatEntityId());

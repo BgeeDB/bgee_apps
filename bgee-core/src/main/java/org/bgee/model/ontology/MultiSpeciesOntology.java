@@ -20,7 +20,7 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
  * Class allowing to describe a multi-species ontology, or the sub-graph of a multi-species ontology.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, July 2016
+ * @version Bgee 13, Oct. 2016
  * @since   Bgee 13, July 2016
  * @param <T>   The type of element in this ontology or sub-graph.
  */
@@ -31,13 +31,13 @@ public class MultiSpeciesOntology<T extends NamedEntity & OntologyElement<T>>
 
     /**
      * A {@code Set} of {@code TaxonConstraint}s that are taxon constrains on relations 
-     * between {@code OntologyElement}s in this ontology.
+     * between {@code OntologyElement}s of this ontology.
      */
     private final Set<TaxonConstraint> relationTaxonConstraints;
 
     /**
      * A {@code Set} of {@code TaxonConstraint}s that are taxon constrains on 
-     * {@code OntologyElement}s in this ontology.
+     * {@code OntologyElement}s of this ontology.
      */
     private final Set<TaxonConstraint> entityTaxonConstraints;
 
@@ -46,48 +46,33 @@ public class MultiSpeciesOntology<T extends NamedEntity & OntologyElement<T>>
      */
     private final Set<String> speciesIds;
 
-    /** 
-     * Constructor providing the species IDs, the elements, the relations, the relations types, 
-     * the service factory, and the type of elements of this ontology.
+    /**
+     * Constructor providing all parameters of this multi-species ontology.
      * 
-     * @param speciesIds        A {@code Collection} of {@code String}s that are the IDs of 
-     *                          the species describing this multi-species ontology.
-     * @param elements          A {@code Collection} of {@code T}s that are
-     *                          the elements of this ontology.
-     * @param relations         A {@code Collection} of {@code RelationTO}s that are
-     *                          the relations between elements of the ontology.
-     * @param relationTypes     A {@code Collection} of {@code RelationType}s that were
-     *                          considered to build this ontology or sub-graph.
-     * @param serviceFactory    A {@code ServiceFactory} to acquire {@code Service}s from.
-     * @param type              A {@code Class<T>} that is the type of {@code elements} 
-     *                          to be store by this {@code MultiSpeciesOntology}.
+     * @param speciesIds                A {@code Collection} of {@code String}s that are the IDs of 
+     *                                  the species describing this multi-species ontology.
+     * @param elements                  A {@code Collection} of {@code T}s that are
+     *                                  the elements of this ontology.
+     * @param relations                 A {@code Collection} of {@code RelationTO}s that are
+     *                                  the relations between elements of the ontology.
+     * @param taxonConstraints          A {@code Collection} of {@code TaxonConstraint}s that are 
+     *                                  taxon constrains on {@code OntologyElement}s of this ontology.
+     * @param relationTaxonConstraints  A {@code Collection} of {@code TaxonConstraint}s that are
+     *                                  taxon constrains on relations between {@code OntologyElement}s
+     *                                  of this ontology.
+     * @param relationTypes             A {@code Collection} of {@code RelationType}s that were
+     *                                  considered to build this ontology or sub-graph.
+     * @param serviceFactory            A {@code ServiceFactory} to acquire {@code Service}s from.
+     * @param type                      A {@code Class<T>} that is the type of {@code elements} 
+     *                                  to be store by this {@code MultiSpeciesOntology}.
      */
     protected MultiSpeciesOntology(Collection<String> speciesIds, Collection<T> elements, 
-            Collection<RelationTO> relations, Collection<RelationType> relationTypes,
+            Collection<RelationTO> relations, Collection<TaxonConstraint> taxonConstraints, 
+            Collection<TaxonConstraint> relationTaxonConstraints, Collection<RelationType> relationTypes,
             ServiceFactory serviceFactory, Class<T> type) {
         super(elements, relations, relationTypes, serviceFactory, type);
-        this.speciesIds =  Collections.unmodifiableSet(
+        this.speciesIds = Collections.unmodifiableSet(
                 speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds));
-
-        Set<TaxonConstraint> relationTaxonConstraints = new HashSet<>();
-        Set<TaxonConstraint> taxonConstraints = new HashSet<>();
-        if (type.equals(AnatEntity.class)) {
-            relationTaxonConstraints = serviceFactory.getTaxonConstraintService()
-                    .loadAnatEntityRelationTaxonConstraintBySpeciesIds(speciesIds)
-                    .collect(Collectors.toSet());
-            taxonConstraints = serviceFactory.getTaxonConstraintService()
-                    .loadAnatEntityTaxonConstraintBySpeciesIds(speciesIds)
-                    .collect(Collectors.toSet());
-        } else if (type.equals(DevStage.class)) {
-            taxonConstraints = serviceFactory.getTaxonConstraintService()
-                    .loadDevStageTaxonConstraintBySpeciesIds(speciesIds)
-                    .collect(Collectors.toSet());
-            //there is no relation IDs for nested set models, so no TaxonConstraints. 
-            //Relations simply exist if both the source and target of the relations 
-            //exists in the targeted species.
-        } else {
-            throw log.throwing(new IllegalArgumentException("Unsupported OntologyElement"));
-        }
         this.relationTaxonConstraints = Collections.unmodifiableSet(
                 relationTaxonConstraints == null? new HashSet<>(): new HashSet<>(relationTaxonConstraints));
         this.entityTaxonConstraints = Collections.unmodifiableSet(
@@ -138,16 +123,24 @@ public class MultiSpeciesOntology<T extends NamedEntity & OntologyElement<T>>
     private  Set<RelationTO> getRelations(Collection<String> speciesIds) {
         log.entry(speciesIds);
         
-        // Get relation IDs according to taxon constraints
-        Set<String> relationsIds = relationTaxonConstraints.stream()
-                .filter(tc -> tc.getSpeciesId() == null || speciesIds.contains(tc.getSpeciesId()))
-                .map(tc -> tc.getEntityId())
-                .collect(Collectors.toSet());
-                
-        // Filter relations according to taxon constraints
-        return log.exit(this.getRelations().stream()
-                .filter(r -> relationsIds.contains(r.getId()))
-                .collect(Collectors.toSet()));
+        // XXX: according to type of according to if relationTaxonConstraints is null?
+        // No, we should inspect why but I'm just lasy to do it now
+        if (this.getType().equals(AnatEntity.class)) {
+            // Get relation IDs according to taxon constraints
+            Set<String> relationsIds = relationTaxonConstraints.stream()
+                    .filter(tc -> tc.getSpeciesId() == null || speciesIds.contains(tc.getSpeciesId()))
+                    .map(tc -> tc.getEntityId())
+                    .collect(Collectors.toSet());
+                    
+            // Filter relations according to taxon constraints
+            return log.exit(this.getRelations().stream()
+                    .filter(r -> relationsIds.contains(r.getId()))
+                    .collect(Collectors.toSet()));
+        } else if (this.getType().equals(DevStage.class)) {
+            return log.exit(this.getRelations());
+        } else {
+            throw log.throwing(new IllegalArgumentException("Unsupported OntologyElement"));
+        }
     }
     
     /**

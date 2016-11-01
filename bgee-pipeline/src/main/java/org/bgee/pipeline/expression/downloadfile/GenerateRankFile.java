@@ -731,7 +731,8 @@ public class GenerateRankFile {
                 speciesId, 
                 new ExpressionCallFilter(new ExpressionCallData(Expression.EXPRESSED, dataType)), 
                 attrs, 
-                serviceOrdering));
+                serviceOrdering,
+                false));
     }
     
     /**

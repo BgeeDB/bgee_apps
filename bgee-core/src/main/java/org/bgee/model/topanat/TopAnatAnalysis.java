@@ -547,7 +547,8 @@ public class TopAnatAnalysis {
                     this.params.getSpeciesId(), 
                     (ExpressionCallFilter) this.params.convertRawParametersToCallFilter(), 
                     EnumSet.of(CallService.Attribute.GENE_ID, CallService.Attribute.ANAT_ENTITY_ID), 
-                    null
+                    null,
+                    false
                 ).forEach(
                     call -> out.println(
                         call.getGeneId() + '\t' + 

@@ -1,5 +1,6 @@
 package org.bgee.model.analysis;
 
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -28,6 +29,16 @@ import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.ontology.MultiSpeciesOntology;
 import org.bgee.model.species.Taxon;
 
+/**
+ * A {@link Service} to obtain {@link MultiSpeciesCall} objects. 
+ * Users should use the {@link org.bgee.model.ServiceFactory} to obtain {@code CallService}s.
+ * 
+ * @author  Philippe Moret
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13, Nov. 2016
+ * @since   Bgee 13, May 2016
+ */
+// XXX: why not call it MultiSpeciesCallService?
 public class AnalysisService extends Service {
 
     private static final Logger log = LogManager.getLogger(AnalysisService.class.getName());
@@ -87,9 +98,11 @@ public class AnalysisService extends Service {
         orderAttrs.put(CallService.OrderingAttribute.GENE_ID, Direction.ASC);
 
         for (String taxonId : taxonIds) {
+            log.trace("Starting generation of multi-species calls for taxon ID {}", taxonId);
             // Retrieve homologous organ groups with gene IDs
             Map<String, Set<String>> omaToGeneIds = this.getServiceFactory().getGeneService()
                     .getOrthologs(taxonId, clonedSpeIds);
+            log.trace("Homologous organ groups with gene IDs: {}", omaToGeneIds);
             // XXX filter by Gene should be done in GeneService or DAO?
             Set<String> orthologousGeneIds = omaToGeneIds.entrySet().stream()
                     .filter(e -> e.getValue().contains(gene.getId()))
@@ -100,12 +113,14 @@ public class AnalysisService extends Service {
             // Retrieve anat. entity similarities
             Set<AnatEntitySimilarity> anatEntitySimilarities = this.getServiceFactory()
                     .getAnatEntityService().loadAnatEntitySimilarities(taxonId, clonedSpeIds, true);
+            log.trace("Anat. entity similarities: {}", anatEntitySimilarities);
             Set<String> anatEntityIds = anatEntitySimilarities.stream()
                     .map(s -> s.getAnatEntityIds()).flatMap(Set::stream).collect(Collectors.toSet());
             
             // Retrieve dev. stage similarities
             Set<DevStageSimilarity> devStageSimilarities = this.getServiceFactory() 
                     .getDevStageService().loadDevStageSimilarities(taxonId, clonedSpeIds);
+            log.trace("Dev. stage similarities: {}", devStageSimilarities);
             Set<String> devStageIds = devStageSimilarities.stream()
                     .map(s -> s.getDevStageIds()).flatMap(Set::stream).collect(Collectors.toSet());
 
@@ -114,6 +129,7 @@ public class AnalysisService extends Service {
             Set<ConditionFilter> conditionFilters = new HashSet<>();
             conditionFilters.add(new ConditionFilter(anatEntityIds, devStageIds));
             Set<ExpressionCallData> callDataFilters = new HashSet<>(); // cannot be null in ExpressionCallFilter
+            log.warn("Only expressed calls are retrieved");
             callDataFilters.add(new ExpressionCallData(Expression.EXPRESSED));
             ExpressionCallFilter callFilter = new ExpressionCallFilter(
                     geneFilter, conditionFilters, callDataFilters);
@@ -122,12 +138,14 @@ public class AnalysisService extends Service {
             // (filtered by previous filters)
             Set<ExpressionCall> calls = new HashSet<>();
             for (String spId: clonedSpeIds) {
-                calls.addAll(this.getServiceFactory().getCallService().loadExpressionCalls(
-                        spId, callFilter, null, orderAttrs).collect(Collectors.toSet()));
+                Set<ExpressionCall> currentCalls = this.getServiceFactory().getCallService()
+                    .loadExpressionCalls(spId, callFilter, null, orderAttrs).collect(Collectors.toSet());
+                calls.addAll(currentCalls);
             }
 
             taxaToCalls.put(taxonId, this.groupCalls(taxonId,
-                    omaToGeneIds, anatEntitySimilarities, devStageSimilarities, calls)); 
+                    omaToGeneIds, anatEntitySimilarities, devStageSimilarities, calls));
+            log.trace("Done generation of multi-species calls for taxon ID {}", taxonId);
         }
         return taxaToCalls;
     }
@@ -135,6 +153,8 @@ public class AnalysisService extends Service {
     /**
      * Group {@code ExpressionCall}s into {@code MultiSpeciesCall}s.
      * 
+     * @param taxonId                   A {@code String} that is the taxon ID to use to build  
+     *                                  {@code MultiSpeciesCall}s.
      * @param omaToGeneIds              A {@code Map} where keys are {@code String}s corresponding
      *                                  to IDs of OMA nodes, the associated values being {@code Set}
      *                                  of {@code String}s corresponding to gene IDs.
@@ -148,7 +168,8 @@ public class AnalysisService extends Service {
      *                                  expression calls to use to build {@code MultiSpeciesCall}s.
      * @return                          The {@code Set} of {@code MultiSpeciesCall}s thats are 
      *                                  multi-species calls.
-     * @throws IllegalArgumentException If an {@code ExpressionCall} has no condition.
+     * @throws IllegalArgumentException If an {@code ExpressionCall} has not all necessary data 
+     *                                  or if similarity groups are incorrect.
      */
     // TODO to be added to ExpressionCallUtils see TODOs into ExpressionCall
     private Set<MultiSpeciesCall<ExpressionCall>> groupCalls(String taxonId,
@@ -171,7 +192,7 @@ public class AnalysisService extends Service {
             Set<AnatEntitySimilarity> curAESimilarities = anatEntitySimilarities.stream()
                     .filter(s -> s.getAnatEntityIds().contains(call.getCondition().getAnatEntityId()))
                     .collect(Collectors.toSet());
-            if (curAESimilarities.size() != 1) {
+            if (curAESimilarities.size() > 1) {
                 throw new IllegalArgumentException(
                         "An anat. entity is contained in more than anat. entity similarity groups: " +
                         call.getCondition().getAnatEntityId() + " found in " +
@@ -249,12 +270,12 @@ public class AnalysisService extends Service {
      */
     public MultiSpeciesCall<ExpressionCall> computeConservationScore(MultiSpeciesCall<ExpressionCall> inputCall) {
         log.entry(inputCall);
-        
-        // FIXME to be implemented
-        throw new UnsupportedOperationException("Method not implemented yet");
-//        return log.exit(new MultiSpeciesCall<ExpressionCall>(
-//                inputCall.getAnatEntitySimilarity(), inputCall.getDevStageSimilarity(),
-//                inputCall.getTaxonId(), inputCall.getOMANodeId(), inputCall.getOrthologousGeneIds(),
-//                inputCall.getCalls(), null, this.getServiceFactory()));
+        BigDecimal conservationScore = null;
+        // FIXME computation of conservation score must be implemented.        
+        log.warn("Conservation score is not calculated: implementation of computation must be done");
+        return log.exit(new MultiSpeciesCall<ExpressionCall>(
+                inputCall.getAnatEntitySimilarity(), inputCall.getDevStageSimilarity(),
+                inputCall.getTaxonId(), inputCall.getOMANodeId(), inputCall.getOrthologousGeneIds(),
+                inputCall.getCalls(), conservationScore, this.getServiceFactory()));
     }
 }

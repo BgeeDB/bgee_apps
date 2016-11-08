@@ -58,11 +58,12 @@ public class AnalysisService extends Service {
      * @param gene          A {@code Gene} that is the gene for which to return multi-species calls.
      * @param speciesIds    A {@code Collection} of {@code String}s that are the IDs of species
      *                      in which the gene orthologs should be found.
-     * @return              The {@code Map} where keys are {@code String}s corresponding to IDs of taxa,  
+     * @return              The {@code LinkedHashMap} where keys are {@code String}s corresponding
+     *                      to IDs of taxa ordered from closest to farthest of {@code gene},
      *                      the associated values being {@code Set} of {@code MultiSpeciesCall}s
      *                      corresponding to multi-species calls.
      */
-    public Map<String, Set<MultiSpeciesCall<ExpressionCall>>> loadMultiSpeciesExpressionCalls(
+    public LinkedHashMap<String, Set<MultiSpeciesCall<ExpressionCall>>> loadMultiSpeciesExpressionCalls(
             Gene gene, Collection<String> speciesIds) {
         log.entry(gene, speciesIds);
         
@@ -92,7 +93,7 @@ public class AnalysisService extends Service {
                 .map(t -> t.getId())
                 .collect(Collectors.toList());
         
-        Map<String, Set<MultiSpeciesCall<ExpressionCall>>> taxaToCalls = new HashMap<>();
+        LinkedHashMap<String, Set<MultiSpeciesCall<ExpressionCall>>> taxaToCalls = new LinkedHashMap<>();
         
         LinkedHashMap<CallService.OrderingAttribute, Direction> orderAttrs = new LinkedHashMap<>();
         orderAttrs.put(CallService.OrderingAttribute.GENE_ID, Direction.ASC);

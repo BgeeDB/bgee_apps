@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -199,7 +200,7 @@ public class AnalysisServiceTest extends TestAncestor {
         Map<String, Set<MultiSpeciesCall<ExpressionCall>>> actual = 
             analysisService.loadMultiSpeciesExpressionCalls(gene, speciesIds);
 
-        Map<String, Set<MultiSpeciesCall<ExpressionCall>>> expected = new HashMap<>();
+        LinkedHashMap<String, Set<MultiSpeciesCall<ExpressionCall>>> expected = new LinkedHashMap<>();
         
         Set<MultiSpeciesCall<ExpressionCall>> multiSpCalls1 = new HashSet<>();
         multiSpCalls1.add(new MultiSpeciesCall<>(aeSim1, dsSim1, taxId10, "oma1", orthologousGeneIds10,
@@ -217,6 +218,8 @@ public class AnalysisServiceTest extends TestAncestor {
             new HashSet<>(Arrays.asList(call4, call5, call6)), null, serviceFactory));
         expected.put(taxId100, multiSpCalls100);
 
+        assertEquals("Incorrect multi-species expression calls", new ArrayList<>(expected.keySet()),
+            new ArrayList<>(actual.keySet()));
         assertEquals("Incorrect multi-species expression calls for tax ID 10",
             expected.get(taxId10), actual.get(taxId10));
         assertEquals("Incorrect multi-species expression calls for tax ID 100",

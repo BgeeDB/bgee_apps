@@ -2,6 +2,7 @@ package org.bgee.model;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.analysis.AnalysisService;
 import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.anatdev.DevStageService;
 import org.bgee.model.anatdev.TaxonConstraintService;
@@ -145,6 +146,14 @@ public class ServiceFactory implements AutoCloseable {
         return log.exit(new CallService(this));
     }
     
+    /**
+     * @return A newly instantiated {@code AnalysisService}
+     */
+    public AnalysisService getAnalysisService() {
+        log.entry();
+        return log.exit(new AnalysisService(this));
+    }
+
     /**
      * @return A newly instantiated {@code AnatEntityService}
      */

@@ -1,9 +1,13 @@
 package org.bgee.model.ontology;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -12,8 +16,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.NamedEntity;
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.TaxonConstraint;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
+import org.bgee.model.species.Taxon;
 
 /**
  * Abstract class allowing to describe an ontology, or the sub-graph of an ontology.
@@ -192,6 +198,26 @@ public abstract class OntologyBase<T extends NamedEntity & OntologyElement<T>> {
     }
 
     /**
+     * Get ordered ancestors of {@code element} in this ontology based on any relations that were loaded.
+     * <p>
+     * Only direct relations incoming from or outgoing to {@code element} are considered,
+     * in order to only retrieve direct parents of {@code element}.
+     * <p>
+     * Ancestors are ordered from closest to farthest of {@code element}.  
+     * 
+     * @param element       A {@code T} that is the element for which ancestors are retrieved.
+     * @return              A {@code Set} of {@code T}s that are the ancestors
+     *                      of {@code element} in this ontology. Can be empty if {@code element} 
+     *                      has no ancestors according to the loaded information.
+     * @throws IllegalArgumentException If {@code element} is {@code null} or is not found 
+     *                                  in this ontology.
+     */
+    public List<T> getOrderedAncestors(T element) {
+        log.entry(element);
+        return log.exit(this.getOrderedAncestors(element, null));
+    }
+
+    /**
      * Get ancestors of {@code element} in this ontology based on relations of types {@code relationTypes}.
      * 
      * @param element       A {@code T} that is the element for which ancestors are retrieved.
@@ -208,6 +234,39 @@ public abstract class OntologyBase<T extends NamedEntity & OntologyElement<T>> {
         return log.exit(this.getAncestors(element, relationTypes, false));
     }
     
+    /**
+     * Get ordered ancestors of {@code element} in this ontology based on relations
+     * of types {@code relationTypes}.
+     * <p>
+     * Only direct relations incoming from or outgoing to {@code element} are considered,
+     * in order to only retrieve direct parents of {@code element}.
+     * <p>
+     * Ancestors are ordered from closest to farthest of {@code element}.  
+     * 
+     * @param element       A {@code T} that is the element for which ancestors are retrieved.
+     * @param relationTypes A {@code Set} of {@code RelationType}s that are the relation
+     *                      types to consider.
+     * @return              A {@code Set} of {@code T}s that are the ancestors
+     *                      of {@code element} in this ontology. Can be empty if {@code element} 
+     *                      has no ancestors according to the requested parameters.
+     * @throws IllegalArgumentException If {@code element} is {@code null} or is not found 
+     *                                  in this ontology.
+     */
+    public List<T> getOrderedAncestors(T element, Collection<RelationType> relationTypes) {
+        log.entry(element, relationTypes);
+        if (element == null) {
+            throw new IllegalArgumentException("Provided element is null");
+        }
+        if (getElement(element.getId()) == null) {
+            throw new IllegalArgumentException("Provided element is not found in this ontology");
+        }
+        Set<T> ancestors = this.getAncestors(element, relationTypes, false);
+        return log.exit(this.getOrderedRelations(element).stream()
+            .map(r -> getElement(r.getTargetId()))
+            .filter(e -> ancestors.contains(e))
+            .collect(Collectors.toList()));
+    }
+
     /**
      * Get ancestors of the given {@code element} in this ontology, according to 
      * any {@code RelationType}s that were considered to build this ontology.
@@ -251,7 +310,6 @@ public abstract class OntologyBase<T extends NamedEntity & OntologyElement<T>> {
         return log.exit(this.getRelatives(element, this.getElements(), true, relationTypes, directRelOnly, 
                 null, null));
     }
-
 
     /**
      * Get descendants of the given {@code element} in this ontology, according to 
@@ -440,6 +498,43 @@ public abstract class OntologyBase<T extends NamedEntity & OntologyElement<T>> {
                      .collect(Collectors.toSet());
          }
          return log.exit(relatives);
+    }
+
+    /**
+     * Retrieve ordered relations from {@code element}.
+     * <p>
+     * Ancestors are ordered from {@code element} ID to farthest element ID.  
+     * 
+     * @param element   A {@code T} that is the element from which relations are retrieved.
+     * @return          The {@code List} of ordered {@code RelationTO}s of this ontology.
+     */
+    protected List<RelationTO> getOrderedRelations(T element) {
+        log.entry(element);
+        
+        if (!this.type.equals(DevStage.class) && !this.type.equals(Taxon.class)) {
+            //XXX: sEach element of taxonomy and dev. stage ontology have only one parent
+            throw log.throwing(new IllegalArgumentException(
+                    "Ordering unsupported for OntologyElement " + this.type));
+        }
+        
+        List<RelationTO> orderedRels = new ArrayList<>();
+        ArrayDeque<RelationTO> queue = new ArrayDeque<>(this.relations);
+        String id = element.getId();
+        int initialQueueSize = queue.size();
+        int countViewedRelations = 0;
+        while (!queue.isEmpty() && countViewedRelations < initialQueueSize) {
+            RelationTO currentRel = queue.pop();
+            if (currentRel.getSourceId().equals(id)) {
+                orderedRels.add(currentRel);
+                id = currentRel.getTargetId();
+                countViewedRelations = 0;
+                continue;
+            }
+            queue.add(currentRel);
+            countViewedRelations++;
+        }
+
+        return log.exit(orderedRels);
     }
 
     /**

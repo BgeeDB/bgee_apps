@@ -89,7 +89,7 @@ public interface TaxonDAO extends DAO<TaxonDAO.Attribute> {
      * If {@code includeAncestors} is {@code false}, the {@code TaxonTOResultSet} returned 
      * is guaranteed to return one and only one {@code TaxonTO}.
      * 
-     * @param speciesIds        A {@code Set} of {@code String}s that are the IDs of the species 
+     * @param speciesIds        A {@code Collection} of {@code String}s that are the IDs of the species 
      *                          for which we want to retrieve the LCA.
      * @param includeAncestors  A {@code boolean} defining whether the ancestors of the LCA 
      *                          should also be retrieved; if {@code true}, there are retrieved.
@@ -97,8 +97,7 @@ public interface TaxonDAO extends DAO<TaxonDAO.Attribute> {
      *                          {@code TaxonTO}s.
      * @throws DAOException     If an error occurred when accessing the data source. 
      */
-    //TODO: change signature to use Collection instead of Set
-    public TaxonTOResultSet getLeastCommonAncestor(Set<String> speciesIds, 
+    public TaxonTOResultSet getLeastCommonAncestor(Collection<String> speciesIds, 
             boolean includeAncestors) throws DAOException, IllegalArgumentException;
 
     /**

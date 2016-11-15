@@ -26,6 +26,8 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTOResultSet;
+import org.bgee.model.species.Taxon;
+import org.bgee.model.species.TaxonService;
 import org.junit.Test;
 
 /**
@@ -456,5 +458,142 @@ public class OntologyServiceTest extends TestAncestor {
         		        expRelationTypes, serviceFactory, DevStage.class);
         assertEquals("Incorrect dev. stage ontology", expectedOntology3, 
         		service.getDevStageOntology(speciesIds, stageIds, false, false));
+    }
+    
+    /**
+     * Test the method 
+     * {@link OntologyService#getTaxonOntology(java.util.Collection, java.util.Collection, boolean, boolean)}.
+     */
+    @Test
+    public void shouldGetTaxonOntology() {
+        
+        DAOManager managerMock = mock(DAOManager.class);
+        RelationDAO relationDao = mock(RelationDAO.class);
+        when(managerMock.getRelationDAO()).thenReturn(relationDao);
+        
+        Set<String> speciesIds = new HashSet<String>();
+        speciesIds.addAll(Arrays.asList("11", "22", "44"));
+        Set<String> taxonIds = new HashSet<String>();
+        taxonIds.addAll(Arrays.asList("tax_id1", "tax_id2"));
+
+        Set<String> sourceTaxonIds = new HashSet<String>();
+        sourceTaxonIds.addAll(taxonIds);
+        Set<String> targetTaxonIds = new HashSet<String>();
+        targetTaxonIds.addAll(taxonIds);
+                
+        // Tax_id1 --------------
+        // | is_a    \ is_a      |
+        // Tax_id2     Tax_id2p  | is_a (indirect)
+        // | is_a    / is_a      |
+        // Tax_id3 --------------
+
+        Set<RelationTO.RelationType> daoRelationTypes = new HashSet<>();
+        daoRelationTypes.add(RelationTO.RelationType.ISA_PARTOF);
+        
+        List<RelationTO> relationTOs1 = Arrays.asList(
+                new RelationTO(null, "tax_id2", "tax_id1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO(null, "tax_id2p", "tax_id1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO(null, "tax_id3", "tax_id2", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO(null, "tax_id3", "tax_id1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT));
+        RelationTOResultSet mockRelationRs1 = getMockResultSet(RelationTOResultSet.class, relationTOs1);
+        when(relationDao.getTaxonRelations(sourceTaxonIds, targetTaxonIds,
+                true, EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE)), null))
+            .thenReturn(mockRelationRs1);
+
+        sourceTaxonIds = new HashSet<>(Arrays.asList("tax_id3", "tax_id2p"));
+        targetTaxonIds = new HashSet<>(Arrays.asList("tax_id3", "tax_id2p"));
+        List<RelationTO> relationTOs1b = Arrays.asList(
+            new RelationTO(null, "tax_id2p", "tax_id1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+            new RelationTO(null, "tax_id3", "tax_id2p", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT));
+        RelationTOResultSet mockRelationRs1b = getMockResultSet(RelationTOResultSet.class, relationTOs1b);
+        when(relationDao.getTaxonRelations(sourceTaxonIds, targetTaxonIds,
+                true, EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE)), null))
+            .thenReturn(mockRelationRs1b);
+
+        targetTaxonIds = new HashSet<>(Arrays.asList("tax_id1", "tax_id2"));
+        List<RelationTO> relationTOs2 = Arrays.asList(
+                new RelationTO(null, "tax_id2", "tax_id1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO(null, "tax_id3", "tax_id2", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT));
+        RelationTOResultSet mockRelationRs2 = getMockResultSet(RelationTOResultSet.class, relationTOs2);
+        when(relationDao.getTaxonRelations(null, targetTaxonIds,
+                true, EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE)), null))
+            .thenReturn(mockRelationRs2);
+        
+        targetTaxonIds = new HashSet<>(Arrays.asList("tax_id3"));
+        List<RelationTO> relationTOs2b = Arrays.asList(
+            new RelationTO(null, "tax_id3", "tax_id2", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+            new RelationTO(null, "tax_id3", "tax_id1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT));
+        RelationTOResultSet mockRelationRs2b = getMockResultSet(RelationTOResultSet.class, relationTOs2b);
+        when(relationDao.getTaxonRelations(new HashSet<>(), targetTaxonIds,
+                true, EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE)), null))
+            .thenReturn(mockRelationRs2b);
+
+        sourceTaxonIds = new HashSet<>(Arrays.asList("tax_id1", "tax_id2"));
+        targetTaxonIds = new HashSet<>(Arrays.asList("tax_id1", "tax_id2"));
+        List<RelationTO> relationTOs3 = Arrays.asList(
+                new RelationTO(null, "tax_id2", "tax_id1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT));
+        RelationTOResultSet mockRelationRs3 = getMockResultSet(RelationTOResultSet.class, relationTOs3);
+        when(relationDao.getTaxonRelations(sourceTaxonIds, targetTaxonIds,
+                false, EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE)), null))
+            .thenReturn(mockRelationRs3);
+        
+        List<RelationTO> relationTOs3b = Arrays.asList(
+            new RelationTO(null, "tax_id2", "tax_id1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT));
+        RelationTOResultSet mockRelationRs3b = getMockResultSet(RelationTOResultSet.class, relationTOs3b);
+        when(relationDao.getTaxonRelations(sourceTaxonIds, targetTaxonIds,
+            false, EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE)), null))
+        .thenReturn(mockRelationRs3b);
+
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(managerMock);
+        TaxonService taxonService = mock(TaxonService.class);
+        when(serviceFactory.getTaxonService()).thenReturn(taxonService);
+
+        Set<Taxon> taxa1 = new HashSet<>(Arrays.asList(
+                new Taxon("1", "tax_id1", "desc1"),
+                new Taxon("2", "tax_id2", "desc2"),
+                new Taxon("3", "tax_id2p", "desc2p"),
+                new Taxon("4", "tax_id3", "desc3")));
+        Set<Taxon> taxa2 = new HashSet<>(Arrays.asList(
+                new Taxon("1", "tax_id1", "desc1"),
+                new Taxon("2", "tax_id2", "desc2"),
+                new Taxon("4", "tax_id3", "desc3")));
+        Set<Taxon> taxa3 = new HashSet<>(Arrays.asList(
+                new Taxon("1", "tax_id1", "desc1"),
+                new Taxon("2", "tax_id2", "desc2")));
+        when(taxonService.loadTaxa(speciesIds, true)).thenReturn(taxa1.stream())
+        .thenReturn(taxa2.stream()).thenReturn(taxa3.stream());
+
+        Set<RelationType> expRelationTypes = new HashSet<>();
+        expRelationTypes.add(RelationType.ISA_PARTOF);
+
+        OntologyService service = new OntologyService(serviceFactory);
+
+        Set<RelationTO> rel1 = new HashSet<>();
+        rel1.addAll(relationTOs1);
+        rel1.addAll(relationTOs1b);
+        MultiSpeciesOntology<Taxon> expectedOntology1 = 
+                new MultiSpeciesOntology<>(speciesIds, taxa1, rel1,
+                    null, new HashSet<>(), expRelationTypes, serviceFactory, Taxon.class);
+        assertEquals("Incorrect dev. stage ontology", expectedOntology1,
+                service.getTaxonOntology(speciesIds, taxonIds, true, true));
+
+        Set<RelationTO> rel2 = new HashSet<>();
+        rel2.addAll(relationTOs2);
+        rel2.addAll(relationTOs2b);
+        MultiSpeciesOntology<Taxon> expectedOntology2 = 
+                new MultiSpeciesOntology<>(speciesIds, taxa2, rel2,
+                    null, new HashSet<>(), expRelationTypes, serviceFactory, Taxon.class);
+        assertEquals("Incorrect dev. stage ontology", expectedOntology2,
+                service.getTaxonOntology(speciesIds, taxonIds, false, true));
+
+        Set<RelationTO> rel3 = new HashSet<>();
+        rel3.addAll(relationTOs3);
+        rel3.addAll(relationTOs3b);
+        MultiSpeciesOntology<Taxon> expectedOntology3 = 
+                new MultiSpeciesOntology<>(speciesIds, taxa3, rel3,
+                    null, new HashSet<>(), expRelationTypes, serviceFactory, Taxon.class);
+        assertEquals("Incorrect dev. stage ontology", expectedOntology3, 
+                service.getTaxonOntology(speciesIds, taxonIds, false, false));
     }
 }

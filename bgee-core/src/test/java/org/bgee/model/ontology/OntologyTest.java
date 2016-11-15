@@ -19,6 +19,7 @@ import org.bgee.model.anatdev.TaxonConstraint;
 import org.bgee.model.anatdev.TaxonConstraintService;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
+import org.bgee.model.species.Taxon;
 import org.junit.Test;
 
 /**
@@ -351,6 +352,116 @@ public class OntologyTest extends TestAncestor {
         assertEquals("Incorrect element", expectedAE, ontology.getElements(Arrays.asList("sp3")));
     }
 
+    /**
+     * Test the method {@link OntologyBase#getOrderedRelations(NamedEntity)}.
+     */
+    @Test
+    public void shouldGetOrderedRelations() {
+        ServiceFactory mockFact = mock(ServiceFactory.class);
+        TaxonConstraintService tcService = mock(TaxonConstraintService.class);
+        when(mockFact.getTaxonConstraintService()).thenReturn(tcService);
+
+        Set<String> speciesIds = new HashSet<>(Arrays.asList("sp2"));
+        // Get stage taxon constraints
+        when(tcService.loadDevStageTaxonConstraintBySpeciesIds(speciesIds))
+            .thenReturn( // stage1 sp1/sp2 -------
+                    // |               \     \    
+                    // stage2 sp1/sp2   |     stage2p sp2
+                    // |               /      | 
+                    // stage3 sp1             stage3p sp2
+                    new HashSet<>(Arrays.asList(
+                            new TaxonConstraint("stage1", null),
+                            new TaxonConstraint("stage2", null),
+                            new TaxonConstraint("stage2p", "sp2"),
+                            new TaxonConstraint("stage3p", "sp2"))).stream());
+
+        DevStage ds1 = new DevStage("stage1"), ds2 = new DevStage("stage2"), 
+                ds3 = new DevStage("stage3"), ds2p = new DevStage("stage2p"), 
+                ds3p = new DevStage("stage3p"); 
+
+        Set<DevStage> elements = new HashSet<>(Arrays.asList(ds1, ds2, ds2p, ds3, ds3p));
+        RelationTO rel1 = new RelationTO("1", "stage2", "stage1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT);
+        RelationTO rel2 = new RelationTO("2", "stage3", "stage2", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT);
+        Set<RelationTO> relations = new HashSet<>(Arrays.asList(
+                // stage1 ---
+                // | is_a     \ dev_from   
+                // stage2      stage2p
+                // | is_a      | is_a
+                // stage3      stage3p   
+                new RelationTO("3", "stage4", "stage3", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                rel1,  
+                new RelationTO("4", "stage5", "stage4", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                rel2,
+                new RelationTO("5", "stage2p", "stage1", RelationTO.RelationType.DEVELOPSFROM, RelationStatus.DIRECT),
+                new RelationTO("6", "stage3p", "stage2p", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT)));
+
+        MultiSpeciesOntology<DevStage> ontology = new MultiSpeciesOntology<>(speciesIds,
+                elements, relations, null, null, ALL_RELATIONS, mockFact, DevStage.class);
+
+        List<RelationTO> actualOrderedRels = ontology.getOrderedRelations(ds3);
+        
+        List<RelationTO> expectedOrderedRels = Arrays.asList(rel2, rel1);
+        
+        assertEquals("Incorrect count of relations", expectedOrderedRels.size(), actualOrderedRels.size());
+        for (int i = 0; i < expectedOrderedRels.size(); i++) {
+            assertEquals("Incorrect relation ID", expectedOrderedRels.get(i).getId(),
+                    actualOrderedRels.get(i).getId());
+        }
+    }
+    
+    /**
+     * Test the method {@link OntologyBase#getOrderedRelations(NamedEntity)}.
+     */
+    @Test
+    public void shouldGetOrderedAncestors() {
+        ServiceFactory mockFact = mock(ServiceFactory.class);
+
+        Set<String> speciesIds = new HashSet<>(Arrays.asList("sp1", "sp2", "sp3"));
+
+        Taxon tax1 = new Taxon("taxId1"), tax2 = new Taxon("taxId2"), tax3 = new Taxon("taxId3"), 
+            tax10 = new Taxon("taxId10"), tax100 = new Taxon("taxId100"); 
+        // tax100--
+        // |        \
+        // tax10     \
+        // |     \    \
+        // tax1  tax2  tax3
+        // |     |     |
+        // sp1   sp2   sp3
+        
+        Set<Taxon> elements = new HashSet<>(Arrays.asList(tax1, tax2, tax3, tax10, tax100));
+        RelationTO rel1 = new RelationTO("1", "taxId1", "taxId10", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT);
+        RelationTO rel1b = new RelationTO("1b", "taxId1", "taxId100", RelationTO.RelationType.DEVELOPSFROM, RelationStatus.INDIRECT);
+        RelationTO rel2 = new RelationTO("2", "taxId2", "taxId10", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT);
+        RelationTO rel2b = new RelationTO("2b", "taxId2", "taxId100", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT);
+        RelationTO rel3 = new RelationTO("3", "taxId3", "taxId100", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT);
+        RelationTO rel4 = new RelationTO("4", "taxId10", "taxId100", RelationTO.RelationType.DEVELOPSFROM, RelationStatus.DIRECT);
+        Set<RelationTO> relations = new HashSet<>(Arrays.asList(rel1, rel1b, rel2, rel2b, rel3, rel4));
+
+        MultiSpeciesOntology<Taxon> ontology = new MultiSpeciesOntology<>(speciesIds,
+                elements, relations, null, null, ALL_RELATIONS, mockFact, Taxon.class);
+        assertEquals("Incorrect ordered ancestors",
+            Arrays.asList(tax10, tax100), ontology.getOrderedAncestors(tax1));
+        
+        assertEquals("Incorrect ordered ancestors",
+            Arrays.asList(tax100), ontology.getOrderedAncestors(tax10));
+
+        assertEquals("Incorrect ordered ancestors",
+            Arrays.asList(), ontology.getOrderedAncestors(tax100));
+        
+        assertEquals("Incorrect ordered ancestors",
+            Arrays.asList(tax100), ontology.getOrderedAncestors(tax3));
+        
+        assertEquals("Incorrect ordered ancestors",
+            Arrays.asList(tax10), ontology.getOrderedAncestors(tax1, ISA_RELATIONS));
+
+        try {
+            ontology.getOrderedAncestors(new Taxon("taxIdX"));
+            fail("Should throws an exception");
+        } catch (IllegalArgumentException e) {
+            // Test passed
+        }
+    }
+    
     /**
      * Get relations for tests.
      * 

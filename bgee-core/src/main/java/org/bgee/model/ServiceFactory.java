@@ -2,6 +2,7 @@ package org.bgee.model;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.analysis.AnalysisService;
 import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.anatdev.DevStageService;
 import org.bgee.model.anatdev.TaxonConstraintService;
@@ -14,6 +15,7 @@ import org.bgee.model.keyword.KeywordService;
 import org.bgee.model.ontology.OntologyService;
 import org.bgee.model.source.SourceService;
 import org.bgee.model.species.SpeciesService;
+import org.bgee.model.species.TaxonService;
 
 /**
  * Factory allowing to obtain {@link Service}s. 
@@ -145,6 +147,14 @@ public class ServiceFactory implements AutoCloseable {
     }
     
     /**
+     * @return A newly instantiated {@code AnalysisService}
+     */
+    public AnalysisService getAnalysisService() {
+        log.entry();
+        return log.exit(new AnalysisService(this));
+    }
+
+    /**
      * @return A newly instantiated {@code AnatEntityService}
      */
     public AnatEntityService getAnatEntityService() {
@@ -176,6 +186,14 @@ public class ServiceFactory implements AutoCloseable {
         return log.exit(new TaxonConstraintService(this));
     }
     
+    /**
+     * @return  A newly instantiated {@code TaxonService}
+     */
+    public TaxonService getTaxonService() {
+        log.entry();
+        return log.exit(new TaxonService(this));
+    }
+
     /**
      * @return  The {@code DAOManager} used by this {@code ServiceFactory} to instantiate services.
      */

@@ -21,6 +21,7 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTOResultSet;
 import org.bgee.model.function.QuadriFunction;
+import org.bgee.model.species.Taxon;
 
 /**
  * A {@link Service} to obtain {@link Ontology} and {@link MultiSpeciesOntology} objects.
@@ -294,13 +295,131 @@ public class OntologyService extends Service {
         return log.exit(getRelationTOs(fun, entityIds, getAncestors, getDescendants));
     }
     
-    private Set<RelationTO> getDevStageRelationTOs(Collection<String> speciesIds, Collection<String> entityIds, 
-            boolean getAncestors, boolean getDescendants) {
+    private Set<RelationTO> getDevStageRelationTOs(Collection<String> speciesIds, 
+            Collection<String> entityIds, boolean getAncestors, boolean getDescendants) {
         log.entry(speciesIds, entityIds, getAncestors, getDescendants);
-        QuadriFunction<Set<String>, Set<String>, Boolean, Set<RelationStatus>, RelationTOResultSet> fun = (s, t, b, r) ->
-        getDaoManager().getRelationDAO().getStageRelations(
+        QuadriFunction<Set<String>, Set<String>, Boolean, Set<RelationStatus>, RelationTOResultSet> fun =
+            (s, t, b, r) -> getDaoManager().getRelationDAO().getStageRelations(
                 speciesIds, true, s, t, b, r, null);
         return log.exit(getRelationTOs(fun, entityIds, getAncestors, getDescendants));
+    }
+    
+    private Set<RelationTO> getTaxonRelationTOs(Collection<String> entityIds,
+            boolean getAncestors, boolean getDescendants) {
+        log.entry(entityIds, getAncestors, getDescendants);
+        QuadriFunction<Set<String>, Set<String>, Boolean, Set<RelationStatus>, RelationTOResultSet> fun =
+            (s, t, b, r) -> getDaoManager().getRelationDAO().getTaxonRelations(s, t, b, r, null);
+        return log.exit(getRelationTOs(fun, entityIds, getAncestors, getDescendants));
+    }
+    
+    /**
+     * Retrieve the {@code MultiSpeciesOntology} of {@code Taxon}s for the requested species,
+     * taxon IDs, and relation status.
+     * <p>
+     * The returned {@code Ontology} contains only {@code Taxon}s corresponding to 
+     * the provided taxon IDs, and only the relations between them 
+     * with a {@code RelationType} {@code ISA_PARTOF} are included. 
+     *  
+     * @param speciesId         A {@code String} that is the ID of species 
+     *                          which to retrieve taxa for. Can be {@code null} or empty.
+     * @param taxonIds          A {@code Collection} of {@code String}s that are taxon IDs
+     *                          of the {@code MultiSpeciesOntology} to retrieve.
+     *                          Can be {@code null} or empty.
+     * @return                  The {@code MultiSpeciesOntology} of the {@code Taxon}s 
+     *                          for the requested species and taxa. 
+     */
+    public MultiSpeciesOntology<Taxon> getTaxonOntology(String speciesId,
+             Collection<String> taxonIds) {
+        log.entry(speciesId, taxonIds);
+        return log.exit(this.getTaxonOntology(Arrays.asList(speciesId), taxonIds, false, false));
+    }
+    
+    /**
+     * Retrieve the {@code MultiSpeciesOntology} of {@code Taxon}s for the requested species,
+     * taxon IDs, and relation status.
+     * <p>
+     * The returned {@code Ontology} contains only {@code Taxon}s corresponding to 
+     * the provided taxon IDs, and only the relations between them 
+     * with a {@code RelationType} {@code ISA_PARTOF} are included. 
+     *  
+     * @param speciesIds        A {@code Collection} of {@code String}s that are IDs of species 
+     *                          which to retrieve taxa for. If several IDs are provided, 
+     *                          taxa existing in any of them will be retrieved. 
+     *                          Can be {@code null} or empty.
+     * @param taxonIds          A {@code Collection} of {@code String}s that are taxon IDs
+     *                          of the {@code MultiSpeciesOntology} to retrieve.
+     *                          Can be {@code null} or empty.
+     * @return                  The {@code MultiSpeciesOntology} of the {@code Taxon}s 
+     *                          for the requested species and taxa. 
+     */
+    public MultiSpeciesOntology<Taxon> getTaxonOntology(
+            Collection<String> speciesIds, Collection<String> taxonIds) {
+        log.entry(taxonIds, speciesIds);
+        return log.exit(this.getTaxonOntology(speciesIds, taxonIds, false, false));
+    } 
+    
+    /**
+     * Retrieve the {@code MultiSpeciesOntology} of {@code Taxon}s for the requested species,
+     * taxon IDs, and relation status. 
+     * <p>
+     * The returned {@code MultiSpeciesOntology} contains ancestors and/or descendants according to
+     * {@code getAncestors} and {@code getDescendants}, respectively. 
+     * If both {@code getAncestors} and {@code getDescendants} are {@code false}, 
+     * then only relations between provided taxa are considered.
+     * 
+     * @param speciesId         A {@code String} that is the ID of species 
+     *                          which to retrieve taxa for. Can be {@code null} or empty.
+     * @param taxonIds          A {@code Collection} of {@code String}s that are taxon IDs
+     *                          of the {@code MultiSpeciesOntology} to retrieve.
+     *                          Can be {@code null} or empty.
+     * @param getAncestors      A {@code boolean} defining whether the ancestors of the selected 
+     *                          taxa, and the relations leading to them, should be retrieved.
+     * @param getDescendants    A {@code boolean} defining whether the descendants of the selected 
+     *                          taxa, and the relations leading to them, should be retrieved.
+     * @return                  The {@code MultiSpeciesOntology} of the {@code Taxon}s 
+     *                          for the requested species, taxa, and relation status. 
+     */
+    public MultiSpeciesOntology<Taxon> getTaxonOntology(String speciesId, Collection<String> taxonIds,
+            boolean getAncestors, boolean getDescendants) {
+        log.entry(speciesId, taxonIds, getAncestors, getDescendants);
+        return log.exit(this.getTaxonOntology(Arrays.asList(speciesId), taxonIds,
+                getAncestors, getDescendants));
+    }
+
+    /**
+     * Retrieve the {@code MultiSpeciesOntology} of {@code Taxon}s for the requested species,
+     * taxon IDs, and relation status. 
+     * <p>
+     * The returned {@code MultiSpeciesOntology} contains ancestors and/or descendants according to
+     * {@code getAncestors} and {@code getDescendants}, respectively. 
+     * If both {@code getAncestors} and {@code getDescendants} are {@code false}, 
+     * then only relations between provided taxa are considered.
+     * 
+     * @param speciesIds        A {@code Collection} of {@code String}s that are IDs of species 
+     *                          which to retrieve taxa for. If several IDs are provided, 
+     *                          taxa existing in any of them will be retrieved. 
+     *                          Can be {@code null} or empty.
+     * @param taxonIds          A {@code Collection} of {@code String}s that are taxon IDs
+     *                          of the {@code MultiSpeciesOntology} to retrieve.
+     *                          Can be {@code null} or empty.
+     * @param getAncestors      A {@code boolean} defining whether the ancestors of the selected 
+     *                          taxa, and the relations leading to them, should be retrieved.
+     * @param getDescendants    A {@code boolean} defining whether the descendants of the selected 
+     *                          taxa, and the relations leading to them, should be retrieved.
+     * @return                  The {@code MultiSpeciesOntology} of the {@code Taxon}s 
+     *                          for the requested species and taxa. 
+     */
+    public MultiSpeciesOntology<Taxon> getTaxonOntology(Collection<String> speciesIds,
+            Collection<String> taxonIds, boolean getAncestors, boolean getDescendants) {
+        log.entry(taxonIds, speciesIds, getAncestors, getDescendants);
+
+        Set<RelationTO> rels = this.getTaxonRelationTOs(taxonIds, getAncestors, getDescendants);
+        return log.exit(new MultiSpeciesOntology<Taxon>(speciesIds, 
+                this.getServiceFactory().getTaxonService()
+                    .loadTaxa(speciesIds, true)
+                    .collect(Collectors.toSet()), 
+                rels, null, new HashSet<>(), EnumSet.of(RelationType.ISA_PARTOF),
+                this.getServiceFactory(), Taxon.class));
     }
     
     /**
@@ -357,8 +476,11 @@ public class OntologyService extends Service {
                 sourceIds, targetIds, sourceOrTarget, relationStatus);
         
         Set<RelationTO> relations = new HashSet<>();
+        log.debug("1-relationRetrievalFun.apply({}, {}, {}, {})", sourceIds, targetIds, sourceOrTarget, relationStatus);
+        log.debug("1-relationRetrievalFun.= {}", relationRetrievalFun.apply(sourceIds, targetIds, sourceOrTarget, relationStatus).stream().map(r -> r.getSourceId()+"->"+ r.getTargetId()).collect(Collectors.joining("//")));
         relations.addAll(relationRetrievalFun.apply(sourceIds, targetIds, sourceOrTarget, relationStatus)
                     .getAllTOs());
+        log.debug("1-relations {}", relations.stream().map(r -> r.getSourceId()+"->"+ r.getTargetId()).collect(Collectors.joining("//")));
         //if it is requested to infer entities,  
         if (getAncestors || getDescendants) {
             assert sourceOrTarget: "Incorrect source/target condition status: sourceOrTarget should be true";
@@ -385,11 +507,17 @@ public class OntologyService extends Service {
 
             //Query only if new terms have been discovered
             if (!newSourceIds.isEmpty() || !newTargetIds.isEmpty()) {
+                log.debug("2-relationRetrievalFun.apply({}, {}, {}, {})", newSourceIds, newTargetIds, 
+                    sourceOrTarget, relationStatus);
+                log.debug("2-relationRetrievalFun.= {}", relationRetrievalFun.apply(newSourceIds, newTargetIds, 
+                    sourceOrTarget, relationStatus).stream().map(r -> r.getSourceId()+"->"+ r.getTargetId()).collect(Collectors.joining("//")));
                 relations.addAll(relationRetrievalFun.apply(newSourceIds, newTargetIds, 
                         sourceOrTarget, relationStatus).getAllTOs());
+                log.debug("2-relations {}", relations.stream().map(r -> r.getSourceId()+"->"+ r.getTargetId()).collect(Collectors.joining("//")));
             }
         }
-        
+        log.debug("ex-relations {}", relations.stream().map(r -> r.getSourceId()+"->"+ r.getTargetId()).collect(Collectors.joining("//")));
+
         return log.exit(relations);
     }
     /**

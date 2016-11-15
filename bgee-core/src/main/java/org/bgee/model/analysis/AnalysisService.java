@@ -76,7 +76,7 @@ public class AnalysisService extends Service {
         
         final Set<String> clonedSpeIds = Collections.unmodifiableSet(
                 speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds));
-        if (!clonedSpeIds.contains(gene.getSpeciesId())) {
+        if (!clonedSpeIds.isEmpty() && !clonedSpeIds.contains(gene.getSpeciesId())) {
             throw new IllegalArgumentException("Gene species (" + gene.getSpeciesId() +
                     ") is not in provided species (" + speciesIds +")");
         }

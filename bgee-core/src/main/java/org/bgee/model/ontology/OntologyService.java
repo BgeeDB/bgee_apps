@@ -472,15 +472,10 @@ public class OntologyService extends Service {
             //opposite if we don't want the descendants
             targetIds = null;
         }
-        log.trace("sourceIds: {} - targetIds: {} - sourceOrTarget: {} - relationStatus: {}", 
-                sourceIds, targetIds, sourceOrTarget, relationStatus);
         
         Set<RelationTO> relations = new HashSet<>();
-        log.debug("1-relationRetrievalFun.apply({}, {}, {}, {})", sourceIds, targetIds, sourceOrTarget, relationStatus);
-        log.debug("1-relationRetrievalFun.= {}", relationRetrievalFun.apply(sourceIds, targetIds, sourceOrTarget, relationStatus).stream().map(r -> r.getSourceId()+"->"+ r.getTargetId()).collect(Collectors.joining("//")));
         relations.addAll(relationRetrievalFun.apply(sourceIds, targetIds, sourceOrTarget, relationStatus)
                     .getAllTOs());
-        log.debug("1-relations {}", relations.stream().map(r -> r.getSourceId()+"->"+ r.getTargetId()).collect(Collectors.joining("//")));
         //if it is requested to infer entities,  
         if (getAncestors || getDescendants) {
             assert sourceOrTarget: "Incorrect source/target condition status: sourceOrTarget should be true";
@@ -507,17 +502,10 @@ public class OntologyService extends Service {
 
             //Query only if new terms have been discovered
             if (!newSourceIds.isEmpty() || !newTargetIds.isEmpty()) {
-                log.debug("2-relationRetrievalFun.apply({}, {}, {}, {})", newSourceIds, newTargetIds, 
-                    sourceOrTarget, relationStatus);
-                log.debug("2-relationRetrievalFun.= {}", relationRetrievalFun.apply(newSourceIds, newTargetIds, 
-                    sourceOrTarget, relationStatus).stream().map(r -> r.getSourceId()+"->"+ r.getTargetId()).collect(Collectors.joining("//")));
                 relations.addAll(relationRetrievalFun.apply(newSourceIds, newTargetIds, 
                         sourceOrTarget, relationStatus).getAllTOs());
-                log.debug("2-relations {}", relations.stream().map(r -> r.getSourceId()+"->"+ r.getTargetId()).collect(Collectors.joining("//")));
             }
         }
-        log.debug("ex-relations {}", relations.stream().map(r -> r.getSourceId()+"->"+ r.getTargetId()).collect(Collectors.joining("//")));
-
         return log.exit(relations);
     }
     /**

@@ -219,13 +219,21 @@ public class FrontController extends HttpServlet {
             } else if (requestParameters.getAction() != null &&
                 		requestParameters.getAction().equals(RequestParameters.ACTION_AUTO_COMPLETE_GENE_SEARCH)) {
             		controller = new CommandSearch(response, requestParameters, prop, factory, serviceFactory);
-            } else if (requestParameters.isDAOPageCategory()) {
+            } else if (requestParameters.isADAOPageCategory()) {
                 controller = new CommandDAO(response, requestParameters, this.prop, factory, 
                         serviceFactory);
+            } else if (requestParameters.isAStatsPageCategory()) {
+                //no specific controllers for this for now. 
+                //We simply respond with a 'success no content' so that the client get no errors, 
+                //and so that we get correct information stored in our Apache logs.
+                //TODO: In the future, this should call our Google Monitoring implementation
+                factory.getGeneralDisplay().respondSuccessNoContent();
             } else {
                 throw log.throwing(new PageNotFoundException("Request not recognized."));
             }
-            controller.processRequest();
+            if (controller != null) {
+                controller.processRequest();
+            }
             
         //=== process errors ===
         } catch (Exception e) {

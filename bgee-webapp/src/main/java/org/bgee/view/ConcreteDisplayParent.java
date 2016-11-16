@@ -247,6 +247,17 @@ public abstract class ConcreteDisplayParent {
     }
     
     /**
+     * Delegates to {@link #sendHeaders(int, boolean)} with the status code set to 
+     * {@code HttpServletResponse.SC_NO_CONTENT} and the {@code noCache} argument set to {@code true}.
+     * @see #sendHeaders(int, boolean)
+     */
+    public void respondSuccessNoContent() {
+        log.entry();
+        this.sendHeaders(HttpServletResponse.SC_NO_CONTENT, true);
+        log.exit();
+    }
+    
+    /**
      * Return the MIME content type for the current view, that will be used as argument  
      * when calling {@code setContentType} on the {@code HttpServletResponse} object 
      * provided at instantiation. This content type should NOT include 

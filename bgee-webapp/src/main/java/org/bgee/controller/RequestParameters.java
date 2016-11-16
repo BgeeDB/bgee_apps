@@ -162,6 +162,11 @@ public class RequestParameters {
      * (see {@link URLParameters#getParamPage()}) when a page related to DAO queries is requested.
      */
     public static final String PAGE_DAO = "dao";
+    /**
+     * A {@code String} that is the value taken by the {@code page} parameter 
+     * (see {@link URLParameters#getParamPage()}) when a query is made for usage statistics gathering.
+     */
+    public static final String PAGE_STATS = "stats";
 
     /**
      * A {@code String} that is the value taken by the {@code page} parameter 
@@ -2345,10 +2350,22 @@ public class RequestParameters {
     /**
      * @return  A {@code boolean} to tell whether the request is related to DAO queries.
      */
-    public boolean isDAOPageCategory() {
+    public boolean isADAOPageCategory() {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
             this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_DAO)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    /**
+     * @return  A {@code boolean} to tell whether the request is related to queries for usage statistics 
+     *          (meaning, queries made by clients solely for us to have usage statistics).
+     */
+    public boolean isAStatsPageCategory() {
+        log.entry();
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
+            this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_STATS)) {
             return log.exit(true);
         }
         return log.exit(false);

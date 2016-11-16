@@ -68,17 +68,17 @@ public class AnalysisService extends Service {
         log.entry(gene, speciesIds);
         
         if (gene == null) {
-            throw new IllegalArgumentException("Provided gene should not be null");
+            throw log.throwing(new IllegalArgumentException("Provided gene should not be null"));
         }
         if (gene.getSpeciesId() == null || gene.getSpecies() == null) {
-            throw new IllegalArgumentException("Expecting species info in provided gene:" + gene);
+            throw log.throwing(new IllegalArgumentException("Expecting species info in provided gene:" + gene));
         }
         
         final Set<String> clonedSpeIds = Collections.unmodifiableSet(
                 speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds));
         if (!clonedSpeIds.isEmpty() && !clonedSpeIds.contains(gene.getSpeciesId())) {
-            throw new IllegalArgumentException("Gene species (" + gene.getSpeciesId() +
-                    ") is not in provided species (" + speciesIds +")");
+            throw log.throwing(new IllegalArgumentException("Gene species (" + gene.getSpeciesId() +
+                    ") is not in provided species (" + speciesIds +")"));
         }
         
         // Get all relevant taxa from the species
@@ -86,8 +86,8 @@ public class AnalysisService extends Service {
         MultiSpeciesOntology<Taxon> taxonOnt = this.getServiceFactory().getOntologyService()
                 .getTaxonOntology();
         if (taxonOnt.getElement(gene.getSpecies().getParentTaxonId()) == null) {
-            throw new IllegalStateException("Taxon ID " + gene.getSpecies().getParentTaxonId() +
-                    "not found in retrieved taxonomy");
+            throw log.throwing(new IllegalStateException("Taxon ID " + gene.getSpecies().getParentTaxonId() +
+                    "not found in retrieved taxonomy"));
         }
         List<String> taxonIds = taxonOnt.getOrderedAncestors(
                     taxonOnt.getElement(gene.getSpecies().getParentTaxonId())).stream()
@@ -187,21 +187,21 @@ public class AnalysisService extends Service {
             log.trace("Iteration expr call {}", call);
             
             if (call.getCondition() == null) {
-                throw new IllegalArgumentException("No condition for " + call);
+                throw log.throwing(new IllegalArgumentException("No condition for " + call));
             }
             if (call.getGeneId() == null) {
-                throw new IllegalArgumentException("No gene ID for " + call);
+                throw log.throwing(new IllegalArgumentException("No gene ID for " + call));
             }
             Set<AnatEntitySimilarity> curAESimilarities = anatEntitySimilarities.stream()
                     .filter(s -> s.getAnatEntityIds().contains(call.getCondition().getAnatEntityId()))
                     .collect(Collectors.toSet());
             if (curAESimilarities.size() > 1) {
-                throw new IllegalArgumentException(
+                throw log.throwing(new IllegalArgumentException(
                         "An anat. entity is contained in more than anat. entity similarity groups: " +
                         call.getCondition().getAnatEntityId() + " found in " +
                                 curAESimilarities.stream()
                                     .map(s -> s.getId())
-                                    .collect(Collectors.toSet()));
+                                    .collect(Collectors.toSet())));
             } else if (curAESimilarities.size() == 0) {
                 log.trace(call.getCondition().getAnatEntityId() +
                         " found in any anat. entity similarity group");
@@ -213,12 +213,12 @@ public class AnalysisService extends Service {
                     .filter(s -> s.getDevStageIds().contains(call.getCondition().getDevStageId()))
                     .collect(Collectors.toSet());
             if (curDSSimilarities.size() > 1) {
-                throw new IllegalArgumentException(
+                throw log.throwing(new IllegalArgumentException(
                         "A dev. stage is contained in more than one dev. stage similarity groups: " +
                         call.getCondition().getDevStageId() + " found in " +
                                 curDSSimilarities.stream()
                                     .map(s -> s.getId())
-                                    .collect(Collectors.toSet()));
+                                    .collect(Collectors.toSet())));
             } else if (curDSSimilarities.size() == 0) {
                 log.trace(call.getCondition().getDevStageId() + 
                         " found in any dev. entity similarity group");
@@ -230,9 +230,9 @@ public class AnalysisService extends Service {
                     .map(e -> e.getKey())
                     .collect(Collectors.toSet());
             if (omaNodeIds.size() > 1) {
-                throw new IllegalArgumentException(
+                throw log.throwing(new IllegalArgumentException(
                         "A gene is contained in more than one OMA node ID: " +
-                                call.getGeneId() + " found in " + omaNodeIds);
+                                call.getGeneId() + " found in " + omaNodeIds));
             } else if (omaNodeIds.size() == 0) {
                 log.trace(call.getCondition().getDevStageId() + 
                         " found in any dev. entity similarity group");

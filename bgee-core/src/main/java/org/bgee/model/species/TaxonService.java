@@ -16,7 +16,7 @@ import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Aug. 2016
+ * @version Bgee 13, Nov. 2016
  * @since   Bgee 13, Sept. 2015
  */
 public class TaxonService extends Service {
@@ -53,15 +53,10 @@ public class TaxonService extends Service {
     }
     
     /**
-     * Retrieve {@code Taxon}s that are LCA of the provided species.
-     * If {@code commonAncestor} is {@code true}, all ancestors of the LCA will also be retrieved.
+     * Retrieve {@code Taxon}s that are either least common ancestor
+     * or parent taxon of species in data source.
      * 
-     * @param speciesIds        A {@code Collection} of {@code String}s that are the IDs of species 
-     *                          to filter taxa to retrieve. Can be {@code null} or empty.
-     * @param commonAncestor    A {@code boolean} defining whether the entities retrieved
-     *                          should be common ancestor.
-     * @return                  A {@code Stream} of {@code Taxon}s retrieved for
-     *                          the requested parameters.
+     * @return  A {@code Stream} of {@code Taxon}s retrieved for the requested parameters.
      */
     public Stream<Taxon> loadAllLeastCommonAncestorAndParentTaxa() {
         return log.exit(this.getDaoManager().getTaxonDAO()

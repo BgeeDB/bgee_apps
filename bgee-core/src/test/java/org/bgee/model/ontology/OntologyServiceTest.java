@@ -28,13 +28,14 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStat
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTOResultSet;
 import org.bgee.model.species.Taxon;
 import org.bgee.model.species.TaxonService;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
  * This class holds the unit tests for the {@code OntologyService} class.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Oct. 2016
+ * @version Bgee 13, Nov. 2016
  * @since   Bgee 13, Dec. 2015
  */
 public class OntologyServiceTest extends TestAncestor {
@@ -465,6 +466,7 @@ public class OntologyServiceTest extends TestAncestor {
      * {@link OntologyService#getTaxonOntology(java.util.Collection, java.util.Collection, boolean, boolean)}.
      */
     @Test
+    @Ignore("An error was found in recovery of taxonomy with parameters. The method was disabled")
     public void shouldGetTaxonOntology() {
         
         DAOManager managerMock = mock(DAOManager.class);

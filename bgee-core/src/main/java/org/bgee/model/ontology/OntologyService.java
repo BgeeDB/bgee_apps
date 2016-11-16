@@ -21,6 +21,7 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTOResultSet;
 import org.bgee.model.function.QuadriFunction;
+import org.bgee.model.species.Species;
 import org.bgee.model.species.Taxon;
 
 /**
@@ -29,7 +30,7 @@ import org.bgee.model.species.Taxon;
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 13, Oct. 2016
+ * @version Bgee 13, Nov. 2016
  * @since   Bgee 13, Dec. 2015
  */
 public class OntologyService extends Service {
@@ -313,6 +314,26 @@ public class OntologyService extends Service {
     }
     
     /**
+     * Retrieve the {@code MultiSpeciesOntology} of all {@code Taxon}s that are either least
+     * common ancestor or parent taxon of species in data source.
+     *  
+     * @return  The {@code MultiSpeciesOntology} of all {@code Taxon}.
+     */
+    public MultiSpeciesOntology<Taxon> getTaxonOntology() {
+        log.entry();
+        
+        Set<RelationTO> rels = this.getTaxonRelationTOs(null, false, false);
+        return log.exit(new MultiSpeciesOntology<Taxon>(
+            this.getServiceFactory().getSpeciesService().loadSpeciesByIds(null, false).stream()
+                .map(Species::getId).collect(Collectors.toSet()), 
+            this.getServiceFactory().getTaxonService()
+                .loadAllLeastCommonAncestorAndParentTaxa()
+                .collect(Collectors.toSet()), 
+            rels, null, new HashSet<>(), EnumSet.of(RelationType.ISA_PARTOF),
+            this.getServiceFactory(), Taxon.class));
+    }
+
+    /**
      * Retrieve the {@code MultiSpeciesOntology} of {@code Taxon}s for the requested species,
      * taxon IDs, and relation status.
      * <p>
@@ -409,17 +430,19 @@ public class OntologyService extends Service {
      * @return                  The {@code MultiSpeciesOntology} of the {@code Taxon}s 
      *                          for the requested species and taxa. 
      */
+    // FIXME: this method contained error (elements are not corrects), so it's disabled. Tests are ignored.
+    // When enable, do not forgot to refactor with getTaxonOntology()
     public MultiSpeciesOntology<Taxon> getTaxonOntology(Collection<String> speciesIds,
             Collection<String> taxonIds, boolean getAncestors, boolean getDescendants) {
         log.entry(taxonIds, speciesIds, getAncestors, getDescendants);
-
-        Set<RelationTO> rels = this.getTaxonRelationTOs(taxonIds, getAncestors, getDescendants);
-        return log.exit(new MultiSpeciesOntology<Taxon>(speciesIds, 
-                this.getServiceFactory().getTaxonService()
-                    .loadTaxa(speciesIds, true)
-                    .collect(Collectors.toSet()), 
-                rels, null, new HashSet<>(), EnumSet.of(RelationType.ISA_PARTOF),
-                this.getServiceFactory(), Taxon.class));
+        throw log.throwing(new UnsupportedOperationException("Recovery of taxonomy with parameters is not implemented"));
+//        Set<RelationTO> rels = this.getTaxonRelationTOs(taxonIds, getAncestors, getDescendants);
+//        return log.exit(new MultiSpeciesOntology<Taxon>(speciesIds, 
+//                this.getServiceFactory().getTaxonService()
+//                    .loadTaxa(speciesIds, true)
+//                    .collect(Collectors.toSet()), 
+//                rels, null, new HashSet<>(), EnumSet.of(RelationType.ISA_PARTOF),
+//                this.getServiceFactory(), Taxon.class));
     }
     
     /**

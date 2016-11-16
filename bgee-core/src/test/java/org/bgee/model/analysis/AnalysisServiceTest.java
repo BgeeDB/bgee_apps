@@ -99,7 +99,7 @@ public class AnalysisServiceTest extends TestAncestor {
 
         @SuppressWarnings("unchecked")
         MultiSpeciesOntology<Taxon> taxonOnt = mock(MultiSpeciesOntology.class);
-        when(ontService.getTaxonOntology(speciesIds, null, true, false)).thenReturn(taxonOnt);
+        when(ontService.getTaxonOntology()).thenReturn(taxonOnt);
         when(taxonOnt.getElements()).thenReturn(new HashSet<>(Arrays.asList(taxon1, taxon2)));
         when(taxonOnt.getElement(taxId1)).thenReturn(taxon1);
         when(taxonOnt.getOrderedAncestors(taxon1)).thenReturn(Arrays.asList(taxon10, taxon100));

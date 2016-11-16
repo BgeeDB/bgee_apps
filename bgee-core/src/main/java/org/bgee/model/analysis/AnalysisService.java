@@ -82,8 +82,9 @@ public class AnalysisService extends Service {
         }
         
         // Get all relevant taxa from the species
+        // FIXME: load all taxonomy ontology, should we filter it?
         MultiSpeciesOntology<Taxon> taxonOnt = this.getServiceFactory().getOntologyService()
-                .getTaxonOntology(clonedSpeIds, null, true, false);
+                .getTaxonOntology();
         if (taxonOnt.getElement(gene.getSpecies().getParentTaxonId()) == null) {
             throw new IllegalStateException("Taxon ID " + gene.getSpecies().getParentTaxonId() +
                     "not found in retrieved taxonomy");

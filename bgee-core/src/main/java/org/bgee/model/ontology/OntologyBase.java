@@ -2,7 +2,6 @@ package org.bgee.model.ontology;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -19,6 +18,7 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.TaxonConstraint;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
 import org.bgee.model.species.Taxon;
 
 /**
@@ -26,7 +26,7 @@ import org.bgee.model.species.Taxon;
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 13, July 2016
+ * @version Bgee 13, Nov. 2016
  * @since   Bgee 13, Dec. 2015
  * @param <T>   The type of element in this ontology or sub-graph.
  */
@@ -512,7 +512,7 @@ public abstract class OntologyBase<T extends NamedEntity & OntologyElement<T>> {
         log.entry(element);
         
         if (!this.type.equals(DevStage.class) && !this.type.equals(Taxon.class)) {
-            //XXX: sEach element of taxonomy and dev. stage ontology have only one parent
+            //XXX: Each element of taxonomy and dev. stage ontology have only one parent
             throw log.throwing(new IllegalArgumentException(
                     "Ordering unsupported for OntologyElement " + this.type));
         }
@@ -524,7 +524,8 @@ public abstract class OntologyBase<T extends NamedEntity & OntologyElement<T>> {
         int countViewedRelations = 0;
         while (!queue.isEmpty() && countViewedRelations < initialQueueSize) {
             RelationTO currentRel = queue.pop();
-            if (currentRel.getSourceId().equals(id)) {
+            if (currentRel.getSourceId().equals(id) 
+                    && currentRel.getRelationStatus().equals(RelationStatus.DIRECT)) {
                 orderedRels.add(currentRel);
                 id = currentRel.getTargetId();
                 countViewedRelations = 0;

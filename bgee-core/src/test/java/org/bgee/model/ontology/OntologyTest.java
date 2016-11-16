@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -26,7 +27,7 @@ import org.junit.Test;
  * This class holds the unit tests for the {@code OntologyBase} class.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Oct. 2016
+ * @version Bgee 13, Nov. 2016
  * @since   Bgee 13, Dec. 2015
  */
 public class OntologyTest extends TestAncestor {
@@ -364,43 +365,53 @@ public class OntologyTest extends TestAncestor {
         Set<String> speciesIds = new HashSet<>(Arrays.asList("sp2"));
         // Get stage taxon constraints
         when(tcService.loadDevStageTaxonConstraintBySpeciesIds(speciesIds))
-            .thenReturn( // stage1 sp1/sp2 -------
-                    // |               \     \    
-                    // stage2 sp1/sp2   |     stage2p sp2
-                    // |               /      | 
-                    // stage3 sp1             stage3p sp2
+            .thenReturn( // stage1 sp1/sp2 ---
+                         // |                 \    
+                         // stage2 sp1/sp2     stage5 sp2
+                         // |                  | 
+                         // stage3 sp1         stage6 sp2
+                         // |
+                         // stage4 sp1
                     new HashSet<>(Arrays.asList(
                             new TaxonConstraint("stage1", null),
                             new TaxonConstraint("stage2", null),
-                            new TaxonConstraint("stage2p", "sp2"),
-                            new TaxonConstraint("stage3p", "sp2"))).stream());
+                            new TaxonConstraint("stage3", "sp1"),
+                            new TaxonConstraint("stage4", "sp1"),
+                            new TaxonConstraint("stage5", "sp2"),
+                            new TaxonConstraint("stage6", "sp2"))).stream());
 
         DevStage ds1 = new DevStage("stage1"), ds2 = new DevStage("stage2"), 
-                ds3 = new DevStage("stage3"), ds2p = new DevStage("stage2p"), 
-                ds3p = new DevStage("stage3p"); 
+                ds3 = new DevStage("stage3"), ds4 = new DevStage("stage4"), 
+                ds5 = new DevStage("stage5"), ds6 = new DevStage("stage6"); 
 
-        Set<DevStage> elements = new HashSet<>(Arrays.asList(ds1, ds2, ds2p, ds3, ds3p));
-        RelationTO rel1 = new RelationTO("1", "stage2", "stage1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT);
-        RelationTO rel2 = new RelationTO("2", "stage3", "stage2", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT);
-        Set<RelationTO> relations = new HashSet<>(Arrays.asList(
+        Set<DevStage> elements = new HashSet<>(Arrays.asList(ds1, ds2, ds3, ds4, ds5, ds6));
+        RelationTO rel1 = new RelationTO("3", "stage4", "stage3", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT);
+        RelationTO rel2 = new RelationTO("4", "stage3", "stage2", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT);
+        RelationTO rel3 = new RelationTO("6", "stage2", "stage1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT);
+        Collection<RelationTO> relations = Arrays.asList(
                 // stage1 ---
                 // | is_a     \ dev_from   
-                // stage2      stage2p
+                // stage2      stage5
                 // | is_a      | is_a
-                // stage3      stage3p   
-                new RelationTO("3", "stage4", "stage3", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-                rel1,  
-                new RelationTO("4", "stage5", "stage4", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-                rel2,
-                new RelationTO("5", "stage2p", "stage1", RelationTO.RelationType.DEVELOPSFROM, RelationStatus.DIRECT),
-                new RelationTO("6", "stage3p", "stage2p", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT)));
+                // stage3      stage6
+                // | is_a
+                // stage4   
+            rel2,
+            new RelationTO("1", "stage4", "stage1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT),
+            new RelationTO("2", "stage4", "stage2", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT),
+            rel1,
+            new RelationTO("5", "stage3", "stage1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT),
+            new RelationTO("8", "stage6", "stage1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT),
+            rel3,
+            new RelationTO("7", "stage6", "stage5", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+            new RelationTO("9", "stage5", "stage1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT));
 
         MultiSpeciesOntology<DevStage> ontology = new MultiSpeciesOntology<>(speciesIds,
                 elements, relations, null, null, ALL_RELATIONS, mockFact, DevStage.class);
 
-        List<RelationTO> actualOrderedRels = ontology.getOrderedRelations(ds3);
+        List<RelationTO> actualOrderedRels = ontology.getOrderedRelations(ds4);
         
-        List<RelationTO> expectedOrderedRels = Arrays.asList(rel2, rel1);
+        List<RelationTO> expectedOrderedRels = Arrays.asList(rel1, rel2, rel3);
         
         assertEquals("Incorrect count of relations", expectedOrderedRels.size(), actualOrderedRels.size());
         for (int i = 0; i < expectedOrderedRels.size(); i++) {

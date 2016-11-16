@@ -57,14 +57,20 @@ public class DevStageService extends Service {
     }
 
     /**
-     * Retrieve {@code DevStage}s for given dev. stage IDs.
+     * Retrieve {@code DevStage}s for the requested species filtering and developmental stage IDs. 
+     * If a stage in {@code stageIds} does not exists according to the species filtering, 
+     * it will not be returned.
      * 
-     * @param stageIds  A {@code Collection} of {@code String}s that are IDs of dev. stages 
-     *                  for which to return the {@code DevStage}s.
-     * @return          A {@code Stream} of {@code DevStage}s that are the 
-     *                  dev. stages for the given set of stage IDs.
+     * @param speciesIds    A {@code Collection} of {@code String}s that are the IDs of species 
+     *                      to filter developmental stages to retrieve. Can be {@code null} or empty.
+     * @param anySpecies    A {@code Boolean} defining, when {@code speciesIds} contains several IDs, 
+     *                      whether the stages retrieved should be valid in any 
+     *                      of the requested species (if {@code true}), or in all 
+     *                      of the requested species (if {@code false} or {@code null}).
+     * @param stageIds      A {@code Collection} of {@code String}s that are IDs of developmental
+     *                      stages to retrieve. Can be {@code null} or empty.
+     * @return              A {@code Stream} of {@code DevStage}s retrieved for the requested parameters.
      */
-    //TODO: javadoc/method name consistency (see AnatEntityService)/parameter order
     public Stream<DevStage> loadDevStages(Collection<String> speciesIds, Boolean anySpecies, 
             Collection<String> stageIds) {
         log.entry(speciesIds, anySpecies, stageIds);

@@ -18,6 +18,8 @@ import org.bgee.controller.exception.RequestParametersNotStorableException;
 import org.bgee.controller.exception.RequestSizeExceededException;
 import org.bgee.controller.exception.ValueSizeExceededException;
 import org.bgee.controller.servletutils.BgeeHttpServletRequest;
+import org.bgee.controller.user.User;
+import org.bgee.controller.user.UserService;
 import org.bgee.controller.utils.MailSender;
 import org.bgee.controller.exception.InvalidFormatException;
 import org.bgee.controller.exception.InvalidRequestException;
@@ -66,6 +68,11 @@ public class FrontController extends HttpServlet {
      */
     private final JobService jobService;
     /**
+     * The {@link UserService} instance allowing to create {@code User} objects to identify 
+     * and track users in the webapp.
+     */
+    private final UserService userService;
+    /**
      * A {@code Supplier} of {@code ServiceFactory}s, allowing to obtain a new {@code ServiceFactory} 
      * instance at each call to the {@code doRequest} method.
      */
@@ -98,7 +105,7 @@ public class FrontController extends HttpServlet {
      *              {@code BgeeProperties}
      */
     public FrontController(Properties prop) {
-        this(BgeeProperties.getBgeeProperties(prop), null, null, null, null, null);
+        this(BgeeProperties.getBgeeProperties(prop), null, null, null, null, null, null);
     }
 
     /**
@@ -112,20 +119,25 @@ public class FrontController extends HttpServlet {
      *                                  application, to be used by {@code RequestParameters} objects 
      *                                  to read/write URLs. 
      * @param jobService                A {@code JobService} instance allowing to manage jobs 
-     *                                  between threads across the entire webapp. 
+     *                                  between threads across the entire webapp.
+     * @param userService               A {@link UserService} instance, allowing to create
+     *                                  {@code User} objects to identify and track users in the webapp. 
+     *                                  If {@code null}, the default constructor of {@code UserService} is used.  
      * @param serviceFactoryProvider    A {@code Supplier} of {@code ServiceFactory}s, allowing 
      *                                  to obtain a new {@code ServiceFactory} instance 
      *                                  at each call to the {@code doRequest} method. If {@code null}, 
      *                                  the default constructor of {@code ServiceFactory} is used. 
      * @param viewFactoryProvider       A {@code ViewFactoryProvider} instance to provide 
      *                                  the appropriate {@code ViewFactory} depending on the
-     *                                  display type. 
+     *                                  display type.
      * @param mailSender                A {@code MailSender} instance used to send mails to users.
      */
-    public FrontController(BgeeProperties prop, URLParameters urlParameters, JobService jobService, 
+    public FrontController(BgeeProperties prop, URLParameters urlParameters, 
+            JobService jobService, UserService userService, 
             Supplier<ServiceFactory> serviceFactoryProvider, ViewFactoryProvider viewFactoryProvider, 
             MailSender mailSender) {
-        log.entry(prop, urlParameters, jobService, serviceFactoryProvider, viewFactoryProvider, mailSender);
+        log.entry(prop, urlParameters, jobService, userService, 
+                serviceFactoryProvider, viewFactoryProvider, mailSender);
 
         // If the URLParameters object is null, just use a new instance
         this.urlParameters = urlParameters != null? urlParameters: new URLParameters();
@@ -133,7 +145,8 @@ public class FrontController extends HttpServlet {
         // If the bgee prop object is null, just get the default instance from BgeeProperties
         this.prop = prop != null? prop: BgeeProperties.getBgeeProperties();
         
-        this.jobService = jobService != null? jobService: new JobService(this.prop);
+        this.jobService  = jobService != null? jobService: new JobService(this.prop);
+        this.userService = userService != null? userService: new UserService();
         
         // If the viewFactoryProvider object is null, just use a new instance, 
         //injecting the properties obtained above. 
@@ -175,8 +188,8 @@ public class FrontController extends HttpServlet {
      *                  the client
      * @param postData  A {@code boolean} that indicates whether the request method is POST
      */
-    public void doRequest(HttpServletRequest request, HttpServletResponse response, 
-            boolean postData) { 
+    public void doRequest(final HttpServletRequest request, final HttpServletResponse response,
+            final boolean postData) {
         log.entry(request, response, postData);
         
         //default display type in case of error before we can do anything.
@@ -185,13 +198,22 @@ public class FrontController extends HttpServlet {
         try (ServiceFactory serviceFactory = this.serviceFactoryProvider.get()) {
             //First, to handle errors, we "manually" determine the display type, 
             //because loading all the parameters in RequestParameters could throw an exception.
+            //This displayType will thus have a chance of being used in the catch clause.
             displayType = this.getRequestedDisplayType(request);
 
-            //OK, now we try to get the view requested.
-            request.setCharacterEncoding("UTF-8"); 
+            //Now, try to load and analyze the request parameters
+            request.setCharacterEncoding(RequestParameters.CHAR_ENCODING); 
             RequestParameters requestParameters = new RequestParameters(request, this.urlParameters, 
                     this.prop, true, "&");
-            log.debug("Analyzed URL: " + requestParameters.getRequestURL());
+            log.debug("Analyzed URL: {} - POST data? {}", requestParameters.getRequestURL(), postData);
+            
+            //Load a User instance to track users between requests
+            User user = this.userService.createNewUser(request, requestParameters);
+            //If needed we'll set a tracking cookie, unless it is inappropriate for the requested page 
+            //(e.g., response success no content)
+            boolean setCookie = true;
+            
+            //Now we try to get the view factory requested.
             ViewFactory factory = this.viewFactoryProvider.getFactory(response, requestParameters);
             
             //now we process the request
@@ -228,11 +250,25 @@ public class FrontController extends HttpServlet {
                 //and so that we get correct information stored in our Apache logs.
                 //TODO: In the future, this should call our Google Monitoring implementation
                 factory.getGeneralDisplay().respondSuccessNoContent();
+                setCookie = false;
             } else {
                 throw log.throwing(new PageNotFoundException("Request not recognized."));
             }
             if (controller != null) {
                 controller.processRequest();
+            }
+            
+            //only after the processing we set the tracking cookie: some responses (e.g., redirection) 
+            //might need to set some headers of the response first. And also, we don't want 
+            //to set the cookie in case of error
+            if (setCookie) {
+                try {
+                    user.manageTrackingCookie(request, this.prop.getBgeeRootDomain())
+                    .ifPresent(c -> response.addCookie(c));
+                } catch (IllegalArgumentException e) {
+                    //we are not going to make the query fail for a cookie issue
+                    log.catching(Level.WARN, e);
+                }
             }
             
         //=== process errors ===
@@ -291,17 +327,15 @@ public class FrontController extends HttpServlet {
     }
 
     @Override
-    public void doGet(HttpServletRequest request, HttpServletResponse response) {
+    public void doGet(final HttpServletRequest request, final HttpServletResponse response) {
         log.entry(request, response);
-        log.debug("doGet");
         doRequest(request, response, false);
         log.exit();
     }
 
     @Override
-    public void doPost(HttpServletRequest request, HttpServletResponse response) {
+    public void doPost(final HttpServletRequest request, final HttpServletResponse response) {
         log.entry(request, response);
-        log.debug("doPost");
         doRequest(request, response, true);
         log.exit();
     }

@@ -21,6 +21,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.TestAncestor;
+import org.bgee.controller.user.UserService;
 import org.bgee.controller.utils.MailSender;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.job.JobService;
@@ -121,7 +122,7 @@ public class ControllerTest extends TestAncestor {
         final List<ServiceFactory> mockFactories = new ArrayList<ServiceFactory>();
         MailSender mailSender = mock(MailSender.class);
         FrontController front = new FrontController(this.testProperties, new TestURLParameters(), 
-                new JobService(this.testProperties), 
+                new JobService(this.testProperties), new UserService(), 
                 () -> {
                     ServiceFactory mockFactory = mock(ServiceFactory.class); 
                     mockFactories.add(mockFactory);

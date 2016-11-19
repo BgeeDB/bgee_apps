@@ -161,6 +161,8 @@
              Simply set to point to the server root by default, This parameter should be overriden 
              in settings.xml if needed -->
         <filter.org.bgee.webapp.bgeeRootDirectory>/</filter.org.bgee.webapp.bgeeRootDirectory>
+        <!-- in production, should be '.bgee.org' -->
+        <filter.org.bgee.webapp.bgeeRootDomain></filter.org.bgee.webapp.bgeeRootDomain>
     </properties>
     
     <!-- There is a problem when running the webapp from Eclipse: m2e-wtp acquires 

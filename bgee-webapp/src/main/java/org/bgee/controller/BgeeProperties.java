@@ -101,8 +101,7 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * @see #BGEE_ROOT_DIRECTORY_DEFAULT
      * @see #getBgeeRootDirectory()
      */
-    public final static String BGEE_ROOT_DIRECTORY_KEY = 
-            "org.bgee.webapp.bgeeRootDirectory";
+    public final static String BGEE_ROOT_DIRECTORY_KEY = "org.bgee.webapp.bgeeRootDirectory";
     /**
      * A {@code String} that is the default value of the bgee root directory.
      * 
@@ -110,6 +109,21 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * @see #getBgeeRootDirectory()
      */
     public final static String BGEE_ROOT_DIRECTORY_DEFAULT = "/";
+    /**
+     * A {@code String} that is the key to access to the System property that is read at the 
+     * initialization of {@code BgeeProperties} to set the bgee root domain (e.g., '.bgee.org').
+     * 
+     * @see #BGEE_ROOT_DOMAIN_DEFAULT
+     * @see #getBgeeRootDomain()
+     */
+    public final static String BGEE_ROOT_DOMAIN_KEY = "org.bgee.webapp.bgeeRootDomain";
+    /**
+     * A {@code String} that is the default value of the bgee root directory.
+     * 
+     * @see #BGEE_ROOT_DOMAIN_KEY
+     * @see #getBgeeRootDomain()
+     */
+    public final static String BGEE_ROOT_DOMAIN_DEFAULT = null;
     
     /**
      * A {@code String} that is the key to access to the System property that is read at the 
@@ -118,8 +132,7 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * @see #FTP_ROOT_DIRECTORY_DEFAULT
      * @see #getFTPRootDirectory()
      */
-    public final static String FTP_ROOT_DIRECTORY_KEY = 
-            "org.bgee.webapp.ftpRootDirectory";
+    public final static String FTP_ROOT_DIRECTORY_KEY = "org.bgee.webapp.ftpRootDirectory";
     /**
      * A {@code String} that is the default value of the FTP server root directory. 
      * 
@@ -135,8 +148,7 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * @see #DOWNLOAD_ROOT_DIRECTORY_DEFAULT
      * @see #getDownloadRootDirectory()
      */
-    public final static String DOWNLOAD_ROOT_DIRECTORY_KEY = 
-            "org.bgee.webapp.downloadRootDirectory";
+    public final static String DOWNLOAD_ROOT_DIRECTORY_KEY = "org.bgee.webapp.downloadRootDirectory";
     /**
      * A {@code String} that is the default value of the download root directory. 
      * 
@@ -595,9 +607,14 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
 
     /**
      * A {@code String} that defines the root of URLs to Bgee, 
-     * for instance, "http://bgee.unil.ch/bgee/bgee".
+     * for instance, "http://bgee.org/".
      */
     private final String bgeeRootDirectory;
+    /**
+     * A {@code String} that defines the root domain of Bgee servers, 
+     * for instance, ".bgee.org".
+     */
+    private final String bgeeRootDomain;
 
     /**
      * A {@code String} that defines the root directory where is the FTP server, 
@@ -786,6 +803,8 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
                 REQUEST_PARAMETERS_STORAGE_DIRECTORY_DEFAULT);
         bgeeRootDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 BGEE_ROOT_DIRECTORY_KEY, BGEE_ROOT_DIRECTORY_DEFAULT);
+        bgeeRootDomain = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
+                BGEE_ROOT_DOMAIN_KEY, BGEE_ROOT_DOMAIN_DEFAULT);
         ftpRootDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 FTP_ROOT_DIRECTORY_KEY, FTP_ROOT_DIRECTORY_DEFAULT);
         downloadRootDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
@@ -872,10 +891,17 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
 
     /**
      * @return  A {@code String} that defines the root of URLs to Bgee, for instance, 
-     *          "http://bgee.unil.ch/bgee/bgee".
+     *          "http://bgee.org/".
      */
     public String getBgeeRootDirectory() {
         return bgeeRootDirectory;
+    }
+    /**
+     * @return  A {@code String} that defines the root domain of Bgee servers, 
+     *          for instance, ".bgee.org".
+     */
+    public String getBgeeRootDomain() {
+        return bgeeRootDomain;
     }
 
     /**

@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.InvalidRequestException;
+import org.bgee.controller.user.User;
 import org.bgee.controller.utils.MailSender;
 import org.bgee.model.BgeeEnum;
 import org.bgee.model.ServiceFactory;
@@ -58,6 +59,10 @@ abstract class CommandParent {
      */
     protected final JobService jobService;
     /**
+     * The {@code User} who is making the query to the webapp. 
+     */
+    protected final User user;
+    /**
      * The {@code MailSender} used to send emails.
      */
     protected final MailSender mailSender;
@@ -96,7 +101,7 @@ abstract class CommandParent {
      */
     public CommandParent(HttpServletResponse response, RequestParameters requestParameters,
                          BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory) {
-        this(response, requestParameters, prop, viewFactory, serviceFactory, null, null, null);
+        this(response, requestParameters, prop, viewFactory, serviceFactory, null, null, null, null);
     }
 
     /**
@@ -125,17 +130,19 @@ abstract class CommandParent {
      * @param prop              A {@code BgeeProperties} instance that contains the properties
      *                          to use.
      * @param viewFactory       A {@code ViewFactory} that provides the display type to be used.
+     * @param serviceFactory    A {@code ServiceFactory} that provides the services (might be null)
      * @param jobService        A {@code JobService} instance allowing to manage jobs between threads 
      *                          across the entire webapp.
-     * @param serviceFactory    A {@code ServiceFactory} that provides the services (might be null)
+     * @param user              The {@code User} who is making the query to the webapp (might be null).
      * @param context           The {@code ServletContext} of the servlet using this object. 
      *                          Notably used when forcing file download.
      * @param mailSender        A {@code MailSender} instance used to send mails to users.
      */
     public CommandParent(HttpServletResponse response, RequestParameters requestParameters,
                          BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory, 
-                         JobService jobService, ServletContext context, MailSender mailSender) {
-        log.entry(response, requestParameters, prop, viewFactory, serviceFactory, jobService, context, mailSender);
+                         JobService jobService, User user, ServletContext context, MailSender mailSender) {
+        log.entry(response, requestParameters, prop, viewFactory, serviceFactory, jobService, 
+                user, context, mailSender);
         this.response = response;
         this.context = context;
         this.requestParameters = requestParameters;
@@ -143,6 +150,7 @@ abstract class CommandParent {
         this.viewFactory = viewFactory;
         this.serviceFactory = serviceFactory;
         this.jobService = jobService;
+        this.user = user;
         this.mailSender = mailSender;
         this.serverRoot = prop.getBgeeRootDirectory();
         this.homePage   = prop.getBgeeRootDirectory();

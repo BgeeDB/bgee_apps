@@ -6,6 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.PageNotFoundException;
+import org.bgee.controller.user.User;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.job.Job;
 import org.bgee.model.job.JobService;
@@ -38,10 +39,14 @@ public class CommandJob extends CommandParent {
      * @param viewFactory       A {@code ViewFactory} providing the views of the appropriate 
      *                          display type.
      * @param serviceFactory    A {@code ServiceFactory} that provides bgee services.
+     * @param jobService        A {@code JobService} instance allowing to manage jobs between threads 
+     *                          across the entire webapp.
+     * @param user              The {@code User} who is making the query to the webapp. 
      */
     public CommandJob(HttpServletResponse response, RequestParameters requestParameters, 
-            BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory, JobService jobService) {
-        super(response, requestParameters, prop, viewFactory, serviceFactory, jobService, null, null);
+            BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory, 
+            JobService jobService, User user) {
+        super(response, requestParameters, prop, viewFactory, serviceFactory, jobService, user, null, null);
     }
 
 

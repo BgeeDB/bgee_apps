@@ -27,6 +27,7 @@ import org.bgee.controller.exception.JobResultNotFoundException;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
 import org.bgee.model.job.JobService;
+import org.bgee.model.job.exception.TooManyJobsException;
 import org.bgee.view.ErrorDisplay;
 import org.bgee.view.ViewFactory;
 import org.bgee.view.ViewFactoryProvider;
@@ -228,7 +229,7 @@ public class FrontController extends HttpServlet {
                 controller = new CommandAbout(response, requestParameters, this.prop, factory);
             } else if (requestParameters.isATopAnatPageCategory()) {
                 controller = new CommandTopAnat(response, requestParameters, this.prop, factory, 
-                        serviceFactory, this.jobService, this.getServletContext(), this.mailSender);
+                        serviceFactory, this.jobService, user, this.getServletContext(), this.mailSender);
             } else if (requestParameters.isAJobPageCategory()) {
                 controller = new CommandJob(response, requestParameters, this.prop, factory, 
                         serviceFactory, this.jobService, user);
@@ -318,6 +319,12 @@ public class FrontController extends HttpServlet {
                 errorDisplay.displayControllerException((ValueSizeExceededException) e);
             } else if (e instanceof UnsupportedOperationException) {
                 errorDisplay.displayUnsupportedOperationException();
+            } else if (e instanceof TooManyJobsException) {
+                errorDisplay.displayControllerException((TooManyJobsException) e);
+            //when a job is launched in another thread using a lambda expression, 
+            //the TooManyJobsException is wrapped into an IllegalStateException
+            } else if (e.getCause() != null && e.getCause() instanceof TooManyJobsException) {
+                errorDisplay.displayControllerException((TooManyJobsException) e.getCause());
             } else {
                 errorDisplay.displayUnexpectedError();
             } 

@@ -45,6 +45,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.JobResultNotFoundException;
 import org.bgee.controller.exception.PageNotFoundException;
+import org.bgee.controller.user.User;
 import org.bgee.controller.utils.MailSender;
 import org.bgee.model.BgeeEnum;
 import org.bgee.model.ServiceFactory;
@@ -57,6 +58,7 @@ import org.bgee.model.expressiondata.baseelements.DecorrelationType;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.job.Job;
 import org.bgee.model.job.JobService;
+import org.bgee.model.job.exception.TooManyJobsException;
 import org.bgee.model.species.Species;
 import org.bgee.model.topanat.TopAnatController;
 import org.bgee.model.topanat.TopAnatParams;
@@ -101,6 +103,10 @@ public class CommandTopAnat extends CommandParent {
          */
         protected final JobService jobService;
         /**
+         * The {@code User} launching the job.
+         */
+        protected final User user;
+        /**
          * A {@code String} that is the description of the job.
          */
         private final String jobTitle;
@@ -131,7 +137,7 @@ public class CommandTopAnat extends CommandParent {
         private final MailSender mailSender;
         
         public TopAnatJobRunner(List<TopAnatParams> topAnatParams, String resultUrl, 
-                JobService jobService, long jobId, String jobTitle, String jobCreationDate, 
+                JobService jobService, User user, long jobId, String jobTitle, String jobCreationDate, 
                 String sendToAddress, BgeeProperties props, MailSender mailSender, 
                 Supplier<ServiceFactory> serviceFactoryProvider) {
             log.entry(topAnatParams, resultUrl, jobService, jobId, jobTitle, jobCreationDate, 
@@ -140,6 +146,7 @@ public class CommandTopAnat extends CommandParent {
             
             this.resultUrl = resultUrl;
             this.jobService = jobService;
+            this.user = user;
             this.jobTitle = jobTitle;
             this.jobId = jobId;
             this.jobCreationDate = jobCreationDate;
@@ -164,8 +171,8 @@ public class CommandTopAnat extends CommandParent {
             try {
                 log.trace("Executor thread ID: {}", Thread.currentThread().getId());
                 //acquire the Job
-                //TODO: add management of user ID for limiting number of simultaneous jobs per user
-                job = this.jobService.registerNewJob(this.jobId, null, this.jobTitle, this.topAnatParams.size());
+                job = this.jobService.registerNewJob(this.jobId, this.user.getUUID().toString(), 
+                        this.jobTitle, this.topAnatParams.size());
                 
                 log.debug("Launching TopAnat job");
                 TopAnatController controller2 = new TopAnatController(this.topAnatParams, 
@@ -243,7 +250,7 @@ public class CommandTopAnat extends CommandParent {
             //if there was an error during the analyses, we throw it after sending the mail
             if (exceptionThrown != null && 
                 //if it was a requested interruption, we don't throw an exception
-                !job.isInterruptRequested()) {
+                (job == null || !job.isInterruptRequested())) {
                 
                 throw log.throwing(new IllegalStateException(exceptionThrown));
             }
@@ -420,20 +427,22 @@ public class CommandTopAnat extends CommandParent {
      * @param serviceFactory    A {@code ServiceFactory} that provides bgee services.
      * @param jobService        A {@code JobService} instance allowing to manage jobs between threads 
      *                          across the entire webapp.
+     * @param user              The {@code User} who is making the query to the webapp.
      * @param context           The {@code ServletContext} of the servlet using this object. 
      *                          Notably used when forcing file download.
      * @param mailSender        A {@code MailSender} instance used to send mails to users.
      */
     public CommandTopAnat(HttpServletResponse response, RequestParameters requestParameters, 
             BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory, 
-            JobService jobService, ServletContext context, MailSender mailSender) {
-        super(response, requestParameters, prop, viewFactory, serviceFactory, jobService, context, mailSender);
+            JobService jobService, User user, ServletContext context, MailSender mailSender) {
+        super(response, requestParameters, prop, viewFactory, serviceFactory, jobService, user, 
+                context, mailSender);
         messages = new ArrayList<>();
     }
 
     @Override
     public void processRequest() throws IOException, JobResultNotFoundException, PageNotFoundException, 
-    InvalidRequestException, MissingParameterException {
+    InvalidRequestException, MissingParameterException, TooManyJobsException {
         log.entry();
         
         //we initialize the display only if there is no file to download requested, 
@@ -558,9 +567,15 @@ public class CommandTopAnat extends CommandParent {
      * @param controller    The {@code TopAnatController} holding the parameters 
      *                      of the analyses. 
      * @return              A {@code long} that is the ID of the job running the analyses.
+     * @throws TooManyJobsException     If the user already has too many running jobs.
      */
-    private long launchNewJob(final TopAnatController controller) {
+    private long launchNewJob(final TopAnatController controller) throws TooManyJobsException {
         log.entry(controller);
+        
+        //before formally registering a new job in another thread, we check whether 
+        //the user has already too many running jobs. If we checked only in the other thread, 
+        //we wouldn't display an error message right away, but only after checking the job status.
+        this.jobService.checkTooManyJobs(this.user.getUUID().toString());
         
         log.debug("Results don't exist, launching job");
         
@@ -589,7 +604,7 @@ public class CommandTopAnat extends CommandParent {
         
         Thread newThread = new Thread(new TopAnatJobRunner(
                 controller.getTopAnatParams(), resultUrl, 
-                this.jobService, jobId, jobTitle, jobCreationDate, 
+                this.jobService, this.user, jobId, jobTitle, jobCreationDate, 
                 email, this.prop, this.mailSender, 
                 //Also, for properly loading the ServiceFactory, 
                 //we need to acquire a different DAOManager than the one used 

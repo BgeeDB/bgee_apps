@@ -227,6 +227,16 @@ public abstract class ConcreteDisplayParent {
     }
     /**
      * Delegates to {@link #sendHeaders(int, boolean)} with the status code set to 
+     * {@code 429} "Too Many Requests" and the {@code noCache} argument set to {@code true}.
+     * @see #sendHeaders(int, boolean)
+     */
+    protected void sendTooManyRequeststHeaders() {
+        log.entry();
+        this.sendHeaders(429, true);
+        log.exit();
+    }
+    /**
+     * Delegates to {@link #sendHeaders(int, boolean)} with the status code set to 
      * {@code HttpServletResponse.SC_NOT_FOUND} and the {@code noCache} argument set to {@code true}.
      * @see #sendHeaders(int, boolean)
      */

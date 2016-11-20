@@ -244,7 +244,7 @@ public class FrontController extends HttpServlet {
             		controller = new CommandSearch(response, requestParameters, prop, factory, serviceFactory);
             } else if (requestParameters.isADAOPageCategory()) {
                 controller = new CommandDAO(response, requestParameters, this.prop, factory, 
-                        serviceFactory);
+                        serviceFactory, this.jobService, user);
             } else if (requestParameters.isAStatsPageCategory()) {
                 //no specific controllers for this for now. 
                 //We simply respond with a 'success no content' so that the client get no errors, 

@@ -324,7 +324,13 @@ public class JobService {
             }
         }
         
-        log.info("New Job with ID {} for Thread {} registered", jobId, Thread.currentThread().getId());
+        if (log.isInfoEnabled()) {
+            log.info("New Job with ID {} for Thread {} registered - user {} - "
+                    + "number of running jobs for user: {} - max number of jobs allowed: {}", 
+                    jobId, Thread.currentThread().getId(), userId, 
+                    userId != null? this.jobCountPerUser.get(userId): null, 
+                    maxJobCount);
+        }
         return log.exit(job);
     }
     
@@ -381,6 +387,34 @@ public class JobService {
         }
         
         return log.exit(jobId);
+    }
+    
+    /**
+     * Check whether the user would have too many running jobs if he/she was launching another one. 
+     * This method checks whether the current number of running jobs is equal to or greater than 
+     * the max allowed number of running jobs per user, and throws a {@code TooManyJobsException} 
+     * if it is the case.
+     * 
+     * @param userId                        A {@code String} that is the ID of the user for which 
+     *                                      to check the number of running jobs. 
+     * @throws IllegalArgumentException     If {@code userId} is {@code null}.
+     * @throws TooManyJobsException         If the number of running jobs for user with ID {@code userId}
+     *                                      is equal to or greater than the max allowed number of 
+     *                                      running jobs. 
+     */
+    public void checkTooManyJobs(String userId) throws IllegalArgumentException, TooManyJobsException {
+        log.entry(userId);
+        if (userId == null) {
+            throw log.throwing(new IllegalArgumentException("A user ID must be provided"));
+        }
+        final Integer maxJobCount = this.props == null? null: this.props.getMaxJobCountPerUser();
+        final Integer jobCount = this.jobCountPerUser.get(userId);
+        if (maxJobCount != null && maxJobCount > 0 && jobCount != null && jobCount >= maxJobCount) {
+            throw log.throwing(new TooManyJobsException(maxJobCount));
+        }
+        log.debug("User {} currently has {} running jobs, max number of running jobs {}, it's OK", 
+                userId, jobCount, maxJobCount);
+        log.exit();
     }
     
     /**

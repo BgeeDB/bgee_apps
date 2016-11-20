@@ -7,6 +7,8 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.Properties;
 import java.util.Set;
@@ -312,5 +314,38 @@ public class JobServiceTest extends TestAncestor {
         job.release();
         job = service.registerNewJob(jobId2);
         job.release();
+    }
+    
+    /**
+     * Test {@link JobService#checkTooManyJobs(String)}.
+     */
+    @Test
+    public void shouldCheckTooManyJobs() throws IllegalArgumentException, TooManyJobsException, 
+    ThreadAlreadyWorkingException {
+
+        BgeeProperties props = mock(BgeeProperties.class);
+        when(props.getMaxJobCountPerUser()).thenReturn(1);
+
+        String userId = "1";
+        JobService service = new JobService(props);
+        //no exception should be thrown here
+        service.checkTooManyJobs(userId);
+        
+        Job job = service.registerNewJob(userId);
+        //should throw an exception now
+        try {
+            service.checkTooManyJobs(userId);
+            //test failed
+            throw new AssertionError("A TooManyJobsException should have been thrown");
+        } catch (TooManyJobsException e) {
+            //test passed
+        }
+        
+        //another user should have no problem checking number of jobs
+        service.checkTooManyJobs("2");
+        
+        //after finishing first job, first user should have no problem checking number of jobs
+        job.release();
+        service.checkTooManyJobs(userId);
     }
 }

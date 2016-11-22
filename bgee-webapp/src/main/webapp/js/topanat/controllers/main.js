@@ -1018,15 +1018,25 @@
 
                 // do we need to pass data?
                 function(data){
-                    // Do not consider the user cancellation as an error
-                    var matcher = new RegExp('Job stopped by the user');
-                    if (!vm.message.match(matcher))
-                    {
+                    // Do not consider the user cancellation as an error, 
+                	// or the user submitting too many jobs
+                    var matcherJobStopped = new RegExp('Job stopped by the user');
+                    var cancel = 0;
+                    if (data.data.code == 429) {
+                        vm.message = data.data.message 
+                        + " Please note that we also propose a R package for performing programmatic TopAnat analyses, "
+                        + "see <a href='https://www.bioconductor.org/packages/BgeeDB/' target='_blank'>"
+                        + "BgeeDB Bioconductor package</a>";
+                    	cancel = 1;
+                    } else if (!vm.message.match(matcherJobStopped)) {
                         console.log('error from bgeedataservice');
                         console.log(data);
                         logger.error('TopAnat request not successful', 'TopAnat fail');
-                        vm.message = 'TopAnat request failed. Message from the server: '+data.data.message;
-                        vm.jobDone = true;
+                        vm.message = 'TopAnat request failed. Response from server: '+data.data.message;
+                        cancel = 1;
+                    }
+                    if (cancel) {
+                    	vm.jobDone = true;
                         vm.gridOptions.data = [];
 
                         if (timer) {

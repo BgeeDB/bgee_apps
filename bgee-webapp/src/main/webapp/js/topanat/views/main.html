@@ -1,4 +1,4 @@
-<div ng-cloak class="container-fluid">
+<div ng-cloak <!-- class="container-fluid" --> >
 
     <h1>TopAnat - Gene Expression Enrichment</h1>
 
@@ -197,7 +197,7 @@
 
                 <!--
                 <nav class="navbar navbar-default">
-                    &lt;!&ndash;<div class="container-fluid">&ndash;&gt;
+                    &lt;!&ndash;<div>&ndash;&gt;
                         <span class="h5">Background
                             &lt;!&ndash; Spinner from font-awesome &ndash;&gt;
                             <div class="fa fa-circle-o-notch fa-spin" ng-show="(vm.uploader.isUploading || vm.bg_list) && !vm.background_species" ng-hide="(!vm.uploader.isUploading && !vm.bg_list) || vm.background_species || (vm.background_species == '' &&
@@ -212,7 +212,7 @@
                             <button type="button" class="btn" ng-model="vm.isBackgroundChecked" ng-click="vm.selectBackground('')" ng-disabled="vm.formSubmitted" ng-class="{'btn-primary': vm.isBackgroundChecked === '', 'btn-default': vm.isBackgroundChecked === 'checked'}">Custom data</button>
                         </div>
                         &nbsp;<span class="glyphicon glyphicon-question-sign" uib-popover="{{vm.help}}" popover-trigger="mouseenter" popover-placement="bottom" popover-append-to-body="true" popover-title="Custom background" ng-mouseover="vm.getOnlineHelpForItem('Custom background')"></span>
-                    &lt;!&ndash;</div>&lt;!&ndash; /.container-fluid &ndash;&gt;&ndash;&gt;
+                    &lt;!&ndash;</div>&lt;!&ndash; &ndash;&gt;&ndash;&gt;
                 </nav>
 -->
 
@@ -416,56 +416,86 @@
 
         </div>
 
-        <!-- SUBMIT BUTTON -->
-        <div class="row vert-offset form-inline horiz-offset">
-            <div>
-                <button class="btn btn-primary btn-lg" type="submit"
-                        ng-disabled="queryForm.$invalid ||
+        <!-- SUBMIT BUTTON AND JOB NAME/EMAIL FIELDS -->
+        <div class="submit-buttons col-xs-12">
+            <div class="row">
+				<!-- One button to submit the job -->
+				<button class="btn btn-primary btn-lg col-md-2 col-sm-3 col-xs-12"
+					type="submit"
+					ng-disabled="queryForm.$invalid ||
                         !vm.isValidSpecies ||
                         (vm.isBackgroundChecked === '' && !vm.isValidBackground)"
-                        ng-show="!vm.formSubmitted && !vm.jobDone">
-                    Submit your job
-                </button>
-                <button class="btn btn-danger btn-lg" ng-click="vm.cancelJob()" ng-show="vm.formSubmitted && !vm.jobDone" ng-disabled="!vm.jobId || vm.jobId <= 0" type="button">
-                    Cancel your job
-                </button>
-                <button class="btn btn-success btn-lg" ng-click="vm.startNewJob()" ng-show="vm.jobDone" type="button">
-                    Start a new job
-                </button>
+					ng-show="!vm.formSubmitted && !vm.jobDone">Submit your job
+				</button>
 
-                <div style="display: inline-block;">
-                    <!-- SD: To be commented if not ready on the server's side (milestone 3?) -->
-                    <!-- start -->
-                    <div class="input-group">
-                        <span class="input-group-addon" id="email-addon"><i class="glyphicon glyphicon-envelope" uib-popover="{{vm.help}}" popover-trigger="mouseenter" popover-placement="top" popover-append-to-body="true" popover-title="Email" ng-mouseover="vm.getOnlineHelpForItem('email')"></i></span>
-                        <input type="email" ng-model="vm.email" name="email" class="form-control" placeholder="Email" aria-describedby="email-addon" ng-disabled="vm.formSubmitted">
-                    </div>
-                    <p ng-show="queryForm.email.$error.email" class="alert-danger">No valid email!</p>
-                    <!-- end -->
-                    <div class="input-group">
-                        <span class="input-group-addon" id="description-addon"><i class="glyphicon glyphicon-file" uib-popover="{{vm.help}}" popover-trigger="mouseenter" popover-placement="top" popover-append-to-body="true" popover-title="Job description" ng-mouseover="vm.getOnlineHelpForItem('job name')"></i></span>
-                        <input type="text" class="form-control" placeholder="Job description" aria-describedby="description-addon" ng-disabled="vm.formSubmitted" ng-model="vm.job_title" ng-maxlength="255" name="description">
-                    </div>
-                    <p ng-show="queryForm.description.$error.maxlength" class="alert-danger">Max. 255 characters for the job description!</p>
-                </div>
-            </div>
-        </div>
+				<!-- 2 buttons to display when job is running, 
+                     one for canceling job, one fake button that is a link for opening a new TopAnat windows -->
+				<a class="btn btn-success btn-lg col-md-2 col-sm-3 col-xs-12"
+					target="_blank" href="?page=top_anat"
+					ng-show="vm.formSubmitted && !vm.jobDone"
+					ng-disabled="!vm.jobId || vm.jobId <= 0"> Start a new job </a>
+				<button class="btn btn-danger btn-lg col-md-2 col-sm-3 col-xs-12"
+					ng-click="vm.cancelJob()" ng-show="vm.formSubmitted && !vm.jobDone"
+					ng-disabled="!vm.jobId || vm.jobId <= 0" type="button">
+					Cancel your job</button>
+
+				<!-- 1 button to reset the form -->
+				<button class="btn btn-success btn-lg col-md-2 col-sm-3 col-xs-12"
+					ng-click="vm.startNewJob()" ng-show="vm.jobDone" type="button">
+					Start a new job</button>
+
+				<div class="col-md-8 col-sm-6 col-xs-12" id="input-submit">
+				    <div class="row">
+						<div class="input-group col-md-4 col-xs-6">
+							<span class="input-group-addon" id="email-addon"><i
+								class="glyphicon glyphicon-envelope" uib-popover="{{vm.help}}"
+								popover-trigger="mouseenter" popover-placement="top"
+								popover-append-to-body="true" popover-title="Email"
+								ng-mouseover="vm.getOnlineHelpForItem('email')"></i></span> <input
+								type="email" ng-model="vm.email" name="email"
+								class="form-control" placeholder="Email"
+								aria-describedby="email-addon" ng-disabled="vm.formSubmitted">
+						</div>
+						<div class="input-group col-md-4 col-xs-6">
+							<span class="input-group-addon" id="description-addon"><i
+								class="glyphicon glyphicon-file" uib-popover="{{vm.help}}"
+								popover-trigger="mouseenter" popover-placement="top"
+								popover-append-to-body="true" popover-title="Job description"
+								ng-mouseover="vm.getOnlineHelpForItem('job name')"></i></span> <input
+								type="text" class="form-control" placeholder="Job description"
+								aria-describedby="description-addon"
+								ng-disabled="vm.formSubmitted" ng-model="vm.job_title"
+								ng-maxlength="255" name="description">
+						</div>
+						<div class="col-md-8 col-xs-12">
+						    <div class="row">
+								<p ng-show="queryForm.email.$error.email"
+									class="alert-danger col-xs-6">No valid email</p>
+								<p ng-show="queryForm.description.$error.maxlength"
+									class="alert-danger col-xs-offset-6 col-xs-6">
+									Max. 255 characters</p>
+							</div>
+					    </div>
+					</div>
+				</div>
+			</div>
+		</div>
 
     </form>
 
-    <div id="resultContainer">
-        <div class="vert-offset" ng-show="vm.formSubmitted || vm.message">
+    <div id="resultContainer" class="row">
+        <div ng-show="vm.formSubmitted || vm.message" class="col-md-9 col-xs-12">
 
-            <div class="alert alert-info repeat-animation hide-fade show-fade" ng-show="vm.message" ng-class="{'alert-warning': vm.messageSeverity == 'warning', 'alert-success': vm.messageSeverity == 'success'}">
+            <div id="resultMessage" class="alert alert-info repeat-animation hide-fade show-fade" ng-show="vm.message" ng-class="{'alert-warning': vm.messageSeverity == 'warning', 'alert-success': vm.messageSeverity == 'success'}">
                 <i class="fa fa-spinner fa-spin" data-ng-show="!vm.jobDone && vm.formSubmitted && vm.jobStatus != 'DONE'" data-ng-hide="vm.jobStatus == 'DONE'"></i>
                 <span ng-bind-html="to_trusted(vm.message)"></span>
             </div>
         </div>
 
-		<div ng-show="vm.jobDone && vm.gridOptions.data.length > 0">
+		<div ng-show="vm.jobDone && vm.gridOptions.data.length > 0" class="col-xs-12">
 			<div class="vert-offset horiz-offset">
 				<div class="row">
-						<div class="col-md-12" ng-show="vm.job_title !== ''" style="padding-bottom: 15px; text-align: center;"><span class="h4">{{vm.job_title}}</span></div>					
+				    <div class="col-md-12" ng-show="vm.job_title !== ''" style="padding-bottom: 15px; text-align: center;"><span class="h4">{{vm.job_title}}</span></div>					
 						<div class="col-md-6">
 						<span class="h5">View:</span>
 

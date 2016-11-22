@@ -68,7 +68,7 @@ import org.junit.Test;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Oct. 2016
+ * @version Bgee 13, Nov. 2016
  * @since   Bgee 13, Nov. 2015
  */
 public class CallServiceTest extends TestAncestor {
@@ -993,90 +993,81 @@ public class CallServiceTest extends TestAncestor {
         ancestorConds = new HashSet<>(Arrays.asList(new Condition("organB", "parentStageB1", speciesId)));
         when(mockConditionUtils.getAncestorConditions(childCond, false)).thenReturn(ancestorConds);
 
-        Collection<ExpressionCall> exprCalls = Arrays.asList(
-                // ExpressionCall 1
-                new ExpressionCall("geneA", new Condition("organA", "stageA", speciesId),
-                        dpSelfAndSelf, ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
-                                new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW,
-                                        DataType.AFFYMETRIX, dpSelfAndSelf),
-                                new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH,
-                                        DataType.RNA_SEQ, dpSelfAndSelf)),
-                        new BigDecimal("1.25")),
-                // ExpressionCall 2
-                new ExpressionCall("geneA", new Condition("organA", "parentStageA1", speciesId),
-                        dpSelfAndSelf, ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
-                                new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH,
-                                        DataType.EST, dpSelfAndSelf),
-                                new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH,
-                                        DataType.IN_SITU, dpSelfAndSelf)),
-                        new BigDecimal("1250")),
-                // ExpressionCall 3
-                new ExpressionCall("geneB", new Condition("parentOrganA1", "parentStageA1", speciesId),
-                        dpSelfAndSelf, ExpressionSummary.EXPRESSED, DataQuality.LOW, Arrays.asList(
-                                new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW,
-                                        DataType.RNA_SEQ, dpSelfAndSelf)),
-                        new BigDecimal("10")),
-                // ExpressionCall 4
-                new ExpressionCall("geneB", new Condition("organB", "stageB", speciesId),
-                        dpSelfAndSelf, ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
-                                new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH,
-                                        DataType.AFFYMETRIX, dpSelfAndSelf)),
-                        new BigDecimal("111")));
-
+        ExpressionCall call1 = new ExpressionCall("geneA", new Condition("organA", "stageA", speciesId),
+            dpSelfAndSelf, ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
+                new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndSelf),
+                new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf)),
+            new BigDecimal("1.25"));
+        ExpressionCall call2 = new ExpressionCall("geneA", new Condition("organA", "parentStageA1", speciesId),
+            dpSelfAndSelf, ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
+                new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.EST, dpSelfAndSelf),
+                new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.IN_SITU, dpSelfAndSelf)),
+            new BigDecimal("1250"));
+        ExpressionCall call3 = new ExpressionCall("geneB", new Condition("parentOrganA1", "parentStageA1", speciesId),
+            dpSelfAndSelf, ExpressionSummary.EXPRESSED, DataQuality.LOW, Arrays.asList(
+                new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.RNA_SEQ, dpSelfAndSelf)),
+            new BigDecimal("10"));
+        ExpressionCall call4 = new ExpressionCall("geneB", new Condition("organB", "stageB", speciesId),
+            dpSelfAndSelf, ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
+                new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndSelf)),
+            new BigDecimal("111"));
+        
+        Collection<ExpressionCall> exprCalls = Arrays.asList(call1, call2, call3, call4);
+        
         Set<ExpressionCall> allResults = new HashSet<>(Arrays.asList(
                 // From ExpressionCall 1
                 new ExpressionCall("geneA", new Condition("organA", "stageA", speciesId),
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndSelf),
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf)), 
-                        new BigDecimal("1.25")), 
+                        new BigDecimal("1.25"), Arrays.asList(call1)), 
                 
                 new ExpressionCall("geneA", new Condition("organA", "parentStageA1", speciesId),
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndDesc),
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndDesc)), 
-                        null), 
+                        null, Arrays.asList(call1)),
 
                 new ExpressionCall("geneA", new Condition("parentOrganA1", "stageA", speciesId),
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpDescAndSelf),
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpDescAndSelf)), 
-                        null), 
+                        null, Arrays.asList(call1)),
 
                 new ExpressionCall("geneA", new Condition("parentOrganA1", "parentStageA1", speciesId),
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpDescAndDesc),
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpDescAndDesc)), 
-                        null), 
+                        null, Arrays.asList(call1)),
 
                 // From ExpressionCall 2
                 new ExpressionCall("geneA", new Condition("organA", "parentStageA1", speciesId),
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.EST, dpSelfAndSelf),
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.IN_SITU, dpSelfAndSelf)), 
-                        new BigDecimal("1250")),
+                        new BigDecimal("1250"), Arrays.asList(call2)),
                 
                 new ExpressionCall("geneA", new Condition("parentOrganA1", "parentStageA1", speciesId),
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.EST, dpDescAndSelf),
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.IN_SITU, dpDescAndSelf)), 
-                        null), 
+                        null, Arrays.asList(call2)),
 
                 // From ExpressionCall 3
                 new ExpressionCall("geneB", new Condition("parentOrganA1", "parentStageA1", speciesId),
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.RNA_SEQ, dpSelfAndSelf)), 
-                        new BigDecimal("10")), 
+                        new BigDecimal("10"), Arrays.asList(call3)),
 
                 // From ExpressionCall 4
                 new ExpressionCall("geneB", new Condition("organB", "stageB", speciesId),
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndSelf)), 
-                        new BigDecimal("111")), 
+                        new BigDecimal("111"), Arrays.asList(call4)),
                 new ExpressionCall("geneB", new Condition("organB", "parentStageB1", speciesId),
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndDesc)), 
-                        null)));
+                        null, Arrays.asList(call4))));
 
         Set<ExpressionCall> actualResults = service.propagateExpressionCalls(
                 exprCalls, null, mockConditionUtils, speciesId);
@@ -1157,40 +1148,40 @@ public class CallServiceTest extends TestAncestor {
                 new Condition("parentOrganB1", "stageB", speciesId),
                 new Condition("organB", "stageB", speciesId)));
         when(mockConditionUtils.getDescendantConditions(parentCond, false)).thenReturn(descendantConds);
+        
+        ExpressionCall call1 = new ExpressionCall("geneA", new Condition("organA", "stageA", speciesId),
+                dpSelfAndSelf, ExpressionSummary.NOT_EXPRESSED, DataQuality.LOW, Arrays.asList(
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW,
+                                DataType.AFFYMETRIX, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW,
+                                DataType.IN_SITU, dpSelfAndSelf)),
+                new BigDecimal("2.25"));
+        
+        ExpressionCall call2 = new ExpressionCall("geneA", new Condition("organA", "parentStageA1", speciesId),
+            dpSelfAndSelf, ExpressionSummary.NOT_EXPRESSED, DataQuality.HIGH, Arrays.asList(
+                new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW,
+                        DataType.AFFYMETRIX, dpSelfAndSelf),
+                new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH,
+                        DataType.RNA_SEQ, dpSelfAndSelf)),
+        new BigDecimal("2250"));
 
-        Collection<ExpressionCall> noExprCalls = Arrays.asList(
-                // ExpressionCall 1
-                new ExpressionCall("geneA", new Condition("organA", "stageA", speciesId),
-                        dpSelfAndSelf, ExpressionSummary.NOT_EXPRESSED, DataQuality.LOW, Arrays.asList(
-                                new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW,
-                                        DataType.AFFYMETRIX, dpSelfAndSelf),
-                                new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW,
-                                        DataType.IN_SITU, dpSelfAndSelf)),
-                        new BigDecimal("2.25")),
-                // ExpressionCall 2
-                new ExpressionCall("geneA", new Condition("organA", "parentStageA1", speciesId),
-                        dpSelfAndSelf, ExpressionSummary.NOT_EXPRESSED, DataQuality.HIGH, Arrays.asList(
-                                new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW,
-                                        DataType.AFFYMETRIX, dpSelfAndSelf),
-                                new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH,
-                                        DataType.RNA_SEQ, dpSelfAndSelf)),
-                        new BigDecimal("2250")),
-                // ExpressionCall 3
-                new ExpressionCall("geneA", new Condition("parentOrganA2", "parentStageA1", speciesId),
-                        dpSelfAndSelf, ExpressionSummary.NOT_EXPRESSED, DataQuality.HIGH, Arrays.asList(
-                                new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH,
-                                        DataType.AFFYMETRIX, dpSelfAndSelf),
-                                new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW,
-                                        DataType.IN_SITU, dpSelfAndSelf),
-                                new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW,
-                                        DataType.RNA_SEQ, dpSelfAndSelf)),
-                        new BigDecimal("20")),
-                // ExpressionCall 4
-                new ExpressionCall("geneB", new Condition("parentOrganB2", "stageB", speciesId),
-                        dpSelfAndSelf, ExpressionSummary.NOT_EXPRESSED, DataQuality.HIGH, Arrays.asList(
-                                new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH,
-                                        DataType.AFFYMETRIX, dpSelfAndSelf)),
-                        new BigDecimal("211")));
+        ExpressionCall call3 = new ExpressionCall("geneA", new Condition("parentOrganA2", "parentStageA1", speciesId),
+            dpSelfAndSelf, ExpressionSummary.NOT_EXPRESSED, DataQuality.HIGH, Arrays.asList(
+                new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH,
+                    DataType.AFFYMETRIX, dpSelfAndSelf),
+                new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW,
+                    DataType.IN_SITU, dpSelfAndSelf),
+                new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW,
+                    DataType.RNA_SEQ, dpSelfAndSelf)),
+            new BigDecimal("20"));
+        
+        ExpressionCall call4 =new ExpressionCall("geneB", new Condition("parentOrganB2", "stageB", speciesId),
+            dpSelfAndSelf, ExpressionSummary.NOT_EXPRESSED, DataQuality.HIGH, Arrays.asList(
+                new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH,
+                    DataType.AFFYMETRIX, dpSelfAndSelf)),
+            new BigDecimal("211"));
+        
+        Collection<ExpressionCall> noExprCalls = Arrays.asList(call1, call2, call3, call4);
 
         Set<ExpressionCall> allResults = new HashSet<>(Arrays.asList(
                 // From ExpressionCall 1
@@ -1198,14 +1189,14 @@ public class CallServiceTest extends TestAncestor {
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndSelf),
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.IN_SITU, dpSelfAndSelf)), 
-                        new BigDecimal("2.25")), 
+                        new BigDecimal("2.25"), Arrays.asList(call1)),
                 
                 // From ExpressionCall 2
                 new ExpressionCall("geneA", new Condition("organA", "parentStageA1", speciesId),
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndSelf),
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf)), 
-                        new BigDecimal("2250")), 
+                        new BigDecimal("2250"), Arrays.asList(call2)), 
 
                 // From ExpressionCall 3
                 new ExpressionCall("geneA", new Condition("parentOrganA2", "parentStageA1", speciesId),
@@ -1213,37 +1204,37 @@ public class CallServiceTest extends TestAncestor {
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndSelf),
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.IN_SITU, dpSelfAndSelf), 
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.RNA_SEQ, dpSelfAndSelf)), 
-                        new BigDecimal("20")), 
+                        new BigDecimal("20"), Arrays.asList(call3)), 
 
                 new ExpressionCall("geneA", new Condition("parentOrganA1", "parentStageA1", speciesId),
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpAncAndSelf),
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.IN_SITU, dpAncAndSelf), 
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.RNA_SEQ, dpAncAndSelf)), 
-                        null), 
+                        null, Arrays.asList(call3)), 
 
                 new ExpressionCall("geneA", new Condition("organA", "parentStageA1", speciesId),
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpAncAndSelf),
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.IN_SITU, dpAncAndSelf), 
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.RNA_SEQ, dpAncAndSelf)), 
-                        null), 
+                        null, Arrays.asList(call3)),
 
                 // From ExpressionCall 4
                 new ExpressionCall("geneB", new Condition("parentOrganB2", "stageB", speciesId),
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndSelf)), 
-                        new BigDecimal("211")), 
+                        new BigDecimal("211"), Arrays.asList(call4)),
 
                 new ExpressionCall("geneB", new Condition("parentOrganB1", "stageB", speciesId),
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpAncAndSelf)), 
-                        null), 
+                        null, Arrays.asList(call4)),
 
                 new ExpressionCall("geneB", new Condition("organB", "stageB", speciesId),
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpAncAndSelf)), 
-                        null)));
+                        null, Arrays.asList(call4))));
 
         Set<ExpressionCall> actualResults = service.propagateExpressionCalls(
                 noExprCalls, null, mockConditionUtils, speciesId);
@@ -1460,6 +1451,15 @@ public class CallServiceTest extends TestAncestor {
     public void shouldReconcileSingleGeneCalls() {
         String speciesId = "speciesId1";
 
+        ExpressionCall descendantCall =  new ExpressionCall("geneA", new Condition("organB", "stageB1", speciesId),
+            null, null, null, Arrays.asList(
+                new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndSelf)), 
+            null);
+        ExpressionCall parentCall =  new ExpressionCall("geneA", new Condition("parentOrganA1", "stageA", speciesId),
+            null, null, null, Arrays.asList(
+                new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndSelf)), 
+            null);
+        
         // EXPRESSED - HIGH quality - observed
         Set<ExpressionCall> inputCalls = new HashSet<>(Arrays.asList(
                 new ExpressionCall("geneA", new Condition("organA", "stageA", speciesId),
@@ -1469,19 +1469,20 @@ public class CallServiceTest extends TestAncestor {
                         new BigDecimal("1.25")), 
                 new ExpressionCall("geneA", new Condition("organA", "stageA", speciesId),
                         null, null, null, Arrays.asList(
-                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndSelf)), 
-                         new BigDecimal("12.5")), 
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpDescAndSelf)), 
+                        new BigDecimal("12.5"), Arrays.asList(parentCall)),
                 new ExpressionCall("geneA", new Condition("organB", "parentStageB1", speciesId),
                         null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndDesc)), 
-                        new BigDecimal("125"))));
+                        new BigDecimal("125"), Arrays.asList(descendantCall))));
+        
         ExpressionCall expectedResult = new ExpressionCall("geneA", null, 
-                new DataPropagation(PropagationState.SELF, PropagationState.SELF_AND_DESCENDANT, true), 
+                new DataPropagation(PropagationState.SELF_AND_DESCENDANT, PropagationState.SELF_AND_DESCENDANT, true), 
                 ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
-                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpDescAndSelf),
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndDesc),
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf)), 
-                new BigDecimal("1.25"));
+                new BigDecimal("1.25"), Arrays.asList(descendantCall, parentCall));
         ExpressionCall actualResult = CallService.reconcileSingleGeneCalls(inputCalls);
         assertEquals("Incorrect ExpressionCall generated", expectedResult, actualResult);
         

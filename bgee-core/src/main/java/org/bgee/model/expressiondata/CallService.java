@@ -61,7 +61,7 @@ import org.bgee.model.species.TaxonomyFilter;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Oct. 2016
+ * @version Bgee 13, Nov. 2016
  * @since   Bgee 13, Oct. 2015
  */
 /// XXX: Check in bgee14 if speciesId is retrieved in CallTO
@@ -1597,7 +1597,8 @@ public class CallService extends Service {
                     null, // ExpressionSummary (update after the propagation of all TOs)
                     null, // DataQuality (update after the propagation of all TOs)
                     currentCallData, 
-                    currentGlobalMeanRank);
+                    currentGlobalMeanRank,
+                    new HashSet<>(Arrays.asList(call)));
 
             log.trace("Add the propagated call: {}", propagatedCall);
             globalCalls.add(propagatedCall);
@@ -1638,6 +1639,12 @@ public class CallService extends Service {
         }
         String geneId = geneIds.iterator().next();
         
+        Set<ExpressionCall> sourceCalls = calls.stream()
+            .map(c-> c.getSourceCalls())
+            .flatMap(Set::stream)
+            .map(c -> (ExpressionCall) c)
+            .collect(Collectors.toSet());
+
         Set<ExpressionCallData> callData = calls.stream()
                 .map(c-> c.getCallData())
                 .flatMap(Set::stream)
@@ -1711,7 +1718,7 @@ public class CallService extends Service {
                 .min((r1, r2) -> r1.compareTo(r2));
 
         return log.exit(new ExpressionCall(geneId, null, callDataProp, expressionSummary, 
-                dataQuality, callData, bestGlobalMeanRank.orElse(null)));
+                dataQuality, callData, bestGlobalMeanRank.orElse(null), sourceCalls));
     }
     
     /**

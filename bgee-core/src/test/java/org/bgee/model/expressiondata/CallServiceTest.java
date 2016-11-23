@@ -1,8 +1,6 @@
 package org.bgee.model.expressiondata;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyCollectionOf;
@@ -851,99 +849,6 @@ public class CallServiceTest extends TestAncestor {
     }
     
     /**
-     * Test the method {@link CallService#testCallFilter(ExpressionCall, ExpressionCallFilter)}.
-     */
-    @Test
-    public void shouldTestCallFilter() {
-        Collection<ExpressionCallData> callData = new HashSet<>();
-        callData.add(new ExpressionCallData(
-                Expression.EXPRESSED, DataQuality.HIGH, DataType.EST, new DataPropagation()));
-        callData.add(new ExpressionCallData(
-                Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, new DataPropagation()));
-
-        ExpressionCall call1 = new ExpressionCall("g1", new Condition("ae1", "ds1", "sp1"),
-                new DataPropagation(PropagationState.SELF, PropagationState.SELF, true),
-                ExpressionSummary.EXPRESSED, DataQuality.HIGH, callData, new BigDecimal(125.00));
-        
-        // Test with no ExpressionCallFilter 
-        try {
-            CallService.testCallFilter(call1, null);
-            fail("An IllegalArgumentException should be thrown when call filter is null");
-        } catch (IllegalArgumentException e){
-            // Test passed
-        }
-        
-        ExpressionCallData validCallDataFilter1 = new ExpressionCallData(
-                Expression.EXPRESSED, DataQuality.LOW, DataType.EST, new DataPropagation());
-        ExpressionCallData validCallDataFilter2 = new ExpressionCallData(
-                Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, 
-                new DataPropagation(PropagationState.DESCENDANT, PropagationState.SELF));
-        ExpressionCallData validCallDataFilter3 = new ExpressionCallData(
-                Expression.EXPRESSED, DataQuality.HIGH, null, new DataPropagation());
-
-        ExpressionCallData notValidCallDataFilter1 = new ExpressionCallData(
-                Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, new DataPropagation());
-        ExpressionCallData notValidCallDataFilter2 = new ExpressionCallData(
-                Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, new DataPropagation());
-
-        // Test with no GeneFilter and ConditionFilters 
-        Set<ExpressionCallData> callDataFilters = new HashSet<>(Arrays.asList(validCallDataFilter1));
-        ExpressionCallFilter callFilter = new ExpressionCallFilter(null, null, callDataFilters);
-        assertTrue("Call should pass the filter", CallService.testCallFilter(call1, callFilter));
-
-        callDataFilters = new HashSet<>(Arrays.asList(validCallDataFilter2));
-        callFilter = new ExpressionCallFilter(null, null, callDataFilters);
-        assertTrue("Call should pass the filter", CallService.testCallFilter(call1, callFilter));
-
-        callDataFilters = new HashSet<>(Arrays.asList(validCallDataFilter3));
-        callFilter = new ExpressionCallFilter(null, null, callDataFilters);
-        assertTrue("Call should pass the filter", CallService.testCallFilter(call1, callFilter));
-
-        callDataFilters = new HashSet<>(Arrays.asList(validCallDataFilter1, notValidCallDataFilter1));
-        callFilter = new ExpressionCallFilter(null, null, callDataFilters);
-        assertTrue("Call should pass the filter", CallService.testCallFilter(call1, callFilter));
-
-        callDataFilters = new HashSet<>(Arrays.asList(notValidCallDataFilter1));
-        callFilter = new ExpressionCallFilter(null, null, callDataFilters);
-        assertFalse("Call should not pass the filter", CallService.testCallFilter(call1, callFilter));
-
-        callDataFilters = new HashSet<>(Arrays.asList(notValidCallDataFilter2));
-        callFilter = new ExpressionCallFilter(null, null, callDataFilters);
-        assertFalse("Call should not pass the filter", CallService.testCallFilter(call1, callFilter));
-
-        callData.clear();
-        callData.add(new ExpressionCallData(
-                Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, new DataPropagation()));
-        ExpressionCall call2 = new ExpressionCall("g1", new Condition("ae1", "ds1", "sp1"),
-                new DataPropagation(PropagationState.SELF, PropagationState.SELF, true),
-                ExpressionSummary.EXPRESSED, DataQuality.HIGH, callData, new BigDecimal(125.00));
-        ExpressionCallData notValidCallDataFilter3 = new ExpressionCallData(
-                Expression.EXPRESSED, DataQuality.HIGH, null, new DataPropagation());
-        callDataFilters = new HashSet<>(Arrays.asList(notValidCallDataFilter3));
-        callFilter = new ExpressionCallFilter(null, null, callDataFilters);
-        assertFalse("Call should not pass the filter", CallService.testCallFilter(call2, callFilter));
-
-        // Test condition filter
-        callFilter = new ExpressionCallFilter(null, null, callDataFilters);
-        Set<ConditionFilter> validConditionFilters = new HashSet<>();
-        validConditionFilters.add(new ConditionFilter(Arrays.asList("ae1", "ae2"), Arrays.asList("ds1", "ds2")));
-        callFilter = new ExpressionCallFilter(new GeneFilter("g1"), validConditionFilters, 
-                new HashSet<>(Arrays.asList(validCallDataFilter1)));
-        assertTrue("Call should pass the filter", CallService.testCallFilter(call1, callFilter));
-
-        Set<ConditionFilter> notValidConditionFilters = new HashSet<>();
-        notValidConditionFilters.add(new ConditionFilter(Arrays.asList("ae1", "ae2"), Arrays.asList("ds2")));
-        callFilter = new ExpressionCallFilter(new GeneFilter("g1"), notValidConditionFilters, 
-                new HashSet<>(Arrays.asList(validCallDataFilter1)));
-        assertFalse("Call should not pass the filter", CallService.testCallFilter(call1, callFilter));
-
-        // Test gene filter
-        callFilter = new ExpressionCallFilter(new GeneFilter("g2"), validConditionFilters, 
-                new HashSet<>(Arrays.asList(validCallDataFilter1)));
-        assertFalse("Call should not pass the filter", CallService.testCallFilter(call1, callFilter));
-    }
-
-    /**
      * Test the method 
      * {@link CallService#propagateExpressionCalls(Collection, Collection, ConditionUtils, String)}.
      */
@@ -1073,28 +978,51 @@ public class CallServiceTest extends TestAncestor {
                 exprCalls, null, mockConditionUtils, speciesId);
         assertEquals("Incorrect ExpressionCalls generated", allResults, actualResults);
         
+        final Set<String> allOrgans = allResults.stream().map(c -> c.getCondition().getAnatEntityId()).collect(Collectors.toSet());
+        final Set<String> allStages = allResults.stream().map(c -> c.getCondition().getDevStageId()).collect(Collectors.toSet());
+        
         Set<String> allowedOrganIds = new HashSet<>(Arrays.asList("organA"));
         Set<ExpressionCall> expectedResults = allResults.stream()
                 .filter(c -> allowedOrganIds.contains(c.getCondition().getAnatEntityId()))
                 .collect(Collectors.toSet());
-        actualResults = service.propagateExpressionCalls(exprCalls, Arrays.asList(
-                new ConditionFilter(allowedOrganIds, null)), mockConditionUtils, speciesId);
+        actualResults = service.propagateExpressionCalls(exprCalls,
+            allowedOrganIds.stream()
+            .map(o -> allStages.stream()
+                    .map(s -> new Condition(o, s, speciesId)).collect(Collectors.toSet()))
+            .flatMap(Set::stream)
+            .collect(Collectors.toSet()),
+            mockConditionUtils, speciesId);
+        log.debug("expectedResults: {}",
+            expectedResults.stream().map(c -> c.getGeneId() +" - "+ c.getCondition()).collect(Collectors.toSet()));
+        log.debug("actualResults: {}",
+            actualResults.stream().map(c -> c.getGeneId() +" - "+ c.getCondition()).collect(Collectors.toSet()));
         assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
 
         Set<String> allowedStageIds = new HashSet<>(Arrays.asList("parentStageA1"));
         expectedResults = allResults.stream()
                 .filter(c -> allowedStageIds.contains(c.getCondition().getDevStageId()))
                 .collect(Collectors.toSet());
-        actualResults = service.propagateExpressionCalls(exprCalls, Arrays.asList(
-                new ConditionFilter(null, allowedStageIds)), mockConditionUtils, speciesId);
+        actualResults = service.propagateExpressionCalls(exprCalls,
+            allowedStageIds.stream()
+            .map(s -> allOrgans.stream()
+                    .map(o -> new Condition(o, s, speciesId)).collect(Collectors.toSet()))
+            .flatMap(Set::stream)
+            .collect(Collectors.toSet()),
+            mockConditionUtils, speciesId);
         assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
 
         expectedResults = allResults.stream()
                 .filter(c -> allowedOrganIds.contains(c.getCondition().getAnatEntityId()))
                 .filter(c -> allowedStageIds.contains(c.getCondition().getDevStageId()))
                 .collect(Collectors.toSet());
-        actualResults = service.propagateExpressionCalls(exprCalls, Arrays.asList(
-                new ConditionFilter(allowedOrganIds, allowedStageIds)), mockConditionUtils, speciesId);
+                
+        actualResults = service.propagateExpressionCalls(exprCalls,
+            allowedOrganIds.stream()
+            .map(o -> allowedStageIds.stream()
+                    .map(s -> new Condition(o, s, speciesId)).collect(Collectors.toSet()))
+            .flatMap(Set::stream)
+            .collect(Collectors.toSet()),
+            mockConditionUtils, speciesId);
         assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
     }
     
@@ -1244,8 +1172,8 @@ public class CallServiceTest extends TestAncestor {
         Set<ExpressionCall> expectedResults = allResults.stream()
                 .filter(c -> allowedOrganIds.contains(c.getCondition().getAnatEntityId()))
                 .collect(Collectors.toSet());
-        actualResults = service.propagateExpressionCalls(
-                noExprCalls, Arrays.asList(new ConditionFilter(allowedOrganIds, null)),
+        actualResults = service.propagateExpressionCalls(noExprCalls,
+                allowedOrganIds.stream().map(id -> new Condition(id, null, speciesId)).collect(Collectors.toSet()),
                 mockConditionUtils, speciesId);
         assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
 
@@ -1253,8 +1181,8 @@ public class CallServiceTest extends TestAncestor {
         expectedResults = allResults.stream()
                 .filter(c -> allowedStageIds.contains(c.getCondition().getDevStageId()))
                 .collect(Collectors.toSet());
-        actualResults = service.propagateExpressionCalls(
-                noExprCalls, Arrays.asList(new ConditionFilter(null, allowedStageIds)),
+        actualResults = service.propagateExpressionCalls(noExprCalls,
+            allowedStageIds.stream().map(id -> new Condition(null, id, speciesId)).collect(Collectors.toSet()),
                 mockConditionUtils, speciesId);
         assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
 
@@ -1262,9 +1190,13 @@ public class CallServiceTest extends TestAncestor {
                 .filter(c -> allowedOrganIds.contains(c.getCondition().getAnatEntityId()))
                 .filter(c -> allowedStageIds.contains(c.getCondition().getDevStageId()))
                 .collect(Collectors.toSet());
-        actualResults = service.propagateExpressionCalls(
-                noExprCalls, Arrays.asList(new ConditionFilter(allowedOrganIds, allowedStageIds)),
-                mockConditionUtils, speciesId);
+        actualResults = service.propagateExpressionCalls(noExprCalls, 
+            allowedOrganIds.stream()
+                .map(o -> allowedStageIds.stream()
+                    .map(s -> new Condition(o, s, speciesId)).collect(Collectors.toSet()))
+                .flatMap(Set::stream)
+                .collect(Collectors.toSet()),
+            mockConditionUtils, speciesId);
         assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
     }
     
@@ -1954,7 +1886,7 @@ public class CallServiceTest extends TestAncestor {
         ServiceFactory serviceFactory = mock(ServiceFactory.class);
         when(serviceFactory.getDAOManager()).thenReturn(manager);
         CallService service = new CallService(serviceFactory);
-        final CallSpliterator<Set<ExpressionCall>, ExpressionCall> spliterator1 = service.new CallSpliterator<>(
+        final CallSpliterator<ExpressionCall, Set<ExpressionCall>> spliterator1 = service.new CallSpliterator<>(
                 stream1, stream2,
                 Comparator.comparing(ExpressionCall::getGeneId, Comparator.nullsLast(Comparator.naturalOrder())));
         List<Set<ExpressionCall>> callsByGene = StreamSupport.stream(spliterator1, false)
@@ -1980,7 +1912,7 @@ public class CallServiceTest extends TestAncestor {
         // One stream well defined and an empty stream
         stream1 = calls1.stream();
         stream2 = Stream.empty();
-        final CallSpliterator<Set<ExpressionCall>, ExpressionCall> spliterator2 =
+        final CallSpliterator<ExpressionCall, Set<ExpressionCall>> spliterator2 =
                 service.new CallSpliterator<>(stream1, stream2, Comparator.comparing(
                         ExpressionCall::getGeneId, Comparator.nullsLast(Comparator.naturalOrder())));
         callsByGene = StreamSupport.stream(spliterator2, false)
@@ -2005,7 +1937,7 @@ public class CallServiceTest extends TestAncestor {
 
         stream1 = calls1.stream();
         stream2 = calls2.stream();
-        final CallSpliterator<Set<ExpressionCall>, ExpressionCall> spliterator3 =
+        final CallSpliterator<ExpressionCall, Set<ExpressionCall>> spliterator3 =
                 service.new CallSpliterator<>(stream1, stream2, Comparator.comparing(
                         (call) -> call.getCondition().getAnatEntityId(),
                         Comparator.nullsLast(Comparator.reverseOrder())));
@@ -2028,7 +1960,7 @@ public class CallServiceTest extends TestAncestor {
         
         
         // Bad order
-        final CallSpliterator<Set<ExpressionCall>, ExpressionCall> spliterator4 =
+        final CallSpliterator<ExpressionCall, Set<ExpressionCall>> spliterator4 =
                 service.new CallSpliterator<>(stream1, stream2, Comparator.comparing(
                         ExpressionCall::getGeneId, Comparator.nullsLast(Comparator.naturalOrder())));
         try {

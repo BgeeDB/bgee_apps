@@ -21,7 +21,6 @@ import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -148,7 +147,7 @@ public class CallService extends Service {
      * @param <T>   The type of {@code Call}.
      * @param <U>   The type of {@code Set} of {@code T}.
      */
-    public class CallSpliterator<U extends Set<T>, T extends Call<?,?>> 
+    public class CallSpliterator<T extends Call<?,?>, U extends Set<T>> 
         extends Spliterators.AbstractSpliterator<U> {
      
         final private Comparator<? super T> comparator;
@@ -378,6 +377,7 @@ public class CallService extends Service {
      *                              and reconciled expression calls.
      * @throws IllegalArgumentException If {@code callFilter} or {@code speciesID} are null or empty.
      */
+    // check if call datafilter propagation is take into account 
     public Stream<ExpressionCall> loadExpressionCalls(String speciesId, 
             ExpressionCallFilter callFilter, Collection<Attribute> attributes, 
             LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes, boolean doPropagation)
@@ -399,6 +399,7 @@ public class CallService extends Service {
 
         // We need to retrieved all attributes to be able to build the ConditionUtils and
         // propagate, reconcile and filter calls.
+                // FIXME dont retrieve all attributes
         boolean doExpressedQuery = callFilter.getCallDataFilters().stream()
                 .anyMatch(callData -> Expression.EXPRESSED.equals(callData.getCallType()));
 
@@ -425,12 +426,16 @@ public class CallService extends Service {
         tmpCondForPropagation.addAll(notExpressedCalls.stream()
                 .map(c -> c.getCondition()).collect(Collectors.toSet()));
         
-        CallSpliterator<Set<ExpressionCall>, ExpressionCall> spliterator = new CallSpliterator<>(
+        CallSpliterator<ExpressionCall, Set<ExpressionCall>> spliterator = new CallSpliterator<>(
                 expressedCalls.stream(), notExpressedCalls.stream(),
                 Comparator.comparing(ExpressionCall::getGeneId, Comparator.nullsLast(Comparator.naturalOrder())));
         Stream<Set<ExpressionCall>> callsByGene = StreamSupport.stream(spliterator, false)
                 .onClose(() -> spliterator.close());
         
+        // Get valid conditions  condition of callsByGene if genefilter
+        // All propagate method get only valid conditions
+        // Propagation to propagated conditions
+
         Stream<ExpressionCall> reconciledCalls;
         if (doPropagation) {
             ConditionUtils conditionUtils = new ConditionUtils(
@@ -441,7 +446,16 @@ public class CallService extends Service {
                     this.getServiceFactory());
 
             reconciledCalls = callsByGene
-                    .map(g -> this.propagateExpressionCalls(g, callFilter.getConditionFilters(), conditionUtils, speciesId))
+                    .map(g -> {
+                        Set<Condition> validConds = conditionUtils.getConditions();
+                        if (callFilter.getCallDataFilters().stream()
+                            .anyMatch(ecd -> PropagationState.SELF.equals(ecd.getDataPropagation()))) {
+                            validConds = g.stream().map(c -> c.getCondition())
+                                .filter(c -> callFilter.getConditionFilters().stream().anyMatch(f -> f.test(c)))
+                                .collect(Collectors.toSet());
+                        }
+                        return this.propagateExpressionCalls(g, validConds, conditionUtils, speciesId);
+                    })
                     .map(g -> {
                         // For single species, we need to reconcile calls with the same gene/organ/stage
                         // Note: we need to use List to have a stable sort in next step
@@ -469,7 +483,7 @@ public class CallService extends Service {
                                         reconciledCall.getGlobalMeanRank());
                             })
                             // Filter calls according CallFilter
-                            .filter(c -> CallService.testCallFilter(c, callFilter))
+                            .filter(c -> callFilter.test(c))
                             // Order according to provided orderingAttributes with convertServiceOrdering
                             // We order before removing attribute to be able to order on all orderingAttributes
                             .sorted(CallService.convertServiceOrdering(clonedOrderingAttrs))
@@ -484,7 +498,7 @@ public class CallService extends Service {
             reconciledCalls = callsByGene
                     .map(m -> m.stream()
                             // Filter calls according CallFilter
-                            .filter(c -> CallService.testCallFilter(c, callFilter))
+                            .filter(c -> callFilter.test(c))
                             // Order according to provided orderingAttributes with convertServiceOrdering
                             // We order before removing attribute to be able to order on all orderingAttributes
                             .sorted(CallService.convertServiceOrdering(clonedOrderingAttrs))
@@ -499,90 +513,6 @@ public class CallService extends Service {
         return log.exit(reconciledCalls);
     }
 
-    /** 
-     * Evaluates this {@code ExpressionCallFilter} on the given {@code ExpressionCall}.
-     * 
-     * @param call          An {@code ExpressionCall} that is the expression call to be evaluated.
-     * @param callFilter    An {@code ExpressionCallFilter} that is the filter 
-     *                      to be used to evaluate {@code call}.
-     * @return              {@code true} if the {@code call} matches {@code callFilter}.
-     * @throws IllegalArgumentException If {@code call}, call data of {@code call}
-     *                                  or {@code callFilter} are null.
-     */
-    // TODO to be added to ExpressionCallUtils see TODOs into ExpressionCall
-    public static boolean testCallFilter(ExpressionCall call, ExpressionCallFilter callFilter) 
-            throws IllegalArgumentException {
-        log.entry(call, callFilter);
-
-        if (call == null) {
-            throw log.throwing(new IllegalArgumentException("ExpressionCall could not be null"));
-        }
-        if (call.getCallData() == null || call.getCallData().isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("ExpressionCallData could not be null or empty"));
-        }
-        if (callFilter == null) {
-            throw log.throwing(new IllegalArgumentException("ExpressionCallFilter could not be null"));
-        }
-
-        // Filter according GeneFilter
-        if (callFilter.getGeneFilter() != null
-                && !callFilter.getGeneFilter().getGeneIds().contains(call.getGeneId())) {
-            return log.exit(false);
-        }
-
-        // Filter according ConditionFilters
-        if (callFilter.getConditionFilters() != null
-                && !callFilter.getConditionFilters().isEmpty()
-                && !callFilter.getConditionFilters().stream().anyMatch(f -> f.test(call.getCondition()))) {
-            return log.exit(false);
-        }
-
-        // Filter according CallDataFilters, if several filters are provided, they are seen as "OR" conditions        
-        for (ExpressionCallData callDataFilter: callFilter.getCallDataFilters()) {
-            for (ExpressionCallData callData: call.getCallData()) {
-                boolean isDataTypeValid = false;
-                boolean isCallTypeValid = false;
-                boolean isDataQualityValid = false;
-
-                // Filter on DataType (AFFYMETRIX, EST, IN_SITU, RNA_SEQ)
-                if (callDataFilter.getDataType() == null 
-                        || !Collections.disjoint(
-                                callDataFilter.getDataType() == null?
-                                        EnumSet.allOf(DataType.class): EnumSet.of(callDataFilter.getDataType()),
-                                callData.getDataType() == null?
-                                        EnumSet.allOf(DataType.class): EnumSet.of(callData.getDataType()))) {
-                    isDataTypeValid = true;
-                } else {
-                    continue;
-                }
-                
-                // Filter on CallType (EXPRESSED, NOT_EXPRESSED)
-                if (callDataFilter.getCallType() == null
-                        || callData.getCallType().equals(callDataFilter.getCallType())) {
-                    isCallTypeValid = true;
-                } else {
-                    continue;
-                }
-                
-                // Filter on DataQuality (NODATA, LOW, HIGH)
-                if (callDataFilter.getDataQuality() == null
-                        || callDataFilter.getDataQuality().equals(DataQuality.LOW) 
-                        || !Collections.disjoint(
-                                callDataFilter.getDataQuality() == null?
-                                        EnumSet.allOf(DataQuality.class): EnumSet.of(callDataFilter.getDataQuality()),
-                                callData.getDataQuality() == null?
-                                        EnumSet.allOf(DataQuality.class): EnumSet.of(callData.getDataQuality()))) {
-                    isDataQualityValid = true;
-                } else {
-                    continue;
-                }
-                if (isDataTypeValid && isCallTypeValid && isDataQualityValid) {
-                    return log.exit(true);
-                }
-            }
-        }
-        return log.exit(false);
-    }
 
     /**
      * Return an {@code ExpressionCall} populated according to {@code attributes}.
@@ -808,7 +738,7 @@ public class CallService extends Service {
                                 //ConditionFilters
                                 callFilter.getConditionFilters().stream()
                                     .map(condFilter -> new DAOConditionFilter(
-                                        condFilter.getAnatEntitieIds(), 
+                                        condFilter.getAnatEntityIds(), 
                                         condFilter.getDevStageIds()))
                                 .collect(Collectors.toSet())
                                 )),  
@@ -1323,10 +1253,9 @@ public class CallService extends Service {
      * and {@code DataQuality} equal to {@code null}. 
      *  
      * @param calls             A {@code Collection} of {@code ExpressionCall}s to be propagated.
-     * @param conditionFilter   A {@code Collection} of {@code ConditionFilter}s to configure 
+     * @param validConditions   A {@code Collection} of {@code Condition}s that are the valid conditions to configure 
      *                          the filtering of conditions in propagated calls. 
-     *                          If several {@code ConditionFilter}s are provided, they are seen as
-     *                          "OR" conditions. Can be {@code null} or empty. 
+     *                          Can be {@code null} or empty. 
      * @param conditionUtils    A {@code ConditionUtils} containing at least anat. entity
      *                          {@code Ontology} to use for the propagation.
      * @param speciesId         A {@code String} that is the ID of the species 
@@ -1337,16 +1266,16 @@ public class CallService extends Service {
      */
     // NOTE: No update ExpressionCalls, to provide better unicity of the method, and allow better unit testing
     protected Set<ExpressionCall> propagateExpressionCalls(Collection<ExpressionCall> calls,
-            Collection<ConditionFilter> conditionFilter, ConditionUtils conditionUtils, 
+            Collection<Condition> validConditions, ConditionUtils conditionUtils, 
             String speciesId) throws IllegalArgumentException {
-        log.entry(calls, conditionFilter, conditionUtils, speciesId);
+        log.entry(calls, validConditions, conditionUtils, speciesId);
         
         if (calls == null || calls.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("No ExpressionCalls provided"));
         }
-
-        Set<ConditionFilter> clonedConditionFilters = Collections.unmodifiableSet(
-                conditionFilter == null? new HashSet<>() : new HashSet<>(conditionFilter));
+        
+        Set<Condition> clonedValidConditions = Collections.unmodifiableSet(
+            validConditions == null? new HashSet<>() : new HashSet<>(validConditions));
 
         // Check that ExpressionCalls are expressed or not expressed calls
         if (calls.stream()
@@ -1373,7 +1302,7 @@ public class CallService extends Service {
         log.trace("There are {} not propagated expr calls.", expressedCalls.size());
         if (!expressedCalls.isEmpty()) {
             Set<ExpressionCall> propagatedExpressedCalls = this.propagateExpressionCalls(
-                    expressedCalls, clonedConditionFilters, conditionUtils, speciesId, true);
+                    expressedCalls, clonedValidConditions, conditionUtils, speciesId, true);
             if (propagatedExpressedCalls != null) {
                 log.trace("There are {} propagated expr calls.", propagatedExpressedCalls.size());
                 propagatedCalls.addAll(propagatedExpressedCalls);
@@ -1385,7 +1314,7 @@ public class CallService extends Service {
         log.trace("There are {} not propagated no-expr calls.", notExpressedCalls.size());
         if (!notExpressedCalls.isEmpty()) {
             Set<ExpressionCall> propagatedNotExpressedCalls = this.propagateExpressionCalls(
-                    notExpressedCalls, clonedConditionFilters, conditionUtils, speciesId, false);
+                    notExpressedCalls, clonedValidConditions, conditionUtils, speciesId, false);
             if (propagatedNotExpressedCalls != null) {
                 log.trace("There are {} propagated no-expr calls.", propagatedNotExpressedCalls.size());
                 propagatedCalls.addAll(propagatedNotExpressedCalls);
@@ -1403,7 +1332,7 @@ public class CallService extends Service {
      * and {@code DataQuality} equal to {@code null}.
      * 
      * @param calls             A {@code Set} of {@code ExpressionCall}s to be propagated.
-     * @param conditionFilter   A {@code Set} of {@code ConditionFilter}s to configure 
+     * @param conditionFilters   A {@code Set} of {@code ConditionFilter}s to configure 
      *                          the filtering of conditions in propagated calls. 
      *                          If several {@code ConditionFilter}s are provided, they are seen as
      *                          "OR" conditions. Can be {@code null} or empty. 
@@ -1418,14 +1347,14 @@ public class CallService extends Service {
      * @throws IllegalArgumentException
      */
     private Set<ExpressionCall> propagateExpressionCalls(Set<ExpressionCall> calls,
-            Set<ConditionFilter> conditionFilter, ConditionUtils conditionUtils, 
+            Set<Condition> validConditions, ConditionUtils conditionUtils, 
             String speciesId, boolean areExpressedCalls) throws IllegalArgumentException {
-        log.entry(calls, conditionFilter, conditionUtils, speciesId, areExpressedCalls);
+        log.entry(calls, validConditions, conditionUtils, speciesId, areExpressedCalls);
         
         // As it is a private method, we can assume that provided parameters
         // have already been checked but we can add asserts
         assert calls != null && !calls.isEmpty();
-        assert conditionFilter != null;
+        assert validConditions != null;
         assert conditionUtils != null;
         assert speciesId != null;
         
@@ -1478,9 +1407,10 @@ public class CallService extends Service {
             
             assert propagatedConditions != null;
     
-            // Propagation to propagated conditions
-            Set<ExpressionCall> propagatedCalls = this.propagateExpressionCall(
-                    call, propagatedConditions, conditionFilter);
+            Set<ExpressionCall> propagatedCalls = this.propagateExpressionCall(call,
+                propagatedConditions.stream()
+                    .filter(c -> validConditions.isEmpty() || validConditions.contains(c))
+                    .collect(Collectors.toSet()));
             allPropagatedCalls.addAll(propagatedCalls);
             
             log.trace("Add the propagated calls: {}", propagatedCalls);
@@ -1497,19 +1427,15 @@ public class CallService extends Service {
      * @param call              An {@code ExpressionCall} that is the call to be propagated.
      * @param conditions        A {@code Collection} of {@code Condition}s that are the conditions 
      *                          in which the propagation have to be done.
-     * @param conditionFilters  A {@code Collection} of {@code ConditionFilter}s to configure 
-     *                          the filtering of conditions in propagated calls. 
-     *                          If several {@code ConditionFilter}s are provided, they are seen as
-     *                          "OR" conditions. Can be {@code null} or empty. 
      * @return                  A {@code Set} of {@code ExpressionCall}s that are propagated calls
      *                          from provided {@code childCall}.
      */
-    private Set<ExpressionCall> propagateExpressionCall(ExpressionCall call,
-            Collection<Condition> conditions, Collection<ConditionFilter> conditionFilters) {
-        log.entry(call, conditions, conditionFilters);
+    private Set<ExpressionCall> propagateExpressionCall(
+        ExpressionCall call, Collection<Condition> conditions) {
+        log.entry(call, conditions);
         
         log.trace("Propagation for call: {}", call);
-        
+        log.debug("conditions: {}", conditions);
         Set<ExpressionCall> globalCalls = new HashSet<>();
         Condition inputCondition = call.getCondition();
 
@@ -1518,11 +1444,6 @@ public class CallService extends Service {
         allConditions.add(inputCondition);
         
         for (Condition condition : allConditions) {
-            if (conditionFilters != null && !conditionFilters.isEmpty() 
-                    && !conditionFilters.stream().anyMatch(f -> f.test(condition))) {
-                continue;
-            }
-            
             log.trace("Propagation of the current call to condition: {}", condition);
 
             Set<ExpressionCallData> selfCallData = new HashSet<>();
@@ -1712,6 +1633,7 @@ public class CallService extends Service {
         }
 
         // Global mean rank
+        // FIXME get only min of observed calls
         Optional<BigDecimal> bestGlobalMeanRank = calls.stream()
                 .map(c -> c.getGlobalMeanRank())
                 .filter(r -> r != null)

@@ -18,8 +18,13 @@ import java.util.Properties;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.bgee.TestAncestor;
+import org.bgee.controller.user.UserService;
 import org.bgee.controller.utils.MailSender;
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.job.JobService;
 import org.bgee.view.FakeFactoryProvider;
 import org.bgee.view.ViewFactoryProvider;
 import org.junit.Before;
@@ -31,11 +36,18 @@ import org.junit.Test;
  * {@code HttpServletResponse} depending on the injected dependencies.
  * 
  * @author Mathieu Seppey
- * @version Bgee 13
+ * @author Frederic Bastian
+ * @version Bgee 13 Nov. 2016
  * @since Bgee 13
  */
-public class ControllerTest {
+public class ControllerTest extends TestAncestor {
+    private final static Logger log = LogManager.getLogger(ControllerTest.class.getName());
     
+    @Override
+    protected Logger getLogger() {
+        return log;
+    }
+
     /**
      * A mock {@code HttpServletRequest}
      */
@@ -89,6 +101,7 @@ public class ControllerTest {
         parameterMap.put(params.getParamPage().getName(), new String[]{"download"});
         parameterMap.put(params.getParamTestString().getName(), new String[]{"test"});
         when(this.mockHttpServletRequest.getParameterMap()).thenReturn(parameterMap);
+        when(this.mockHttpServletRequest.getRemoteAddr()).thenReturn("127.0.0.1");
     }
 
     /**
@@ -109,6 +122,7 @@ public class ControllerTest {
         final List<ServiceFactory> mockFactories = new ArrayList<ServiceFactory>();
         MailSender mailSender = mock(MailSender.class);
         FrontController front = new FrontController(this.testProperties, new TestURLParameters(), 
+                new JobService(this.testProperties), new UserService(), 
                 () -> {
                     ServiceFactory mockFactory = mock(ServiceFactory.class); 
                     mockFactories.add(mockFactory);

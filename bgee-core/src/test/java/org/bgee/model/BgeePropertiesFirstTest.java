@@ -21,7 +21,7 @@ import org.junit.Test;
  * @author Mathieu Seppey
  * @author Valentine Rech de Laval
  * @author Frederic Bastian
- * @version Bgee 13, June 2015
+ * @version Bgee 13, Oct 2016
  * @since Bgee 13
  * @see BgeePropertiesParentTest
  * @see BgeePropertiesFirstTest
@@ -42,6 +42,7 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
         prop.put(BgeeProperties.TOP_ANAT_R_WORKING_DIRECTORY_KEY, "/injectedrwd");
         prop.put(BgeeProperties.TOP_ANAT_FUNCTION_FILE_KEY, "/injectedfunctionfile");
         prop.put(BgeeProperties.TOP_ANAT_RESULTS_WRITING_DIRECTORY_KEY, "/injectedwd");
+        prop.put(BgeeProperties.MAX_JOB_COUNT_PER_USER_KEY, 5);
 
         // get the instance of bgeeproperties and check the values
         this.bgeeProp = BgeeProperties.getBgeeProperties(prop);
@@ -53,6 +54,8 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
                 "/injectedfunctionfile", bgeeProp.getTopAnatFunctionFile());
         assertEquals("Wrong property value retrieved", 
                 "/injectedwd", bgeeProp.getTopAnatResultsWritingDirectory());
+        assertEquals("Wrong property value retrieved", 
+                5, bgeeProp.getMaxJobCountPerUser());
     }
 
     /**
@@ -105,9 +108,7 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
         //check that no exception was thrown in the second thread.
         //In that case, it would be completed and calling get would throw 
         //the exception. 
-        if (future.isDone()) {
-            future.get();
-        }
+        future.get();
         assertNotSame("The two objects are the same but they should not be",
                 bgeeProp1, test.bgeeProp3);
         

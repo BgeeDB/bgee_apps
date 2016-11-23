@@ -20,9 +20,11 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.TestAncestor;
 import org.bgee.controller.CommandTopAnat.GeneListResponse;
 import org.bgee.controller.CommandTopAnat.JobResponse;
+import org.bgee.controller.user.User;
 import org.bgee.controller.utils.MailSender;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.TaskManager;
+import org.bgee.model.job.Job;
+import org.bgee.model.job.JobService;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.DevStageService;
 import org.bgee.model.gene.Gene;
@@ -59,6 +61,8 @@ public class CommandTopAnatTest extends TestAncestor {
         
         //mock Services
         ServiceFactory serviceFac = mock(ServiceFactory.class);
+        JobService jobService = mock(JobService.class);
+        User user = mock(User.class);
         
         GeneService geneService = mock(GeneService.class);
         when(serviceFac.getGeneService()).thenReturn(geneService);
@@ -131,7 +135,8 @@ public class CommandTopAnatTest extends TestAncestor {
         log.info("Generated query URL: " + params.getRequestURL());
 
         CommandTopAnat controller = new CommandTopAnat(mock(HttpServletResponse.class),
-                params, mock(BgeeProperties.class), viewFac, serviceFac, null, mailSender);
+                params, mock(BgeeProperties.class), viewFac, serviceFac, jobService, user, 
+                null, mailSender);
         controller.processRequest();
 
         LinkedHashMap<String, Long> fgSpToGeneCount = new LinkedHashMap<>();
@@ -181,10 +186,12 @@ public class CommandTopAnatTest extends TestAncestor {
 
         //mock Services
         ServiceFactory serviceFac = mock(ServiceFactory.class);
+        JobService jobService = mock(JobService.class);
         
-        TaskManager taskManager = mock(TaskManager.class);
-        when(TaskManager.getTaskManager(jobId)).thenReturn(taskManager);
-        when(taskManager.isTerminated()).thenReturn(true);
+        Job job = mock(Job.class);
+        when(jobService.getJob(jobId)).thenReturn(job);
+        when(job.isTerminated()).thenReturn(true);
+        User user = mock(User.class);
 
         GeneService geneService = mock(GeneService.class);
         when(serviceFac.getGeneService()).thenReturn(geneService);
@@ -213,7 +220,8 @@ public class CommandTopAnatTest extends TestAncestor {
         log.info("Generated query URL: " + params.getRequestURL());
 
         CommandTopAnat controller = new CommandTopAnat(mock(HttpServletResponse.class),
-                params, mock(BgeeProperties.class), viewFac, serviceFac, null, mailSender);
+                params, mock(BgeeProperties.class), viewFac, serviceFac, jobService, user, 
+                null, mailSender);
         controller.processRequest();
 
         JobResponse response1 = new JobResponse(jobId, "DONE", keyParam);

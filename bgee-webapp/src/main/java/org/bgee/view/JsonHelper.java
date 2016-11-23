@@ -11,6 +11,7 @@ import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.controller.URLParameters;
 import org.bgee.model.file.DownloadFile;
+import org.bgee.model.job.Job;
 import org.bgee.model.topanat.TopAnatResults;
 import org.bgee.model.topanat.TopAnatResults.TopAnatResultRow;
 
@@ -419,6 +420,51 @@ public class JsonHelper {
     }
 
     /**
+     * A {@code TypeAdapter} to read/write {@code Job}s in JSON. This adapter 
+     * is needed to not display some information, notably about the running {@code Thread} 
+     * or the {@code Job} pool.
+     * <p>
+     * We use a {@code TypeAdapter} rather than a {@code JsonSerializer}, because, 
+     * as stated in the {@code JsonSerializer} javadoc: "New applications should prefer 
+     * {@code TypeAdapter}, whose streaming API is more efficient than this interface's tree API. "
+     */
+    private static final class JobTypeAdapter extends TypeAdapter<Job> {
+        
+        @Override
+        public void write(JsonWriter out, Job value) throws IOException {
+            log.entry(out, value);
+            if (value == null) {
+                out.nullValue();
+                log.exit(); return;
+            }
+            out.beginObject();
+            
+            //values with no modifications
+            out.name("id").value(value.getId());
+            out.name("name").value(value.getName());
+            out.name("userId").value(value.getUserId());
+            out.name("started").value(value.isStarted());
+            out.name("terminated").value(value.isTerminated());
+            out.name("successful").value(value.isSuccessful());
+            out.name("interruptRequested").value(value.isInterruptRequested());
+            out.name("released").value(value.isReleased());
+            out.name("taskCount").value(value.getTaskCount());
+            out.name("currentTaskIndex").value(value.getCurrentTaskIndex());
+            out.name("currentTaskName").value(value.getCurrentTaskName());
+            
+            
+            out.endObject();
+            log.exit();
+        }
+        
+        @Override
+        public Job read(JsonReader in) throws IOException {
+            //for now, we never read JSON values
+            throw log.throwing(new UnsupportedOperationException("No custom JSON reader for Job."));
+        } 
+    }
+
+    /**
      * The {@code Gson} used to dump JSON
      */
     private final Gson gson;
@@ -469,6 +515,7 @@ public class JsonHelper {
                 .registerTypeAdapter(DownloadFile.class, new DownloadFileTypeAdapter(this.props))
                 .registerTypeAdapter(RequestParameters.class, new RequestParametersTypeAdapter())
                 .registerTypeAdapter(TopAnatResults.class, new TopAnatResultsTypeAdapter(this.requestParameters))
+                .registerTypeAdapter(Job.class, new JobTypeAdapter())
                 .registerTypeAdapterFactory(new BgeeTypeAdapterFactory())
                 .setPrettyPrinting()
                 .disableHtmlEscaping()

@@ -11,7 +11,7 @@ import org.bgee.model.file.SpeciesDataGroup;
  * @author  Mathieu Seppey
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Mar. 2016
+ * @version Bgee 13, Oct. 2016
  * @since   Bgee 1
  */
 public interface GeneralDisplay {
@@ -23,4 +23,8 @@ public interface GeneralDisplay {
      * @throws IllegalArgumentException If {@code groups} contains multi-species data groups.
      */
     public void displayHomePage(List<SpeciesDataGroup> groups) throws IllegalArgumentException;
+    /**
+     * Launch a 204 response "No content" (request successfully processed but no content to return).
+     */
+    public void respondSuccessNoContent();
 }

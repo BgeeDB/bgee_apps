@@ -18,10 +18,16 @@ import org.bgee.controller.exception.RequestParametersNotStorableException;
 import org.bgee.controller.exception.RequestSizeExceededException;
 import org.bgee.controller.exception.ValueSizeExceededException;
 import org.bgee.controller.servletutils.BgeeHttpServletRequest;
+import org.bgee.controller.user.User;
+import org.bgee.controller.user.UserService;
 import org.bgee.controller.utils.MailSender;
 import org.bgee.controller.exception.InvalidFormatException;
 import org.bgee.controller.exception.InvalidRequestException;
+import org.bgee.controller.exception.JobResultNotFoundException;
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.dao.api.exception.QueryInterruptedException;
+import org.bgee.model.job.JobService;
+import org.bgee.model.job.exception.TooManyJobsException;
 import org.bgee.view.ErrorDisplay;
 import org.bgee.view.ViewFactory;
 import org.bgee.view.ViewFactoryProvider;
@@ -34,7 +40,7 @@ import org.bgee.view.ViewFactoryProvider.DisplayType;
  * @author Mathieu Seppey
  * @author Frederic Bastian
  *
- * @version Bgee 13, Dec. 2015
+ * @version Bgee 13, Oct 2016
  * @since Bgee 13
  */
 public class FrontController extends HttpServlet {
@@ -51,12 +57,22 @@ public class FrontController extends HttpServlet {
      * The {@code BgeeProperties} instance that will be used in the whole application
      * and re injected in all classes that will need it eventually.
      */
-    private final BgeeProperties prop ;
+    private final BgeeProperties prop;
     /**
      * The {@code URLParameters} instance that will provide the parameters list available 
      * within the application
      */
-    private final URLParameters urlParameters ;
+    private final URLParameters urlParameters;
+    /**
+     * The {@code JobService} instance that will allow to manage jobs between threads 
+     * across the entire webapp. 
+     */
+    private final JobService jobService;
+    /**
+     * The {@link UserService} instance allowing to create {@code User} objects to identify 
+     * and track users in the webapp.
+     */
+    private final UserService userService;
     /**
      * A {@code Supplier} of {@code ServiceFactory}s, allowing to obtain a new {@code ServiceFactory} 
      * instance at each call to the {@code doRequest} method.
@@ -66,7 +82,7 @@ public class FrontController extends HttpServlet {
      * The {@code ViewFactoryProvider} instance that will provide the appropriate 
      * {@code ViewFactory} depending on the display type
      */
-    private final ViewFactoryProvider viewFactoryProvider ;
+    private final ViewFactoryProvider viewFactoryProvider;
     /**
      * The {@code MailSender} used to send emails.
      */
@@ -90,7 +106,7 @@ public class FrontController extends HttpServlet {
      *              {@code BgeeProperties}
      */
     public FrontController(Properties prop) {
-        this(BgeeProperties.getBgeeProperties(prop), null, null, null, null);
+        this(BgeeProperties.getBgeeProperties(prop), null, null, null, null, null, null);
     }
 
     /**
@@ -103,19 +119,26 @@ public class FrontController extends HttpServlet {
      * @param urlParameters             A {@code urlParameters} instance to be used in the whole 
      *                                  application, to be used by {@code RequestParameters} objects 
      *                                  to read/write URLs. 
+     * @param jobService                A {@code JobService} instance allowing to manage jobs 
+     *                                  between threads across the entire webapp.
+     * @param userService               A {@link UserService} instance, allowing to create
+     *                                  {@code User} objects to identify and track users in the webapp. 
+     *                                  If {@code null}, the default constructor of {@code UserService} is used.  
      * @param serviceFactoryProvider    A {@code Supplier} of {@code ServiceFactory}s, allowing 
      *                                  to obtain a new {@code ServiceFactory} instance 
      *                                  at each call to the {@code doRequest} method. If {@code null}, 
      *                                  the default constructor of {@code ServiceFactory} is used. 
      * @param viewFactoryProvider       A {@code ViewFactoryProvider} instance to provide 
      *                                  the appropriate {@code ViewFactory} depending on the
-     *                                  display type. 
+     *                                  display type.
      * @param mailSender                A {@code MailSender} instance used to send mails to users.
      */
     public FrontController(BgeeProperties prop, URLParameters urlParameters, 
+            JobService jobService, UserService userService, 
             Supplier<ServiceFactory> serviceFactoryProvider, ViewFactoryProvider viewFactoryProvider, 
             MailSender mailSender) {
-        log.entry(prop, urlParameters, serviceFactoryProvider, viewFactoryProvider, mailSender);
+        log.entry(prop, urlParameters, jobService, userService, 
+                serviceFactoryProvider, viewFactoryProvider, mailSender);
 
         // If the URLParameters object is null, just use a new instance
         this.urlParameters = urlParameters != null? urlParameters: new URLParameters();
@@ -123,11 +146,15 @@ public class FrontController extends HttpServlet {
         // If the bgee prop object is null, just get the default instance from BgeeProperties
         this.prop = prop != null? prop: BgeeProperties.getBgeeProperties();
         
+        this.jobService  = jobService != null? jobService: new JobService(this.prop);
+        this.userService = userService != null? userService: new UserService();
+        
         // If the viewFactoryProvider object is null, just use a new instance, 
         //injecting the properties obtained above. 
         //XXX: if viewFactoryProvider is not null, we currently don't check that it uses 
         //the same BgeeProperties instance. Maybe it's OK to allow to use different BgeeProperties instances? 
         this.viewFactoryProvider = viewFactoryProvider != null? viewFactoryProvider: new ViewFactoryProvider(this.prop);
+        
         
         //If serviceFactoryProvider is null, use default constructor of ServiceFactory
         this.serviceFactoryProvider = serviceFactoryProvider != null? serviceFactoryProvider: 
@@ -162,8 +189,8 @@ public class FrontController extends HttpServlet {
      *                  the client
      * @param postData  A {@code boolean} that indicates whether the request method is POST
      */
-    public void doRequest(HttpServletRequest request, HttpServletResponse response, 
-            boolean postData) { 
+    public void doRequest(final HttpServletRequest request, final HttpServletResponse response,
+            final boolean postData) {
         log.entry(request, response, postData);
         
         //default display type in case of error before we can do anything.
@@ -172,13 +199,22 @@ public class FrontController extends HttpServlet {
         try (ServiceFactory serviceFactory = this.serviceFactoryProvider.get()) {
             //First, to handle errors, we "manually" determine the display type, 
             //because loading all the parameters in RequestParameters could throw an exception.
+            //This displayType will thus have a chance of being used in the catch clause.
             displayType = this.getRequestedDisplayType(request);
 
-            //OK, now we try to get the view requested.
-            request.setCharacterEncoding("UTF-8"); 
+            //Now, try to load and analyze the request parameters
+            request.setCharacterEncoding(RequestParameters.CHAR_ENCODING); 
             RequestParameters requestParameters = new RequestParameters(request, this.urlParameters, 
                     this.prop, true, "&");
-            log.debug("Analyzed URL: " + requestParameters.getRequestURL());
+            log.debug("Analyzed URL: {} - POST data? {}", requestParameters.getRequestURL(), postData);
+            
+            //Load a User instance to track users between requests
+            User user = this.userService.createNewUser(request, requestParameters);
+            //If needed we'll set a tracking cookie, unless it is inappropriate for the requested page 
+            //(e.g., response success no content)
+            boolean setCookie = true;
+            
+            //Now we try to get the view factory requested.
             ViewFactory factory = this.viewFactoryProvider.getFactory(response, requestParameters);
             
             //now we process the request
@@ -193,10 +229,10 @@ public class FrontController extends HttpServlet {
                 controller = new CommandAbout(response, requestParameters, this.prop, factory);
             } else if (requestParameters.isATopAnatPageCategory()) {
                 controller = new CommandTopAnat(response, requestParameters, this.prop, factory, 
-                        serviceFactory, this.getServletContext(), this.mailSender);
+                        serviceFactory, this.jobService, user, this.getServletContext(), this.mailSender);
             } else if (requestParameters.isAJobPageCategory()) {
                 controller = new CommandJob(response, requestParameters, this.prop, factory, 
-                        serviceFactory);
+                        serviceFactory, this.jobService, user);
             } else if (requestParameters.isAGenePageCategory()){
                 controller = new CommandGene(response, requestParameters, this.prop, factory, serviceFactory);      
             } else if (requestParameters.isASourcePageCategory()){
@@ -206,17 +242,50 @@ public class FrontController extends HttpServlet {
             } else if (requestParameters.getAction() != null &&
                 		requestParameters.getAction().equals(RequestParameters.ACTION_AUTO_COMPLETE_GENE_SEARCH)) {
             		controller = new CommandSearch(response, requestParameters, prop, factory, serviceFactory);
-            } else if (requestParameters.isDAOPageCategory()) {
+            } else if (requestParameters.isADAOPageCategory()) {
                 controller = new CommandDAO(response, requestParameters, this.prop, factory, 
-                        serviceFactory);
+                        serviceFactory, this.jobService, user);
+            } else if (requestParameters.isAStatsPageCategory()) {
+                //no specific controllers for this for now. 
+                //We simply respond with a 'success no content' so that the client get no errors, 
+                //and so that we get correct information stored in our Apache logs.
+                //TODO: In the future, this should call our Google Monitoring implementation
+                factory.getGeneralDisplay().respondSuccessNoContent();
+                setCookie = false;
             } else {
                 throw log.throwing(new PageNotFoundException("Request not recognized."));
             }
-            controller.processRequest();
+            if (controller != null) {
+                controller.processRequest();
+            }
+            
+            //only after the processing we set the tracking cookie: some responses (e.g., redirection) 
+            //might need to set some headers of the response first. And also, we don't want 
+            //to set the cookie in case of error
+            if (setCookie) {
+                try {
+                    user.manageTrackingCookie(request, this.prop.getBgeeRootDomain())
+                    .ifPresent(c -> response.addCookie(c));
+                } catch (IllegalArgumentException e) {
+                    //we are not going to make the query fail for a cookie issue
+                    log.catching(Level.WARN, e);
+                }
+            }
             
         //=== process errors ===
         } catch (Exception e) {
-            log.catching(e);
+            Throwable realException = e.getCause() != null && 
+                    (e.getCause() instanceof TooManyJobsException || 
+                    e.getCause() instanceof QueryInterruptedException || 
+                    e.getCause() instanceof JobResultNotFoundException)? e.getCause(): e;
+            Level logLevel = Level.ERROR;
+            if (realException instanceof QueryInterruptedException || 
+                    realException instanceof JobResultNotFoundException || 
+                    realException instanceof TooManyJobsException) {
+                logLevel = Level.DEBUG;
+            }
+            log.catching(logLevel, realException);
+            
             //get an ErrorDisplay of the appropriate display type. 
             //We don't acquire the ErrorDisplay before any Exception is thrown, 
             //because we might need to use the response outputstream directly; 
@@ -231,31 +300,33 @@ public class FrontController extends HttpServlet {
                 errorDisplay = this.viewFactoryProvider.getFactory(response, displayType, rp)
                         .getErrorDisplay();
             } catch (IOException e1) {
-                e1.initCause(e);
-                e = e1;
+                e1.initCause(realException);
+                realException = e1;
             }
             if (errorDisplay == null) {
-                log.error("Could not display error message to caller: {}", e);
+                log.error("Could not display error message to caller: {}", realException);
             }
             
-            if (e instanceof InvalidFormatException) {
-                errorDisplay.displayControllerException((InvalidFormatException) e);
-            } else if (e instanceof InvalidRequestException) {
-                errorDisplay.displayControllerException((InvalidRequestException) e);
-            } else if (e instanceof MultipleValuesNotAllowedException) {
-                errorDisplay.displayControllerException((MultipleValuesNotAllowedException) e);
-            } else if (e instanceof PageNotFoundException) {
-                errorDisplay.displayControllerException((PageNotFoundException) e);
-            } else if (e instanceof RequestParametersNotFoundException) {
-                errorDisplay.displayControllerException((RequestParametersNotFoundException) e);
-            } else if (e instanceof RequestParametersNotStorableException) {
-                errorDisplay.displayControllerException((RequestParametersNotStorableException) e);
-            } else if (e instanceof RequestSizeExceededException) {
-                errorDisplay.displayControllerException((RequestSizeExceededException) e);
-            } else if (e instanceof ValueSizeExceededException) {
-                errorDisplay.displayControllerException((ValueSizeExceededException) e);
-            } else if (e instanceof UnsupportedOperationException) {
+            if (realException instanceof InvalidFormatException) {
+                errorDisplay.displayControllerException((InvalidFormatException) realException);
+            } else if (realException instanceof InvalidRequestException) {
+                errorDisplay.displayControllerException((InvalidRequestException) realException);
+            } else if (realException instanceof MultipleValuesNotAllowedException) {
+                errorDisplay.displayControllerException((MultipleValuesNotAllowedException) realException);
+            } else if (realException instanceof PageNotFoundException) {
+                errorDisplay.displayControllerException((PageNotFoundException) realException);
+            } else if (realException instanceof RequestParametersNotFoundException) {
+                errorDisplay.displayControllerException((RequestParametersNotFoundException) realException);
+            } else if (realException instanceof RequestParametersNotStorableException) {
+                errorDisplay.displayControllerException((RequestParametersNotStorableException) realException);
+            } else if (realException instanceof RequestSizeExceededException) {
+                errorDisplay.displayControllerException((RequestSizeExceededException) realException);
+            } else if (realException instanceof ValueSizeExceededException) {
+                errorDisplay.displayControllerException((ValueSizeExceededException) realException);
+            } else if (realException instanceof UnsupportedOperationException) {
                 errorDisplay.displayUnsupportedOperationException();
+            } else if (realException instanceof TooManyJobsException) {
+                errorDisplay.displayControllerException((TooManyJobsException) realException);
             } else {
                 errorDisplay.displayUnexpectedError();
             } 
@@ -265,17 +336,15 @@ public class FrontController extends HttpServlet {
     }
 
     @Override
-    public void doGet(HttpServletRequest request, HttpServletResponse response) {
+    public void doGet(final HttpServletRequest request, final HttpServletResponse response) {
         log.entry(request, response);
-        log.debug("doGet");
         doRequest(request, response, false);
         log.exit();
     }
 
     @Override
-    public void doPost(HttpServletRequest request, HttpServletResponse response) {
+    public void doPost(final HttpServletRequest request, final HttpServletResponse response) {
         log.entry(request, response);
-        log.debug("doPost");
         doRequest(request, response, true);
         log.exit();
     }

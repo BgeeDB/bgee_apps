@@ -516,6 +516,7 @@ public abstract class DAOManager implements AutoCloseable
 	 * 										from the {@code ServiceLoader}. 
 	 * @see #getDAOManager(Properties)
 	 */
+	//TODO: we must completely get rid of these "per-thread singletons" and static methods...
 	public static DAOManager getDAOManager() throws IllegalStateException, ServiceConfigurationError {
 		log.entry();
 		
@@ -622,6 +623,11 @@ public abstract class DAOManager implements AutoCloseable
      * This method is used to hide the implementation detail that the ID associated 
      * to a DAOManager is its holder Thread ID.
      */
+    //TODO: actually, rather than defining static methods (which we try to avoid), 
+    //we could have each DAOManager instance to store its Thread used to run it, 
+    //like in org.bgee.model.job.Job. This would allow to check the interruption status 
+    //of the running Thread, from another Thread. And we could have a "DAOManagerService" or "pool" 
+    //allowing to retrieve the DAOManager of a Thread from another Thread (as in org.bgee.model.job.JobService)
     public static void kill(Thread thread) throws DAOException {
     	log.entry(thread);
     	DAOManager.kill(thread.getId());
@@ -631,6 +637,7 @@ public abstract class DAOManager implements AutoCloseable
     //*****************************************
     //  INSTANCE ATTRIBUTES AND METHODS
     //*****************************************	
+    //FIXME: needs to make all these variables final
     /**
      * An {@code AtomicBoolean} to indicate whether 
      * this {@code DAOManager} was closed (following a call to {@link #close()}, 
@@ -662,6 +669,11 @@ public abstract class DAOManager implements AutoCloseable
      * to call close() on a DAOManager after use.
      */
     private volatile long id;
+    
+    /**
+     * The {@code Properties} that were used to obtain this {@code DAOManager}.
+     */
+    private volatile Properties parameters;
     /**
      * Every concrete implementation must provide a default constructor 
      * with no parameters. 
@@ -670,6 +682,7 @@ public abstract class DAOManager implements AutoCloseable
 		log.entry();
 		this.closed = new AtomicBoolean(false);
 		this.setKilled(false);
+		this.parameters = null;
 		log.exit();
 	}
 	
@@ -1288,8 +1301,19 @@ public abstract class DAOManager implements AutoCloseable
      * @throws IllegalArgumentException     If this {@code DAOManager} does not accept 
      * 										{@code props}. 
      */
-    public abstract void setParameters(Properties props) 
-    		throws IllegalArgumentException;
+    public void setParameters(Properties props) throws IllegalArgumentException {
+        log.entry(props);
+        //enforce immutable properties
+        this.parameters = props;
+        log.exit();
+    }
+    
+    /**
+     * @return  The {@code Properties} that were used to obtain this {@code DAOManager}.
+     */
+    public Properties getParameters() {
+        return parameters;
+    }
     
 
     //*****************************************

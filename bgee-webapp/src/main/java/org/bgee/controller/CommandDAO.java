@@ -15,6 +15,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.PageNotFoundException;
+import org.bgee.controller.user.User;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOManager;
@@ -33,6 +34,10 @@ import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.job.Job;
+import org.bgee.model.job.JobService;
+import org.bgee.model.job.exception.ThreadAlreadyWorkingException;
+import org.bgee.model.job.exception.TooManyJobsException;
 import org.bgee.view.DAODisplay;
 import org.bgee.view.ViewFactory;
 
@@ -62,40 +67,52 @@ public class CommandDAO extends CommandParent {
      *                          to use.
      * @param viewFactory       A {@code ViewFactory} that provides the display type to be used.
      * @param serviceFactory    A {@code ServiceFactory} that provides bgee services.
+     * @param jobService        A {@code JobService} instance allowing to manage jobs between threads 
+     *                          across the entire webapp.
+     * @param user              The {@code User} who is making the query to the webapp.
      */
     public CommandDAO (HttpServletResponse response, RequestParameters requestParameters, 
-            BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory) {
-        super(response, requestParameters, prop, viewFactory, serviceFactory);
+            BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory, 
+            JobService jobService, User user) {
+        super(response, requestParameters, prop, viewFactory, serviceFactory, jobService, user, null, null);
     }
 
     @Override
     public void processRequest() throws IllegalStateException, IOException, 
-        PageNotFoundException, InvalidRequestException {
+        PageNotFoundException, InvalidRequestException, ThreadAlreadyWorkingException, TooManyJobsException {
         log.entry();
         
-        //XXX: we should certainly have something using reflection API, 
-        //for now we simply hardcode DAO methods that are supported
-        if ("org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.getExpressionCalls".equals(
-                this.requestParameters.getAction())) {
 
-            this.processGetExpressionCalls();
-            
-        } else if ("org.bgee.model.dao.api.anatdev.AnatEntityDAO.getAnatEntities".equals(
-                this.requestParameters.getAction())) { 
-            
-            this.processGetAnatEntities();
-        } else if ("org.bgee.model.dao.api.ontologycommon.RelationDAO.getAnatEntityRelations".equals(
-                this.requestParameters.getAction())) { 
-            
-            this.processGetAnatEntitiyRelations();
-        } else if ("org.bgee.model.dao.api.species.SpeciesDAO.getAllSpecies".equals(
-                this.requestParameters.getAction())) { 
-            
-            this.processGetAllSpecies();
-        } else {
-            throw log.throwing(new PageNotFoundException("Incorrect " + 
-                    this.requestParameters.getUrlParametersInstance().getParamAction() + 
-                    " parameter value."));
+        Job job = this.jobService.registerNewJob(this.user.getUUID().toString());
+        try {
+            //XXX: we should certainly have something using reflection API, 
+            //for now we simply hardcode DAO methods that are supported
+            if ("org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.getExpressionCalls".equals(
+                    this.requestParameters.getAction())) {
+                
+                this.processGetExpressionCalls();
+                
+            } else if ("org.bgee.model.dao.api.anatdev.AnatEntityDAO.getAnatEntities".equals(
+                    this.requestParameters.getAction())) { 
+                
+                this.processGetAnatEntities();
+            } else if ("org.bgee.model.dao.api.ontologycommon.RelationDAO.getAnatEntityRelations".equals(
+                    this.requestParameters.getAction())) { 
+                
+                this.processGetAnatEntitiyRelations();
+            } else if ("org.bgee.model.dao.api.species.SpeciesDAO.getAllSpecies".equals(
+                    this.requestParameters.getAction())) { 
+                
+                this.processGetAllSpecies();
+            } else {
+                throw log.throwing(new PageNotFoundException("Incorrect " + 
+                        this.requestParameters.getUrlParametersInstance().getParamAction() + 
+                        " parameter value."));
+            }
+        } finally {
+            //we don't care whether the job is successful or not, we just want 
+            //to keep track of number of running jobs per user
+            job.release();
         }
         
         log.exit();

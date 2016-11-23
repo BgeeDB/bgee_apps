@@ -199,6 +199,10 @@ public class JsonParentDisplay extends ConcreteDisplayParent {
             super.sendInternalErrorHeaders();
             log.exit(); return;
         }
+        if (code == 429) {
+            super.sendTooManyRequeststHeaders();
+            log.exit(); return;
+        }
         throw log.throwing(new IllegalArgumentException("Unsupported HTTP status code: " + code));
     }
 

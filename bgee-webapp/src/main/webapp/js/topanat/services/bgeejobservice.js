@@ -12,6 +12,7 @@
 
         var service = {
             getJobStatus: getJobStatus,
+            cancelJob: cancelJob,
             getJobResult: getJobResult,
             storeJobData: storeJobData,
             getJobHistory: getJobHistory,
@@ -62,6 +63,42 @@
                     return defer.reject("Error, no job tracking data available");
                 }
 
+            );
+
+            return defer.promise;
+        }
+        
+
+        function cancelJob(jobid) {
+
+            console.time("cancelJob");
+
+            var defer = $q.defer();
+
+            if(!jobid){
+                // TODO return real error object. Return null in the mean time,
+                // avoid to log an error server side
+                console.log("Problem, no jobId provided");
+                return defer.reject("Error, no jobId provided.");
+            }
+
+            console.log("jobid: "+jobid);
+            var params = "?page=job&action=cancel&job_id=" + jobid + "&ajax=1&display_type=json";
+            console.log("cancelJob params: " + params);
+
+            // TODO handle error states, return $q.reject(response.data.message)
+
+            return $http.get(params)
+                .then(function(response){
+                    console.log("response ok");
+                    console.timeEnd("cancelJob");
+                    return response.data;
+                },
+                function(){
+                    console.log("response not ok");
+                    console.timeEnd("cancelJob");
+                    return defer.reject("Error, no cancel job data available");
+                }
             );
 
             return defer.promise;

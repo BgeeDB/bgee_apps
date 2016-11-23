@@ -8,8 +8,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
 
-import rcaller.RCaller;
-import rcaller.RCode;
+import com.github.rcaller.rStuff.RCaller;
+import com.github.rcaller.rStuff.RCode;
 
 public class TopAnatRManager {
 

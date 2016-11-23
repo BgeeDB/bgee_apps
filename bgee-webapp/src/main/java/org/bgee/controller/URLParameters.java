@@ -339,11 +339,16 @@ public class URLParameters {
             false, false, null, true, DEFAULT_IS_SECURE, 
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Double.class);
     /**
-     * A {@code Parameter<String>} containing the key associated to one TopAnat analysis. 
+     * A {@code Parameter<String>} containing the key associated to a specific analysis. 
+     * It is usually a hash of the analysis parameters. 
      */
     private static final Parameter<String> ANALYSIS_ID = new Parameter<String>("analysis_id",
-            false, false, null, true , DEFAULT_IS_SECURE, 
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+            false, false, null,
+            true,              //can be stored as data parameter for retrieving cached analyses
+            DEFAULT_IS_SECURE, 
+            128,               //length of 128 for SHA512 hexa representation 
+            "^[a-zA-Z0-9]*$",  //accept only ASCII characters for SHA512 hexa representation 
+            String.class);
     /**
      * A {@code Parameter<Integer>} that contains the job ID to be used to track a job.
      * Corresponds to the URL parameter "job_id".
@@ -374,7 +379,7 @@ public class URLParameters {
     private static final Parameter<String> EMAIL = new Parameter<String>("email",
             false, false, null, false, true, DEFAULT_MAX_SIZE, DEFAULT_FORMAT, 
             String.class);
-
+    
     /**
      * A {@code Parameter<String>} that contains the attributes to retrieve when performing 
      * a webservice query.
@@ -383,6 +388,18 @@ public class URLParameters {
     private static final Parameter<String> ATTRIBUTE_LIST = new Parameter<String>("attr_list",
             true, false, DEFAULT_SEPARATORS, true, DEFAULT_IS_SECURE, 
             10000, DEFAULT_LIST_FORMAT, String.class);
+
+    /**
+     * A {@code Parameter<String>} that contains the API key sent when using a Bgee webservice.
+     * Corresponds to the URL parameter "api_key".
+     */
+    private static final Parameter<String> API_KEY = new Parameter<String>("api_key",
+            false, false, null, 
+            false, //is storable: false, don't store user's API keys and don't change 'data' param based on them
+            true,  //is secure: yes, avoid sharing user's API keys
+            128,   //length of 128 for SHA512 hexa representation used in the BgeeDB R package
+            "^[a-zA-Z0-9]*$", //accept only ASCII characters for SHA512 hexa representation used in the BgeeDB R package
+            String.class);
 
     //    /**
 //     * A {@code Parameter<Boolean>} to determine whether all anatomical structures of 
@@ -442,7 +459,9 @@ public class URLParameters {
             FOREGROUND_LIST, FOREGROUND_FILE, BACKGROUND_LIST, BACKGROUND_FILE,
             EXPRESSION_TYPE, DATA_QUALITY, DATA_TYPE, DEV_STAGE, DECORRELATION_TYPE,
             NODE_SIZE, FDR_THRESHOLD, P_VALUE_THRESHOLD, NB_NODE, 
-            GENE_INFO, ANALYSIS_ID, 
+            GENE_INFO, 
+            //ID to identify a specific analysis
+            ANALYSIS_ID, 
             //DAO as webservice
             ATTRIBUTE_LIST, 
 //            ALL_ORGANS,
@@ -453,6 +472,8 @@ public class URLParameters {
             JOB_TITLE, JOB_ID, EMAIL, JOB_CREATION_DATE, 
             DISPLAY_TYPE,
             DATA, 
+            //webservice parameter
+            API_KEY, 
             DISPLAY_REQUEST_PARAMS, 
             AJAX
             );
@@ -737,6 +758,14 @@ public class URLParameters {
      */
     public Parameter<String> getParamAttributeList() {
         return ATTRIBUTE_LIST;
+    }
+    
+    /**
+     * @return  A {@code Parameter<String>} that contains the API key sent when using a Bgee webservice.
+     *          Corresponds to the URL parameter "api_key".
+     */
+    public Parameter<String> getParamApiKey() {
+        return API_KEY;
     }
 
     /**

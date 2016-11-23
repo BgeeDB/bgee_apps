@@ -23,10 +23,12 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.TestAncestor;
 import org.bgee.controller.exception.InvalidFormatException;
 import org.bgee.controller.exception.InvalidRequestException;
+import org.bgee.controller.user.User;
 import org.bgee.controller.utils.MailSender;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.job.JobService;
 import org.bgee.view.ViewFactory;
 import org.junit.Test;
 
@@ -51,8 +53,9 @@ public class CommandParentTest extends TestAncestor {
 
         public FakeCommand(HttpServletResponse response, RequestParameters requestParameters, 
                 BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory, 
-                ServletContext context, MailSender mailSender) {
-            super(response, requestParameters, prop, viewFactory, serviceFactory, context, mailSender);
+                JobService jobService, User user, ServletContext context, MailSender mailSender) {
+            super(response, requestParameters, prop, viewFactory, serviceFactory, jobService, user, 
+                    context, mailSender);
         }
 
         @Override
@@ -75,7 +78,7 @@ public class CommandParentTest extends TestAncestor {
         log.info("Generated query URL: " + params.getRequestURL());
         //no data type parameter, should retrieve no data types
         FakeCommand command = new FakeCommand(response, params, BgeeProperties.getBgeeProperties(), 
-                null, null, context, null);
+                null, null, null, null, context, null);
         assertEquals("No data types should have been retrieved", null, command.checkAndGetDataTypes());
         
         //all parameters, should retrieve all data types
@@ -85,7 +88,7 @@ public class CommandParentTest extends TestAncestor {
                 .collect(Collectors.toList()));
         log.info("Generated query URL: " + params.getRequestURL());
         command = new FakeCommand(response, params, BgeeProperties.getBgeeProperties(), 
-                null, null, context, null);
+                null, null, null, null, context, null);
         assertEquals("All data types should have been retrieved", EnumSet.allOf(DataType.class), 
                 command.checkAndGetDataTypes());
         
@@ -94,7 +97,7 @@ public class CommandParentTest extends TestAncestor {
         params.addValue(params.getUrlParametersInstance().getParamDataType(), RequestParameters.ALL_VALUE);
         log.info("Generated query URL: " + params.getRequestURL());
         command = new FakeCommand(response, params, BgeeProperties.getBgeeProperties(), 
-                null, null, context, null);
+                null, null, null, null, context, null);
         assertEquals("All data types should have been retrieved", EnumSet.allOf(DataType.class), 
                 command.checkAndGetDataTypes());
         
@@ -106,7 +109,7 @@ public class CommandParentTest extends TestAncestor {
                 .collect(Collectors.toList()));
         log.info("Generated query URL: " + params.getRequestURL());
         command = new FakeCommand(response, params, BgeeProperties.getBgeeProperties(), 
-                null, null, context, null);
+                null, null, null, null, context, null);
         assertEquals("All data types should have been retrieved", 
                 new HashSet<>(Arrays.asList(DataType.class.getEnumConstants()).subList(0, 1)), 
                 command.checkAndGetDataTypes());
@@ -117,7 +120,7 @@ public class CommandParentTest extends TestAncestor {
             params.addValue(params.getUrlParametersInstance().getParamDataType(), "test");
             log.info("Generated query URL: " + params.getRequestURL());
             command = new FakeCommand(response, params, BgeeProperties.getBgeeProperties(), 
-                    null, null, context, null);
+                    null, null, null, null, context, null);
             command.checkAndGetDataTypes();
             //test failed, an exception should have been thrown
             fail("Incorrect data type param should raise an exception.");
@@ -138,7 +141,7 @@ public class CommandParentTest extends TestAncestor {
         log.info("Generated query URL: " + params.getRequestURL());
         //no data quality parameter, should retrieve no data quality
         FakeCommand command = new FakeCommand(response, params, BgeeProperties.getBgeeProperties(), 
-                null, null, context, null);
+                null, null, null, null, context, null);
         assertEquals("No data quality should have been retrieved", null, command.checkAndGetDataQuality());
 
         //LOW quality
@@ -146,7 +149,7 @@ public class CommandParentTest extends TestAncestor {
         params.addValue(params.getUrlParametersInstance().getParamDataQuality(), DataQuality.LOW.name().toLowerCase());
         log.info("Generated query URL: " + params.getRequestURL());
         command = new FakeCommand(response, params, BgeeProperties.getBgeeProperties(), 
-                null, null, context, null);
+                null, null, null, null, context, null);
         assertEquals("Low quality should have been retrieved", DataQuality.LOW, 
                 command.checkAndGetDataQuality());
         
@@ -155,7 +158,7 @@ public class CommandParentTest extends TestAncestor {
         params.addValue(params.getUrlParametersInstance().getParamDataQuality(), RequestParameters.ALL_VALUE);
         log.info("Generated query URL: " + params.getRequestURL());
         command = new FakeCommand(response, params, BgeeProperties.getBgeeProperties(), 
-                null, null, context, null);
+                null, null, null, null, context, null);
         assertEquals("Low quality should have been retrieved", DataQuality.LOW, 
                 command.checkAndGetDataQuality());
         
@@ -164,7 +167,7 @@ public class CommandParentTest extends TestAncestor {
         params.addValue(params.getUrlParametersInstance().getParamDataQuality(), DataQuality.HIGH.name().toLowerCase());
         log.info("Generated query URL: " + params.getRequestURL());
         command = new FakeCommand(response, params, BgeeProperties.getBgeeProperties(), 
-                null, null, context, null);
+                null, null, null, null, context, null);
         assertEquals("High quality should have been retrieved", DataQuality.HIGH, 
                 command.checkAndGetDataQuality());
         
@@ -174,7 +177,7 @@ public class CommandParentTest extends TestAncestor {
             params.addValue(params.getUrlParametersInstance().getParamDataQuality(), "test");
             log.info("Generated query URL: " + params.getRequestURL());
             command = new FakeCommand(response, params, BgeeProperties.getBgeeProperties(), 
-                    null, null, context, null);
+                    null, null, null, null, context, null);
             command.checkAndGetDataQuality();
             //test failed, an exception should have been thrown
             fail("Incorrect data quality param should raise an exception.");
@@ -200,7 +203,7 @@ public class CommandParentTest extends TestAncestor {
         when(context.getMimeType(filePath)).thenReturn("application/zip");
         
         FakeCommand command = new FakeCommand(response, null, BgeeProperties.getBgeeProperties(), 
-                null, null, context, null);
+                null, null, null, null, context, null);
         command.launchFileDownload(filePath, "myFile");
         
         verify(response).setContentType("application/zip");

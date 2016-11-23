@@ -16,6 +16,7 @@ import org.bgee.controller.exception.RequestParametersNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotStorableException;
 import org.bgee.controller.exception.RequestSizeExceededException;
 import org.bgee.controller.exception.ValueSizeExceededException;
+import org.bgee.model.job.exception.TooManyJobsException;
 import org.bgee.view.ErrorDisplay;
 
 public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay {
@@ -198,6 +199,19 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
                 + "for the requesed view or the requested parameters.</p>");
 
         this.endDisplay();
+        log.exit();
+    }
+
+    @Override
+    public void displayControllerException(TooManyJobsException e) {
+        log.entry(e);
+
+        this.sendTooManyRequeststHeaders();
+
+        this.startDisplay("Too many jobs!");
+        this.writeln("<p class='alert'>Too Many Requests - " + htmlEntities(e.getMessage()) + "</p>");
+        this.endDisplay();
+        
         log.exit();
     }
 

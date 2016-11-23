@@ -17,6 +17,7 @@ import org.bgee.controller.exception.RequestParametersNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotStorableException;
 import org.bgee.controller.exception.RequestSizeExceededException;
 import org.bgee.controller.exception.ValueSizeExceededException;
+import org.bgee.model.job.exception.TooManyJobsException;
 import org.bgee.view.ErrorDisplay;
 import org.bgee.view.JsonHelper;
 
@@ -201,5 +202,17 @@ public class JsonErrorDisplay extends JsonParentDisplay implements ErrorDisplay 
         
         log.exit();
     }
-    
+
+    @Override
+    public void displayControllerException(TooManyJobsException e) {
+        log.entry(e);
+        
+        LinkedHashMap<String, Object> data = new LinkedHashMap<>();
+        data.put(EXCEPTION_TYPE_KEY, e.getClass().getSimpleName());
+        data.put("allowedMaxJobCount", e.getMaxAllowedJobCount());
+        //send HTTP status code 429 "Too Many Requests"
+        this.sendResponse(429, "Too Many Requests - " + e.getMessage(), data);
+        
+        log.exit();
+    }
 }

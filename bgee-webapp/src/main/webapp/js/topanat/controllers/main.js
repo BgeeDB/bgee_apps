@@ -267,7 +267,7 @@
                     // jobId check is a magic number we use to get used parameters when result is not available
                     // prevents us getting results again when we already know it's missing
 
-                    if(vm.jobId != 999999 && (typeof jobStatus.code !== 'undefined' &&
+                    if(vm.jobId != -1 && (typeof jobStatus.code !== 'undefined' &&
                         jobStatus.code !== 400 &&
                         typeof jobStatus.data.topAnatResults !== 'undefined' ||
                         (typeof jobStatus.data.jobResponse !== 'undefined' &&
@@ -294,7 +294,7 @@
                         console.log("no result, send form or check Jobstatus");
 
                         // no result, check if we have requestParameters and resubmit
-                        if(vm.jobId == 999999 || (typeof jobStatus.requestParameters !== 'undefined' && jobStatus.code == 400)) {
+                        if(vm.jobId == -1 || (typeof jobStatus.requestParameters !== 'undefined' && jobStatus.code == 400)) {
                             console.log("no result or job found for the parameters, resubmit");
                             logger.info("Job result was missing, resubmitting job");
                             $timeout(function(){
@@ -890,6 +890,16 @@
             if(request){
                 request.cancel("User cancellation");
             }
+            console.info("Calling cancelJob, jobId = " + vm.jobId);
+
+            bgeejobservice.cancelJob(vm.jobId)
+                .then(function (data) {
+                    console.log("got data from cancelJob");
+                },
+                function(data){
+                    logger.error("Error canceling job");
+                }
+            );
 
             vm.jobDone = true;
             vm.message = "Job stopped by the user";
@@ -914,6 +924,7 @@
             disableForm();
 
             vm.jobDone = false; /* When true -> Show the "New job" button */
+            vm.jobId   = -1;    /* When > 0 -> Enable the cancel button */
 
             vm.message = lang.jobProgressStart;
             vm.messageSeverity = "warning";
@@ -1007,15 +1018,25 @@
 
                 // do we need to pass data?
                 function(data){
-                    // Do not consider the user cancellation as an error
-                    var matcher = new RegExp('Job stopped by the user');
-                    if (!vm.message.match(matcher))
-                    {
+                    // Do not consider the user cancellation as an error, 
+                	// or the user submitting too many jobs
+                    var matcherJobStopped = new RegExp('Job stopped by the user');
+                    var cancel = 0;
+                    if (data.data.code == 429) {
+                        vm.message = data.data.message 
+                        + " Please note that we also propose a R package for performing programmatic TopAnat analyses, "
+                        + "see <a href='https://www.bioconductor.org/packages/BgeeDB/' target='_blank'>"
+                        + "BgeeDB Bioconductor package</a>";
+                    	cancel = 1;
+                    } else if (!vm.message.match(matcherJobStopped)) {
                         console.log('error from bgeedataservice');
                         console.log(data);
                         logger.error('TopAnat request not successful', 'TopAnat fail');
-                        vm.message = 'TopAnat request failed. Message from the server: '+data.data.message;
-                        vm.jobDone = true;
+                        vm.message = 'TopAnat request failed. Response from server: '+data.data.message;
+                        cancel = 1;
+                    }
+                    if (cancel) {
+                    	vm.jobDone = true;
                         vm.gridOptions.data = [];
 
                         if (timer) {

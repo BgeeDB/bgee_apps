@@ -274,11 +274,17 @@ public class FrontController extends HttpServlet {
             
         //=== process errors ===
         } catch (Exception e) {
+            Throwable realException = e.getCause() != null && 
+                    (e.getCause() instanceof TooManyJobsException || 
+                    e.getCause() instanceof QueryInterruptedException || 
+                    e.getCause() instanceof JobResultNotFoundException)? e.getCause(): e;
             Level logLevel = Level.ERROR;
-            if (e instanceof QueryInterruptedException || e instanceof JobResultNotFoundException) {
+            if (realException instanceof QueryInterruptedException || 
+                    realException instanceof JobResultNotFoundException || 
+                    realException instanceof TooManyJobsException) {
                 logLevel = Level.DEBUG;
             }
-            log.catching(logLevel, e);
+            log.catching(logLevel, realException);
             
             //get an ErrorDisplay of the appropriate display type. 
             //We don't acquire the ErrorDisplay before any Exception is thrown, 
@@ -294,37 +300,33 @@ public class FrontController extends HttpServlet {
                 errorDisplay = this.viewFactoryProvider.getFactory(response, displayType, rp)
                         .getErrorDisplay();
             } catch (IOException e1) {
-                e1.initCause(e);
-                e = e1;
+                e1.initCause(realException);
+                realException = e1;
             }
             if (errorDisplay == null) {
-                log.error("Could not display error message to caller: {}", e);
+                log.error("Could not display error message to caller: {}", realException);
             }
             
-            if (e instanceof InvalidFormatException) {
-                errorDisplay.displayControllerException((InvalidFormatException) e);
-            } else if (e instanceof InvalidRequestException) {
-                errorDisplay.displayControllerException((InvalidRequestException) e);
-            } else if (e instanceof MultipleValuesNotAllowedException) {
-                errorDisplay.displayControllerException((MultipleValuesNotAllowedException) e);
-            } else if (e instanceof PageNotFoundException) {
-                errorDisplay.displayControllerException((PageNotFoundException) e);
-            } else if (e instanceof RequestParametersNotFoundException) {
-                errorDisplay.displayControllerException((RequestParametersNotFoundException) e);
-            } else if (e instanceof RequestParametersNotStorableException) {
-                errorDisplay.displayControllerException((RequestParametersNotStorableException) e);
-            } else if (e instanceof RequestSizeExceededException) {
-                errorDisplay.displayControllerException((RequestSizeExceededException) e);
-            } else if (e instanceof ValueSizeExceededException) {
-                errorDisplay.displayControllerException((ValueSizeExceededException) e);
-            } else if (e instanceof UnsupportedOperationException) {
+            if (realException instanceof InvalidFormatException) {
+                errorDisplay.displayControllerException((InvalidFormatException) realException);
+            } else if (realException instanceof InvalidRequestException) {
+                errorDisplay.displayControllerException((InvalidRequestException) realException);
+            } else if (realException instanceof MultipleValuesNotAllowedException) {
+                errorDisplay.displayControllerException((MultipleValuesNotAllowedException) realException);
+            } else if (realException instanceof PageNotFoundException) {
+                errorDisplay.displayControllerException((PageNotFoundException) realException);
+            } else if (realException instanceof RequestParametersNotFoundException) {
+                errorDisplay.displayControllerException((RequestParametersNotFoundException) realException);
+            } else if (realException instanceof RequestParametersNotStorableException) {
+                errorDisplay.displayControllerException((RequestParametersNotStorableException) realException);
+            } else if (realException instanceof RequestSizeExceededException) {
+                errorDisplay.displayControllerException((RequestSizeExceededException) realException);
+            } else if (realException instanceof ValueSizeExceededException) {
+                errorDisplay.displayControllerException((ValueSizeExceededException) realException);
+            } else if (realException instanceof UnsupportedOperationException) {
                 errorDisplay.displayUnsupportedOperationException();
-            } else if (e instanceof TooManyJobsException) {
-                errorDisplay.displayControllerException((TooManyJobsException) e);
-            //when a job is launched in another thread using a lambda expression, 
-            //the TooManyJobsException is wrapped into an IllegalStateException
-            } else if (e.getCause() != null && e.getCause() instanceof TooManyJobsException) {
-                errorDisplay.displayControllerException((TooManyJobsException) e.getCause());
+            } else if (realException instanceof TooManyJobsException) {
+                errorDisplay.displayControllerException((TooManyJobsException) realException);
             } else {
                 errorDisplay.displayUnexpectedError();
             } 

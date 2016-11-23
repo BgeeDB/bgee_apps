@@ -4,6 +4,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
@@ -318,7 +319,7 @@ public class JobService {
                 
                 //rethrow exception appropriately 
                 if (realException.equals(e.getCause())) {
-                    throw log.throwing(realException);
+                    throw log.throwing(Level.DEBUG, realException);
                 }
                 throw log.throwing(e);
             }
@@ -410,7 +411,7 @@ public class JobService {
         final Integer maxJobCount = this.props == null? null: this.props.getMaxJobCountPerUser();
         final Integer jobCount = this.jobCountPerUser.get(userId);
         if (maxJobCount != null && maxJobCount > 0 && jobCount != null && jobCount >= maxJobCount) {
-            throw log.throwing(new TooManyJobsException(maxJobCount));
+            throw log.throwing(Level.DEBUG, new TooManyJobsException(maxJobCount));
         }
         log.debug("User {} currently has {} running jobs, max number of running jobs {}, it's OK", 
                 userId, jobCount, maxJobCount);

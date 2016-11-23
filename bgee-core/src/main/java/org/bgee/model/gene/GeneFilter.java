@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -13,11 +14,12 @@ import org.apache.logging.log4j.Logger;
 /**
  * A filter to parameterize queries using genes. 
  * 
- * @author Frederic Bastian
- * @version Bgee 13 Oct. 2015
- * @since Bgee 13 Oct. 2015
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13, Nov. 2015
+ * @since   Bgee 13, Oct. 2015
  */
-public class GeneFilter {
+public class GeneFilter implements Predicate<String> {
     private final static Logger log = LogManager.getLogger(GeneFilter.class.getName());
     /**
      * @see #getGenesIds()
@@ -92,5 +94,11 @@ public class GeneFilter {
     @Override
     public String toString() {
         return "GeneFilter [geneIds=" + geneIds + "]";
+    }
+
+    @Override
+    public boolean test(String geneId) {
+        log.entry();
+        return log.exit(geneId == null || geneIds.contains(geneId));
     }
 }

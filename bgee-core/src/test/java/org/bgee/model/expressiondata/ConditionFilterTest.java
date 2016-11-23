@@ -33,6 +33,8 @@ public class ConditionFilterTest extends TestAncestor {
         Condition condition7 = new Condition("ae5", "ds4", "spId");   // not kept even if ae5 is in filter 1
         Condition condition8 = new Condition("ae4", "ds5", "spId");   // not kept even if ds5 is in filter 1
         Condition condition9 = new Condition("ae6", "ds6", "spId");   // not kept by any filter
+        Condition condition10 = new Condition("ae5", null, "spId");   // not kept by any filter
+        Condition condition11 = new Condition(null, "ds5", "spId");   // not kept by any filter
         
         Set<String> anatEntitieIds = new HashSet<>(Arrays.asList("ae1", "ae2", "ae5"));
         Set<String> devStageIds = new HashSet<>(Arrays.asList("ds1", "ds2", "ds5"));
@@ -46,6 +48,8 @@ public class ConditionFilterTest extends TestAncestor {
         assertFalse(conditionFilter.test(condition7));
         assertFalse(conditionFilter.test(condition8));
         assertFalse(conditionFilter.test(condition9));
+        assertTrue(conditionFilter.test(condition10));
+        assertTrue(conditionFilter.test(condition11));
 
         conditionFilter = new ConditionFilter(anatEntitieIds, null);
         assertTrue(conditionFilter.test(condition1));
@@ -57,7 +61,9 @@ public class ConditionFilterTest extends TestAncestor {
         assertTrue(conditionFilter.test(condition7));
         assertFalse(conditionFilter.test(condition8));
         assertFalse(conditionFilter.test(condition9));
-        
+        assertTrue(conditionFilter.test(condition10));
+        assertTrue(conditionFilter.test(condition11));
+
         anatEntitieIds = new HashSet<>(Arrays.asList("ae3"));
         conditionFilter = new ConditionFilter(anatEntitieIds, null);
         assertFalse(conditionFilter.test(condition1));
@@ -69,7 +75,9 @@ public class ConditionFilterTest extends TestAncestor {
         assertFalse(conditionFilter.test(condition7));
         assertFalse(conditionFilter.test(condition8));
         assertFalse(conditionFilter.test(condition9));
-        
+        assertFalse(conditionFilter.test(condition10));
+        assertTrue(conditionFilter.test(condition11));
+
         devStageIds = new HashSet<>(Arrays.asList("ds3"));
         conditionFilter = new ConditionFilter(null, devStageIds);
         assertFalse(conditionFilter.test(condition1));
@@ -81,5 +89,7 @@ public class ConditionFilterTest extends TestAncestor {
         assertFalse(conditionFilter.test(condition7));
         assertFalse(conditionFilter.test(condition8));
         assertFalse(conditionFilter.test(condition9));
+        assertTrue(conditionFilter.test(condition10));
+        assertFalse(conditionFilter.test(condition11));
     }
 }

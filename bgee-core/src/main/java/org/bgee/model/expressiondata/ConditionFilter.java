@@ -21,7 +21,7 @@ public class ConditionFilter implements Predicate<Condition> {
     private final static Logger log = LogManager.getLogger(ConditionFilter.class.getName());
     
     /**
-     * @see #getAnatEntitieIds()
+     * @see #getAnatEntityIds()
      */
     private final Set<String> anatEntitieIds;
     /**
@@ -57,7 +57,7 @@ public class ConditionFilter implements Predicate<Condition> {
      * @return  An unmodifiable {@code Set} of {@code String}s that are the IDs 
      *          of the anatomical entities that this {@code ConditionFilter} will specify to use.
      */
-    public Set<String> getAnatEntitieIds() {
+    public Set<String> getAnatEntityIds() {
         return anatEntitieIds;
     }
     /**
@@ -121,29 +121,24 @@ public class ConditionFilter implements Predicate<Condition> {
     public boolean test(Condition condition) {
         log.entry(condition);
 
-        boolean applyToAnatEntity = this.getAnatEntitieIds() != null && !this.getAnatEntitieIds().isEmpty();
-        boolean applyToDevStage = this.getDevStageIds() != null && !this.getDevStageIds().isEmpty();
+        boolean isValid = true;
         
-        if (applyToAnatEntity && applyToDevStage) {
-            // Filter has to be apply on anat. entity IDs and dev. stage IDs
-            if (this.getAnatEntitieIds().contains(condition.getAnatEntityId()) &&
-                    this.getDevStageIds().contains(condition.getDevStageId())) {
-                return log.exit(true);
-            }
-
-        } else  if (applyToAnatEntity) {
-            // Filter has to be apply only on anat. entity IDs 
-            if (this.getAnatEntitieIds().contains(condition.getAnatEntityId())) {
-                return log.exit(true);
-            }
-
-        } else  if (applyToDevStage) {
-            // Filter has to be apply only on dev. stage IDs 
-            if (this.getDevStageIds().contains(condition.getDevStageId())) {
-                return log.exit(true);
-            }
-
+        // Check dev. stage ID 
+        if (condition.getDevStageId() != null 
+            && this.getDevStageIds() != null && !this.getDevStageIds().isEmpty()
+            && !this.getDevStageIds().contains(condition.getDevStageId())) {
+            log.debug("Dev. stage {} not validated: ", condition.getDevStageId());
+            isValid = false;
         }
-        return log.exit(false);
+    
+        // Check anat. entity ID 
+        if (condition.getAnatEntityId() != null 
+            && this.getAnatEntityIds() != null && !this.getAnatEntityIds().isEmpty()
+            && !this.getAnatEntityIds().contains(condition.getAnatEntityId())) {
+            log.debug("Anat. entity {} not validated", condition.getAnatEntityId());
+            isValid = false;
+        }
+        
+        return log.exit(isValid);
     }
 }

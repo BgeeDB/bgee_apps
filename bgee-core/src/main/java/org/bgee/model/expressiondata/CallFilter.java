@@ -3,13 +3,17 @@ package org.bgee.model.expressiondata;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.CallData.DiffExpressionCallData;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
+import org.bgee.model.expressiondata.baseelements.DataQuality;
+import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.gene.GeneFilter;
 
 /**
@@ -17,7 +21,7 @@ import org.bgee.model.gene.GeneFilter;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, July 2015
+ * @version Bgee 13, Nov. 2016
  * @since   Bgee 13, Oct. 2015
  *
  * @param T The type of {@code CallData} to be used by this {@code CallFilter}. 
@@ -36,7 +40,7 @@ import org.bgee.model.gene.GeneFilter;
 //Note that even if they were OR conditions, they should be used in several queries, 
 //as it is not possible from the DAO to make one query applying a different Set 
 //of CallData filters to different Sets of GeneFilters, ConditionFilters, etc.
-public class CallFilter<T extends CallData<?>> {
+public class CallFilter<T extends CallData<?>> implements Predicate<Call<?, T>> {
     private final static Logger log = LogManager.getLogger(CallFilter.class.getName());
     
     /**
@@ -124,9 +128,7 @@ public class CallFilter<T extends CallData<?>> {
     //Note that they *must* remain OR conditions, because the DataPropagation 
     //is part of these CallData, and we need to do one query
     //XXX: again, where to accept the diffExpressionFactor
-    
     private final Set<T> callDataFilters;
-    
     
     /**
      * Basic constructor allowing to provide one {@code CallData} filter.
@@ -303,5 +305,85 @@ public class CallFilter<T extends CallData<?>> {
         return "CallFilter [geneFilter=" + geneFilter 
                 + ", conditionFilters=" + conditionFilters 
                 + ", callDataFilters=" + callDataFilters + "]";
+    }
+    @Override
+    public boolean test(Call<?, T> call) {
+        log.entry(call);
+        
+        if (call == null) {
+            throw log.throwing(new IllegalArgumentException("ExpressionCall could not be null"));
+        }
+        if (call.getCallData() == null || call.getCallData().isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("ExpressionCallData could not be null or empty"));
+        }
+
+        // Filter according GeneFilter
+        if (geneFilter != null && !geneFilter.test(call.getGeneId())) {
+            return log.exit(false);
+        }
+
+        // Filter according ConditionFilters
+        if (conditionFilters != null && !conditionFilters.isEmpty()
+                && !conditionFilters.stream().anyMatch(f -> f.test(call.getCondition()))) {
+            return log.exit(false);
+        }
+
+        // Filter according CallDataFilters, if several filters are provided, they are seen as "OR" conditions        
+        for (T callDataFilter: this.getCallDataFilters()) {
+            for (T callData: call.getCallData()) {
+                boolean isDataTypeValid = false;
+                boolean isCallTypeValid = false;
+                boolean isDataQualityValid = false;
+                boolean isDataPropagation = false;
+
+                // Filter on DataType (AFFYMETRIX, EST, IN_SITU, RNA_SEQ)
+                if (callDataFilter.getDataType() == null 
+                        || !Collections.disjoint(
+                                callDataFilter.getDataType() == null?
+                                        EnumSet.allOf(DataType.class): EnumSet.of(callDataFilter.getDataType()),
+                                callData.getDataType() == null?
+                                        EnumSet.allOf(DataType.class): EnumSet.of(callData.getDataType()))) {
+                    isDataTypeValid = true;
+                } else {
+                    continue;
+                }
+                
+                // Filter on CallType (EXPRESSED, NOT_EXPRESSED)
+                if (callDataFilter.getCallType() == null
+                        || callData.getCallType().equals(callDataFilter.getCallType())) {
+                    isCallTypeValid = true;
+                } else {
+                    continue;
+                }
+                
+                // Filter on DataQuality (NODATA, LOW, HIGH)
+                if (callDataFilter.getDataQuality() == null
+                        || callDataFilter.getDataQuality().equals(DataQuality.LOW) 
+                        || !Collections.disjoint(
+                                callDataFilter.getDataQuality() == null?
+                                        EnumSet.allOf(DataQuality.class): EnumSet.of(callDataFilter.getDataQuality()),
+                                callData.getDataQuality() == null?
+                                        EnumSet.allOf(DataQuality.class): EnumSet.of(callData.getDataQuality()))) {
+                    isDataQualityValid = true;
+                } else {
+                    continue;
+                }
+                // Filter on DataPropagation
+                if (callDataFilter.getDataPropagation() == null
+                        || callDataFilter.getDataPropagation().getIncludingObservedData() == null
+                        || callDataFilter.getDataPropagation().getIncludingObservedData() 
+                            == call.getDataPropagation().getIncludingObservedData()) {
+                    isDataPropagation = true;
+                } else {
+                    continue;
+                }
+                
+                if (isDataTypeValid && isCallTypeValid && isDataQualityValid && isDataPropagation) {
+                    return log.exit(true);
+                }
+            }
+        }
+        return log.exit(false);
+
     }
 }

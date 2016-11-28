@@ -137,11 +137,11 @@ public class CallService extends Service {
     /**
      * A {@code Spliterator} allowing to stream over {@code Call}s grouped according
      * to provided {@code Comparator} obtained from two {@code Stream}s.
-     * This {@code Spliterator} is ordered, immutable, unsized, and 
+     * This {@code Spliterator} is ordered, sorted, immutable, unsized, and 
      * contains unique and not {@code null} elements. 
      * 
      * @author  Valentine Rech de Laval
-     * @version Bgee 13, Oct. 2016
+     * @version Bgee 13, Nov. 2016
      * @since   Bgee 13, Oct. 2016
      * 
      * @param <T>   The type of {@code Call}.
@@ -1255,9 +1255,8 @@ public class CallService extends Service {
      * and {@code DataQuality} equal to {@code null}. 
      *  
      * @param calls             A {@code Collection} of {@code ExpressionCall}s to be propagated.
-     * @param validConditions   A {@code Collection} of {@code Condition}s that are the valid conditions to configure 
-     *                          the filtering of conditions in propagated calls. 
-     *                          Can be {@code null} or empty. 
+     * @param validConditions   A {@code Collection} of {@code Condition}s that are conditions
+     *                          for which propagation is allowed. Can be {@code null} or empty. 
      * @param conditionUtils    A {@code ConditionUtils} containing at least anat. entity
      *                          {@code Ontology} to use for the propagation.
      * @param speciesId         A {@code String} that is the ID of the species 
@@ -1268,8 +1267,8 @@ public class CallService extends Service {
      */
     // NOTE: No update ExpressionCalls, to provide better unicity of the method, and allow better unit testing
     protected Set<ExpressionCall> propagateExpressionCalls(Collection<ExpressionCall> calls,
-            Collection<Condition> validConditions, ConditionUtils conditionUtils, 
-            String speciesId) throws IllegalArgumentException {
+            Collection<Condition> validConditions, ConditionUtils conditionUtils, String speciesId)
+                throws IllegalArgumentException {
         log.entry(calls, validConditions, conditionUtils, speciesId);
         
         if (calls == null || calls.isEmpty()) {
@@ -1332,10 +1331,8 @@ public class CallService extends Service {
      * and {@code DataQuality} equal to {@code null}.
      * 
      * @param calls             A {@code Set} of {@code ExpressionCall}s to be propagated.
-     * @param conditionFilters   A {@code Set} of {@code ConditionFilter}s to configure 
-     *                          the filtering of conditions in propagated calls. 
-     *                          If several {@code ConditionFilter}s are provided, they are seen as
-     *                          "OR" conditions. Can be {@code null} or empty. 
+     * @param validConditions   A {@code Collection} of {@code Condition}s that are conditions
+     *                          for which propagation is allowed. Can be {@code null} or empty. 
      * @param conditionUtils    A {@code ConditionUtils} containing at least anat. entity
      *                          {@code Ontology} to use for the propagation.
      * @param speciesId         A {@code String} that is the ID of the species 
@@ -1429,20 +1426,20 @@ public class CallService extends Service {
      * Propagate {@code ExpressionCall} to provided {@code parentConditions}.
      * 
      * @param call              An {@code ExpressionCall} that is the call to be propagated.
-     * @param propagatedConditions        A {@code Collection} of {@code Condition}s that are the conditions 
-     *                          in which the propagation have to be done.
+     * @param propagatedConds   A {@code Collection} of {@code Condition}s that are the conditions 
+     *                          for which the propagation have to be done.
      * @return                  A {@code Set} of {@code ExpressionCall}s that are propagated calls
      *                          from provided {@code childCall}.
      */
     private Set<ExpressionCall> propagateExpressionCall(
-        ExpressionCall call, Collection<Condition> propagatedConditions) {
-        log.entry(call, propagatedConditions);
+        ExpressionCall call, Collection<Condition> propagatedConds) {
+        log.entry(call, propagatedConds);
         
         log.trace("Propagation for call: {}", call);
         Set<ExpressionCall> globalCalls = new HashSet<>();
         Condition inputCondition = call.getCondition();
         
-        for (Condition condition : propagatedConditions) {
+        for (Condition condition : propagatedConds) {
             log.trace("Propagation of the current call to condition: {}", condition);
 
             Set<ExpressionCallData> selfCallData = new HashSet<>();
@@ -1548,7 +1545,7 @@ public class CallService extends Service {
         }
         if (calls.stream().anyMatch(c -> c.getCallData() == null || c.getCallData().isEmpty())) {
             throw log.throwing(new IllegalArgumentException(
-                    "At least one ExpressionCall has not ExpressionCallData"));
+                    "At least one ExpressionCall has no ExpressionCallData"));
         }
 
         // Check calls have same gene ID
@@ -1631,8 +1628,8 @@ public class CallService extends Service {
             }
         }
 
-        // Global mean rank
-        // FIXME get only min of observed calls
+        // Global mean rank:  
+        // it get only min of observed calls because propagated calls has null as global mean rank
         Optional<BigDecimal> bestGlobalMeanRank = calls.stream()
                 .map(c -> c.getGlobalMeanRank())
                 .filter(r -> r != null)

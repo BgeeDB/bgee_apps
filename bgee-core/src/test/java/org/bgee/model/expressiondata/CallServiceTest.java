@@ -1,6 +1,7 @@
 package org.bgee.model.expressiondata;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyCollectionOf;
@@ -1979,5 +1980,34 @@ public class CallServiceTest extends TestAncestor {
         } catch (IllegalStateException e) {
             // Test passed
         }
+    }
+    
+    @Test
+    public void shouldGetComparator() {
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        CallService service = new CallService(serviceFactory);
+
+        CallSpliterator<ExpressionCall, Set<ExpressionCall>> spliterator =
+            service.new CallSpliterator<>(Stream.empty(), Stream.empty(), Comparator.comparing(
+                    ExpressionCall::getGeneId, Comparator.nullsLast(Comparator.naturalOrder())));
+        Comparator<? super Set<ExpressionCall>> comparator = spliterator.getComparator();
+        
+        Set<ExpressionCall> gp1 = new HashSet<>();
+        gp1.add(new ExpressionCall("ID1", null, null, null, DataQuality.LOW, null, new BigDecimal(100)));
+        gp1.add(new ExpressionCall("ID1", null, null, null, DataQuality.HIGH, null, new BigDecimal(100)));
+
+        Set<ExpressionCall> gp2 = new HashSet<>();
+        gp2.add(new ExpressionCall("ID2", null, null, null, DataQuality.LOW, null, new BigDecimal(10)));
+
+        assertTrue("Incorect compararison", comparator.compare(gp1, gp2) < 0);
+        assertTrue("Incorect compararison", comparator.compare(gp2, gp1) > 0);
+        assertTrue("Incorect compararison", comparator.compare(gp1, gp1) == 0);
+
+        spliterator = service.new CallSpliterator<>(Stream.empty(), Stream.empty(),
+            Comparator.comparing(ExpressionCall::getGlobalMeanRank, Comparator.nullsLast(Comparator.naturalOrder())));
+        comparator = spliterator.getComparator();
+        assertTrue("Incorect compararison", comparator.compare(gp1, gp2) > 0);
+        assertTrue("Incorect compararison", comparator.compare(gp2, gp1) < 0);
+        assertTrue("Incorect compararison", comparator.compare(gp1, gp1) == 0);
     }
 }

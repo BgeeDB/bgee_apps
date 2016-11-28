@@ -171,11 +171,7 @@ public class CallService extends Service {
          */
         public CallSpliterator(Stream<T> stream1, Stream<T> stream2, Comparator<? super T> comparator) {
             super(Long.MAX_VALUE, Spliterator.ORDERED | Spliterator.IMMUTABLE 
-                    | Spliterator.DISTINCT | Spliterator.NONNULL 
-                    // FIXME should be sorted? if yes, we should override getComparator() 
-                    // building a comparator of List<Call>, how??
-//                    | Spliterator.SORTED 
-                    );
+                    | Spliterator.DISTINCT | Spliterator.NONNULL | Spliterator.SORTED);
             if (stream1 == null || stream2 == null) {
                 throw new IllegalArgumentException("Provided streams cannot be null");
             }
@@ -340,6 +336,12 @@ public class CallService extends Service {
         public Spliterator<U> trySplit() {
             log.entry();
             return log.exit(null);
+        }
+        
+        @Override
+        public Comparator<? super U> getComparator() {
+            log.entry();
+            return log.exit(Comparator.comparing(s -> s.stream().findFirst().get(), this.comparator));
         }
         
         /** 

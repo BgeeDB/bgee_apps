@@ -1271,27 +1271,25 @@ public class CallService extends Service {
         log.entry(calls, validConditions, conditionUtils, speciesId);
         
         if (calls == null || calls.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("No ExpressionCalls provided"));
+            throw log.throwing(new IllegalArgumentException("No ExpressionCall provided"));
         }
         
         Set<Condition> clonedValidConditions = Collections.unmodifiableSet(
             validConditions == null? new HashSet<>() : new HashSet<>(validConditions));
 
         // Check that ExpressionCalls are expressed or not expressed calls
-        if (calls.stream()
-                .anyMatch(c -> c.getSummaryCallType() == null 
+        if (calls.stream().anyMatch(c -> c.getSummaryCallType() == null 
                     && !c.getSummaryCallType().equals(ExpressionSummary.EXPRESSED) 
                     && !c.getSummaryCallType().equals(ExpressionSummary.NOT_EXPRESSED))) {
-                throw log.throwing(new IllegalArgumentException(
-                        "All provided ExpressionCalls should be expressed or not expressed calls"));
+            throw log.throwing(new IllegalArgumentException(
+                "All provided ExpressionCalls should be expressed or not expressed calls"));
         }
         
         // Check that ExpressionCalls are not propagated
-        if (calls.stream()
-                .anyMatch(c -> c.getDataPropagation() == null 
+        if (calls.stream().anyMatch(c -> c.getDataPropagation() == null 
                 || c.getDataPropagation().equals(DataPropagation.PropagationState.SELF))) {
-                throw log.throwing(new IllegalArgumentException(
-                        "All provided ExpressionCalls should be not propagated"));
+            throw log.throwing(new IllegalArgumentException(
+                "All provided ExpressionCalls should be not propagated"));
         }
 
         // Propagate ExpressionCalls according their ExpressionSummary.
@@ -1407,13 +1405,17 @@ public class CallService extends Service {
             
             assert propagatedConditions != null;
     
-            Set<ExpressionCall> propagatedCalls = this.propagateExpressionCall(call,
-                propagatedConditions.stream()
-                    .filter(c -> validConditions.isEmpty() || validConditions.contains(c))
-                    .collect(Collectors.toSet()));
-            allPropagatedCalls.addAll(propagatedCalls);
-            
-            log.trace("Add the propagated calls: {}", propagatedCalls);
+            Set<Condition> filteredConds = propagatedConditions.stream()
+                .filter(c -> validConditions.isEmpty() || validConditions.contains(c))
+                .collect(Collectors.toSet());
+            if (!filteredConds.isEmpty()) {
+                Set<ExpressionCall> propagatedCalls = this.propagateExpressionCall(call,
+                    propagatedConditions.stream()
+                        .filter(c -> validConditions.isEmpty() || validConditions.contains(c))
+                        .collect(Collectors.toSet()));
+                allPropagatedCalls.addAll(propagatedCalls);
+                log.debug("Add the propagated calls: {}", propagatedCalls);
+            }
         }
 
         log.trace("Done generating propagated calls.");
@@ -1425,25 +1427,20 @@ public class CallService extends Service {
      * Propagate {@code ExpressionCall} to provided {@code parentConditions}.
      * 
      * @param call              An {@code ExpressionCall} that is the call to be propagated.
-     * @param conditions        A {@code Collection} of {@code Condition}s that are the conditions 
+     * @param propagatedConditions        A {@code Collection} of {@code Condition}s that are the conditions 
      *                          in which the propagation have to be done.
      * @return                  A {@code Set} of {@code ExpressionCall}s that are propagated calls
      *                          from provided {@code childCall}.
      */
     private Set<ExpressionCall> propagateExpressionCall(
-        ExpressionCall call, Collection<Condition> conditions) {
-        log.entry(call, conditions);
+        ExpressionCall call, Collection<Condition> propagatedConditions) {
+        log.entry(call, propagatedConditions);
         
         log.trace("Propagation for call: {}", call);
-        log.debug("conditions: {}", conditions);
         Set<ExpressionCall> globalCalls = new HashSet<>();
         Condition inputCondition = call.getCondition();
-
-        // We should add input call condition to not loose that call
-        Set<Condition> allConditions = new HashSet<>(conditions);
-        allConditions.add(inputCondition);
         
-        for (Condition condition : allConditions) {
+        for (Condition condition : propagatedConditions) {
             log.trace("Propagation of the current call to condition: {}", condition);
 
             Set<ExpressionCallData> selfCallData = new HashSet<>();

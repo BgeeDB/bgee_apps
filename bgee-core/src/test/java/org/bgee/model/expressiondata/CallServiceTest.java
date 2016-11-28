@@ -975,7 +975,7 @@ public class CallServiceTest extends TestAncestor {
                         null, Arrays.asList(call4))));
 
         Set<ExpressionCall> actualResults = service.propagateExpressionCalls(
-                exprCalls, null, mockConditionUtils, speciesId);
+                exprCalls, new HashSet<>(), mockConditionUtils, speciesId);
         assertEquals("Incorrect ExpressionCalls generated", allResults, actualResults);
         
         final Set<String> allOrgans = allResults.stream().map(c -> c.getCondition().getAnatEntityId()).collect(Collectors.toSet());
@@ -992,10 +992,6 @@ public class CallServiceTest extends TestAncestor {
             .flatMap(Set::stream)
             .collect(Collectors.toSet()),
             mockConditionUtils, speciesId);
-        log.debug("expectedResults: {}",
-            expectedResults.stream().map(c -> c.getGeneId() +" - "+ c.getCondition()).collect(Collectors.toSet()));
-        log.debug("actualResults: {}",
-            actualResults.stream().map(c -> c.getGeneId() +" - "+ c.getCondition()).collect(Collectors.toSet()));
         assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
 
         Set<String> allowedStageIds = new HashSet<>(Arrays.asList("parentStageA1"));
@@ -1003,9 +999,9 @@ public class CallServiceTest extends TestAncestor {
                 .filter(c -> allowedStageIds.contains(c.getCondition().getDevStageId()))
                 .collect(Collectors.toSet());
         actualResults = service.propagateExpressionCalls(exprCalls,
-            allowedStageIds.stream()
-            .map(s -> allOrgans.stream()
-                    .map(o -> new Condition(o, s, speciesId)).collect(Collectors.toSet()))
+            allOrgans.stream()
+            .map(o -> allowedStageIds.stream()
+                    .map(s -> new Condition(o, s, speciesId)).collect(Collectors.toSet()))
             .flatMap(Set::stream)
             .collect(Collectors.toSet()),
             mockConditionUtils, speciesId);
@@ -1164,6 +1160,9 @@ public class CallServiceTest extends TestAncestor {
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpAncAndSelf)), 
                         null, Arrays.asList(call4))));
 
+        final Set<String> allOrgans = allResults.stream().map(c -> c.getCondition().getAnatEntityId()).collect(Collectors.toSet());
+        final Set<String> allStages = allResults.stream().map(c -> c.getCondition().getDevStageId()).collect(Collectors.toSet());
+
         Set<ExpressionCall> actualResults = service.propagateExpressionCalls(
                 noExprCalls, null, mockConditionUtils, speciesId);
         assertEquals("Incorrect ExpressionCalls generated", allResults, actualResults);
@@ -1173,8 +1172,12 @@ public class CallServiceTest extends TestAncestor {
                 .filter(c -> allowedOrganIds.contains(c.getCondition().getAnatEntityId()))
                 .collect(Collectors.toSet());
         actualResults = service.propagateExpressionCalls(noExprCalls,
-                allowedOrganIds.stream().map(id -> new Condition(id, null, speciesId)).collect(Collectors.toSet()),
-                mockConditionUtils, speciesId);
+            allowedOrganIds.stream()
+                .map(o -> allStages.stream()
+                    .map(s -> new Condition(o, s, speciesId)).collect(Collectors.toSet()))
+                .flatMap(Set::stream)
+                .collect(Collectors.toSet()),
+            mockConditionUtils, speciesId);
         assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
 
         Set<String> allowedStageIds = new HashSet<>(Arrays.asList("parentStageA1"));
@@ -1182,7 +1185,11 @@ public class CallServiceTest extends TestAncestor {
                 .filter(c -> allowedStageIds.contains(c.getCondition().getDevStageId()))
                 .collect(Collectors.toSet());
         actualResults = service.propagateExpressionCalls(noExprCalls,
-            allowedStageIds.stream().map(id -> new Condition(null, id, speciesId)).collect(Collectors.toSet()),
+            allOrgans.stream()
+            .map(o -> allowedStageIds.stream()
+                .map(s -> new Condition(o, s, speciesId)).collect(Collectors.toSet()))
+            .flatMap(Set::stream)
+            .collect(Collectors.toSet()),
                 mockConditionUtils, speciesId);
         assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
 
@@ -1411,9 +1418,10 @@ public class CallServiceTest extends TestAncestor {
         ExpressionCall expectedResult = new ExpressionCall("geneA", null, 
                 new DataPropagation(PropagationState.SELF_AND_DESCENDANT, PropagationState.SELF_AND_DESCENDANT, true), 
                 ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
-                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpDescAndSelf),
-                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndDesc),
-                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf)), 
+                    new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndSelf),
+                    new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf), 
+                    new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpDescAndSelf), 
+                    new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndDesc)), 
                 new BigDecimal("1.25"), Arrays.asList(descendantCall, parentCall));
         ExpressionCall actualResult = CallService.reconcileSingleGeneCalls(inputCalls);
         assertEquals("Incorrect ExpressionCall generated", expectedResult, actualResult);

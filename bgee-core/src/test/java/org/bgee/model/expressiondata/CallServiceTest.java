@@ -1056,23 +1056,23 @@ public class CallServiceTest extends TestAncestor {
         
         Condition parentCond = new Condition("organA", "stageA", speciesId);
         Set<Condition> descendantConds = new HashSet<>();
-        when(mockConditionUtils.getDescendantConditions(parentCond, false)).thenReturn(descendantConds);
+        when(mockConditionUtils.getDescendantConditions(parentCond, false, false)).thenReturn(descendantConds);
         
         parentCond = new Condition("organA", "parentStageA1", speciesId);
         descendantConds = new HashSet<>();
-        when(mockConditionUtils.getDescendantConditions(parentCond, false)).thenReturn(descendantConds);
+        when(mockConditionUtils.getDescendantConditions(parentCond, false, false)).thenReturn(descendantConds);
 
         parentCond = new Condition("parentOrganA2", "parentStageA1", speciesId);
         descendantConds = new HashSet<>(Arrays.asList(
                 new Condition("parentOrganA1", "parentStageA1", speciesId),
                 new Condition("organA", "parentStageA1", speciesId)));
-        when(mockConditionUtils.getDescendantConditions(parentCond, false)).thenReturn(descendantConds);
+        when(mockConditionUtils.getDescendantConditions(parentCond, false, false)).thenReturn(descendantConds);
 
         parentCond = new Condition("parentOrganB2", "stageB", speciesId);
         descendantConds = new HashSet<>(Arrays.asList(
                 new Condition("parentOrganB1", "stageB", speciesId),
                 new Condition("organB", "stageB", speciesId)));
-        when(mockConditionUtils.getDescendantConditions(parentCond, false)).thenReturn(descendantConds);
+        when(mockConditionUtils.getDescendantConditions(parentCond, false, false)).thenReturn(descendantConds);
         
         ExpressionCall call1 = new ExpressionCall("geneA", new Condition("organA", "stageA", speciesId),
                 dpSelfAndSelf, ExpressionSummary.NOT_EXPRESSED, DataQuality.LOW, Arrays.asList(

@@ -391,7 +391,7 @@ public class CallService extends Service {
             throw log.throwing(new IllegalArgumentException("A CallFilter must be provided."));
         }
         if (StringUtils.isBlank(speciesId)) {
-            throw log.throwing(new IllegalArgumentException("A speciesID must be provided"));
+            throw log.throwing(new IllegalArgumentException("A species ID must be provided"));
         }
         
         final Set<Attribute> clonedAttrs = Collections.unmodifiableSet(
@@ -434,10 +434,6 @@ public class CallService extends Service {
         Stream<Set<ExpressionCall>> callsByGene = StreamSupport.stream(spliterator, false)
                 .onClose(() -> spliterator.close());
         
-        // Get valid conditions  condition of callsByGene if genefilter
-        // All propagate method get only valid conditions
-        // Propagation to propagated conditions
-
         Stream<ExpressionCall> reconciledCalls;
         if (doPropagation) {
             ConditionUtils conditionUtils = new ConditionUtils(
@@ -1397,7 +1393,7 @@ public class CallService extends Service {
                 propagatedConditions = conditionUtils.getAncestorConditions(call.getCondition(), false);
                 log.trace("Ancestor conditions for {}: {}", call.getCondition(), propagatedConditions);
             } else {
-                propagatedConditions = conditionUtils.getDescendantConditions(call.getCondition(), false);
+                propagatedConditions = conditionUtils.getDescendantConditions(call.getCondition(), false, false);
                 log.trace("Descendant conditions for {}: {}",  call.getCondition(), propagatedConditions);
             }
             propagatedConditions.add(call.getCondition());
@@ -1413,7 +1409,7 @@ public class CallService extends Service {
                         .filter(c -> validConditions.isEmpty() || validConditions.contains(c))
                         .collect(Collectors.toSet()));
                 allPropagatedCalls.addAll(propagatedCalls);
-                log.debug("Add the propagated calls: {}", propagatedCalls);
+                log.trace("Add the propagated calls: {}", propagatedCalls);
             }
         }
 

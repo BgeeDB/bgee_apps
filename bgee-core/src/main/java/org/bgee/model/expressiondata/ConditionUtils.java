@@ -467,9 +467,28 @@ public class ConditionUtils implements Comparator<Condition> {
      * @return              A {@code Set} of {@code Condition}s that are descendants of {@code cond}.
      * @throws IllegalArgumentException If {@code cond} is not registered to this {@code ConditionUtils}.
      */
-    // TODO: refactor this method with constructor and getAncestorConditions
     public Set<Condition> getDescendantConditions(Condition cond, boolean directRelOnly) {
         log.entry(cond, directRelOnly);
+        return getDescendantConditions(cond, directRelOnly, true);
+    }
+
+    /**
+     * Get all the {@code Condition}s that are more precise than {@code cond} 
+     * among the {@code Condition}s provided at instantiation.
+     * 
+     * @param cond              A {@code Condition} for which we want to retrieve descendant {@code Condition}s.
+     * @param directRelOnly     A {@code boolean} defining whether only direct parents 
+     *                          or children of {@code element} should be returned.
+     * @param includeSubstages  A {@code boolean} defining whether conditions with child stages
+     *                          should be returned.
+     * @return                  A {@code Set} of {@code Condition}s that are descendants of {@code cond}.
+     * @throws IllegalArgumentException If {@code cond} is not registered to this {@code ConditionUtils}.
+     */
+    // TODO: refactor this method with constructor and getAncestorConditions
+    public Set<Condition> getDescendantConditions(Condition cond, boolean directRelOnly,
+        boolean includeSubstages) {
+        log.entry(cond, directRelOnly, includeSubstages);
+        
         if (!this.getConditions().contains(cond)) {
             throw log.throwing(new IllegalArgumentException("The provided condition "
                     + "is not registered to this ConditionUtils: " + cond));
@@ -477,8 +496,11 @@ public class ConditionUtils implements Comparator<Condition> {
         
         Set<String> devStageIds = new HashSet<>();
         devStageIds.add(cond.getDevStageId());
-        // NOTE: We should not propagate to descendant stages.
-        
+        if (includeSubstages && this.devStageOnt != null && cond.getDevStageId() != null) {
+            devStageIds.addAll(this.devStageOnt.getDescendants(
+                    this.devStageOnt.getElement(cond.getDevStageId()), directRelOnly)
+                    .stream().map(e -> e.getId()).collect(Collectors.toSet()));
+       }
         Set<String> anatEntityIds = new HashSet<>();
         anatEntityIds.add(cond.getAnatEntityId());
         if (this.anatEntityOnt != null && cond.getAnatEntityId() != null) {

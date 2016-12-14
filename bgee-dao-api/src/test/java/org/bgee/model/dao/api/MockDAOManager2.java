@@ -10,6 +10,7 @@ import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixProbesetDAO;
@@ -47,8 +48,8 @@ import static org.mockito.Mockito.mock;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, June 2016
- * @since   Bgee 13
+ * @version Bgee 13, Dec. 2016
+ * @since   Bgee 13, July 2013
  */
 public class MockDAOManager2 extends DAOManager {
 	
@@ -144,6 +145,10 @@ public class MockDAOManager2 extends DAOManager {
     @Override
     protected NoExpressionCallDAO getNewNoExpressionCallDAO() {
         return this.instanceMockManager.getNewNoExpressionCallDAO();
+    }
+    @Override
+    protected ExperimentExpressionDAO getNewExperimentExpressionDAO() {
+        return this.instanceMockManager.getNewExperimentExpressionDAO();
     }
     @Override
     protected DiffExpressionCallDAO getNewDiffExpressionCallDAO() {

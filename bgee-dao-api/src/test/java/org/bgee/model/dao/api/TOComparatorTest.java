@@ -19,6 +19,7 @@ import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.ComparisonFactor;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.DiffExprCallType;
+import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.GlobalExpressionToExpressionTO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.GlobalNoExpressionToNoExpressionTO;
@@ -51,8 +52,8 @@ import org.junit.Test;
  *  
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, June 2016
- * @since   Bgee 13
+ * @version Bgee 13, Dec. 2016
+ * @since   Bgee 13, Sep. 2014
  */
 public class TOComparatorTest extends TestAncestor {
     /**
@@ -448,6 +449,28 @@ public class TOComparatorTest extends TestAncestor {
         to2 = new NoExpressionCallTO("2", "ID1", "Anat_id1", "Stage_id6", 
                 DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
                 DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+    }
+
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * using {@code ExperimentExpressionTO}s.
+     */
+    @Test
+    public void testAreExperimentExpressionTOEqual() {
+        ExperimentExpressionTO to1 = new ExperimentExpressionTO("1", 1, 2, 3, 4, 5);
+        ExperimentExpressionTO to2 = new ExperimentExpressionTO("1", 1, 2, 3, 4, 5);
+        assertTrue(TOComparator.areTOsEqual(to1, to2, true));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+        
+        // Same ID but different experiment count
+        to2 = new ExperimentExpressionTO("1", 1, 2, 3, 4, 999);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        assertFalse(TOComparator.areTOsEqual(to1, to2, false));
+        
+        // Different ID
+        to2 = new ExperimentExpressionTO("2", 1, 2, 3, 4, 5);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
     }

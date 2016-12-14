@@ -17,9 +17,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -40,6 +42,7 @@ import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.CallDAOFilter;
 import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
+import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTOResultSet;
@@ -67,7 +70,7 @@ import org.junit.Test;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Nov. 2016
+ * @version Bgee 13, Dec. 2016
  * @since   Bgee 13, Nov. 2015
  */
 public class CallServiceTest extends TestAncestor {
@@ -1878,105 +1881,111 @@ public class CallServiceTest extends TestAncestor {
     @Test
     public void shouldTryAdvance() {
         
+        List<ExpressionCallTO> callTOs = new ArrayList<ExpressionCallTO>();
+        callTOs.add(new ExpressionCallTO("expId1", "geneId1", null, null, null, null, null, null, null, null, null, null, null));
+        callTOs.add(new ExpressionCallTO("expId2", "geneId1", null, null, null, null, null, null, null, null, null, null, null));
+        callTOs.add(new ExpressionCallTO("expId3", "geneId1", null, null, null, null, null, null, null, null, null, null, null));
+        callTOs.add(new ExpressionCallTO("expId4", "geneId2", null, null, null, null, null, null, null, null, null, null, null));
+        callTOs.add(new ExpressionCallTO("expId5", "geneId2", null, null, null, null, null, null, null, null, null, null, null));
+        callTOs.add(new ExpressionCallTO("expId6", "geneId2", null, null, null, null, null, null, null, null, null, null, null));
+        
         // Two streams well defined
-        List<ExpressionCall> calls1 = new ArrayList<ExpressionCall>();
-        calls1.add(new ExpressionCall("ID1", new Condition("ae1", "s1", "1"), null, null, null, null, null));
-        calls1.add(new ExpressionCall("ID1", new Condition("ae2", "s1", "1"), null, null, null, null, null));
-        calls1.add(new ExpressionCall("ID2", new Condition("ae1", "s1", "1"), null, null, null, null, null));
-        calls1.add(new ExpressionCall("ID2", new Condition("ae2", "s1", "1"), null, null, null, null, null));
-        Stream<ExpressionCall> stream1 = calls1.stream();
+        List<ExperimentExpressionTO> expExprTOs1 = new ArrayList<ExperimentExpressionTO>();
+        expExprTOs1.add(new ExperimentExpressionTO("expId1", 1, null, null, null, null));
+        expExprTOs1.add(new ExperimentExpressionTO("expId1", 2, null, null, null, null));
+        expExprTOs1.add(new ExperimentExpressionTO("expId2", 3, null, null, null, null));
+        expExprTOs1.add(new ExperimentExpressionTO("expId5", 4, null, null, null, null));
+        Stream<ExperimentExpressionTO> stream1 = expExprTOs1.stream();
 
-        List<ExpressionCall> calls2 = new ArrayList<ExpressionCall>(); 
-        calls2.add(new ExpressionCall("ID1", new Condition("ae3", "s1", "1"), null, null, null, null, null));
-        calls2.add(new ExpressionCall("ID4", new Condition("ae1", "s1", "1"), null, null, null, null, null));
-        Stream<ExpressionCall> stream2 = calls2.stream();
+        List<ExperimentExpressionTO> expExprTOs2 = new ArrayList<ExperimentExpressionTO>();
+        expExprTOs2.add(new ExperimentExpressionTO("expId1", 5, null, null, null, null));
+        expExprTOs2.add(new ExperimentExpressionTO("expId2", 6, null, null, null, null));
+        expExprTOs2.add(new ExperimentExpressionTO("expId4", 7, null, null, null, null));
+        Stream<ExperimentExpressionTO> stream2 = expExprTOs2.stream();
 
+        Set<Stream<ExperimentExpressionTO>> set = new HashSet<>();
+        set.add(stream1);
+        set.add(stream2);
+        
         DAOManager manager = mock(DAOManager.class);
         ServiceFactory serviceFactory = mock(ServiceFactory.class);
         when(serviceFactory.getDAOManager()).thenReturn(manager);
         CallService service = new CallService(serviceFactory);
-        final CallSpliterator<ExpressionCall, Set<ExpressionCall>> spliterator1 = service.new CallSpliterator<>(
-                stream1, stream2,
-                Comparator.comparing(ExpressionCall::getGeneId, Comparator.nullsLast(Comparator.naturalOrder())));
-        List<Set<ExpressionCall>> callsByGene = StreamSupport.stream(spliterator1, false)
-                .onClose(() -> spliterator1.close())
-                .collect(Collectors.toList());
+        final CallSpliterator<ExpressionCallTO, Map<ExpressionCallTO, Set<ExperimentExpressionTO>>> 
+            spliterator1 = service.new CallSpliterator<>(callTOs.stream(), set, 
+                Comparator.comparing(ExpressionCallTO::getGeneId, Comparator.nullsLast(Comparator.naturalOrder())));
+        List<Map<ExpressionCallTO, Set<ExperimentExpressionTO>>> callsByGene = StreamSupport.stream(spliterator1, false)
+                .onClose(() -> spliterator1.close()).collect(Collectors.toList());
         
-        assertEquals(3, callsByGene.size());
-        Set<ExpressionCall> gp1 = new HashSet<>();
-        gp1.add(new ExpressionCall("ID1", new Condition("ae1", "s1", "1"), null, null, null, null, null));
-        gp1.add(new ExpressionCall("ID1", new Condition("ae2", "s1", "1"), null, null, null, null, null));
-        gp1.add(new ExpressionCall("ID1", new Condition("ae3", "s1", "1"), null, null, null, null, null));
-        assertEquals(gp1, callsByGene.get(0));
-     
-        Set<ExpressionCall> gp2 = new HashSet<>();
-        gp2.add(new ExpressionCall("ID2", new Condition("ae1", "s1", "1"), null, null, null, null, null));
-        gp2.add(new ExpressionCall("ID2", new Condition("ae2", "s1", "1"), null, null, null, null, null));
-        assertEquals(gp2, callsByGene.get(1));
-        
-        Set<ExpressionCall> gp3 = new HashSet<>();
-        gp3.add(new ExpressionCall("ID4", new Condition("ae1", "s1", "1"), null, null, null, null, null));
-        assertEquals(gp3, callsByGene.get(2));
-
-        // One stream well defined and an empty stream
-        stream1 = calls1.stream();
-        stream2 = Stream.empty();
-        final CallSpliterator<ExpressionCall, Set<ExpressionCall>> spliterator2 =
-                service.new CallSpliterator<>(stream1, stream2, Comparator.comparing(
-                        ExpressionCall::getGeneId, Comparator.nullsLast(Comparator.naturalOrder())));
-        callsByGene = StreamSupport.stream(spliterator2, false)
-                .onClose(() -> spliterator2.close())
-                .collect(Collectors.toList());
         assertEquals(2, callsByGene.size());
-        gp1.clear();
-        gp1.add(new ExpressionCall("ID1", new Condition("ae1", "s1", "1"), null, null, null, null, null));
-        gp1.add(new ExpressionCall("ID1", new Condition("ae2", "s1", "1"), null, null, null, null, null));
-        assertEquals(gp1, callsByGene.get(0));
-        assertEquals(gp2, callsByGene.get(1));
-        
+        Map<ExpressionCallTO, Set<ExperimentExpressionTO>> mapGene1 = new HashMap<>();
+        mapGene1.put(new ExpressionCallTO("expId1", "geneId1", null, null, null, null, null, null, null, null, null, null, null),
+            new HashSet<>(Arrays.asList(
+                new ExperimentExpressionTO("expId1", 1, null, null, null, null),
+                new ExperimentExpressionTO("expId1", 2, null, null, null, null),
+                new ExperimentExpressionTO("expId1", 5, null, null, null, null))));
+        mapGene1.put(new ExpressionCallTO("expId2", "geneId1", null, null, null, null, null, null, null, null, null, null, null),
+            new HashSet<>(Arrays.asList(
+                new ExperimentExpressionTO("expId2", 3, null, null, null, null),
+                new ExperimentExpressionTO("expId2", 6, null, null, null, null))));
+        assertEquals(mapGene1, callsByGene.get(0));
+
+        Map<ExpressionCallTO, Set<ExperimentExpressionTO>> mapGene2 = new HashMap<>();
+        mapGene2.put(new ExpressionCallTO("expId4", "geneId2", null, null, null, null, null, null, null, null, null, null, null),
+            new HashSet<>(Arrays.asList(
+                new ExperimentExpressionTO("expId4", 7, null, null, null, null))));
+        mapGene2.put(new ExpressionCallTO("expId5", "geneId2", null, null, null, null, null, null, null, null, null, null, null),
+            new HashSet<>(Arrays.asList(
+                new ExperimentExpressionTO("expId5", 4, null, null, null, null))));
+        assertEquals(mapGene2, callsByGene.get(1));
+
         // Different comparator
-        calls1.clear();
-        calls1.add(new ExpressionCall("ID2", new Condition("ae2", "s1", "1"), null, null, null, null, null));
-        calls1.add(new ExpressionCall("ID1", new Condition("ae2", "s1", "1"), null, null, null, null, null));
-        calls1.add(new ExpressionCall("ID2", new Condition("ae1", "s1", "1"), null, null, null, null, null));
-        calls1.add(new ExpressionCall("ID1", new Condition("ae1", "s1", "1"), null, null, null, null, null));
-        calls2.clear(); 
-        calls2.add(new ExpressionCall("ID4", new Condition("ae2", "s1", "1"), null, null, null, null, null));
-        calls2.add(new ExpressionCall("ID1", new Condition("ae1", "s1", "1"), null, null, null, null, null));
+        callTOs = new ArrayList<ExpressionCallTO>();
+        callTOs.add(new ExpressionCallTO("expId1", "geneId1", "anatEntityId1", "stageId1", null, null, null, null, null, null, null, null, null));
+        callTOs.add(new ExpressionCallTO("expId2", "geneId1", "anatEntityId2", "stageId1", null, null, null, null, null, null, null, null, null));
+        callTOs.add(new ExpressionCallTO("expId3", "geneId2", "anatEntityId2", "stageId1", null, null, null, null, null, null, null, null, null));
+        
+        expExprTOs1 = new ArrayList<ExperimentExpressionTO>();
+        expExprTOs1.add(new ExperimentExpressionTO("expId1", 1, null, null, null, null));
+        expExprTOs1.add(new ExperimentExpressionTO("expId2", 2, null, null, null, null));
+        expExprTOs1.add(new ExperimentExpressionTO("expId3", 3, null, null, null, null));
+        stream1 = expExprTOs1.stream();
 
-        stream1 = calls1.stream();
-        stream2 = calls2.stream();
-        final CallSpliterator<ExpressionCall, Set<ExpressionCall>> spliterator3 =
-                service.new CallSpliterator<>(stream1, stream2, Comparator.comparing(
-                        (call) -> call.getCondition().getAnatEntityId(),
-                        Comparator.nullsLast(Comparator.reverseOrder())));
-        callsByGene = StreamSupport.stream(spliterator3, false)
-                .onClose(() -> spliterator3.close())
+        set = new HashSet<>();
+        set.add(stream1);
+
+        final CallSpliterator<ExpressionCallTO, Map<ExpressionCallTO, Set<ExperimentExpressionTO>>> 
+            spliterator2 = service.new CallSpliterator<>(callTOs.stream(), set, 
+                Comparator.comparing(ExpressionCallTO::getAnatEntityId, Comparator.nullsLast(Comparator.naturalOrder())));
+        callsByGene = StreamSupport.stream(spliterator2, false).onClose(() -> spliterator2.close())
                 .collect(Collectors.toList());
+        
         assertEquals(2, callsByGene.size());
-        
-        gp1.clear();
-        gp2.clear();
-        gp1.add(new ExpressionCall("ID2", new Condition("ae2", "s1", "1"), null, null, null, null, null));
-        gp1.add(new ExpressionCall("ID1", new Condition("ae2", "s1", "1"), null, null, null, null, null));
-        gp1.add(new ExpressionCall("ID4", new Condition("ae2", "s1", "1"), null, null, null, null, null));
-        gp2.add(new ExpressionCall("ID2", new Condition("ae1", "s1", "1"), null, null, null, null, null));
-        gp2.add(new ExpressionCall("ID1", new Condition("ae1", "s1", "1"), null, null, null, null, null));
-        gp2.add(new ExpressionCall("ID1", new Condition("ae1", "s1", "1"), null, null, null, null, null));
+        mapGene1 = new HashMap<>();
+        mapGene1.put(new ExpressionCallTO("expId1", "geneId1", "anatEntityId1", "stageId1", null, null, null, null, null, null, null, null, null),
+            new HashSet<>(Arrays.asList(
+                new ExperimentExpressionTO("expId1", 1, null, null, null, null))));
+        assertEquals(mapGene1, callsByGene.get(0));
 
-        assertEquals(gp1, callsByGene.get(0));
-        assertEquals(gp2, callsByGene.get(1));
-        
-        
+        mapGene2 = new HashMap<>();
+        mapGene2.put(new ExpressionCallTO("expId2", "geneId1", "anatEntityId2", "stageId1", null, null, null, null, null, null, null, null, null),
+            new HashSet<>(Arrays.asList(
+                new ExperimentExpressionTO("expId2", 2, null, null, null, null))));
+        mapGene2.put(new ExpressionCallTO("expId3", "geneId2", "anatEntityId2", "stageId1", null, null, null, null, null, null, null, null, null),
+            new HashSet<>(Arrays.asList(
+                new ExperimentExpressionTO("expId3", 3, null, null, null, null))));
+        assertEquals(mapGene2, callsByGene.get(1));
+
+
         // Bad order
-        final CallSpliterator<ExpressionCall, Set<ExpressionCall>> spliterator4 =
-                service.new CallSpliterator<>(stream1, stream2, Comparator.comparing(
-                        ExpressionCall::getGeneId, Comparator.nullsLast(Comparator.naturalOrder())));
+        final CallSpliterator<ExpressionCallTO, Map<ExpressionCallTO, Set<ExperimentExpressionTO>>> 
+            spliterator3 = service.new CallSpliterator<>(callTOs.stream(), set, 
+            Comparator.comparing(ExpressionCallTO::getAnatEntityId, Comparator.nullsLast(Comparator.naturalOrder())));
         try {
-            callsByGene = StreamSupport.stream(spliterator4, false)
+            callsByGene = StreamSupport.stream(spliterator3, false)
                     .onClose(() -> spliterator3.close())
                     .collect(Collectors.toList());
-            fail("Should throw an exception due to bad orderof calls");
+            fail("Should throw an exception due to bad order of call TOs");
         } catch (IllegalStateException e) {
             // Test passed
         }
@@ -1987,27 +1996,36 @@ public class CallServiceTest extends TestAncestor {
         ServiceFactory serviceFactory = mock(ServiceFactory.class);
         CallService service = new CallService(serviceFactory);
 
-        CallSpliterator<ExpressionCall, Set<ExpressionCall>> spliterator =
-            service.new CallSpliterator<>(Stream.empty(), Stream.empty(), Comparator.comparing(
-                    ExpressionCall::getGeneId, Comparator.nullsLast(Comparator.naturalOrder())));
-        Comparator<? super Set<ExpressionCall>> comparator = spliterator.getComparator();
+        final CallSpliterator<ExpressionCallTO, Map<ExpressionCallTO, Set<ExperimentExpressionTO>>> 
+        spliterator1 = service.new CallSpliterator<>(Stream.empty(), new HashSet<>(), 
+        Comparator.comparing(ExpressionCallTO::getGeneId, Comparator.nullsLast(Comparator.naturalOrder())));
+        Comparator<? super Map<ExpressionCallTO, Set<ExperimentExpressionTO>>> comparator = spliterator1.getComparator();
         
-        Set<ExpressionCall> gp1 = new HashSet<>();
-        gp1.add(new ExpressionCall("ID1", null, null, null, DataQuality.LOW, null, new BigDecimal(100)));
-        gp1.add(new ExpressionCall("ID1", null, null, null, DataQuality.HIGH, null, new BigDecimal(100)));
+        Map<ExpressionCallTO, Set<ExperimentExpressionTO>> mapGene1 = new HashMap<>();
+        mapGene1.put(new ExpressionCallTO("expId1", "geneId1", "ae2", null, null, null, null, null, null, null, null, null, null),
+            null);
+        mapGene1.put(new ExpressionCallTO("expId2", "geneId1", "ae2", null, null, null, null, null, null, null, null, null, null),
+            null);
 
-        Set<ExpressionCall> gp2 = new HashSet<>();
-        gp2.add(new ExpressionCall("ID2", null, null, null, DataQuality.LOW, null, new BigDecimal(10)));
+        Map<ExpressionCallTO, Set<ExperimentExpressionTO>> mapGene2 = new HashMap<>();
+        mapGene2.put(new ExpressionCallTO("expId4", "geneId2", "ae1", null, null, null, null, null, null, null, null, null, null),
+            null);
+        mapGene2.put(new ExpressionCallTO("expId5", "geneId2", "ae1", null, null, null, null, null, null, null, null, null, null),
+            null);
 
-        assertTrue("Incorect compararison", comparator.compare(gp1, gp2) < 0);
-        assertTrue("Incorect compararison", comparator.compare(gp2, gp1) > 0);
-        assertTrue("Incorect compararison", comparator.compare(gp1, gp1) == 0);
+        Set<ExpressionCallTO> gp2 = new HashSet<>();
+        gp2.add(new ExpressionCallTO("expId6", "geneId2", null, null, null, null, null, null, null, null, null, null, null));
 
-        spliterator = service.new CallSpliterator<>(Stream.empty(), Stream.empty(),
-            Comparator.comparing(ExpressionCall::getGlobalMeanRank, Comparator.nullsLast(Comparator.naturalOrder())));
-        comparator = spliterator.getComparator();
-        assertTrue("Incorect compararison", comparator.compare(gp1, gp2) > 0);
-        assertTrue("Incorect compararison", comparator.compare(gp2, gp1) < 0);
-        assertTrue("Incorect compararison", comparator.compare(gp1, gp1) == 0);
+        assertTrue("Incorect compararison", comparator.compare(mapGene1, mapGene2) < 0);
+        assertTrue("Incorect compararison", comparator.compare(mapGene2, mapGene1) > 0);
+        assertTrue("Incorect compararison", comparator.compare(mapGene2, mapGene2) == 0);
+
+        final CallSpliterator<ExpressionCallTO, Map<ExpressionCallTO, Set<ExperimentExpressionTO>>> 
+        spliterator2 = service.new CallSpliterator<>(Stream.empty(), new HashSet<>(), 
+        Comparator.comparing(ExpressionCallTO::getAnatEntityId, Comparator.nullsLast(Comparator.naturalOrder())));
+        comparator = spliterator2.getComparator();
+        assertTrue("Incorect compararison", comparator.compare(mapGene1, mapGene2) > 0);
+        assertTrue("Incorect compararison", comparator.compare(mapGene2, mapGene1) < 0);
+        assertTrue("Incorect compararison", comparator.compare(mapGene1, mapGene1) == 0);
     }
 }

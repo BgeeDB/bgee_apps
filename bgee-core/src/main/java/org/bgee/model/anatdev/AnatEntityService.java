@@ -3,6 +3,7 @@ package org.bgee.model.anatdev;
 import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Map;
@@ -48,6 +49,21 @@ public class AnatEntityService extends Service {
      */
     public AnatEntityService(DAOManager daoManager) {
         super(daoManager);
+    }
+    
+    /**
+     * Retrieve {@code AnatEntity} for the requested ID.
+     *      
+     * @param speciesIds    A {@code Collection} of {@code String}s that are IDs of species 
+     *                      for which to return the {@code AnatEntity}s.
+     * @return              A {@code Stream} of {@code AnatEntity}s retrieved for the requested 
+     *                      species IDs.
+     */
+    public AnatEntity loadAnatEntityById(String anatEntityId) {
+        log.entry(anatEntityId);
+        Stream<AnatEntity> anatEntityStream = this.loadAnatEntities(null, true, Collections.singleton(anatEntityId));
+        AnatEntity anatEntity = anatEntityStream.count() == 0 ? null: anatEntityStream.findFirst().get();
+        return log.exit(anatEntity);
     }
     
     /**

@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.AboutDisplay;
+import org.bgee.view.AnatEntityDisplay;
 import org.bgee.view.DAODisplay;
 import org.bgee.view.DocumentationDisplay;
 import org.bgee.view.DownloadDisplay;
@@ -126,6 +127,12 @@ public class HtmlFactory extends ViewFactory {
 	public GeneDisplay getGeneDisplay() throws IOException {
 		log.entry();
 		return log.exit(new HtmlGeneDisplay(response, requestParameters, prop, jsonHelper, this));
+	}
+	
+	@Override
+	public AnatEntityDisplay getAnatEntityDisplay() throws IOException {
+		log.entry();
+		return log.exit(new HtmlAnatEntityDisplay(response, requestParameters, prop, jsonHelper, this));
 	}
 	
 	@Override

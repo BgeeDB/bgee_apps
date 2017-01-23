@@ -145,8 +145,32 @@ public class CommandAnatEntity extends CommandParent{
 	 *             ordered by global mean rank.
 	 */
 	private HashMap<String,List<ExpressionCall>> getExpressions(AnatEntity anatEntity, Set<String> speciesIds) {
-	    //TODO
-		return null;
+	    log.entry(anatEntity);
+	    SpeciesService speciesService = serviceFactory.getSpeciesService();
+	    Set<Species> speciesSet = speciesIds == null ? speciesService.loadSpeciesInDataGroups(false) : speciesService.loadSpeciesByIds(speciesIds, false);
+		LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
+	                new LinkedHashMap<>();
+		//The ordering is not essential here, because anyway we will need to order calls 
+		//with an equal rank, based on the relations between their conditions, which is difficult 
+		//to make in a query to the data source.
+	    serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
+		CallService callService = serviceFactory.getCallService();
+		Collection<ConditionFilter> condFilterCollection = new ArrayList<>();
+		condFilterCollection.add(new ConditionFilter(Collections.singleton(anatEntity.getId()), null));
+		HashMap<String, List<ExpressionCall>> expressionCallBySpecies = new HashMap<String, List<ExpressionCall>>();
+		for(Species species:speciesSet){
+			expressionCallBySpecies.put(species.getId(),
+					callService.loadExpressionCalls(
+					        species.getId(), 
+			                new ExpressionCallFilter(null, condFilterCollection, new DataPropagation(), 
+			                        Arrays.asList(new ExpressionCallData(Expression.EXPRESSED))), 
+			                EnumSet.of(CallService.Attribute.GENE_ID, CallService.Attribute.ANAT_ENTITY_ID, 
+			                        CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.CALL_DATA, 
+			                        CallService.Attribute.GLOBAL_DATA_QUALITY, CallService.Attribute.GLOBAL_RANK), 
+			                serviceOrdering)
+			            .collect(Collectors.toList()));
+		}
+		return log.exit(expressionCallBySpecies);
 	}
 }
 

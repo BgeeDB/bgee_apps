@@ -235,7 +235,9 @@ public class FrontController extends HttpServlet {
                         serviceFactory, this.jobService, user);
             } else if (requestParameters.isAGenePageCategory()){
                 controller = new CommandGene(response, requestParameters, this.prop, factory, serviceFactory);      
-            } else if (requestParameters.isASourcePageCategory()){
+            } else if (requestParameters.isAnAnatEntityPageCategory()){
+                controller = new CommandAnatEntity(response, requestParameters, this.prop, factory, serviceFactory);      
+            }else if (requestParameters.isASourcePageCategory()){
                 controller = new CommandSource(response, requestParameters, this.prop, factory, serviceFactory);      
             } else if (requestParameters.isASpeciesPageCategory()){
                 controller = new CommandSpecies(response, requestParameters, this.prop, factory, serviceFactory);      

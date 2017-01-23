@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.AboutDisplay;
+import org.bgee.view.AnatEntityDisplay;
 import org.bgee.view.DAODisplay;
 import org.bgee.view.DocumentationDisplay;
 import org.bgee.view.DownloadDisplay;
@@ -104,6 +105,11 @@ public class JsonFactory extends ViewFactory {
 
 	@Override
 	public GeneDisplay getGeneDisplay() throws IOException {
+        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
+	}
+	
+	@Override
+	public AnatEntityDisplay getAnatEntityDisplay() throws IOException {
         throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
 	}
 

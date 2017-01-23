@@ -146,6 +146,8 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	    urlTopAnat.setPage(RequestParameters.PAGE_TOP_ANAT);
 	    RequestParameters urlGeneSearch = this.getNewRequestParameters();
 	    urlGeneSearch.setPage(RequestParameters.PAGE_GENE);
+	    RequestParameters urlAnatEntitySearch = this.getNewRequestParameters();
+	    urlAnatEntitySearch.setPage(RequestParameters.PAGE_ANAT_ENTITY);
 	    RequestParameters urlDownload = this.getNewRequestParameters();
 	    urlDownload.setPage(RequestParameters.PAGE_DOWNLOAD);
 	    
@@ -154,6 +156,8 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	    		"'><span class='glyphicon glyphicon-stats'></span>Expression enrichment analysis</a>");
 	    this.writeln("<a href='"+ urlGeneSearch.getRequestURL() + 
 	    		"'><span class='glyphicon glyphicon-search'></span>Gene search</a>");
+	    this.writeln("<a href='"+ urlAnatEntitySearch.getRequestURL() + 
+	    		"'><span class='glyphicon glyphicon-search'></span>Anatomical entity search</a>");
 	    this.writeln("<a href='"+ urlDownload.getRequestURL() + 
 	    		"'><span class='glyphicon glyphicon-download'></span>Download</a>");
 	    this.writeln("</div>"); // close start_buttons

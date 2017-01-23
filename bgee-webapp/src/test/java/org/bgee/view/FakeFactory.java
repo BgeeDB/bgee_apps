@@ -95,6 +95,11 @@ public class FakeFactory extends ViewFactory {
 	public GeneDisplay getGeneDisplay() throws IOException {
 		return null;
 	}
+	
+	@Override
+	public AnatEntityDisplay getAnatEntityDisplay() throws IOException {
+		return null;
+	}
 
     @Override
     public SpeciesDisplay getSpeciesDisplay() throws IOException {

@@ -126,6 +126,15 @@ public abstract class ViewFactory {
      * 	                   response output.
      */
     public abstract GeneDisplay getGeneDisplay() throws IOException;
+    
+    /**
+     * 
+     * @return A {@code AnatEntityDisplay} instance of the appropriate display type.
+     * 
+     * @throws IOException If an error occurs with the {@code PrintWriter} when writing the
+     * 	                   response output.
+     */
+    public abstract AnatEntityDisplay getAnatEntityDisplay() throws IOException;
 
     /**
      *                              

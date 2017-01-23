@@ -120,11 +120,11 @@ public class CommandAnatEntity extends CommandParent{
 	}
 	
 	/**
-	 * Gets the {@code Gene} instance from its id. 
+	 * Gets the {@code AnatEntity} instance from its id. 
 	 * 
-	 * @param geneId A {@code String} containing the gene id.
-	 * @return       The {@code Gene} instance.
-	 * @throws PageNotFoundException   If no {@code Gene} could be found corresponding to {@code geneId}.
+	 * @param geneId A {@code String} containing the AnatEntity id.
+	 * @return       The {@code AnatEntiy} instance.
+	 * @throws PageNotFoundException   If no {@code AnatEntity} could be found corresponding to {@code anatEntityId}.
 	 */
 	private AnatEntity getAnatEntity(String anatEntityId) throws PageNotFoundException {
 	    log.entry(anatEntityId);
@@ -136,19 +136,30 @@ public class CommandAnatEntity extends CommandParent{
 	}
 	
 	/**
+	 * Gets the {@code Set} of {@code Species} instance from their ids. 
+	 * 
+	 * @param speciesIds A {@code List} of {@code String} containing the Species ids.
+	 * @return       The {@code Set} of {@code Species} instances.
+	 */
+	private Set<Species> getSpecies(List<String> speciesIds){
+	    log.entry(speciesIds);
+	    SpeciesService speciesService = serviceFactory.getSpeciesService();
+	    Set<Species> speciesSet = speciesIds == null ? speciesService.loadSpeciesInDataGroups(false) : speciesService.loadSpeciesByIds(speciesIds, false);
+		return log.exit(speciesSet);
+	}
+	
+	/**
 	 * Retrieves the sorted list of {@code ExpressionCall} associated to this anat. entity for selected species, 
 	 * ordered by global mean rank.
 	 * 
 	 * @param anatEntity The {@code AnatEntity}
 	 * @param speciesIds The {@code Set} of {@code Species} Ids.
-	 * @return     A {@code HashMap} with {@code Species} Ids as keys and a {@code List} of {@code ExpressionCall} associated to this anat. entity as values, 
-	 *             ordered by global mean rank.
+	 * @return     The {@code HashMap} with {@code Species} Ids as keys and a {@code List} of {@code ExpressionCall} associated to this anat. entity, 
+	 *             ordered by global mean rank as values.
 	 */
-	private HashMap<String,List<ExpressionCall>> getExpressions(AnatEntity anatEntity, Set<String> speciesIds) {
+	private HashMap<String,List<ExpressionCall>> getExpressions(AnatEntity anatEntity, Set<Species> speciesSet) {
 	    log.entry(anatEntity);
-	    SpeciesService speciesService = serviceFactory.getSpeciesService();
-	    Set<Species> speciesSet = speciesIds == null ? speciesService.loadSpeciesInDataGroups(false) : speciesService.loadSpeciesByIds(speciesIds, false);
-		LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
+	    LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
 	                new LinkedHashMap<>();
 		//The ordering is not essential here, because anyway we will need to order calls 
 		//with an equal rank, based on the relations between their conditions, which is difficult 

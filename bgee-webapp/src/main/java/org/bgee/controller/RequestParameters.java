@@ -1959,6 +1959,14 @@ public class RequestParameters {
     public String getGeneId() {
     	return this.getFirstValue(this.getUrlParametersInstance().getParamGeneId());
     }
+    
+    /**
+     * @return the anat_entity_id parameter
+     */
+    public String getAnatEntityId() {
+    	return this.getFirstValue(this.getUrlParametersInstance().getParamAnatEntityId());
+    }
+    
     /**
      * Convenient method to set value of the parameter returned by 
      * {@link URLParameters#getParamGeneId()}. Equivalent to calling 

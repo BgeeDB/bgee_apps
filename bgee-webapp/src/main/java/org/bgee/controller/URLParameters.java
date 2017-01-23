@@ -182,6 +182,14 @@ public class URLParameters {
     		new Parameter<String>("gene_id", false,false, null, false, false, 50, DEFAULT_FORMAT, String.class);
     
     /**
+     * A {@code Parameter<String>} representing an anat. entity id, typically for the anat. entity page.
+     * Category of the parameter: controller parameter.
+     * Corresponds to the URL parameter "anat_entity_id".
+     */
+    private static final Parameter<String> ANAT_ENTITY_ID = 
+    		new Parameter<String>("anat_entity_id", false,false, null, false, false, 50, DEFAULT_FORMAT, String.class);
+    
+    /**
      * A {@code Parameter<String>} representing a search, typically for the gene page.
      * Category of the parameter: controller parameter.
      * Corresponds to the URL parameter "search".
@@ -583,6 +591,13 @@ public class URLParameters {
     public Parameter<String> getParamGeneId() {
     	return GENE_ID;
     }
+    
+    /**
+     * @return  A {@code Parameter<String>} that contains the gene id.
+     */
+     public Parameter<String> getParamAnatEntityId() {
+     	return ANAT_ENTITY_ID;
+     }
     
     /**
      * @return  A {@code Parameter<String>} that contains the search text.

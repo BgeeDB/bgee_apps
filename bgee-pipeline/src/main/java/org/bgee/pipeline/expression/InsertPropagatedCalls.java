@@ -48,7 +48,6 @@ import org.bgee.model.expressiondata.ConditionUtils;
 import org.bgee.model.expressiondata.baseelements.CallType.Expression;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataPropagation.PropagationState;
-import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataQualitySummary;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;

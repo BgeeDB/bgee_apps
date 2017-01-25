@@ -760,7 +760,7 @@ public class CallService extends Service {
                     //no gene orthology requested
                     null, 
                     //Attributes
-                    // FIXME Attributes does not work anymore but I leave it to be able to come back
+                    // FIXME It does not compile anymore but I leave it to be able to come back
                     // to it before the cleaning of the class
                     null,
 //                    convertServiceAttrsToExprDAOAttrs(attributes, exprCallData.stream()
@@ -876,7 +876,7 @@ public class CallService extends Service {
                 //get the best quality among all data types
                 extractBestQual(callTO),
                 //map to CallDatas
-                // FIXME Attributes does not compile anymore but I leave it to be able to come back
+                // FIXME It does not compile anymore but I leave it to be able to come back
                 // to it before the cleaning of the class
                 null,
 //                callTO.extractDataTypesToDataStates().entrySet().stream()

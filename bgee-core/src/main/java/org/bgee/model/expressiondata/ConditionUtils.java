@@ -24,7 +24,7 @@ import org.bgee.model.ontology.RelationType;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, July 2016
+ * @version Bgee 14, Jan. 2017
  * @since   Bgee 13, Dec. 2015
  */
 //TODO: Actually, maybe we should have an UtilsFactory, as we have a ServiceFactory. 
@@ -488,7 +488,28 @@ public class ConditionUtils implements Comparator<Condition> {
     public Set<Condition> getDescendantConditions(Condition cond, boolean directRelOnly,
         boolean includeSubstages) {
         log.entry(cond, directRelOnly, includeSubstages);
-        
+        return log.exit(getDescendantConditions(cond, directRelOnly, includeSubstages, 0));
+    }
+
+    /**
+     * Get all the {@code Condition}s that are more precise than {@code cond} 
+     * among the {@code Condition}s provided at instantiation.
+     * 
+     * @param cond              A {@code Condition} for which we want to retrieve descendant {@code Condition}s.
+     * @param directRelOnly     A {@code boolean} defining whether only direct parents 
+     *                          or children of {@code element} should be returned.
+     * @param includeSubstages  A {@code boolean} defining whether conditions with child stages
+     *                          should be returned.
+     * @param substageMaxLevel  An {@code Integer} that is the maximal sub-level in which child stages
+     *                          should be retrieved. If less than 1, there is no limitation.
+     * @return                  A {@code Set} of {@code Condition}s that are descendants of {@code cond}.
+     * @throws IllegalArgumentException If {@code cond} is not registered to this {@code ConditionUtils}.
+     */
+    // TODO: refactor this method with constructor and getAncestorConditions
+    public Set<Condition> getDescendantConditions(Condition cond, boolean directRelOnly,
+        boolean includeSubstages, Integer substageMaxLevel) {
+        log.entry(cond, directRelOnly, includeSubstages, substageMaxLevel);
+
         if (!this.getConditions().contains(cond)) {
             throw log.throwing(new IllegalArgumentException("The provided condition "
                     + "is not registered to this ConditionUtils: " + cond));
@@ -497,9 +518,15 @@ public class ConditionUtils implements Comparator<Condition> {
         Set<String> devStageIds = new HashSet<>();
         devStageIds.add(cond.getDevStageId());
         if (includeSubstages && this.devStageOnt != null && cond.getDevStageId() != null) {
-            devStageIds.addAll(this.devStageOnt.getDescendants(
-                    this.devStageOnt.getElement(cond.getDevStageId()), directRelOnly)
-                    .stream().map(e -> e.getId()).collect(Collectors.toSet()));
+            Set<DevStage> descendants;
+            if (substageMaxLevel < 1) {
+                descendants = this.devStageOnt.getDescendants(
+                    this.devStageOnt.getElement(cond.getDevStageId()), directRelOnly);
+            } else {
+                descendants = this.devStageOnt.getDescendantsUntilSubLevel(
+                    this.devStageOnt.getElement(cond.getDevStageId()), substageMaxLevel);
+            }
+            devStageIds.addAll(descendants.stream().map(e -> e.getId()).collect(Collectors.toSet()));
        }
         Set<String> anatEntityIds = new HashSet<>();
         anatEntityIds.add(cond.getAnatEntityId());

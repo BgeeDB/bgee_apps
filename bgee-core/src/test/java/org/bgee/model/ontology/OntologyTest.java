@@ -12,6 +12,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.anatdev.AnatEntity;
@@ -27,11 +29,13 @@ import org.junit.Test;
  * This class holds the unit tests for the {@code OntologyBase} class.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Nov. 2016
+ * @version Bgee 14, Jan. 2017
  * @since   Bgee 13, Dec. 2015
  */
 public class OntologyTest extends TestAncestor {
   
+    private static final Logger log = LogManager.getLogger(OntologyTest.class.getName());
+
     private static Set<RelationType> ALL_RELATIONS = EnumSet.allOf(RelationType.class);
     private static Set<RelationType> ISA_RELATIONS = EnumSet.of(RelationType.ISA_PARTOF);
 
@@ -175,32 +179,33 @@ public class OntologyTest extends TestAncestor {
         AnatEntity ae3 = new AnatEntity("UBERON:0003", "C", "C description"); 
         Set<AnatEntity> elements = new HashSet<>(Arrays.asList(ae1, ae2, ae2p, ae3));
         Set<RelationTO> relations = this.getAnatEntityRelationTOs();
+        // UBERON:0001 ------------------
+        // | is_a       \ dev_from      |
+        // UBERON:0002   UBERON:0002p   | is_a (indirect)
+        // | is_a       / is_a          |
+        // UBERON:0003 ------------------
 
         OntologyBase<AnatEntity> ontology = new Ontology<>("sp1", elements, 
                 relations, ALL_RELATIONS, mockFact, AnatEntity.class);
         
-        Set<AnatEntity> descendants = ontology.getDescendants(ae1);
-        Set<AnatEntity> expDescendants = new HashSet<>(Arrays.asList(ae2, ae2p, ae3));
-        assertEquals("Incorrects descendants", expDescendants, descendants);
+        assertEquals("Incorrects descendants", new HashSet<>(Arrays.asList(ae2, ae2p, ae3)),
+            ontology.getDescendants(ae1));
         
-        descendants = ontology.getDescendants(ae1, ISA_RELATIONS);
-        expDescendants = new HashSet<>(Arrays.asList(ae2, ae3));
-        assertEquals("Incorrects descendants", expDescendants, descendants);
+        assertEquals("Incorrects descendants", new HashSet<>(Arrays.asList(ae2, ae3)),
+            ontology.getDescendants(ae1, ISA_RELATIONS));
 
-        descendants = ontology.getDescendants(ae1, ALL_RELATIONS, true);
-        expDescendants = new HashSet<>(Arrays.asList(ae2, ae2p));
-        assertEquals("Incorrects descendants", expDescendants, descendants);
+        log.debug("TESTING-A");
+        assertEquals("Incorrects descendants", new HashSet<>(Arrays.asList(ae2, ae2p)),
+            ontology.getDescendants(ae1, ALL_RELATIONS, true));
 
-        descendants = ontology.getDescendants(ae1, true);
-        assertEquals("Incorrects descendants", expDescendants, descendants);
+        assertEquals("Incorrects descendants", new HashSet<>(Arrays.asList(ae2, ae2p)),
+            ontology.getDescendants(ae1, true));
 
-        descendants = ontology.getDescendants(ae2, ALL_RELATIONS);
-        expDescendants = new HashSet<>(Arrays.asList(ae3));
-        assertEquals("Incorrects descendants", expDescendants, descendants);
+        assertEquals("Incorrects descendants", new HashSet<>(Arrays.asList(ae3)),
+            ontology.getDescendants(ae2, ALL_RELATIONS));
 
-        descendants = ontology.getDescendants(ae3, ALL_RELATIONS);
-        expDescendants = new HashSet<>();
-        assertEquals("Incorrects descendants", expDescendants, descendants);
+        assertEquals("Incorrects descendants", new HashSet<>(),
+            ontology.getDescendants(ae3, ALL_RELATIONS));
     }
     
     /**
@@ -421,7 +426,7 @@ public class OntologyTest extends TestAncestor {
     }
     
     /**
-     * Test the method {@link OntologyBase#getOrderedRelations(NamedEntity)}.
+     * Test the method {@link OntologyBase#getOrderedAncestors(NamedEntity)}.
      */
     @Test
     public void shouldGetOrderedAncestors() {
@@ -473,6 +478,60 @@ public class OntologyTest extends TestAncestor {
         }
     }
     
+    /**
+     * Test the method {@link OntologyBase#getDescendantsUntilSubLevel(org.bgee.model.NamedEntity, int)}.
+     */
+    @Test
+    public void shouldGetDescendantsByLevel() {
+        ServiceFactory mockFact = mock(ServiceFactory.class);
+
+        Set<String> speciesIds = new HashSet<>(Arrays.asList("sp1", "sp2", "sp3"));
+
+        Taxon tax1 = new Taxon("taxId1"), tax2 = new Taxon("taxId2"), tax3 = new Taxon("taxId3"), 
+            tax10 = new Taxon("taxId10"), tax100 = new Taxon("taxId100"); 
+        // tax100--
+        // |        \
+        // tax10     \
+        // |     \    \
+        // tax1  tax2  tax3
+        // |     |     |
+        // sp1   sp2   sp3
+        
+        Set<Taxon> elements = new HashSet<>(Arrays.asList(tax1, tax2, tax3, tax10, tax100));
+        RelationTO rel1 = new RelationTO("1", "taxId1", "taxId10", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT);
+        RelationTO rel1b = new RelationTO("1b", "taxId1", "taxId100", RelationTO.RelationType.DEVELOPSFROM, RelationStatus.INDIRECT);
+        RelationTO rel2 = new RelationTO("2", "taxId2", "taxId10", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT);
+        RelationTO rel2b = new RelationTO("2b", "taxId2", "taxId100", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT);
+        RelationTO rel3 = new RelationTO("3", "taxId3", "taxId100", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT);
+        RelationTO rel4 = new RelationTO("4", "taxId10", "taxId100", RelationTO.RelationType.DEVELOPSFROM, RelationStatus.DIRECT);
+        Set<RelationTO> relations = new HashSet<>(Arrays.asList(rel1, rel1b, rel2, rel2b, rel3, rel4));
+
+        MultiSpeciesOntology<Taxon> ontology = new MultiSpeciesOntology<>(speciesIds,
+                elements, relations, null, null, ALL_RELATIONS, mockFact, Taxon.class);
+        assertEquals("Incorrect descendants",
+            new HashSet<>(), ontology.getDescendantsUntilSubLevel(tax1, 1));
+        assertEquals("Incorrect descendants",
+            new HashSet<>(Arrays.asList(tax1, tax2)), ontology.getDescendantsUntilSubLevel(tax10, 1));
+        assertEquals("Incorrect descendants",
+            new HashSet<>(Arrays.asList(tax10, tax3)), ontology.getDescendantsUntilSubLevel(tax100, 1));
+        assertEquals("Incorrect descendants",
+            new HashSet<>(Arrays.asList(tax10, tax1, tax2, tax3)), ontology.getDescendantsUntilSubLevel(tax100, 2));
+
+        try {
+            ontology.getDescendantsUntilSubLevel(tax100, 0);
+            fail("Should throws an exception");
+        } catch (IllegalArgumentException e) {
+            // Test passed because sub-level is not positive
+        }
+
+        try {
+            ontology.getDescendantsUntilSubLevel(new Taxon("taxIdX"), 1);
+            fail("Should throws an exception");
+        } catch (IllegalArgumentException e) {
+            // Test passed because taxon ID not found
+        }
+    }
+
     /**
      * Get relations for tests.
      * 

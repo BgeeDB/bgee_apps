@@ -21,7 +21,7 @@ import org.bgee.model.gene.GeneFilter;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Nov. 2016
+ * @version Bgee 14, Jan. 2017
  * @since   Bgee 13, Oct. 2015
  *
  * @param T The type of {@code CallData} to be used by this {@code CallFilter}. 
@@ -193,15 +193,17 @@ public class CallFilter<T extends CallData<?>> implements Predicate<Call<?, T>> 
         //Use forEach to be able to access the redundant CallDatas for the Exception message
         callDataFilters.stream().forEach(e1 -> callDataFilters.stream().forEach(e2 -> {
             if (!e1.equals(e2) && e1.getCallType().equals(e2.getCallType()) && 
-                    (e1.getDataType() == null || e2.getDataType() == null || 
-                    e1.getDataType().equals(e2.getDataType()) && 
+                // FIXME It does not compile anymore but I leave it to be able to come back
+                // to it before the cleaning of the class
+//                    (e1.getDataType() == null || e2.getDataType() == null || 
+//                    e1.getDataType().equals(e2.getDataType()) && 
                     //if they are of type ExpressionCallData, then they target redundant CallType/DataType
                     (e1 instanceof ExpressionCallData && e2 instanceof ExpressionCallData || 
                     //if they are of type DiffExpressionCallData, they will be considered redundant 
                     //only if they also target the same DiffExpressionFactor
                      e1 instanceof DiffExpressionCallData && e2 instanceof DiffExpressionCallData && 
                      ((DiffExpressionCallData) e1).getDiffExpressionFactor().equals(
-                             ((DiffExpressionCallData) e2).getDiffExpressionFactor())))) {
+                             ((DiffExpressionCallData) e2).getDiffExpressionFactor()))) {
                 throw log.throwing(new IllegalArgumentException(
                         "The provided CallDatas target a redundant combination of CallType and DataType: "
                                 + e1 + " - " + e2));
@@ -336,17 +338,19 @@ public class CallFilter<T extends CallData<?>> implements Predicate<Call<?, T>> 
                 boolean isDataQualityValid = false;
                 boolean isDataPropagation = false;
 
+                // FIXME It does not compile anymore but I leave it to be able to come back
+                // to it before the cleaning of the class
                 // Filter on DataType (AFFYMETRIX, EST, IN_SITU, RNA_SEQ)
-                if (callDataFilter.getDataType() == null 
-                        || !Collections.disjoint(
-                                callDataFilter.getDataType() == null?
-                                        EnumSet.allOf(DataType.class): EnumSet.of(callDataFilter.getDataType()),
-                                callData.getDataType() == null?
-                                        EnumSet.allOf(DataType.class): EnumSet.of(callData.getDataType()))) {
-                    isDataTypeValid = true;
-                } else {
-                    continue;
-                }
+//                if (callDataFilter.getDataType() == null 
+//                        || !Collections.disjoint(
+//                                callDataFilter.getDataType() == null?
+//                                        EnumSet.allOf(DataType.class): EnumSet.of(callDataFilter.getDataType()),
+//                                callData.getDataType() == null?
+//                                        EnumSet.allOf(DataType.class): EnumSet.of(callData.getDataType()))) {
+//                    isDataTypeValid = true;
+//                } else {
+//                    continue;
+//                }
                 
                 // Filter on CallType (EXPRESSED, NOT_EXPRESSED)
                 if (callDataFilter.getCallType() == null

@@ -26,7 +26,7 @@ import org.bgee.model.species.Taxon;
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 13, Nov. 2016
+ * @version Bgee 14, Jan. 2017
  * @since   Bgee 13, Dec. 2015
  * @param <T>   The type of element in this ontology or sub-graph.
  */
@@ -377,7 +377,7 @@ public abstract class OntologyBase<T extends NamedEntity & OntologyElement<T>> {
      *                      types allowing to filter the relations to retrieve.
      * @param directRelOnly A {@code boolean} defining whether only direct children
      *                      of {@code element} should be returned.
-     * @return              A {@code Collection} of {@code T}s that are the descendants
+     * @return              A {@code Set} of {@code T}s that are the descendants
      *                      of the given {@code element}. Can be empty if {@code element} 
      *                      has no descendants according to the requested parameters.
      * @throws IllegalArgumentException If {@code element} is {@code null} or is not found 
@@ -389,6 +389,32 @@ public abstract class OntologyBase<T extends NamedEntity & OntologyElement<T>> {
                 null, null));
     }
 
+    /**
+     * Get descendants of {@code element} in this ontology until maximum sub-level
+     * in which children are retrieved.
+     * 
+     * @param element       A {@code T} that is the element for which descendants are retrieved.
+     * @param subLevelMax   An {@code int} that is the maximum sub-level in which children are retrieved.
+     * @return              A {@code Set} of {@code T}s that are the descendants
+     *                      of the given {@code element}
+     */
+    public Set<T> getDescendantsUntilSubLevel(T element, int subLevelMax) {
+        log.entry(element, subLevelMax);
+        if (subLevelMax < 1) {
+            throw log.throwing(new IllegalArgumentException("Sub-level should be positif"));
+        }
+        Set<T> descendants = new HashSet<>();
+        descendants.add(element);
+        for (int i = 0; i < subLevelMax; i++) {
+            descendants.addAll(descendants.stream()
+                .map(d -> getDescendants(d, true))
+                .flatMap(Set::stream)
+                .collect(Collectors.toSet()));
+        }
+        descendants.remove(element);
+        return log.exit(descendants);
+    }
+    
     /**
      * Get relatives from this ontology. The returned {@code Set} contains
      * ancestor or descendants of the provided {@code element} retrieved from

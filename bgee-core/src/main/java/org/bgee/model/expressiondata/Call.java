@@ -30,6 +30,7 @@ import org.bgee.model.expressiondata.CallData.DiffExpressionCallData;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
+import org.bgee.model.expressiondata.baseelements.DataQualitySummary;
 import org.bgee.model.expressiondata.baseelements.DiffExpressionFactor;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.*;
@@ -39,7 +40,7 @@ import org.bgee.model.expressiondata.baseelements.SummaryCallType.*;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Nov. 2016
+ * @version Bgee 14, Jan. 2017
  * @since   Bgee 13, Sept. 2015
  * @param <T> The type of {@code SummaryCallType}.
  * @param <U> The type of {@code CallData}.
@@ -823,14 +824,14 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         private final BigDecimal globalMeanRank;
         
         public ExpressionCall(String geneId, Condition condition, DataPropagation dataPropagation, 
-            ExpressionSummary summaryCallType, DataQuality summaryQual, 
+            ExpressionSummary summaryCallType, DataQualitySummary summaryQual, 
             Collection<ExpressionCallData> callData, BigDecimal globalMeanRank) {
             this(geneId, condition, dataPropagation, summaryCallType, summaryQual, callData,
                 globalMeanRank, null);
         }
 
         public ExpressionCall(String geneId, Condition condition, DataPropagation dataPropagation, 
-                ExpressionSummary summaryCallType, DataQuality summaryQual, 
+                ExpressionSummary summaryCallType, DataQualitySummary summaryQual, 
                 Collection<ExpressionCallData> callData, BigDecimal globalMeanRank,
                 Collection<ExpressionCall> sourceCalls) {
             super(geneId, condition, dataPropagation, summaryCallType, summaryQual, callData,
@@ -932,13 +933,13 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         
         public DiffExpressionCall(DiffExpressionFactor factor, String geneId, 
                 Condition condition, DiffExpressionSummary summaryCallType, 
-                DataQuality summaryQual, Collection<DiffExpressionCallData> callData) {
+                DataQualitySummary summaryQual, Collection<DiffExpressionCallData> callData) {
             this(factor, geneId, condition, summaryCallType, summaryQual, callData, null);
         }
         
         public DiffExpressionCall(DiffExpressionFactor factor, String geneId, 
             Condition condition, DiffExpressionSummary summaryCallType, 
-            DataQuality summaryQual, Collection<DiffExpressionCallData> callData,
+            DataQualitySummary summaryQual, Collection<DiffExpressionCallData> callData,
             Collection<DiffExpressionCall> sourceCalls) {
             super(geneId, condition, new DataPropagation(), summaryCallType, summaryQual, callData, 
                 sourceCalls == null ? new HashSet<>() : sourceCalls.stream()
@@ -1001,21 +1002,21 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
     
     private final T summaryCallType;
     
-    private final DataQuality summaryQuality;
+    private final DataQualitySummary summaryQuality;
     
     private final Set<U> callData;
 
     private final Set<Call<T, U>> sourceCalls;
 
     protected Call(String geneId, Condition condition, DataPropagation dataPropagation, 
-        T summaryCallType, DataQuality summaryQual, Collection<U> callData) {
+        T summaryCallType, DataQualitySummary summaryQual, Collection<U> callData) {
         this(geneId, condition, dataPropagation, summaryCallType, summaryQual, callData, null);
     }
 
     //Note: we cannot always know the DataPropagation status per data type, 
     //so we need to be able to provide a global DataPropagation status over all data types.
     protected Call(String geneId, Condition condition, DataPropagation dataPropagation, 
-            T summaryCallType, DataQuality summaryQual, Collection<U> callData, 
+            T summaryCallType, DataQualitySummary summaryQual, Collection<U> callData, 
             Set<Call<T, U>> sourceCalls) {
         //TODO: sanity checks
         if (DataQuality.NODATA.equals(summaryQual)) {
@@ -1044,7 +1045,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
     public T getSummaryCallType() {
         return summaryCallType;
     }
-    public DataQuality getSummaryQuality() {
+    public DataQualitySummary getSummaryQuality() {
         return summaryQuality;
     }
     public Set<U> getCallData() {

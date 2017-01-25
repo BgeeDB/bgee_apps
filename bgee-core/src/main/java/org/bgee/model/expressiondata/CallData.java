@@ -3,13 +3,13 @@ package org.bgee.model.expressiondata;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.baseelements.CallType;
+import org.bgee.model.expressiondata.baseelements.CallType.DiffExpression;
+import org.bgee.model.expressiondata.baseelements.CallType.Expression;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DiffExpressionFactor;
 import org.bgee.model.gene.Gene;
-import org.bgee.model.expressiondata.baseelements.CallType.DiffExpression;
-import org.bgee.model.expressiondata.baseelements.CallType.Expression;
 
 /**
  * A {@code CallData} represents the expression state of a {@link Gene}, in a {@link Condition}. 
@@ -22,9 +22,10 @@ import org.bgee.model.expressiondata.baseelements.CallType.Expression;
  * For a class also managing the gene and condition definitions, and managing 
  * expression data from different data types for a given call, see the class {@link Call}. 
  * 
- * @author Frederic Bastian
- * @version Bgee 13 Sept. 2015
- * @since Bgee 13 Sept. 2015
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, Jan. 2017
+ * @since   Bgee 13 Sept. 2015
  */
 //XXX: examples of attributes that could be managed by this class: 
 //* count of experiments supporting and contradicting the CallType.
@@ -55,6 +56,12 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         //of analysis a DiffExpressionCallData comes from...
         private final DiffExpressionFactor diffExpressionFactor;
         
+        private final DiffExpression callType;
+
+        private final DataQuality dataQuality;
+
+        private final DataPropagation dataPropagation;
+
         public DiffExpressionCallData(DiffExpressionFactor factor, DiffExpression callType) {
             this(factor, callType, null);
         }
@@ -68,25 +75,53 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         }
         public DiffExpressionCallData(DiffExpressionFactor factor, DiffExpression callType, 
                 DataQuality dataQual, DataType dataType, DataPropagation dataPropagation) {
-            super(callType, dataQual, dataType, dataPropagation);
-            if (factor == null) {
-                throw log.throwing(new IllegalArgumentException(
-                        "The provided DiffExpressionFactor cannot be null."));
+            super(dataType);
+            
+            log.entry(factor, callType, dataQual, dataType, dataPropagation);
+            
+            if (callType == null || dataQual == null || DataQuality.NODATA.equals(dataQual) || 
+                dataPropagation == null) {
+                        throw log.throwing(new IllegalArgumentException("A DiffExpressionFactor, "
+                            + "a CallType, a DataQuality, and a DataPropagation must be defined "
+                            + "to instantiate a CallData."));
             }
-            this.diffExpressionFactor = factor;
+            callType.checkDataPropagation(dataPropagation);
+            if (dataType != null) {
+                callType.checkDataType(dataType);
+            }
+
+            this.callType = callType;
+            this.dataQuality = dataQual;
+            this.dataPropagation = dataPropagation;
+            this.diffExpressionFactor = factor;            
+            log.exit();
         }
         
         public DiffExpressionFactor getDiffExpressionFactor() {
             return diffExpressionFactor;
         }
         
+        public DiffExpression getCallType() {
+            return callType;
+        }
+        public DataQuality getDataQuality() {
+            return dataQuality;
+        }
+        public DataPropagation getDataPropagation() {
+            return dataPropagation;
+        }
+
         @Override
         public int hashCode() {
             final int prime = 31;
             int result = super.hashCode();
             result = prime * result + ((diffExpressionFactor == null) ? 0 : diffExpressionFactor.hashCode());
+            result = prime * result + ((callType == null) ? 0 : callType.hashCode());
+            result = prime * result + ((dataPropagation == null) ? 0 : dataPropagation.hashCode());
+            result = prime * result + ((dataQuality == null) ? 0 : dataQuality.hashCode());
             return result;
         }
+        
         @Override
         public boolean equals(Object obj) {
             if (this == obj) {
@@ -102,34 +137,207 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             if (diffExpressionFactor != other.diffExpressionFactor) {
                 return false;
             }
+            if (callType == null) {
+                if (other.callType != null) {
+                    return false;
+                }
+            } else if (!callType.equals(other.callType)) {
+                return false;
+            }
+            if (dataPropagation == null) {
+                if (other.dataPropagation != null) {
+                    return false;
+                }
+            } else if (!dataPropagation.equals(other.dataPropagation)) {
+                return false;
+            }
+            if (dataQuality != other.dataQuality) {
+                return false;
+            }
             return true;
         }
         
         @Override
         public String toString() {
-            return "DiffExpressionCallData [diffExpressionFactor=" + diffExpressionFactor 
-                    + ", super CallData=" + super.toString() + "]";
+            return super.toString() + " - Call type: " + callType + " - Data quality: " + dataQuality +
+                " - Data propagation: " + dataPropagation + " - Diff. expression factor: " + diffExpressionFactor;
         }
     }
     
-    //XXX: for now, there is nothing really special about expression calls.
-    //But maybe it's good for typing the generic type, and for future evolutions?
     public static class ExpressionCallData extends CallData<Expression> {
-        public ExpressionCallData(Expression callType) {
-            this(callType, null);
+
+        private final int presentHighSelfExpCount;
+        
+        private final int presentLowSelfExpCount;
+        
+        private final int absentHighSelfExpCount;
+        
+        private final int presentHighDescExpCount;
+        
+        private final int presentLowDescExpCount;
+        
+        private final int absentHighParentExpCount;
+
+        private final int presentHighTotalCount;
+        
+        private final int presentLowTotalCount;
+        
+        private final int absentHighTotalCount;
+        
+        public ExpressionCallData(DataType dataType) {
+            this(dataType, 0, 0, 0, 0, 0, 0, 0, 0, 0);
         }
-        public ExpressionCallData(Expression callType, DataType dataType) {
-            this(callType, DataQuality.LOW, dataType);
+
+        public ExpressionCallData(DataType dataType, int presentHighSelfExpCount, 
+            int presentLowSelfExpCount, int absentHighSelfExpCount, int presentHighDescExpCount,
+            int presentLowDescExpCount, int absentHighParentExpCount, int presentHighTotalCount,
+            int presentLowTotalCount, int absentHighTotalCount) {
+            super(dataType);
+            this.presentHighSelfExpCount = presentHighSelfExpCount;
+            this.presentLowSelfExpCount = presentLowSelfExpCount;
+            this.absentHighSelfExpCount = absentHighSelfExpCount;
+            this.presentHighDescExpCount = presentHighDescExpCount;
+            this.presentLowDescExpCount = presentLowDescExpCount;
+            this.absentHighParentExpCount = absentHighParentExpCount;
+            this.presentHighTotalCount = presentHighTotalCount;
+            this.presentLowTotalCount = presentLowTotalCount;
+            this.absentHighTotalCount = absentHighTotalCount;
         }
-        public ExpressionCallData(Expression callType, DataQuality dataQual, DataType dataType) {
-            this(callType, dataQual, dataType, new DataPropagation());
+
+        public int getPresentHighSelfExpCount() {
+            return presentHighSelfExpCount;
         }
-        public ExpressionCallData(Expression callType, DataQuality dataQual, DataType dataType, 
-                DataPropagation dataPropagation) {
-            super(callType, dataQual, dataType, dataPropagation);
+
+        public int getPresentLowSelfExpCount() {
+            return presentLowSelfExpCount;
+        }
+
+        public int getAbsentHighSelfExpCount() {
+            return absentHighSelfExpCount;
+        }
+
+        public int getPresentHighDescExpCount() {
+            return presentHighDescExpCount;
+        }
+
+        public int getPresentLowDescExpCount() {
+            return presentLowDescExpCount;
+        }
+
+        public int getAbsentHighParentExpCount() {
+            return absentHighParentExpCount;
+        }
+
+        public int getPresentHighTotalCount() {
+            return presentHighTotalCount;
+        }
+
+        public int getPresentLowTotalCount() {
+            return presentLowTotalCount;
+        }
+
+        public int getAbsentHighTotalCount() {
+            return absentHighTotalCount;
+        }
+
+        @Override
+        // FIXME check implementation
+        public Expression getCallType() {
+            log.entry();
+            if (this.getPresentHighTotalCount() > 0 || this.getPresentLowDescExpCount() > 0) {
+                return log.exit(Expression.EXPRESSED);
+            }
+            if (this.getAbsentHighTotalCount() > 0) {
+                return log.exit(Expression.NOT_EXPRESSED);
+            }
+            return log.exit(null);
+        }
+
+        @Override
+        // FIXME check implementation
+        public DataQuality getDataQuality() {
+            log.entry();
+            if (this.getPresentHighTotalCount() > 0 || 
+                this.getPresentHighSelfExpCount() > 0 || this.getPresentHighDescExpCount() > 0) {
+                return log.exit(DataQuality.HIGH);
+            }
+            if (this.getPresentLowTotalCount() > 0 || 
+                this.getPresentLowSelfExpCount() > 0 || this.getPresentLowDescExpCount() > 0) {
+                return log.exit(DataQuality.LOW);
+            }
+            if (this.getPresentLowTotalCount() > 0) {
+                return log.exit(DataQuality.HIGH);
+            }
+            return log.exit(DataQuality.NODATA);
+        }
+
+        @Override
+        // FIXME check implementation
+        public DataPropagation getDataPropagation() {
+            log.entry();
+            throw log.throwing(new UnsupportedOperationException("How to define DataPropagation?"));
+        }
+
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = super.hashCode();
+            result = prime * result + absentHighParentExpCount;
+            result = prime * result + absentHighSelfExpCount;
+            result = prime * result + absentHighTotalCount;
+            result = prime * result + presentHighDescExpCount;
+            result = prime * result + presentHighSelfExpCount;
+            result = prime * result + presentHighTotalCount;
+            result = prime * result + presentLowDescExpCount;
+            result = prime * result + presentLowSelfExpCount;
+            result = prime * result + presentLowTotalCount;
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (!super.equals(obj))
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            ExpressionCallData other = (ExpressionCallData) obj;
+            if (absentHighParentExpCount != other.absentHighParentExpCount)
+                return false;
+            if (absentHighSelfExpCount != other.absentHighSelfExpCount)
+                return false;
+            if (absentHighTotalCount != other.absentHighTotalCount)
+                return false;
+            if (presentHighDescExpCount != other.presentHighDescExpCount)
+                return false;
+            if (presentHighSelfExpCount != other.presentHighSelfExpCount)
+                return false;
+            if (presentHighTotalCount != other.presentHighTotalCount)
+                return false;
+            if (presentLowDescExpCount != other.presentLowDescExpCount)
+                return false;
+            if (presentLowSelfExpCount != other.presentLowSelfExpCount)
+                return false;
+            if (presentLowTotalCount != other.presentLowTotalCount)
+                return false;
+            return true;
+        }
+
+        @Override
+        public String toString() {
+            return super.toString() + " - Present high self exp count: " + presentHighSelfExpCount +
+                " - Present low self exp count: " + presentLowSelfExpCount + 
+                " - Absent high self exp count: " + absentHighSelfExpCount + 
+                " - Present high desc exp count: " + presentHighDescExpCount +
+                " - Present low descendant exp count: " + presentLowDescExpCount +
+                " - Absent high parent exp count: " + absentHighParentExpCount +
+                " - Present low total count: " + presentLowTotalCount +
+                " - Present high total count: "+ presentHighTotalCount +
+                " - Absent high total count: " + absentHighTotalCount;
         }
     }
-
 
     //**********************************************
     //   INSTANCE ATTRIBUTES AND METHODS
@@ -137,135 +345,39 @@ public abstract class CallData<T extends Enum<T> & CallType> {
     
     private final DataType dataType;
     
-    private final T callType;
-    
-    private final DataQuality dataQuality;
-    
-    private final DataPropagation dataPropagation;
-	
-	
-	/**
-	 * Basic constructor allowing to only specify a {@code CallType}. The {@code DataQuality} 
-	 * will be set to {@code LOW}, the {@code DataType} will be {@code null}, 
-	 * and the {@code DataPropagation} will be instantiated using its 0-arg constructor. 
-	 * 
-	 * @param callType The {@code CallType} of this {@code CallData}.
-     * @throws IllegalArgumentException    If {@code callType} is {@code null}.
-	 * @see CallData#CallData(Enum, DataQuality, DataType, DataPropagation)
-	 */
-	protected CallData(T callType) throws IllegalArgumentException {
-	    this(callType, null);
-	}
     /**
-     * Constructor allowing to specify a {@code CallType} and a {@code DataType}. 
-     * The {@code DataQuality} will be set to {@code LOW}, 
-     * and the {@code DataPropagation} will be instantiated using its 0-arg constructor. 
+     * Constructor allowing to specify a {@code DataType}. 
      * 
-     * @param callType          The {@code CallType} of this {@code CallData}.
-     * @param dataType          The {@code DataType} that allowed to generate the {@code CallType}.
-     * @throws IllegalArgumentException    If {@code callType} is {@code null}, 
-     *                                     or if {@code dataType} is not {@code null} 
-     *                                     and incompatible with {@code callType}.
-     * @see CallData#CallData(Enum, DataQuality, DataType, DataPropagation)
+     * @param dataType  The {@code DataType} that allowed to generate the {@code CallType}.
+     * @throws IllegalArgumentException    If {@code dataType} is not {@code null}.
      */
-    protected CallData(T callType, DataType dataType) throws IllegalArgumentException {
-        this(callType, DataQuality.LOW, dataType);
-    }
-    /**
-     * Constructor allowing to specify a {@code CallType} and its associated {@code DataQuality} 
-     * and {@code DataType}. 
-     * The {@code DataPropagation} will be instantiated using its 0-arg constructor.  
-     * 
-     * @param callType          The {@code CallType} of this {@code CallData}.
-     * @param dataQual          The {@code DataQuality} associated to the {@code CallType} 
-     *                          of this {@code CallData}.
-     * @param dataType          The {@code DataType} that allowed to generate the {@code CallType}, 
-     *                          with its associated {@code DataQuality}, for this {@code CallData}.
-     * @throws IllegalArgumentException    If {@code callType} or {@code dataQual} are {@code null}, 
-     *                                     or if {@code dataType} is not {@code null} 
-     *                                     and incompatible with {@code callType}.
-     */
-    protected CallData(T callType, DataQuality dataQual, DataType dataType) 
-            throws IllegalArgumentException {
-        this(callType, dataQual, dataType, new DataPropagation());
-    }
-	/**
-	 * Instantiate a {@code CallData}: for the type of call {@code callType}, representing 
-	 * the expression state of a gene; the quality {@code dataQual}, representing 
-	 * how confidence we are that the call is correct; the data type {@code dataType}, 
-	 * representing the type of data the allowed to generate the call; and the propagation 
-	 * {@code dataPropagation}, representing the origin of the data, relative to the condition 
-	 * in which the call was made: for instance, from an anatomical structure 
-	 * or any of its substructures, or only in the anatomical structure itself.
-	 * <p> 
-	 * Only {@code dataType} can be {@code null}, meaning that the call is requested 
-	 * to have been generated from any data type. If other arguments are {@code null}, 
-	 * an {@code IllegalArgumentException} is thrown. If {@code dataPropagation} is incompatible 
-	 * with {@code callType} (see {@link CallType#checkDataPropagation(DataPropagation)}), 
-	 * or if {@code dataType} is not {@code null} and incompatible with {@code callType} 
-	 * (see {@link CallType#checkDataType(DataType)}), an {@code IllegalArgumentException} is thrown.
-	 * 
-	 * @param callType          The {@code CallType} of this {@code CallData}.
-     * @param dataQual          The {@code DataQuality} associated to the {@code CallType} 
-     *                          of this {@code CallData}.
-     * @param dataType          The {@code DataType} that allowed to generate the {@code CallType}, 
-     *                          with its associated {@code DataQuality}, for this {@code CallData}.
-     *                          If {@code null}, then it means that this {@code CallData} 
-     *                          is applicable to any {@code DataType}.
-     * @param dataPropagation   The {@code DataPropagation} representing the origin of the data, 
-     *                          relative to the condition in which the call was made.
-	 * @throws IllegalArgumentException    If any of {@code callType}, {@code dataQual}, 
-	 *                                     or {@code dataPropagation} is {@code null}, 
-	 *                                     or if {@code dataPropagation} is incompatible 
-     *                                     with {@code callType}, or if {@code dataType} 
-     *                                     is not {@code null} and incompatible with 
-     *                                     {@code callType}.
-	 */
-	protected CallData(T callType, DataQuality dataQual, DataType dataType, 
-	        DataPropagation dataPropagation) throws IllegalArgumentException {
-        log.entry(callType, dataQual, dataType, dataPropagation);
+    protected CallData(DataType dataType) throws IllegalArgumentException {
+        log.entry(dataType);
         
-        if (callType == null || dataQual == null || DataQuality.NODATA.equals(dataQual) || 
-                dataPropagation == null) {
-            throw log.throwing(new IllegalArgumentException("A CallType, a DataQuality, "
-                    + "and a DataPropagation must be defined to instantiate a CallData."));
+        if (dataType == null) {
+            throw log.throwing(new IllegalArgumentException
+                ("A DataType must be defined to instantiate a CallData."));
         }
-        callType.checkDataPropagation(dataPropagation);
-        if (dataType != null) {
-            callType.checkDataType(dataType);
-        }
-        
-        this.callType = callType;
-        this.dataQuality = dataQual;
+
         this.dataType = dataType;
-        this.dataPropagation = dataPropagation;
 
         log.exit();
     }
 	
-    public DataType getDataType() {
-        return dataType;
-    }
-    public T getCallType() {
-        return callType;
-    }
-    public DataQuality getDataQuality() {
-        return dataQuality;
-    }
-    public DataPropagation getDataPropagation() {
-        return dataPropagation;
-    }
+    public abstract T getCallType();
+
+    public abstract DataQuality getDataQuality();
+    
+    public abstract DataPropagation getDataPropagation();
     
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((callType == null) ? 0 : callType.hashCode());
-        result = prime * result + ((dataPropagation == null) ? 0 : dataPropagation.hashCode());
-        result = prime * result + ((dataQuality == null) ? 0 : dataQuality.hashCode());
         result = prime * result + ((dataType == null) ? 0 : dataType.hashCode());
         return result;
     }
+    
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -278,23 +390,6 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             return false;
         }
         CallData<?> other = (CallData<?>) obj;
-        if (callType == null) {
-            if (other.callType != null) {
-                return false;
-            }
-        } else if (!callType.equals(other.callType)) {
-            return false;
-        }
-        if (dataPropagation == null) {
-            if (other.dataPropagation != null) {
-                return false;
-            }
-        } else if (!dataPropagation.equals(other.dataPropagation)) {
-            return false;
-        }
-        if (dataQuality != other.dataQuality) {
-            return false;
-        }
         if (dataType != other.dataType) {
             return false;
         }
@@ -303,10 +398,6 @@ public abstract class CallData<T extends Enum<T> & CallType> {
     
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() 
-                + " [dataType=" + dataType 
-                + ", callType=" + callType 
-                + ", dataQuality=" + dataQuality
-                + ", dataPropagation=" + dataPropagation + "]";
+        return "Data type: " + dataType;
     }
 }

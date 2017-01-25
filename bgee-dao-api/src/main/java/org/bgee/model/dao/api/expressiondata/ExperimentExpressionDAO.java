@@ -5,23 +5,23 @@ import java.util.LinkedHashMap;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
-import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 
 /**
  * DAO defining queries using or retrieving {@link ExperimentExpressionTO}s. 
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Dec. 2016
- * @since   Bgee 13, Dec. 2016
+ * @version Bgee 14, Jan. 2017
+ * @since   Bgee 14, Dec. 2016
  */
 public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Attribute> {
     
     /**
      * The attributes available for {@code ExperimentExpressionTO}
      * <ul>
-     *   <li>@{code ID} corresponds to {@link ExperimentExpressionTO#getId()}
      *   <li>@{code EXPRESSION_ID} corresponds to {@link ExperimentExpressionTO#getExpressionId()}
+     *   <li>@{code EXPERIMENT_ID} corresponds to {@link ExperimentExpressionTO#getExperimentId()}
      *   <li>@{code PRESENT_HIGH_COUNT} corresponds to {@link ExperimentExpressionTO#getPresentHighCount()}}
      *   <li>@{code PRESENT_LOW_COUNT} corresponds to {@link ExperimentExpressionTO#getPresentLowCount()}
      *   <li>@{code ABSENT_HIGH_COUNT} corresponds to {@link ExperimentExpressionTO#getAbsentHighCount()}
@@ -29,17 +29,17 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
      * </ul>
      */
     enum Attribute implements DAO.Attribute {
-        ID, EXPRESSION_ID, PRESENT_HIGH_COUNT, PRESENT_LOW_COUNT, ABSENT_HIGH_COUNT, EXPERIMENT_COUNT;
+        EXPRESSION_ID, EXPERIMENT_ID, PRESENT_HIGH_COUNT, PRESENT_LOW_COUNT, ABSENT_HIGH_COUNT, EXPERIMENT_COUNT;
     }
 
     /**
      * The attributes available to order retrieved {@code ExperimentExpressionTO}s
      * <ul>
-     *   <li>@{code ID} uses {@link ExperimentExpressionTO#getId()}
+     *   <li>@{code ID} uses {@link ExperimentExpressionTO#getExpressionId()}
      * </ul>
      */
     enum OrderingAttribute implements DAO.OrderingAttribute {
-        ID
+        EXPRESSION_ID
     }
     
     /**
@@ -148,12 +148,17 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
      * {@code TransferObject} representing an experiment expression in the Bgee database.
      * 
      * @author  Valentine Rech de Laval
-     * @version Bgee 13, Dec. 2016
+     * @version Bgee 14, Jan. 2017
      * @since   Bgee 13, Dec. 2016
      */
-    public class ExperimentExpressionTO extends EntityTO {
+    public class ExperimentExpressionTO extends TransferObject {
 
         private static final long serialVersionUID = 3464643420374159955L;
+
+        /**
+         * An {@code Integer} that is the expression ID of this experiment expression.
+         */
+        private final Integer expressionId;
 
         /**
          * An {@code Integer} that is the experiment ID of this experiment expression.
@@ -191,7 +196,7 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
          * All of these parameters are optional, so they can be {@code null} when not used.
          * Other attributes are set to {@code null}.
          * 
-         * @param id                A {@code String} that is the ID of this {@code ExperimentExpressionTO}.
+         * @param expressionId      An {@code Integer} that is the expression ID.
          * @param experimentId      An {@code Integer} that is the experiment ID.
          * @param presentHighCount  An {@code Integer} that is the count of experiments that
          *                          produced this experiment expression as present high.
@@ -203,14 +208,21 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
          *                          exact combination of counts of present high/present low/absent 
          *                          high/absent low that produced this experiment expression.
          */
-        public ExperimentExpressionTO(String id, Integer experimentId, Integer presentHighCount,
+        public ExperimentExpressionTO(Integer expressionId, Integer experimentId, Integer presentHighCount,
             Integer presentLowCount, Integer absentHighCount, Integer experimentCount) {
-            super(id);
+            this.expressionId = expressionId;
             this.experimentId = experimentId;
             this.presentHighCount = presentHighCount;
             this.presentLowCount = presentLowCount;
             this.absentHighCount = absentHighCount;
             this.experimentCount = experimentCount;
+        }
+
+        /**
+         * @return  The {@code Integer} that is the expression ID of this experiment expression.
+         */
+        public Integer getExpressionId() {
+            return expressionId;
         }
 
         /**
@@ -257,6 +269,7 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
         public int hashCode() {
             final int prime = 31;
             int result = super.hashCode();
+            result = prime * result + ((expressionId == null) ? 0 : expressionId.hashCode());
             result = prime * result + ((experimentId == null) ? 0 : experimentId.hashCode());
             result = prime * result + ((presentHighCount == null) ? 0 : presentHighCount.hashCode());
             result = prime * result + ((presentLowCount == null) ? 0 : presentLowCount.hashCode());
@@ -274,6 +287,11 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
             if (getClass() != obj.getClass())
                 return false;
             ExperimentExpressionTO other = (ExperimentExpressionTO) obj;
+            if (expressionId == null) {
+                if (other.expressionId != null)
+                    return false;
+            } else if (!expressionId.equals(other.expressionId))
+                return false;
             if (experimentId == null) {
                 if (other.experimentId != null)
                     return false;
@@ -304,11 +322,12 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
 
         @Override
         public String toString() {
-            return super.toString() + " - Experiment ID: " + getExperimentId();
-//                + " - Present high count: " + getPresentHighCount(),
-//                + " - Present low count: " + getPresentLowCount() 
-//                + " - Absent high count: " + getAbsentHighCount()
-//                + " - Experiment count: " + getExperimentCount();
+            return " - Expression ID: " + getExpressionId() 
+                + " - Experiment ID: " + getExperimentId()
+                + " - Present high count: " + getPresentHighCount()
+                + " - Present low count: " + getPresentLowCount() 
+                + " - Absent high count: " + getAbsentHighCount()
+                + " - Experiment count: " + getExperimentCount();
         }
     }
 }

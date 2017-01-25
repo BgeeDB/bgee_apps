@@ -47,6 +47,7 @@ import org.bgee.model.expressiondata.baseelements.CallType.Expression;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataPropagation.PropagationState;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
+import org.bgee.model.expressiondata.baseelements.DataQualitySummary;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
@@ -58,7 +59,7 @@ import org.bgee.model.species.TaxonomyFilter;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Dec. 2016
+ * @version Bgee 14, Jan. 2017
  * @since   Bgee 13, Oct. 2015
  */
 /// XXX: Check in bgee14 if speciesId is retrieved in CallTO
@@ -304,9 +305,9 @@ public class CallService extends Service {
             Set<ExperimentExpressionTO> set = new HashSet<ExperimentExpressionTO>();
             for (Entry<Iterator<ExperimentExpressionTO>, ExperimentExpressionTO> e: mapItToLastTO.entrySet()) {
                 ExperimentExpressionTO currentTO = e.getValue();
-                while (currentTO != null && expressionId.equals(currentTO.getId())) {
+                while (currentTO != null && expressionId.equals(currentTO.getExpressionId())) {
                     if (set.contains(currentTO)) {
-                        currentTO = new ExperimentExpressionTO(currentTO.getId(), currentTO.getExperimentId(),
+                        currentTO = new ExperimentExpressionTO(currentTO.getExpressionId(), currentTO.getExperimentId(),
                             currentTO.getPresentHighCount() == null ? 0 : currentTO.getPresentHighCount() * 2,
                             currentTO.getPresentLowCount() == null ? 0 : currentTO.getPresentLowCount() * 2,
                             currentTO.getAbsentHighCount() == null ? 0 : currentTO.getAbsentHighCount() * 2,
@@ -545,7 +546,7 @@ public class CallService extends Service {
             }
             condition = new Condition(anatEntityId, devStageId, call.getCondition().getSpeciesId());
         }
-        DataQuality summaryQual = null; 
+        DataQualitySummary summaryQual = null; 
         if (clonedAttrs.contains(Attribute.GLOBAL_DATA_QUALITY)) {
             summaryQual = call.getSummaryQuality();
         }
@@ -759,11 +760,14 @@ public class CallService extends Service {
                     //no gene orthology requested
                     null, 
                     //Attributes
-                    convertServiceAttrsToExprDAOAttrs(attributes, exprCallData.stream()
-                            .flatMap(callData -> callData.getDataType() != null? 
-                                    EnumSet.of(callData.getDataType()).stream(): 
-                                        EnumSet.allOf(DataType.class).stream())
-                            .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)))), 
+                    // FIXME Attributes does not work anymore but I leave it to be able to come back
+                    // to it before the cleaning of the class
+                    null,
+//                    convertServiceAttrsToExprDAOAttrs(attributes, exprCallData.stream()
+//                            .flatMap(callData -> callData.getDataType() != null? 
+//                                    EnumSet.of(callData.getDataType()).stream(): 
+//                                        EnumSet.allOf(DataType.class).stream())
+//                            .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)))), 
                     //OrderingAttributes
                     convertServiceOrderingAttrsToExprDAOOrderingAttrs(orderingAttributes)
                 )
@@ -804,7 +808,7 @@ public class CallService extends Service {
 
         LinkedHashMap<ExperimentExpressionDAO.OrderingAttribute,DAO.Direction> orderingAttrs =
             new LinkedHashMap<>();
-        orderingAttrs.put(ExperimentExpressionDAO.OrderingAttribute.ID, DAO.Direction.ASC);
+        orderingAttrs.put(ExperimentExpressionDAO.OrderingAttribute.EXPRESSION_ID, DAO.Direction.ASC);
 
         Stream<ExperimentExpressionTO> affyData = 
             dao.getAffymetrixExperimentExpressions(null, orderingAttrs).stream();
@@ -872,15 +876,18 @@ public class CallService extends Service {
                 //get the best quality among all data types
                 extractBestQual(callTO),
                 //map to CallDatas
-                callTO.extractDataTypesToDataStates().entrySet().stream()
-                    .filter(entry -> entry.getValue() != null && 
-                                     !entry.getValue().equals(CallTO.DataState.NODATA))
-                    .map(entry -> new ExpressionCallData(Expression.EXPRESSED, 
-                            convertDataStateToDataQuality(entry.getValue()), 
-                            convertExprAttributeToDataType(entry.getKey()), 
-                            callDataPropagation))
-                    
-                    .collect(Collectors.toSet()), 
+                // FIXME Attributes does not compile anymore but I leave it to be able to come back
+                // to it before the cleaning of the class
+                null,
+//                callTO.extractDataTypesToDataStates().entrySet().stream()
+//                    .filter(entry -> entry.getValue() != null && 
+//                                     !entry.getValue().equals(CallTO.DataState.NODATA))
+//                    .map(entry -> new ExpressionCallData(Expression.EXPRESSED, 
+//                            convertDataStateToDataQuality(entry.getValue()), 
+//                            convertExprAttributeToDataType(entry.getKey()), 
+//                            callDataPropagation))
+//                    
+//                    .collect(Collectors.toSet()), 
                 callTO.getGlobalMeanRank()
                 ));
     }
@@ -888,13 +895,15 @@ public class CallService extends Service {
     //*************************************************************************
     // HELPER METHODS CONVERTING INFORMATION FROM CallDAO LAYER TO Call LAYER
     //*************************************************************************
-    private static DataQuality extractBestQual(CallTO<?> callTO) {
+    private static DataQualitySummary extractBestQual(CallTO<?> callTO) {
         log.entry(callTO);
-        
-        return log.exit(callTO.extractDataTypesToDataStates().values().stream()
-            .filter(e -> e != null && !e.equals(CallTO.DataState.NODATA))
-            .max(Comparator.naturalOrder())
-            .map(CallService::convertDataStateToDataQuality).orElse(null));
+        // FIXME It does not compile anymore but I leave it to be able to come back
+        // to it before the cleaning of the class
+        throw new UnsupportedOperationException("Implementation deleted");
+//        return log.exit(callTO.extractDataTypesToDataStates().values().stream()
+//            .filter(e -> e != null && !e.equals(CallTO.DataState.NODATA))
+//            .max(Comparator.naturalOrder())
+//            .map(CallService::convertDataStateToDataQuality).orElse(null));
     }
     
     private static DataQuality convertDataStateToDataQuality(CallTO.DataState state) 
@@ -969,15 +978,17 @@ public class CallService extends Service {
         //on a minimum quality level, of course.
         //Here, don't use an EnumSet to be able to put 'null' in it (see below).
         Set<DataType> dataTypes = new HashSet<>();
-        if (callData.getDataType() == null && callData.getDataQuality().equals(DataQuality.LOW)) {
-            //no filtering on data quality for any data type
-            dataTypes.add(null);
-        } else {
-            //filtering requested on data quality for any data type, 
-            //or filtering requested on one specific data type for any quality
-            dataTypes = callData.getDataType() != null? 
-                EnumSet.of(callData.getDataType()): EnumSet.allOf(DataType.class);
-        }
+        // FIXME It does not compile anymore but I leave it to be able to come back
+        // to it before the cleaning of the class
+//        if (callData.getDataType() == null && callData.getDataQuality().equals(DataQuality.LOW)) {
+//            //no filtering on data quality for any data type
+//            dataTypes.add(null);
+//        } else {
+//            //filtering requested on data quality for any data type, 
+//            //or filtering requested on one specific data type for any quality
+//            dataTypes = callData.getDataType() != null? 
+//                EnumSet.of(callData.getDataType()): EnumSet.allOf(DataType.class);
+//        }
                 
         return log.exit(dataTypes.stream().map(dataType -> {
             CallTO.DataState affyState = null;
@@ -1349,9 +1360,11 @@ public class CallService extends Service {
                             "ExpressionCallData already propagated: " + callData));
                 }
                 
-                selfCallData.add(new ExpressionCallData(callData.getCallType(),
-                        callData.getDataQuality(), callData.getDataType(), 
-                        new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)));
+                // FIXME It does not compile anymore but I leave it to be able to come back
+                // to it before the cleaning of the class
+//                selfCallData.add(new ExpressionCallData(callData.getCallType(),
+//                        callData.getDataQuality(), callData.getDataType(), 
+//                        new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)));
 
                 PropagationState anatEntityPropagationState = null;
                 PropagationState devStagePropagationState = null;
@@ -1384,10 +1397,12 @@ public class CallService extends Service {
 
                 // NOTE: we do not manage includingObservedData here, 
                 // it's should be done during the grouping of ExpressionCalls
-                relativeCallData.add(new ExpressionCallData(callData.getCallType(),
-                        callData.getDataQuality(), callData.getDataType(), 
-                        new DataPropagation(anatEntityPropagationState, devStagePropagationState,
-                                includingObservedData)));
+                // FIXME It does not compile anymore but I leave it to be able to come back
+                // to it before the cleaning of the class
+//                relativeCallData.add(new ExpressionCallData(callData.getCallType(),
+//                        callData.getDataQuality(), callData.getDataType(), 
+//                        new DataPropagation(anatEntityPropagationState, devStagePropagationState,
+//                                includingObservedData)));
             }
             
             // Add propagated expression call.
@@ -1509,16 +1524,16 @@ public class CallService extends Service {
         }
         
         //DataQuality
-        DataQuality dataQuality = null;
+        DataQualitySummary dataQuality = null;
         if (expressionSummary == ExpressionSummary.EXPRESSED 
                 || expressionSummary == ExpressionSummary.NOT_EXPRESSED) {
             Set<DataQuality> qualities = callData.stream()
                     .map(c -> c.getDataQuality())
                     .collect(Collectors.toSet());
             if (qualities.contains(DataQuality.HIGH)) {
-                dataQuality = DataQuality.HIGH;
+                dataQuality = DataQualitySummary.GOLD;
             } else {
-                dataQuality = DataQuality.LOW;
+                dataQuality = DataQualitySummary.SILVER;
             }
         }
 

@@ -6,6 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLAnatEntityDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO;
@@ -15,6 +16,7 @@ import org.bgee.model.dao.mysql.anatdev.mapping.MySQLStageGroupingDAO;
 import org.bgee.model.dao.mysql.anatdev.mapping.MySQLSummarySimilarityAnnotationDAO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.expressiondata.MySQLDiffExpressionCallDAO;
+import org.bgee.model.dao.mysql.expressiondata.MySQLExperimentExpressionDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLNoExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.affymetrix.MySQLAffymetrixProbesetDAO;
@@ -182,6 +184,12 @@ public abstract class MySQLDAOUser {
      */
     protected MySQLNoExpressionCallDAO getNoExpressionCallDAO() {
         return (MySQLNoExpressionCallDAO) this.manager.getNoExpressionCallDAO();
+    }
+    /**
+     * @return  A {@code MySQLExperimentExpressionDAO}.
+     */
+    protected MySQLExperimentExpressionDAO getExperimentExpressionDAO() {
+        return (MySQLExperimentExpressionDAO) this.manager.getExperimentExpressionDAO();
     }
     /**
      * @return  A {@code MySQLAnatEntityDAO}.

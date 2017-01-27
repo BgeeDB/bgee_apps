@@ -192,6 +192,11 @@ public class RequestParameters {
     public static final String GENE_ID = "gene_id";
     
     /**
+     * A {@code String} that encapsulates the value of the gene id parameter for the gene page.
+     */
+    public static final String ANAT_ENTITY_ID = "anatEntity_id";
+    
+    /**
      * A {@code String} that is the value taken by the {@code action} parameter 
      * (see {@link URLParameters#getParamAction()}) when download page about files 
      * providing calls of expression is requested. Value of the parameter page should be 
@@ -1961,7 +1966,7 @@ public class RequestParameters {
     }
     
     /**
-     * @return the anat_entity_id parameter
+     * @return the anatEntity_id parameter
      */
     public String getAnatEntityId() {
     	return this.getFirstValue(this.getUrlParametersInstance().getParamAnatEntityId());
@@ -1978,6 +1983,19 @@ public class RequestParameters {
     public void setGeneId(String geneId) {
         this.resetValues(this.getUrlParametersInstance().getParamGeneId());
         this.addValue(this.getUrlParametersInstance().getParamGeneId(), geneId);
+    }
+    
+    /**
+     * Convenient method to set value of the parameter returned by 
+     * {@link URLParameters#getParamGeneId()}. Equivalent to calling 
+     * {@link #addValue(Parameter, Object)} for this parameter.
+     * 
+     * @param action    A {@code String} that is the value of the {@code anatEntity_id} URL parameter 
+     *                  to set.
+     */
+    public void setAnatEntityId(String anatEntityId) {
+        this.resetValues(this.getUrlParametersInstance().getParamAnatEntityId());
+        this.addValue(this.getUrlParametersInstance().getParamAnatEntityId(), anatEntityId);
     }
 
     /**

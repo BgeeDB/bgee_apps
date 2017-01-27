@@ -184,10 +184,10 @@ public class URLParameters {
     /**
      * A {@code Parameter<String>} representing an anat. entity id, typically for the anat. entity page.
      * Category of the parameter: controller parameter.
-     * Corresponds to the URL parameter "anat_entity_id".
+     * Corresponds to the URL parameter "anatEntity_id".
      */
     private static final Parameter<String> ANAT_ENTITY_ID = 
-    		new Parameter<String>("anat_entity_id", false,false, null, false, false, 50, DEFAULT_FORMAT, String.class);
+    		new Parameter<String>("anatEntity_id", false,false, null, false, false, 50, DEFAULT_FORMAT, String.class);
     
     /**
      * A {@code Parameter<String>} representing a search, typically for the gene page.

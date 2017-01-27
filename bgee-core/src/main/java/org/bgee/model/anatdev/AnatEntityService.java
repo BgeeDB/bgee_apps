@@ -6,10 +6,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -61,8 +63,8 @@ public class AnatEntityService extends Service {
      */
     public AnatEntity loadAnatEntityById(String anatEntityId) {
         log.entry(anatEntityId);
-        Stream<AnatEntity> anatEntityStream = this.loadAnatEntities(null, true, Collections.singleton(anatEntityId));
-        AnatEntity anatEntity = anatEntityStream.count() == 0 ? null: anatEntityStream.findFirst().get();
+        List<AnatEntity> anatEntities = this.loadAnatEntities(null, true, Collections.singleton(anatEntityId)).collect(Collectors.toList());
+        AnatEntity anatEntity = anatEntities.size() == 0 ? null: anatEntities.get(0);
         return log.exit(anatEntity);
     }
     

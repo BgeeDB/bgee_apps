@@ -32,6 +32,7 @@ import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.baseelements.CallType.Expression;
 import org.bgee.model.expressiondata.baseelements.DataPropagation.PropagationState;
+import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
@@ -51,8 +52,8 @@ import org.supercsv.io.dozer.ICsvDozerBeanWriter;
  * the Bgee database.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Oct. 2016
- * @since   Bgee 13, 
+ * @version Bgee 14, Feb. 2017
+ * @since   Bgee 13, Sept. 2017
  */
 public class GenerateExprFile2 extends GenerateDownloadFile {
 
@@ -442,12 +443,10 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         serviceOrdering.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
         serviceOrdering.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.ASC);
         
-        ExpressionCallFilter callFilter = new ExpressionCallFilter(null, null, new HashSet<>(Arrays.asList(
-                new ExpressionCallData(Expression.EXPRESSED),
-                new ExpressionCallData(Expression.NOT_EXPRESSED))));
+        ExpressionCallFilter callFilter = new ExpressionCallFilter(null, null, null, null, null, new DataPropagation());
 
         Stream<ExpressionCall> calls = serviceFactory.getCallService().loadExpressionCalls(
-                speciesId, callFilter, null, serviceOrdering, true)
+                speciesId, callFilter, null, serviceOrdering)
                 .filter(c-> !nonInformativeAnatEntities.contains(c.getCondition().getAnatEntityId()));
 
         log.trace("Done retrieving data for expression files for the species {}.", speciesId);
@@ -1027,7 +1026,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
     private String resumeIncludingObservedData(Set<ExpressionCallData> callData) {
         log.entry(callData);
         return log.exit(convertObservedDataToString(callData.stream()
-                .anyMatch(d -> Boolean.TRUE.equals(d.getDataPropagation().getIncludingObservedData()))));
+                .anyMatch(d -> d.isObservedData())));
     }
 
     /**

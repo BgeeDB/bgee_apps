@@ -48,7 +48,7 @@ import org.bgee.model.expressiondata.ConditionUtils;
 import org.bgee.model.expressiondata.baseelements.CallType.Expression;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataPropagation.PropagationState;
-import org.bgee.model.expressiondata.baseelements.DataQualitySummary;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.pipeline.BgeeDBUtils;
@@ -59,7 +59,7 @@ import org.bgee.pipeline.MySQLDAOUser;
  * Class responsible for inserting the propagated expression into the Bgee database.
  * 
  * @author Valentine Rech de Laval
- * @version Bgee 14, Jan. 2017
+ * @version Bgee 14, Feb. 2017
  * @since   Bgee 14, Jan. 2017
  */
 public class InsertPropagatedCalls extends MySQLDAOUser {
@@ -384,21 +384,32 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
      */
     public static class PipelineCall extends ExpressionCall {
 
-        Set<ExpressionCallTO> parentSourceCallTOs;
+        private final Set<ExpressionCallTO> parentSourceCallTOs;
 
-        Set<ExpressionCallTO> selfSourceCallTOs;
+        private final Set<ExpressionCallTO> selfSourceCallTOs;
 
-        Set<ExpressionCallTO> descendantSourceCallTOs;
+        private final Set<ExpressionCallTO> descendantSourceCallTOs;
+        
+        private final DataPropagation dataPropagation;
         
         public PipelineCall(String geneId, Condition condition, DataPropagation dataPropagation,
-                ExpressionSummary summaryCallType, DataQualitySummary summaryQual,
+            Set<ExpressionCallTO> parentSourceCallTOs, Set<ExpressionCallTO> selfSourceCallTOs,
+            Set<ExpressionCallTO> descendantSourceCallTOs) {
+            this(geneId, condition, dataPropagation, null, null, null, null,
+                parentSourceCallTOs, selfSourceCallTOs,descendantSourceCallTOs);
+        }
+        
+        public PipelineCall(String geneId, Condition condition, DataPropagation dataPropagation,
+                ExpressionSummary summaryCallType, SummaryQuality summaryQual,
                 Collection<ExpressionCallData> callData, BigDecimal globalMeanRank,
                 Set<ExpressionCallTO> parentSourceCallTOs, Set<ExpressionCallTO> selfSourceCallTOs,
                 Set<ExpressionCallTO> descendantSourceCallTOs) {
-            super(geneId, condition, dataPropagation, summaryCallType, summaryQual, callData, globalMeanRank);
+            super(geneId, condition, dataPropagation != null? dataPropagation.getIncludingObservedData(): null,
+                summaryCallType, summaryQual, callData, globalMeanRank);
             this.parentSourceCallTOs = Collections.unmodifiableSet(parentSourceCallTOs);
             this.selfSourceCallTOs = Collections.unmodifiableSet(selfSourceCallTOs);
             this.descendantSourceCallTOs = Collections.unmodifiableSet(descendantSourceCallTOs);
+            this.dataPropagation = dataPropagation;
         }
 
         /**
@@ -423,6 +434,10 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
          */
         public Set<ExpressionCallTO> getDescendantSourceCallTOs() {
             return descendantSourceCallTOs;
+        }
+        
+        public DataPropagation getDataPropagation() {
+            return dataPropagation;
         }
     }
     
@@ -488,7 +503,8 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
             List<String> speciesIdsToUse = BgeeDBUtils.checkAndGetSpeciesIds(speciesIds, 
                 this.getSpeciesDAO());
 
-            speciesIdsToUse.parallelStream().forEach(speciesId -> {
+            //Note: no parallel stream because insertions are made into database
+            speciesIdsToUse.stream().forEach(speciesId -> {
                 log.info("Start inserting of propagated calls for the species {}...", speciesId);
 
                 try {
@@ -526,32 +542,33 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
                     throws IllegalArgumentException {
         log.entry(speciesId, attributes);
         
-        // FIXME add sanity checks on attibutes:
+        final ServiceFactory serviceFactory = this.serviceFactorySupplier.get();
+        
+        // FIXME add sanity checks on attributes:
         // - need anat. entity or dev. stage 
         
         // We retrieve all attributes to be able to build the ConditionUtils and
         // propagate, reconcile and filter calls.
         // XXX: may be we should not retrieve all attributes
+        // FIXME: the previous comment seems incorrect, we should be allowed to retrieve only required attributes
         Stream<ExpressionCallTO> streamExpressionCallTOs =
                 this.performsExpressionCallQuery(speciesId, attributes);
         
         Map<DataType, Stream<ExperimentExpressionTO>> experimentExprTOsByDataType =
-            performsExperimentExpressionQuery();
+            performsExperimentExpressionQuery(speciesId);
         
-        // We store calls to get conditions to be able to build the ConditionUtils
-        List<ExpressionCallTO> expressedCallTOs = streamExpressionCallTOs.collect(Collectors.toList());
-        
-        Set<Condition> conditions = expressedCallTOs.stream()
-                .map(c -> new Condition(c.getAnatEntityId(), c.getStageId(), speciesId))
-                .collect(Collectors.toSet());
+        Set<Condition> conditions = serviceFactory.getConditionService()
+            .loadConditionsBySpeciesId(speciesId)
+            .collect(Collectors.toSet());
         
         CallSpliterator<ExpressionCallTO, Map<ExpressionCallTO, Map<DataType, Set<ExperimentExpressionTO>>>> spliterator = 
-            new CallSpliterator<>(expressedCallTOs.stream(), experimentExprTOsByDataType,
-                Comparator.comparing(ExpressionCallTO::getGeneId, Comparator.nullsLast(Comparator.naturalOrder())));
+            new CallSpliterator<>(streamExpressionCallTOs, experimentExprTOsByDataType,
+                Comparator.comparing(RawExpressionCallTO::getGeneId, Comparator.nullsLast(Comparator.naturalOrder()))
+                          .thenComparing(RawExpressionCallTO::getId, Comparator.nullsLast(Comparator.naturalOrder())));
         Stream<Map<ExpressionCallTO, Map<DataType, Set<ExperimentExpressionTO>>>> callTOsByGene =
             StreamSupport.stream(spliterator, false).onClose(() -> spliterator.close());
 
-        ConditionUtils conditionUtils = new ConditionUtils(conditions, true, this.serviceFactorySupplier.get());
+        ConditionUtils conditionUtils = new ConditionUtils(conditions, true, true, serviceFactory);
         
         Stream<ExpressionCall> reconciledCalls = callTOsByGene
             // First we convert Map<ExpressionCallTO, Map<DataType, Set<ExperimentExpressionTO>>
@@ -561,7 +578,7 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
                     .collect(Collectors.toMap(
                         e -> mapCallTOToPipelineCall(e.getKey(), speciesId),
                         e -> e.getValue().entrySet().stream()
-                            .map(eeTo -> new PipelineCallData(eeTo.getKey(), 
+                            .map(eeTo -> new PipelineCallData(eeTo.getKey(),
                                 new DataPropagation(PropagationState.SELF, PropagationState.SELF, true),
                                 null, eeTo.getValue(), null))
                             .collect(Collectors.toSet()),
@@ -572,8 +589,8 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
             .map(m -> m.entrySet().stream()
                 // Reconcile calls
                 .map(e -> InsertPropagatedCalls.reconcileSingleGeneCalls(e.getKey(), e.getValue()))
-                // Keep requested attributes
-                .map(c -> getClonedExpressionCall(c, attributes))
+//                // Keep requested attributes
+//                .map(c -> getClonedExpressionCall(c, attributes))
                 // After removing of some attributes, some calls can be identical
                 .distinct()
                 .collect(Collectors.toList()))
@@ -591,79 +608,70 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
      *                      If {@code null} or empty, all attributes are populated. 
      * @return              The clones {@code ExpressionCall} populated according to {@code attributes}.
      */
-    private static ExpressionCall getClonedExpressionCall(ExpressionCall call, Set<Attribute> attributes) {
-        log.entry(call, attributes);
-        
-        assert attributes != null;
-        
-        Set<Attribute> clonedAttrs = attributes.isEmpty()? EnumSet.allOf(Attribute.class): attributes;
-
-        String geneId = null;
-        if (clonedAttrs.contains(Attribute.GENE_ID)) {
-            geneId = call.getGeneId();
-        }
-        Condition condition = null;
-        if (call.getCondition() != null && (clonedAttrs.contains(Attribute.ANAT_ENTITY_ID) || 
-                clonedAttrs.contains(Attribute.DEV_STAGE_ID))) {
-            String anatEntityId = null;
-            if (clonedAttrs.contains(Attribute.ANAT_ENTITY_ID) ) {
-                anatEntityId = call.getCondition().getAnatEntityId();
-            }
-            String devStageId = null;
-            if (clonedAttrs.contains(Attribute.DEV_STAGE_ID) ) {
-                devStageId = call.getCondition().getDevStageId();
-            }
-            condition = new Condition(anatEntityId, devStageId, call.getCondition().getSpeciesId());
-        }
-        DataQualitySummary summaryQual = null; 
-        if (clonedAttrs.contains(Attribute.GLOBAL_DATA_QUALITY)) {
-            summaryQual = call.getSummaryQuality();
-        }
-        BigDecimal globalMeanRank = null;
-        if (clonedAttrs.contains(Attribute.GLOBAL_RANK)) {
-            globalMeanRank = call.getGlobalMeanRank();
-        }
-        DataPropagation dataPropagation = null; 
-        if (call.getDataPropagation() != null && (
-                clonedAttrs.contains(Attribute.GLOBAL_ANAT_PROPAGATION) || 
-                clonedAttrs.contains(Attribute.GLOBAL_STAGE_PROPAGATION) || 
-                clonedAttrs.contains(Attribute.GLOBAL_OBSERVED_DATA))) {
-            PropagationState anatPropa = null;
-            if (clonedAttrs.contains(Attribute.GLOBAL_ANAT_PROPAGATION) ) {
-                anatPropa = call.getDataPropagation().getAnatEntityPropagationState();
-            }
-            PropagationState stagePropa = null;
-            if (clonedAttrs.contains(Attribute.GLOBAL_STAGE_PROPAGATION) ) {
-                stagePropa = call.getDataPropagation().getDevStagePropagationState();
-            }
-            Boolean includingObservedData = null;
-            if (clonedAttrs.contains(Attribute.GLOBAL_OBSERVED_DATA) ) {
-                includingObservedData = call.getDataPropagation().getIncludingObservedData();
-            }
-            dataPropagation = new DataPropagation(anatPropa, stagePropa, includingObservedData);
-        }
-        Collection<ExpressionCallData> callData = null;
-        if (clonedAttrs.contains(Attribute.CALL_DATA)) {
-            callData = call.getCallData();
-        }
-        // FIXME: Take into account Attribute.CALL_DATA_OBSERVED_DATA ??
-
-        // FIXME: Create Attribute.GLOBAL_SUMMARY or always fill the summary ??
-        ExpressionSummary summaryCallType = call.getSummaryCallType();
-        
-        return log.exit(new ExpressionCall(geneId, condition, dataPropagation, summaryCallType,
-                summaryQual, callData, globalMeanRank));
-    }
-    
-    private static LinkedHashMap<OrderingAttribute, Direction> getDefaultOrdering() {
-        log.entry();
-        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
-                new LinkedHashMap<>();
-        for (CallService.OrderingAttribute attr: EnumSet.allOf(CallService.OrderingAttribute.class)) {
-            serviceOrdering.put(attr, Service.Direction.ASC);
-        }
-        return log.exit(serviceOrdering);
-    }
+    // FIXME : to remove?
+//    private static ExpressionCall getClonedExpressionCall(ExpressionCall call, Set<Attribute> attributes) {
+//        log.entry(call, attributes);
+//        
+//        assert attributes != null;
+//        
+//        Set<Attribute> clonedAttrs = attributes.isEmpty()? EnumSet.allOf(Attribute.class): attributes;
+//
+//        String geneId = null;
+//        if (clonedAttrs.contains(Attribute.GENE_ID)) {
+//            geneId = call.getGeneId();
+//        }
+//        Condition condition = null;
+//        if (call.getCondition() != null && (clonedAttrs.contains(Attribute.ANAT_ENTITY_ID) || 
+//                clonedAttrs.contains(Attribute.DEV_STAGE_ID))) {
+//            String anatEntityId = null;
+//            if (clonedAttrs.contains(Attribute.ANAT_ENTITY_ID) ) {
+//                anatEntityId = call.getCondition().getAnatEntityId();
+//            }
+//            String devStageId = null;
+//            if (clonedAttrs.contains(Attribute.DEV_STAGE_ID) ) {
+//                devStageId = call.getCondition().getDevStageId();
+//            }
+//            condition = new Condition(anatEntityId, devStageId, call.getCondition().getSpeciesId());
+//        }
+//        SummaryQuality summaryQual = null; 
+//        if (clonedAttrs.contains(Attribute.GLOBAL_DATA_QUALITY)) {
+//            summaryQual = call.getSummaryQuality();
+//        }
+//        BigDecimal globalMeanRank = null;
+//        if (clonedAttrs.contains(Attribute.GLOBAL_RANK)) {
+//            globalMeanRank = call.getGlobalMeanRank();
+//        }
+//        DataPropagation dataPropagation = null; 
+//        if (call.getDataPropagation() != null && (
+//                clonedAttrs.contains(Attribute.GLOBAL_ANAT_PROPAGATION) || 
+//                clonedAttrs.contains(Attribute.GLOBAL_STAGE_PROPAGATION) || 
+//                clonedAttrs.contains(Attribute.GLOBAL_OBSERVED_DATA))) {
+//            PropagationState anatPropa = null;
+//            if (clonedAttrs.contains(Attribute.GLOBAL_ANAT_PROPAGATION) ) {
+//                anatPropa = call.getDataPropagation().getAnatEntityPropagationState();
+//            }
+//            PropagationState stagePropa = null;
+//            if (clonedAttrs.contains(Attribute.GLOBAL_STAGE_PROPAGATION) ) {
+//                stagePropa = call.getDataPropagation().getDevStagePropagationState();
+//            }
+//            Boolean includingObservedData = null;
+//            if (clonedAttrs.contains(Attribute.GLOBAL_OBSERVED_DATA) ) {
+//                includingObservedData = call.getDataPropagation().getIncludingObservedData();
+//            }
+//            dataPropagation = new DataPropagation(anatPropa, stagePropa, includingObservedData);
+//        }
+//        Collection<ExpressionCallData> callData = null;
+//        if (clonedAttrs.contains(Attribute.CALL_DATA)) {
+//            callData = call.getCallData();
+//        }
+//        // FIXME: Take into account Attribute.CALL_DATA_OBSERVED_DATA ??
+//
+//        // FIXME: Create Attribute.GLOBAL_SUMMARY or always fill the summary ??
+//        ExpressionSummary summaryCallType = call.getSummaryCallType();
+//        
+//        return log.exit(new ExpressionCall(geneId, condition, dataPropagation, summaryCallType,
+//                summaryQual, callData, globalMeanRank));
+//    }
 
     //*************************************************************************
     // METHODS PERFORMING THE QUERIES TO THE DAOs
@@ -693,25 +701,21 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
                     throws IllegalArgumentException {
         log.entry(speciesId, attributes);
         log.debug("Start retrieving expressed data");
-        
-        //UnsupportedOperationExceptions (for now)
-        if (attributes.contains(Attribute.CALL_DATA_OBSERVED_DATA)) {
-            throw log.throwing(new UnsupportedOperationException(
-                    "Retrieval of observed data state per data type not yet implemented."));
-        }
 
-        //now, do one query for each combination of propagation states
-        Stream<ExpressionCallTO> expr = this.getExpressionCallDAO().getExpressionCalls(
-                null, // ExpressionCallDAOFilter 
-                null, //CallTOFilters
-                false,  //includeSubstructures
-                false,  //includeSubStages
-                null,  //global gene filter
-                null,   //no gene orthology requested
+        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> ordering = 
+            new LinkedHashMap<>();
+        //Warning, the following ordering is necessary for proper call inference, 
+        //(see retrieval of experimentExpressionTOs)
+        ordering.put(RawCallDAO.OrderingAttribute.GENE_ID, DAO.Direction.ASC);
+        ordering.put(RawCallDAO.OrderingAttribute.EXPRESSION_ID, DAO.Direction.ASC);
+        
+        Stream<ExpressionCallTO> expr = this.getRawExpressionCallDAO().getExpressionCalls(
+                speciesId, 
                 //Attributes
-                convertServiceAttrsToExprDAOAttrs(attributes),
+                convertServiceAttrsToRawExprDAOAttrs(attributes),
                 //OrderingAttributes
-                convertServiceOrderingAttrsToExprDAOOrderingAttrs(getDefaultOrdering()))
+                //XXX: we could rather have a method "getExpressionCallsOrderedByGeneIdAndExprId"
+                ordering)
             //retrieve the Stream resulting from the query. Note that the query is not executed 
             //as long as the Stream is not consumed (lazy-loading).
             .stream();
@@ -728,39 +732,42 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
      *          the associated value being a {@code Stream} of {@code ExperimentExpressionTO}s
      *          defining experiment expression.
      */
-    private Map<DataType, Stream<ExperimentExpressionTO>> performsExperimentExpressionQuery()
+    private Map<DataType, Stream<ExperimentExpressionTO>> performsExperimentExpressionQuery(String speciesId)
                     throws IllegalArgumentException {
-        log.entry();
+        log.entry(speciesId);
 
         log.debug("Start retrieving experiement expressions");
 
         final ExperimentExpressionDAO dao = this.getExperimentExpressionDAO();
 
+        //Warning, the following ordering is necessary for proper call inference, 
+        //(see retrieval of rawCallTOs)
         LinkedHashMap<ExperimentExpressionDAO.OrderingAttribute,DAO.Direction> orderingAttrs =
             new LinkedHashMap<>();
+        orderingAttrs.put(ExperimentExpressionDAO.OrderingAttribute.GENE_ID, DAO.Direction.ASC);
         orderingAttrs.put(ExperimentExpressionDAO.OrderingAttribute.EXPRESSION_ID, DAO.Direction.ASC);
 
         Map<DataType, Stream<ExperimentExpressionTO>> map = new HashMap<>();
         for (DataType dt: DataType.values()) {
             switch (dt) {
                 case AFFYMETRIX:
-                    map.put(DataType.AFFYMETRIX, dao.getAffymetrixExperimentExpressions(null, orderingAttrs).stream());
+                    map.put(DataType.AFFYMETRIX, dao.getAffymetrixExperimentExpressions(null, orderingAttrs, speciesId).stream());
                     break;
                 case EST:
-                    map.put(DataType.EST, dao.getESTExperimentExpressions(null, orderingAttrs).stream());
+                    map.put(DataType.EST, dao.getESTExperimentExpressions(null, orderingAttrs, speciesId).stream());
                     break;
                 case IN_SITU:
-                    map.put(DataType.IN_SITU, dao.getInSituExperimentExpressions(null, orderingAttrs).stream());
+                    map.put(DataType.IN_SITU, dao.getInSituExperimentExpressions(null, orderingAttrs, speciesId).stream());
                     break;
                 case RNA_SEQ:
-                    map.put(DataType.RNA_SEQ, dao.getRNASeqExperimentExpressions(null, orderingAttrs).stream());
+                    map.put(DataType.RNA_SEQ, dao.getRNASeqExperimentExpressions(null, orderingAttrs, speciesId).stream());
                     break;
                 default: 
                     throw log.throwing(new IllegalStateException("Unsupported DataType: " + dt));
             }
         }
 
-        log.debug("Done retrieving experiement expressions");
+        log.debug("Done retrieving experiment expressions");
         return log.exit(map);
     }
 
@@ -776,7 +783,6 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
                 new DataPropagation(PropagationState.SELF, PropagationState.SELF, true), 
                 // At this point, we do not generate data state, quality, CallData, and rank
                 // as we haven't reconcile data.
-                null, null, null, null,
                 null, new HashSet<>(Arrays.asList(callTO)), null));
     }
     
@@ -833,6 +839,7 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
     //*************************************************************************
     // HELPER METHODS CONVERTING INFORMATION FROM Call LAYER TO ExpressionCallDAO LAYER
     //*************************************************************************
+    //FIXME: update convertion for new tables
     private static Set<ExpressionCallDAO.Attribute> convertServiceAttrsToExprDAOAttrs(
             Set<Attribute> attributes) {
         log.entry(attributes);
@@ -932,13 +939,13 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
         int analyzedCallCount = 0;
     
         Map<PipelineCall, Set<PipelineCallData>> propagatedData = new HashMap<>();
-        for (Entry<PipelineCall, Set<PipelineCallData>> callData: data.entrySet()) {
+        for (Entry<PipelineCall, Set<PipelineCallData>> entry: data.entrySet()) {
             analyzedCallCount++;
             if (log.isDebugEnabled() && analyzedCallCount % 100000 == 0) {
                 log.debug("{}/{} expression calls analyzed.", analyzedCallCount, callCount);
             }
     
-            ExpressionCall curCall = callData.getKey();
+            ExpressionCall curCall = entry.getKey();
             log.trace("Propagation for call: {}", curCall);
     
             // Retrieve conditions
@@ -947,7 +954,7 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
             log.trace("Ancestor conditions for {}: {}", curCall.getCondition(), ancestorConditions);
             if (!ancestorConditions.isEmpty()) {
                 Map<PipelineCall, Set<PipelineCallData>> ancestorCalls =
-                        propagateData(callData, ancestorConditions, true);
+                        propagatePipelineData(entry, ancestorConditions, true);
                 assert !ancestorCalls.isEmpty();
                 mergeData(propagatedData, ancestorCalls);
             }
@@ -957,7 +964,7 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
             log.trace("Descendant conditions for {}: {}",  curCall.getCondition(), descendantConditions);
             if (!descendantConditions.isEmpty()) {
                 Map<PipelineCall, Set<PipelineCallData>> descendantCalls =
-                        propagateData(callData, descendantConditions, false);
+                        propagatePipelineData(entry, descendantConditions, false);
                 assert !descendantCalls.isEmpty();
                 mergeData(propagatedData, descendantCalls);
             }
@@ -1005,7 +1012,7 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
      * @return                  A {@code Set} of {@code ExpressionCall}s that are propagated calls
      *                          from provided {@code childCall}.
      */
-    private Map<PipelineCall, Set<PipelineCallData>> propagateData(
+    private Map<PipelineCall, Set<PipelineCallData>> propagatePipelineData(
         Entry<PipelineCall, Set<PipelineCallData>> data, Set<Condition> propagatedConds, 
         boolean areAncestors) {
         log.entry(data, propagatedConds, areAncestors);
@@ -1130,33 +1137,33 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
         }
     
         // DataPropagation
-        PropagationState anatEntityPropagationState = summarizePropagationState(pipelineData,
-                DataPropagation::getAnatEntityPropagationState);
-        PropagationState devStagePropagationState = summarizePropagationState(pipelineData,
-                DataPropagation::getDevStagePropagationState);
+//        PropagationState anatEntityPropagationState = summarizePropagationState(pipelineData,
+//                DataPropagation::getAnatEntityPropagationState);
+//        PropagationState devStagePropagationState = summarizePropagationState(pipelineData,
+//                DataPropagation::getDevStagePropagationState);
         boolean includingObservedData = pipelineData.stream()
                 .anyMatch(c -> c.getDataPropagation().getIncludingObservedData() == true);
-        DataPropagation callDataProp = new DataPropagation(
-                anatEntityPropagationState, devStagePropagationState, includingObservedData);
+//        DataPropagation callDataProp = new DataPropagation(
+//                anatEntityPropagationState, devStagePropagationState, includingObservedData);
     
         Map<DataType, Set<PipelineCallData>> pipelineDataByDataTypes = pipelineData.stream()
                 .collect(Collectors.groupingBy(PipelineCallData::getDataType, Collectors.toSet()));
 
         Set<ExpressionCallData> expressionCallData = new HashSet<>();
         for (Entry<DataType, Set<PipelineCallData>> entry: pipelineDataByDataTypes.entrySet()) {
-            expressionCallData.add(mapToExpressionCallData(entry.getKey(), entry.getValue()));
+            expressionCallData.add(mergePipelineCallDataIntoExpressionCallData(entry.getKey(), entry.getValue()));
         }
         
+        // XXX: is it necessary to infer summaries and global mean rank?
         // ExpressionSummary
         ExpressionSummary expressionSummary = getExpressionSummary(expressionCallData);
-    
-        // DataQualitySummary
-        DataQualitySummary qualitySummary = getQualitySummary(expressionCallData, expressionSummary);
+        // SummaryQuality
+        SummaryQuality qualitySummary = getSummaryQuality(expressionCallData, expressionSummary);
     
         // Global mean rank
         BigDecimal globalMeanRank = getGlobalMeanRank(call);
     
-        return log.exit(new ExpressionCall(call.getGeneId(), call.getCondition(), callDataProp,
+        return log.exit(new ExpressionCall(call.getGeneId(), call.getCondition(), includingObservedData,
                 expressionSummary, qualitySummary, expressionCallData, globalMeanRank, null));
     }
     
@@ -1167,21 +1174,22 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
      *                              to use to define quality summary.
      * @param expressionSummary     An {@code ExpressionSummary} that is the expression summary 
      *                              to use to define quality summary.
-     * @return                      The {@code DataQualitySummary} that is the quality summary.
+     * @return                      The {@code SummaryQuality} that is the quality summary.
      */
-    private static DataQualitySummary getQualitySummary(Set<ExpressionCallData> expressionCallData,
+    // FIXME: use CallService.inferSummaryQuality? 
+    private static SummaryQuality getSummaryQuality(Set<ExpressionCallData> expressionCallData,
             ExpressionSummary expressionSummary) {
         log.entry(expressionCallData, expressionSummary);
         
-        DataQualitySummary qualitySummary = null;
+        SummaryQuality qualitySummary = null;
         if (expressionSummary == ExpressionSummary.EXPRESSED) {
             if (expressionCallData.stream().anyMatch(d -> d.getPresentHighTotalCount() > 0)) {
-                qualitySummary = DataQualitySummary.GOLD;
+                qualitySummary = SummaryQuality.GOLD;
             } else {
-                qualitySummary = DataQualitySummary.SILVER;
+                qualitySummary = SummaryQuality.SILVER;
             }
         } else if(expressionSummary == ExpressionSummary.NOT_EXPRESSED) {
-            qualitySummary = DataQualitySummary.GOLD;
+            qualitySummary = SummaryQuality.GOLD;
         }
         
         return log.exit(qualitySummary);
@@ -1194,6 +1202,7 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
      *                              to use to define quality summary.
      * @return                      The {@code ExpressionSummary} that is the expression summary.
      */
+    // FIXME: use CallService.inferSummaryCallType? 
     private static ExpressionSummary getExpressionSummary(Set<ExpressionCallData> expressionCallData) {
         log.entry(expressionCallData);
         
@@ -1215,8 +1224,7 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
             }
         } else {
             long notPropagatedNoExprCount = expressionCallData.stream()
-                .filter(c -> Boolean.TRUE.equals(c.getDataPropagation().getIncludingObservedData()) &&
-                    c.getCallType().equals(Expression.NOT_EXPRESSED))
+                .filter(c -> c.isObservedData() && Expression.NOT_EXPRESSED.equals(c.getCallType()))
                 .count();
     
             if (notPropagatedNoExprCount == 0) {
@@ -1234,45 +1242,43 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
      * @param pipelineCall  A {@code PipelineCall} that the call for which the rank should be defined.
      * @return              The {@code BigDecimal} that is the rank of {@code pipelineCall}.
      */
+    // FIXME: to remove?
     private static BigDecimal getGlobalMeanRank(PipelineCall pipelineCall) {
         log.entry(pipelineCall);
         throw log.throwing(new UnsupportedOperationException("Operation not yet implement"));
     }
     
     /**
-     * Map pipeline call data into an {@code ExpressionCallData}.
+     * Merge a {@code Set} of {@code PipelineCallData} into one {@code ExpressionCallData}.
      * 
      * @param dataType          A {@code DataType} that is the data type of {@code pipelineCallData}.
      * @param pipelineCallData  A {@code Set} of {@code PipelineCallData} to be used to
      *                          build the {@code ExpressionCallData}.
      * @return                  The {@code ExpressionCallData}.
      */
-    private static ExpressionCallData mapToExpressionCallData(DataType dataType,
+    private static ExpressionCallData mergePipelineCallDataIntoExpressionCallData(DataType dataType,
             Set<PipelineCallData> pipelineCallData) {
         log.entry(dataType, pipelineCallData);
 
-        int presentHighSelfExpCount = getSpecificCount(pipelineCallData,
-            PipelineCallData::getSelfExperimentExpr, ExperimentExpressionTO::getPresentHighCount);
-        int presentLowSelfExpCount = getSpecificCount(pipelineCallData,
-            PipelineCallData::getSelfExperimentExpr, ExperimentExpressionTO::getPresentLowCount);
-        int absentHighSelfExpCount = getSpecificCount(pipelineCallData,
-            PipelineCallData::getSelfExperimentExpr, ExperimentExpressionTO::getAbsentHighCount);
-
-        int presentHighDescExpCount = getSpecificCount(pipelineCallData,
-            PipelineCallData::getDescendantExperimentExpr, ExperimentExpressionTO::getPresentHighCount);
-        int presentLowDescExpCount = getSpecificCount(pipelineCallData,
-            PipelineCallData::getDescendantExperimentExpr, ExperimentExpressionTO::getPresentLowCount);
+        assert pipelineCallData.stream().anyMatch(pcd -> !dataType.equals(pcd.getDataType()));
         
-        int absentHighParentExpCount = getSpecificCount(pipelineCallData,
-            PipelineCallData::getParentExperimentExpr, ExperimentExpressionTO::getAbsentHighCount);
+        int presentHighSelfCount = getSpecificCount(pipelineCallData,
+            PipelineCallData::getSelfExperimentExpr, ExperimentExpressionTO::getPresentHighCount);
+        int presentLowSelfCount = getSpecificCount(pipelineCallData,
+            PipelineCallData::getSelfExperimentExpr, ExperimentExpressionTO::getPresentLowCount);
+        int absentHighSelfCount = getSpecificCount(pipelineCallData,
+            PipelineCallData::getSelfExperimentExpr, ExperimentExpressionTO::getAbsentHighCount);
+        int absentLowSelfCount = getSpecificCount(pipelineCallData,
+            PipelineCallData::getSelfExperimentExpr, ExperimentExpressionTO::getAbsentLowCount);
         
         int presentHighTotalCount = getTotalCount(pipelineCallData, ExperimentExpressionTO::getPresentHighCount);
         int presentLowTotalCount = getTotalCount(pipelineCallData, ExperimentExpressionTO::getPresentLowCount);
         int absentHighTotalCount = getTotalCount(pipelineCallData, ExperimentExpressionTO::getAbsentHighCount);
+        int absentLowTotalCount = getTotalCount(pipelineCallData, ExperimentExpressionTO::getAbsentLowCount);
         
-        return log.exit(new ExpressionCallData(dataType, presentHighSelfExpCount, presentLowSelfExpCount, 
-            absentHighSelfExpCount, presentHighDescExpCount, presentLowDescExpCount, 
-            absentHighParentExpCount, presentHighTotalCount, presentLowTotalCount, absentHighTotalCount));
+        return log.exit(new ExpressionCallData(dataType, 
+            presentHighSelfCount, presentLowSelfCount, absentHighSelfCount, absentLowSelfCount,
+            presentHighTotalCount, presentLowTotalCount, absentHighTotalCount, absentLowTotalCount));
     }
     
     /** 
@@ -1341,98 +1347,99 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
             .collect(Collectors.toSet()));
     }
 
-    /**
-     * Summarize {@code PropagationState}s from {@code ExpressionCall}s.
-     * 
-     * @param propStates    A {@code Set} of {@code PropagationState}s that are propagation states
-     *                      to summarize in one {@code PropagationState}.
-     * @return              The {@code PropagationState} that is the summary of provided {@code propStates}.
-     * @throws IllegalArgumentException If it is impossible to summarize provided {@code PropagationState}s.
-     *                                  For instance, {@code PropagationState.DESCENDANT} and 
-     *                                  {@code PropagationState.SELF_OR_ANCESTOR} combination.
-     */
-    private static PropagationState summarizePropagationState(Set<PipelineCallData> pipelineData,
-            Function<DataPropagation, PropagationState> getPropState) throws IllegalArgumentException {
-        log.entry(pipelineData, getPropState);
-        
-        Set<PropagationState> propStates = pipelineData.stream()
-            .map(c -> getPropState.apply(c.getDataPropagation()))
-            .filter(dp -> dp != null)
-            .collect(Collectors.toSet());
-
-        if (propStates.contains(PropagationState.ALL)) {
-            return log.exit(PropagationState.ALL);
-        }
-    
-        if (propStates.size() == 1) {
-            return log.exit(propStates.iterator().next());
-        }
-    
-        HashSet<PropagationState> desc = new HashSet<>(Arrays.asList(
-            PropagationState.DESCENDANT, PropagationState.SELF_AND_DESCENDANT, PropagationState.ALL));
-        HashSet<PropagationState> asc = new HashSet<>(Arrays.asList(
-            PropagationState.ANCESTOR, PropagationState.SELF_AND_ANCESTOR, PropagationState.ALL));
-        HashSet<PropagationState> self = new HashSet<>(Arrays.asList(
-            PropagationState.SELF, PropagationState.SELF_AND_DESCENDANT,
-            PropagationState.SELF_AND_ANCESTOR, PropagationState.ALL));
-    
-        boolean fromDesc = !Collections.disjoint(propStates, desc);
-        boolean fromAsc = !Collections.disjoint(propStates, asc);
-        boolean fromSelf = !Collections.disjoint(propStates, self);
-    
-        if (fromDesc && fromAsc && fromSelf) {
-            return log.exit(PropagationState.ALL);
-        }
-    
-        if (fromDesc && fromSelf) {
-            return log.exit(PropagationState.SELF_AND_DESCENDANT);
-        }
-    
-        if (fromAsc && fromSelf) {
-            return log.exit(PropagationState.SELF_AND_ANCESTOR);
-        }
-    
-        if (fromAsc && fromDesc && !propStates.contains(PropagationState.SELF_OR_ANCESTOR)
-            && !propStates.contains(PropagationState.SELF_OR_DESCENDANT)) {
-            return log.exit(PropagationState.ANCESTOR_AND_DESCENDANT);
-        }
-    
-        if (propStates.containsAll(
-            Arrays.asList(PropagationState.SELF_OR_ANCESTOR, PropagationState.SELF))
-            || propStates.containsAll(
-                Arrays.asList(PropagationState.SELF_OR_ANCESTOR, PropagationState.ANCESTOR))) {
-            return log.exit(PropagationState.SELF_OR_ANCESTOR);
-        }
-        if (propStates.containsAll(
-            Arrays.asList(PropagationState.SELF_OR_DESCENDANT, PropagationState.SELF))
-            || propStates.containsAll(
-                Arrays.asList(PropagationState.SELF_OR_DESCENDANT, PropagationState.DESCENDANT))) {
-            return log.exit(PropagationState.SELF_OR_DESCENDANT);
-        }
-    
-        // XXX: Not resolved combinations:
-        // - ANCESTOR && DESCENDANT &  & SELF_OR_ANCESTOR
-        // - ANCESTOR && DESCENDANT && SELF_OR_ANCESTOR && ANCESTOR_AND_DESCENDANT
-        // - ANCESTOR && DESCENDANT && SELF_OR_ANCESTOR && SELF_OR_DESCENDANT
-        // - ANCESTOR && DESCENDANT && SELF_OR_ANCESTOR && SELF_OR_DESCENDANT && ANCESTOR_AND_DESCENDANT
-        // - ANCESTOR && DESCENDANT && SELF_OR_DESCENDANT
-        // - ANCESTOR && DESCENDANT && SELF_OR_DESCENDANT && ANCESTOR_AND_DESCENDANT
-        // - ANCESTOR && SELF_OR_ANCESTOR && ANCESTOR_AND_DESCENDANT
-        // - ANCESTOR && SELF_OR_ANCESTOR && SELF_OR_DESCENDANT
-        // - ANCESTOR && SELF_OR_ANCESTOR && SELF_OR_DESCENDANT && ANCESTOR_AND_DESCENDANT
-        // - ANCESTOR && SELF_OR_DESCENDANT
-        // - ANCESTOR && SELF_OR_DESCENDANT && ANCESTOR_AND_DESCENDANT
-        // - DESCENDANT && SELF_OR_ANCESTOR
-        // - DESCENDANT && SELF_OR_ANCESTOR && ANCESTOR_AND_DESCENDANT
-        // - DESCENDANT && SELF_OR_ANCESTOR && SELF_OR_DESCENDANT
-        // - DESCENDANT && SELF_OR_ANCESTOR && SELF_OR_DESCENDANT && ANCESTOR_AND_DESCENDANT
-        // - DESCENDANT && SELF_OR_DESCENDANT && ANCESTOR_AND_DESCENDANT
-        // - SELF_OR_ANCESTOR && ANCESTOR_AND_DESCENDANT
-        // - SELF_OR_ANCESTOR && SELF_OR_DESCENDANT
-        // - SELF_OR_ANCESTOR && SELF_OR_DESCENDANT && ANCESTOR_AND_DESCENDANT
-        // - SELF_OR_DESCENDANT && ANCESTOR_AND_DESCENDANT
-        // - SELF && SELF_OR_ANCESTOR && SELF_OR_DESCENDANT
-        throw log.throwing(new IllegalArgumentException(
-            "Impossible to summarize provided propagation states: " + propStates));
-    }
+    // FIXME : to remove?
+//    /**
+//     * Summarize {@code PropagationState}s from {@code ExpressionCall}s.
+//     * 
+//     * @param propStates    A {@code Set} of {@code PropagationState}s that are propagation states
+//     *                      to summarize in one {@code PropagationState}.
+//     * @return              The {@code PropagationState} that is the summary of provided {@code propStates}.
+//     * @throws IllegalArgumentException If it is impossible to summarize provided {@code PropagationState}s.
+//     *                                  For instance, {@code PropagationState.DESCENDANT} and 
+//     *                                  {@code PropagationState.SELF_OR_ANCESTOR} combination.
+//     */
+//    private static PropagationState summarizePropagationState(Set<PipelineCallData> pipelineData,
+//            Function<DataPropagation, PropagationState> getPropState) throws IllegalArgumentException {
+//        log.entry(pipelineData, getPropState);
+//        
+//        Set<PropagationState> propStates = pipelineData.stream()
+//            .map(c -> getPropState.apply(c.getDataPropagation()))
+//            .filter(dp -> dp != null)
+//            .collect(Collectors.toSet());
+//
+//        if (propStates.contains(PropagationState.ALL)) {
+//            return log.exit(PropagationState.ALL);
+//        }
+//    
+//        if (propStates.size() == 1) {
+//            return log.exit(propStates.iterator().next());
+//        }
+//    
+//        HashSet<PropagationState> desc = new HashSet<>(Arrays.asList(
+//            PropagationState.DESCENDANT, PropagationState.SELF_AND_DESCENDANT, PropagationState.ALL));
+//        HashSet<PropagationState> asc = new HashSet<>(Arrays.asList(
+//            PropagationState.ANCESTOR, PropagationState.SELF_AND_ANCESTOR, PropagationState.ALL));
+//        HashSet<PropagationState> self = new HashSet<>(Arrays.asList(
+//            PropagationState.SELF, PropagationState.SELF_AND_DESCENDANT,
+//            PropagationState.SELF_AND_ANCESTOR, PropagationState.ALL));
+//    
+//        boolean fromDesc = !Collections.disjoint(propStates, desc);
+//        boolean fromAsc = !Collections.disjoint(propStates, asc);
+//        boolean fromSelf = !Collections.disjoint(propStates, self);
+//    
+//        if (fromDesc && fromAsc && fromSelf) {
+//            return log.exit(PropagationState.ALL);
+//        }
+//    
+//        if (fromDesc && fromSelf) {
+//            return log.exit(PropagationState.SELF_AND_DESCENDANT);
+//        }
+//    
+//        if (fromAsc && fromSelf) {
+//            return log.exit(PropagationState.SELF_AND_ANCESTOR);
+//        }
+//    
+//        if (fromAsc && fromDesc && !propStates.contains(PropagationState.SELF_OR_ANCESTOR)
+//            && !propStates.contains(PropagationState.SELF_OR_DESCENDANT)) {
+//            return log.exit(PropagationState.ANCESTOR_AND_DESCENDANT);
+//        }
+//    
+//        if (propStates.containsAll(
+//            Arrays.asList(PropagationState.SELF_OR_ANCESTOR, PropagationState.SELF))
+//            || propStates.containsAll(
+//                Arrays.asList(PropagationState.SELF_OR_ANCESTOR, PropagationState.ANCESTOR))) {
+//            return log.exit(PropagationState.SELF_OR_ANCESTOR);
+//        }
+//        if (propStates.containsAll(
+//            Arrays.asList(PropagationState.SELF_OR_DESCENDANT, PropagationState.SELF))
+//            || propStates.containsAll(
+//                Arrays.asList(PropagationState.SELF_OR_DESCENDANT, PropagationState.DESCENDANT))) {
+//            return log.exit(PropagationState.SELF_OR_DESCENDANT);
+//        }
+//    
+//        // XXX: Not resolved combinations:
+//        // - ANCESTOR && DESCENDANT &  & SELF_OR_ANCESTOR
+//        // - ANCESTOR && DESCENDANT && SELF_OR_ANCESTOR && ANCESTOR_AND_DESCENDANT
+//        // - ANCESTOR && DESCENDANT && SELF_OR_ANCESTOR && SELF_OR_DESCENDANT
+//        // - ANCESTOR && DESCENDANT && SELF_OR_ANCESTOR && SELF_OR_DESCENDANT && ANCESTOR_AND_DESCENDANT
+//        // - ANCESTOR && DESCENDANT && SELF_OR_DESCENDANT
+//        // - ANCESTOR && DESCENDANT && SELF_OR_DESCENDANT && ANCESTOR_AND_DESCENDANT
+//        // - ANCESTOR && SELF_OR_ANCESTOR && ANCESTOR_AND_DESCENDANT
+//        // - ANCESTOR && SELF_OR_ANCESTOR && SELF_OR_DESCENDANT
+//        // - ANCESTOR && SELF_OR_ANCESTOR && SELF_OR_DESCENDANT && ANCESTOR_AND_DESCENDANT
+//        // - ANCESTOR && SELF_OR_DESCENDANT
+//        // - ANCESTOR && SELF_OR_DESCENDANT && ANCESTOR_AND_DESCENDANT
+//        // - DESCENDANT && SELF_OR_ANCESTOR
+//        // - DESCENDANT && SELF_OR_ANCESTOR && ANCESTOR_AND_DESCENDANT
+//        // - DESCENDANT && SELF_OR_ANCESTOR && SELF_OR_DESCENDANT
+//        // - DESCENDANT && SELF_OR_ANCESTOR && SELF_OR_DESCENDANT && ANCESTOR_AND_DESCENDANT
+//        // - DESCENDANT && SELF_OR_DESCENDANT && ANCESTOR_AND_DESCENDANT
+//        // - SELF_OR_ANCESTOR && ANCESTOR_AND_DESCENDANT
+//        // - SELF_OR_ANCESTOR && SELF_OR_DESCENDANT
+//        // - SELF_OR_ANCESTOR && SELF_OR_DESCENDANT && ANCESTOR_AND_DESCENDANT
+//        // - SELF_OR_DESCENDANT && ANCESTOR_AND_DESCENDANT
+//        // - SELF && SELF_OR_ANCESTOR && SELF_OR_DESCENDANT
+//        throw log.throwing(new IllegalArgumentException(
+//            "Impossible to summarize provided propagation states: " + propStates));
+//    }
 }

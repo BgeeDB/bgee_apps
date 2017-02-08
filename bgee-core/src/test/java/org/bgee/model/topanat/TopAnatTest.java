@@ -149,7 +149,7 @@ public class TopAnatTest extends TestAncestor {
         Stream callStream = Stream.of(mockExpressionCall1, mockExpressionCall2, mockExpressionCall3,
                 mockExpressionCall4,mockExpressionCall5);
         when(mockCallService.loadExpressionCalls(anyString(), (ExpressionCallFilter) any(), 
-                anyCollectionOf(CallService.Attribute.class), eq(ordering), eq(false))) // TODO be more specific here
+                anyCollectionOf(CallService.Attribute.class), eq(ordering))) // TODO be more specific here
         .thenReturn(callStream);    
         when(mockServiceFactory.getGeneService()).thenReturn(mockGeneService);
         when(mockServiceFactory.getCallService()).thenReturn(mockCallService);

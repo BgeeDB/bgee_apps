@@ -18,12 +18,12 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntitySimilarity;
 import org.bgee.model.anatdev.DevStageSimilarity;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
-import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.ConditionFilter;
 import org.bgee.model.expressiondata.MultiSpeciesCall;
-import org.bgee.model.expressiondata.baseelements.CallType.Expression;
+import org.bgee.model.expressiondata.baseelements.DataPropagation;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.ontology.MultiSpeciesOntology;
@@ -35,7 +35,7 @@ import org.bgee.model.species.Taxon;
  * 
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Nov. 2016
+ * @version Bgee 14, Feb. 2017
  * @since   Bgee 13, May 2016
  */
 // XXX: why not call it MultiSpeciesCallService?
@@ -127,14 +127,15 @@ public class AnalysisService extends Service {
                     .map(s -> s.getDevStageIds()).flatMap(Set::stream).collect(Collectors.toSet());
 
             // Build ExpressionCallFilter
-            GeneFilter geneFilter = new GeneFilter(orthologousGeneIds);
             Set<ConditionFilter> conditionFilters = new HashSet<>();
             conditionFilters.add(new ConditionFilter(anatEntityIds, devStageIds));
-            Set<ExpressionCallData> callDataFilters = new HashSet<>(); // cannot be null in ExpressionCallFilter
             log.warn("Only expressed calls are retrieved");
-            callDataFilters.add(new ExpressionCallData(Expression.EXPRESSED));
             ExpressionCallFilter callFilter = new ExpressionCallFilter(
-                    geneFilter, conditionFilters, callDataFilters);
+                new GeneFilter(orthologousGeneIds),
+                conditionFilters,
+                null, null,
+                ExpressionSummary.EXPRESSED,
+                new DataPropagation());
             
             // For each species, we load propagated and reconciled calls
             // (filtered by previous filters)
@@ -142,7 +143,7 @@ public class AnalysisService extends Service {
             for (String spId: clonedSpeIds) {
                 // FIXME do propagation???
                 Set<ExpressionCall> currentCalls = this.getServiceFactory().getCallService().
-                    loadExpressionCalls(spId, callFilter, null, orderAttrs, false).collect(Collectors.toSet());
+                    loadExpressionCalls(spId, callFilter, null, orderAttrs).collect(Collectors.toSet());
                 calls.addAll(currentCalls);
             }
 

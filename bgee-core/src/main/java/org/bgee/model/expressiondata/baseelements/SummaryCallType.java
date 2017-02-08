@@ -43,6 +43,7 @@ public interface SummaryCallType {
      * @see org.bgee.model.expressiondata.Call.ExpressionCall ExpressionCall
      * @since Bgee 13 Sept. 2015
      */
+    // XXX: to be remove if there is no ambiguity in bgee_v14? See also DiffExpressionSummary
     public static enum ExpressionSummary implements SummaryCallType {
         EXPRESSED, NOT_EXPRESSED, WEAK_AMBIGUITY, STRONG_AMBIGUITY;
     }

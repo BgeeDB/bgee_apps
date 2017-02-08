@@ -53,7 +53,7 @@ import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, Jan. 2017
+ * @version Bgee 14, Feb. 2017
  * @since   Bgee 13, July 2014
  */
 public class TOComparator {
@@ -739,7 +739,8 @@ public class TOComparator {
                 to1.getExperimentId() == to2.getExperimentId() && 
                 to1.getPresentHighCount() == to2.getPresentHighCount() && 
                 to1.getPresentLowCount() == to2.getPresentLowCount() && 
-                to1.getAbsentHighCount() == to2.getAbsentHighCount() && 
+                to1.getAbsentHighCount() == to2.getAbsentHighCount() &&
+                to1.getAbsentLowCount() == to2.getAbsentLowCount() &&
                 to1.getExperimentCount() == to2.getExperimentCount()) {
             return log.exit(true);
         }

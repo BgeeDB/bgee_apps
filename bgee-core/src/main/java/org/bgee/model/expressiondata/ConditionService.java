@@ -12,7 +12,7 @@ import org.bgee.model.ServiceFactory;
  * Users should use the {@link org.bgee.model.ServiceFactory} to obtain {@code ConditionService}s.
  * 
  * @author Valentine Rech de Laval
- * @version Bgee 13, Oct. 2016
+ * @version Bgee 13, Feb. 2017
  * @since   Bgee 13, Oct. 2016
  */
 public class ConditionService extends Service {
@@ -23,8 +23,9 @@ public class ConditionService extends Service {
         super(serviceFactory);
     }
     
-    public Stream<Condition> loadConditionsForPropagation() {
-        log.warn("Retrieval of conditions for propagation not yet implemented.");
-        return Stream.empty();
+    public Stream<Condition> loadConditionsBySpeciesId(String speciesId) {
+        log.entry(speciesId);
+        log.warn("Retrieval of conditions by species ID not yet implemented.");
+        return log.exit(Stream.empty());
     }
 }

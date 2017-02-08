@@ -12,6 +12,7 @@ import org.bgee.model.TestAncestor;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.expressiondata.baseelements.CallType.Expression;
 import org.bgee.model.topanat.exception.MissingParameterException;
 import org.junit.Test;
@@ -64,7 +65,7 @@ public class TopAnatRealTest extends TestAncestor {
                 "ENSXETG00000001573", 
                 "ENSXETG00000011784"
                 ), 
-                "8364", Expression.EXPRESSED).fdrThreshold(1).pvalueThreshold(1).dataQuality(DataQuality.HIGH).build();
+                "8364", Expression.EXPRESSED).fdrThreshold(1).pvalueThreshold(1).summaryQuality(SummaryQuality.GOLD).build();
         try {
             TaskManager.registerTaskManager(Thread.currentThread().getId());
             TopAnatController controller = new TopAnatController(Arrays.asList(params), 

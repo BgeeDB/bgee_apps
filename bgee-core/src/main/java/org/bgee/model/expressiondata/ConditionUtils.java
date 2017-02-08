@@ -24,7 +24,7 @@ import org.bgee.model.ontology.RelationType;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Jan. 2017
+ * @version Bgee 14, Feb. 2017
  * @since   Bgee 13, Dec. 2015
  */
 //TODO: Actually, maybe we should have an UtilsFactory, as we have a ServiceFactory. 
@@ -54,6 +54,11 @@ public class ConditionUtils implements Comparator<Condition> {
     private final boolean inferAncestralConditions;
     
     /**
+     * @see #isInferredDescendantConditions()
+     */
+    private final boolean inferDescendantConditions;
+    
+    /**
      * Constructor providing the {@code conditions} and the {@code serviceFactory}.
      * <p>
      * The constructor retrieves ontologies.
@@ -66,7 +71,7 @@ public class ConditionUtils implements Comparator<Condition> {
      *                                  does not exist in the requested species.
      */
     public ConditionUtils(Collection<Condition> conditions, ServiceFactory serviceFactory) {
-        this(conditions, false, serviceFactory);
+        this(conditions, false, false, serviceFactory);
     }
     
     /**
@@ -79,12 +84,14 @@ public class ConditionUtils implements Comparator<Condition> {
      *                              by this {@code ConditionUtils}.
      * @param inferAncestralConds   A {@code boolean} defining whether the ancestral conditions
      *                              should be inferred.
+     * @param inferDescendantConds  A {@code boolean} defining whether the descendant conditions
+     *                              should be inferred.
      * @throws IllegalArgumentException If any of the arguments is {@code null} or empty, 
      *                                  or if {@code Condition}s does not exist in the same species.
      */
     public ConditionUtils(Collection<Condition> conditions, boolean inferAncestralConds,
-            ServiceFactory serviceFactory) throws IllegalArgumentException {
-        this(conditions, inferAncestralConds, serviceFactory, null, null);
+            boolean inferDescendantConds, ServiceFactory serviceFactory) throws IllegalArgumentException {
+        this(conditions, inferAncestralConds, inferDescendantConds, serviceFactory, null, null);
     }
     
     /**
@@ -106,7 +113,7 @@ public class ConditionUtils implements Comparator<Condition> {
      */
     public ConditionUtils(Collection<Condition> conditions, Ontology<AnatEntity> anatEntityOnt,
             Ontology<DevStage> devStageOnt) throws IllegalArgumentException {
-        this(conditions, false, anatEntityOnt, devStageOnt);
+        this(conditions, false, false, anatEntityOnt, devStageOnt);
     }
     
     /**
@@ -129,9 +136,9 @@ public class ConditionUtils implements Comparator<Condition> {
      *                                  or if {@code Condition}s does not exist in the same species.
      */
     public ConditionUtils(Collection<Condition> conditions, boolean inferAncestralConds,
-            Ontology<AnatEntity> anatEntityOnt, Ontology<DevStage> devStageOnt) 
-                    throws IllegalArgumentException {
-        this(conditions, inferAncestralConds, null, anatEntityOnt, devStageOnt);
+            boolean inferDescendantConds, Ontology<AnatEntity> anatEntityOnt,
+            Ontology<DevStage> devStageOnt) throws IllegalArgumentException {
+        this(conditions, inferAncestralConds, inferDescendantConds, null, anatEntityOnt, devStageOnt);
     }
     
     /**
@@ -157,10 +164,11 @@ public class ConditionUtils implements Comparator<Condition> {
     //I guess multi-species would need a separate class, e.g., MultiSpeciesConditionUtils.
     //TODO: unit test for ancestral condition inferences
     //TODO: refactor this constructor, methods getAncestorConditions and getDescendantConditions
-    private ConditionUtils(Collection<Condition> conditions, boolean inferAncestralConds,
+    private ConditionUtils(Collection<Condition> conditions, 
+            boolean inferAncestralConds, boolean inferDescendantConds,
             ServiceFactory serviceFactory, Ontology<AnatEntity> anatEntityOnt,
             Ontology<DevStage> devStageOnt) throws IllegalArgumentException {
-        log.entry(conditions, inferAncestralConds, serviceFactory, anatEntityOnt, devStageOnt);
+        log.entry(conditions, inferAncestralConds, inferDescendantConds, serviceFactory, anatEntityOnt, devStageOnt);
         
         if (conditions == null || conditions.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Some conditions must be provided."));
@@ -174,6 +182,7 @@ public class ConditionUtils implements Comparator<Condition> {
         }
         
         this.inferAncestralConditions = inferAncestralConds;
+        this.inferDescendantConditions = inferDescendantConds;
         Set<Condition> tempConditions = new HashSet<>(conditions);
         
         Set<String> anatEntityIds = new HashSet<>();
@@ -200,7 +209,7 @@ public class ConditionUtils implements Comparator<Condition> {
             } else if (serviceFactory != null) {
                 this.anatEntityOnt = serviceFactory.getOntologyService().getAnatEntityOntology(
                         speciesId, anatEntityIds, EnumSet.of(RelationType.ISA_PARTOF), 
-                        inferAncestralConds? true: false, false);
+                        inferAncestralConds, inferDescendantConds);
             } else {
                 throw log.throwing(new IllegalArgumentException(
                         "No ServiceFactory nor anatomical ontology provided."));
@@ -214,7 +223,7 @@ public class ConditionUtils implements Comparator<Condition> {
                 this.devStageOnt = devStageOnt;
             } else if (serviceFactory != null) {
                 this.devStageOnt = serviceFactory.getOntologyService().getDevStageOntology(
-                        speciesId, devStageIds, inferAncestralConds? true: false, false);
+                        speciesId, devStageIds, inferAncestralConds, inferDescendantConds);
             } else {
                 throw log.throwing(new IllegalArgumentException(
                         "No ServiceFactory nor developmental ontology provided."));
@@ -228,32 +237,47 @@ public class ConditionUtils implements Comparator<Condition> {
             throw log.throwing(new IllegalArgumentException("Ontologies should be in the same species."));
         }
 
-        if (inferAncestralConds) {
-            Set<Condition> ancConditions = tempConditions.stream().flatMap(cond -> {
-                Set<String> ancStageIds = new HashSet<>();
-                ancStageIds.add(cond.getDevStageId());
+        //TODO: test inference of descendant conditions
+        if (inferAncestralConds || inferDescendantConds) {
+            Set<Condition> newPropagatedConditions = tempConditions.stream().flatMap(cond -> {
+                Set<String> propStageIds = new HashSet<>();
+                propStageIds.add(cond.getDevStageId());
                 if (this.devStageOnt != null && cond.getDevStageId() != null) {
-                    ancStageIds.addAll(this.devStageOnt.getAncestors(
+                    if (inferAncestralConds) {
+                        propStageIds.addAll(this.devStageOnt.getAncestors(
                             this.devStageOnt.getElement(cond.getDevStageId()))
                             .stream().map(e -> e.getId()).collect(Collectors.toSet()));
+                    }
+                    if (inferDescendantConds) {
+                        propStageIds.addAll(this.devStageOnt.getDescendants(
+                            this.devStageOnt.getElement(cond.getDevStageId()))
+                            .stream().map(e -> e.getId()).collect(Collectors.toSet()));
+                    }
                 }
                 
-                Set<String> ancAnatEntityIds = new HashSet<>();
-                ancAnatEntityIds.add(cond.getAnatEntityId());
+                Set<String> propAnatEntityIds = new HashSet<>();
+                propAnatEntityIds.add(cond.getAnatEntityId());
                 if (this.anatEntityOnt != null && cond.getAnatEntityId() != null) {
-                    ancAnatEntityIds.addAll(this.anatEntityOnt.getAncestors(
+                    if (inferAncestralConds) {
+                        propAnatEntityIds.addAll(this.anatEntityOnt.getAncestors(
                             this.anatEntityOnt.getElement(cond.getAnatEntityId()))
                             .stream().map(e -> e.getId()).collect(Collectors.toSet()));
+                    }
+                    if (inferDescendantConds) {
+                        propAnatEntityIds.addAll(this.anatEntityOnt.getDescendants(
+                            this.anatEntityOnt.getElement(cond.getAnatEntityId()))
+                            .stream().map(e -> e.getId()).collect(Collectors.toSet()));
+                    }
                 }
                 
-                return ancAnatEntityIds.stream()
-                        .flatMap(ancAnatEntityId -> ancStageIds.stream().map(ancStageId -> 
-                            new Condition(ancAnatEntityId, ancStageId, speciesId)))
-                        .filter(ancCond -> !cond.equals(ancCond));
+                return propAnatEntityIds.stream()
+                        .flatMap(propAnatEntityId -> propStageIds.stream().map(propStageId -> 
+                            new Condition(propAnatEntityId, propStageId, speciesId)))
+                        .filter(propCond -> !cond.equals(propCond));
 
             }).collect(Collectors.toSet());
             
-            tempConditions.addAll(ancConditions);
+            tempConditions.addAll(newPropagatedConditions);
         }
         this.conditions = Collections.unmodifiableSet(tempConditions);
 
@@ -652,5 +676,11 @@ public class ConditionUtils implements Comparator<Condition> {
     public boolean isInferredAncestralConditions() {
         return this.inferAncestralConditions;
     }
-    
+    /** 
+     * @return  The {@code boolean} defining whether the descendant conditions should be inferred.
+     */
+    public boolean isInferredDescendantConditions() {
+        return this.inferDescendantConditions;
+    }
+
 }

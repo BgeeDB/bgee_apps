@@ -26,21 +26,23 @@ import org.apache.commons.math3.ml.distance.CanberraDistance;
 import org.apache.commons.math3.ml.distance.DistanceMeasure;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.DiffExpressionCallData;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
-import org.bgee.model.expressiondata.baseelements.DataPropagation;
+import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
-import org.bgee.model.expressiondata.baseelements.DataQualitySummary;
 import org.bgee.model.expressiondata.baseelements.DiffExpressionFactor;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
-import org.bgee.model.expressiondata.baseelements.SummaryCallType.*;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.DiffExpressionSummary;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 
 /**
  * This class describes the calls related to gene baseline expression and differential expression.
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Jan. 2017
+ * @version Bgee 14, Feb. 2017
  * @since   Bgee 13, Sept. 2015
  * @param <T> The type of {@code SummaryCallType}.
  * @param <U> The type of {@code CallData}.
@@ -812,7 +814,6 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             return log.exit(formatter);
         }
 
-
         //*******************************************
         // INSTANCE ATTRIBUTES AND METHODS
         //*******************************************
@@ -823,18 +824,23 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         //plus an information of confidence about it.
         private final BigDecimal globalMeanRank;
         
-        public ExpressionCall(String geneId, Condition condition, DataPropagation dataPropagation, 
-            ExpressionSummary summaryCallType, DataQualitySummary summaryQual, 
+        public ExpressionCall(String geneId, Condition condition,
             Collection<ExpressionCallData> callData, BigDecimal globalMeanRank) {
-            this(geneId, condition, dataPropagation, summaryCallType, summaryQual, callData,
+            this(geneId, condition, null, null, null, callData, globalMeanRank);
+        }
+        
+        public ExpressionCall(String geneId, Condition condition, Boolean isObservedData, 
+            ExpressionSummary summaryCallType, SummaryQuality summaryQual, 
+            Collection<ExpressionCallData> callData, BigDecimal globalMeanRank) {
+            this(geneId, condition, isObservedData, summaryCallType, summaryQual, callData,
                 globalMeanRank, null);
         }
 
-        public ExpressionCall(String geneId, Condition condition, DataPropagation dataPropagation, 
-                ExpressionSummary summaryCallType, DataQualitySummary summaryQual, 
+        public ExpressionCall(String geneId, Condition condition, Boolean isObservedData, 
+                ExpressionSummary summaryCallType, SummaryQuality summaryQual, 
                 Collection<ExpressionCallData> callData, BigDecimal globalMeanRank,
                 Collection<ExpressionCall> sourceCalls) {
-            super(geneId, condition, dataPropagation, summaryCallType, summaryQual, callData,
+            super(geneId, condition, isObservedData, summaryCallType, summaryQual, callData,
                 sourceCalls == null ? new HashSet<>() : sourceCalls.stream()
                     .map(c -> (Call<ExpressionSummary, ExpressionCallData>) c)
                     .collect(Collectors.toSet()));
@@ -933,15 +939,15 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         
         public DiffExpressionCall(DiffExpressionFactor factor, String geneId, 
                 Condition condition, DiffExpressionSummary summaryCallType, 
-                DataQualitySummary summaryQual, Collection<DiffExpressionCallData> callData) {
+                SummaryQuality summaryQual, Collection<DiffExpressionCallData> callData) {
             this(factor, geneId, condition, summaryCallType, summaryQual, callData, null);
         }
         
         public DiffExpressionCall(DiffExpressionFactor factor, String geneId, 
             Condition condition, DiffExpressionSummary summaryCallType, 
-            DataQualitySummary summaryQual, Collection<DiffExpressionCallData> callData,
+            SummaryQuality summaryQual, Collection<DiffExpressionCallData> callData,
             Collection<DiffExpressionCall> sourceCalls) {
-            super(geneId, condition, new DataPropagation(), summaryCallType, summaryQual, callData, 
+            super(geneId, condition, null, summaryCallType, summaryQual, callData, 
                 sourceCalls == null ? new HashSet<>() : sourceCalls.stream()
                 .map(c -> (Call<DiffExpressionSummary, DiffExpressionCallData>) c)
                 .collect(Collectors.toSet()));
@@ -983,6 +989,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
 
         @Override
         public String toString() {
+            
             StringBuilder builder = new StringBuilder();
             builder.append("DiffExpressionCall [diffExpressionFactor()=").append(getDiffExpressionFactor())
                    .append(", super Call=").append(super.toString())
@@ -990,7 +997,8 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             return builder.toString();
         }
     }
-  //**********************************************
+    
+    //**********************************************
     //   INSTANCE ATTRIBUTES AND METHODS
     //**********************************************
     
@@ -998,54 +1006,66 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
     
     private final Condition condition;
     
-    private final DataPropagation dataPropagation;
+    private final Boolean isObservedData;
     
     private final T summaryCallType;
     
-    private final DataQualitySummary summaryQuality;
+    private final SummaryQuality summaryQuality;
     
     private final Set<U> callData;
 
     private final Set<Call<T, U>> sourceCalls;
 
-    protected Call(String geneId, Condition condition, DataPropagation dataPropagation, 
-        T summaryCallType, DataQualitySummary summaryQual, Collection<U> callData) {
-        this(geneId, condition, dataPropagation, summaryCallType, summaryQual, callData, null);
+    protected Call(String geneId, Condition condition, Boolean isObservedData, 
+        T summaryCallType, SummaryQuality summaryQual, Collection<U> callData) {
+        this(geneId, condition, isObservedData, summaryCallType, summaryQual, callData, null);
     }
 
-    //Note: we cannot always know the DataPropagation status per data type, 
-    //so we need to be able to provide a global DataPropagation status over all data types.
-    protected Call(String geneId, Condition condition, DataPropagation dataPropagation, 
-            T summaryCallType, DataQualitySummary summaryQual, Collection<U> callData, 
+    protected Call(String geneId, Condition condition, Collection<U> callData, 
             Set<Call<T, U>> sourceCalls) {
-        //TODO: sanity checks
-        if (DataQuality.NODATA.equals(summaryQual)) {
+        this(geneId, condition, null, null, null, callData, sourceCalls);
+    }
+
+    private Call(String geneId, Condition condition, Boolean isObservedData, 
+        T summaryCallType, SummaryQuality summaryQuality, Collection<U> callData, 
+        Set<Call<T, U>> sourceCalls) {
+        if (DataQuality.NODATA.equals(summaryQuality)) {
             throw log.throwing(new IllegalArgumentException("An actual DataQuality must be provided."));
         }
+//        if ((callData == null || callData.isEmpty()) && (isObservedData == null || summaryCallType == null || summaryQuality == null)) {
+//            throw log.throwing(new IllegalArgumentException(
+//                "Call data must be provided to infer isObservedData, summaryCallType and summaryQuality."));
+//        }
         this.geneId = geneId;
         this.condition = condition;
-        this.dataPropagation = dataPropagation;
-        this.summaryCallType = summaryCallType;
-        this.summaryQuality = summaryQual;
         this.callData = Collections.unmodifiableSet(
             callData == null? new HashSet<>(): new HashSet<>(callData));
+//        if (callData != null && !callData.isEmpty()) {
+//            this.isObservedData = isObservedData != null? isObservedData : inferIsObservedData(this.callData);
+//            this.summaryCallType = summaryCallType != null? summaryCallType : inferSummaryCallType(this.callData);
+//            this.summaryQuality = summaryQuality != null? summaryQuality : inferSummaryQuality(this.callData);            
+//        } else {
+            this.isObservedData = isObservedData;
+            this.summaryCallType = summaryCallType;
+            this.summaryQuality = summaryQuality;            
+//        }
         this.sourceCalls = Collections.unmodifiableSet(
             sourceCalls == null? new HashSet<>(): new HashSet<>(sourceCalls));
     }
-
+    
     public String getGeneId() {
         return geneId;
     }
     public Condition getCondition() {
         return condition;
     }
-    public DataPropagation getDataPropagation() {
-        return dataPropagation;
+    public Boolean getIsObservedData() {
+        return isObservedData;
     }
     public T getSummaryCallType() {
         return summaryCallType;
     }
-    public DataQualitySummary getSummaryQuality() {
+    public SummaryQuality getSummaryQuality() {
         return summaryQuality;
     }
     public Set<U> getCallData() {
@@ -1054,20 +1074,21 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
     public Set<Call<T, U>> getSourceCalls() {
         return sourceCalls;
     }
-
+    
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((sourceCalls == null) ? 0 : sourceCalls.hashCode());
-        result = prime * result + ((callData == null) ? 0 : callData.hashCode());
-        result = prime * result + ((condition == null) ? 0 : condition.hashCode());
-        result = prime * result + ((dataPropagation == null) ? 0 : dataPropagation.hashCode());
         result = prime * result + ((geneId == null) ? 0 : geneId.hashCode());
+        result = prime * result + ((condition == null) ? 0 : condition.hashCode());
+        result = prime * result + ((isObservedData == null) ? 0 : isObservedData.hashCode());
         result = prime * result + ((summaryCallType == null) ? 0 : summaryCallType.hashCode());
         result = prime * result + ((summaryQuality == null) ? 0 : summaryQuality.hashCode());
+        result = prime * result + ((callData == null) ? 0 : callData.hashCode());
+        result = prime * result + ((sourceCalls == null) ? 0 : sourceCalls.hashCode());
         return result;
     }
+    
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -1080,18 +1101,11 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             return false;
         }
         Call<?, ?> other = (Call<?, ?>) obj;
-        if (sourceCalls == null) {
-            if (other.sourceCalls != null) {
+        if (geneId == null) {
+            if (other.geneId != null) {
                 return false;
             }
-        } else if (!sourceCalls.equals(other.sourceCalls)) {
-            return false;
-        }
-        if (callData == null) {
-            if (other.callData != null) {
-                return false;
-            }
-        } else if (!callData.equals(other.callData)) {
+        } else if (!geneId.equals(other.geneId)) {
             return false;
         }
         if (condition == null) {
@@ -1101,20 +1115,11 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         } else if (!condition.equals(other.condition)) {
             return false;
         }
-        if (dataPropagation == null) {
-            if (other.dataPropagation != null) {
+        if (isObservedData == null) {
+            if (other.isObservedData != null)
                 return false;
-            }
-        } else if (!dataPropagation.equals(other.dataPropagation)) {
+        } else if (!isObservedData.equals(other.isObservedData))
             return false;
-        }
-        if (geneId == null) {
-            if (other.geneId != null) {
-                return false;
-            }
-        } else if (!geneId.equals(other.geneId)) {
-            return false;
-        }
         if (summaryCallType == null) {
             if (other.summaryCallType != null) {
                 return false;
@@ -1125,17 +1130,31 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         if (summaryQuality != other.summaryQuality) {
             return false;
         }
+        if (callData == null) {
+            if (other.callData != null) {
+                return false;
+            }
+        } else if (!callData.equals(other.callData)) {
+            return false;
+        }
+        if (sourceCalls == null) {
+            if (other.sourceCalls != null) {
+                return false;
+            }
+        } else if (!sourceCalls.equals(other.sourceCalls)) {
+            return false;
+        }
         return true;
     }
 
     @Override
     public String toString() {
-        return    ", geneId=" + geneId 
-                + ", condition=" + condition 
-                + ", dataPropagation=" + dataPropagation
-                + ", summaryCallType=" + summaryCallType 
-                + ", summaryQuality=" + summaryQuality 
-                + ", callData=" + callData 
-                + ", sourceCalls=" + sourceCalls;
+        return    "Gene ID: " + geneId 
+                + " - Condition:" + condition 
+                + " - Is observed data: " + isObservedData
+                + " - Summary call type: " + summaryCallType 
+                + " - Summary quality: " + summaryQuality 
+                + " - Call data: " + callData 
+                + " - Source calls: " + sourceCalls;
     }
 }

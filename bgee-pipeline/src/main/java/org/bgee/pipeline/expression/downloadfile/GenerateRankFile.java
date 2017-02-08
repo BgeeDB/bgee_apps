@@ -43,7 +43,9 @@ import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.CallType.Expression;
+import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.ontology.Ontology;
 import org.bgee.model.species.Species;
@@ -729,10 +731,10 @@ public class GenerateRankFile {
         CallService service = serviceFactory.getCallService();
         return log.exit(service.loadExpressionCalls(
                 speciesId, 
-                new ExpressionCallFilter(new ExpressionCallData(Expression.EXPRESSED, dataType)), 
+                new ExpressionCallFilter(null, null, Arrays.asList(dataType), null,
+                    ExpressionSummary.EXPRESSED, new DataPropagation()),
                 attrs, 
-                serviceOrdering,
-                false));
+                serviceOrdering));
     }
     
     /**

@@ -52,7 +52,7 @@ import org.junit.Test;
  *  
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Jan. 2017
+ * @version Bgee 14, Feb. 2017
  * @since   Bgee 13, Sep. 2014
  */
 public class TOComparatorTest extends TestAncestor {
@@ -459,12 +459,12 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreExperimentExpressionTOEqual() {
-        ExperimentExpressionTO to1 = new ExperimentExpressionTO(1, 1, 2, 3, 4, 5);
-        ExperimentExpressionTO to2 = new ExperimentExpressionTO(1, 1, 2, 3, 4, 5);
+        ExperimentExpressionTO to1 = new ExperimentExpressionTO(1, 1, 2, 3, 4, 5, 6);
+        ExperimentExpressionTO to2 = new ExperimentExpressionTO(1, 1, 2, 3, 4, 5, 6);
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
-        to2 = new ExperimentExpressionTO(1, 1, 2, 3, 4, 999);
+        to2 = new ExperimentExpressionTO(1, 1, 2, 3, 4, 999, 6);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertFalse(TOComparator.areTOsEqual(to1, to2, false));
     }

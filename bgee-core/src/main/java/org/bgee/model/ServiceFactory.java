@@ -8,6 +8,7 @@ import org.bgee.model.anatdev.DevStageService;
 import org.bgee.model.anatdev.TaxonConstraintService;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.expressiondata.ConditionService;
 import org.bgee.model.file.DownloadFileService;
 import org.bgee.model.file.SpeciesDataGroupService;
 import org.bgee.model.gene.GeneService;
@@ -48,8 +49,8 @@ import org.bgee.model.species.TaxonService;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, May 2016
- * @since   Bgee 13
+ * @version Bgee 14, Feb. 2017
+ * @since   Bgee 13, Sept. 2015
  */
 //XXX: should we put all Services in a same package, so that the constructors are protected 
 //and can only be obtained through the ServiceFactory?
@@ -192,6 +193,14 @@ public class ServiceFactory implements AutoCloseable {
     public TaxonService getTaxonService() {
         log.entry();
         return log.exit(new TaxonService(this));
+    }
+    
+    /**
+     * @return A newly instantiated {@code ConditionService}
+     */
+    public ConditionService getConditionService() {
+        log.entry();
+        return log.exit(new ConditionService(this));
     }
 
     /**

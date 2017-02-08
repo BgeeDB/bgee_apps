@@ -12,7 +12,7 @@ import org.bgee.model.dao.api.exception.DAOException;
  * DAO defining queries using or retrieving {@link ExperimentExpressionTO}s. 
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Jan. 2017
+ * @version Bgee 14, Feb. 2017
  * @since   Bgee 14, Dec. 2016
  */
 public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Attribute> {
@@ -25,21 +25,24 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
      *   <li>@{code PRESENT_HIGH_COUNT} corresponds to {@link ExperimentExpressionTO#getPresentHighCount()}}
      *   <li>@{code PRESENT_LOW_COUNT} corresponds to {@link ExperimentExpressionTO#getPresentLowCount()}
      *   <li>@{code ABSENT_HIGH_COUNT} corresponds to {@link ExperimentExpressionTO#getAbsentHighCount()}
+     *   <li>@{code ABSENT_LOW_COUNT} corresponds to {@link ExperimentExpressionTO#getAbsentLowCount()}
      *   <li>@{code EXPERIMENT_COUNT} corresponds to {@link ExperimentExpressionTO#getExperimentCount()}
      * </ul>
      */
     enum Attribute implements DAO.Attribute {
-        EXPRESSION_ID, EXPERIMENT_ID, PRESENT_HIGH_COUNT, PRESENT_LOW_COUNT, ABSENT_HIGH_COUNT, EXPERIMENT_COUNT;
+        EXPRESSION_ID, EXPERIMENT_ID, PRESENT_HIGH_COUNT, PRESENT_LOW_COUNT,
+        ABSENT_HIGH_COUNT, ABSENT_LOW_COUNT, EXPERIMENT_COUNT;
     }
 
     /**
      * The attributes available to order retrieved {@code ExperimentExpressionTO}s
      * <ul>
-     *   <li>@{code ID} uses {@link ExperimentExpressionTO#getExpressionId()}
+     *   <li>@{code GENE_ID}
+     *   <li>@{code EXPRESSION_ID} uses {@link ExperimentExpressionTO#getExpressionId()}
      * </ul>
      */
     enum OrderingAttribute implements DAO.OrderingAttribute {
-        EXPRESSION_ID
+        GENE_ID, EXPRESSION_ID
     }
     
     /**
@@ -58,12 +61,13 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
      *                              the associated value being a {@code DAO.Direction} 
      *                              defining whether the ordering should be ascendant or descendant.
      *                              If {@code null} or empty, then no ordering is performed. 
+     * @param speciesId             A {@code String} that is the ID of the species to retrieve calls for.
      * @return                      An {@code ExperimentExpressionTOResultSet} allowing to obtain 
      *                              the requested {@code ExperimentExpressionTO}s.
      * @throws DAOException             If an error occurred while accessing the data source. 
      */
     public ExperimentExpressionTOResultSet getAffymetrixExperimentExpressions(Collection<Attribute> attributes, 
-            LinkedHashMap<OrderingAttribute, DAO.Direction> orderingAttributes) throws DAOException;
+            LinkedHashMap<OrderingAttribute, DAO.Direction> orderingAttributes, String speciesId) throws DAOException;
 
     /**
      * Retrieve RNA-Seq experiment expressions from the data source.
@@ -81,12 +85,13 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
      *                              the associated value being a {@code DAO.Direction} 
      *                              defining whether the ordering should be ascendant or descendant.
      *                              If {@code null} or empty, then no ordering is performed. 
+     * @param speciesId             A {@code String} that is the ID of the species to retrieve calls for.
      * @return                      An {@code ExperimentExpressionTOResultSet} allowing to obtain 
      *                              the requested {@code ExperimentExpressionTO}s.
      * @throws DAOException             If an error occurred while accessing the data source. 
      */
     public ExperimentExpressionTOResultSet getRNASeqExperimentExpressions(Collection<Attribute> attributes, 
-            LinkedHashMap<OrderingAttribute, DAO.Direction> orderingAttributes) throws DAOException;
+            LinkedHashMap<OrderingAttribute, DAO.Direction> orderingAttributes, String speciesId) throws DAOException;
 
     /**
      * Retrieve EST experiment expressions from the data source.
@@ -104,12 +109,13 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
      *                              the associated value being a {@code DAO.Direction} 
      *                              defining whether the ordering should be ascendant or descendant.
      *                              If {@code null} or empty, then no ordering is performed. 
+     * @param speciesId             A {@code String} that is the ID of the species to retrieve calls for.
      * @return                      An {@code ExperimentExpressionTOResultSet} allowing to obtain 
      *                              the requested {@code ExperimentExpressionTO}s.
      * @throws DAOException             If an error occurred while accessing the data source. 
      */
     public ExperimentExpressionTOResultSet getESTExperimentExpressions(Collection<Attribute> attributes, 
-            LinkedHashMap<OrderingAttribute, DAO.Direction> orderingAttributes) throws DAOException;
+            LinkedHashMap<OrderingAttribute, DAO.Direction> orderingAttributes, String speciesId) throws DAOException;
 
     /**
      * Retrieve <em>in situ</em> experiment expressions from the data source.
@@ -127,12 +133,13 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
      *                              the associated value being a {@code DAO.Direction} 
      *                              defining whether the ordering should be ascendant or descendant.
      *                              If {@code null} or empty, then no ordering is performed. 
+     * @param speciesId             A {@code String} that is the ID of the species to retrieve calls for.
      * @return                      An {@code ExperimentExpressionTOResultSet} allowing to obtain 
      *                              the requested {@code ExperimentExpressionTO}s.
      * @throws DAOException             If an error occurred while accessing the data source. 
      */
     public ExperimentExpressionTOResultSet getInSituExperimentExpressions(Collection<Attribute> attributes, 
-            LinkedHashMap<OrderingAttribute, DAO.Direction> orderingAttributes) throws DAOException;
+            LinkedHashMap<OrderingAttribute, DAO.Direction> orderingAttributes, String speciesId) throws DAOException;
 
     /**
      * {@code DAOResultSet} specifics to {@code ExperimentExpressionTO}s
@@ -184,6 +191,12 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
         private final Integer absentHighCount;
         
         /**
+         * An {@code Integer} that is the count of experiments that produced
+         * this experiment expression as absent low.
+         */
+        private final Integer absentLowCount;
+
+        /**
          * An {@code Integer} that is the number of experiments with that exact combination of counts 
          * of present high/present low/absent high/absent low that produced this experiment expression.
          */
@@ -204,17 +217,20 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
          *                          produced this experiment expression as present low.
          * @param absentHighCount   An {@code Integer} that is the count of experiments 
          *                          produced this experiment expression as absent high.
+         * @param absentLowCount    An {@code Integer} that is the count of experiments 
+         *                          produced this experiment expression as absent low.
          * @param experimentCount   An {@code Integer} that is the number of experiments with that 
          *                          exact combination of counts of present high/present low/absent 
          *                          high/absent low that produced this experiment expression.
          */
         public ExperimentExpressionTO(Integer expressionId, Integer experimentId, Integer presentHighCount,
-            Integer presentLowCount, Integer absentHighCount, Integer experimentCount) {
+            Integer presentLowCount, Integer absentHighCount, Integer absentLowCount, Integer experimentCount) {
             this.expressionId = expressionId;
             this.experimentId = experimentId;
             this.presentHighCount = presentHighCount;
             this.presentLowCount = presentLowCount;
             this.absentHighCount = absentHighCount;
+            this.absentLowCount = absentLowCount;
             this.experimentCount = experimentCount;
         }
 
@@ -257,6 +273,14 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
         }
 
         /**
+         * @return  The {@code Integer} that is the count of experiments that produced
+         *          this experiment expression as absent low.
+         */
+        public Integer getAbsentLowCount() {
+            return absentHighCount;
+        }
+
+        /**
          * @return  The {@code Integer} that is the number of experiments with that
          *          exact combination of counts of present high/present low/absent high/absent low 
          *          that produced this experiment expression.
@@ -274,6 +298,7 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
             result = prime * result + ((presentHighCount == null) ? 0 : presentHighCount.hashCode());
             result = prime * result + ((presentLowCount == null) ? 0 : presentLowCount.hashCode());
             result = prime * result + ((absentHighCount == null) ? 0 : absentHighCount.hashCode());
+            result = prime * result + ((absentLowCount == null) ? 0 : absentLowCount.hashCode());
             result = prime * result + ((experimentCount == null) ? 0 : experimentCount.hashCode());
             return result;
         }
@@ -312,6 +337,11 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
                     return false;
             } else if (!absentHighCount.equals(other.absentHighCount))
                 return false;
+            if (absentLowCount == null) {
+                if (other.absentLowCount != null)
+                    return false;
+            } else if (!absentLowCount.equals(other.absentLowCount))
+                return false;
             if (experimentCount == null) {
                 if (other.experimentCount != null)
                     return false;
@@ -327,6 +357,7 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
                 + " - Present high count: " + getPresentHighCount()
                 + " - Present low count: " + getPresentLowCount() 
                 + " - Absent high count: " + getAbsentHighCount()
+                + " - Absent low count: " + getAbsentLowCount()
                 + " - Experiment count: " + getExperimentCount();
         }
     }

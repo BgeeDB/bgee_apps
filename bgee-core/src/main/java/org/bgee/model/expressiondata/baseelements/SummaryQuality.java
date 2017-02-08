@@ -8,10 +8,10 @@ import org.bgee.model.BgeeEnum.BgeeEnumField;
  * associated to a same {@code Call}.
  * 
  * @author Valentine Rech de Laval
- * @version Bgee 14, Jan. 2017
+ * @version Bgee 14, Feb. 2017
  * @since   Bgee 14, Jan. 2017
  */
-public enum DataQualitySummary implements BgeeEnumField {
+public enum SummaryQuality implements BgeeEnumField {
     //WARNING: these Enums must be declared in order, from the lowest quality 
     //to the highest quality. This is because the compareTo implementation 
     //of the Enum class will be used.

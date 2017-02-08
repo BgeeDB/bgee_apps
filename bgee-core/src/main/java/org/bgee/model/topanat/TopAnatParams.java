@@ -7,29 +7,25 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.expressiondata.CallData;
-import org.bgee.model.expressiondata.CallData.DiffExpressionCallData;
-import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.CallFilter;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.ConditionFilter;
 import org.bgee.model.expressiondata.baseelements.CallType;
-import org.bgee.model.expressiondata.baseelements.DataPropagation;
-import org.bgee.model.expressiondata.baseelements.DataQuality;
-import org.bgee.model.expressiondata.baseelements.DataType;
-import org.bgee.model.expressiondata.baseelements.DecorrelationType;
-import org.bgee.model.expressiondata.baseelements.DiffExpressionFactor;
-import org.bgee.model.expressiondata.baseelements.StatisticTest;
 import org.bgee.model.expressiondata.baseelements.CallType.DiffExpression;
 import org.bgee.model.expressiondata.baseelements.CallType.Expression;
+import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataPropagation.PropagationState;
+import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.DecorrelationType;
+import org.bgee.model.expressiondata.baseelements.StatisticTest;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.topanat.exception.MissingParameterException;
 
@@ -45,7 +41,7 @@ public class TopAnatParams {
     /**
      * 
      */
-    private final static DataQuality DATA_QUALITY_DEFAULT = DataQuality.LOW;
+    private final static SummaryQuality DATA_QUALITY_DEFAULT = SummaryQuality.SILVER;
 
     /**
      * 
@@ -100,7 +96,7 @@ public class TopAnatParams {
     /**
      * 
      */
-    private final DataQuality dataQuality;
+    private final SummaryQuality summaryQuality;
 
     /**
      * 
@@ -186,7 +182,7 @@ public class TopAnatParams {
         /**
          * 
          */
-        private DataQuality dataQuality;
+        private SummaryQuality summaryQuality;
 
         /**
          * 
@@ -262,9 +258,9 @@ public class TopAnatParams {
          * @param dataQuality
          * @return
          */
-        public Builder dataQuality(DataQuality dataQuality){
-            log.entry(dataQuality);
-            this.dataQuality = dataQuality;
+        public Builder summaryQuality(SummaryQuality summaryQuality){
+            log.entry(summaryQuality);
+            this.summaryQuality = summaryQuality;
             return log.exit(this);
         } 
 
@@ -406,8 +402,8 @@ public class TopAnatParams {
         this.devStageId = builder.devStageId;
         this.fdrThreshold = builder.fdrThreshold == null ? TopAnatParams.FDR_THRESHOLD_DEFAULT :
             builder.fdrThreshold;
-        this.dataQuality = builder.dataQuality == null ? TopAnatParams.DATA_QUALITY_DEFAULT
-                : builder.dataQuality;
+        this.summaryQuality = builder.summaryQuality == null ? TopAnatParams.DATA_QUALITY_DEFAULT
+                : builder.summaryQuality;
         this.nodeSize = builder.nodeSize == null ? TopAnatParams.NODE_SIZE_DEFAULT
                 : builder.nodeSize;
         this.numberOfSignificantNodes = builder.numberOfSignificantNode == null ? 
@@ -454,8 +450,8 @@ public class TopAnatParams {
     /**
      * @return
      */
-    public DataQuality getDataQuality() {
-        return dataQuality;
+    public SummaryQuality getSummaryQuality() {
+        return summaryQuality;
     }
 
     /**
@@ -534,61 +530,43 @@ public class TopAnatParams {
      */
     public CallFilter<?> convertRawParametersToCallFilter() {
         log.entry();
+        
+        GeneFilter geneFilter = this.submittedBackgroundIds != null?
+            new GeneFilter(this.submittedBackgroundIds): null;
+        
+        Collection<ConditionFilter> condFilters = StringUtils.isBlank(this.devStageId)? null: 
+            Arrays.asList(new ConditionFilter(null, Arrays.asList(this.devStageId)));
+        
+        SummaryQuality summaryQualityFilter = this.summaryQuality == null?
+            SummaryQuality.SILVER: this.summaryQuality;
+        
         if (this.callType == Expression.EXPRESSED) {
             return log.exit(new ExpressionCallFilter(
-                    //gene filter 
-                    this.submittedBackgroundIds != null? new GeneFilter(this.submittedBackgroundIds): null, 
-                    //condition filter
-                    StringUtils.isBlank(this.devStageId)? null: 
-                        Arrays.asList(new ConditionFilter(null, Arrays.asList(this.devStageId))),
-                    this.getExpressionCallData()
+                //gene filter 
+                geneFilter, 
+                //condition filter
+                condFilters,
+                this.dataTypes,
+                summaryQualityFilter,
+                ExpressionSummary.EXPRESSED,
+                new DataPropagation(PropagationState.SELF, PropagationState.SELF_OR_DESCENDANT)
                 ));
         }
         if (this.callType == DiffExpression.OVER_EXPRESSED) {
             //TODO: to implement, and use method getDiffExpressionCallData
             throw log.throwing(new UnsupportedOperationException(
                     "CallService for diff. expression not yet implemented"));
+//            return log.exit(new DiffExpressionCallFilter(
+//                //gene filter 
+//                geneFilter, 
+//                //condition filter
+//                condFilters,
+//                this.dataTypes,
+//                summaryQualityFilter,
+//                DiffExpressionSummary.OVER_EXPRESSED)
+//            );
         }
         throw log.throwing(new IllegalStateException("Unsupported CallType: " + this.callType));
-    }
-    
-    private Collection<ExpressionCallData> getExpressionCallData() {
-        log.entry();
-
-        return log.exit(this.getCallData((dataType, dataQual) -> 
-            new ExpressionCallData(CallType.Expression.EXPRESSED,
-                dataQual, dataType, 
-                new DataPropagation(PropagationState.SELF, 
-                        PropagationState.SELF_OR_DESCENDANT))));
-    }
-
-    /**
-     * XXX check if correct: DiffExpressionFactor.ANATOMY ? DiffExpression.DIFF_EXPRESSED ?
-     * => storyboard says over-expressed of diff. expressed? I don't remember.
-     * XXX check if correct: DataPropagation
-     * @return
-     */
-    private Collection<DiffExpressionCallData> getDiffExpressionCallData() {
-        log.entry();
-
-        return log.exit(this.getCallData((dataType, dataQual) -> 
-            new DiffExpressionCallData(DiffExpressionFactor.ANATOMY, 
-                CallType.DiffExpression.OVER_EXPRESSED, dataQual, dataType)));
-    }
-
-    private <T extends CallData<?>> Collection<T> getCallData(
-            BiFunction<DataType, DataQuality, T> callDataSupplier) {
-        log.entry(callDataSupplier);
-
-        final DataQuality dataQual = this.dataQuality == null? DataQuality.LOW: this.dataQuality;
-
-        if (this.dataTypes == null || this.dataTypes.isEmpty() || 
-                this.dataTypes.containsAll(this.callType.getAllowedDataTypes())) {
-            return log.exit(Arrays.asList(callDataSupplier.apply(null, dataQual)));
-        }
-        return log.exit(this.dataTypes.stream()
-                .map(dataType -> callDataSupplier.apply(dataType, dataQual))
-                .collect(Collectors.toSet()));
     }
 
     /**
@@ -609,8 +587,8 @@ public class TopAnatParams {
             valueToHash.append(this.speciesId.toString());
         if(this.callType != null)
             valueToHash.append(this.callType.toString());
-        if(this.dataQuality != null)
-            valueToHash.append(this.dataQuality.toString());
+        if(this.summaryQuality != null)
+            valueToHash.append(this.summaryQuality.toString());
         if(this.dataTypes != null)
             valueToHash.append(EnumSet.copyOf(this.dataTypes).toString());
         if(this.devStageId != null)
@@ -688,8 +666,8 @@ public class TopAnatParams {
             ret.append("dataQuality");
             ret.append(valSep);
         }
-        if(this.dataQuality != null)
-            ret.append(this.dataQuality.toString());
+        if(this.summaryQuality != null)
+            ret.append(this.summaryQuality.toString());
         ret.append(paramSep);
         
         if (displayDetails) {

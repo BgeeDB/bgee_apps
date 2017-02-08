@@ -11,6 +11,14 @@ import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO;
 import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 
+/**
+ * A {@code ExperimentExpressionDAO} for MySQL. 
+ * 
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, Feb. 2017
+ * @see org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO
+ * @since   Bgee 14, Dec. 2016
+ */
 public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionDAO.Attribute> 
                                             implements ExperimentExpressionDAO  {
 
@@ -34,8 +42,8 @@ public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionD
     @Override
     public ExperimentExpressionTOResultSet getAffymetrixExperimentExpressions(
         Collection<ExperimentExpressionDAO.Attribute> attributes, 
-        LinkedHashMap<ExperimentExpressionDAO.OrderingAttribute, DAO.Direction> orderingAttributes)
-            throws DAOException {
+        LinkedHashMap<ExperimentExpressionDAO.OrderingAttribute, DAO.Direction> orderingAttributes,
+        String species) throws DAOException {
         log.entry(attributes, orderingAttributes);
         return log.exit(this.getExperimentExpressions(attributes, orderingAttributes));
     }
@@ -43,8 +51,8 @@ public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionD
     @Override
     public ExperimentExpressionTOResultSet getESTExperimentExpressions(
         Collection<ExperimentExpressionDAO.Attribute> attributes, 
-        LinkedHashMap<ExperimentExpressionDAO.OrderingAttribute, DAO.Direction> orderingAttributes)
-            throws DAOException {
+        LinkedHashMap<ExperimentExpressionDAO.OrderingAttribute, DAO.Direction> orderingAttributes,
+        String species) throws DAOException {
         log.entry(attributes, orderingAttributes);
         return log.exit(this.getExperimentExpressions(attributes, orderingAttributes));
     }
@@ -52,8 +60,8 @@ public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionD
     @Override
     public ExperimentExpressionTOResultSet getInSituExperimentExpressions(
         Collection<ExperimentExpressionDAO.Attribute> attributes, 
-        LinkedHashMap<ExperimentExpressionDAO.OrderingAttribute, DAO.Direction> orderingAttributes)
-            throws DAOException {
+        LinkedHashMap<ExperimentExpressionDAO.OrderingAttribute, DAO.Direction> orderingAttributes,
+        String species) throws DAOException {
         log.entry(attributes, orderingAttributes);
         return log.exit(this.getExperimentExpressions(attributes, orderingAttributes));
     }
@@ -61,8 +69,8 @@ public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionD
     @Override
     public ExperimentExpressionTOResultSet getRNASeqExperimentExpressions(
         Collection<ExperimentExpressionDAO.Attribute> attributes, 
-        LinkedHashMap<ExperimentExpressionDAO.OrderingAttribute, DAO.Direction> orderingAttributes)
-            throws DAOException {
+        LinkedHashMap<ExperimentExpressionDAO.OrderingAttribute, DAO.Direction> orderingAttributes,
+        String species) throws DAOException {
         log.entry(attributes, orderingAttributes);
         return log.exit(this.getExperimentExpressions(attributes, orderingAttributes));
     }

@@ -127,7 +127,8 @@ public class ConditionFilter implements Predicate<Condition> {
         if (condition.getDevStageId() != null 
             && this.getDevStageIds() != null && !this.getDevStageIds().isEmpty()
             && !this.getDevStageIds().contains(condition.getDevStageId())) {
-            log.debug("Dev. stage {} not validated: ", condition.getDevStageId());
+            log.debug("Dev. stage {} not validated: not in {}",
+                condition.getDevStageId(), this.getDevStageIds());
             isValid = false;
         }
     
@@ -135,7 +136,8 @@ public class ConditionFilter implements Predicate<Condition> {
         if (condition.getAnatEntityId() != null 
             && this.getAnatEntityIds() != null && !this.getAnatEntityIds().isEmpty()
             && !this.getAnatEntityIds().contains(condition.getAnatEntityId())) {
-            log.debug("Anat. entity {} not validated", condition.getAnatEntityId());
+            log.debug("Anat. entity {} not validated: not in {}",
+                condition.getAnatEntityId(), this.getAnatEntityIds());
             isValid = false;
         }
         

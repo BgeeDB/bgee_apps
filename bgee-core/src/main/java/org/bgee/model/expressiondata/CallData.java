@@ -24,8 +24,8 @@ import org.bgee.model.gene.Gene;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Jan. 2017
- * @since   Bgee 13 Sept. 2015
+ * @version Bgee 14, Feb. 2017
+ * @since   Bgee 13, Sept. 2015
  */
 //XXX: examples of attributes that could be managed by this class: 
 //* count of experiments supporting and contradicting the CallType.
@@ -55,8 +55,6 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         //But maybe we can argue that it is always useful to be able to know from which type 
         //of analysis a DiffExpressionCallData comes from...
         private final DiffExpressionFactor diffExpressionFactor;
-        
-        private final DiffExpression callType;
 
         private final DataQuality dataQuality;
 
@@ -75,7 +73,7 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         }
         public DiffExpressionCallData(DiffExpressionFactor factor, DiffExpression callType, 
                 DataQuality dataQual, DataType dataType, DataPropagation dataPropagation) {
-            super(dataType);
+            super(dataType, callType);
             
             log.entry(factor, callType, dataQual, dataType, dataPropagation);
             
@@ -90,7 +88,6 @@ public abstract class CallData<T extends Enum<T> & CallType> {
                 callType.checkDataType(dataType);
             }
 
-            this.callType = callType;
             this.dataQuality = dataQual;
             this.dataPropagation = dataPropagation;
             this.diffExpressionFactor = factor;            
@@ -101,14 +98,18 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             return diffExpressionFactor;
         }
         
-        public DiffExpression getCallType() {
-            return callType;
-        }
         public DataQuality getDataQuality() {
             return dataQuality;
         }
+        //XXX: to remove?
         public DataPropagation getDataPropagation() {
             return dataPropagation;
+        }
+
+        @Override
+        // FIXME do implementation
+        public boolean isObservedData() {
+            return log.exit(false);
         }
 
         @Override
@@ -116,7 +117,6 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             final int prime = 31;
             int result = super.hashCode();
             result = prime * result + ((diffExpressionFactor == null) ? 0 : diffExpressionFactor.hashCode());
-            result = prime * result + ((callType == null) ? 0 : callType.hashCode());
             result = prime * result + ((dataPropagation == null) ? 0 : dataPropagation.hashCode());
             result = prime * result + ((dataQuality == null) ? 0 : dataQuality.hashCode());
             return result;
@@ -137,13 +137,6 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             if (diffExpressionFactor != other.diffExpressionFactor) {
                 return false;
             }
-            if (callType == null) {
-                if (other.callType != null) {
-                    return false;
-                }
-            } else if (!callType.equals(other.callType)) {
-                return false;
-            }
             if (dataPropagation == null) {
                 if (other.dataPropagation != null) {
                     return false;
@@ -159,24 +152,20 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         
         @Override
         public String toString() {
-            return super.toString() + " - Call type: " + callType + " - Data quality: " + dataQuality +
+            return super.toString() + " - Data quality: " + dataQuality +
                 " - Data propagation: " + dataPropagation + " - Diff. expression factor: " + diffExpressionFactor;
         }
     }
     
     public static class ExpressionCallData extends CallData<Expression> {
 
-        private final int presentHighSelfExpCount;
+        private final int presentHighSelfCount;
         
-        private final int presentLowSelfExpCount;
+        private final int presentLowSelfCount;
         
-        private final int absentHighSelfExpCount;
-        
-        private final int presentHighDescExpCount;
-        
-        private final int presentLowDescExpCount;
-        
-        private final int absentHighParentExpCount;
+        private final int absentHighSelfCount;
+
+        private final int absentLowSelfCount;
 
         private final int presentHighTotalCount;
         
@@ -184,48 +173,55 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         
         private final int absentHighTotalCount;
         
-        public ExpressionCallData(DataType dataType) {
-            this(dataType, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-        }
+        private final int absentLowTotalCount;
+        
+        //CallType always inferred from experiment count, constructor useless
+//        public ExpressionCallData(CallType callType, DataType dataType) {
+//            this(callType, dataType, 0, 0, 0, 0, 0, 0, 0, 0);
+//        }
 
-        public ExpressionCallData(DataType dataType, int presentHighSelfExpCount, 
-            int presentLowSelfExpCount, int absentHighSelfExpCount, int presentHighDescExpCount,
-            int presentLowDescExpCount, int absentHighParentExpCount, int presentHighTotalCount,
-            int presentLowTotalCount, int absentHighTotalCount) {
-            super(dataType);
-            this.presentHighSelfExpCount = presentHighSelfExpCount;
-            this.presentLowSelfExpCount = presentLowSelfExpCount;
-            this.absentHighSelfExpCount = absentHighSelfExpCount;
-            this.presentHighDescExpCount = presentHighDescExpCount;
-            this.presentLowDescExpCount = presentLowDescExpCount;
-            this.absentHighParentExpCount = absentHighParentExpCount;
+        public ExpressionCallData(DataType dataType, int presentHighSelfCount, 
+            int presentLowSelfCount, int absentHighSelfCount, int absentLowSelfCount,
+            int presentHighTotalCount, int presentLowTotalCount, int absentHighTotalCount,
+            int absentLowTotalCount) {
+            super(dataType, inferCallType(presentHighTotalCount,
+                presentLowTotalCount, absentHighTotalCount, absentLowSelfCount));
+            
+            if (presentHighTotalCount < 0 || presentLowTotalCount < 0 || 
+                absentHighTotalCount < 0 || absentLowTotalCount < 0 || 
+                presentHighSelfCount < 0 || presentLowSelfCount < 0 || 
+                absentHighSelfCount < 0 || absentLowSelfCount < 0) {
+                throw log.throwing(new IllegalArgumentException("Incorrect count values"));
+            }
+            if (presentHighTotalCount == 0 && presentLowTotalCount == 0 && 
+                absentHighTotalCount == 0 && absentLowTotalCount == 0) {
+                throw log.throwing(new IllegalArgumentException(
+                    "Total experiment counts must be provided to infer call type and quality"));
+            }
+            this.presentHighSelfCount = presentHighSelfCount;
+            this.presentLowSelfCount = presentLowSelfCount;
+            this.absentHighSelfCount = absentHighSelfCount;
+            this.absentLowSelfCount = absentLowSelfCount;
             this.presentHighTotalCount = presentHighTotalCount;
             this.presentLowTotalCount = presentLowTotalCount;
             this.absentHighTotalCount = absentHighTotalCount;
+            this.absentLowTotalCount = absentLowTotalCount;
         }
 
-        public int getPresentHighSelfExpCount() {
-            return presentHighSelfExpCount;
+        public int getPresentHighSelfCount() {
+            return presentHighSelfCount;
         }
 
-        public int getPresentLowSelfExpCount() {
-            return presentLowSelfExpCount;
+        public int getPresentLowSelfCount() {
+            return presentLowSelfCount;
         }
 
-        public int getAbsentHighSelfExpCount() {
-            return absentHighSelfExpCount;
+        public int getAbsentHighSelfCount() {
+            return absentHighSelfCount;
         }
-
-        public int getPresentHighDescExpCount() {
-            return presentHighDescExpCount;
-        }
-
-        public int getPresentLowDescExpCount() {
-            return presentLowDescExpCount;
-        }
-
-        public int getAbsentHighParentExpCount() {
-            return absentHighParentExpCount;
+        
+        public int getAbsentLowSelfCount() {
+            return absentLowSelfCount;
         }
 
         public int getPresentHighTotalCount() {
@@ -240,42 +236,52 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             return absentHighTotalCount;
         }
 
-        @Override
-        // FIXME check implementation
-        public Expression getCallType() {
-            log.entry();
-            if (this.getPresentHighTotalCount() > 0 || this.getPresentLowDescExpCount() > 0) {
+        public int getAbsentLowTotalCount() {
+            return absentLowTotalCount;
+        }
+
+        private static Expression inferCallType(int presentHighTotalCount, int presentLowTotalCount, 
+            int absentHighTotalCount, int absentLowTotalCount) {
+            log.entry(presentHighTotalCount, presentLowTotalCount,
+                absentHighTotalCount, absentLowTotalCount);
+            if (presentHighTotalCount > 0 || presentLowTotalCount > 0) {
                 return log.exit(Expression.EXPRESSED);
             }
-            if (this.getAbsentHighTotalCount() > 0) {
+            if (absentHighTotalCount > 0 || absentLowTotalCount > 0) {
                 return log.exit(Expression.NOT_EXPRESSED);
             }
-            return log.exit(null);
+            throw log.throwing(new IllegalStateException("Inference of expression is not possible"
+                + " because all total counts are null"));
         }
 
-        @Override
-        // FIXME check implementation
-        public DataQuality getDataQuality() {
-            log.entry();
-            if (this.getPresentHighTotalCount() > 0 || 
-                this.getPresentHighSelfExpCount() > 0 || this.getPresentHighDescExpCount() > 0) {
-                return log.exit(DataQuality.HIGH);
-            }
-            if (this.getPresentLowTotalCount() > 0 || 
-                this.getPresentLowSelfExpCount() > 0 || this.getPresentLowDescExpCount() > 0) {
-                return log.exit(DataQuality.LOW);
-            }
-            if (this.getPresentLowTotalCount() > 0) {
-                return log.exit(DataQuality.HIGH);
-            }
-            return log.exit(DataQuality.NODATA);
-        }
+        //DataQual is now inferred only from the integration of all data types, 
+        //so it doesn't make sense to have a quality score per data type. We only need experiment counts.
+//        @Override
+//        public DataQuality getDataQuality() {
+//            log.entry();
+//            if (this.getPresentHighTotalCount() > 0) {
+//                return log.exit(DataQuality.HIGH);
+//            }
+//            if (this.getPresentLowTotalCount() > 0) {
+//                return log.exit(DataQuality.LOW);
+//            }
+//            if (this.getAbsentHighTotalCount() > 0) {
+//                return log.exit(DataQuality.HIGH);
+//            }
+//            if (this.getAbsentLowTotalCount() > 0) {
+//                return log.exit(DataQuality.LOW);
+//            }
+//            return log.exit(DataQuality.NODATA);
+//        }
 
         @Override
-        // FIXME check implementation
-        public DataPropagation getDataPropagation() {
+        public boolean isObservedData() {
             log.entry();
-            throw log.throwing(new UnsupportedOperationException("How to define DataPropagation?"));
+            if (this.presentHighSelfCount != 0 || this.presentLowSelfCount != 0 || 
+                this.absentHighSelfCount != 0 || this.absentLowSelfCount != 0) {
+                return log.exit(true);
+            }
+            return log.exit(false);
         }
 
 
@@ -283,15 +289,14 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         public int hashCode() {
             final int prime = 31;
             int result = super.hashCode();
-            result = prime * result + absentHighParentExpCount;
-            result = prime * result + absentHighSelfExpCount;
-            result = prime * result + absentHighTotalCount;
-            result = prime * result + presentHighDescExpCount;
-            result = prime * result + presentHighSelfExpCount;
+            result = prime * result + presentHighSelfCount;
+            result = prime * result + presentLowSelfCount;
+            result = prime * result + absentHighSelfCount;
+            result = prime * result + absentLowSelfCount;
             result = prime * result + presentHighTotalCount;
-            result = prime * result + presentLowDescExpCount;
-            result = prime * result + presentLowSelfExpCount;
             result = prime * result + presentLowTotalCount;
+            result = prime * result + absentHighTotalCount;
+            result = prime * result + absentLowTotalCount;
             return result;
         }
 
@@ -304,38 +309,36 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             if (getClass() != obj.getClass())
                 return false;
             ExpressionCallData other = (ExpressionCallData) obj;
-            if (absentHighParentExpCount != other.absentHighParentExpCount)
+            if (presentHighSelfCount != other.presentHighSelfCount)
                 return false;
-            if (absentHighSelfExpCount != other.absentHighSelfExpCount)
+            if (presentLowSelfCount != other.presentLowSelfCount)
                 return false;
-            if (absentHighTotalCount != other.absentHighTotalCount)
+            if (absentHighSelfCount != other.absentHighSelfCount)
                 return false;
-            if (presentHighDescExpCount != other.presentHighDescExpCount)
-                return false;
-            if (presentHighSelfExpCount != other.presentHighSelfExpCount)
+            if (absentLowSelfCount != other.absentLowSelfCount)
                 return false;
             if (presentHighTotalCount != other.presentHighTotalCount)
                 return false;
-            if (presentLowDescExpCount != other.presentLowDescExpCount)
-                return false;
-            if (presentLowSelfExpCount != other.presentLowSelfExpCount)
-                return false;
             if (presentLowTotalCount != other.presentLowTotalCount)
+                return false;
+            if (absentHighTotalCount != other.absentHighTotalCount)
+                return false;
+            if (absentLowTotalCount != other.absentLowTotalCount)
                 return false;
             return true;
         }
 
         @Override
         public String toString() {
-            return super.toString() + " - Present high self exp count: " + presentHighSelfExpCount +
-                " - Present low self exp count: " + presentLowSelfExpCount + 
-                " - Absent high self exp count: " + absentHighSelfExpCount + 
-                " - Present high desc exp count: " + presentHighDescExpCount +
-                " - Present low descendant exp count: " + presentLowDescExpCount +
-                " - Absent high parent exp count: " + absentHighParentExpCount +
+            return super.toString() + 
+                " - Present high self count: " + presentHighSelfCount +
+                " - Present low self count: " + presentLowSelfCount + 
+                " - Absent high self count: " + absentHighSelfCount + 
+                " - Absent low self count: " + absentLowSelfCount +
                 " - Present low total count: " + presentLowTotalCount +
                 " - Present high total count: "+ presentHighTotalCount +
-                " - Absent high total count: " + absentHighTotalCount;
+                " - Absent high total count: " + absentHighTotalCount +
+                " - Absent low total count: " + absentLowTotalCount;
         }
     }
 
@@ -345,13 +348,15 @@ public abstract class CallData<T extends Enum<T> & CallType> {
     
     private final DataType dataType;
     
+    private final T callType;
+    
     /**
      * Constructor allowing to specify a {@code DataType}. 
      * 
      * @param dataType  The {@code DataType} that allowed to generate the {@code CallType}.
      * @throws IllegalArgumentException    If {@code dataType} is not {@code null}.
      */
-    protected CallData(DataType dataType) throws IllegalArgumentException {
+    protected CallData(DataType dataType, T callType) throws IllegalArgumentException {
         log.entry(dataType);
         
         if (dataType == null) {
@@ -360,21 +365,27 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         }
 
         this.dataType = dataType;
-
+        this.callType = callType;
         log.exit();
     }
 	
-    public abstract T getCallType();
+    public DataType getDataType() {
+        return dataType;
+    }
 
-    public abstract DataQuality getDataQuality();
+    public T getCallType() {
+        return callType;
+    }
     
-    public abstract DataPropagation getDataPropagation();
+    //TODO: javadoc
+    public abstract boolean isObservedData();
     
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((dataType == null) ? 0 : dataType.hashCode());
+        result = prime * result + ((callType == null) ? 0 : callType.hashCode());
         return result;
     }
     
@@ -393,11 +404,14 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         if (dataType != other.dataType) {
             return false;
         }
+        if (callType != other.callType) {
+            return false;
+        }
         return true;
     }
     
     @Override
     public String toString() {
-        return "Data type: " + dataType;
+        return "Data type: " + dataType + " - Call type: " + callType;
     }
 }

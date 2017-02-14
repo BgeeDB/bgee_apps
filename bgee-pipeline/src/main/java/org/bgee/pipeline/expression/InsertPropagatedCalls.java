@@ -13,6 +13,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
@@ -25,6 +26,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
@@ -37,13 +40,14 @@ import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO;
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO.RawExpressionCallTO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.CallService;
-import org.bgee.model.expressiondata.CallService.Attribute;
-import org.bgee.model.expressiondata.CallService.OrderingAttribute;
 import org.bgee.model.expressiondata.Condition;
+import org.bgee.model.expressiondata.ConditionService;
+import org.bgee.model.expressiondata.ConditionService.Attribute;
 import org.bgee.model.expressiondata.ConditionUtils;
 import org.bgee.model.expressiondata.baseelements.CallType.Expression;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
@@ -58,7 +62,8 @@ import org.bgee.pipeline.MySQLDAOUser;
 /**
  * Class responsible for inserting the propagated expression into the Bgee database.
  * 
- * @author Valentine Rech de Laval
+ * @author  Valentine Rech de Laval
+ * @author  Frederic Bastian
  * @version Bgee 14, Feb. 2017
  * @since   Bgee 14, Jan. 2017
  */
@@ -162,21 +167,30 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
      * 
      * @param <T>   The type of {@code CallTO}s.
      */
-    public class CallSpliterator<T extends CallTO<?>,
-            U extends Map<T, Map<DataType, Set<ExperimentExpressionTO>>>>
+    public class CallSpliterator<U extends Map<RawExpressionCallTO, Map<DataType, Set<ExperimentExpressionTO>>>>
         extends Spliterators.AbstractSpliterator<U> {
      
-        final private Comparator<T> comparator;
-        final private Stream<T> callTOs;
+        /**
+         * A {@code Comparator} only to verify that {@code RawExpressionCallTO} {@code Stream} elements 
+         * are properly ordered.
+         */
+        final static private Comparator<RawExpressionCallTO> CALL_TO_COMPARATOR = 
+            Comparator.comparing(RawExpressionCallTO::getGeneId, Comparator.nullsLast(Comparator.naturalOrder()))
+            .thenComparing(RawExpressionCallTO::getId, Comparator.nullsLast(Comparator.naturalOrder()));
+        
+        final private Stream<RawExpressionCallTO> callTOs;
+        //TODO: javadoc: not final for lazy loading
+        private Iterator<RawExpressionCallTO> itCallTOs;
+        private RawExpressionCallTO lastCallTO;
         final private Map<DataType, Stream<ExperimentExpressionTO>> experimentExprTOsByDataType;
-        private Iterator<T> itCallTOs;
-        private Map<DataType, ExperimentExpressionTO> mapDataTypeToLastTO;
-        private Map<DataType, Iterator<ExperimentExpressionTO>> mapDataTypeToIt;
+        //TODO: javadoc: this map is NOT immutable (but reference is final)
+        final private Map<DataType, Iterator<ExperimentExpressionTO>> mapDataTypeToIt;
+        //TODO: javadoc: this map is NOT immutable (but reference is final)
+        final private Map<DataType, ExperimentExpressionTO> mapDataTypeToLastTO;
         
         private boolean isInitiated;
         private boolean isClosed;
         private boolean isFirstIteration;
-        private T lastTO;
 
         /**
          * Default constructor.
@@ -186,132 +200,123 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
          *                                     the {@code ExperimentExpressionTO}s streams.
          * @param comparator    A {@code Comparator} of {@code T}s that is the comparator of elements.
          */
-        public CallSpliterator(Stream<T> callTOs, 
-                Map<DataType, Stream<ExperimentExpressionTO>> experimentExprTOsByDataType,
-                Comparator<T> comparator) {
+        public CallSpliterator(Stream<RawExpressionCallTO> callTOs, 
+                Map<DataType, Stream<ExperimentExpressionTO>> experimentExprTOsByDataType) {
             super(Long.MAX_VALUE, Spliterator.ORDERED | Spliterator.IMMUTABLE 
                     | Spliterator.DISTINCT | Spliterator.NONNULL | Spliterator.SORTED);
             if (callTOs == null || experimentExprTOsByDataType == null 
                 || experimentExprTOsByDataType.entrySet().stream().anyMatch(e -> e == null || e.getValue() == null)) {
                 throw new IllegalArgumentException("Provided streams cannot be null");
             }
+            
             this.callTOs = callTOs;
-            this.experimentExprTOsByDataType = experimentExprTOsByDataType;
+            this.experimentExprTOsByDataType = Collections.unmodifiableMap(experimentExprTOsByDataType);
             this.isInitiated = false;
-            this.isClosed = true; // Open initiation
-            this.comparator = comparator;
+            this.isClosed = false;
             this.isFirstIteration = true;
+            this.mapDataTypeToLastTO = new HashMap<>();
+            this.mapDataTypeToIt = new HashMap<>();
         }
      
         @Override
         public boolean tryAdvance(Consumer<? super U> action) {
             log.entry(action);
+            
+            if (this.isClosed) {
+                throw log.throwing(new IllegalStateException("Already close"));
+            }
 
-            if (!isInitiated) {
-                // Lazy loading: we do not get iterators (terminal operation)
-                // while tryAdvance() is not called.
-                this.itCallTOs = callTOs.iterator();
-                this.mapDataTypeToLastTO = new HashMap<>();
-                this.mapDataTypeToIt = new HashMap<>();
-                for (Entry<DataType, Stream<ExperimentExpressionTO>> entry: experimentExprTOsByDataType.entrySet()) {
-                    Iterator<ExperimentExpressionTO> it = entry.getValue().iterator();
-                    this.mapDataTypeToIt.put(entry.getKey(), it);
-                    this.mapDataTypeToLastTO.put(entry.getKey(), it.next());
+            // Lazy loading: we do not get stream iterators (terminal operation)
+            // before tryAdvance() is called.
+            if (!this.isInitiated) {
+                //set it first because method can return false and exist the block
+                this.isInitiated = true;
+                
+                this.itCallTOs = this.callTOs.iterator();
+                try {
+                    this.lastCallTO = this.itCallTOs.next();
+                } catch (NoSuchElementException e) {
+                    log.catching(Level.DEBUG, e);
+                    return log.exit(false);
                 }
-                isInitiated = true;
-                isClosed = false;
+                
+                for (Entry<DataType, Stream<ExperimentExpressionTO>> entry: this.experimentExprTOsByDataType.entrySet()) {
+                    Iterator<ExperimentExpressionTO> it = entry.getValue().iterator();
+                    try {
+                        this.mapDataTypeToLastTO.put(entry.getKey(), it.next());
+                        //don't store the iterator if there is no element (catch clause)
+                        this.mapDataTypeToIt.put(entry.getKey(), it);
+                    } catch (NoSuchElementException e) {
+                        //it's OK to have no element for a given data type
+                        log.catching(Level.TRACE, e);
+                    }
+                }
+                //We should have at least one data type with supporting data
+                if (this.mapDataTypeToLastTO.isEmpty()) {
+                    throw log.throwing(new IllegalStateException("Missing supporting data"));
+                }
+            }
+
+            //if already initialized, no calls retrieved, but method called again (should never happen, 
+            //as the method would have returned false during initialization above)
+            if (this.lastCallTO == null) {
+                log.warn("Stream used again despite having no elements.");
+                return log.exit(false);
             }
             
-            Map<T, Map<DataType, Set<ExperimentExpressionTO>>> data = new HashMap<>();
-            Set<String> experimentIds = new HashSet<>();
-            T previousTO = null;
+            final Map<RawExpressionCallTO, Map<DataType, Set<ExperimentExpressionTO>>> data = new HashMap<>(); //returned element
             //we iterate the ResultSet, then we do a last iteration after the last TO is 
             //retrieved, to properly group all the calls.
-            boolean doIteration = true;
-            int iterationCount = 0;
-            while (doIteration) {
-                doIteration = itCallTOs.hasNext();
-                T currentTO = null;
-                if (doIteration) {
-                    // We should not get next element if it is not the first call to tryAdvance()
-                    // but it is the first time of iterations
-                    if (!this.isFirstIteration && experimentIds.isEmpty()) {
-                        currentTO = this.lastTO;
-                    } else {
-                        currentTO = itCallTOs.next();
-                    }
-                } else {
-                    // If there is no more element, we should get next element if it is
-                    // the first iteration or the last call if it is not 
-                    if (this.isFirstIteration) {
-                        currentTO = itCallTOs.next();
-                    } else {
-                        currentTO = this.lastTO;
-                    }
-                    previousTO = currentTO;
-                    experimentIds.add(currentTO.getId());
+            boolean currentGeneIteration = true;
+            int geneCount = 0; //for logging purpose
+            while (currentGeneIteration) {
+                if (this.lastCallTO.getGeneId() == null || this.lastCallTO.getId() == null) {
+                    throw log.throwing(new IllegalStateException("Missing attributes in raw call: "
+                        + this.lastCallTO));
                 }
-                this.isFirstIteration = false;
-                log.trace("Previous call={} - Current call={}", previousTO, currentTO);
-
-                //if the gene changes, or if it is the latest iteration
-                if (!doIteration || //doIteration is false for the latest iteration, 
-                    // AFTER retrieving the last TO (ResultSet.isAfterLast would return true)
-                    (previousTO != null && comparator.compare(currentTO, previousTO) != 0)) {
-                    log.trace("Start generating data for {}", previousTO);
-                    iterationCount++;
-
-                    assert (doIteration && currentTO != null && currentTO != null) || 
-                    (!doIteration && currentTO == null && currentTO == null);
-
-                    //the calls are supposed to be ordered by ascending gene ID
-                    if (currentTO != null && comparator.compare(currentTO, previousTO) < 0) {
-                        throw log.throwing(new IllegalStateException("The expression calls "
-                            + "were not retrieved in good order, which "
-                            + "is mandatory for proper generation of data: previous key: "
-                            + previousTO + ", current key: " + currentTO));
-                    }
-
-                    if (previousTO == null) {
-                        //if we reach this code block, it means there were no results at all 
-                        //retrieved from the list. This is not formally an error, 
-                        //maybe there is no expression with key
-                        log.warn("No calls retrieved");
-                        break;
-                    }
-
-                    action.accept((U) data);
-                    
-                    log.trace("Done generating data for element {}", previousTO);
-
-                    if (log.isDebugEnabled() && iterationCount % 10000 == 0) {
-                        log.debug("{} gene IDs already iterated", iterationCount);
-                    }
-
-                    this.lastTO = currentTO;
-                    break;
+                // We add the previous ExperimentExpressionTOs to the group
+                assert this.lastCallTO != null;
+                assert data.get(this.lastCallTO) == null;                       
+                data.put(this.lastCallTO, this.getExpExprs(this.lastCallTO.getId()));
+                
+                RawExpressionCallTO currentCallTO = null;
+                //try-catch to avoid calling both hasNext and next
+                try {
+                    currentCallTO = this.itCallTOs.next();
+                    currentGeneIteration = true;
+                } catch (NoSuchElementException e) {
+                    currentGeneIteration = false;
                 }
-                if (doIteration) {
-                    // We add the current TOs to the group
-                    Map<DataType, Set<ExperimentExpressionTO>> expExprByDataType = data.get(currentTO);
-                    Map<DataType, Set<ExperimentExpressionTO>> newElmts = this.getElements(currentTO.getId());
-                    if (newElmts != null) {
-                        if (expExprByDataType == null) {
-                            expExprByDataType = new HashMap<>();
-                            data.put(currentTO, expExprByDataType);
-                        }
-                        expExprByDataType.putAll(newElmts);                        
-                    }
-                    experimentIds.add(currentTO.getId());
-
-                    // We store the current gene ID to be compare with the next one
-                    previousTO = currentTO;
+                //the calls are supposed to be ordered by ascending gene ID - expression ID
+                if (currentCallTO != null && CALL_TO_COMPARATOR.compare(this.lastCallTO, currentCallTO) > 0) {
+                    throw log.throwing(new IllegalStateException("The expression calls "
+                        + "were not retrieved in good order, which is mandatory "
+                        + "for proper generation of data: previous key: "
+                        + this.lastCallTO + ", current key: " + currentCallTO));
                 }
+                log.trace("Previous call={} - Current call={}", this.lastCallTO, currentCallTO);
+
+                //if the gene changes, or if it is the latest iteration, 
+                //we generate the data Map for the previous gene, all data were iterated for that gene.
+                if (!currentGeneIteration || !currentCallTO.getGeneId().equals(this.lastCallTO.getGeneId())) {
+                    assert (currentGeneIteration && currentCallTO != null) || (!currentGeneIteration && currentCallTO == null);
+                    geneCount++;
+                    currentGeneIteration = false;
+                    action.accept((U) data); //method will exit after accepting the action
+                    if (log.isDebugEnabled() && geneCount % 10000 == 0) {
+                        log.debug("{} gene IDs already iterated", geneCount);
+                    }
+                    log.trace("Done accumulating data for {}", this.lastCallTO.getGeneId());
+                }
+                
+                //Important that this line is executed at every iteration, 
+                //even if no more data
+                this.lastCallTO = currentCallTO;
             }
-            if (itCallTOs.hasNext() || doIteration) {
+            
+            if (this.lastCallTO != null) {
                 return log.exit(true);
             }
-
             return log.exit(false);
         }
                 
@@ -319,29 +324,47 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
          * Get {@code ExperimentExpressionTO}s grouped by {@code DataType}s
          * corresponding to the provided expression ID.  
          * <p>
-         * Provided {@code Iterator}s are modified.
+         * Related {@code Iterator}s are modified.
          * 
-         * @param    A {@code String} that is the ID of the expression.
-         * @return  A {@code T} that is the new next element to be saved.
-         *          Returns {@code null}, if iteration has no more elements.
+         * @param expressionId  An {@code Integer} that is the ID of the expression.
+         * @return              A {@code Map} where keys are {@code DataType}s, the associated values
+         *                      are {@code Set}s of {@code ExperimentExpressionTO}s.
          */
-        private Map<DataType, Set<ExperimentExpressionTO>> getElements(String expressionId) {
+        private Map<DataType, Set<ExperimentExpressionTO>> getExpExprs(Integer expressionId) {
             log.entry(expressionId);
             
-            Map<DataType, Set<ExperimentExpressionTO>> tosByDataType = new HashMap<>();
+            Map<DataType, Set<ExperimentExpressionTO>> expExprTosByDataType = new HashMap<>();
             for (Entry<DataType, Iterator<ExperimentExpressionTO>> entry: mapDataTypeToIt.entrySet()) {
                 DataType currentDataType = entry.getKey();
+                Iterator<ExperimentExpressionTO> it = entry.getValue();
                 ExperimentExpressionTO currentTO = mapDataTypeToLastTO.get(currentDataType);
+                Set<ExperimentExpressionTO> exprExprTOs = new HashSet<>();
                 while (currentTO != null && expressionId.equals(currentTO.getExpressionId())) {
                     // We should not have 2 identical TOs
-                    assert !tosByDataType.get(currentDataType).contains(currentTO);
-                    tosByDataType.get(currentDataType).add(currentTO);
-                    currentTO = entry.getValue().hasNext()? entry.getValue().next() : null;
+                    assert !expExprTosByDataType.get(currentDataType).contains(currentTO);
+                    
+                    //if it is the first iteration for this datatype, we store the associated TO Set.
+                    if (exprExprTOs.isEmpty()) {
+                        expExprTosByDataType.put(currentDataType, exprExprTOs);
+                    }
+                    
+                    exprExprTOs.add(currentTO);
+                    
+                    //try-catch to avoid calling both next and hasNext
+                    try {
+                        currentTO = it.next();
+                    } catch (NoSuchElementException e) {
+                        currentTO = null;
+                    }
                 }
                 mapDataTypeToLastTO.put(currentDataType, currentTO);
             }
+            if (expExprTosByDataType.isEmpty()) {
+                throw log.throwing(new IllegalStateException("No supporting data for expression ID " 
+                        + expressionId));
+            }
 
-            return log.exit(tosByDataType.isEmpty()? null : tosByDataType);
+            return log.exit(expExprTosByDataType);
         }
         
         /**
@@ -359,7 +382,8 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
         @Override
         public Comparator<? super U> getComparator() {
             log.entry();
-            return log.exit(Comparator.comparing(s -> s.keySet().stream().findFirst().get(), this.comparator));
+            return log.exit(Comparator.comparing(s -> s.keySet().stream().findFirst().get().getGeneId(), 
+                Comparator.nullsLast(Comparator.naturalOrder())));
         }
         
         /** 
@@ -368,8 +392,12 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
         public void close() {
             log.entry();
             if (!isClosed){
-                callTOs.close();
-                experimentExprTOsByDataType.values().stream().forEach(s -> s.close());
+                try {
+                    callTOs.close();
+                    experimentExprTOsByDataType.values().stream().forEach(s -> s.close());
+                } finally {
+                    this.isClosed = true;
+                }
             }
             log.exit();
         }
@@ -392,19 +420,19 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
         
         private final DataPropagation dataPropagation;
         
-        public PipelineCall(String geneId, Condition condition, DataPropagation dataPropagation,
+        public PipelineCall(int geneId, int conditionId, DataPropagation dataPropagation,
             Set<ExpressionCallTO> parentSourceCallTOs, Set<ExpressionCallTO> selfSourceCallTOs,
             Set<ExpressionCallTO> descendantSourceCallTOs) {
-            this(geneId, condition, dataPropagation, null, null, null, null,
+            this(geneId, conditionId, dataPropagation, null, null, null, null,
                 parentSourceCallTOs, selfSourceCallTOs,descendantSourceCallTOs);
         }
         
-        public PipelineCall(String geneId, Condition condition, DataPropagation dataPropagation,
+        public PipelineCall(int geneId, int conditionId, DataPropagation dataPropagation,
                 ExpressionSummary summaryCallType, SummaryQuality summaryQual,
                 Collection<ExpressionCallData> callData, BigDecimal globalMeanRank,
                 Set<ExpressionCallTO> parentSourceCallTOs, Set<ExpressionCallTO> selfSourceCallTOs,
                 Set<ExpressionCallTO> descendantSourceCallTOs) {
-            super(geneId, condition, dataPropagation != null? dataPropagation.getIncludingObservedData(): null,
+            super(geneId, conditionId, dataPropagation != null? dataPropagation.getIncludingObservedData(): null,
                 summaryCallType, summaryQual, callData, globalMeanRank);
             this.parentSourceCallTOs = Collections.unmodifiableSet(parentSourceCallTOs);
             this.selfSourceCallTOs = Collections.unmodifiableSet(selfSourceCallTOs);
@@ -450,15 +478,15 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
      */
     public static class PipelineCallData {
         
-        DataType dataType;
+        final private DataType dataType;
         
-        DataPropagation dataPropagation;
+        final private DataPropagation dataPropagation;
         
-        private Set<ExperimentExpressionTO> parentExperimentExpr;
+        final private Set<ExperimentExpressionTO> parentExperimentExpr;
         
-        private Set<ExperimentExpressionTO> selfExperimentExpr;
+        final private Set<ExperimentExpressionTO> selfExperimentExpr;
         
-        private Set<ExperimentExpressionTO> descendantExperimentExpr;
+        final private Set<ExperimentExpressionTO> descendantExperimentExpr;
         
         public PipelineCallData(DataType dataType, DataPropagation dataPropagation,
                 Set<ExperimentExpressionTO> parentExperimentExpr,
@@ -492,7 +520,7 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
         }
     }
 
-    public void insert(List<String> speciesIds, Collection<Attribute> attributes) {
+    public void insert(List<String> speciesIds, Collection<ConditionService.Attribute> attributes) {
         log.entry(speciesIds, attributes);
 
         final Set<Attribute> clonedAttrs = Collections.unmodifiableSet(
@@ -510,6 +538,7 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
                 try {
                     Stream<ExpressionCall> propagatedCalls = 
                             this.generatePropagatedCalls(speciesId, clonedAttrs);
+                    this.insertPropagatedCalls(propagatedCalls);
                     // FIXME Insert calls
                 } finally {
                     // close connection to database between each species, to avoid idle
@@ -526,6 +555,10 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
         log.exit();
     }
 
+    private void insertPropagatedCalls(Stream<ExpressionCall> propagatedCalls) {
+        log.entry(propagatedCalls);
+        throw log.throwing(new UnsupportedOperationException("Insertion of propagated calls in db not implemented yet"));
+    }
     /** 
      * Generate propagated and reconciled expression calls.
      * 
@@ -538,46 +571,42 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
      *                      and reconciled expression calls.
      * @throws IllegalArgumentException    If {@code speciesID} is {@code null} or empty.
      */
-    private Stream<ExpressionCall> generatePropagatedCalls(String speciesId, Set<Attribute> attributes)
+    private Stream<ExpressionCall> generatePropagatedCalls(String speciesId, Set<ConditionService.Attribute> attributes)
                     throws IllegalArgumentException {
         log.entry(speciesId, attributes);
         
         final ServiceFactory serviceFactory = this.serviceFactorySupplier.get();
         
-        // FIXME add sanity checks on attributes:
-        // - need anat. entity or dev. stage 
+        // Sanity checks on attributes
+        if (attributes.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                "Condition Attributes should not be empty"));
+        }
         
-        // We retrieve all attributes to be able to build the ConditionUtils and
-        // propagate, reconcile and filter calls.
-        // XXX: may be we should not retrieve all attributes
-        // FIXME: the previous comment seems incorrect, we should be allowed to retrieve only required attributes
-        Stream<ExpressionCallTO> streamExpressionCallTOs =
-                this.performsExpressionCallQuery(speciesId, attributes);
+        Stream<RawExpressionCallTO> streamRawCallTOs = this.performsRawExpressionCallTOQuery(speciesId);
         
         Map<DataType, Stream<ExperimentExpressionTO>> experimentExprTOsByDataType =
             performsExperimentExpressionQuery(speciesId);
         
-        Set<Condition> conditions = serviceFactory.getConditionService()
-            .loadConditionsBySpeciesId(speciesId)
-            .collect(Collectors.toSet());
-        
-        CallSpliterator<ExpressionCallTO, Map<ExpressionCallTO, Map<DataType, Set<ExperimentExpressionTO>>>> spliterator = 
-            new CallSpliterator<>(streamExpressionCallTOs, experimentExprTOsByDataType,
-                Comparator.comparing(RawExpressionCallTO::getGeneId, Comparator.nullsLast(Comparator.naturalOrder()))
-                          .thenComparing(RawExpressionCallTO::getId, Comparator.nullsLast(Comparator.naturalOrder())));
-        Stream<Map<ExpressionCallTO, Map<DataType, Set<ExperimentExpressionTO>>>> callTOsByGene =
+        CallSpliterator<Map<RawExpressionCallTO, Map<DataType, Set<ExperimentExpressionTO>>>> spliterator = 
+            new CallSpliterator<>(streamRawCallTOs, experimentExprTOsByDataType);
+        Stream<Map<RawExpressionCallTO, Map<DataType, Set<ExperimentExpressionTO>>>> callTOsByGene =
             StreamSupport.stream(spliterator, false).onClose(() -> spliterator.close());
 
+        // We retrieve all conditions in the species, and infer all propagated conditions
+        Set<Condition> conditions = serviceFactory.getConditionService()
+            .loadObservedConditionsBySpeciesId(speciesId, attributes)
+            .collect(Collectors.toSet());
         ConditionUtils conditionUtils = new ConditionUtils(conditions, true, true, serviceFactory);
         
         Stream<ExpressionCall> reconciledCalls = callTOsByGene
-            // First we convert Map<ExpressionCallTO, Map<DataType, Set<ExperimentExpressionTO>>
-            // into Map<PipelineCall, Set<PipelineExpressionCallData>>
-            // having source ExpressionCallTOs.
+            // First we convert Map<RawExpressionCallTO, Map<DataType, Set<ExperimentExpressionTO>>
+            // into Map<PipelineCall, Set<PipelineCallData>> having source RawExpressionCallTO.
             .map(geneData -> geneData.entrySet().stream()
                     .collect(Collectors.toMap(
-                        e -> mapCallTOToPipelineCall(e.getKey(), speciesId),
+                        e -> mapRawCallTOToPipelineCall(e.getKey(), speciesId),
                         e -> e.getValue().entrySet().stream()
+                        //TODO: use method as for mapRawCallTOTo...
                             .map(eeTo -> new PipelineCallData(eeTo.getKey(),
                                 new DataPropagation(PropagationState.SELF, PropagationState.SELF, true),
                                 null, eeTo.getValue(), null))
@@ -682,40 +711,17 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
      * 
      * @param speciesId             A {@code String} that is the ID of the species 
      *                              for which to return the {@code ExpressionCall}s.
-     * @param callFilter            An {@code ExpressionCallFilter} allowing 
-     *                              to configure retrieving of data throw {@code DAO}s.
-     *                              Cannot be {@code null} or empty (check by calling methods).
-     * @param attributes            A {@code Set} of {@code Attribute}s defining the attributes
-     *                              to populate in the returned {@code ExpressionCall}s.
-     *                              If {@code null} or empty, all attributes are populated. 
-     * @param orderingAttributes    A {@code LinkedHashMap} where keys are 
-     *                              {@code CallService.OrderingAttribute}s defining the attributes
-     *                              used to order the returned {@code ExpressionCall}s, 
-     *                              the associated value being a {@code Service.Direction} defining 
-     *                              whether the ordering should be ascendant or descendant.
      * @return                      The {@code Stream} of {@code ExpressionCall}s.
      * @throws IllegalArgumentException If the {@code callFilter} provided define multiple 
      *                                  expression propagation states requested.
      */
-    private Stream<ExpressionCallTO> performsExpressionCallQuery(String speciesId, Set<Attribute> attributes)
+    private Stream<RawExpressionCallTO> performsRawExpressionCallTOQuery(String speciesId)
                     throws IllegalArgumentException {
-        log.entry(speciesId, attributes);
+        log.entry(speciesId);
         log.debug("Start retrieving expressed data");
-
-        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> ordering = 
-            new LinkedHashMap<>();
-        //Warning, the following ordering is necessary for proper call inference, 
-        //(see retrieval of experimentExpressionTOs)
-        ordering.put(RawCallDAO.OrderingAttribute.GENE_ID, DAO.Direction.ASC);
-        ordering.put(RawCallDAO.OrderingAttribute.EXPRESSION_ID, DAO.Direction.ASC);
         
-        Stream<ExpressionCallTO> expr = this.getRawExpressionCallDAO().getExpressionCalls(
-                speciesId, 
-                //Attributes
-                convertServiceAttrsToRawExprDAOAttrs(attributes),
-                //OrderingAttributes
-                //XXX: we could rather have a method "getExpressionCallsOrderedByGeneIdAndExprId"
-                ordering)
+        Stream<RawExpressionCallTO> expr = this.getRawExpressionCallDAO()
+            .getExpressionCallsOrderedByGeneIdAndExprId(speciesId)
             //retrieve the Stream resulting from the query. Note that the query is not executed 
             //as long as the Stream is not consumed (lazy-loading).
             .stream();
@@ -740,27 +746,20 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
 
         final ExperimentExpressionDAO dao = this.getExperimentExpressionDAO();
 
-        //Warning, the following ordering is necessary for proper call inference, 
-        //(see retrieval of rawCallTOs)
-        LinkedHashMap<ExperimentExpressionDAO.OrderingAttribute,DAO.Direction> orderingAttrs =
-            new LinkedHashMap<>();
-        orderingAttrs.put(ExperimentExpressionDAO.OrderingAttribute.GENE_ID, DAO.Direction.ASC);
-        orderingAttrs.put(ExperimentExpressionDAO.OrderingAttribute.EXPRESSION_ID, DAO.Direction.ASC);
-
         Map<DataType, Stream<ExperimentExpressionTO>> map = new HashMap<>();
         for (DataType dt: DataType.values()) {
             switch (dt) {
                 case AFFYMETRIX:
-                    map.put(DataType.AFFYMETRIX, dao.getAffymetrixExperimentExpressions(null, orderingAttrs, speciesId).stream());
+                    map.put(dt, dao.getAffymetrixExpExprsOrderedByGeneIdAndExprId(speciesId).stream());
                     break;
                 case EST:
-                    map.put(DataType.EST, dao.getESTExperimentExpressions(null, orderingAttrs, speciesId).stream());
+                    map.put(dt, dao.getESTExpExprsOrderedByGeneIdAndExprId(speciesId).stream());
                     break;
                 case IN_SITU:
-                    map.put(DataType.IN_SITU, dao.getInSituExperimentExpressions(null, orderingAttrs, speciesId).stream());
+                    map.put(dt, dao.getInSituExpExprsOrderedByGeneIdAndExprId(speciesId).stream());
                     break;
                 case RNA_SEQ:
-                    map.put(DataType.RNA_SEQ, dao.getRNASeqExperimentExpressions(null, orderingAttrs, speciesId).stream());
+                    map.put(dt, dao.getRNASeqExpExprsOrderedByGeneIdAndExprId(speciesId).stream());
                     break;
                 default: 
                     throw log.throwing(new IllegalStateException("Unsupported DataType: " + dt));
@@ -774,12 +773,12 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
     //*************************************************************************
     // METHODS MAPPING CallTOs TO PipelineCalls
     //*************************************************************************
-    private static PipelineCall mapCallTOToPipelineCall(ExpressionCallTO callTO, String speciesId) {
+    private static PipelineCall mapRawCallTOToPipelineCall(RawExpressionCallTO callTO, String speciesId) {
         log.entry(callTO, speciesId);
 
+        assert callTO.getConditionId() != null;
         return log.exit(new PipelineCall(callTO.getGeneId(), 
-                callTO.getAnatEntityId() != null || callTO.getStageId() != null? 
-                        new Condition(callTO.getAnatEntityId(), callTO.getStageId(), speciesId): null, 
+                callTO.getConditionId(), 
                 new DataPropagation(PropagationState.SELF, PropagationState.SELF, true), 
                 // At this point, we do not generate data state, quality, CallData, and rank
                 // as we haven't reconcile data.
@@ -1124,6 +1123,8 @@ public class InsertPropagatedCalls extends MySQLDAOUser {
      *                      to be used for reconciliation.
      * @return              The representative {@code ExpressionCall}.
      */
+    //XXX: why returning ExpressionCall rather than PipelineCall? (I don't really care). 
+    //Or should we use PipelineCall all along to be able to store numeric bgeeGeneId?
     private static ExpressionCall reconcileSingleGeneCalls(PipelineCall call,
             Set<PipelineCallData> pipelineData) {
         log.entry(call, pipelineData);

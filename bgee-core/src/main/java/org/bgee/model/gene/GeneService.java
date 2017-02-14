@@ -92,7 +92,7 @@ public class GeneService extends Service {
     	}
     	assert result.size() == 1: "Requested 1 gene should get 1 gene";
     	Gene gene = result.iterator().next();
-    	Set<String> speciesIds = new HashSet<>();
+    	Set<Integer> speciesIds = new HashSet<>();
     	assert gene.getSpeciesId() != null;
     	speciesIds.add(gene.getSpeciesId());
     	Species species = this.getServiceFactory().getSpeciesService()
@@ -143,12 +143,12 @@ public class GeneService extends Service {
             return log.exit(new LinkedList<>());
         }
         
-        Set<String> speciesIds = matchedGeneList.stream().map(Gene::getSpeciesId).collect(Collectors.toSet());
-        Map<String, Species> speciesMap = this.getServiceFactory().getSpeciesService()
+        Set<Integer> speciesIds = matchedGeneList.stream().map(Gene::getSpeciesId).collect(Collectors.toSet());
+        Map<Integer, Species> speciesMap = this.getServiceFactory().getSpeciesService()
                 .loadSpeciesByIds(speciesIds, false).stream()
                 .collect(Collectors.toMap(Species::getId, Function.identity()));
         
-        Set<String> geneIds = matchedGeneList.stream().map(Gene::getId).collect(Collectors.toSet());
+        Set<Integer> geneIds = matchedGeneList.stream().map(Gene::getId).collect(Collectors.toSet());
         
         //give Species objects to new Gene objects
         matchedGeneList = matchedGeneList.stream().map(g -> new Gene(g.getId(), g.getSpeciesId(), 
@@ -176,7 +176,7 @@ public class GeneService extends Service {
         log.entry(gene, term);
         // if the gene name or id match there is no synonym
         if (gene.getName().toLowerCase().contains(term.toLowerCase())
-                || gene.getId().toLowerCase().contains(term.toLowerCase())) {
+                || String.valueOf(gene.getId()).contains(term)) {
             return log.exit(new GeneMatch(gene, null));
         }
 
@@ -205,7 +205,7 @@ public class GeneService extends Service {
             return log.exit(null);
         }
 
-        return log.exit(new Gene(geneTO.getId(), String.valueOf(geneTO.getSpeciesId()), geneTO.getName(),
-                geneTO.getDescription()));
+        return log.exit(new Gene(Integer.valueOf(geneTO.getId()), Integer.valueOf(geneTO.getSpeciesId()),
+                geneTO.getName(), geneTO.getDescription()));
     }
 }

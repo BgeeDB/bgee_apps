@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -29,20 +30,21 @@ import org.bgee.model.species.Taxon;
  * @version Bgee 14, Jan. 2017
  * @since   Bgee 13, Dec. 2015
  * @param <T>   The type of element in this ontology or sub-graph.
+ * @param <U>   The type of ID of the elements in this ontology or sub-graph.
  */
-public abstract class OntologyBase<T extends NamedEntity & OntologyElement<T>> {
+public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T>, U> {
 
     private static final Logger log = LogManager.getLogger(OntologyBase.class.getName());
     
     /**
-     * @see #getElements()
+     * A {@code Map} associating IDs of elements as key to the corresponding element as value.
      */
-    private final Set<T> elements;
+    private final Map<U, T> elements;
 
     /**
      * A {@code Set} of {@code RelationTO}s that are the relations between elements of the ontology.
      */
-    private final Set<RelationTO> relations;
+    private final Set<RelationTO<U>> relations;
 
     /**
      * @see #getRelationTypes()
@@ -80,7 +82,7 @@ public abstract class OntologyBase<T extends NamedEntity & OntologyElement<T>> {
     //XXX: when needed, we could add a parameter 'directRelOnly', in case we only want 
     //to retrieve direct parents or children of terms. See method 'getRelatives' 
     //already capable of considering only direct relations.
-    protected OntologyBase(Collection<T> elements, Collection<RelationTO> relations,
+    protected OntologyBase(Collection<T> elements, Collection<RelationTO<U>> relations,
             Collection<RelationType> relationTypes, ServiceFactory serviceFactory, Class<T> type) {
         log.entry(elements, relations, relationTypes, serviceFactory, type);
         if (elements == null || elements.isEmpty()) {
@@ -95,7 +97,8 @@ public abstract class OntologyBase<T extends NamedEntity & OntologyElement<T>> {
         
         //it is acceptable to have no relations provided: maybe there is no valid relations 
         //for the requested parameters.
-        this.elements = Collections.unmodifiableSet(new HashSet<>(elements));
+        this.elements = Collections.unmodifiableMap(elements.stream()
+            .collect(Collectors.toMap(e -> e.getId(), e -> e, (e1, e2) -> e1)));
         this.relations = Collections.unmodifiableSet(
                 relations == null? new HashSet<>(): new HashSet<>(relations));
         this.relationTypes = Collections.unmodifiableSet(new HashSet<>(relationTypes));
@@ -103,7 +106,7 @@ public abstract class OntologyBase<T extends NamedEntity & OntologyElement<T>> {
         this.type = type;
 
         //check for null elements after filtering redundancy thanks to Sets
-        if (this.elements.stream().anyMatch(Objects::isNull)) {
+        if (this.elements.values().stream().anyMatch(Objects::isNull)) {
             throw log.throwing(new IllegalArgumentException("No element can be null."));
         }
         if (this.relations.stream().anyMatch(Objects::isNull)) {
@@ -112,7 +115,7 @@ public abstract class OntologyBase<T extends NamedEntity & OntologyElement<T>> {
         if (this.relationTypes.stream().anyMatch(Objects::isNull)) {
             throw log.throwing(new IllegalArgumentException("No relation type can be null."));
         }
-        if (type != null && this.elements.stream().anyMatch(e -> !e.getClass().isAssignableFrom(type))) {
+        if (type != null && this.elements.values().stream().anyMatch(e -> !e.getClass().isAssignableFrom(type))) {
             throw log.throwing(new IllegalArgumentException(
                     "The class of all elements should be equals to provided class " + type));
         }
@@ -129,14 +132,14 @@ public abstract class OntologyBase<T extends NamedEntity & OntologyElement<T>> {
      *          this ontology or sub-graph.
      */
     public Set<T> getElements() {
-        return elements;
+        return new HashSet<>(elements.values());
     }
 
     /**
      * @return  The {@code Set} of {@code RelationTO}s that are the relations that were considered
      *          to build this ontology or sub-graph.
      */
-    protected Set<RelationTO> getRelations() {
+    protected Set<RelationTO<U>> getRelations() {
         return relations;
     }
 
@@ -173,13 +176,8 @@ public abstract class OntologyBase<T extends NamedEntity & OntologyElement<T>> {
      * @return      A {@code T} that is the element corresponding to the given {@code id}.
      *              Return {@code null} if the element is not found in the ontology.
      */
-    public T getElement(String id) {
-        log.entry(id);
-        for (T t: elements) {
-            if (t.getId().equals(id))
-                return log.exit(t);
-        }
-        return log.exit(null);
+    public T getElement(U id) {
+        elements.get(id);
     }
 
     /**
@@ -479,7 +477,7 @@ public abstract class OntologyBase<T extends NamedEntity & OntologyElement<T>> {
                 .map(OntologyBase::convertRelationType)
                 .collect(Collectors.toCollection(() -> EnumSet.noneOf(RelationTO.RelationType.class)));
 
-        final Set<String> allowedEntityIds = elements.stream().map(e -> e.getId()).collect(Collectors.toSet());   
+        final Set<U> allowedEntityIds = elements.stream().map(e -> e.getId()).collect(Collectors.toSet());   
         final Set<String> allowedRelIds;
         final boolean relIdFiltering;
         if (isMultiSpecies && !relationTaxonConstraints.isEmpty()) {
@@ -495,7 +493,7 @@ public abstract class OntologyBase<T extends NamedEntity & OntologyElement<T>> {
             relIdFiltering = false;
         }
 
-        final Set<RelationTO> filteredRelations = relations.stream()
+        final Set<RelationTO<U>> filteredRelations = relations.stream()
                 .filter(r -> usedRelationTypes.contains(r.getRelationType()) && 
                              (!directRelOnly || 
                                   RelationTO.RelationStatus.DIRECT.equals(r.getRelationStatus())))
@@ -534,7 +532,7 @@ public abstract class OntologyBase<T extends NamedEntity & OntologyElement<T>> {
      * @param element   A {@code T} that is the element from which relations are retrieved.
      * @return          The {@code List} of ordered {@code RelationTO}s of this ontology.
      */
-    protected List<RelationTO> getOrderedRelations(T element) {
+    protected List<RelationTO<U>> getOrderedRelations(T element) {
         log.entry(element);
         
         if (!this.type.equals(DevStage.class) && !this.type.equals(Taxon.class)) {
@@ -543,13 +541,13 @@ public abstract class OntologyBase<T extends NamedEntity & OntologyElement<T>> {
                     "Ordering unsupported for OntologyElement " + this.type));
         }
         
-        List<RelationTO> orderedRels = new ArrayList<>();
-        ArrayDeque<RelationTO> queue = new ArrayDeque<>(this.relations);
-        String id = element.getId();
+        List<RelationTO<U>> orderedRels = new ArrayList<>();
+        ArrayDeque<RelationTO<U>> queue = new ArrayDeque<>(this.relations);
+        U id = element.getId();
         int initialQueueSize = queue.size();
         int countViewedRelations = 0;
         while (!queue.isEmpty() && countViewedRelations < initialQueueSize) {
-            RelationTO currentRel = queue.pop();
+            RelationTO<U> currentRel = queue.pop();
             if (currentRel.getSourceId().equals(id) 
                     && currentRel.getRelationStatus().equals(RelationStatus.DIRECT)) {
                 orderedRels.add(currentRel);
@@ -605,7 +603,7 @@ public abstract class OntologyBase<T extends NamedEntity & OntologyElement<T>> {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        OntologyBase<?> other = (OntologyBase<?>) obj;
+        OntologyBase<?,?> other = (OntologyBase<?,?>) obj;
         if (elements == null) {
             if (other.elements != null)
                 return false;

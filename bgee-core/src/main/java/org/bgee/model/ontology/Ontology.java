@@ -14,20 +14,21 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
  * @version Bgee 13, July 2016
  * @since   Bgee 13, July 2016
  * @param <T>   The type of element in this ontology or sub-graph.
+ * @param <U>   The type of ID of the elements in this ontology or sub-graph.
  */
-public class Ontology<T extends NamedEntity & OntologyElement<T>>
-    extends OntologyBase<T> {
+public class Ontology<T extends NamedEntity<U> & OntologyElement<T>, U>
+    extends OntologyBase<T, U> {
     
     /**
      * @see #getSpeciesId()
      */
-    private final String speciesId;
+    private final Integer speciesId;
 
     /** 
      * Constructor providing the species IDs, the elements, the relations, the relations types, 
      * the service factory, and the type of elements of this ontology.
      * 
-     * @param speciesId         A {@code String} that is the ID of the species describing this 
+     * @param speciesId         An {@code Integer} that is the ID of the species describing this 
      *                          single-species ontology. Can be {@code null} if the ontology 
      *                          is species-agnostic (for instance, taxonomy ontology).
      * @param elements          A {@code Collection} of {@code T}s that are
@@ -40,19 +41,19 @@ public class Ontology<T extends NamedEntity & OntologyElement<T>>
      * @param type              A {@code Class<T>} that is the type of {@code elements} 
      *                          to be store by this {@code Ontology}.
      */
-    protected Ontology(String speciesId, Collection<T> elements,
-            Collection<RelationTO> relations, Collection<RelationType> relationTypes,
+    protected Ontology(Integer speciesId, Collection<T> elements,
+            Collection<RelationTO<U>> relations, Collection<RelationType> relationTypes,
             ServiceFactory serviceFactory, Class<T> type) {
         super(elements, relations, relationTypes, serviceFactory, type);
         this.speciesId = speciesId;
     }
     
     /**
-     * @return  The {@code String} that is the ID of the species that was considered
+     * @return  The {@code Integer} that is the ID of the species that was considered
      *          to build of this ontology or sub-graph. {@code null} if the ontology 
      *          is species-agnostic (for instance, taxonomy ontology).
      */
-    public String getSpeciesId() {
+    public Integer getSpeciesId() {
         return speciesId;
     }
 }

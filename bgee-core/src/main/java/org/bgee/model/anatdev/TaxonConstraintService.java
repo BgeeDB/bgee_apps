@@ -33,12 +33,12 @@ public class TaxonConstraintService extends Service {
     /**
      * Retrieve anatomical entity taxon constraints for a given set of species IDs.
      * 
-     * @param speciesIds    A {@code Collection} of {@code String}s that are IDs of species 
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that are IDs of species 
      *                      for which to return the {@code TaxonConstraint}s.
      * @return              A {@code Stream} of {@code TaxonConstraint}s that are 
      *                      the {@code TaxonConstraint}s for the given set of species IDs.
      */
-    public Stream<TaxonConstraint> loadAnatEntityTaxonConstraintBySpeciesIds(Collection<String> speciesIds) {
+    public Stream<TaxonConstraint> loadAnatEntityTaxonConstraintBySpeciesIds(Collection<Integer> speciesIds) {
         log.entry(speciesIds);
         
         return log.exit(getDaoManager().getTaxonConstraintDAO()
@@ -49,13 +49,13 @@ public class TaxonConstraintService extends Service {
     /**
      * Retrieve anatomical entity relation taxon constraints for a given set of species IDs.
      * 
-     * @param speciesIds    A {@code Collection} of {@code String}s that are IDs of species 
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that are IDs of species 
      *                      for which to return the {@code TaxonConstraint}s.
      * @return              A {@code Stream} of {@code TaxonConstraint}s that are 
      *                      the {@code TaxonConstraint}s for the given set of species IDs.
      */
     public Stream<TaxonConstraint> loadAnatEntityRelationTaxonConstraintBySpeciesIds(
-            Collection<String> speciesIds) {
+            Collection<Integer> speciesIds) {
         log.entry(speciesIds);
         
         return log.exit(getDaoManager().getTaxonConstraintDAO()
@@ -66,12 +66,12 @@ public class TaxonConstraintService extends Service {
     /**
      * Retrieve developmental stage taxon constraints for a given set of species IDs.
      * 
-     * @param speciesIds    A {@code Collection} of {@code String}s that are IDs of species 
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that are IDs of species 
      *                      for which to return the {@code TaxonConstraint}s.
      * @return              A {@code Stream} of {@code TaxonConstraint}s that are 
      *                      the {@code TaxonConstraint}s for the given set of species IDs.
      */
-    public Stream<TaxonConstraint> loadDevStageTaxonConstraintBySpeciesIds(Collection<String> speciesIds) {
+    public Stream<TaxonConstraint> loadDevStageTaxonConstraintBySpeciesIds(Collection<Integer> speciesIds) {
         log.entry(speciesIds);
         
         return log.exit(getDaoManager().getTaxonConstraintDAO()

@@ -23,9 +23,10 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
  * @version Bgee 13, Oct. 2016
  * @since   Bgee 13, July 2016
  * @param <T>   The type of element in this ontology or sub-graph.
- */
-public class MultiSpeciesOntology<T extends NamedEntity & OntologyElement<T>> 
-    extends OntologyBase<T> {
+ * @param <U>   The type of ID of the elements in this ontology or sub-graph.
+*/
+public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T>, U> 
+    extends OntologyBase<T, U> {
 
     private static final Logger log = LogManager.getLogger(MultiSpeciesOntology.class.getName());
 
@@ -44,12 +45,12 @@ public class MultiSpeciesOntology<T extends NamedEntity & OntologyElement<T>>
     /**
      * @see #getSpeciesIds()
      */
-    private final Set<String> speciesIds;
+    private final Set<Integer> speciesIds;
 
     /**
      * Constructor providing all parameters of this multi-species ontology.
      * 
-     * @param speciesIds                A {@code Collection} of {@code String}s that are the IDs of 
+     * @param speciesIds                A {@code Collection} of {@code Integer}s that are the IDs of 
      *                                  the species describing this multi-species ontology.
      * @param elements                  A {@code Collection} of {@code T}s that are
      *                                  the elements of this ontology.
@@ -66,8 +67,8 @@ public class MultiSpeciesOntology<T extends NamedEntity & OntologyElement<T>>
      * @param type                      A {@code Class<T>} that is the type of {@code elements} 
      *                                  to be store by this {@code MultiSpeciesOntology}.
      */
-    protected MultiSpeciesOntology(Collection<String> speciesIds, Collection<T> elements, 
-            Collection<RelationTO> relations, Collection<TaxonConstraint> taxonConstraints, 
+    protected MultiSpeciesOntology(Collection<Integer> speciesIds, Collection<T> elements, 
+            Collection<RelationTO<U>> relations, Collection<TaxonConstraint> taxonConstraints, 
             Collection<TaxonConstraint> relationTaxonConstraints, Collection<RelationType> relationTypes,
             ServiceFactory serviceFactory, Class<T> type) {
         super(elements, relations, relationTypes, serviceFactory, type);
@@ -96,7 +97,7 @@ public class MultiSpeciesOntology<T extends NamedEntity & OntologyElement<T>>
      * @return              The {@code Set} of {@code T}s that are the elements that were considered 
      *                      to build this ontology or sub-graph, filtered by {@code speciesId}.
      */
-    public  Set<T> getElements(Collection<String> speciesIds) {
+    public  Set<T> getElements(Collection<Integer> speciesIds) {
         log.entry(speciesIds);
         
         // Get stage or anat. entity IDs according to taxon constraints
@@ -115,12 +116,12 @@ public class MultiSpeciesOntology<T extends NamedEntity & OntologyElement<T>>
      * Get relations that were considered to build this ontology or sub-graph,
      * filtered by {@code speciesIds}.
      * 
-     * @param speciesIds    A {@code Collection} of {@code String}s that is the IDs of species
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that is the IDs of species
      *                      allowing to filter the relations to retrieve.
      * @return              The {@code Set} of {@code RelationTO}s that are the relations that were
      *                      considered to build this ontology or sub-graph, filtered by {@code speciesId}.
      */
-    private  Set<RelationTO> getRelations(Collection<String> speciesIds) {
+    private  Set<RelationTO<U>> getRelations(Collection<Integer> speciesIds) {
         log.entry(speciesIds);
         
         // XXX: according to type of according to if relationTaxonConstraints is null?
@@ -249,13 +250,13 @@ public class MultiSpeciesOntology<T extends NamedEntity & OntologyElement<T>>
      * Get the {@code Ontology} of the provided {@code speciesId} 
      * from this {@code MultiSpeciesOntology}.
      * 
-     * @param speciesId A {@code String} that is the ID of species of 
+     * @param speciesId An {@code Integer} that is the ID of species of 
      *                  which the ontology should be retrieved.
      * @return          The {@code Ontology} of the provided {@code speciesId}.
      * @throws IllegalArgumentException If {@code speciesId} is {@code null} or if 
      *                                  the {@code speciesId} is not in this {@code MultiSpeciesOntology}.
      */
-    public Ontology<T> getAsSingleSpeciesOntology(String speciesId) {
+    public Ontology<T, U> getAsSingleSpeciesOntology(Integer speciesId) {
         log.entry(speciesId);
         if (speciesId == null) {
             throw log.throwing(new IllegalArgumentException("A species ID should be provided"));

@@ -69,16 +69,16 @@ public class OntologyServiceTest extends TestAncestor {
         // | is_a       / is_a          |
         // UBERON:0003 ------------------
         
-        List<RelationTO> allRelations = Arrays.asList(
-                new RelationTO("1", "UBERON:0002", "UBERON:0001", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-                new RelationTO("2", "UBERON:0002p", "UBERON:0001", RelationTO.RelationType.DEVELOPSFROM, RelationStatus.DIRECT),
-                new RelationTO("3", "UBERON:0003", "UBERON:0002", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-                new RelationTO("4", "UBERON:0003", "UBERON:0002p", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-                new RelationTO("5", "UBERON:0003", "UBERON:0001", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT));
+        List<RelationTO<String>> allRelations = Arrays.asList(
+                new RelationTO<>(1, "UBERON:0002", "UBERON:0001", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO<>(2, "UBERON:0002p", "UBERON:0001", RelationTO.RelationType.DEVELOPSFROM, RelationStatus.DIRECT),
+                new RelationTO<>(3, "UBERON:0003", "UBERON:0002", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO<>(4, "UBERON:0003", "UBERON:0002p", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO<>(5, "UBERON:0003", "UBERON:0001", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT));
 
-        List<RelationTO> relationTOs1 = Arrays.asList(allRelations.get(0), allRelations.get(1),
+        List<RelationTO<String>> relationTOs1 = Arrays.asList(allRelations.get(0), allRelations.get(1),
                 allRelations.get(2), allRelations.get(3));
-        RelationTOResultSet mockRelationRs1 = getMockResultSet(RelationTOResultSet.class, relationTOs1);
+        RelationTOResultSet<String> mockRelationRs1 = getMockResultSet(RelationTOResultSet.class, relationTOs1);
         when(relationDao.getAnatEntityRelations(
         		speciesIds, true, sourceAnatEntityIds, targetAnatEntityIds, true, 
         		daoRelationTypes1, relationStatus, null))
@@ -86,23 +86,23 @@ public class OntologyServiceTest extends TestAncestor {
 
         Set<String> newSourceAnatEntityIds = new HashSet<String>(Arrays.asList("UBERON:0001", "UBERON:0003"));
         Set<String> newTargetAnatEntityIds = new HashSet<String>(Arrays.asList("UBERON:0001", "UBERON:0003"));
-        RelationTOResultSet mockRelationRs1b = getMockResultSet(RelationTOResultSet.class, allRelations);
+        RelationTOResultSet<String> mockRelationRs1b = getMockResultSet(RelationTOResultSet.class, allRelations);
         when(relationDao.getAnatEntityRelations(speciesIds, true, newSourceAnatEntityIds,
                 newTargetAnatEntityIds, true, daoRelationTypes1, relationStatus, null))
             .thenReturn(mockRelationRs1b);
 
-        List<RelationTO> relationTOs2 = Arrays.asList(allRelations.get(0), allRelations.get(1));
-        RelationTOResultSet mockRelationRs2 = getMockResultSet(RelationTOResultSet.class, relationTOs2);
+        List<RelationTO<String>> relationTOs2 = Arrays.asList(allRelations.get(0), allRelations.get(1));
+        RelationTOResultSet<String> mockRelationRs2 = getMockResultSet(RelationTOResultSet.class, relationTOs2);
         when(relationDao.getAnatEntityRelations(speciesIds, true, sourceAnatEntityIds, null, true, 
         		daoRelationTypes23, relationStatus, null)).thenReturn(mockRelationRs2);
         
-        RelationTOResultSet mockRelationRs2b = getMockResultSet(RelationTOResultSet.class, new ArrayList<>());
+        RelationTOResultSet<String> mockRelationRs2b = getMockResultSet(RelationTOResultSet.class, new ArrayList<>());
         when(relationDao.getAnatEntityRelations(speciesIds, true, new HashSet<String>(Arrays.asList("UBERON:0001")), 
                 new HashSet<>(), true, daoRelationTypes23, relationStatus, null))
             .thenReturn(mockRelationRs2b);
 
-        List<RelationTO> relationTOs3 = new ArrayList<>();
-        RelationTOResultSet mockRelationRs3 = getMockResultSet(RelationTOResultSet.class, relationTOs3);
+        List<RelationTO<String>> relationTOs3 = new ArrayList<>();
+        RelationTOResultSet<String> mockRelationRs3 = getMockResultSet(RelationTOResultSet.class, relationTOs3);
         when(relationDao.getAnatEntityRelations(
         		speciesIds, true, sourceAnatEntityIds, targetAnatEntityIds, false, 
         		daoRelationTypes23, relationStatus, null))
@@ -192,7 +192,7 @@ public class OntologyServiceTest extends TestAncestor {
 
         OntologyService service = new OntologyService(serviceFactory);
 
-        OntologyBase<AnatEntity> expectedOntology1 = 
+        OntologyBase<AnatEntity, String> expectedOntology1 = 
         		new MultiSpeciesOntology<>(speciesIds, anatEntities1, new HashSet<>(allRelations),
         		        taxonConstraints, relationTaxonConstraints,
         		        expRelationTypes1, serviceFactory, AnatEntity.class);
@@ -200,7 +200,7 @@ public class OntologyServiceTest extends TestAncestor {
                 expectedOntology1, service.getAnatEntityOntology(speciesIds, anatEntityIds,
                 		expRelationTypes1, true, true));
         
-        OntologyBase<AnatEntity> expectedOntology2 = 
+        OntologyBase<AnatEntity, String> expectedOntology2 = 
         		new MultiSpeciesOntology<>(speciesIds, anatEntities2, new HashSet<>(relationTOs2),
                         taxonConstraints, relationTaxonConstraints,
         		        expRelationTypes23, serviceFactory, AnatEntity.class);
@@ -208,7 +208,7 @@ public class OntologyServiceTest extends TestAncestor {
                 expectedOntology2, service.getAnatEntityOntology(speciesIds, anatEntityIds,
                 		expRelationTypes23, true, false));
         
-        OntologyBase<AnatEntity> expectedOntology3 = 
+        OntologyBase<AnatEntity, String> expectedOntology3 = 
         		new MultiSpeciesOntology<>(speciesIds, anatEntities3, new HashSet<>(relationTOs3),
                         taxonConstraints, relationTaxonConstraints,
         		        expRelationTypes23, serviceFactory, AnatEntity.class);

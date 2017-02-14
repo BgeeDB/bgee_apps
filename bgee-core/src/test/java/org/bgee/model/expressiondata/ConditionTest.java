@@ -29,24 +29,25 @@ public class ConditionTest extends TestAncestor {
      * Test that equals/hashCode/compareTo are consistent for {@code Condition} class.
      */
     @Test
+    //TODO: to remove to rely on the Entity hashCode/equals method
     public void testEqualsHashCodeCompareTo() {
         // Assert with same conditions
-        Condition c1 = new Condition("Anat1", "stage1", "speciesId1");
-        Condition c2 = new Condition("Anat1", "stage1", "speciesId1");
+        Condition c1 = new Condition(1, "Anat1", "stage1", "speciesId1");
+        Condition c2 = new Condition(1, "Anat1", "stage1", "speciesId1");
         assertTrue("Incorrect equals", c1.equals(c2));
         assertEquals("Incorrect hashCode", c1.hashCode(), c2.hashCode());
         assertEquals("Incorrect compareTo", 0, c1.compareTo(c2));
         assertEquals("Incorrect compareTo", 0, c2.compareTo(c1));
         
-        c1 = new Condition("Anat1", null, "speciesId1");
-        c2 = new Condition("Anat1", null, "speciesId1");
+        c1 = new Condition(1, "Anat1", null, "speciesId1");
+        c2 = new Condition(1, "Anat1", null, "speciesId1");
         assertTrue("Incorrect equals", c1.equals(c2));
         assertEquals("Incorrect hashCode", c1.hashCode(), c2.hashCode());
         assertEquals("Incorrect compareTo", 0, c1.compareTo(c2));
         assertEquals("Incorrect compareTo", 0, c2.compareTo(c1));
         
-        c1 = new Condition(null, "stage1", "speciesId1");
-        c2 = new Condition(null, "stage1", "speciesId1");
+        c1 = new Condition(1, null, "stage1", "speciesId1");
+        c2 = new Condition(1, null, "stage1", "speciesId1");
         assertTrue("Incorrect equals", c1.equals(c2));
         assertEquals("Incorrect hashCode", c1.hashCode(), c2.hashCode());
         assertEquals("Incorrect compareTo", 0, c1.compareTo(c2));
@@ -54,47 +55,47 @@ public class ConditionTest extends TestAncestor {
         
         // Assert with different conditions
         // different anat entity IDs
-        c1 = new Condition("Anat1", "stage1", "speciesId1");
-        c2 = new Condition("Anat2", "stage1", "speciesId1");
+        c1 = new Condition(1, "Anat1", "stage1", "speciesId1");
+        c2 = new Condition(1, "Anat2", "stage1", "speciesId1");
         assertFalse("Incorrect equals", c1.equals(c2));
         assertEquals("Incorrect compareTo", -1, c1.compareTo(c2));
         assertEquals("Incorrect compareTo", 1, c2.compareTo(c1));
         
-        c1 = new Condition("Anat1", "stage2", "speciesId1");
-        c2 = new Condition(null, "stage2", "speciesId1");
+        c1 = new Condition(1, "Anat1", "stage2", "speciesId1");
+        c2 = new Condition(1, null, "stage2", "speciesId1");
         assertFalse("Incorrect equals", c1.equals(c2));
         assertEquals("Incorrect compareTo", -1, c1.compareTo(c2));
         assertEquals("Incorrect compareTo", 1, c2.compareTo(c1));
 
         // different stage IDs
-        c1 = new Condition("Anat1", "stage1", "speciesId1");
-        c2 = new Condition("Anat1", "stage2", "speciesId1");
+        c1 = new Condition(1, "Anat1", "stage1", "speciesId1");
+        c2 = new Condition(1, "Anat1", "stage2", "speciesId1");
         assertFalse("Incorrect equals", c1.equals(c2));
         assertEquals("Incorrect compareTo", -1, c1.compareTo(c2));
         assertEquals("Incorrect compareTo", 1, c2.compareTo(c1));
         
-        c1 = new Condition("Anat1", "stage1", "speciesId1");
-        c2 = new Condition("Anat1", null, "speciesId1");
+        c1 = new Condition(1, "Anat1", "stage1", "speciesId1");
+        c2 = new Condition(1, "Anat1", null, "speciesId1");
         assertFalse("Incorrect equals", c1.equals(c2));
         assertEquals("Incorrect compareTo", -1, c1.compareTo(c2));
         assertEquals("Incorrect compareTo", 1, c2.compareTo(c1));
         
         // different species IDs
-        c1 = new Condition("Anat1", "stage2", "speciesId1");
-        c2 = new Condition("Anat1", "stage2", "speciesId2");
+        c1 = new Condition(1, "Anat1", "stage2", "speciesId1");
+        c2 = new Condition(1, "Anat1", "stage2", "speciesId2");
         assertFalse("Incorrect equals", c1.equals(c2));
         assertEquals("Incorrect compareTo", -1, c1.compareTo(c2));
         assertEquals("Incorrect compareTo", 1, c2.compareTo(c1));
         
-        c1 = new Condition("Anat1", "stage1", "speciesId1");
-        c2 = new Condition("Anat1", "stage1", "speciesId2");
+        c1 = new Condition(1, "Anat1", "stage1", "speciesId1");
+        c2 = new Condition(1, "Anat1", "stage1", "speciesId2");
         assertFalse("Incorrect equals", c1.equals(c2));
         assertEquals("Incorrect compareTo", -1, c1.compareTo(c2));
         assertEquals("Incorrect compareTo", 1, c2.compareTo(c1));
         
         // different IDs
-        c1 = new Condition("Anat1", "stage2", "speciesId1");
-        c2 = new Condition("Anat2", "stage1", "speciesId2");
+        c1 = new Condition(1, "Anat1", "stage2", "speciesId1");
+        c2 = new Condition(1, "Anat2", "stage1", "speciesId2");
         assertFalse("Incorrect equals", c1.equals(c2));
         assertEquals("Incorrect compareTo", -1, c1.compareTo(c2));
         assertEquals("Incorrect compareTo", 1, c2.compareTo(c1));

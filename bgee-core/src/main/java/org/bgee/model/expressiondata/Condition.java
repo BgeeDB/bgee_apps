@@ -5,6 +5,7 @@ import java.util.Comparator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.Entity;
 
 /**
  * This class describes the conditions related to gene expression. It notably captures 
@@ -18,7 +19,7 @@ import org.apache.logging.log4j.Logger;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, July 2016
+ * @version Bgee 14, Feb. 2017
  * @since   Bgee 13. Sept. 2015
  */
 //XXX: how to manage multi-species conditions? Should we have a class SingleSpeciesCondition 
@@ -29,7 +30,7 @@ import org.apache.logging.log4j.Logger;
 //should be managed in a different way. 
 //TODO: I guess this means the ConditionUtils should use the new MultiSpeciesOntology mechanism, 
 //to be able to perform computations over any species. 
-public class Condition implements Comparable<Condition> {
+public class Condition extends Entity<Integer> implements Comparable<Condition> {
     private final static Logger log = LogManager.getLogger(Condition.class.getName());
 
     /**
@@ -48,16 +49,16 @@ public class Condition implements Comparable<Condition> {
      * @see #getDevStageId()
      */
     private final String devStageId;
-    
     /**
      * @see #getSpeciesId()
      */
     private final String speciesId;
-    
+
     /**
-     * Constructor providing the IDs of the anatomical entity, the developmental stage, 
+     * Constructor providing the IDs of this condition, the anatomical entity, the developmental stage, 
      * and species ID of this {@code Condition}.
      * 
+     * @param conditionId   An {@code Integer} that is the ID of this gene expression condition.
      * @param anatEntityId  A {@code String} that is the ID of the anatomical entity 
      *                      used in this gene expression condition.
      * @param devStageId    A {@code String} that is the ID of the developmental stage  
@@ -67,14 +68,15 @@ public class Condition implements Comparable<Condition> {
      * @throws IllegalArgumentException If both {@code anatEntity} and {@code devStage} are blank 
      *                                  of if {@code speciesId} is blank. 
      */
-    public Condition(String anatEntityId, String devStageId, String speciesId) throws IllegalArgumentException {
+    public Condition(Integer conditionId, String anatEntityId, String devStageId, String speciesId)
+            throws IllegalArgumentException {
+        super(conditionId);
         if (StringUtils.isBlank(anatEntityId) && StringUtils.isBlank(devStageId)) {
             throw log.throwing(new IllegalArgumentException(
                     "The anat. entity ID and the dev. stage ID cannot be both blank."));
         }
         if (StringUtils.isBlank(speciesId)) {
-            throw log.throwing(new IllegalArgumentException(
-                    "The species ID cannot be blank."));
+            throw log.throwing(new IllegalArgumentException("The species ID cannot be blank."));
         }
         this.anatEntityId = anatEntityId;
         this.devStageId   = devStageId;
@@ -143,6 +145,7 @@ public class Condition implements Comparable<Condition> {
         return COND_COMPARATOR.compare(this, other);
     }
     
+    //TODO: to remove to rely on the Entity hashCode/equals method
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -191,6 +194,6 @@ public class Condition implements Comparable<Condition> {
     @Override
     public String toString() {
         return "Condition [anatEntityId=" + anatEntityId + ", devStageId=" + devStageId + 
-                ", speciesId=" + speciesId + "]";
+            ", speciesId=" + speciesId + "]";
     }
 }

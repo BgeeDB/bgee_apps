@@ -167,7 +167,7 @@ public class MultiSpeciesCall<T extends Call<?, ?>> {
      * @return  The {@code Set} of {@code String}s that are the IDs of the species of 
      *          orthologous genes of this {@code MultiSpeciesCall}.
      */
-    public Set<String> getSpeciesIds() {
+    public Set<Integer> getSpeciesIds() {
         return log.exit(this.serviceFactory.getGeneService()
                 .loadGenesByIdsAndSpeciesIds(this.getOrthologousGeneIds(), null).stream()
                 .map(g -> g.getSpeciesId()).collect(Collectors.toSet()));
@@ -195,7 +195,7 @@ public class MultiSpeciesCall<T extends Call<?, ?>> {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        MultiSpeciesCall other = (MultiSpeciesCall) obj;
+        MultiSpeciesCall<?> other = (MultiSpeciesCall<?>) obj;
         if (omaNodeId == null) {
             if (other.omaNodeId != null) {
                 return false;

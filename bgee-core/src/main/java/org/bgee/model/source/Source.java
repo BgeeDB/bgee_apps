@@ -14,7 +14,7 @@ import org.bgee.model.expressiondata.baseelements.DataType;
  * @version Bgee 13, July 2016
  * @since   Bgee 13, Mar. 2016
  */
-public class Source extends NamedEntity {
+public class Source extends NamedEntity<Integer> {
 
     /**
      * A {@code String} that is the URL for cross-references to data source.
@@ -89,10 +89,10 @@ public class Source extends NamedEntity {
      * This {@code id} cannot be {@code null}, or blank,
      * otherwise an {@code IllegalArgumentException} will be thrown.
      * 
-     * @param id            A {@code String} representing the ID of this object.
+     * @param id            An {@code Integer} representing the ID of this object.
      * @throws IllegalArgumentException If {@code id} is {@code null}, or blank. 
      */
-    public Source(String id) throws IllegalArgumentException {
+    public Source(Integer id) throws IllegalArgumentException {
         super(id);
     }
     
@@ -102,12 +102,12 @@ public class Source extends NamedEntity {
      * This {@code id} cannot be {@code null}, or blank, 
      * otherwise an {@code IllegalArgumentException} will be thrown.
      * 
-     * @param id            A {@code String} representing the ID of this object.
+     * @param id            An {@code Integer} representing the ID of this object.
      * @param name          A {@code String} representing the name of the data source.
      * @param description   A {@code String} representing the description of the data source.
      * @throws IllegalArgumentException     if {@code id} is {@code null}, or blank.
      */
-    public Source(String id, String name, String description) throws IllegalArgumentException {
+    public Source(Integer id, String name, String description) throws IllegalArgumentException {
         super(id, name, description);
     }
 
@@ -117,7 +117,7 @@ public class Source extends NamedEntity {
      * This {@code id} cannot be {@code null}, or blank, 
      * otherwise an {@code IllegalArgumentException} will be thrown.
      * 
-     * @param id                A {@code String} that is the ID of the data source.
+     * @param id                An {@code Integer} that is the ID of the data source.
      * @param name              A {@code String} that is the name of the data source.
      * @param description       A {@code String} that is the description of the data source.
      * @param xRefUrl           A {@code String} that is the URL for cross-references to data source.
@@ -131,7 +131,7 @@ public class Source extends NamedEntity {
      * @param displayOrder      An {@code Integer} that is the data source display ordering.
      * @throws IllegalArgumentException     If {@code id} is {@code null}, or blank.
      */
-    public Source(String id, String name, String description, String xRefUrl,
+    public Source(Integer id, String name, String description, String xRefUrl,
             String experimentUrl, String evidenceUrl, String baseUrl, Date releaseDate,
             String releaseVersion, Boolean toDisplay, SourceCategory category, Integer displayOrder)
                     throws IllegalArgumentException {
@@ -153,7 +153,7 @@ public class Source extends NamedEntity {
      * This {@code id} cannot be {@code null}, or blank, 
      * otherwise an {@code IllegalArgumentException} will be thrown.
      * 
-     * @param id                A {@code String} that is the ID of the data source.
+     * @param id                An {@code Integer} that is the ID of the data source.
      * @param name              A {@code String} that is the name of the data source.
      * @param description       A {@code String} that is the description of the data source.
      * @param xRefUrl           A {@code String} that is the URL for cross-references to data source.
@@ -177,7 +177,7 @@ public class Source extends NamedEntity {
      *                                          of this data source.
      * @throws IllegalArgumentException     If {@code id} is {@code null}, or blank.
      */
-    public Source(String id, String name, String description, String xRefUrl,
+    public Source(Integer id, String name, String description, String xRefUrl,
             String experimentUrl, String evidenceUrl, String baseUrl, Date releaseDate,
             String releaseVersion, Boolean toDisplay, SourceCategory category, Integer displayOrder,
             Map<String, Set<DataType>> dataTypesBySpeciesforData, Map<String, Set<DataType>> dataTypesBySpeciesForAnnotations)

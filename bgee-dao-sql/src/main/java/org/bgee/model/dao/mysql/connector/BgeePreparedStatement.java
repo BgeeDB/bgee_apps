@@ -267,6 +267,41 @@ public class BgeePreparedStatement implements AutoCloseable {
         this.setValues(startIndex, values, (e, f) -> this.setString(e, f), toOrder);
         log.exit();
     }
+    
+    /**
+     * Sets the designated parameters of this {@code BgeePreparedStatement} to the values 
+     * given in {@code values}, starting at index {@code startIndex}. This corresponds to 
+     * SQL query parts written using {@link #generateParameterizedQueryString(int)}.
+     * 
+     * @param startIndex        An {@code int} that is the first index of the parameter to set.
+     *                          If these are the first parameters set for this 
+     *                          {@code BgeePreparedStatement}, the first parameter is 1.
+     * @param values            A {@code Collection} of {@code String}s that are values to be used 
+     *                          to set the parameters.
+     * @param toOrder           A {@code boolean} defining whether {@code values} should be ordered 
+     *                          based on their natural ordering, to improve chances of cache hit. 
+     *                          {@code values} will not be modified.
+     * @param cls               The {@code Class} corresponding to the generic type {@code <T>}.
+     * @param <T>               The type of the {@code Object}s to set.
+     * @throws SQLException     If parameterIndex does not correspond to a parameter marker in the 
+     *                          SQL statement; if a database access error occurs or this method is 
+     *                          called on a closed {@code PreparedStatement}.
+     */
+    //TODO: unit tests
+    @SuppressWarnings("unchecked")
+    public <T> void setObjects(int startIndex, Collection<T> values, boolean toOrder, 
+        Class<T> cls) throws SQLException {
+        log.entry(startIndex, values, toOrder, cls);
+        if (String.class.isAssignableFrom(cls)) {
+            this.setStrings(startIndex, (Collection<String>) values, toOrder);
+            
+        } else if (Integer.class.isAssignableFrom(cls)) {
+            this.setIntegers(startIndex, (Collection<Integer>) values, toOrder);
+        } else {
+            throw log.throwing(new UnsupportedOperationException("Only String and Integer types are supported."));
+        }
+        log.exit();
+    }
     /**
      * Converts the {@code String}s provided in values into {@code Integer}s and use them 
      * to set the designated parameters of this {@code BgeePreparedStatement}, 

@@ -78,7 +78,7 @@ public class SpeciesService extends Service {
      * @throws DAOException                 If an error occurred while accessing a {@code DAO}.
      * @throws QueryInterruptedException    If a query to a {@code DAO} was intentionally interrupted.
      */
-    public Set<Species> loadSpeciesByIds(Set<String> speciesIds, boolean withSpeciesInfo)
+    public Set<Species> loadSpeciesByIds(Set<Integer> speciesIds, boolean withSpeciesInfo)
             throws DAOException, QueryInterruptedException {
         log.entry(speciesIds, withSpeciesInfo);
         Set<Species> species = this.getDaoManager().getSpeciesDAO().getSpeciesByIds(speciesIds).stream()
@@ -136,10 +136,10 @@ public class SpeciesService extends Service {
      */
     private Map<Source, Set<DataType>> getDataTypesByDataSource(
             final List<SourceToSpeciesTO> sourceToSpeciesTOs, List<Source> sources, 
-            String speciesId, InfoType infoType) {
+            Integer speciesId, InfoType infoType) {
         log.entry(sourceToSpeciesTOs, sources, speciesId, infoType);
         
-        final Map<String, Source> sourcesByIds = sources.stream()
+        final Map<Integer, Source> sourcesByIds = sources.stream()
                 .collect(Collectors.toMap(
                         s -> s.getId(),
                         s -> s, 
@@ -168,7 +168,7 @@ public class SpeciesService extends Service {
      */
     private static Species mapFromTO(SpeciesDAO.SpeciesTO speciesTO) {
         log.entry(speciesTO);
-        return log.exit(new Species(speciesTO.getId(), speciesTO.getName(), 
+        return log.exit(new Species(Integer.valueOf(speciesTO.getId()), speciesTO.getName(), 
                 speciesTO.getDescription(), speciesTO.getGenus(), speciesTO.getSpeciesName(), 
                 speciesTO.getGenomeVersion(), speciesTO.getParentTaxonId()));
     }

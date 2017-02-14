@@ -28,6 +28,7 @@ import org.junit.Test;
  * This class holds the unit tests for the {@code GeneService} class.
  * 
  * @author  Valentine Rech de Laval
+ * @author  Philippe Moret
  * @version Bgee 13, Nov. 2015
  * @since   Bgee 13, Nov. 2015
  */
@@ -43,9 +44,9 @@ public class GeneServiceTest extends TestAncestor {
         when(managerMock.getGeneDAO()).thenReturn(dao);
         
         GeneTOResultSet mockGeneRs = getMockResultSet(GeneTOResultSet.class,
-                Arrays.asList(new GeneTO("ID1", "Name1", 11),
-                        new GeneTO("ID2", "Name2", 22),
-                        new GeneTO("ID4", "Name4", 44)));
+                Arrays.asList(new GeneTO("1", "Name1", 11),
+                        new GeneTO("2", "Name2", 22),
+                        new GeneTO("4", "Name4", 44)));
         
         Set<String> speciesIds = new HashSet<String>();
         speciesIds.addAll(Arrays.asList("11", "22", "44"));
@@ -56,9 +57,9 @@ public class GeneServiceTest extends TestAncestor {
         when(dao.getGenesBySpeciesIds(speciesIds, geneIds)).thenReturn(mockGeneRs);
 
         List<Gene> expectedGenes= new ArrayList<Gene>();
-        expectedGenes.add(new Gene("ID1", "11", "Name1"));
-        expectedGenes.add(new Gene("ID2", "22", "Name2"));
-        expectedGenes.add(new Gene("ID4", "44", "Name4"));
+        expectedGenes.add(new Gene(1, 11, "Name1"));
+        expectedGenes.add(new Gene(2, 22, "Name2"));
+        expectedGenes.add(new Gene(4, 44, "Name4"));
         
         GeneService service = new GeneService(serviceFactory);
         assertEquals("Incorrect gene to keywords mapping",

@@ -49,12 +49,12 @@ public class AnatEntityService extends Service {
      * Retrieve {@code AnatEntity}s for the requested species IDs. If several species IDs 
      * are provided, the {@code AnatEntity}s existing in any of them are retrieved. 
      *      
-     * @param speciesIds    A {@code Collection} of {@code String}s that are IDs of species 
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that are IDs of species 
      *                      for which to return the {@code AnatEntity}s.
      * @return              A {@code Stream} of {@code AnatEntity}s retrieved for the requested 
      *                      species IDs.
      */
-    public Stream<AnatEntity> loadAnatEntitiesBySpeciesIds(Collection<String> speciesIds) {
+    public Stream<AnatEntity> loadAnatEntitiesBySpeciesIds(Collection<Integer> speciesIds) {
         log.entry(speciesIds);
         return log.exit(this.loadAnatEntities(speciesIds, true, null));
     }
@@ -64,7 +64,7 @@ public class AnatEntityService extends Service {
      * If an entity in {@code anatEntitiesIds} does not exists according to the species filtering, 
      * it will not be returned.
      * 
-     * @param speciesIds        A {@code Collection} of {@code String}s that are the IDs of species 
+     * @param speciesIds        A {@code Collection} of {@code Integer}s that are the IDs of species 
      *                          to filter anatomical entities to retrieve. Can be {@code null} or empty.
      * @param anySpecies        A {@code Boolean} defining, when {@code speciesIds} contains several IDs, 
      *                          whether the entities retrieved should be valid in any 
@@ -74,7 +74,7 @@ public class AnatEntityService extends Service {
      *                          entities to retrieve. Can be {@code null} or empty.
      * @return                  A {@code Stream} of {@code AnatEntity}s retrieved for the requested parameters.
      */
-    public Stream<AnatEntity> loadAnatEntities(Collection<String> speciesIds, 
+    public Stream<AnatEntity> loadAnatEntities(Collection<Integer> speciesIds, 
             Boolean anySpecies, Collection<String> anatEntitiesIds) {
         log.entry(speciesIds, anySpecies, anatEntitiesIds);
         
@@ -92,12 +92,12 @@ public class AnatEntityService extends Service {
      * correspond to anatomical entities belonging to non-informative subsets in Uberon,
      * and with no observed data from Bgee (no basic calls of any type in them).
      * 
-     * @param speciesIds    A {@code Collection} of {@code String}s that are the IDs of species 
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that are the IDs of species 
      *                      allowing to filter the non-informative anatomical entities to use
      * @return              A {@code Stream} of {@code AnatEntity}s retrieved for
      *                      the requested species IDs.
      */
-    public Stream<AnatEntity> loadNonInformativeAnatEntitiesBySpeciesIds(Collection<String> speciesIds) {
+    public Stream<AnatEntity> loadNonInformativeAnatEntitiesBySpeciesIds(Collection<Integer> speciesIds) {
         log.entry(speciesIds);
         
         return log.exit(this.getDaoManager().getAnatEntityDAO().getNonInformativeAnatEntitiesBySpeciesIds(
@@ -184,7 +184,7 @@ public class AnatEntityService extends Service {
      * @param relationTO The {@code RelationTO} to be mapped
      * @return the mapped {@code Entry}
      */
-    private static Entry<String, String> mapFromTO(RelationDAO.RelationTO relationTO) {
+    private static Entry<String, String> mapFromTO(RelationDAO.RelationTO<String> relationTO) {
         log.entry(relationTO);
         return log.exit(new AbstractMap.SimpleEntry<>(relationTO.getTargetId(), relationTO.getSourceId()));
     }

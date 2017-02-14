@@ -39,14 +39,14 @@ public class DevStageService extends Service {
     /**
      * Retrieve grouping {@code DevStage}s for the given species IDs and level.
      * 
-     * @param speciesIds    A {@code Collection} of {@code String}s that are IDs of species 
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that are IDs of species 
      *                      for which to return the {@code DevStage}s.
      * @param level         An {@code Integer} that is the level of dev. stages 
      *                      for which to return the {@code DevStage}s.
      * @return              A {@code List} of {@code DevStage}s that are the grouping 
      *                      dev. stages for {@code speciesIds} and {@code level}.
      */
-    public Set<DevStage> loadGroupingDevStages(Collection<String> speciesIds, Integer level) {
+    public Set<DevStage> loadGroupingDevStages(Collection<Integer> speciesIds, Integer level) {
         log.entry(speciesIds, level);
         return log.exit(getDaoManager().getStageDAO().getStages(
                     speciesIds == null? null: new HashSet<>(speciesIds),
@@ -61,7 +61,7 @@ public class DevStageService extends Service {
      * If a stage in {@code stageIds} does not exists according to the species filtering, 
      * it will not be returned.
      * 
-     * @param speciesIds    A {@code Collection} of {@code String}s that are the IDs of species 
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that are the IDs of species 
      *                      to filter developmental stages to retrieve. Can be {@code null} or empty.
      * @param anySpecies    A {@code Boolean} defining, when {@code speciesIds} contains several IDs, 
      *                      whether the stages retrieved should be valid in any 
@@ -71,7 +71,7 @@ public class DevStageService extends Service {
      *                      stages to retrieve. Can be {@code null} or empty.
      * @return              A {@code Stream} of {@code DevStage}s retrieved for the requested parameters.
      */
-    public Stream<DevStage> loadDevStages(Collection<String> speciesIds, Boolean anySpecies, 
+    public Stream<DevStage> loadDevStages(Collection<Integer> speciesIds, Boolean anySpecies, 
             Collection<String> stageIds) {
         log.entry(speciesIds, anySpecies, stageIds);
         return log.exit(getDaoManager().getStageDAO().getStages(
@@ -94,7 +94,7 @@ public class DevStageService extends Service {
      * @return              The {@code Set} of {@link DevStageSimilarity} that are dev. stage 
      *                      similarities from provided {@code taxonId} and {@code speciesIds}.
      */
-    public Set<DevStageSimilarity> loadDevStageSimilarities(String taxonId, Set<String> speciesIds) {
+    public Set<DevStageSimilarity> loadDevStageSimilarities(String taxonId, Set<Integer> speciesIds) {
        log.entry(taxonId, speciesIds);
        return log.exit(this.getDaoManager().getStageGroupingDAO().getGroupToStage(taxonId, speciesIds).stream()
              .collect(Collectors.groupingBy(GroupToStageTO::getGroupId)) // group by groupId

@@ -16,7 +16,7 @@ import org.bgee.model.source.Source;
  * @version Bgee 13, Nov. 2016
  * @since   Bgee 13, Mar. 2013
  */
-public class Species extends NamedEntity {
+public class Species extends NamedEntity<Integer> {
     
 	/** @see #getGenus() */
 	private final String genus;
@@ -48,26 +48,26 @@ public class Species extends NamedEntity {
      * This {@code id} cannot be blank,
      * otherwise an {@code IllegalArgumentException} will be thrown.
      *
-     * @param id    A {@code String} representing the ID of this object.
+     * @param id    An {@code Integer} representing the ID of this object.
      * @throws IllegalArgumentException if {@code id} is blank.
      */
-    public Species(String id) throws IllegalArgumentException {
+    public Species(Integer id) throws IllegalArgumentException {
         this(id, null, null);
     }
     /**
      * Constructor of {@code Species}.
-     * @param id            A {@code String} representing the ID of this {@code Species}. 
+     * @param id            An {@code Integer} representing the ID of this {@code Species}. 
      *                      Cannot be blank.
      * @param name          A {@code String} representing the (common) name of this {@code Species}.
      * @param description   A {@code String} description of this {@code Species}.
      */
-    public Species(String id, String name, String description) throws IllegalArgumentException {
+    public Species(Integer id, String name, String description) throws IllegalArgumentException {
         this(id, name, description, null, null, null, null);
     }
     
     /**
      * Constructor of {@code Species}.
-     * @param id            A {@code String} representing the ID of this {@code Species}. 
+     * @param id            An {@code Integer} representing the ID of this {@code Species}. 
      *                      Cannot be blank.
      * @param name          A {@code String} representing the (common) name of this {@code Species}.
      * @param description   A {@code String} description of this {@code Species}.
@@ -79,14 +79,14 @@ public class Species extends NamedEntity {
      *                      this {@code Species}.
      * @param parentTaxonId A {@code String} representing the ID of the parent taxon of this species.
      */
-    public Species(String id, String name, String description, String genus, String speciesName,
+    public Species(Integer id, String name, String description, String genus, String speciesName,
             String genomeVersion, String parentTaxonId) throws IllegalArgumentException {
         this(id, name, description, genus, speciesName, genomeVersion, parentTaxonId, null, null);
     }
     
     /**
      * Constructor of {@code Species}.
-     * @param id            A {@code String} representing the ID of this {@code Species}. 
+     * @param id            An {@code Integer} representing the ID of this {@code Species}. 
      *                      Cannot be blank.
      * @param name          A {@code String} representing the (common) name of this {@code Species}.
      * @param description   A {@code String} description of this {@code Species}.
@@ -105,7 +105,7 @@ public class Species extends NamedEntity {
      *                                              being a {@code Set} of {@code DataType}s corresponding
      *                                              to data types of annotation data of this data source.
      */
-    public Species(String id, String name, String description, String genus, String speciesName,
+    public Species(Integer id, String name, String description, String genus, String speciesName,
             String genomeVersion, Map<Source, Set<DataType>> dataTypesByDataSourcesForData, 
             Map<Source, Set<DataType>> dataTypesByDataSourcesForAnnotation) throws IllegalArgumentException {
         this(id, name, description, genus, speciesName, genomeVersion, null, 
@@ -114,7 +114,7 @@ public class Species extends NamedEntity {
     /**
      * Constructor of {@code Species}.
      * 
-     * @param id            A {@code String} representing the ID of this {@code Species}. 
+     * @param id            An {@code Integer} representing the ID of this {@code Species}. 
      *                      Cannot be blank.
      * @param name          A {@code String} representing the (common) name of this {@code Species}.
      * @param description   A {@code String} description of this {@code Species}.
@@ -134,7 +134,7 @@ public class Species extends NamedEntity {
      *                                              being a {@code Set} of {@code DataType}s corresponding
      *                                              to data types of annotation data of this data source.
      */
-    public Species(String id, String name, String description, String genus, String speciesName,
+    public Species(Integer id, String name, String description, String genus, String speciesName,
             String genomeVersion, String parentTaxonId, Map<Source, Set<DataType>> dataTypesByDataSourcesForData, 
             Map<Source, Set<DataType>> dataTypesByDataSourcesForAnnotation) throws IllegalArgumentException {
         super(id, name, description);

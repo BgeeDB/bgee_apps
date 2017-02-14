@@ -98,7 +98,7 @@ public class SpeciesDataGroupService extends Service {
             SpeciesToDataGroupTOResultSet speciesToDataGroupRs, Collection<Species> species) {
         log.entry(speciesToDataGroupRs, species);
         
-        final Map<String, Species> speciesMap = species.stream()
+        final Map<Integer, Species> speciesMap = species.stream()
                 .collect(Collectors.toMap(Entity::getId, Function.identity()));
         
         return log.exit(speciesToDataGroupRs.stream().collect(Collectors.groupingBy(

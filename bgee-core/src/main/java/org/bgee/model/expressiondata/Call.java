@@ -372,7 +372,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                     throw log.throwing(new IllegalArgumentException("Missing rank for call: "
                             + call));
                 }
-                if (call.getCondition() == null) {
+                if (call.getConditionId() == null) {
                     throw log.throwing(new IllegalArgumentException("Missing Condition for call: "
                             + call));
                 }
@@ -382,13 +382,13 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                 }
                 
                 //Retrieve the validated conditions for the currently iterated gene
-                Set<Condition> validatedConditions = validatedCalls.stream()
+                Set<Integer> validatedConditionIds = validatedCalls.stream()
                         .filter(c -> Objects.equals(c.getGeneId(), call.getGeneId()))
-                        .map(ExpressionCall::getCondition)
+                        .map(ExpressionCall::getConditionId)
                         .collect(Collectors.toSet());
                 //check whether any of the validated Condition is a descendant 
                 //of the Condition of the iterated call
-                if (validatedConditions.isEmpty() || Collections.disjoint(validatedConditions, 
+                if (validatedConditionIds.isEmpty() || Collections.disjoint(validatedConditionIds, 
                         conditionUtils.getDescendantConditions(call.getCondition()))) {
                     
                     log.trace("Valid call: {}", call);
@@ -824,23 +824,23 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         //plus an information of confidence about it.
         private final BigDecimal globalMeanRank;
         
-        public ExpressionCall(String geneId, Condition condition,
+        public ExpressionCall(Integer geneId, Integer conditionId,
             Collection<ExpressionCallData> callData, BigDecimal globalMeanRank) {
-            this(geneId, condition, null, null, null, callData, globalMeanRank);
+            this(geneId, conditionId, null, null, null, callData, globalMeanRank);
         }
         
-        public ExpressionCall(String geneId, Condition condition, Boolean isObservedData, 
+        public ExpressionCall(Integer geneId, Integer conditionId, Boolean isObservedData, 
             ExpressionSummary summaryCallType, SummaryQuality summaryQual, 
             Collection<ExpressionCallData> callData, BigDecimal globalMeanRank) {
-            this(geneId, condition, isObservedData, summaryCallType, summaryQual, callData,
+            this(geneId, conditionId, isObservedData, summaryCallType, summaryQual, callData,
                 globalMeanRank, null);
         }
 
-        public ExpressionCall(String geneId, Condition condition, Boolean isObservedData, 
+        public ExpressionCall(Integer geneId, Integer conditionId, Boolean isObservedData, 
                 ExpressionSummary summaryCallType, SummaryQuality summaryQual, 
                 Collection<ExpressionCallData> callData, BigDecimal globalMeanRank,
                 Collection<ExpressionCall> sourceCalls) {
-            super(geneId, condition, isObservedData, summaryCallType, summaryQual, callData,
+            super(geneId, conditionId, isObservedData, summaryCallType, summaryQual, callData,
                 sourceCalls == null ? new HashSet<>() : sourceCalls.stream()
                     .map(c -> (Call<ExpressionSummary, ExpressionCallData>) c)
                     .collect(Collectors.toSet()));
@@ -937,17 +937,17 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          */
         private final DiffExpressionFactor diffExpressionFactor;
         
-        public DiffExpressionCall(DiffExpressionFactor factor, String geneId, 
-                Condition condition, DiffExpressionSummary summaryCallType, 
+        public DiffExpressionCall(DiffExpressionFactor factor, Integer geneId, 
+            Integer conditionId, DiffExpressionSummary summaryCallType, 
                 SummaryQuality summaryQual, Collection<DiffExpressionCallData> callData) {
-            this(factor, geneId, condition, summaryCallType, summaryQual, callData, null);
+            this(factor, geneId, conditionId, summaryCallType, summaryQual, callData, null);
         }
         
-        public DiffExpressionCall(DiffExpressionFactor factor, String geneId, 
-            Condition condition, DiffExpressionSummary summaryCallType, 
+        public DiffExpressionCall(DiffExpressionFactor factor,Integer geneId, 
+            Integer conditionId, DiffExpressionSummary summaryCallType, 
             SummaryQuality summaryQual, Collection<DiffExpressionCallData> callData,
             Collection<DiffExpressionCall> sourceCalls) {
-            super(geneId, condition, null, summaryCallType, summaryQual, callData, 
+            super(geneId, conditionId, null, summaryCallType, summaryQual, callData, 
                 sourceCalls == null ? new HashSet<>() : sourceCalls.stream()
                 .map(c -> (Call<DiffExpressionSummary, DiffExpressionCallData>) c)
                 .collect(Collectors.toSet()));
@@ -1002,9 +1002,9 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
     //   INSTANCE ATTRIBUTES AND METHODS
     //**********************************************
     
-    private final String geneId;
+    private final Integer geneId;
     
-    private final Condition condition;
+    private final Integer conditionId;
     
     private final Boolean isObservedData;
     
@@ -1016,17 +1016,17 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
 
     private final Set<Call<T, U>> sourceCalls;
 
-    protected Call(String geneId, Condition condition, Boolean isObservedData, 
+    protected Call(Integer geneId, Integer conditionId, Boolean isObservedData, 
         T summaryCallType, SummaryQuality summaryQual, Collection<U> callData) {
-        this(geneId, condition, isObservedData, summaryCallType, summaryQual, callData, null);
+        this(geneId, conditionId, isObservedData, summaryCallType, summaryQual, callData, null);
     }
 
-    protected Call(String geneId, Condition condition, Collection<U> callData, 
+    protected Call(Integer geneId, Integer conditionId, Collection<U> callData, 
             Set<Call<T, U>> sourceCalls) {
-        this(geneId, condition, null, null, null, callData, sourceCalls);
+        this(geneId, conditionId, null, null, null, callData, sourceCalls);
     }
 
-    private Call(String geneId, Condition condition, Boolean isObservedData, 
+    private Call(Integer geneId, Integer conditionId, Boolean isObservedData, 
         T summaryCallType, SummaryQuality summaryQuality, Collection<U> callData, 
         Set<Call<T, U>> sourceCalls) {
         if (DataQuality.NODATA.equals(summaryQuality)) {
@@ -1037,7 +1037,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
 //                "Call data must be provided to infer isObservedData, summaryCallType and summaryQuality."));
 //        }
         this.geneId = geneId;
-        this.condition = condition;
+        this.conditionId = conditionId;
         this.callData = Collections.unmodifiableSet(
             callData == null? new HashSet<>(): new HashSet<>(callData));
 //        if (callData != null && !callData.isEmpty()) {
@@ -1053,11 +1053,11 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             sourceCalls == null? new HashSet<>(): new HashSet<>(sourceCalls));
     }
     
-    public String getGeneId() {
+    public Integer getGeneId() {
         return geneId;
     }
-    public Condition getCondition() {
-        return condition;
+    public Integer getConditionId() {
+        return conditionId;
     }
     public Boolean getIsObservedData() {
         return isObservedData;
@@ -1080,7 +1080,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         final int prime = 31;
         int result = 1;
         result = prime * result + ((geneId == null) ? 0 : geneId.hashCode());
-        result = prime * result + ((condition == null) ? 0 : condition.hashCode());
+        result = prime * result + ((conditionId == null) ? 0 : conditionId.hashCode());
         result = prime * result + ((isObservedData == null) ? 0 : isObservedData.hashCode());
         result = prime * result + ((summaryCallType == null) ? 0 : summaryCallType.hashCode());
         result = prime * result + ((summaryQuality == null) ? 0 : summaryQuality.hashCode());
@@ -1108,11 +1108,11 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         } else if (!geneId.equals(other.geneId)) {
             return false;
         }
-        if (condition == null) {
-            if (other.condition != null) {
+        if (conditionId == null) {
+            if (other.conditionId != null) {
                 return false;
             }
-        } else if (!condition.equals(other.condition)) {
+        } else if (!conditionId.equals(other.conditionId)) {
             return false;
         }
         if (isObservedData == null) {
@@ -1150,7 +1150,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
     @Override
     public String toString() {
         return    "Gene ID: " + geneId 
-                + " - Condition:" + condition 
+                + " - Condition ID:" + conditionId 
                 + " - Is observed data: " + isObservedData
                 + " - Summary call type: " + summaryCallType 
                 + " - Summary quality: " + summaryQuality 

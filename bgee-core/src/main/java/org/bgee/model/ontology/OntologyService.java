@@ -54,14 +54,14 @@ public class OntologyService extends Service {
      * The returned {@code Ontology} contains only the selected anat. entities, and only the
      * relations between them with a {@code RelationType} {@code ISA_PARTOF} are included.
      * 
-     * @param speciesId         A {@code String} that is the ID of species 
+     * @param speciesId         An {@code Integer} that is the ID of species 
      *                          which to retrieve anat. entities for. Can be {@code null}.
      * @param anatEntityIds     A {@code Collection} of {@code String}s that are IDs of anat.
      *                          entity IDs to retrieve. Can be {@code null} or empty.
      * @return                  The {@code Ontology} of {@code AnatEntity}s for the requested species, 
      *                          anat. entity, relations types, and relation status.
      */
-    public Ontology<AnatEntity> getAnatEntityOntology(String speciesId, Collection<String> anatEntityIds) {
+    public Ontology<AnatEntity, String> getAnatEntityOntology(Integer speciesId, Collection<String> anatEntityIds) {
         log.entry(speciesId, anatEntityIds);
         return log.exit(this.getAnatEntityOntology(speciesId, anatEntityIds,
                 EnumSet.of(RelationType.ISA_PARTOF), false, false));
@@ -76,7 +76,7 @@ public class OntologyService extends Service {
      * If both {@code getAncestors} and {@code getDescendants} are {@code false}, 
      * then only relations between the selected anat. entities are retrieved.
      * 
-     * @param speciesId         A {@code String} that is the ID of species 
+     * @param speciesId         An {@code Integer} that is the ID of species 
      *                          which to retrieve anat. entities for. Can be {@code null}.
      * @param anatEntityIds     A {@code Collection} of {@code String}s that are IDs of anat.
      *                          entity IDs to retrieve. Can be {@code null} or empty.
@@ -90,7 +90,7 @@ public class OntologyService extends Service {
      * @return                  The {@code Ontology} of {@code AnatEntity}s for the requested species, 
      *                          anat. entity, relations types, and relation status.
      */
-    public Ontology<AnatEntity> getAnatEntityOntology(String speciesId, Collection<String> anatEntityIds, 
+    public Ontology<AnatEntity, String> getAnatEntityOntology(Integer speciesId, Collection<String> anatEntityIds, 
             Collection<RelationType> relationTypes, boolean getAncestors, boolean getDescendants) {
         log.entry(speciesId, anatEntityIds, getAncestors, getDescendants, relationTypes);
         
@@ -106,7 +106,7 @@ public class OntologyService extends Service {
      * The returned {@code MultiSpeciesOntology} contains only the selected anat. entities, 
      * and only the relations between them with a {@code RelationType} {@code ISA_PARTOF} are included.
      * 
-     * @param speciesIds        A {@code Collection} of {@code String}s that are IDs of species 
+     * @param speciesIds        A {@code Collection} of {@code Integer}s that are IDs of species 
      *                          which to retrieve anat. entities for. If several IDs are provided, 
      *                          anat. entities existing in any of them will be retrieved. 
      *                          Can be {@code null} or empty.
@@ -115,7 +115,7 @@ public class OntologyService extends Service {
      * @return                  The {@code MultiSpeciesOntology} of {@code AnatEntity}s for the requested species 
      *                          and anat. entity.
      */
-    public MultiSpeciesOntology<AnatEntity> getAnatEntityOntology(Collection<String> speciesIds, 
+    public MultiSpeciesOntology<AnatEntity, String> getAnatEntityOntology(Collection<Integer> speciesIds, 
             Collection<String> anatEntityIds) {
         log.entry(speciesIds, anatEntityIds);
         return log.exit(this.getAnatEntityOntology(speciesIds, anatEntityIds,
@@ -131,7 +131,7 @@ public class OntologyService extends Service {
      * If both {@code getAncestors} and {@code getDescendants} are {@code false}, 
      * then only relations between the selected anat. entities are retrieved.
      * 
-     * @param speciesIds        A {@code Collection} of {@code String}s that are IDs of species 
+     * @param speciesIds        A {@code Collection} of {@code Integer}s that are IDs of species 
      *                          which to retrieve anat. entities for. If several IDs are provided, 
      *                          anat. entities existing in any of them will be retrieved. 
      *                          Can be {@code null} or empty.
@@ -147,12 +147,12 @@ public class OntologyService extends Service {
      * @return                  The {@code MultiSpeciesOntology} of {@code AnatEntity}s for the requested species, 
      *                          anat. entity, relations types, and relation status.
      */
-    public MultiSpeciesOntology<AnatEntity> getAnatEntityOntology(Collection<String> speciesIds, 
+    public MultiSpeciesOntology<AnatEntity, String> getAnatEntityOntology(Collection<Integer> speciesIds, 
             Collection<String> anatEntityIds, Collection<RelationType> relationTypes, 
             boolean getAncestors, boolean getDescendants) {
         log.entry(speciesIds, anatEntityIds, getAncestors, getDescendants, relationTypes);
         
-        Set<RelationTO> rels = this.getAnatEntityRelationTOs(speciesIds, anatEntityIds,
+        Set<RelationTO<String>> rels = this.getAnatEntityRelationTOs(speciesIds, anatEntityIds,
                 relationTypes, getAncestors, getDescendants);
         Set<TaxonConstraint> relationTaxonConstraints = getServiceFactory().getTaxonConstraintService()
                     .loadAnatEntityRelationTaxonConstraintBySpeciesIds(speciesIds)
@@ -160,7 +160,7 @@ public class OntologyService extends Service {
         Set<TaxonConstraint> taxonConstraints = getServiceFactory().getTaxonConstraintService()
                     .loadAnatEntityTaxonConstraintBySpeciesIds(speciesIds)
                     .collect(Collectors.toSet());
-        return log.exit(new MultiSpeciesOntology<AnatEntity>(speciesIds, 
+        return log.exit(new MultiSpeciesOntology<AnatEntity, String>(speciesIds, 
                 this.getServiceFactory().getAnatEntityService()
                     .loadAnatEntities(speciesIds, true, this.getRequestedEntityIds(anatEntityIds, rels))
                     .collect(Collectors.toSet()), 
@@ -176,14 +176,14 @@ public class OntologyService extends Service {
      * the provided dev. stages IDs, and only the relations between them 
      * with a {@code RelationType} {@code ISA_PARTOF} are included. 
      * 
-     * @param speciesId         A {@code String} that is the ID of species which to retrieve 
+     * @param speciesId         An {@code Integer} that is the ID of species which to retrieve 
      *                          dev. stages for. Can be {@code null}.
      * @param devStageIds       A {@code Collection} of {@code String}s that are dev. stages IDs
      *                          of the {@code Ontology} to retrieve. Can be {@code null} or empty.
      * @return                  The {@code Ontology} of the {@code DevStage}s for the requested species 
      *                          and dev. stages.
      */
-    public Ontology<DevStage> getDevStageOntology(String speciesId, Collection<String> devStageIds) {
+    public Ontology<DevStage, String> getDevStageOntology(Integer speciesId, Collection<String> devStageIds) {
         log.entry(speciesId, devStageIds);
         return this.getDevStageOntology(Arrays.asList(speciesId), devStageIds, false, false)
                 .getAsSingleSpeciesOntology(speciesId);
@@ -198,7 +198,7 @@ public class OntologyService extends Service {
      * If both {@code getAncestors} and {@code getDescendants} are {@code false}, 
      * then only relations between provided developmental stages are considered.
      * 
-     * @param speciesId         A {@code String} that is the ID of species which to retrieve 
+     * @param speciesId         An {@code Integer} that is the ID of species which to retrieve 
      *                          dev. stages for. Can be {@code null}.
      * @param devStageIds       A {@code Collection} of {@code String}s that are dev. stages IDs
      *                          of the {@code Ontology} to retrieve. Can be {@code null} or empty.
@@ -209,7 +209,7 @@ public class OntologyService extends Service {
      * @return                  The {@code Ontology} of the {@code DevStage}s for the requested species, 
      *                          dev. stages, and relation status. 
      */
-    public Ontology<DevStage> getDevStageOntology(String speciesId, Collection<String> devStageIds, 
+    public Ontology<DevStage> getDevStageOntology(Integer speciesId, Collection<String> devStageIds, 
             boolean getAncestors, boolean getDescendants) {
         log.entry(speciesId, devStageIds, getAncestors, getDescendants);
         return log.exit(getDevStageOntology(Arrays.asList(speciesId), devStageIds, getAncestors, 
@@ -224,7 +224,7 @@ public class OntologyService extends Service {
      * the provided dev. stages IDs, and only the relations between them 
      * with a {@code RelationType} {@code ISA_PARTOF} are included. 
      * 
-     * @param speciesIds        A {@code Collection} of {@code String}s that are IDs of species 
+     * @param speciesIds        A {@code Collection} of {@code Integer}s that are IDs of species 
      *                          which to retrieve dev. stages for. If several IDs are provided, 
      *                          dev. stages existing in any of them will be retrieved. 
      *                          Can be {@code null} or empty.
@@ -233,7 +233,7 @@ public class OntologyService extends Service {
      * @return                  The {@code MultiSpeciesOntology} of the {@code DevStage}s for the requested species 
      *                          and dev. stages.
      */
-    public MultiSpeciesOntology<DevStage> getDevStageOntology(Collection<String> speciesIds, 
+    public MultiSpeciesOntology<DevStage> getDevStageOntology(Collection<Integer> speciesIds, 
             Collection<String> devStageIds) {
         log.entry(speciesIds, devStageIds);
         return this.getDevStageOntology(speciesIds, devStageIds, false, false);
@@ -248,7 +248,7 @@ public class OntologyService extends Service {
      * If both {@code getAncestors} and {@code getDescendants} are {@code false}, 
      * then only relations between provided developmental stages are considered.
      * 
-     * @param speciesIds        A {@code Collection} of {@code String}s that are IDs of species 
+     * @param speciesIds        A {@code Collection} of {@code Integer}s that are IDs of species 
      *                          which to retrieve dev. stages for. If several IDs are provided, 
      *                          dev. stages existing in any of them will be retrieved. 
      *                          Can be {@code null} or empty.
@@ -261,11 +261,11 @@ public class OntologyService extends Service {
      * @return                  The {@code MultiSpeciesOntology} of the {@code DevStage}s for the requested species, 
      *                          dev. stages, and relation status. 
      */
-    public MultiSpeciesOntology<DevStage> getDevStageOntology(Collection<String> speciesIds, 
+    public MultiSpeciesOntology<DevStage> getDevStageOntology(Collection<Integer> speciesIds, 
             Collection<String> devStageIds, boolean getAncestors, boolean getDescendants) {
         log.entry(speciesIds, devStageIds, getAncestors, getDescendants);
         
-        Set<RelationTO> rels = this.getDevStageRelationTOs(speciesIds, devStageIds, 
+        Set<RelationTO<String>> rels = this.getDevStageRelationTOs(speciesIds, devStageIds, 
                 getAncestors, getDescendants);
         Set<TaxonConstraint> taxonConstraints = getServiceFactory().getTaxonConstraintService()
                 .loadDevStageTaxonConstraintBySpeciesIds(speciesIds)
@@ -281,10 +281,12 @@ public class OntologyService extends Service {
                 this.getServiceFactory(), DevStage.class));
     }
     
-    private Set<RelationTO> getAnatEntityRelationTOs(Collection<String> speciesIds, Collection<String> entityIds, 
-            Collection<RelationType> relationTypes, boolean getAncestors, boolean getDescendants) {
+    private Set<RelationTO<String>> getAnatEntityRelationTOs(Collection<Integer> speciesIds,
+        Collection<String> entityIds,  Collection<RelationType> relationTypes,
+        boolean getAncestors, boolean getDescendants) {
         log.entry(speciesIds, entityIds, relationTypes, getAncestors, getDescendants);
-        QuadriFunction<Set<String>, Set<String>, Boolean, Set<RelationStatus>, RelationTOResultSet> fun = (s, t, b, r) ->
+        QuadriFunction<Set<String>, Set<String>, Boolean, Set<RelationStatus>, RelationTOResultSet<String>> fun =
+            (s, t, b, r) ->
             getDaoManager().getRelationDAO().getAnatEntityRelations(
                 speciesIds, true, s, t, b, 
                 relationTypes.stream()
@@ -296,19 +298,19 @@ public class OntologyService extends Service {
         return log.exit(getRelationTOs(fun, entityIds, getAncestors, getDescendants));
     }
     
-    private Set<RelationTO> getDevStageRelationTOs(Collection<String> speciesIds, 
+    private Set<RelationTO<String>> getDevStageRelationTOs(Collection<Integer> speciesIds, 
             Collection<String> entityIds, boolean getAncestors, boolean getDescendants) {
         log.entry(speciesIds, entityIds, getAncestors, getDescendants);
-        QuadriFunction<Set<String>, Set<String>, Boolean, Set<RelationStatus>, RelationTOResultSet> fun =
+        QuadriFunction<Set<String>, Set<String>, Boolean, Set<RelationStatus>, RelationTOResultSet<String>> fun =
             (s, t, b, r) -> getDaoManager().getRelationDAO().getStageRelations(
                 speciesIds, true, s, t, b, r, null);
         return log.exit(getRelationTOs(fun, entityIds, getAncestors, getDescendants));
     }
     
-    private Set<RelationTO> getTaxonRelationTOs(Collection<String> entityIds,
+    private Set<RelationTO<String>> getTaxonRelationTOs(Collection<Integer> entityIds,
             boolean getAncestors, boolean getDescendants) {
         log.entry(entityIds, getAncestors, getDescendants);
-        QuadriFunction<Set<String>, Set<String>, Boolean, Set<RelationStatus>, RelationTOResultSet> fun =
+        QuadriFunction<Set<String>, Set<String>, Boolean, Set<RelationStatus>, RelationTOResultSet<String>> fun =
             (s, t, b, r) -> getDaoManager().getRelationDAO().getTaxonRelations(s, t, b, r, null);
         return log.exit(getRelationTOs(fun, entityIds, getAncestors, getDescendants));
     }
@@ -319,11 +321,11 @@ public class OntologyService extends Service {
      *  
      * @return  The {@code MultiSpeciesOntology} of all {@code Taxon}.
      */
-    public MultiSpeciesOntology<Taxon> getTaxonOntology() {
+    public MultiSpeciesOntology<Taxon, Integer> getTaxonOntology() {
         log.entry();
         
-        Set<RelationTO> rels = this.getTaxonRelationTOs(null, false, false);
-        return log.exit(new MultiSpeciesOntology<Taxon>(
+        Set<RelationTO<Integer>> rels = this.getTaxonRelationTOs(null, false, false);
+        return log.exit(new MultiSpeciesOntology<Taxon, Integer>(
             this.getServiceFactory().getSpeciesService().loadSpeciesByIds(null, false).stream()
                 .map(Species::getId).collect(Collectors.toSet()), 
             this.getServiceFactory().getTaxonService()
@@ -466,13 +468,15 @@ public class OntologyService extends Service {
      *                              requested entities, and potentially also to their ancestors 
      *                              and/or their descendants.
      * @param <T>                   The type of elements for which to retrieve {@code RelationTO}s.
+     * @param <U>                   The type of ID of the elements in this ontology or sub-graph.
      */
-    private <T extends NamedEntity & OntologyElement<T>> Set<RelationTO> getRelationTOs(
-            QuadriFunction<Set<String>, Set<String>, Boolean, Set<RelationStatus>, RelationTOResultSet> relationRetrievalFun, 
-            Collection<String> entityIds, boolean getAncestors, boolean getDescendants) {
+    private <T extends NamedEntity<U> & OntologyElement<T>, U> Set<RelationTO<U>> getRelationTOs(
+            QuadriFunction<Set<U>, Set<U>, Boolean, Set<RelationStatus>,
+            RelationTOResultSet<U>> relationRetrievalFun, 
+            Collection<U> entityIds, boolean getAncestors, boolean getDescendants) {
         log.entry(relationRetrievalFun, entityIds, getAncestors, getDescendants);
         
-        final Set<String> filteredEntities = Collections.unmodifiableSet(
+        final Set<U> filteredEntities = Collections.unmodifiableSet(
                 entityIds == null? new HashSet<>(): new HashSet<>(entityIds));
     
         // Currently, we use all non reflexive relations.
@@ -481,8 +485,8 @@ public class OntologyService extends Service {
         Set<RelationStatus> relationStatus = EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE));
         
         //by default, include all ancestors and descendants of selected entities
-        Set<String> sourceIds = filteredEntities;
-        Set<String> targetIds = filteredEntities;
+        Set<U> sourceIds = filteredEntities;
+        Set<U> targetIds = filteredEntities;
         boolean sourceOrTarget = true;
         if (!getAncestors && !getDescendants) {
             //request only relations between selected entities (constraints both sources and targets 
@@ -496,15 +500,15 @@ public class OntologyService extends Service {
             targetIds = null;
         }
         
-        Set<RelationTO> relations = new HashSet<>();
+        Set<RelationTO<U>> relations = new HashSet<>();
         relations.addAll(relationRetrievalFun.apply(sourceIds, targetIds, sourceOrTarget, relationStatus)
                     .getAllTOs());
         //if it is requested to infer entities,  
         if (getAncestors || getDescendants) {
             assert sourceOrTarget: "Incorrect source/target condition status: sourceOrTarget should be true";
         
-            Set<String> newSourceIds = new HashSet<>();
-            Set<String> newTargetIds = new HashSet<>();
+            Set<U> newSourceIds = new HashSet<>();
+            Set<U> newTargetIds = new HashSet<>();
             if (getAncestors) {
                 //get targets IDs of retrieved relations that become new source IDs
                 newSourceIds.addAll(relations.stream().map(r -> r.getTargetId()).collect(Collectors.toSet()));
@@ -543,13 +547,13 @@ public class OntologyService extends Service {
      * @return                      A {@code Set} of {@code String}s that are IDs of 
      *                              {@code OntologyElement}s to load.
      */
-    private Set<String> getRequestedEntityIds(Collection<String> entityIds, Collection<RelationTO> relations) {
+    private <U> Set<U> getRequestedEntityIds(Collection<U> entityIds, Collection<RelationTO<U>> relations) {
         log.entry(entityIds, relations);
         //we retrieve objects corresponding to all the requested entities, 
         //plus their ancestors/descendants depending on the parameters. 
         //We cannot simply use the retrieved relations, as some entities 
         //might have no relations according to the requested parameters
-        Set<String> requestedEntityIds = entityIds == null? new HashSet<>(): new HashSet<>(entityIds);
+        Set<U> requestedEntityIds = entityIds == null? new HashSet<>(): new HashSet<>(entityIds);
         //Warning: if filteredEntities is empty, then all entities are requested 
         //and we should not restrain the entities using the relations
         if (!requestedEntityIds.isEmpty()) {

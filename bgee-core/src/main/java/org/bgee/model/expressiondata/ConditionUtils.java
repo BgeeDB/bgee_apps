@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -35,9 +36,9 @@ public class ConditionUtils implements Comparator<Condition> {
     private static final Logger log = LogManager.getLogger(ConditionUtils.class.getName());
     
     /**
-     * @see #getConditions()
+     * A {@code Map} associating IDs of {@code Condition}s as key to the corresponding {@code Condition} as value.
      */
-    private final Set<Condition> conditions;
+    private final Map<Integer, Condition> conditions;
     
     /**
      * @see #getAnatEntityOntology()
@@ -279,7 +280,8 @@ public class ConditionUtils implements Comparator<Condition> {
             
             tempConditions.addAll(newPropagatedConditions);
         }
-        this.conditions = Collections.unmodifiableSet(tempConditions);
+        this.conditions = Collections.unmodifiableMap(tempConditions.stream()
+            .collect(Collectors.toMap(c -> c.getId(), c -> c, (c1, c2) -> c1)));
 
         this.checkEntityExistence(devStageIds, this.devStageOnt);
         this.checkEntityExistence(anatEntityIds, this.anatEntityOnt);
@@ -601,7 +603,7 @@ public class ConditionUtils implements Comparator<Condition> {
         if (this.getAnatEntityOntology() == null) {
             return log.exit(null);
         }
-        if (!this.conditions.contains(condition)) {
+        if (!this.conditions.containsValue(condition)) {
             throw log.throwing(new IllegalArgumentException("Unrecognized condition: " + condition));
         }
         return log.exit(this.getAnatEntityOntology().getElement(condition.getAnatEntityId()));
@@ -636,7 +638,7 @@ public class ConditionUtils implements Comparator<Condition> {
         if (this.getDevStageOntology() == null) {
             return log.exit(null);
         }
-        if (!this.conditions.contains(condition)) {
+        if (!this.conditions.containsValue(condition)) {
             throw log.throwing(new IllegalArgumentException("Unrecognized condition: " + condition));
         }
         return log.exit(this.getDevStageOntology().getElement(condition.getDevStageId()));
@@ -650,7 +652,10 @@ public class ConditionUtils implements Comparator<Condition> {
      *          on this {@code ConditionUtils}.
      */
     public Set<Condition> getConditions() {
-        return conditions;
+        return new HashSet<>(conditions.values());
+    }
+    public Condition getCondition(int id) {
+        return this.conditions.get(id);
     }
     /**
      * @return  An {@code Ontology} of {@code AnatEntity}s used to infer relations between {@code Condition}s. 

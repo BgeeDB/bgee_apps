@@ -11,7 +11,7 @@ import org.bgee.model.species.Species;
  * @version Bgee 13, July 2016
  * @since   Bgee 01
  */
-public class Gene extends NamedEntity {
+public class Gene extends NamedEntity<Integer> {
 	/**
 	 * The {@code Species} this {@code Gene} belongs to.
 	 */
@@ -23,17 +23,17 @@ public class Gene extends NamedEntity {
 	 * should correspond to the value returned by the {@code getId()} method 
 	 * on this {@code Species} object.
 	 */
-	private final String speciesId;
+	private final Integer speciesId;
 	
 	/**
      * Constructor providing the {@code id} of this {@code Gene}.
      * This {@code id} cannot be {@code null}, or blank,
      * otherwise an {@code IllegalArgumentException} will be thrown.
      * 
-     * @param id            A  {@code String} representing the ID of this object.
+     * @param id            An {@code Integer} representing the ID of this object.
      * @throws IllegalArgumentException If {@code id} is {@code null}, or blank. 
      */
-    public Gene (String id) throws IllegalArgumentException {
+    public Gene (Integer id) throws IllegalArgumentException {
     	this(id, null);
     }
     /**
@@ -41,11 +41,11 @@ public class Gene extends NamedEntity {
      * This {@code id} cannot be {@code null}, or blank,
      * otherwise an {@code IllegalArgumentException} will be thrown.
      * 
-     * @param id            A  {@code String} representing the ID of this object.
-     * @param speciesId     A {@code String} representing the ID of the species this gene belongs to.
+     * @param id            An {@code Integer} representing the ID of this object.
+     * @param speciesId     An {@code Integer} representing the ID of the species this gene belongs to.
      * @throws IllegalArgumentException     if {@code id} is {@code null}, or blank.
      */
-    public Gene (String id, String speciesId) throws IllegalArgumentException {
+    public Gene (Integer id, Integer speciesId) throws IllegalArgumentException {
         this(id, speciesId, null);
     }
 
@@ -54,12 +54,12 @@ public class Gene extends NamedEntity {
      * This {@code id} cannot be {@code null}, or blank,
      * otherwise an {@code IllegalArgumentException} will be thrown.
      * 
-     * @param id            A  {@code String} representing the ID of this object.
-     * @param speciesId     A {@code String} representing the ID of the species this gene belongs to.
+     * @param id            An {@code Integer} representing the ID of this object.
+     * @param speciesId     An {@code Integer} representing the ID of the species this gene belongs to.
      * @param name          A {@code String} representing the name of this gene.
      * @throws IllegalArgumentException     if {@code id} is {@code null}, or blank.
      */
-    public Gene(String id, String speciesId, String name) throws IllegalArgumentException {
+    public Gene(Integer id, Integer speciesId, String name) throws IllegalArgumentException {
     	this(id, speciesId, name, null);
     }
     
@@ -68,13 +68,13 @@ public class Gene extends NamedEntity {
      * This {@code id} cannot be {@code null}, or blank,
      * otherwise an {@code IllegalArgumentException} will be thrown.
      * 
-     * @param id            A  {@code String} representing the ID of this object.
-     * @param speciesId     A {@code String} representing the ID of the species this gene belongs to.
+     * @param id            An {@code Integer} representing the ID of this object.
+     * @param speciesId     An {@code Integer} representing the ID of the species this gene belongs to.
      * @param name          A {@code String} representing the name of this gene.
      * @param description   A {@code String} representing the description of this gene.
      * @throws IllegalArgumentException     if {@code id} is {@code null}, or blank.
      */
-    public Gene(String id, String speciesId, String name, String description) throws IllegalArgumentException {
+    public Gene(Integer id, Integer speciesId, String name, String description) throws IllegalArgumentException {
     	this(id, speciesId, name, description, null);
     }
     
@@ -84,14 +84,15 @@ public class Gene extends NamedEntity {
      * This {@code id} cannot be {@code null}, or blank,
      * otherwise an {@code IllegalArgumentException} will be thrown.
      * 
-     * @param id            A  {@code String} representing the ID of this object.
-     * @param speciesId     A {@code String} representing the ID of the species this gene belongs to.
+     * @param id            An {@code Integer} representing the ID of this object.
+     * @param speciesId     An {@code Integer} representing the ID of the species this gene belongs to.
      * @param name          A {@code String} representing the name of this gene.
      * @param description   A {@code String} representing the description of this gene.
      * @param species       A {@code Species} representing the species this gene belongs to.
      * @throws IllegalArgumentException     if {@code id} is {@code null}, or blank.
      */
-    public Gene(String id, String speciesId, String name, String description, Species species) throws IllegalArgumentException {
+    public Gene(Integer id, Integer speciesId, String name, String description, Species species)
+        throws IllegalArgumentException {
         super(id, name, description);
         this.speciesId = speciesId;
         this.species = species;
@@ -117,7 +118,7 @@ public class Gene extends NamedEntity {
 	 * 			on the {@code Species} returned by the {@code getSpecies()} method, 
 	 * 			if not {@code null}. Otherwise, returns the value sets at the instantiation.
 	 */
-	public String getSpeciesId() {
+	public Integer getSpeciesId() {
 		if (this.getSpecies() != null) {
 			return this.getSpecies().getId();
 		}

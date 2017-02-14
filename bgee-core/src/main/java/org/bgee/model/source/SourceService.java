@@ -123,7 +123,7 @@ public class SourceService extends Service {
      *                              data of the provided {@code sourceId}.
      */
     private Map<String, Set<DataType>> getDataTypesBySpecies(
-            final List<SourceToSpeciesTO> sourceToSpeciesTOs, String sourceId, InfoType infoType) {
+            final List<SourceToSpeciesTO> sourceToSpeciesTOs, Integer sourceId, InfoType infoType) {
         log.entry(sourceToSpeciesTOs, sourceId, infoType);
         Map<String, Set<DataType>> map = sourceToSpeciesTOs.stream()
             .filter(to -> to.getDataSourceId().equals(sourceId))
@@ -149,7 +149,7 @@ public class SourceService extends Service {
         if (sourceTO == null) {
             return log.exit(null);
         }
-        return log.exit(new Source(sourceTO.getId(), sourceTO.getName(), sourceTO.getDescription(),
+        return log.exit(new Source(Integer.valueOf(sourceTO.getId()), sourceTO.getName(), sourceTO.getDescription(),
                 sourceTO.getXRefUrl(), sourceTO.getExperimentUrl(), sourceTO.getEvidenceUrl(),
                 sourceTO.getBaseUrl(), sourceTO.getReleaseDate(), sourceTO.getReleaseVersion(),
                 sourceTO.isToDisplay(), convertDataStateToDataQuality(sourceTO.getSourceCategory()),

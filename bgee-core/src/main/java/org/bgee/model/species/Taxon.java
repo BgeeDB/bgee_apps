@@ -12,7 +12,7 @@ import org.bgee.model.ontology.OntologyElement;
  * @version Bgee 13, Aug. 2016
  * @version Bgee 13, Sep. 2013
  */
-public class Taxon extends NamedEntity implements OntologyElement<Taxon> {
+public class Taxon extends NamedEntity<Integer> implements OntologyElement<Taxon> {
 
     /**
      * Default constructor not public, an ID must always be provided, 
@@ -28,10 +28,10 @@ public class Taxon extends NamedEntity implements OntologyElement<Taxon> {
      * Constructor providing the ID of this {@code Taxon}. 
      * {@code id} cannot be blank, otherwise an {@code IllegalArgumentException} is thrown. 
      * 
-     * @param id    A {@code String} representing the ID of this {@code Taxon}.
+     * @param id    An {@code Integer} representing the ID of this {@code Taxon}.
      * @throws IllegalArgumentException     if {@code id} is blank. 
      */
-    public Taxon(String id) {
+    public Taxon(Integer id) {
         this(id, null, null);
     }
 
@@ -39,12 +39,12 @@ public class Taxon extends NamedEntity implements OntologyElement<Taxon> {
      * Constructor providing the ID, name, and description corresponding to this {@code Taxon}. 
      * {@code id} cannot be blank, otherwise an {@code IllegalArgumentException} is thrown. 
      * 
-     * @param id            A {@code String} representing the ID of this {@code Taxon}.
+     * @param id            A n{@code Integer} representing the ID of this {@code Taxon}.
      * @param name          A {@code String} representing the name of this {@code Taxon}.
      * @param description   A {@code String} representing the description of this {@code Taxon}.
      * @throws IllegalArgumentException     if {@code id} is blank. 
      */
-    public Taxon(String id, String name, String description) {
+    public Taxon(Integer id, String name, String description) {
         super(id, name, description);
     }
 }

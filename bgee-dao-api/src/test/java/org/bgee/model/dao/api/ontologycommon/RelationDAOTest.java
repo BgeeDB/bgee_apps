@@ -109,15 +109,15 @@ public class RelationDAOTest extends TestAncestor {
      */
     @Test
     public void testRelationTOHashCodeEquals() {
-        RelationTO to1 = new RelationTO("1", "1", null, null, null);
-        RelationTO to2 = new RelationTO("1", "3", null, null, null);
+        RelationTO<String> to1 = new RelationTO<>(1, "1", null, null, null);
+        RelationTO<String> to2 = new RelationTO<>(1, "3", null, null, null);
         assertEquals("RelationTOs with same IDs should be equal whatever their other attributes", 
                 to1, to2);
         assertEquals("RelationTOs with same IDs should have equal hashCode whatever " +
                 "their other attributes", to1.hashCode(), to2.hashCode());
         
-        to1 = new RelationTO(null, "1", null, null, null);
-        to2 = new RelationTO(null, "3", null, null, null);
+        to1 = new RelationTO<>(null, "1", null, null, null);
+        to2 = new RelationTO<>(null, "3", null, null, null);
         assertNotEquals("RelationTOs with a null ID " +
                 "should be compared over all attributes", to1, to2);
         //we do not test hashCode, as it is not mandatory to have different hashCode 

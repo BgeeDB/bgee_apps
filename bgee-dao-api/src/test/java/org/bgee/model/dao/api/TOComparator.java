@@ -16,6 +16,7 @@ import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO.GroupToStageTO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SimAnnotToAnatEntityTO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
@@ -127,7 +128,9 @@ public class TOComparator {
         } else if (to1 instanceof TaxonConstraintTO) {
             return log.exit(areTOsEqual((TaxonConstraintTO) to1, (TaxonConstraintTO) to2));
         } else if (to1 instanceof RelationTO) {
-            return log.exit(areTOsEqual((RelationTO) to1, (RelationTO) to2, compareId));
+            return log.exit(areTOsEqual((RelationTO<?>) to1, (RelationTO<?>) to2, compareId));
+        } else if (to1 instanceof ConditionTO) {
+            return log.exit(areTOsEqual((ConditionTO) to1, (ConditionTO) to2, compareId));
         } else if (to1 instanceof ExpressionCallTO) {
             return log.exit(areTOsEqual((ExpressionCallTO) to1, (ExpressionCallTO) to2, 
                     compareId));
@@ -135,8 +138,7 @@ public class TOComparator {
             return log.exit(areTOsEqual((NoExpressionCallTO) to1, (NoExpressionCallTO) to2, 
                     compareId));
         } else if (to1 instanceof ExperimentExpressionTO) {
-            return log.exit(areTOsEqual((ExperimentExpressionTO) to1, (ExperimentExpressionTO) to2, 
-                    compareId));
+            return log.exit(areTOsEqual((ExperimentExpressionTO) to1, (ExperimentExpressionTO) to2));
         } else if (to1 instanceof GlobalExpressionToExpressionTO) {
             return log.exit(areTOsEqual((
                     GlobalExpressionToExpressionTO) to1, (GlobalExpressionToExpressionTO) to2));
@@ -616,15 +618,43 @@ public class TOComparator {
      * @return      {@code true} if {@code to1} and {@code to2} have all 
      *              attributes equal.
      */
-    private static boolean areTOsEqual(RelationTO to1, RelationTO to2, 
+    private static boolean areTOsEqual(RelationTO<?> to1, RelationTO<?> to2, 
             boolean compareId) {
         log.entry(to1, to2, compareId);
 
-        if ((!compareId || StringUtils.equals(to1.getId(), to2.getId())) && 
-                StringUtils.equals(to1.getSourceId(), to2.getSourceId()) && 
-                StringUtils.equals(to1.getTargetId(), to2.getTargetId()) && 
+        if ((!compareId || (to1.getId() == null && to2.getId() == null || 
+                    to1.getId() != null && to1.getId().equals(to2.getId()))) && 
+                (to1.getSourceId() == null && to2.getSourceId() == null || 
+                    to1.getSourceId() != null && to1.getSourceId().equals(to2.getSourceId())) && 
+                (to1.getTargetId() == null && to2.getTargetId() == null || 
+                    to1.getTargetId() != null && to1.getTargetId().equals(to2.getTargetId())) && 
                 to1.getRelationStatus() == to2.getRelationStatus() && 
                 to1.getRelationType() == to2.getRelationType()) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    /**
+     * Method to compare two {@code ConditionTO}s, to check for complete equality of each
+     * attribute. 
+     * <p>
+     * If {@code compareId} is {@code false}, the value returned by the method {@code getId} 
+     * will not be used for comparison.
+     * 
+     * @param to1       An {@code ConditionTO} to be compared to {@code to2}.
+     * @param to2       An {@code ConditionTO} to be compared to {@code to1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
+     *                  used for comparisons. 
+     * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
+     */
+    private static boolean areTOsEqual(ConditionTO to1, ConditionTO to2, boolean compareId) {
+        log.entry(to1, to2, compareId);
+
+        if ((!compareId || to1.getId() == to2.getId()) && 
+                to1.getExprMappedConditionId() == to2.getExprMappedConditionId() &&
+                StringUtils.equals(to1.getAnatEntityId(), to2.getAnatEntityId()) && 
+                StringUtils.equals(to1.getStageId(), to2.getStageId()) && 
+                to1.getSpeciesId() == to2.getSpeciesId()) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -732,8 +762,7 @@ public class TOComparator {
      *                  used for comparisons. 
      * @return      {@code true} if {@code to1} and {@code to2} have all attributes equal.
      */
-    private static boolean areTOsEqual(ExperimentExpressionTO to1, ExperimentExpressionTO to2, 
-            boolean compareId) {
+    private static boolean areTOsEqual(ExperimentExpressionTO to1, ExperimentExpressionTO to2) {
         log.entry(to1, to2);
         if (to1.getExpressionId() == to2.getExpressionId() && 
                 to1.getExperimentId() == to2.getExperimentId() && 

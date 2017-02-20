@@ -6,7 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
-import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.NamedEntityTO;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 
@@ -88,7 +88,7 @@ public interface CIOStatementDAO extends DAO<CIOStatementDAO.Attribute> {
      * @version Bgee 13
      * @since Bgee 13
      */
-    public final class CIOStatementTO extends EntityTO {
+    public final class CIOStatementTO extends NamedEntityTO<String> {
 
         private static final long serialVersionUID = 7509933615802695073L;
 

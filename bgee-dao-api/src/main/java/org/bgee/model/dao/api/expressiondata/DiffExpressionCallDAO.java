@@ -359,7 +359,7 @@ public interface DiffExpressionCallDAO
          * Default constructor
          */
         DiffExpressionCallTO() {
-            this(null, null, null, null, null, null, null, null, 
+            this(null, null, null, null, null, null, null, 
                     null, null, null, null, null, null, null);
         }
         
@@ -369,13 +369,11 @@ public interface DiffExpressionCallDAO
          * <p>
          * All of these parameters are optional, so they can be {@code null} when not used.
          * 
-         * @param id                                A {@code String} that is the ID of this call.
-         * @param geneId                            A {@code String} that is the ID of the gene 
-         *                                          associated to this call.
-         * @param anatEntityId                      A {@code String} that is the ID of the 
-         *                                          anatomical entity associated to this call. 
-         * @param stageId                           A {@code String} that is the ID of the 
-         *                                          developmental stage associated to this call. 
+         * @param id                                An {@code Integer} that is the ID of this call.
+         * @param bgeeGeneId                        An {@code Integer} that is the ID of the gene associated to 
+         *                                          this call.
+         * @param conditionId                       An {@code Integer} that is the ID of the condition
+         *                                          associated to this call. 
          * @param comparisonFactor                  The {@code ComparisonFactor} defining what was 
          *                                          the comparison factor used during the 
          *                                          differential expression analyzes generating 
@@ -405,14 +403,14 @@ public interface DiffExpressionCallDAO
          *                                          analysis using RNA-seq data where a different 
          *                                          call is found.
          */
-        public DiffExpressionCallTO(String id, String geneId, String anatEntityId, String stageId, 
+        public DiffExpressionCallTO(Integer id, Integer bgeeGeneId, Integer conditionId, 
                 ComparisonFactor comparisonFactor, DiffExprCallType diffExprCallTypeAffymetrix, 
                 DataState diffExprAffymetrixData, Float bestPValueAffymetrix, 
                 Integer consistentDEACountAffymetrix, Integer inconsistentDEACountAffymetrix, 
                 DiffExprCallType diffExprCallTypeRNASeq, DataState diffExprRNASeqData,
                 Float bestPValueRNASeq, Integer consistentDEACountRNASeq, 
                 Integer inconsistentDEACountRNASeq) {
-            super(id, geneId, anatEntityId, stageId, diffExprAffymetrixData, null, null, 
+            super(id, bgeeGeneId, conditionId, diffExprAffymetrixData, null, null, 
                     null, diffExprRNASeqData);
             this.comparisonFactor = comparisonFactor;
             this.diffExprCallTypeAffymetrix = diffExprCallTypeAffymetrix;
@@ -653,102 +651,6 @@ public interface DiffExpressionCallDAO
                     " - Best p-value with RNA-seq: " + this.getBestPValueRNASeq() +
                     " - Consistent DEA Count with RNA-seq: " + this.getConsistentDEACountRNASeq() + 
                     " - Inconsistent DEA Count with RNA-seq: " + this.getInconsistentDEACountRNASeq();
-        }
-
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = super.hashCode();
-            if (this.useOtherAttributesForHashCodeEquals()) {
-                result = prime * result
-                        + ((comparisonFactor == null) ? 0 : comparisonFactor.hashCode());
-                result = prime * result
-                        + ((diffExprCallTypeAffymetrix == null) ? 0 : diffExprCallTypeAffymetrix.hashCode());
-                result = prime * result
-                        + ((bestPValueAffymetrix == null) ? 0 : bestPValueAffymetrix.hashCode());
-                result = prime * result
-                        + ((consistentDEACountAffymetrix == null) ? 0
-                                : consistentDEACountAffymetrix.hashCode());
-                result = prime * result
-                        + ((inconsistentDEACountAffymetrix == null) ? 0
-                                : inconsistentDEACountAffymetrix.hashCode());
-                result = prime * result
-                        + ((diffExprCallTypeRNASeq == null) ? 0 : diffExprCallTypeRNASeq.hashCode());
-                result = prime * result
-                        + ((bestPValueRNASeq == null) ? 0 : bestPValueRNASeq.hashCode());
-                result = prime * result
-                        + ((consistentDEACountRNASeq == null) ? 0 : consistentDEACountRNASeq.hashCode());
-                result = prime * result
-                        + ((inconsistentDEACountRNASeq == null) ? 0 : inconsistentDEACountRNASeq.hashCode());
-            }
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (!(obj instanceof DiffExpressionCallTO)) {
-                return false;
-            }
-            if (!super.equals(obj)) {
-                return false;
-            }
-            if (this.useOtherAttributesForHashCodeEquals()) {
-                DiffExpressionCallTO other = (DiffExpressionCallTO) obj;
-                if (comparisonFactor != other.comparisonFactor) {
-                    return false;
-                }
-                if (diffExprCallTypeAffymetrix != other.diffExprCallTypeAffymetrix) {
-                    return false;
-                }
-                if (bestPValueAffymetrix == null) {
-                    if (other.bestPValueAffymetrix != null) {
-                        return false;
-                    }
-                } else if (!bestPValueAffymetrix.equals(other.bestPValueAffymetrix)) {
-                    return false;
-                }
-                if (consistentDEACountAffymetrix == null) {
-                    if (other.consistentDEACountAffymetrix != null) {
-                        return false;
-                    }
-                } else if (!consistentDEACountAffymetrix.equals(other.consistentDEACountAffymetrix)) {
-                    return false;
-                }
-                if (inconsistentDEACountAffymetrix == null) {
-                    if (other.inconsistentDEACountAffymetrix != null) {
-                        return false;
-                    }
-                } else if (!inconsistentDEACountAffymetrix.equals(other.inconsistentDEACountAffymetrix)) {
-                    return false;
-                }
-
-                if (diffExprCallTypeRNASeq != other.diffExprCallTypeRNASeq) {
-                    return false;
-                }
-                if (bestPValueRNASeq == null) {
-                    if (other.bestPValueRNASeq != null) {
-                        return false;
-                    }
-                } else if (!bestPValueRNASeq.equals(other.bestPValueRNASeq)) {
-                    return false;
-                }                
-                if (consistentDEACountRNASeq == null) {
-                    if (other.consistentDEACountRNASeq != null) {
-                        return false;
-                    }
-                } else if (!consistentDEACountRNASeq.equals(other.consistentDEACountRNASeq)) {
-                    return false;
-                }
-                if (inconsistentDEACountRNASeq == null) {
-                    if (other.inconsistentDEACountRNASeq != null)
-                        return false;
-                } else if (!inconsistentDEACountRNASeq
-                        .equals(other.inconsistentDEACountRNASeq))
-                    return false;
-            }
-            return true;
         }
     }
 }

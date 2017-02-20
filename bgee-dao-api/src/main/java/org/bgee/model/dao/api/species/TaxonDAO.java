@@ -1,7 +1,6 @@
 package org.bgee.model.dao.api.species;
 
 import java.util.Collection;
-import java.util.Set;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
@@ -132,7 +131,7 @@ public interface TaxonDAO extends DAO<TaxonDAO.Attribute> {
      * @version Bgee 13
      * @since Bgee 13
      */
-    public final class TaxonTO extends NestedSetModelElementTO {
+    public final class TaxonTO extends NestedSetModelElementTO<Integer> {
     	private static final long serialVersionUID = 704571970140502441L;
     	/**
          * A {@code String} that is the scientific name of this taxon (for instance, 
@@ -155,7 +154,7 @@ public interface TaxonDAO extends DAO<TaxonDAO.Attribute> {
          * <p>
          * All of these parameters are optional, so they can be {@code null} when not used.
          * 
-         * @param id                A {@code String} that is the ID.
+         * @param id                An {@code Integer} that is the ID.
          * @param commonName        A {@code String} that is the common name of this taxon.
          * @param scientificName    A {@code String} that is the scientific name of this taxon.
          * @param leftBound         An {@code Integer} that is the left bound of this taxon 
@@ -170,7 +169,7 @@ public interface TaxonDAO extends DAO<TaxonDAO.Attribute> {
          *                                  {code leftBound} or {code rightBound} or {code level} 
          *                                  is not {@code null} and less than 0.
          */
-        public TaxonTO(String id, String commonName, String scientificName, 
+        public TaxonTO(Integer id, String commonName, String scientificName, 
                 Integer leftBound, Integer rightBound, Integer level, Boolean lca) 
             throws IllegalArgumentException {
             super(id, commonName, null, leftBound, rightBound, level);

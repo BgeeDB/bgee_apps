@@ -215,14 +215,14 @@ public interface SourceToSpeciesDAO extends DAO<SourceToSpeciesDAO.Attribute> {
 
 
         /**
-         * A {@code String} that is the ID of the data source.
+         * An {@code Integer} that is the ID of the data source.
          */
-        private String dataSourceId;
+        private Integer dataSourceId;
 
         /**
-         * A {@code String} that is the ID of the species.
+         * An {@code Integer} that is the ID of the species.
          */
-        private String speciesId;
+        private Integer speciesId;
 
         /**
          * A {@code DataType} that is the data type (for instance, affymetrix).
@@ -240,12 +240,12 @@ public interface SourceToSpeciesDAO extends DAO<SourceToSpeciesDAO.Attribute> {
          * <p>
          * All of these parameters are optional, so they can be {@code null} when not used.
          * 
-         * @param datasourceId  A {@code String} that is the ID of the data source.
-         * @param speciesId     A {@code String} that is the ID of the species.
+         * @param datasourceId  An {@code Integer} that is the ID of the data source.
+         * @param speciesId     An {@code Integer} that is the ID of the species.
          * @param dataType      A {@code DataType} that is the data type.
          * @param infoType      A {@code InfoType} that is the information type.
          */
-        public SourceToSpeciesTO(String datasourceId, String speciesId, 
+        public SourceToSpeciesTO(Integer datasourceId, Integer speciesId, 
                 DataType dataType, InfoType infoType) {
             this.dataSourceId   = datasourceId;
             this.speciesId      = speciesId;
@@ -256,14 +256,14 @@ public interface SourceToSpeciesDAO extends DAO<SourceToSpeciesDAO.Attribute> {
         /**
          * @return the {@code String} that is the ID of the data source.
          */
-        public String getDataSourceId() {
+        public Integer getDataSourceId() {
             return dataSourceId;
         }
 
         /**
          * @return the {@code String} that is the ID of the species.
          */
-        public String getSpeciesId() {
+        public Integer getSpeciesId() {
             return speciesId;
         }
 
@@ -279,43 +279,6 @@ public interface SourceToSpeciesDAO extends DAO<SourceToSpeciesDAO.Attribute> {
          */
         public InfoType getInfoType() {
             return infoType;
-        }
-
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + ((dataSourceId == null) ? 0 : dataSourceId.hashCode());
-            result = prime * result + ((speciesId == null) ? 0 : speciesId.hashCode());
-            result = prime * result + ((dataType == null) ? 0 : dataType.hashCode());
-            result = prime * result + ((infoType == null) ? 0 : infoType.hashCode());
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            SourceToSpeciesTO other = (SourceToSpeciesTO) obj;
-            if (dataSourceId == null) {
-                if (other.dataSourceId != null)
-                    return false;
-            } else if (!dataSourceId.equals(other.dataSourceId))
-                return false;
-            if (speciesId == null) {
-                if (other.speciesId != null)
-                    return false;
-            } else if (!speciesId.equals(other.speciesId))
-                return false;
-            if (dataType != other.dataType)
-                return false;
-            if (infoType != other.infoType)
-                return false;
-            return true;
         }
 
         @Override

@@ -4,7 +4,7 @@ import java.util.Collection;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
-import org.bgee.model.dao.api.TransferObject;
+import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.exception.DAOException;
 
 /**
@@ -89,12 +89,11 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
      * @version Bgee 14, Feb. 2017
      * @since   Bgee 14, Feb. 2017
      */
-    public class ConditionTO extends TransferObject {
+    public class ConditionTO extends EntityTO<Integer> {
 
         private static final long serialVersionUID = -1057540315343857464L;
 
 
-        private Integer id;
         private Integer exprMappedConditionId;
         private String anatEntityId;
         private String stageId;
@@ -102,19 +101,11 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
         
         public ConditionTO(Integer id, Integer exprMappedConditionId, String anatEntityId,
             String stageId, Integer speciesId) {
-            super();
-            this.id = id;
+            super(id);
             this.exprMappedConditionId = exprMappedConditionId;
             this.anatEntityId = anatEntityId;
             this.stageId = stageId;
             this.speciesId = speciesId;
-        }
-        
-        /**
-         * @return  The {@code String} that is the internal condition ID. Each condition is species-specific.
-         */
-        public Integer getId() {
-            return id;
         }
         
         /**
@@ -146,57 +137,8 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
         }
         
         @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + ((anatEntityId == null) ? 0 : anatEntityId.hashCode());
-            result = prime * result + ((id == null) ? 0 : id.hashCode());
-            result = prime * result + ((exprMappedConditionId == null) ? 0 : exprMappedConditionId.hashCode());
-            result = prime * result + ((speciesId == null) ? 0 : speciesId.hashCode());
-            result = prime * result + ((stageId == null) ? 0 : stageId.hashCode());
-            return result;
-        }
-        
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            ConditionTO other = (ConditionTO) obj;
-            if (anatEntityId == null) {
-                if (other.anatEntityId != null)
-                    return false;
-            } else if (!anatEntityId.equals(other.anatEntityId))
-                return false;
-            if (id == null) {
-                if (other.id != null)
-                    return false;
-            } else if (!id.equals(other.id))
-                return false;
-            if (exprMappedConditionId == null) {
-                if (other.exprMappedConditionId != null)
-                    return false;
-            } else if (!exprMappedConditionId.equals(other.exprMappedConditionId))
-                return false;
-            if (speciesId == null) {
-                if (other.speciesId != null)
-                    return false;
-            } else if (!speciesId.equals(other.speciesId))
-                return false;
-            if (stageId == null) {
-                if (other.stageId != null)
-                    return false;
-            } else if (!stageId.equals(other.stageId))
-                return false;
-            return true;
-        }
-        
-        @Override
         public String toString() {
-            return "ConditionTO [id=" + id + ", exprMappedConditionId=" + exprMappedConditionId
+            return "ConditionTO [id=" + getId() + ", exprMappedConditionId=" + exprMappedConditionId
                 + ", anatEntityId=" + anatEntityId + ", stageId=" + stageId + ", speciesId=" + speciesId + "]";
         }
     }

@@ -4,7 +4,7 @@ import java.util.Collection;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
-import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.NamedEntityTO;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 
@@ -45,14 +45,14 @@ public interface KeywordDAO extends DAO<KeywordDAO.Attribute> {
      * It is the responsibility of the caller to close this {@code DAOResultSet} once 
      * results are retrieved.
      * 
-     * @param speciesIds    A {@code Collection} of {@code String}s representing the IDs 
+     * @param speciesIds    A {@code Collection} of {@code Integer}s representing the IDs 
      *                      of the species for which we want to retrieve associated keywords. 
      *                      If {@code null} or empty, keywords associated to any species 
      *                      are retrieved. 
      * @return              An {@code KeywordTOResultSet} allowing to retrieve {@code KeywordTO}s.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public KeywordTOResultSet getKeywordsRelatedToSpecies(Collection<String> speciesIds) 
+    public KeywordTOResultSet getKeywordsRelatedToSpecies(Collection<Integer> speciesIds) 
             throws DAOException;
     
     /**
@@ -70,7 +70,7 @@ public interface KeywordDAO extends DAO<KeywordDAO.Attribute> {
      * Note that setting {@link KeywordDAO.Attribute Attribute}s to use has no effect 
      * for this query. 
      * 
-     * @param speciesIds    A {@code Collection} of {@code String}s representing the IDs 
+     * @param speciesIds    A {@code Collection} of {@code Integer}s representing the IDs 
      *                      of the species for which we want to retrieve relations. 
      *                      If {@code null} or empty, relations to any species 
      *                      are retrieved. 
@@ -79,7 +79,7 @@ public interface KeywordDAO extends DAO<KeywordDAO.Attribute> {
      *                      by calling {@link EntityToKeywordTO#getEntityId()}.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public EntityToKeywordTOResultSet getKeywordToSpecies(Collection<String> speciesIds) 
+    public EntityToKeywordTOResultSet<Integer> getKeywordToSpecies(Collection<Integer> speciesIds) 
             throws DAOException;
     
     /**
@@ -101,17 +101,17 @@ public interface KeywordDAO extends DAO<KeywordDAO.Attribute> {
      * @see EntityToKeywordTO
      * @since Bgee 13
      */
-    public final class KeywordTO extends EntityTO {
+    public final class KeywordTO extends NamedEntityTO<Integer> {
         private static final long serialVersionUID = -2422542912796617172L;
 
         /**
          * Constructor providing a keyword and its associated ID.
          * 
-         * @param id    A {@code String} that is the ID of the keyword.
+         * @param id    An {@code Integer} that is the ID of the keyword.
          * @param name  A {@code String} representing the keyword. 
          */
-        public KeywordTO(String id, String name) {
-            super(id, name, null);
+        public KeywordTO(Integer id, String name) {
+            super(id, name);
         }
         
         /**
@@ -135,8 +135,10 @@ public interface KeywordDAO extends DAO<KeywordDAO.Attribute> {
      * @author Frederic Bastian
      * @version Bgee 13 August 2015
      * @since Bgee 13
+     * 
+     * @param <T> the type of ID of the related entity in the {@code EntityToKeywordTO}
      */
-    public interface EntityToKeywordTOResultSet extends DAOResultSet<EntityToKeywordTO> {
+    public interface EntityToKeywordTOResultSet<T> extends DAOResultSet<EntityToKeywordTO<T>> {
     }
     
     /**
@@ -148,39 +150,41 @@ public interface KeywordDAO extends DAO<KeywordDAO.Attribute> {
      * an {@link org.bgee.model.dao.api.EntityTO}.
      * 
      * @author Frederic Bastian
-     * @version Bgee 13 August 2015
+     * @version Bgee 14 Feb. 2017
      * @see KeywordTO
      * @since Bgee 13
+     * 
+     * @param <T> the type of ID of the related entity
      */
-    public final class EntityToKeywordTO extends TransferObject {
+    public final class EntityToKeywordTO<T> extends TransferObject {
         private static final long serialVersionUID = 2419308067857032483L;
         
         /**
          * @see #getEntityId()
          */
-        private final String entityId;
+        private final T entityId;
         /**
          * @see #getKeywordId()
          */
-        private final String keywordId;
+        private final Integer keywordId;
         
-        public EntityToKeywordTO(String entityId, String keywordId) {
+        public EntityToKeywordTO(T entityId, Integer keywordId) {
             this.entityId = entityId;
             this.keywordId = keywordId;
         }
 
         /**
-         * @return  A {@code String} that is the ID of an entity linked to a keyword, 
+         * @return  A {@code T} that is the ID of an entity linked to a keyword, 
          *          with keyword ID returned by {@link #getKeywordId()}.
          */
-        public String getEntityId() {
+        public T getEntityId() {
             return entityId;
         }
         /**
-         * @return  A {@code String} that is the ID of a keyword, related to the entity 
+         * @return  An {@code Integer} that is the ID of a keyword, related to the entity 
          *          with ID returned by {@link #getEntityId()}.
          */
-        public String getKeywordId() {
+        public Integer getKeywordId() {
             return keywordId;
         }
 
@@ -188,46 +192,6 @@ public interface KeywordDAO extends DAO<KeywordDAO.Attribute> {
         public String toString() {
             return "EntityToKeywordTO[entityID: " + this.getEntityId() 
                     + " - keywordID: " + this.getKeywordId() + "]";
-        }
-
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result
-                    + ((entityId == null) ? 0 : entityId.hashCode());
-            result = prime * result
-                    + ((keywordId == null) ? 0 : keywordId.hashCode());
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null) {
-                return false;
-            }
-            if (getClass() != obj.getClass()) {
-                return false;
-            }
-            EntityToKeywordTO other = (EntityToKeywordTO) obj;
-            if (entityId == null) {
-                if (other.entityId != null) {
-                    return false;
-                }
-            } else if (!entityId.equals(other.entityId)) {
-                return false;
-            }
-            if (keywordId == null) {
-                if (other.keywordId != null) {
-                    return false;
-                }
-            } else if (!keywordId.equals(other.keywordId)) {
-                return false;
-            }
-            return true;
         }
     }
 }

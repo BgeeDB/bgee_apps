@@ -107,7 +107,7 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
      * @see org.bgee.model.dao.api.gene.HierarchicalGroupDAO
      * @since Bgee 13
      */
-    public class HierarchicalGroupTO extends NestedSetModelElementTO {
+    public class HierarchicalGroupTO extends NestedSetModelElementTO<Integer> {
 
         private static final long serialVersionUID = 3491884200260547404L;
 
@@ -130,7 +130,7 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
          * All of these parameters are optional, so they can be {@code null} when not used.
          * If a bound is not {@code null}, it should be positive.
          * 
-         * @param id            A {@code String} that is the ID of a node in the tree of
+         * @param id            An {@code Integer} that is the ID of a node in the tree of
          *                      hierarchical groups
          * @param OMAGroupId    A {@code String} that is the ID for a particular OMA
          *                      group of orthologous genes
@@ -141,7 +141,7 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
          * @throws IllegalArgumentException If {@code id} is empty, or if any of {code leftBound} or
          *                                  {code rightBound} is not {@code null} and less than 0.
          */
-        public HierarchicalGroupTO(String id, String OMAGroupId, Integer leftBound,
+        public HierarchicalGroupTO(Integer id, String OMAGroupId, Integer leftBound,
                 Integer rightBound) throws IllegalArgumentException {
             this(id, OMAGroupId, leftBound, rightBound, null);
         }
@@ -153,7 +153,7 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
          * All of these parameters are optional, so they can be {@code null} when not used.
          * If a bound is not {@code null}, it should be positive.
          * 
-         * @param id            A {@code String} that is the ID of a node in the tree of
+         * @param id            An {@code Integer} that is the ID of a node in the tree of
          *                      hierarchical groups.
          * @param OMAGroupId    A {@code String} that is the ID for a particular OMA
          *                      group of orthologous genes
@@ -166,7 +166,7 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
          * @throws IllegalArgumentException If {@code id} is empty, or if any of {code leftBound} or
          *                                  {code rightBound} is not {@code null} and less than 0.
          */
-        public HierarchicalGroupTO(String id, String OMAGroupId, Integer leftBound,
+        public HierarchicalGroupTO(Integer id, String OMAGroupId, Integer leftBound,
                 Integer rightBound, Integer taxonId) throws IllegalArgumentException {
             super(id, null, null, leftBound, rightBound, null);
             this.OMAGroupId = OMAGroupId;
@@ -180,7 +180,7 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
          *         value not set.
          */
         @Override
-        public String getId() {
+        public Integer getId() {
             // method overridden only to provide a more accurate javadoc
             return super.getId();
         }
@@ -246,6 +246,7 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
          * This corresponds to the ID of Hierarchical Group (see {@link HierarchicalGroupTO}).
          */
         //XXX: should it be an int as in the database?
+        //Woops, isn't the groupId a String actually? Or are we speaking about the node ID?
         private final String groupId;
         /**
          * A {@code String} that is the ID of a gene belonging to the group with ID 
@@ -279,52 +280,6 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
          */
         public String getGeneId() {
             return geneId;
-        }
-
-        /* (non-Javadoc)
-         * @see java.lang.Object#hashCode()
-         */
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result
-                    + ((geneId == null) ? 0 : geneId.hashCode());
-            result = prime * result
-                    + ((groupId == null) ? 0 : groupId.hashCode());
-            return result;
-        }
-
-        /* (non-Javadoc)
-         * @see java.lang.Object#equals(java.lang.Object)
-         */
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null) {
-                return false;
-            }
-            if (!(obj instanceof HierarchicalGroupToGeneTO)) {
-                return false;
-            }
-            HierarchicalGroupToGeneTO other = (HierarchicalGroupToGeneTO) obj;
-            if (geneId == null) {
-                if (other.geneId != null) {
-                    return false;
-                }
-            } else if (!geneId.equals(other.geneId)) {
-                return false;
-            }
-            if (groupId == null) {
-                if (other.groupId != null) {
-                    return false;
-                }
-            } else if (!groupId.equals(other.groupId)) {
-                return false;
-            }
-            return true;
         }
         
         @Override

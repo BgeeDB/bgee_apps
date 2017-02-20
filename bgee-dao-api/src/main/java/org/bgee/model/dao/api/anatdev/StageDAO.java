@@ -184,7 +184,7 @@ public interface StageDAO extends DAO<StageDAO.Attribute> {
      * @version Bgee 13
      * @since Bgee 01
      */
-    public final class StageTO extends NestedSetModelElementTO {
+    public final class StageTO extends NestedSetModelElementTO<String> {
         private static final long serialVersionUID = -1560561694015229894L;
         /**
          * See {@link #isTooGranular()}.

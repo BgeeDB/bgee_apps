@@ -5,7 +5,7 @@ import java.util.Set;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
-import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.NamedEntityTO;
 import org.bgee.model.dao.api.exception.DAOException;
 
 /**
@@ -136,16 +136,20 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      * @version Bgee 13
      * @since Bgee 13
      */
-    public class GeneTO extends EntityTO {
+    public class GeneTO extends NamedEntityTO<Integer> {
 
         private static final long serialVersionUID = -9011956802137411474L;
+
+        /**
+         * A {@code String} that is the ID of this gene in the Ensembl database.
+         */
+        private final String geneId;
 
         /**
          * An {@code Integer} that is the species ID of the gene.
          */
         private final Integer speciesId;
-        
-        
+
         /**
          * An {@code Integer} that is the gene type ID (for instance, the ID for protein_coding).
          */
@@ -171,23 +175,25 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
          * All of these parameters are optional, so they can be {@code null} when not used.
          * Other attributes are set to {@code null}.
          * 
-         * @param geneId    A {@code String} that is the ID of this gene.
+         * @param bgeeGeneId    An {@code Integer} that is the ID of this gene.
+         * @param geneId        A {@code String} that is the ID of this gene in the Ensembl database.
          * @param geneName  A {@code String} that is the name of this gene.
          * @param speciesId An {@code Integer} of the species which this gene belongs to.
          */
-        public GeneTO(String geneId, String geneName, Integer speciesId) {
-            this(geneId, geneName, null, speciesId, null, null, null);
+        public GeneTO(Integer bgeeGeneId, String geneId, String geneName, Integer speciesId) {
+            this(bgeeGeneId, geneId, geneName, null, speciesId, null, null, null);
         }
 
         /**
-         * Constructor providing the ID (for instance, {@code Ensembl:ENSMUSG00000038253}), 
+         * Constructor providing the Bgee gene ID, the Ensembl ID (for instance, {@code Ensembl:ENSMUSG00000038253}), 
          * the name (for instance, {@code Hoxa5}), the description, the species ID, the BioType, 
          * the ID of the OMA Hierarchical Orthologous Group, whether this gene is present in 
          * Ensembl (see {@link #isEnsemblGene()}).  
          * <p>
          * All of these parameters are optional, so they can be {@code null} when not used.
          * 
-         * @param geneId                A {@code String} that is the ID of this gene.
+         * @param bgeeGeneId            An {@code Integer} that is the ID of this gene.
+         * @param geneId                A {@code String} that is the ID of this gene in the Ensembl database.
          * @param geneName              A {@code String} that is the name of this gene.
          * @param geneDescription       A {@code String} that is the description of this gene.
          * @param speciesId             An {@code Integer} that is the species ID which this 
@@ -198,9 +204,10 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
          * @param ensemblGene           A {code Boolean} defining whether this gene is present 
          *                              in Ensembl.
          */
-        public GeneTO(String geneId, String geneName, String geneDescription, Integer speciesId,
-                Integer geneBioTypeId, Integer OMAParentNodeId, Boolean ensemblGene) {
-            super(geneId, geneName, geneDescription);
+        public GeneTO(Integer bgeeGeneId, String geneId, String geneName, String geneDescription, 
+                Integer speciesId, Integer geneBioTypeId, Integer OMAParentNodeId, Boolean ensemblGene) {
+            super(bgeeGeneId, geneName, geneDescription);
+            this.geneId = geneId;
             this.speciesId = speciesId;
             this.geneBioTypeId = geneBioTypeId;
             this.OMAParentNodeId = OMAParentNodeId;
@@ -208,38 +215,29 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
         }
 
         /**
-         * @return  The {@code String} that is the name of this gene (for instance, "Hoxa5").
-         *          Corresponds to the DAO {@code Attribute} {@link GeneDAO.Attribute 
-         *          NAME}. Returns {@code null} if value not set.
+         * @return  A {@code String} that is the Ensembl gene ID.
          */
-        @Override
-        public String getName() {
-            //method overridden only to provide a more accurate javadoc
-            return super.getName();
+        public String getGeneId() {
+            return this.geneId;
         }
-
-
         /**
          * @return  The species ID.
          */
         public Integer getSpeciesId() {
             return this.speciesId;
         }
-
         /**
          * @return The gene bio type ID (for instance, the ID for protein_coding).
          */
         public Integer getGeneBioTypeId() {
             return this.geneBioTypeId;
         }
-        
         /**
          * @return  The OMA Hierarchical Orthologous Group ID that this gene belongs to.
          */
         public Integer getOMAParentNodeId() {
             return this.OMAParentNodeId;
         }
-        
         /**
          * @return  The {@code Boolean} defining whether this gene is present in Ensembl.
          */
@@ -249,7 +247,8 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
 
         @Override
         public String toString() {
-            return "ID: " + this.getId() + " - Label: " + this.getName() + 
+            return "ID: " + this.getId() + " - Ensembl ID: " + this.getGeneId() + 
+                   " - Label: " + this.getName() + 
                    " - Species ID: " + this.getSpeciesId() + 
                    " - Gene bio type ID: " + this.getGeneBioTypeId() + 
                    " - OMA Hierarchical Orthologous Group ID: " + this.getOMAParentNodeId() + 

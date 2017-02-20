@@ -322,68 +322,6 @@ public interface SummarySimilarityAnnotationDAO extends
             return this.cioId;
         }
 
-        /* (non-Javadoc)
-         * @see java.lang.Object#hashCode()
-         */
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + ((cioId == null) ? 0 : cioId.hashCode());
-            result = prime * result + ((id == null) ? 0 : id.hashCode());
-            result = prime * result
-                    + ((negated == null) ? 0 : negated.hashCode());
-            result = prime * result
-                    + ((taxonId == null) ? 0 : taxonId.hashCode());
-            return result;
-        }
-
-        /* (non-Javadoc)
-         * @see java.lang.Object#equals(java.lang.Object)
-         */
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null) {
-                return false;
-            }
-            if (!(obj instanceof SummarySimilarityAnnotationTO)) {
-                return false;
-            }
-            SummarySimilarityAnnotationTO other = (SummarySimilarityAnnotationTO) obj;
-            if (cioId == null) {
-                if (other.cioId != null) {
-                    return false;
-                }
-            } else if (!cioId.equals(other.cioId)) {
-                return false;
-            }
-            if (id == null) {
-                if (other.id != null) {
-                    return false;
-                }
-            } else if (!id.equals(other.id)) {
-                return false;
-            }
-            if (negated == null) {
-                if (other.negated != null) {
-                    return false;
-                }
-            } else if (!negated.equals(other.negated)) {
-                return false;
-            }
-            if (taxonId == null) {
-                if (other.taxonId != null) {
-                    return false;
-                }
-            } else if (!taxonId.equals(other.taxonId)) {
-                return false;
-            }
-            return true;
-        }
-
         @Override
         public String toString() {
             return " ID: " + this.getId() + " - Taxon ID: " + this.getTaxonId() +
@@ -460,55 +398,6 @@ public interface SummarySimilarityAnnotationDAO extends
          */
         public String getAnatEntityId() {
             return anatEntityId;
-        }
-        
-        /* (non-Javadoc)
-         * @see java.lang.Object#hashCode()
-         */
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result
-                    + ((anatEntityId == null) ? 0 : anatEntityId.hashCode());
-            result = prime
-                    * result
-                    + ((summarySimilarityAnnotationId == null) ? 0
-                            : summarySimilarityAnnotationId.hashCode());
-            return result;
-        }
-
-        /* (non-Javadoc)
-         * @see java.lang.Object#equals(java.lang.Object)
-         */
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null) {
-                return false;
-            }
-            if (!(obj instanceof SimAnnotToAnatEntityTO)) {
-                return false;
-            }
-            SimAnnotToAnatEntityTO other = (SimAnnotToAnatEntityTO) obj;
-            if (anatEntityId == null) {
-                if (other.anatEntityId != null) {
-                    return false;
-                }
-            } else if (!anatEntityId.equals(other.anatEntityId)) {
-                return false;
-            }
-            if (summarySimilarityAnnotationId == null) {
-                if (other.summarySimilarityAnnotationId != null) {
-                    return false;
-                }
-            } else if (!summarySimilarityAnnotationId
-                    .equals(other.summarySimilarityAnnotationId)) {
-                return false;
-            }
-            return true;
         }
 
         @Override

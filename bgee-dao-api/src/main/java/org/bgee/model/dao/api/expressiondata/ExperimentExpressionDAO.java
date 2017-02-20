@@ -168,9 +168,9 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
         private final Integer expressionId;
 
         /**
-         * An {@code Integer} that is the experiment ID of this experiment expression.
+         * A {@code String} that is the experiment ID of this experiment expression.
          */
-        private final Integer experimentId;
+        private final String experimentId;
         
         /**
          * An {@code Integer} that is the count of experiments that produced
@@ -210,7 +210,7 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
          * Other attributes are set to {@code null}.
          * 
          * @param expressionId      An {@code Integer} that is the expression ID.
-         * @param experimentId      An {@code Integer} that is the experiment ID.
+         * @param experimentId      A {@code String} that is the experiment ID.
          * @param presentHighCount  An {@code Integer} that is the count of experiments that
          *                          produced this experiment expression as present high.
          * @param presentLowCount   An {@code Integer} that is the count of experiments that
@@ -223,7 +223,7 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
          *                          exact combination of counts of present high/present low/absent 
          *                          high/absent low that produced this experiment expression.
          */
-        public ExperimentExpressionTO(Integer expressionId, Integer experimentId, Integer presentHighCount,
+        public ExperimentExpressionTO(Integer expressionId, String experimentId, Integer presentHighCount,
             Integer presentLowCount, Integer absentHighCount, Integer absentLowCount, Integer experimentCount) {
             this.expressionId = expressionId;
             this.experimentId = experimentId;
@@ -242,9 +242,9 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
         }
 
         /**
-         * @return  The {@code Integer} that is the experiment ID of this experiment expression.
+         * @return  The {@code String} that is the experiment ID of this experiment expression.
          */
-        public Integer getExperimentId() {
+        public String getExperimentId() {
             return experimentId;
         }
 
@@ -277,7 +277,7 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
          *          this experiment expression as absent low.
          */
         public Integer getAbsentLowCount() {
-            return absentHighCount;
+            return absentLowCount;
         }
 
         /**
@@ -287,67 +287,6 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
          */
         public Integer getExperimentCount() {
             return experimentCount;
-        }
-
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = super.hashCode();
-            result = prime * result + ((expressionId == null) ? 0 : expressionId.hashCode());
-            result = prime * result + ((experimentId == null) ? 0 : experimentId.hashCode());
-            result = prime * result + ((presentHighCount == null) ? 0 : presentHighCount.hashCode());
-            result = prime * result + ((presentLowCount == null) ? 0 : presentLowCount.hashCode());
-            result = prime * result + ((absentHighCount == null) ? 0 : absentHighCount.hashCode());
-            result = prime * result + ((absentLowCount == null) ? 0 : absentLowCount.hashCode());
-            result = prime * result + ((experimentCount == null) ? 0 : experimentCount.hashCode());
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (!super.equals(obj))
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            ExperimentExpressionTO other = (ExperimentExpressionTO) obj;
-            if (expressionId == null) {
-                if (other.expressionId != null)
-                    return false;
-            } else if (!expressionId.equals(other.expressionId))
-                return false;
-            if (experimentId == null) {
-                if (other.experimentId != null)
-                    return false;
-            } else if (!experimentId.equals(other.experimentId))
-                return false;
-            if (presentHighCount == null) {
-                if (other.presentHighCount != null)
-                    return false;
-            } else if (!presentHighCount.equals(other.presentHighCount))
-                return false;
-            if (presentLowCount == null) {
-                if (other.presentLowCount != null)
-                    return false;
-            } else if (!presentLowCount.equals(other.presentLowCount))
-                return false;
-            if (absentHighCount == null) {
-                if (other.absentHighCount != null)
-                    return false;
-            } else if (!absentHighCount.equals(other.absentHighCount))
-                return false;
-            if (absentLowCount == null) {
-                if (other.absentLowCount != null)
-                    return false;
-            } else if (!absentLowCount.equals(other.absentLowCount))
-                return false;
-            if (experimentCount == null) {
-                if (other.experimentCount != null)
-                    return false;
-            } else if (!experimentCount.equals(other.experimentCount))
-                return false;
-            return true;
         }
 
         @Override

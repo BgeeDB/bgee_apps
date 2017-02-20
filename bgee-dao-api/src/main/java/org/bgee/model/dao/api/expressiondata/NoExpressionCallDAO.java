@@ -272,7 +272,7 @@ public interface NoExpressionCallDAO extends CallDAO<NoExpressionCallDAO.Attribu
          * Default constructor.
          */
         NoExpressionCallTO() {
-            this(null, null, null, null, null, null, null, null, null, null);
+            this(null, null, null, null, null, null, null, null, null);
         }
 
         /**
@@ -284,12 +284,10 @@ public interface NoExpressionCallDAO extends CallDAO<NoExpressionCallDAO.Attribu
          * <p>
          * All of these parameters are optional, so they can be {@code null} when not used.
          * 
-         * @param id                   A {@code String} that is the ID of this call.
-         * @param geneId               A {@code String} that is the ID of the gene associated to 
+         * @param id                   An {@code Integer} that is the ID of this call.
+         * @param bgeeGeneId           An {@code Integer} that is the ID of the gene associated to 
          *                             this call.
-         * @param anatEntityId         A {@code String} that is the ID of the anatomical entity
-         *                             associated to this call. 
-         * @param stageId              A {@code String} that is the ID of the developmental stage 
+         * @param conditionId          An {@code Integer} that is the ID of the condition
          *                             associated to this call. 
          * @param affymetrixData       A {@code DataSate} that is the contribution of Affymetrix  
          *                             data to the generation of this call.
@@ -306,11 +304,11 @@ public interface NoExpressionCallDAO extends CallDAO<NoExpressionCallDAO.Attribu
          *                             part_of relations, even indirect.
          * @param originOfLine         An {@code OriginOfLine} defining the origin of line.
          */
-        public NoExpressionCallTO(String id, String geneId, String anatEntityId, String stageId,
+        public NoExpressionCallTO(Integer id, Integer bgeeGeneId, Integer conditionId,
                 DataState affymetrixData, DataState inSituData,  
                 DataState relaxedInSituData, DataState rnaSeqData, 
                 Boolean includeParentStructures, OriginOfLine originOfLine) {
-            super(id, geneId, anatEntityId, stageId, affymetrixData, null, 
+            super(id, bgeeGeneId, conditionId, affymetrixData, null, 
                     inSituData, relaxedInSituData, rnaSeqData);
             this.includeParentStructures = includeParentStructures;
             this.originOfLine = originOfLine;
@@ -437,42 +435,6 @@ public interface NoExpressionCallDAO extends CallDAO<NoExpressionCallDAO.Attribu
                     " - Include Parent Structures: " + this.isIncludeParentStructures() +
                     " - Origin Of Line: " + this.getOriginOfLine();
         }
-
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = super.hashCode();
-            if (this.useOtherAttributesForHashCodeEquals()) {
-                result = prime * result + 
-                        ((includeParentStructures == null) ? 0 : includeParentStructures.hashCode());
-                result = prime * result +
-                        ((originOfLine == null) ? 0 : originOfLine.hashCode());
-            }
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (!(obj instanceof NoExpressionCallTO)) {
-                return false;
-            }
-            if (!super.equals(obj)) {
-                return false;
-            }
-            if (this.useOtherAttributesForHashCodeEquals()) {
-                NoExpressionCallTO other = (NoExpressionCallTO) obj;
-                if (includeParentStructures != other.includeParentStructures) {
-                    return false;
-                }
-                if (originOfLine != other.originOfLine) {
-                    return false;
-                }
-            }
-            return true;
-        }
     }
     
     /**
@@ -499,35 +461,35 @@ public interface NoExpressionCallDAO extends CallDAO<NoExpressionCallDAO.Attribu
         private static final long serialVersionUID = -5283534395161770005L;
 
         /**
-         * A {@code String} representing the ID of the no-expression call.
+         * A {@code Integer} representing the ID of the no-expression call.
          */
-        private final String noExpressionId;
+        private final Integer noExpressionId;
 
         /**
-         * A {@code String} representing the ID of the global no-expression call.
+         * A {@code Integer} representing the ID of the global no-expression call.
          */
-        private final String globalNoExpressionId;
+        private final Integer globalNoExpressionId;
 
         /**
          * Constructor providing the no-expression call ID and the global no-expression call ID.  
          **/
-        public GlobalNoExpressionToNoExpressionTO(String noExpressionId, 
-                String globalNoExpressionId) {
+        public GlobalNoExpressionToNoExpressionTO(Integer noExpressionId, 
+                Integer globalNoExpressionId) {
             this.noExpressionId = noExpressionId;
             this.globalNoExpressionId = globalNoExpressionId;
         }
 
         /**
-         * @return  the {@code String} representing the ID of the no-expression call.
+         * @return  the {@code Integer} representing the ID of the no-expression call.
          */
-        public String getNoExpressionId() {
+        public Integer getNoExpressionId() {
             return noExpressionId;
         }
 
         /**
-         * @return  the {@code String} representing the ID of the global no-expression call.
+         * @return  the {@code Integer} representing the ID of the global no-expression call.
          */
-        public String getGlobalNoExpressionId() {
+        public Integer getGlobalNoExpressionId() {
             return globalNoExpressionId;
         }
         
@@ -535,45 +497,6 @@ public interface NoExpressionCallDAO extends CallDAO<NoExpressionCallDAO.Attribu
         public String toString() {
             return "noExpressionId: " + noExpressionId + 
                     " - globalNoExpressionId: " + globalNoExpressionId;
-        }
-
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * 
-                    result + ((globalNoExpressionId == null) ? 0 : globalNoExpressionId.hashCode());
-            result = prime * result + ((noExpressionId == null) ? 0 : noExpressionId.hashCode());
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null) {
-                return false;
-            }
-            if (getClass() != obj.getClass()) {
-                return false;
-            }
-            GlobalNoExpressionToNoExpressionTO other = (GlobalNoExpressionToNoExpressionTO) obj;
-            if (globalNoExpressionId == null) {
-                if (other.globalNoExpressionId != null) {
-                    return false;
-                }
-            } else if (!globalNoExpressionId.equals(other.globalNoExpressionId)) {
-                return false;
-            }
-            if (noExpressionId == null) {
-                if (other.noExpressionId != null) {
-                    return false;
-                }
-            } else if (!noExpressionId.equals(other.noExpressionId)) {
-                return false;
-            }
-            return true;
         }
     }
 }

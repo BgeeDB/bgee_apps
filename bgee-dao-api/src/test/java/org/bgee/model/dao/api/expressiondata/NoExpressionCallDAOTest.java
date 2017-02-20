@@ -40,7 +40,7 @@ public class NoExpressionCallDAOTest extends TestAncestor {
      */
     @Test
     public void shouldExtractDataTypesToDataStates() {
-        NoExpressionCallTO callTO = new NoExpressionCallTO(null, null, null, null,
+        NoExpressionCallTO callTO = new NoExpressionCallTO(null, null, null,
                 DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, null,
                 null, null);
         Map<NoExpressionCallDAO.Attribute, DataState> expectedMap = new HashMap<>();
@@ -50,7 +50,7 @@ public class NoExpressionCallDAOTest extends TestAncestor {
         assertEquals("Incorrect data types to data states extracted", expectedMap, 
                 callTO.extractDataTypesToDataStates());
         
-        callTO = new NoExpressionCallTO(null, null, null, null,
+        callTO = new NoExpressionCallTO(null, null, null,
                 DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.HIGHQUALITY,
                 null, null);
         expectedMap = new HashMap<>();
@@ -75,7 +75,7 @@ public class NoExpressionCallDAOTest extends TestAncestor {
      */
     @Test
     public void shouldRetrieveNoExpressionFilteringDataTypes() {
-        NoExpressionCallTO callTO = new NoExpressionCallTO(null, null, null, null,
+        NoExpressionCallTO callTO = new NoExpressionCallTO(null, null, null,
                 DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, DataState.LOWQUALITY,
                 null, null);
         Map<NoExpressionCallDAO.Attribute, DataState> expectedMap = 
@@ -86,7 +86,7 @@ public class NoExpressionCallDAOTest extends TestAncestor {
         assertEquals("Incorrect filtering data types retrieved", expectedMap, 
                 callTO.extractFilteringDataTypes());
         
-        callTO = new NoExpressionCallTO(null, null, null, null,
+        callTO = new NoExpressionCallTO(null, null, null,
                 DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY,
                 null, null);
         expectedMap = new EnumMap<>(NoExpressionCallDAO.Attribute.class);
@@ -97,7 +97,7 @@ public class NoExpressionCallDAOTest extends TestAncestor {
         assertEquals("Incorrect filtering data types retrieved with all LOWQUALITY", expectedMap, 
                 callTO.extractFilteringDataTypes());
         
-        callTO = new NoExpressionCallTO(null, null, null, null,
+        callTO = new NoExpressionCallTO(null, null, null,
                 DataState.NODATA, null, DataState.LOWQUALITY, DataState.NODATA,
                 null, null);
         expectedMap = new EnumMap<>(NoExpressionCallDAO.Attribute.class);
@@ -105,7 +105,7 @@ public class NoExpressionCallDAOTest extends TestAncestor {
         assertEquals("Incorrect filtering data types retrieved with mixed null and NODATA", expectedMap, 
                 callTO.extractFilteringDataTypes());
         
-        callTO = new NoExpressionCallTO(null, null, null, null,
+        callTO = new NoExpressionCallTO(null, null, null,
                 DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY,
                 null, null);
         expectedMap = new EnumMap<>(NoExpressionCallDAO.Attribute.class);

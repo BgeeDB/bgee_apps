@@ -176,10 +176,10 @@ public interface TaxonConstraintDAO {
         private final String entityId;
         
         /**
-         * A {@code String} that is the ID of the species that define the taxon constraint. 
+         * An {@code Integer} that is the ID of the species that define the taxon constraint. 
          * If it is {@code null}, it means that the entity exists in all species.
          */
-        private final String speciesId;
+        private final Integer speciesId;
 
         /**
          * Constructor providing the entity ID and the species ID defining this taxon constraint.
@@ -188,10 +188,10 @@ public interface TaxonConstraintDAO {
          * 
          * @param entityId      A {@code String} that is the ID of the entity that has a taxon 
          *                      constraint. 
-         * @param speciesId     A {@code String} that is the ID of the species that define the 
+         * @param speciesId     An {@code Integer} that is the ID of the species that define the 
          *                      taxon constraint.
          */
-        public TaxonConstraintTO(String entityId, String speciesId) {
+        public TaxonConstraintTO(String entityId, Integer speciesId) {
             this.entityId = entityId;
             this.speciesId = speciesId;
         }
@@ -204,44 +204,14 @@ public interface TaxonConstraintDAO {
         }
 
         /**
-         * @return  the {@code String} that is the ID of the species that define the taxon 
+         * @return  the {@code Integer} that is the ID of the species that define the taxon 
          *          constraint. If it is {@code null}, it means that the entity exists in all 
          *          species.
          */
-        public String getSpeciesId() {
+        public Integer getSpeciesId() {
             return this.speciesId;
         }
 
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + ((entityId == null) ? 0 : entityId.hashCode());
-            result = prime * result + ((speciesId == null) ? 0 : speciesId.hashCode());
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            TaxonConstraintTO other = (TaxonConstraintTO) obj;
-            if (entityId == null) {
-                if (other.entityId != null)
-                    return false;
-            } else if (!entityId.equals(other.entityId))
-                return false;
-            if (speciesId == null) {
-                if (other.speciesId != null)
-                    return false;
-            } else if (!speciesId.equals(other.speciesId))
-                return false;
-            return true;
-        }
         @Override
         public String toString() {
             return "Entity ID: " + this.getEntityId() + " - Species ID: " + this.getSpeciesId();

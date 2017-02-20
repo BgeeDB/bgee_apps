@@ -4,7 +4,7 @@ import java.util.Collection;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
-import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.NamedEntityTO;
 import org.bgee.model.dao.api.exception.DAOException;
 
 
@@ -193,7 +193,7 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
      * @version Bgee 13
      * @since Bgee 13
      */
-    public class AnatEntityTO extends EntityTO {
+    public class AnatEntityTO extends NamedEntityTO<String> {
 
         private static final long serialVersionUID = -4321114125536711089L;
         

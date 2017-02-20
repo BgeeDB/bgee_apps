@@ -4,7 +4,7 @@ import java.util.Collection;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
-import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.NamedEntityTO;
 import org.bgee.model.dao.api.exception.DAOException;
 
 /**
@@ -79,7 +79,7 @@ public interface EvidenceOntologyDAO extends DAO<EvidenceOntologyDAO.Attribute> 
      * @version Bgee 13
      * @since Bgee 13
      */
-    public final class ECOTermTO extends EntityTO {
+    public final class ECOTermTO extends NamedEntityTO<String> {
 
         private static final long serialVersionUID = 5801391933268876747L;
 

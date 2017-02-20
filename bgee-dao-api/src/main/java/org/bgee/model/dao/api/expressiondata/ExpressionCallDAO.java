@@ -483,7 +483,7 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
          */
         public ExpressionCallTO(DataState affymetrixData, DataState estData, DataState inSituData, 
                 DataState rnaSeqData, OriginOfLine anatOrigin, OriginOfLine stageOrigin, Boolean observedData) {
-            this(null, null, null, null, null, affymetrixData, null, estData, null, 
+            this(null, null, null, null, affymetrixData, null, estData, null, 
                     inSituData, null, rnaSeqData, null, 
                  null, null, anatOrigin, stageOrigin, observedData);
         }
@@ -493,12 +493,10 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
          * <p>
          * All of these parameters are optional, so they can be {@code null} when not used.
          * 
-         * @param id                    A {@code String} that is the ID of this call.
-         * @param geneId                A {@code String} that is the ID of the gene 
-         *                              associated to this call.
-         * @param anatEntityId          A {@code String} that is the ID of the anatomical entity
-         *                              associated to this call. 
-         * @param stageId               A {@code String} that is the ID of the developmental stage 
+         * @param id                    An {@code Integer} that is the ID of this call.
+         * @param bgeeGeneId            An {@code Integer} that is the ID of the gene associated to 
+         *                              this call.
+         * @param conditionId           An {@code Integer} that is the ID of the condition
          *                              associated to this call. 
          * @param affymetrixData        A {@code DataSate} that is the contribution of Affymetrix  
          *                              data to the generation of this call.
@@ -527,11 +525,11 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
          *                              was actually observed from experiment, or whether it is 
          *                              generated from some kind of propagation.
          */
-        public ExpressionCallTO(String id, String geneId, String anatEntityId, String stageId,
+        public ExpressionCallTO(Integer id, Integer bgeeGeneId, Integer conditionId,
                 DataState affymetrixData, DataState estData, DataState inSituData, 
                 DataState rnaSeqData, Boolean includeSubstructures, Boolean includeSubStages, 
                 OriginOfLine anatOrigin, OriginOfLine stageOrigin, Boolean observedData) {
-            this(id, geneId, anatEntityId, stageId, null, affymetrixData, null, 
+            this(id, bgeeGeneId, conditionId, null, affymetrixData, null, 
                     estData, null, inSituData, null, rnaSeqData, null, 
                     includeSubstructures, includeSubStages, 
                     anatOrigin, stageOrigin, observedData);
@@ -542,12 +540,10 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
          * <p>
          * All of these parameters are optional, so they can be {@code null} when not used.
          * 
-         * @param id                    A {@code String} that is the ID of this call.
-         * @param geneId                A {@code String} that is the ID of the gene 
-         *                              associated to this call.
-         * @param anatEntityId          A {@code String} that is the ID of the anatomical entity
-         *                              associated to this call. 
-         * @param stageId               A {@code String} that is the ID of the developmental stage 
+         * @param id                    An {@code Integer} that is the ID of this call.
+         * @param bgeeGeneId            An {@code Integer} that is the ID of the gene associated to 
+         *                              this call.
+         * @param conditionId           An {@code Integer} that is the ID of the condition
          *                              associated to this call. 
          * @param globalMeanRank        A {@code BigDecimal} that is the mean rank of the gene 
          *                              in the condition, based on the mean rank of each data type 
@@ -605,14 +601,14 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
          *                              was actually observed from experiment, or whether it is 
          *                              generated from some kind of propagation.
          */
-        public ExpressionCallTO(String id, String geneId, String anatEntityId, String stageId,
+        public ExpressionCallTO(Integer id, Integer bgeeGeneId, Integer conditionId, 
                 BigDecimal globalMeanRank, DataState affymetrixData, BigDecimal affymetrixMeanRank, 
                 DataState estData, BigDecimal estMeanRank, 
                 DataState inSituData, BigDecimal inSituMeanRank, 
                 DataState rnaSeqData, BigDecimal rnaSeqMeanRank, 
                 Boolean includeSubstructures, Boolean includeSubStages, 
                 OriginOfLine anatOrigin, OriginOfLine stageOrigin, Boolean observedData) {
-            super(id, geneId, anatEntityId, stageId, affymetrixData, estData, inSituData, 
+            super(id, bgeeGeneId, conditionId, affymetrixData, estData, inSituData, 
                     null, rnaSeqData);
             this.includeSubstructures = includeSubstructures;
             this.includeSubStages = includeSubStages;
@@ -865,100 +861,6 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
                     " - In situ mean rank: " + this.inSituMeanRank + 
                     " - RNA-Seq mean rank: " + this.rnaSeqMeanRank;
         }
-
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = super.hashCode();
-            if (this.useOtherAttributesForHashCodeEquals()) {
-                result = prime * result + 
-                        ((includeSubStages == null) ? 0 : includeSubStages.hashCode());
-                result = prime * result + 
-                        ((includeSubstructures == null) ? 0 : includeSubstructures.hashCode());
-                result = prime * result +
-                        ((anatOriginOfLine == null) ? 0 : anatOriginOfLine.hashCode());
-                result = prime * result +
-                        ((stageOriginOfLine == null) ? 0 : stageOriginOfLine.hashCode());
-                result = prime * result +
-                        ((observedData == null) ? 0 : observedData.hashCode());
-                
-                result = prime * result + ((affymetrixMeanRank == null) ? 0 : 
-                    affymetrixMeanRank.hashCode());
-                result = prime * result + ((estMeanRank == null) ? 0 : estMeanRank.hashCode());
-                result = prime * result + ((globalMeanRank == null) ? 0 : globalMeanRank.hashCode());
-                result = prime * result + ((inSituMeanRank == null) ? 0 : inSituMeanRank.hashCode());
-                result = prime * result + ((rnaSeqMeanRank == null) ? 0 : rnaSeqMeanRank.hashCode());
-            }
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (!(obj instanceof ExpressionCallTO)) {
-                return false;
-            }
-            if (!super.equals(obj)) {
-                return false;
-            }
-            if (this.useOtherAttributesForHashCodeEquals()) {
-                ExpressionCallTO other = (ExpressionCallTO) obj;
-                if (includeSubStages != other.includeSubStages) {
-                    return false;
-                }
-                if (includeSubstructures != other.includeSubstructures) {
-                    return false;
-                }
-                if (anatOriginOfLine != other.anatOriginOfLine) {
-                    return false;
-                }
-                if (stageOriginOfLine != other.stageOriginOfLine) {
-                    return false;
-                }
-                if (observedData != other.observedData) {
-                    return false;
-                }
-                
-                if (affymetrixMeanRank == null) {
-                    if (other.affymetrixMeanRank != null) {
-                        return false;
-                    }
-                } else if (!affymetrixMeanRank.equals(other.affymetrixMeanRank)) {
-                    return false;
-                }
-                if (estMeanRank == null) {
-                    if (other.estMeanRank != null) {
-                        return false;
-                    }
-                } else if (!estMeanRank.equals(other.estMeanRank)) {
-                    return false;
-                }
-                if (globalMeanRank == null) {
-                    if (other.globalMeanRank != null) {
-                        return false;
-                    }
-                } else if (!globalMeanRank.equals(other.globalMeanRank)) {
-                    return false;
-                }
-                if (inSituMeanRank == null) {
-                    if (other.inSituMeanRank != null) {
-                        return false;
-                    }
-                } else if (!inSituMeanRank.equals(other.inSituMeanRank)) {
-                    return false;
-                }
-                if (rnaSeqMeanRank == null) {
-                    if (other.rnaSeqMeanRank != null) {
-                        return false;
-                    }
-                } else if (!rnaSeqMeanRank.equals(other.rnaSeqMeanRank)) {
-                    return false;
-                }
-            }
-            return true;
-        }
     }
     
     /**
@@ -991,40 +893,40 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
         private static final long serialVersionUID = -46963749760698289L;
 
         /**
-         * A {@code String} representing the ID of the expression call.
+         * A {@code Integer} representing the ID of the expression call.
          */
-        private final String expressionId;
+        private final Integer expressionId;
 
         /**
-         * A {@code String} representing the ID of the global expression call.
+         * A {@code Integer} representing the ID of the global expression call.
          */
-        private final String globalExpressionId;
+        private final Integer globalExpressionId;
 
         /**
          * Constructor providing the expression call ID (see {@link #getExpressionId()}) and 
          * the global expression call ID (see {@link #getGlobalExpressionId()}).
          * 
-         * @param expressionId          A {@code String} that is the ID of the expression call.
-         * @param globalExpressionId    A {@code String} that is the ID of the global expression 
+         * @param expressionId          A {@code Integer} that is the ID of the expression call.
+         * @param globalExpressionId    A {@code Integer} that is the ID of the global expression 
          *                              call.
          **/
-        public GlobalExpressionToExpressionTO(String expressionId, String globalExpressionId) {
+        public GlobalExpressionToExpressionTO(Integer expressionId, Integer globalExpressionId) {
             super();
             this.expressionId = expressionId;
             this.globalExpressionId = globalExpressionId;
         }
 
         /**
-         * @return  the {@code String} representing the ID of the expression call.
+         * @return  the {@code Integer} representing the ID of the expression call.
          */
-        public String getExpressionId() {
+        public Integer getExpressionId() {
             return expressionId;
         }
 
         /**
-         * @return  the {@code String} representing the ID of the global expression call.
+         * @return  the {@code Integer} representing the ID of the global expression call.
          */
-        public String getGlobalExpressionId() {
+        public Integer getGlobalExpressionId() {
             return globalExpressionId;
         }
         
@@ -1032,45 +934,6 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
         public String toString() {
             return "expressionId: " + expressionId + 
                     " - globalExpressionId: " + globalExpressionId;
-        }
-
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + ((expressionId == null) ? 0 : expressionId.hashCode());
-            result = prime * result + 
-                    ((globalExpressionId == null) ? 0 : globalExpressionId.hashCode());
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null) {
-                return false;
-            }
-            if (getClass() != obj.getClass()) {
-                return false;
-            }
-            GlobalExpressionToExpressionTO other = (GlobalExpressionToExpressionTO) obj;
-            if (expressionId == null) {
-                if (other.expressionId != null) {
-                    return false;
-                }
-            } else if (!expressionId.equals(other.expressionId)) {
-                return false;
-            }
-            if (globalExpressionId == null) {
-                if (other.globalExpressionId != null) {
-                    return false;
-                }
-            } else if (!globalExpressionId.equals(other.globalExpressionId)) {
-                return false;
-            }
-            return true;
         }
     }
 }

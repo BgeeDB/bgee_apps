@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -96,7 +97,6 @@ public class TOComparator {
      *              attributes equal.
      * @param <T>   A {@code TransferObject} type parameter.
      */
-    //TODO: when NamedEntityTO will be implemented, check for EntityTO instances 
     //to properly be sure that there is a getId() method
     public static <T extends TransferObject> boolean areTOsEqual(T to1, T to2, boolean compareId) {
         log.entry(to1, to2);
@@ -168,7 +168,7 @@ public class TOComparator {
         } else if (to1 instanceof KeywordTO) {
             return log.exit(areTOsEqual((KeywordTO) to1, (KeywordTO) to2, compareId));
         } else if (to1 instanceof EntityToKeywordTO) {
-            return log.exit(areTOsEqual((EntityToKeywordTO) to1, (EntityToKeywordTO) to2));
+            return log.exit(areTOsEqual((EntityToKeywordTO<?>) to1, (EntityToKeywordTO<?>) to2));
         } else if (to1 instanceof DownloadFileTO) {
             return log.exit(areTOsEqual( (DownloadFileTO)to1, (DownloadFileTO) to2, compareId));
         } else if (to2 instanceof SpeciesDataGroupTO) {
@@ -221,7 +221,6 @@ public class TOComparator {
      *              with all attributes equal.
      * @param <T>   A {@code TransferObject} type parameter.
      */
-    //TODO: when NamedEntityTO will be implemented, check for EntityTO instances 
     //to properly be sure that there is a getId() method
     public static <T extends TransferObject> boolean areTOCollectionsEqual(Collection<T> c1, 
             Collection<T> c2, boolean compareId) {
@@ -297,10 +296,30 @@ public class TOComparator {
      * @return          {@code true} if {@code entity1} and {@code entity2} have 
      *                  all attributes equal.
      */
-    private static boolean areEntityTOsEqual(EntityTO entity1, EntityTO entity2, 
+    private static boolean areEntityTOsEqual(EntityTO<?> entity1, EntityTO<?> entity2, 
             boolean compareId) {
         log.entry(entity1, entity2, compareId);
-        if ((!compareId || StringUtils.equals(entity1.getId(), entity2.getId())) &&
+        return log.exit(!compareId || Objects.equals(entity1.getId(), entity2.getId()));
+    }
+    /**
+     * Method to compare two {@code EntityTO}s, to check for complete equality of each attribute.
+     * This is because the {@code equals} method of {@code EntityTO}s is solely based 
+     * on their ID, not on other attributes.
+     * <p>
+     * If {@code compareId} is {@code false}, the value returned by the method {@code getId} 
+     * will not be used for comparison.
+     * 
+     * @param entity1   An {@code EntityTO} to be compared to {@code entity2}.
+     * @param entity2   An {@code EntityTO} to be compared to {@code entity1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
+     *                  used for comparisons. 
+     * @return          {@code true} if {@code entity1} and {@code entity2} have 
+     *                  all attributes equal.
+     */
+    private static boolean areEntityTOsEqual(NamedEntityTO<?> entity1, NamedEntityTO<?> entity2, 
+            boolean compareId) {
+        log.entry(entity1, entity2, compareId);
+        if (areEntityTOsEqual((EntityTO<?>) entity1, (EntityTO<?>) entity2, compareId) &&
                 StringUtils.equals(entity1.getName(), entity2.getName()) &&
                 StringUtils.equals(entity1.getDescription(), entity2.getDescription())) {
             return log.exit(true);
@@ -328,11 +347,10 @@ public class TOComparator {
         if (TOComparator.areEntityTOsEqual(spTO1, spTO2, compareId) && 
                 StringUtils.equals(spTO1.getGenus(), spTO2.getGenus()) &&
                 StringUtils.equals(spTO1.getSpeciesName(), spTO2.getSpeciesName()) &&
-                StringUtils.equals(spTO1.getParentTaxonId(), spTO2.getParentTaxonId()) &&
+                Objects.equals(spTO1.getParentTaxonId(), spTO2.getParentTaxonId()) &&
                 StringUtils.equals(spTO1.getGenomeFilePath(), spTO2.getGenomeFilePath()) &&
                 StringUtils.equals(spTO1.getGenomeVersion(), spTO2.getGenomeVersion()) &&
-                StringUtils.equals(spTO1.getGenomeSpeciesId(), spTO2.getGenomeSpeciesId()) &&
-                StringUtils.equals(spTO1.getFakeGeneIdPrefix(), spTO2.getFakeGeneIdPrefix())) {
+                Objects.equals(spTO1.getGenomeSpeciesId(), spTO2.getGenomeSpeciesId())) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -358,10 +376,10 @@ public class TOComparator {
         log.entry(taxonTO1, taxonTO2, compareId);
         if (TOComparator.areEntityTOsEqual(taxonTO1, taxonTO2, compareId) && 
                 StringUtils.equals(taxonTO1.getScientificName(), taxonTO2.getScientificName()) &&
-                taxonTO1.getLeftBound() == taxonTO2.getLeftBound() && 
-                taxonTO1.getRightBound() == taxonTO2.getRightBound() && 
-                taxonTO1.getLevel() == taxonTO2.getLevel() && 
-                taxonTO1.isLca() == taxonTO2.isLca()) {
+                Objects.equals(taxonTO1.getLeftBound(), taxonTO2.getLeftBound()) && 
+                Objects.equals(taxonTO1.getRightBound(), taxonTO2.getRightBound()) && 
+                Objects.equals(taxonTO1.getLevel(), taxonTO2.getLevel()) && 
+                Objects.equals(taxonTO1.isLca(), taxonTO2.isLca())) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -386,10 +404,8 @@ public class TOComparator {
             boolean compareId) {
         log.entry(goTermTO1, goTermTO2, compareId);
         if (TOComparator.areEntityTOsEqual(goTermTO1, goTermTO2, compareId) && 
-                (goTermTO1.getDomain() == null && goTermTO2.getDomain() == null || 
-                goTermTO1.getDomain() != null && goTermTO1.getDomain().equals(goTermTO2.getDomain())) && 
-                (goTermTO1.getAltIds() == null && goTermTO2.getAltIds() == null || 
-                goTermTO1.getAltIds() != null && goTermTO1.getAltIds().equals(goTermTO2.getAltIds()))) {
+                Objects.equals(goTermTO1.getDomain(), goTermTO2.getDomain()) && 
+                Objects.equals(goTermTO1.getAltIds(), goTermTO2.getAltIds())) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -414,10 +430,11 @@ public class TOComparator {
             boolean compareId) {
         log.entry(geneTO1, geneTO2, compareId);
         if (TOComparator.areEntityTOsEqual(geneTO1, geneTO2, compareId) && 
-                geneTO1.getSpeciesId() == geneTO2.getSpeciesId() && 
-                geneTO1.getGeneBioTypeId() == geneTO2.getGeneBioTypeId() && 
-                geneTO1.getOMAParentNodeId() == geneTO2.getOMAParentNodeId() && 
-                geneTO1.isEnsemblGene() == geneTO2.isEnsemblGene()) {
+                Objects.equals(geneTO1.getGeneId(), geneTO2.getGeneId()) && 
+                Objects.equals(geneTO1.getSpeciesId(), geneTO2.getSpeciesId()) && 
+                Objects.equals(geneTO1.getGeneBioTypeId(), geneTO2.getGeneBioTypeId()) && 
+                Objects.equals(geneTO1.getOMAParentNodeId(), geneTO2.getOMAParentNodeId()) && 
+                Objects.equals(geneTO1.isEnsemblGene(), geneTO2.isEnsemblGene())) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -443,9 +460,9 @@ public class TOComparator {
         log.entry(to1, to2, compareId);
         if (TOComparator.areEntityTOsEqual(to1, to2, compareId) && 
                 StringUtils.equals(to1.getOMAGroupId(), to2.getOMAGroupId()) && 
-                to1.getLeftBound() == to2.getLeftBound() && 
-                to1.getRightBound() == to2.getRightBound() && 
-                to1.getTaxonId() == to2.getTaxonId()) {
+                Objects.equals(to1.getLeftBound(), to2.getLeftBound()) && 
+                Objects.equals(to1.getRightBound(), to2.getRightBound()) && 
+                Objects.equals(to1.getTaxonId(), to2.getTaxonId())) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -501,7 +518,7 @@ public class TOComparator {
         if (TOComparator.areEntityTOsEqual(anatEntity1, anatEntity2, compareId) && 
                 StringUtils.equals(anatEntity1.getStartStageId(), anatEntity2.getStartStageId()) &&
                 StringUtils.equals(anatEntity1.getEndStageId(), anatEntity2.getEndStageId()) && 
-                anatEntity1.isNonInformative() == anatEntity2.isNonInformative()) {
+                Objects.equals(anatEntity1.isNonInformative(), anatEntity2.isNonInformative())) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -510,13 +527,12 @@ public class TOComparator {
     private static boolean areTOsEqual(DownloadFileTO to1, DownloadFileTO to2, boolean compareId){
         log.entry(to1, to2, compareId);
         return log.exit(TOComparator.areEntityTOsEqual(to1, to2, compareId) && 
-                to1.getCategory() == to2.getCategory()
+                Objects.equals(to1.getCategory(), to2.getCategory())
                 && StringUtils.equals(to1.getPath(), to2.getPath())
                 //not possible to simply use to1.getSize() == to2.getSize() for Long value > 127, 
                 //see http://stackoverflow.com/a/20542511/1768736
-                && (to1.getSize() == null && to2.getSize() == null || 
-                    to1.getSize().equals(to2.getSize()))
-                && StringUtils.equals(to1.getSpeciesDataGroupId(), to2.getSpeciesDataGroupId())
+                && Objects.equals(to1.getSize(), to2.getSize())
+                && Objects.equals(to1.getSpeciesDataGroupId(), to2.getSpeciesDataGroupId())
         );
     }
 
@@ -538,8 +554,7 @@ public class TOComparator {
             boolean compareId){
         log.entry(to1, to2, compareId);
         return log.exit(TOComparator.areEntityTOsEqual(to1, to2, compareId) && 
-                (to1.getPreferredOrder() == null && to2.getPreferredOrder() == null || 
-                 to1.getPreferredOrder() != null && to1.getPreferredOrder().equals(to2.getPreferredOrder())));
+                Objects.equals(to1.getPreferredOrder(), to2.getPreferredOrder()));
     }
     
     /**
@@ -553,8 +568,8 @@ public class TOComparator {
     private static boolean areTOsEqual(SpeciesToDataGroupTO to1, SpeciesToDataGroupTO to2){
         log.entry(to1, to2);
         
-        if (StringUtils.equals(to1.getGroupId(), to2.getGroupId()) && 
-                StringUtils.equals(to1.getSpeciesId(), to2.getSpeciesId())) {
+        if (Objects.equals(to1.getGroupId(), to2.getGroupId()) && 
+                Objects.equals(to1.getSpeciesId(), to2.getSpeciesId())) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -579,8 +594,8 @@ public class TOComparator {
             boolean compareId) {
         log.entry(to1, to2, compareId);
         if (TOComparator.areEntityTOsEqual(to1, to2, compareId) && 
-                to1.isGroupingStage() == to2.isGroupingStage() && 
-                to1.isTooGranular() == to2.isTooGranular()) {
+                Objects.equals(to1.isGroupingStage(), to2.isGroupingStage()) && 
+                Objects.equals(to1.isTooGranular(), to2.isTooGranular())) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -598,10 +613,8 @@ public class TOComparator {
     private static boolean areTOsEqual(TaxonConstraintTO to1, TaxonConstraintTO to2) {
         log.entry(to1, to2);
 
-        //for now, the equals method of TaxonConstraintTO takes into account 
-        //all attributes, so we can use it directly. We still keep the method 
-        //areTOsEqual for abstraction purpose.
-        return log.exit(to1.equals(to2));
+        return log.exit(Objects.equals(to1.getEntityId(), to2.getEntityId()) && 
+                Objects.equals(to1.getSpeciesId(), to2.getSpeciesId()));
     }
 
     /**
@@ -622,14 +635,11 @@ public class TOComparator {
             boolean compareId) {
         log.entry(to1, to2, compareId);
 
-        if ((!compareId || (to1.getId() == null && to2.getId() == null || 
-                    to1.getId() != null && to1.getId().equals(to2.getId()))) && 
-                (to1.getSourceId() == null && to2.getSourceId() == null || 
-                    to1.getSourceId() != null && to1.getSourceId().equals(to2.getSourceId())) && 
-                (to1.getTargetId() == null && to2.getTargetId() == null || 
-                    to1.getTargetId() != null && to1.getTargetId().equals(to2.getTargetId())) && 
-                to1.getRelationStatus() == to2.getRelationStatus() && 
-                to1.getRelationType() == to2.getRelationType()) {
+        if ((!compareId || Objects.equals(to1.getId(), to2.getId())) && 
+                Objects.equals(to1.getSourceId(), to2.getSourceId()) && 
+                Objects.equals(to1.getTargetId(), to2.getTargetId()) && 
+                Objects.equals(to1.getRelationStatus(), to2.getRelationStatus()) && 
+                Objects.equals(to1.getRelationType(), to2.getRelationType())) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -650,11 +660,11 @@ public class TOComparator {
     private static boolean areTOsEqual(ConditionTO to1, ConditionTO to2, boolean compareId) {
         log.entry(to1, to2, compareId);
 
-        if ((!compareId || to1.getId() == to2.getId()) && 
-                to1.getExprMappedConditionId() == to2.getExprMappedConditionId() &&
+        if ((!compareId || Objects.equals(to1.getId(), to2.getId())) && 
+                Objects.equals(to1.getExprMappedConditionId(), to2.getExprMappedConditionId()) &&
                 StringUtils.equals(to1.getAnatEntityId(), to2.getAnatEntityId()) && 
                 StringUtils.equals(to1.getStageId(), to2.getStageId()) && 
-                to1.getSpeciesId() == to2.getSpeciesId()) {
+                Objects.equals(to1.getSpeciesId(), to2.getSpeciesId())) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -677,15 +687,14 @@ public class TOComparator {
     private static boolean areCallTOsEqual(CallTO<?> to1, CallTO<?> to2, 
             boolean compareId) {
         log.entry(to1, to2, compareId);
-        if ((!compareId || StringUtils.equals(to1.getId(), to2.getId())) &&
-                StringUtils.equals(to1.getGeneId(), to2.getGeneId()) &&
-                StringUtils.equals(to1.getStageId(), to2.getStageId()) &&
-                StringUtils.equals(to1.getAnatEntityId(), to2.getAnatEntityId()) &&
-                to1.getAffymetrixData() == to2.getAffymetrixData() &&
-                to1.getESTData() == to2.getESTData() &&
-                to1.getInSituData() == to2.getInSituData() &&
-                to1.getRelaxedInSituData() == to2.getRelaxedInSituData() &&
-                to1.getRNASeqData() == to2.getRNASeqData()) {
+        if (areEntityTOsEqual(to1, to2, compareId) &&
+                Objects.equals(to1.getBgeeGeneId(), to2.getBgeeGeneId()) &&
+                Objects.equals(to1.getConditionId(), to2.getConditionId()) &&
+                Objects.equals(to1.getAffymetrixData(), to2.getAffymetrixData()) &&
+                Objects.equals(to1.getESTData(), to2.getESTData()) &&
+                Objects.equals(to1.getInSituData(), to2.getInSituData()) &&
+                Objects.equals(to1.getRelaxedInSituData(), to2.getRelaxedInSituData()) &&
+                Objects.equals(to1.getRNASeqData(), to2.getRNASeqData())) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -709,11 +718,11 @@ public class TOComparator {
             boolean compareId) {
         log.entry(to1, to2, compareId);
         if (TOComparator.areCallTOsEqual(to1, to2, compareId) && 
-                to1.isIncludeSubstructures() == to2.isIncludeSubstructures() && 
-                to1.isIncludeSubStages() == to2.isIncludeSubStages() &&
-                to1.getAnatOriginOfLine() == to2.getAnatOriginOfLine() &&
-                to1.getStageOriginOfLine() == to2.getStageOriginOfLine() &&
-                to1.isObservedData() == to2.isObservedData() &&
+                Objects.equals(to1.isIncludeSubstructures(), to2.isIncludeSubstructures()) && 
+                Objects.equals(to1.isIncludeSubStages(), to2.isIncludeSubStages()) &&
+                Objects.equals(to1.getAnatOriginOfLine(), to2.getAnatOriginOfLine()) &&
+                Objects.equals(to1.getStageOriginOfLine(), to2.getStageOriginOfLine()) &&
+                Objects.equals(to1.isObservedData(), to2.isObservedData()) &&
                 areBigDecimalEquals(to1.getGlobalMeanRank(), to2.getGlobalMeanRank()) &&
                 areBigDecimalEquals(to1.getAffymetrixMeanRank(), to2.getAffymetrixMeanRank()) &&
                 areBigDecimalEquals(to1.getESTMeanRank(), to2.getESTMeanRank()) &&
@@ -742,8 +751,8 @@ public class TOComparator {
             boolean compareId) {
         log.entry(to1, to2);
         if (TOComparator.areCallTOsEqual(to1, to2, compareId) && 
-                to1.isIncludeParentStructures() == to2.isIncludeParentStructures() && 
-                to1.getOriginOfLine() == to2.getOriginOfLine()) {
+                Objects.equals(to1.isIncludeParentStructures(), to2.isIncludeParentStructures()) && 
+                Objects.equals(to1.getOriginOfLine(), to2.getOriginOfLine())) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -764,13 +773,13 @@ public class TOComparator {
      */
     private static boolean areTOsEqual(ExperimentExpressionTO to1, ExperimentExpressionTO to2) {
         log.entry(to1, to2);
-        if (to1.getExpressionId() == to2.getExpressionId() && 
-                to1.getExperimentId() == to2.getExperimentId() && 
-                to1.getPresentHighCount() == to2.getPresentHighCount() && 
-                to1.getPresentLowCount() == to2.getPresentLowCount() && 
-                to1.getAbsentHighCount() == to2.getAbsentHighCount() &&
-                to1.getAbsentLowCount() == to2.getAbsentLowCount() &&
-                to1.getExperimentCount() == to2.getExperimentCount()) {
+        if (Objects.equals(to1.getExpressionId(), to2.getExpressionId()) && 
+                Objects.equals(to1.getExperimentId(), to2.getExperimentId()) && 
+                Objects.equals(to1.getPresentHighCount(), to2.getPresentHighCount()) && 
+                Objects.equals(to1.getPresentLowCount(), to2.getPresentLowCount()) && 
+                Objects.equals(to1.getAbsentHighCount(), to2.getAbsentHighCount()) &&
+                Objects.equals(to1.getAbsentLowCount(), to2.getAbsentLowCount()) &&
+                Objects.equals(to1.getExperimentCount(), to2.getExperimentCount())) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -788,8 +797,8 @@ public class TOComparator {
     private static boolean areTOsEqual(GlobalExpressionToExpressionTO to1, 
             GlobalExpressionToExpressionTO to2) {
         log.entry(to1, to2);
-        if (to1.getExpressionId() == to2.getExpressionId() && 
-                to1.getGlobalExpressionId() == to2.getGlobalExpressionId()) {
+        if (Objects.equals(to1.getExpressionId(), to2.getExpressionId()) && 
+                Objects.equals(to1.getGlobalExpressionId(), to2.getGlobalExpressionId())) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -807,8 +816,8 @@ public class TOComparator {
     private static boolean areTOsEqual(GlobalNoExpressionToNoExpressionTO to1, 
             GlobalNoExpressionToNoExpressionTO to2) {
         log.entry(to1, to2);
-        if (to1.getNoExpressionId() == to2.getNoExpressionId() && 
-                to1.getGlobalNoExpressionId() == to2.getGlobalNoExpressionId()) {
+        if (Objects.equals(to1.getNoExpressionId(), to2.getNoExpressionId()) && 
+                Objects.equals(to1.getGlobalNoExpressionId(), to2.getGlobalNoExpressionId())) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -831,17 +840,17 @@ public class TOComparator {
             boolean compareId) {
         log.entry(to1, to2);
         if (TOComparator.areCallTOsEqual(to1, to2, compareId) && 
-                to1.getComparisonFactor() == to2.getComparisonFactor() &&
-                to1.getDiffExprCallTypeAffymetrix() == to2.getDiffExprCallTypeAffymetrix() &&
+                Objects.equals(to1.getComparisonFactor(), to2.getComparisonFactor()) &&
+                Objects.equals(to1.getDiffExprCallTypeAffymetrix(), to2.getDiffExprCallTypeAffymetrix()) &&
                 TOComparator.areNearlyEqualFloat(
                         to1.getBestPValueAffymetrix(), to2.getBestPValueAffymetrix()) &&
-                to1.getConsistentDEACountAffymetrix() == to2.getConsistentDEACountAffymetrix() &&
-                to1.getInconsistentDEACountAffymetrix() == to2.getInconsistentDEACountAffymetrix() &&
-                to1.getDiffExprCallTypeRNASeq() == to2.getDiffExprCallTypeRNASeq() &&
+                Objects.equals(to1.getConsistentDEACountAffymetrix(), to2.getConsistentDEACountAffymetrix()) &&
+                Objects.equals(to1.getInconsistentDEACountAffymetrix(), to2.getInconsistentDEACountAffymetrix()) &&
+                Objects.equals(to1.getDiffExprCallTypeRNASeq(), to2.getDiffExprCallTypeRNASeq()) &&
                 TOComparator.areNearlyEqualFloat(
                         to1.getBestPValueRNASeq(), to2.getBestPValueRNASeq()) &&
-                to1.getConsistentDEACountRNASeq() == to2.getConsistentDEACountRNASeq() &&
-                to1.getInconsistentDEACountRNASeq() == to2.getInconsistentDEACountRNASeq()) {
+                Objects.equals(to1.getConsistentDEACountRNASeq(), to2.getConsistentDEACountRNASeq()) &&
+                Objects.equals(to1.getInconsistentDEACountRNASeq(), to2.getInconsistentDEACountRNASeq())) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -863,9 +872,9 @@ public class TOComparator {
     private static boolean areTOsEqual(CIOStatementTO to1, CIOStatementTO to2, boolean compareId) {
         log.entry(to1, to2);
         if (TOComparator.areEntityTOsEqual(to1, to2, compareId) && 
-                to1.getConfidenceLevel() == to2.getConfidenceLevel() &&
-                to1.getEvidenceConcordance() == to2.getEvidenceConcordance() &&
-                to1.getEvidenceTypeConcordance() == to2.getEvidenceTypeConcordance()) {
+                Objects.equals(to1.getConfidenceLevel(), to2.getConfidenceLevel()) &&
+                Objects.equals(to1.getEvidenceConcordance(), to2.getEvidenceConcordance()) &&
+                Objects.equals(to1.getEvidenceTypeConcordance(), to2.getEvidenceTypeConcordance())) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -902,7 +911,7 @@ public class TOComparator {
         log.entry(to1, to2);
         
         if (StringUtils.equals(to1.getSummarySimilarityAnnotationId(), to2.getSummarySimilarityAnnotationId()) &&
-            to1.isNegated() == to2.isNegated() &&
+            Objects.equals(to1.isNegated(), to2.isNegated()) &&
             StringUtils.equals(to1.getECOId(), to2.getECOId()) &&
             StringUtils.equals(to1.getCIOId(), to2.getCIOId()) &&
             StringUtils.equals(to1.getReferenceId(), to2.getReferenceId()) &&
@@ -910,9 +919,7 @@ public class TOComparator {
             StringUtils.equals(to1.getSupportingText(), to2.getSupportingText()) &&
             StringUtils.equals(to1.getAssignedBy(), to2.getAssignedBy()) &&
             StringUtils.equals(to1.getCurator(), to2.getCurator()) &&
-            (to1.getAnnotationDate() == to2.getAnnotationDate() ||
-                (to1.getAnnotationDate() != null && 
-                to1.getAnnotationDate().equals(to2.getAnnotationDate())))) {
+            Objects.equals(to1.getAnnotationDate(), to2.getAnnotationDate())) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -931,7 +938,7 @@ public class TOComparator {
         log.entry(to1, to2);
         if (StringUtils.equals(to1.getId(), to2.getId()) &&
             StringUtils.equals(to1.getTaxonId(), to2.getTaxonId()) &&
-            to1.isNegated() == to2.isNegated() &&
+            Objects.equals(to1.isNegated(), to2.isNegated()) &&
             StringUtils.equals(to1.getCIOId(), to2.getCIOId())) {
             return log.exit(true);
         }
@@ -999,10 +1006,10 @@ public class TOComparator {
      * @param to2       A {@code EntityToKeywordTO} to be compared to {@code to1}.
      * @return      {@code true} if {@code to1} and {@code to2} have all attributes equal.
      */
-    private static boolean areTOsEqual(EntityToKeywordTO to1, EntityToKeywordTO to2) {
+    private static boolean areTOsEqual(EntityToKeywordTO<?> to1, EntityToKeywordTO<?> to2) {
         log.entry(to1, to2);
-        if (StringUtils.equals(to1.getEntityId(), to2.getEntityId()) &&
-                StringUtils.equals(to1.getKeywordId(), to2.getKeywordId())) {
+        if (Objects.equals(to1.getEntityId(), to2.getEntityId()) &&
+                Objects.equals(to1.getKeywordId(), to2.getKeywordId())) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -1025,13 +1032,11 @@ public class TOComparator {
                 StringUtils.equals(to1.getExperimentUrl(), to2.getExperimentUrl()) &&
                 StringUtils.equals(to1.getEvidenceUrl(), to2.getEvidenceUrl()) &&
                 StringUtils.equals(to1.getBaseUrl(), to2.getBaseUrl()) &&
-                (to1.getReleaseDate() == to2.getReleaseDate() ||
-                    (to1.getReleaseDate() != null && to1.getReleaseDate().equals(to2.getReleaseDate()))) &&
+                Objects.equals(to1.getReleaseDate(), to2.getReleaseDate()) &&
                 StringUtils.equals(to1.getReleaseVersion(), to2.getReleaseVersion()) &&
-                to1.isToDisplay() == to2.isToDisplay() &&
-                to1.getSourceCategory() == to2.getSourceCategory() &&
-                (to1.getDisplayOrder() == to2.getDisplayOrder() ||
-                    (to1.getDisplayOrder() != null && to1.getDisplayOrder().equals(to2.getDisplayOrder())))) {
+                Objects.equals(to1.isToDisplay(), to2.isToDisplay()) &&
+                Objects.equals(to1.getSourceCategory(), to2.getSourceCategory()) &&
+                Objects.equals(to1.getDisplayOrder(), to2.getDisplayOrder())) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -1047,10 +1052,10 @@ public class TOComparator {
      */
     private static boolean areTOsEqual(SourceToSpeciesTO to1, SourceToSpeciesTO to2) {
         log.entry(to1, to2);
-        if (StringUtils.equals(to1.getDataSourceId(), to2.getDataSourceId()) &&
-                StringUtils.equals(to1.getSpeciesId(), to2.getSpeciesId()) &&
-                to1.getDataType() == to2.getDataType() &&
-                to1.getInfoType() == to2.getInfoType()) {
+        if (Objects.equals(to1.getDataSourceId(), to2.getDataSourceId()) &&
+                Objects.equals(to1.getSpeciesId(), to2.getSpeciesId()) &&
+                Objects.equals(to1.getDataType(), to2.getDataType()) &&
+                Objects.equals(to1.getInfoType(), to2.getInfoType())) {
             return log.exit(true);
         }
         return log.exit(false);

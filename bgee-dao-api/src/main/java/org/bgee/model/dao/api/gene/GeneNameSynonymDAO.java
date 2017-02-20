@@ -1,6 +1,5 @@
 package org.bgee.model.dao.api.gene;
 
-import java.util.Collection;
 import java.util.Set;
 
 import org.bgee.model.dao.api.DAO;
@@ -34,10 +33,10 @@ public interface GeneNameSynonymDAO extends DAO<GeneNameSynonymDAO.Attribute> {
 	
 	/**
 	 * Loads the gene name synonyms for a set of genes
-	 * @param geneIds A {@code Set} of gene IDs.
+	 * @param bgeeGeneIds A {@code Set} of gene IDs.
 	 * @return A {@code GeneNameSynonymTOResultSet} encapsulating the result.
 	 */
-    public GeneNameSynonymTOResultSet getGeneNameSynonyms(Set<String> geneIds);
+    public GeneNameSynonymTOResultSet getGeneNameSynonyms(Set<Integer> bgeeGeneIds);
 	
     /**
      * {@code DAOResultSet} specifics to {@code GeneNameSynonymTO}s
@@ -63,7 +62,7 @@ public interface GeneNameSynonymDAO extends DAO<GeneNameSynonymDAO.Attribute> {
 		/**
 		 * The gene ID
 		 */
-		private final String geneId;
+		private final Integer bgeeGeneId;
 		
 		/**
 		 * The synonym
@@ -72,19 +71,19 @@ public interface GeneNameSynonymDAO extends DAO<GeneNameSynonymDAO.Attribute> {
 		
 		/**
 		 * Constructor providing the two fields of the {@code GeneNameSynonymTO}
-		 * @param geneId A {@code String} representing the gene id
+		 * @param bgeeGeneId      An {@code Integer} representing the gene id
 		 * @param geneNameSynonym A {@code String} containing the gene name synonyms
 		 */
-		public GeneNameSynonymTO(String geneId, String geneNameSynonym){
-			this.geneId = geneId;
+		public GeneNameSynonymTO(Integer bgeeGeneId, String geneNameSynonym){
+			this.bgeeGeneId = bgeeGeneId;
 			this.geneNameSynonym = geneNameSynonym;
 		}
 
 		/**
 		 * @return the geneId
 		 */
-		public String getGeneId() {
-			return geneId;
+		public Integer getBgeeGeneId() {
+			return bgeeGeneId;
 		}
 
 		/**

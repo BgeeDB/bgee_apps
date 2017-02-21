@@ -28,9 +28,8 @@ public interface DiffExpressionCallDAO
      * {@code DiffExpressionCallTO}s obtained from this {@code DiffExpressionCallDAO}.
      * <ul>
      * <li>{@code ID}: corresponds to {@link DiffExpressionCallTO#getId()}.
-     * <li>{@code GENE_ID}: corresponds to {@link DiffExpressionCallTO#getGeneId()}.
-     * <li>{@code ANAT_ENTITY_ID}: corresponds to {@link DiffExpressionCallTO#getAnatEntityId()}.
-     * <li>{@code STAGE_ID}: corresponds to {@link DiffExpressionCallTO#getStageId()}.
+     * <li>{@code GENE_ID}: corresponds to {@link DiffExpressionCallTO#getBgeeGeneId()}.
+     * <li>{@code CONDITION_ID}: corresponds to {@link DiffExpressionCallTO#getConditionId()}.
      * <li>{@code COMPARISON_FACTOR}: corresponds to 
      *                                  {@link DiffExpressionCallTO#getComparisonFactor()}.
      * <li>{@code DIFF_EXPR_CALL_AFFYMETRIX}: corresponds to 
@@ -59,7 +58,7 @@ public interface DiffExpressionCallDAO
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements CallDAO.Attribute {
-        ID(false), GENE_ID(false), ANAT_ENTITY_ID(false), STAGE_ID(false), COMPARISON_FACTOR(false),
+        ID(false), GENE_ID(false), CONDITION_ID(false), COMPARISON_FACTOR(false),
         DIFF_EXPR_CALL_AFFYMETRIX(false), DIFF_EXPR_AFFYMETRIX_DATA(true), BEST_P_VALUE_AFFYMETRIX(false), 
         CONSISTENT_DEA_COUNT_AFFYMETRIX(false), INCONSISTENT_DEA_COUNT_AFFYMETRIX(false),
         DIFF_EXPR_CALL_RNA_SEQ(false), DIFF_EXPR_RNA_SEQ_DATA(true), BEST_P_VALUE_RNA_SEQ(false), 

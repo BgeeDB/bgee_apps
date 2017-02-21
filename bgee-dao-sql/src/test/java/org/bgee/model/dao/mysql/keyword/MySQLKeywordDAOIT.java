@@ -40,10 +40,10 @@ public class MySQLKeywordDAOIT extends MySQLITAncestor {
         
         //first, get all keywords related to any species, with all attributes
         Collection<KeywordTO> expectedTOs = Arrays.asList(
-                new KeywordTO("2", "keywordRelatedToSpecies11"), 
-                new KeywordTO("3", "keywordRelatedToSpecies11_2"), 
-                new KeywordTO("4", "keywordRelatedToSpecies21"), 
-                new KeywordTO("5", "keywordRelatedToSpecies11And21"));
+                new KeywordTO(2, "keywordRelatedToSpecies11"), 
+                new KeywordTO(3, "keywordRelatedToSpecies11_2"), 
+                new KeywordTO(4, "keywordRelatedToSpecies21"), 
+                new KeywordTO(5, "keywordRelatedToSpecies11And21"));
         
         assertTrue("KeywordTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(
@@ -74,57 +74,57 @@ public class MySQLKeywordDAOIT extends MySQLITAncestor {
         
         //Now, get all keywords related to only some species, with all attributes
         expectedTOs = Arrays.asList(
-                new KeywordTO("2", "keywordRelatedToSpecies11"), 
-                new KeywordTO("3", "keywordRelatedToSpecies11_2"), 
-                new KeywordTO("5", "keywordRelatedToSpecies11And21"));
+                new KeywordTO(2, "keywordRelatedToSpecies11"), 
+                new KeywordTO(3, "keywordRelatedToSpecies11_2"), 
+                new KeywordTO(5, "keywordRelatedToSpecies11And21"));
         assertTrue("KeywordTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(
-                        dao.getKeywordsRelatedToSpecies(Arrays.asList("11")).getAllTOs(), 
+                        dao.getKeywordsRelatedToSpecies(Arrays.asList(11)).getAllTOs(), 
                         expectedTOs));
         
         expectedTOs = Arrays.asList(
-                new KeywordTO("4", "keywordRelatedToSpecies21"), 
-                new KeywordTO("5", "keywordRelatedToSpecies11And21"));
+                new KeywordTO(4, "keywordRelatedToSpecies21"), 
+                new KeywordTO(5, "keywordRelatedToSpecies11And21"));
         assertTrue("KeywordTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(
-                        dao.getKeywordsRelatedToSpecies(Arrays.asList("21")).getAllTOs(), 
+                        dao.getKeywordsRelatedToSpecies(Arrays.asList(21)).getAllTOs(), 
                         expectedTOs));
         
         expectedTOs = Arrays.asList(
-                new KeywordTO("2", "keywordRelatedToSpecies11"), 
-                new KeywordTO("3", "keywordRelatedToSpecies11_2"), 
-                new KeywordTO("4", "keywordRelatedToSpecies21"), 
-                new KeywordTO("5", "keywordRelatedToSpecies11And21"));
+                new KeywordTO(2, "keywordRelatedToSpecies11"), 
+                new KeywordTO(3, "keywordRelatedToSpecies11_2"), 
+                new KeywordTO(4, "keywordRelatedToSpecies21"), 
+                new KeywordTO(5, "keywordRelatedToSpecies11And21"));
         assertTrue("KeywordTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(
-                        dao.getKeywordsRelatedToSpecies(Arrays.asList("11", "21")).getAllTOs(), 
+                        dao.getKeywordsRelatedToSpecies(Arrays.asList(11, 21)).getAllTOs(), 
                         expectedTOs));
         
         expectedTOs = Arrays.asList(
-                new KeywordTO("2", "keywordRelatedToSpecies11"), 
-                new KeywordTO("3", "keywordRelatedToSpecies11_2"), 
-                new KeywordTO("5", "keywordRelatedToSpecies11And21"));
+                new KeywordTO(2, "keywordRelatedToSpecies11"), 
+                new KeywordTO(3, "keywordRelatedToSpecies11_2"), 
+                new KeywordTO(5, "keywordRelatedToSpecies11And21"));
         assertTrue("KeywordTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(
-                        dao.getKeywordsRelatedToSpecies(Arrays.asList("11", "31")).getAllTOs(), 
+                        dao.getKeywordsRelatedToSpecies(Arrays.asList(11, 31)).getAllTOs(), 
                         expectedTOs));
         
         expectedTOs = Arrays.asList();
         assertTrue("KeywordTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(
-                        dao.getKeywordsRelatedToSpecies(Arrays.asList("31")).getAllTOs(), 
+                        dao.getKeywordsRelatedToSpecies(Arrays.asList(31)).getAllTOs(), 
                         expectedTOs));
         
         
         //now, retrieve only some Attributes
         dao.setAttributes(KeywordDAO.Attribute.ID);
         expectedTOs = Arrays.asList(
-                new KeywordTO("2", null), 
-                new KeywordTO("3", null), 
-                new KeywordTO("5", null));
+                new KeywordTO(2, null), 
+                new KeywordTO(3, null), 
+                new KeywordTO(5, null));
         assertTrue("KeywordTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(
-                        dao.getKeywordsRelatedToSpecies(Arrays.asList("11")).getAllTOs(), 
+                        dao.getKeywordsRelatedToSpecies(Arrays.asList(1)).getAllTOs(), 
                         expectedTOs));
 
         dao.setAttributes(KeywordDAO.Attribute.NAME);
@@ -134,7 +134,7 @@ public class MySQLKeywordDAOIT extends MySQLITAncestor {
                 new KeywordTO(null, "keywordRelatedToSpecies11And21"));
         assertTrue("KeywordTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(
-                        dao.getKeywordsRelatedToSpecies(Arrays.asList("11")).getAllTOs(), 
+                        dao.getKeywordsRelatedToSpecies(Arrays.asList(11)).getAllTOs(), 
                         expectedTOs));
     }
     
@@ -150,12 +150,12 @@ public class MySQLKeywordDAOIT extends MySQLITAncestor {
         MySQLKeywordDAO dao = new MySQLKeywordDAO(this.getMySQLDAOManager());
         
         //first, get all species-keyword relations for any species
-        Collection<EntityToKeywordTO> expectedTOs = Arrays.asList(
-                new EntityToKeywordTO("11", "2"), 
-                new EntityToKeywordTO("11", "3"), 
-                new EntityToKeywordTO("21", "4"), 
-                new EntityToKeywordTO("11", "5"), 
-                new EntityToKeywordTO("21", "5"));
+        Collection<EntityToKeywordTO<Integer>> expectedTOs = Arrays.asList(
+                new EntityToKeywordTO<>(11, 2), 
+                new EntityToKeywordTO<>(11, 3), 
+                new EntityToKeywordTO<>(21, 4), 
+                new EntityToKeywordTO<>(11, 5), 
+                new EntityToKeywordTO<>(21, 5));
         
         assertTrue("EntityToKeywordTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(
@@ -169,46 +169,46 @@ public class MySQLKeywordDAOIT extends MySQLITAncestor {
         
         //now, get species-keyword relations for only some species
         expectedTOs = Arrays.asList(
-                new EntityToKeywordTO("11", "2"), 
-                new EntityToKeywordTO("11", "3"), 
-                new EntityToKeywordTO("11", "5"));
+                new EntityToKeywordTO<>(11, 2), 
+                new EntityToKeywordTO<>(11, 3), 
+                new EntityToKeywordTO<>(11, 5));
         assertTrue("EntityToKeywordTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(
-                        dao.getKeywordToSpecies(Arrays.asList("11")).getAllTOs(), 
+                        dao.getKeywordToSpecies(Arrays.asList(11)).getAllTOs(), 
                         expectedTOs));
         
         expectedTOs = Arrays.asList(
-                new EntityToKeywordTO("21", "4"), 
-                new EntityToKeywordTO("21", "5"));
+                new EntityToKeywordTO<>(21, 4), 
+                new EntityToKeywordTO<>(21, 5));
         assertTrue("EntityToKeywordTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(
-                        dao.getKeywordToSpecies(Arrays.asList("21")).getAllTOs(), 
+                        dao.getKeywordToSpecies(Arrays.asList(21)).getAllTOs(), 
                         expectedTOs));
         
         expectedTOs = Arrays.asList(
-                new EntityToKeywordTO("11", "2"), 
-                new EntityToKeywordTO("11", "3"), 
-                new EntityToKeywordTO("21", "4"), 
-                new EntityToKeywordTO("11", "5"), 
-                new EntityToKeywordTO("21", "5"));
+                new EntityToKeywordTO<>(11, 2), 
+                new EntityToKeywordTO<>(11, 3), 
+                new EntityToKeywordTO<>(21, 4), 
+                new EntityToKeywordTO<>(11, 5), 
+                new EntityToKeywordTO<>(21, 5));
         assertTrue("EntityToKeywordTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(
-                        dao.getKeywordToSpecies(Arrays.asList("11", "21")).getAllTOs(), 
+                        dao.getKeywordToSpecies(Arrays.asList(11, 21)).getAllTOs(), 
                         expectedTOs));
 
         expectedTOs = Arrays.asList(
-                new EntityToKeywordTO("11", "2"), 
-                new EntityToKeywordTO("11", "3"), 
-                new EntityToKeywordTO("11", "5"));
+                new EntityToKeywordTO<>(11, 2), 
+                new EntityToKeywordTO<>(11, 3), 
+                new EntityToKeywordTO<>(11, 5));
         assertTrue("EntityToKeywordTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(
-                        dao.getKeywordToSpecies(Arrays.asList("11", "31")).getAllTOs(), 
+                        dao.getKeywordToSpecies(Arrays.asList(11, 31)).getAllTOs(), 
                         expectedTOs));
 
         expectedTOs = Arrays.asList();
         assertTrue("EntityToKeywordTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(
-                        dao.getKeywordToSpecies(Arrays.asList("31")).getAllTOs(), 
+                        dao.getKeywordToSpecies(Arrays.asList(31)).getAllTOs(), 
                         expectedTOs));
     }
 

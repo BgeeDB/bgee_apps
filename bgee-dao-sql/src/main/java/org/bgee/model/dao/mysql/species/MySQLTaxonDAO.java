@@ -221,7 +221,7 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
                 this.getManager().getConnection().prepareStatement(sql)) {
             int paramIndex = 1;
             for (TaxonTO taxonTO: taxa) {
-                stmt.setInt(paramIndex, Integer.parseInt(taxonTO.getId()));
+                stmt.setInt(paramIndex, taxonTO.getId());
                 paramIndex++;
                 stmt.setString(paramIndex, taxonTO.getScientificName());
                 paramIndex++;
@@ -266,14 +266,14 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
         @Override
         protected TaxonTO getNewTO() {
             log.entry();
-            String taxonId = null, taxonName = null, taxonScientificName = null;
-            Integer taxonLeftBound = null, taxonRightBound = null, taxonLevel = null;
+            String taxonName = null, taxonScientificName = null;
+            Integer taxonId = null, taxonLeftBound = null, taxonRightBound = null, taxonLevel = null;
             Boolean bgeeSpeciesLCA = null;
             // Get results
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
                     if (column.getValue().equals("taxonId")) {
-                        taxonId = this.getCurrentResultSet().getString(column.getKey());
+                        taxonId = this.getCurrentResultSet().getInt(column.getKey());
 
                     } else if (column.getValue().equals("taxonCommonName")) {
                         taxonName = this.getCurrentResultSet().getString(column.getKey());

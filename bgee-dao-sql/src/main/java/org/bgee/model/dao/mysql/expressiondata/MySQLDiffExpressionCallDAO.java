@@ -120,8 +120,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
         boolean distinct = false;
         if (!this.getAttributes().contains(DiffExpressionCallDAO.Attribute.ID) &&  
                 (!this.getAttributes().contains(DiffExpressionCallDAO.Attribute.GENE_ID) || 
-                 !this.getAttributes().contains(DiffExpressionCallDAO.Attribute.ANAT_ENTITY_ID) || 
-                 !this.getAttributes().contains(DiffExpressionCallDAO.Attribute.STAGE_ID))) {
+                 !this.getAttributes().contains(DiffExpressionCallDAO.Attribute.CONDITION_ID))) {
             distinct = true;
         }
         String sql = this.generateSelectClause(this.getAttributes(), diffExprTableName, distinct);
@@ -155,7 +154,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
                 geneInfoTable = "tempGene";
                 // If taxon ID is not provided, we retrieve the OMAParentNodeId of the gene,
                 // else we retrieve all OMA node IDs above each gene.
-                sql += "(SELECT DISTINCT t10.OMANodeId, t30.geneId "
+                sql += "(SELECT DISTINCT t10.OMANodeId, t30.bgeeGeneId "
                     + "FROM OMAHierarchicalGroup AS t10 "
                     + "INNER JOIN OMAHierarchicalGroup AS t20 ON "
                     + "t20.OMANodeLeftBound >= t10.OMANodeLeftBound AND " 
@@ -180,7 +179,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
             //XXX: this order might not be optimal if other filtering options are added 
             //in the future (not based only on speciesIds)
             sql += " STRAIGHT_JOIN " + diffExprTableName + 
-                    " ON " + geneInfoTable + ".geneId = " + diffExprTableName + ".geneId ";
+                    " ON " + geneInfoTable + ".bgeeGeneId = " + diffExprTableName + ".bgeeGeneId ";
             
             //if we want to retrieve groups of homologous genes, 
             //we have already filtered the species considered in the sub-query.
@@ -338,11 +337,9 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
             if (attribute.equals(DiffExpressionCallDAO.Attribute.ID)) {
                 sql += "differentialExpressionId";
             } else if (attribute.equals(DiffExpressionCallDAO.Attribute.GENE_ID)) {
-                sql += "geneId";
-            } else if (attribute.equals(DiffExpressionCallDAO.Attribute.ANAT_ENTITY_ID)) {
-                sql += "anatEntityId";
-            } else if (attribute.equals(DiffExpressionCallDAO.Attribute.STAGE_ID)) {
-                sql += "stageId";
+                sql += "bgeeGeneId";
+            } else if (attribute.equals(DiffExpressionCallDAO.Attribute.CONDITION_ID)) {
+                sql += "conditionId";
             } else if (attribute.equals(DiffExpressionCallDAO.Attribute.COMPARISON_FACTOR)) {
                 sql += "comparisonFactor";
             } else if (attribute.equals(DiffExpressionCallDAO.Attribute.DIFF_EXPR_CALL_AFFYMETRIX)) {
@@ -431,7 +428,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
         protected DiffExpressionCallTO getNewTO() throws DAOException {
             log.entry();
 
-            String id = null, geneId = null, anatEntityId = null, stageId = null;
+            Integer id = null, geneId = null, conditionId = null;
             ComparisonFactor comparisonFactor = null;
             DataState diffExprAffymetrixData = null, diffExprRNASeqData = null;
             DiffExprCallType diffExprCallTypeAffymetrix = null, diffExprCallTypeRNASeq = null;
@@ -443,16 +440,13 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
                     if (column.getValue().equals("differentialExpressionId")) {
-                        id = this.getCurrentResultSet().getString(column.getKey());
+                        id = this.getCurrentResultSet().getInt(column.getKey());
 
-                    } else if (column.getValue().equals("geneId")) {
-                        geneId = this.getCurrentResultSet().getString(column.getKey());
+                    } else if (column.getValue().equals("bgeeGeneId")) {
+                        geneId = this.getCurrentResultSet().getInt(column.getKey());
 
-                    } else if (column.getValue().equals("anatEntityId")) {
-                        anatEntityId = this.getCurrentResultSet().getString(column.getKey());
-
-                    } else if (column.getValue().equals("stageId")) {
-                        stageId = this.getCurrentResultSet().getString(column.getKey());
+                    } else if (column.getValue().equals("conditionId")) {
+                        conditionId = this.getCurrentResultSet().getInt(column.getKey());
 
                     } else if (column.getValue().equals("comparisonFactor")) {
                         comparisonFactor = ComparisonFactor.convertToComparisonFactor(
@@ -506,7 +500,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
                     throw log.throwing(new DAOException(e));
                 }
             }
-            return log.exit(new DiffExpressionCallTO(id, geneId, anatEntityId, stageId, 
+            return log.exit(new DiffExpressionCallTO(id, geneId, conditionId, 
                     comparisonFactor, diffExprCallTypeAffymetrix, diffExprAffymetrixData, 
                     bestPValueAffymetrix, consistentDEACountAffymetrix, inconsistentDEACountAffymetrix, 
                     diffExprCallTypeRNASeq, diffExprRNASeqData, bestPValueRNASeq, 

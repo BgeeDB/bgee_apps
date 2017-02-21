@@ -41,7 +41,7 @@ public interface TaxonConstraintDAO {
      * It is the responsibility of the caller to close this {@code DAOResultSet}
      * once results are retrieved.
      * 
-     * @param speciesIds    A {@code Collection} of {@code String}s that are the IDs of species 
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that are the IDs of species 
      *                      to retrieve taxon constrains for.
      * @param attributes    A {@code Collection} of {@code TaxonConstraintDAO.Attribute}s defining  
      *                      the attributes to populate in the returned {@code TaxonConstraintTO}s.
@@ -51,7 +51,7 @@ public interface TaxonConstraintDAO {
      * @throws DAOException If an error occurred when accessing the data source. 
      */
     public TaxonConstraintTOResultSet getAnatEntityTaxonConstraints(
-            Collection<String> speciesIds, Collection<TaxonConstraintDAO.Attribute> attributes)
+            Collection<Integer> speciesIds, Collection<TaxonConstraintDAO.Attribute> attributes)
             throws DAOException;
     
     /**
@@ -62,7 +62,7 @@ public interface TaxonConstraintDAO {
      * It is the responsibility of the caller to close this {@code DAOResultSet}
      * once results are retrieved.
      * 
-     * @param speciesIds    A {@code Collection} of {@code String}s that are the IDs of species 
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that are the IDs of species 
      *                      to retrieve taxon constrains for.
      * @param attributes    A {@code Collection} of {@code TaxonConstraintDAO.Attribute}s defining  
      *                      the attributes to populate in the returned {@code TaxonConstraintTO}s.
@@ -72,7 +72,7 @@ public interface TaxonConstraintDAO {
      * @throws DAOException If an error occurred when accessing the data source. 
      */
     public TaxonConstraintTOResultSet getAnatEntityRelationTaxonConstraints(
-            Collection<String> speciesIds, Collection<TaxonConstraintDAO.Attribute> attributes)
+            Collection<Integer> speciesIds, Collection<TaxonConstraintDAO.Attribute> attributes)
             throws DAOException;
 
     /**
@@ -83,7 +83,7 @@ public interface TaxonConstraintDAO {
      * It is the responsibility of the caller to close this {@code DAOResultSet}
      * once results are retrieved.
      * 
-     * @param speciesIds    A {@code Collection} of {@code String}s that are the IDs of species 
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that are the IDs of species 
      *                      to retrieve taxon constrains for.
      * @param attributes    A {@code Collection} of {@code TaxonConstraintDAO.Attribute}s defining  
      *                      the attributes to populate in the returned {@code TaxonConstraintTO}s.
@@ -93,7 +93,7 @@ public interface TaxonConstraintDAO {
      * @throws DAOException If an error occurred when accessing the data source. 
      */
     public TaxonConstraintTOResultSet getStageTaxonConstraints(
-            Collection<String> speciesIds, Collection<TaxonConstraintDAO.Attribute> attributes)
+            Collection<Integer> speciesIds, Collection<TaxonConstraintDAO.Attribute> attributes)
             throws DAOException;
 
     /**

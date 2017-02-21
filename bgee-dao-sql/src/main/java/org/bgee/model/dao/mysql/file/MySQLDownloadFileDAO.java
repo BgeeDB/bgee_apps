@@ -124,7 +124,7 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
                 this.getManager().getConnection().prepareStatement(sql.toString())) {
             int paramIndex = 1;
             for (DownloadFileTO fileTO: fileTOs) {
-                stmt.setString(paramIndex, fileTO.getId());
+                stmt.setInt(paramIndex, fileTO.getId());
                 paramIndex++;
                 stmt.setString(paramIndex, fileTO.getName());
                 paramIndex++;
@@ -134,7 +134,7 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
                 paramIndex++;
                 stmt.setEnumDAOField(paramIndex, fileTO.getCategory());
                 paramIndex++;
-                stmt.setString(paramIndex, fileTO.getSpeciesDataGroupId());
+                stmt.setInt(paramIndex, fileTO.getSpeciesDataGroupId());
                 paramIndex++;
                 stmt.setLong(paramIndex, fileTO.getSize());
                 paramIndex++;
@@ -168,8 +168,8 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
             try {
                 log.entry();
                 final ResultSet currentResultSet = this.getCurrentResultSet();
-                String id = null, path = null, name = null, 
-                        description = null, speciesDataGroupId = null;
+                Integer id = null, speciesDataGroupId = null;
+                String path = null, name = null, description = null;
                 Long size = null;
                 DownloadFileTO.CategoryEnum category = null;
 
@@ -178,7 +178,7 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
                     DownloadFileDAO.Attribute attr = getAttributeByColumnName(columnName);
                     switch (attr) {
                         case ID:
-                            id = currentResultSet.getString(columnName);
+                            id = currentResultSet.getInt(columnName);
                             break;
                         case DESCRIPTION:
                             description = currentResultSet.getString(columnName);
@@ -197,7 +197,7 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
                                     currentResultSet.getString(columnName));
                             break;
                         case SPECIES_DATA_GROUP_ID:
-                            speciesDataGroupId = currentResultSet.getString(columnName);
+                            speciesDataGroupId = currentResultSet.getInt(columnName);
                             break;
                         default:
                             log.throwing(new UnrecognizedColumnException(columnName));

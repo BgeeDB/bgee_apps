@@ -26,9 +26,8 @@ public interface NoExpressionCallDAO extends CallDAO<NoExpressionCallDAO.Attribu
      * obtained from this {@code NoExpressionCallDAO}.
      * <ul>
      * <li>{@code ID}: corresponds to {@link NoExpressionCallTO#getId()}.
-     * <li>{@code GENEID}: corresponds to {@link NoExpressionCallTO#getGeneId()}.
-     * <li>{@code STAGEID}: corresponds to {@link NoExpressionCallTO#getStageId()}.
-     * <li>{@code ANATENTITYID}: corresponds to {@link NoExpressionCallTO#getAnatEntityId()}.
+     * <li>{@code GENEID}: corresponds to {@link NoExpressionCallTO#getBgeeGeneId()}.
+     * <li>{@code CONDITION_ID}: corresponds to {@link NoExpressionCallTO#getConditionId()}.
      * <li>{@code AFFYMETRIXDATA}: corresponds to {@link NoExpressionCallTO#getAffymetrixData()}.
      * <li>{@code INSITUDATA}: corresponds to {@link NoExpressionCallTO#getInSituData()}.
      * <li>{@code RNASEQDATA}: corresponds to {@link NoExpressionCallTO#getRNASeqData()}.
@@ -41,7 +40,7 @@ public interface NoExpressionCallDAO extends CallDAO<NoExpressionCallDAO.Attribu
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements CallDAO.Attribute {
-        ID(false), GENE_ID(false), STAGE_ID(false), ANAT_ENTITY_ID(false), 
+        ID(false), GENE_ID(false), CONDITION_ID(false), 
         AFFYMETRIX_DATA(true), IN_SITU_DATA(true), RNA_SEQ_DATA(true),
         INCLUDE_PARENT_STRUCTURES(false), ORIGIN_OF_LINE(false);
         

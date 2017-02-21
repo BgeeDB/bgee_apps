@@ -172,7 +172,7 @@ public class MySQLSourceToSpeciesDAO extends MySQLDAO<SourceToSpeciesDAO.Attribu
         @Override
         protected SourceToSpeciesTO getNewTO() {
             log.entry();
-            String dataSourceId = null, speciesId = null;
+            Integer dataSourceId = null, speciesId = null;
             DataType dataType = null;
             InfoType infoType = null;
             
@@ -180,10 +180,10 @@ public class MySQLSourceToSpeciesDAO extends MySQLDAO<SourceToSpeciesDAO.Attribu
             for (Entry<Integer, String> column : this.getColumnLabels().entrySet()) {
                 try {
                     if (column.getValue().equals("dataSourceId")) {
-                        dataSourceId = this.getCurrentResultSet().getString(column.getKey());
+                        dataSourceId = this.getCurrentResultSet().getInt(column.getKey());
 
                     } else if (column.getValue().equals("speciesId")) {
-                        speciesId = this.getCurrentResultSet().getString(column.getKey());
+                        speciesId = this.getCurrentResultSet().getInt(column.getKey());
 
                     } else if (column.getValue().equals("dataType")) {
                         dataType = DataType.convertToDataType(

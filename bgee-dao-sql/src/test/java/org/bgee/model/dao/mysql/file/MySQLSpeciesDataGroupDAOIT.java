@@ -50,8 +50,8 @@ public class MySQLSpeciesDataGroupDAOIT extends MySQLITAncestor {
         //no atributes nor ordering attributes
         Collection<SpeciesDataGroupDAO.SpeciesDataGroupTO> actual = dao.getAllSpeciesDataGroup(null, null).getAllTOs();
         Collection<SpeciesDataGroupDAO.SpeciesDataGroupTO> expected = Arrays.asList(
-                new SpeciesDataGroupDAO.SpeciesDataGroupTO("1", "SingleSpecies1", "SS1 is a ...", 1),
-                new SpeciesDataGroupDAO.SpeciesDataGroupTO("2", "MultiSpecies2", "A multi species group...", 2)
+                new SpeciesDataGroupDAO.SpeciesDataGroupTO(1, "SingleSpecies1", "SS1 is a ...", 1),
+                new SpeciesDataGroupDAO.SpeciesDataGroupTO(2, "MultiSpecies2", "A multi species group...", 2)
         );
         assertTrue("SpeciesDataGroupTOs are incorrectly retrieved\nGOT\n"+actual+"\nEXPECTED\n"+expected,
                 TOComparator.areTOCollectionsEqual(actual, expected));
@@ -61,8 +61,8 @@ public class MySQLSpeciesDataGroupDAOIT extends MySQLITAncestor {
                 Arrays.asList(SpeciesDataGroupDAO.Attribute.ID, SpeciesDataGroupDAO.Attribute.DESCRIPTION), 
                 null).getAllTOs();
         expected = Arrays.asList(
-                new SpeciesDataGroupDAO.SpeciesDataGroupTO("1", null , "SS1 is a ...", null),
-                new SpeciesDataGroupDAO.SpeciesDataGroupTO("2", null, "A multi species group...", null)
+                new SpeciesDataGroupDAO.SpeciesDataGroupTO(1, null , "SS1 is a ...", null),
+                new SpeciesDataGroupDAO.SpeciesDataGroupTO(2, null, "A multi species group...", null)
         );
         assertTrue("SpeciesDataGroupTOs are incorrectly retrieved\nGOT\n"+actual+"\nEXPECTED\n"+expected,
                 TOComparator.areTOCollectionsEqual(actual, expected));
@@ -96,9 +96,9 @@ public class MySQLSpeciesDataGroupDAOIT extends MySQLITAncestor {
         //no ordering requested
         Collection<SpeciesToDataGroupTO> actual = dao.getAllSpeciesToDataGroup(null).getAllTOs();
         Collection<SpeciesToDataGroupTO> expected = Arrays.asList(
-                new SpeciesToDataGroupTO("41", "1"),
-                new SpeciesToDataGroupTO("21", "2"),
-                new SpeciesToDataGroupTO("51", "2")
+                new SpeciesToDataGroupTO(41, 1),
+                new SpeciesToDataGroupTO(21, 2),
+                new SpeciesToDataGroupTO(51, 2)
         );
         assertTrue("SpeciesToDataGroupTOs are incorrectly retrieved\nGOT\n" + actual + 
                 "\nEXPECTED\n" + expected, TOComparator.areTOCollectionsEqual(actual, expected));
@@ -108,9 +108,9 @@ public class MySQLSpeciesDataGroupDAOIT extends MySQLITAncestor {
         attrs.put(SpeciesToGroupOrderingAttribute.DISTANCE_TO_SPECIES, OrderingDAO.Direction.ASC);
         List<SpeciesToDataGroupTO> actualList = dao.getAllSpeciesToDataGroup(attrs).getAllTOs();
         List<SpeciesToDataGroupTO> expectedList = Arrays.asList(
-                new SpeciesToDataGroupTO("41", "1"),
-                new SpeciesToDataGroupTO("51", "2"),
-                new SpeciesToDataGroupTO("21", "2")
+                new SpeciesToDataGroupTO(41, 1),
+                new SpeciesToDataGroupTO(51, 2),
+                new SpeciesToDataGroupTO(21, 2)
         );
         assertTrue("SpeciesToDataGroupTOs are incorrectly retrieved\nGOT\n" + actualList + 
                 "\nEXPECTED\n" + expectedList, TOComparator.areTOCollectionsEqual(actualList, expectedList));
@@ -122,9 +122,9 @@ public class MySQLSpeciesDataGroupDAOIT extends MySQLITAncestor {
         attrs.put(SpeciesToGroupOrderingAttribute.DISTANCE_TO_SPECIES, OrderingDAO.Direction.ASC);
         actualList = dao.getAllSpeciesToDataGroup(attrs).getAllTOs();
         expectedList = Arrays.asList(
-                new SpeciesToDataGroupTO("51", "2"),
-                new SpeciesToDataGroupTO("21", "2"),
-                new SpeciesToDataGroupTO("41", "1")
+                new SpeciesToDataGroupTO(51, 2),
+                new SpeciesToDataGroupTO(21, 2),
+                new SpeciesToDataGroupTO(41, 1)
         );
         assertTrue("SpeciesToDataGroupTOs are incorrectly retrieved\nGOT\n" + actualList + 
                 "\nEXPECTED\n" + expectedList, TOComparator.areTOCollectionsEqual(actualList, expectedList));
@@ -139,9 +139,9 @@ public class MySQLSpeciesDataGroupDAOIT extends MySQLITAncestor {
         expectedList = Arrays.asList(
                 //species 41 and 51 have the same taxonomic distance to species 21, 
                 //they should also be ordered by species ID among them.
-                new SpeciesToDataGroupTO("41", "1"),
-                new SpeciesToDataGroupTO("51", "2"),
-                new SpeciesToDataGroupTO("21", "2")
+                new SpeciesToDataGroupTO(41, 1),
+                new SpeciesToDataGroupTO(51, 2),
+                new SpeciesToDataGroupTO(21, 2)
         );
         assertTrue("SpeciesToDataGroupTOs are incorrectly retrieved\nGOT\n" + actualList + 
                 "\nEXPECTED\n" + expectedList, TOComparator.areTOCollectionsEqual(actualList, expectedList));
@@ -155,9 +155,9 @@ public class MySQLSpeciesDataGroupDAOIT extends MySQLITAncestor {
         expectedList = Arrays.asList(
                 //species 41 and 51 have the same taxonomic distance to species 21, 
                 //but here we also requested ordering per data group ID.
-                new SpeciesToDataGroupTO("51", "2"),
-                new SpeciesToDataGroupTO("41", "1"),
-                new SpeciesToDataGroupTO("21", "2")
+                new SpeciesToDataGroupTO(51, 2),
+                new SpeciesToDataGroupTO(41, 1),
+                new SpeciesToDataGroupTO(21, 2)
         );
         assertTrue("SpeciesToDataGroupTOs are incorrectly retrieved\nGOT\n" + actualList + 
                 "\nEXPECTED\n" + expectedList, TOComparator.areTOCollectionsEqual(actualList, expectedList));
@@ -181,8 +181,8 @@ public class MySQLSpeciesDataGroupDAOIT extends MySQLITAncestor {
         
         //create a Collection of SpeciesDataGroupTOs to be inserted
         Collection<SpeciesDataGroupTO> groupTOs = Arrays.asList(
-                new SpeciesDataGroupTO("101", "sdg name 1", "sdg desc 1", 1),
-                new SpeciesDataGroupTO("102", "sdg name 2", "sdg desc 2", 2));
+                new SpeciesDataGroupTO(101, "sdg name 1", "sdg desc 1", 1),
+                new SpeciesDataGroupTO(102, "sdg name 2", "sdg desc 2", 2));
         try {
             MySQLSpeciesDataGroupDAO dao = new MySQLSpeciesDataGroupDAO(this.getMySQLDAOManager());
             assertEquals("Incorrect number of rows inserted", 2, 
@@ -233,10 +233,10 @@ public class MySQLSpeciesDataGroupDAOIT extends MySQLITAncestor {
         
         //create a Collection of SpeciesToDataGroupTOs to be inserted
         Collection<SpeciesToDataGroupTO> mappingTOs = Arrays.asList(
-                new SpeciesToDataGroupTO("11", "101"),
-                new SpeciesToDataGroupTO("22", "101"),
-                new SpeciesToDataGroupTO("11", "102"),
-                new SpeciesToDataGroupTO("33", "102"));
+                new SpeciesToDataGroupTO(11, 101),
+                new SpeciesToDataGroupTO(22, 101),
+                new SpeciesToDataGroupTO(11, 102),
+                new SpeciesToDataGroupTO(33, 102));
         try {
             MySQLSpeciesDataGroupDAO dao = new MySQLSpeciesDataGroupDAO(this.getMySQLDAOManager());
             assertEquals("Incorrect number of rows inserted", 4, 

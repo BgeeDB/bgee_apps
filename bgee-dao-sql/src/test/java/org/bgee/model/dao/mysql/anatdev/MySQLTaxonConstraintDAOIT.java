@@ -64,24 +64,24 @@ public class MySQLTaxonConstraintDAOIT extends MySQLITAncestor {
                 dao.getAnatEntityTaxonConstraints(null, null).getAllTOs();
         List<TaxonConstraintTO> allTCs = Arrays.asList(
                 new TaxonConstraintTO("Anat_id1", null),
-                new TaxonConstraintTO("Anat_id2", "11"),
-                new TaxonConstraintTO("Anat_id2", "21"),
-                new TaxonConstraintTO("Anat_id3", "31"),
-                new TaxonConstraintTO("Anat_id4", "31"),
-                new TaxonConstraintTO("Anat_id5", "21"),
+                new TaxonConstraintTO("Anat_id2", 11),
+                new TaxonConstraintTO("Anat_id2", 21),
+                new TaxonConstraintTO("Anat_id3", 31),
+                new TaxonConstraintTO("Anat_id4", 31),
+                new TaxonConstraintTO("Anat_id5", 21),
                 new TaxonConstraintTO("Anat_id6", null),
-                new TaxonConstraintTO("Anat_id7", "21"),
-                new TaxonConstraintTO("Anat_id7", "31"),
-                new TaxonConstraintTO("Anat_id8", "11"),
-                new TaxonConstraintTO("Anat_id9", "21"),
-                new TaxonConstraintTO("Anat_id10", "31"),
+                new TaxonConstraintTO("Anat_id7", 21),
+                new TaxonConstraintTO("Anat_id7", 31),
+                new TaxonConstraintTO("Anat_id8", 11),
+                new TaxonConstraintTO("Anat_id9", 21),
+                new TaxonConstraintTO("Anat_id10", 31),
                 new TaxonConstraintTO("Anat_id11", null),
-                new TaxonConstraintTO("Anat_id12", "21"),
+                new TaxonConstraintTO("Anat_id12", 21),
                 new TaxonConstraintTO("Anat_id13", null),
-                new TaxonConstraintTO("Anat_id14", "11"),
-                new TaxonConstraintTO("UBERON:0001853", "11"),
-                new TaxonConstraintTO("UBERON:0001853", "41"),
-                new TaxonConstraintTO("UBERON:0001687", "51"),
+                new TaxonConstraintTO("Anat_id14", 11),
+                new TaxonConstraintTO("UBERON:0001853", 11),
+                new TaxonConstraintTO("UBERON:0001853", 41),
+                new TaxonConstraintTO("UBERON:0001687", 51),
                 new TaxonConstraintTO("UBERON:0011606", null)); 
         assertTrue("TaxonConstraintTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methTCs, allTCs));
@@ -94,7 +94,7 @@ public class MySQLTaxonConstraintDAOIT extends MySQLITAncestor {
                 TOComparator.areTOCollectionsEqual(methTCs, allTCs));
 
         // Specifying speciesIds
-        List<String> speciesIds = Arrays.asList("11", "22");
+        List<Integer> speciesIds = Arrays.asList(11, 22);
         methTCs = dao.getAnatEntityTaxonConstraints(speciesIds, null).getAllTOs();
         Set<TaxonConstraintTO> expectedTCs = allTCs.stream()
                 .filter(tc -> tc.getSpeciesId() == null || speciesIds.contains(tc.getSpeciesId()))
@@ -129,19 +129,19 @@ public class MySQLTaxonConstraintDAOIT extends MySQLITAncestor {
         List<TaxonConstraintTO> methTCs = 
                 dao.getAnatEntityRelationTaxonConstraints(null, null).getAllTOs();
         List<TaxonConstraintTO> allTCs = Arrays.asList(
-                new TaxonConstraintTO("1",null), new TaxonConstraintTO("2","11"),
-                new TaxonConstraintTO("2","21"), new TaxonConstraintTO("3","31"),
-                new TaxonConstraintTO("4","11"), new TaxonConstraintTO("5",null),
-                new TaxonConstraintTO("6","31"), new TaxonConstraintTO("7","21"),
-                new TaxonConstraintTO("7","31"), new TaxonConstraintTO("8","11"),
-                new TaxonConstraintTO("9","31"), new TaxonConstraintTO("10",null),
-                new TaxonConstraintTO("11","21"), new TaxonConstraintTO("12","21"),
-                new TaxonConstraintTO("12","11"), new TaxonConstraintTO("13","31"),
-                new TaxonConstraintTO("14","11"), new TaxonConstraintTO("15",null),
-                new TaxonConstraintTO("16","31"), new TaxonConstraintTO("17","31"),
-                new TaxonConstraintTO("18","11"), new TaxonConstraintTO("18","21"),
-                new TaxonConstraintTO("19",null), new TaxonConstraintTO("20","31"),
-                new TaxonConstraintTO("21","21"), new TaxonConstraintTO("22","31"),
+                new TaxonConstraintTO("1",null), new TaxonConstraintTO("2",11),
+                new TaxonConstraintTO("2",21), new TaxonConstraintTO("3",31),
+                new TaxonConstraintTO("4",11), new TaxonConstraintTO("5",null),
+                new TaxonConstraintTO("6",31), new TaxonConstraintTO("7",21),
+                new TaxonConstraintTO("7",31), new TaxonConstraintTO("8",11),
+                new TaxonConstraintTO("9",31), new TaxonConstraintTO("10",null),
+                new TaxonConstraintTO("11",21), new TaxonConstraintTO("12",21),
+                new TaxonConstraintTO("12",11), new TaxonConstraintTO("13",31),
+                new TaxonConstraintTO("14",11), new TaxonConstraintTO("15",null),
+                new TaxonConstraintTO("16",31), new TaxonConstraintTO("17",31),
+                new TaxonConstraintTO("18",11), new TaxonConstraintTO("18",21),
+                new TaxonConstraintTO("19",null), new TaxonConstraintTO("20",31),
+                new TaxonConstraintTO("21",21), new TaxonConstraintTO("22",31),
                 new TaxonConstraintTO("23",null)); 
         assertTrue("TaxonConstraintTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methTCs, allTCs));
@@ -154,7 +154,7 @@ public class MySQLTaxonConstraintDAOIT extends MySQLITAncestor {
                 TOComparator.areTOCollectionsEqual(methTCs, allTCs));
 
         // Specifying speciesIds
-        List<String> speciesIds = Arrays.asList("11", "22");
+        List<Integer> speciesIds = Arrays.asList(11, 22);
         methTCs = dao.getAnatEntityRelationTaxonConstraints(speciesIds, null).getAllTOs();
         Set<TaxonConstraintTO> expectedTCs = allTCs.stream()
                 .filter(tc -> tc.getSpeciesId() == null || speciesIds.contains(tc.getSpeciesId()))
@@ -191,25 +191,25 @@ public class MySQLTaxonConstraintDAOIT extends MySQLITAncestor {
         List<TaxonConstraintTO> allTCs = Arrays.asList(
                 new TaxonConstraintTO("Stage_id1", null),
                 new TaxonConstraintTO("Stage_id2", null),
-                new TaxonConstraintTO("Stage_id3", "21"), 
-                new TaxonConstraintTO("Stage_id4", "31"), 
-                new TaxonConstraintTO("Stage_id5", "11"), 
-                new TaxonConstraintTO("Stage_id5", "21"), 
-                new TaxonConstraintTO("Stage_id6", "11"), 
-                new TaxonConstraintTO("Stage_id6", "21"), 
-                new TaxonConstraintTO("Stage_id7", "11"), 
-                new TaxonConstraintTO("Stage_id7", "21"), 
-                new TaxonConstraintTO("Stage_id8", "11"), 
-                new TaxonConstraintTO("Stage_id9", "21"), 
-                new TaxonConstraintTO("Stage_id10", "21"), 
-                new TaxonConstraintTO("Stage_id11", "21"), 
-                new TaxonConstraintTO("Stage_id12", "21"), 
-                new TaxonConstraintTO("Stage_id13", "21"), 
+                new TaxonConstraintTO("Stage_id3", 21), 
+                new TaxonConstraintTO("Stage_id4", 31), 
+                new TaxonConstraintTO("Stage_id5", 11), 
+                new TaxonConstraintTO("Stage_id5", 21), 
+                new TaxonConstraintTO("Stage_id6", 11), 
+                new TaxonConstraintTO("Stage_id6", 21), 
+                new TaxonConstraintTO("Stage_id7", 11), 
+                new TaxonConstraintTO("Stage_id7", 21), 
+                new TaxonConstraintTO("Stage_id8", 11), 
+                new TaxonConstraintTO("Stage_id9", 21), 
+                new TaxonConstraintTO("Stage_id10", 21), 
+                new TaxonConstraintTO("Stage_id11", 21), 
+                new TaxonConstraintTO("Stage_id12", 21), 
+                new TaxonConstraintTO("Stage_id13", 21), 
                 new TaxonConstraintTO("Stage_id14", null), 
                 new TaxonConstraintTO("Stage_id15", null), 
-                new TaxonConstraintTO("Stage_id16", "11"), 
-                new TaxonConstraintTO("Stage_id17", "31"), 
-                new TaxonConstraintTO("Stage_id18", "11")); 
+                new TaxonConstraintTO("Stage_id16", 11), 
+                new TaxonConstraintTO("Stage_id17", 31), 
+                new TaxonConstraintTO("Stage_id18", 11)); 
         assertTrue("TaxonConstraintTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methTCs, allTCs));
 
@@ -221,7 +221,7 @@ public class MySQLTaxonConstraintDAOIT extends MySQLITAncestor {
                 TOComparator.areTOCollectionsEqual(methTCs, allTCs));
 
         // Specifying speciesIds
-        List<String> speciesIds = Arrays.asList("11", "22");
+        List<Integer> speciesIds = Arrays.asList(11, 22);
         methTCs = dao.getStageTaxonConstraints(speciesIds, null).getAllTOs();
         Set<TaxonConstraintTO> expectedTCs = allTCs.stream()
                 .filter(tc -> tc.getSpeciesId() == null || speciesIds.contains(tc.getSpeciesId()))
@@ -252,8 +252,8 @@ public class MySQLTaxonConstraintDAOIT extends MySQLITAncestor {
 
         //create a Collection of TaxonConstraintTO to be inserted
         Collection<TaxonConstraintTO> taxonConstraintTOs = Arrays.asList(
-                new TaxonConstraintTO("99","11"),
-                new TaxonConstraintTO("98","21"),
+                new TaxonConstraintTO("99",11),
+                new TaxonConstraintTO("98",21),
                 new TaxonConstraintTO("97",null));
 
         try {
@@ -304,8 +304,8 @@ public class MySQLTaxonConstraintDAOIT extends MySQLITAncestor {
 
         //create a Collection of TaxonConstraintTO to be inserted
         Collection<TaxonConstraintTO> taxonConstraintTOs = Arrays.asList(
-                new TaxonConstraintTO("Anat_id10","11"),
-                new TaxonConstraintTO("Anat_id5","21"),
+                new TaxonConstraintTO("Anat_id10",11),
+                new TaxonConstraintTO("Anat_id5",21),
                 new TaxonConstraintTO("Anat_id1",null));
 
         try {
@@ -356,8 +356,8 @@ public class MySQLTaxonConstraintDAOIT extends MySQLITAncestor {
 
        //create a Collection of TaxonConstraintTO to be inserted
        Collection<TaxonConstraintTO> taxonConstraintTOs = Arrays.asList(
-               new TaxonConstraintTO("Stage_id10","11"),
-               new TaxonConstraintTO("Stage_id5","21"),
+               new TaxonConstraintTO("Stage_id10",11),
+               new TaxonConstraintTO("Stage_id5",21),
                new TaxonConstraintTO("Stage_id1",null));
 
        try {

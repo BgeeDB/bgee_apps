@@ -88,7 +88,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 		        + "INNER JOIN species ON t1.speciesId = species.speciesId "
 		        + "left outer join "
 		            + "(SELECT * FROM geneNameSynonym WHERE geneNameSynonym like ?) as t2 "
-		        + "on t1.geneId = t2.geneId "
+		        + "on t1.bgeeGeneId = t2.bgeeGeneId "
 		        + "where (t1.geneId like ? or t1.geneName like ? or t2.geneNameSynonym like ?) ";
 
 		if (speciesIds != null && !speciesIds.isEmpty()) {
@@ -233,7 +233,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 			}
 			sql.append(this.attributeToString(attribute) + " = ?");
 		}
-		sql.append(" WHERE geneId = ?");
+		sql.append(" WHERE bgeeGeneId = ?");
 
 		try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql.toString())) {
 			for (GeneTO gene : genes) {
@@ -253,7 +253,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 						stmt.setBoolean(i++, gene.isEnsemblGene());
 					}
 				}
-				stmt.setString(i, gene.getId());
+				stmt.setInt(i, gene.getId());
 				geneUpdatedCount += stmt.executeUpdate();
 				stmt.clearParameters();
 			}
@@ -325,8 +325,10 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 
 		String label = null;
 		if (attribute.equals(GeneDAO.Attribute.ID)) {
-			label = "geneId";
-		} else if (attribute.equals(GeneDAO.Attribute.NAME)) {
+			label = "bgeeGeneId";
+		} else if (attribute.equals(GeneDAO.Attribute.ENSEMBL_ID)) {
+            label = "geneId";
+        } else if (attribute.equals(GeneDAO.Attribute.NAME)) {
 			label = "geneName";
 		} else if (attribute.equals(GeneDAO.Attribute.DESCRIPTION)) {
 			label = "geneDescription";
@@ -377,12 +379,15 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 		protected GeneTO getNewTO() {
 			log.entry();
 			String geneId = null, geneName = null, geneDescription = null;
-			Integer speciesId = null, geneBioTypeId = null, OMAParentNodeId = null;
+			Integer id = null, speciesId = null, geneBioTypeId = null, OMAParentNodeId = null;
 			Boolean ensemblGene = null;
 			// Get results
 			for (Entry<Integer, String> column : this.getColumnLabels().entrySet()) {
 				try {
-					if (column.getValue().equals("geneId")) {
+				    if (column.getValue().equals("bgeeGeneId")) {
+                        id = this.getCurrentResultSet().getInt(column.getKey());
+
+                    } else if (column.getValue().equals("geneId")) {
 						geneId = this.getCurrentResultSet().getString(column.getKey());
 
 					} else if (column.getValue().equals("geneName")) {
@@ -411,7 +416,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 				}
 			}
 			// Set GeneTO
-			return log.exit(new GeneTO(geneId, geneName, geneDescription, speciesId, geneBioTypeId, OMAParentNodeId,
+			return log.exit(new GeneTO(id, geneId, geneName, geneDescription, speciesId, geneBioTypeId, OMAParentNodeId,
 			        ensemblGene));
 		}
 	}

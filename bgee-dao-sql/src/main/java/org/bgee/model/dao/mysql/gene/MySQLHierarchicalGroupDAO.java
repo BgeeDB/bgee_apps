@@ -111,7 +111,7 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
     	try (BgeePreparedStatement stmt = 
     			this.getManager().getConnection().prepareStatement(sql)) {
     		for (HierarchicalGroupTO group: groups) {
-    			stmt.setInt(1, Integer.parseInt(group.getId()));
+    			stmt.setInt(1, group.getId());
     			stmt.setString(2, group.getOMAGroupId());
     			stmt.setInt(3, group.getLeftBound());
     			stmt.setInt(4, group.getRightBound());

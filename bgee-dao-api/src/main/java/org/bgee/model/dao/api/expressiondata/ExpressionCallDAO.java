@@ -28,9 +28,8 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
      * obtained from this {@code ExpressionCallDAO}.
      * <ul>
      * <li>{@code ID}: corresponds to {@link ExpressionCallTO#getId()}.
-     * <li>{@code GENE_ID}: corresponds to {@link ExpressionCallTO#getGeneId()}.
-     * <li>{@code STAGE_ID}: corresponds to {@link ExpressionCallTO#getStageId()}.
-     * <li>{@code ANAT_ENTITY_ID}: corresponds to {@link ExpressionCallTO#getAnatEntityId()}.
+     * <li>{@code GENE_ID}: corresponds to {@link ExpressionCallTO#getBgeeGeneId()}.
+     * <li>{@code CONDITION_ID}: corresponds to {@link ExpressionCallTO#getConditionId()}.
      * <li>{@code GLOBAL_MEAN_RANK}: corresponds to {@link ExpressionCallTO#getGlobalMeanRank()}.
      * <li>{@code AFFYMETRIX_DATA}: corresponds to {@link ExpressionCallTO#getAffymetrixData()}.
      * <li>{@code AFFYMETRIX_MEAN_RANK}: corresponds to {@link ExpressionCallTO#getAffymetrixMeanRank()}.
@@ -51,8 +50,8 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements CallDAO.Attribute {
-        ID(false, false, false, "id"), GENE_ID(false, false, false, "geneId"), 
-        STAGE_ID(false, false, false, "stageId"), ANAT_ENTITY_ID(false, false, false, "anatEntityId"), 
+        ID(false, false, false, "id"), GENE_ID(false, false, false, "bgeeGeneId"), 
+        CONDITION_ID(false, false, false, "conditionId"), 
         GLOBAL_MEAN_RANK(false, true, false, "globalMeanRank"), 
         AFFYMETRIX_DATA(true, false, false, "affymetrixData"), 
         AFFYMETRIX_MEAN_RANK(false, true, false, "affymetrixMeanRank"), 
@@ -118,9 +117,8 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
     /**
      * The attributes available to order retrieved {@code ExpressionCallTO}s
      * <ul>
-     * <li>{@code GENE_ID}: corresponds to {@link ExpressionCallTO#getGeneId()}.
-     * <li>{@code STAGE_ID}: corresponds to {@link ExpressionCallTO#getStageId()}.
-     * <li>{@code ANAT_ENTITY_ID}: corresponds to {@link ExpressionCallTO#getAnatEntityId()}.
+     * <li>{@code GENE_ID}: corresponds to {@link ExpressionCallTO#getBgeeGeneId()}.
+     * <li>{@code CONDITION_ID}: corresponds to {@link ExpressionCallTO#getConditionId()}.
      * <li>{@code OMA_GROUP_ID}: order results by the OMA group genes belong to. 
      * If this {@code OrderingAttribute} is used in a query not specifying any targeted taxon 
      * for gene orthology, then the {@code OMAParentNodeId} of the gene is used (see 
@@ -132,7 +130,7 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
      * </ul>
      */
     enum OrderingAttribute implements DAO.OrderingAttribute {
-        GENE_ID, STAGE_ID, ANAT_ENTITY_ID, OMA_GROUP_ID, MEAN_RANK;
+        GENE_ID, CONDITION_ID, OMA_GROUP_ID, MEAN_RANK;
     }
     
     /**

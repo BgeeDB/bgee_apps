@@ -144,15 +144,15 @@ public class MySQLSourceToSpeciesDAOIT extends MySQLITAncestor {
 
     private List<SourceToSpeciesTO> getAllSourceToSpeciesTOs() {
         return Arrays.asList(
-                new SourceToSpeciesTO("1", "11", DataType.AFFYMETRIX, InfoType.DATA),
-                new SourceToSpeciesTO("1", "11", DataType.AFFYMETRIX, InfoType.ANNOTATION),
-                new SourceToSpeciesTO("1", "21", DataType.AFFYMETRIX, InfoType.DATA),
-                new SourceToSpeciesTO("1", "21", DataType.AFFYMETRIX, InfoType.ANNOTATION),
-                new SourceToSpeciesTO("2", "11", DataType.EST, InfoType.DATA),
-                new SourceToSpeciesTO("3", "11", DataType.EST, InfoType.ANNOTATION),
-                new SourceToSpeciesTO("4", "11", DataType.EST, InfoType.DATA),
-                new SourceToSpeciesTO("4", "11", DataType.EST, InfoType.ANNOTATION),
-                new SourceToSpeciesTO("4", "21", DataType.RNA_SEQ, InfoType.DATA),
-                new SourceToSpeciesTO("4", "21", DataType.IN_SITU, InfoType.ANNOTATION));
+                new SourceToSpeciesTO(1, 11, DataType.AFFYMETRIX, InfoType.DATA),
+                new SourceToSpeciesTO(1, 11, DataType.AFFYMETRIX, InfoType.ANNOTATION),
+                new SourceToSpeciesTO(1, 21, DataType.AFFYMETRIX, InfoType.DATA),
+                new SourceToSpeciesTO(1, 21, DataType.AFFYMETRIX, InfoType.ANNOTATION),
+                new SourceToSpeciesTO(2, 11, DataType.EST, InfoType.DATA),
+                new SourceToSpeciesTO(3, 11, DataType.EST, InfoType.ANNOTATION),
+                new SourceToSpeciesTO(4, 11, DataType.EST, InfoType.DATA),
+                new SourceToSpeciesTO(4, 11, DataType.EST, InfoType.ANNOTATION),
+                new SourceToSpeciesTO(4, 21, DataType.RNA_SEQ, InfoType.DATA),
+                new SourceToSpeciesTO(4, 21, DataType.IN_SITU, InfoType.ANNOTATION));
     }
 }

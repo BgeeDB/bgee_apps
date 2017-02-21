@@ -215,19 +215,19 @@ public class MySQLSourceDAO extends MySQLDAO<SourceDAO.Attribute> implements Sou
 
         @Override
         protected SourceTO getNewTO() {
-            String sourceId = null, sourceName = null, sourceDescription = null, xRefUrl = null,
+            String sourceName = null, sourceDescription = null, xRefUrl = null,
                     experimentUrl = null, evidenceUrl = null, baseUrl = null, releaseVersion = null;
             java.sql.Date releaseDate = null;
             Boolean toDisplay = null;
             SourceCategory category = null;
-            Integer displayOrder = null;
+            Integer sourceId = null, displayOrder = null;
 
             for (Map.Entry<Integer, String> column : this.getColumnLabels().entrySet()) {
                 try {
                     String columnName = column.getValue();
 
                     if (columnName.equals("dataSourceId")) {
-                        sourceId = this.getCurrentResultSet().getString(column.getKey());
+                        sourceId = this.getCurrentResultSet().getInt(column.getKey());
 
                     } else if (columnName.equals("dataSourceName")) {
                         sourceName = this.getCurrentResultSet().getString(column.getKey());

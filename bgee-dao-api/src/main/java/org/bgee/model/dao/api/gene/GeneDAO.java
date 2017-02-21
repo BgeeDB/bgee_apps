@@ -23,6 +23,7 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      * obtained from this {@code GeneDAO}.
      * <ul>
      * <li>{@code ID}: corresponds to {@link GeneTO#getId()}.
+     * <li>{@code ENSEMBL_ID}: corresponds to {@link GeneTO#getGeneId()}.
      * <li>{@code NAME}: corresponds to {@link GeneTO#getName()}.
      * <li>{@code DESCRIPTION}: corresponds to {@link GeneTO#getDescription()}.
      * <li>{@code SPECIESID}: corresponds to {@link GeneTO#getSpeciesId()}.
@@ -35,7 +36,7 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        ID, NAME, DESCRIPTION, SPECIES_ID, GENE_BIO_TYPE_ID, OMA_PARENT_NODE_ID, ENSEMBL_GENE;
+        ID, ENSEMBL_ID, NAME, DESCRIPTION, SPECIES_ID, GENE_BIO_TYPE_ID, OMA_PARENT_NODE_ID, ENSEMBL_GENE;
 //        ANCESTRAL_OMA_NODE_ID, ANCESTRAL_OMA_TAXON_ID;
     }
     

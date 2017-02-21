@@ -68,7 +68,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 	}
 
 	@Override
-	public GeneTOResultSet getGenesBySpeciesIds(Set<String> speciesIds) throws DAOException {
+	public GeneTOResultSet getGenesBySpeciesIds(Set<Integer> speciesIds) throws DAOException {
 		log.entry(speciesIds);
 		return log.exit(this.getGenesBySpeciesIds(speciesIds, null));
 	}
@@ -80,7 +80,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 	}
 
 	@Override
-	public GeneTOResultSet getGeneBySearchTerm(String searchTerm, Set<String> speciesIds, int limitStart,
+	public GeneTOResultSet getGeneBySearchTerm(String searchTerm, Set<Integer> speciesIds, int limitStart,
 	        int resultPerPage) {
 
 		String sql = "select distinct t1.* " + 
@@ -122,9 +122,9 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 			int i = 5;
 
 			if (speciesIds != null && !speciesIds.isEmpty()) {
-				Iterator<String> speciesIdIterator = speciesIds.iterator();
+				Iterator<Integer> speciesIdIterator = speciesIds.iterator();
 				while (speciesIdIterator.hasNext()) {
-					preparedStatement.setString(i, speciesIdIterator.next());
+					preparedStatement.setInt(i, speciesIdIterator.next());
 					i++;
 				}
 			}
@@ -150,7 +150,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 	}
 
 	@Override
-	public GeneTOResultSet getGenesBySpeciesIds(Set<String> speciesIds, Set<String> geneIds) throws DAOException {
+	public GeneTOResultSet getGenesBySpeciesIds(Set<Integer> speciesIds, Set<String> geneIds) throws DAOException {
 		log.entry(speciesIds, geneIds);
 
 		String sql = this.generateSelectClause(this.getAttributes(), GENE_TABLE_NAME);
@@ -181,7 +181,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 		try {
 			BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
 			if (filterBySpeciesIDs) {
-				stmt.setStringsToIntegers(1, speciesIds, true);
+				stmt.setIntegers(1, speciesIds, true);
 			}
 
 			int offsetParamIndex = (filterBySpeciesIDs ? speciesIds.size() + 1 : 1);

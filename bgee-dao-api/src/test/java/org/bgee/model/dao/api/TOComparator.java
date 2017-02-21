@@ -480,8 +480,8 @@ public class TOComparator {
     private static boolean areTOsEqual(HierarchicalGroupToGeneTO to1, HierarchicalGroupToGeneTO to2) {
         log.entry(to1, to2);
 
-        if (StringUtils.equals(to1.getGeneId(), to2.getGeneId()) && 
-                StringUtils.equals(to1.getGroupId(), to2.getGroupId())) {
+        if (Objects.equals(to1.getBgeeGeneId(), to2.getBgeeGeneId()) && 
+            Objects.equals(to1.getNodeId(), to2.getNodeId())) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -937,7 +937,7 @@ public class TOComparator {
             SummarySimilarityAnnotationTO to2) {
         log.entry(to1, to2);
         if (StringUtils.equals(to1.getId(), to2.getId()) &&
-            StringUtils.equals(to1.getTaxonId(), to2.getTaxonId()) &&
+            Objects.equals(to1.getTaxonId(), to2.getTaxonId()) &&
             Objects.equals(to1.isNegated(), to2.isNegated()) &&
             StringUtils.equals(to1.getCIOId(), to2.getCIOId())) {
             return log.exit(true);

@@ -70,9 +70,9 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
      * the responsibility of the caller to close the returned {@code DAOResultSet} 
      * once results are retrieved.
      * 
-     * @param taxonId       A {@code String} that is the NCBI ID of the taxon for which 
+     * @param taxonId       An {@code int} that is the NCBI ID of the taxon for which 
      *                      homologous genes should be retrieved.
-     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
+     * @param speciesIds    A {@code Set} of {@code Integer}s that are the IDs of species 
      *                      for which we want to retrieve genes. Can be {@code null} or empty, 
      *                      in order to retrieve all homologous genes for the provided taxon.
      * @return              A {@code HierarchicalGroupToGeneTOResultSet} allowing to retrieve 
@@ -80,8 +80,8 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
      * @throws IllegalArgumentException If {@code taxonId} is empty or null. 
      * @throws DAOException             If an error occurred when accessing the data source. 
      */
-    public HierarchicalGroupToGeneTOResultSet getGroupToGene(String taxonId, 
-            Set<String> speciesIds) throws DAOException, IllegalArgumentException;
+    public HierarchicalGroupToGeneTOResultSet getGroupToGene(int taxonId, 
+            Set<Integer> speciesIds) throws DAOException, IllegalArgumentException;
 
     /**
      * {@code DAOResultSet} specifics to {@code HierarchicalGroupTO}s
@@ -242,49 +242,47 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
         private static final long serialVersionUID = 3165617503583438525L;
         
         /**
-         * A {@code String} representing the ID of a group of homologous genes. 
+         * An {@code Integer} representing the ID of a group of homologous genes. 
          * This corresponds to the ID of Hierarchical Group (see {@link HierarchicalGroupTO}).
          */
-        //XXX: should it be an int as in the database?
-        //Woops, isn't the groupId a String actually? Or are we speaking about the node ID?
-        private final String groupId;
+        private final Integer nodeId;
         /**
-         * A {@code String} that is the ID of a gene belonging to the group with ID 
+         * An {@code Integer} that is the ID of a gene belonging to the group with ID 
          * {@link #groupId}.
          */
-        private final String geneId;
+        private final Integer bgeeGeneId;
         
         /**
          * Constructor providing the ID of the group and the ID of a gene belonging to 
          * the group.
          * 
-         * @param groupId   A {@code String} that is the ID of an group of homologous genes.
-         * @param geneId    A {@code String} that is the ID of a gene belonging to the group.
+         * @param groupId       An {@code Integer} that is the ID of an group of homologous genes.
+         * @param bgeeGeneId    An {@code Integer} that is the ID of a gene belonging to the group.
          */
-        public HierarchicalGroupToGeneTO (String groupId, String geneId) {
-            this.groupId = groupId;
-            this.geneId = geneId;
+        public HierarchicalGroupToGeneTO (Integer nodeId, Integer bgeeGeneId) {
+            this.nodeId = nodeId;
+            this.bgeeGeneId = bgeeGeneId;
         }
 
         /**
-         * @return  A {@code String} representing the ID of a group of homologous genes. 
+         * @return  An {@code Integer} representing the ID of a group of homologous genes. 
          *          This corresponds to the ID of Hierarchical Group (see 
          *          {@link HierarchicalGroupTO}).
          */
-        public String getGroupId() {
-            return groupId;
+        public Integer getNodeId() {
+            return nodeId;
         }
         /**
-         * @return  A {@code String} that is the ID of a gene belonging to the group with ID 
-         *          {@link #getGroupId()}.
+         * @return  An {@code Integer} that is the ID of a gene belonging to the group with ID 
+         *          {@link #getNodeId()}.
          */
-        public String getGeneId() {
-            return geneId;
+        public Integer getBgeeGeneId() {
+            return bgeeGeneId;
         }
         
         @Override
         public String toString() {
-            return "HierarchicalGroupToGeneTO[groupId="+this.groupId+",geneId="+this.geneId+"]";
+            return "HierarchicalGroupToGeneTO[groupId="+this.nodeId+", bgeeGeneId="+this.bgeeGeneId+"]";
         }
     }
 }

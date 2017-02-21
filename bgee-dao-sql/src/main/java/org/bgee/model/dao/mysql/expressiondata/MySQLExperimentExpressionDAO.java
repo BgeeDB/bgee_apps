@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO;
 import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
@@ -40,46 +41,37 @@ public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionD
     }
 
     @Override
-    public ExperimentExpressionTOResultSet getAffymetrixExperimentExpressions(
-        Collection<ExperimentExpressionDAO.Attribute> attributes, 
-        LinkedHashMap<ExperimentExpressionDAO.OrderingAttribute, DAO.Direction> orderingAttributes,
-        String species) throws DAOException {
-        log.entry(attributes, orderingAttributes);
-        return log.exit(this.getExperimentExpressions(attributes, orderingAttributes));
+    public ExperimentExpressionTOResultSet getAffymetrixExpExprsOrderedByGeneIdAndExprId(int speciesId,
+        Collection<ConditionDAO.Attribute> condParam) throws DAOException {
+        log.entry(speciesId, condParam);
+        return log.exit(getExperimentExpressions(speciesId, condParam));
     }
 
     @Override
-    public ExperimentExpressionTOResultSet getESTExperimentExpressions(
-        Collection<ExperimentExpressionDAO.Attribute> attributes, 
-        LinkedHashMap<ExperimentExpressionDAO.OrderingAttribute, DAO.Direction> orderingAttributes,
-        String species) throws DAOException {
-        log.entry(attributes, orderingAttributes);
-        return log.exit(this.getExperimentExpressions(attributes, orderingAttributes));
+    public ExperimentExpressionTOResultSet getESTExpExprsOrderedByGeneIdAndExprId(int speciesId,
+        Collection<ConditionDAO.Attribute> condParam) throws DAOException {
+        log.entry(speciesId, condParam);
+        return log.exit(getExperimentExpressions(speciesId, condParam));
     }
 
     @Override
-    public ExperimentExpressionTOResultSet getInSituExperimentExpressions(
-        Collection<ExperimentExpressionDAO.Attribute> attributes, 
-        LinkedHashMap<ExperimentExpressionDAO.OrderingAttribute, DAO.Direction> orderingAttributes,
-        String species) throws DAOException {
-        log.entry(attributes, orderingAttributes);
-        return log.exit(this.getExperimentExpressions(attributes, orderingAttributes));
+    public ExperimentExpressionTOResultSet getInSituExpExprsOrderedByGeneIdAndExprId(int speciesId,
+        Collection<ConditionDAO.Attribute> condParam) throws DAOException {
+        log.entry(speciesId, condParam);
+        return log.exit(getExperimentExpressions(speciesId, condParam));
     }
 
     @Override
-    public ExperimentExpressionTOResultSet getRNASeqExperimentExpressions(
-        Collection<ExperimentExpressionDAO.Attribute> attributes, 
-        LinkedHashMap<ExperimentExpressionDAO.OrderingAttribute, DAO.Direction> orderingAttributes,
-        String species) throws DAOException {
-        log.entry(attributes, orderingAttributes);
-        return log.exit(this.getExperimentExpressions(attributes, orderingAttributes));
+    public ExperimentExpressionTOResultSet getRNASeqExpExprsOrderedByGeneIdAndExprId(int speciesId,
+        Collection<ConditionDAO.Attribute> condParam) throws DAOException {
+        log.entry(speciesId, condParam);
+        return log.exit(getExperimentExpressions(speciesId, condParam));
     }
     
-    private ExperimentExpressionTOResultSet getExperimentExpressions(
-        Collection<ExperimentExpressionDAO.Attribute> attributes, 
-        LinkedHashMap<ExperimentExpressionDAO.OrderingAttribute, DAO.Direction> orderingAttributes) 
+    private ExperimentExpressionTOResultSet getExperimentExpressions(int speciesId,
+        Collection<ConditionDAO.Attribute> condParam) 
             throws DAOException{
-        log.entry(attributes, orderingAttributes);
+        log.entry(speciesId, condParam);
         throw log.throwing(new UnsupportedOperationException(
             "Retrieval of experiment expressions not yet implemented."));
     }

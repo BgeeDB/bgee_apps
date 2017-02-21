@@ -27,7 +27,7 @@ public class MySQLRawExpressionCallDAO  extends MySQLDAO<RawExpressionCallDAO.At
         LogManager.getLogger(MySQLRawExpressionCallDAO.class.getName());
 
     @Override
-    public RawExpressionCallTOResultSet getExpressionCallsOrderedByGeneIdAndExprId(String speciesId) throws DAOException {
+    public RawExpressionCallTOResultSet getExpressionCallsOrderedByGeneIdAndExprId(int speciesId) throws DAOException {
         log.entry(speciesId);
         throw log.throwing(new UnsupportedOperationException("Retrieve od expression calls not implemented yet"));
     }

@@ -64,7 +64,7 @@ public interface RelationDAO extends DAO<RelationDAO.Attribute> {
      * The relations are retrieved and returned as a {@code RelationTOResultSet}. It is the 
      * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesIds        A {@code Set} of {@code String}s that are the IDs of species 
+     * @param speciesIds        A {@code Set} of {@code Integer}s that are the IDs of species 
      *                          to retrieve relations for.
      * @param relationTypes     A {@code Set} of {@code RelationType}s that are the relation 
      *                          types allowing to filter the relations to retrieve.
@@ -74,7 +74,7 @@ public interface RelationDAO extends DAO<RelationDAO.Attribute> {
      *                          entity relations from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public RelationTOResultSet<String> getAnatEntityRelationsBySpeciesIds(Set<String> speciesIds,
+    public RelationTOResultSet<String> getAnatEntityRelationsBySpeciesIds(Set<Integer> speciesIds,
             Set<RelationType> relationTypes, Set<RelationStatus> relationStatus) throws DAOException;
 
     /**
@@ -85,7 +85,7 @@ public interface RelationDAO extends DAO<RelationDAO.Attribute> {
      * The relations are retrieved and returned as a {@code RelationTOResultSet}. It is the 
      * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesIds            A {@code Collection} of {@code String}s that are the IDs of species 
+     * @param speciesIds            A {@code Collection} of {@code Integer}s that are the IDs of species 
      *                              to retrieve relations for. Can be {@code null} or empty.
      * @param anySpecies            A {@code Boolean} defining, when {@code speciesIds} contains several IDs, 
      *                              whether the relations retrieved should be valid in any 
@@ -118,7 +118,7 @@ public interface RelationDAO extends DAO<RelationDAO.Attribute> {
      *                              entity relations from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public RelationTOResultSet<String> getAnatEntityRelations(Collection<String> speciesIds, Boolean anySpecies, 
+    public RelationTOResultSet<String> getAnatEntityRelations(Collection<Integer> speciesIds, Boolean anySpecies, 
             Collection<String> sourceAnatEntityIds, Collection<String> targetAnatEntityIds, Boolean sourceOrTarget, 
             Collection<RelationType> relationTypes, Collection<RelationStatus> relationStatus, 
             Collection<RelationDAO.Attribute> attributes) throws DAOException;
@@ -131,7 +131,7 @@ public interface RelationDAO extends DAO<RelationDAO.Attribute> {
      * The relations are retrieved and returned as a {@code RelationTOResultSet}. It is the 
      * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesIds        A {@code Set} of {@code String}s that are the IDs of species 
+     * @param speciesIds        A {@code Set} of {@code Integer}s that are the IDs of species 
      *                          to retrieve relations for.
      * @param relationStatus    A {@code Set} of {@code RelationStatus} that are the status
      *                          allowing to filter the relations to retrieve.
@@ -139,7 +139,7 @@ public interface RelationDAO extends DAO<RelationDAO.Attribute> {
      *                      from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public RelationTOResultSet<String> getStageRelationsBySpeciesIds(Set<String> speciesIds, 
+    public RelationTOResultSet<String> getStageRelationsBySpeciesIds(Set<Integer> speciesIds, 
             Set<RelationStatus> relationStatus) throws DAOException;
 
     /**
@@ -149,7 +149,7 @@ public interface RelationDAO extends DAO<RelationDAO.Attribute> {
      * The relations are retrieved and returned as a {@code RelationTOResultSet}. It is the 
      * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesIds            A {@code Collection} of {@code String}s that are the IDs of species 
+     * @param speciesIds            A {@code Collection} of {@code Integer}s that are the IDs of species 
      *                              to retrieve relations for. Can be {@code null} or empty.
      * @param anySpecies            A {@code Boolean} defining, when {@code speciesIds} contains several IDs, 
      *                              whether the relations retrieved should be valid in any 
@@ -179,7 +179,7 @@ public interface RelationDAO extends DAO<RelationDAO.Attribute> {
      *                              stage relations from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public RelationTOResultSet<String> getStageRelations(Collection<String> speciesIds, Boolean anySpecies, 
+    public RelationTOResultSet<String> getStageRelations(Collection<Integer> speciesIds, Boolean anySpecies, 
             Collection<String> sourceDevStageIds, Collection<String> targetDevStageIds, Boolean sourceOrTarget, 
             Collection<RelationStatus> relationStatus, 
             Collection<RelationDAO.Attribute> attributes) throws DAOException;

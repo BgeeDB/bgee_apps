@@ -74,17 +74,17 @@ public class MySQLSummarySimilarityAnnotationDAO
 
     @Override
     public SummarySimilarityAnnotationTOResultSet getSummarySimilarityAnnotations(
-            String taxonId)  throws DAOException, IllegalArgumentException {
+            Integer taxonId)  throws DAOException, IllegalArgumentException {
         return this.getSummarySimilarityAnnotations(taxonId, false);
     }
             
     @Override
     public SummarySimilarityAnnotationTOResultSet getSummarySimilarityAnnotations(
-            String taxonId, boolean onlyTrusted) throws DAOException, IllegalArgumentException {
+            Integer taxonId, boolean onlyTrusted) throws DAOException, IllegalArgumentException {
         log.entry(taxonId, onlyTrusted);
         
-        if (StringUtils.isEmptyOrWhitespaceOnly(taxonId)) {
-            throw log.throwing(new IllegalArgumentException("Taxon ID must be provided"));
+        if (taxonId == null || taxonId <= 0) {
+            throw log.throwing(new IllegalArgumentException("Valid taxon ID must be provided"));
         }
         
         String sql = this.generateSelectClause(this.getAttributes(), "t3", true);
@@ -102,7 +102,7 @@ public class MySQLSummarySimilarityAnnotationDAO
         //not the actual results, so we should not close this BgeePreparedStatement.
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
-            stmt.setString(1, taxonId);
+            stmt.setInt(1, taxonId);
             return log.exit(new MySQLSummarySimilarityAnnotationTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
@@ -110,11 +110,11 @@ public class MySQLSummarySimilarityAnnotationDAO
     }
 
     @Override
-    public SimAnnotToAnatEntityTOResultSet getSimAnnotToAnatEntity(String taxonId, 
-            Set<String> speciesIds) throws DAOException, IllegalArgumentException {
+    public SimAnnotToAnatEntityTOResultSet getSimAnnotToAnatEntity(Integer taxonId, 
+            Set<Integer> speciesIds) throws DAOException, IllegalArgumentException {
         log.entry(taxonId, speciesIds);
-        if (StringUtils.isEmptyOrWhitespaceOnly(taxonId)) {
-            throw log.throwing(new IllegalArgumentException("Taxon ID must be provided"));
+        if (taxonId == null || taxonId <= 0) {
+            throw log.throwing(new IllegalArgumentException("Valid taxon ID must be provided"));
         }
         
         String sql = this.getAnnotToAnatEntityQueryStart();
@@ -137,9 +137,9 @@ public class MySQLSummarySimilarityAnnotationDAO
         //not the actual results, so we should not close this BgeePreparedStatement.
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
-            stmt.setString(1, taxonId);
+            stmt.setInt(1, taxonId);
             if (speciesIds != null && !speciesIds.isEmpty()) {
-                stmt.setStringsToIntegers(2, speciesIds, true);
+                stmt.setIntegers(2, speciesIds, true);
             }
             return log.exit(new MySQLSimAnnotToAnatEntityTOResultSet(stmt));
         } catch (SQLException e) {
@@ -148,11 +148,11 @@ public class MySQLSummarySimilarityAnnotationDAO
     }
 
     @Override
-    public SimAnnotToAnatEntityTOResultSet getSimAnnotToLostAnatEntity(String taxonId, 
-            Set<String> speciesIds) throws DAOException, IllegalArgumentException {
+    public SimAnnotToAnatEntityTOResultSet getSimAnnotToLostAnatEntity(Integer taxonId, 
+            Set<Integer> speciesIds) throws DAOException, IllegalArgumentException {
         log.entry(taxonId, speciesIds);
-        if (StringUtils.isEmptyOrWhitespaceOnly(taxonId)) {
-            throw log.throwing(new IllegalArgumentException("Taxon ID must be provided"));
+        if (taxonId == null || taxonId <= 0) {
+            throw log.throwing(new IllegalArgumentException("Valid taxon ID must be provided"));
         }
         if (speciesIds == null || speciesIds.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Some species must be provided."));
@@ -172,8 +172,8 @@ public class MySQLSummarySimilarityAnnotationDAO
         //not the actual results, so we should not close this BgeePreparedStatement.
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
-            stmt.setString(1, taxonId);
-            stmt.setStringsToIntegers(2, speciesIds, true);
+            stmt.setInt(1, taxonId);
+            stmt.setIntegers(2, speciesIds, true);
             return log.exit(new MySQLSimAnnotToAnatEntityTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
@@ -383,7 +383,7 @@ public class MySQLSummarySimilarityAnnotationDAO
                 this.getManager().getConnection().prepareStatement(sqlExpression)) {
             for (SummarySimilarityAnnotationTO summaryTO: summaryTOs) {
                 stmt.setInt(1, Integer.parseInt(summaryTO.getId()));
-                stmt.setInt(2, Integer.parseInt(summaryTO.getTaxonId()));
+                stmt.setInt(2, summaryTO.getTaxonId());
                 stmt.setBoolean(3, summaryTO.isNegated());
                 stmt.setString(4, summaryTO.getCIOId());
                 annotationInsertedCount += stmt.executeUpdate();
@@ -495,7 +495,8 @@ public class MySQLSummarySimilarityAnnotationDAO
         protected SummarySimilarityAnnotationTO getNewTO() throws DAOException {
             log.entry();
 
-            String id = null, taxonId = null, cioId = null; 
+            String id = null, cioId = null;
+            Integer taxonId = null;
             Boolean negated = null;
 
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
@@ -504,7 +505,7 @@ public class MySQLSummarySimilarityAnnotationDAO
                         id = this.getCurrentResultSet().getString(column.getKey());
                         
                     } else if (column.getValue().equals("taxonId")) {
-                        taxonId = this.getCurrentResultSet().getString(column.getKey());
+                        taxonId = this.getCurrentResultSet().getInt(column.getKey());
 
                     } else if (column.getValue().equals("negated")) {
                         negated = this.getCurrentResultSet().getBoolean(column.getKey());

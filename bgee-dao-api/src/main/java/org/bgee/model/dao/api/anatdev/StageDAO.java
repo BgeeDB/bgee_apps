@@ -50,12 +50,12 @@ public interface StageDAO extends DAO<StageDAO.Attribute> {
      * The stages are retrieved and returned as a {@code StageTOResultSet}. It is the
      * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesIds    A {@code Collection} of {@code String}s that are the IDs of species 
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that are the IDs of species 
      *                      allowing to filter the stages to use.
      * @return              An {@code StageTOResultSet} containing all stages from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public StageTOResultSet getStagesBySpeciesIds(Collection<String> speciesIds) throws DAOException;
+    public StageTOResultSet getStagesBySpeciesIds(Collection<Integer> speciesIds) throws DAOException;
     
     /**
      * Retrieves stages from data source existing in any of the requested species, 
@@ -65,7 +65,7 @@ public interface StageDAO extends DAO<StageDAO.Attribute> {
      * The stages are retrieved and returned as a {@code StageTOResultSet}. It is the
      * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesIds        A {@code Collection} of {@code String}s that are the IDs of species 
+     * @param speciesIds        A {@code Collection} of {@code Integer}s that are the IDs of species 
      *                          allowing to filter the stages to use.
      * @param isGroupingStage   A {@code Boolean} defining whether this stage is a grouping stage, 
      *                          broad enough to allow comparisons of anatomical features. 
@@ -75,7 +75,7 @@ public interface StageDAO extends DAO<StageDAO.Attribute> {
      * @return                  The {@code StageTOResultSet} containing stages from data source.
      * @throws DAOException     If an error occurred when accessing the data source. 
      */
-    public StageTOResultSet getStagesBySpeciesIds(Collection<String> speciesIds, Boolean isGroupingStage,
+    public StageTOResultSet getStagesBySpeciesIds(Collection<Integer> speciesIds, Boolean isGroupingStage,
             Integer level) throws DAOException;
 
     /**
@@ -101,7 +101,7 @@ public interface StageDAO extends DAO<StageDAO.Attribute> {
      * The stages are retrieved and returned as a {@code StageTOResultSet}. It is the
      * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesIds        A {@code Collection} of {@code String}s that are the IDs of species 
+     * @param speciesIds        A {@code Collection} of {@code Integer}s that are the IDs of species 
      *                          allowing to filter the stages to use.
      * @param stageIds          A {@code Collection} of {@code String}s that are the IDs of dev. stages
      *                          allowing to filter the stages to use.
@@ -114,7 +114,7 @@ public interface StageDAO extends DAO<StageDAO.Attribute> {
      *                          from data source.
      * @throws DAOException     If an error occurred when accessing the data source. 
      */
-    public StageTOResultSet getStages(Collection<String> speciesIds, Collection<String> stageIds,
+    public StageTOResultSet getStages(Collection<Integer> speciesIds, Collection<String> stageIds,
             Boolean isGroupingStage, Integer level) throws DAOException;
 
     /**
@@ -126,7 +126,7 @@ public interface StageDAO extends DAO<StageDAO.Attribute> {
      * The stages are retrieved and returned as a {@code StageTOResultSet}. It is the
      * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesIds        A {@code Collection} of {@code String}s that are the IDs of species 
+     * @param speciesIds        A {@code Collection} of {@code Integer}s that are the IDs of species 
      *                          allowing to filter the stages to use.
      * @param anySpecies        A {@code Boolean} defining, when {@code speciesIds} contains several IDs, 
      *                          whether the entities retrieved should be valid in any 
@@ -147,7 +147,7 @@ public interface StageDAO extends DAO<StageDAO.Attribute> {
      *                          from data source.
      * @throws DAOException     If an error occurred when accessing the data source. 
      */
-    public StageTOResultSet getStages(Collection<String> speciesIds, Boolean anySpecies, 
+    public StageTOResultSet getStages(Collection<Integer> speciesIds, Boolean anySpecies, 
             Collection<String> stageIds, Boolean isGroupingStage, Integer level, 
             Collection<StageDAO.Attribute> attributes) throws DAOException;
 

@@ -52,7 +52,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
     }
 
     @Override
-    public RelationTOResultSet<String> getAnatEntityRelations(Collection<String> speciesIds, Boolean anySpecies, 
+    public RelationTOResultSet<String> getAnatEntityRelations(Collection<Integer> speciesIds, Boolean anySpecies, 
             Collection<String> sourceAnatEntityIds, Collection<String> targetAnatEntityIds, Boolean sourceOrTarget, 
             Collection<RelationType> relationTypes, Collection<RelationStatus> relationStatus, 
             Collection<RelationDAO.Attribute> attributes) {
@@ -65,8 +65,8 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         // FILTER ARGUMENTS
         //*******************************
         //Species
-        Set<String> clonedSpeIds = Optional.ofNullable(speciesIds)
-                .map(c -> new HashSet<String>(c)).orElse(null);
+        Set<Integer> clonedSpeIds = Optional.ofNullable(speciesIds)
+                .map(c -> new HashSet<>(c)).orElse(null);
         boolean isSpeciesFilter = clonedSpeIds != null && !clonedSpeIds.isEmpty();
         boolean realAnySpecies = isSpeciesFilter && 
                 (Boolean.TRUE.equals(anySpecies) || clonedSpeIds.size() == 1);
@@ -190,7 +190,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             int startIndex = 1;
             if (isSpeciesFilter) {
-                stmt.setStringsToIntegers(startIndex, clonedSpeIds, true);
+                stmt.setIntegers(startIndex, clonedSpeIds, true);
                 startIndex += clonedSpeIds.size();
             }
             if (isSourceAnatEntityFilter) {
@@ -216,7 +216,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
     }
     
     @Override
-    public RelationTOResultSet<String> getAnatEntityRelationsBySpeciesIds(Set<String> speciesIds, 
+    public RelationTOResultSet<String> getAnatEntityRelationsBySpeciesIds(Set<Integer> speciesIds, 
             Set<RelationType> relationTypes, Set<RelationStatus> relationStatus) {
         log.entry(speciesIds, relationTypes, relationStatus);    
 
@@ -236,7 +236,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
     }
 
     @Override
-    public RelationTOResultSet<String> getStageRelationsBySpeciesIds(Set<String> speciesIds, 
+    public RelationTOResultSet<String> getStageRelationsBySpeciesIds(Set<Integer> speciesIds, 
             Set<RelationStatus> relationStatus) {
         log.entry(speciesIds, relationStatus);
         return log.exit(this.getStageRelations(speciesIds, true, null, null, true, relationStatus, 
@@ -244,7 +244,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
     }
 
     @Override
-    public RelationTOResultSet<String> getStageRelations(Collection<String> speciesIds, Boolean anySpecies, 
+    public RelationTOResultSet<String> getStageRelations(Collection<Integer> speciesIds, Boolean anySpecies, 
             Collection<String> sourceDevStageIds, Collection<String> targetDevStageIds, Boolean sourceOrTarget, 
             Collection<RelationStatus> relationStatus, 
             Collection<RelationDAO.Attribute> attributes) {
@@ -259,7 +259,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
     /**
      * Retrieve {@code RelationTO}s for any nested set model stored in the database.
      *  
-     * @param speciesIds            A {@code Collection} of {@code String}s that are the IDs of species 
+     * @param speciesIds            A {@code Collection} of {@code Integer}s that are the IDs of species 
      *                              to retrieve relations for. Can be {@code null} or empty. 
      *                              Only applicable for multiple-species ontologies.
      * @param anySpecies            A {@code Boolean} defining, when {@code speciesIds} contains several IDs, 
@@ -307,7 +307,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
      *                              nested set model relations from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    private <T> RelationTOResultSet<T> getNestedSetModelFakeRelations(Collection<String> speciesIds, 
+    private <T> RelationTOResultSet<T> getNestedSetModelFakeRelations(Collection<Integer> speciesIds, 
             Boolean anySpecies, Collection<T> sourceIds, Collection<T> targetIds, 
             Boolean sourceOrTarget, Collection<RelationStatus> relationStatus, 
             Collection<RelationDAO.Attribute> attributes, String tableName, String taxonConstTableName, 
@@ -324,8 +324,8 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         // FILTER ARGUMENTS
         //*******************************
         //Species
-        Set<String> clonedSpeIds = Optional.ofNullable(speciesIds)
-                .map(c -> new HashSet<String>(c)).orElse(null);
+        Set<Integer> clonedSpeIds = Optional.ofNullable(speciesIds)
+                .map(c -> new HashSet<>(c)).orElse(null);
         boolean isSpeciesFilter = clonedSpeIds != null && !clonedSpeIds.isEmpty();
         assert !isSpeciesFilter || taxonConstTableName != null; 
         boolean realAnySpecies = isSpeciesFilter && 
@@ -466,9 +466,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
              BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
              int startIndex = 1;
              if (isSpeciesFilter) {
-                 List<Integer> orderedSpeciesIds = clonedSpeIds.stream()
-                         .map(e -> e == null? null: Integer.parseInt(e))
-                         .collect(Collectors.toList());
+                 List<Integer> orderedSpeciesIds = clonedSpeIds.stream().collect(Collectors.toList());
                  Collections.sort(orderedSpeciesIds);
                  stmt.setIntegers(startIndex, orderedSpeciesIds, false);
                  startIndex += orderedSpeciesIds.size();

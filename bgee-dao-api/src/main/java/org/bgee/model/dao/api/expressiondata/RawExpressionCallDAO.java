@@ -54,7 +54,7 @@ public interface RawExpressionCallDAO extends DAO<RawExpressionCallDAO.Attribute
      * @return
      * @throws DAOException
      */
-    public RawExpressionCallTOResultSet getExpressionCallsOrderedByGeneIdAndExprId(String speciesId)
+    public RawExpressionCallTOResultSet getExpressionCallsOrderedByGeneIdAndExprId(int speciesId)
         throws DAOException;
 
   /**

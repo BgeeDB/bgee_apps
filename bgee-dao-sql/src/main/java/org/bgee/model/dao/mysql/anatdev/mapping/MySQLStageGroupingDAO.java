@@ -35,8 +35,8 @@ public class MySQLStageGroupingDAO extends MySQLDAO implements StageGroupingDAO 
     }
 
     @Override
-    public GroupToStageTOResultSet getGroupToStage(String ancestralTaxonId, 
-            Set<String> speciesIds) throws DAOException {
+    public GroupToStageTOResultSet getGroupToStage(Integer ancestralTaxonId, 
+            Set<Integer> speciesIds) throws DAOException {
         log.entry(ancestralTaxonId, speciesIds);
         //as of Bgee 13, there is no mapping between stages, so we basically 
         //simply retrieve grouping stages existing in all the provided species, 
@@ -70,7 +70,7 @@ public class MySQLStageGroupingDAO extends MySQLDAO implements StageGroupingDAO 
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             if (hasSpecies) {
-                stmt.setStringsToIntegers(1, speciesIds, true);
+                stmt.setIntegers(1, speciesIds, true);
                 stmt.setInt(1 + speciesIds.size(), speciesIds.size());
             }
             

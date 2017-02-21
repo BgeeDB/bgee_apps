@@ -61,13 +61,13 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
      * the responsibility of the caller to close this {@code DAOResultSet} once results are 
      * retrieved.
      * 
-     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
+     * @param speciesIds    A {@code Set} of {@code Integer}s that are the IDs of species 
      *                      allowing to filter the anatomical entities to use.
      * @return              An {@code AnatEntityTOResultSet} containing all anatomical entities
      *                      from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public AnatEntityTOResultSet getAnatEntitiesBySpeciesIds(Collection<String> speciesIds) 
+    public AnatEntityTOResultSet getAnatEntitiesBySpeciesIds(Collection<Integer> speciesIds) 
             throws DAOException;
     
     /**
@@ -97,7 +97,7 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
      * It is the responsibility of the caller to close this {@code DAOResultSet} once results 
      * are retrieved.
      * 
-     * @param speciesIds        A {@code Collection} of {@code String}s that are the IDs of species 
+     * @param speciesIds        A {@code Collection} of {@code Integer}s that are the IDs of species 
      *                          allowing to filter the anatomical entities to use.
      * @param anatEntitiesIds   A {@code Collection} of {@code String}s that are the IDs of anatomical 
      *                          entities allowing to filter the anatomical entities to use.
@@ -106,7 +106,7 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
      *                          {@code anatEntitiesIds}.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public AnatEntityTOResultSet getAnatEntities(Collection<String> speciesIds, 
+    public AnatEntityTOResultSet getAnatEntities(Collection<Integer> speciesIds, 
             Collection<String> anatEntitiesIds) throws DAOException;
 
     /**
@@ -119,7 +119,7 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
      * It is the responsibility of the caller to close this {@code DAOResultSet} once results 
      * are retrieved.
      * 
-     * @param speciesIds        A {@code Collection} of {@code String}s that are the IDs of species 
+     * @param speciesIds        A {@code Collection} of {@code Integer}s that are the IDs of species 
      *                          allowing to filter the anatomical entities to use.
      * @param anySpecies        A {@code Boolean} defining, when {@code speciesIds} contains several IDs, 
      *                          whether the entities retrieved should be valid in any 
@@ -136,7 +136,7 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
      *                          {@code anatEntitiesIds}.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public AnatEntityTOResultSet getAnatEntities(Collection<String> speciesIds, Boolean anySpecies, 
+    public AnatEntityTOResultSet getAnatEntities(Collection<Integer> speciesIds, Boolean anySpecies, 
             Collection<String> anatEntitiesIds, Collection<AnatEntityDAO.Attribute> attributes) 
                     throws DAOException;
 
@@ -149,13 +149,13 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
      * {@code AnatEntityTOResultSet}. It is the responsibility of the caller to close this 
      * {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesIds    A {@code Collection} of {@code String}s that are the IDs of species 
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that are the IDs of species 
      *                      allowing to filter the non-informative anatomical entities to use
      * @return              An {@code AnatEntityTOResultSet} containing non-informative 
      *                      anatomical entities from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public AnatEntityTOResultSet getNonInformativeAnatEntitiesBySpeciesIds(Collection<String> speciesIds) 
+    public AnatEntityTOResultSet getNonInformativeAnatEntitiesBySpeciesIds(Collection<Integer> speciesIds) 
             throws DAOException;
     
     /**

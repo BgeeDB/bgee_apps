@@ -85,14 +85,14 @@ public class MySQLStageDAOIT extends MySQLITAncestor {
 
         // Test recovery of all attributes with filter on species IDs
         dao.clearAttributes();
-        Set<String> speciesIds = this.getSpeciesFilter();
+        Set<Integer> speciesIds = this.getSpeciesFilter();
         expectedStages = this.getFilteredStageTOsBySpecies();
         assertTrue("StageTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(
                         dao.getStagesBySpeciesIds(speciesIds).getAllTOs(), expectedStages));
         
         dao.clearAttributes();
-        speciesIds = new HashSet<String>(Arrays.asList("11", "21", "31", "44"));
+        speciesIds = new HashSet<>(Arrays.asList(11, 21, 31, 44));
         expectedStages = this.getAllStageTOs();
         List<StageTO> retrievedStageTOs = dao.getStagesBySpeciesIds(speciesIds).getAllTOs();
         assertTrue("StageTOs incorrectly retrieved, expected " + expectedStages + 
@@ -100,7 +100,7 @@ public class MySQLStageDAOIT extends MySQLITAncestor {
                 TOComparator.areTOCollectionsEqual(retrievedStageTOs, expectedStages));
         
         // Test recovery of all attributes with filter on species IDs and grouping stage
-        speciesIds = new HashSet<String>(Arrays.asList("11","44"));
+        speciesIds = new HashSet<>(Arrays.asList(11, 44));
         expectedStages = Arrays.asList(
                 new StageTO("Stage_id1", "stageN1", "stage Desc 1", 1, 36, 1, false, true), 
                 new StageTO("Stage_id8", "stageN8", "stage Desc 8", 12, 13, 4, false, true), 
@@ -197,7 +197,7 @@ public class MySQLStageDAOIT extends MySQLITAncestor {
                         expectedStages));
 
         // Test recovery nothing with all filters
-        final Set<String> speciesIds = this.getSpeciesFilter();
+        final Set<Integer> speciesIds = this.getSpeciesFilter();
         assertTrue("StageTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(
                         dao.getStages(speciesIds, stageIds, true, 4).getAllTOs(),
@@ -205,7 +205,7 @@ public class MySQLStageDAOIT extends MySQLITAncestor {
         
         // Test recovery one TO (due to DISCTINCT) with all filters
         dao.setAttributes(StageDAO.Attribute.LEVEL, StageDAO.Attribute.GRANULAR, StageDAO.Attribute.GROUPING);
-        speciesIds.add("21");
+        speciesIds.add(21);
         dao.setAttributes(StageDAO.Attribute.LEVEL, StageDAO.Attribute.GRANULAR, StageDAO.Attribute.GROUPING);
         expectedStages = Arrays.asList(
                 new StageTO(null, null, null, null, null, 4, false, false));
@@ -234,7 +234,7 @@ public class MySQLStageDAOIT extends MySQLITAncestor {
                 new StageTO("Stage_id7", "stageN7", null, null, null, null, null, null));
         assertTrue("StageTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(
-                        dao.getStages(Arrays.asList("11", "21"), false, 
+                        dao.getStages(Arrays.asList(11, 21), false, 
                                 Arrays.asList("Stage_id2", "Stage_id5", "Stage_id6", "Stage_id7"), 
                                 false, null, 
                                 EnumSet.of(StageDAO.Attribute.ID, StageDAO.Attribute.NAME)).getAllTOs(),
@@ -301,8 +301,8 @@ public class MySQLStageDAOIT extends MySQLITAncestor {
      * @return  The {@code Set} of {@code String}s that are species IDs used as filter.
      * @see #getFilteredStageTOsBySpecies()
      */
-    private Set<String> getSpeciesFilter() {
-        Set<String> speciesIds = new HashSet<String>(Arrays.asList("11","44"));
+    private Set<Integer> getSpeciesFilter() {
+        Set<Integer> speciesIds = new HashSet<>(Arrays.asList(11, 44));
         return speciesIds;
     }
     

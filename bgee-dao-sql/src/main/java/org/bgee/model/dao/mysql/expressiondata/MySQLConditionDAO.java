@@ -30,7 +30,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
     }
 
     @Override
-    public ConditionTOResultSet getConditionsBySpeciesIds(Collection<String> speciesIds,
+    public ConditionTOResultSet getConditionsBySpeciesIds(Collection<Integer> speciesIds,
         Collection<ConditionDAO.Attribute> attributes) throws DAOException {
         log.entry(speciesIds, attributes);
         throw log.throwing(new UnsupportedOperationException("Retrieve of conditions not implemented yet"));

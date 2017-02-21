@@ -52,19 +52,19 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
     }
     
     @Override
-    public HierarchicalGroupToGeneTOResultSet getGroupToGene(String taxonId, 
-            Set<String> speciesIds) throws DAOException, IllegalArgumentException {
+    public HierarchicalGroupToGeneTOResultSet getGroupToGene(int taxonId, 
+            Set<Integer> speciesIds) throws DAOException, IllegalArgumentException {
         log.entry(taxonId, speciesIds);
 
-        if (StringUtils.isEmptyOrWhitespaceOnly(taxonId)) {
+        if (taxonId <= 0) {
             throw log.throwing(new IllegalArgumentException("No taxon ID is provided"));
         }
         
         boolean hasSpecies  = speciesIds != null && !speciesIds.isEmpty();
         
-        String sql = "SELECT geneToOma.OMANodeId, geneToOma.geneId "
+        String sql = "SELECT geneToOma.OMANodeId, geneToOma.bgeeGeneId "
                 + "FROM geneToOma "
-                + "INNER JOIN gene AS g ON geneToOma.geneId = g.geneId "
+                + "INNER JOIN gene AS g ON geneToOma.bgeeGeneId = g.bgeeGeneId "
                 + "WHERE taxonId = ? ";
         if (hasSpecies) {
             sql += "AND g.speciesId IN (" +
@@ -76,9 +76,9 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
         //not the actual results, so we should not close this BgeePreparedStatement.
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
-            stmt.setString(1, taxonId);
+            stmt.setInt(1, taxonId);
             if (hasSpecies) {
-                stmt.setStringsToIntegers(2, speciesIds, true);
+                stmt.setIntegers(2, speciesIds, true);
             }  
             return log.exit(new MySQLHierarchicalGroupToGeneTOResultSet(stmt));
         } catch (SQLException e) {
@@ -184,15 +184,15 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
         protected HierarchicalGroupToGeneTO getNewTO() throws DAOException {
             log.entry();
 
-            String hogId = null, geneId = null; 
+            Integer hogId = null, geneId = null; 
 
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
                     if (column.getValue().equals("OMANodeId")) {
-                        hogId = this.getCurrentResultSet().getString(column.getKey());
+                        hogId = this.getCurrentResultSet().getInt(column.getKey());
                         
                     } else if (column.getValue().equals("geneId")) {
-                        geneId = this.getCurrentResultSet().getString(column.getKey());
+                        geneId = this.getCurrentResultSet().getInt(column.getKey());
 
                     } else {
                         throw log.throwing(new UnrecognizedColumnException(column.getValue()));

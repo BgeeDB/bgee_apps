@@ -111,8 +111,8 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
                 TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
 
         // With specified species IDs without gene IDs
-        Set<String> speciesIds = new HashSet<String>();
-        speciesIds.addAll(Arrays.asList("11", "31", "44"));
+        Set<Integer> speciesIds = new HashSet<>();
+        speciesIds.addAll(Arrays.asList(11, 31, 44));
         dao.clearAttributes();
         methGenes = dao.getGenesBySpeciesIds(speciesIds).getAllTOs();
         expectedGenes = Arrays.asList(

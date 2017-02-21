@@ -62,7 +62,7 @@ public interface SummarySimilarityAnnotationDAO extends
      * {@code SummarySimilarityAnnotationTOResultSet}. It is the responsibility of the caller 
      * to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param taxonId           A {@code String} that is the NCBI ID of the taxon 
+     * @param taxonId           An {@code Integer} that is the NCBI ID of the taxon 
      *                          for which the similarity annotations should be valid, 
      *                          including all its ancestral taxa.
      * @param onlyTrusted       Restrict the results to "trusted" annotations (should be the default).
@@ -72,7 +72,7 @@ public interface SummarySimilarityAnnotationDAO extends
      * @throws IllegalArgumentException If {@code taxonId} is {@code null} or empty.
      */
     public SummarySimilarityAnnotationTOResultSet getSummarySimilarityAnnotations(
-            String taxonId, boolean onlyTrusted) throws DAOException, IllegalArgumentException;
+            Integer taxonId, boolean onlyTrusted) throws DAOException, IllegalArgumentException;
     
     /**
      * Retrieve similarity annotations valid at the level of {@code taxonId}, 
@@ -82,7 +82,7 @@ public interface SummarySimilarityAnnotationDAO extends
      * {@code SummarySimilarityAnnotationTOResultSet}. It is the responsibility of the caller 
      * to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param taxonId           A {@code String} that is the NCBI ID of the taxon 
+     * @param taxonId           An {@code Integer} that is the NCBI ID of the taxon 
      *                          for which the similarity annotations should be valid, 
      *                          including all its ancestral taxa.
      * @return                  A {@code SummarySimilarityAnnotationTOResultSet} allowing 
@@ -90,7 +90,7 @@ public interface SummarySimilarityAnnotationDAO extends
      * @throws DAOException     If an error occurred when accessing the data source.
      * @throws IllegalArgumentException If {@code taxonId} is {@code null} or empty.
      */
-    SummarySimilarityAnnotationTOResultSet getSummarySimilarityAnnotations(String taxonId)
+    SummarySimilarityAnnotationTOResultSet getSummarySimilarityAnnotations(Integer taxonId)
             throws DAOException, IllegalArgumentException;
     
     /**
@@ -127,10 +127,10 @@ public interface SummarySimilarityAnnotationDAO extends
      * the responsibility of the caller to close the returned {@code DAOResultSet} 
      * once results are retrieved.
      * 
-     * @param ancestralTaxonId  A {@code String} that is the NCBI ID of the taxon 
+     * @param ancestralTaxonId  An {@code Integer} that is the NCBI ID of the taxon 
      *                          for which the similarity annotations should be valid, 
      *                          including all its ancestral taxa.
-     * @param speciesIds        A {@code Set} of {@code String}s that are the IDs 
+     * @param speciesIds        A {@code Set} of {@code Integer}s that are the IDs 
      *                          of the species for which the anatomical entities retrieved 
      *                          should be valid. If {@code null} or empty, 
      *                          the anatomical entities retrieved will be valid in any species.
@@ -141,8 +141,8 @@ public interface SummarySimilarityAnnotationDAO extends
      */
     //Note that if someday we use other similarity concepts than 'historical homology' 
     //(HOM:0000007), then this method will need to accept the HOMId as argument.
-    public SimAnnotToAnatEntityTOResultSet getSimAnnotToAnatEntity(String ancestralTaxonId, 
-            Set<String> speciesIds) throws DAOException, IllegalArgumentException;
+    public SimAnnotToAnatEntityTOResultSet getSimAnnotToAnatEntity(Integer ancestralTaxonId, 
+            Set<Integer> speciesIds) throws DAOException, IllegalArgumentException;
     
     /**
      * Retrieve <strong>positive</strong> transitive similarity annotations and 
@@ -159,10 +159,10 @@ public interface SummarySimilarityAnnotationDAO extends
      * the responsibility of the caller to close the returned {@code DAOResultSet} 
      * once results are retrieved.
      * 
-     * @param ancestralTaxonId  A {@code String} that is the NCBI ID of the taxon 
+     * @param ancestralTaxonId  An {@code Integer} that is the NCBI ID of the taxon 
      *                          for which the similarity annotations should be valid, 
      *                          including all its ancestral taxa.
-     * @param speciesIds        A {@code Set} of {@code String}s that are the IDs 
+     * @param speciesIds        A {@code Set} of {@code Integer}s that are the IDs 
      *                          of the species in which the anatomical entities retrieved 
      *                          should <strong>not</strong> exist. If {@code null} or empty, 
      *                          an {@code IllegalArgumentException} is thrown.
@@ -176,7 +176,7 @@ public interface SummarySimilarityAnnotationDAO extends
     //Note that if someday we use other similarity concepts than 'historical homology' 
     //(HOM:0000007), then this method will need to accept the HOMId as argument.
     public SimAnnotToAnatEntityTOResultSet getSimAnnotToLostAnatEntity(
-            String ancestralTaxonId, Set<String> speciesIds) throws DAOException, 
+            Integer ancestralTaxonId, Set<Integer> speciesIds) throws DAOException, 
             IllegalArgumentException;
 
     /**
@@ -248,9 +248,9 @@ public interface SummarySimilarityAnnotationDAO extends
         private final String id;
         
         /**
-         * A {@code String} representing the taxon targeted by the summary similarity annotation.
+         * An {@code Integer} representing the taxon targeted by the summary similarity annotation.
          */
-        private final String taxonId;
+        private final Integer taxonId;
         
         /**
          * A {@code Boolean} defining whether this annotation is negated; this would mean that 
@@ -274,14 +274,14 @@ public interface SummarySimilarityAnnotationDAO extends
          * All of these parameters are optional, so they can be {@code null} when not used.
          * 
          * @param id        A {@code String} that is the ID of this summary similarity annotation. 
-         * @param taxonId   A {@code String} that is the taxon targeted by the summary similarity 
+         * @param taxonId   An {@code Integer} that is the taxon targeted by the summary similarity 
          *                  annotation.
          * @param negated   A {@code Boolean} defining whether this annotation is negated. 
          * @param cioId     A {@code String} that is the ID of the confidence statement associated 
          *                  to this summary similarity annotation.
          * @throws IllegalArgumentException If {@code id} is empty.
          */
-        public SummarySimilarityAnnotationTO(String id, String taxonId, 
+        public SummarySimilarityAnnotationTO(String id, Integer taxonId, 
                 Boolean negated, String cioId) throws IllegalArgumentException {
             this.id = id;
             this.taxonId = taxonId;
@@ -297,10 +297,10 @@ public interface SummarySimilarityAnnotationDAO extends
         }
 
         /**
-         * @return  the {@code String} representing the taxon targeted by the 
+         * @return  the {@code Integer} representing the taxon targeted by the 
          *          summary similarity annotation.
          */
-        public String getTaxonId() {
+        public Integer getTaxonId() {
             return this.taxonId;
         }
 

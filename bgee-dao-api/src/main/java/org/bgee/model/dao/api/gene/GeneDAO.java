@@ -66,12 +66,12 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      * The genes are retrieved and returned as a {@code GeneTOResultSet}. It is the
      * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
+     * @param speciesIds    A {@code Set} of {@code Integer}s that are the IDs of species 
      *                      allowing to filter the genes to use.
      * @return              An {@code GeneTOResultSet} containing all genes from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public GeneTOResultSet getGenesBySpeciesIds(Set<String> speciesIds) throws DAOException;
+    public GeneTOResultSet getGenesBySpeciesIds(Set<Integer> speciesIds) throws DAOException;
 
     /**
      * Retrieves genes from data source according to a {@code Set} of {@code String}s
@@ -80,25 +80,25 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      * The genes are retrieved and returned as a {@code GeneTOResultSet}. It is the
      * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
+     * @param speciesIds    A {@code Set} of {@code Integer}s that are the IDs of species 
      *                      allowing to filter the genes to use.
      * @param geneIds       A {@code Set} of {@code String}s that are the IDs of genes 
                             allowing to filter the genes to use.
      * @return              An {@code GeneTOResultSet} containing all genes from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public GeneTOResultSet getGenesBySpeciesIds(Set<String> speciesIds, Set<String> geneIds) 
+    public GeneTOResultSet getGenesBySpeciesIds(Set<Integer> speciesIds, Set<String> geneIds) 
             throws DAOException;
     
     /**
      * Returns genes according to a search term, matching gene name, id or one synonym.
      * @param searchTerm A {@code String} containing the term to be searched
-     * @param speciesIds A {@code Set} of species Ids (may be empty to search on all species)
+     * @param speciesIds A {@code Set} of {@code Integer}s that are species Ids (may be empty to search on all species)
      * @param limitStart An {@code int} representing the index of the first element to return.
      * @param resultPerPage An {@code int} representing the number of elements to return
      * @return A @{code {@link GeneTOResultSet} encapsulating the results.
      */
-    public GeneTOResultSet getGeneBySearchTerm(String searchTerm, Set<String> speciesIds, int limitStart,
+    public GeneTOResultSet getGeneBySearchTerm(String searchTerm, Set<Integer> speciesIds, int limitStart,
 	        int resultPerPage);
 
     /**
@@ -115,8 +115,7 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      *                                  {@code attributesToUpdate} is empty or null or contains 
      *                                  an ancestral OMA node ID or an ancestral OMA taxon ID.   
      */
-    public int updateGenes(Collection<GeneTO> genes, 
-            Collection<GeneDAO.Attribute> attributesToUpdate) 
+    public int updateGenes(Collection<GeneTO> genes, Collection<GeneDAO.Attribute> attributesToUpdate) 
                     throws DAOException, IllegalArgumentException;
     
     /**

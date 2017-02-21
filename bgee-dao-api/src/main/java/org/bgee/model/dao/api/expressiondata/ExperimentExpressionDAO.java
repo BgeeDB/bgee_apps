@@ -33,17 +33,6 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
         EXPRESSION_ID, EXPERIMENT_ID, PRESENT_HIGH_COUNT, PRESENT_LOW_COUNT,
         ABSENT_HIGH_COUNT, ABSENT_LOW_COUNT, EXPERIMENT_COUNT;
     }
-
-    /**
-     * The attributes available to order retrieved {@code ExperimentExpressionTO}s
-     * <ul>
-     *   <li>@{code GENE_ID}
-     *   <li>@{code EXPRESSION_ID} uses {@link ExperimentExpressionTO#getExpressionId()}
-     * </ul>
-     */
-    enum OrderingAttribute implements DAO.OrderingAttribute {
-        GENE_ID, EXPRESSION_ID
-    }
     
     /**
      * Retrieve affymetrix experiment expressions from the data source.
@@ -51,23 +40,15 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
      * The expressions are retrieved and returned as an {@code ExperimentExpressionTOResultSet}.
      * It is the responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param attributes            A {@code Collection} of {@code ExperimentExpressionDAO.Attribute}s 
-     *                              defining the attributes to populate in the returned 
-     *                              {@code ExperimentExpressionTO}s. If {@code null} or empty, 
-     *                              all attributes are populated. 
-     * @param orderingAttributes    A {@code LinkedHashMap} where keys are 
-     *                              {@code ExperimentExpressionDAO.OrderingAttribute}s defining 
-     *                              the attributes used to order the returned {@code ExperimentExpressionTO}s, 
-     *                              the associated value being a {@code DAO.Direction} 
-     *                              defining whether the ordering should be ascendant or descendant.
-     *                              If {@code null} or empty, then no ordering is performed. 
-     * @param speciesId             A {@code String} that is the ID of the species to retrieve calls for.
+     * @param speciesId             An {@code int} that is the ID of the species to retrieve calls for.
+     * @param condParameters        A {@code Collection} of {@code ConditionDAO.Attribute}s 
+     *                              defining {@code ExperimentExpressionTO}s to return.
      * @return                      An {@code ExperimentExpressionTOResultSet} allowing to obtain 
      *                              the requested {@code ExperimentExpressionTO}s.
      * @throws DAOException             If an error occurred while accessing the data source. 
      */
-    public ExperimentExpressionTOResultSet getAffymetrixExperimentExpressions(Collection<Attribute> attributes, 
-            LinkedHashMap<OrderingAttribute, DAO.Direction> orderingAttributes, String speciesId) throws DAOException;
+    public ExperimentExpressionTOResultSet getAffymetrixExpExprsOrderedByGeneIdAndExprId(int speciesId,
+        Collection<ConditionDAO.Attribute> condParameters) throws DAOException;
 
     /**
      * Retrieve RNA-Seq experiment expressions from the data source.
@@ -75,23 +56,15 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
      * The expressions are retrieved and returned as an {@code ExperimentExpressionTOResultSet}.
      * It is the responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param attributes            A {@code Collection} of {@code ExperimentExpressionDAO.Attribute}s 
-     *                              defining the attributes to populate in the returned 
-     *                              {@code ExperimentExpressionTO}s. If {@code null} or empty, 
-     *                              all attributes are populated. 
-     * @param orderingAttributes    A {@code LinkedHashMap} where keys are 
-     *                              {@code ExperimentExpressionDAO.OrderingAttribute}s defining 
-     *                              the attributes used to order the returned {@code ExperimentExpressionTO}s, 
-     *                              the associated value being a {@code DAO.Direction} 
-     *                              defining whether the ordering should be ascendant or descendant.
-     *                              If {@code null} or empty, then no ordering is performed. 
-     * @param speciesId             A {@code String} that is the ID of the species to retrieve calls for.
+     * @param speciesId             An {@code int} that is the ID of the species to retrieve calls for.
+     * @param condParameters        A {@code Collection} of {@code ConditionDAO.Attribute}s 
+     *                              defining {@code ExperimentExpressionTO}s to return.
      * @return                      An {@code ExperimentExpressionTOResultSet} allowing to obtain 
      *                              the requested {@code ExperimentExpressionTO}s.
      * @throws DAOException             If an error occurred while accessing the data source. 
      */
-    public ExperimentExpressionTOResultSet getRNASeqExperimentExpressions(Collection<Attribute> attributes, 
-            LinkedHashMap<OrderingAttribute, DAO.Direction> orderingAttributes, String speciesId) throws DAOException;
+    public ExperimentExpressionTOResultSet getRNASeqExpExprsOrderedByGeneIdAndExprId(int speciesId,
+        Collection<ConditionDAO.Attribute> condParameters) throws DAOException;
 
     /**
      * Retrieve EST experiment expressions from the data source.
@@ -99,23 +72,16 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
      * The expressions are retrieved and returned as an {@code ExperimentExpressionTOResultSet}.
      * It is the responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param attributes            A {@code Collection} of {@code ExperimentExpressionDAO.Attribute}s 
-     *                              defining the attributes to populate in the returned 
-     *                              {@code ExperimentExpressionTO}s. If {@code null} or empty, 
-     *                              all attributes are populated. 
-     * @param orderingAttributes    A {@code LinkedHashMap} where keys are 
-     *                              {@code ExperimentExpressionDAO.OrderingAttribute}s defining 
-     *                              the attributes used to order the returned {@code ExperimentExpressionTO}s, 
-     *                              the associated value being a {@code DAO.Direction} 
-     *                              defining whether the ordering should be ascendant or descendant.
-     *                              If {@code null} or empty, then no ordering is performed. 
+     * @param speciesId             An {@code int} that is the ID of the species to retrieve calls for.
+     * @param condParameters        A {@code Collection} of {@code ConditionDAO.Attribute}s 
+     *                              defining {@code ExperimentExpressionTO}s to return.
      * @param speciesId             A {@code String} that is the ID of the species to retrieve calls for.
      * @return                      An {@code ExperimentExpressionTOResultSet} allowing to obtain 
      *                              the requested {@code ExperimentExpressionTO}s.
      * @throws DAOException             If an error occurred while accessing the data source. 
      */
-    public ExperimentExpressionTOResultSet getESTExperimentExpressions(Collection<Attribute> attributes, 
-            LinkedHashMap<OrderingAttribute, DAO.Direction> orderingAttributes, String speciesId) throws DAOException;
+    public ExperimentExpressionTOResultSet getESTExpExprsOrderedByGeneIdAndExprId(int speciesId,
+        Collection<ConditionDAO.Attribute> condParameters) throws DAOException;
 
     /**
      * Retrieve <em>in situ</em> experiment expressions from the data source.
@@ -123,23 +89,16 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
      * The expressions are retrieved and returned as an {@code ExperimentExpressionTOResultSet}.
      * It is the responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param attributes            A {@code Collection} of {@code ExperimentExpressionDAO.Attribute}s 
-     *                              defining the attributes to populate in the returned 
-     *                              {@code ExperimentExpressionTO}s. If {@code null} or empty, 
-     *                              all attributes are populated. 
-     * @param orderingAttributes    A {@code LinkedHashMap} where keys are 
-     *                              {@code ExperimentExpressionDAO.OrderingAttribute}s defining 
-     *                              the attributes used to order the returned {@code ExperimentExpressionTO}s, 
-     *                              the associated value being a {@code DAO.Direction} 
-     *                              defining whether the ordering should be ascendant or descendant.
-     *                              If {@code null} or empty, then no ordering is performed. 
+     * @param speciesId             An {@code int} that is the ID of the species to retrieve calls for.
+     * @param condParameters        A {@code Collection} of {@code ConditionDAO.Attribute}s 
+     *                              defining {@code ExperimentExpressionTO}s to return.
      * @param speciesId             A {@code String} that is the ID of the species to retrieve calls for.
      * @return                      An {@code ExperimentExpressionTOResultSet} allowing to obtain 
      *                              the requested {@code ExperimentExpressionTO}s.
      * @throws DAOException             If an error occurred while accessing the data source. 
      */
-    public ExperimentExpressionTOResultSet getInSituExperimentExpressions(Collection<Attribute> attributes, 
-            LinkedHashMap<OrderingAttribute, DAO.Direction> orderingAttributes, String speciesId) throws DAOException;
+    public ExperimentExpressionTOResultSet getInSituExpExprsOrderedByGeneIdAndExprId(int speciesId,
+        Collection<ConditionDAO.Attribute> condParameters) throws DAOException;
 
     /**
      * {@code DAOResultSet} specifics to {@code ExperimentExpressionTO}s

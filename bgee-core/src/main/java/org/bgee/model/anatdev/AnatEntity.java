@@ -10,7 +10,7 @@ import org.bgee.model.ontology.OntologyElement;
  * @version Bgee 13.1
  *
  */
-public class AnatEntity extends NamedEntity<String> implements OntologyElement<AnatEntity> {
+public class AnatEntity extends NamedEntity<String> implements OntologyElement<AnatEntity, String> {
 
     /**
      * Default constructor not public, an ID must always be provided, 

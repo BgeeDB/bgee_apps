@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,7 +33,7 @@ import org.bgee.model.species.Taxon;
  * @param <T>   The type of element in this ontology or sub-graph.
  * @param <U>   The type of ID of the elements in this ontology or sub-graph.
  */
-public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T>, U> {
+public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T, U>, U> {
 
     private static final Logger log = LogManager.getLogger(OntologyBase.class.getName());
     
@@ -177,7 +178,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T>
      *              Return {@code null} if the element is not found in the ontology.
      */
     public T getElement(U id) {
-        elements.get(id);
+        return elements.get(id);
     }
 
     /**
@@ -434,7 +435,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T>
      *                                  relation types allowing to filter the relations to consider.
      * @param directRelOnly             A {@code boolean} defining whether only direct parents 
      *                                  or children of {@code element} should be returned.
-     * @param speciesIds                A {@code Collection} of {@code String}s that is the IDs of species
+     * @param speciesIds                A {@code Collection} of {@code Integer}s that is the IDs of species
      *                                  allowing to filter the elements to retrieve.
      * @param relationTaxonConstraints  A {@code Set} of {@code TaxonConstraint}s about relations. 
      *                                  Can be {@code null} for relations inside a nested set model 
@@ -448,12 +449,12 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T>
     // XXX could be used in BgeeDBUtils.getIsAPartOfRelativesFromDb()
     //TODO: unit test with multi-species nested set model ontologies (e.g., DevStageOntology)
     protected Set<T> getRelatives(T element, Set<T> elements, boolean isAncestor, 
-            Collection<RelationType> relationTypes, boolean directRelOnly, Collection<String> speciesIds, 
+            Collection<RelationType> relationTypes, boolean directRelOnly, Collection<Integer> speciesIds, 
             Set<TaxonConstraint> relationTaxonConstraints) {
         log.entry(element, elements, isAncestor, relationTypes, directRelOnly, speciesIds, 
                 relationTaxonConstraints);
         
-        final Set<String> filteredSpeciesIds = speciesIds == null? null: new HashSet<>(speciesIds);
+        final Set<Integer> filteredSpeciesIds = speciesIds == null? null: new HashSet<>(speciesIds);
         boolean isMultiSpecies = filteredSpeciesIds != null && !filteredSpeciesIds.isEmpty();
         
         if (isMultiSpecies && relationTaxonConstraints == null) {
@@ -504,24 +505,21 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T>
                                                                             //are allowed entities
                 .collect(Collectors.toSet());
 
-
-        Set<T> relatives = new HashSet<>();
+        Stream<T> relatives = null;
         if (isAncestor) {
             relatives = filteredRelations.stream()
-                    .filter(r -> r.getSourceId().equals(element.getId()))
-                    .map(r -> this.getElement(r.getTargetId()))
-                    .filter(e -> e != null)
-                    .filter(e -> allowedEntityIds.contains(e.getId()))
-                    .collect(Collectors.toSet());
+                .filter(r -> r.getSourceId().equals(element.getId()))
+                .map(r -> this.getElement(r.getTargetId()));
         } else {
             relatives = filteredRelations.stream()
-                    .filter(r-> r.getTargetId().equals(element.getId()))
-                    .map(r -> this.getElement(r.getSourceId()))
-                    .filter(e -> e != null)
-                    .filter(e -> allowedEntityIds.contains(e.getId()))
-                     .collect(Collectors.toSet());
-         }
-         return log.exit(relatives);
+                .filter(r-> r.getTargetId().equals(element.getId()))
+                .map(r -> this.getElement(r.getSourceId()));
+        }
+        return log.exit(relatives
+            .filter(e -> e != null)
+            .filter(e -> allowedEntityIds.contains(e.getId()))
+            .filter(e -> !e.getId().equals(element.getId()))
+            .collect(Collectors.toSet()));
     }
 
     /**

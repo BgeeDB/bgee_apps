@@ -69,7 +69,7 @@ public class SpeciesService extends Service {
     /**
      * Loads species for a given set of species IDs .
      * 
-     * @param speciesIds        A {@code Set} of {@code String}s that are IDs of species 
+     * @param speciesIds        A {@code Set} of {@code Integer}s that are IDs of species 
      *                          for which to return the {@code Species}s.
      * @param withSpeciesInfo   A {@code boolean}s defining whether data sources of the species
      *                          is retrieved or not.

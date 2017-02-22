@@ -1,11 +1,15 @@
 package org.bgee.model.expressiondata;
 
+import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.Entity;
+import org.bgee.model.expressiondata.baseelements.DataType;
 
 /**
  * This class describes the conditions related to gene expression. It notably captures 
@@ -30,7 +34,7 @@ import org.bgee.model.Entity;
 //should be managed in a different way. 
 //TODO: I guess this means the ConditionUtils should use the new MultiSpeciesOntology mechanism, 
 //to be able to perform computations over any species. 
-public class Condition extends Entity<Integer> implements Comparable<Condition> {
+public class Condition implements Comparable<Condition> {
     private final static Logger log = LogManager.getLogger(Condition.class.getName());
 
     /**
@@ -39,7 +43,8 @@ public class Condition extends Entity<Integer> implements Comparable<Condition> 
     private static final Comparator<Condition> COND_COMPARATOR = Comparator
             .comparing(Condition::getAnatEntityId, Comparator.nullsLast(String::compareTo))
             .thenComparing(Condition::getDevStageId, Comparator.nullsLast(String::compareTo))
-            .thenComparing(Condition::getSpeciesId, Comparator.nullsLast(String::compareTo));
+            .thenComparing(Condition::getSpeciesId, Comparator.nullsLast(Integer::compareTo));
+    
     
     /**
      * @see #getAnatEntityId()
@@ -52,35 +57,59 @@ public class Condition extends Entity<Integer> implements Comparable<Condition> 
     /**
      * @see #getSpeciesId()
      */
-    private final String speciesId;
+    private final Integer speciesId;
 
+    private final Map<DataType, BigDecimal> maxRanksByDataType;
+    
     /**
-     * Constructor providing the IDs of this condition, the anatomical entity, the developmental stage, 
+     * Constructor providing the IDs of the anatomical entity, the developmental stage, 
      * and species ID of this {@code Condition}.
      * 
-     * @param conditionId   An {@code Integer} that is the ID of this gene expression condition.
      * @param anatEntityId  A {@code String} that is the ID of the anatomical entity 
      *                      used in this gene expression condition.
      * @param devStageId    A {@code String} that is the ID of the developmental stage  
      *                      used in this gene expression condition.
-     * @param speciesId     A {@code String} that is the ID of the species  
+     * @param speciesId     An {@code Integer} that is the ID of the species  
      *                      used in this gene expression condition.
-     * @throws IllegalArgumentException If both {@code anatEntity} and {@code devStage} are blank 
-     *                                  of if {@code speciesId} is blank. 
+     * @throws IllegalArgumentException If both {@code anatEntity} and {@code devStage} are blanks 
+     *                                  or if {@code speciesId} is empty or less than 1. 
      */
-    public Condition(Integer conditionId, String anatEntityId, String devStageId, String speciesId)
+    public Condition(String anatEntityId, String devStageId, Integer speciesId)
             throws IllegalArgumentException {
-        super(conditionId);
+        this(anatEntityId, devStageId, speciesId, null);
+    }
+
+    /**
+     * Constructor providing the IDs of the anatomical entity, the developmental stage, 
+     * and species ID of this {@code Condition}.
+     * 
+     * @param anatEntityId          A {@code String} that is the ID of the anatomical entity 
+     *                              used in this gene expression condition.
+     * @param devStageId            A {@code String} that is the ID of the developmental stage  
+     *                              used in this gene expression condition.
+     * @param speciesId             An {@code Integer} that is the ID of the species  
+     *                              used in this gene expression condition.
+     * @param maxRanksByDataType    A {@code Map} where keys are {@code DataType}s corresponding
+     *                              to the data type, the associated values being
+     *                              {@code BigDecimal}s corresponding to max ranks.
+     * @throws IllegalArgumentException If both {@code anatEntity} and {@code devStage} are blanks 
+     *                                  or if {@code speciesId} is empty or less than 1. 
+     */
+    public Condition(String anatEntityId, String devStageId, Integer speciesId,
+            Map<DataType, BigDecimal> maxRanksByDataType) throws IllegalArgumentException {
         if (StringUtils.isBlank(anatEntityId) && StringUtils.isBlank(devStageId)) {
             throw log.throwing(new IllegalArgumentException(
                     "The anat. entity ID and the dev. stage ID cannot be both blank."));
         }
-        if (StringUtils.isBlank(speciesId)) {
-            throw log.throwing(new IllegalArgumentException("The species ID cannot be blank."));
+        if (speciesId == null || speciesId <= 0) {
+            throw log.throwing(new IllegalArgumentException(
+                "The species ID cannot be null or equals or less than 1."));
         }
-        this.anatEntityId = anatEntityId;
-        this.devStageId   = devStageId;
-        this.speciesId    = speciesId;
+        this.anatEntityId       = anatEntityId;
+        this.devStageId         = devStageId;
+        this.speciesId          = speciesId;
+        this.maxRanksByDataType = Collections.unmodifiableMap(maxRanksByDataType == null?
+                                    new HashMap<>(): maxRanksByDataType);
     }
     
     /**
@@ -121,11 +150,18 @@ public class Condition extends Entity<Integer> implements Comparable<Condition> 
         return devStageId;
     }
     /**
-     * @return  A {@code String} that is the ID of the species 
+     * @return  An {@code Integer} that is the ID of the species 
      *          used in this gene expression condition.
      */
-    public String getSpeciesId() {
+    public Integer getSpeciesId() {
         return speciesId;
+    }
+
+    /** TODO
+     * @return
+     */
+    public Map<DataType, BigDecimal> getMaxRanksByDataType() {
+        return maxRanksByDataType;
     }
 
     //*********************************

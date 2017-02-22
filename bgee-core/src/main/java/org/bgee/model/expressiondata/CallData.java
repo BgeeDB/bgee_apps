@@ -1,5 +1,7 @@
 package org.bgee.model.expressiondata;
 
+import java.math.BigDecimal;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.baseelements.CallType;
@@ -167,6 +169,14 @@ public abstract class CallData<T extends Enum<T> & CallType> {
 
         private final int absentLowSelfCount;
 
+        private final int presentHighDescCount;
+        
+        private final int presentLowDescCount;
+        
+        private final int absentHighParentCount;
+
+        private final int absentLowParentCount;
+
         private final int presentHighTotalCount;
         
         private final int presentLowTotalCount;
@@ -174,7 +184,14 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         private final int absentHighTotalCount;
         
         private final int absentLowTotalCount;
+
+        private final int propagatedCount;
+
+        private final BigDecimal rank;
         
+        private final BigDecimal rankNorm;
+        
+        private final BigDecimal rankSum;
         //CallType always inferred from experiment count, constructor useless
 //        public ExpressionCallData(CallType callType, DataType dataType) {
 //            this(callType, dataType, 0, 0, 0, 0, 0, 0, 0, 0);
@@ -182,8 +199,10 @@ public abstract class CallData<T extends Enum<T> & CallType> {
 
         public ExpressionCallData(DataType dataType, int presentHighSelfCount, 
             int presentLowSelfCount, int absentHighSelfCount, int absentLowSelfCount,
-            int presentHighTotalCount, int presentLowTotalCount, int absentHighTotalCount,
-            int absentLowTotalCount) {
+            int presentHighDescCount, int presentLowDescCount, int absentHighParentCount,
+            int absentLowParentCount, int presentHighTotalCount, int presentLowTotalCount,
+            int absentHighTotalCount, int absentLowTotalCount, int propagatedCount,
+            BigDecimal rank, BigDecimal rankNorm, BigDecimal rankSum) {
             super(dataType, inferCallType(presentHighTotalCount,
                 presentLowTotalCount, absentHighTotalCount, absentLowSelfCount));
             
@@ -202,10 +221,19 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             this.presentLowSelfCount = presentLowSelfCount;
             this.absentHighSelfCount = absentHighSelfCount;
             this.absentLowSelfCount = absentLowSelfCount;
+            this.presentHighDescCount = presentHighDescCount;
+            this.presentLowDescCount = presentLowDescCount;
+            this.absentHighParentCount = absentHighParentCount;
+            this.absentLowParentCount = absentLowParentCount;
             this.presentHighTotalCount = presentHighTotalCount;
             this.presentLowTotalCount = presentLowTotalCount;
             this.absentHighTotalCount = absentHighTotalCount;
             this.absentLowTotalCount = absentLowTotalCount;
+            this.propagatedCount = propagatedCount;
+            this.rank = rank;
+            this.rankNorm = rankNorm;
+            this.rankSum = rankSum;
+
         }
 
         public int getPresentHighSelfCount() {
@@ -224,6 +252,22 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             return absentLowSelfCount;
         }
 
+        public int getPresentHighDescCount() {
+            return presentHighDescCount;
+        }
+
+        public int getPresentLowDescCount() {
+            return presentLowDescCount;
+        }
+
+        public int getAbsentHighParentCount() {
+            return absentHighParentCount;
+        }
+
+        public int getAbsentLowParentCount() {
+            return absentLowParentCount;
+        }
+
         public int getPresentHighTotalCount() {
             return presentHighTotalCount;
         }
@@ -238,6 +282,22 @@ public abstract class CallData<T extends Enum<T> & CallType> {
 
         public int getAbsentLowTotalCount() {
             return absentLowTotalCount;
+        }
+
+        public int getPropagatedCount() {
+            return propagatedCount;
+        }
+
+        public BigDecimal getRank() {
+            return rank;
+        }
+
+        public BigDecimal getRankNorm() {
+            return rankNorm;
+        }
+
+        public BigDecimal getRankSum() {
+            return rankSum;
         }
 
         private static Expression inferCallType(int presentHighTotalCount, int presentLowTotalCount, 
@@ -284,61 +344,121 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             return log.exit(false);
         }
 
-
+        
         @Override
         public int hashCode() {
             final int prime = 31;
             int result = super.hashCode();
-            result = prime * result + presentHighSelfCount;
-            result = prime * result + presentLowSelfCount;
+            result = prime * result + absentHighParentCount;
             result = prime * result + absentHighSelfCount;
-            result = prime * result + absentLowSelfCount;
-            result = prime * result + presentHighTotalCount;
-            result = prime * result + presentLowTotalCount;
             result = prime * result + absentHighTotalCount;
+            result = prime * result + absentLowParentCount;
+            result = prime * result + absentLowSelfCount;
             result = prime * result + absentLowTotalCount;
+            result = prime * result + presentHighDescCount;
+            result = prime * result + presentHighSelfCount;
+            result = prime * result + presentHighTotalCount;
+            result = prime * result + presentLowDescCount;
+            result = prime * result + presentLowSelfCount;
+            result = prime * result + presentLowTotalCount;
+            result = prime * result + propagatedCount;
+            result = prime * result + ((rank == null) ? 0 : rank.hashCode());
+            result = prime * result + ((rankNorm == null) ? 0 : rankNorm.hashCode());
+            result = prime * result + ((rankSum == null) ? 0 : rankSum.hashCode());
             return result;
         }
 
         @Override
         public boolean equals(Object obj) {
-            if (this == obj)
+            if (this == obj) {
                 return true;
-            if (!super.equals(obj))
+            }
+            if (!super.equals(obj)) {
                 return false;
-            if (getClass() != obj.getClass())
+            }
+            if (getClass() != obj.getClass()) {
                 return false;
+            }
             ExpressionCallData other = (ExpressionCallData) obj;
-            if (presentHighSelfCount != other.presentHighSelfCount)
+            if (absentHighParentCount != other.absentHighParentCount) {
                 return false;
-            if (presentLowSelfCount != other.presentLowSelfCount)
+            }
+            if (absentHighSelfCount != other.absentHighSelfCount) {
                 return false;
-            if (absentHighSelfCount != other.absentHighSelfCount)
+            }
+            if (absentHighTotalCount != other.absentHighTotalCount) {
                 return false;
-            if (absentLowSelfCount != other.absentLowSelfCount)
+            }
+            if (absentLowParentCount != other.absentLowParentCount) {
                 return false;
-            if (presentHighTotalCount != other.presentHighTotalCount)
+            }
+            if (absentLowSelfCount != other.absentLowSelfCount) {
                 return false;
-            if (presentLowTotalCount != other.presentLowTotalCount)
+            }
+            if (absentLowTotalCount != other.absentLowTotalCount) {
                 return false;
-            if (absentHighTotalCount != other.absentHighTotalCount)
+            }
+            if (presentHighDescCount != other.presentHighDescCount) {
                 return false;
-            if (absentLowTotalCount != other.absentLowTotalCount)
+            }
+            if (presentHighSelfCount != other.presentHighSelfCount) {
                 return false;
+            }
+            if (presentHighTotalCount != other.presentHighTotalCount) {
+                return false;
+            }
+            if (presentLowDescCount != other.presentLowDescCount) {
+                return false;
+            }
+            if (presentLowSelfCount != other.presentLowSelfCount) {
+                return false;
+            }
+            if (presentLowTotalCount != other.presentLowTotalCount) {
+                return false;
+            }
+            if (propagatedCount != other.propagatedCount) {
+                return false;
+            }
+            if (rank == null) {
+                if (other.rank != null) {
+                    return false;
+                }
+            } else if (!rank.equals(other.rank)) {
+                return false;
+            }
+            if (rankNorm == null) {
+                if (other.rankNorm != null) {
+                    return false;
+                }
+            } else if (!rankNorm.equals(other.rankNorm)) {
+                return false;
+            }
+            if (rankSum == null) {
+                if (other.rankSum != null) {
+                    return false;
+                }
+            } else if (!rankSum.equals(other.rankSum)) {
+                return false;
+            }
             return true;
         }
 
         @Override
         public String toString() {
-            return super.toString() + 
-                " - Present high self count: " + presentHighSelfCount +
-                " - Present low self count: " + presentLowSelfCount + 
-                " - Absent high self count: " + absentHighSelfCount + 
-                " - Absent low self count: " + absentLowSelfCount +
-                " - Present low total count: " + presentLowTotalCount +
-                " - Present high total count: "+ presentHighTotalCount +
-                " - Absent high total count: " + absentHighTotalCount +
-                " - Absent low total count: " + absentLowTotalCount;
+            return "ExpressionCallData [presentHighSelfCount=" + presentHighSelfCount +
+                ", presentLowSelfCount=" + presentLowSelfCount + 
+                ", absentHighSelfCount=" + absentHighSelfCount + 
+                ", absentLowSelfCount=" + absentLowSelfCount + 
+                ", presentHighDescCount=" + presentHighDescCount + 
+                ", presentLowDescCount=" + presentLowDescCount + 
+                ", absentHighParentCount=" + absentHighParentCount + 
+                ", absentLowParentCount=" + absentLowParentCount + 
+                ", presentHighTotalCount=" + presentHighTotalCount + 
+                ", presentLowTotalCount=" + presentLowTotalCount + 
+                ", absentHighTotalCount=" + absentHighTotalCount + 
+                ", absentLowTotalCount=" + absentLowTotalCount + 
+                ", propagatedCount=" + propagatedCount +
+                ", rank=" + rank + ", rankNorm=" + rankNorm + ", rankSum=" + rankSum + "]";
         }
     }
 

@@ -886,13 +886,21 @@ public class CallParamsTest extends TestAncestor {
         
         
         
-        Set<String> twoElementSet = new HashSet<String>();
+        Set<String> twoElementSet = new HashSet<>();
         twoElementSet.add("ID1");
         twoElementSet.add("ID2");
+        Set<Integer> twoIntElementSet = new HashSet<>();
+        twoIntElementSet.add(1);
+        twoIntElementSet.add(2);
+
         String thirdElement = "ID3";
-        Set<String> threeElementSet = new HashSet<String>(twoElementSet);
+        Set<String> threeElementSet = new HashSet<>(twoElementSet);
         threeElementSet.add(thirdElement);
         
+        Integer thirdIntElement = 3;
+        Set<Integer> threeIntElementSet = new HashSet<>(twoIntElementSet);
+        threeIntElementSet.add(thirdIntElement);
+
         params.addAllAnatEntityIds(twoElementSet);
         assertEquals("Incorrect anatEntityIds set/get", twoElementSet, 
                 params.getAnatEntityIds());
@@ -923,11 +931,11 @@ public class CallParamsTest extends TestAncestor {
         assertEquals("Incorrect geneId set/get", new HashSet<String>(), 
                 params.getGeneIds());
         
-        params.addAllSpeciesIds(twoElementSet);
-        assertEquals("Incorrect geneIds set/get", twoElementSet, 
+        params.addAllSpeciesIds(twoIntElementSet);
+        assertEquals("Incorrect species set/get", twoElementSet, 
                 params.getSpeciesIds());
-        params.addSpeciesId(thirdElement);
-        assertEquals("Incorrect geneIds set/get", threeElementSet, 
+        params.addSpeciesId(thirdIntElement);
+        assertEquals("Incorrect species set/get", threeElementSet, 
                 params.getSpeciesIds());
         params.clearSpeciesIds();
         assertEquals("Incorrect geneId set/get", new HashSet<String>(), 

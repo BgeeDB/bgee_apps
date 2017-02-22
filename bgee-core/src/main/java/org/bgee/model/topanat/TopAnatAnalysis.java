@@ -226,7 +226,7 @@ public class TopAnatAnalysis {
         }
         allGeneIds.removeAll(this.geneService.loadGenesByIdsAndSpeciesIds(allGeneIds, 
                 Arrays.asList(this.params.getSpeciesId())).stream()
-                .map(Gene::getId)
+                .map(Gene::getEnsemblGeneId)
                 .collect(Collectors.toSet()));
         if (!allGeneIds.isEmpty()) {
             throw log.throwing(new InvalidSpeciesGenesException("Some gene IDs are unrecognized, "
@@ -553,7 +553,7 @@ public class TopAnatAnalysis {
                     null
                 ).forEach(
                     call -> out.println(
-                        call.getGeneId() + '\t' + 
+                        call.getGene().getEnsemblGeneId() + '\t' + 
                         call.getCondition().getAnatEntityId()
                     )
                 );

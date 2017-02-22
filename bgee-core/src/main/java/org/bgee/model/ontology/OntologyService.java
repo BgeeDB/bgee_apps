@@ -209,7 +209,7 @@ public class OntologyService extends Service {
      * @return                  The {@code Ontology} of the {@code DevStage}s for the requested species, 
      *                          dev. stages, and relation status. 
      */
-    public Ontology<DevStage> getDevStageOntology(Integer speciesId, Collection<String> devStageIds, 
+    public Ontology<DevStage, String> getDevStageOntology(Integer speciesId, Collection<String> devStageIds, 
             boolean getAncestors, boolean getDescendants) {
         log.entry(speciesId, devStageIds, getAncestors, getDescendants);
         return log.exit(getDevStageOntology(Arrays.asList(speciesId), devStageIds, getAncestors, 
@@ -233,7 +233,7 @@ public class OntologyService extends Service {
      * @return                  The {@code MultiSpeciesOntology} of the {@code DevStage}s for the requested species 
      *                          and dev. stages.
      */
-    public MultiSpeciesOntology<DevStage> getDevStageOntology(Collection<Integer> speciesIds, 
+    public MultiSpeciesOntology<DevStage, String> getDevStageOntology(Collection<Integer> speciesIds, 
             Collection<String> devStageIds) {
         log.entry(speciesIds, devStageIds);
         return this.getDevStageOntology(speciesIds, devStageIds, false, false);
@@ -261,7 +261,7 @@ public class OntologyService extends Service {
      * @return                  The {@code MultiSpeciesOntology} of the {@code DevStage}s for the requested species, 
      *                          dev. stages, and relation status. 
      */
-    public MultiSpeciesOntology<DevStage> getDevStageOntology(Collection<Integer> speciesIds, 
+    public MultiSpeciesOntology<DevStage, String> getDevStageOntology(Collection<Integer> speciesIds, 
             Collection<String> devStageIds, boolean getAncestors, boolean getDescendants) {
         log.entry(speciesIds, devStageIds, getAncestors, getDescendants);
         
@@ -273,7 +273,7 @@ public class OntologyService extends Service {
         //there is no relation IDs for nested set models, so no TaxonConstraints. 
         //Relations simply exist if both the source and target of the relations 
         //exists in the targeted species.
-        return log.exit(new MultiSpeciesOntology<DevStage>(speciesIds, 
+        return log.exit(new MultiSpeciesOntology<DevStage, String>(speciesIds, 
                 this.getServiceFactory().getDevStageService()
                     .loadDevStages(speciesIds, true, this.getRequestedEntityIds(devStageIds, rels))
                     .collect(Collectors.toSet()), 
@@ -307,10 +307,10 @@ public class OntologyService extends Service {
         return log.exit(getRelationTOs(fun, entityIds, getAncestors, getDescendants));
     }
     
-    private Set<RelationTO<String>> getTaxonRelationTOs(Collection<Integer> entityIds,
+    private Set<RelationTO<Integer>> getTaxonRelationTOs(Collection<Integer> entityIds,
             boolean getAncestors, boolean getDescendants) {
         log.entry(entityIds, getAncestors, getDescendants);
-        QuadriFunction<Set<String>, Set<String>, Boolean, Set<RelationStatus>, RelationTOResultSet<String>> fun =
+        QuadriFunction<Set<Integer>, Set<Integer>, Boolean, Set<RelationStatus>, RelationTOResultSet<Integer>> fun =
             (s, t, b, r) -> getDaoManager().getRelationDAO().getTaxonRelations(s, t, b, r, null);
         return log.exit(getRelationTOs(fun, entityIds, getAncestors, getDescendants));
     }
@@ -343,16 +343,16 @@ public class OntologyService extends Service {
      * the provided taxon IDs, and only the relations between them 
      * with a {@code RelationType} {@code ISA_PARTOF} are included. 
      *  
-     * @param speciesId         A {@code String} that is the ID of species 
+     * @param speciesId         An {@code Integer} that is the ID of species 
      *                          which to retrieve taxa for. Can be {@code null} or empty.
-     * @param taxonIds          A {@code Collection} of {@code String}s that are taxon IDs
+     * @param taxonIds          A {@code Collection} of {@code Integer}s that are taxon IDs
      *                          of the {@code MultiSpeciesOntology} to retrieve.
      *                          Can be {@code null} or empty.
      * @return                  The {@code MultiSpeciesOntology} of the {@code Taxon}s 
      *                          for the requested species and taxa. 
      */
-    public MultiSpeciesOntology<Taxon> getTaxonOntology(String speciesId,
-             Collection<String> taxonIds) {
+    public MultiSpeciesOntology<Taxon, Integer> getTaxonOntology(Integer speciesId,
+             Collection<Integer> taxonIds) {
         log.entry(speciesId, taxonIds);
         return log.exit(this.getTaxonOntology(Arrays.asList(speciesId), taxonIds, false, false));
     }
@@ -365,18 +365,18 @@ public class OntologyService extends Service {
      * the provided taxon IDs, and only the relations between them 
      * with a {@code RelationType} {@code ISA_PARTOF} are included. 
      *  
-     * @param speciesIds        A {@code Collection} of {@code String}s that are IDs of species 
+     * @param speciesIds        A {@code Collection} of {@code Integer}s that are IDs of species 
      *                          which to retrieve taxa for. If several IDs are provided, 
      *                          taxa existing in any of them will be retrieved. 
      *                          Can be {@code null} or empty.
-     * @param taxonIds          A {@code Collection} of {@code String}s that are taxon IDs
+     * @param taxonIds          A {@code Collection} of {@code Integer}s that are taxon IDs
      *                          of the {@code MultiSpeciesOntology} to retrieve.
      *                          Can be {@code null} or empty.
      * @return                  The {@code MultiSpeciesOntology} of the {@code Taxon}s 
      *                          for the requested species and taxa. 
      */
-    public MultiSpeciesOntology<Taxon> getTaxonOntology(
-            Collection<String> speciesIds, Collection<String> taxonIds) {
+    public MultiSpeciesOntology<Taxon, Integer> getTaxonOntology(
+            Collection<Integer> speciesIds, Collection<Integer> taxonIds) {
         log.entry(taxonIds, speciesIds);
         return log.exit(this.getTaxonOntology(speciesIds, taxonIds, false, false));
     } 
@@ -390,9 +390,9 @@ public class OntologyService extends Service {
      * If both {@code getAncestors} and {@code getDescendants} are {@code false}, 
      * then only relations between provided taxa are considered.
      * 
-     * @param speciesId         A {@code String} that is the ID of species 
+     * @param speciesId         An {@code Integer} that is the ID of species 
      *                          which to retrieve taxa for. Can be {@code null} or empty.
-     * @param taxonIds          A {@code Collection} of {@code String}s that are taxon IDs
+     * @param taxonIds          A {@code Collection} of {@code Integer}s that are taxon IDs
      *                          of the {@code MultiSpeciesOntology} to retrieve.
      *                          Can be {@code null} or empty.
      * @param getAncestors      A {@code boolean} defining whether the ancestors of the selected 
@@ -402,8 +402,8 @@ public class OntologyService extends Service {
      * @return                  The {@code MultiSpeciesOntology} of the {@code Taxon}s 
      *                          for the requested species, taxa, and relation status. 
      */
-    public MultiSpeciesOntology<Taxon> getTaxonOntology(String speciesId, Collection<String> taxonIds,
-            boolean getAncestors, boolean getDescendants) {
+    public MultiSpeciesOntology<Taxon, Integer> getTaxonOntology(Integer speciesId,
+            Collection<Integer> taxonIds, boolean getAncestors, boolean getDescendants) {
         log.entry(speciesId, taxonIds, getAncestors, getDescendants);
         return log.exit(this.getTaxonOntology(Arrays.asList(speciesId), taxonIds,
                 getAncestors, getDescendants));
@@ -418,11 +418,11 @@ public class OntologyService extends Service {
      * If both {@code getAncestors} and {@code getDescendants} are {@code false}, 
      * then only relations between provided taxa are considered.
      * 
-     * @param speciesIds        A {@code Collection} of {@code String}s that are IDs of species 
+     * @param speciesIds        A {@code Collection} of {@code Integer}s that are IDs of species 
      *                          which to retrieve taxa for. If several IDs are provided, 
      *                          taxa existing in any of them will be retrieved. 
      *                          Can be {@code null} or empty.
-     * @param taxonIds          A {@code Collection} of {@code String}s that are taxon IDs
+     * @param taxonIds          A {@code Collection} of {@code Integer}s that are taxon IDs
      *                          of the {@code MultiSpeciesOntology} to retrieve.
      *                          Can be {@code null} or empty.
      * @param getAncestors      A {@code boolean} defining whether the ancestors of the selected 
@@ -434,8 +434,8 @@ public class OntologyService extends Service {
      */
     // FIXME: this method contained error (elements are not corrects), so it's disabled. Tests are ignored.
     // When enable, do not forgot to refactor with getTaxonOntology()
-    public MultiSpeciesOntology<Taxon> getTaxonOntology(Collection<String> speciesIds,
-            Collection<String> taxonIds, boolean getAncestors, boolean getDescendants) {
+    public MultiSpeciesOntology<Taxon, Integer> getTaxonOntology(Collection<Integer> speciesIds,
+            Collection<Integer> taxonIds, boolean getAncestors, boolean getDescendants) {
         log.entry(taxonIds, speciesIds, getAncestors, getDescendants);
         throw log.throwing(new UnsupportedOperationException("Recovery of taxonomy with parameters is not implemented"));
 //        Set<RelationTO> rels = this.getTaxonRelationTOs(taxonIds, getAncestors, getDescendants);
@@ -470,7 +470,7 @@ public class OntologyService extends Service {
      * @param <T>                   The type of elements for which to retrieve {@code RelationTO}s.
      * @param <U>                   The type of ID of the elements in this ontology or sub-graph.
      */
-    private <T extends NamedEntity<U> & OntologyElement<T>, U> Set<RelationTO<U>> getRelationTOs(
+    private <T extends NamedEntity<U> & OntologyElement<T, U>, U> Set<RelationTO<U>> getRelationTOs(
             QuadriFunction<Set<U>, Set<U>, Boolean, Set<RelationStatus>,
             RelationTOResultSet<U>> relationRetrievalFun, 
             Collection<U> entityIds, boolean getAncestors, boolean getDescendants) {

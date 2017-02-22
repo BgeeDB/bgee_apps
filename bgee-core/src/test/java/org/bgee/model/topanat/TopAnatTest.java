@@ -4,9 +4,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyCollection;
 import static org.mockito.Matchers.anyCollectionOf;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -19,7 +18,6 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -28,7 +26,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
@@ -38,8 +35,6 @@ import org.bgee.model.TestAncestor;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
-import org.bgee.model.expressiondata.Call;
-import org.bgee.model.expressiondata.CallFilter;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
@@ -101,7 +96,7 @@ public class TopAnatTest extends TestAncestor {
         // Define the params for the analysis
         TopAnatParams.Builder topAnatParamsBuilder = new TopAnatParams.Builder(
                 new HashSet<String>(Arrays.asList("G1","G2")),
-                new HashSet<String>(Arrays.asList("G1","G2","G3","G4")),"999",
+                new HashSet<String>(Arrays.asList("G1","G2","G3","G4")), 999,
                 CallType.Expression.EXPRESSED);
 
         topAnatParamsBuilder.fdrThreshold(1000d); // extreme value to produce results easily with false data
@@ -133,22 +128,23 @@ public class TopAnatTest extends TestAncestor {
                 new HashMap<String,Set<String>>();
         anatEntitiesRelationships.put("A1", new HashSet<String>(Arrays.asList("A2","A3")));
         anatEntitiesRelationships.put("A3", new HashSet<String>(Arrays.asList("A4")));        
-        when(mockAnatEntityService.loadAnatEntitiesBySpeciesIds(anyCollectionOf(String.class))).thenReturn(anatEntities);
-        when(mockAnatEntityService.loadDirectIsAPartOfRelationships(anyCollectionOf(String.class)))
-        .thenReturn(anatEntitiesRelationships);
-        when(mockGene1.getId()).thenReturn("G1");
-        when(mockGene2.getId()).thenReturn("G2");
-        when(mockGene3.getId()).thenReturn("G3");
-        when(mockGene4.getId()).thenReturn("G4");
-        when(mockGene5.getId()).thenReturn("G5");
+        when(mockAnatEntityService.loadAnatEntitiesBySpeciesIds(anyCollectionOf(Integer.class)))
+            .thenReturn(anatEntities);
+        when(mockAnatEntityService.loadDirectIsAPartOfRelationships(anyCollectionOf(Integer.class)))
+            .thenReturn(anatEntitiesRelationships);
+        when(mockGene1.getEnsemblGeneId()).thenReturn("G1");
+        when(mockGene2.getEnsemblGeneId()).thenReturn("G2");
+        when(mockGene3.getEnsemblGeneId()).thenReturn("G3");
+        when(mockGene4.getEnsemblGeneId()).thenReturn("G4");
+        when(mockGene5.getEnsemblGeneId()).thenReturn("G5");
         when(mockAnatEntity.getId()).thenReturn("A1").thenReturn("A2")
         .thenReturn("A3").thenReturn("A4").thenReturn("A5");
         when(mockAnatEntity.getName()).thenReturn("body").thenReturn("head")
         .thenReturn("hand").thenReturn("eye").thenReturn("finger");
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> ordering = null;
-        Stream callStream = Stream.of(mockExpressionCall1, mockExpressionCall2, mockExpressionCall3,
-                mockExpressionCall4,mockExpressionCall5);
-        when(mockCallService.loadExpressionCalls(anyString(), (ExpressionCallFilter) any(), 
+        Stream<ExpressionCall> callStream = Stream.of(mockExpressionCall1, mockExpressionCall2,
+                mockExpressionCall3, mockExpressionCall4,mockExpressionCall5);
+        when(mockCallService.loadExpressionCalls(anyInt(), (ExpressionCallFilter) any(), 
                 anyCollectionOf(CallService.Attribute.class), eq(ordering))) // TODO be more specific here
         .thenReturn(callStream);    
         when(mockServiceFactory.getGeneService()).thenReturn(mockGeneService);
@@ -162,12 +158,13 @@ public class TopAnatTest extends TestAncestor {
         when(mockExpressionCall3.getCondition()).thenReturn(mockCondition);
         when(mockExpressionCall4.getCondition()).thenReturn(mockCondition);
         when(mockExpressionCall5.getCondition()).thenReturn(mockCondition);
-        when(mockExpressionCall1.getGeneId()).thenReturn("G1");
-        when(mockExpressionCall2.getGeneId()).thenReturn("G2");
-        when(mockExpressionCall3.getGeneId()).thenReturn("G3");
-        when(mockExpressionCall4.getGeneId()).thenReturn("G4");
-        when(mockExpressionCall5.getGeneId()).thenReturn("G5");
-        when(mockAnatEntityService.loadAnatEntitiesBySpeciesIds(anyCollectionOf(String.class))).thenReturn(anatEntities);
+        when(mockExpressionCall1.getGene().getEnsemblGeneId()).thenReturn("G1");
+        when(mockExpressionCall2.getGene().getEnsemblGeneId()).thenReturn("G2");
+        when(mockExpressionCall3.getGene().getEnsemblGeneId()).thenReturn("G3");
+        when(mockExpressionCall4.getGene().getEnsemblGeneId()).thenReturn("G4");
+        when(mockExpressionCall5.getGene().getEnsemblGeneId()).thenReturn("G5");
+        when(mockAnatEntityService.loadAnatEntitiesBySpeciesIds(anyCollectionOf(Integer.class)))
+            .thenReturn(anatEntities);
         when(mockCondition.getAnatEntityId())
         .thenReturn("A1").thenReturn("A2").thenReturn("A3").thenReturn("A4").thenReturn("A4");      
 

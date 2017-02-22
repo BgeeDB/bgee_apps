@@ -136,7 +136,7 @@ public abstract class CallUser extends MySQLDAOUser {
      * Retrieves all expression calls for given species in a {@code Map} associating gene IDs to 
      * {@code ExpressionCallTO}s, present into the Bgee database.
      * 
-     * @param speciesIds        A {@code Set} of {@code String}s that are the IDs of species 
+     * @param speciesIds        A {@code Set} of {@code Integer}s that are the IDs of species 
      *                          allowing to filter the expression calls to use.
      * @return                  A {@code LinkedHashMap} associating gene IDs to 
      *                          {@code ExpressionCallTO}s of the given species. Returns a 
@@ -145,7 +145,7 @@ public abstract class CallUser extends MySQLDAOUser {
      * @throws DAOException     If an error occurred while getting the data from the Bgee database.
      */
     protected LinkedHashMap<String, List<ExpressionCallTO>> getExpressionCallsByGeneId(
-            Set<String> speciesIds) throws DAOException {
+            Set<Integer> speciesIds) throws DAOException {
         log.entry(speciesIds);
         
         ExpressionCallParams params = new ExpressionCallParams();

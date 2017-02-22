@@ -261,7 +261,7 @@ public class InsertSimilarityAnnotation extends MySQLDAOUser {
         this.similarityAnnotIdGenerator++;
         return log.exit(new SummarySimilarityAnnotationTO(
                 Integer.toString(this.similarityAnnotIdGenerator), 
-                Integer.toString(summaryAnnot.getNcbiTaxonId()), summaryAnnot.isNegated(), 
+                summaryAnnot.getNcbiTaxonId(), summaryAnnot.isNegated(), 
                 summaryAnnot.getCioId()));
     }
     

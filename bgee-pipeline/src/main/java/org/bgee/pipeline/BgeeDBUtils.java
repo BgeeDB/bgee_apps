@@ -50,16 +50,16 @@ public class BgeeDBUtils {
      * 
      * @param speciesDAO    A {@code SpeciesDAO} to use to retrieve information about species 
      *                      from the Bgee data source.
-     * @return A {@code Set} of {@code String}s containing species IDs of the Bgee database.
+     * @return A {@code Set} of {@code Integer}s containing species IDs of the Bgee database.
      * @throws DAOException If an error occurred while getting the data from the Bgee database.
      */
-    public static List<String> getSpeciesIdsFromDb(SpeciesDAO speciesDAO) throws DAOException {
+    public static List<Integer> getSpeciesIdsFromDb(SpeciesDAO speciesDAO) throws DAOException {
         log.entry(speciesDAO);
 
         speciesDAO.setAttributes(SpeciesDAO.Attribute.ID);
         
         try (SpeciesTOResultSet rsSpecies = speciesDAO.getAllSpecies()) {
-            List<String> speciesIdsInBgee = new ArrayList<String>();
+            List<Integer> speciesIdsInBgee = new ArrayList<>();
             while (rsSpecies.next()) {
                 speciesIdsInBgee.add(rsSpecies.getTO().getId());
             }
@@ -75,27 +75,27 @@ public class BgeeDBUtils {
      * will return the validated {@code Collection} provided as argument. If an ID 
      * is not found in Bgee, this method will throw an {@code IllegalArgumentException}.
      * 
-     * @param speciesIds    A {@code List} of {@code String}s that are IDs of species, 
+     * @param speciesIds    A {@code List} of {@code Integer}s that are IDs of species, 
      *                      to be validated.
      * @param speciesDAO    A {@code SpeciesDAO} to use to retrieve information about species 
      *                      from the Bgee data source
-     * @return              A {@code List} of {@code String}s that are the IDs of all species 
+     * @return              A {@code List} of {@code Integer}s that are the IDs of all species 
      *                      in Bgee, if {@code speciesIds} was {@code null} or empty, 
      *                      otherwise, returns the argument {@code speciesIds} itself.
      * @throws IllegalArgumentException If {@code speciesIds} is not {@code null} nor empty 
      *                                  and an ID is not found in Bgee.
      */
-    public static List<String> checkAndGetSpeciesIds(List<String> speciesIds, SpeciesDAO speciesDAO) 
+    public static List<Integer> checkAndGetSpeciesIds(List<Integer> speciesIds, SpeciesDAO speciesDAO) 
             throws IllegalArgumentException {
         log.entry(speciesIds, speciesDAO);
         
-        List<String> speciesIdsFromDb = BgeeDBUtils.getSpeciesIdsFromDb(speciesDAO); 
+        List<Integer> speciesIdsFromDb = BgeeDBUtils.getSpeciesIdsFromDb(speciesDAO); 
         if (speciesIds == null || speciesIds.isEmpty()) {
             return log.exit(speciesIdsFromDb);
         } else if (!speciesIdsFromDb.containsAll(speciesIds)) {
             //copy to avoid modifying user input, maybe the caller 
             //will recover from the exception
-            List<String> debugSpeciesIds = new ArrayList<String>(speciesIds);
+            List<Integer> debugSpeciesIds = new ArrayList<>(speciesIds);
             debugSpeciesIds.removeAll(speciesIdsFromDb);
             throw log.throwing(new IllegalArgumentException("Some species IDs " +
                     "could not be found in Bgee: " + debugSpeciesIds));
@@ -115,7 +115,7 @@ public class BgeeDBUtils {
      * but with any {@code RelationStatus} ({@code REFLEXIVE}, {@code DIRECT}, 
      * {@code INDIRECT}). 
      * 
-     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
+     * @param speciesIds    A {@code Set} of {@code Integer}s that are the IDs of species 
      *                      to retrieve relations for. Can be {@code null} or empty.
      * @param relationDAO   A {@code RelationDAO} to use to retrieve information about 
      *                      relations between anatomical entities from the Bgee data source.
@@ -125,7 +125,7 @@ public class BgeeDBUtils {
      *                      that are the IDs of their associated sources. 
      * @throws DAOException If an error occurred while getting the data from the Bgee database.
      */
-    public static Map<String, Set<String>> getAnatEntityChildrenFromParents(Set<String> speciesIds, 
+    public static Map<String, Set<String>> getAnatEntityChildrenFromParents(Set<Integer> speciesIds, 
             RelationDAO relationDAO) throws DAOException {
         log.entry(speciesIds, relationDAO);
         return log.exit(BgeeDBUtils.getIsAPartOfRelativesFromDb(
@@ -144,7 +144,7 @@ public class BgeeDBUtils {
      * but with any {@code RelationStatus} ({@code REFLEXIVE}, {@code DIRECT}, 
      * {@code INDIRECT}). 
      * 
-     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
+     * @param speciesIds    A {@code Set} of {@code Integer}s that are the IDs of species 
      *                      to retrieve relations for. Can be {@code null} or empty.
      * @param relationDAO   A {@code RelationDAO} to use to retrieve information about 
      *                      relations between anatomical entities from the Bgee data source.
@@ -154,7 +154,7 @@ public class BgeeDBUtils {
      *                      that are the IDs of their associated targets. 
      * @throws DAOException If an error occurred while getting the data from the Bgee database.
      */
-    public static Map<String, Set<String>> getAnatEntityParentsFromChildren(Set<String> speciesIds, 
+    public static Map<String, Set<String>> getAnatEntityParentsFromChildren(Set<Integer> speciesIds, 
             RelationDAO relationDAO) throws DAOException {
         log.entry(speciesIds, relationDAO);
         return log.exit(BgeeDBUtils.getIsAPartOfRelativesFromDb(
@@ -173,7 +173,7 @@ public class BgeeDBUtils {
      * but with any {@code RelationStatus} ({@code REFLEXIVE}, {@code DIRECT}, 
      * {@code INDIRECT}). 
      * 
-     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
+     * @param speciesIds    A {@code Set} of {@code Integer}s that are the IDs of species 
      *                      to retrieve relations for. Can be {@code null} or empty.
      * @param relationDAO   A {@code RelationDAO} to use to retrieve information about 
      *                      relations between stages from the Bgee data source.
@@ -183,7 +183,7 @@ public class BgeeDBUtils {
      *                      that are the IDs of their associated sources. 
      * @throws DAOException If an error occurred while getting the data from the Bgee database.
      */
-    public static Map<String, Set<String>> getStageChildrenFromParents(Set<String> speciesIds, 
+    public static Map<String, Set<String>> getStageChildrenFromParents(Set<Integer> speciesIds, 
             RelationDAO relationDAO) throws DAOException {
         log.entry(speciesIds, relationDAO);
         return log.exit(BgeeDBUtils.getIsAPartOfRelativesFromDb(
@@ -202,7 +202,7 @@ public class BgeeDBUtils {
      * but with any {@code RelationStatus} ({@code REFLEXIVE}, {@code DIRECT}, 
      * {@code INDIRECT}). 
      * 
-     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
+     * @param speciesIds    A {@code Set} of {@code Integer}s that are the IDs of species 
      *                      to retrieve relations for. Can be {@code null} or empty.
      * @param relationDAO   A {@code RelationDAO} to use to retrieve information about 
      *                      relations between stages from the Bgee data source.
@@ -212,7 +212,7 @@ public class BgeeDBUtils {
      *                      that are the IDs of their associated targets. 
      * @throws DAOException If an error occurred while getting the data from the Bgee database.
      */
-    public static Map<String, Set<String>> getStageParentsFromChildren(Set<String> speciesIds, 
+    public static Map<String, Set<String>> getStageParentsFromChildren(Set<Integer> speciesIds, 
             RelationDAO relationDAO) throws DAOException {
         log.entry(speciesIds, relationDAO);
         return log.exit(BgeeDBUtils.getIsAPartOfRelativesFromDb(
@@ -238,7 +238,7 @@ public class BgeeDBUtils {
      * but with any {@code RelationStatus} ({@code REFLEXIVE}, {@code DIRECT}, 
      * {@code INDIRECT}). 
      * 
-     * @param speciesIds            A {@code Set} of {@code String}s that are the IDs of species 
+     * @param speciesIds            A {@code Set} of {@code Integer}s that are the IDs of species 
      *                              to retrieve relations for. Can be {@code null} or empty.
      * @param anatEntityRelatives   A {@code boolean} defining whether to retrieve relations 
      *                              for anatomical entities, or for developmental stages. 
@@ -259,7 +259,7 @@ public class BgeeDBUtils {
      *                      sources to their targets. 
      * @throws DAOException If an error occurred while getting the data from the Bgee database.
      */
-    private static Map<String, Set<String>> getIsAPartOfRelativesFromDb(Set<String> speciesIds, 
+    private static Map<String, Set<String>> getIsAPartOfRelativesFromDb(Set<Integer> speciesIds, 
             boolean anatEntityRelatives, boolean childrenFromParents, RelationDAO relationDAO) 
                     throws DAOException {
         log.entry(speciesIds, anatEntityRelatives, childrenFromParents, relationDAO);
@@ -270,7 +270,7 @@ public class BgeeDBUtils {
         relationDAO.setAttributes(RelationDAO.Attribute.SOURCE_ID, 
                 RelationDAO.Attribute.TARGET_ID);
         // get direct, indirect, and reflexive is_a/part_of relations 
-        RelationTOResultSet relTORs = null;
+        RelationTOResultSet<String> relTORs = null;
         Map<String, Set<String>> relativesMap = new HashMap<String, Set<String>>();
         try {
             if (anatEntityRelatives) {
@@ -283,7 +283,7 @@ public class BgeeDBUtils {
             //now, populate Map where keys are sourceId and values the associated targetIds, 
             //or the opposite, depending on descendantsByParent
             while (relTORs.next()) {
-                RelationTO relTO = relTORs.getTO();
+                RelationTO<String> relTO = relTORs.getTO();
                 String key = null;
                 String value = null;
                 if (childrenFromParents) {

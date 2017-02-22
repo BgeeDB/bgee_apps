@@ -58,13 +58,13 @@ public class SpeciesDataGroupService extends Service {
             throws DAOException, QueryInterruptedException, IllegalStateException {
         log.entry();
         
-        final Map<String, Set<DownloadFile>> groupIdToDownloadFilesMap = 
+        final Map<Integer, Set<DownloadFile>> groupIdToDownloadFilesMap = 
                 buildDownloadFileMap(this.getServiceFactory().getDownloadFileService().getAllDownloadFiles());
         
         LinkedHashMap<SpeciesToGroupOrderingAttribute, DAO.Direction> orderAttrs = new LinkedHashMap<>();
         orderAttrs.put(SpeciesToGroupOrderingAttribute.DATA_GROUP_ID, DAO.Direction.ASC);
         orderAttrs.put(SpeciesToGroupOrderingAttribute.DISTANCE_TO_SPECIES, DAO.Direction.ASC);
-        final Map<String, List<Species>> groupIdToSpeciesMap = buildSpeciesMap(
+        final Map<Integer, List<Species>> groupIdToSpeciesMap = buildSpeciesMap(
                 getDaoManager().getSpeciesDataGroupDAO().getAllSpeciesToDataGroup(orderAttrs), 
                 this.getServiceFactory().getSpeciesService().loadSpeciesInDataGroups(false));
         
@@ -94,7 +94,7 @@ public class SpeciesDataGroupService extends Service {
      *                              data group IDs, associated to the {@code List} of {@code Species} 
      *                              they contain, in preferred order, as value. 
      */
-    private static Map<String, List<Species>> buildSpeciesMap(
+    private static Map<Integer, List<Species>> buildSpeciesMap(
             SpeciesToDataGroupTOResultSet speciesToDataGroupRs, Collection<Species> species) {
         log.entry(speciesToDataGroupRs, species);
         
@@ -119,7 +119,7 @@ public class SpeciesDataGroupService extends Service {
      * @return              A {@code Map} where keys are {@code String}s corresponding to data group IDs, 
      *                      associated to the {@code Set} of {@code DownloadFile} they contain as value. 
      */
-    private static Map<String, Set<DownloadFile>> buildDownloadFileMap(
+    private static Map<Integer, Set<DownloadFile>> buildDownloadFileMap(
             Collection<DownloadFile> downloadFiles) {
         log.entry(downloadFiles);
         return log.exit(downloadFiles.stream()
@@ -152,7 +152,7 @@ public class SpeciesDataGroupService extends Service {
      * @param files         the {@code Set} of associated {@code DownloadFile}s
      * @return a (newly allocated) {@code SpeciesDataGroup}
      */
-    private static SpeciesDataGroup newSpeciesDataGroup(String id, String name, String description, 
+    private static SpeciesDataGroup newSpeciesDataGroup(Integer id, String name, String description, 
             List<Species> species, Set<DownloadFile> files) {
         log.entry(id, name, description, species, files);
         return log.exit(new SpeciesDataGroup(id, name, description, species, files));

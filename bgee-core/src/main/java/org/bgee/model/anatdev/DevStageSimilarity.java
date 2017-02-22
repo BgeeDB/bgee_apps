@@ -12,7 +12,7 @@ import org.bgee.model.Entity;
  * @version Bgee 13, Aug. 2016 
  * @since   Bgee 13, Apr. 2016 
  */
-public class DevStageSimilarity extends Entity {
+public class DevStageSimilarity extends Entity<String> {
     
     /**
      * A {@code Set} of {@code String}s that are developmental stage IDs of this group. 

@@ -24,17 +24,17 @@ public class ConditionFilterTest extends TestAncestor {
      */
     @Test
     public void shoudTest() {
-        Condition condition1 = new Condition(1, "ae1", "ds1", "spId");   // kept by filter 1
-        Condition condition2 = new Condition(2, "ae2", "ds1", "spId");   // kept by filter 1
-        Condition condition3 = new Condition(3, "ae2", "ds2", "spId");   // kept by filter 1
-        Condition condition4 = new Condition(4, "ae4", "ds3", "spId");   // kept by filter 2
-        Condition condition5 = new Condition(5, "ae5", "ds3", "spId");   // kept by filter 2
-        Condition condition6 = new Condition(6, "ae3", "ds1", "spId");   // kept by filter 3
-        Condition condition7 = new Condition(7, "ae5", "ds4", "spId");   // not kept even if ae5 is in filter 1
-        Condition condition8 = new Condition(8, "ae4", "ds5", "spId");   // not kept even if ds5 is in filter 1
-        Condition condition9 = new Condition(9, "ae6", "ds6", "spId");   // not kept by any filter
-        Condition condition10 = new Condition(10, "ae5", null, "spId");   // not kept by any filter
-        Condition condition11 = new Condition(11, null, "ds5", "spId");   // not kept by any filter
+        Condition condition1 = new Condition("ae1", "ds1", 1);   // kept by filter 1
+        Condition condition2 = new Condition("ae2", "ds1", 1);   // kept by filter 1
+        Condition condition3 = new Condition("ae2", "ds2", 1);   // kept by filter 1
+        Condition condition4 = new Condition("ae4", "ds3", 1);   // kept by filter 2
+        Condition condition5 = new Condition("ae5", "ds3", 1);   // kept by filter 2
+        Condition condition6 = new Condition("ae3", "ds1", 1);   // kept by filter 3
+        Condition condition7 = new Condition("ae5", "ds4", 1);   // not kept even if ae5 is in filter 1
+        Condition condition8 = new Condition("ae4", "ds5", 1);   // not kept even if ds5 is in filter 1
+        Condition condition9 = new Condition("ae6", "ds6", 1);   // not kept by any filter
+        Condition condition10 = new Condition("ae5", null, 1);   // not kept by any filter
+        Condition condition11 = new Condition(null, "ds5", 1);   // not kept by any filter
         
         Set<String> anatEntitieIds = new HashSet<>(Arrays.asList("ae1", "ae2", "ae5"));
         Set<String> devStageIds = new HashSet<>(Arrays.asList("ds1", "ds2", "ds5"));

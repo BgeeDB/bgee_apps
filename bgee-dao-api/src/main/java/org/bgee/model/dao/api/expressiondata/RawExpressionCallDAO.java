@@ -1,6 +1,7 @@
 package org.bgee.model.dao.api.expressiondata;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
@@ -51,11 +52,12 @@ public interface RawExpressionCallDAO extends DAO<RawExpressionCallDAO.Attribute
     /** 
      * TODO javadoc
      * @param speciesId
+     * @param condParameters
      * @return
      * @throws DAOException
      */
-    public RawExpressionCallTOResultSet getExpressionCallsOrderedByGeneIdAndExprId(int speciesId)
-        throws DAOException;
+    public RawExpressionCallTOResultSet getExpressionCallsOrderedByGeneIdAndExprId(int speciesId,
+        Collection<ConditionDAO.Attribute> condParameters) throws DAOException;
 
   /**
    * {@code DAOResultSet} specifics to {@code RawExpressionCallTO}s

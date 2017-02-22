@@ -1,8 +1,11 @@
 package org.bgee.model.dao.mysql.expressiondata;
 
+import java.util.Collection;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO;
 import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
@@ -27,8 +30,9 @@ public class MySQLRawExpressionCallDAO  extends MySQLDAO<RawExpressionCallDAO.At
         LogManager.getLogger(MySQLRawExpressionCallDAO.class.getName());
 
     @Override
-    public RawExpressionCallTOResultSet getExpressionCallsOrderedByGeneIdAndExprId(int speciesId) throws DAOException {
-        log.entry(speciesId);
+    public RawExpressionCallTOResultSet getExpressionCallsOrderedByGeneIdAndExprId(int speciesId,
+            Collection<ConditionDAO.Attribute> attrs) throws DAOException {
+        log.entry(speciesId, attrs);
         throw log.throwing(new UnsupportedOperationException("Retrieve od expression calls not implemented yet"));
     }
 

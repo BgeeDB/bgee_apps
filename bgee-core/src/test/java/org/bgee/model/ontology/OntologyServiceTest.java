@@ -50,7 +50,7 @@ public class OntologyServiceTest extends TestAncestor {
         RelationDAO relationDao = mock(RelationDAO.class);
         when(managerMock.getRelationDAO()).thenReturn(relationDao);
         
-        Set<String> speciesIds = new HashSet<String>(Arrays.asList("11", "22", "44"));
+        Set<Integer> speciesIds = new HashSet<>(Arrays.asList(11, 22, 44));
         Set<String> anatEntityIds = new HashSet<String>(Arrays.asList("UBERON:0002", "UBERON:0002p"));
 
         Set<String> sourceAnatEntityIds = new HashSet<String>(anatEntityIds);
@@ -154,12 +154,12 @@ public class OntologyServiceTest extends TestAncestor {
                 // |                    /                      |
                 // UBERON:0003 sp1/sp2 ------------------------
                 new TaxonConstraint("UBERON:0001", null),
-                new TaxonConstraint("UBERON:0002", "11"),
-                new TaxonConstraint("UBERON:0002", "22"),
-                new TaxonConstraint("UBERON:0002p", "22"),
-                new TaxonConstraint("UBERON:0002p", "33"),
-                new TaxonConstraint("UBERON:0003", "11"),
-                new TaxonConstraint("UBERON:0003", "22")));
+                new TaxonConstraint("UBERON:0002", 11),
+                new TaxonConstraint("UBERON:0002", 22),
+                new TaxonConstraint("UBERON:0002p", 33),
+                new TaxonConstraint("UBERON:0002p", 33),
+                new TaxonConstraint("UBERON:0003", 11),
+                new TaxonConstraint("UBERON:0003", 22)));
         // Note: we need to use thenReturn() twice because a stream can be use only once 
         when(tcService.loadAnatEntityTaxonConstraintBySpeciesIds(speciesIds))
             .thenReturn(taxonConstraints.stream()).thenReturn(taxonConstraints.stream())
@@ -172,13 +172,13 @@ public class OntologyServiceTest extends TestAncestor {
                 // UBERON:0002   UBERON:0002p   | sp2/sp1 (indirect)
                 // | sp1       / sp2            |
                 // UBERON:0003 ------------------
-                new TaxonConstraint("1", "11"),
-                new TaxonConstraint("1", "22"),
-                new TaxonConstraint("2", "22"),
-                new TaxonConstraint("3", "11"),
-                new TaxonConstraint("4", "22"),
-                new TaxonConstraint("5", "11"),
-                new TaxonConstraint("5", "22")));
+                new TaxonConstraint("1", 11),
+                new TaxonConstraint("1", 22),
+                new TaxonConstraint("2", 22),
+                new TaxonConstraint("3", 11),
+                new TaxonConstraint("4", 22),
+                new TaxonConstraint("5", 11),
+                new TaxonConstraint("5", 22)));
         // Note: we need to use thenReturn() twice because a stream can be use only once 
         when(tcService.loadAnatEntityRelationTaxonConstraintBySpeciesIds(speciesIds))
             .thenReturn(relationTaxonConstraints.stream()).thenReturn(relationTaxonConstraints.stream())
@@ -229,7 +229,7 @@ public class OntologyServiceTest extends TestAncestor {
         RelationDAO relationDao = mock(RelationDAO.class);
         when(managerMock.getRelationDAO()).thenReturn(relationDao);
         
-        Set<String> speciesIds = new HashSet<String>(Arrays.asList("11", "22", "44"));
+        Set<Integer> speciesIds = new HashSet<>(Arrays.asList(11, 22, 44));
         Set<String> anatEntityIds = new HashSet<String>(Arrays.asList("UBERON:0004"));
 
         Set<String> sourceAnatEntityIds = new HashSet<String>(anatEntityIds);
@@ -241,16 +241,16 @@ public class OntologyServiceTest extends TestAncestor {
         Set<RelationStatus> relationStatus = EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE));
 
         // UBERON:0001 is_a UBERON:0002 is_a UBERON:0003 is_a UBERON:0004
-        List<RelationTO> allRelations = Arrays.asList(
-                new RelationTO("1", "UBERON:0002", "UBERON:0001", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-                new RelationTO("2", "UBERON:0003", "UBERON:0002", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-                new RelationTO("3", "UBERON:0003", "UBERON:0001", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT),     
-                new RelationTO("4", "UBERON:0004", "UBERON:0003", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-                new RelationTO("5", "UBERON:0004", "UBERON:0002", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT),
-                new RelationTO("6", "UBERON:0004", "UBERON:0001", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT));
-        List<RelationTO> relationTOs1 = Arrays.asList(allRelations.get(3), allRelations.get(4), allRelations.get(5));
+        List<RelationTO<String>> allRelations = Arrays.asList(
+                new RelationTO<>(1, "UBERON:0002", "UBERON:0001", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO<>(2, "UBERON:0003", "UBERON:0002", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO<>(3, "UBERON:0003", "UBERON:0001", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT),     
+                new RelationTO<>(4, "UBERON:0004", "UBERON:0003", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO<>(5, "UBERON:0004", "UBERON:0002", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT),
+                new RelationTO<>(6, "UBERON:0004", "UBERON:0001", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT));
+        List<RelationTO<String>> relationTOs1 = Arrays.asList(allRelations.get(3), allRelations.get(4), allRelations.get(5));
 
-        RelationTOResultSet mockRelationRs1 = getMockResultSet(RelationTOResultSet.class, relationTOs1);
+        RelationTOResultSet<String> mockRelationRs1 = getMockResultSet(RelationTOResultSet.class, relationTOs1);
         when(relationDao.getAnatEntityRelations(
                 speciesIds, true, sourceAnatEntityIds, targetAnatEntityIds, true, 
                 daoRelationTypes, relationStatus, null))
@@ -258,8 +258,8 @@ public class OntologyServiceTest extends TestAncestor {
 
         Set<String> newSourceAnatEntityIds = new HashSet<String>(Arrays.asList("UBERON:0001", "UBERON:0002", "UBERON:0003"));
         Set<String> newTargetAnatEntityIds = new HashSet<String>(Arrays.asList("UBERON:0001", "UBERON:0002", "UBERON:0003"));
-        List<RelationTO> relationTOs1b = Arrays.asList(allRelations.get(0), allRelations.get(1), allRelations.get(2));
-        RelationTOResultSet mockRelationRs1b = getMockResultSet(RelationTOResultSet.class, relationTOs1b);
+        List<RelationTO<String>> relationTOs1b = Arrays.asList(allRelations.get(0), allRelations.get(1), allRelations.get(2));
+        RelationTOResultSet<String> mockRelationRs1b = getMockResultSet(RelationTOResultSet.class, relationTOs1b);
         when(relationDao.getAnatEntityRelations(
                 speciesIds, true, newSourceAnatEntityIds, newTargetAnatEntityIds, true, 
                 daoRelationTypes, relationStatus, null))
@@ -308,7 +308,7 @@ public class OntologyServiceTest extends TestAncestor {
 
         OntologyService service = new OntologyService(serviceFactory);
 
-        OntologyBase<AnatEntity> expectedOntology1 = 
+        OntologyBase<AnatEntity, String> expectedOntology1 = 
                 new MultiSpeciesOntology<>(speciesIds, anatEntities, new HashSet<>(allRelations),
                         taxonConstraints, relationTaxonConstraints,
                         expRelationTypes, serviceFactory, AnatEntity.class);
@@ -327,7 +327,7 @@ public class OntologyServiceTest extends TestAncestor {
         RelationDAO relationDao = mock(RelationDAO.class);
         when(managerMock.getRelationDAO()).thenReturn(relationDao);
         
-        Set<String> speciesIds = new HashSet<String>(Arrays.asList("11", "22", "44"));
+        Set<Integer> speciesIds = new HashSet<>(Arrays.asList(11, 22, 44));
         Set<String> stageIds = new HashSet<String>(Arrays.asList("Stage_id1", "Stage_id2"));
 
         Set<String> sourceStageIds = new HashSet<String>(stageIds);
@@ -341,43 +341,43 @@ public class OntologyServiceTest extends TestAncestor {
 
         Set<RelationStatus> relationStatus = EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE));
 
-        List<RelationTO> allRelationTOs = Arrays.asList(
-        		new RelationTO(null, "Stage_id2", "Stage_id1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-        		new RelationTO(null, "Stage_id2p", "Stage_id1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-        		new RelationTO(null, "Stage_id3", "Stage_id2", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-        		new RelationTO(null, "Stage_id3", "Stage_id2p", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-        		new RelationTO(null, "Stage_id3", "Stage_id1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT));
-        List<RelationTO> relationTOs1 = Arrays.asList(allRelationTOs.get(0),
+        List<RelationTO<String>> allRelationTOs = Arrays.asList(
+        		new RelationTO<>(null, "Stage_id2", "Stage_id1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+        		new RelationTO<>(null, "Stage_id2p", "Stage_id1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+        		new RelationTO<>(null, "Stage_id3", "Stage_id2", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+        		new RelationTO<>(null, "Stage_id3", "Stage_id2p", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+        		new RelationTO<>(null, "Stage_id3", "Stage_id1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT));
+        List<RelationTO<String>> relationTOs1 = Arrays.asList(allRelationTOs.get(0),
                 allRelationTOs.get(1), allRelationTOs.get(2), allRelationTOs.get(4));
-        RelationTOResultSet mockRelationRs1 = getMockResultSet(RelationTOResultSet.class, relationTOs1);
+        RelationTOResultSet<String> mockRelationRs1 = getMockResultSet(RelationTOResultSet.class, relationTOs1);
         when(relationDao.getStageRelations(speciesIds, true, sourceStageIds, targetStageIds,
         		true, relationStatus, null))
         	.thenReturn(mockRelationRs1);
         
         Set<String> newSourceStageIds = new HashSet<String>(Arrays.asList("Stage_id2p", "Stage_id3"));
         Set<String> newTargetStageIds = new HashSet<String>(Arrays.asList("Stage_id2p", "Stage_id3"));
-        List<RelationTO> relationTOs1b = Arrays.asList(allRelationTOs.get(1),
+        List<RelationTO<String>> relationTOs1b = Arrays.asList(allRelationTOs.get(1),
                 allRelationTOs.get(2), allRelationTOs.get(3), allRelationTOs.get(4));
-        RelationTOResultSet mockRelationRs1b = getMockResultSet(RelationTOResultSet.class, relationTOs1b);
+        RelationTOResultSet<String> mockRelationRs1b = getMockResultSet(RelationTOResultSet.class, relationTOs1b);
         when(relationDao.getStageRelations(speciesIds, true, newSourceStageIds, newTargetStageIds,
                 true, relationStatus, null))
             .thenReturn(mockRelationRs1b);
 
-        List<RelationTO> relationTOs2 = Arrays.asList(allRelationTOs.get(0),
+        List<RelationTO<String>> relationTOs2 = Arrays.asList(allRelationTOs.get(0),
                 allRelationTOs.get(1), allRelationTOs.get(2), allRelationTOs.get(4));
-        RelationTOResultSet mockRelationRs2 = getMockResultSet(RelationTOResultSet.class, relationTOs2);
+        RelationTOResultSet<String> mockRelationRs2 = getMockResultSet(RelationTOResultSet.class, relationTOs2);
         when(relationDao.getStageRelations(speciesIds, true, null, targetStageIds,
         		true, relationStatus, null))
         	.thenReturn(mockRelationRs2);
-        List<RelationTO> relationTOs2b = Arrays.asList(allRelationTOs.get(3));
-        RelationTOResultSet mockRelationRs2b = getMockResultSet(RelationTOResultSet.class, relationTOs2b);
+        List<RelationTO<String>> relationTOs2b = Arrays.asList(allRelationTOs.get(3));
+        RelationTOResultSet<String> mockRelationRs2b = getMockResultSet(RelationTOResultSet.class, relationTOs2b);
         when(relationDao.getStageRelations(speciesIds, true, new HashSet<>(), 
                 new HashSet<String>(Arrays.asList("Stage_id2p", "Stage_id3")), true, relationStatus, null))
             .thenReturn(mockRelationRs2b);
         
-        List<RelationTO> relationTOs3 = Arrays.asList(
-        		new RelationTO(null, "Stage_id2", "Stage_id1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT));
-        RelationTOResultSet mockRelationRs3 = getMockResultSet(RelationTOResultSet.class, relationTOs3);
+        List<RelationTO<String>> relationTOs3 = Arrays.asList(
+        		new RelationTO<>(null, "Stage_id2", "Stage_id1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT));
+        RelationTOResultSet<String> mockRelationRs3 = getMockResultSet(RelationTOResultSet.class, relationTOs3);
         when(relationDao.getStageRelations(speciesIds, true, sourceStageIds, targetStageIds,
         		false, relationStatus, null))
         	.thenReturn(mockRelationRs3);
@@ -424,9 +424,9 @@ public class OntologyServiceTest extends TestAncestor {
                 new HashSet<>(Arrays.asList(
                         new TaxonConstraint("stage1", null),
                         new TaxonConstraint("stage2", null),
-                        new TaxonConstraint("stage2p", "sp2"),
-                        new TaxonConstraint("stage3", "sp1"),
-                        new TaxonConstraint("stage3p", "sp2")));
+                        new TaxonConstraint("stage2p", 2),
+                        new TaxonConstraint("stage3", 1),
+                        new TaxonConstraint("stage3p", 2)));
 
         // Note: we need to use thenReturn() twice because a stream can be use only once
         when(tcService.loadDevStageTaxonConstraintBySpeciesIds(speciesIds))
@@ -439,23 +439,23 @@ public class OntologyServiceTest extends TestAncestor {
 
         OntologyService service = new OntologyService(serviceFactory);
 
-        MultiSpeciesOntology<DevStage> expectedOntology1 = 
-        		new MultiSpeciesOntology<>(speciesIds, devStages1, new HashSet<>(allRelationTOs),
-        		        stageTCs, null,
+        MultiSpeciesOntology<DevStage, String> expectedOntology1 = 
+        		new MultiSpeciesOntology<DevStage, String>(speciesIds, devStages1,
+        		        new HashSet<>(allRelationTOs), stageTCs, null,
         		        expRelationTypes, serviceFactory, DevStage.class);
         assertEquals("Incorrect dev. stage ontology", expectedOntology1,
         		service.getDevStageOntology(speciesIds, stageIds, true, true));
 
-        MultiSpeciesOntology<DevStage> expectedOntology2 = 
-        		new MultiSpeciesOntology<>(speciesIds, devStages2, new HashSet<>(allRelationTOs),
-        		        stageTCs, null,
+        MultiSpeciesOntology<DevStage, String> expectedOntology2 = 
+        		new MultiSpeciesOntology<DevStage, String>(speciesIds, devStages2,
+        		        new HashSet<>(allRelationTOs), stageTCs, null,
         		        expRelationTypes, serviceFactory, DevStage.class);
         assertEquals("Incorrect dev. stage ontology", expectedOntology2,
         		service.getDevStageOntology(speciesIds, stageIds, false, true));
 
-        MultiSpeciesOntology<DevStage> expectedOntology3 = 
-        		new MultiSpeciesOntology<>(speciesIds, devStages3, new HashSet<>(relationTOs3),
-        		        stageTCs, null,
+        MultiSpeciesOntology<DevStage, String> expectedOntology3 = 
+        		new MultiSpeciesOntology<DevStage, String>(speciesIds, devStages3,
+        		        new HashSet<>(relationTOs3), stageTCs, null,
         		        expRelationTypes, serviceFactory, DevStage.class);
         assertEquals("Incorrect dev. stage ontology", expectedOntology3, 
         		service.getDevStageOntology(speciesIds, stageIds, false, false));
@@ -473,14 +473,14 @@ public class OntologyServiceTest extends TestAncestor {
         RelationDAO relationDao = mock(RelationDAO.class);
         when(managerMock.getRelationDAO()).thenReturn(relationDao);
         
-        Set<String> speciesIds = new HashSet<String>();
-        speciesIds.addAll(Arrays.asList("11", "22", "44"));
-        Set<String> taxonIds = new HashSet<String>();
-        taxonIds.addAll(Arrays.asList("tax_id1", "tax_id2"));
+        Set<Integer> speciesIds = new HashSet<>();
+        speciesIds.addAll(Arrays.asList(11, 22, 44));
+        Set<Integer> taxonIds = new HashSet<>();
+        taxonIds.addAll(Arrays.asList(1, 2));
 
-        Set<String> sourceTaxonIds = new HashSet<String>();
+        Set<Integer> sourceTaxonIds = new HashSet<>();
         sourceTaxonIds.addAll(taxonIds);
-        Set<String> targetTaxonIds = new HashSet<String>();
+        Set<Integer> targetTaxonIds = new HashSet<>();
         targetTaxonIds.addAll(taxonIds);
                 
         // Tax_id1 --------------
@@ -492,56 +492,56 @@ public class OntologyServiceTest extends TestAncestor {
         Set<RelationTO.RelationType> daoRelationTypes = new HashSet<>();
         daoRelationTypes.add(RelationTO.RelationType.ISA_PARTOF);
         
-        List<RelationTO> relationTOs1 = Arrays.asList(
-                new RelationTO(null, "tax_id2", "tax_id1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-                new RelationTO(null, "tax_id2p", "tax_id1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-                new RelationTO(null, "tax_id3", "tax_id2", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-                new RelationTO(null, "tax_id3", "tax_id1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT));
-        RelationTOResultSet mockRelationRs1 = getMockResultSet(RelationTOResultSet.class, relationTOs1);
+        List<RelationTO<Integer>> relationTOs1 = Arrays.asList(
+                new RelationTO<>(null, 2, 1, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO<>(null, 21, 1, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO<>(null, 3, 2, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO<>(null, 3, 1, RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT));
+        RelationTOResultSet<Integer> mockRelationRs1 = getMockResultSet(RelationTOResultSet.class, relationTOs1);
         when(relationDao.getTaxonRelations(sourceTaxonIds, targetTaxonIds,
                 true, EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE)), null))
             .thenReturn(mockRelationRs1);
 
-        sourceTaxonIds = new HashSet<>(Arrays.asList("tax_id3", "tax_id2p"));
-        targetTaxonIds = new HashSet<>(Arrays.asList("tax_id3", "tax_id2p"));
-        List<RelationTO> relationTOs1b = Arrays.asList(
-            new RelationTO(null, "tax_id2p", "tax_id1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-            new RelationTO(null, "tax_id3", "tax_id2p", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT));
-        RelationTOResultSet mockRelationRs1b = getMockResultSet(RelationTOResultSet.class, relationTOs1b);
+        sourceTaxonIds = new HashSet<>(Arrays.asList(3, 21));
+        targetTaxonIds = new HashSet<>(Arrays.asList(3, 21));
+        List<RelationTO<Integer>> relationTOs1b = Arrays.asList(
+            new RelationTO<>(null, 21, 1, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+            new RelationTO<>(null, 3, 21, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT));
+        RelationTOResultSet<Integer> mockRelationRs1b = getMockResultSet(RelationTOResultSet.class, relationTOs1b);
         when(relationDao.getTaxonRelations(sourceTaxonIds, targetTaxonIds,
                 true, EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE)), null))
             .thenReturn(mockRelationRs1b);
 
-        targetTaxonIds = new HashSet<>(Arrays.asList("tax_id1", "tax_id2"));
-        List<RelationTO> relationTOs2 = Arrays.asList(
-                new RelationTO(null, "tax_id2", "tax_id1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-                new RelationTO(null, "tax_id3", "tax_id2", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT));
-        RelationTOResultSet mockRelationRs2 = getMockResultSet(RelationTOResultSet.class, relationTOs2);
+        targetTaxonIds = new HashSet<>(Arrays.asList(1, 2));
+        List<RelationTO<Integer>> relationTOs2 = Arrays.asList(
+                new RelationTO<>(null, 2, 1, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO<>(null, 3, 2, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT));
+        RelationTOResultSet<Integer> mockRelationRs2 = getMockResultSet(RelationTOResultSet.class, relationTOs2);
         when(relationDao.getTaxonRelations(null, targetTaxonIds,
                 true, EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE)), null))
             .thenReturn(mockRelationRs2);
         
-        targetTaxonIds = new HashSet<>(Arrays.asList("tax_id3"));
-        List<RelationTO> relationTOs2b = Arrays.asList(
-            new RelationTO(null, "tax_id3", "tax_id2", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-            new RelationTO(null, "tax_id3", "tax_id1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT));
-        RelationTOResultSet mockRelationRs2b = getMockResultSet(RelationTOResultSet.class, relationTOs2b);
+        targetTaxonIds = new HashSet<>(Arrays.asList(3));
+        List<RelationTO<Integer>> relationTOs2b = Arrays.asList(
+            new RelationTO<>(null, 3, 2, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+            new RelationTO<>(null, 3, 1, RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT));
+        RelationTOResultSet<Integer> mockRelationRs2b = getMockResultSet(RelationTOResultSet.class, relationTOs2b);
         when(relationDao.getTaxonRelations(new HashSet<>(), targetTaxonIds,
                 true, EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE)), null))
             .thenReturn(mockRelationRs2b);
 
-        sourceTaxonIds = new HashSet<>(Arrays.asList("tax_id1", "tax_id2"));
-        targetTaxonIds = new HashSet<>(Arrays.asList("tax_id1", "tax_id2"));
-        List<RelationTO> relationTOs3 = Arrays.asList(
-                new RelationTO(null, "tax_id2", "tax_id1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT));
-        RelationTOResultSet mockRelationRs3 = getMockResultSet(RelationTOResultSet.class, relationTOs3);
+        sourceTaxonIds = new HashSet<>(Arrays.asList(1, 2));
+        targetTaxonIds = new HashSet<>(Arrays.asList(1, 2));
+        List<RelationTO<Integer>> relationTOs3 = Arrays.asList(
+                new RelationTO<>(null, 2, 1, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT));
+        RelationTOResultSet<Integer> mockRelationRs3 = getMockResultSet(RelationTOResultSet.class, relationTOs3);
         when(relationDao.getTaxonRelations(sourceTaxonIds, targetTaxonIds,
                 false, EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE)), null))
             .thenReturn(mockRelationRs3);
         
-        List<RelationTO> relationTOs3b = Arrays.asList(
-            new RelationTO(null, "tax_id2", "tax_id1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT));
-        RelationTOResultSet mockRelationRs3b = getMockResultSet(RelationTOResultSet.class, relationTOs3b);
+        List<RelationTO<Integer>> relationTOs3b = Arrays.asList(
+            new RelationTO<>(null, 2, 1, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT));
+        RelationTOResultSet<Integer> mockRelationRs3b = getMockResultSet(RelationTOResultSet.class, relationTOs3b);
         when(relationDao.getTaxonRelations(sourceTaxonIds, targetTaxonIds,
             false, EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE)), null))
         .thenReturn(mockRelationRs3b);
@@ -552,17 +552,17 @@ public class OntologyServiceTest extends TestAncestor {
         when(serviceFactory.getTaxonService()).thenReturn(taxonService);
 
         Set<Taxon> taxa1 = new HashSet<>(Arrays.asList(
-                new Taxon("1", "tax_id1", "desc1"),
-                new Taxon("2", "tax_id2", "desc2"),
-                new Taxon("3", "tax_id2p", "desc2p"),
-                new Taxon("4", "tax_id3", "desc3")));
+                new Taxon(1, "1", "desc1"),
+                new Taxon(2, "2", "desc2"),
+                new Taxon(3, "21", "desc2p"),
+                new Taxon(4, "3", "desc3")));
         Set<Taxon> taxa2 = new HashSet<>(Arrays.asList(
-                new Taxon("1", "tax_id1", "desc1"),
-                new Taxon("2", "tax_id2", "desc2"),
-                new Taxon("4", "tax_id3", "desc3")));
+                new Taxon(1, "1", "desc1"),
+                new Taxon(2, "2", "desc2"),
+                new Taxon(4, "3", "desc3")));
         Set<Taxon> taxa3 = new HashSet<>(Arrays.asList(
-                new Taxon("1", "tax_id1", "desc1"),
-                new Taxon("2", "tax_id2", "desc2")));
+                new Taxon(1, "1", "desc1"),
+                new Taxon(2, "2", "desc2")));
         when(taxonService.loadTaxa(speciesIds, true)).thenReturn(taxa1.stream())
         .thenReturn(taxa2.stream()).thenReturn(taxa3.stream());
 
@@ -571,28 +571,28 @@ public class OntologyServiceTest extends TestAncestor {
 
         OntologyService service = new OntologyService(serviceFactory);
 
-        Set<RelationTO> rel1 = new HashSet<>();
+        Set<RelationTO<Integer>> rel1 = new HashSet<>();
         rel1.addAll(relationTOs1);
         rel1.addAll(relationTOs1b);
-        MultiSpeciesOntology<Taxon> expectedOntology1 = 
+        MultiSpeciesOntology<Taxon,Integer> expectedOntology1 = 
                 new MultiSpeciesOntology<>(speciesIds, taxa1, rel1,
                     null, new HashSet<>(), expRelationTypes, serviceFactory, Taxon.class);
         assertEquals("Incorrect dev. stage ontology", expectedOntology1,
                 service.getTaxonOntology(speciesIds, taxonIds, true, true));
 
-        Set<RelationTO> rel2 = new HashSet<>();
+        Set<RelationTO<Integer>> rel2 = new HashSet<>();
         rel2.addAll(relationTOs2);
         rel2.addAll(relationTOs2b);
-        MultiSpeciesOntology<Taxon> expectedOntology2 = 
+        MultiSpeciesOntology<Taxon,Integer> expectedOntology2 = 
                 new MultiSpeciesOntology<>(speciesIds, taxa2, rel2,
                     null, new HashSet<>(), expRelationTypes, serviceFactory, Taxon.class);
         assertEquals("Incorrect dev. stage ontology", expectedOntology2,
                 service.getTaxonOntology(speciesIds, taxonIds, false, true));
 
-        Set<RelationTO> rel3 = new HashSet<>();
+        Set<RelationTO<Integer>> rel3 = new HashSet<>();
         rel3.addAll(relationTOs3);
         rel3.addAll(relationTOs3b);
-        MultiSpeciesOntology<Taxon> expectedOntology3 = 
+        MultiSpeciesOntology<Taxon,Integer> expectedOntology3 = 
                 new MultiSpeciesOntology<>(speciesIds, taxa3, rel3,
                     null, new HashSet<>(), expRelationTypes, serviceFactory, Taxon.class);
         assertEquals("Incorrect dev. stage ontology", expectedOntology3, 

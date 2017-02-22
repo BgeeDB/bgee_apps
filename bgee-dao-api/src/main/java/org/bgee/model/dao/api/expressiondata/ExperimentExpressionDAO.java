@@ -1,7 +1,6 @@
 package org.bgee.model.dao.api.expressiondata;
 
 import java.util.Collection;
-import java.util.LinkedHashMap;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
@@ -26,12 +25,13 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
      *   <li>@{code PRESENT_LOW_COUNT} corresponds to {@link ExperimentExpressionTO#getPresentLowCount()}
      *   <li>@{code ABSENT_HIGH_COUNT} corresponds to {@link ExperimentExpressionTO#getAbsentHighCount()}
      *   <li>@{code ABSENT_LOW_COUNT} corresponds to {@link ExperimentExpressionTO#getAbsentLowCount()}
-     *   <li>@{code EXPERIMENT_COUNT} corresponds to {@link ExperimentExpressionTO#getExperimentCount()}
+     *   <li>@{code CALL_DIRECTION} corresponds to {@link ExperimentExpressionTO#getCallDirection()}
+     *   <li>@{code CALL_QUALITY} corresponds to {@link ExperimentExpressionTO#getCallQuality()}
      * </ul>
      */
     enum Attribute implements DAO.Attribute {
         EXPRESSION_ID, EXPERIMENT_ID, PRESENT_HIGH_COUNT, PRESENT_LOW_COUNT,
-        ABSENT_HIGH_COUNT, ABSENT_LOW_COUNT, EXPERIMENT_COUNT;
+        ABSENT_HIGH_COUNT, ABSENT_LOW_COUNT, CALL_DIRECTION, CALL_QUALITY;
     }
     
     /**
@@ -114,12 +114,19 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
      * {@code TransferObject} representing an experiment expression in the Bgee database.
      * 
      * @author  Valentine Rech de Laval
-     * @version Bgee 14, Jan. 2017
+     * @version Bgee 14, Feb. 2017
      * @since   Bgee 13, Dec. 2016
      */
     public class ExperimentExpressionTO extends TransferObject {
 
         private static final long serialVersionUID = 3464643420374159955L;
+
+        public enum CallQuality {
+            LOW, HIGH;
+        }
+        public enum CallDirection {
+            PRESENT, ABSENT;
+        }
 
         /**
          * An {@code Integer} that is the expression ID of this experiment expression.
@@ -156,10 +163,14 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
         private final Integer absentLowCount;
 
         /**
-         * An {@code Integer} that is the number of experiments with that exact combination of counts 
-         * of present high/present low/absent high/absent low that produced this experiment expression.
+         * A {@code CallQuality} that is inferred direction for this call based on this experiment.
          */
-        private final Integer experimentCount;
+        private final CallQuality callQuality;
+        
+        /**
+         * A {@code CallDirection} that is inferred quality for this call based on this experiment
+         */
+        private final CallDirection callDirection;
         
         /**
          * Constructor providing the experiment ID and counts of experiments that produced
@@ -178,19 +189,22 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
          *                          produced this experiment expression as absent high.
          * @param absentLowCount    An {@code Integer} that is the count of experiments 
          *                          produced this experiment expression as absent low.
-         * @param experimentCount   An {@code Integer} that is the number of experiments with that 
-         *                          exact combination of counts of present high/present low/absent 
-         *                          high/absent low that produced this experiment expression.
+         * @param callQuality       A {@code CallQuality} that is inferred direction for
+         *                          this call based on this experiment.
+         * @param callDirection     A {@code CallQuality} that is inferred quality for
+         *                          this call based on this experiment.
          */
         public ExperimentExpressionTO(Integer expressionId, String experimentId, Integer presentHighCount,
-            Integer presentLowCount, Integer absentHighCount, Integer absentLowCount, Integer experimentCount) {
+            Integer presentLowCount, Integer absentHighCount, Integer absentLowCount,
+            CallQuality callQuality, CallDirection callDirection) {
             this.expressionId = expressionId;
             this.experimentId = experimentId;
             this.presentHighCount = presentHighCount;
             this.presentLowCount = presentLowCount;
             this.absentHighCount = absentHighCount;
             this.absentLowCount = absentLowCount;
-            this.experimentCount = experimentCount;
+            this.callQuality = callQuality;
+            this.callDirection = callDirection;
         }
 
         /**
@@ -239,13 +253,21 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
             return absentLowCount;
         }
 
-        /**
-         * @return  The {@code Integer} that is the number of experiments with that
-         *          exact combination of counts of present high/present low/absent high/absent low 
-         *          that produced this experiment expression.
+
+        /** 
+         * @return  The {@code CallQuality} that is inferred direction for this call
+         *          based on this experiment.
          */
-        public Integer getExperimentCount() {
-            return experimentCount;
+        public CallQuality getCallQuality() {
+            return callQuality;
+        }
+
+        /**
+         * @return  The {@code CallDirection} that is inferred quality for this call
+         *          based on this experiment
+         */
+        public CallDirection getCallDirection() {
+            return callDirection;
         }
 
         @Override
@@ -256,7 +278,8 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
                 + " - Present low count: " + getPresentLowCount() 
                 + " - Absent high count: " + getAbsentHighCount()
                 + " - Absent low count: " + getAbsentLowCount()
-                + " - Experiment count: " + getExperimentCount();
+                + " - Call quality: " + getCallQuality()
+                + " - Call direction: " + getCallDirection();
         }
     }
 }

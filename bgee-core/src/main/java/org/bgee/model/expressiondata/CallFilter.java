@@ -409,8 +409,8 @@ public abstract class CallFilter<T extends CallData<?>> implements Predicate<Cal
         }
 
         // Filter according GeneFilter
-        if (geneFilter != null && !geneFilter.test(call.getGeneId())) {
-            log.debug("Gene {} not validated: not in {}", call.getGeneId(), geneFilter.getGeneIds());
+        if (geneFilter != null && !geneFilter.test(call.getGene())) {
+            log.debug("Gene {} not validated: not in {}", call.getGene(), geneFilter.getGeneIds());
             return log.exit(false);
         }
 

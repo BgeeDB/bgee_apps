@@ -12,7 +12,7 @@ import org.bgee.model.Entity;
  * @version Bgee 13, Aug. 2016
  * @since   Bgee 13, Apr. 2016
  */
-public class AnatEntitySimilarity extends Entity {
+public class AnatEntitySimilarity extends Entity<String> {
     
     /**
      * @return The {@code Set} of {@code String}s that are anatomical entity IDs of this group.

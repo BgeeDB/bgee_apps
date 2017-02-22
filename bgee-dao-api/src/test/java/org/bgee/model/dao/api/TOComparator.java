@@ -779,7 +779,8 @@ public class TOComparator {
                 Objects.equals(to1.getPresentLowCount(), to2.getPresentLowCount()) && 
                 Objects.equals(to1.getAbsentHighCount(), to2.getAbsentHighCount()) &&
                 Objects.equals(to1.getAbsentLowCount(), to2.getAbsentLowCount()) &&
-                Objects.equals(to1.getExperimentCount(), to2.getExperimentCount())) {
+                Objects.equals(to1.getCallDirection(), to2.getCallDirection()) &&
+                Objects.equals(to1.getCallQuality(), to2.getCallQuality())) {
             return log.exit(true);
         }
         return log.exit(false);

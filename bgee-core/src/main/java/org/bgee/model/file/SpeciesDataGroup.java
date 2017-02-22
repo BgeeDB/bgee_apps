@@ -13,7 +13,7 @@ import java.util.*;
  * @author Philippe Moret
  * @see DownloadFile
  */
-public class SpeciesDataGroup extends NamedEntity {
+public class SpeciesDataGroup extends NamedEntity<Integer> {
 
 	/**
 	 * This class' Logger
@@ -30,7 +30,7 @@ public class SpeciesDataGroup extends NamedEntity {
 	 */
     private final Set<DownloadFile> downloadFiles;
 
-    public SpeciesDataGroup(String id, String name, String description, List<Species> members, 
+    public SpeciesDataGroup(Integer id, String name, String description, List<Species> members, 
             Set<DownloadFile> downloadFiles) {
         super(id,name,description);
         

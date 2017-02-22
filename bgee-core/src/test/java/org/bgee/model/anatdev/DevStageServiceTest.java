@@ -54,8 +54,8 @@ public class DevStageServiceTest extends TestAncestor {
 
         // Filter on species IDs is not tested here (tested in StageDAO)
         // but we need a variable to mock DAO answer
-        Set<String> speciesIds1 = new HashSet<String>();
-        speciesIds1.add("44");
+        Set<Integer> speciesIds1 = new HashSet<>();
+        speciesIds1.add(44);
 
         StageTOResultSet mockStageRs1 = getMockResultSet(StageTOResultSet.class, stageTOs);
         when(dao.getStages(eq(speciesIds1), eq(true), anyObject(), eq(true), eq(3), anyObject()))
@@ -91,8 +91,8 @@ public class DevStageServiceTest extends TestAncestor {
         Set<String> stageIds = new HashSet<String>();
         stageIds.add("Stage_id12");
         stageIds.add("Stage_id3");
-        Set<String> speciesIds = new HashSet<String>();
-        speciesIds.add("44");
+        Set<Integer> speciesIds = new HashSet<>();
+        speciesIds.add(44);
 
         StageTOResultSet mockStageRs = getMockResultSet(StageTOResultSet.class, stageTOs);
         when(dao.getStages(eq(speciesIds), eq(true), eq(stageIds), eq(null), eq(null), anyObject()))
@@ -118,8 +118,8 @@ public class DevStageServiceTest extends TestAncestor {
         StageGroupingDAO dao = mock(StageGroupingDAO.class);
         when(managerMock.getStageGroupingDAO()).thenReturn(dao);
         
-        String taxonId = "taxon1";
-        Set<String> speciesIds = new HashSet<>(Arrays.asList("sp1", "sp2"));
+        Integer taxonId = 1;
+        Set<Integer> speciesIds = new HashSet<>(Arrays.asList(1, 2));
         GroupToStageTOResultSet rs = getMockResultSet(GroupToStageTOResultSet.class,
                 Arrays.asList(
                         new GroupToStageTO("group1", "stage1"),

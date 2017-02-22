@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -38,16 +37,16 @@ public class ConditionUtils implements Comparator<Condition> {
     /**
      * A {@code Map} associating IDs of {@code Condition}s as key to the corresponding {@code Condition} as value.
      */
-    private final Map<Integer, Condition> conditions;
+    private final Set<Condition> conditions;
     
     /**
      * @see #getAnatEntityOntology()
      */
-    private final Ontology<AnatEntity> anatEntityOnt;
+    private final Ontology<AnatEntity, String> anatEntityOnt;
     /**
      * @see #getDevStageOntology()
      */
-    private final Ontology<DevStage> devStageOnt;
+    private final Ontology<DevStage, String> devStageOnt;
     
     /**
      * @see #isInferredAncestralConditions()
@@ -112,8 +111,8 @@ public class ConditionUtils implements Comparator<Condition> {
      * @throws IllegalArgumentException If any of the arguments is {@code null} or empty, 
      *                                  or if {@code Condition}s does not exist in the same species.
      */
-    public ConditionUtils(Collection<Condition> conditions, Ontology<AnatEntity> anatEntityOnt,
-            Ontology<DevStage> devStageOnt) throws IllegalArgumentException {
+    public ConditionUtils(Collection<Condition> conditions, Ontology<AnatEntity, String> anatEntityOnt,
+            Ontology<DevStage, String> devStageOnt) throws IllegalArgumentException {
         this(conditions, false, false, anatEntityOnt, devStageOnt);
     }
     
@@ -137,8 +136,8 @@ public class ConditionUtils implements Comparator<Condition> {
      *                                  or if {@code Condition}s does not exist in the same species.
      */
     public ConditionUtils(Collection<Condition> conditions, boolean inferAncestralConds,
-            boolean inferDescendantConds, Ontology<AnatEntity> anatEntityOnt,
-            Ontology<DevStage> devStageOnt) throws IllegalArgumentException {
+            boolean inferDescendantConds, Ontology<AnatEntity, String> anatEntityOnt,
+            Ontology<DevStage, String> devStageOnt) throws IllegalArgumentException {
         this(conditions, inferAncestralConds, inferDescendantConds, null, anatEntityOnt, devStageOnt);
     }
     
@@ -167,8 +166,8 @@ public class ConditionUtils implements Comparator<Condition> {
     //TODO: refactor this constructor, methods getAncestorConditions and getDescendantConditions
     private ConditionUtils(Collection<Condition> conditions, 
             boolean inferAncestralConds, boolean inferDescendantConds,
-            ServiceFactory serviceFactory, Ontology<AnatEntity> anatEntityOnt,
-            Ontology<DevStage> devStageOnt) throws IllegalArgumentException {
+            ServiceFactory serviceFactory, Ontology<AnatEntity, String> anatEntityOnt,
+            Ontology<DevStage, String> devStageOnt) throws IllegalArgumentException {
         log.entry(conditions, inferAncestralConds, inferDescendantConds, serviceFactory, anatEntityOnt, devStageOnt);
         
         if (conditions == null || conditions.isEmpty()) {
@@ -198,11 +197,11 @@ public class ConditionUtils implements Comparator<Condition> {
         }
         
         //Get species ID from conditions and check if it is the same in all conditions
-        Set<String> speciesIds = conditions.stream().map(c -> c.getSpeciesId()).collect(Collectors.toSet());
+        Set<Integer> speciesIds = conditions.stream().map(c -> c.getSpeciesId()).collect(Collectors.toSet());
         if (speciesIds.size() != 1) {
             throw log.throwing(new IllegalArgumentException("Conditions should be in the same species."));
         }
-        String speciesId = speciesIds.iterator().next();
+        Integer speciesId = speciesIds.iterator().next();
         if (!anatEntityIds.isEmpty()) {
             //it will be checked later that all anat. entities are present in the ontology
             if (anatEntityOnt != null) {
@@ -280,8 +279,7 @@ public class ConditionUtils implements Comparator<Condition> {
             
             tempConditions.addAll(newPropagatedConditions);
         }
-        this.conditions = Collections.unmodifiableMap(tempConditions.stream()
-            .collect(Collectors.toMap(c -> c.getId(), c -> c, (c1, c2) -> c1)));
+        this.conditions = Collections.unmodifiableSet(tempConditions);
 
         this.checkEntityExistence(devStageIds, this.devStageOnt);
         this.checkEntityExistence(anatEntityIds, this.anatEntityOnt);
@@ -297,8 +295,9 @@ public class ConditionUtils implements Comparator<Condition> {
      *                  in {@code entityIds}.
      * @throws IllegalArgumentException If some elements in {@code entityIds} are not present in 
      *                                  {@code ont}.
+     * @param <T>   The type of ID of the elements in the ontology or sub-graph.
      */
-    private void checkEntityExistence(Set<String> entityIds, Ontology<?> ont) 
+    private <T> void checkEntityExistence(Set<String> entityIds, Ontology<?, T> ont) 
             throws IllegalArgumentException {
         log.entry(entityIds, ont);
         
@@ -306,7 +305,7 @@ public class ConditionUtils implements Comparator<Condition> {
             log.exit(); return;
         }
         
-        Set<String> recognizedEntityIds = ont.getElements().stream()
+        Set<T> recognizedEntityIds = ont.getElements().stream()
                 .map(e -> e.getId()).collect(Collectors.toSet());
         if (!recognizedEntityIds.containsAll(entityIds)) {
             Set<String> unrecognizedIds = new HashSet<>(entityIds);
@@ -603,7 +602,7 @@ public class ConditionUtils implements Comparator<Condition> {
         if (this.getAnatEntityOntology() == null) {
             return log.exit(null);
         }
-        if (!this.conditions.containsValue(condition)) {
+        if (!this.conditions.contains(condition)) {
             throw log.throwing(new IllegalArgumentException("Unrecognized condition: " + condition));
         }
         return log.exit(this.getAnatEntityOntology().getElement(condition.getAnatEntityId()));
@@ -638,7 +637,7 @@ public class ConditionUtils implements Comparator<Condition> {
         if (this.getDevStageOntology() == null) {
             return log.exit(null);
         }
-        if (!this.conditions.containsValue(condition)) {
+        if (!this.conditions.contains(condition)) {
             throw log.throwing(new IllegalArgumentException("Unrecognized condition: " + condition));
         }
         return log.exit(this.getDevStageOntology().getElement(condition.getDevStageId()));
@@ -652,18 +651,16 @@ public class ConditionUtils implements Comparator<Condition> {
      *          on this {@code ConditionUtils}.
      */
     public Set<Condition> getConditions() {
-        return new HashSet<>(conditions.values());
+        return this.conditions;
     }
-    public Condition getCondition(int id) {
-        return this.conditions.get(id);
-    }
+
     /**
      * @return  An {@code Ontology} of {@code AnatEntity}s used to infer relations between {@code Condition}s. 
      *          Contains only {@code AnatEntity}s and relations for entities present 
      *          in the {@code Condition}s provided at instantiation.
      * @see #getDevStageOntology()
      */
-    public Ontology<AnatEntity> getAnatEntityOntology() {
+    public Ontology<AnatEntity, String> getAnatEntityOntology() {
         return anatEntityOnt;
     }
     /**
@@ -672,7 +669,7 @@ public class ConditionUtils implements Comparator<Condition> {
      *          in the {@code Condition}s provided at instantiation.
      * @see #getAnatEntityOntology()
      */
-    public Ontology<DevStage> getDevStageOntology() {
+    public Ontology<DevStage, String> getDevStageOntology() {
         return devStageOnt;
     }
     /** 

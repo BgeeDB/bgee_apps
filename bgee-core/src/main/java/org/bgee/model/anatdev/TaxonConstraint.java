@@ -17,10 +17,10 @@ public class TaxonConstraint {
     private final String entityId;
     
     /**
-     * A {@code String} that is the ID of the species that define the taxon constraint. 
+     * An {@code Integer} that is the ID of the species that define the taxon constraint. 
      * If it is {@code null}, it means that the entity exists in all species.
      */
-    private final String speciesId;
+    private final Integer speciesId;
 
     /**
      * Constructor providing the {@code entityId} and the {@code speciesId}
@@ -29,10 +29,10 @@ public class TaxonConstraint {
      * If {@code speciesId} is {@code null}, it means that the entity exists in all species.
      * 
      * @param entityId    A {@code String} that is the ID of the entity that has a taxon constraint.
-     * @param speciesId   A {@code String} that is the ID of the species that define
+     * @param speciesId   An {@code Integer} that is the ID of the species that define
      *                    the taxon constraint.
      */
-    public TaxonConstraint(String entityId, String speciesId) {
+    public TaxonConstraint(String entityId, Integer speciesId) {
         this.entityId = entityId;
         this.speciesId = speciesId;
     }
@@ -45,10 +45,10 @@ public class TaxonConstraint {
     }
 
     /**
-     * @return  A {@code String} that is the ID of the species that define the taxon constraint. 
+     * @return  An {@code Integer} that is the ID of the species that define the taxon constraint. 
      *          If it is {@code null}, it means that the entity exists in all species.
      */
-    public String getSpeciesId() {
+    public Integer getSpeciesId() {
         return speciesId;
     }
 

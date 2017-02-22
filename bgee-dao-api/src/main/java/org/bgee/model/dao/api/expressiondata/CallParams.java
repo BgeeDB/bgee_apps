@@ -163,11 +163,11 @@ public abstract class CallParams {
     // SPECIES FILTERING
     //****************************************
     /**
-     * A {@code Set} of {@code String}s that are the IDs of species allowing to filter 
+     * A {@code Set} of {@code Integer}s that are the IDs of species allowing to filter 
      * the calls to use. Only calls with a species ID equals to one of the ID in 
      * this {@code Set} will be used. 
      */
-    private Set<String> speciesIds;
+    private Set<Integer> speciesIds;
 
     
     /**
@@ -185,15 +185,15 @@ public abstract class CallParams {
         
         this.setAllDataTypes(false);
         
-        this.anatEntityIds = new HashSet<String>();
+        this.anatEntityIds = new HashSet<>();
         this.setUseAnatDescendants(false);
         
-        this.stageIds  = new HashSet<String>();
+        this.stageIds  = new HashSet<>();
         this.setUseDevDescendants(false);
         
-        this.geneIds      = new HashSet<String>();
+        this.geneIds      = new HashSet<>();
         
-        this.speciesIds   = new HashSet<String>();
+        this.speciesIds   = new HashSet<>();
     }
     
     /**
@@ -1156,36 +1156,36 @@ public abstract class CallParams {
     // SPECIES FILTERING
     //****************************************
     /**
-     * Add {@code id} to the {@code Set} of {@code String}s that are the IDs 
+     * Add {@code id} to the {@code Set} of {@code Integer}s that are the IDs 
      * of species allowing to filter the calls to use. 
      * Only calls with a species ID equals to one of the ID in this {@code Set} will be used. 
      * 
-     * @param id    A {@code String} to be added to the IDs of species 
+     * @param id    An {@code Integer} to be added to the IDs of species 
      *              used to filter the calls to use.
      */
-    public void addSpeciesId(String id) {
+    public void addSpeciesId(Integer id) {
         this.speciesIds.add(id);
     }
     /**
-     * Add {@code ids} to the {@code Set} of {@code String}s that are the IDs 
+     * Add {@code ids} to the {@code Set} of {@code Integer}s that are the IDs 
      * of species allowing to filter the calls to use. 
      * Only calls with a species ID equals to one of the ID in this {@code Set} will be used. 
      * 
-     * @param ids   A {@code Collection} of {@code String}s that are the IDs 
+     * @param ids   A {@code Collection} of {@code Integer}s that are the IDs 
      *              of species used to filter the calls to use.
      */
-    public void addAllSpeciesIds(Collection<String> ids) {
+    public void addAllSpeciesIds(Collection<Integer> ids) {
         this.speciesIds.addAll(ids);
     }
     /**
-     * Returns the unmodifiable {@code Set} of {@code String}s that are the IDs 
+     * Returns the unmodifiable {@code Set} of {@code Integer}s that are the IDs 
      * of species allowing to filter the calls to use. 
      * Only calls with a species ID equals to one of the ID in this {@code Set} will be used. 
      * 
-     * @return      An unmodifiable {@code Collection} of {@code String}s that are the IDs 
+     * @return      An unmodifiable {@code Collection} of {@code Integer}s that are the IDs 
      *              of species used to filter the calls to use.
      */
-    public Set<String> getSpeciesIds() {
+    public Set<Integer> getSpeciesIds() {
         return Collections.unmodifiableSet(this.speciesIds);
     }
     /**

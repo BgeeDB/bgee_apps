@@ -86,7 +86,7 @@ public class TopAnatParams {
     /**
      * 
      */
-    private final String speciesId;
+    private final Integer speciesId;
 
     /**
      * 
@@ -167,7 +167,7 @@ public class TopAnatParams {
         /**
          * 
          */
-        private final String speciesId;
+        private final Integer speciesId;
 
         /**
          * 
@@ -233,7 +233,7 @@ public class TopAnatParams {
          * @param submittedForegroundIds
          * @param callType
          */
-        public Builder(Collection<String> submittedForegroundIds, String speciesId, CallType callType){
+        public Builder(Collection<String> submittedForegroundIds, Integer speciesId, CallType callType){
             this(submittedForegroundIds, null, speciesId, callType);
         }
 
@@ -244,7 +244,7 @@ public class TopAnatParams {
          * @param callType
          */
         public Builder(Collection<String> submittedForegroundIds, Collection<String> submittedBackgroundIds,
-                String speciesId, CallType callType) {
+                Integer speciesId, CallType callType) {
             log.entry(submittedForegroundIds,submittedBackgroundIds,speciesId,callType);
             this.submittedForegroundIds = submittedForegroundIds;
             this.submittedBackgroundIds = submittedBackgroundIds;
@@ -436,7 +436,7 @@ public class TopAnatParams {
      * 
      * @return
      */
-    public String getSpeciesId(){
+    public Integer getSpeciesId(){
         return speciesId; 
     }
 

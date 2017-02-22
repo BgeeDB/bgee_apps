@@ -7,7 +7,7 @@ import java.util.Set;
 public class TaxonomyFilter {
     //TODO: check consistency between taxonId and speciesIds
     private final String taxonId;
-    private final Set<String> speciesIds;
+    private final Set<Integer> speciesIds;
     
     private final boolean allSpeciesRequested;
     

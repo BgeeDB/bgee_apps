@@ -41,22 +41,22 @@ public class TaxonConstraintServiceTest extends TestAncestor {
         when(managerMock.getTaxonConstraintDAO()).thenReturn(dao);
         
         List<TaxonConstraintTO> taxonConstraintTOs = Arrays.asList(
-                new TaxonConstraintTO("UBERON:0001853", "11"),
-                new TaxonConstraintTO("UBERON:0001853", "41"),
+                new TaxonConstraintTO("UBERON:0001853", 11),
+                new TaxonConstraintTO("UBERON:0001853", 41),
                 new TaxonConstraintTO("UBERON:0011606", null)); 
 
         // Filter on species IDs is not tested here (tested in TaxonConstraintDAO)
         // but we need a variable to mock DAO answer
-        Set<String> speciesIds = new HashSet<String>();
-        speciesIds.addAll(Arrays.asList("11", "41"));
+        Set<Integer> speciesIds = new HashSet<>();
+        speciesIds.addAll(Arrays.asList(11, 41));
 
         TaxonConstraintTOResultSet mockRs1 = 
                 getMockResultSet(TaxonConstraintTOResultSet.class, taxonConstraintTOs);
         when(dao.getAnatEntityTaxonConstraints(speciesIds, null)).thenReturn(mockRs1);
         
         List<TaxonConstraint> expectedTCs = Arrays.asList(
-                new TaxonConstraint("UBERON:0001853", "11"), 
-                new TaxonConstraint("UBERON:0001853", "41"), 
+                new TaxonConstraint("UBERON:0001853", 11), 
+                new TaxonConstraint("UBERON:0001853", 41), 
                 new TaxonConstraint("UBERON:0011606", null));
         TaxonConstraintService service = new TaxonConstraintService(serviceFactory);
         assertEquals("Incorrect anat. entity taxon constraints", expectedTCs,
@@ -78,13 +78,13 @@ public class TaxonConstraintServiceTest extends TestAncestor {
         
         List<TaxonConstraintTO> taxonConstraintTOs = Arrays.asList(
                 new TaxonConstraintTO("1", null),
-                new TaxonConstraintTO("2", "11"),
-                new TaxonConstraintTO("2", "21")); 
+                new TaxonConstraintTO("2", 11),
+                new TaxonConstraintTO("2", 21)); 
 
         // Filter on species IDs is not tested here (tested in TaxonConstraintDAO)
         // but we need a variable to mock DAO answer
-        Set<String> speciesIds = new HashSet<String>();
-        speciesIds.addAll(Arrays.asList("11", "21"));
+        Set<Integer> speciesIds = new HashSet<>();
+        speciesIds.addAll(Arrays.asList(11, 21));
 
         TaxonConstraintTOResultSet mockRs1 = 
                 getMockResultSet(TaxonConstraintTOResultSet.class, taxonConstraintTOs);
@@ -92,8 +92,8 @@ public class TaxonConstraintServiceTest extends TestAncestor {
         
         List<TaxonConstraint> expectedTCs = Arrays.asList(
                 new TaxonConstraint("1", null), 
-                new TaxonConstraint("2", "11"), 
-                new TaxonConstraint("2", "21"));
+                new TaxonConstraint("2", 11), 
+                new TaxonConstraint("2", 21));
         TaxonConstraintService service = new TaxonConstraintService(serviceFactory);
         assertEquals("Incorrect anat. entity relation taxon constraints", expectedTCs,
                 service.loadAnatEntityRelationTaxonConstraintBySpeciesIds(speciesIds)
@@ -116,13 +116,13 @@ public class TaxonConstraintServiceTest extends TestAncestor {
         List<TaxonConstraintTO> taxonConstraintTOs = Arrays.asList(
                 new TaxonConstraintTO("Stage_id1", null),
                 new TaxonConstraintTO("Stage_id2", null),
-                new TaxonConstraintTO("Stage_id3", "21"), 
-                new TaxonConstraintTO("Stage_id4", "31")); 
+                new TaxonConstraintTO("Stage_id3", 21), 
+                new TaxonConstraintTO("Stage_id4", 31)); 
 
         // Filter on species IDs is not tested here (tested in TaxonConstraintDAO)
         // but we need a variable to mock DAO answer
-        Set<String> speciesIds = new HashSet<String>();
-        speciesIds.addAll(Arrays.asList("11", "21", "31"));
+        Set<Integer> speciesIds = new HashSet<>();
+        speciesIds.addAll(Arrays.asList(11, 21, 31));
 
         TaxonConstraintTOResultSet mockRs1 = 
                 getMockResultSet(TaxonConstraintTOResultSet.class, taxonConstraintTOs);
@@ -131,8 +131,8 @@ public class TaxonConstraintServiceTest extends TestAncestor {
         List<TaxonConstraint> expectedTCs = Arrays.asList(
                 new TaxonConstraint("Stage_id1", null), 
                 new TaxonConstraint("Stage_id2", null), 
-                new TaxonConstraint("Stage_id3", "21"), 
-                new TaxonConstraint("Stage_id4", "31"));
+                new TaxonConstraint("Stage_id3", 21), 
+                new TaxonConstraint("Stage_id4", 31));
         TaxonConstraintService service = new TaxonConstraintService(serviceFactory);
         assertEquals("Incorrect dev. stage taxon constraints", expectedTCs,
                 service.loadDevStageTaxonConstraintBySpeciesIds(speciesIds).collect(Collectors.toList()));

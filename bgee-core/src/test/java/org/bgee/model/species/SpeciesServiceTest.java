@@ -47,10 +47,10 @@ public class SpeciesServiceTest extends TestAncestor {
 		
 		// mock behavior
         List<SpeciesTO> speciesTos = Arrays.asList(
-                new SpeciesTO("9606", "human", "Homo", "sapiens", "4312", "3241",
-                        "version1", "321", null), 
-                new SpeciesTO("1234", "name", "genus", "someSpecies", "1123", "3432241",
-                        "versionA", "1321", null));
+                new SpeciesTO(9606, "human", "Homo", "sapiens", 4312, "3241",
+                        "version1", 321), 
+                new SpeciesTO(1234, "name", "genus", "someSpecies", 1123, "3432241",
+                        "versionA", 1321));
         // ResultSet cannot be reused. As we have 2 tests, we need 2 ResultSet
         SpeciesTOResultSet speciesRS = getMockResultSet(SpeciesTOResultSet.class, speciesTos);
         SpeciesTOResultSet speciesRS2 = getMockResultSet(SpeciesTOResultSet.class, speciesTos);
@@ -58,21 +58,21 @@ public class SpeciesServiceTest extends TestAncestor {
 		
 		SourceToSpeciesTOResultSet sToSpRS = getMockResultSet(SourceToSpeciesTOResultSet.class, 
 		        Arrays.asList(
-		                new SourceToSpeciesTO("s1", "9606", SourceToSpeciesTO.DataType.EST, InfoType.DATA),
-		                new SourceToSpeciesTO("s1", "9606", SourceToSpeciesTO.DataType.IN_SITU, InfoType.DATA),
-                        new SourceToSpeciesTO("s2", "9606", SourceToSpeciesTO.DataType.AFFYMETRIX, InfoType.ANNOTATION),
-                        new SourceToSpeciesTO("s3", "9606", SourceToSpeciesTO.DataType.RNA_SEQ, InfoType.DATA),
-		                new SourceToSpeciesTO("s2", "1234", SourceToSpeciesTO.DataType.IN_SITU, InfoType.ANNOTATION)));
+		                new SourceToSpeciesTO(1, 9606, SourceToSpeciesTO.DataType.EST, InfoType.DATA),
+		                new SourceToSpeciesTO(1, 9606, SourceToSpeciesTO.DataType.IN_SITU, InfoType.DATA),
+                        new SourceToSpeciesTO(2, 9606, SourceToSpeciesTO.DataType.AFFYMETRIX, InfoType.ANNOTATION),
+                        new SourceToSpeciesTO(3, 9606, SourceToSpeciesTO.DataType.RNA_SEQ, InfoType.DATA),
+		                new SourceToSpeciesTO(2, 1234, SourceToSpeciesTO.DataType.IN_SITU, InfoType.ANNOTATION)));
 		when(sourceToSpeciesDAOMock.getSourceToSpecies(null, 
-		        new HashSet<String>(Arrays.asList("9606", "1234")), null, null, null)).thenReturn(sToSpRS);
+		        new HashSet<>(Arrays.asList(9606, 1234)), null, null, null)).thenReturn(sToSpRS);
 
 		Set<Species> expectedSpecies = new HashSet<>(Arrays.asList(
-		        new Species("9606", "human", null, "Homo", "sapiens", "version1", "4312"), 
-		        new Species("1234", "name", null, "genus", "someSpecies", "versionA", "1123")));
+		        new Species(9606, "human", null, "Homo", "sapiens", "version1", 4312), 
+		        new Species(1234, "name", null, "genus", "someSpecies", "versionA", 1123)));
 
 		SourceService sourceService = mock(SourceService.class);
 		when(sourceService.loadAllSources(false)).thenReturn(
-		        Arrays.asList(new Source("s1"), new Source("s2"), new Source("s3")));
+		        Arrays.asList(new Source(1), new Source(2), new Source(3)));
         ServiceFactory serviceFactory = mock(ServiceFactory.class);
         when(serviceFactory.getDAOManager()).thenReturn(managerMock);
         when(serviceFactory.getSourceService()).thenReturn(sourceService);
@@ -82,16 +82,16 @@ public class SpeciesServiceTest extends TestAncestor {
 		assertEquals(expectedSpecies, speciesService.loadSpeciesInDataGroups(false));
 		
 		Map<Source, Set<DataType>> forData9606 = new HashMap<>();
-        forData9606.put(new Source("s1"), new HashSet<DataType>(Arrays.asList(DataType.EST, DataType.IN_SITU)));
-        forData9606.put(new Source("s3"), new HashSet<DataType>(Arrays.asList(DataType.RNA_SEQ)));
+        forData9606.put(new Source(1), new HashSet<DataType>(Arrays.asList(DataType.EST, DataType.IN_SITU)));
+        forData9606.put(new Source(3), new HashSet<DataType>(Arrays.asList(DataType.RNA_SEQ)));
         Map<Source, Set<DataType>> forAnnot9606 = new HashMap<>();
-        forAnnot9606.put(new Source("s2"), new HashSet<DataType>(Arrays.asList(DataType.AFFYMETRIX)));
+        forAnnot9606.put(new Source(2), new HashSet<DataType>(Arrays.asList(DataType.AFFYMETRIX)));
         Map<Source, Set<DataType>> forAnnot1234 = new HashMap<>();
-        forAnnot1234.put(new Source("s2"), new HashSet<DataType>(Arrays.asList(DataType.IN_SITU)));
+        forAnnot1234.put(new Source(2), new HashSet<DataType>(Arrays.asList(DataType.IN_SITU)));
         expectedSpecies.clear();
-        expectedSpecies.add(new Species("9606", "human", null, "Homo", "sapiens", "version1", 
+        expectedSpecies.add(new Species(9606, "human", null, "Homo", "sapiens", "version1", 
                 forData9606, forAnnot9606));
-        expectedSpecies.add(new Species("1234", "name", null, "genus", "someSpecies", "versionA", 
+        expectedSpecies.add(new Species(1234, "name", null, "genus", "someSpecies", "versionA", 
                 null, forAnnot1234));
 
 		assertEquals(expectedSpecies, speciesService.loadSpeciesInDataGroups(true));
@@ -108,29 +108,29 @@ public class SpeciesServiceTest extends TestAncestor {
 
 	    // mock behavior
         List<SpeciesTO> speciesTos = Arrays.asList(
-                new SpeciesTO("9606", "human", "Homo", "sapiens", "4312", "3241",
-                        "version1", "321", null), 
-                new SpeciesTO("1234", "name", "genus", "someSpecies", "1123", "3432241",
-                        "versionA", "1321", null));
+                new SpeciesTO(9606, "human", "Homo", "sapiens", 4312, "3241",
+                        "version1", 321), 
+                new SpeciesTO(1234, "name", "genus", "someSpecies", 1123, "3432241",
+                        "versionA", 1321));
         // ResultSet cannot be reused. As we have 2 tests, we need 2 ResultSet
-	    Set<String> speciesIds = new HashSet<>(Arrays.asList("9606", "1234"));
+	    Set<Integer> speciesIds = new HashSet<>(Arrays.asList(9606, 1234));
         SpeciesTOResultSet speciesRS = getMockResultSet(SpeciesTOResultSet.class, speciesTos);
         SpeciesTOResultSet speciesRS2 = getMockResultSet(SpeciesTOResultSet.class, speciesTos);
         when(speciesDAOMock.getSpeciesByIds(speciesIds)).thenReturn(speciesRS).thenReturn(speciesRS2);
 
 	    SourceToSpeciesTOResultSet sToSpRS = getMockResultSet(SourceToSpeciesTOResultSet.class, 
 	            Arrays.asList(
-	                    new SourceToSpeciesTO("s1", "9606", SourceToSpeciesTO.DataType.EST, InfoType.DATA),
-	                    new SourceToSpeciesTO("s1", "9606", SourceToSpeciesTO.DataType.IN_SITU, InfoType.DATA),
-	                    new SourceToSpeciesTO("s2", "9606", SourceToSpeciesTO.DataType.AFFYMETRIX, InfoType.ANNOTATION),
-	                    new SourceToSpeciesTO("s3", "9606", SourceToSpeciesTO.DataType.RNA_SEQ, InfoType.DATA),
-	                    new SourceToSpeciesTO("s2", "1234", SourceToSpeciesTO.DataType.IN_SITU, InfoType.ANNOTATION)));
+	                    new SourceToSpeciesTO(1, 9606, SourceToSpeciesTO.DataType.EST, InfoType.DATA),
+	                    new SourceToSpeciesTO(1, 9606, SourceToSpeciesTO.DataType.IN_SITU, InfoType.DATA),
+	                    new SourceToSpeciesTO(2, 9606, SourceToSpeciesTO.DataType.AFFYMETRIX, InfoType.ANNOTATION),
+	                    new SourceToSpeciesTO(3, 9606, SourceToSpeciesTO.DataType.RNA_SEQ, InfoType.DATA),
+	                    new SourceToSpeciesTO(2, 1234, SourceToSpeciesTO.DataType.IN_SITU, InfoType.ANNOTATION)));
 	    when(sourceToSpeciesDAOMock.getSourceToSpecies(null, 
-	            new HashSet<String>(Arrays.asList("9606", "1234")), null, null, null)).thenReturn(sToSpRS);
+	            new HashSet<>(Arrays.asList(9606, 1234)), null, null, null)).thenReturn(sToSpRS);
 
 	    SourceService sourceService = mock(SourceService.class);
 	    when(sourceService.loadAllSources(false)).thenReturn(
-	            Arrays.asList(new Source("s1"), new Source("s2"), new Source("s3")));
+	            Arrays.asList(new Source(1), new Source(2), new Source(3)));
         ServiceFactory serviceFactory = mock(ServiceFactory.class);
         when(serviceFactory.getDAOManager()).thenReturn(managerMock);
         when(serviceFactory.getSourceService()).thenReturn(sourceService);
@@ -138,21 +138,21 @@ public class SpeciesServiceTest extends TestAncestor {
 	    // actual use of the service
 	    SpeciesService service = new SpeciesService(serviceFactory);
 	    Set<Species> expected = new HashSet<>(Arrays.asList(
-	            new Species("9606", "human", null, "Homo", "sapiens", "version1", "4312"),
-	            new Species("1234", "name", null, "genus", "someSpecies", "versionA", "1123")));
+	            new Species(9606, "human", null, "Homo", "sapiens", "version1", 4312),
+	            new Species(1234, "name", null, "genus", "someSpecies", "versionA", 1123)));
         assertEquals(expected, service.loadSpeciesByIds(speciesIds, false));
         
         Map<Source, Set<DataType>> forData9606 = new HashMap<>();
-        forData9606.put(new Source("s1"), new HashSet<DataType>(Arrays.asList(DataType.EST, DataType.IN_SITU)));
-        forData9606.put(new Source("s3"), new HashSet<DataType>(Arrays.asList(DataType.RNA_SEQ)));
+        forData9606.put(new Source(1), new HashSet<DataType>(Arrays.asList(DataType.EST, DataType.IN_SITU)));
+        forData9606.put(new Source(3), new HashSet<DataType>(Arrays.asList(DataType.RNA_SEQ)));
         Map<Source, Set<DataType>> forAnnot9606 = new HashMap<>();
-        forAnnot9606.put(new Source("s2"), new HashSet<DataType>(Arrays.asList(DataType.AFFYMETRIX)));
+        forAnnot9606.put(new Source(2), new HashSet<DataType>(Arrays.asList(DataType.AFFYMETRIX)));
         Map<Source, Set<DataType>> forAnnot1234 = new HashMap<>();
-        forAnnot1234.put(new Source("s2"), new HashSet<DataType>(Arrays.asList(DataType.IN_SITU)));
+        forAnnot1234.put(new Source(2), new HashSet<DataType>(Arrays.asList(DataType.IN_SITU)));
         expected.clear();
-        expected.add(new Species("9606", "human", null, "Homo", "sapiens", "version1", 
+        expected.add(new Species(9606, "human", null, "Homo", "sapiens", "version1", 
                 forData9606, forAnnot9606));
-        expected.add(new Species("1234", "name", null, "genus", "someSpecies", "versionA", 
+        expected.add(new Species(1234, "name", null, "genus", "someSpecies", "versionA", 
                 null, forAnnot1234));
 
         assertEquals(expected, service.loadSpeciesByIds(speciesIds, true));

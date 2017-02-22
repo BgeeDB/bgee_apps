@@ -7,7 +7,6 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -79,7 +78,7 @@ public class AnatEntityService extends Service {
         log.entry(speciesIds, anySpecies, anatEntitiesIds);
         
         return log.exit(this.getDaoManager().getAnatEntityDAO().getAnatEntities(
-                    speciesIds == null? null: new HashSet<>(speciesIds), 
+                    speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds), 
                     anySpecies, 
                     anatEntitiesIds == null? null: new HashSet<>(anatEntitiesIds), 
                     null)
@@ -101,17 +100,17 @@ public class AnatEntityService extends Service {
         log.entry(speciesIds);
         
         return log.exit(this.getDaoManager().getAnatEntityDAO().getNonInformativeAnatEntitiesBySpeciesIds(
-                    speciesIds == null? null: new HashSet<>(speciesIds)).stream()
+                    speciesIds).stream()
                 .map(AnatEntityService::mapFromTO));
     }
 
     //FIXME: a similar method should be part of the Ontology or OntologyService classes, 
     //with a better returned value. To be written.
     @Deprecated
-    public Map<String, Set<String>> loadDirectIsAPartOfRelationships(Collection<String> speciesIds) {
+    public Map<String, Set<String>> loadDirectIsAPartOfRelationships(Collection<Integer> speciesIds) {
         log.entry(speciesIds);
         return log.exit(this.getDaoManager().getRelationDAO().getAnatEntityRelationsBySpeciesIds(
-                    Optional.ofNullable(speciesIds).map(e -> new HashSet<>(e)).orElse(new HashSet<>()), 
+                    speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds), 
                     EnumSet.of(RelationTO.RelationType.ISA_PARTOF), 
                     EnumSet.of(RelationTO.RelationStatus.DIRECT))
                 ).stream()
@@ -129,10 +128,10 @@ public class AnatEntityService extends Service {
      * Load anatomical entity similarities from provided {@code taxonId}, {@code speciesIds},
      * and {@code onlyTrusted}.
      * 
-     * @param taxonId       A {@code String} that is the NCBI ID of the taxon for which the similarity 
+     * @param taxonId       An {@code Integer} that is the NCBI ID of the taxon for which the similarity 
      *                      annotations should be valid, including all its ancestral taxa.
-     * @param speciesIds    A {@code Set} of IDs of the species for which the similarity 
-     *                      annotations should be restricted.
+     * @param speciesIds    A {@code Set} of {@code Integer}s that are IDs of the species
+     *                      for which the similarity annotations should be restricted.
      *                      If empty or {@code null} all available species are used.
      * @param onlyTrusted   A {@code boolean} defining whether results should be restricted 
      *                      to "trusted" annotations.
@@ -140,8 +139,8 @@ public class AnatEntityService extends Service {
      *                      similarities from provided {@code taxonId}, {@code speciesIds},
      *                      and {@code onlyTrusted}.
      */
-    public Set<AnatEntitySimilarity> loadAnatEntitySimilarities(String taxonId,
-            Set<String> speciesIds, boolean onlyTrusted) {
+    public Set<AnatEntitySimilarity> loadAnatEntitySimilarities(Integer taxonId,
+            Set<Integer> speciesIds, boolean onlyTrusted) {
         log.entry(taxonId, speciesIds, onlyTrusted);
         
         Map<String, SummarySimilarityAnnotationTO> simAnnotations = 

@@ -35,7 +35,7 @@ public class MockTest extends TestAncestor {
     @Test
     public void shouldGetMockResultSet() {
         List<KeywordTO> expectedTOs = Arrays.asList(
-                new KeywordTO("1", "k1"), new KeywordTO("2", "k2"), new KeywordTO("1", "k1"));
+                new KeywordTO(1, "k1"), new KeywordTO(2, "k2"), new KeywordTO(1, "k1"));
         KeywordTOResultSet mockRs = getMockResultSet(KeywordTOResultSet.class, expectedTOs);
 
         assertNull("Incorrect value returned before first next()", mockRs.getTO());

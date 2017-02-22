@@ -12,7 +12,7 @@ import org.bgee.model.ontology.OntologyElement;
  * @version Bgee 13, Aug. 2016
  * @version Bgee 13, Sep. 2013
  */
-public class Taxon extends NamedEntity<Integer> implements OntologyElement<Taxon> {
+public class Taxon extends NamedEntity<Integer> implements OntologyElement<Taxon, Integer> {
 
     /**
      * Default constructor not public, an ID must always be provided, 

@@ -12,13 +12,13 @@ import org.apache.logging.log4j.Logger;
  * @version Bgee 13 Nov. 2015
  * @since Bgee 13 Nov. 2015
  */
-public abstract class NestedSetModelEntity extends NamedEntity implements Comparable<NestedSetModelEntity> {
+public abstract class NestedSetModelEntity<T> extends NamedEntity<T> implements Comparable<NestedSetModelEntity<T>> {
     private final static Logger log = LogManager.getLogger(NestedSetModelEntity.class.getName());
     
     /**
      * A {@code Comparator} for {@code NestedSetModelEntity}.
      */
-    public static final Comparator<NestedSetModelEntity> nestedSetModelComparator = 
+    public static final Comparator<NestedSetModelEntity<?>> nestedSetModelComparator = 
             Comparator.comparing(entity -> {
                 if (entity.getLeftBound() == 0) {
                     throw log.throwing(new IllegalStateException("A left bound must be set "
@@ -43,8 +43,7 @@ public abstract class NestedSetModelEntity extends NamedEntity implements Compar
     /**
      * Constructor providing all parameters of a {@code NestedSetModelEntity}.
      * 
-     * @param id            A {@code String} representing the ID of this entity. 
-     *                      Cannot be blank.
+     * @param id            A {@code T} representing the ID of this entity. Cannot be blank.
      * @param name          A {@code String} that is the name of this entity.
      * @param description   A {@code String} that is the description of this entity.
      * @param leftBound     An {@code int} that is the left bound of this entity 
@@ -54,7 +53,7 @@ public abstract class NestedSetModelEntity extends NamedEntity implements Compar
      * @param level         An {@code int} that is the level of this entity 
      *                      in its nested set model. First level is 1.
      */
-    protected NestedSetModelEntity(String id, String name, String description, 
+    protected NestedSetModelEntity(T id, String name, String description, 
             int leftBound, int rightBound, int level) {
         super(id, name, description);
         this.leftBound = leftBound;
@@ -84,7 +83,7 @@ public abstract class NestedSetModelEntity extends NamedEntity implements Compar
     }
     
     @Override
-    public int compareTo(NestedSetModelEntity entity) {
+    public int compareTo(NestedSetModelEntity<T> entity) {
         log.entry(entity);
         return log.exit(nestedSetModelComparator.compare(this, entity));
     }
@@ -109,7 +108,7 @@ public abstract class NestedSetModelEntity extends NamedEntity implements Compar
         if (getClass() != obj.getClass()) {
             return false;
         }
-        NestedSetModelEntity other = (NestedSetModelEntity) obj;
+        NestedSetModelEntity<?> other = (NestedSetModelEntity<?>) obj;
         if (leftBound != other.leftBound) {
             return false;
         }

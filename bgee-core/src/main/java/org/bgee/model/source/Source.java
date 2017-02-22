@@ -70,18 +70,18 @@ public class Source extends NamedEntity<Integer> {
     private Integer displayOrder;
 
     /**
-     * A {@code Map} where keys are {@code String}s corresponding to species IDs,
+     * A {@code Map} where keys are {@code Integer}s corresponding to species IDs,
      * the associated values being a {@code Set} of {@code DataType}s corresponding to 
      * data types of raw data of this data source.
      */
-    private Map<String, Set<DataType>> dataTypesBySpeciesforData;
+    private Map<Integer, Set<DataType>> dataTypesBySpeciesforData;
 
     /**
-     * A {@code Map} where keys are {@code String}s corresponding to species IDs,
+     * A {@code Map} where keys are {@code Integer}s corresponding to species IDs,
      * the associated values being a {@code Set} of {@code DataType}s corresponding to 
      * data types of annotation data of this data source.
      */
-    private Map<String, Set<DataType>> dataTypesBySpeciesForAnnotations;
+    private Map<Integer, Set<DataType>> dataTypesBySpeciesForAnnotations;
 
     /**
      * Constructor providing the {@code id} of this {@code Source}.
@@ -165,12 +165,12 @@ public class Source extends NamedEntity<Integer> {
      * @param toDisplay         A {@code Boolean} defining whether the data source should be displayed.
      * @param category          A {@code Category} that is the data source category.
      * @param displayOrder      An {@code Integer} that is the data source display ordering.
-     * @param dataTypesBySpeciesforData         A {@code Map} where keys are {@code String}s
+     * @param dataTypesBySpeciesforData         A {@code Map} where keys are {@code Integer}s
      *                                          corresponding to species IDs, the associated values
      *                                          being a {@code Set} of {@code DataType}s 
      *                                          corresponding to data types of raw data
      *                                          of this data source.
-     * @param dataTypesBySpeciesForAnnotations  A {@code Map} where keys are {@code String}s 
+     * @param dataTypesBySpeciesForAnnotations  A {@code Map} where keys are {@code Integer}s 
      *                                          corresponding to species IDs, the associated values 
      *                                          being a {@code Set} of {@code DataType}s 
      *                                          corresponding to data types of annotation data
@@ -180,7 +180,8 @@ public class Source extends NamedEntity<Integer> {
     public Source(Integer id, String name, String description, String xRefUrl,
             String experimentUrl, String evidenceUrl, String baseUrl, Date releaseDate,
             String releaseVersion, Boolean toDisplay, SourceCategory category, Integer displayOrder,
-            Map<String, Set<DataType>> dataTypesBySpeciesforData, Map<String, Set<DataType>> dataTypesBySpeciesForAnnotations)
+            Map<Integer, Set<DataType>> dataTypesBySpeciesforData,
+            Map<Integer, Set<DataType>> dataTypesBySpeciesForAnnotations)
                     throws IllegalArgumentException {
         this(id, name, description, xRefUrl, experimentUrl, evidenceUrl, baseUrl, releaseDate,
                 releaseVersion, toDisplay, category, displayOrder);
@@ -224,11 +225,11 @@ public class Source extends NamedEntity<Integer> {
         return displayOrder;
     }
     
-    public Map<String, Set<DataType>> getDataTypesBySpeciesForData() {
+    public Map<Integer, Set<DataType>> getDataTypesBySpeciesForData() {
         return dataTypesBySpeciesforData;
     }
 
-    public Map<String, Set<DataType>> getDataTypesBySpeciesForAnnotation() {
+    public Map<Integer, Set<DataType>> getDataTypesBySpeciesForAnnotation() {
         return dataTypesBySpeciesForAnnotations;
     }
 

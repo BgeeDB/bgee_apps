@@ -13,7 +13,7 @@ import org.bgee.model.ontology.OntologyElement;
  * @version Bgee 13, Nov. 2015
  * @since   Bgee 13
  */ 
-public class DevStage extends NestedSetModelEntity implements OntologyElement<DevStage> {
+public class DevStage extends NestedSetModelEntity<String> implements OntologyElement<DevStage, String> {
     private final static Logger log = LogManager.getLogger(DevStage.class.getName());
     
     /**

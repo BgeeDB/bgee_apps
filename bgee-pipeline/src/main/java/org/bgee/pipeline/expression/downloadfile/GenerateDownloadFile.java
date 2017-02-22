@@ -521,17 +521,17 @@ public abstract class GenerateDownloadFile extends CallUser {
      * <p>
      * If a species ID could not be identified, an {@code IllegalArgumentException} is thrown.
      * 
-     * @param speciesIds    A {@code Set} of {@code String}s that are the species IDs 
+     * @param speciesIds    A {@code Set} of {@code Integer}s that are the species IDs 
      *                      to be checked, and for which to generate a {@code String} 
      *                      used to construct download file names. Can be {@code null} or empty 
      *                      to retrieve information for all species. 
-     * @return              A {@code Map} where keys are {@code String}s that are the species IDs, 
+     * @return              A {@code Map} where keys are {@code Integer}s that are the species IDs, 
      *                      the associated values being a {@code String} that is its latin name.
      */
-    protected Map<String, String> checkAndGetLatinNamesBySpeciesIds(Set<String> speciesIds) {
+    protected Map<Integer, String> checkAndGetLatinNamesBySpeciesIds(Set<Integer> speciesIds) {
         log.entry(speciesIds);
         
-        Map<String, String> namesByIds = new HashMap<String, String>();
+        Map<Integer, String> namesByIds = new HashMap<>();
         SpeciesDAO speciesDAO = this.getSpeciesDAO();
         speciesDAO.setAttributes(SpeciesDAO.Attribute.ID, SpeciesDAO.Attribute.GENUS, 
                 SpeciesDAO.Attribute.SPECIES_NAME);
@@ -539,7 +539,7 @@ public abstract class GenerateDownloadFile extends CallUser {
         try (SpeciesTOResultSet rs = speciesDAO.getSpeciesByIds(speciesIds)) {
             while (rs.next()) {
                 SpeciesTO speciesTO = rs.getTO();
-                if (StringUtils.isBlank(speciesTO.getId()) || 
+                if (speciesTO.getId() == null || speciesTO.getId() <= 0 || 
                         StringUtils.isBlank(speciesTO.getGenus()) || 
                         StringUtils.isBlank(speciesTO.getSpeciesName())) {
                     throw log.throwing(new IllegalStateException("Incorrect species " +
@@ -556,7 +556,7 @@ public abstract class GenerateDownloadFile extends CallUser {
         if (namesByIds.size() < speciesIds.size()) {
             //copy to avoid modifying user input, maybe the caller 
             //will recover from the exception
-            Set<String> copySpeciesIds = new HashSet<String>(speciesIds);
+            Set<Integer> copySpeciesIds = new HashSet<>(speciesIds);
             copySpeciesIds.removeAll(namesByIds.keySet());
             throw log.throwing(new IllegalArgumentException("Some species IDs provided " +
                     "do not correspond to any species: " + copySpeciesIds));

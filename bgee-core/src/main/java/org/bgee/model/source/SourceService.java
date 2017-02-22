@@ -93,9 +93,9 @@ public class SourceService extends Service {
         List<Source> completedSources = new ArrayList<>();
 
         for (Source source : sources) {
-            Map<String, Set<DataType>> forData = getDataTypesBySpecies(
+            Map<Integer, Set<DataType>> forData = getDataTypesBySpecies(
                     sourceToSpeciesTOs, source.getId(), InfoType.DATA);
-            Map<String, Set<DataType>> forAnnotation = getDataTypesBySpecies(
+            Map<Integer, Set<DataType>> forAnnotation = getDataTypesBySpecies(
                     sourceToSpeciesTOs, source.getId(), InfoType.ANNOTATION);
 
             completedSources.add(new Source(source.getId(), source.getName(), source.getDescription(),
@@ -113,19 +113,19 @@ public class SourceService extends Service {
      * 
      * @param sourceToSpeciesTOs    A {@code List} of {@code SourceToSpeciesTO}s that are sources 
      *                              to species to be grouped.
-     * @param sourceId              A {@code String} that is the source ID for which to return
+     * @param sourceId              An {@code Integer} that is the source ID for which to return
      *                              data types by species.
      * @param infoType              An {@code InfoType} that is the information type for which
      *                              to return data types by species.
-     * @return                      A {@code Map} where keys are {@code String}s corresponding to 
+     * @return                      A {@code Map} where keys are {@code Integer}s corresponding to 
      *                              species IDs, the associated values being a {@code Set} of 
      *                              {@code DataType}s corresponding to data types of {@code infoType}
      *                              data of the provided {@code sourceId}.
      */
-    private Map<String, Set<DataType>> getDataTypesBySpecies(
+    private Map<Integer, Set<DataType>> getDataTypesBySpecies(
             final List<SourceToSpeciesTO> sourceToSpeciesTOs, Integer sourceId, InfoType infoType) {
         log.entry(sourceToSpeciesTOs, sourceId, infoType);
-        Map<String, Set<DataType>> map = sourceToSpeciesTOs.stream()
+        Map<Integer, Set<DataType>> map = sourceToSpeciesTOs.stream()
             .filter(to -> to.getDataSourceId().equals(sourceId))
             .filter(to -> to.getInfoType().equals(infoType))
             .collect(Collectors.toMap(to -> to.getSpeciesId(), 
@@ -149,7 +149,7 @@ public class SourceService extends Service {
         if (sourceTO == null) {
             return log.exit(null);
         }
-        return log.exit(new Source(Integer.valueOf(sourceTO.getId()), sourceTO.getName(), sourceTO.getDescription(),
+        return log.exit(new Source(sourceTO.getId(), sourceTO.getName(), sourceTO.getDescription(),
                 sourceTO.getXRefUrl(), sourceTO.getExperimentUrl(), sourceTO.getEvidenceUrl(),
                 sourceTO.getBaseUrl(), sourceTO.getReleaseDate(), sourceTO.getReleaseVersion(),
                 sourceTO.isToDisplay(), convertDataStateToDataQuality(sourceTO.getSourceCategory()),

@@ -101,14 +101,14 @@ public class InsertTaxaTest extends TestAncestor {
         //made to the DAOs
         Set<SpeciesTO> expectedSpeciesTOs = new HashSet<SpeciesTO>();
         expectedSpeciesTOs.add(
-                new SpeciesTO("8", "my common nameA", "my genusA", "my speciesA", "16", 
-                        "file/pathA", "versionA", null, null));
+                new SpeciesTO(8, "my common nameA", "my genusA", "my speciesA", 16, 
+                        "file/pathA", "versionA", null));
         expectedSpeciesTOs.add(
-                new SpeciesTO("13", "my common nameB", "my genusB", "my speciesB", "12", 
-                        "file/pathB", "versionB", "20", "PREFIX"));
+                new SpeciesTO(13, "my common nameB", "my genusB", "my speciesB", 12, 
+                        "file/pathB", "versionB", 20));
         expectedSpeciesTOs.add(
-                new SpeciesTO("15", "my common nameC", "my genusC", "my speciesC", "14", 
-                        "file/pathC", "versionC", null, null));
+                new SpeciesTO(15, "my common nameC", "my genusC", "my speciesC", 14, 
+                        "file/pathC", "versionC", null));
         ArgumentCaptor<Set> speciesTOsArg = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockSpeciesDAO).insertSpecies(speciesTOsArg.capture());
         if (!this.areSpeciesTOCollectionsEqual(
@@ -120,22 +120,14 @@ public class InsertTaxaTest extends TestAncestor {
         
 
         Set<TaxonTO> expectedTaxonTOs = new HashSet<TaxonTO>();
-        expectedTaxonTOs.add(
-                new TaxonTO("1", null, "taxon A", 1, 16, 1, false));
-        expectedTaxonTOs.add(
-                new TaxonTO("2", "common name taxon B", "taxon B", 2, 15, 2, false));
-        expectedTaxonTOs.add(
-                new TaxonTO("3", null, "taxon z", 13, 14, 3, false));
-        expectedTaxonTOs.add(
-                new TaxonTO("6", "common name taxon C", "taxon C", 3, 12, 3, true));
-        expectedTaxonTOs.add(
-                new TaxonTO("11", "common name taxon D", "taxon D", 4, 9, 4, false));
-        expectedTaxonTOs.add(
-                new TaxonTO("12", "common name taxon E", "taxon E", 5, 8, 5, true));
-        expectedTaxonTOs.add(
-                new TaxonTO("14", "common name taxon F", "taxon F", 6, 7, 6, false));
-        expectedTaxonTOs.add(
-                new TaxonTO("16", "common name taxon G", "taxon G", 10, 11, 4, false));
+        expectedTaxonTOs.add(new TaxonTO(1, null, "taxon A", 1, 16, 1, false));
+        expectedTaxonTOs.add(new TaxonTO(2, "common name taxon B", "taxon B", 2, 15, 2, false));
+        expectedTaxonTOs.add(new TaxonTO(3, null, "taxon z", 13, 14, 3, false));
+        expectedTaxonTOs.add(new TaxonTO(6, "common name taxon C", "taxon C", 3, 12, 3, true));
+        expectedTaxonTOs.add(new TaxonTO(11, "common name taxon D", "taxon D", 4, 9, 4, false));
+        expectedTaxonTOs.add(new TaxonTO(12, "common name taxon E", "taxon E", 5, 8, 5, true));
+        expectedTaxonTOs.add(new TaxonTO(14, "common name taxon F", "taxon F", 6, 7, 6, false));
+        expectedTaxonTOs.add(new TaxonTO(16, "common name taxon G", "taxon G", 10, 11, 4, false));
         ArgumentCaptor<Set> taxonTOsArg = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockTaxonDAO).insertTaxa(taxonTOsArg.capture());
         if (!this.areTaxonTOCollectionsEqual(
@@ -183,9 +175,7 @@ public class InsertTaxaTest extends TestAncestor {
                     (s1.getGenomeFilePath() == null && s2.getGenomeFilePath() == null || 
                         s1.getGenomeFilePath() != null && s1.getGenomeFilePath().equals(s2.getGenomeFilePath())) && 
                     (s1.getGenomeSpeciesId() == null && s2.getGenomeSpeciesId() == null || 
-                        s1.getGenomeSpeciesId() != null && s1.getGenomeSpeciesId().equals(s2.getGenomeSpeciesId())) && 
-                    (s1.getFakeGeneIdPrefix() == null && s2.getFakeGeneIdPrefix() == null || 
-                        s1.getFakeGeneIdPrefix() != null && s1.getFakeGeneIdPrefix().equals(s2.getFakeGeneIdPrefix())) ) {
+                        s1.getGenomeSpeciesId() != null && s1.getGenomeSpeciesId().equals(s2.getGenomeSpeciesId())) ) {
                     found = true;   
                     break;
                 }

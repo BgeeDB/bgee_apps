@@ -86,17 +86,18 @@ public class DevStageService extends Service {
     /**
      * Load developmental stage similarities from provided {@code taxonId} and {@code speciesIds}.
      * 
-     * @param taxonId       A {@code String} that is the NCBI ID of the taxon for which the similarity 
+     * @param taxonId       An {@code Integer} that is the NCBI ID of the taxon for which the similarity 
      *                      annotations should be valid, including all its ancestral taxa.
-     * @param speciesIds    A {@code Set} of IDs of the species for which the similarity 
-     *                      annotations should be restricted.
+     * @param speciesIds    A {@code Set} of {@code Integer}s that are the IDs of the species
+     *                      for which the similarity annotations should be restricted.
      *                      If empty or {@code null} all available species are used.
      * @return              The {@code Set} of {@link DevStageSimilarity} that are dev. stage 
      *                      similarities from provided {@code taxonId} and {@code speciesIds}.
      */
-    public Set<DevStageSimilarity> loadDevStageSimilarities(String taxonId, Set<Integer> speciesIds) {
+    public Set<DevStageSimilarity> loadDevStageSimilarities(Integer taxonId, Set<Integer> speciesIds) {
        log.entry(taxonId, speciesIds);
-       return log.exit(this.getDaoManager().getStageGroupingDAO().getGroupToStage(taxonId, speciesIds).stream()
+       return log.exit(this.getDaoManager().getStageGroupingDAO().getGroupToStage(
+               taxonId, speciesIds == null? null: new HashSet<>(speciesIds)).stream()
              .collect(Collectors.groupingBy(GroupToStageTO::getGroupId)) // group by groupId
                   .entrySet().stream()
                   .map(e -> new DevStageSimilarity(e.getKey(),              // map to DevStageSimilarity

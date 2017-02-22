@@ -57,15 +57,15 @@ public class AnalysisService extends Service {
      * Retrieve multi-species expression calls for a specific gene in provided species.
      * 
      * @param gene          A {@code Gene} that is the gene for which to return multi-species calls.
-     * @param speciesIds    A {@code Collection} of {@code String}s that are the IDs of species
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that are the IDs of species
      *                      in which the gene orthologs should be found.
-     * @return              The {@code LinkedHashMap} where keys are {@code String}s corresponding
+     * @return              The {@code LinkedHashMap} where keys are {@code Integer}s corresponding
      *                      to IDs of taxa ordered from closest to farthest of {@code gene},
      *                      the associated values being {@code Set} of {@code MultiSpeciesCall}s
      *                      corresponding to multi-species calls.
      */
-    public LinkedHashMap<String, Set<MultiSpeciesCall<ExpressionCall>>> loadMultiSpeciesExpressionCalls(
-            Gene gene, Collection<String> speciesIds) {
+    public LinkedHashMap<Integer, Set<MultiSpeciesCall<ExpressionCall>>> loadMultiSpeciesExpressionCalls(
+            Gene gene, Collection<Integer> speciesIds) {
         log.entry(gene, speciesIds);
         
         if (gene == null) {
@@ -75,7 +75,7 @@ public class AnalysisService extends Service {
             throw log.throwing(new IllegalArgumentException("Expecting species info in provided gene:" + gene));
         }
         
-        final Set<String> clonedSpeIds = Collections.unmodifiableSet(
+        final Set<Integer> clonedSpeIds = Collections.unmodifiableSet(
                 speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds));
         if (!clonedSpeIds.isEmpty() && !clonedSpeIds.contains(gene.getSpeciesId())) {
             throw log.throwing(new IllegalArgumentException("Gene species (" + gene.getSpeciesId() +
@@ -84,31 +84,32 @@ public class AnalysisService extends Service {
         
         // Get all relevant taxa from the species
         // FIXME: load all taxonomy ontology, should we filter it?
-        MultiSpeciesOntology<Taxon> taxonOnt = this.getServiceFactory().getOntologyService()
+        MultiSpeciesOntology<Taxon, Integer> taxonOnt = this.getServiceFactory().getOntologyService()
                 .getTaxonOntology();
-        if (taxonOnt.getElement(gene.getSpecies().getParentTaxonId()) == null) {
+        Integer parentTaxonId = gene.getSpecies().getParentTaxonId();
+        if (taxonOnt.getElement(parentTaxonId) == null) {
             throw log.throwing(new IllegalStateException("Taxon ID " + gene.getSpecies().getParentTaxonId() +
                     "not found in retrieved taxonomy"));
         }
-        List<String> taxonIds = taxonOnt.getOrderedAncestors(
-                    taxonOnt.getElement(gene.getSpecies().getParentTaxonId())).stream()
+        List<Integer> taxonIds = taxonOnt.getOrderedAncestors(
+                    taxonOnt.getElement(parentTaxonId)).stream()
                 .map(t -> t.getId())
                 .collect(Collectors.toList());
         
-        LinkedHashMap<String, Set<MultiSpeciesCall<ExpressionCall>>> taxaToCalls = new LinkedHashMap<>();
+        LinkedHashMap<Integer, Set<MultiSpeciesCall<ExpressionCall>>> taxaToCalls = new LinkedHashMap<>();
         
         LinkedHashMap<CallService.OrderingAttribute, Direction> orderAttrs = new LinkedHashMap<>();
         orderAttrs.put(CallService.OrderingAttribute.GENE_ID, Direction.ASC);
 
-        for (String taxonId : taxonIds) {
+        for (Integer taxonId : taxonIds) {
             log.trace("Starting generation of multi-species calls for taxon ID {}", taxonId);
             // Retrieve homologous organ groups with gene IDs
-            Map<String, Set<String>> omaToGeneIds = this.getServiceFactory().getGeneService()
+            Map<Integer, Set<Integer>> omaToGeneIds = this.getServiceFactory().getGeneService()
                     .getOrthologs(taxonId, clonedSpeIds);
             log.trace("Homologous organ groups with gene IDs: {}", omaToGeneIds);
             // XXX filter by Gene should be done in GeneService or DAO?
-            Set<String> orthologousGeneIds = omaToGeneIds.entrySet().stream()
-                    .filter(e -> e.getValue().contains(gene.getId()))
+            Set<Integer> orthologousGeneIds = omaToGeneIds.entrySet().stream()
+                    .filter(e -> e.getValue().contains(gene.getEnsemblGeneId()))
                     .map(e -> e.getValue())
                     .flatMap(Set::stream)
                     .collect(Collectors.toSet());
@@ -132,7 +133,10 @@ public class AnalysisService extends Service {
             conditionFilters.add(new ConditionFilter(anatEntityIds, devStageIds));
             log.warn("Only expressed calls are retrieved");
             ExpressionCallFilter callFilter = new ExpressionCallFilter(
-                new GeneFilter(orthologousGeneIds),
+                // FIXME use GeneFilter. Be careful between bgee and Ensembl gene IDs, 
+                // Ensembl gene IDs are not unique.
+                null,
+//                new GeneFilter(orthologousGeneIds),
                 conditionFilters,
                 null, null,
                 ExpressionSummary.EXPRESSED,
@@ -141,7 +145,7 @@ public class AnalysisService extends Service {
             // For each species, we load propagated and reconciled calls
             // (filtered by previous filters)
             Set<ExpressionCall> calls = new HashSet<>();
-            for (String spId: clonedSpeIds) {
+            for (Integer spId: clonedSpeIds) {
                 // FIXME do propagation???
                 Set<ExpressionCall> currentCalls = this.getServiceFactory().getCallService().
                     loadExpressionCalls(spId, callFilter, null, orderAttrs).collect(Collectors.toSet());
@@ -158,9 +162,9 @@ public class AnalysisService extends Service {
     /**
      * Group {@code ExpressionCall}s into {@code MultiSpeciesCall}s.
      * 
-     * @param taxonId                   A {@code String} that is the taxon ID to use to build  
+     * @param taxonId                   An {@code Integer} that is the taxon ID to use to build  
      *                                  {@code MultiSpeciesCall}s.
-     * @param omaToGeneIds              A {@code Map} where keys are {@code String}s corresponding
+     * @param omaToGeneIds              A {@code Map} where keys are {@code Integer}s corresponding
      *                                  to IDs of OMA nodes, the associated values being {@code Set}
      *                                  of {@code String}s corresponding to gene IDs.
      * @param anatEntitySimilarities    A {@code Set} of {@code AnatEntitySimilarity}s thats are 
@@ -177,8 +181,8 @@ public class AnalysisService extends Service {
      *                                  or if similarity groups are incorrect.
      */
     // TODO to be added to ExpressionCallUtils see TODOs into ExpressionCall
-    private Set<MultiSpeciesCall<ExpressionCall>> groupCalls(String taxonId,
-            Map<String, Set<String>> omaToGeneIds, Set<AnatEntitySimilarity> anatEntitySimilarities,
+    private Set<MultiSpeciesCall<ExpressionCall>> groupCalls(Integer taxonId,
+            Map<Integer, Set<Integer>> omaToGeneIds, Set<AnatEntitySimilarity> anatEntitySimilarities,
             Set<DevStageSimilarity> devStageSimilarities, Set<ExpressionCall> calls)
                     throws IllegalArgumentException {
         log.entry(taxonId, omaToGeneIds, anatEntitySimilarities, devStageSimilarities, calls);
@@ -188,10 +192,10 @@ public class AnalysisService extends Service {
         for (ExpressionCall call: calls) {
             log.trace("Iteration expr call {}", call);
             
-            if (StringUtils.isBlank(call.getConditionId()) {
+            if (call.getCondition() == null) {
                 throw log.throwing(new IllegalArgumentException("No condition for " + call));
             }
-            if (call.getGeneId() == null) {
+            if (call.getGene() == null || StringUtils.isBlank(call.getGene().getEnsemblGeneId())) {
                 throw log.throwing(new IllegalArgumentException("No gene ID for " + call));
             }
             Set<AnatEntitySimilarity> curAESimilarities = anatEntitySimilarities.stream()
@@ -227,24 +231,25 @@ public class AnalysisService extends Service {
                 continue;
             }
             DevStageSimilarity dsSimilarity = curDSSimilarities.iterator().next();
-            Set<String> omaNodeIds = omaToGeneIds.entrySet().stream()
-                    .filter(e -> e.getValue().contains(call.getGeneId()))
+            Set<Integer> omaNodeIds = omaToGeneIds.entrySet().stream()
+                    .filter(e -> e.getValue().contains(call.getGene().getEnsemblGeneId()))
                     .map(e -> e.getKey())
                     .collect(Collectors.toSet());
             if (omaNodeIds.size() > 1) {
                 throw log.throwing(new IllegalArgumentException(
                         "A gene is contained in more than one OMA node ID: " +
-                                call.getGeneId() + " found in " + omaNodeIds));
+                                call.getGene().getEnsemblGeneId() + " found in " + omaNodeIds));
             } else if (omaNodeIds.size() == 0) {
                 log.trace(call.getCondition().getDevStageId() + 
                         " found in any dev. entity similarity group");
                 continue;
             }
-            String omaNodeId = omaNodeIds.iterator().next();
+            Integer omaNodeId = omaNodeIds.iterator().next();
 
-            MultiSpeciesCall<ExpressionCall> multiSpeciesCall = new MultiSpeciesCall<ExpressionCall>(
-                    aeSimilarity, dsSimilarity, taxonId, omaNodeId, omaToGeneIds.get(omaNodeId), null,
-                    null, this.getServiceFactory());
+            MultiSpeciesCall<ExpressionCall> multiSpeciesCall = null; 
+//                new MultiSpeciesCall<ExpressionCall>(
+//                    aeSimilarity, dsSimilarity, taxonId, omaNodeId, omaToGeneIds.get(omaNodeId), null,
+//                    null, this.getServiceFactory());
             Set<ExpressionCall> associatedCalls = multiSpCallToCalls.get(multiSpeciesCall);
             if (associatedCalls == null) {
                 log.trace("Create new map key: {}", multiSpeciesCall);

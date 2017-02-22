@@ -94,7 +94,7 @@ public class DownloadFile {
     private final String path;
     private final String name;
     private final CategoryEnum category;
-    private final String speciesDataGroupId;
+    private final Integer speciesDataGroupId;
     private final long size;
 
     /**
@@ -104,12 +104,12 @@ public class DownloadFile {
      *                             by convention if the file represents a directory.
      * @param category             A {@code CategoryEnum} 
      * @param size                 A {@code long} representing the file size in bytes.
-     * @param speciesDataGroupId   A {@code String} representing the species data group that owns this file.
+     * @param speciesDataGroupId   A {@code Integer} representing the species data group that owns this file.
      * @throws IllegalArgumentException If any of the argument is {@code null}.
      */
-    public DownloadFile(String path, String name, CategoryEnum category, Long size, String speciesDataGroupId){
+    public DownloadFile(String path, String name, CategoryEnum category, Long size, Integer speciesDataGroupId){
         if (StringUtils.isBlank(path) || StringUtils.isBlank(name) || category == null || 
-                StringUtils.isBlank(speciesDataGroupId)) {
+                speciesDataGroupId == null) {
             throw new IllegalArgumentException("No argument can be null or blank.");
         }
         this.path = path;
@@ -145,9 +145,9 @@ public class DownloadFile {
 
     /**
      * Gets the species data group id
-     * @return A {@code String} representation of the species data group id
+     * @return An {@code Integer} representation of the species data group id
      */
-    public String getSpeciesDataGroupId() {
+    public Integer getSpeciesDataGroupId() {
         return speciesDataGroupId;
     }
 

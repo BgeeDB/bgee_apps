@@ -7,30 +7,24 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
-import java.util.Spliterator;
-import java.util.Spliterators;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.CommonService;
 import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
 import org.bgee.model.dao.api.expressiondata.CallDAOFilter;
 import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
-import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
 import org.bgee.model.expressiondata.Call.DiffExpressionCall;
@@ -38,13 +32,12 @@ import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.CallFilter.DiffExpressionCallFilter;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
-import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataPropagation.PropagationState;
-import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.species.TaxonomyFilter;
 
@@ -58,7 +51,7 @@ import org.bgee.model.species.TaxonomyFilter;
  * @since   Bgee 13, Oct. 2015
  */
 /// XXX: Check in bgee14 if speciesId is retrieved in CallTO
-public class CallService extends Service {
+public class CallService extends CommonService {
     private final static Logger log = LogManager.getLogger(CallService.class.getName());
     
     //XXX: Enum class for fields of Call to populate? 
@@ -114,232 +107,12 @@ public class CallService extends Service {
         throw log.throwing(new UnsupportedOperationException("Load of calls in multi species not implemented yet"));
     }
 
-    /**
-     * A {@code Spliterator} allowing to stream over {@code Call}s grouped according
-     * to provided {@code Comparator} obtained from a main {@code Stream} of {@code CallTO}s
-     * and one or several {@code Stream}s of {@code ExperimentExpressionTO}s.
-     * <p>
-     * This {@code Spliterator} is ordered, sorted, immutable, unsized, and 
-     * contains unique and not {@code null} elements. 
-     * 
-     * @author  Valentine Rech de Laval
-     * @version Bgee 13, Dec. 2016
-     * @since   Bgee 13, Oct. 2016
-     * 
-     * @param <T>   The type of {@code CallTO}s.
-     */
-    public class CallSpliterator<T extends CallTO<?>, U extends Map<T, Set<ExperimentExpressionTO>>> 
-        extends Spliterators.AbstractSpliterator<U> {
-     
-        final private Comparator<T> comparator;
-        final private Stream<T> callTOs;
-        final private Set<Stream<ExperimentExpressionTO>> experimentExpTOSet;
-        private Iterator<T> itCallTOs;
-        private Map<Iterator<ExperimentExpressionTO>, ExperimentExpressionTO> mapItToLastTO;
-        private boolean isInitiated;
-        private boolean isClosed;
-        private boolean isFirstIteration;
-        private T lastTO;
-
-        /**
-         * Constructor providing the two {@code Stream}s and the {@code Comparator} of {@code T}s.
-         * 
-         * @param callTOStream       A {@code Stream} of {@code T} that is the first stream.
-         * @param experimentExpTOStreams    A {@code Set} of {@code Stream}s that are is the second stream.
-         * @param comparator    A {@code Comparator} of {@code T}s that is the comparator of elements.
-         */
-        public CallSpliterator(Stream<T> callTOs, 
-            Set<Stream<ExperimentExpressionTO>> experimentExpTOSet, Comparator<T> comparator) {
-            super(Long.MAX_VALUE, Spliterator.ORDERED | Spliterator.IMMUTABLE 
-                    | Spliterator.DISTINCT | Spliterator.NONNULL | Spliterator.SORTED);
-            if (callTOs == null || experimentExpTOSet == null || experimentExpTOSet.stream().anyMatch(e -> e == null)) {
-                throw new IllegalArgumentException("Provided streams cannot be null");
-            }
-            this.callTOs = callTOs;
-            this.experimentExpTOSet = experimentExpTOSet;
-            this.isInitiated = false;
-            this.isClosed = true; // Open initiation
-            this.comparator = comparator;
-            this.isFirstIteration = true;
-        }
-     
-        @Override
-        public boolean tryAdvance(Consumer<? super U> action) {
-            log.entry(action);
-
-            if (!isInitiated) {
-                // Lazy loading: we do not get iterators (terminal operation)
-                // while tryAdvance() is not called.
-                this.itCallTOs = callTOs.iterator();
-                this.mapItToLastTO = new HashMap<>();
-                for (Stream<ExperimentExpressionTO> ee: experimentExpTOSet) {
-                    Iterator<ExperimentExpressionTO> it = ee.iterator();
-                    this.mapItToLastTO.put(it, it.next());
-                }
-                isInitiated = true;
-                isClosed = false;
-            }
-            
-            Map<T, Set<ExperimentExpressionTO>> map = new HashMap<>();
-            Set<String> experimentIds = new HashSet<>();
-            T previousTO = null;
-            //we iterate the ResultSet, then we do a last iteration after the last TO is 
-            //retrieved, to properly group all the calls.
-            boolean doIteration = true;
-            int iterationCount = 0;
-            while (doIteration) {
-                doIteration = itCallTOs.hasNext();
-                T currentTO = null;
-                if (doIteration) {
-                    // We should not get next element if it is not the first call to tryAdvance()
-                    // but it is the first time of iterations
-                    if (!this.isFirstIteration && experimentIds.isEmpty()) {
-                        currentTO = this.lastTO;
-                    } else {
-                        currentTO = itCallTOs.next();
-                    }
-                } else {
-                    // If there is no more element, we should get next element if it is
-                    // the first iteration or the last call if it is not 
-                    if (this.isFirstIteration) {
-                        currentTO = itCallTOs.next();
-                    } else {
-                        currentTO = this.lastTO;
-                    }
-                    previousTO = currentTO;
-                    experimentIds.add(currentTO.getId());
-                }
-                this.isFirstIteration = false;
-                log.trace("Previous call={} - Current call={}", previousTO, currentTO);
-
-                //if the gene changes, or if it is the latest iteration
-                if (!doIteration || //doIteration is false for the latest iteration, 
-                    // AFTER retrieving the last TO (ResultSet.isAfterLast would return true)
-                    (previousTO != null && comparator.compare(currentTO, previousTO) != 0)) {
-                    log.trace("Start generating data for {}", previousTO);
-                    iterationCount++;
-
-                    assert (doIteration && currentTO != null && currentTO != null) || 
-                    (!doIteration && currentTO == null && currentTO == null);
-
-                    //the calls are supposed to be ordered by ascending gene ID
-                    if (currentTO != null && comparator.compare(currentTO, previousTO) < 0) {
-                        throw log.throwing(new IllegalStateException("The expression calls "
-                            + "were not retrieved in good order, which "
-                            + "is mandatory for proper generation of data: previous key: "
-                            + previousTO + ", current key: " + currentTO));
-                    }
-
-                    if (previousTO == null) {
-                        //if we reach this code block, it means there were no results at all 
-                        //retrieved from the list. This is not formally an error, 
-                        //maybe there is no expression with key
-                        log.warn("No calls retrieved");
-                        break;
-                    }
-
-                    action.accept((U) map);
-                    
-                    log.trace("Done generating data for element {}", previousTO);
-
-                    if (log.isDebugEnabled() && iterationCount % 10000 == 0) {
-                        log.debug("{} gene IDs already iterated", iterationCount);
-                    }
-
-                    this.lastTO = currentTO;
-                    break;
-                }
-                if (doIteration) {
-                    // We add the current TOs to the group
-                    Set<ExperimentExpressionTO> s = map.get(currentTO);
-                    Set<ExperimentExpressionTO> newElmts = this.getElements(currentTO.getId());
-                    if (newElmts != null) {
-                        if (s == null) {
-                            s = new HashSet<>();
-                            map.put(currentTO, s);
-                        }
-                        s.addAll(newElmts);                        
-                    }
-                    experimentIds.add(currentTO.getId());
-                    // We store the current gene ID to be compare with the next one
-                    previousTO = currentTO;
-                }
-            }
-            if (itCallTOs.hasNext() || doIteration) {
-                return log.exit(true);
-            }
-
-            return log.exit(false);
-        }
-                
-        /**
-         * Get {@code ExperimentExpressionTO}s corresponding to the provided expression ID.  
-         * <p>
-         * Provided {@code Iterator}s are modified.
-         * 
-         * @return                  A {@code T} that is the new next element to be saved.
-         *                          Returns {@code null}, if iteration has no more elements.
-         */
-        private Set<ExperimentExpressionTO> getElements(String expressionId) {
-            log.entry(expressionId);
-            
-            Set<ExperimentExpressionTO> set = new HashSet<ExperimentExpressionTO>();
-            for (Entry<Iterator<ExperimentExpressionTO>, ExperimentExpressionTO> e: mapItToLastTO.entrySet()) {
-                ExperimentExpressionTO currentTO = e.getValue();
-                while (currentTO != null && expressionId.equals(currentTO.getExpressionId())) {
-                    if (set.contains(currentTO)) {
-                        currentTO = new ExperimentExpressionTO(currentTO.getExpressionId(), currentTO.getExperimentId(),
-                            currentTO.getPresentHighCount() == null ? 0 : currentTO.getPresentHighCount() * 2,
-                            currentTO.getPresentLowCount() == null ? 0 : currentTO.getPresentLowCount() * 2,
-                            currentTO.getAbsentHighCount() == null ? 0 : currentTO.getAbsentHighCount() * 2,
-                            currentTO.getAbsentLowCount() == null ? 0 : currentTO.getAbsentLowCount() * 2,
-                            currentTO.getExperimentCount() == null ? 0 : currentTO.getExperimentCount() * 2);
-                    }
-                    set.add(currentTO);
-                    currentTO = e.getKey().hasNext()? e.getKey().next() : null;
-                }
-                mapItToLastTO.put(e.getKey(), currentTO);
-            }
-            return log.exit(set.isEmpty()? null : set);
-        }
-        
-        /**
-         * Return {@code null}, because a {@code CallSpliterator} does not have 
-         * the capability of being accessed in parallel. 
-         * 
-         * @return  The {@code Spliterator} that is {@code null}.
-         */
-        @Override
-        public Spliterator<U> trySplit() {
-            log.entry();
-            return log.exit(null);
-        }
-        
-        @Override
-        public Comparator<? super U> getComparator() {
-            log.entry();
-            return log.exit(Comparator.comparing(s -> s.keySet().stream().findFirst().get(), this.comparator));
-        }
-        
-        /** 
-         * Close {@code Stream}s provided at instantiation.
-         */
-        // TODO add unit test to be sure that streams are closed
-        public void close() {
-            log.entry();
-            if (!isClosed){
-                callTOs.close();
-                experimentExpTOSet.stream().forEach(s -> s.close());
-            }
-            log.exit();
-        }
-    }
         
     /** 
      * Load propagated and reconciled expression calls with parameter provided 
      * through an {@code ExpressionCallFilter}.
      * 
-     * @param speciesId             A {@code String} that is the ID of the species 
+     * @param speciesId             An {@code Integer} that is the ID of the species 
      *                              for which to return the {@code ExpressionCall}s.
      * @param callFilter            An {@code ExpressionCallFilter} allowing 
      *                              to filter retrieving of data.
@@ -356,7 +129,7 @@ public class CallService extends Service {
      *                              and reconciled expression calls.
      * @throws IllegalArgumentException If {@code callFilter} or {@code speciesID} are null or empty.
      */
-    public Stream<ExpressionCall> loadExpressionCalls(String speciesId, 
+    public Stream<ExpressionCall> loadExpressionCalls(Integer speciesId, 
             ExpressionCallFilter callFilter, Collection<Attribute> attributes, 
             LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes)
                     throws IllegalArgumentException {        
@@ -371,7 +144,7 @@ public class CallService extends Service {
         if (callFilter == null) {
             throw log.throwing(new IllegalArgumentException("A CallFilter must be provided."));
         }
-        if (StringUtils.isBlank(speciesId)) {
+        if (speciesId == null || speciesId <= 0) {
             throw log.throwing(new IllegalArgumentException("A species ID must be provided"));
         }
 
@@ -454,7 +227,7 @@ public class CallService extends Service {
             Comparator<ExpressionCall> tmpComp = null;
             switch (entry.getKey()) {
             case GENE_ID:
-                tmpComp = Comparator.comparing(ExpressionCall::getGeneId, compStr);
+                tmpComp = Comparator.comparing(c -> c.getGene().getEnsemblGeneId(), compStr);
                 break;
             case ANAT_ENTITY_ID:
                 tmpComp = Comparator.comparing(c -> c.getCondition().getAnatEntityId(), compStr);
@@ -489,7 +262,7 @@ public class CallService extends Service {
         return log.exit(serviceOrdering);
     }
 
-    public Stream<DiffExpressionCall> loadDiffExpressionCalls(String speciesId, 
+    public Stream<DiffExpressionCall> loadDiffExpressionCalls(Integer speciesId, 
             DiffExpressionCallFilter callFilter) {
         log.entry(speciesId, callFilter);
         throw log.throwing(new UnsupportedOperationException("Load of diff. expression calls not implemented yet"));
@@ -502,7 +275,7 @@ public class CallService extends Service {
      * Perform query to retrieve expressed calls without the post-processing of 
      * the results returned by {@code DAO}s.
      * 
-     * @param speciesId             A {@code String} that is the ID of the species 
+     * @param speciesId             An {@code Integer} that is the ID of the species 
      *                              for which to return the {@code ExpressionCall}s.
      * @param callFilter            An {@code ExpressionCallFilter} allowing 
      *                              to configure retrieving of data throw {@code DAO}s.
@@ -520,7 +293,7 @@ public class CallService extends Service {
      *                                  expression propagation states requested.
      */
     // FIXME implement call to DAO
-    private Stream<ExpressionCallTO> performsExpressionCallQuery(String speciesId, 
+    private Stream<ExpressionCallTO> performsExpressionCallQuery(Integer speciesId, 
             ExpressionCallFilter callFilter, Set<Attribute> attributes, 
             LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes)
                     throws IllegalArgumentException {
@@ -541,7 +314,7 @@ public class CallService extends Service {
                             //as a global gene filter, not through the CallDAOFilter. 
                             null, 
                             //species
-                            Arrays.asList(speciesId), 
+                            Arrays.asList(String.valueOf(speciesId)), 
                             //ConditionFilters
                             callFilter.getConditionFilters().stream()
                                 .map(condFilter -> new DAOConditionFilter(
@@ -559,7 +332,8 @@ public class CallService extends Service {
                         true : false,
                     //global gene filter
                     Optional.ofNullable(callFilter.getGeneFilter())
-                        .map(geneFilter -> geneFilter.getGeneIds()).orElse(new HashSet<>()), 
+                        .map(geneFilter -> geneFilter.getGeneIds().stream().map(String::valueOf)
+                            .collect(Collectors.toSet())).orElse(new HashSet<>()), 
                     //no gene orthology requested
                     null, 
                     //Attributes
@@ -579,27 +353,28 @@ public class CallService extends Service {
     // METHODS MAPPING CallTOs TO Calls
     //*************************************************************************
     private static ExpressionCall mapCallTOToExpressionCall(ExpressionCallTO callTO, 
-            DataPropagation callFilterPropag, String speciesId) {
+            DataPropagation callFilterPropag, Integer speciesId) {
         log.entry(callTO, callFilterPropag, speciesId);
         
-        //Inference of isObservedData, summaryCallType and summaryQuality is done into ExpressionCall        
-        return log.exit(new ExpressionCall(callTO.getGeneId(), 
-                callTO.getAnatEntityId() != null || callTO.getStageId() != null? 
-                        new Condition(callTO.getAnatEntityId(), callTO.getStageId(), speciesId): null, 
-                // FIXME It does not compile anymore but I leave it to be able to come back
-                // to it before the cleaning of the class
-                // Generate ExpressionCallData
-                null,
-//                callTO.extractDataTypesToDataStates().entrySet().stream()
-//                    .filter(entry -> entry.getValue() != null && 
-//                                     !entry.getValue().equals(CallTO.DataState.NODATA))
-//                    .map(entry -> new ExpressionCallData(Expression.EXPRESSED, 
-//                            convertDataStateToDataQuality(entry.getValue()), 
-//                            convertExprAttributeToDataType(entry.getKey()), 
-//                            callDataPropagation))
-//                    .collect(Collectors.toSet()), 
-                callTO.getGlobalMeanRank()
-                ));
+        throw log.throwing(new UnsupportedOperationException("mapCallTOToExpressionCall should be re-implemeted"));
+//        //Inference of isObservedData, summaryCallType and summaryQuality is done into ExpressionCall        
+//        return log.exit(new ExpressionCall(callTO.getGene().getId(), 
+//                callTO.getAnatEntityId() != null || callTO.getStageId() != null? 
+//                        new Condition(callTO.getAnatEntityId(), callTO.getStageId(), speciesId): null, 
+//                // FIXME It does not compile anymore but I leave it to be able to come back
+//                // to it before the cleaning of the class
+//                // Generate ExpressionCallData
+//                null,
+////                callTO.extractDataTypesToDataStates().entrySet().stream()
+////                    .filter(entry -> entry.getValue() != null && 
+////                                     !entry.getValue().equals(CallTO.DataState.NODATA))
+////                    .map(entry -> new ExpressionCallData(Expression.EXPRESSED, 
+////                            convertDataStateToDataQuality(entry.getValue()), 
+////                            convertExprAttributeToDataType(entry.getKey()), 
+////                            callDataPropagation))
+////                    .collect(Collectors.toSet()), 
+//                callTO.getGlobalMeanRank()
+//                ));
     }
     
     //*************************************************************************
@@ -759,9 +534,9 @@ public class CallService extends Service {
                 case GENE_ID: 
                     return ExpressionCallDAO.OrderingAttribute.GENE_ID;
                 case ANAT_ENTITY_ID: 
-                    return ExpressionCallDAO.OrderingAttribute.ANAT_ENTITY_ID;
+                    return ExpressionCallDAO.OrderingAttribute.CONDITION_ID;
                 case DEV_STAGE_ID: 
-                    return ExpressionCallDAO.OrderingAttribute.STAGE_ID;
+                    return ExpressionCallDAO.OrderingAttribute.CONDITION_ID;
                 case GLOBAL_RANK: 
                     return ExpressionCallDAO.OrderingAttribute.MEAN_RANK;
                 default: 
@@ -820,9 +595,9 @@ public class CallService extends Service {
             case GENE_ID: 
                 return Stream.of(ExpressionCallDAO.Attribute.GENE_ID);
             case ANAT_ENTITY_ID: 
-                return Stream.of(ExpressionCallDAO.Attribute.ANAT_ENTITY_ID);
+                return Stream.of(ExpressionCallDAO.Attribute.CONDITION_ID);
             case DEV_STAGE_ID: 
-                return Stream.of(ExpressionCallDAO.Attribute.STAGE_ID);
+                return Stream.of(ExpressionCallDAO.Attribute.CONDITION_ID);
             //Whether we need to get a global quality level over all requested data types, 
             //or the detailed quality level per data type, it's the same DAO attributes that we need. 
             case GLOBAL_DATA_QUALITY:

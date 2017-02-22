@@ -53,8 +53,8 @@ public class AnatEntityServiceTest extends TestAncestor {
 
         // Filter on species IDs is not tested here (tested in AnatEntityDAO)
         // but we need a variable to mock DAO answer
-        Set<String> speciesIds = new HashSet<String>();
-        speciesIds.add("11");
+        Set<Integer> speciesIds = new HashSet<>();
+        speciesIds.add(11);
 
         AnatEntityTOResultSet mockAnatEntRs1 = 
                 getMockResultSet(AnatEntityTOResultSet.class, anatEntityTOs);
@@ -93,8 +93,8 @@ public class AnatEntityServiceTest extends TestAncestor {
 
         // Filter on species IDs is not tested here (tested in AnatEntityDAO)
         // but we need a variable to mock DAO answer
-        Set<String> speciesIds = new HashSet<String>();
-        speciesIds.add("11");
+        Set<Integer> speciesIds = new HashSet<>();
+        speciesIds.add(11);
         Set<String> anatEntityIds = new HashSet<>(Arrays.asList(
                 "UBERON:0001687", "UBERON:0001853", "UBERON:0011606"));
 
@@ -132,8 +132,8 @@ public class AnatEntityServiceTest extends TestAncestor {
 
         // Filter on species IDs is not tested here (tested in AnatEntityDAO)
         // but we need a variable to mock DAO answer
-        Set<String> speciesIds = new HashSet<String>();
-        speciesIds.add("11");
+        Set<Integer> speciesIds = new HashSet<>();
+        speciesIds.add(11);
 
         AnatEntityTOResultSet mockAnatEntRs1 = 
                 getMockResultSet(AnatEntityTOResultSet.class, anatEntityTOs);
@@ -161,8 +161,8 @@ public class AnatEntityServiceTest extends TestAncestor {
         
         SummarySimilarityAnnotationTOResultSet resultSetSim = getMockResultSet(
                 SummarySimilarityAnnotationTOResultSet.class, 
-                Arrays.asList(new SummarySimilarityAnnotationTO("sim1", "taxon1", false, "cio01"),
-                  new SummarySimilarityAnnotationTO("sim2", "taxon1", false, "cio01")));
+                Arrays.asList(new SummarySimilarityAnnotationTO("sim1", 1, false, "cio01"),
+                  new SummarySimilarityAnnotationTO("sim2", 1, false, "cio01")));
 
         SimAnnotToAnatEntityTOResultSet resultSetSimToAnat = getMockResultSet(
                 SimAnnotToAnatEntityTOResultSet.class, 
@@ -171,8 +171,8 @@ public class AnatEntityServiceTest extends TestAncestor {
                 new SimAnnotToAnatEntityTO("sim2", "anat3")
         ));
        
-        when(dao.getSummarySimilarityAnnotations("taxon1",true)).thenReturn(resultSetSim);
-        when(dao.getSimAnnotToAnatEntity("taxon1", null)).thenReturn(resultSetSimToAnat);
+        when(dao.getSummarySimilarityAnnotations(1,true)).thenReturn(resultSetSim);
+        when(dao.getSimAnnotToAnatEntity(1, null)).thenReturn(resultSetSimToAnat);
         
         AnatEntityService service = new AnatEntityService(serviceFactory);
         Collection<AnatEntitySimilarity> expected = new HashSet<>(Arrays.asList(
@@ -180,7 +180,7 @@ public class AnatEntityServiceTest extends TestAncestor {
                 new AnatEntitySimilarity("sim2", new HashSet<>(Arrays.asList("anat3")))
                 ));
         
-        Collection<AnatEntitySimilarity> actual = service.loadAnatEntitySimilarities("taxon1", null, true);
+        Collection<AnatEntitySimilarity> actual = service.loadAnatEntitySimilarities(1, null, true);
         assertEquals(expected, actual);
         
     }

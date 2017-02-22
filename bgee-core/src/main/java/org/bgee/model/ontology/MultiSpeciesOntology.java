@@ -25,7 +25,7 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
  * @param <T>   The type of element in this ontology or sub-graph.
  * @param <U>   The type of ID of the elements in this ontology or sub-graph.
 */
-public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T>, U> 
+public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, U>, U> 
     extends OntologyBase<T, U> {
 
     private static final Logger log = LogManager.getLogger(MultiSpeciesOntology.class.getName());
@@ -81,10 +81,10 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T>,
     }
     
     /**
-     * @return  The {@code Set} of {@code String}s that are the IDs of the species
+     * @return  The {@code Set} of {@code Integer}s that are the IDs of the species
      *          that were considered to build this ontology or sub-graph.
      */
-    public Set<String> getSpeciesIds() {
+    public Set<Integer> getSpeciesIds() {
         return speciesIds;
     }
 
@@ -92,7 +92,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T>,
      * Get elements that were considered to build this ontology or sub-graph,
      * filtered by {@code speciesIds}.
      * 
-     * @param speciesIds    A {@code Collection} of {@code String}s that is the IDs of species
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that is the IDs of species
      *                      allowing to filter the elements to retrieve.
      * @return              The {@code Set} of {@code T}s that are the elements that were considered 
      *                      to build this ontology or sub-graph, filtered by {@code speciesId}.
@@ -154,7 +154,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T>,
      * @param element       A {@code T} that is the element for which ancestors are retrieved.
      * @param directRelOnly A {@code boolean} defining whether only direct parents
      *                      of {@code element} should be returned.
-     * @param speciesIds    A {@code Collection} of {@code String}s that is the IDs of species
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that is the IDs of species
      *                      allowing to filter the elements to retrieve.
      * @return              A {@code Set} of {@code T}s that are the ancestors
      *                      of the given {@code element}. Can be empty if {@code element} 
@@ -162,7 +162,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T>,
      * @throws IllegalArgumentException If {@code element} is {@code null} or is not found 
      *                                  in this {@code MultiSpeciesOntology}.
      */
-    public Set<T> getAncestors(T element, boolean directRelOnly, Collection<String> speciesIds) {
+    public Set<T> getAncestors(T element, boolean directRelOnly, Collection<Integer> speciesIds) {
         log.entry(element, directRelOnly, speciesIds);
         return log.exit(this.getAncestors(element, null, directRelOnly, speciesIds));
     }
@@ -179,7 +179,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T>,
      *                      types to consider.
      * @param directRelOnly A {@code boolean} defining whether only direct parents
      *                      of {@code element} should be returned.
-     * @param speciesIds    A {@code Collection} of {@code String}s that is the IDs of species
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that is the IDs of species
      *                      allowing to filter the elements to retrieve.
      * @return              A {@code Set} of {@code T}s that are the ancestors
      *                      of {@code element} in this ontology. Can be empty if {@code element} 
@@ -188,12 +188,10 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T>,
      *                                  in this {@code MultiSpeciesOntology}.
      */
     public Set<T> getAncestors(T element, Collection<RelationType> relationTypes, 
-            boolean directRelOnly, Collection<String> speciesIds) {
+            boolean directRelOnly, Collection<Integer> speciesIds) {
         log.entry(element, relationTypes, directRelOnly, speciesIds);
         return log.exit(this.getRelatives(element, this.getElements(speciesIds), 
                 true, relationTypes, directRelOnly, speciesIds, this.relationTaxonConstraints));
-        
-        
     }
     
     /**
@@ -206,7 +204,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T>,
      * @param element       A {@code T} that is the element for which descendants are retrieved.
      * @param directRelOnly A {@code boolean} defining whether only direct children
      *                      of {@code element} should be returned.
-     * @param speciesIds    A {@code Collection} of {@code String}s that is the IDs of species
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that is the IDs of species
      *                      allowing to filter the elements to retrieve.
      * @return              A {@code Set} of {@code T}s that are the descendants
      *                      of the given {@code element} in this ontology. Can be empty if {@code element} 
@@ -214,9 +212,9 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T>,
      * @throws IllegalArgumentException If {@code element} is {@code null} or is not found 
      *                                  in this {@code MultiSpeciesOntology}.
      */
-    public Set<T> getDescendants(T element, boolean directRelOnly, Collection<String> speciesIds) {
+    public Set<T> getDescendants(T element, boolean directRelOnly, Collection<Integer> speciesIds) {
         log.entry(element, directRelOnly, speciesIds);
-        return log.exit(this.getDescendants(element, null, directRelOnly,speciesIds));
+        return log.exit(this.getDescendants(element, null, directRelOnly, speciesIds));
     }
     
     /**
@@ -231,7 +229,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T>,
      *                      types allowing to filter the relations to retrieve.
      * @param directRelOnly A {@code boolean} defining whether only direct children
      *                      of {@code element} should be returned.
-     * @param speciesIds    A {@code Collection} of {@code String}s that are the IDs of species
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that are the IDs of species
      *                      allowing to filter the elements to retrieve.
      * @return              A {@code Collection} of {@code T}s that are the descendants
      *                      of the given {@code element}. Can be empty if {@code element} 
@@ -240,7 +238,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T>,
      *                                  in this {@code MultiSpeciesOntology}.
      */
     public Set<T> getDescendants(T element, Collection<RelationType> relationTypes, 
-            boolean directRelOnly, Collection<String> speciesIds) {
+            boolean directRelOnly, Collection<Integer> speciesIds) {
         log.entry(element, relationTypes, directRelOnly, speciesIds);
         return log.exit(this.getRelatives(element, this.getElements(speciesIds), false, 
                 relationTypes, directRelOnly, speciesIds, this.relationTaxonConstraints));
@@ -258,7 +256,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T>,
      */
     public Ontology<T, U> getAsSingleSpeciesOntology(Integer speciesId) {
         log.entry(speciesId);
-        if (speciesId == null) {
+        if (speciesId == null || speciesId <= 0) {
             throw log.throwing(new IllegalArgumentException("A species ID should be provided"));
         }
 

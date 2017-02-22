@@ -38,15 +38,15 @@ public class MultiSpeciesCall<T extends Call<?, ?>> {
     private final DevStageSimilarity stageSimilarity;
     
     /**
-     * A {@code String} that is the ID of the taxon of this {@code MultiSpeciesCall}.
+     * A {@code Integer} that is the ID of the taxon of this {@code MultiSpeciesCall}.
      */
-    private final String taxonId;
+    private final Integer taxonId;
 
     /**
      * A {@code String} that is the ID of the OMA node of orthologous genes
      * of this {@code MultiSpeciesCall}.
      */
-    private final String omaNodeId;
+    private final Integer omaNodeId;
 
     /**
      * A {@code Set} of {@code String}s that are the IDs of the orthologous genes defined 
@@ -78,8 +78,8 @@ public class MultiSpeciesCall<T extends Call<?, ?>> {
      * @param anatSimilarity    An {@code AnatEntitySimilarity} that is the group 
      *                          of homologous organs of this call.
      * @param stageSimilarity   A {@code DevStageSimilarity} that is the group of stages of this call.
-     * @param taxonId           A {@code String} that is the ID of the taxon of this call.
-     * @param omaNodeId         A {@code String} that is the ID of the OMA node of 
+     * @param taxonId           An {@code Integer} that is the ID of the taxon of this call.
+     * @param omaNodeId         An {@code Integer} that is the ID of the OMA node of 
      *                          orthologous genes of this call.
      * @param orthologGeneIds   A {@code Collection} of {@code String}s that are the IDs of
      *                          the orthologous genes of this {@code omaNodeId}.
@@ -89,7 +89,7 @@ public class MultiSpeciesCall<T extends Call<?, ?>> {
      *                          of this {@code MultiSpeciesCall}.
      */
     public MultiSpeciesCall(AnatEntitySimilarity anatSimilarity, DevStageSimilarity stageSimilarity,
-            String taxonId, String omaNodeId, Collection<String> orthologousGeneIds, Collection<T> calls,
+            Integer taxonId, Integer omaNodeId, Collection<String> orthologousGeneIds, Collection<T> calls,
             BigDecimal conservationScore, ServiceFactory serviceFactory) {
         if (serviceFactory == null) {
             throw log.throwing(new IllegalArgumentException("A ServiceFactory must be provided."));
@@ -124,17 +124,17 @@ public class MultiSpeciesCall<T extends Call<?, ?>> {
     }
 
     /**
-     * @return  The {@code String} that is the ID of the taxon of this {@code MultiSpeciesCall}.
+     * @return  The {@code Integer} that is the ID of the taxon of this {@code MultiSpeciesCall}.
      */
-    public String getTaxonId() {
+    public Integer getTaxonId() {
         return taxonId;
     }
 
     /**
-     * @return  The {@code String} that is the ID of the OMA node of orthologous genes
+     * @return  The {@code Integer} that is the ID of the OMA node of orthologous genes
      *          of this {@code MultiSpeciesCall}.
      */
-    public String getOMANodeId() {
+    public Integer getOMANodeId() {
         return omaNodeId;
     }
 
@@ -164,7 +164,7 @@ public class MultiSpeciesCall<T extends Call<?, ?>> {
     /** 
      * Helper method to obtain IDs of species from orthologous gene IDs of this {@code MultiSpeciesCall}.
      * 
-     * @return  The {@code Set} of {@code String}s that are the IDs of the species of 
+     * @return  The {@code Set} of {@code Integer}s that are the IDs of the species of 
      *          orthologous genes of this {@code MultiSpeciesCall}.
      */
     public Set<Integer> getSpeciesIds() {

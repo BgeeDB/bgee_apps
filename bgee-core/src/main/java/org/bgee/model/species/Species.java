@@ -33,7 +33,7 @@ public class Species extends NamedEntity<Integer> {
     /**@see #getDataTypesByDataSourcesForAnnotation() */
     private Map<Source, Set<DataType>> dataTypesByDataSourcesForAnnotation;
 
-    private final String parentTaxonId;
+    private final Integer parentTaxonId;
     
     /**
      * 0-arg constructor private, at least an ID must be provided, see {@link #Species(String)}.
@@ -77,10 +77,10 @@ public class Species extends NamedEntity<Integer> {
      *                      {@code Species} (e.g., "sapiens" for human).
      * @param genomeVersion A {@code String} representing the genome version used for 
      *                      this {@code Species}.
-     * @param parentTaxonId A {@code String} representing the ID of the parent taxon of this species.
+     * @param parentTaxonId An {@code Integer} representing the ID of the parent taxon of this species.
      */
     public Species(Integer id, String name, String description, String genus, String speciesName,
-            String genomeVersion, String parentTaxonId) throws IllegalArgumentException {
+            String genomeVersion, Integer parentTaxonId) throws IllegalArgumentException {
         this(id, name, description, genus, speciesName, genomeVersion, parentTaxonId, null, null);
     }
     
@@ -124,7 +124,7 @@ public class Species extends NamedEntity<Integer> {
      *                      {@code Species} (e.g., "sapiens" for human).
      * @param genomeVersion A {@code String} representing the genome version used for 
      *                      this {@code Species}.
-     * @param parentTaxonId A {@code String} representing the ID of the parent taxon of this species.
+     * @param parentTaxonId An {@code Integer} representing the ID of the parent taxon of this species.
      * @param dataTypesByDataSourcesForData         A {@code Map} where keys are {@code Source}s 
      *                                              corresponding to data sources, the associated values 
      *                                              being a {@code Set} of {@code DataType}s corresponding
@@ -135,7 +135,7 @@ public class Species extends NamedEntity<Integer> {
      *                                              to data types of annotation data of this data source.
      */
     public Species(Integer id, String name, String description, String genus, String speciesName,
-            String genomeVersion, String parentTaxonId, Map<Source, Set<DataType>> dataTypesByDataSourcesForData, 
+            String genomeVersion, Integer parentTaxonId, Map<Source, Set<DataType>> dataTypesByDataSourcesForData, 
             Map<Source, Set<DataType>> dataTypesByDataSourcesForAnnotation) throws IllegalArgumentException {
         super(id, name, description);
         this.genus = genus;
@@ -196,9 +196,9 @@ public class Species extends NamedEntity<Integer> {
     }
     
     /**
-     * @return A {@code String} representing the ID of the parent Taxon of this species
+     * @return An {@code Integer} representing the ID of the parent Taxon of this species
      */
-    public String getParentTaxonId() {
+    public Integer getParentTaxonId() {
         return this.parentTaxonId;
     }
 

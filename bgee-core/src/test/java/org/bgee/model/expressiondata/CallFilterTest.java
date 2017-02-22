@@ -20,6 +20,7 @@ import org.bgee.model.expressiondata.baseelements.DataPropagation.PropagationSta
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
+import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
 import org.junit.Test;
 
@@ -67,11 +68,12 @@ public class CallFilterTest extends TestAncestor {
     public void shouldTest() {
         Collection<ExpressionCallData> callData = new HashSet<>();
         callData.add(new ExpressionCallData(DataType.EST, 2 /*presentHighSelfExpCount*/, 
-            0, 0, 0, 2 /*presentHighTotalCount*/, 0, 0, 0));
+            0, 0, 0, 0, 0, 0, 0, 2 /*presentHighTotalCount*/, 0, 0, 0, 0, null, null, null));
         callData.add(new ExpressionCallData(DataType.AFFYMETRIX, 0, 
-            1 /*presentLowSelfExpCount*/, 0, 0, 0, 1 /*presentLowTotalCount*/, 0, 0));
+            1 /*presentLowSelfExpCount*/, 0, 0, 0, 0, 0, 0, 0, 1 /*presentLowTotalCount*/,
+            0, 0, 0, null, null, null));
 
-        ExpressionCall call1 = new ExpressionCall("g1", new Condition("ae1", "ds1", "sp1"), true, 
+        ExpressionCall call1 = new ExpressionCall(new Gene("g1"), new Condition("ae1", "ds1", 1), true, 
             ExpressionSummary.EXPRESSED, SummaryQuality.GOLD, callData, new BigDecimal(125.00));
         
         // Test with no GeneFilter and ConditionFilters 
@@ -106,8 +108,9 @@ public class CallFilterTest extends TestAncestor {
 
         callData.clear();
         callData.add(new ExpressionCallData(DataType.AFFYMETRIX, 0, 
-            1 /*presentLowSelfExpCount*/, 0, 0, 0, 1 /*presentLowTotalCount*/, 0, 0));
-        ExpressionCall call2 = new ExpressionCall("g1", new Condition("ae1", "ds1", "sp1"),
+            1 /*presentLowSelfExpCount*/, 0, 0, 0, 0, 0, 0, 0, 1 /*presentLowTotalCount*/,
+            0, 0, 0, null, null, null));
+        ExpressionCall call2 = new ExpressionCall(new Gene("g1"), new Condition("ae1", "ds1", 1),
                 true, ExpressionSummary.EXPRESSED, SummaryQuality.SILVER, callData, new BigDecimal(125.00));
         callFilter = new ExpressionCallFilter(null, null, null, SummaryQuality.GOLD,
             ExpressionSummary.EXPRESSED, new DataPropagation());

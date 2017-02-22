@@ -56,9 +56,9 @@ public class OntologyTest extends TestAncestor {
         AnatEntity ae2p = new AnatEntity("UBERON:0002p", "Bprime", "Bprime description"); 
         AnatEntity ae3 = new AnatEntity("UBERON:0003", "C", "C description"); 
         Set<AnatEntity> elements = new HashSet<>(Arrays.asList(ae1, ae2, ae2p, ae3));
-        Set<RelationTO> relations = this.getAnatEntityRelationTOs();
+        Set<RelationTO<String>> relations = this.getAnatEntityRelationTOs();
 
-        Ontology<AnatEntity> ontology = new Ontology<AnatEntity>("sp1",
+        Ontology<AnatEntity, String> ontology = new Ontology<>(1,
                 elements, relations, ALL_RELATIONS, serviceFactory, AnatEntity.class);
         
         Set<AnatEntity> ancestors = ontology.getAncestors(ae3);
@@ -100,7 +100,7 @@ public class OntologyTest extends TestAncestor {
         AnatEntity ae1 = new AnatEntity("UBERON:0001"), ae2 = new AnatEntity("UBERON:0002"), 
                 ae2p = new AnatEntity("UBERON:0002p"), ae3 = new AnatEntity("UBERON:0003"); 
         Set<AnatEntity> elements = new HashSet<>(Arrays.asList(ae1, ae2, ae2p, ae3));
-        Set<RelationTO> relations = this.getAnatEntityRelationTOs();
+        Set<RelationTO<String>> relations = this.getAnatEntityRelationTOs();
 
         Set<TaxonConstraint> taxonConstraint = new HashSet<>(Arrays.asList(
                     // UBERON:0001 sp1/sp2/sp3 --------------------
@@ -109,12 +109,12 @@ public class OntologyTest extends TestAncestor {
                     // |                    /                      |
                     // UBERON:0003 sp1/sp2 ------------------------
                     new TaxonConstraint("UBERON:0001", null),
-                    new TaxonConstraint("UBERON:0002", "sp1"),
-                    new TaxonConstraint("UBERON:0002", "sp2"),
-                    new TaxonConstraint("UBERON:0002p", "sp2"),
-                    new TaxonConstraint("UBERON:0002p", "sp3"),
-                    new TaxonConstraint("UBERON:0003", "sp1"),
-                    new TaxonConstraint("UBERON:0003", "sp2")));
+                    new TaxonConstraint("UBERON:0002", 1),
+                    new TaxonConstraint("UBERON:0002", 2),
+                    new TaxonConstraint("UBERON:0002p", 2),
+                    new TaxonConstraint("UBERON:0002p", 3),
+                    new TaxonConstraint("UBERON:0003", 1),
+                    new TaxonConstraint("UBERON:0003", 2)));
         
         Set<TaxonConstraint> relationTaxonConstraint = new HashSet<>(Arrays.asList(
                     // UBERON:0001 ------------------
@@ -122,20 +122,20 @@ public class OntologyTest extends TestAncestor {
                     // UBERON:0002   UBERON:0002p   | sp2/sp1 (indirect)
                     // | sp1       / sp2            |
                     // UBERON:0003 ------------------
-                    new TaxonConstraint("1", "sp1"),
-                    new TaxonConstraint("1", "sp2"),
-                    new TaxonConstraint("2", "sp2"),
-                    new TaxonConstraint("3", "sp1"),
-                    new TaxonConstraint("4", "sp2"),
-                    new TaxonConstraint("5", "sp1"),
-                    new TaxonConstraint("5", "sp2")));
+                    new TaxonConstraint("1", 1),
+                    new TaxonConstraint("1", 2),
+                    new TaxonConstraint("2", 2),
+                    new TaxonConstraint("3", 1),
+                    new TaxonConstraint("4", 2),
+                    new TaxonConstraint("5", 1),
+                    new TaxonConstraint("5", 2)));
 
-        MultiSpeciesOntology<AnatEntity> ontology = new MultiSpeciesOntology<AnatEntity>(
-                Arrays.asList("sp1", "sp2", "sp3"), elements, relations,
+        MultiSpeciesOntology<AnatEntity, String> ontology = new MultiSpeciesOntology<>(
+                Arrays.asList(1, 2, 3), elements, relations,
                 taxonConstraint, relationTaxonConstraint, ALL_RELATIONS, 
                 mockFact, AnatEntity.class);
 
-        List<String> speciesIds = Arrays.asList("sp1");
+        List<Integer> speciesIds = Arrays.asList(1);
         Set<AnatEntity> ancestors = ontology.getAncestors(ae3, ALL_RELATIONS, false, speciesIds);
         Set<AnatEntity> expAncestors = new HashSet<>(Arrays.asList(ae1, ae2));
         assertEquals("Incorrects ancestors", expAncestors, ancestors);
@@ -148,12 +148,12 @@ public class OntologyTest extends TestAncestor {
         expAncestors = new HashSet<>(Arrays.asList(ae1, ae2));
         assertEquals("Incorrects ancestors", expAncestors, ancestors);
 
-        speciesIds = Arrays.asList("sp2");
+        speciesIds = Arrays.asList(2);
         ancestors = ontology.getAncestors(ae3, ISA_RELATIONS, false, speciesIds);
         expAncestors = new HashSet<>(Arrays.asList(ae1, ae2p));
         assertEquals("Incorrects ancestors", expAncestors, ancestors);
 
-        speciesIds = Arrays.asList("sp3");
+        speciesIds = Arrays.asList(3);
         try {
             ancestors = ontology.getAncestors(ae3, ALL_RELATIONS, false, speciesIds);
             fail("Should fail due to element not in provided species");
@@ -178,14 +178,14 @@ public class OntologyTest extends TestAncestor {
         AnatEntity ae2p = new AnatEntity("UBERON:0002p", "Bprime", "Bprime description"); 
         AnatEntity ae3 = new AnatEntity("UBERON:0003", "C", "C description"); 
         Set<AnatEntity> elements = new HashSet<>(Arrays.asList(ae1, ae2, ae2p, ae3));
-        Set<RelationTO> relations = this.getAnatEntityRelationTOs();
+        Set<RelationTO<String>> relations = this.getAnatEntityRelationTOs();
         // UBERON:0001 ------------------
         // | is_a       \ dev_from      |
         // UBERON:0002   UBERON:0002p   | is_a (indirect)
         // | is_a       / is_a          |
         // UBERON:0003 ------------------
 
-        OntologyBase<AnatEntity> ontology = new Ontology<>("sp1", elements, 
+        OntologyBase<AnatEntity, String> ontology = new Ontology<>(1, elements, 
                 relations, ALL_RELATIONS, mockFact, AnatEntity.class);
         
         assertEquals("Incorrects descendants", new HashSet<>(Arrays.asList(ae2, ae2p, ae3)),
@@ -217,7 +217,7 @@ public class OntologyTest extends TestAncestor {
         TaxonConstraintService tcService = mock(TaxonConstraintService.class);
         when(mockFact.getTaxonConstraintService()).thenReturn(tcService);
 
-        Set<String> speciesIds = new HashSet<>(Arrays.asList("sp2"));
+        Set<Integer> speciesIds = new HashSet<>(Arrays.asList(2));
         // Get stage taxon constraints
         Set<TaxonConstraint> taxonConstraint = new HashSet<>(Arrays.asList(
         // stage1 sp1/sp2 -------
@@ -227,29 +227,29 @@ public class OntologyTest extends TestAncestor {
         // stage3 sp1             stage3p sp2
                 new TaxonConstraint("stage1", null),
                 new TaxonConstraint("stage2", null),
-                new TaxonConstraint("stage2p", "sp2"),
-                new TaxonConstraint("stage3p", "sp2")));
+                new TaxonConstraint("stage2p", 2),
+                new TaxonConstraint("stage3p", 2)));
 
         DevStage ds1 = new DevStage("stage1"), ds2 = new DevStage("stage2"), 
                 ds3 = new DevStage("stage3"), ds2p = new DevStage("stage2p"), 
                 ds3p = new DevStage("stage3p"); 
 
         Set<DevStage> elements = new HashSet<>(Arrays.asList(ds1, ds2, ds2p, ds3, ds3p));
-        Set<RelationTO> relations = new HashSet<>(Arrays.asList(
+        Set<RelationTO<String>> relations = new HashSet<>(Arrays.asList(
                 // stage1 -----------------------------------
                 // | is_a  \                    \ dev_from   \   
                 // stage2   |                    stage2p      | is_a (indirect)
                 // | is_a  / is_a (indirect)     | is_a      /
                 // stage3                        stage3p ----   
-                new RelationTO("1", "stage2", "stage1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-                new RelationTO("2", "stage3", "stage2", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-                new RelationTO("3", "stage3", "stage1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT),
+                new RelationTO<>(1, "stage2", "stage1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO<>(2, "stage3", "stage2", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO<>(3, "stage3", "stage1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT),
 
-                new RelationTO("4", "stage2p", "stage1", RelationTO.RelationType.DEVELOPSFROM, RelationStatus.DIRECT),
-                new RelationTO("5", "stage3p", "stage2p", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-                new RelationTO("6", "stage3p", "stage1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT)));
+                new RelationTO<>(4, "stage2p", "stage1", RelationTO.RelationType.DEVELOPSFROM, RelationStatus.DIRECT),
+                new RelationTO<>(5, "stage3p", "stage2p", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO<>(6, "stage3p", "stage1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT)));
 
-        MultiSpeciesOntology<DevStage> ontology = new MultiSpeciesOntology<>(speciesIds,
+        MultiSpeciesOntology<DevStage, String> ontology = new MultiSpeciesOntology<>(speciesIds,
                 elements, relations, taxonConstraint, null, ALL_RELATIONS, mockFact, DevStage.class);
 
         Set<DevStage> descendants = ontology.getDescendants(ds1, ISA_RELATIONS);
@@ -303,10 +303,10 @@ public class OntologyTest extends TestAncestor {
         AnatEntity ae2 = new AnatEntity("UBERON:0002", "B", "B description"); 
 
         Set<AnatEntity> elements = new HashSet<>(Arrays.asList(ae1, ae2));
-        Set<RelationTO> relations = this.getAnatEntityRelationTOs();
+        Set<RelationTO<String>> relations = this.getAnatEntityRelationTOs();
 
         ServiceFactory mockFact = mock(ServiceFactory.class);
-        OntologyBase<AnatEntity> ontology = new Ontology<>("sp1", elements,
+        OntologyBase<AnatEntity, String> ontology = new Ontology<>(1, elements,
                 relations, ALL_RELATIONS, mockFact, AnatEntity.class);
         
         assertEquals("Incorrect element", ae1, ontology.getElement("UBERON:0001"));
@@ -328,26 +328,26 @@ public class OntologyTest extends TestAncestor {
         // |                    /                      |
         // UBERON:0003 sp1/sp2 ------------------------
 
-        List<String> speciesIds = Arrays.asList("sp1", "sp2", "sp3");
+        List<Integer> speciesIds = Arrays.asList(1, 2, 3);
         Set<TaxonConstraint> relationTaxonConstraint = new HashSet<>(
-                Arrays.asList(new TaxonConstraint("rel1", "sp3")));
+                Arrays.asList(new TaxonConstraint("rel1", 3)));
 
         Set<TaxonConstraint> taxonConstraints = new HashSet<>(Arrays.asList(
                 new TaxonConstraint("UBERON:0001", null),
-                new TaxonConstraint("UBERON:0002", "sp1"),
-                new TaxonConstraint("UBERON:0002", "sp2"),
-                new TaxonConstraint("UBERON:0002p", "sp2"),
-                new TaxonConstraint("UBERON:0002p", "sp3"),
-                new TaxonConstraint("UBERON:0003", "sp2"),
-                new TaxonConstraint("UBERON:0003", "sp3")));
+                new TaxonConstraint("UBERON:0002", 1),
+                new TaxonConstraint("UBERON:0002", 2),
+                new TaxonConstraint("UBERON:0002p", 2),
+                new TaxonConstraint("UBERON:0002p", 3),
+                new TaxonConstraint("UBERON:0003", 2),
+                new TaxonConstraint("UBERON:0003", 3)));
 
         AnatEntity ae1 = new AnatEntity("UBERON:0001"), ae2 = new AnatEntity("UBERON:0002"), 
                 ae2p = new AnatEntity("UBERON:0002p"), ae3 = new AnatEntity("UBERON:0003"); 
 
         Set<AnatEntity> elements = new HashSet<>(Arrays.asList(ae1, ae2, ae2p, ae3));
-        Set<RelationTO> relations = this.getAnatEntityRelationTOs();
+        Set<RelationTO<String>> relations = this.getAnatEntityRelationTOs();
 
-        MultiSpeciesOntology<AnatEntity> ontology = new MultiSpeciesOntology<>(speciesIds,
+        MultiSpeciesOntology<AnatEntity,String> ontology = new MultiSpeciesOntology<>(speciesIds,
                 elements, relations, taxonConstraints, relationTaxonConstraint, ALL_RELATIONS, 
                 mockFact, AnatEntity.class);
 
@@ -355,7 +355,7 @@ public class OntologyTest extends TestAncestor {
         assertEquals("Incorrect element", expectedAE, ontology.getElements());
 
         expectedAE = new HashSet<>(Arrays.asList(ae1, ae2p, ae3));
-        assertEquals("Incorrect element", expectedAE, ontology.getElements(Arrays.asList("sp3")));
+        assertEquals("Incorrect element", expectedAE, ontology.getElements(Arrays.asList(3)));
     }
 
     /**
@@ -367,7 +367,7 @@ public class OntologyTest extends TestAncestor {
         TaxonConstraintService tcService = mock(TaxonConstraintService.class);
         when(mockFact.getTaxonConstraintService()).thenReturn(tcService);
 
-        Set<String> speciesIds = new HashSet<>(Arrays.asList("sp2"));
+        Set<Integer> speciesIds = new HashSet<>(Arrays.asList(2));
         // Get stage taxon constraints
         when(tcService.loadDevStageTaxonConstraintBySpeciesIds(speciesIds))
             .thenReturn( // stage1 sp1/sp2 ---
@@ -380,20 +380,20 @@ public class OntologyTest extends TestAncestor {
                     new HashSet<>(Arrays.asList(
                             new TaxonConstraint("stage1", null),
                             new TaxonConstraint("stage2", null),
-                            new TaxonConstraint("stage3", "sp1"),
-                            new TaxonConstraint("stage4", "sp1"),
-                            new TaxonConstraint("stage5", "sp2"),
-                            new TaxonConstraint("stage6", "sp2"))).stream());
+                            new TaxonConstraint("stage3", 1),
+                            new TaxonConstraint("stage4", 1),
+                            new TaxonConstraint("stage5", 2),
+                            new TaxonConstraint("stage6", 2))).stream());
 
         DevStage ds1 = new DevStage("stage1"), ds2 = new DevStage("stage2"), 
                 ds3 = new DevStage("stage3"), ds4 = new DevStage("stage4"), 
                 ds5 = new DevStage("stage5"), ds6 = new DevStage("stage6"); 
 
         Set<DevStage> elements = new HashSet<>(Arrays.asList(ds1, ds2, ds3, ds4, ds5, ds6));
-        RelationTO rel1 = new RelationTO("3", "stage4", "stage3", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT);
-        RelationTO rel2 = new RelationTO("4", "stage3", "stage2", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT);
-        RelationTO rel3 = new RelationTO("6", "stage2", "stage1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT);
-        Collection<RelationTO> relations = Arrays.asList(
+        RelationTO<String> rel1 = new RelationTO<>(3, "stage4", "stage3", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT);
+        RelationTO<String> rel2 = new RelationTO<>(4, "stage3", "stage2", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT);
+        RelationTO<String> rel3 = new RelationTO<>(6, "stage2", "stage1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT);
+        Collection<RelationTO<String>> relations = Arrays.asList(
                 // stage1 ---
                 // | is_a     \ dev_from   
                 // stage2      stage5
@@ -402,21 +402,21 @@ public class OntologyTest extends TestAncestor {
                 // | is_a
                 // stage4   
             rel2,
-            new RelationTO("1", "stage4", "stage1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT),
-            new RelationTO("2", "stage4", "stage2", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT),
+            new RelationTO<>(1, "stage4", "stage1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT),
+            new RelationTO<>(2, "stage4", "stage2", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT),
             rel1,
-            new RelationTO("5", "stage3", "stage1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT),
-            new RelationTO("8", "stage6", "stage1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT),
+            new RelationTO<>(5, "stage3", "stage1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT),
+            new RelationTO<>(8, "stage6", "stage1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT),
             rel3,
-            new RelationTO("7", "stage6", "stage5", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-            new RelationTO("9", "stage5", "stage1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT));
+            new RelationTO<>(7, "stage6", "stage5", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+            new RelationTO<>(9, "stage5", "stage1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT));
 
-        MultiSpeciesOntology<DevStage> ontology = new MultiSpeciesOntology<>(speciesIds,
+        MultiSpeciesOntology<DevStage,String> ontology = new MultiSpeciesOntology<>(speciesIds,
                 elements, relations, null, null, ALL_RELATIONS, mockFact, DevStage.class);
 
-        List<RelationTO> actualOrderedRels = ontology.getOrderedRelations(ds4);
+        List<RelationTO<String>> actualOrderedRels = ontology.getOrderedRelations(ds4);
         
-        List<RelationTO> expectedOrderedRels = Arrays.asList(rel1, rel2, rel3);
+        List<RelationTO<String>> expectedOrderedRels = Arrays.asList(rel1, rel2, rel3);
         
         assertEquals("Incorrect count of relations", expectedOrderedRels.size(), actualOrderedRels.size());
         for (int i = 0; i < expectedOrderedRels.size(); i++) {
@@ -432,10 +432,10 @@ public class OntologyTest extends TestAncestor {
     public void shouldGetOrderedAncestors() {
         ServiceFactory mockFact = mock(ServiceFactory.class);
 
-        Set<String> speciesIds = new HashSet<>(Arrays.asList("sp1", "sp2", "sp3"));
+        Set<Integer> speciesIds = new HashSet<>(Arrays.asList(1, 2, 3));
 
-        Taxon tax1 = new Taxon("taxId1"), tax2 = new Taxon("taxId2"), tax3 = new Taxon("taxId3"), 
-            tax10 = new Taxon("taxId10"), tax100 = new Taxon("taxId100"); 
+        Taxon tax1 = new Taxon(1), tax2 = new Taxon(2), tax3 = new Taxon(3), 
+            tax10 = new Taxon(10), tax100 = new Taxon(100); 
         // tax100--
         // |        \
         // tax10     \
@@ -445,15 +445,15 @@ public class OntologyTest extends TestAncestor {
         // sp1   sp2   sp3
         
         Set<Taxon> elements = new HashSet<>(Arrays.asList(tax1, tax2, tax3, tax10, tax100));
-        RelationTO rel1 = new RelationTO("1", "taxId1", "taxId10", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT);
-        RelationTO rel1b = new RelationTO("1b", "taxId1", "taxId100", RelationTO.RelationType.DEVELOPSFROM, RelationStatus.INDIRECT);
-        RelationTO rel2 = new RelationTO("2", "taxId2", "taxId10", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT);
-        RelationTO rel2b = new RelationTO("2b", "taxId2", "taxId100", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT);
-        RelationTO rel3 = new RelationTO("3", "taxId3", "taxId100", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT);
-        RelationTO rel4 = new RelationTO("4", "taxId10", "taxId100", RelationTO.RelationType.DEVELOPSFROM, RelationStatus.DIRECT);
-        Set<RelationTO> relations = new HashSet<>(Arrays.asList(rel1, rel1b, rel2, rel2b, rel3, rel4));
+        RelationTO<Integer> rel1 = new RelationTO<>(1, 1, 10, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT);
+        RelationTO<Integer> rel1b = new RelationTO<>(11, 1, 100, RelationTO.RelationType.DEVELOPSFROM, RelationStatus.INDIRECT);
+        RelationTO<Integer> rel2 = new RelationTO<>(2, 2, 10, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT);
+        RelationTO<Integer> rel2b = new RelationTO<>(21, 2, 100, RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT);
+        RelationTO<Integer> rel3 = new RelationTO<>(3, 3, 100, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT);
+        RelationTO<Integer> rel4 = new RelationTO<>(4, 10, 100, RelationTO.RelationType.DEVELOPSFROM, RelationStatus.DIRECT);
+        Set<RelationTO<Integer>> relations = new HashSet<>(Arrays.asList(rel1, rel1b, rel2, rel2b, rel3, rel4));
 
-        MultiSpeciesOntology<Taxon> ontology = new MultiSpeciesOntology<>(speciesIds,
+        MultiSpeciesOntology<Taxon, Integer> ontology = new MultiSpeciesOntology<>(speciesIds,
                 elements, relations, null, null, ALL_RELATIONS, mockFact, Taxon.class);
         assertEquals("Incorrect ordered ancestors",
             Arrays.asList(tax10, tax100), ontology.getOrderedAncestors(tax1));
@@ -471,7 +471,7 @@ public class OntologyTest extends TestAncestor {
             Arrays.asList(tax10), ontology.getOrderedAncestors(tax1, ISA_RELATIONS));
 
         try {
-            ontology.getOrderedAncestors(new Taxon("taxIdX"));
+            ontology.getOrderedAncestors(new Taxon(-1));
             fail("Should throws an exception");
         } catch (IllegalArgumentException e) {
             // Test passed
@@ -485,10 +485,10 @@ public class OntologyTest extends TestAncestor {
     public void shouldGetDescendantsByLevel() {
         ServiceFactory mockFact = mock(ServiceFactory.class);
 
-        Set<String> speciesIds = new HashSet<>(Arrays.asList("sp1", "sp2", "sp3"));
+        Set<Integer> speciesIds = new HashSet<>(Arrays.asList(1, 2, 3));
 
-        Taxon tax1 = new Taxon("taxId1"), tax2 = new Taxon("taxId2"), tax3 = new Taxon("taxId3"), 
-            tax10 = new Taxon("taxId10"), tax100 = new Taxon("taxId100"); 
+        Taxon tax1 = new Taxon(1), tax2 = new Taxon(2), tax3 = new Taxon(3), 
+            tax10 = new Taxon(10), tax100 = new Taxon(100); 
         // tax100--
         // |        \
         // tax10     \
@@ -498,15 +498,15 @@ public class OntologyTest extends TestAncestor {
         // sp1   sp2   sp3
         
         Set<Taxon> elements = new HashSet<>(Arrays.asList(tax1, tax2, tax3, tax10, tax100));
-        RelationTO rel1 = new RelationTO("1", "taxId1", "taxId10", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT);
-        RelationTO rel1b = new RelationTO("1b", "taxId1", "taxId100", RelationTO.RelationType.DEVELOPSFROM, RelationStatus.INDIRECT);
-        RelationTO rel2 = new RelationTO("2", "taxId2", "taxId10", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT);
-        RelationTO rel2b = new RelationTO("2b", "taxId2", "taxId100", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT);
-        RelationTO rel3 = new RelationTO("3", "taxId3", "taxId100", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT);
-        RelationTO rel4 = new RelationTO("4", "taxId10", "taxId100", RelationTO.RelationType.DEVELOPSFROM, RelationStatus.DIRECT);
-        Set<RelationTO> relations = new HashSet<>(Arrays.asList(rel1, rel1b, rel2, rel2b, rel3, rel4));
+        RelationTO<Integer> rel1 = new RelationTO<>(1, 1, 10, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT);
+        RelationTO<Integer> rel1b = new RelationTO<>(11, 1, 100, RelationTO.RelationType.DEVELOPSFROM, RelationStatus.INDIRECT);
+        RelationTO<Integer> rel2 = new RelationTO<>(2, 2, 10, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT);
+        RelationTO<Integer> rel2b = new RelationTO<>(21, 2, 100, RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT);
+        RelationTO<Integer> rel3 = new RelationTO<>(3, 3, 100, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT);
+        RelationTO<Integer> rel4 = new RelationTO<>(4, 10, 100, RelationTO.RelationType.DEVELOPSFROM, RelationStatus.DIRECT);
+        Set<RelationTO<Integer>> relations = new HashSet<>(Arrays.asList(rel1, rel1b, rel2, rel2b, rel3, rel4));
 
-        MultiSpeciesOntology<Taxon> ontology = new MultiSpeciesOntology<>(speciesIds,
+        MultiSpeciesOntology<Taxon, Integer> ontology = new MultiSpeciesOntology<>(speciesIds,
                 elements, relations, null, null, ALL_RELATIONS, mockFact, Taxon.class);
         assertEquals("Incorrect descendants",
             new HashSet<>(), ontology.getDescendantsUntilSubLevel(tax1, 1));
@@ -525,7 +525,7 @@ public class OntologyTest extends TestAncestor {
         }
 
         try {
-            ontology.getDescendantsUntilSubLevel(new Taxon("taxIdX"), 1);
+            ontology.getDescendantsUntilSubLevel(new Taxon(-1), 1);
             fail("Should throws an exception");
         } catch (IllegalArgumentException e) {
             // Test passed because taxon ID not found
@@ -537,19 +537,19 @@ public class OntologyTest extends TestAncestor {
      * 
      * @return  The {@code Set} of {@code RelationTO}s that are the relations to be used for tests.
      */
-    private Set<RelationTO> getAnatEntityRelationTOs() {
-        Set<RelationTO> relations = new HashSet<>(Arrays.asList(
+    private Set<RelationTO<String>> getAnatEntityRelationTOs() {
+        Set<RelationTO<String>> relations = new HashSet<>(Arrays.asList(
                 // UBERON:0001 ------------------
                 // | is_a       \ dev_from      |
                 // UBERON:0002   UBERON:0002p   | is_a (indirect)
                 // | is_a       / is_a          |
                 // UBERON:0003 ------------------
-                new RelationTO("1", "UBERON:0002", "UBERON:0001", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-                new RelationTO("2", "UBERON:0002p", "UBERON:0001", RelationTO.RelationType.DEVELOPSFROM, RelationStatus.DIRECT),
-                new RelationTO("3", "UBERON:0003", "UBERON:0002", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-                new RelationTO("4", "UBERON:0003", "UBERON:0002p", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-                new RelationTO("5", "UBERON:0003", "UBERON:0001", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT),
-                new RelationTO("6", "totoA", "totoB", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT)));
+                new RelationTO<>(1, "UBERON:0002", "UBERON:0001", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO<>(2, "UBERON:0002p", "UBERON:0001", RelationTO.RelationType.DEVELOPSFROM, RelationStatus.DIRECT),
+                new RelationTO<>(3, "UBERON:0003", "UBERON:0002", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO<>(4, "UBERON:0003", "UBERON:0002p", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO<>(5, "UBERON:0003", "UBERON:0001", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT),
+                new RelationTO<>(6, "totoA", "totoB", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT)));
         return relations;
     }
 }

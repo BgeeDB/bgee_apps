@@ -469,8 +469,8 @@ public class InsertTaxa extends MySQLDAOUser {
             //we retrieve the Integer value of the ID used on the NCBI website, 
             //because this is how we store this ID in the database. But we convert it 
             //to a String because the Bgee classes only accept IDs as Strings.
-            String parentTaxonId = String.valueOf(OntologyUtils.getTaxNcbiId(
-                    this.taxOntWrapper.getIdentifier(parents.iterator().next())));
+            Integer parentTaxonId = OntologyUtils.getTaxNcbiId(
+                    this.taxOntWrapper.getIdentifier(parents.iterator().next()));
             
             String commonName  = (String) species.get(SPECIES_COMMON_NAME_KEY);
             String genus       = (String) species.get(SPECIES_GENUS_KEY);
@@ -492,12 +492,10 @@ public class InsertTaxa extends MySQLDAOUser {
                         "Missing path to genome version for species: " + commonName));
             }
             Integer genomeSpeciesId = (Integer) species.get(SPECIES_GENOME_ID_KEY);
-            String fakeGeneIdPrefix = (String) species.get(SPECIES_FAKE_GENE_PREFIX_KEY);
+//            String fakeGeneIdPrefix = (String) species.get(SPECIES_FAKE_GENE_PREFIX_KEY);
             
-            speciesTOs.add(new SpeciesTO(String.valueOf(speciesId), commonName, genus, 
-                    speciesName, parentTaxonId, genomeFilePath, genomeVersion,
-                    (genomeSpeciesId == null ? null: String.valueOf(genomeSpeciesId)), 
-                    fakeGeneIdPrefix));
+            speciesTOs.add(new SpeciesTO(speciesId, commonName, genus, 
+                    speciesName, parentTaxonId, genomeFilePath, genomeVersion, genomeSpeciesId));
         }
         if (speciesTOs.size() != allSpecies.size()) {
             throw log.throwing(new IllegalStateException("The taxonomy ontology " +
@@ -600,8 +598,7 @@ public class InsertTaxa extends MySQLDAOUser {
             //we retrieve the Integer value of the ID used on the NCBI website, 
             //because this is how we store this ID in the database. But we convert it 
             //to a String because the Bgee classes only accept IDs as Strings.
-            String taxonId = String.valueOf(OntologyUtils.getTaxNcbiId(
-                    this.taxOntWrapper.getIdentifier(taxon)));
+            Integer taxonId = OntologyUtils.getTaxNcbiId(this.taxOntWrapper.getIdentifier(taxon));
             String commonName = this.getCommonNameSynonym(taxon);
             String scientificName = this.taxOntWrapper.getLabel(taxon);
             Map<String, Integer> taxonParams = nestedSetModelParams.get(taxon);

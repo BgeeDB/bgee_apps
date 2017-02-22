@@ -69,7 +69,7 @@ public class ConditionUtilsTest extends TestAncestor {
         String devStageId4 = "stage4";
         DevStage devStage4 = new DevStage(devStageId4);
 
-        String speciesId = "9606";
+        Integer speciesId = 9606;
         
         Condition cond1 = new Condition(anatEntityId1, devStageId1, speciesId);
         Condition cond2 = new Condition(anatEntityId2, devStageId2, speciesId);
@@ -96,15 +96,15 @@ public class ConditionUtilsTest extends TestAncestor {
         
         //suppress warning as we cannot specify generic type for a mock
         @SuppressWarnings("unchecked")
-        Ontology<AnatEntity> anatEntityOnt = mock(Ontology.class);
+        Ontology<AnatEntity, String> anatEntityOnt = mock(Ontology.class);
         @SuppressWarnings("unchecked")
-        Ontology<DevStage> devStageOnt = mock(Ontology.class);
+        Ontology<DevStage, String> devStageOnt = mock(Ontology.class);
         
-        when(ontService.getAnatEntityOntology("9606", new HashSet<>(Arrays.asList(
+        when(ontService.getAnatEntityOntology(9606, new HashSet<>(Arrays.asList(
                 anatEntityId1, anatEntityId2, anatEntityId3, anatEntityId4)), 
                 EnumSet.of(RelationType.ISA_PARTOF), false, false))
         .thenReturn(anatEntityOnt);
-        when(ontService.getDevStageOntology("9606", new HashSet<>(Arrays.asList(
+        when(ontService.getDevStageOntology(9606, new HashSet<>(Arrays.asList(
                 devStageId1, devStageId2, devStageId3, devStageId4)), false, false))
         .thenReturn(devStageOnt);
         
@@ -205,7 +205,7 @@ public class ConditionUtilsTest extends TestAncestor {
         //check that an Exception is correctly thrown if a condition used was not provided at instantiation
         try {
             this.conditionUtils.isConditionMorePrecise(this.conditions.get(0), 
-                    new Condition("test1", "test2", "sp3"));
+                    new Condition("test1", "test2", 3));
             //test fail
             fail("An exception should be thrown when a Condition was not provided at instantiation.");
         } catch (IllegalArgumentException e) {

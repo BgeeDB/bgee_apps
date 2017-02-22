@@ -67,7 +67,7 @@ public class ExecutionTime extends CallUser {
                     expectedArgLengthSingleSpecies + " arguments, " + args.length + " provided."));
         }
 
-        List<String> speciesIds = CommandRunner.parseListArgument(args[0]);
+        List<Integer> speciesIds = CommandRunner.parseListArgumentAsInt(args[0]);
 
         ExecutionTime myApp = new ExecutionTime();
         myApp.calculateExecutionTime(speciesIds);
@@ -75,10 +75,10 @@ public class ExecutionTime extends CallUser {
         log.exit();
     }
 
-    private void calculateExecutionTime (List<String> speciesIds) {
+    private void calculateExecutionTime (List<Integer> speciesIds) {
         log.entry(speciesIds);
 
-        Set<String> setSpecies = new HashSet<String>(
+        Set<Integer> setSpecies = new HashSet<>(
                 BgeeDBUtils.checkAndGetSpeciesIds(speciesIds, this.getSpeciesDAO()));
 
 //        // No propagation
@@ -154,7 +154,7 @@ public class ExecutionTime extends CallUser {
         log.exit();
     }
 
-    private Collection<ExpressionCallTO> getExpressionCallsByApp(Set<String> speciesIds, 
+    private Collection<ExpressionCallTO> getExpressionCallsByApp(Set<Integer> speciesIds, 
             boolean isIncludeSubstructures, boolean isIncludeSubStages) {
         log.entry(speciesIds, isIncludeSubstructures, isIncludeSubStages);
 
@@ -207,7 +207,7 @@ public class ExecutionTime extends CallUser {
         return log.exit(returnExprTOs);
     }
 
-    private Collection<ExpressionCallTO> getExpressionCallsBySql(Set<String> speciesIds, 
+    private Collection<ExpressionCallTO> getExpressionCallsBySql(Set<Integer> speciesIds, 
             boolean isIncludeSubstructures, boolean isIncludeSubStages) {
         log.entry(speciesIds, isIncludeSubstructures, isIncludeSubStages);
 

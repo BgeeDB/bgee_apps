@@ -21,6 +21,8 @@ import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressio
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.ComparisonFactor;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.DiffExprCallType;
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO;
+import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO.CallDirection;
+import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO.CallQuality;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.GlobalExpressionToExpressionTO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.GlobalNoExpressionToNoExpressionTO;
@@ -483,12 +485,14 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreExperimentExpressionTOEqual() {
-        ExperimentExpressionTO to1 = new ExperimentExpressionTO(1, "1", 2, 3, 4, 5, 6);
-        ExperimentExpressionTO to2 = new ExperimentExpressionTO(1, "1", 2, 3, 4, 5, 6);
+        ExperimentExpressionTO to1 = new ExperimentExpressionTO(1, "1", 2, 3, 4, 5,
+            CallQuality.HIGH, CallDirection.ABSENT);
+        ExperimentExpressionTO to2 = new ExperimentExpressionTO(1, "1", 2, 3, 4, 5,
+            CallQuality.HIGH, CallDirection.ABSENT);
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
-        to2 = new ExperimentExpressionTO(1, "1", 2, 3, 4, 999, 6);
+        to2 = new ExperimentExpressionTO(1, "1", 2, 3, 4, 999, CallQuality.HIGH, CallDirection.ABSENT);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertFalse(TOComparator.areTOsEqual(to1, to2, false));
     }

@@ -49,7 +49,7 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
     }
     
     @Override
-    public SpeciesTOResultSet getSpeciesByIds(Set<String> speciesIds) throws DAOException {
+    public SpeciesTOResultSet getSpeciesByIds(Set<Integer> speciesIds) throws DAOException {
         log.entry(speciesIds);
         
         String sql = this.generateSelectClause(this.getAttributes(), "species");
@@ -68,7 +68,7 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             if (speciesIds != null && speciesIds.size() > 0) {
-                stmt.setStringsToIntegers(1, speciesIds, true);
+                stmt.setIntegers(1, speciesIds, true);
             }  
             return log.exit(new MySQLSpeciesTOResultSet(stmt));
         } catch (SQLException e) {

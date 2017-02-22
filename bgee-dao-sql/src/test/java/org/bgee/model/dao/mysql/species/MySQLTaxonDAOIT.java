@@ -179,7 +179,7 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
         
         this.useSelectDB();
         
-        Set<String> speciesIds = new HashSet<String>();
+        Set<Integer> speciesIds = new HashSet<>();
         boolean includeAncestors = false;
         
         MySQLTaxonDAO dao = new MySQLTaxonDAO(this.getMySQLDAOManager());
@@ -204,7 +204,7 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
                 
         // One species ID - includeAncestors = false
         // => find the LCA of the species
-        speciesIds.add("41");
+        speciesIds.add(41);
         includeAncestors = false;
         actualResults = dao.getLeastCommonAncestor(speciesIds, includeAncestors).getAllTOs();
         expectedTaxa = Arrays.asList(
@@ -227,7 +227,7 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
         // Severals species IDs (species are member of a same taxon leaf) - includeAncestors = true
         // => find the LCA of the species and its ancestors
         dao.setAttributes(Arrays.asList(TaxonDAO.Attribute.LCA, TaxonDAO.Attribute.LEVEL));
-        speciesIds.add("42");
+        speciesIds.add(42);
         actualResults = dao.getLeastCommonAncestor(speciesIds, includeAncestors).getAllTOs();
         expectedTaxa = Arrays.asList(
                 new TaxonTO(null, null, null, null, null, 3, true),
@@ -239,7 +239,7 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
         // Severals species IDs (species 31 is member of parent taxon) - includeAncestors = true
         // => find the LCA of the species and its ancestors
         dao.setAttributes(Arrays.asList(TaxonDAO.Attribute.ID));
-        speciesIds.add("31");
+        speciesIds.add(31);
         actualResults = dao.getLeastCommonAncestor(speciesIds, includeAncestors).getAllTOs();
         expectedTaxa = Arrays.asList(
                 new TaxonTO(111, null, null, null, null, null, null),

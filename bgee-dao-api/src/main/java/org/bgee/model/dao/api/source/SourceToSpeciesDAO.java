@@ -57,10 +57,10 @@ public interface SourceToSpeciesDAO extends DAO<SourceToSpeciesDAO.Attribute> {
     /**
      * Retrieve data sources to species used in Bgee from data source.
      * 
-     * @param dataSourceIds A {@code Collection} of {@code String}s that are the IDs of data sources
+     * @param dataSourceIds A {@code Collection} of {@code Integer}s that are the IDs of data sources
      *                      allowing to filter the data sources to species.
      *                      If {@code null} or empty, all data sources are used.
-     * @param speciesIds    A {@code Collection} of {@code String}s that are the IDs of species
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that are the IDs of species
      *                      allowing to filter the data sources to species.
      *                      If {@code null} or empty, all species are used.
      * @param dataTypes     A {@code Collection} of {@code DataType}s that are the data types
@@ -78,8 +78,8 @@ public interface SourceToSpeciesDAO extends DAO<SourceToSpeciesDAO.Attribute> {
      * @throws DAOException             If an error occurred when accessing the data source.
      * @throws IllegalStateException    If retrieved more than one source.
      */
-    public SourceToSpeciesTOResultSet getSourceToSpecies(Collection<String> dataSourceIds,
-            Collection<String> speciesIds, Collection<DataType> dataTypes, Collection<InfoType> infoTypes,
+    public SourceToSpeciesTOResultSet getSourceToSpecies(Collection<Integer> dataSourceIds,
+            Collection<Integer> speciesIds, Collection<DataType> dataTypes, Collection<InfoType> infoTypes,
             Collection<SourceToSpeciesDAO.Attribute> attributes) throws DAOException;
 
     /**

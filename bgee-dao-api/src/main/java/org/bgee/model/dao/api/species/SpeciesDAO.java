@@ -77,12 +77,12 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
      * It is the responsibility of the caller to close this {@code DAOResultSet} once 
      * results are retrieved.
      * 
-     * @param speciesIds    A {@code Set} of {@code String}s that are the NCBI IDs 
+     * @param speciesIds    A {@code Set} of {@code Integer}s that are the NCBI IDs 
      *                      of the requested species (for instance, {@code 9606} for human).
      * @return A {@code SpeciesTOResultSet} containing all species from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public SpeciesTOResultSet getSpeciesByIds(Set<String> speciesIds) throws DAOException;
+    public SpeciesTOResultSet getSpeciesByIds(Set<Integer> speciesIds) throws DAOException;
 
     /**
      * Retrieve all the species that are part of any data group.

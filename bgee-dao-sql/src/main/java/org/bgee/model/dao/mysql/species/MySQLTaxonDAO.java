@@ -145,11 +145,11 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
 
     @Override
     //TODO: integration test - test also a case where species are member of a same taxon leaf
-    public TaxonTOResultSet getLeastCommonAncestor(Collection<String> speciesIds, 
+    public TaxonTOResultSet getLeastCommonAncestor(Collection<Integer> speciesIds, 
             boolean includeAncestors) throws DAOException, IllegalArgumentException {
         log.entry(speciesIds, includeAncestors);
         
-        final Set<String> clonedSpeIds = Collections.unmodifiableSet(
+        final Set<Integer> clonedSpeIds = Collections.unmodifiableSet(
                 speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds));
         
         String sql = this.generateSelectClause(this.getAttributes(), "t1");
@@ -182,7 +182,7 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             if (!clonedSpeIds.isEmpty()) {
-                stmt.setStringsToIntegers(1, clonedSpeIds, true);
+                stmt.setIntegers(1, clonedSpeIds, true);
             }
             
             return log.exit(new MySQLTaxonTOResultSet(stmt));

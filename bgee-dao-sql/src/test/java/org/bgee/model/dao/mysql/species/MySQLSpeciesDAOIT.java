@@ -163,7 +163,7 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
         // Generate result with the method
         MySQLSpeciesDAO dao = new MySQLSpeciesDAO(this.getMySQLDAOManager());
         List<SpeciesTO> speciesTOs = dao.getSpeciesByIds(
-                new HashSet<String>(Arrays.asList("11", "31"))).getAllTOs();
+                new HashSet<>(Arrays.asList(11, 31))).getAllTOs();
         
         // expected result
         List<SpeciesTO> expectedSpeciesTOs = Arrays.asList(
@@ -180,7 +180,7 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
         dao.setAttributes(SpeciesDAO.Attribute.ID, SpeciesDAO.Attribute.GENUS, 
                 SpeciesDAO.Attribute.SPECIES_NAME);
         speciesTOs = dao.getSpeciesByIds(
-                new HashSet<String>(Arrays.asList("11", "31"))).getAllTOs();
+                new HashSet<>(Arrays.asList(11, 31))).getAllTOs();
         
         // Generate manually expected result
         expectedSpeciesTOs = Arrays.asList(

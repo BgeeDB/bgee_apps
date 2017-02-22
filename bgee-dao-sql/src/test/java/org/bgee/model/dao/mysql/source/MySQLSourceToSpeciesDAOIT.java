@@ -90,7 +90,7 @@ public class MySQLSourceToSpeciesDAOIT extends MySQLITAncestor {
                         expectedTOs));
         
         // Test recovery of all attributes with filter on species IDs
-        Set<String> speciesIds = new HashSet<String>(Arrays.asList("11","44"));
+        Set<Integer> speciesIds = new HashSet<>(Arrays.asList(11, 44));
         expectedTOs = this.getAllSourceToSpeciesTOs().stream()
                 .filter(s -> speciesIds.contains(s.getSpeciesId()))
                 .collect(Collectors.toList());
@@ -112,7 +112,7 @@ public class MySQLSourceToSpeciesDAOIT extends MySQLITAncestor {
         
         // Test recovery of one attribute with filter on data source IDs and data types
         EnumSet<Attribute> attributes = EnumSet.of(SourceToSpeciesDAO.Attribute.DATA_TYPE);
-        Set<String> dataSourceIds = new HashSet<String>(Arrays.asList("4","99"));
+        Set<Integer> dataSourceIds = new HashSet<>(Arrays.asList(4, 99));
         EnumSet<DataType> dataTypes = EnumSet.of(DataType.EST, DataType.IN_SITU);
         expectedTOs = this.getAllSourceToSpeciesTOs().stream()
                 .filter(s -> dataSourceIds.contains(s.getDataSourceId()))

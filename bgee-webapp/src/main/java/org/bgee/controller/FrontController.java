@@ -216,7 +216,6 @@ public class FrontController extends HttpServlet {
             
             //Now we try to get the view factory requested.
             ViewFactory factory = this.viewFactoryProvider.getFactory(response, requestParameters);
-            
             //now we process the request
             CommandParent controller = null;
             if (requestParameters.isTheHomePage()) {
@@ -244,7 +243,11 @@ public class FrontController extends HttpServlet {
             } else if (requestParameters.getAction() != null &&
                 		requestParameters.getAction().equals(RequestParameters.ACTION_AUTO_COMPLETE_GENE_SEARCH)) {
             		controller = new CommandSearch(response, requestParameters, prop, factory, serviceFactory);
-            } else if (requestParameters.isADAOPageCategory()) {
+            } else if (requestParameters.getAction() != null &&
+            		requestParameters.getAction().equals(RequestParameters.ACTION_AUTO_COMPLETE_ANAT_ENTITY_SEARCH)) {
+            	log.debug("auto complete anat entity");
+        		controller = new CommandSearch(response, requestParameters, prop, factory, serviceFactory);
+            }else if (requestParameters.isADAOPageCategory()) {
                 controller = new CommandDAO(response, requestParameters, this.prop, factory, 
                         serviceFactory, this.jobService, user);
             } else if (requestParameters.isAStatsPageCategory()) {

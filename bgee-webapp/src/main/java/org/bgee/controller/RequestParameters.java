@@ -192,7 +192,7 @@ public class RequestParameters {
     public static final String GENE_ID = "gene_id";
     
     /**
-     * A {@code String} that encapsulates the value of the gene id parameter for the gene page.
+     * A {@code String} that encapsulates the value of the anat. entity id parameter for the anat. entity page.
      */
     public static final String ANAT_ENTITY_ID = "anatEntity_id";
     
@@ -281,6 +281,12 @@ public class RequestParameters {
      * Value of the parameter page should be {@link #PAGE_GENE}.
      */
     public static final String ACTION_AUTO_COMPLETE_GENE_SEARCH = "auto_complete_gene_search";
+    /**
+    * A {@code String} that is the value taken by the {@code action} parameter 
+    * (see {@link URLParameters#getParamAction()}) when auto-complete anat. entity search is requested.
+    * Value of the parameter page should be {@link #PAGE_ANAT_ENTITY}.
+    */
+   public static final String ACTION_AUTO_COMPLETE_ANAT_ENTITY_SEARCH = "auto_complete_anat_entity_search";
 
     /**
      * A {@code String} that is the anchor to use in the hash part of an URL 
@@ -1987,7 +1993,7 @@ public class RequestParameters {
     
     /**
      * Convenient method to set value of the parameter returned by 
-     * {@link URLParameters#getParamGeneId()}. Equivalent to calling 
+     * {@link URLParameters#getParamAnatEntityId()}. Equivalent to calling 
      * {@link #addValue(Parameter, Object)} for this parameter.
      * 
      * @param action    A {@code String} that is the value of the {@code anatEntity_id} URL parameter 

@@ -1,5 +1,6 @@
 package org.bgee.model.dao.api.expressiondata;
 
+import java.math.BigDecimal;
 import java.util.Collection;
 
 import org.bgee.model.dao.api.DAO;
@@ -11,6 +12,7 @@ import org.bgee.model.dao.api.exception.DAOException;
  * DAO defining queries using or retrieving {@link ConditionTO}s. 
  * 
  * @author  Valentine Rech de Laval
+ * @author  Frederic Bastian
  * @version Bgee 14, Feb. 2017
  * @since   Bgee 14, Feb. 2017
  * @see ConditionTO
@@ -29,28 +31,44 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
      * <li>{@code SEX}: corresponds to {@link ConditionTO#getSex()}.
      * <li>{@code SEX_INFERRED}: corresponds to {@link ConditionTO#getSexInferred()}.
      * <li>{@code STRAIN}: corresponds to {@link ConditionTO#getStrain()}.
+     * <li>{@code AFFYMETRIX_MAX_RANK}: corresponds to {@link ConditionTO#getAffymetrixMaxRank()}.
+     * <li>{@code RNA_SEQ_MAX_RANK}: corresponds to {@link ConditionTO#getRNASeqMaxRank()}.
+     * <li>{@code EST_MAX_RANK}: corresponds to {@link ConditionTO#getESTMaxRank()}.
+     * <li>{@code IN_SITU_MAX_RANK}: corresponds to {@link ConditionTO#getInSituMaxRank()}.
      * </ul>
-     * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
-     * @see org.bgee.model.dao.api.DAO#setAttributes(Enum[])
-     * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        ID("id"), EXPR_MAPPED_CONDITION_ID("exprMappedConditionId"), ANAT_ENTITY_ID("anatEntityId"), 
-        STAGE_ID("stageId"), SPECIES_ID("speciesId");
+        ID("id", false), EXPR_MAPPED_CONDITION_ID("exprMappedConditionId", false), 
+        SPECIES_ID("speciesId", false), 
+        ANAT_ENTITY_ID("anatEntityId", true), STAGE_ID("stageId", true), 
+        AFFYMETRIX_MAX_RANK("affymetrixMaxRank", false), RNA_SEQ_MAX_RANK("rnaSeqMaxRank", false), 
+        EST_MAX_RANK("estMaxRank", false), IN_SITU_MAX_RANK("inSituMaxRank", false);
 
         /**
          * A {@code String} that is the corresponding field name in {@code AnatEntityTO} class.
          * @see {@link Attribute#getTOFieldName()}
          */
         private final String fieldName;
+        /**
+         * @see #isConditionParameter()
+         */
+        private final boolean conditionParameter;
         
-        private Attribute(String fieldName) {
+        private Attribute(String fieldName, boolean conditionParameter) {
             this.fieldName = fieldName;
+            this.conditionParameter = conditionParameter;
         }
-
         @Override
         public String getTOFieldName() {
             return this.fieldName;
+        }
+        /**
+         * @return  A {@code boolean} defining whether this attribute corresponds 
+         *          to a condition parameter (anat entity, stage, sex, strain), allowing to determine 
+         *          which condition and expression tables to target for queries.
+         */
+        public boolean isConditionParameter() {
+            return this.conditionParameter;
         }
     }
     
@@ -61,16 +79,40 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
      * The conditions are retrieved and returned as a {@code ConditionTOResultSet}. It is the
      * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesIds    A {@code Set} of {@code Integer}s that are the IDs of species 
-     *                      allowing to filter the conditions to use.
-     * @param attributes    A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
-     *                      attributes to populate in the returned {@code ConditionTO}s.
-     *                      If {@code null} or empty, all attributes are populated. 
-     * @return              An {@code ConditionTOResultSet} containing all conditions from data source.
-     * @throws DAOException If an error occurred when accessing the data source. 
+     * @param speciesIds            A {@code Set} of {@code Integer}s that are the IDs of species 
+     *                              allowing to filter the conditions to use.
+     * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
+     *                              combination of condition parameters that were requested for queries, 
+     *                              allowing to determine which condition and expression tables to target.
+     *                              It is different from {@code attributes}, because you might want 
+     *                              to retrieve, for instance, only anatomical entity IDs, 
+     *                              while your expression query was using a stage ID parameter for filtering, 
+     *                              and thus the targeted tables must include information for both 
+     *                              anatomical entities and stages.
+     * @param attributes            A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
+     *                              attributes to populate in the returned {@code ConditionTO}s.
+     *                              If {@code null} or empty, all attributes are populated. 
+     * @return                      An {@code ConditionTOResultSet} containing all conditions 
+     *                              from data source.
+     * @throws DAOException If an error occurred when accessing the data source.
+     * @throws IllegalArgumentException If one of the {@code Attribute}s in {@code conditionParameters}
+     *                                  is not a condition parameter attributes (see 
+     *                                  {@link Attribute#isConditionParameter()}). 
      */
     public ConditionTOResultSet getConditionsBySpeciesIds(Collection<Integer> speciesIds,
-        Collection<Attribute> attributes) throws DAOException;
+        Collection<Attribute> conditionParameters, Collection<Attribute> attributes) 
+            throws DAOException, IllegalArgumentException;
+    
+    /**
+     * Insert into the datasource the provided {@code ConditionTO}s. Which condition table 
+     * should be targeted will be determined by the attributes of the {@code ConditionTO}s 
+     * that are populated. 
+     * 
+     * @param conditionTOs  A {@code Collection} of {@code ConditionTO}s to be inserted into the datasource.
+     * @return              An {@code int} that is the number of conditions inserted.
+     * @throws DAOException If an error occurred while inserting the conditions.
+     */
+    public int insertConditions(Collection<ConditionTO> conditionTOs) throws DAOException;
         
     /**
      * {@code DAOResultSet} specifics to {@code ConditionTO}s
@@ -98,21 +140,42 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
         private String anatEntityId;
         private String stageId;
         private Integer speciesId;
+        /**
+         * @see #getAffymetrixMaxRank()
+         */
+        private final BigDecimal affymetrixMaxRank;
+        /**
+         * @see #getRNASeqMaxRank()
+         */
+        private final BigDecimal rnaSeqMaxRank;
+        /**
+         * @see #getESTMaxRank()
+         */
+        private final BigDecimal estMaxRank;
+        /**
+         * @see #getInSituMaxRank()
+         */
+        private final BigDecimal inSituMaxRank;
         
         public ConditionTO(Integer id, Integer exprMappedConditionId, String anatEntityId,
-            String stageId, Integer speciesId) {
+            String stageId, Integer speciesId, BigDecimal affymetrixMaxRank, 
+            BigDecimal rnaSeqMaxRank, BigDecimal estMaxRank, BigDecimal inSituMaxRank) {
             super(id);
             this.exprMappedConditionId = exprMappedConditionId;
             this.anatEntityId = anatEntityId;
             this.stageId = stageId;
             this.speciesId = speciesId;
+            this.affymetrixMaxRank = affymetrixMaxRank;
+            this.rnaSeqMaxRank = rnaSeqMaxRank;
+            this.estMaxRank = estMaxRank;
+            this.inSituMaxRank = inSituMaxRank;
         }
         
         /**
-         * @return  The {@code String} that is the condition ID that should be used for insertion
+         * @return  The {@code Integer} that is the condition ID that should be used for insertion
          *          into the expression table: too-granular conditions (e.g., 43 yo human stage,
          *          or sexInferred=1) are mapped to less granular conditions for summary.
-         *          Equal to {@code conditionId} if condition is not too granular.
+         *          Equal to {@code #getId()} if condition is not too granular.
          */
         public Integer getExprMappedConditionId() {
             return exprMappedConditionId;
@@ -135,11 +198,42 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
         public Integer getSpeciesId() {
             return speciesId;
         }
+
+        /**
+         * @return  A {@code BigDecimal} that is the max rank in this condition, over all genes, 
+         *          based on Affymetrix data.
+         */
+        public BigDecimal getAffymetrixMaxRank() {
+            return affymetrixMaxRank;
+        }
+        /**
+         * @return  A {@code BigDecimal} that is the max rank in this condition, over all genes, 
+         *          based on RNA-Seq data.
+         */
+        public BigDecimal getRNASeqMaxRank() {
+            return rnaSeqMaxRank;
+        }
+        /**
+         * @return  A {@code BigDecimal} that is the max rank in this condition, over all genes, 
+         *          based on EST data.
+         */
+        public BigDecimal getESTMaxRank() {
+            return estMaxRank;
+        }
+        /**
+         * @return  A {@code BigDecimal} that is the max rank in this condition, over all genes, 
+         *          based on in situ data.
+         */
+        public BigDecimal getInSituMaxRank() {
+            return inSituMaxRank;
+        }
         
         @Override
         public String toString() {
             return "ConditionTO [id=" + getId() + ", exprMappedConditionId=" + exprMappedConditionId
-                + ", anatEntityId=" + anatEntityId + ", stageId=" + stageId + ", speciesId=" + speciesId + "]";
+                + ", anatEntityId=" + anatEntityId + ", stageId=" + stageId + ", speciesId=" + speciesId
+                + ", affymetrixMaxRank=" + affymetrixMaxRank + ", rnaSeqMaxRank=" + rnaSeqMaxRank
+                + ", estMaxRank=" + estMaxRank + ", inSituMaxRank=" + inSituMaxRank + "]";
         }
     }
 }

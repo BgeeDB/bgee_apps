@@ -362,18 +362,27 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreConditionTOsEqual() {
-        ConditionTO to1 = new ConditionTO(1, 2, "anatEntityId1", "stageId1", 99);
-        ConditionTO to2 = new ConditionTO(1, 2, "anatEntityId1", "stageId1", 99);
+        ConditionTO to1 = new ConditionTO(1, 2, "anatEntityId1", "stageId1", 99, 
+                new BigDecimal("1.5"), new BigDecimal("2.5"), new BigDecimal("3.5"), new BigDecimal("4"));
+        ConditionTO to2 = new ConditionTO(1, 2, "anatEntityId1", "stageId1", 99, 
+                new BigDecimal("1.5"), new BigDecimal("2.5"), new BigDecimal("3.5"), new BigDecimal("4"));
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
-        to2 = new ConditionTO(1, 2, "anatEntityId1", "stageId1", 8);
+        to2 = new ConditionTO(1, 2, "anatEntityId1", "stageId1", 8, 
+                new BigDecimal("1.5"), new BigDecimal("2.5"), new BigDecimal("3.5"), new BigDecimal("4"));
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         
-        to2 = new ConditionTO(1, 2, "anatEntityId2", "stageId1", 99);
+        to2 = new ConditionTO(1, 2, "anatEntityId2", "stageId1", 99, 
+                new BigDecimal("1.5"), new BigDecimal("2.5"), new BigDecimal("3.5"), new BigDecimal("4"));
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         
-        to2 = new ConditionTO(86, 2, "anatEntityId1", "stageId1", 99);
+        to2 = new ConditionTO(1, 2, "anatEntityId1", "stageId1", 99, 
+                new BigDecimal("1.5"), new BigDecimal("2.5"), new BigDecimal("3.5"), new BigDecimal("3"));
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        
+        to2 = new ConditionTO(86, 2, "anatEntityId1", "stageId1", 99, 
+                new BigDecimal("1.5"), new BigDecimal("2.5"), new BigDecimal("3.5"), new BigDecimal("4"));
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
     }

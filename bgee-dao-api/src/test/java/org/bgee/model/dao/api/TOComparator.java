@@ -664,7 +664,11 @@ public class TOComparator {
                 Objects.equals(to1.getExprMappedConditionId(), to2.getExprMappedConditionId()) &&
                 StringUtils.equals(to1.getAnatEntityId(), to2.getAnatEntityId()) && 
                 StringUtils.equals(to1.getStageId(), to2.getStageId()) && 
-                Objects.equals(to1.getSpeciesId(), to2.getSpeciesId())) {
+                Objects.equals(to1.getSpeciesId(), to2.getSpeciesId()) && 
+                areBigDecimalEquals(to1.getAffymetrixMaxRank(), to2.getAffymetrixMaxRank()) && 
+                areBigDecimalEquals(to1.getRNASeqMaxRank(), to2.getRNASeqMaxRank()) && 
+                areBigDecimalEquals(to1.getESTMaxRank(), to2.getESTMaxRank()) && 
+                areBigDecimalEquals(to1.getInSituMaxRank(), to2.getInSituMaxRank())) {
             return log.exit(true);
         }
         return log.exit(false);

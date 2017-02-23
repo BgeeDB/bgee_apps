@@ -932,13 +932,13 @@ public class CallParamsTest extends TestAncestor {
                 params.getGeneIds());
         
         params.addAllSpeciesIds(twoIntElementSet);
-        assertEquals("Incorrect species set/get", twoElementSet, 
+        assertEquals("Incorrect species set/get", twoIntElementSet, 
                 params.getSpeciesIds());
         params.addSpeciesId(thirdIntElement);
-        assertEquals("Incorrect species set/get", threeElementSet, 
+        assertEquals("Incorrect species set/get", threeIntElementSet, 
                 params.getSpeciesIds());
         params.clearSpeciesIds();
-        assertEquals("Incorrect geneId set/get", new HashSet<String>(), 
+        assertEquals("Incorrect geneId set/get", new HashSet<Integer>(), 
                 params.getSpeciesIds());
 
         

@@ -15,14 +15,14 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * The MySQL implementation of {@link MySQLDownloadFileDAO}.
  * 
  * @author Philippe Moret
  * @author Valentine Rech de Laval
- * @version Bgee 13 Sept. 2015
+ * @author Frederic Bastian
+ * @version Bgee 14 Feb. 2017
  * @since Bgee 13
  */
 public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> implements DownloadFileDAO {
@@ -51,21 +51,6 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
         colToAttributesMap.put("downloadFileSize", DownloadFileDAO.Attribute.FILE_SIZE);
         colToAttributesMap.put("downloadFileCategory", DownloadFileDAO.Attribute.CATEGORY);
         colToAttributesMap.put("speciesDataGroupId", DownloadFileDAO.Attribute.SPECIES_DATA_GROUP_ID);
-    }
-
-    /**
-     * Finds the {@link DownloadFileDAO.Attribute} from a column name.
-     * @param columnName A string representing the column name.
-     * @return The {@link DownloadFileDAO.Attribute} corresponding to the column name
-     * @throws IllegalArgumentException If the columnName doesn't match any attributes.
-     */
-    private static DownloadFileDAO.Attribute getAttributeByColumnName(String columnName){
-        log.entry(columnName);
-        DownloadFileDAO.Attribute attribute = colToAttributesMap.get(columnName);
-        if (attribute == null) {
-            throw log.throwing(new IllegalArgumentException("Unknown column name : " + columnName));
-        } 
-        return attribute;
     }
 
     /**
@@ -101,18 +86,15 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
                     "No file is given, then no file is inserted"));
         }
         
-        Map<DownloadFileDAO.Attribute, String> attrsToCols = colToAttributesMap.entrySet()
-                .stream()
-                .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
         StringBuilder sql = new StringBuilder(); 
         sql.append("INSERT INTO downloadFile (")
-        .append(attrsToCols.get(DownloadFileDAO.Attribute.ID)).append(", ")
-        .append(attrsToCols.get(DownloadFileDAO.Attribute.NAME)).append(", ")
-        .append(attrsToCols.get(DownloadFileDAO.Attribute.DESCRIPTION)).append(", ")
-        .append(attrsToCols.get(DownloadFileDAO.Attribute.PATH)).append(", ")
-        .append(attrsToCols.get(DownloadFileDAO.Attribute.CATEGORY)).append(", ")
-        .append(attrsToCols.get(DownloadFileDAO.Attribute.SPECIES_DATA_GROUP_ID)).append(", ")
-        .append(attrsToCols.get(DownloadFileDAO.Attribute.FILE_SIZE))
+        .append(getSelectExprFromAttribute(DownloadFileDAO.Attribute.ID, colToAttributesMap)).append(", ")
+        .append(getSelectExprFromAttribute(DownloadFileDAO.Attribute.NAME, colToAttributesMap)).append(", ")
+        .append(getSelectExprFromAttribute(DownloadFileDAO.Attribute.DESCRIPTION, colToAttributesMap)).append(", ")
+        .append(getSelectExprFromAttribute(DownloadFileDAO.Attribute.PATH, colToAttributesMap)).append(", ")
+        .append(getSelectExprFromAttribute(DownloadFileDAO.Attribute.CATEGORY, colToAttributesMap)).append(", ")
+        .append(getSelectExprFromAttribute(DownloadFileDAO.Attribute.SPECIES_DATA_GROUP_ID, colToAttributesMap)).append(", ")
+        .append(getSelectExprFromAttribute(DownloadFileDAO.Attribute.FILE_SIZE, colToAttributesMap))
         .append(") VALUES ");
         for (int i = 0; i < fileTOs.size(); i++) {
             if (i > 0) {
@@ -175,7 +157,7 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
 
                 for (Map.Entry<Integer, String> col : this.getColumnLabels().entrySet()) {
                     String columnName = col.getValue();
-                    DownloadFileDAO.Attribute attr = getAttributeByColumnName(columnName);
+                    DownloadFileDAO.Attribute attr = getAttributeFromColName(columnName, colToAttributesMap);
                     switch (attr) {
                         case ID:
                             id = currentResultSet.getInt(columnName);

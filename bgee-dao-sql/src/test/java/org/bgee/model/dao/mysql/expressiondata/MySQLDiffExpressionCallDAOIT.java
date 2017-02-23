@@ -62,7 +62,7 @@ public class MySQLDiffExpressionCallDAOIT extends MySQLITAncestor {
         MySQLDiffExpressionCallDAO dao = new MySQLDiffExpressionCallDAO(this.getMySQLDAOManager());
 
         // Without speciesIds
-        Set<String> speciesIds = new HashSet<String>();
+        Set<Integer> speciesIds = new HashSet<>();
         DiffExpressionCallParams params = new DiffExpressionCallParams();
         params.addAllSpeciesIds(speciesIds);
         // Generate manually expected result
@@ -126,7 +126,7 @@ public class MySQLDiffExpressionCallDAOIT extends MySQLITAncestor {
 
         // With speciesIds
         dao.clearOrderingAttributes();
-        params.addAllSpeciesIds(Arrays.asList("21", "41"));
+        params.addAllSpeciesIds(Arrays.asList(21, 41));
         // Generate manually expected result
         expectedDiffExprCalls = Arrays.asList(
                 new DiffExpressionCallTO(322, 2, 2, 
@@ -261,7 +261,7 @@ public class MySQLDiffExpressionCallDAOIT extends MySQLITAncestor {
                         dao.getDiffExpressionCalls(params).getAllTOs()));
         
         // Test all filters in same time
-        params.addAllSpeciesIds(Arrays.asList("11"));
+        params.addAllSpeciesIds(Arrays.asList(11));
         params.setComparisonFactor(ComparisonFactor.ANATOMY);
         params.clearAffymetrixDiffExprCallTypes();
         params.addAffymetrixDiffExprCallType(DiffExprCallType.NOT_DIFF_EXPRESSED);
@@ -299,7 +299,7 @@ public class MySQLDiffExpressionCallDAOIT extends MySQLITAncestor {
 
         // We filter on species and taxon ID retrieving no results
         DiffExpressionCallParams params = new DiffExpressionCallParams();
-        params.addAllSpeciesIds(Arrays.asList("21", "41"));
+        params.addAllSpeciesIds(Arrays.asList(21, 41));
         // Compare
         assertTrue("No DiffExpressionCallTO should be retrieved", 
                 dao.getHomologousGenesDiffExpressionCalls("311", params).getAllTOs().isEmpty());

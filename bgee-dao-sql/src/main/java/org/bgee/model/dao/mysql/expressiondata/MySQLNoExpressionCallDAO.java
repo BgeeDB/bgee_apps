@@ -76,7 +76,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
      * @throws DAOException             If a {@code SQLException} occurred while trying to get 
      *                                  no-expression calls.   
      */
-    private NoExpressionCallTOResultSet getNoExpressionCalls(Set<String> speciesIds,
+    private NoExpressionCallTOResultSet getNoExpressionCalls(Set<Integer> speciesIds,
             boolean isIncludeParentStructures) throws DAOException {
         log.entry(speciesIds, isIncludeParentStructures);        
 
@@ -174,7 +174,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         try {
             stmt = this.getManager().getConnection().prepareStatement(sql.toString());
             if (speciesIds != null && speciesIds.size() > 0) {
-                stmt.setStringsToIntegers(1, speciesIds, true);
+                stmt.setIntegers(1, speciesIds, true);
             }             
             return log.exit(new MySQLNoExpressionCallTOResultSet(stmt));
         } catch (SQLException e) {

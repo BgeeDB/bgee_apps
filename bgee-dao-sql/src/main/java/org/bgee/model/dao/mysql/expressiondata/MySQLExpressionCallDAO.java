@@ -799,7 +799,7 @@ implements ExpressionCallDAO {
     //  duplication event? They don't have any taxonId...
     //
     @Deprecated
-    private ExpressionCallTOResultSet getExpressionCalls(Set<String> speciesIds, 
+    private ExpressionCallTOResultSet getExpressionCalls(Set<Integer> speciesIds, 
             boolean isIncludeSubstructures, boolean isIncludeSubStages, 
             String commonAncestralTaxonId) throws DAOException {
         log.entry(speciesIds, isIncludeSubstructures, isIncludeSubStages, 
@@ -868,7 +868,7 @@ implements ExpressionCallDAO {
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             if (speciesIds != null && !speciesIds.isEmpty()) {
-                stmt.setStringsToIntegers(1, speciesIds, true);
+                stmt.setIntegers(1, speciesIds, true);
             }
 
             if (!isIncludeSubStages) {

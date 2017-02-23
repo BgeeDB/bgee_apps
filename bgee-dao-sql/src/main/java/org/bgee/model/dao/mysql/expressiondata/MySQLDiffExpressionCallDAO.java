@@ -108,7 +108,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
      *                                      expression calls.                      
      */
     private DiffExpressionCallTOResultSet getDiffExpressionCalls(
-            String omaTaxonId, Set<String> speciesIds,
+            String omaTaxonId, Set<Integer> speciesIds,
             ComparisonFactor factor, Set<DiffExprCallType> diffExprCallTypeAffymetrix,
             boolean includeAffymetrixTypes, Set<DiffExprCallType> diffExprCallTypeRNASeq, 
             boolean includeRnaSeqTypes, boolean isSatisfyAllCallTypeCondition) {
@@ -276,7 +276,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
                 stmtIndex = 2;
             }
             if (hasSpecies) {
-                stmt.setStringsToIntegers(stmtIndex, speciesIds, true);
+                stmt.setIntegers(stmtIndex, speciesIds, true);
                 stmtIndex += speciesIds.size();
             }             
             

@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -216,30 +215,16 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
      *                                  {@code getAttributeFromColName}.
      * @return                          A {@code String} that is a 'select_expr' corresponding to {@code attr}.
      * @throws IllegalArgumentException If {@code attr} does not correspond to any 'select_expr' 
-     *                                  in {@code selectExprsToAttributes}, or if several 'select_expr's 
-     *                                  are mapped to a same {@code Attribute}.
+     *                                  in {@code selectExprsToAttributes}.
      * @see #getAttributeFromColName(String, Map)
-     * @see #reverseColNameMap(Map)
      * @see #generateSelectClause(String, Map, boolean)
      */
-    //FIXME: we shouldn't reverse the Map at each call to this method...
     protected String getSelectExprFromAttribute(T attr, Map<String, T> selectExprsToAttributes) 
             throws IllegalArgumentException {
         log.entry(attr, selectExprsToAttributes);
         
-        //we reverse the provided Map, because anyway we want to check all Entries 
-        //to make sure there is not several 'select_expr's mapped to a same Attribute
-        Map<T, String> reverseMap = new HashMap<T, String>();
-        try {
-            reverseMap = selectExprsToAttributes.entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
-        } catch (IllegalStateException e) {
-            //wrap the IllegalStateException thrown by Collectors.toMap into an IllegalArgumentException
-            throw log.throwing(new IllegalArgumentException(
-                    "An Attribute is mapped to several 'select_expr's", e));
-        }
-        
-        String selectExpr = reverseMap.get(attr);
+        String selectExpr = selectExprsToAttributes.entrySet().stream()
+                .filter(e -> e.getValue().equals(attr)).map(e -> e.getKey()).findFirst().orElse(null);
         if (StringUtils.isBlank(selectExpr)) {
             throw log.throwing(new IllegalArgumentException(
                     "Attribute not mapped to any valid 'select_expr': " + attr));

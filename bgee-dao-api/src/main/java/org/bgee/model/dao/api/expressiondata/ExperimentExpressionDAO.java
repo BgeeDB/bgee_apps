@@ -40,9 +40,11 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
      * The expressions are retrieved and returned as an {@code ExperimentExpressionTOResultSet}.
      * It is the responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesId             An {@code int} that is the ID of the species to retrieve calls for.
-     * @param condParameters        A {@code Collection} of {@code ConditionDAO.Attribute}s 
-     *                              defining {@code ExperimentExpressionTO}s to return.
+     * @param speciesId             An {@code int} that is the ID of the species to retrieve data for.
+     * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
+     *                              combination of condition parameters that were requested for queries, 
+     *                              allowing to determine which condition and expression tables to target
+     *                              (see {@link ConditionDAO.Attribute#isConditionParameter()}).
      * @return                      An {@code ExperimentExpressionTOResultSet} allowing to obtain 
      *                              the requested {@code ExperimentExpressionTO}s.
      * @throws DAOException             If an error occurred while accessing the data source. 
@@ -56,9 +58,11 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
      * The expressions are retrieved and returned as an {@code ExperimentExpressionTOResultSet}.
      * It is the responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesId             An {@code int} that is the ID of the species to retrieve calls for.
-     * @param condParameters        A {@code Collection} of {@code ConditionDAO.Attribute}s 
-     *                              defining {@code ExperimentExpressionTO}s to return.
+     * @param speciesId             An {@code int} that is the ID of the species to retrieve data for.
+     * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
+     *                              combination of condition parameters that were requested for queries, 
+     *                              allowing to determine which condition and expression tables to target
+     *                              (see {@link ConditionDAO.Attribute#isConditionParameter()}).
      * @return                      An {@code ExperimentExpressionTOResultSet} allowing to obtain 
      *                              the requested {@code ExperimentExpressionTO}s.
      * @throws DAOException             If an error occurred while accessing the data source. 
@@ -72,9 +76,11 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
      * The expressions are retrieved and returned as an {@code ExperimentExpressionTOResultSet}.
      * It is the responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesId             An {@code int} that is the ID of the species to retrieve calls for.
-     * @param condParameters        A {@code Collection} of {@code ConditionDAO.Attribute}s 
-     *                              defining {@code ExperimentExpressionTO}s to return.
+     * @param speciesId             An {@code int} that is the ID of the species to retrieve data for.
+     * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
+     *                              combination of condition parameters that were requested for queries, 
+     *                              allowing to determine which condition and expression tables to target
+     *                              (see {@link ConditionDAO.Attribute#isConditionParameter()}).
      * @param speciesId             A {@code String} that is the ID of the species to retrieve calls for.
      * @return                      An {@code ExperimentExpressionTOResultSet} allowing to obtain 
      *                              the requested {@code ExperimentExpressionTO}s.
@@ -89,9 +95,11 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
      * The expressions are retrieved and returned as an {@code ExperimentExpressionTOResultSet}.
      * It is the responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesId             An {@code int} that is the ID of the species to retrieve calls for.
-     * @param condParameters        A {@code Collection} of {@code ConditionDAO.Attribute}s 
-     *                              defining {@code ExperimentExpressionTO}s to return.
+     * @param speciesId             An {@code int} that is the ID of the species to retrieve data for.
+     * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
+     *                              combination of condition parameters that were requested for queries, 
+     *                              allowing to determine which condition and expression tables to target
+     *                              (see {@link ConditionDAO.Attribute#isConditionParameter()}).
      * @param speciesId             A {@code String} that is the ID of the species to retrieve calls for.
      * @return                      An {@code ExperimentExpressionTOResultSet} allowing to obtain 
      *                              the requested {@code ExperimentExpressionTO}s.
@@ -132,7 +140,6 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
          * An {@code Integer} that is the expression ID of this experiment expression.
          */
         private final Integer expressionId;
-
         /**
          * A {@code String} that is the experiment ID of this experiment expression.
          */
@@ -143,19 +150,16 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
          * this experiment expression as present high.
          */
         private final Integer presentHighCount;
-        
         /**
          * An {@code Integer} that is the count of experiments that produced
          * this experiment expression as present low.
          */
         private final Integer presentLowCount;
-        
         /**
          * An {@code Integer} that is the count of experiments that produced
          * this experiment expression as absent high.
          */
         private final Integer absentHighCount;
-        
         /**
          * An {@code Integer} that is the count of experiments that produced
          * this experiment expression as absent low.
@@ -166,7 +170,6 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
          * A {@code CallQuality} that is inferred direction for this call based on this experiment.
          */
         private final CallQuality callQuality;
-        
         /**
          * A {@code CallDirection} that is inferred quality for this call based on this experiment
          */
@@ -213,7 +216,6 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
         public Integer getExpressionId() {
             return expressionId;
         }
-
         /**
          * @return  The {@code String} that is the experiment ID of this experiment expression.
          */
@@ -228,7 +230,6 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
         public Integer getPresentHighCount() {
             return presentHighCount;
         }
-
         /**
          * @return  The {@code Integer} that is the count of experiments that produced
          *          this experiment expression as present low
@@ -236,7 +237,6 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
         public Integer getPresentLowCount() {
             return presentLowCount;
         }
-
         /**
          * @return  The {@code Integer} that is the count of experiments that produced
          *          this experiment expression as absent high
@@ -244,7 +244,6 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
         public Integer getAbsentHighCount() {
             return absentHighCount;
         }
-
         /**
          * @return  The {@code Integer} that is the count of experiments that produced
          *          this experiment expression as absent low.
@@ -253,7 +252,6 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
             return absentLowCount;
         }
 
-
         /** 
          * @return  The {@code CallQuality} that is inferred direction for this call
          *          based on this experiment.
@@ -261,7 +259,6 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
         public CallQuality getCallQuality() {
             return callQuality;
         }
-
         /**
          * @return  The {@code CallDirection} that is inferred quality for this call
          *          based on this experiment

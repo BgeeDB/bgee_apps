@@ -63,11 +63,17 @@ public interface RawExpressionCallDAO extends DAO<RawExpressionCallDAO.Attribute
     }
     
     /** 
-     * TODO javadoc
-     * @param speciesId
-     * @param condParameters
-     * @return
-     * @throws DAOException
+     * Retrieve raw expression calls for a requested species, ordered by gene IDs and expression IDs, 
+     * for the requested combination of condition parameters.
+     * 
+     * @param speciesId             An {@code int} that is the ID of the species to retrieve calls for.
+     * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
+     *                              combination of condition parameters that were requested for queries, 
+     *                              allowing to determine which condition and expression tables to target
+     *                              (see {@link ConditionDAO.Attribute#isConditionParameter()}).
+     * @return                      A {@code RawExpressionCallTOResultSet} allowing to obtain 
+     *                              the requested {@code RawExpressionCallTO}s.
+     * @throws DAOException         If an error occurred while accessing the data source.
      */
     public RawExpressionCallTOResultSet getExpressionCallsOrderedByGeneIdAndExprId(int speciesId,
             Collection<ConditionDAO.Attribute> condParameters) throws DAOException;

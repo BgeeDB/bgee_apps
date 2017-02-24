@@ -2,6 +2,8 @@ package org.bgee.model.dao.api.expressiondata;
 
 import java.util.Collection;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.TransferObject;
@@ -126,14 +128,67 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
      * @since   Bgee 13, Dec. 2016
      */
     public class ExperimentExpressionTO extends TransferObject {
+        private final static Logger log = LogManager.getLogger(ExperimentExpressionTO.class.getName());
 
         private static final long serialVersionUID = 3464643420374159955L;
 
-        public enum CallQuality {
-            LOW, HIGH;
+        public enum CallQuality implements TransferObject.EnumDAOField {
+            LOW("poor quality"), HIGH("high quality");
+
+            /**
+             * The {@code String} representation of the enum.
+             */
+            private String stringRepresentation;
+            /**
+             * Constructor
+             * @param stringRepresentation the {@code String} representation of the enum.
+             */
+            CallQuality(String stringRepresentation) {
+                this.stringRepresentation = stringRepresentation;
+            }
+            @Override
+            public String getStringRepresentation() {
+                return stringRepresentation;
+            }
+            /**
+             * Return the mapped {@link CallQuality} from a string representation.
+             * @param stringRepresentation A string representation
+             * @return The corresponding {@code CallQuality}
+             * @see org.bgee.model.dao.api.TransferObject.EnumDAOField#convert(Class, String)
+             */
+            public static CallQuality convertToCallQuality(String stringRepresentation){
+                log.entry(stringRepresentation);
+                return log.exit(ExperimentExpressionTO.convert(CallQuality.class, stringRepresentation));
+            }
         }
-        public enum CallDirection {
-            PRESENT, ABSENT;
+        public enum CallDirection implements TransferObject.EnumDAOField {
+            PRESENT("present"), ABSENT("absent");
+
+            /**
+             * The {@code String} representation of the enum.
+             */
+            private String stringRepresentation;
+            /**
+             * Constructor
+             * @param stringRepresentation the {@code String} representation of the enum.
+             */
+            CallDirection(String stringRepresentation) {
+                this.stringRepresentation = stringRepresentation;
+            }
+            @Override
+            public String getStringRepresentation() {
+                return stringRepresentation;
+            }
+            /**
+             * Return the mapped {@link CallDirection} from a string representation.
+             * @param stringRepresentation A string representation
+             * @return The corresponding {@code CallDirection}
+             * @see org.bgee.model.dao.api.TransferObject.EnumDAOField#convert(Class, String)
+             */
+            public static CallDirection convertToCallDirection(String stringRepresentation){
+                log.entry(stringRepresentation);
+                return log.exit(ExperimentExpressionTO.convert(CallDirection.class, stringRepresentation));
+            }
         }
 
         /**

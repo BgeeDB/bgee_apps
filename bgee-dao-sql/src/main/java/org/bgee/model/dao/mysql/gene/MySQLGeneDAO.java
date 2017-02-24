@@ -34,6 +34,10 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 	private final static Logger log = LogManager.getLogger(MySQLGeneDAO.class.getName());
 
 	private static final String GENE_TABLE_NAME = "gene";
+	/**
+	 * A {@code String} that is the field name for Bgee internal gene IDs.
+	 */
+	public static final String BGEE_GENE_ID = "bgeeGeneId";
 
 	/**
 	 * Constructor providing the {@code MySQLDAOManager} that this

@@ -17,6 +17,7 @@ import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
+import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 
 /**
  * A {@code RawExpressionCallDAO} for MySQL. 
@@ -44,7 +45,7 @@ public class MySQLRawExpressionCallDAO extends MySQLDAO<RawExpressionCallDAO.Att
         log.entry(comb);
         Map<String, RawExpressionCallDAO.Attribute> colToAttributesMap = new HashMap<>();
         colToAttributesMap.put(comb.getRawExprIdField(), RawExpressionCallDAO.Attribute.ID);
-        colToAttributesMap.put("bgeeGeneId", RawExpressionCallDAO.Attribute.BGEE_GENE_ID);
+        colToAttributesMap.put(MySQLGeneDAO.BGEE_GENE_ID, RawExpressionCallDAO.Attribute.BGEE_GENE_ID);
         colToAttributesMap.put(comb.getCondIdField(), RawExpressionCallDAO.Attribute.CONDITION_ID);
         colToAttributesMap.put("affymetrixMeanRank", RawExpressionCallDAO.Attribute.AFFYMETRIX_MEAN_RANK);
         colToAttributesMap.put("rnaSeqMeanRank", RawExpressionCallDAO.Attribute.RNA_SEQ_MEAN_RANK);
@@ -83,7 +84,7 @@ public class MySQLRawExpressionCallDAO extends MySQLDAO<RawExpressionCallDAO.Att
                     + " ON " + comb.getRawExprTable() + "." + comb.getCondIdField()
                     + " = " + comb.getCondTable() + "." + comb.getCondIdField()
                 + " WHERE " + comb.getCondTable() + ".speciesId = ?"
-                + " ORDER BY " + comb.getRawExprTable() + ".bgeeGeneId, " 
+                + " ORDER BY " + comb.getRawExprTable() + "." + MySQLGeneDAO.BGEE_GENE_ID + ", " 
                     + comb.getRawExprTable() + "." + comb.getRawExprIdField();
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);

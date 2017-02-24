@@ -204,7 +204,7 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
              * @see org.bgee.model.dao.api.TransferObject.EnumDAOField#convert(Class, String)
              */
             public static CategoryEnum convertToCategoryEnum(String stringRepresentation){
-                log.entry();
+                log.entry(stringRepresentation);
                 return log.exit(EntityTO.convert(CategoryEnum.class, stringRepresentation));
             }
 

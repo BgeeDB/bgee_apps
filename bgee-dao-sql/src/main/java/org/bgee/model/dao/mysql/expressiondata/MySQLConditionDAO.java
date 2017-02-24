@@ -36,6 +36,64 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
     private final static Logger log = LogManager.getLogger(MySQLConditionDAO.class.getName());
     
     /**
+     * A {@code String} that is the field name for species IDs in condition tables.
+     */
+    public final static String SPECIES_ID = "speciesId";
+    
+    /**
+     * Create the "ON" part of a JOIN clause to link the original condition table containing 
+     * raw conditions using all parameters to a specific condition table, 
+     * for the provided parameter combination, using the appropriate fields for the join.
+     * 
+     * @param originalCondTable A {@code String} that is the name used in the query 
+     *                          of the original raw condition table.
+     * @param specificCondTable A {@code String} that is the name used in the query 
+     *                          of the targeted specific condition table.
+     * @param comb              The {@code CondParamCombination} allowing to target the appropriate fields.
+     * @return                  A {@code String} that is the "ON" part of the JOIN clause.
+     */
+    public static String getJoinOnBetweenCondTables(final String originalCondTable, 
+            final String specificCondTable, final CondParamCombination comb) {
+        log.entry(originalCondTable, specificCondTable, comb);
+        
+        if (comb.isAllParamCombination()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "No join needed for condition parameter combination using all parameters."));
+        }
+
+        //retrieve the column names of condition parameters and species ID. 
+        //we use the method getColToAttributesMap(CondParamCombination) for convenience,
+        //these column names do not vary depending on the condition parameters used.
+        final Map<ConditionDAO.Attribute, String> condParamToColName = getColToAttributesMap(comb)
+                .entrySet().stream()
+                .collect(Collectors.toMap(e -> e.getValue(), e -> e.getKey()));
+
+        StringBuilder sb = new StringBuilder();
+        //always use the speciesId field for the join
+        String speIdField = condParamToColName.get(ConditionDAO.Attribute.SPECIES_ID);
+        if (speIdField == null) {
+            throw log.throwing(new IllegalStateException("No column name corresponding to "
+                    + ConditionDAO.Attribute.SPECIES_ID));
+        }
+        sb.append(originalCondTable).append(".").append(speIdField)
+          .append(" = ").append(specificCondTable).append(".").append(speIdField);
+        //now, join using the condition parameters used in this combination
+        sb.append(comb.getParameters().stream().map(p -> {
+            StringBuilder sb2 = new StringBuilder();
+            String colName = condParamToColName.get(p);
+            if (colName == null) {
+                throw log.throwing(new IllegalStateException("No column name corresponding to "
+                        + p));
+            }
+            sb2.append(" AND ").append(originalCondTable).append(".").append(colName)
+              .append(" = ").append(specificCondTable).append(".").append(colName);
+            return sb2.toString();
+        }).collect(Collectors.joining()));
+        
+        return log.exit(sb.toString());
+    }
+    
+    /**
      * Get a {@code Map} associating column names to corresponding {@code ConditionDAO.Attribute}.
      * 
      * @param comb  The {@code CondParamCombination} allowing to target the appropriate 
@@ -55,7 +113,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
         }
         colToAttributesMap.put("anatEntityId", ConditionDAO.Attribute.ANAT_ENTITY_ID);
         colToAttributesMap.put("stageId", ConditionDAO.Attribute.STAGE_ID);
-        colToAttributesMap.put("speciesId", ConditionDAO.Attribute.SPECIES_ID);
+        colToAttributesMap.put(SPECIES_ID, ConditionDAO.Attribute.SPECIES_ID);
         colToAttributesMap.put("affymetrixMaxRank", ConditionDAO.Attribute.AFFYMETRIX_MAX_RANK);
         colToAttributesMap.put("rnaSeqMaxRank", ConditionDAO.Attribute.RNA_SEQ_MAX_RANK);
         colToAttributesMap.put("estMaxRank", ConditionDAO.Attribute.EST_MAX_RANK);
@@ -85,7 +143,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                 attrs) 
                 + " FROM " + comb.getCondTable();
         if (!speIds.isEmpty()) {
-            sql += " WHERE speciesId IN (" 
+            sql += " WHERE " + SPECIES_ID + " IN (" 
                 + BgeePreparedStatement.generateParameterizedQueryString(speIds.size()) + ")";
         }
         try {

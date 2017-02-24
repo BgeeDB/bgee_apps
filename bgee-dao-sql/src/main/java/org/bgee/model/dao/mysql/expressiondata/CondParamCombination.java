@@ -39,6 +39,27 @@ public enum CondParamCombination {
     ;
     
     private static final Logger log = LogManager.getLogger(CondParamCombination.class.getName());
+    
+    /**
+     * A {@code String} that is the raw expression table name containing original calls 
+     * when all condition parameters are used.
+     */
+    public static String ORIGINAL_RAW_EXPR_TABLE = "expression";
+    /**
+     * A {@code String} that is the expression ID field name in the raw expression table 
+     * containing original calls when all condition parameters are used.
+     */
+    public static String ORIGINAL_RAW_EXPR_ID_FIELD = "expressionId";
+    /**
+     * A {@code String} that is the raw condition table name containing original conditions 
+     * when all condition parameters are used.
+     */
+    public static String ORIGINAL_RAW_COND_TABLE = "cond";
+    /**
+     * A {@code String} that is the condition ID field name in the raw condition table 
+     * containing original conditions when all condition parameters are used.
+     */
+    public static String ORIGINAL_RAW_COND_ID_FIELD = "conditionId";
 
     /**
      * Retrieve the {@code CondParamCombination} corresponding to the provided combination of 
@@ -81,7 +102,12 @@ public enum CondParamCombination {
         if (matchingComb.size() != 1) {
             throw log.throwing(new IllegalStateException("No \"all parameter\" combination defined"));
         }
-        return log.exit(matchingComb.iterator().next());
+        CondParamCombination comb = matchingComb.iterator().next();
+        assert comb.getRawExprIdField().equals(ORIGINAL_RAW_EXPR_ID_FIELD);
+        assert comb.getRawExprTable().equals(ORIGINAL_RAW_EXPR_TABLE);
+        assert comb.getCondIdField().equals(ORIGINAL_RAW_COND_ID_FIELD);
+        assert comb.getCondTable().equals(ORIGINAL_RAW_COND_TABLE);
+        return log.exit(comb);
     }
 
     

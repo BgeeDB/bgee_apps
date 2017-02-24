@@ -83,7 +83,8 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
      *                              allowing to filter the conditions to use.
      * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
      *                              combination of condition parameters that were requested for queries, 
-     *                              allowing to determine which condition and expression tables to target.
+     *                              allowing to determine which condition and expression tables to target
+     *                              (see {Attribute#isConditionParameter()}).
      *                              It is different from {@code attributes}, because you might want 
      *                              to retrieve, for instance, only anatomical entity IDs, 
      *                              while your expression query was using a stage ID parameter for filtering, 
@@ -104,15 +105,45 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
             throws DAOException, IllegalArgumentException;
     
     /**
-     * Insert into the datasource the provided {@code ConditionTO}s. Which condition table 
-     * should be targeted will be determined by the attributes of the {@code ConditionTO}s 
-     * that are populated. 
+     * Retrieve the maximum of condition IDs in the appropriate table specified by {@code conditionParameters}.
      * 
-     * @param conditionTOs  A {@code Collection} of {@code ConditionTO}s to be inserted into the datasource.
-     * @return              An {@code int} that is the number of conditions inserted.
-     * @throws DAOException If an error occurred while inserting the conditions.
+     * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
+     *                              combination of condition parameters that were requested for queries, 
+     *                              allowing to determine which condition and expression tables to target
+     *                              (see {Attribute#isConditionParameter()}). This is to make sure
+     *                              that attributes requested for insertion are not accidentally missing 
+     *                              from the {@code ConditionTO}s.
+     * @return                      An {@code int} that is maximum of condition IDs in the appropriate table.
+     *                              If there is no condition, return 0.
+     * @throws DAOException             If an error occurred when accessing the data source. 
+     * @throws IllegalArgumentException If one of the {@code Attribute}s in {@code conditionParameters}
+     *                                  is not a condition parameter attributes (see 
+     *                                  {@link Attribute#isConditionParameter()}).
      */
-    public int insertConditions(Collection<ConditionTO> conditionTOs) throws DAOException;
+    public int getMaxConditionId(Collection<Attribute> conditionParameters) 
+            throws DAOException, IllegalArgumentException;
+    
+    /**
+     * Insert into the datasource the provided {@code ConditionTO}s. Which condition table 
+     * should be targeted will be determined by {@code conditionParameters}. 
+     * 
+     * @param conditionTOs          A {@code Collection} of {@code ConditionTO}s to be inserted 
+     *                              into the datasource.
+     * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
+     *                              combination of condition parameters that were requested for queries, 
+     *                              allowing to determine which condition and expression tables to target
+     *                              (see {Attribute#isConditionParameter()}). This is to make sure
+     *                              that attributes requested for insertion are not accidentally missing 
+     *                              from the {@code ConditionTO}s.
+     * @return                      An {@code int} that is the number of conditions inserted.
+     * @throws DAOException If an error occurred while inserting the conditions.
+     * @throws IllegalArgumentException If an attribute necessary for the targeted tables is missing, 
+     *                                  or if one of the {@code Attribute}s in {@code conditionParameters}
+     *                                  is not a condition parameter attributes (see 
+     *                                  {@link Attribute#isConditionParameter()}).
+     */
+    public int insertConditions(Collection<ConditionTO> conditionTOs, 
+            Collection<Attribute> conditionParameters) throws DAOException, IllegalArgumentException;
         
     /**
      * {@code DAOResultSet} specifics to {@code ConditionTO}s
@@ -135,11 +166,10 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
 
         private static final long serialVersionUID = -1057540315343857464L;
 
-
-        private Integer exprMappedConditionId;
-        private String anatEntityId;
-        private String stageId;
-        private Integer speciesId;
+        private final Integer exprMappedConditionId;
+        private final String anatEntityId;
+        private final String stageId;
+        private final Integer speciesId;
         /**
          * @see #getAffymetrixMaxRank()
          */

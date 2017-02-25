@@ -84,7 +84,7 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
      * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
      *                              combination of condition parameters that were requested for queries, 
      *                              allowing to determine which condition and expression tables to target
-     *                              (see {Attribute#isConditionParameter()}).
+     *                              (see {@link Attribute#isConditionParameter()}).
      *                              It is different from {@code attributes}, because you might want 
      *                              to retrieve, for instance, only anatomical entity IDs, 
      *                              while your expression query was using a stage ID parameter for filtering, 
@@ -110,7 +110,7 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
      * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
      *                              combination of condition parameters that were requested for queries, 
      *                              allowing to determine which condition and expression tables to target
-     *                              (see {Attribute#isConditionParameter()}). This is to make sure
+     *                              (see {@link Attribute#isConditionParameter()}). This is to make sure
      *                              that attributes requested for insertion are not accidentally missing 
      *                              from the {@code ConditionTO}s.
      * @return                      An {@code int} that is maximum of condition IDs in the appropriate table.
@@ -132,9 +132,7 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
      * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
      *                              combination of condition parameters that were requested for queries, 
      *                              allowing to determine which condition and expression tables to target
-     *                              (see {Attribute#isConditionParameter()}). This is to make sure
-     *                              that attributes requested for insertion are not accidentally missing 
-     *                              from the {@code ConditionTO}s.
+     *                              (see {@link Attribute#isConditionParameter()}).
      * @return                      An {@code int} that is the number of conditions inserted.
      * @throws DAOException If an error occurred while inserting the conditions.
      * @throws IllegalArgumentException If an attribute necessary for the targeted tables is missing, 

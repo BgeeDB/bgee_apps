@@ -887,7 +887,6 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
      * @since Bgee 13
      */
     public final class GlobalExpressionToExpressionTO extends TransferObject {
-        // TODO modify the class to be immutable.
         private static final long serialVersionUID = -46963749760698289L;
 
         /**

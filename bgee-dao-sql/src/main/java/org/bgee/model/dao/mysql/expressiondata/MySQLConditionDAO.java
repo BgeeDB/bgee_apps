@@ -167,7 +167,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
         String sql = "SELECT MAX(" + comb.getCondIdField() + ") AS " + comb.getCondIdField() 
             + " FROM " + comb.getCondTable();
     
-        try (MySQLConditionTOResultSet resultSet = new MySQLConditionTOResultSet(
+        try (ConditionTOResultSet resultSet = new MySQLConditionTOResultSet(
                 this.getManager().getConnection().prepareStatement(sql), comb)) {
             
             if (resultSet.next() && resultSet.getTO().getId() != null) {
@@ -317,8 +317,8 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
 
         @Override
         protected ConditionDAO.ConditionTO getNewTO() throws DAOException {
+            log.entry();
             try {
-                log.entry();
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 Integer id = null, exprMappedCondId = null, speciesId = null;
                 String anatEntityId = null, stageId = null;

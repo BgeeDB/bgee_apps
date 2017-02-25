@@ -1341,7 +1341,7 @@ comment = 'This table is a summary of expression calls for a given gene-conditio
 create table globalExpressionToExpression (
     globalExpressionId int unsigned not null,
     expressionId int unsigned not null, 
-    callOrigin enum('self', 'descendant', 'parent') COMMENT 'Define whether the raw call used for production of the global call comes from the condition itself, a descendant condition, or a parent condition.'
+    callOrigin enum('self', 'descendant', 'parent') not null COMMENT 'Define whether the raw call used for production of the global call comes from the condition itself, a descendant condition, or a parent condition.'
 ) engine = innodb 
 comment = 'this table allows to link the propagated global calls in "globalExpression" table to the raw original calls in "expression" table';
 
@@ -1445,7 +1445,7 @@ comment = 'See globalExpression table for comments. This table is a summary of e
 create table anatEntityGlobalExpressionToExpression (
     globalAnatEntityExpressionId int unsigned not null,
     anatEntityExpressionId int unsigned not null, 
-    callOrigin enum('self', 'descendant', 'parent')
+    callOrigin enum('self', 'descendant', 'parent') not null
 ) engine = innodb 
 comment = 'See globalExpressionToExpression table for comments. This table allows to link the propagated global calls in "globalAnatEntityExpression" table to the raw original calls in "anatEntityExpression" table';
 
@@ -1549,7 +1549,7 @@ comment = 'See globalExpression table for comments. This table is a summary of e
 create table anatEntityStageGlobalExpressionToExpression (
     globalAnatEntityStageExpressionId int unsigned not null,
     anatEntityStageExpressionId int unsigned not null, 
-    callOrigin enum('self', 'descendant', 'parent')
+    callOrigin enum('self', 'descendant', 'parent') not null
 ) engine = innodb 
 comment = 'See globalExpressionToExpression table for comments. This table allows to link the propagated global calls in "globalAnatEntityStageExpression" table to the raw original calls in "anatEntityStageExpression" table';
 
@@ -1653,7 +1653,7 @@ comment = 'See globalExpression table for comments. This table is a summary of e
 create table anatEntitySexGlobalExpressionToExpression (
     globalAnatEntitySexExpressionId int unsigned not null,
     anatEntitySexExpressionId int unsigned not null, 
-    callOrigin enum('self', 'descendant', 'parent')
+    callOrigin enum('self', 'descendant', 'parent') not null
 ) engine = innodb 
 comment = 'See globalExpressionToExpression table for comments. This table allows to link the propagated global calls in "globalAnatEntitySexExpression" table to the raw original calls in "anatEntitySexExpression" table';
 
@@ -1757,7 +1757,7 @@ comment = 'See globalExpression table for comments. This table is a summary of e
 create table anatEntityStrainGlobalExpressionToExpression (
     globalAnatEntityStrainExpressionId int unsigned not null,
     anatEntityStrainExpressionId int unsigned not null, 
-    callOrigin enum('self', 'descendant', 'parent')
+    callOrigin enum('self', 'descendant', 'parent') not null
 ) engine = innodb 
 comment = 'See globalExpressionToExpression table for comments. This table allows to link the propagated global calls in "globalAnatEntityStrainExpression" table to the raw original calls in "anatEntityStrainExpression" table';
 
@@ -1861,7 +1861,7 @@ comment = 'See globalExpression table for comments. This table is a summary of e
 create table anatEntityStageSexGlobalExpressionToExpression (
     globalAnatEntityStageSexExpressionId int unsigned not null,
     anatEntityStageSexExpressionId int unsigned not null, 
-    callOrigin enum('self', 'descendant', 'parent')
+    callOrigin enum('self', 'descendant', 'parent') not null
 ) engine = innodb 
 comment = 'See globalExpressionToExpression table for comments. This table allows to link the propagated global calls in "globalAnatEntityStageSexExpression" table to the raw original calls in "anatEntityStageSexExpression" table';
 
@@ -1965,7 +1965,7 @@ comment = 'See globalExpression table for comments. This table is a summary of e
 create table anatEntityStageStrainGlobalExpressionToExpression (
     globalAnatEntityStageStrainExpressionId int unsigned not null,
     anatEntityStageStrainExpressionId int unsigned not null, 
-    callOrigin enum('self', 'descendant', 'parent')
+    callOrigin enum('self', 'descendant', 'parent') not null
 ) engine = innodb 
 comment = 'See globalExpressionToExpression table for comments. This table allows to link the propagated global calls in "globalAnatEntityStageStrainExpression" table to the raw original calls in "anatEntityStageStrainExpression" table';
 
@@ -2069,7 +2069,7 @@ comment = 'See globalExpression table for comments. This table is a summary of e
 create table anatEntitySexStrainGlobalExpressionToExpression (
     globalAnatEntitySexStrainExpressionId int unsigned not null,
     anatEntitySexStrainExpressionId int unsigned not null, 
-    callOrigin enum('self', 'descendant', 'parent')
+    callOrigin enum('self', 'descendant', 'parent') not null
 ) engine = innodb 
 comment = 'See globalExpressionToExpression table for comments. This table allows to link the propagated global calls in "globalAnatEntitySexStrainExpression" table to the raw original calls in "anatEntitySexStrainExpression" table';
 

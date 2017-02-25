@@ -21,7 +21,8 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
  * A {@code TaxonConstraintDAO} for MySQL. 
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, May 2016
+ * @author Frederic Bastian
+ * @version Bgee 14 Feb. 2017
  * @see     org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO
  * @since   Bgee 13
  */
@@ -45,13 +46,13 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
     }
 
     @Override
-    public TaxonConstraintTOResultSet getAnatEntityTaxonConstraints(
+    public TaxonConstraintTOResultSet<String> getAnatEntityTaxonConstraints(
             Collection<Integer> speciesIds, Collection<TaxonConstraintDAO.Attribute> attributes)
             throws DAOException {
         log.entry(speciesIds, attributes);
 
         return log.exit(this.getTaxonConstraints(
-                speciesIds, attributes, "anatEntityTaxonConstraint", "anatEntityId"));
+                speciesIds, attributes, "anatEntityTaxonConstraint", "anatEntityId", String.class));
     }
     
     @Override
@@ -61,7 +62,7 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
      * entity ID column names, and, most important of all, types of this column 
      * (int or string) are different.
      */
-    public TaxonConstraintTOResultSet getAnatEntityRelationTaxonConstraints(
+    public TaxonConstraintTOResultSet<Integer> getAnatEntityRelationTaxonConstraints(
             Collection<Integer> speciesIds, Collection<TaxonConstraintDAO.Attribute> attributes)
             throws DAOException {
         log.entry(speciesIds, attributes);
@@ -104,19 +105,19 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
             if (filterBySpeciesIDs) {
                 stmt.setIntegers(1, speciesIds, true);
             }
-            return log.exit(new MySQLTaxonConstraintTOResultSet(stmt));
+            return log.exit(new MySQLTaxonConstraintTOResultSet<>(stmt, Integer.class));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
     }
 
     @Override
-    public TaxonConstraintTOResultSet getStageTaxonConstraints(
+    public TaxonConstraintTOResultSet<String> getStageTaxonConstraints(
             Collection<Integer> speciesIds, Collection<TaxonConstraintDAO.Attribute> attributes)
             throws DAOException {
         log.entry(speciesIds, attributes);
         return log.exit(this.getTaxonConstraints(
-                speciesIds, attributes, "stageTaxonConstraint", "stageId"));
+                speciesIds, attributes, "stageTaxonConstraint", "stageId", String.class));
     }
 
     /** 
@@ -134,14 +135,17 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
      *                          If {@code null} or empty, all attributes are populated. 
      * @param tableName         A {@code String} that is the name of the table to be used.
      * @param entityColumnName  A {@code String} that is the name of entity ID column.
+     * @param cls               A {@code Class} representing the type of ID of related entities.
      * @return                  A {@code TaxonConstraintTOResultSet} allowing to retrieve 
      *                          taxon constrains from data source.
      * @throws DAOException     If an error occurred when accessing the data source. 
+     * 
+     * @param <T> the type of ID of the related entity.
      */
-    private TaxonConstraintTOResultSet getTaxonConstraints(Collection<Integer> speciesIds,
+    private <T> TaxonConstraintTOResultSet<T> getTaxonConstraints(Collection<Integer> speciesIds,
             Collection<TaxonConstraintDAO.Attribute> attributes, String tableName,
-            String entityColumnName) throws DAOException {
-        log.entry(speciesIds, attributes, tableName, entityColumnName);
+            String entityColumnName, Class<T> cls) throws DAOException {
+        log.entry(speciesIds, attributes, tableName, entityColumnName, cls);
         
         boolean filterBySpeciesIDs = speciesIds != null && !speciesIds.isEmpty();
 
@@ -180,7 +184,7 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
             if (filterBySpeciesIDs) {
                 stmt.setIntegers(1, speciesIds, true);
             }
-            return log.exit(new MySQLTaxonConstraintTOResultSet(stmt));
+            return log.exit(new MySQLTaxonConstraintTOResultSet<>(stmt, cls));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -193,7 +197,7 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
      * table names, entity ID column names, and, most important of all, types of this column 
      * (int or string) are different.
      */
-    public int insertAnatEntityRelationTaxonConstraints(Collection<TaxonConstraintTO> contraints)
+    public int insertAnatEntityRelationTaxonConstraints(Collection<TaxonConstraintTO<Integer>> contraints)
                     throws DAOException, IllegalArgumentException {
         log.entry(contraints);
 
@@ -211,8 +215,8 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
         int contraintInsertedCount = 0;
         try (BgeePreparedStatement stmt = 
                 this.getManager().getConnection().prepareStatement(sqlExpression)) {
-            for (TaxonConstraintTO contraint: contraints) {
-                stmt.setInt(1, Integer.parseInt(contraint.getEntityId()));
+            for (TaxonConstraintTO<Integer> contraint: contraints) {
+                stmt.setInt(1, contraint.getEntityId());
                 if (contraint.getSpeciesId() == null) {
                     stmt.setNull(2, Types.INTEGER);
                 } else {
@@ -235,7 +239,7 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
      * table names, entity ID column names, and, most important of all, types of this column 
      * (int or string) are different.
      */
-    public int insertAnatEntityTaxonConstraints(Collection<TaxonConstraintTO> contraints)
+    public int insertAnatEntityTaxonConstraints(Collection<TaxonConstraintTO<String>> contraints)
             throws DAOException, IllegalArgumentException {
         log.entry(contraints);
 
@@ -253,7 +257,7 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
         int contraintInsertedCount = 0;
         try (BgeePreparedStatement stmt = 
                 this.getManager().getConnection().prepareStatement(sqlExpression)) {
-            for (TaxonConstraintTO contraint: contraints) {
+            for (TaxonConstraintTO<String> contraint: contraints) {
                 stmt.setString(1, contraint.getEntityId());
                 if (contraint.getSpeciesId() == null) {
                     stmt.setNull(2, Types.INTEGER);
@@ -277,7 +281,7 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
      * table names, entity ID column names, and, most important of all, types of this column 
      * (int or string) are different.
      */
-    public int insertStageTaxonConstraints(Collection<TaxonConstraintTO> contraints)
+    public int insertStageTaxonConstraints(Collection<TaxonConstraintTO<String>> contraints)
             throws DAOException, IllegalArgumentException {
         log.entry(contraints);
 
@@ -294,7 +298,7 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
         int contraintInsertedCount = 0;
         try (BgeePreparedStatement stmt = 
                 this.getManager().getConnection().prepareStatement(sqlExpression)) {
-            for (TaxonConstraintTO contraint: contraints) {
+            for (TaxonConstraintTO<String> contraint: contraints) {
                 stmt.setString(1, contraint.getEntityId());
                 if (contraint.getSpeciesId() == null) {
                     stmt.setNull(2, Types.INTEGER);
@@ -316,26 +320,31 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
      * A {@code MySQLDAOResultSet} specific to {@code MySQLTaxonConstraintTO}.
      * 
      * @author Valentine Rech de Laval
-     * @version Bgee 13
+     * @author Frederic Bastian
+     * @version Bgee 14 Feb. 2017
      * @since Bgee 13
+     * 
+     * @param <T> the type of ID of the related entity.
      */
-    public class MySQLTaxonConstraintTOResultSet extends MySQLDAOResultSet<TaxonConstraintTO> 
-                                                 implements TaxonConstraintTOResultSet {
+    public class MySQLTaxonConstraintTOResultSet<T> extends MySQLDAOResultSet<TaxonConstraintTO<T>> 
+                                                 implements TaxonConstraintTOResultSet<T> {
+        private final Class<T> cls;
         /**
          * Delegates to {@link MySQLDAOResultSet#MySQLDAOResultSet(BgeePreparedStatement)}
          * super constructor.
          * 
          * @param statement The first {@code BgeePreparedStatement} to execute a query on.
          */
-        private MySQLTaxonConstraintTOResultSet(BgeePreparedStatement statement) {
+        private MySQLTaxonConstraintTOResultSet(BgeePreparedStatement statement, Class<T> cls) {
             super(statement);
+            this.cls = cls;
         }
 
         @Override
-        protected TaxonConstraintTO getNewTO() throws DAOException {
+        protected TaxonConstraintTO<T> getNewTO() throws DAOException {
             log.entry();
             
-            String entityId = null;
+            T entityId = null;
             Integer speciesId = null;
 
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
@@ -343,7 +352,7 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
                     if (column.getValue().equals("stageId") || 
                                 column.getValue().equals("anatEntityId") || 
                                 column.getValue().equals("anatEntityRelationId")) {
-                        entityId = this.getCurrentResultSet().getString(column.getKey());
+                        entityId = this.getCurrentResultSet().getObject(column.getKey(), this.cls);
                     } else if (column.getValue().equals("speciesId")) {
                         speciesId = this.getCurrentResultSet().getInt(column.getKey());
 
@@ -355,7 +364,7 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
                 }
             }
            
-            return log.exit(new TaxonConstraintTO(entityId, speciesId));
+            return log.exit(new TaxonConstraintTO<T>(entityId, speciesId));
         }
     }
 }

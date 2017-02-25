@@ -14,7 +14,8 @@ import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
  * Users should use the {@link org.bgee.model.ServiceFactory} to obtain {@code TaxonConstraint}s.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, May 2016
+ * @author  Frederic Bastian
+ * @version Bgee 14 Feb. 2017
  * @since   Bgee 13, May 2016
  */
 public class TaxonConstraintService extends Service {
@@ -38,7 +39,7 @@ public class TaxonConstraintService extends Service {
      * @return              A {@code Stream} of {@code TaxonConstraint}s that are 
      *                      the {@code TaxonConstraint}s for the given set of species IDs.
      */
-    public Stream<TaxonConstraint> loadAnatEntityTaxonConstraintBySpeciesIds(Collection<Integer> speciesIds) {
+    public Stream<TaxonConstraint<String>> loadAnatEntityTaxonConstraintBySpeciesIds(Collection<Integer> speciesIds) {
         log.entry(speciesIds);
         
         return log.exit(getDaoManager().getTaxonConstraintDAO()
@@ -54,7 +55,7 @@ public class TaxonConstraintService extends Service {
      * @return              A {@code Stream} of {@code TaxonConstraint}s that are 
      *                      the {@code TaxonConstraint}s for the given set of species IDs.
      */
-    public Stream<TaxonConstraint> loadAnatEntityRelationTaxonConstraintBySpeciesIds(
+    public Stream<TaxonConstraint<Integer>> loadAnatEntityRelationTaxonConstraintBySpeciesIds(
             Collection<Integer> speciesIds) {
         log.entry(speciesIds);
         
@@ -71,7 +72,7 @@ public class TaxonConstraintService extends Service {
      * @return              A {@code Stream} of {@code TaxonConstraint}s that are 
      *                      the {@code TaxonConstraint}s for the given set of species IDs.
      */
-    public Stream<TaxonConstraint> loadDevStageTaxonConstraintBySpeciesIds(Collection<Integer> speciesIds) {
+    public Stream<TaxonConstraint<String>> loadDevStageTaxonConstraintBySpeciesIds(Collection<Integer> speciesIds) {
         log.entry(speciesIds);
         
         return log.exit(getDaoManager().getTaxonConstraintDAO()
@@ -85,13 +86,13 @@ public class TaxonConstraintService extends Service {
      * @param taxonConstraintTO A {@code TaxonConstraintTO} that is the transfert object to be mapped.
      * @return                  The mapped {@link TaxonConstraint}.
      */
-    private static TaxonConstraint mapFromTO(TaxonConstraintTO taxonConstraintTO) {
+    private static <T> TaxonConstraint<T> mapFromTO(TaxonConstraintTO<T> taxonConstraintTO) {
         log.entry(taxonConstraintTO);
         if (taxonConstraintTO == null) {
             return log.exit(null);
         }
 
-        return log.exit(new TaxonConstraint(
+        return log.exit(new TaxonConstraint<T>(
                 taxonConstraintTO.getEntityId(), taxonConstraintTO.getSpeciesId()));
     }
 }

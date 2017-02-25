@@ -4,17 +4,20 @@ package org.bgee.model.anatdev;
  * Class describing taxon constraints.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, May 2016
+ * @author  Frederic Bastian
+ * @version Bgee 14 Feb. 2017
  * @since   Bgee 13, May 2016
+ * 
+ * @param <T> the type of ID of the related entity
  */
 //TODO: actually, shouldn't it use a Set<String> speciesIds? We don't have to stick 
 //to the design in the database...
-public class TaxonConstraint {
+public class TaxonConstraint<T> {
     
     /**
-     * A {@code String} that is the ID of the entity that has a taxon constraint.
+     * A {@code T} that is the ID of the entity that has a taxon constraint.
      */
-    private final String entityId;
+    private final T entityId;
     
     /**
      * An {@code Integer} that is the ID of the species that define the taxon constraint. 
@@ -28,19 +31,19 @@ public class TaxonConstraint {
      * <p>
      * If {@code speciesId} is {@code null}, it means that the entity exists in all species.
      * 
-     * @param entityId    A {@code String} that is the ID of the entity that has a taxon constraint.
+     * @param entityId    A {@code T} that is the ID of the entity that has a taxon constraint.
      * @param speciesId   An {@code Integer} that is the ID of the species that define
      *                    the taxon constraint.
      */
-    public TaxonConstraint(String entityId, Integer speciesId) {
+    public TaxonConstraint(T entityId, Integer speciesId) {
         this.entityId = entityId;
         this.speciesId = speciesId;
     }
 
     /**
-     * @return  A {@code String} that is the ID of the entity that has a taxon constraint.
+     * @return  A {@code T} that is the ID of the entity that has a taxon constraint.
      */
-    public String getEntityId() {
+    public T getEntityId() {
         return entityId;
     }
 
@@ -69,7 +72,7 @@ public class TaxonConstraint {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        TaxonConstraint other = (TaxonConstraint) obj;
+        TaxonConstraint<?> other = (TaxonConstraint<?>) obj;
         if (entityId == null) {
             if (other.entityId != null)
                 return false;

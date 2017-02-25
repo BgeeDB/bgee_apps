@@ -34,13 +34,13 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
      * A {@code Set} of {@code TaxonConstraint}s that are taxon constrains on relations 
      * between {@code OntologyElement}s of this ontology.
      */
-    private final Set<TaxonConstraint> relationTaxonConstraints;
+    private final Set<TaxonConstraint<Integer>> relationTaxonConstraints;
 
     /**
      * A {@code Set} of {@code TaxonConstraint}s that are taxon constrains on 
      * {@code OntologyElement}s of this ontology.
      */
-    private final Set<TaxonConstraint> entityTaxonConstraints;
+    private final Set<TaxonConstraint<String>> entityTaxonConstraints;
 
     /**
      * @see #getSpeciesIds()
@@ -68,8 +68,9 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
      *                                  to be store by this {@code MultiSpeciesOntology}.
      */
     protected MultiSpeciesOntology(Collection<Integer> speciesIds, Collection<T> elements, 
-            Collection<RelationTO<U>> relations, Collection<TaxonConstraint> taxonConstraints, 
-            Collection<TaxonConstraint> relationTaxonConstraints, Collection<RelationType> relationTypes,
+            Collection<RelationTO<U>> relations, Collection<TaxonConstraint<String>> taxonConstraints, 
+            Collection<TaxonConstraint<Integer>> relationTaxonConstraints, 
+            Collection<RelationType> relationTypes,
             ServiceFactory serviceFactory, Class<T> type) {
         super(elements, relations, relationTypes, serviceFactory, type);
         this.speciesIds = Collections.unmodifiableSet(
@@ -128,7 +129,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
         // No, we should inspect why but I'm just lasy to do it now
         if (this.getType().equals(AnatEntity.class)) {
             // Get relation IDs according to taxon constraints
-            Set<String> relationsIds = relationTaxonConstraints.stream()
+            Set<Integer> relationsIds = relationTaxonConstraints.stream()
                     .filter(tc -> tc.getSpeciesId() == null || speciesIds.contains(tc.getSpeciesId()))
                     .map(tc -> tc.getEntityId())
                     .collect(Collectors.toSet());

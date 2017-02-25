@@ -450,7 +450,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
     //TODO: unit test with multi-species nested set model ontologies (e.g., DevStageOntology)
     protected Set<T> getRelatives(T element, Set<T> elements, boolean isAncestor, 
             Collection<RelationType> relationTypes, boolean directRelOnly, Collection<Integer> speciesIds, 
-            Set<TaxonConstraint> relationTaxonConstraints) {
+            Set<TaxonConstraint<Integer>> relationTaxonConstraints) {
         log.entry(element, elements, isAncestor, relationTypes, directRelOnly, speciesIds, 
                 relationTaxonConstraints);
         
@@ -477,9 +477,10 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
                 .stream()
                 .map(OntologyBase::convertRelationType)
                 .collect(Collectors.toCollection(() -> EnumSet.noneOf(RelationTO.RelationType.class)));
+        log.trace("Used relation types: {}", usedRelationTypes);
 
         final Set<U> allowedEntityIds = elements.stream().map(e -> e.getId()).collect(Collectors.toSet());   
-        final Set<String> allowedRelIds;
+        final Set<Integer> allowedRelIds;
         final boolean relIdFiltering;
         if (isMultiSpecies && !relationTaxonConstraints.isEmpty()) {
             allowedRelIds = relationTaxonConstraints.stream()
@@ -504,6 +505,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
                                 allowedEntityIds.contains(r.getTargetId())) //or, both the source and target 
                                                                             //are allowed entities
                 .collect(Collectors.toSet());
+        log.trace("Filtered relations: {}", filteredRelations);
 
         Stream<T> relatives = null;
         if (isAncestor) {

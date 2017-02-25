@@ -12,7 +12,8 @@ import org.bgee.model.dao.api.exception.DAOException;
  * DAO defining queries using or retrieving {@link TaxonConstraintTO}s. 
  *
  * @author  Valentine Rech de Laval
- * @version Bgee 13, May 2016
+ * @author Frederic Bastian
+ * @version Bgee 14 Feb. 2017
  * @see     TaxonConstraintTO
  * @since   Bgee 13
  */
@@ -50,7 +51,7 @@ public interface TaxonConstraintDAO {
      *                      anatomical entity taxon constrains from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public TaxonConstraintTOResultSet getAnatEntityTaxonConstraints(
+    public TaxonConstraintTOResultSet<String> getAnatEntityTaxonConstraints(
             Collection<Integer> speciesIds, Collection<TaxonConstraintDAO.Attribute> attributes)
             throws DAOException;
     
@@ -71,7 +72,7 @@ public interface TaxonConstraintDAO {
      *                      anatomical entity taxon constrains from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public TaxonConstraintTOResultSet getAnatEntityRelationTaxonConstraints(
+    public TaxonConstraintTOResultSet<Integer> getAnatEntityRelationTaxonConstraints(
             Collection<Integer> speciesIds, Collection<TaxonConstraintDAO.Attribute> attributes)
             throws DAOException;
 
@@ -92,7 +93,7 @@ public interface TaxonConstraintDAO {
      *                      developmental stage taxon constrains from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public TaxonConstraintTOResultSet getStageTaxonConstraints(
+    public TaxonConstraintTOResultSet<String> getStageTaxonConstraints(
             Collection<Integer> speciesIds, Collection<TaxonConstraintDAO.Attribute> attributes)
             throws DAOException;
 
@@ -110,7 +111,7 @@ public interface TaxonConstraintDAO {
      *                                  {@code DAOException} ({@code DAO}s do not expose these kind 
      *                                  of implementation details).
      */
-    public int insertStageTaxonConstraints(Collection<TaxonConstraintTO> taxonConstraintTOs) 
+    public int insertStageTaxonConstraints(Collection<TaxonConstraintTO<String>> taxonConstraintTOs) 
             throws DAOException, IllegalArgumentException;
     
     /**
@@ -127,7 +128,7 @@ public interface TaxonConstraintDAO {
      *                      a {@code DAOException} ({@code DAOs} do not expose these kind of 
      *                      implementation details).
      */
-    public int insertAnatEntityTaxonConstraints(Collection<TaxonConstraintTO> taxonConstraintTOs) 
+    public int insertAnatEntityTaxonConstraints(Collection<TaxonConstraintTO<String>> taxonConstraintTOs) 
             throws DAOException, IllegalArgumentException;
     
     /**
@@ -145,17 +146,20 @@ public interface TaxonConstraintDAO {
      *                      kind of implementation details).
      */
     public int insertAnatEntityRelationTaxonConstraints(
-            Collection<TaxonConstraintTO> taxonConstraintTOs)
+            Collection<TaxonConstraintTO<Integer>> taxonConstraintTOs)
                     throws DAOException, IllegalArgumentException;
     
     /**
      * {@code DAOResultSet} specifics to {@code TaxonConstraintTO}s
      * 
      * @author Valentine Rech de Laval
-     * @version Bgee 13
+     * @author Frederic Bastian
+     * @version Bgee 14 Feb. 2017
      * @since Bgee 13
+     * 
+     * @param <T> the type of ID of the related entity.
      */
-    public interface TaxonConstraintTOResultSet extends DAOResultSet<TaxonConstraintTO> {
+    public interface TaxonConstraintTOResultSet<T> extends DAOResultSet<TaxonConstraintTO<T>> {
         
     }
 
@@ -163,17 +167,20 @@ public interface TaxonConstraintDAO {
      * A {@code TransferObject} representing a taxon constraint for an entity in the Bgee database.
      * 
      * @author Valentine Rech de Laval
-     * @version Bgee 13
+     * @author Frederic Bastian
+     * @version Bgee 14 Feb. 2017
      * @since Bgee 13
+     * 
+     * @param <T> the type of ID of the related entity.
      */
-    public class TaxonConstraintTO extends TransferObject {
+    public class TaxonConstraintTO<T> extends TransferObject {
 
         private static final long serialVersionUID = -4793134010857365138L;
 
         /**
-         * A {@code String} that is the ID of the entity that has a taxon constraint.
+         * A {@code T} that is the ID of the entity that has a taxon constraint.
          */
-        private final String entityId;
+        private final T entityId;
         
         /**
          * An {@code Integer} that is the ID of the species that define the taxon constraint. 
@@ -186,12 +193,12 @@ public interface TaxonConstraintDAO {
          * <p>
          * All of these parameters are optional, so they can be {@code null} when not used.
          * 
-         * @param entityId      A {@code String} that is the ID of the entity that has a taxon 
+         * @param entityId      A {@code T} that is the ID of the entity that has a taxon 
          *                      constraint. 
          * @param speciesId     An {@code Integer} that is the ID of the species that define the 
          *                      taxon constraint.
          */
-        public TaxonConstraintTO(String entityId, Integer speciesId) {
+        public TaxonConstraintTO(T entityId, Integer speciesId) {
             this.entityId = entityId;
             this.speciesId = speciesId;
         }
@@ -199,7 +206,7 @@ public interface TaxonConstraintDAO {
         /**
          * @return  the {@code String} that is ID of the entity that has a taxon constraint.
          */
-        public String getEntityId() {
+        public T getEntityId() {
             return this.entityId;
         }
 

@@ -6,7 +6,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -147,38 +146,38 @@ public class OntologyServiceTest extends TestAncestor {
         TaxonConstraintService tcService = mock(TaxonConstraintService.class);
         when(serviceFactory.getTaxonConstraintService()).thenReturn(tcService);
 
-        Set<TaxonConstraint> taxonConstraints = new HashSet<>(Arrays.asList(
+        Set<TaxonConstraint<String>> taxonConstraints = new HashSet<>(Arrays.asList(
                 // UBERON:0001 sp1/sp2/sp3 --------------------
                 // |                    \                      |
                 // UBERON:0002 sp1/sp2   UBERON:0002p sp2/sp3  | 
                 // |                    /                      |
                 // UBERON:0003 sp1/sp2 ------------------------
-                new TaxonConstraint("UBERON:0001", null),
-                new TaxonConstraint("UBERON:0002", 11),
-                new TaxonConstraint("UBERON:0002", 22),
-                new TaxonConstraint("UBERON:0002p", 33),
-                new TaxonConstraint("UBERON:0002p", 33),
-                new TaxonConstraint("UBERON:0003", 11),
-                new TaxonConstraint("UBERON:0003", 22)));
+                new TaxonConstraint<>("UBERON:0001", null),
+                new TaxonConstraint<>("UBERON:0002", 11),
+                new TaxonConstraint<>("UBERON:0002", 22),
+                new TaxonConstraint<>("UBERON:0002p", 33),
+                new TaxonConstraint<>("UBERON:0002p", 33),
+                new TaxonConstraint<>("UBERON:0003", 11),
+                new TaxonConstraint<>("UBERON:0003", 22)));
         // Note: we need to use thenReturn() twice because a stream can be use only once 
         when(tcService.loadAnatEntityTaxonConstraintBySpeciesIds(speciesIds))
             .thenReturn(taxonConstraints.stream()).thenReturn(taxonConstraints.stream())
             .thenReturn(taxonConstraints.stream()).thenReturn(taxonConstraints.stream())
             .thenReturn(taxonConstraints.stream()).thenReturn(taxonConstraints.stream());
         
-        Set<TaxonConstraint> relationTaxonConstraints = new HashSet<>(Arrays.asList(
+        Set<TaxonConstraint<Integer>> relationTaxonConstraints = new HashSet<>(Arrays.asList(
                 // UBERON:0001 ------------------
                 // | sp1/sp2   \ sp2            |
                 // UBERON:0002   UBERON:0002p   | sp2/sp1 (indirect)
                 // | sp1       / sp2            |
                 // UBERON:0003 ------------------
-                new TaxonConstraint("1", 11),
-                new TaxonConstraint("1", 22),
-                new TaxonConstraint("2", 22),
-                new TaxonConstraint("3", 11),
-                new TaxonConstraint("4", 22),
-                new TaxonConstraint("5", 11),
-                new TaxonConstraint("5", 22)));
+                new TaxonConstraint<>(1, 11),
+                new TaxonConstraint<>(1, 22),
+                new TaxonConstraint<>(2, 22),
+                new TaxonConstraint<>(3, 11),
+                new TaxonConstraint<>(4, 22),
+                new TaxonConstraint<>(5, 11),
+                new TaxonConstraint<>(5, 22)));
         // Note: we need to use thenReturn() twice because a stream can be use only once 
         when(tcService.loadAnatEntityRelationTaxonConstraintBySpeciesIds(speciesIds))
             .thenReturn(relationTaxonConstraints.stream()).thenReturn(relationTaxonConstraints.stream())
@@ -284,22 +283,22 @@ public class OntologyServiceTest extends TestAncestor {
         TaxonConstraintService tcService = mock(TaxonConstraintService.class);
         when(serviceFactory.getTaxonConstraintService()).thenReturn(tcService);
 
-        Set<TaxonConstraint> taxonConstraints = new HashSet<>(Arrays.asList(
-                new TaxonConstraint("UBERON:0001", null),
-                new TaxonConstraint("UBERON:0002", null),
-                new TaxonConstraint("UBERON:0003", null),
-                new TaxonConstraint("UBERON:0004", null)));
+        Set<TaxonConstraint<String>> taxonConstraints = new HashSet<>(Arrays.asList(
+                new TaxonConstraint<>("UBERON:0001", null),
+                new TaxonConstraint<>("UBERON:0002", null),
+                new TaxonConstraint<>("UBERON:0003", null),
+                new TaxonConstraint<>("UBERON:0004", null)));
         // Note: we need to use thenReturn() twice because a stream can be use only once 
         when(tcService.loadAnatEntityTaxonConstraintBySpeciesIds(speciesIds))
             .thenReturn(taxonConstraints.stream()).thenReturn(taxonConstraints.stream());
         
-        Set<TaxonConstraint> relationTaxonConstraints = new HashSet<>(Arrays.asList(
-                new TaxonConstraint("1", null),
-                new TaxonConstraint("2", null),
-                new TaxonConstraint("3", null),
-                new TaxonConstraint("4", null),
-                new TaxonConstraint("5", null),
-                new TaxonConstraint("6", null)));
+        Set<TaxonConstraint<Integer>> relationTaxonConstraints = new HashSet<>(Arrays.asList(
+                new TaxonConstraint<>(1, null),
+                new TaxonConstraint<>(2, null),
+                new TaxonConstraint<>(3, null),
+                new TaxonConstraint<>(4, null),
+                new TaxonConstraint<>(5, null),
+                new TaxonConstraint<>(6, null)));
         // Note: we need to use thenReturn() twice because a stream can be use only once 
         when(tcService.loadAnatEntityRelationTaxonConstraintBySpeciesIds(speciesIds))
             .thenReturn(relationTaxonConstraints.stream()).thenReturn(relationTaxonConstraints.stream());
@@ -415,18 +414,18 @@ public class OntologyServiceTest extends TestAncestor {
 
         TaxonConstraintService tcService = mock(TaxonConstraintService.class);
         when(serviceFactory.getTaxonConstraintService()).thenReturn(tcService);
-        Set<TaxonConstraint> stageTCs = 
+        Set<TaxonConstraint<String>> stageTCs = 
                 // stage1 sp1/sp2 -------
                 // |               \     \    
                 // stage2 sp1/sp2   |     stage2p sp2
                 // |               /      | 
                 // stage3 sp1             stage3p sp2
                 new HashSet<>(Arrays.asList(
-                        new TaxonConstraint("stage1", null),
-                        new TaxonConstraint("stage2", null),
-                        new TaxonConstraint("stage2p", 2),
-                        new TaxonConstraint("stage3", 1),
-                        new TaxonConstraint("stage3p", 2)));
+                        new TaxonConstraint<>("stage1", null),
+                        new TaxonConstraint<>("stage2", null),
+                        new TaxonConstraint<>("stage2p", 2),
+                        new TaxonConstraint<>("stage3", 1),
+                        new TaxonConstraint<>("stage3p", 2)));
 
         // Note: we need to use thenReturn() twice because a stream can be use only once
         when(tcService.loadDevStageTaxonConstraintBySpeciesIds(speciesIds))

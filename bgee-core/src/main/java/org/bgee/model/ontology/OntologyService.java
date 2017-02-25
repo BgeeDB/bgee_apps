@@ -154,10 +154,10 @@ public class OntologyService extends Service {
         
         Set<RelationTO<String>> rels = this.getAnatEntityRelationTOs(speciesIds, anatEntityIds,
                 relationTypes, getAncestors, getDescendants);
-        Set<TaxonConstraint> relationTaxonConstraints = getServiceFactory().getTaxonConstraintService()
+        Set<TaxonConstraint<Integer>> relationTaxonConstraints = getServiceFactory().getTaxonConstraintService()
                     .loadAnatEntityRelationTaxonConstraintBySpeciesIds(speciesIds)
                     .collect(Collectors.toSet());
-        Set<TaxonConstraint> taxonConstraints = getServiceFactory().getTaxonConstraintService()
+        Set<TaxonConstraint<String>> taxonConstraints = getServiceFactory().getTaxonConstraintService()
                     .loadAnatEntityTaxonConstraintBySpeciesIds(speciesIds)
                     .collect(Collectors.toSet());
         return log.exit(new MultiSpeciesOntology<AnatEntity, String>(speciesIds, 
@@ -267,7 +267,7 @@ public class OntologyService extends Service {
         
         Set<RelationTO<String>> rels = this.getDevStageRelationTOs(speciesIds, devStageIds, 
                 getAncestors, getDescendants);
-        Set<TaxonConstraint> taxonConstraints = getServiceFactory().getTaxonConstraintService()
+        Set<TaxonConstraint<String>> taxonConstraints = getServiceFactory().getTaxonConstraintService()
                 .loadDevStageTaxonConstraintBySpeciesIds(speciesIds)
                 .collect(Collectors.toSet());
         //there is no relation IDs for nested set models, so no TaxonConstraints. 

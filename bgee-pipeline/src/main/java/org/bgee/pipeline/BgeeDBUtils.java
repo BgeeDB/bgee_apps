@@ -14,6 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.NamedEntityTO;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
 import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.exception.DAOException;
@@ -322,17 +323,17 @@ public class BgeeDBUtils {
      *              the method {@code DAOResultSet#getTO()}. It should not have been closed, 
      *              and the method {@code next} should not have been already called.
      * @param <T>   The type of {@code EntityTO} in {@code rs}.
-     * @return      A {@code Map} where keys are {@code String}s corresponding to 
+     * @param <U>   The type of ID in {@code EntityTO} in {@code rs}.
+     * @return      A {@code Map} where keys are {@code U}s corresponding to 
      *              entity IDs, the associated values being {@code T}s 
      *              corresponding to entity TOs. 
      * @throws IllegalArgumentException If {@code rs} does not allow to retrieve EntityTO IDs.
      * @throws IllegalStateException	If several TOs associated to a same ID.
      */
-    //TODO Modify when NamedEntityTO implemented 
-    private static <T extends EntityTO> Map<String, T> generateTOsByIdsMap(DAOResultSet<T> rs) {
+    private static <U, T extends EntityTO<U>> Map<U, T> generateTOsByIdsMap(DAOResultSet<T> rs) {
         log.entry(rs);
         
-        Map<String, T> tosByIds = new HashMap<String, T>();
+        Map<U, T> tosByIds = new HashMap<>();
         try {
             while (rs.next()) {
                 T entityTO = rs.getTO();
@@ -363,6 +364,7 @@ public class BgeeDBUtils {
      *              the method {@code DAOResultSet#getTO()}. It should not have been closed, 
      *              and the method {@code next} should not have been already called.
      * @param <T>   The type of {@code EntityTO} in {@code rs}.
+     * @param <U>   The type of ID in {@code EntityTO} in {@code rs}.
      * @return      A {@code Map} where keys are {@code String}s corresponding to 
      *              entity IDs, the associated values being {@code String}s 
      *              corresponding to entity names. 
@@ -372,12 +374,12 @@ public class BgeeDBUtils {
     //XXX: Currently, we keep specific methods to be able to store and restore specific attributes.
     //     This could be generic using Java 8, but we are just lazy to implement it now.
 
-    private static <T extends EntityTO> Map<String, String> generateNamesByIdsMap(DAOResultSet<T> rs) 
+    private static <U, T extends NamedEntityTO<U>> Map<U, String> generateNamesByIdsMap(DAOResultSet<T> rs) 
     		throws IllegalArgumentException, IllegalStateException {
         log.entry(rs);
         
-        Map<String, String> namesByIds = new HashMap<String, String>();
-        for (Entry<String, T> entry: generateTOsByIdsMap(rs).entrySet()) {
+        Map<U, String> namesByIds = new HashMap<>();
+        for (Entry<U, T> entry: generateTOsByIdsMap(rs).entrySet()) {
             if (entry.getValue().getName() == null) {
                 throw log.throwing(new IllegalArgumentException("The provided DAOResultSet " +
                         "does not allow to retrieve EntityTO names"));                   
@@ -406,14 +408,14 @@ public class BgeeDBUtils {
     //XXX: Currently, we keep this specific method to be able to store and restore 
     //     specific attributes. This could be generic in generateNamesByIdsMap using Java 8, 
     //     but we are just lazy to implement it now. 
-    public static Map<String, String> getGeneNamesByIds(Set<String> speciesIds, GeneDAO geneDAO) {
+    public static Map<Integer, String> getGeneNamesByIds(Set<Integer> speciesIds, GeneDAO geneDAO) {
         log.entry(speciesIds, geneDAO);
         log.debug("Start retrieving gene names for species: {}", speciesIds);
         //store original attributes to restore geneDAO in proper state afterwards.
         Collection<GeneDAO.Attribute> attributes = geneDAO.getAttributes();
         geneDAO.setAttributes(GeneDAO.Attribute.ID, GeneDAO.Attribute.NAME);
         
-        Map<String, String> geneNamesByIds = 
+        Map<Integer, String> geneNamesByIds = 
                 generateNamesByIdsMap(geneDAO.getGenesBySpeciesIds(speciesIds));
         
         //restore geneDAO in proper state
@@ -436,12 +438,12 @@ public class BgeeDBUtils {
      *                      gene IDs, the associated values being {@code GeneTO}s 
      *                      corresponding to gene TOs. 
      */
-    public static Map<String, GeneTO> getGeneTOsByIds(Set<String> speciesIds, GeneDAO geneDAO) {
+    public static Map<Integer, GeneTO> getGeneTOsByIds(Set<Integer> speciesIds, GeneDAO geneDAO) {
         log.entry(speciesIds, geneDAO);
         
         log.debug("Start retrieving gene TOs for species: {}", speciesIds);
         
-        Map<String, GeneTO> geneTOsByIds = 
+        Map<Integer, GeneTO> geneTOsByIds = 
                 generateTOsByIdsMap(geneDAO.getGenesBySpeciesIds(speciesIds));
 
         log.debug("Done retrieving gene TOs for species: {}, {} TOs retrieved", 
@@ -465,7 +467,7 @@ public class BgeeDBUtils {
     //XXX: Currently, we keep this specific method to be able to store and restore 
     //     specific attributes. This could be generic in generateNamesByIdsMap using Java 8, 
     //     but we are just lazy to implement it now. 
-    public static Map<String, String> getStageNamesByIds(Set<String> speciesIds, 
+    public static Map<String, String> getStageNamesByIds(Set<Integer> speciesIds, 
             StageDAO stageDAO) {
         log.entry(speciesIds, stageDAO);
         log.debug("Start retrieving stage names for species: {}", speciesIds);
@@ -500,7 +502,7 @@ public class BgeeDBUtils {
     //XXX: Currently, we keep this specific method to be able to store and restore 
     //     specific attributes. This could be generic in generateNamesByIdsMap using Java 8, 
     //     but we are just lazy to implement it now. 
-    public static Map<String, String> getAnatEntityNamesByIds(Set<String> speciesIds, 
+    public static Map<String, String> getAnatEntityNamesByIds(Set<Integer> speciesIds, 
             AnatEntityDAO anatEntityDAO) {
         log.entry(speciesIds, anatEntityDAO);
         log.debug("Start retrieving anatomical entity names for species: {}", speciesIds);

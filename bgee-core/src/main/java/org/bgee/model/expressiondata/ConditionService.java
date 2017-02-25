@@ -35,28 +35,28 @@ public class ConditionService extends CommonService {
     public ConditionService(ServiceFactory serviceFactory) {
         super(serviceFactory);
     }
-    
-    /** 
-     * Retrieve {@code Condition}s for the requested species IDs. If several species IDs 
-     * are provided, the {@code Condition}s existing in any of them are retrieved. 
-     * 
-     * @param speciesIds     A {@code Collection} of {@code Integer}s that are IDs of species 
-     *                      for which to return the {@code Condition}s.
-     * @param attributes    A {@code Collection} of {@code Attribute}s defining the
-     *                      attributes to populate in the returned {@code Condition}s.
-     *                      If {@code null} or empty, all attributes are populated. 
-     * @return              A {@code Stream} of {@code Condition}s retrieved for
-     *                      the requested species IDs.
-     */
-    public Stream<Condition> loadConditionsBySpeciesId(Collection<Integer> speciesIds,
-            Collection<Attribute> attributes) {
-        log.entry(speciesIds, attributes);
-        log.warn("Retrieval of conditions by species ID not yet implemented.");
-        Set<Integer> clonedSpeciesIds = speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds);
-        Set<Attribute> clonedAttributes = attributes == null? new HashSet<>(): new HashSet<>(attributes);
-
-        return log.exit(getDaoManager().getConditionDAO().getConditionsBySpeciesIds(
-                clonedSpeciesIds, convertConditionServiceAttrsToConditionDAOAttrs(clonedAttributes)).stream()
-            .map(cTO-> mapConditionTOToCondition(cTO)));
-    }
+//    
+//    /** 
+//     * Retrieve {@code Condition}s for the requested species IDs. If several species IDs 
+//     * are provided, the {@code Condition}s existing in any of them are retrieved. 
+//     * 
+//     * @param speciesIds     A {@code Collection} of {@code Integer}s that are IDs of species 
+//     *                      for which to return the {@code Condition}s.
+//     * @param attributes    A {@code Collection} of {@code Attribute}s defining the
+//     *                      attributes to populate in the returned {@code Condition}s.
+//     *                      If {@code null} or empty, all attributes are populated. 
+//     * @return              A {@code Stream} of {@code Condition}s retrieved for
+//     *                      the requested species IDs.
+//     */
+//    public Stream<Condition> loadConditionsBySpeciesId(Collection<Integer> speciesIds,
+//            Collection<Attribute> attributes) {
+//        log.entry(speciesIds, attributes);
+//        log.warn("Retrieval of conditions by species ID not yet implemented.");
+//        Set<Integer> clonedSpeciesIds = speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds);
+//        Set<Attribute> clonedAttributes = attributes == null? new HashSet<>(): new HashSet<>(attributes);
+//
+//        return log.exit(getDaoManager().getConditionDAO().getConditionsBySpeciesIds(
+//                clonedSpeciesIds, convertConditionServiceAttrsToConditionDAOAttrs(clonedAttributes)).stream()
+//            .map(cTO-> mapConditionTOToCondition(cTO)));
+//    }
 }

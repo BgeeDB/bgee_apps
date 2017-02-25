@@ -102,21 +102,21 @@ public class BgeeDBUtilsTest extends TestAncestor {
             
             this.mockGetAllSpecies(mockManager);
             assertEquals("Incorrect speciesIDs checked and retrieved", 
-                    Arrays.asList("21", "11", "30"), BgeeDBUtils.checkAndGetSpeciesIds(
-                            new ArrayList<String>(), mockManager.getSpeciesDAO()));
+                    Arrays.asList(21, 11, 30), BgeeDBUtils.checkAndGetSpeciesIds(
+                            new ArrayList<>(), mockManager.getSpeciesDAO()));
             
             this.mockGetAllSpecies(mockManager);
             assertEquals("Incorrect speciesIDs checked and retrieved", 
-                    Arrays.asList("30", "21", "11"), BgeeDBUtils.checkAndGetSpeciesIds(
-                            Arrays.asList("30", "21", "11"), mockManager.getSpeciesDAO()));
+                    Arrays.asList(30, 21, 11), BgeeDBUtils.checkAndGetSpeciesIds(
+                            Arrays.asList(30, 21, 11), mockManager.getSpeciesDAO()));
             
             this.mockGetAllSpecies(mockManager);
             assertEquals("Incorrect speciesIDs checked and retrieved", 
-                    Arrays.asList("30", "11"), BgeeDBUtils.checkAndGetSpeciesIds(
-                            Arrays.asList("30", "11"), mockManager.getSpeciesDAO()));
+                    Arrays.asList(30, 11), BgeeDBUtils.checkAndGetSpeciesIds(
+                            Arrays.asList(30, 11), mockManager.getSpeciesDAO()));
             try {
                 this.mockGetAllSpecies(mockManager);
-                BgeeDBUtils.checkAndGetSpeciesIds(Arrays.asList("11", "30", "100"), 
+                BgeeDBUtils.checkAndGetSpeciesIds(Arrays.asList(11, 30, 100), 
                         mockManager.getSpeciesDAO());
                 //test failed, the method should have thrown an exception
                 throw new AssertionError("checkAndGetSpeciesIds did not throw " +
@@ -137,9 +137,9 @@ public class BgeeDBUtilsTest extends TestAncestor {
         // We need a mock MySQLSpeciesTOResultSet to mock the return of getAllSpecies().
         SpeciesTOResultSet mockSpeciesTORs = this.createMockDAOResultSet(
                 Arrays.asList(
-                        new SpeciesTO("21", null, null, null, null, null, null, null, null),
-                        new SpeciesTO("11", null, null, null, null, null, null, null, null),
-                        new SpeciesTO("30", null, null, null, null, null, null, null, null)),
+                        new SpeciesTO(21, null, null, null, null, null, null, null),
+                        new SpeciesTO(11, null, null, null, null, null, null, null),
+                        new SpeciesTO(30, null, null, null, null, null, null, null)),
                 MySQLSpeciesTOResultSet.class);
         when(mockManager.mockSpeciesDAO.getAllSpecies()).thenReturn(mockSpeciesTORs);
         
@@ -152,24 +152,24 @@ public class BgeeDBUtilsTest extends TestAncestor {
      */
     @Test
     public void shouldGetAnatEntityTargetsOrSources() {
-        List<RelationTO> returnedRelTOs = Arrays.asList(
-                new RelationTO("1", "1"), 
-                new RelationTO("2", "2"), 
-                new RelationTO("3", "3"), 
-                new RelationTO("4", "4"), 
-                new RelationTO("5", "5"), 
-                new RelationTO("2", "1"), 
-                new RelationTO("3", "1"), 
-                new RelationTO("4", "3"), 
-                new RelationTO("4", "1"), 
-                new RelationTO("3", "5"));
+        List<RelationTO<String>> returnedRelTOs = Arrays.asList(
+                new RelationTO<>("1", "1"), 
+                new RelationTO<>("2", "2"), 
+                new RelationTO<>("3", "3"), 
+                new RelationTO<>("4", "4"), 
+                new RelationTO<>("5", "5"), 
+                new RelationTO<>("2", "1"), 
+                new RelationTO<>("3", "1"), 
+                new RelationTO<>("4", "3"), 
+                new RelationTO<>("4", "1"), 
+                new RelationTO<>("3", "5"));
         
         try (MockDAOManager mockManager = new MockDAOManager()) {
             
-            RelationTOResultSet mockRelationTOResultSet = this.createMockDAOResultSet(
+            RelationTOResultSet<String> mockRelationTOResultSet = this.createMockDAOResultSet(
                     returnedRelTOs, MySQLRelationTOResultSet.class);
             when(mockManager.getRelationDAO().getAnatEntityRelationsBySpeciesIds(
-                    new HashSet<String>(Arrays.asList("1", "2")), 
+                    new HashSet<>(Arrays.asList(1, 2)), 
                     EnumSet.of(RelationType.ISA_PARTOF), null)).thenReturn(mockRelationTOResultSet);
             
             Map<String, Set<String>> expectedReturnedVal = new HashMap<String, Set<String>>();
@@ -181,7 +181,7 @@ public class BgeeDBUtilsTest extends TestAncestor {
             
             assertEquals("Incorrect anat entity relatives by source", expectedReturnedVal, 
                     BgeeDBUtils.getAnatEntityChildrenFromParents(
-                            new HashSet<String>(Arrays.asList("1", "2")), 
+                            new HashSet<>(Arrays.asList(1, 2)), 
                             mockManager.getRelationDAO()));
             verify(mockManager.getRelationDAO()).setAttributes(RelationDAO.Attribute.SOURCE_ID, 
                     RelationDAO.Attribute.TARGET_ID);
@@ -189,10 +189,10 @@ public class BgeeDBUtilsTest extends TestAncestor {
         }
         
         try (MockDAOManager mockManager = new MockDAOManager()) {
-            RelationTOResultSet mockRelationTOResultSet = this.createMockDAOResultSet(
+            RelationTOResultSet<String> mockRelationTOResultSet = this.createMockDAOResultSet(
                     returnedRelTOs, MySQLRelationTOResultSet.class);
             when(mockManager.getRelationDAO().getAnatEntityRelationsBySpeciesIds(
-                    new HashSet<String>(Arrays.asList("1", "2")), 
+                    new HashSet<>(Arrays.asList(1, 2)), 
                     EnumSet.of(RelationType.ISA_PARTOF), null)).thenReturn(mockRelationTOResultSet);
             
             Map<String, Set<String>> expectedReturnedVal = new HashMap<String, Set<String>>();
@@ -204,7 +204,7 @@ public class BgeeDBUtilsTest extends TestAncestor {
             
             assertEquals("Incorrect anat entity relatives by target", expectedReturnedVal, 
                     BgeeDBUtils.getAnatEntityParentsFromChildren(
-                            new HashSet<String>(Arrays.asList("1", "2")), 
+                            new HashSet<>(Arrays.asList(1, 2)), 
                             mockManager.getRelationDAO()));
             verify(mockManager.getRelationDAO()).setAttributes(RelationDAO.Attribute.SOURCE_ID, 
                     RelationDAO.Attribute.TARGET_ID);
@@ -219,22 +219,22 @@ public class BgeeDBUtilsTest extends TestAncestor {
     @Test
     public void shouldGetStageTargetsOrSources() {
         //stages can have only one direct parent
-        List<RelationTO> returnedRelTOs = Arrays.asList(
-                new RelationTO("1", "1"), 
-                new RelationTO("2", "2"), 
-                new RelationTO("3", "3"), 
-                new RelationTO("4", "4"), 
-                new RelationTO("2", "1"), 
-                new RelationTO("3", "1"), 
-                new RelationTO("4", "3"), 
-                new RelationTO("4", "1"));
+        List<RelationTO<String>> returnedRelTOs = Arrays.asList(
+                new RelationTO<>("1", "1"), 
+                new RelationTO<>("2", "2"), 
+                new RelationTO<>("3", "3"), 
+                new RelationTO<>("4", "4"), 
+                new RelationTO<>("2", "1"), 
+                new RelationTO<>("3", "1"), 
+                new RelationTO<>("4", "3"), 
+                new RelationTO<>("4", "1"));
         
         try (MockDAOManager mockManager = new MockDAOManager()) {
             
-            RelationTOResultSet mockRelationTOResultSet = this.createMockDAOResultSet(
+            RelationTOResultSet<String> mockRelationTOResultSet = this.createMockDAOResultSet(
                     returnedRelTOs, MySQLRelationTOResultSet.class);
             when(mockManager.getRelationDAO().getStageRelationsBySpeciesIds(
-                    new HashSet<String>(Arrays.asList("1", "2")), null)).thenReturn(
+                    new HashSet<>(Arrays.asList(1, 2)), null)).thenReturn(
                             mockRelationTOResultSet);
             
             Map<String, Set<String>> expectedReturnedVal = new HashMap<String, Set<String>>();
@@ -245,7 +245,7 @@ public class BgeeDBUtilsTest extends TestAncestor {
             
             assertEquals("Incorrect stage relatives by source", expectedReturnedVal, 
                     BgeeDBUtils.getStageChildrenFromParents(
-                            new HashSet<String>(Arrays.asList("1", "2")), 
+                            new HashSet<>(Arrays.asList(1, 2)), 
                             mockManager.getRelationDAO()));
             verify(mockManager.getRelationDAO()).setAttributes(RelationDAO.Attribute.SOURCE_ID, 
                     RelationDAO.Attribute.TARGET_ID);
@@ -254,10 +254,10 @@ public class BgeeDBUtilsTest extends TestAncestor {
         
         try (MockDAOManager mockManager = new MockDAOManager()) {
             
-            RelationTOResultSet mockRelationTOResultSet = this.createMockDAOResultSet(
+            RelationTOResultSet<String> mockRelationTOResultSet = this.createMockDAOResultSet(
                     returnedRelTOs, MySQLRelationTOResultSet.class);
             when(mockManager.getRelationDAO().getStageRelationsBySpeciesIds(
-                    new HashSet<String>(Arrays.asList("1", "2")), null)).thenReturn(
+                    new HashSet<>(Arrays.asList(1, 2)), null)).thenReturn(
                             mockRelationTOResultSet);
             
             Map<String, Set<String>> expectedReturnedVal = new HashMap<String, Set<String>>();
@@ -268,7 +268,7 @@ public class BgeeDBUtilsTest extends TestAncestor {
             
             assertEquals("Incorrect stage relatives by source", expectedReturnedVal, 
                     BgeeDBUtils.getStageParentsFromChildren(
-                            new HashSet<String>(Arrays.asList("1", "2")), 
+                            new HashSet<>(Arrays.asList(1, 2)), 
                             mockManager.getRelationDAO()));
             verify(mockManager.getRelationDAO()).setAttributes(RelationDAO.Attribute.SOURCE_ID, 
                     RelationDAO.Attribute.TARGET_ID);
@@ -283,14 +283,14 @@ public class BgeeDBUtilsTest extends TestAncestor {
     public void shouldGetGeneNamesByIds() {
         try (MockDAOManager mockManager = new MockDAOManager()) {
             List<GeneTO> returnedGeneTOs = Arrays.asList(
-                    new GeneTO("1", "gene A", null), 
-                    new GeneTO("2", "gene B", null), 
-                    new GeneTO("3", "gene C", null));
+                    new GeneTO(1, "1", "gene A", null), 
+                    new GeneTO(2, "2", "gene B", null), 
+                    new GeneTO(3, "3", "gene C", null));
             
             GeneTOResultSet mockRS = this.createMockDAOResultSet(
                     returnedGeneTOs, MySQLGeneTOResultSet.class);
             when(mockManager.getGeneDAO().getGenesBySpeciesIds(
-                    new HashSet<String>(Arrays.asList("1", "2")))).thenReturn(
+                    new HashSet<>(Arrays.asList(1, 2)))).thenReturn(
                             mockRS);
             
             Map<String, String> expectedReturnedVal = new HashMap<String, String>();
@@ -300,7 +300,7 @@ public class BgeeDBUtilsTest extends TestAncestor {
             
             assertEquals("Incorrect ID-name mapping", expectedReturnedVal, 
                     BgeeDBUtils.getGeneNamesByIds(
-                            new HashSet<String>(Arrays.asList("1", "2")), 
+                            new HashSet<>(Arrays.asList(1, 2)), 
                             mockManager.getGeneDAO()));
             verify(mockManager.getGeneDAO()).setAttributes(GeneDAO.Attribute.ID, 
                     GeneDAO.Attribute.NAME);
@@ -309,19 +309,19 @@ public class BgeeDBUtilsTest extends TestAncestor {
         
         try (MockDAOManager mockManager = new MockDAOManager()) {
             List<GeneTO> returnedGeneTOs = Arrays.asList(
-                    new GeneTO("1", "gene A", null), 
-                    new GeneTO(null, "gene B", null));
+                    new GeneTO(1, "1", "gene A", null), 
+                    new GeneTO(null, null, "gene B", null));
             
             GeneTOResultSet mockRS = this.createMockDAOResultSet(
                     returnedGeneTOs, MySQLGeneTOResultSet.class);
             when(mockManager.getGeneDAO().getGenesBySpeciesIds(
-                    new HashSet<String>(Arrays.asList("1", "2")))).thenReturn(
+                    new HashSet<>(Arrays.asList(1, 2)))).thenReturn(
                             mockRS);
             
             try {
                 //an IllegalArgumentException should be thrown, because no ID for a TO
                 BgeeDBUtils.getGeneNamesByIds(
-                        new HashSet<String>(Arrays.asList("1", "2")), 
+                        new HashSet<>(Arrays.asList(1, 2)), 
                         mockManager.getGeneDAO());
                 //test failed
                 throw log.throwing(new AssertionError("No IllegalArgumentException was thrown " + 
@@ -334,20 +334,20 @@ public class BgeeDBUtilsTest extends TestAncestor {
 
         try (MockDAOManager mockManager = new MockDAOManager()) {
             List<GeneTO> returnedGeneTOs = Arrays.asList(
-                    new GeneTO("1", "gene A", null), 
-                    new GeneTO("1", "gene B", null));
+                    new GeneTO(1, "1", "gene A", null), 
+                    new GeneTO(1, "1", "gene B", null));
             
             GeneTOResultSet mockRS = this.createMockDAOResultSet(
                     returnedGeneTOs, MySQLGeneTOResultSet.class);
             when(mockManager.getGeneDAO().getGenesBySpeciesIds(
-                    new HashSet<String>(Arrays.asList("1", "2")))).thenReturn(
+                    new HashSet<>(Arrays.asList(1, 2)))).thenReturn(
                             mockRS);
             
             try {
                 //an IllegalStateException should be thrown, because several names are mapped 
                 //to a same ID
                 BgeeDBUtils.getGeneNamesByIds(
-                        new HashSet<String>(Arrays.asList("1", "2")), 
+                        new HashSet<>(Arrays.asList(1, 2)), 
                         mockManager.getGeneDAO());
                 //test failed
                 throw log.throwing(new AssertionError("No IllegalStateException was thrown " +
@@ -366,16 +366,16 @@ public class BgeeDBUtilsTest extends TestAncestor {
     public void shouldGetGeneTOsByIds() {
         try (MockDAOManager mockManager = new MockDAOManager()) {
             
-            GeneTO gene1 = new GeneTO("1", "gene A", "desc A", 1, 1, 1, true); 
-            GeneTO gene2 = new GeneTO("2", "gene B", "desc B", 2, 1, 1, true); 
-            GeneTO gene3 = new GeneTO("3", "gene C", "desc C", 1, 2, 2, true); 
+            GeneTO gene1 = new GeneTO(1, "1", "gene A", "desc A", 1, 1, 1, true); 
+            GeneTO gene2 = new GeneTO(2, "2", "gene B", "desc B", 2, 1, 1, true); 
+            GeneTO gene3 = new GeneTO(3, "3", "gene C", "desc C", 1, 2, 2, true); 
 
             List<GeneTO> returnedGeneTOs = Arrays.asList(gene1, gene2, gene3);
             
             GeneTOResultSet mockRS = this.createMockDAOResultSet(
                     returnedGeneTOs, MySQLGeneTOResultSet.class);
             when(mockManager.getGeneDAO().getGenesBySpeciesIds(
-                    new HashSet<String>(Arrays.asList("1", "2")))).thenReturn(
+                    new HashSet<>(Arrays.asList(1, 2)))).thenReturn(
                             mockRS);
             
             Map<String, GeneTO> expectedReturnedVal = new HashMap<String, GeneTO>();
@@ -385,27 +385,27 @@ public class BgeeDBUtilsTest extends TestAncestor {
             
             assertEquals("Incorrect ID-TO mapping", expectedReturnedVal, 
                     BgeeDBUtils.getGeneTOsByIds(
-                            new HashSet<String>(Arrays.asList("1", "2")), 
+                            new HashSet<>(Arrays.asList(1, 2)), 
                             mockManager.getGeneDAO()));
             verify(mockRS).close();
         }
         
         try (MockDAOManager mockManager = new MockDAOManager()) {
             List<GeneTO> returnedGeneTOs = Arrays.asList(
-                    new GeneTO("1", "gene A", null), 
-                    new GeneTO(null, "gene B", null));
+                    new GeneTO(1, "1", "gene A", null), 
+                    new GeneTO(null, null, "gene B", null));
             
             GeneTOResultSet mockRS = this.createMockDAOResultSet(
                     returnedGeneTOs, MySQLGeneTOResultSet.class);
             when(mockManager.getGeneDAO().getGenesBySpeciesIds(
-                    new HashSet<String>(Arrays.asList("1", "2")))).thenReturn(
+                    new HashSet<>(Arrays.asList(1, 2)))).thenReturn(
                             mockRS);
             
             try {
                 //an IllegalStateException should be thrown, because several names are mapped 
                 //to a same ID
                 BgeeDBUtils.getGeneNamesByIds(
-                        new HashSet<String>(Arrays.asList("1", "2")), 
+                        new HashSet<>(Arrays.asList(1, 2)), 
                         mockManager.getGeneDAO());
                 //test failed
                 fail("No IllegalArgumentException was thrown, TO doesn't allow to retrieve ID");
@@ -417,20 +417,20 @@ public class BgeeDBUtilsTest extends TestAncestor {
 
         try (MockDAOManager mockManager = new MockDAOManager()) {
             List<GeneTO> returnedGeneTOs = Arrays.asList(
-                    new GeneTO("1", "gene A", "desc A", 1, 1, 1, true), 
-                    new GeneTO("1", "gene B", "desc B", 1, 1, 1, true));
+                    new GeneTO(1, "1", "gene A", "desc A", 1, 1, 1, true), 
+                    new GeneTO(1, "1", "gene B", "desc B", 1, 1, 1, true));
             
             GeneTOResultSet mockRS = this.createMockDAOResultSet(
                     returnedGeneTOs, MySQLGeneTOResultSet.class);
             when(mockManager.getGeneDAO().getGenesBySpeciesIds(
-                    new HashSet<String>(Arrays.asList("1", "2")))).thenReturn(
+                    new HashSet<>(Arrays.asList(1, 2)))).thenReturn(
                             mockRS);
             
             try {
                 //an IllegalStateException should be thrown, because several TOs are mapped 
                 //to a same ID
                 BgeeDBUtils.getGeneTOsByIds(
-                        new HashSet<String>(Arrays.asList("1", "2")), 
+                        new HashSet<>(Arrays.asList(1, 2)), 
                         mockManager.getGeneDAO());
                 //test failed
                 fail("No IllegalStateException was thrown with several TOs mapped to a same ID");
@@ -455,7 +455,7 @@ public class BgeeDBUtilsTest extends TestAncestor {
             StageTOResultSet mockRS = this.createMockDAOResultSet(
                     returnedStageTOs, MySQLStageTOResultSet.class);
             when(mockManager.getStageDAO().getStagesBySpeciesIds(
-                    new HashSet<String>(Arrays.asList("1", "2")))).thenReturn(
+                    new HashSet<>(Arrays.asList(1, 2)))).thenReturn(
                             mockRS);
             
             Map<String, String> expectedReturnedVal = new HashMap<String, String>();
@@ -465,7 +465,7 @@ public class BgeeDBUtilsTest extends TestAncestor {
             
             assertEquals("Incorrect ID-name mapping", expectedReturnedVal, 
                     BgeeDBUtils.getStageNamesByIds(
-                            new HashSet<String>(Arrays.asList("1", "2")), 
+                            new HashSet<>(Arrays.asList(1, 2)), 
                             mockManager.getStageDAO()));
             verify(mockManager.getStageDAO()).setAttributes(StageDAO.Attribute.ID, 
                     StageDAO.Attribute.NAME);
@@ -480,13 +480,13 @@ public class BgeeDBUtilsTest extends TestAncestor {
             StageTOResultSet mockRS = this.createMockDAOResultSet(
                     returnedStageTOs, MySQLStageTOResultSet.class);
             when(mockManager.getStageDAO().getStagesBySpeciesIds(
-                    new HashSet<String>(Arrays.asList("1", "2")))).thenReturn(
+                    new HashSet<>(Arrays.asList(1, 2)))).thenReturn(
                             mockRS);
             
             try {
                 //an IllegalArgumentException should be thrown, because no name for the first TO
                 BgeeDBUtils.getStageNamesByIds(
-                        new HashSet<String>(Arrays.asList("1", "2")), 
+                        new HashSet<>(Arrays.asList(1, 2)), 
                         mockManager.getStageDAO());
                 //test failed
                 throw log.throwing(new AssertionError("No IllegalArgumentException was thrown " +
@@ -505,14 +505,14 @@ public class BgeeDBUtilsTest extends TestAncestor {
             StageTOResultSet mockRS = this.createMockDAOResultSet(
                     returnedStageTOs, MySQLStageTOResultSet.class);
             when(mockManager.getStageDAO().getStagesBySpeciesIds(
-                    new HashSet<String>(Arrays.asList("1", "2")))).thenReturn(
+                    new HashSet<>(Arrays.asList(1, 2)))).thenReturn(
                             mockRS);
             
             try {
                 //an IllegalStateException should be thrown, because several names are mapped 
                 //to a same ID
                 BgeeDBUtils.getStageNamesByIds(
-                        new HashSet<String>(Arrays.asList("1", "2")), 
+                        new HashSet<>(Arrays.asList(1, 2)), 
                         mockManager.getStageDAO());
                 //test failed
                 throw log.throwing(new AssertionError("No IllegalStateException was thrown " +
@@ -538,7 +538,7 @@ public class BgeeDBUtilsTest extends TestAncestor {
             AnatEntityTOResultSet mockRS = this.createMockDAOResultSet(
                     returnedAnatEntityTOs, MySQLAnatEntityTOResultSet.class);
             when(mockManager.getAnatEntityDAO().getAnatEntitiesBySpeciesIds(
-                    new HashSet<String>(Arrays.asList("1", "2")))).thenReturn(
+                    new HashSet<>(Arrays.asList(1, 2)))).thenReturn(
                             mockRS);
             
             Map<String, String> expectedReturnedVal = new HashMap<String, String>();
@@ -548,7 +548,7 @@ public class BgeeDBUtilsTest extends TestAncestor {
             
             assertEquals("Incorrect ID-name mapping", expectedReturnedVal, 
                     BgeeDBUtils.getAnatEntityNamesByIds(
-                            new HashSet<String>(Arrays.asList("1", "2")), 
+                            new HashSet<>(Arrays.asList(1, 2)), 
                             mockManager.getAnatEntityDAO()));
             verify(mockManager.getAnatEntityDAO()).setAttributes(AnatEntityDAO.Attribute.ID, 
                     AnatEntityDAO.Attribute.NAME);
@@ -563,13 +563,13 @@ public class BgeeDBUtilsTest extends TestAncestor {
             AnatEntityTOResultSet mockRS = this.createMockDAOResultSet(
                     returnedAnatEntityTOs, MySQLAnatEntityTOResultSet.class);
             when(mockManager.getAnatEntityDAO().getAnatEntitiesBySpeciesIds(
-                    new HashSet<String>(Arrays.asList("1", "2")))).thenReturn(
+                    new HashSet<>(Arrays.asList(1, 2)))).thenReturn(
                             mockRS);
             
             try {
                 //an IllegalArgumentException should be thrown, because no name and ID for a TO
                 BgeeDBUtils.getAnatEntityNamesByIds(
-                        new HashSet<String>(Arrays.asList("1", "2")), 
+                        new HashSet<>(Arrays.asList(1, 2)), 
                         mockManager.getAnatEntityDAO());
                 //test failed
                 throw log.throwing(new AssertionError("No IllegalArgumentException was thrown " +
@@ -588,14 +588,14 @@ public class BgeeDBUtilsTest extends TestAncestor {
             AnatEntityTOResultSet mockRS = this.createMockDAOResultSet(
                     returnedAnatEntityTOs, MySQLAnatEntityTOResultSet.class);
             when(mockManager.getAnatEntityDAO().getAnatEntitiesBySpeciesIds(
-                    new HashSet<String>(Arrays.asList("1", "2")))).thenReturn(
+                    new HashSet<>(Arrays.asList(1, 2)))).thenReturn(
                             mockRS);
             
             try {
                 //an IllegalStateException should be thrown, because several names are mapped 
                 //to a same ID
                 BgeeDBUtils.getAnatEntityNamesByIds(
-                        new HashSet<String>(Arrays.asList("1", "2")), 
+                        new HashSet<>(Arrays.asList(1, 2)), 
                         mockManager.getAnatEntityDAO());
                 //test failed
                 throw log.throwing(new AssertionError("No IllegalStateException was thrown " +

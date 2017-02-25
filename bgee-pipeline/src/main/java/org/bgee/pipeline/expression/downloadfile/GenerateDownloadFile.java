@@ -395,7 +395,7 @@ public abstract class GenerateDownloadFile extends CallUser {
      * A {@code List} of {@code String}s that are the IDs of species allowing 
      * to filter the calls to retrieve.
      */
-    protected List<String> speciesIds;
+    protected List<Integer> speciesIds;
     
     /**
      * A {@code List} of {@code String}s that are the file types to be generated.
@@ -431,7 +431,7 @@ public abstract class GenerateDownloadFile extends CallUser {
      * @param directory     A {@code String} that is the directory where to store files.
      * @throws IllegalArgumentException If {@code directory} is {@code null} or blank.
      */
-    public GenerateDownloadFile(List<String> speciesIds, Set<? extends FileType> fileTypes, 
+    public GenerateDownloadFile(List<Integer> speciesIds, Set<? extends FileType> fileTypes, 
             String directory) throws IllegalArgumentException {
         this(null, speciesIds, fileTypes, directory);
     }
@@ -451,9 +451,10 @@ public abstract class GenerateDownloadFile extends CallUser {
      */
     //TODO: speciesIds shoudn't be defined for multi-species classes that use map. 
     // We need to reorganize generation download file classes.
-    public GenerateDownloadFile(MySQLDAOManager manager, List<String> speciesIds, 
+    public GenerateDownloadFile(MySQLDAOManager manager, List<Integer> speciesIds, 
             Set<? extends FileType> fileTypes, String directory) throws IllegalArgumentException {
-        super(manager);
+        //FIXME: restore if CallUser is reused?
+        //super(manager);
         if (StringUtils.isBlank(directory)) {
             throw log.throwing(new IllegalArgumentException("A directory must be provided"));
         }
@@ -481,11 +482,11 @@ public abstract class GenerateDownloadFile extends CallUser {
      * @param stageId           A {@code String} that is the ID of the stage.
      * @param stageName         A {@code String} that is the name of the stage.
      */
-    protected void addIdsAndNames(Map<String, String> row, String geneId, String geneName, 
+    protected void addIdsAndNames(Map<String, Object> row, Integer geneId, String geneName, 
             String anatEntityId, String anatEntityName, String stageId, String stageName) {
         log.entry(row, geneId, geneName, anatEntityId, anatEntityName, stageId, stageName);
         
-        if (StringUtils.isBlank(geneId)) {
+        if (geneId == null) {
             throw log.throwing(new IllegalArgumentException("No Id provided for gene."));
         }
         if (StringUtils.isBlank(stageId)) {

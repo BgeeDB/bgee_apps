@@ -244,34 +244,40 @@ public class CommandRunner {
             
         //---------- Hierarchical groups -----------
         case "ParseOrthoXML":
-            ParseOrthoXML.main(newArgs);
-            break;
+            throw log.throwing(new UnsupportedOperationException("Method disabled while updated"));
+            //ParseOrthoXML.main(newArgs);
+            //break;
 
         //---------- Call propagation -----------
         case "InsertGlobalCalls":
-            InsertGlobalCalls.main(newArgs);
-            break;
+            throw log.throwing(new UnsupportedOperationException("Method disabled while updated"));
+//            InsertGlobalCalls.main(newArgs);
+//            break;
         case "FilterNoExprCalls":
-            FilterNoExprCalls.main(newArgs);
-            break;
+            throw log.throwing(new UnsupportedOperationException("Method disabled while updated"));
+//            FilterNoExprCalls.main(newArgs);
+//            break;
  
         //---------- Download file generation -----------
         case "GenerateDiffExprFile":
             GenerateDiffExprFile.main(newArgs);
             break;
         case "GenerateBasicExprFile":
-            GenerateExprFile.main(newArgs);
-            break;
+            throw log.throwing(new UnsupportedOperationException("Method disabled while updated"));
+//            GenerateExprFile.main(newArgs);
+//            break;
         case "GenerateMultiSpeciesDiffExprFile":
-            GenerateMultiSpeciesDiffExprFile.main(newArgs);
-            break;
+            throw log.throwing(new UnsupportedOperationException("Method disabled while updated"));
+//            GenerateMultiSpeciesDiffExprFile.main(newArgs);
+//            break;
         case "InsertSpeciesDataGroups":
             InsertSpeciesDataGroups.main(newArgs);
             break;
         //Rank download files
         case "GenerateRankFile": 
-            GenerateRankFile.main(newArgs);
-            break;
+            throw log.throwing(new UnsupportedOperationException("Method disabled while updated"));
+//            GenerateRankFile.main(newArgs);
+//            break;
             
         default: 
             throw log.throwing(new UnsupportedOperationException("The following action " +

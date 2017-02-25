@@ -35,6 +35,7 @@ import org.bgee.pipeline.MySQLDAOUser;
  * @version Bgee 13 Oct. 2015
  * @since Bgee 13
  */
+//FIXME: to reactivate?
 public class InsertSpeciesDataGroups extends MySQLDAOUser {
     
     /**
@@ -120,9 +121,10 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
         // We could use the flatMap function, but we want to perform sanity checks.
         InsertSpeciesDataGroups insert = new InsertSpeciesDataGroups(
                 
-                //LinkedHashMap<String, Set<String>> groupToSpecies
+                //LinkedHashMap<String, Set<Integer>> groupToSpecies
                 CommandRunner.parseMapArgument(args[0]).entrySet().stream()
-                .collect(Collectors.toMap(e -> e.getKey(), e -> new HashSet<String>(e.getValue()), 
+                .collect(Collectors.toMap(e -> e.getKey(), e -> new HashSet<Integer>(e.getValue()
+                        .stream().map(v -> Integer.parseInt(v)).collect(Collectors.toSet())), 
                     (k, v) -> {throw log.throwing(
                             new IllegalArgumentException("Key used more than once: " + k));},
                     LinkedHashMap::new)),
@@ -179,7 +181,7 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
      * species IDs belonging to the group. The order of the entries is important,
      * it is used to specify the preferred display order of the data groups.
      */
-    private final LinkedHashMap<String, Set<String>> groupToSpecies;
+    private final LinkedHashMap<String, Set<Integer>> groupToSpecies;
     
     /**
      * A {@code LinkedHashMap} where keys are {@code String}s that are names given to a group of species,
@@ -234,7 +236,7 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
      * @see #InsertSpeciesDataGroups(MySQLDAOManager, LinkedHashMap, LinkedHashMap, LinkedHashMap, 
      *      Map, Map, String) main constructor
      */
-    public InsertSpeciesDataGroups(LinkedHashMap<String, Set<String>> groupToSpecies,
+    public InsertSpeciesDataGroups(LinkedHashMap<String, Set<Integer>> groupToSpecies,
             LinkedHashMap<String, Set<String>> groupToCaterories,
             LinkedHashMap<String, String> groupToReplacement,
             Map<String, String> singleSpCatToFilePattern,
@@ -296,7 +298,7 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
      * @throws IllegalArgumentException If some mandatory parameters are incorrectly provided.
      */
     public InsertSpeciesDataGroups(MySQLDAOManager manager,
-            LinkedHashMap<String, Set<String>> groupToSpecies,
+            LinkedHashMap<String, Set<Integer>> groupToSpecies,
             LinkedHashMap<String, Set<String>> groupToCaterories,
             LinkedHashMap<String, String> groupToReplacement,
             Map<String, String> singleSpCatToFilePattern,
@@ -372,7 +374,7 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
         }
         //sanity check on species IDs
         BgeeDBUtils.checkAndGetSpeciesIds(
-                new ArrayList<String>(this.groupToSpecies.values().stream()
+                new ArrayList<Integer>(this.groupToSpecies.values().stream()
                 .flatMap(e -> e.stream()).collect(Collectors.toSet())), this.getSpeciesDAO());
         
         log.exit();
@@ -395,7 +397,7 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
         //(and also to insert the SpeciesDataGroups). 
         Map<String, SpeciesDataGroupTO> speciesDataGroupTOs = new HashMap<>(); 
         int i = 1;
-        for (Entry<String, Set<String>> groupToSpecies: this.groupToSpecies.entrySet()) {
+        for (Entry<String, Set<Integer>> groupToSpecies: this.groupToSpecies.entrySet()) {
             if (StringUtils.isBlank(groupToSpecies.getKey())) {
                 throw log.throwing(new IllegalStateException("No group name can be blank."));
             }
@@ -404,7 +406,7 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
                         "No species in group " + groupToSpecies.getKey()));
             }
             final String groupName = groupToSpecies.getKey().trim();
-            final String groupId = String.valueOf(i);
+            final Integer groupId = i;
             speciesDataGroupTOs.put(groupName, 
                     //we also use i to generate the preferred order
                     new SpeciesDataGroupTO(groupId, groupName, null, i));
@@ -418,11 +420,11 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
         Set<DownloadFileTO> downloadFileTOs = new HashSet<DownloadFileTO>();
         int downloadFileId = 1;
         //We store the IDs of groups that actually have valid download files existing
-        Set<String> groupIdsWithData = new HashSet<String>();
+        Set<Integer> groupIdsWithData = new HashSet<>();
         for (Entry<String, Set<String>> groupAndCategories : this.groupToCaterories.entrySet()) {
 
             String groupName = groupAndCategories.getKey();
-            String groupId = speciesDataGroupTOs.get(groupName).getId();
+            Integer groupId = speciesDataGroupTOs.get(groupName).getId();
             int speciesCount = this.groupToSpecies.get(groupName).size();
             
             for (String category: groupAndCategories.getValue()) {
@@ -454,7 +456,7 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
 
                 // Currently, the file description is not use, so for the moment, we set it to null.
                 downloadFileTOs.add(new DownloadFileTO(
-                        String.valueOf(downloadFileId), file.getName(), null, path, file.length(),
+                        downloadFileId, file.getName(), null, path, file.length(),
                         CategoryEnum.convertToCategoryEnum(category), groupId));
                 groupIdsWithData.add(groupId);
                 downloadFileId++;

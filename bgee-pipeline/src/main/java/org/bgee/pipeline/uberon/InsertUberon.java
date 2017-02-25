@@ -161,7 +161,7 @@ public class InsertUberon extends MySQLDAOUser {
      * of the Uberon anatomy into the data source. They represent the taxon constraints 
      * for each anatomical entity stored in {@link #anatEntityTOs}.
      */
-    private Set<TaxonConstraintTO> anatEntityTaxonConstraintTOs;
+    private Set<TaxonConstraintTO<String>> anatEntityTaxonConstraintTOs;
     /**
      * A {@code Set} of {@code RelationTO}s generated as part of the insertion 
      * of the Uberon anatomy into the data source. They represent the relations between 
@@ -174,7 +174,7 @@ public class InsertUberon extends MySQLDAOUser {
      * of the Uberon anatomy into the data source. They represent the taxon constraints 
      * for each relation stored in {@link #anatRelationTOs}.
      */
-    private Set<TaxonConstraintTO> anatRelTaxonConstraintTOs;
+    private Set<TaxonConstraintTO<Integer>> anatRelTaxonConstraintTOs;
 
     /**
      * Default constructor using default {@code MySQLDAOManager}.
@@ -192,9 +192,9 @@ public class InsertUberon extends MySQLDAOUser {
         super(manager);
 
         this.anatEntityTOs = new HashSet<AnatEntityTO>();
-        this.anatEntityTaxonConstraintTOs = new HashSet<TaxonConstraintTO>();
+        this.anatEntityTaxonConstraintTOs = new HashSet<TaxonConstraintTO<String>>();
         this.anatRelationTOs = new HashSet<>();
-        this.anatRelTaxonConstraintTOs = new HashSet<TaxonConstraintTO>();
+        this.anatRelTaxonConstraintTOs = new HashSet<TaxonConstraintTO<Integer>>();
     }
     
     /**
@@ -235,7 +235,7 @@ public class InsertUberon extends MySQLDAOUser {
         
         //generate the StageTOs and taxonConstraintTOs
         Set<StageTO> stageTOs = new HashSet<StageTO>();
-        Set<TaxonConstraintTO> constraintTOs = new HashSet<TaxonConstraintTO>();
+        Set<TaxonConstraintTO<String>> constraintTOs = new HashSet<TaxonConstraintTO<String>>();
         OWLGraphWrapper wrapper = uberon.getOntologyUtils().getWrapper();
         for (Entry<OWLClass, Map<String, Integer>> stageEntry: nestedSetModel.entrySet()) {
             OWLClass OWLClassStage = stageEntry.getKey();
@@ -268,10 +268,10 @@ public class InsertUberon extends MySQLDAOUser {
             //generate the TaxonConstraintTOs
             if (uberon.existsInAllSpecies(OWLClassStage, speciesIds)) {
                 //a null speciesId means: exists in all species
-                constraintTOs.add(new TaxonConstraintTO(id, null));
+                constraintTOs.add(new TaxonConstraintTO<>(id, null));
             } else {
                 for (int speciesId: uberon.existsInSpecies(OWLClassStage, speciesIds)) {
-                    constraintTOs.add(new TaxonConstraintTO(id, speciesId));
+                    constraintTOs.add(new TaxonConstraintTO<>(id, speciesId));
                 }
             }
         }
@@ -341,13 +341,13 @@ public class InsertUberon extends MySQLDAOUser {
             this.anatEntityTOs = new HashSet<AnatEntityTO>();
             this.getTaxonConstraintDAO().insertAnatEntityTaxonConstraints(
                     this.anatEntityTaxonConstraintTOs);
-            this.anatEntityTaxonConstraintTOs = new HashSet<TaxonConstraintTO>();
+            this.anatEntityTaxonConstraintTOs = new HashSet<TaxonConstraintTO<String>>();
             //insert relations between anat entities and their taxon constraints
             this.getRelationDAO().insertAnatEntityRelations(this.anatRelationTOs);
             this.anatRelationTOs = new HashSet<>();
             this.getTaxonConstraintDAO().insertAnatEntityRelationTaxonConstraints(
                     this.anatRelTaxonConstraintTOs);
-            this.anatRelTaxonConstraintTOs = new HashSet<TaxonConstraintTO>();
+            this.anatRelTaxonConstraintTOs = new HashSet<TaxonConstraintTO<Integer>>();
             
             this.commit();
             log.info("Done inserting info into data source.");
@@ -426,12 +426,12 @@ public class InsertUberon extends MySQLDAOUser {
                 //and anatRelTaxonConstraintTOs for "identity" relation
                 if (uberon.existsInAllSpecies(cls, speciesIds)) {
                     //a null speciesId means: exists in all species
-                    TaxonConstraintTO taxConstrTO = new TaxonConstraintTO(id, null);
+                    TaxonConstraintTO<String> taxConstrTO = new TaxonConstraintTO<>(id, null);
                     this.anatEntityTaxonConstraintTOs.add(taxConstrTO);
                     log.trace("Generating taxon constraint: {}", taxConstrTO);
                 } else {
                     for (int speciesId: uberon.existsInSpecies(cls, speciesIds)) {
-                        TaxonConstraintTO taxConstrTO = new TaxonConstraintTO(id, speciesId);
+                        TaxonConstraintTO<String> taxConstrTO = new TaxonConstraintTO<>(id, speciesId);
                         this.anatEntityTaxonConstraintTOs.add(taxConstrTO);
                         log.trace("Generating taxon constraint: {}", taxConstrTO);
                     }
@@ -1007,14 +1007,14 @@ public class InsertUberon extends MySQLDAOUser {
         
         if (inSpecies.containsAll(allowedSpeciesIds)) {
             //a null speciesId means: exists in all species
-            TaxonConstraintTO taxConstraintTO = 
-                    new TaxonConstraintTO(Integer.toString(relationId), null);
+            TaxonConstraintTO<Integer> taxConstraintTO = 
+                    new TaxonConstraintTO<>(relationId, null);
             this.anatRelTaxonConstraintTOs.add(taxConstraintTO);
             log.trace("Taxon constraint: {}", taxConstraintTO);
         } else if (!inSpecies.isEmpty()) {
             for (int speciesId: inSpecies) {
-                TaxonConstraintTO taxConstraintTO = new TaxonConstraintTO(
-                        Integer.toString(relationId), speciesId);
+                TaxonConstraintTO<Integer> taxConstraintTO = new TaxonConstraintTO<>(
+                        relationId, speciesId);
                 this.anatRelTaxonConstraintTOs.add(taxConstraintTO);
                 log.trace("Taxon constraint: {}", taxConstraintTO);
             }

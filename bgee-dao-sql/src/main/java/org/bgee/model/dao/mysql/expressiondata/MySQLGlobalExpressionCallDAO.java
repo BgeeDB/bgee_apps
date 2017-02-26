@@ -57,6 +57,8 @@ implements GlobalExpressionCallDAO {
         colToAttributesMap.put(MySQLGeneDAO.BGEE_GENE_ID, GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID);
         colToAttributesMap.put(comb.getCondIdField(), GlobalExpressionCallDAO.Attribute.CONDITION_ID);
         
+        colToAttributesMap.put("globalMeanRank", GlobalExpressionCallDAO.Attribute.GLOBAL_MEAN_RANK);
+        
         colToAttributesMap.put("affymetrixExpPresentHighSelfCount", 
                 GlobalExpressionCallDAO.Attribute.AFFYMETRIX_EXP_PRESENT_HIGH_SELF_COUNT);
         colToAttributesMap.put("affymetrixExpPresentLowSelfCount", 
@@ -472,6 +474,10 @@ implements GlobalExpressionCallDAO {
                         paramIndex++;
                         break;
                         
+                    case GLOBAL_MEAN_RANK:
+                        //do nothing for this attribute, this is not a column in the table
+                        //but a select_expr computing the rank on the fly
+                        break;
                     default:
                         log.throwing(new IllegalStateException("Unsupported attribute: " + attr));
                     }
@@ -595,7 +601,8 @@ implements GlobalExpressionCallDAO {
                         inSituExpPresentLowTotalCount = null, inSituExpAbsentHighTotalCount = null, 
                         inSituExpAbsentLowTotalCount = null, inSituExpPropagatedCount = null;
                 
-                BigDecimal affymetrixMeanRank = null, rnaSeqMeanRank = null, estRank = null, 
+                BigDecimal globalMeanRank = null,
+                        affymetrixMeanRank = null, rnaSeqMeanRank = null, estRank = null, 
                         inSituRank = null, affymetrixMeanRankNorm = null, rnaSeqMeanRankNorm = null, 
                         estRankNorm = null, inSituRankNorm = null, 
                         affymetrixDistinctRankSum = null, rnaSeqDistinctRankSum = null;
@@ -614,6 +621,10 @@ implements GlobalExpressionCallDAO {
                         break;
                     case CONDITION_ID:
                         conditionId = currentResultSet.getInt(columnName);
+                        break;
+
+                    case GLOBAL_MEAN_RANK:
+                        globalMeanRank = currentResultSet.getBigDecimal(columnName);
                         break;
                         
                     case AFFYMETRIX_EXP_PRESENT_HIGH_SELF_COUNT:
@@ -794,6 +805,7 @@ implements GlobalExpressionCallDAO {
                     }
                 }
                 return log.exit(new GlobalExpressionCallTO(id, bgeeGeneId, conditionId,
+                        globalMeanRank,
                         affymetrixExpPresentHighSelfCount, affymetrixExpPresentLowSelfCount, 
                         affymetrixExpAbsentHighSelfCount, affymetrixExpAbsentLowSelfCount, 
                         affymetrixExpPresentHighDescendantCount, 

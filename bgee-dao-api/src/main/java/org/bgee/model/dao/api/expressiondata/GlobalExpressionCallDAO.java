@@ -46,7 +46,8 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
         IN_SITU_EXP_ABSENT_HIGH_PARENT_COUNT, IN_SITU_EXP_ABSENT_LOW_PARENT_COUNT, 
         IN_SITU_EXP_PRESENT_HIGH_TOTAL_COUNT, IN_SITU_EXP_PRESENT_LOW_TOTAL_COUNT, 
         IN_SITU_EXP_ABSENT_HIGH_TOTAL_COUNT, IN_SITU_EXP_ABSENT_LOW_TOTAL_COUNT, 
-        IN_SITU_EXP_PROPAGATED_COUNT, 
+        IN_SITU_EXP_PROPAGATED_COUNT,
+        GLOBAL_MEAN_RANK,
         AFFYMETRIX_MEAN_RANK, RNA_SEQ_MEAN_RANK, 
         EST_RANK, IN_SITU_RANK, 
         AFFYMETRIX_MEAN_RANK_NORM, RNA_SEQ_MEAN_RANK_NORM, 
@@ -135,6 +136,8 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
 
         private static final long serialVersionUID = -1057540315343857464L;
         
+        private final BigDecimal globalMeanRank;
+        
         private final Integer affymetrixExpPresentHighSelfCount;
         private final Integer affymetrixExpPresentLowSelfCount;
         private final Integer affymetrixExpAbsentHighSelfCount;
@@ -186,6 +189,7 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
         private final Integer inSituExpPropagatedCount;
         
         public GlobalExpressionCallTO(Integer id, Integer bgeeGeneId, Integer conditionId,
+                BigDecimal globalMeanRank,
                 Integer affymetrixExpPresentHighSelfCount, Integer affymetrixExpPresentLowSelfCount, 
                 Integer affymetrixExpAbsentHighSelfCount, Integer affymetrixExpAbsentLowSelfCount, 
                 Integer affymetrixExpPresentHighDescendantCount, 
@@ -218,6 +222,8 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
             super(id, bgeeGeneId, conditionId, affymetrixMeanRank, rnaSeqMeanRank, estRank,
                   inSituRank, affymetrixMeanRankNorm, rnaSeqMeanRankNorm, estRankNorm,
                   inSituRankNorm, affymetrixDistinctRankSum, rnaSeqDistinctRankSum);
+            
+            this.globalMeanRank = globalMeanRank;
             
             this.affymetrixExpPresentHighSelfCount = affymetrixExpPresentHighSelfCount;
             this.affymetrixExpPresentLowSelfCount = affymetrixExpPresentLowSelfCount;
@@ -270,6 +276,16 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
             this.inSituExpPropagatedCount = inSituExpPropagatedCount;
         }
 
+        /**
+         * @return  A {@code BigDecimal} that is the weighted mean rank of the gene in the condition, 
+         *          based on the normalized mean rank of each data type requested in the query. 
+         *          So for instance, if you configured an {@code ExpressionCallDAOFilter} 
+         *          to only retrieved Affymetrix data, then this rank will be equal to the rank 
+         *          returned by {@link #getAffymetrixMeanRank()}.
+         */
+        public BigDecimal getGlobalMeanRank() {
+            return globalMeanRank;
+        }
 
         public Integer getAffymetrixExpPresentHighSelfCount() {
             return affymetrixExpPresentHighSelfCount;
@@ -415,6 +431,8 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
         public String toString() {
             return "GlobalExpressionCallTO [id=" + this.getId() + ", bgeeGeneId=" + this.getBgeeGeneId() 
                     + ", conditionId=" + this.getConditionId() 
+                    
+                    + ", globalMeanRank=" + globalMeanRank
                     
                     + ", affymetrixExpPresentHighSelfCount=" + affymetrixExpPresentHighSelfCount
                     + ", affymetrixExpPresentLowSelfCount=" + affymetrixExpPresentLowSelfCount

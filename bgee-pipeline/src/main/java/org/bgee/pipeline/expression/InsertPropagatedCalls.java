@@ -847,8 +847,139 @@ public class InsertPropagatedCalls extends CallService {
     private GlobalExpressionCallTO mapPipelineCallToGlobalExprCallTO(int exprId, int condId, 
             PipelineCall pipelineCall) {
         log.entry(exprId, condId, pipelineCall);
-        //FIXME: TODO
-        throw new UnsupportedOperationException("TODO");
+        
+        Integer affymetrixExpPresentHighSelfCount = 0, affymetrixExpPresentLowSelfCount = 0,
+            affymetrixExpAbsentHighSelfCount = 0, affymetrixExpAbsentLowSelfCount = 0,
+            affymetrixExpPresentHighDescendantCount = 0, affymetrixExpPresentLowDescendantCount = 0,
+            affymetrixExpAbsentHighParentCount = 0, affymetrixExpAbsentLowParentCount = 0,
+            affymetrixExpPresentHighTotalCount = 0, affymetrixExpPresentLowTotalCount = 0,
+            affymetrixExpAbsentHighTotalCount = 0, affymetrixExpAbsentLowTotalCount = 0,
+            affymetrixExpPropagatedCount = 0;
+        
+        Integer rnaSeqExpPresentHighSelfCount = 0, rnaSeqExpPresentLowSelfCount = 0,
+            rnaSeqExpAbsentHighSelfCount = 0, rnaSeqExpAbsentLowSelfCount = 0,
+            rnaSeqExpPresentHighDescendantCount = 0, rnaSeqExpPresentLowDescendantCount = 0,
+            rnaSeqExpAbsentHighParentCount = 0, rnaSeqExpAbsentLowParentCount = 0,
+            rnaSeqExpPresentHighTotalCount = 0, rnaSeqExpPresentLowTotalCount = 0,
+            rnaSeqExpAbsentHighTotalCount = 0, rnaSeqExpAbsentLowTotalCount = 0,
+            rnaSeqExpPropagatedCount = 0;
+        
+        Integer estLibPresentHighSelfCount = 0, estLibPresentLowSelfCount = 0,
+            estLibPresentHighDescendantCount = 0, estLibPresentLowDescendantCount = 0,
+            estLibPresentHighTotalCount = 0, estLibPresentLowTotalCount = 0,
+            estLibPropagatedCount = 0;
+        
+        Integer inSituExpPresentHighSelfCount = 0, inSituExpPresentLowSelfCount = 0,
+            inSituExpAbsentHighSelfCount = 0, inSituExpAbsentLowSelfCount = 0,
+            inSituExpPresentHighDescendantCount = 0, inSituExpPresentLowDescendantCount = 0,
+            inSituExpAbsentHighParentCount = 0, inSituExpAbsentLowParentCount = 0,
+            inSituExpPresentHighTotalCount = 0, inSituExpPresentLowTotalCount = 0,
+            inSituExpAbsentHighTotalCount = 0, inSituExpAbsentLowTotalCount = 0,
+            inSituExpPropagatedCount = 0;
+        
+        BigDecimal affymetrixMeanRank = null, estRank = null, inSituRank = null, rnaSeqMeanRank = null;
+
+        BigDecimal affymetrixMeanRankNorm = null, estRankNorm = null, inSituRankNorm = null,
+            rnaSeqMeanRankNorm = null;
+
+        BigDecimal affymetrixDistinctRankSum = null, rnaSeqDistinctRankSum = null;
+
+        for (ExpressionCallData e: pipelineCall.getCallData()) {
+            switch (e.getDataType()) {
+                case AFFYMETRIX: 
+                    affymetrixExpPresentHighSelfCount = e.getPresentHighSelfCount();
+                    affymetrixExpPresentLowSelfCount = e.getPresentLowSelfCount();
+                    affymetrixExpAbsentHighSelfCount = e.getAbsentHighSelfCount();
+                    affymetrixExpAbsentLowSelfCount = e.getAbsentLowSelfCount();
+                    affymetrixExpPresentHighDescendantCount = e.getPresentHighDescCount();
+                    affymetrixExpPresentLowDescendantCount = e.getPresentLowDescCount();
+                    affymetrixExpAbsentHighParentCount = e.getAbsentHighParentCount();
+                    affymetrixExpAbsentLowParentCount = e.getAbsentLowParentCount();
+                    affymetrixExpPresentHighTotalCount = e.getPresentHighTotalCount();
+                    affymetrixExpPresentLowTotalCount = e.getPresentLowTotalCount();
+                    affymetrixExpAbsentHighTotalCount = e.getAbsentHighTotalCount();
+                    affymetrixExpAbsentLowTotalCount = e.getAbsentLowTotalCount();
+                    affymetrixExpPropagatedCount = e.getPropagatedCount();
+                    affymetrixMeanRank = e.getRank();
+                    affymetrixMeanRankNorm = e.getRankNorm();
+                    affymetrixDistinctRankSum = e.getRankSum();
+                    break;
+                case EST: 
+                    estLibPresentHighSelfCount = e.getPresentHighSelfCount();
+                    estLibPresentLowSelfCount = e.getPresentLowSelfCount();
+                    estLibPresentHighDescendantCount = e.getPresentHighDescCount();
+                    estLibPresentLowDescendantCount = e.getPresentLowDescCount();
+                    estLibPresentHighTotalCount = e.getPresentHighTotalCount();
+                    estLibPresentLowTotalCount = e.getPresentLowTotalCount();
+                    estLibPropagatedCount = e.getPropagatedCount();
+                    estRank = e.getRank();
+                    estRankNorm = e.getRankNorm();
+                    break;
+                case IN_SITU: 
+                    inSituExpPresentHighSelfCount = e.getPresentHighSelfCount();
+                    inSituExpPresentLowSelfCount = e.getPresentLowSelfCount();
+                    inSituExpAbsentHighSelfCount = e.getAbsentHighSelfCount();
+                    inSituExpAbsentLowSelfCount = e.getAbsentLowSelfCount();
+                    inSituExpPresentHighDescendantCount = e.getPresentHighDescCount();
+                    inSituExpPresentLowDescendantCount = e.getPresentLowDescCount();
+                    inSituExpAbsentHighParentCount = e.getAbsentHighParentCount();
+                    inSituExpAbsentLowParentCount = e.getAbsentLowParentCount();
+                    inSituExpPresentHighTotalCount = e.getPresentHighTotalCount();
+                    inSituExpPresentLowTotalCount = e.getPresentLowTotalCount();
+                    inSituExpAbsentHighTotalCount = e.getAbsentHighTotalCount();
+                    inSituExpAbsentLowTotalCount = e.getAbsentLowTotalCount();
+                    inSituExpPropagatedCount = e.getPropagatedCount();
+                    inSituRank = e.getRank();
+                    inSituRankNorm = e.getRankNorm();
+                    break;
+                case RNA_SEQ:
+                    rnaSeqExpPresentHighSelfCount = e.getPresentHighSelfCount();
+                    rnaSeqExpPresentLowSelfCount = e.getPresentLowSelfCount();
+                    rnaSeqExpAbsentHighSelfCount = e.getAbsentHighSelfCount();
+                    rnaSeqExpAbsentLowSelfCount = e.getAbsentLowSelfCount();
+                    rnaSeqExpPresentHighDescendantCount = e.getPresentHighDescCount();
+                    rnaSeqExpPresentLowDescendantCount = e.getPresentLowDescCount();
+                    rnaSeqExpAbsentHighParentCount = e.getAbsentHighParentCount();
+                    rnaSeqExpAbsentLowParentCount = e.getAbsentLowParentCount();
+                    rnaSeqExpPresentHighTotalCount = e.getPresentHighTotalCount();
+                    rnaSeqExpPresentLowTotalCount = e.getPresentLowTotalCount();
+                    rnaSeqExpAbsentHighTotalCount = e.getAbsentHighTotalCount();
+                    rnaSeqExpAbsentLowTotalCount = e.getAbsentLowTotalCount();
+                    rnaSeqExpPropagatedCount = e.getPropagatedCount();
+                    rnaSeqMeanRank = e.getRank();
+                    rnaSeqMeanRankNorm = e.getRankNorm();
+                    rnaSeqDistinctRankSum = e.getRankSum();
+                    break;
+                default:
+                    throw log.throwing(new IllegalStateException("Unsupported DataType: " + e.getDataType()));
+            }
+        }
+        
+        return log.exit(new GlobalExpressionCallTO(exprId, pipelineCall.getBgeeGeneId(), condId,
+            pipelineCall.getGlobalMeanRank(), affymetrixExpPresentHighSelfCount,
+            affymetrixExpPresentLowSelfCount, affymetrixExpAbsentHighSelfCount,
+            affymetrixExpAbsentLowSelfCount, affymetrixExpPresentHighDescendantCount, 
+            affymetrixExpPresentLowDescendantCount, affymetrixExpAbsentHighParentCount,
+            affymetrixExpAbsentLowParentCount, affymetrixExpPresentHighTotalCount,
+            affymetrixExpPresentLowTotalCount, affymetrixExpAbsentHighTotalCount,
+            affymetrixExpAbsentLowTotalCount, affymetrixExpPropagatedCount,
+            rnaSeqExpPresentHighSelfCount, rnaSeqExpPresentLowSelfCount, rnaSeqExpAbsentHighSelfCount,
+            rnaSeqExpAbsentLowSelfCount, rnaSeqExpPresentHighDescendantCount,
+            rnaSeqExpPresentLowDescendantCount, rnaSeqExpAbsentHighParentCount,
+            rnaSeqExpAbsentLowParentCount, rnaSeqExpPresentHighTotalCount,
+            rnaSeqExpPresentLowTotalCount, rnaSeqExpAbsentHighTotalCount,
+            rnaSeqExpAbsentLowTotalCount, rnaSeqExpPropagatedCount, estLibPresentHighSelfCount,
+            estLibPresentLowSelfCount, estLibPresentHighDescendantCount,
+            estLibPresentLowDescendantCount, estLibPresentHighTotalCount, estLibPresentLowTotalCount,
+            estLibPropagatedCount, inSituExpPresentHighSelfCount, inSituExpPresentLowSelfCount,
+            inSituExpAbsentHighSelfCount, inSituExpAbsentLowSelfCount,
+            inSituExpPresentHighDescendantCount, inSituExpPresentLowDescendantCount,
+            inSituExpAbsentHighParentCount, inSituExpAbsentLowParentCount,
+            inSituExpPresentHighTotalCount, inSituExpPresentLowTotalCount,
+            inSituExpAbsentHighTotalCount, inSituExpAbsentLowTotalCount, inSituExpPropagatedCount, 
+            affymetrixMeanRank, rnaSeqMeanRank, estRank, inSituRank, affymetrixMeanRankNorm,
+            rnaSeqMeanRankNorm, estRankNorm, inSituRankNorm, affymetrixDistinctRankSum, 
+            rnaSeqDistinctRankSum));
     }
 
     /** 

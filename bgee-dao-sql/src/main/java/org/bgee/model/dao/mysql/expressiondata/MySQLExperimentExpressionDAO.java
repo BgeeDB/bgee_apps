@@ -77,7 +77,8 @@ public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionD
         }
         //if comb takes into account all condition parameters, then the selected exprIdField
         //should be named as in the table expExprTableName, so we use comb to retrieve it in any case.
-        assert comb.getRawExprIdField().equals(CondParamCombination.ORIGINAL_RAW_EXPR_ID_FIELD);
+        assert !comb.isAllParamCombination() ||
+            comb.getRawExprIdField().equals(CondParamCombination.ORIGINAL_RAW_EXPR_ID_FIELD);
         sb.append(".").append(comb.getRawExprIdField());
         
         return log.exit(sb.toString());

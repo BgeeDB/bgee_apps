@@ -346,7 +346,8 @@ public class InsertPropagatedCalls extends CallService {
                 Set<ExperimentExpressionTO> exprExprTOs = new HashSet<>();
                 while (currentTO != null && expressionId.equals(currentTO.getExpressionId())) {
                     // We should not have 2 identical TOs
-                    assert !expExprTosByDataType.get(currentDataType).contains(currentTO);
+                    assert expExprTosByDataType.get(currentDataType) == null ||
+                        !expExprTosByDataType.get(currentDataType).contains(currentTO);
                     
                     //if it is the first iteration for this datatype and expressionId,
                     //we store the associated ExperimentExpressionTO Set.
@@ -1211,7 +1212,7 @@ public class InsertPropagatedCalls extends CallService {
         Set<PipelineCall> calls = data.keySet();
     
         // Here, no calls should have PropagationState which is not SELF
-        assert !calls.stream().anyMatch(c -> c.getIsObservedData()); 
+        assert !calls.stream().anyMatch(c -> !c.getIsObservedData()); 
 //        // Here, no calls should include non-observed data
 //        assert !calls.stream().anyMatch(c -> !c.getDataPropagation().getIncludingObservedData()); 
         // Check conditionUtils contains all conditions of calls

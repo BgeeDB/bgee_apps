@@ -126,7 +126,7 @@ public class TOComparator {
             return log.exit(areTOsEqual(
                     (HierarchicalGroupToGeneTO) to1, (HierarchicalGroupToGeneTO) to2));
         } else if (to1 instanceof TaxonConstraintTO) {
-            return log.exit(areTOsEqual((TaxonConstraintTO) to1, (TaxonConstraintTO) to2));
+            return log.exit(areTOsEqual((TaxonConstraintTO<?>) to1, (TaxonConstraintTO<?>) to2));
         } else if (to1 instanceof RelationTO) {
             return log.exit(areTOsEqual((RelationTO<?>) to1, (RelationTO<?>) to2, compareId));
         } else if (to1 instanceof ConditionTO) {
@@ -610,7 +610,7 @@ public class TOComparator {
      * @return      {@code true} if {@code to1} and {@code to2} have all 
      *              attributes equal.
      */
-    private static boolean areTOsEqual(TaxonConstraintTO to1, TaxonConstraintTO to2) {
+    private static boolean areTOsEqual(TaxonConstraintTO<?> to1, TaxonConstraintTO<?> to2) {
         log.entry(to1, to2);
 
         return log.exit(Objects.equals(to1.getEntityId(), to2.getEntityId()) && 

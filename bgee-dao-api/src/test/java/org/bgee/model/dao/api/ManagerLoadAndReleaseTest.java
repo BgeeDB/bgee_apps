@@ -76,7 +76,7 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 					this.exchanger.exchange(null);
 				}
 			}
-		};
+		}
 		
 		//get a DAOManager in the main thread
 		DAOManager manager1 = DAOManager.getDAOManager();
@@ -165,7 +165,7 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 					this.exchanger.exchange(null);
 				}
 			}
-		};
+		}
 		
 		//get a DAOManager in the main thread
 		DAOManager manager1 = DAOManager.getDAOManager();
@@ -355,7 +355,7 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 					this.exchanger.exchange(null);
 				}
 			}
-		};
+		}
 		
 		//get a DAOManager in the main thread (just to be sure this one
 		//is not killed when we kill the manager in the second thread)
@@ -440,7 +440,7 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 					this.exchanger.exchange(null);
 				}
 			}
-		};
+		}
 
 		assertFalse("hasDAOManager returned a incorrect value in the main thread", 
 				DAOManager.hasDAOManager());

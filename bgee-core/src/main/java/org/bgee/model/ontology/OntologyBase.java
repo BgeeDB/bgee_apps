@@ -400,18 +400,23 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
     public Set<T> getDescendantsUntilSubLevel(T element, int subLevelMax) {
         log.entry(element, subLevelMax);
         if (subLevelMax < 1) {
-            throw log.throwing(new IllegalArgumentException("Sub-level should be positif"));
+            throw log.throwing(new IllegalArgumentException("Sub-level should be stricly greater than 0"));
         }
-        Set<T> descendants = new HashSet<>();
-        descendants.add(element);
-        for (int i = 0; i < subLevelMax; i++) {
-            descendants.addAll(descendants.stream()
+        Set<T> allDescendants = new HashSet<>();
+        Set<T> currentElements = new HashSet<>();
+        currentElements.add(element);
+        int i = 0;
+        while (i < subLevelMax && !currentElements.isEmpty()) {
+            Set<T> descendants = currentElements.stream()
                 .map(d -> getDescendants(d, true))
                 .flatMap(Set::stream)
-                .collect(Collectors.toSet()));
+                .collect(Collectors.toSet());
+            allDescendants.addAll(descendants);
+            currentElements = new HashSet<>();
+            currentElements.addAll(descendants);
+            i++;
         }
-        descendants.remove(element);
-        return log.exit(descendants);
+        return log.exit(allDescendants);
     }
     
     /**

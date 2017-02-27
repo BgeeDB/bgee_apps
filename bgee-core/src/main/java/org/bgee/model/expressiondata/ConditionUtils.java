@@ -513,7 +513,7 @@ public class ConditionUtils implements Comparator<Condition> {
     public Set<Condition> getDescendantConditions(Condition cond, boolean directRelOnly,
         boolean includeSubstages) {
         log.entry(cond, directRelOnly, includeSubstages);
-        return log.exit(getDescendantConditions(cond, directRelOnly, includeSubstages, 0));
+        return log.exit(getDescendantConditions(cond, directRelOnly, includeSubstages, null, null));
     }
 
     /**
@@ -532,8 +532,8 @@ public class ConditionUtils implements Comparator<Condition> {
      */
     // TODO: refactor this method with constructor and getAncestorConditions
     public Set<Condition> getDescendantConditions(Condition cond, boolean directRelOnly,
-        boolean includeSubstages, Integer substageMaxLevel) {
-        log.entry(cond, directRelOnly, includeSubstages, substageMaxLevel);
+        boolean includeSubstages, Integer subAnatEntityMaxLevel, Integer subStageMaxLevel) {
+        log.entry(cond, directRelOnly, includeSubstages, subAnatEntityMaxLevel, subStageMaxLevel);
 
         if (!this.getConditions().contains(cond)) {
             throw log.throwing(new IllegalArgumentException("The provided condition "
@@ -544,23 +544,28 @@ public class ConditionUtils implements Comparator<Condition> {
         devStageIds.add(cond.getDevStageId());
         if (includeSubstages && this.devStageOnt != null && cond.getDevStageId() != null) {
             Set<DevStage> descendants;
-            if (substageMaxLevel < 1) {
+            if (subStageMaxLevel == null || subStageMaxLevel < 1) {
                 descendants = this.devStageOnt.getDescendants(
                     this.devStageOnt.getElement(cond.getDevStageId()), directRelOnly);
             } else {
                 descendants = this.devStageOnt.getDescendantsUntilSubLevel(
-                    this.devStageOnt.getElement(cond.getDevStageId()), substageMaxLevel);
+                    this.devStageOnt.getElement(cond.getDevStageId()), subStageMaxLevel);
             }
             devStageIds.addAll(descendants.stream().map(e -> e.getId()).collect(Collectors.toSet()));
        }
         Set<String> anatEntityIds = new HashSet<>();
         anatEntityIds.add(cond.getAnatEntityId());
         if (this.anatEntityOnt != null && cond.getAnatEntityId() != null) {
-            log.trace("Retrieving anat. entity IDs from ontology for stageId {} - relOnly {}.", 
-                    cond.getDevStageId(), directRelOnly);
-            anatEntityIds.addAll(this.anatEntityOnt.getDescendants(
-                    this.anatEntityOnt.getElement(cond.getAnatEntityId()), directRelOnly)
-                    .stream().map(e -> e.getId()).collect(Collectors.toSet()));
+            Set<AnatEntity> descendants;
+            if (subAnatEntityMaxLevel == null || subAnatEntityMaxLevel < 1) {
+                descendants = this.anatEntityOnt.getDescendants(
+                        this.anatEntityOnt.getElement(cond.getAnatEntityId()), directRelOnly);
+            } else {
+                descendants = this.anatEntityOnt.getDescendantsUntilSubLevel(
+                        this.anatEntityOnt.getElement(cond.getAnatEntityId()), subAnatEntityMaxLevel);
+            }
+            anatEntityIds.addAll(descendants.stream()
+                    .map(e -> e.getId()).collect(Collectors.toSet()));
         }
         log.trace("Stage IDs retrieved: {}", devStageIds);
         log.trace("Anat. entity IDs retrieved: {}", anatEntityIds);

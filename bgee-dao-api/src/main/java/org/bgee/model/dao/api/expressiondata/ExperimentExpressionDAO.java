@@ -132,6 +132,7 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
 
         private static final long serialVersionUID = 3464643420374159955L;
 
+        //WARNING: it is very important that these enums are ordered by ascending order of quality
         public enum CallQuality implements TransferObject.EnumDAOField {
             LOW("poor quality"), HIGH("high quality");
 

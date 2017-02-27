@@ -29,6 +29,7 @@ import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixProbesetDAO;
@@ -1026,6 +1027,19 @@ public abstract class DAOManager implements AutoCloseable
         this.checkClosed();
         return log.exit(this.getNewRawExpressionCallDAO());
     }
+    /**
+     * Get a new {@link org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO GlobalExpressionCallDAO}, 
+     * unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  a new {@code GlobalExpressionCallDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO GlobalExpressionCallDAO
+     */
+    public GlobalExpressionCallDAO getGlobalExpressionCallDAO() {
+        log.entry();
+        this.checkClosed();
+        return log.exit(this.getNewGlobalExpressionCallDAO());
+    }
 
     /**
      * Get a new {@link org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO ExperimentExpressionDAO}, 
@@ -1449,6 +1463,14 @@ public abstract class DAOManager implements AutoCloseable
      * @return  A new {@code RawExpressionCallDAO}
      */
     protected abstract RawExpressionCallDAO getNewRawExpressionCallDAO();
+    /**
+     * Service provider must return a new 
+     * {@link org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO GlobalExpressionCallDAO} 
+     * instance when this method is called. 
+     * 
+     * @return  A new {@code GlobalExpressionCallDAO}
+     */
+    protected abstract GlobalExpressionCallDAO getNewGlobalExpressionCallDAO();
     /**
      * Service provider must return a new 
      * {@link org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO ExperimentExpressionDAO} 

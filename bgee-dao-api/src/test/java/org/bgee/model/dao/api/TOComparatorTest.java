@@ -319,12 +319,12 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreTaxonConstraintTOsEqual() {
-        TaxonConstraintTO to1 = new TaxonConstraintTO("ID1", 2);
-        TaxonConstraintTO to2 = new TaxonConstraintTO("ID1", 2);
+        TaxonConstraintTO<String> to1 = new TaxonConstraintTO<>("ID1", 2);
+        TaxonConstraintTO<String> to2 = new TaxonConstraintTO<>("ID1", 2);
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
-        to2 = new TaxonConstraintTO("ID1", 3);
+        to2 = new TaxonConstraintTO<>("ID1", 3);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
     }
     

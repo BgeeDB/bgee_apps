@@ -11,7 +11,6 @@ import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DiffExpressionFactor;
-import org.bgee.model.gene.Gene;
 
 /**
  * A {@code CallData} represents the expression state of a {@link Gene}, in a {@link Condition}. 
@@ -239,31 +238,28 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         public int getPresentHighSelfCount() {
             return presentHighSelfCount;
         }
-
         public int getPresentLowSelfCount() {
             return presentLowSelfCount;
         }
-
         public int getAbsentHighSelfCount() {
             return absentHighSelfCount;
         }
-        
         public int getAbsentLowSelfCount() {
             return absentLowSelfCount;
+        }
+        public int getAllSelfCount() {
+            return presentHighSelfCount + presentLowSelfCount + absentHighSelfCount + absentLowSelfCount;
         }
 
         public int getPresentHighDescCount() {
             return presentHighDescCount;
         }
-
         public int getPresentLowDescCount() {
             return presentLowDescCount;
         }
-
         public int getAbsentHighParentCount() {
             return absentHighParentCount;
         }
-
         public int getAbsentLowParentCount() {
             return absentLowParentCount;
         }
@@ -271,17 +267,17 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         public int getPresentHighTotalCount() {
             return presentHighTotalCount;
         }
-
         public int getPresentLowTotalCount() {
             return presentLowTotalCount;
         }
-
         public int getAbsentHighTotalCount() {
             return absentHighTotalCount;
         }
-
         public int getAbsentLowTotalCount() {
             return absentLowTotalCount;
+        }
+        public int getAllTotalCount() {
+            return presentHighTotalCount + presentLowTotalCount + absentHighTotalCount + absentLowTotalCount;
         }
 
         public int getPropagatedCount() {

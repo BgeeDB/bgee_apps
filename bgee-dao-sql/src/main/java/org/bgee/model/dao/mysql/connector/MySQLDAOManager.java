@@ -43,6 +43,7 @@ import org.bgee.model.dao.mysql.expressiondata.MySQLConditionDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLDiffExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLExperimentExpressionDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO;
+import org.bgee.model.dao.mysql.expressiondata.MySQLGlobalExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLNoExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLRawExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.affymetrix.MySQLAffymetrixProbesetDAO;
@@ -1031,6 +1032,11 @@ public class MySQLDAOManager extends DAOManager {
     protected MySQLRawExpressionCallDAO getNewRawExpressionCallDAO() {
         log.entry();
         return log.exit(new MySQLRawExpressionCallDAO(this));
+    }
+    @Override
+    protected MySQLGlobalExpressionCallDAO getNewGlobalExpressionCallDAO() {
+        log.entry();
+        return log.exit(new MySQLGlobalExpressionCallDAO(this));
     }
     @Override
     protected ExperimentExpressionDAO getNewExperimentExpressionDAO() {

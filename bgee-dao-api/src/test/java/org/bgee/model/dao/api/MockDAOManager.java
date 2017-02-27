@@ -13,6 +13,7 @@ import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixProbesetDAO;
@@ -146,6 +147,10 @@ public class MockDAOManager extends DAOManager {
     @Override
     protected RawExpressionCallDAO getNewRawExpressionCallDAO() {
         return this.instanceMockManager.getNewRawExpressionCallDAO();
+    }
+    @Override
+    protected GlobalExpressionCallDAO getNewGlobalExpressionCallDAO() {
+        return this.instanceMockManager.getNewGlobalExpressionCallDAO();
     }
     @Override
     protected ExperimentExpressionDAO getNewExperimentExpressionDAO() {

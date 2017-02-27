@@ -2,7 +2,6 @@ package org.bgee.model;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOManager;
 
 /**

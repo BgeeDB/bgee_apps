@@ -19,13 +19,14 @@ import org.bgee.model.ServiceFactory;
  * @version Bgee 14, Feb. 2017
  * @since   Bgee 13, Oct. 2016
  */
+//FIXME: there shouldn't be any ConditionService for now
 public class ConditionService extends CommonService {
-    
-    private static final Logger log = LogManager.getLogger(ConditionService.class.getName());
-    
-    public static enum Attribute implements Service.Attribute {
-        ANAT_ENTITY_ID, DEV_STAGE_ID, SPECIES_ID;
-    }
+//    
+//    private static final Logger log = LogManager.getLogger(ConditionService.class.getName());
+//    
+//    public static enum Attribute implements Service.Attribute {
+//        ANAT_ENTITY_ID, DEV_STAGE_ID, SPECIES_ID;
+//    }
 
     /**
      * @param serviceFactory            The {@code ServiceFactory} to be used to obtain

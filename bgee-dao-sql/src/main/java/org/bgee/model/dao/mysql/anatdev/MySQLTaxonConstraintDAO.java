@@ -354,7 +354,7 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
                                 column.getValue().equals("anatEntityRelationId")) {
                         entityId = this.getCurrentResultSet().getObject(column.getKey(), this.cls);
                     } else if (column.getValue().equals("speciesId")) {
-                        speciesId = this.getCurrentResultSet().getInt(column.getKey());
+                        speciesId = this.getInteger(column.getValue());
 
                     } else {
                         throw log.throwing(new UnrecognizedColumnException(column.getValue()));

@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
@@ -131,7 +130,7 @@ public class InsertPropagatedCalls extends CallService {
 
         List<Integer> speciesIds = null;
         if (args.length == expectedArgLengthWithSpecies) {
-            speciesIds = CommandRunner.parseListArgumentAsInt(args[1]);    
+            speciesIds = CommandRunner.parseListArgumentAsInt(args[0]);
         }
 
         InsertPropagatedCalls.insert(speciesIds, COND_PARAM_SET);
@@ -497,7 +496,7 @@ public class InsertPropagatedCalls extends CallService {
          */
         @Override
         public int hashCode() {
-            return Objects.hashCode(this);
+            return System.identityHashCode(this);
         }
         /**
          * Override method implemented in {@code ExpressionCall} to restore default {@code Object#equals(Object)} behavior.
@@ -677,7 +676,8 @@ public class InsertPropagatedCalls extends CallService {
         final Set<ConditionDAO.Attribute> clonedCondParams = 
                 Collections.unmodifiableSet(EnumSet.copyOf(condParameters));
         
-        log.info("Start inserting of propagated calls for the species {}...", speciesId);
+        log.info("Start inserting of propagated calls for the species {} with combination of condition {}...",
+            speciesId, condParameters);
 
         try {
             //we assume the insertion is done using MySQL, and we start a transaction
@@ -736,6 +736,8 @@ public class InsertPropagatedCalls extends CallService {
             } catch (Exception e2) {
                 log.catching(e2);
             }
+            throw log.throwing(new IllegalStateException(
+                "Error while generating/inserting propagated calls", e));
         } finally {
             // close connection to database between each species, to avoid idle
             // connection reset or for parallel execution
@@ -762,7 +764,7 @@ public class InsertPropagatedCalls extends CallService {
     private Map<Condition, Integer> insertNewConditions(Set<PipelineCall> propagatedCalls,
             Collection<Condition> insertedConditions, Set<ConditionDAO.Attribute> conditionParams,
             ConditionDAO condDAO) {
-        log.entry(propagatedCalls, insertedConditions, conditionParams);
+        log.entry(propagatedCalls, insertedConditions, conditionParams, condDAO);
         
         //First, we retrieve the conditions not already present in the database
         Set<Condition> conds = propagatedCalls.stream()

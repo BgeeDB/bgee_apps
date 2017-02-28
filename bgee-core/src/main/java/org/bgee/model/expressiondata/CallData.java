@@ -203,7 +203,7 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             int absentHighTotalCount, int absentLowTotalCount, int propagatedCount,
             BigDecimal rank, BigDecimal rankNorm, BigDecimal rankSum) {
             super(dataType, inferCallType(presentHighTotalCount,
-                presentLowTotalCount, absentHighTotalCount, absentLowSelfCount));
+                presentLowTotalCount, absentHighTotalCount, absentLowTotalCount));
             
             if (presentHighTotalCount < 0 || presentLowTotalCount < 0 || 
                 absentHighTotalCount < 0 || absentLowTotalCount < 0 || 

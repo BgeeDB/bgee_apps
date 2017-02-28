@@ -308,7 +308,7 @@ public class InsertPropagatedCalls extends CallService {
                     currentGeneIteration = false;
                     action.accept((U) data); //method will exit after accepting the action
                     if (log.isDebugEnabled() && geneCount % 1000 == 0) {
-                        log.debug("{} genes iterated", geneCount);
+                        log.info("{} genes iterated", geneCount);
                     }
                     log.trace("Done accumulating data for {}", this.lastCallTO.getBgeeGeneId());
                 }
@@ -505,6 +505,15 @@ public class InsertPropagatedCalls extends CallService {
         public boolean equals(Object obj) {
             return this == obj;
         }
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("PipelineCall [bgeeGeneId=").append(bgeeGeneId).append(", parentSourceCallTOs=")
+                    .append(parentSourceCallTOs).append(", selfSourceCallTO=").append(selfSourceCallTO)
+                    .append(", descendantSourceCallTOs=").append(descendantSourceCallTOs).append("]");
+            return builder.toString();
+        }
+        
     }
     
     /**
@@ -555,6 +564,16 @@ public class InsertPropagatedCalls extends CallService {
         }
         public Set<ExperimentExpressionTO> getDescendantExperimentExpr() {
             return descendantExperimentExpr;
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("PipelineCallData [dataType=").append(dataType).append(", dataPropagation=")
+                    .append(dataPropagation).append(", parentExperimentExpr=").append(parentExperimentExpr)
+                    .append(", selfExperimentExpr=").append(selfExperimentExpr).append(", descendantExperimentExpr=")
+                    .append(descendantExperimentExpr).append("]");
+            return builder.toString();
         }
     }
 
@@ -829,16 +848,22 @@ public class InsertPropagatedCalls extends CallService {
                     PipelineCall call = e.getValue();
                     
                     Set<GlobalExpressionToRawExpressionTO> tos = new HashSet<>();
-                    tos.add(new GlobalExpressionToRawExpressionTO(call.getSelfSourceCallTO().getId(), 
+                    if (call.getSelfSourceCallTO() != null) {
+                        tos.add(new GlobalExpressionToRawExpressionTO(call.getSelfSourceCallTO().getId(), 
                             globalExprId, GlobalExpressionToRawExpressionTO.CallOrigin.SELF));
-                    tos.addAll(call.getParentSourceCallTOs().stream()
+                    }
+                    if (call.getParentSourceCallTOs() != null) {
+                        tos.addAll(call.getParentSourceCallTOs().stream()
                             .map(p -> new GlobalExpressionToRawExpressionTO(p.getId(), 
                                     globalExprId, GlobalExpressionToRawExpressionTO.CallOrigin.PARENT))
                             .collect(Collectors.toSet()));
-                    tos.addAll(call.getDescendantSourceCallTOs().stream()
+                    }
+                    if (call.getDescendantSourceCallTOs() != null) {
+                        tos.addAll(call.getDescendantSourceCallTOs().stream()
                             .map(d -> new GlobalExpressionToRawExpressionTO(d.getId(), 
                                     globalExprId, GlobalExpressionToRawExpressionTO.CallOrigin.DESCENDANT))
                             .collect(Collectors.toSet()));
+                    }
                     
                     return tos.stream();
                 })
@@ -1051,6 +1076,9 @@ public class InsertPropagatedCalls extends CallService {
                 // Reconcile calls and return all of them in one Set
                 return callGroup.keySet().stream()
                     .map(c -> reconcileGeneCalls(callGroup.get(c), callDataGroup.get(c)))
+                    //reconcileGeneCalls return null if there was no valid data to propagate
+                    //(e.g., only "present" calls in parent conditions)
+                    .filter(c -> c != null)
                     .collect(Collectors.toSet());
             });
 
@@ -1136,7 +1164,7 @@ public class InsertPropagatedCalls extends CallService {
             int speciesId, Set<ConditionDAO.Attribute> attrs) throws IllegalArgumentException {
         log.entry(speciesId, attrs);
 
-        log.debug("Retrieving experiement expressions");
+        log.debug("Retrieving experiment expressions");
         final ExperimentExpressionDAO dao = this.getDaoManager().getExperimentExpressionDAO();
 
         Map<DataType, Stream<ExperimentExpressionTO>> map = new HashMap<>();
@@ -1237,7 +1265,7 @@ public class InsertPropagatedCalls extends CallService {
         for (Entry<PipelineCall, Set<PipelineCallData>> entry: data.entrySet()) {
             analyzedCallCount++;
             if (log.isDebugEnabled() && (analyzedCallCount % 100 == 0 || analyzedCallCount == 1)) {
-                log.debug("{}/{} expression calls analyzed.", analyzedCallCount, callCount);
+                log.trace("{}/{} expression calls analyzed.", analyzedCallCount, callCount);
             }
     
             ExpressionCall curCall = entry.getKey();
@@ -1413,14 +1441,15 @@ public class InsertPropagatedCalls extends CallService {
         Condition condition = conditions.iterator().next();
 
         Set<RawExpressionCallTO> selfSourceCallTOs = calls.stream().map(PipelineCall::getSelfSourceCallTO)
-            .collect(Collectors.toSet());
+                .filter(to -> to != null)
+                .collect(Collectors.toSet());
         if (selfSourceCallTOs.size() > 1) {
             throw log.throwing(new IllegalArgumentException(
-                "Several self TO are found in provided PipelineCalls"));
+                "Several self TO are found in provided PipelineCalls: " + selfSourceCallTOs));
         }
         //selfSourceCallTOs is empty if there is only propagated calls in the condition
         RawExpressionCallTO selfSourceCallTO = null;
-        if (!selfSourceCallTOs.isEmpty()) {
+        if (selfSourceCallTOs.size() == 1) {
             selfSourceCallTO = selfSourceCallTOs.iterator().next();
         }
 
@@ -1436,9 +1465,19 @@ public class InsertPropagatedCalls extends CallService {
 
         Set<ExpressionCallData> expressionCallData = new HashSet<>();
         for (Entry<DataType, Set<PipelineCallData>> entry: pipelineDataByDataTypes.entrySet()) {
-            expressionCallData.add(mergePipelineCallDataIntoExpressionCallData(
-                            entry.getKey(), entry.getValue(), selfSourceCallTO));
+            ExpressionCallData cd = mergePipelineCallDataIntoExpressionCallData(
+                    entry.getKey(), entry.getValue(), selfSourceCallTO);
+            //the returned callData is null if there was no valid data to propagate
+            //(e.g., only "present" expression calls in parent conditions)
+            if (cd != null) {
+                expressionCallData.add(cd);
+            }
         }
+        if (expressionCallData.isEmpty()) {
+            log.trace("No valid data to propagate");
+            return log.exit(null);
+        }
+        
         assert expressionCallData.stream().mapToInt(ecd -> ecd.getAllTotalCount()).sum() != 0;
         assert includingObservedData && 
                    expressionCallData.stream().mapToInt(ecd -> ecd.getAllSelfCount()).sum() > 0 ||
@@ -1453,9 +1492,11 @@ public class InsertPropagatedCalls extends CallService {
 
         return log.exit(new PipelineCall(geneId, condition, includingObservedData, expressionCallData,
             calls.stream().map(PipelineCall::getParentSourceCallTOs)
+                          .filter(s -> s != null)
                           .flatMap(Set::stream).collect(Collectors.toSet()),
             selfSourceCallTO,
             calls.stream().map(PipelineCall::getDescendantSourceCallTOs)
+                          .filter(s -> s != null)
                           .flatMap(Set::stream).collect(Collectors.toSet())));
     }
     
@@ -1474,7 +1515,40 @@ public class InsertPropagatedCalls extends CallService {
             Set<PipelineCallData> pipelineCallData, RawExpressionCallTO selfSourceCallTO) {
         log.entry(dataType, pipelineCallData, selfSourceCallTO);
 
-        assert pipelineCallData.stream().anyMatch(pcd -> !dataType.equals(pcd.getDataType()));
+        assert pipelineCallData.stream().noneMatch(pcd -> !dataType.equals(pcd.getDataType()));
+        if (pipelineCallData.stream().anyMatch(pcd -> 
+            (pcd.getSelfExperimentExpr() == null || pcd.getSelfExperimentExpr().isEmpty()) && 
+            (pcd.getParentExperimentExpr() == null || pcd.getParentExperimentExpr().isEmpty()) && 
+            (pcd.getDescendantExperimentExpr() == null || pcd.getDescendantExperimentExpr().isEmpty()))) {
+            throw log.throwing(new IllegalArgumentException(
+                    "A PipelineCallData contains no ExperimentExpressionTO, pipelineCalls: " 
+                    + pipelineCallData));
+        }
+
+
+        int presentHighTotalCount = this.getTotalCount(pipelineCallData,
+            CallDirection.PRESENT, CallQuality.HIGH);
+        int presentLowTotalCount = this.getTotalCount(pipelineCallData,
+            CallDirection.PRESENT, CallQuality.LOW);
+        int absentHighTotalCount = this.getTotalCount(pipelineCallData,
+            CallDirection.ABSENT, CallQuality.HIGH);
+        int absentLowTotalCount = this.getTotalCount(pipelineCallData,
+            CallDirection.ABSENT, CallQuality.LOW);
+
+        //In case there is no data valid to be propagated (e.g., only expression calls in parents)
+        if ((presentHighTotalCount + presentLowTotalCount 
+                + absentHighTotalCount + absentLowTotalCount) == 0) {
+            assert pipelineCallData.stream().allMatch(pcd -> 
+                (pcd.getSelfExperimentExpr() == null || pcd.getSelfExperimentExpr().isEmpty()) && 
+                (pcd.getParentExperimentExpr() == null || pcd.getParentExperimentExpr().stream()
+                        .filter(eeto -> CallDirection.ABSENT.equals(eeto.getCallDirection()))
+                        .limit(1).count() == 0) &&  
+                (pcd.getDescendantExperimentExpr() == null || pcd.getDescendantExperimentExpr().stream()
+                .filter(eeto -> CallDirection.PRESENT.equals(eeto.getCallDirection()))
+                .limit(1).count() == 0));
+            
+            return log.exit(null);
+        }
         
         int presentHighSelfCount = this.getSpecificCount(pipelineCallData,
             PipelineCallData::getSelfExperimentExpr, CallDirection.PRESENT, CallQuality.HIGH);
@@ -1496,7 +1570,7 @@ public class InsertPropagatedCalls extends CallService {
         //are not propagated to descendant conditions; but we still want to count
         //experiments only once between ABSENT HIGH and ABSENT LOW. 
         Function<PipelineCallData, Set<ExperimentExpressionTO>> funCallDataAbsentToEETO = 
-            p -> p.getParentExperimentExpr().stream()
+            p -> p.getParentExperimentExpr() == null? null: p.getParentExperimentExpr().stream()
                 .filter(eeTO -> CallDirection.ABSENT.equals(eeTO.getCallDirection()))
                 .collect(Collectors.toSet());
         int absentHighParentCount = this.getSpecificCount(pipelineCallData,
@@ -1508,7 +1582,7 @@ public class InsertPropagatedCalls extends CallService {
         //but formally we do not propagate ABSENT calls to parent condition, 
         //so here we keep only PRESENT calls
         Function<PipelineCallData, Set<ExperimentExpressionTO>> funCallDataPresentToEETO = 
-            p -> p.getDescendantExperimentExpr().stream()
+            p -> p.getDescendantExperimentExpr() == null? null: p.getDescendantExperimentExpr().stream()
                 .filter(eeTO -> CallDirection.PRESENT.equals(eeTO.getCallDirection()))
                 .collect(Collectors.toSet());
         int presentHighDescCount = this.getSpecificCount(pipelineCallData,
@@ -1516,27 +1590,13 @@ public class InsertPropagatedCalls extends CallService {
         int presentLowDescCount = this.getSpecificCount(pipelineCallData,
             funCallDataPresentToEETO, CallDirection.PRESENT, CallQuality.LOW);
 
-
-        int presentHighTotalCount = this.getTotalCount(pipelineCallData,
-            CallDirection.PRESENT, CallQuality.HIGH);
-        int presentLowTotalCount = this.getTotalCount(pipelineCallData,
-            CallDirection.PRESENT, CallQuality.LOW);
-        int absentHighTotalCount = this.getTotalCount(pipelineCallData,
-            CallDirection.ABSENT, CallQuality.HIGH);
-        int absentLowTotalCount = this.getTotalCount(pipelineCallData,
-            CallDirection.ABSENT, CallQuality.LOW);
-
         
         //count number of experiments part of the "total" count that did not come from "self".
         //First, get all ExperimentExpressionTOs that were considered for the "total" count
         Set<ExperimentExpressionTO> bestTotalEETOs = getBestTotalEETOs(pipelineCallData);
         //now we retrieve the best ExperimentExpressionTO for each experiment among the "self" attribute.
-        Set<ExperimentExpressionTO> bestSelfEETOs = this.getBestExperimentExpressionTOs(
-                pipelineCallData.stream()
-                    .map(p -> p.getSelfExperimentExpr())
-                    .flatMap(Set::stream)
-                    .collect(Collectors.toSet())
-        );
+        Set<ExperimentExpressionTO> bestSelfEETOs = getBestSelectedEETOs(pipelineCallData, 
+                p -> p.getSelfExperimentExpr());
         //now we count the number of ExperimentExpressionTOs that do not have a as good or better call 
         //from this experiment in the "self" attribute
         int propagatedCount = (int) bestTotalEETOs.stream()
@@ -1607,12 +1667,8 @@ public class InsertPropagatedCalls extends CallService {
         
         //to count each experiment only once in a given set of "self", "parent" or "descendant" attributes, 
         //we keep its "best" call from all ExperimentExpressionTOs.
-        Set<ExperimentExpressionTO> bestSelectedEETOs = this.getBestExperimentExpressionTOs(
-            pipelineCallData.stream()
-                .map(p -> funCallDataToEETO.apply(p))
-                .flatMap(Set::stream)
-                .collect(Collectors.toSet())
-            );
+        Set<ExperimentExpressionTO> bestSelectedEETOs = this.getBestSelectedEETOs(pipelineCallData, 
+                funCallDataToEETO);
         
         return log.exit((int) bestSelectedEETOs.stream()
             .filter(eeTo -> callDirection.equals(eeTo.getCallDirection())
@@ -1620,6 +1676,18 @@ public class InsertPropagatedCalls extends CallService {
             .map(ExperimentExpressionTO::getExperimentId)
             .distinct()
             .count());
+    }
+    
+    private Set<ExperimentExpressionTO> getBestSelectedEETOs(Set<PipelineCallData> pipelineCallData,
+            Function<PipelineCallData, Set<ExperimentExpressionTO>> funCallDataToEETO) {
+        log.entry(pipelineCallData, funCallDataToEETO);
+        return log.exit(this.getBestExperimentExpressionTOs(
+            pipelineCallData.stream()
+                .map(p -> funCallDataToEETO.apply(p))
+                .filter(s -> s != null)
+                .flatMap(Set::stream)
+                .collect(Collectors.toSet())
+            ));
     }
     
     /** 
@@ -1663,7 +1731,9 @@ public class InsertPropagatedCalls extends CallService {
                 .map(p -> {
                     Set<ExperimentExpressionTO> exps = new HashSet<>();
                     
-                    exps.addAll(p.getSelfExperimentExpr());
+                    if (p.getSelfExperimentExpr() != null) {
+                        exps.addAll(p.getSelfExperimentExpr());
+                    }
                     
                     //we keep only ABSENT calls from parent structures, so that 
                     //getBestExperimentExpressionTOs does not discard an experiment 
@@ -1671,15 +1741,19 @@ public class InsertPropagatedCalls extends CallService {
                     //in another parent: in that case, we want to propagate only the absence 
                     //of expression, since we don't propagate presence of expression
                     //to descendant conditions
-                    exps.addAll(p.getParentExperimentExpr().stream()
+                    if (p.getParentExperimentExpr() != null) {
+                        exps.addAll(p.getParentExperimentExpr().stream()
                             .filter(eeTO -> CallDirection.ABSENT.equals(eeTO.getCallDirection()))
                             .collect(Collectors.toSet()));
+                    }
                     
                     //we do not propagate ABSENT calls to parent condition, 
                     //so here we keep only PRESENT calls
-                    exps.addAll(p.getDescendantExperimentExpr().stream()
+                    if (p.getDescendantExperimentExpr() != null) {
+                        exps.addAll(p.getDescendantExperimentExpr().stream()
                             .filter(eeTO -> CallDirection.PRESENT.equals(eeTO.getCallDirection()))
                             .collect(Collectors.toSet()));
+                    }
                     return exps;
                 })
                 .flatMap(Set::stream)

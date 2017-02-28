@@ -13,6 +13,7 @@ import org.bgee.pipeline.annotations.InsertSimilarityAnnotation;
 import org.bgee.pipeline.annotations.SimilarityAnnotation;
 import org.bgee.pipeline.expression.FilterNoExprCalls;
 import org.bgee.pipeline.expression.InsertGlobalCalls;
+import org.bgee.pipeline.expression.InsertPropagatedCalls;
 import org.bgee.pipeline.expression.downloadfile.GenerateExprFile;
 import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile;
 import org.bgee.pipeline.expression.downloadfile.GenerateMultiSpeciesDiffExprFile;
@@ -257,6 +258,9 @@ public class CommandRunner {
             throw log.throwing(new UnsupportedOperationException("Method disabled while updated"));
 //            FilterNoExprCalls.main(newArgs);
 //            break;
+        case "InsertPropagatedCalls": 
+            InsertPropagatedCalls.main(newArgs);
+            break;
  
         //---------- Download file generation -----------
         case "GenerateDiffExprFile":

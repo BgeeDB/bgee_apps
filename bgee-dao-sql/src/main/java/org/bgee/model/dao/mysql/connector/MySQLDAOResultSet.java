@@ -892,7 +892,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
     protected Integer getInteger(String columnLabel) throws SQLException {
         log.entry(columnLabel);
         int value = this.getCurrentResultSet().getInt(columnLabel);
-        if (this.getCurrentResultSet().wasNull()) {
+        if (value == 0 && this.getCurrentResultSet().wasNull()) {
             return log.exit(null);
         }
         return log.exit(value);

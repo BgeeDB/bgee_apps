@@ -122,8 +122,8 @@ public class DataPropagation {
     public DataPropagation(PropagationState anatEntityPropagationState, 
             PropagationState devStagePropagationState, Boolean includingObservedData) 
                     throws IllegalArgumentException {
-        if (anatEntityPropagationState == null || devStagePropagationState == null) {
-            throw log.throwing(new IllegalArgumentException("The propagation states cannot be null"));
+        if (anatEntityPropagationState == null && devStagePropagationState == null) {
+            throw log.throwing(new IllegalArgumentException("The propagation states cannot be both null"));
         }
         //check consistency of the PropagationState and of the observed data state
         PropagationState[] states = new PropagationState[]{
@@ -142,8 +142,9 @@ public class DataPropagation {
             // ExpressionCall will have anat. entity propa. state equals to SELF_AND_ANCESTOR and 
             // dev. stage propa. state equals to SELF_AND_ANCESTOR
             // with includingObservedData equals to true
-            new Boolean(false).equals(includingObservedData) && Arrays.stream(states).allMatch(
-                e -> PropagationState.SELF.equals(e))) {
+            new Boolean(false).equals(includingObservedData) && Arrays.stream(states)
+                    .filter(e -> e != null)
+                    .allMatch(e -> PropagationState.SELF.equals(e))) {
             
             throw log.throwing(new IllegalArgumentException("The provided observed data state ("
                     + includingObservedData + ") is incompatible with the provided PropagationStates ("

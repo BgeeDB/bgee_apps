@@ -3,7 +3,6 @@ package org.bgee.model.dao.mysql.expressiondata;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -212,8 +211,13 @@ implements GlobalExpressionCallDAO {
         
         final Map<String, GlobalExpressionCallDAO.Attribute> colToAttrMap = getColToAttributesMap(comb);
         //The order of the parameters is important for generating the query and then setting the parameters.
-        List<GlobalExpressionCallDAO.Attribute> toPopulate = new ArrayList<>(
-                EnumSet.allOf(GlobalExpressionCallDAO.Attribute.class));
+        List<GlobalExpressionCallDAO.Attribute> toPopulate = 
+                EnumSet.allOf(GlobalExpressionCallDAO.Attribute.class).stream()
+                //globalMeanRank is not a column in the table, but a select expression
+                //computed on the fly in SELECT queries
+                .filter(a -> !GlobalExpressionCallDAO.Attribute.GLOBAL_MEAN_RANK.equals(a))
+                .collect(Collectors.toList());
+
         StringBuilder sql = new StringBuilder(); 
         sql.append("INSERT INTO ").append(comb.getGlobalExprTable()).append(" (")
            .append(toPopulate.stream().map(a -> getSelectExprFromAttribute(a, colToAttrMap))
@@ -472,11 +476,6 @@ implements GlobalExpressionCallDAO {
                     case RNA_SEQ_DISTINCT_RANK_SUM:
                         stmt.setBigDecimal(paramIndex, callTO.getRNASeqDistinctRankSum());
                         paramIndex++;
-                        break;
-                        
-                    case GLOBAL_MEAN_RANK:
-                        //do nothing for this attribute, this is not a column in the table
-                        //but a select_expr computing the rank on the fly
                         break;
                     default:
                         log.throwing(new IllegalStateException("Unsupported attribute: " + attr));

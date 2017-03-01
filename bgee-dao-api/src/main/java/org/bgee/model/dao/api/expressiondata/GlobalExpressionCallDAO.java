@@ -55,6 +55,38 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
         AFFYMETRIX_DISTINCT_RANK_SUM, 
         RNA_SEQ_DISTINCT_RANK_SUM;
     }
+    
+    /** 
+     * Retrieves global calls from data source in the appropriate table specified by 
+     * {@code conditionParameters}.
+     * <p>
+     * The global calls are retrieved and returned as a {@code GlobalExpressionCallTOResultSet}. 
+     * It is the responsibility of the caller to close this {@code DAOResultSet} once results 
+     * are retrieved.
+     * 
+     * @param geneIds               A {@code Set} of {@code Integer}s that are bgee IDs of genes 
+     *                              to filter this query. 
+     *                              Can be {@code null} or empty.
+     * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
+     *                              combination of condition parameters that were requested for queries, 
+     *                              allowing to determine which condition and expression tables to target
+     *                              (see {@link ConditionDAO.Attribute#isConditionParameter()}).
+     * @param attributes            A {@code Collection} of {@code GlobalExpressionCallDAO.Attribute}s 
+     *                              defining the attributes to populate in the returned 
+     *                              {@code GlobalExpressionCallTO}s. If {@code null} or empty, 
+     *                              all attributes are populated. 
+     * @return                      An {@code GlobalExpressionCallTOResultSet} containing global
+     *                              calls from data source according to {@code attributes} and
+     *                              {@code conditionParameters}.
+     * @throws DAOException         If an error occurred when accessing the data source. 
+     * @throws IllegalArgumentException If one of the {@code Attribute}s in {@code conditionParameters}
+     *                                  is not a condition parameter attributes (see 
+     *                                  {@link ConditionDAO.Attribute#isConditionParameter()}).
+     */
+    public GlobalExpressionCallTOResultSet getGlobalCalls(Collection<Integer> bgeeGeneIds,
+            Collection<ConditionDAO.Attribute> conditionParameters,
+            Collection<GlobalExpressionCallDAO.Attribute> attributes)
+                throws DAOException, IllegalArgumentException;
 
     /**
      * Retrieve the maximum of global expression IDs in the appropriate table specified by {@code conditionParameters}.

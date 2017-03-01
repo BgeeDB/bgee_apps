@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.CommonService;
 import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
@@ -35,7 +36,7 @@ import org.bgee.model.species.Species;
  */
 // Either remove species attribute from Gene class (not speciesId attribute) or add boolean 
 // to all methods defining if species object should be retrieved or not. 
-public class GeneService extends Service {
+public class GeneService extends CommonService {
     
     private static final Logger log = LogManager.getLogger(GeneService.class.getName());
 
@@ -193,23 +194,7 @@ public class GeneService extends Service {
      */
     private static Gene mapFromTO(GeneTO geneTO) {
         log.entry(geneTO);
-        return log.exit(mapFromTO(geneTO, null));
+        return log.exit(CommonService.mapGeneTOToGene(geneTO, null));
     }
 
-    /**
-     * Maps {@code GeneTO} to a {@code Gene}.
-     * 
-     * @param geneTO    The {@code GeneTO} to map.
-     * @param species   The {@code Species} to set.
-     * @return          The mapped {@code Gene}.
-     */
-    private static Gene mapFromTO(GeneTO geneTO, Species species) {
-        log.entry(geneTO, species);
-        if (geneTO == null) {
-            return log.exit(null);
-        }
-
-        return log.exit(new Gene(geneTO.getGeneId(), geneTO.getSpeciesId(),
-                geneTO.getName(), geneTO.getDescription(), species));
-    }
 }

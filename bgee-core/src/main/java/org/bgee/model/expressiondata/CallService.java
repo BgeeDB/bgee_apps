@@ -2,7 +2,6 @@ package org.bgee.model.expressiondata;
 
 import java.math.BigDecimal;
 import java.util.AbstractMap.SimpleEntry;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -21,24 +20,25 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.CommonService;
 import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
-import org.bgee.model.dao.api.expressiondata.CallDAOFilter;
-import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallTO;
 import org.bgee.model.expressiondata.Call.DiffExpressionCall;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.CallFilter.DiffExpressionCallFilter;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
-import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataPropagation.PropagationState;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
+import org.bgee.model.gene.Gene;
+import org.bgee.model.species.Species;
 import org.bgee.model.species.TaxonomyFilter;
 
 /**
@@ -47,10 +47,9 @@ import org.bgee.model.species.TaxonomyFilter;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Feb. 2017
+ * @version Bgee 14, Mar. 2017
  * @since   Bgee 13, Oct. 2015
  */
-/// XXX: Check in bgee14 if speciesId is retrieved in CallTO
 public class CallService extends CommonService {
     private final static Logger log = LogManager.getLogger(CallService.class.getName());
     
@@ -58,23 +57,22 @@ public class CallService extends CommonService {
     //(e.g., GENE, ANAT_ENTITY, STAGE, DATA). But this means that we once again 
     //"duplicate" the concepts in the Condition class. 
     
-//******************
-// Notes from previous CallFilter version
-//******************
-  //XXX: 
- // - if both IDs and multiple species requested AND forceHomology is true 
- //   => find missing orthologous genes/homologous organs/comparable stages
-    
+    //******************
+    // Notes from previous CallFilter version
+    //******************
+    //XXX: 
+    // - if both IDs and multiple species requested AND forceHomology is true 
+    //   => find missing orthologous genes/homologous organs/comparable stages
     //XXX: impact both the gene filtering and the anat.entity and stage filtering.
     //Species should be always explicitly targeted.
-//    private final TaxonomyFilter taxonFilter; 
+    //    private final TaxonomyFilter taxonFilter; 
     //XXX: with this boolean set to true, any multi-species query will search explicitly 
     //for homology/orthology relations, and will complete ID list provided to potentially 
     //add homolog/orthologs (i.e., impacting both ConditionFilters and GeneFilters).
     //if false, then any query is possible, without caring about homology/orthology.
     //XXX: If true, retrieve results only in homologous structure/comparable stages, always.
-//    private final boolean forceHomology;
-//******************
+    //    private final boolean forceHomology;
+    //******************
     
     public static enum Attribute implements Service.Attribute {
         GENE_ID, ANAT_ENTITY_ID, DEV_STAGE_ID, GLOBAL_DATA_QUALITY, GLOBAL_RANK, CALL_DATA, 
@@ -129,6 +127,8 @@ public class CallService extends CommonService {
      *                              and reconciled expression calls.
      * @throws IllegalArgumentException If {@code callFilter} or {@code speciesID} are null or empty.
      */
+    // FIXME manage correctly filters
+    // FIXME check sanity checks
     public Stream<ExpressionCall> loadExpressionCalls(Integer speciesId, 
             ExpressionCallFilter callFilter, Collection<Attribute> attributes, 
             LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes)
@@ -161,7 +161,7 @@ public class CallService extends CommonService {
                 (PropagationState.SELF.equals(anatEntityPropFilter) && PropagationState.SELF.equals(devStagePropFilter));
             if (!isValidProp) {
                 throw log.throwing(new IllegalArgumentException("Not an accepted combination for data propagation filter"));
-            }            
+            }
         }
 
         if (callFilter.getPropagationFilter() != null && !clonedAttrs.contains(Attribute.CALL_DATA)) {
@@ -179,13 +179,52 @@ public class CallService extends CommonService {
             }
         }
 
-        Stream<ExpressionCall> calls = 
-            this.performsExpressionCallQuery(speciesId, callFilter, clonedAttrs, clonedOrderingAttrs)
-            .map(to -> mapCallTOToExpressionCall(to, callFilter.getPropagationFilter(), speciesId));
+        Set<ConditionDAO.Attribute> condParams = convertCallFilterToConditionDAOAttr(callFilter);
+        
+        // Retrieve species
+        Set<Integer> clnSpId =  Collections.singleton(speciesId);
+        final Set<Species> speciesSet = this.getServiceFactory().getSpeciesService()
+            .loadSpeciesByIds(clnSpId, false);
+        if (speciesSet.size() != 1) {
+            throw new IllegalArgumentException("Provided species not found in data source");
+        }
+        Species species = speciesSet.stream().findAny().get();
+        
+        // Retrieve conditions by condition IDs
+        final Map<Integer, Condition> condMap = Collections.unmodifiableMap(
+            this.getDaoManager().getConditionDAO()
+                .getConditionsBySpeciesIds(clnSpId, condParams, condParams).stream()
+                .collect(Collectors.toMap(cTO -> cTO.getId(), cTO -> mapConditionTOToCondition(cTO))));
+        assert !condMap.isEmpty();
+        
+        // Retrieve genes by Bgee IDs
+        // FIXME when GeneFilter is empty
+        final Map<Integer, Gene> geneMap = this.getDaoManager().getGeneDAO()
+                .getGenesBySpeciesIds(clnSpId, callFilter.getGeneFilter().getGeneIds()).stream()
+                .collect(Collectors.toMap(
+                    gTO -> gTO.getId(),
+                    gTO -> CommonService.mapGeneTOToGene(gTO, species)));
+        assert !geneMap.isEmpty();
+        
+        // Retrieve calls
+        Stream<ExpressionCall> calls = this.performsGlobalExprCallQuery(speciesId, geneMap, callFilter, 
+                condParams, clonedAttrs, clonedOrderingAttrs)
+            .map(to -> mapGlobalCallTOToExpressionCall(to, species, geneMap, condMap, clonedAttrs))
+            // We filter ExpressionCalls according to callFilter
+            .filter(c -> callFilter.test(c))
+            // TODO: do we really need to order?
+            .sorted(CallService.convertServiceOrdering(clonedOrderingAttrs));
         
         return log.exit(calls);
     }
     
+    private Set<ConditionDAO.Attribute> convertCallFilterToConditionDAOAttr(
+            ExpressionCallFilter callFilter) {
+        log.entry(callFilter);
+        throw log.throwing(new UnsupportedOperationException(
+            "Conversion of call filter to ConditionDAO attributes not implemented yet."));
+    }
+
     /** 
      * Return the {@code Comparator} of {@code ExpressionCall}s, performing the comparisons
      * in order provided by {@code orderingAttributes}.
@@ -197,7 +236,6 @@ public class CallService extends CommonService {
      *                              whether the ordering should be ascendant or descendant.
      * @return                      The {@code Comparator} of {@code ExpressionCall}s.
      */
-    // TODO to be added to ExpressionCallUtils see TODOs into ExpressionCall
     public static Comparator<ExpressionCall> convertServiceOrdering(
             LinkedHashMap<CallService.OrderingAttribute, Service.Direction> orderingAttributes) {
         log.entry(orderingAttributes);
@@ -292,13 +330,14 @@ public class CallService extends CommonService {
      * @throws IllegalArgumentException If the {@code callFilter} provided define multiple 
      *                                  expression propagation states requested.
      */
-    // FIXME implement call to DAO
-    private Stream<ExpressionCallTO> performsExpressionCallQuery(Integer speciesId, 
-            ExpressionCallFilter callFilter, Set<Attribute> attributes, 
+    private Stream<GlobalExpressionCallTO> performsGlobalExprCallQuery(Integer speciesId, 
+            Map<Integer, Gene> geneMap, ExpressionCallFilter callFilter,
+            Set<ConditionDAO.Attribute> condParameters, Set<Attribute> attributes,
             LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes)
                     throws IllegalArgumentException {
-        log.entry(speciesId, callFilter, attributes, orderingAttributes);
-        log.debug("Start retrieving expression data");
+        log.entry(speciesId, callFilter, geneMap, attributes, orderingAttributes);
+
+        log.trace("Retrieving global expression data...");
 
         //UnsupportedOperationExceptions (for now)
         if (attributes.contains(Attribute.CALL_DATA_OBSERVED_DATA)) {
@@ -306,77 +345,160 @@ public class CallService extends CommonService {
                     "Retrieval of observed data state per data type not yet implemented."));
         }
 
-        final ExpressionCallDAO exprDao = this.getDaoManager().getExpressionCallDAO();
-        Stream<ExpressionCallTO> expr = exprDao.getExpressionCalls(Arrays.asList(
-                    //generate an ExpressionCallDAOFilter from callFilter 
-                    new CallDAOFilter(
-                            //we will provide the gene IDs to the getExpressionCalls method 
-                            //as a global gene filter, not through the CallDAOFilter. 
-                            null, 
-                            //species
-                            Arrays.asList(String.valueOf(speciesId)), 
-                            //ConditionFilters
-                            callFilter.getConditionFilters().stream()
-                                .map(condFilter -> new DAOConditionFilter(
-                                    condFilter.getAnatEntityIds(), 
-                                    condFilter.getDevStageIds()))
-                            .collect(Collectors.toSet())
-                            )),  
-                    //CallTOFilters
-                    mapCallFilterToExprCallTOFilters(callFilter), 
-                    //includeSubstructures
-                    PropagationState.SELF.equals(callFilter.getPropagationFilter().getAnatEntityPropagationState())?
-                        true : false,
-                    //includeSubStages
-                    PropagationState.SELF.equals(callFilter.getPropagationFilter().getDevStagePropagationState())?
-                        true : false,
-                    //global gene filter
-                    Optional.ofNullable(callFilter.getGeneFilter())
-                        .map(geneFilter -> geneFilter.getGeneIds().stream().map(String::valueOf)
-                            .collect(Collectors.toSet())).orElse(new HashSet<>()), 
-                    //no gene orthology requested
-                    null, 
-                    //Attributes
-                    convertServiceAttrsToExprDAOAttrs(attributes, callFilter.getDataTypeFilter()), 
-                    //OrderingAttributes
-                    convertServiceOrderingAttrsToExprDAOOrderingAttrs(orderingAttributes)
-                )
-                //retrieve the Stream resulting from the query. Note that the query is not executed 
-                //as long as the Stream is not consumed (lazy-loading).
-                .stream();
-        log.debug("Done retrieving expressed data");
+//        final ExpressionCallDAO exprDao = this.getDaoManager().getExpressionCallDAO();
+//        Stream<ExpressionCallTO> expr = exprDao.getExpressionCalls(Arrays.asList(
+//                    //generate an ExpressionCallDAOFilter from callFilter 
+//                    new CallDAOFilter(
+//                            //we will provide the gene IDs to the getExpressionCalls method 
+//                            //as a global gene filter, not through the CallDAOFilter. 
+//                            null, 
+//                            //species
+//                            Arrays.asList(String.valueOf(speciesId)), 
+//                            //ConditionFilters
+//                            callFilter.getConditionFilters().stream()
+//                                .map(condFilter -> new DAOConditionFilter(
+//                                    condFilter.getAnatEntityIds(), 
+//                                    condFilter.getDevStageIds()))
+//                            .collect(Collectors.toSet())
+//                            )),  
+//                    //CallTOFilters
+//                    mapCallFilterToExprCallTOFilters(callFilter), 
+//                    //includeSubstructures
+//                    PropagationState.SELF.equals(callFilter.getPropagationFilter().getAnatEntityPropagationState())?
+//                        true : false,
+//                    //includeSubStages
+//                    PropagationState.SELF.equals(callFilter.getPropagationFilter().getDevStagePropagationState())?
+//                        true : false,
+//                    //global gene filter
+//                    Optional.ofNullable(callFilter.getGeneFilter())
+//                        .map(geneFilter -> geneFilter.getGeneIds().stream().map(String::valueOf)
+//                            .collect(Collectors.toSet())).orElse(new HashSet<>()), 
+//                    //no gene orthology requested
+//                    null, 
+//                    //Attributes
+//                    convertServiceAttrsToExprDAOAttrs(attributes, callFilter.getDataTypeFilter()), 
+//                    //OrderingAttributes
+//                    convertServiceOrderingAttrsToExprDAOOrderingAttrs(orderingAttributes)
+//                )
+//                //retrieve the Stream resulting from the query. Note that the query is not executed 
+//                //as long as the Stream is not consumed (lazy-loading).
+//                .stream();
 
-        return log.exit(expr);
+        final GlobalExpressionCallDAO dao = this.getDaoManager().getGlobalExpressionCallDAO();
+        Stream<GlobalExpressionCallTO> calls = dao.getGlobalCalls(geneMap.keySet(), condParameters,
+                convertCallServiceAttrToGlobalExprAttr(attributes)).stream();
+
+        return log.exit(calls);
+    }
+
+    private Collection<GlobalExpressionCallDAO.Attribute> convertCallServiceAttrToGlobalExprAttr(
+        Set<Attribute> attributes) {
+        log.entry(attributes);
+        throw log.throwing(new UnsupportedOperationException(
+            "Conversion of CallService attributes to GlobalExpressionCallDAO attributes not implemented yet."));
     }
 
     //*************************************************************************
     // METHODS MAPPING CallTOs TO Calls
     //*************************************************************************
-    private static ExpressionCall mapCallTOToExpressionCall(ExpressionCallTO callTO, 
-            DataPropagation callFilterPropag, Integer speciesId) {
-        log.entry(callTO, callFilterPropag, speciesId);
+    private ExpressionCall mapGlobalCallTOToExpressionCall(GlobalExpressionCallTO globalCallTO, 
+            Species species, Map<Integer, Gene> geneMap, Map<Integer, Condition> condMap,
+            Set<CallService.Attribute> attrs) {
+        log.entry(globalCallTO, species, geneMap, condMap, attrs);
         
-        throw log.throwing(new UnsupportedOperationException("mapCallTOToExpressionCall should be re-implemeted"));
-//        //Inference of isObservedData, summaryCallType and summaryQuality is done into ExpressionCall        
-//        return log.exit(new ExpressionCall(callTO.getGene().getId(), 
-//                callTO.getAnatEntityId() != null || callTO.getStageId() != null? 
-//                        new Condition(callTO.getAnatEntityId(), callTO.getStageId(), speciesId): null, 
-//                // FIXME It does not compile anymore but I leave it to be able to come back
-//                // to it before the cleaning of the class
-//                // Generate ExpressionCallData
-//                null,
-////                callTO.extractDataTypesToDataStates().entrySet().stream()
-////                    .filter(entry -> entry.getValue() != null && 
-////                                     !entry.getValue().equals(CallTO.DataState.NODATA))
-////                    .map(entry -> new ExpressionCallData(Expression.EXPRESSED, 
-////                            convertDataStateToDataQuality(entry.getValue()), 
-////                            convertExprAttributeToDataType(entry.getKey()), 
-////                            callDataPropagation))
-////                    .collect(Collectors.toSet()), 
-//                callTO.getGlobalMeanRank()
-//                ));
+        Set<ExpressionCallData> callData = mapGlobalCallToCallData(globalCallTO);
+
+        return log.exit(new ExpressionCall(geneMap.get(globalCallTO.getBgeeGeneId()), 
+            condMap.get(globalCallTO.getConditionId()),
+            inferIsObservedData(callData),
+            inferSummaryCallType(callData),
+            inferSummaryQuality(callData),
+            callData,
+            globalCallTO.getGlobalMeanRank()));
     }
     
+    private static Set<ExpressionCallData> mapGlobalCallToCallData(GlobalExpressionCallTO globalCallTO) {
+        log.entry();
+        
+        Set<ExpressionCallData> allCallData = new HashSet<>();
+        for (DataType dt : DataType.values()) {
+            ExpressionCallData callData;
+            switch (dt) {
+                case AFFYMETRIX:
+                    callData = new ExpressionCallData(dt, globalCallTO.getAffymetrixExpPresentHighSelfCount(),
+                        globalCallTO.getAffymetrixExpPresentLowSelfCount(),
+                        globalCallTO.getAffymetrixExpAbsentHighSelfCount(),
+                        globalCallTO.getAffymetrixExpAbsentLowSelfCount(),
+                        globalCallTO.getAffymetrixExpPresentHighDescendantCount(),
+                        globalCallTO.getAffymetrixExpPresentLowDescendantCount(),
+                        globalCallTO.getAffymetrixExpAbsentHighParentCount(),
+                        globalCallTO.getAffymetrixExpAbsentLowParentCount(),
+                        globalCallTO.getAffymetrixExpPresentHighTotalCount(),
+                        globalCallTO.getAffymetrixExpPresentLowTotalCount(),
+                        globalCallTO.getAffymetrixExpAbsentHighTotalCount(),
+                        globalCallTO.getAffymetrixExpAbsentLowTotalCount(),
+                        globalCallTO.getAffymetrixExpPropagatedCount(),
+                        globalCallTO.getAffymetrixMeanRank(), globalCallTO.getAffymetrixMeanRankNorm(),
+                        globalCallTO.getAffymetrixDistinctRankSum());
+                    break;
+                case EST:
+                    callData = new ExpressionCallData(dt, globalCallTO.getESTLibPresentHighSelfCount(),
+                        globalCallTO.getESTLibPresentLowSelfCount(),
+                        0, 0,   // Absent self counts
+                        globalCallTO.getESTLibPresentHighDescendantCount(),
+                        globalCallTO.getESTLibPresentLowDescendantCount(),
+                        0, 0,   // Absent parent counts
+                        globalCallTO.getESTLibPresentHighTotalCount(),
+                        globalCallTO.getESTLibPresentLowTotalCount(),
+                        0, 0,   // Absent total counts
+                        globalCallTO.getESTLibPropagatedCount(),
+                        globalCallTO.getESTRank(), globalCallTO.getESTRankNorm(),
+                        null);  // rankSum
+
+                    break;
+                case IN_SITU:
+                    callData = new ExpressionCallData(dt, globalCallTO.getInSituExpPresentHighSelfCount(),
+                        globalCallTO.getInSituExpPresentLowSelfCount(),
+                        globalCallTO.getInSituExpAbsentHighSelfCount(),
+                        globalCallTO.getInSituExpAbsentLowSelfCount(),
+                        globalCallTO.getInSituExpPresentHighDescendantCount(),
+                        globalCallTO.getInSituExpPresentLowDescendantCount(),
+                        globalCallTO.getInSituExpAbsentHighParentCount(),
+                        globalCallTO.getInSituExpAbsentLowParentCount(),
+                        globalCallTO.getInSituExpPresentHighTotalCount(),
+                        globalCallTO.getInSituExpPresentLowTotalCount(),
+                        globalCallTO.getInSituExpAbsentHighTotalCount(),
+                        globalCallTO.getInSituExpAbsentLowTotalCount(),
+                        globalCallTO.getInSituExpPropagatedCount(),
+                        globalCallTO.getInSituRank(), globalCallTO.getInSituRankNorm(),
+                        null);
+                    break;
+                case RNA_SEQ:
+                    callData = new ExpressionCallData(dt, globalCallTO.getRNASeqExpPresentHighSelfCount(),
+                        globalCallTO.getRNASeqExpPresentLowSelfCount(),
+                        globalCallTO.getRNASeqExpAbsentHighSelfCount(),
+                        globalCallTO.getRNASeqExpAbsentLowSelfCount(),
+                        globalCallTO.getRNASeqExpPresentHighDescendantCount(),
+                        globalCallTO.getRNASeqExpPresentLowDescendantCount(),
+                        globalCallTO.getRNASeqExpAbsentHighParentCount(),
+                        globalCallTO.getRNASeqExpAbsentLowParentCount(),
+                        globalCallTO.getRNASeqExpPresentHighTotalCount(),
+                        globalCallTO.getRNASeqExpPresentLowTotalCount(),
+                        globalCallTO.getRNASeqExpAbsentHighTotalCount(),
+                        globalCallTO.getRNASeqExpAbsentLowTotalCount(),
+                        globalCallTO.getRNASeqExpPropagatedCount(),
+                        globalCallTO.getRNASeqMeanRank(), globalCallTO.getRNASeqMeanRankNorm(),
+                        globalCallTO.getRNASeqDistinctRankSum());
+                    break;
+                default:
+                    throw log.throwing(new IllegalStateException("Unsupported DataType: " + dt));
+            }
+            allCallData.add(callData);
+        }
+        assert !allCallData.isEmpty();
+        return log.exit(allCallData);
+    }
+
     //*************************************************************************
     // HELPER METHODS CONVERTING INFORMATION FROM CallDAO LAYER TO Call LAYER
     //*************************************************************************
@@ -405,45 +527,13 @@ public class CallService extends CommonService {
             new SimpleEntry<>(ExpressionCallDAO.Attribute.RNA_SEQ_DATA, DataType.RNA_SEQ))
             .collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue));
             
-    private static DataType convertExprAttributeToDataType(
-            ExpressionCallDAO.Attribute attr) throws IllegalStateException {
-        log.entry(attr);
-        
-        return log.exit(Optional.ofNullable(EXPR_ATTR_TO_DATA_TYPE.get(attr))
-                //bug of javac for type inference, we need to type the exception explicitly to RuntimeException,
-                //see http://stackoverflow.com/questions/25523375/java8-lambdas-and-exceptions
-                .<RuntimeException>orElseThrow(
-                () -> log.throwing(new IllegalStateException(
-                        "Unsupported ExpressionCallDAO.Attribute: " + attr))));
-    }
-    
-    private static PropagationState convertExprOriginToPropagationState(
-            ExpressionCallTO.OriginOfLine origin) throws IllegalStateException {
-        log.entry(origin);
-        
-        if (origin == null) {
-            return log.exit(null);
-        }
-        switch (origin) {
-        case SELF: 
-            return log.exit(PropagationState.SELF);
-        case DESCENT: 
-            return log.exit(PropagationState.DESCENDANT);
-        case BOTH: 
-            return log.exit(PropagationState.SELF_AND_DESCENDANT);
-        default: 
-            throw log.throwing(new IllegalStateException("Unsupported ExpressionCallTO.OriginOfLine: "
-                     + origin));
-        }
-    }
-    
     //*************************************************************************
     // METHODS MAPPING CallDatas TO ExpressionCallTOs
     //*************************************************************************
-    private static Set<ExpressionCallTO> mapCallFilterToExprCallTOFilters(ExpressionCallFilter filter) {
+    private static Set<ExpressionCallTO> mapCallFilterToGlobalExprCallTOFilters(ExpressionCallFilter filter) {
         log.entry(filter);
         throw log.throwing(new UnsupportedOperationException(
-            "Mapping CallFilter To ExprCallTO filters to be implemented"));
+            "Mapping CallFilter To GlobalExprCallTO filters to be implemented"));
     }
     
     //FIXME: to remove, we only need CallTOToCallData
@@ -523,65 +613,45 @@ public class CallService extends CommonService {
         }
     }
     
-    private static LinkedHashMap<ExpressionCallDAO.OrderingAttribute, DAO.Direction> 
-        convertServiceOrderingAttrsToExprDAOOrderingAttrs(
-            LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttrs) {
-        log.entry(orderingAttrs);
-        
-        return log.exit(orderingAttrs.entrySet().stream().collect(Collectors.toMap(
-            entry -> {
-                switch (entry.getKey()) {
-                case GENE_ID: 
-                    return ExpressionCallDAO.OrderingAttribute.GENE_ID;
-                case ANAT_ENTITY_ID: 
-                    return ExpressionCallDAO.OrderingAttribute.CONDITION_ID;
-                case DEV_STAGE_ID: 
-                    return ExpressionCallDAO.OrderingAttribute.CONDITION_ID;
-                case GLOBAL_RANK: 
-                    return ExpressionCallDAO.OrderingAttribute.MEAN_RANK;
-                default: 
-                    throw log.throwing(new IllegalStateException("Unsupported OrderingAttributes from CallService: "
-                            + entry.getKey()));
-                }
-            }, 
-            entry -> {
-                switch (entry.getValue()) {
-                case ASC: 
-                    return DAO.Direction.ASC;
-                case DESC: 
-                    return DAO.Direction.DESC;
-                default: 
-                    throw log.throwing(new IllegalStateException("Unsupported ordering Direction from CallService: "
-                            + entry.getValue()));
-                }
-            }, 
-            (v1, v2) -> {throw log.throwing(new IllegalStateException("No key collision possible"));}, 
-            () -> new LinkedHashMap<ExpressionCallDAO.OrderingAttribute, DAO.Direction>())));
-    }
+//    private static LinkedHashMap<ExpressionCallDAO.OrderingAttribute, DAO.Direction> 
+//        convertServiceOrderingAttrsToExprDAOOrderingAttrs(
+//            LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttrs) {
+//        log.entry(orderingAttrs);
+//        
+//        return log.exit(orderingAttrs.entrySet().stream().collect(Collectors.toMap(
+//            entry -> {
+//                switch (entry.getKey()) {
+//                case GENE_ID: 
+//                    return ExpressionCallDAO.OrderingAttribute.GENE_ID;
+//                case ANAT_ENTITY_ID: 
+//                    return ExpressionCallDAO.OrderingAttribute.CONDITION_ID;
+//                case DEV_STAGE_ID: 
+//                    return ExpressionCallDAO.OrderingAttribute.CONDITION_ID;
+//                case GLOBAL_RANK: 
+//                    return ExpressionCallDAO.OrderingAttribute.MEAN_RANK;
+//                default: 
+//                    throw log.throwing(new IllegalStateException("Unsupported OrderingAttributes from CallService: "
+//                            + entry.getKey()));
+//                }
+//            }, 
+//            entry -> {
+//                switch (entry.getValue()) {
+//                case ASC: 
+//                    return DAO.Direction.ASC;
+//                case DESC: 
+//                    return DAO.Direction.DESC;
+//                default: 
+//                    throw log.throwing(new IllegalStateException("Unsupported ordering Direction from CallService: "
+//                            + entry.getValue()));
+//                }
+//            }, 
+//            (v1, v2) -> {throw log.throwing(new IllegalStateException("No key collision possible"));}, 
+//            () -> new LinkedHashMap<ExpressionCallDAO.OrderingAttribute, DAO.Direction>())));
+//    }
 
     //*************************************************************************
     // HELPER METHODS CONVERTING INFORMATION FROM Call LAYER TO ExpressionCallDAO LAYER
     //*************************************************************************
-    private static ExpressionCallTO.OriginOfLine convertPropagationStateToExprOrigin(
-            PropagationState state) throws IllegalStateException {
-        log.entry(state);
-        switch (state) {
-        case DESCENDANT: 
-            return log.exit(ExpressionCallTO.OriginOfLine.DESCENT);
-        case SELF_AND_DESCENDANT: 
-            return log.exit(ExpressionCallTO.OriginOfLine.BOTH);
-        case SELF: 
-        case SELF_OR_DESCENDANT: 
-            //SELF or SELF_OR_DESCENDANT simply means "include substructures/substages or not", 
-            //so this is managed when calling the method of the DAO, there is no further 
-            //filtering necessary here.
-            return log.exit(null);
-        default: 
-            throw log.throwing(new IllegalStateException("Unsupported PropagationState "
-                    + "for ExpressionCallTOs: " + state));
-        }
-    }
-    
     private static Set<ExpressionCallDAO.Attribute> convertServiceAttrsToExprDAOAttrs(
             Set<Attribute> attributes, Set<DataType> dataTypesRequested) {
         log.entry(attributes, dataTypesRequested);
@@ -632,8 +702,9 @@ public class CallService extends CommonService {
      * 
      * @param callData  A {@code Set} of {@code U}s that are {@code CallData} to be used.
      * @return          The {@code T} that is the inferred {@code SummaryCallType}.
+     * @param <T>       The type of {CallData}.
      */
-    private static Boolean inferIsObservedData(Set<CallData<?>> callData) {
+    private static <T extends CallData<?>> Boolean inferIsObservedData(Set<T> callData) {
         log.entry(callData);
         if (callData.stream().anyMatch(cd -> cd.isObservedData())) {
             return log.exit(true);
@@ -647,7 +718,7 @@ public class CallService extends CommonService {
      * @param callData  A {@code Set} of {@code ExpressionCallData}s that are {@code CallData} to be used.
      * @return          The {@code ExpressionSummary} that is the inferred call type quality.
      */
-    protected static ExpressionSummary inferSummaryCallType(Set<ExpressionCallData> callData) {
+    private ExpressionSummary inferSummaryCallType(Set<ExpressionCallData> callData) {
         log.entry(callData);
         
         if (callData.stream().anyMatch(cd -> ExpressionSummary.EXPRESSED.equals(cd.getCallType()))) {
@@ -677,7 +748,7 @@ public class CallService extends CommonService {
      * @param callData  A {@code Set} of {@code ExpressionCallData}s that are {@code CallData} to be used.
      * @return          The {@code SummaryQuality} that is the inferred summary quality.
      */
-    protected SummaryQuality inferSummaryQuality(Set<ExpressionCallData> callData) {
+    private SummaryQuality inferSummaryQuality(Set<ExpressionCallData> callData) {
         log.entry(callData);
 
         int expPresentHigh = 0, expPresentLow = 0, expAbsentHigh = 0, expAbsentLow = 0;

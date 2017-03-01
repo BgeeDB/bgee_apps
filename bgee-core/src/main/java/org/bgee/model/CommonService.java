@@ -12,9 +12,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.ConditionService;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.gene.Gene;
+import org.bgee.model.species.Species;
 
 /**
  * Parent class of several {@code Service}s needing to access common methods. 
@@ -107,5 +110,22 @@ public class CommonService extends Service {
                 cond.getAnatEntityId(), cond.getDevStageId(), cond.getSpeciesId(), 
                 ranksByDataType.get(DataType.AFFYMETRIX), ranksByDataType.get(DataType.RNA_SEQ), 
                 ranksByDataType.get(DataType.EST), ranksByDataType.get(DataType.IN_SITU)));
+    }
+    
+    /**
+     * Map {@code GeneTO} to a {@code Gene}.
+     * 
+     * @param geneTO    A {@code GeneTO} that is the condition from data source
+     *                  to map into {@code Gene}.
+     * @param species   A {@code Species} that is the species of the gene.
+     * @return          The mapped {@code Gene}.
+     */
+    protected static Gene mapGeneTOToGene(GeneTO geneTO, Species species) {
+        log.entry(geneTO, species);
+        if (geneTO == null) {
+            return log.exit(null);
+        }
+        return log.exit(new Gene(geneTO.getGeneId(), geneTO.getSpeciesId(),
+                geneTO.getName(), geneTO.getDescription(), species));
     }
 }

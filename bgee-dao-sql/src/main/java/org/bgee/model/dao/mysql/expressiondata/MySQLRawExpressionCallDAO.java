@@ -5,7 +5,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -71,24 +73,28 @@ public class MySQLRawExpressionCallDAO extends MySQLDAO<RawExpressionCallDAO.Att
 
 
     @Override
-    public RawExpressionCallTOResultSet getExpressionCallsOrderedByGeneIdAndExprId(int speciesId,
-            Collection<ConditionDAO.Attribute> condParameters) throws DAOException {
-        log.entry(speciesId, condParameters);
+    public RawExpressionCallTOResultSet getExpressionCallsOrderedByGeneIdAndExprId(
+            Collection<Integer> geneIds,
+            Collection<ConditionDAO.Attribute> condParameters) throws DAOException, IllegalArgumentException {
+        log.entry(geneIds, condParameters);
+        
+        if (geneIds == null || geneIds.isEmpty() || geneIds.stream().anyMatch(id -> id == null)) {
+            throw log.throwing(new IllegalArgumentException("No gene IDs or null gene ID provided"));
+        }
+        Set<Integer> clonedGeneIds = new HashSet<>(geneIds);
 
         CondParamCombination comb = CondParamCombination.getCombination(condParameters);
         
         String sql = generateSelectClause(comb.getRawExprTable(), getColToAttributesMap(comb), 
                 false, null) 
-                + " FROM " + comb.getRawExprTable() 
-                + " INNER JOIN " + comb.getCondTable() 
-                    + " ON " + comb.getRawExprTable() + "." + comb.getCondIdField()
-                    + " = " + comb.getCondTable() + "." + comb.getCondIdField()
-                + " WHERE " + comb.getCondTable() + ".speciesId = ?"
+                + " FROM " + comb.getRawExprTable()
+                + " WHERE " + comb.getRawExprTable() + "." + MySQLGeneDAO.BGEE_GENE_ID + " IN ("
+                    + BgeePreparedStatement.generateParameterizedQueryString(clonedGeneIds.size()) + ")"
                 + " ORDER BY " + comb.getRawExprTable() + "." + MySQLGeneDAO.BGEE_GENE_ID + ", " 
                     + comb.getRawExprTable() + "." + comb.getRawExprIdField();
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
-            stmt.setInt(1, speciesId);
+            stmt.setIntegers(1, clonedGeneIds, true);
             return log.exit(new MySQLRawExpressionCallTOResultSet(stmt, comb));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

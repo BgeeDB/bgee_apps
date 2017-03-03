@@ -1,6 +1,7 @@
 package org.bgee.pipeline.expression;
 
 import java.math.BigDecimal;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -16,11 +17,14 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -39,6 +43,7 @@ import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentE
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionToRawExpressionTO;
+import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO.RawExpressionCallTO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
@@ -68,6 +73,11 @@ public class InsertPropagatedCalls extends CallService {
      * to descendant conditions.
      */
     public final static int NB_SUBLEVELS_MAX = 1;
+    /**
+     * An {@code int} that is the number of genes to load at a same time to propagate calls for,
+     * and to run computations in parallel between groups of genes of this size.
+     */
+    public final static int GENE_PARALLEL_GROUP_SIZE = 2000;
     
     private final static Set<Set<ConditionDAO.Attribute>> COND_PARAM_SET;
     private final static Map<Set<ConditionDAO.Attribute>, AtomicInteger> COND_ID_COUNTERS;
@@ -98,8 +108,53 @@ public class InsertPropagatedCalls extends CallService {
         EXPR_ID_COUNTERS = Collections.unmodifiableMap(exprIdCounters);
     }
 
-    public InsertPropagatedCalls(ServiceFactory serviceFactory) {
-        super(serviceFactory);
+    /**
+     * A {@code volatile} {@code Throwable} allowing to notify all threads when an error occurs,
+     * and to store the actual error that occurred.
+     */
+    private volatile Throwable errorOccured;
+    /**
+     * A {@code volatile} {@code boolean} allowing to notify all threads that the insertion
+     * of all calls for a species is finished.
+     */
+    private volatile boolean jobCompleted;
+    /**
+     * A {@code Supplier} of {@code ServiceFactory}s to be acquired from different threads.
+     */
+    private final Supplier<ServiceFactory> serviceFactorySupplier;
+    /**
+     * A {@code BlockingQueue} containing {@code Set}s of {@code PipelineCall}s to be inserted.
+     * Each contained {@code Set} is inserted into the database in a single INSERT statement.
+     * Propagating threads will add new {@code PipelineCall}s to be inserted to this queue,
+     * and the insertion thread will remove them from the queue for insertion.
+     */
+    private final BlockingQueue<Set<PipelineCall>> callsToInsert;
+    /**
+     * A {@code Set} of {@code ConditionDAO.Attribute}s defining the combination
+     * of condition parameters that were requested for queries, allowing to determine 
+     * which condition and expression tables to target.
+     */
+    private final Set<ConditionDAO.Attribute> conditionParams;
+    /**
+     * An {@code int} that is the ID of the species to propagate calls for.
+     */
+    private final int speciesId;
+
+    public InsertPropagatedCalls(Supplier<ServiceFactory> serviceFactorySupplier, 
+            Collection<ConditionDAO.Attribute> conditionParams, int speciesId) {
+        super(serviceFactorySupplier.get());
+        if (conditionParams == null || conditionParams.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("Condition attributes should not be empty"));
+        }
+        this.serviceFactorySupplier = serviceFactorySupplier;
+        this.conditionParams = Collections.unmodifiableSet(EnumSet.copyOf(conditionParams));
+        this.speciesId = speciesId;
+        //use a LinkedBlockingDeque because we are going to do lots of insert/remove,
+        //because we don't care about element order, and because we don't want to block
+        //when reaching maximal capacity
+        this.callsToInsert = new LinkedBlockingDeque<>();
+        this.errorOccured = null;
+        this.jobCompleted = false;
     }
     
     /**
@@ -272,7 +327,6 @@ public class InsertPropagatedCalls extends CallService {
             //retrieved, to properly group all the calls. This is why we use the boolean currentGeneIteration.
             //This loop always work on this.lastCallTO, which has already been populated at this point.
             boolean currentGeneIteration = true;
-            int geneCount = 0; //for logging purpose
             while (currentGeneIteration) {
                 if (this.lastCallTO.getBgeeGeneId() == null || this.lastCallTO.getId() == null) {
                     throw log.throwing(new IllegalStateException("Missing attributes in raw call: "
@@ -304,12 +358,8 @@ public class InsertPropagatedCalls extends CallService {
                 //we generate the data Map for the previous gene, as all data were iterated for that gene.
                 if (!currentGeneIteration || !currentCallTO.getBgeeGeneId().equals(this.lastCallTO.getBgeeGeneId())) {
                     assert (currentGeneIteration && currentCallTO != null) || (!currentGeneIteration && currentCallTO == null);
-                    geneCount++;
                     currentGeneIteration = false;
                     action.accept((U) data); //method will exit after accepting the action
-                    if (log.isDebugEnabled() && geneCount % 1000 == 0) {
-                        log.info("{} genes iterated", geneCount);
-                    }
                     log.trace("Done accumulating data for {}", this.lastCallTO.getBgeeGeneId());
                 }
                 
@@ -576,7 +626,373 @@ public class InsertPropagatedCalls extends CallService {
             return builder.toString();
         }
     }
+    
+    /**
+     * Class responsible for running in a separate thread the insertions to database
+     * for a specific species ID and combination of condition parameters,
+     * to be able to have a single transaction to insert these data.
+     * This should not impact performances, as anyway INSERT statements are executed
+     * sequentially in MySQL.
+     * 
+     * @author  Frederic Bastian
+     * @version Bgee 14 Feb. 2017
+     * @since Bgee 14 Feb. 2017
+     */
+    private static class InsertJob implements Runnable {
+        /**
+         * The {@code InsertPropagatedCalls} object that launched this tread. Allows this thread
+         * to be notified on error or job completion, and to share variables between threads
+         * used by this object.
+         */
+        private final InsertPropagatedCalls callPropagator;
+        /**
+         * A {@code Map} where keys are {@code Condition}s and the associated value
+         * an {@code Integer}s that is the Condition ID. Only {@code Condition}s
+         * inserted into the database are present in this {@code Map}.
+         * <p>
+         * This Map will be modified as we create new conditions for inserting propagated calls.
+         */
+        private final Map<Condition, Integer> condMap;
+        
+        private InsertJob(InsertPropagatedCalls callPropagator, Map<Integer, Condition> originalCondMap) {
+            log.entry(callPropagator, originalCondMap);
+            this.callPropagator = callPropagator;
+            //we copy the Map as we will modify it in this thread while we insert new Conditions.
+            //Also, in this thread we want IDs by Condition rather than the opposite
+            this.condMap = originalCondMap.entrySet().stream()
+                    .collect(Collectors.toMap(e -> e.getValue(), e -> e.getKey()));
+        }
+        
+        @Override
+        public void run() {
+            log.entry();
 
+            //We need a new connection to the database for each thread, so we use
+            //the ServiceFactory Supplier
+            final ServiceFactory factory = this.callPropagator.serviceFactorySupplier.get();
+            final DAOManager daoManager = factory.getDAOManager();
+            final ConditionDAO condDAO = daoManager.getConditionDAO();
+            final GlobalExpressionCallDAO exprDAO = daoManager.getGlobalExpressionCallDAO();
+            
+            boolean errorInThisThread = false;
+            try {
+                //we assume the insertion is done using MySQL, and we start a transaction
+                log.debug("Starting transaction");
+                ((MySQLDAOManager) daoManager).getConnection().startTransaction();
+            
+                int groupsInserted = 0;
+                while ((!this.callPropagator.jobCompleted || 
+                            //important to check that there is no remaining calls to insert,
+                            //as other thread might set the jobCompleted flag to true
+                            //before this thread finishes to insert all data.
+                            !this.callPropagator.callsToInsert.isEmpty()) && 
+                       //but if an error occurred, we stop immediately in any case.
+                       this.callPropagator.errorOccured == null) {
+                    
+                    Set<PipelineCall> toInsert = this.callPropagator.callsToInsert.take();
+                    
+                    // Here, we insert new conditions, and add them to the known conditions
+                    Map<Condition, Integer> newCondMap = this.insertNewConditions(
+                            toInsert, this.condMap.keySet(), condDAO);
+                    if (!Collections.disjoint(this.condMap.keySet(), newCondMap.keySet())) {
+                        throw log.throwing(new IllegalStateException("Error, new conditions already seen. "
+                                + "new conditions: " + newCondMap.keySet() + " - existing conditions: "
+                                + this.condMap.keySet()));
+                    }
+                    if (!Collections.disjoint(this.condMap.values(), newCondMap.values())) {
+                        throw log.throwing(new IllegalStateException("Error, condition IDs reused. "
+                                + "new IDs: " + newCondMap.values() + " - existing IDs: "
+                                + this.condMap.values()));
+                    }
+                    this.condMap.putAll(newCondMap);
+
+                    // And we finish by inserting the computed calls
+                    this.insertPropagatedCalls(toInsert, this.condMap, exprDAO);
+                    
+                    if (log.isDebugEnabled() && groupsInserted % 100 == 0) {
+                        log.debug("{} genes inserted.", groupsInserted);
+                    }
+                    groupsInserted++;
+                }
+            } catch (Exception e) {
+                //note: we don't set this.callPropagator.errorOccured here, it will be done
+                //in the main thread.
+                errorInThisThread = true;
+                if (e instanceof RuntimeException) {
+                    throw log.throwing((RuntimeException) e);
+                }
+                throw log.throwing(new IllegalStateException(e));
+            } finally {
+                assert this.callPropagator.jobCompleted ||
+                       this.callPropagator.errorOccured != null ||
+                       errorInThisThread;
+                //we assume the insertion is done using MySQL, and we commit/rollback the transaction
+                try {
+                    if (!errorInThisThread && this.callPropagator.errorOccured == null) {
+                        assert this.callPropagator.jobCompleted;
+                        log.debug("Committing transaction");
+                        ((MySQLDAOManager) daoManager).getConnection().commit();
+                    } else {
+                        log.debug("Rollbacking transaction");
+                        ((MySQLDAOManager) daoManager).getConnection().rollback();
+                    }
+                } catch (SQLException e) {
+                    if (errorInThisThread) {
+                        //we are already going to throw an exception, so that's enough
+                        log.catching(e);
+                    } else {
+                        throw log.throwing(new IllegalStateException(e));
+                    }
+                } finally {
+                    daoManager.close();
+                }
+            }
+            
+            log.exit();
+        }
+
+        /**
+         * 
+         * @param propagatedCalls       A {@code Set} of {@code PipelineCall}s that are all the calls
+         *                              for one gene.
+         * @param insertedConditions    A {@code Set} of {@code Condition}s already inserted
+         *                              into the database.
+         * @param condDAO               A {@code ConditionDAO} to perform the insertions.
+         * @return  A {@code Map} containing only newly inserted {@code Condition}s as keys, 
+         *          associated to their corresponding {@code Integer} ID.
+         */
+        private Map<Condition, Integer> insertNewConditions(Set<PipelineCall> propagatedCalls,
+                Set<Condition> insertedConditions, ConditionDAO condDAO) {
+            log.entry(propagatedCalls, insertedConditions, condDAO);
+            
+            //First, we retrieve the conditions not already present in the database
+            Set<Condition> conds = propagatedCalls.stream()
+                    .map(c -> c.getCondition()).collect(Collectors.toSet());
+            conds.removeAll(insertedConditions);
+            
+            //Get the counter to generate condition IDs.
+            final AtomicInteger counter = COND_ID_COUNTERS.get(this.callPropagator.conditionParams);
+            if (counter == null) {
+                throw log.throwing(new IllegalStateException(
+                        "No condition counter available for condition parameter combination: " 
+                        + this.callPropagator.conditionParams));
+            }
+            //now we create the Map associating each Condition to insert to a generated ID for insertion
+            Map<Condition, Integer> newConds = conds.stream()
+                    .collect(Collectors.toMap(c -> c, c -> counter.incrementAndGet()));
+            
+            //now we insert the conditions
+            Set<ConditionTO> condTOs = newConds.entrySet().stream()
+                    //for propagated conditions, the exprMappedConditionId is always equal to the conditionId
+                    .map(e -> mapConditionToConditionTO(e.getValue(), e.getValue(), e.getKey()))
+                    .collect(Collectors.toSet());
+            if (!condTOs.isEmpty()) {
+                condDAO.insertConditions(condTOs, this.callPropagator.conditionParams);
+            }
+            
+            //return new conditions with IDs
+            return log.exit(newConds);
+        }
+
+        private void insertPropagatedCalls(Set<PipelineCall> propagatedCalls,
+            Map<Condition, Integer> condMap, GlobalExpressionCallDAO dao) {
+            log.entry(propagatedCalls, condMap, dao);
+        
+            //Get the counter to generate expression IDs.
+            final AtomicInteger counter = EXPR_ID_COUNTERS.get(this.callPropagator.conditionParams);
+            if (counter == null) {
+                throw log.throwing(new IllegalStateException(
+                        "No expression counter available for condition parameter combination: " 
+                        + this.callPropagator.conditionParams));
+            }
+        
+        
+            //Now, insert. We associate each PipelineCall to its generated TO for easier retrieval
+            Map<GlobalExpressionCallTO, PipelineCall> callMap = propagatedCalls.stream()
+                    .collect(Collectors.toMap(
+                            c -> mapPipelineCallToGlobalExprCallTO(counter.incrementAndGet(), 
+                                    condMap.get(c.getCondition()), c), 
+                            c -> c
+                    ));
+            //XXX: maybe it would generate a query too large to insert all calls for one gene
+            //at once. But I think our max_allowed_packet_size is big enough and should be OK.
+            //Worst case scenario we'll add a loop here.
+            assert !callMap.isEmpty();
+            dao.insertGlobalCalls(callMap.keySet(), this.callPropagator.conditionParams);
+            
+            //insert the relations between global expr IDs and raw expr IDs.
+            //Note that we insert all relation, even the "invalid" ones (ABSENT calls in descendant, 
+            //PRESENT calls in parents; having all relations for descendants is essential for computing
+            //a global rank score)
+            Set<GlobalExpressionToRawExpressionTO> globalToRawTOs = callMap.entrySet().stream()
+                    .flatMap(e -> {
+                        int globalExprId = e.getKey().getId();
+                        PipelineCall call = e.getValue();
+                        
+                        Set<GlobalExpressionToRawExpressionTO> tos = new HashSet<>();
+                        if (call.getSelfSourceCallTO() != null) {
+                            tos.add(new GlobalExpressionToRawExpressionTO(call.getSelfSourceCallTO().getId(), 
+                                globalExprId, GlobalExpressionToRawExpressionTO.CallOrigin.SELF));
+                        }
+                        if (call.getParentSourceCallTOs() != null) {
+                            tos.addAll(call.getParentSourceCallTOs().stream()
+                                .map(p -> new GlobalExpressionToRawExpressionTO(p.getId(), 
+                                        globalExprId, GlobalExpressionToRawExpressionTO.CallOrigin.PARENT))
+                                .collect(Collectors.toSet()));
+                        }
+                        if (call.getDescendantSourceCallTOs() != null) {
+                            tos.addAll(call.getDescendantSourceCallTOs().stream()
+                                .map(d -> new GlobalExpressionToRawExpressionTO(d.getId(), 
+                                        globalExprId, GlobalExpressionToRawExpressionTO.CallOrigin.DESCENDANT))
+                                .collect(Collectors.toSet()));
+                        }
+                        
+                        return tos.stream();
+                    })
+                    .collect(Collectors.toSet());
+            assert !globalToRawTOs.isEmpty();
+            dao.insertGlobalExpressionToRawExpression(globalToRawTOs, this.callPropagator.conditionParams);
+        }
+
+        private static GlobalExpressionCallTO mapPipelineCallToGlobalExprCallTO(int exprId, int condId, 
+                PipelineCall pipelineCall) {
+            log.entry(exprId, condId, pipelineCall);
+            
+            Integer affymetrixExpPresentHighSelfCount = 0, affymetrixExpPresentLowSelfCount = 0,
+                affymetrixExpAbsentHighSelfCount = 0, affymetrixExpAbsentLowSelfCount = 0,
+                affymetrixExpPresentHighDescendantCount = 0, affymetrixExpPresentLowDescendantCount = 0,
+                affymetrixExpAbsentHighParentCount = 0, affymetrixExpAbsentLowParentCount = 0,
+                affymetrixExpPresentHighTotalCount = 0, affymetrixExpPresentLowTotalCount = 0,
+                affymetrixExpAbsentHighTotalCount = 0, affymetrixExpAbsentLowTotalCount = 0,
+                affymetrixExpPropagatedCount = 0;
+            
+            Integer rnaSeqExpPresentHighSelfCount = 0, rnaSeqExpPresentLowSelfCount = 0,
+                rnaSeqExpAbsentHighSelfCount = 0, rnaSeqExpAbsentLowSelfCount = 0,
+                rnaSeqExpPresentHighDescendantCount = 0, rnaSeqExpPresentLowDescendantCount = 0,
+                rnaSeqExpAbsentHighParentCount = 0, rnaSeqExpAbsentLowParentCount = 0,
+                rnaSeqExpPresentHighTotalCount = 0, rnaSeqExpPresentLowTotalCount = 0,
+                rnaSeqExpAbsentHighTotalCount = 0, rnaSeqExpAbsentLowTotalCount = 0,
+                rnaSeqExpPropagatedCount = 0;
+            
+            Integer estLibPresentHighSelfCount = 0, estLibPresentLowSelfCount = 0,
+                estLibPresentHighDescendantCount = 0, estLibPresentLowDescendantCount = 0,
+                estLibPresentHighTotalCount = 0, estLibPresentLowTotalCount = 0,
+                estLibPropagatedCount = 0;
+            
+            Integer inSituExpPresentHighSelfCount = 0, inSituExpPresentLowSelfCount = 0,
+                inSituExpAbsentHighSelfCount = 0, inSituExpAbsentLowSelfCount = 0,
+                inSituExpPresentHighDescendantCount = 0, inSituExpPresentLowDescendantCount = 0,
+                inSituExpAbsentHighParentCount = 0, inSituExpAbsentLowParentCount = 0,
+                inSituExpPresentHighTotalCount = 0, inSituExpPresentLowTotalCount = 0,
+                inSituExpAbsentHighTotalCount = 0, inSituExpAbsentLowTotalCount = 0,
+                inSituExpPropagatedCount = 0;
+            
+            BigDecimal affymetrixMeanRank = null, estRank = null, inSituRank = null, rnaSeqMeanRank = null;
+        
+            BigDecimal affymetrixMeanRankNorm = null, estRankNorm = null, inSituRankNorm = null,
+                rnaSeqMeanRankNorm = null;
+        
+            BigDecimal affymetrixDistinctRankSum = null, rnaSeqDistinctRankSum = null;
+        
+            for (ExpressionCallData e: pipelineCall.getCallData()) {
+                switch (e.getDataType()) {
+                    case AFFYMETRIX: 
+                        affymetrixExpPresentHighSelfCount = e.getPresentHighSelfCount();
+                        affymetrixExpPresentLowSelfCount = e.getPresentLowSelfCount();
+                        affymetrixExpAbsentHighSelfCount = e.getAbsentHighSelfCount();
+                        affymetrixExpAbsentLowSelfCount = e.getAbsentLowSelfCount();
+                        affymetrixExpPresentHighDescendantCount = e.getPresentHighDescCount();
+                        affymetrixExpPresentLowDescendantCount = e.getPresentLowDescCount();
+                        affymetrixExpAbsentHighParentCount = e.getAbsentHighParentCount();
+                        affymetrixExpAbsentLowParentCount = e.getAbsentLowParentCount();
+                        affymetrixExpPresentHighTotalCount = e.getPresentHighTotalCount();
+                        affymetrixExpPresentLowTotalCount = e.getPresentLowTotalCount();
+                        affymetrixExpAbsentHighTotalCount = e.getAbsentHighTotalCount();
+                        affymetrixExpAbsentLowTotalCount = e.getAbsentLowTotalCount();
+                        affymetrixExpPropagatedCount = e.getPropagatedCount();
+                        affymetrixMeanRank = e.getRank();
+                        affymetrixMeanRankNorm = e.getRankNorm();
+                        affymetrixDistinctRankSum = e.getRankSum();
+                        break;
+                    case EST: 
+                        estLibPresentHighSelfCount = e.getPresentHighSelfCount();
+                        estLibPresentLowSelfCount = e.getPresentLowSelfCount();
+                        estLibPresentHighDescendantCount = e.getPresentHighDescCount();
+                        estLibPresentLowDescendantCount = e.getPresentLowDescCount();
+                        estLibPresentHighTotalCount = e.getPresentHighTotalCount();
+                        estLibPresentLowTotalCount = e.getPresentLowTotalCount();
+                        estLibPropagatedCount = e.getPropagatedCount();
+                        estRank = e.getRank();
+                        estRankNorm = e.getRankNorm();
+                        break;
+                    case IN_SITU: 
+                        inSituExpPresentHighSelfCount = e.getPresentHighSelfCount();
+                        inSituExpPresentLowSelfCount = e.getPresentLowSelfCount();
+                        inSituExpAbsentHighSelfCount = e.getAbsentHighSelfCount();
+                        inSituExpAbsentLowSelfCount = e.getAbsentLowSelfCount();
+                        inSituExpPresentHighDescendantCount = e.getPresentHighDescCount();
+                        inSituExpPresentLowDescendantCount = e.getPresentLowDescCount();
+                        inSituExpAbsentHighParentCount = e.getAbsentHighParentCount();
+                        inSituExpAbsentLowParentCount = e.getAbsentLowParentCount();
+                        inSituExpPresentHighTotalCount = e.getPresentHighTotalCount();
+                        inSituExpPresentLowTotalCount = e.getPresentLowTotalCount();
+                        inSituExpAbsentHighTotalCount = e.getAbsentHighTotalCount();
+                        inSituExpAbsentLowTotalCount = e.getAbsentLowTotalCount();
+                        inSituExpPropagatedCount = e.getPropagatedCount();
+                        inSituRank = e.getRank();
+                        inSituRankNorm = e.getRankNorm();
+                        break;
+                    case RNA_SEQ:
+                        rnaSeqExpPresentHighSelfCount = e.getPresentHighSelfCount();
+                        rnaSeqExpPresentLowSelfCount = e.getPresentLowSelfCount();
+                        rnaSeqExpAbsentHighSelfCount = e.getAbsentHighSelfCount();
+                        rnaSeqExpAbsentLowSelfCount = e.getAbsentLowSelfCount();
+                        rnaSeqExpPresentHighDescendantCount = e.getPresentHighDescCount();
+                        rnaSeqExpPresentLowDescendantCount = e.getPresentLowDescCount();
+                        rnaSeqExpAbsentHighParentCount = e.getAbsentHighParentCount();
+                        rnaSeqExpAbsentLowParentCount = e.getAbsentLowParentCount();
+                        rnaSeqExpPresentHighTotalCount = e.getPresentHighTotalCount();
+                        rnaSeqExpPresentLowTotalCount = e.getPresentLowTotalCount();
+                        rnaSeqExpAbsentHighTotalCount = e.getAbsentHighTotalCount();
+                        rnaSeqExpAbsentLowTotalCount = e.getAbsentLowTotalCount();
+                        rnaSeqExpPropagatedCount = e.getPropagatedCount();
+                        rnaSeqMeanRank = e.getRank();
+                        rnaSeqMeanRankNorm = e.getRankNorm();
+                        rnaSeqDistinctRankSum = e.getRankSum();
+                        break;
+                    default:
+                        throw log.throwing(new IllegalStateException("Unsupported DataType: " + e.getDataType()));
+                }
+            }
+            
+            return log.exit(new GlobalExpressionCallTO(exprId, pipelineCall.getBgeeGeneId(), condId,
+                pipelineCall.getGlobalMeanRank(), affymetrixExpPresentHighSelfCount,
+                affymetrixExpPresentLowSelfCount, affymetrixExpAbsentHighSelfCount,
+                affymetrixExpAbsentLowSelfCount, affymetrixExpPresentHighDescendantCount, 
+                affymetrixExpPresentLowDescendantCount, affymetrixExpAbsentHighParentCount,
+                affymetrixExpAbsentLowParentCount, affymetrixExpPresentHighTotalCount,
+                affymetrixExpPresentLowTotalCount, affymetrixExpAbsentHighTotalCount,
+                affymetrixExpAbsentLowTotalCount, affymetrixExpPropagatedCount,
+                rnaSeqExpPresentHighSelfCount, rnaSeqExpPresentLowSelfCount, rnaSeqExpAbsentHighSelfCount,
+                rnaSeqExpAbsentLowSelfCount, rnaSeqExpPresentHighDescendantCount,
+                rnaSeqExpPresentLowDescendantCount, rnaSeqExpAbsentHighParentCount,
+                rnaSeqExpAbsentLowParentCount, rnaSeqExpPresentHighTotalCount,
+                rnaSeqExpPresentLowTotalCount, rnaSeqExpAbsentHighTotalCount,
+                rnaSeqExpAbsentLowTotalCount, rnaSeqExpPropagatedCount, estLibPresentHighSelfCount,
+                estLibPresentLowSelfCount, estLibPresentHighDescendantCount,
+                estLibPresentLowDescendantCount, estLibPresentHighTotalCount, estLibPresentLowTotalCount,
+                estLibPropagatedCount, inSituExpPresentHighSelfCount, inSituExpPresentLowSelfCount,
+                inSituExpAbsentHighSelfCount, inSituExpAbsentLowSelfCount,
+                inSituExpPresentHighDescendantCount, inSituExpPresentLowDescendantCount,
+                inSituExpAbsentHighParentCount, inSituExpAbsentLowParentCount,
+                inSituExpPresentHighTotalCount, inSituExpPresentLowTotalCount,
+                inSituExpAbsentHighTotalCount, inSituExpAbsentLowTotalCount, inSituExpPropagatedCount, 
+                affymetrixMeanRank, rnaSeqMeanRank, estRank, inSituRank, affymetrixMeanRankNorm,
+                rnaSeqMeanRankNorm, estRankNorm, inSituRankNorm, affymetrixDistinctRankSum, 
+                rnaSeqDistinctRankSum));
+        }
+    }
+    
     /**
      * 
      * @param speciesIds
@@ -658,395 +1074,167 @@ public class InsertPropagatedCalls extends CallService {
             commonManager.releaseResources();
 
 
-            //Note: no parallel stream because insertions are made into database. 
-            //But we could do it in transactions? Not sure it will be much faster...
+            //Note: no parallel stream here for now, but parallel tasks are already used per species,
+            //so there shouldn't be much advantage to use parallel stream here as well;
+            //but we could, because each condition parameter combination
+            //will target different condition and expression tables.
             speciesIdsToUse.stream().forEach(speciesId -> {
-                //here we could definitely go parallel, because each condition parameter combination
-                //will target different condition and expression tables. But let's first see
-                //how things work for one thread at a time
                 clonedCondParamsSet.stream().forEach(condParams -> {
-                    //Provide a new DAOManager and new ServiceFactory for each species, 
-                    //in case we go parallel, and for connection idle time. 
+                    //Give as argument a Supplier of ServiceFactory so that this object
+                    //can provide a new connection to each parallel thread.
                     InsertPropagatedCalls insert = new InsertPropagatedCalls(
-                            serviceFactoryProvider.apply(daoManagerSupplier.get()));
-                    insert.insertOneSpeciesOneCondParamCombination(speciesId, condParams);
+                            () -> serviceFactoryProvider.apply(daoManagerSupplier.get()), 
+                            condParams, speciesId);
+                    insert.insertOneSpeciesOneCondParamCombination();
                 });
             });
         }
         log.exit();
     }
     
-    /**
-     * 
-     * @param speciesId
-     * @param conditionParams           A {@code Collection} of {@code ConditionDAO.Attribute}s 
-     *                                  defining the combination of condition parameters that 
-     *                                  were requested for queries, allowing to determine 
-     *                                  which condition and expression information to target
-     */
-    private void insertOneSpeciesOneCondParamCombination(int speciesId, 
-            Collection<ConditionDAO.Attribute> condParameters) {
-        log.entry(speciesId, condParameters);
-
-        // Sanity checks on attributes
-        if (condParameters == null || condParameters.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("Condition attributes should not be empty"));
-        }
-        final Set<ConditionDAO.Attribute> clonedCondParams = 
-                Collections.unmodifiableSet(EnumSet.copyOf(condParameters));
+    private void insertOneSpeciesOneCondParamCombination() {
+        log.entry();
         
         log.info("Start inserting of propagated calls for the species {} with combination of condition {}...",
-            speciesId, condParameters);
+            this.speciesId, this.conditionParams);
 
-        try {
-            //we assume the insertion is done using MySQL, and we start a transaction
-            ((MySQLDAOManager) this.getDaoManager()).getConnection().startTransaction();
+        // close connection to database between each species, to avoid idle
+        // connection reset or for parallel execution
+        try (DAOManager mainManager = this.getDaoManager()) {
             
-            // First we retrieve conditions. We do it here, to avoid a second call to
-            // ConditonDAO to know which are the new Conditions.
+            //First, we retrieve the conditions already present in database
             final Map<Integer, Condition> condMap = Collections.unmodifiableMap(
-                    this.performConditionTOQuery(speciesId, clonedCondParams)
+                    this.performConditionTOQuery(mainManager.getConditionDAO())
                     .collect(Collectors.toMap(cTO -> cTO.getId(), cTO -> mapConditionTOToCondition(cTO))));
+            log.info("{} Conditions already inserted for species {}", condMap.size(), speciesId);
 
-            // We propagate calls. Each Set contains all propagated calls for one gene
-            final Stream<Set<PipelineCall>> propagatedCalls = 
-                this.generatePropagatedCalls(speciesId, condMap, clonedCondParams);
+            // We use all existing conditions in the species, and infer all propagated conditions
+            log.debug("Starting condition inference...");
+            ConditionUtils conditionUtils = new ConditionUtils(condMap.values(), true, true,
+                this.getServiceFactory());
+            log.debug("Done condition inference.");
             
-            //now we reverse condMap because now we want the condition ID from a Condition object
-            final Map<Condition, Integer> condToIdMap = condMap.entrySet().stream()
-                    .collect(Collectors.toMap(e -> e.getValue(), e -> e.getKey()));
+            //we retrieve the IDs of genes with expression data. This is because making the computation
+            //a whole species at a time can use too much memory for species with large amount of data.
+            //Also, the computations for those species are slow so we want to go parallel. 
+            final List<Integer> bgeeGeneIds = Collections.unmodifiableList(
+                    mainManager.getGeneDAO()
+                        .getGenesWithDataBySpeciesIds(Collections.singleton(speciesId))
+                        .stream().map(g -> g.getId())
+                        .collect(Collectors.toList()));
+            log.info("{} genes with data retrieved for species {}", bgeeGeneIds.size(), speciesId);
             
-            //Make the new data insertions
-            ConditionDAO condDAO = this.getDaoManager().getConditionDAO();
-            GlobalExpressionCallDAO exprDAO = this.getDaoManager().getGlobalExpressionCallDAO();
-            //here we use a classic loop rather than a Stream.forEach, as we modify condToIdMap.
-            //Anyway those are both terminal operations that will trigger the computations.
-            //Each Set contains all the computed calls for one gene.
-            Iterator<Set<PipelineCall>> callSetIt = propagatedCalls.iterator();
-            while (callSetIt.hasNext()) {
-                Set<PipelineCall> callSet = callSetIt.next();
-                // Here, we insert new conditions, and add them to the known conditions
-                Map<Condition, Integer> newCondMap = this.insertNewConditions(callSet, 
-                        condToIdMap.keySet(), clonedCondParams, condDAO);
-                if (!Collections.disjoint(condToIdMap.keySet(), newCondMap.keySet())) {
-                    throw log.throwing(new IllegalStateException("Error, new conditions already seen. "
-                            + "new conditions: " + newCondMap.keySet() + " - existing conditions: "
-                            + condToIdMap.keySet()));
+            //Remaining computations/insertions will be made in separate threads
+            //with a separate database connection, so we close the main connection immediately,
+            //but do not close the manager because of the try-with-resource clause.
+            mainManager.releaseResources();
+
+
+            //PARALLEL EXECUTION: now we launch the independent thread responsible for
+            //inserting the data into the data source
+            Thread insertThread = new Thread(new InsertJob(this, condMap));
+            //no need for a try-catch clause, this.errorOccured will be set in the main thread
+            //if an exception is thrown.
+            insertThread.start();
+            
+            //PARALLEL EXECUTION: we generate groups of genes of size GENES_PER_ITERATION
+            //and run the computations in parallel between groups
+            int iterationCount = (int) Math.ceil((float) bgeeGeneIds.size()/(float) GENE_PARALLEL_GROUP_SIZE);
+            IntStream.range(0, iterationCount).parallel()
+            .mapToObj(i -> bgeeGeneIds.subList(i * GENE_PARALLEL_GROUP_SIZE, 
+                    ((i + 1) * GENE_PARALLEL_GROUP_SIZE) > bgeeGeneIds.size()? 
+                            bgeeGeneIds.size(): ((i + 1) * GENE_PARALLEL_GROUP_SIZE)))
+            .forEach(subsetGeneIds -> {
+                //Check error status
+                if (this.errorOccured != null) {
+                    return;
                 }
-                if (!Collections.disjoint(condToIdMap.values(), newCondMap.values())) {
-                    throw log.throwing(new IllegalStateException("Error, condition IDs reused. "
-                            + "new IDs: " + newCondMap.values() + " - existing IDs: "
-                            + condToIdMap.values()));
+                log.info("Processing {} genes...", subsetGeneIds.size());
+
+                //We need a new connection to the database for each thread, so we use
+                //a ServiceFactory Supplier
+                final ServiceFactory threadServiceFactory = this.serviceFactorySupplier.get();
+                
+                try (DAOManager threadDAOManager = threadServiceFactory.getDAOManager()) {
+                    final RawExpressionCallDAO rawCallDAO = threadDAOManager.getRawExpressionCallDAO();
+                    final ExperimentExpressionDAO expExprDAO = threadDAOManager.getExperimentExpressionDAO();
+                    
+                    // We propagate calls. Each Set contains all propagated calls for one gene
+                    final Stream<Set<PipelineCall>> propagatedCalls = this.generatePropagatedCalls(
+                            new HashSet<>(subsetGeneIds), condMap, conditionUtils, rawCallDAO, expExprDAO);
+                    
+                    //Provide the calls to insert to the Thread managing the insertions
+                    //through the dedicated BlockingQueue
+                    propagatedCalls.forEach(set -> {
+                        //Check error status
+                        if (this.errorOccured != null) {
+                            return;
+                        }
+                        try {
+                            this.callsToInsert.put(set);
+                        } catch (InterruptedException e) {
+                            throw new IllegalStateException(e);
+                        }
+                    });
                 }
-                condToIdMap.putAll(newCondMap);
-
-                // And we finish by inserting the computed calls
-                this.insertPropagatedCalls(callSet, condToIdMap, clonedCondParams, exprDAO);
-            }
-            
-            
-            //we assume the insertion is done using MySQL, and we commit the transaction
-            ((MySQLDAOManager) this.getDaoManager()).getConnection().commit();
-
+                //no need for a catch clause, this.errorOccured will be set in the main thread
+                //if an exception is thrown.
+                
+                log.info("Done processing {} genes.", subsetGeneIds.size());
+            });
         } catch (Exception e) {
-            //we assume the insertion is done using MySQL, and we rollback the transaction
-            try {
-                ((MySQLDAOManager) this.getDaoManager()).getConnection().rollback();
-            } catch (Exception e2) {
-                log.catching(e2);
+            //very important to set this flag for other threads to know they should stop their work
+            this.errorOccured = e;
+            
+            if (e instanceof RuntimeException) {
+                throw log.throwing((RuntimeException) e);
             }
-            throw log.throwing(new IllegalStateException(
-                "Error while generating/inserting propagated calls", e));
-        } finally {
-            // close connection to database between each species, to avoid idle
-            // connection reset or for parallel execution
-            this.getDaoManager().close();
+            throw log.throwing(new IllegalStateException(e));
         }
-        log.info("Done inserting of propagated calls for the species {}.", speciesId);
+        //very important to set this flag for the insertion thread to know it should quit.
+        this.jobCompleted = true;
+        
+        log.info("Done inserting of propagated calls for the species {} with combination of condition {}...",
+            this.speciesId, this.conditionParams);
         
         log.exit();
-    }
-
-    /**
-     * 
-     * @param propagatedCalls       A {@code Set} of {@code PipelineCall}s that are all the calls
-     *                              for one gene.
-     * @param insertedConditions    A {@code Set} of the {@code Condition}s already inserted into database.
-     * @param conditionParams       A {@code Set} of {@code ConditionDAO.Attribute}s 
-     *                              defining the combination of condition parameters that 
-     *                              were requested for queries, allowing to determine 
-     *                              which condition and expression information to target
-     * @return  A {@code Map} containing only newly inserted {@code Condition}s, 
-     *          with {@code Integer}s that are the condition IDs as keys, 
-     *          associated to their corresponding {@code Condition} as value.
-     */
-    private Map<Condition, Integer> insertNewConditions(Set<PipelineCall> propagatedCalls,
-            Collection<Condition> insertedConditions, Set<ConditionDAO.Attribute> conditionParams,
-            ConditionDAO condDAO) {
-        log.entry(propagatedCalls, insertedConditions, conditionParams, condDAO);
-        
-        //First, we retrieve the conditions not already present in the database
-        Set<Condition> conds = propagatedCalls.stream()
-                .map(c -> c.getCondition()).collect(Collectors.toSet());
-        conds.removeAll(insertedConditions);
-        
-        //Get the counter to generate condition IDs.
-        final AtomicInteger counter = COND_ID_COUNTERS.get(conditionParams);
-        if (counter == null) {
-            throw log.throwing(new IllegalStateException(
-                    "No condition counter available for condition parameter combination: " 
-                    + conditionParams));
-        }
-        //now we create the Map associating each Condition to insert to a generated ID for insertion
-        Map<Condition, Integer> newConds = conds.stream()
-                .collect(Collectors.toMap(c -> c, c -> counter.incrementAndGet()));
-        
-        //now we insert the conditions
-        Set<ConditionTO> condTOs = newConds.entrySet().stream()
-                //for propagated conditions, the exprMappedConditionId is always equal to the conditionId
-                .map(e -> mapConditionToConditionTO(e.getValue(), e.getValue(), e.getKey()))
-                .collect(Collectors.toSet());
-        if (!condTOs.isEmpty()) {
-            condDAO.insertConditions(condTOs, conditionParams);
-        }
-        
-        //return new conditions with IDs
-        return log.exit(newConds);
-    }
-    
-    private void insertPropagatedCalls(Set<PipelineCall> propagatedCalls,
-        Map<Condition, Integer> condMap, Set<ConditionDAO.Attribute> conditionParams, 
-        GlobalExpressionCallDAO dao) {
-        log.entry(propagatedCalls, condMap, conditionParams, dao);
-
-        //Get the counter to generate expression IDs.
-        final AtomicInteger counter = EXPR_ID_COUNTERS.get(conditionParams);
-        if (counter == null) {
-            throw log.throwing(new IllegalStateException(
-                    "No expression counter available for condition parameter combination: " 
-                    + conditionParams));
-        }
-
-
-        //Now, insert. We associate each PipelineCall to its generated TO for easier retrieval
-        Map<GlobalExpressionCallTO, PipelineCall> callMap = propagatedCalls.stream()
-                .collect(Collectors.toMap(
-                        c -> mapPipelineCallToGlobalExprCallTO(counter.incrementAndGet(), 
-                                condMap.get(c.getCondition()), c), 
-                        c -> c
-                ));
-        //XXX: maybe it would generate a query too large to insert all calls for one gene
-        //at once. But I think our max_allowed_packet_size is big enough and should be OK.
-        //Worst case scenario we'll add a loop here.
-        assert !callMap.isEmpty();
-        dao.insertGlobalCalls(callMap.keySet(), conditionParams);
-        
-        //insert the relations between global expr IDs and raw expr IDs.
-        Set<GlobalExpressionToRawExpressionTO> globalToRawTOs = callMap.entrySet().stream()
-                .flatMap(e -> {
-                    int globalExprId = e.getKey().getId();
-                    PipelineCall call = e.getValue();
-                    
-                    Set<GlobalExpressionToRawExpressionTO> tos = new HashSet<>();
-                    if (call.getSelfSourceCallTO() != null) {
-                        tos.add(new GlobalExpressionToRawExpressionTO(call.getSelfSourceCallTO().getId(), 
-                            globalExprId, GlobalExpressionToRawExpressionTO.CallOrigin.SELF));
-                    }
-                    if (call.getParentSourceCallTOs() != null) {
-                        tos.addAll(call.getParentSourceCallTOs().stream()
-                            .map(p -> new GlobalExpressionToRawExpressionTO(p.getId(), 
-                                    globalExprId, GlobalExpressionToRawExpressionTO.CallOrigin.PARENT))
-                            .collect(Collectors.toSet()));
-                    }
-                    if (call.getDescendantSourceCallTOs() != null) {
-                        tos.addAll(call.getDescendantSourceCallTOs().stream()
-                            .map(d -> new GlobalExpressionToRawExpressionTO(d.getId(), 
-                                    globalExprId, GlobalExpressionToRawExpressionTO.CallOrigin.DESCENDANT))
-                            .collect(Collectors.toSet()));
-                    }
-                    
-                    return tos.stream();
-                })
-                .collect(Collectors.toSet());
-        assert !globalToRawTOs.isEmpty();
-        dao.insertGlobalExpressionToRawExpression(globalToRawTOs, conditionParams);
-    }
-    
-    private GlobalExpressionCallTO mapPipelineCallToGlobalExprCallTO(int exprId, int condId, 
-            PipelineCall pipelineCall) {
-        log.entry(exprId, condId, pipelineCall);
-        
-        Integer affymetrixExpPresentHighSelfCount = 0, affymetrixExpPresentLowSelfCount = 0,
-            affymetrixExpAbsentHighSelfCount = 0, affymetrixExpAbsentLowSelfCount = 0,
-            affymetrixExpPresentHighDescendantCount = 0, affymetrixExpPresentLowDescendantCount = 0,
-            affymetrixExpAbsentHighParentCount = 0, affymetrixExpAbsentLowParentCount = 0,
-            affymetrixExpPresentHighTotalCount = 0, affymetrixExpPresentLowTotalCount = 0,
-            affymetrixExpAbsentHighTotalCount = 0, affymetrixExpAbsentLowTotalCount = 0,
-            affymetrixExpPropagatedCount = 0;
-        
-        Integer rnaSeqExpPresentHighSelfCount = 0, rnaSeqExpPresentLowSelfCount = 0,
-            rnaSeqExpAbsentHighSelfCount = 0, rnaSeqExpAbsentLowSelfCount = 0,
-            rnaSeqExpPresentHighDescendantCount = 0, rnaSeqExpPresentLowDescendantCount = 0,
-            rnaSeqExpAbsentHighParentCount = 0, rnaSeqExpAbsentLowParentCount = 0,
-            rnaSeqExpPresentHighTotalCount = 0, rnaSeqExpPresentLowTotalCount = 0,
-            rnaSeqExpAbsentHighTotalCount = 0, rnaSeqExpAbsentLowTotalCount = 0,
-            rnaSeqExpPropagatedCount = 0;
-        
-        Integer estLibPresentHighSelfCount = 0, estLibPresentLowSelfCount = 0,
-            estLibPresentHighDescendantCount = 0, estLibPresentLowDescendantCount = 0,
-            estLibPresentHighTotalCount = 0, estLibPresentLowTotalCount = 0,
-            estLibPropagatedCount = 0;
-        
-        Integer inSituExpPresentHighSelfCount = 0, inSituExpPresentLowSelfCount = 0,
-            inSituExpAbsentHighSelfCount = 0, inSituExpAbsentLowSelfCount = 0,
-            inSituExpPresentHighDescendantCount = 0, inSituExpPresentLowDescendantCount = 0,
-            inSituExpAbsentHighParentCount = 0, inSituExpAbsentLowParentCount = 0,
-            inSituExpPresentHighTotalCount = 0, inSituExpPresentLowTotalCount = 0,
-            inSituExpAbsentHighTotalCount = 0, inSituExpAbsentLowTotalCount = 0,
-            inSituExpPropagatedCount = 0;
-        
-        BigDecimal affymetrixMeanRank = null, estRank = null, inSituRank = null, rnaSeqMeanRank = null;
-
-        BigDecimal affymetrixMeanRankNorm = null, estRankNorm = null, inSituRankNorm = null,
-            rnaSeqMeanRankNorm = null;
-
-        BigDecimal affymetrixDistinctRankSum = null, rnaSeqDistinctRankSum = null;
-
-        for (ExpressionCallData e: pipelineCall.getCallData()) {
-            switch (e.getDataType()) {
-                case AFFYMETRIX: 
-                    affymetrixExpPresentHighSelfCount = e.getPresentHighSelfCount();
-                    affymetrixExpPresentLowSelfCount = e.getPresentLowSelfCount();
-                    affymetrixExpAbsentHighSelfCount = e.getAbsentHighSelfCount();
-                    affymetrixExpAbsentLowSelfCount = e.getAbsentLowSelfCount();
-                    affymetrixExpPresentHighDescendantCount = e.getPresentHighDescCount();
-                    affymetrixExpPresentLowDescendantCount = e.getPresentLowDescCount();
-                    affymetrixExpAbsentHighParentCount = e.getAbsentHighParentCount();
-                    affymetrixExpAbsentLowParentCount = e.getAbsentLowParentCount();
-                    affymetrixExpPresentHighTotalCount = e.getPresentHighTotalCount();
-                    affymetrixExpPresentLowTotalCount = e.getPresentLowTotalCount();
-                    affymetrixExpAbsentHighTotalCount = e.getAbsentHighTotalCount();
-                    affymetrixExpAbsentLowTotalCount = e.getAbsentLowTotalCount();
-                    affymetrixExpPropagatedCount = e.getPropagatedCount();
-                    affymetrixMeanRank = e.getRank();
-                    affymetrixMeanRankNorm = e.getRankNorm();
-                    affymetrixDistinctRankSum = e.getRankSum();
-                    break;
-                case EST: 
-                    estLibPresentHighSelfCount = e.getPresentHighSelfCount();
-                    estLibPresentLowSelfCount = e.getPresentLowSelfCount();
-                    estLibPresentHighDescendantCount = e.getPresentHighDescCount();
-                    estLibPresentLowDescendantCount = e.getPresentLowDescCount();
-                    estLibPresentHighTotalCount = e.getPresentHighTotalCount();
-                    estLibPresentLowTotalCount = e.getPresentLowTotalCount();
-                    estLibPropagatedCount = e.getPropagatedCount();
-                    estRank = e.getRank();
-                    estRankNorm = e.getRankNorm();
-                    break;
-                case IN_SITU: 
-                    inSituExpPresentHighSelfCount = e.getPresentHighSelfCount();
-                    inSituExpPresentLowSelfCount = e.getPresentLowSelfCount();
-                    inSituExpAbsentHighSelfCount = e.getAbsentHighSelfCount();
-                    inSituExpAbsentLowSelfCount = e.getAbsentLowSelfCount();
-                    inSituExpPresentHighDescendantCount = e.getPresentHighDescCount();
-                    inSituExpPresentLowDescendantCount = e.getPresentLowDescCount();
-                    inSituExpAbsentHighParentCount = e.getAbsentHighParentCount();
-                    inSituExpAbsentLowParentCount = e.getAbsentLowParentCount();
-                    inSituExpPresentHighTotalCount = e.getPresentHighTotalCount();
-                    inSituExpPresentLowTotalCount = e.getPresentLowTotalCount();
-                    inSituExpAbsentHighTotalCount = e.getAbsentHighTotalCount();
-                    inSituExpAbsentLowTotalCount = e.getAbsentLowTotalCount();
-                    inSituExpPropagatedCount = e.getPropagatedCount();
-                    inSituRank = e.getRank();
-                    inSituRankNorm = e.getRankNorm();
-                    break;
-                case RNA_SEQ:
-                    rnaSeqExpPresentHighSelfCount = e.getPresentHighSelfCount();
-                    rnaSeqExpPresentLowSelfCount = e.getPresentLowSelfCount();
-                    rnaSeqExpAbsentHighSelfCount = e.getAbsentHighSelfCount();
-                    rnaSeqExpAbsentLowSelfCount = e.getAbsentLowSelfCount();
-                    rnaSeqExpPresentHighDescendantCount = e.getPresentHighDescCount();
-                    rnaSeqExpPresentLowDescendantCount = e.getPresentLowDescCount();
-                    rnaSeqExpAbsentHighParentCount = e.getAbsentHighParentCount();
-                    rnaSeqExpAbsentLowParentCount = e.getAbsentLowParentCount();
-                    rnaSeqExpPresentHighTotalCount = e.getPresentHighTotalCount();
-                    rnaSeqExpPresentLowTotalCount = e.getPresentLowTotalCount();
-                    rnaSeqExpAbsentHighTotalCount = e.getAbsentHighTotalCount();
-                    rnaSeqExpAbsentLowTotalCount = e.getAbsentLowTotalCount();
-                    rnaSeqExpPropagatedCount = e.getPropagatedCount();
-                    rnaSeqMeanRank = e.getRank();
-                    rnaSeqMeanRankNorm = e.getRankNorm();
-                    rnaSeqDistinctRankSum = e.getRankSum();
-                    break;
-                default:
-                    throw log.throwing(new IllegalStateException("Unsupported DataType: " + e.getDataType()));
-            }
-        }
-        
-        return log.exit(new GlobalExpressionCallTO(exprId, pipelineCall.getBgeeGeneId(), condId,
-            pipelineCall.getGlobalMeanRank(), affymetrixExpPresentHighSelfCount,
-            affymetrixExpPresentLowSelfCount, affymetrixExpAbsentHighSelfCount,
-            affymetrixExpAbsentLowSelfCount, affymetrixExpPresentHighDescendantCount, 
-            affymetrixExpPresentLowDescendantCount, affymetrixExpAbsentHighParentCount,
-            affymetrixExpAbsentLowParentCount, affymetrixExpPresentHighTotalCount,
-            affymetrixExpPresentLowTotalCount, affymetrixExpAbsentHighTotalCount,
-            affymetrixExpAbsentLowTotalCount, affymetrixExpPropagatedCount,
-            rnaSeqExpPresentHighSelfCount, rnaSeqExpPresentLowSelfCount, rnaSeqExpAbsentHighSelfCount,
-            rnaSeqExpAbsentLowSelfCount, rnaSeqExpPresentHighDescendantCount,
-            rnaSeqExpPresentLowDescendantCount, rnaSeqExpAbsentHighParentCount,
-            rnaSeqExpAbsentLowParentCount, rnaSeqExpPresentHighTotalCount,
-            rnaSeqExpPresentLowTotalCount, rnaSeqExpAbsentHighTotalCount,
-            rnaSeqExpAbsentLowTotalCount, rnaSeqExpPropagatedCount, estLibPresentHighSelfCount,
-            estLibPresentLowSelfCount, estLibPresentHighDescendantCount,
-            estLibPresentLowDescendantCount, estLibPresentHighTotalCount, estLibPresentLowTotalCount,
-            estLibPropagatedCount, inSituExpPresentHighSelfCount, inSituExpPresentLowSelfCount,
-            inSituExpAbsentHighSelfCount, inSituExpAbsentLowSelfCount,
-            inSituExpPresentHighDescendantCount, inSituExpPresentLowDescendantCount,
-            inSituExpAbsentHighParentCount, inSituExpAbsentLowParentCount,
-            inSituExpPresentHighTotalCount, inSituExpPresentLowTotalCount,
-            inSituExpAbsentHighTotalCount, inSituExpAbsentLowTotalCount, inSituExpPropagatedCount, 
-            affymetrixMeanRank, rnaSeqMeanRank, estRank, inSituRank, affymetrixMeanRankNorm,
-            rnaSeqMeanRankNorm, estRankNorm, inSituRankNorm, affymetrixDistinctRankSum, 
-            rnaSeqDistinctRankSum));
     }
 
     /** 
      * Generate propagated and reconciled expression calls.
      * 
-     * @param speciesId     An {@code Integer} that is the ID of the species 
+     * @param geneIds       A {@code Collection} of {@code Integer}s that are the Bgee IDs of the genes 
      *                      for which to return the {@code ExpressionCall}s.
-     * @param attributes    A {@code Collection} of {@code Attribute}s defining the
-     *                      attributes to populate in the returned {@code ExpressionCall}s.
-     *                      If {@code null} or empty, all attributes are populated. 
+     * @param rawCallDAO    The {@code RawExpressionCallDAO} to use to retrieve {@code RawExpressionCallTO}s
+     *                      from data source.
+     * @param expExprDAO    The {@code ExperimentExpressionDAO} to use to retrieve {@code ExperimentExpressionTO}s
+     *                      from data source.
      * @return              A {@code Stream} of {@code Set}s of {@code ExpressionCall}s 
      *                      that are propagated and reconciled expression calls, with each {@code Set}
      *                      containing all {@code ExpressionCall}s for one gene.
      */
-    private Stream<Set<PipelineCall>> generatePropagatedCalls(int speciesId,
-            Map<Integer, Condition> condMap, Set<ConditionDAO.Attribute> condDaoAttr) {
-        log.entry(speciesId, condMap, condDaoAttr);
+    private Stream<Set<PipelineCall>> generatePropagatedCalls(Set<Integer> geneIds,
+            Map<Integer, Condition> condMap, ConditionUtils conditionUtils, 
+            RawExpressionCallDAO rawCallDAO, ExperimentExpressionDAO expExprDAO) {
+        log.entry(geneIds, condMap, conditionUtils, rawCallDAO, expExprDAO);
         
         final Stream<RawExpressionCallTO> streamRawCallTOs = 
-            this.performsRawExpressionCallTOQuery(speciesId, condDaoAttr);
+            this.performsRawExpressionCallTOQuery(geneIds, rawCallDAO);
         
         final Map<DataType, Stream<ExperimentExpressionTO>> experimentExprTOsByDataType =
-            performsExperimentExpressionQuery(speciesId, condDaoAttr);
+            performsExperimentExpressionQuery(geneIds, expExprDAO);
         
         final CallSpliterator<Map<RawExpressionCallTO, Map<DataType, Set<ExperimentExpressionTO>>>>
             spliterator = new CallSpliterator<>(streamRawCallTOs, experimentExprTOsByDataType);
         final Stream<Map<RawExpressionCallTO, Map<DataType, Set<ExperimentExpressionTO>>>> callTOsByGeneStream =
             StreamSupport.stream(spliterator, false).onClose(() -> spliterator.close());
-
-        // We use all existing conditions in the species, and infer all propagated conditions
-        ConditionUtils conditionUtils = new ConditionUtils(condMap.values(), true, true,
-            this.getServiceFactory());
         
         Stream<Set<PipelineCall>> reconciledCalls = callTOsByGeneStream
             // First we convert Map<RawExpressionCallTO, Map<DataType, Set<ExperimentExpressionTO>>
             // into Map<PipelineCall, Set<PipelineCallData>> having source RawExpressionCallTO.
             .map(geneData -> geneData.entrySet().stream()
                     .collect(Collectors.toMap(
-                        e -> mapRawCallTOToPipelineCall(e.getKey(), speciesId,
+                        e -> mapRawCallTOToPipelineCall(e.getKey(),
                                     condMap.get(e.getKey().getConditionId())),
                         e -> mapExpExprTOsToPipelineCallData(e.getValue()))))
             //then we propagate all PipelineCalls of the Map (associated to one gene only), 
@@ -1085,16 +1273,6 @@ public class InsertPropagatedCalls extends CallService {
         return log.exit(reconciledCalls);
     }
     
-    private Set<PipelineCallData> mapExpExprTOsToPipelineCallData(
-        Map<DataType, Set<ExperimentExpressionTO>> expExprsByDataTypes) {
-        log.entry(expExprsByDataTypes);
-        return log.exit(expExprsByDataTypes.entrySet().stream()
-            .map(eeTo -> new PipelineCallData(eeTo.getKey(),
-                new DataPropagation(PropagationState.SELF, PropagationState.SELF, true),
-                null, eeTo.getValue(), null))
-            .collect(Collectors.toSet()));
-    }
-
     //*************************************************************************
     // METHODS PERFORMING THE QUERIES TO THE DAOs
     //*************************************************************************
@@ -1102,21 +1280,15 @@ public class InsertPropagatedCalls extends CallService {
      * Perform query to retrieve conditions without the post-processing of 
      * the results returned by {@code DAO}s.
      * 
-     * @param speciesId     An {@code Integer} that is the ID of the species 
-     *                      for which to return the {@code ExpressionCall}s.
-     * @param conditionParams           A {@code Set} of {@code ConditionDAO.Attribute}s 
-     *                                  defining the combination of condition parameters that 
-     *                                  were requested for queries, allowing to determine 
-     *                                  which condition and expression information to target
-     * @return              The {@code Stream} of {@code ConditionTO}s.
+     * @param condDAO   The {@code ConditionDAO} to use to retrieve {@code ConditionTO}s
+     *                  from data source.
+     * @return          The {@code Stream} of {@code ConditionTO}s.
      */
-    private Stream<ConditionTO> performConditionTOQuery(Integer speciesId, 
-            Set<ConditionDAO.Attribute> conditionParams) {
-        log.entry(speciesId, conditionParams);
+    private Stream<ConditionTO> performConditionTOQuery(ConditionDAO condDAO) {
+        log.entry(condDAO);
         
-        log.debug("Retrieving conditions");
-        Stream<ConditionTO> conds = this.getDaoManager().getConditionDAO()
-            .getConditionsBySpeciesIds(Arrays.asList(speciesId), conditionParams, null)
+        Stream<ConditionTO> conds = condDAO
+            .getConditionsBySpeciesIds(Arrays.asList(this.speciesId), this.conditionParams, null)
             //retrieve the Stream resulting from the query. Note that the query is not executed 
             //as long as the Stream is not consumed (lazy-loading).
             .stream();
@@ -1128,19 +1300,18 @@ public class InsertPropagatedCalls extends CallService {
      * Perform query to retrieve expressed calls without the post-processing of 
      * the results returned by {@code DAO}s.
      * 
-     * @param speciesId     An {@code Integer} that is the ID of the species 
-     *                      for which to return the {@code ExpressionCall}s.
-     * @param attrs         A {@code Set} of {@code ConditionDAO.Attribute}s 
-     *                      defining {@code RawExpressionCallTO}s to return.
+     * @param geneIds       A {@code Collection} of {@code Integer}s that are the Bgee IDs of the genes 
+     *                      for which to return the {@code RawExpressionCallTO}s.
+     * @param rawCallDAO    The {@code RawExpressionCallDAO} to use to retrieve {@code RawExpressionCallTO}s
+     *                      from data source.
      * @return              The {@code Stream} of {@code RawExpressionCallTO}s.
      */
-    private Stream<RawExpressionCallTO> performsRawExpressionCallTOQuery(Integer speciesId,
-            Set<ConditionDAO.Attribute> attrs) throws IllegalArgumentException {
-        log.entry(speciesId, attrs);
+    private Stream<RawExpressionCallTO> performsRawExpressionCallTOQuery(Set<Integer> geneIds, 
+            RawExpressionCallDAO rawCallDAO) throws IllegalArgumentException {
+        log.entry(geneIds, rawCallDAO);
         
-        log.debug("Retrieving expressed data");
-        Stream<RawExpressionCallTO> expr = this.getDaoManager().getRawExpressionCallDAO()
-            .getExpressionCallsOrderedByGeneIdAndExprId(speciesId, attrs)
+        Stream<RawExpressionCallTO> expr = rawCallDAO
+            .getExpressionCallsOrderedByGeneIdAndExprId(geneIds, this.conditionParams)
             //retrieve the Stream resulting from the query. Note that the query is not executed 
             //as long as the Stream is not consumed (lazy-loading).
             .stream();
@@ -1152,35 +1323,35 @@ public class InsertPropagatedCalls extends CallService {
      * Perform queries to retrieve experiment expressions without the post-processing of
      * the results returned by {@code DAO}s.
      * 
-     * @param speciesId     An {@code Integer} that is the ID of the species 
+     * @param geneIds       A {@code Collection} of {@code Integer}s that are the Bgee IDs of the genes 
      *                      for which to return the {@code ExperimentExpressionTO}s.
-     * @param attrs         A {@code Set} of {@code ConditionDAO.Attribute}s 
-     *                      defining {@code ExperimentExpressionTO}s to return.
+     * @param dao           The {@code ExperimentExpressionDAO} to retrieve the data.
      * @return              The {@code Map} where keys are {@code DataType}s defining data types.
      *                      the associated value being a {@code Stream} of
      *                      {@code ExperimentExpressionTO}s defining experiment expression.
      */
     private Map<DataType, Stream<ExperimentExpressionTO>> performsExperimentExpressionQuery(
-            int speciesId, Set<ConditionDAO.Attribute> attrs) throws IllegalArgumentException {
-        log.entry(speciesId, attrs);
-
-        log.debug("Retrieving experiment expressions");
-        final ExperimentExpressionDAO dao = this.getDaoManager().getExperimentExpressionDAO();
+            Set<Integer> geneIds, ExperimentExpressionDAO dao) throws IllegalArgumentException {
+        log.entry(geneIds, dao);
 
         Map<DataType, Stream<ExperimentExpressionTO>> map = new HashMap<>();
         for (DataType dt: DataType.values()) {
             switch (dt) {
                 case AFFYMETRIX:
-                    map.put(dt, dao.getAffymetrixExpExprsOrderedByGeneIdAndExprId(speciesId, attrs).stream());
+                    map.put(dt, dao.getAffymetrixExpExprsOrderedByGeneIdAndExprId(
+                            geneIds, this.conditionParams).stream());
                     break;
                 case EST:
-                    map.put(dt, dao.getESTExpExprsOrderedByGeneIdAndExprId(speciesId, attrs).stream());
+                    map.put(dt, dao.getESTExpExprsOrderedByGeneIdAndExprId(
+                            geneIds, this.conditionParams).stream());
                     break;
                 case IN_SITU:
-                    map.put(dt, dao.getInSituExpExprsOrderedByGeneIdAndExprId(speciesId, attrs).stream());
+                    map.put(dt, dao.getInSituExpExprsOrderedByGeneIdAndExprId(
+                            geneIds, this.conditionParams).stream());
                     break;
                 case RNA_SEQ:
-                    map.put(dt, dao.getRNASeqExpExprsOrderedByGeneIdAndExprId(speciesId, attrs).stream());
+                    map.put(dt, dao.getRNASeqExpExprsOrderedByGeneIdAndExprId(
+                            geneIds, this.conditionParams).stream());
                     break;
                 default: 
                     throw log.throwing(new IllegalStateException("Unsupported DataType: " + dt));
@@ -1188,28 +1359,6 @@ public class InsertPropagatedCalls extends CallService {
         }
 
         return log.exit(map);
-    }
-
-    //*************************************************************************
-    // METHODS MAPPING CallTOs TO PipelineCalls
-    //*************************************************************************
-    private static PipelineCall mapRawCallTOToPipelineCall(RawExpressionCallTO callTO,
-        Integer speciesId, Condition cond) {
-        log.entry(callTO, speciesId, cond);
-
-        if (cond == null) {
-            throw log.throwing(new IllegalArgumentException("No Condition provided for CallTO: " 
-                    + callTO));
-        }
-        assert callTO.getBgeeGeneId() != null;
-        assert callTO.getConditionId() != null;
-
-        return log.exit(new PipelineCall(
-                callTO.getBgeeGeneId(), cond, 
-                true, 
-                // At this point, we do not generate data state, quality, and CallData,
-                // as we haven't reconcile data.
-                null, callTO, null));
     }
     
     //*************************************************************************
@@ -1236,6 +1385,11 @@ public class InsertPropagatedCalls extends CallService {
                 throws IllegalArgumentException {
         log.entry(data, conditionUtils);
 
+        Map<PipelineCall, Set<PipelineCallData>> propagatedData = new HashMap<>();
+        if (this.errorOccured != null) {
+            return log.exit(propagatedData);
+        }
+
         assert data != null && !data.isEmpty();
         assert conditionUtils != null;
         
@@ -1260,13 +1414,12 @@ public class InsertPropagatedCalls extends CallService {
         // Counts for log tracing 
         int callCount = calls.size();
         int analyzedCallCount = 0;
-    
-        Map<PipelineCall, Set<PipelineCallData>> propagatedData = new HashMap<>();
+
         for (Entry<PipelineCall, Set<PipelineCallData>> entry: data.entrySet()) {
-            analyzedCallCount++;
-            if (log.isDebugEnabled() && (analyzedCallCount % 100 == 0 || analyzedCallCount == 1)) {
+            if (log.isTraceEnabled() && analyzedCallCount % 100 == 0) {
                 log.trace("{}/{} expression calls analyzed.", analyzedCallCount, callCount);
             }
+            analyzedCallCount++;
     
             ExpressionCall curCall = entry.getKey();
             log.trace("Propagation for call: {}", curCall);
@@ -1315,6 +1468,11 @@ public class InsertPropagatedCalls extends CallService {
             Entry<PipelineCall, Set<PipelineCallData>> data, Set<Condition> propagatedConds, 
             boolean areAncestors) {
         log.entry(data, propagatedConds, areAncestors);
+
+        Map<PipelineCall, Set<PipelineCallData>> map = new HashMap<>();
+        if (this.errorOccured != null) {
+            return log.exit(map);
+        }
         
         if (propagatedConds.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("No provided propagated conditions"));
@@ -1322,7 +1480,6 @@ public class InsertPropagatedCalls extends CallService {
         PipelineCall call = data.getKey();
         Condition callCondition = call.getCondition();
 
-        Map<PipelineCall, Set<PipelineCallData>> map = new HashMap<>();
         //For each propagated condition (not including the original condition), 
         //create a new PipelineCall, with source CallTOs stored in the appropriate attribute, 
         //and with associated PipelineCallData updated.
@@ -1418,10 +1575,13 @@ public class InsertPropagatedCalls extends CallService {
      * @return              The representative {@code ExpressionCall}.
      */
     //We return PipelineCall rather than ExpressionCall to be able to keep bgeeGeneId
-    //XXX: why don't we return a GlobalExpressionCallTO?
     private PipelineCall reconcileGeneCalls(Set<PipelineCall> calls,
             Set<PipelineCallData> pipelineData) {
         log.entry(calls, pipelineData);
+
+        if (this.errorOccured != null) {
+            return log.exit(null);
+        }
     
         assert calls != null && !calls.isEmpty();
         assert pipelineData != null && !pipelineData.isEmpty();
@@ -1514,6 +1674,10 @@ public class InsertPropagatedCalls extends CallService {
     private ExpressionCallData mergePipelineCallDataIntoExpressionCallData(DataType dataType,
             Set<PipelineCallData> pipelineCallData, RawExpressionCallTO selfSourceCallTO) {
         log.entry(dataType, pipelineCallData, selfSourceCallTO);
+        
+        if (this.errorOccured != null) {
+            return log.exit(null);
+        }
 
         assert pipelineCallData.stream().noneMatch(pcd -> !dataType.equals(pcd.getDataType()));
         if (pipelineCallData.stream().anyMatch(pcd -> 
@@ -1526,13 +1690,13 @@ public class InsertPropagatedCalls extends CallService {
         }
 
 
-        int presentHighTotalCount = this.getTotalCount(pipelineCallData,
+        int presentHighTotalCount = getTotalCount(pipelineCallData,
             CallDirection.PRESENT, CallQuality.HIGH);
-        int presentLowTotalCount = this.getTotalCount(pipelineCallData,
+        int presentLowTotalCount = getTotalCount(pipelineCallData,
             CallDirection.PRESENT, CallQuality.LOW);
-        int absentHighTotalCount = this.getTotalCount(pipelineCallData,
+        int absentHighTotalCount = getTotalCount(pipelineCallData,
             CallDirection.ABSENT, CallQuality.HIGH);
-        int absentLowTotalCount = this.getTotalCount(pipelineCallData,
+        int absentLowTotalCount = getTotalCount(pipelineCallData,
             CallDirection.ABSENT, CallQuality.LOW);
 
         //In case there is no data valid to be propagated (e.g., only expression calls in parents)
@@ -1550,13 +1714,13 @@ public class InsertPropagatedCalls extends CallService {
             return log.exit(null);
         }
         
-        int presentHighSelfCount = this.getSpecificCount(pipelineCallData,
+        int presentHighSelfCount = getSpecificCount(pipelineCallData,
             PipelineCallData::getSelfExperimentExpr, CallDirection.PRESENT, CallQuality.HIGH);
-        int presentLowSelfCount = this.getSpecificCount(pipelineCallData,
+        int presentLowSelfCount = getSpecificCount(pipelineCallData,
             PipelineCallData::getSelfExperimentExpr, CallDirection.PRESENT, CallQuality.LOW);
-        int absentHighSelfCount = this.getSpecificCount(pipelineCallData,
+        int absentHighSelfCount = getSpecificCount(pipelineCallData,
             PipelineCallData::getSelfExperimentExpr, CallDirection.ABSENT, CallQuality.HIGH);
-        int absentLowSelfCount = this.getSpecificCount(pipelineCallData,
+        int absentLowSelfCount = getSpecificCount(pipelineCallData,
             PipelineCallData::getSelfExperimentExpr, CallDirection.ABSENT, CallQuality.LOW);
         
         
@@ -1573,9 +1737,9 @@ public class InsertPropagatedCalls extends CallService {
             p -> p.getParentExperimentExpr() == null? null: p.getParentExperimentExpr().stream()
                 .filter(eeTO -> CallDirection.ABSENT.equals(eeTO.getCallDirection()))
                 .collect(Collectors.toSet());
-        int absentHighParentCount = this.getSpecificCount(pipelineCallData,
+        int absentHighParentCount = getSpecificCount(pipelineCallData,
             funCallDataAbsentToEETO, CallDirection.ABSENT, CallQuality.HIGH);
-        int absentLowParentCount = this.getSpecificCount(pipelineCallData,
+        int absentLowParentCount = getSpecificCount(pipelineCallData,
             funCallDataAbsentToEETO, CallDirection.ABSENT, CallQuality.LOW);
         
         //not really needed since PRESENT calls always win over ABSENT calls, 
@@ -1585,9 +1749,9 @@ public class InsertPropagatedCalls extends CallService {
             p -> p.getDescendantExperimentExpr() == null? null: p.getDescendantExperimentExpr().stream()
                 .filter(eeTO -> CallDirection.PRESENT.equals(eeTO.getCallDirection()))
                 .collect(Collectors.toSet());
-        int presentHighDescCount = this.getSpecificCount(pipelineCallData,
+        int presentHighDescCount = getSpecificCount(pipelineCallData,
             funCallDataPresentToEETO, CallDirection.PRESENT, CallQuality.HIGH);
-        int presentLowDescCount = this.getSpecificCount(pipelineCallData,
+        int presentLowDescCount = getSpecificCount(pipelineCallData,
             funCallDataPresentToEETO, CallDirection.PRESENT, CallQuality.LOW);
 
         
@@ -1646,7 +1810,43 @@ public class InsertPropagatedCalls extends CallService {
             presentHighTotalCount, presentLowTotalCount, absentHighTotalCount, absentLowTotalCount,
             propagatedCount, rank, rankNorm, rankSum));
     }
-    
+
+    //*************************************************************************
+    // METHODS MAPPING dao-api objects to bgee-core objects
+    //*************************************************************************
+
+    private static Set<PipelineCallData> mapExpExprTOsToPipelineCallData(
+        Map<DataType, Set<ExperimentExpressionTO>> expExprsByDataTypes) {
+        log.entry(expExprsByDataTypes);
+        return log.exit(expExprsByDataTypes.entrySet().stream()
+            .map(eeTo -> new PipelineCallData(eeTo.getKey(),
+                new DataPropagation(PropagationState.SELF, PropagationState.SELF, true),
+                null, eeTo.getValue(), null))
+            .collect(Collectors.toSet()));
+    }
+
+    private static PipelineCall mapRawCallTOToPipelineCall(RawExpressionCallTO callTO, Condition cond) {
+        log.entry(callTO, cond);
+
+        if (cond == null) {
+            throw log.throwing(new IllegalArgumentException("No Condition provided for CallTO: " 
+                    + callTO));
+        }
+        assert callTO.getBgeeGeneId() != null;
+        assert callTO.getConditionId() != null;
+
+        return log.exit(new PipelineCall(
+                callTO.getBgeeGeneId(), cond, 
+                true, 
+                // At this point, we do not generate data state, quality, and CallData,
+                // as we haven't reconcile data.
+                null, callTO, null));
+    }
+
+
+    //*************************************************************************
+    // METHODS COUTING EXPERIMENTS FOR DIFFERENT CALL TYPES
+    //*************************************************************************
     /** 
      * Count the number of experiments for a combination of self/descendant/ancestor,
      * present/absent, and high/low.
@@ -1660,14 +1860,14 @@ public class InsertPropagatedCalls extends CallService {
      *                          {@code ExperimentExpressionTO}s
      * @return                  The {@code int} that is the number of experiments for a combination.
      */
-    private int getSpecificCount(Set<PipelineCallData> pipelineCallData,
+    private static int getSpecificCount(Set<PipelineCallData> pipelineCallData,
             Function<PipelineCallData, Set<ExperimentExpressionTO>> funCallDataToEETO,
             CallDirection callDirection, CallQuality callQuality) {
         log.entry(pipelineCallData, funCallDataToEETO, callQuality, callDirection);
         
         //to count each experiment only once in a given set of "self", "parent" or "descendant" attributes, 
         //we keep its "best" call from all ExperimentExpressionTOs.
-        Set<ExperimentExpressionTO> bestSelectedEETOs = this.getBestSelectedEETOs(pipelineCallData, 
+        Set<ExperimentExpressionTO> bestSelectedEETOs = getBestSelectedEETOs(pipelineCallData, 
                 funCallDataToEETO);
         
         return log.exit((int) bestSelectedEETOs.stream()
@@ -1678,10 +1878,10 @@ public class InsertPropagatedCalls extends CallService {
             .count());
     }
     
-    private Set<ExperimentExpressionTO> getBestSelectedEETOs(Set<PipelineCallData> pipelineCallData,
+    private static Set<ExperimentExpressionTO> getBestSelectedEETOs(Set<PipelineCallData> pipelineCallData,
             Function<PipelineCallData, Set<ExperimentExpressionTO>> funCallDataToEETO) {
         log.entry(pipelineCallData, funCallDataToEETO);
-        return log.exit(this.getBestExperimentExpressionTOs(
+        return log.exit(getBestExperimentExpressionTOs(
             pipelineCallData.stream()
                 .map(p -> funCallDataToEETO.apply(p))
                 .filter(s -> s != null)
@@ -1700,13 +1900,13 @@ public class InsertPropagatedCalls extends CallService {
      *                          {@code ExperimentExpressionTO}s
      * @return                  The {@code int} that is the number of experiments for total counts.
      */
-    private int getTotalCount(Set<PipelineCallData> pipelineCallData,
+    private static int getTotalCount(Set<PipelineCallData> pipelineCallData,
             final CallDirection callDirection, CallQuality callQuality) {
         log.entry(pipelineCallData, callQuality, callDirection);
 
         //to count each experiment only once in different "total" attributes, 
         //we keep its "best" call from all ExperimentExpressionTOs.
-        Set<ExperimentExpressionTO> bestSelfAndRelatedEETOs = this.getBestTotalEETOs(pipelineCallData);
+        Set<ExperimentExpressionTO> bestSelfAndRelatedEETOs = getBestTotalEETOs(pipelineCallData);
         
         return log.exit((int) bestSelfAndRelatedEETOs.stream()
             .filter(eeTo -> callDirection.equals(eeTo.getCallDirection())
@@ -1724,9 +1924,9 @@ public class InsertPropagatedCalls extends CallService {
      * @param pipelineCallData
      * @return
      */
-    private Set<ExperimentExpressionTO> getBestTotalEETOs(Set<PipelineCallData> pipelineCallData) {
+    private static Set<ExperimentExpressionTO> getBestTotalEETOs(Set<PipelineCallData> pipelineCallData) {
         log.entry(pipelineCallData);
-        return log.exit(this.getBestExperimentExpressionTOs(
+        return log.exit(getBestExperimentExpressionTOs(
             pipelineCallData.stream()
                 .map(p -> {
                     Set<ExperimentExpressionTO> exps = new HashSet<>();
@@ -1768,7 +1968,7 @@ public class InsertPropagatedCalls extends CallService {
      * @param eeTOs
      * @return
      */
-    private Set<ExperimentExpressionTO> getBestExperimentExpressionTOs(
+    private static Set<ExperimentExpressionTO> getBestExperimentExpressionTOs(
             Collection<ExperimentExpressionTO> eeTOs) {
         log.entry(eeTOs);
         

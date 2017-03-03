@@ -895,4 +895,13 @@ implements GlobalExpressionCallDAO {
             }
         }
     }
+
+    @Override
+    public GlobalExpressionCallTOResultSet getGlobalCalls(Collection<Integer> arg0,
+            Collection<org.bgee.model.dao.api.expressiondata.ConditionDAO.Attribute> arg1,
+            Collection<org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.Attribute> arg2)
+            throws DAOException, IllegalArgumentException {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

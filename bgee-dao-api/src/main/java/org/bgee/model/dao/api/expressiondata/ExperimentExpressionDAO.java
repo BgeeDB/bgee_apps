@@ -42,17 +42,20 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
      * The expressions are retrieved and returned as an {@code ExperimentExpressionTOResultSet}.
      * It is the responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesId             An {@code int} that is the ID of the species to retrieve data for.
+     * @param geneIds               A {@code Collection of {@code Integer}s that are the Bgee IDs 
+     *                              of the genes to retrieve calls for.
      * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
      *                              combination of condition parameters that were requested for queries, 
      *                              allowing to determine which condition and expression tables to target
      *                              (see {@link ConditionDAO.Attribute#isConditionParameter()}).
      * @return                      An {@code ExperimentExpressionTOResultSet} allowing to obtain 
      *                              the requested {@code ExperimentExpressionTO}s.
-     * @throws DAOException             If an error occurred while accessing the data source. 
+     * @throws DAOException             If an error occurred while accessing the data source.
+     * @throws IllegalArgumentException If {@code geneIds} is {@code null} or empty.
      */
-    public ExperimentExpressionTOResultSet getAffymetrixExpExprsOrderedByGeneIdAndExprId(int speciesId,
-        Collection<ConditionDAO.Attribute> condParameters) throws DAOException;
+    public ExperimentExpressionTOResultSet getAffymetrixExpExprsOrderedByGeneIdAndExprId(
+            Collection<Integer> geneIds,
+            Collection<ConditionDAO.Attribute> condParameters) throws DAOException, IllegalArgumentException;
 
     /**
      * Retrieve RNA-Seq experiment expressions from the data source.
@@ -60,17 +63,20 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
      * The expressions are retrieved and returned as an {@code ExperimentExpressionTOResultSet}.
      * It is the responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesId             An {@code int} that is the ID of the species to retrieve data for.
+     * @param geneIds               A {@code Collection of {@code Integer}s that are the Bgee IDs 
+     *                              of the genes to retrieve calls for.
      * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
      *                              combination of condition parameters that were requested for queries, 
      *                              allowing to determine which condition and expression tables to target
      *                              (see {@link ConditionDAO.Attribute#isConditionParameter()}).
      * @return                      An {@code ExperimentExpressionTOResultSet} allowing to obtain 
      *                              the requested {@code ExperimentExpressionTO}s.
-     * @throws DAOException             If an error occurred while accessing the data source. 
+     * @throws DAOException             If an error occurred while accessing the data source.
+     * @throws IllegalArgumentException If {@code geneIds} is {@code null} or empty.
      */
-    public ExperimentExpressionTOResultSet getRNASeqExpExprsOrderedByGeneIdAndExprId(int speciesId,
-        Collection<ConditionDAO.Attribute> condParameters) throws DAOException;
+    public ExperimentExpressionTOResultSet getRNASeqExpExprsOrderedByGeneIdAndExprId(
+            Collection<Integer> geneIds,
+            Collection<ConditionDAO.Attribute> condParameters) throws DAOException, IllegalArgumentException;
 
     /**
      * Retrieve EST experiment expressions from the data source.
@@ -78,7 +84,8 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
      * The expressions are retrieved and returned as an {@code ExperimentExpressionTOResultSet}.
      * It is the responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesId             An {@code int} that is the ID of the species to retrieve data for.
+     * @param geneIds               A {@code Collection of {@code Integer}s that are the Bgee IDs 
+     *                              of the genes to retrieve calls for.
      * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
      *                              combination of condition parameters that were requested for queries, 
      *                              allowing to determine which condition and expression tables to target
@@ -86,10 +93,12 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
      * @param speciesId             A {@code String} that is the ID of the species to retrieve calls for.
      * @return                      An {@code ExperimentExpressionTOResultSet} allowing to obtain 
      *                              the requested {@code ExperimentExpressionTO}s.
-     * @throws DAOException             If an error occurred while accessing the data source. 
+     * @throws DAOException             If an error occurred while accessing the data source.
+     * @throws IllegalArgumentException If {@code geneIds} is {@code null} or empty.
      */
-    public ExperimentExpressionTOResultSet getESTExpExprsOrderedByGeneIdAndExprId(int speciesId,
-        Collection<ConditionDAO.Attribute> condParameters) throws DAOException;
+    public ExperimentExpressionTOResultSet getESTExpExprsOrderedByGeneIdAndExprId(
+            Collection<Integer> geneIds,
+            Collection<ConditionDAO.Attribute> condParameters) throws DAOException, IllegalArgumentException;
 
     /**
      * Retrieve <em>in situ</em> experiment expressions from the data source.
@@ -97,7 +106,8 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
      * The expressions are retrieved and returned as an {@code ExperimentExpressionTOResultSet}.
      * It is the responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesId             An {@code int} that is the ID of the species to retrieve data for.
+     * @param geneIds               A {@code Collection of {@code Integer}s that are the Bgee IDs 
+     *                              of the genes to retrieve calls for.
      * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
      *                              combination of condition parameters that were requested for queries, 
      *                              allowing to determine which condition and expression tables to target
@@ -105,10 +115,12 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
      * @param speciesId             A {@code String} that is the ID of the species to retrieve calls for.
      * @return                      An {@code ExperimentExpressionTOResultSet} allowing to obtain 
      *                              the requested {@code ExperimentExpressionTO}s.
-     * @throws DAOException             If an error occurred while accessing the data source. 
+     * @throws DAOException             If an error occurred while accessing the data source.
+     * @throws IllegalArgumentException If {@code geneIds} is {@code null} or empty.
      */
-    public ExperimentExpressionTOResultSet getInSituExpExprsOrderedByGeneIdAndExprId(int speciesId,
-        Collection<ConditionDAO.Attribute> condParameters) throws DAOException;
+    public ExperimentExpressionTOResultSet getInSituExpExprsOrderedByGeneIdAndExprId(
+            Collection<Integer> geneIds,
+            Collection<ConditionDAO.Attribute> condParameters) throws DAOException, IllegalArgumentException;
 
     /**
      * {@code DAOResultSet} specifics to {@code ExperimentExpressionTO}s

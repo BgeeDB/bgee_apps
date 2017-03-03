@@ -5,7 +5,9 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -85,31 +87,33 @@ public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionD
     }
     private static String getJoin(String expExprTableName, CondParamCombination comb) {
         log.entry(expExprTableName, comb);
-
+        
         StringBuilder sb = new StringBuilder();
-        //first, we join to the original raw expression table. We need it in all cases 
-        //to be able to filter by speciesId
+        
+        //first, we join to the original raw expression table, we need it in all cases
+        //to retrieve the bgeeGeneId for the ordering.
         sb.append(" INNER JOIN ").append(CondParamCombination.ORIGINAL_RAW_EXPR_TABLE)
           .append(" ON ").append(CondParamCombination.ORIGINAL_RAW_EXPR_TABLE).append(".")
           .append(CondParamCombination.ORIGINAL_RAW_EXPR_ID_FIELD)
           .append(" = ").append(expExprTableName).append(".")
           .append(CondParamCombination.ORIGINAL_RAW_EXPR_ID_FIELD);
 
-        //then we join to the original condition table, again, we need it in all cases 
-        //to filter per speciesId.
-        sb.append(" INNER JOIN ").append(CondParamCombination.ORIGINAL_RAW_COND_TABLE)
-          .append(" ON ").append(CondParamCombination.ORIGINAL_RAW_COND_TABLE).append(".")
-          .append(CondParamCombination.ORIGINAL_RAW_COND_ID_FIELD)
-          .append(" = ").append(CondParamCombination.ORIGINAL_RAW_EXPR_TABLE).append(".")
-          .append(CondParamCombination.ORIGINAL_RAW_COND_ID_FIELD);
-        
-        //now we join to the appropriate condition and expression tables for this parameter combination
+        //Now we join to the appropriate condition and expression tables for this parameter combination
         //using the appropriate fields for the join, only if this parameter combination 
-        //does not take into account all fields
+        //does not take into account all fields. The aim is to retrieve the expression ID
+        //from the appropriate table.
         if (!comb.isAllParamCombination()) {
+            //we join to the original condition table.
+            sb.append(" INNER JOIN ").append(CondParamCombination.ORIGINAL_RAW_COND_TABLE)
+            .append(" ON ").append(CondParamCombination.ORIGINAL_RAW_COND_TABLE).append(".")
+            .append(CondParamCombination.ORIGINAL_RAW_COND_ID_FIELD)
+            .append(" = ").append(CondParamCombination.ORIGINAL_RAW_EXPR_TABLE).append(".")
+            .append(CondParamCombination.ORIGINAL_RAW_COND_ID_FIELD);
+            
+            //then to the appropriate condition table
             sb.append(" INNER JOIN ").append(comb.getCondTable()).append(" ON ")
-              .append(MySQLConditionDAO.getJoinOnBetweenCondTables(
-                      CondParamCombination.ORIGINAL_RAW_COND_TABLE, comb.getCondTable(), comb));
+            .append(MySQLConditionDAO.getJoinOnBetweenCondTables(
+                    CondParamCombination.ORIGINAL_RAW_COND_TABLE, comb.getCondTable(), comb));
             
             //finally, we join to the appropriate expression table for this parameter combination, 
             //using the bgeeGeneId in original raw expression table and the mapped conditionId
@@ -125,11 +129,12 @@ public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionD
         return log.exit(sb.toString());
     }
     
-    private static String getWhere() {
+    private static String getWhere(Set<Integer> geneIds) {
         log.entry();
         StringBuilder sb = new StringBuilder();
-        sb.append(" WHERE ").append(CondParamCombination.ORIGINAL_RAW_COND_TABLE)
-          .append(".").append(MySQLConditionDAO.SPECIES_ID).append(" = ?");
+        sb.append(" WHERE ").append(CondParamCombination.ORIGINAL_RAW_EXPR_TABLE)
+          .append(".").append(MySQLGeneDAO.BGEE_GENE_ID).append(" IN (")
+          .append(BgeePreparedStatement.generateParameterizedQueryString(geneIds.size())).append(") ");
         return log.exit(sb.toString());
     }
     private static String getOrderBy(CondParamCombination comb) {
@@ -152,9 +157,15 @@ public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionD
     }
 
     @Override
-    public ExperimentExpressionTOResultSet getAffymetrixExpExprsOrderedByGeneIdAndExprId(int speciesId,
-        Collection<ConditionDAO.Attribute> condParams) throws DAOException {
-        log.entry(speciesId, condParams);
+    public ExperimentExpressionTOResultSet getAffymetrixExpExprsOrderedByGeneIdAndExprId(
+            Collection<Integer> geneIds,
+            Collection<ConditionDAO.Attribute> condParams) throws DAOException, IllegalArgumentException {
+        log.entry(geneIds, condParams);
+        
+        if (geneIds == null || geneIds.isEmpty() || geneIds.stream().anyMatch(id -> id == null)) {
+            throw log.throwing(new IllegalArgumentException("No gene IDs or null gene ID provided"));
+        }
+        Set<Integer> clonedGeneIds = new HashSet<>(geneIds);
 
         CondParamCombination comb = CondParamCombination.getCombination(condParams);
         String tableName = "microarrayExperimentExpression";
@@ -186,12 +197,12 @@ public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionD
                             colToAttrMap))
             .append(" FROM ").append(tableName)
             .append(getJoin(tableName, comb))
-            .append(getWhere())
+            .append(getWhere(clonedGeneIds))
             .append(getOrderBy(comb));
         
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());
-            stmt.setInt(1, speciesId);
+            stmt.setIntegers(1, clonedGeneIds, true);
             return log.exit(new MySQLExperimentExpressionTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
@@ -199,9 +210,15 @@ public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionD
     }
 
     @Override
-    public ExperimentExpressionTOResultSet getESTExpExprsOrderedByGeneIdAndExprId(int speciesId,
-        Collection<ConditionDAO.Attribute> condParams) throws DAOException {
-        log.entry(speciesId, condParams);
+    public ExperimentExpressionTOResultSet getESTExpExprsOrderedByGeneIdAndExprId(
+            Collection<Integer> geneIds,
+            Collection<ConditionDAO.Attribute> condParams) throws DAOException, IllegalArgumentException {
+        log.entry(geneIds, condParams);
+        
+        if (geneIds == null || geneIds.isEmpty() || geneIds.stream().anyMatch(id -> id == null)) {
+            throw log.throwing(new IllegalArgumentException("No gene IDs or null gene ID provided"));
+        }
+        Set<Integer> clonedGeneIds = new HashSet<>(geneIds);
 
         CondParamCombination comb = CondParamCombination.getCombination(condParams);
         String tableName = "estLibraryExpression";
@@ -238,12 +255,12 @@ public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionD
                             colToAttrMap))
             .append(" FROM ").append(tableName)
             .append(getJoin(tableName, comb))
-            .append(getWhere())
+            .append(getWhere(clonedGeneIds))
             .append(getOrderBy(comb));
         
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());
-            stmt.setInt(1, speciesId);
+            stmt.setIntegers(1, clonedGeneIds, true);
             return log.exit(new MySQLExperimentExpressionTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
@@ -251,9 +268,15 @@ public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionD
     }
 
     @Override
-    public ExperimentExpressionTOResultSet getInSituExpExprsOrderedByGeneIdAndExprId(int speciesId,
-        Collection<ConditionDAO.Attribute> condParams) throws DAOException {
-        log.entry(speciesId, condParams);
+    public ExperimentExpressionTOResultSet getInSituExpExprsOrderedByGeneIdAndExprId(
+            Collection<Integer> geneIds,
+            Collection<ConditionDAO.Attribute> condParams) throws DAOException, IllegalArgumentException {
+        log.entry(geneIds, condParams);
+        
+        if (geneIds == null || geneIds.isEmpty() || geneIds.stream().anyMatch(id -> id == null)) {
+            throw log.throwing(new IllegalArgumentException("No gene IDs or null gene ID provided"));
+        }
+        Set<Integer> clonedGeneIds = new HashSet<>(geneIds);
 
         CondParamCombination comb = CondParamCombination.getCombination(condParams);
         String tableName = "inSituExperimentExpression";
@@ -285,12 +308,12 @@ public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionD
                             colToAttrMap))
             .append(" FROM ").append(tableName)
             .append(getJoin(tableName, comb))
-            .append(getWhere())
+            .append(getWhere(clonedGeneIds))
             .append(getOrderBy(comb));
         
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());
-            stmt.setInt(1, speciesId);
+            stmt.setIntegers(1, clonedGeneIds, true);
             return log.exit(new MySQLExperimentExpressionTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
@@ -298,9 +321,15 @@ public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionD
     }
 
     @Override
-    public ExperimentExpressionTOResultSet getRNASeqExpExprsOrderedByGeneIdAndExprId(int speciesId,
-        Collection<ConditionDAO.Attribute> condParams) throws DAOException {
-        log.entry(speciesId, condParams);
+    public ExperimentExpressionTOResultSet getRNASeqExpExprsOrderedByGeneIdAndExprId(
+            Collection<Integer> geneIds,
+            Collection<ConditionDAO.Attribute> condParams) throws DAOException, IllegalArgumentException {
+        log.entry(geneIds, condParams);
+        
+        if (geneIds == null || geneIds.isEmpty() || geneIds.stream().anyMatch(id -> id == null)) {
+            throw log.throwing(new IllegalArgumentException("No gene IDs or null gene ID provided"));
+        }
+        Set<Integer> clonedGeneIds = new HashSet<>(geneIds);
 
         CondParamCombination comb = CondParamCombination.getCombination(condParams);
         String tableName = "rnaSeqExperimentExpression";
@@ -332,12 +361,12 @@ public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionD
                             colToAttrMap))
             .append(" FROM ").append(tableName)
             .append(getJoin(tableName, comb))
-            .append(getWhere())
+            .append(getWhere(clonedGeneIds))
             .append(getOrderBy(comb));
         
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());
-            stmt.setInt(1, speciesId);
+            stmt.setIntegers(1, clonedGeneIds, true);
             return log.exit(new MySQLExperimentExpressionTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

@@ -55,21 +55,21 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
     }
 
     @Override
-    public AnatEntityTOResultSet getAnatEntitiesBySpeciesIds(Collection<String> speciesIds) 
+    public AnatEntityTOResultSet getAnatEntitiesBySpeciesIds(Collection<Integer> speciesIds) 
             throws DAOException {
         log.entry(speciesIds);
         return log.exit(this.getAnatEntities(speciesIds, null));
     }
     
     @Override
-    public AnatEntityTOResultSet getAnatEntities(Collection<String> speciesIds, Collection<String> anatEntitiesIds)
+    public AnatEntityTOResultSet getAnatEntities(Collection<Integer> speciesIds, Collection<String> anatEntitiesIds)
             throws DAOException {
         log.entry(speciesIds, anatEntitiesIds);
         return log.exit(this.getAnatEntities(speciesIds, true, anatEntitiesIds, this.getAttributes()));
     }
     
     @Override
-    public AnatEntityTOResultSet getAnatEntities(Collection<String> speciesIds, Boolean anySpecies, 
+    public AnatEntityTOResultSet getAnatEntities(Collection<Integer> speciesIds, Boolean anySpecies, 
             Collection<String> anatEntitiesIds, Collection<AnatEntityDAO.Attribute> attributes) 
                     throws DAOException {
         log.entry(speciesIds, anySpecies, anatEntitiesIds, attributes);
@@ -80,8 +80,8 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
         // FILTER ARGUMENTS
         //*******************************
         //Species
-        Set<String> clonedSpeIds = Optional.ofNullable(speciesIds)
-                .map(c -> new HashSet<String>(c)).orElse(null);
+        Set<Integer> clonedSpeIds = Optional.ofNullable(speciesIds)
+                .map(c -> new HashSet<>(c)).orElse(null);
         boolean isSpeciesFilter = clonedSpeIds != null && !clonedSpeIds.isEmpty();
         boolean realAnySpecies = isSpeciesFilter && 
                 (Boolean.TRUE.equals(anySpecies) || clonedSpeIds.size() == 1);
@@ -156,7 +156,7 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             if (isSpeciesFilter) {
-                stmt.setStringsToIntegers(1, clonedSpeIds, true);
+                stmt.setIntegers(1, clonedSpeIds, true);
             }
             if (isEntityFilter) {
                 int offsetParamIndex = (isSpeciesFilter? clonedSpeIds.size() + 1: 1);
@@ -170,12 +170,12 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
     }
     
     @Override
-    public AnatEntityTOResultSet getNonInformativeAnatEntitiesBySpeciesIds(Collection<String> speciesIds) 
+    public AnatEntityTOResultSet getNonInformativeAnatEntitiesBySpeciesIds(Collection<Integer> speciesIds) 
             throws DAOException {
         log.entry(speciesIds);      
 
-        Set<String> clonedSpeIds = Optional.ofNullable(speciesIds)
-                .map(c -> new HashSet<String>(c)).orElse(null);
+        Set<Integer> clonedSpeIds = Optional.ofNullable(speciesIds)
+                .map(c -> new HashSet<>(c)).orElse(null);
         boolean isSpeciesFilter = clonedSpeIds != null && clonedSpeIds.size() > 0;
         String tableName = "anatEntity";
         
@@ -225,7 +225,7 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             if (isSpeciesFilter) {
-                stmt.setStringsToIntegers(1, clonedSpeIds, true);
+                stmt.setIntegers(1, clonedSpeIds, true);
             }             
             return log.exit(new MySQLAnatEntityTOResultSet(stmt));
         } catch (SQLException e) {

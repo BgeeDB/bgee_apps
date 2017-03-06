@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.bgee.model.ServiceFactory;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.source.SourceDAO;
@@ -41,6 +42,8 @@ public class SourceServiceTest extends TestAncestor {
     public void shouldLoadSources() {
         // initialize mocks
         DAOManager managerMock = mock(DAOManager.class);
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(managerMock);
         SourceDAO sourceDao = mock(SourceDAO.class);
         when(managerMock.getSourceDAO()).thenReturn(sourceDao);
         
@@ -48,10 +51,10 @@ public class SourceServiceTest extends TestAncestor {
                 .atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
 
         List<SourceTO> sourceTOsInDb = Arrays.asList(
-                new SourceTO("2", "NCBI Taxonomy", "Source taxonomy used in Bgee", "", "", "",
+                new SourceTO(2, "NCBI Taxonomy", "Source taxonomy used in Bgee", "", "", "",
                         "http://www.ncbi.nlm.nih.gov/taxonomy", 
                         date1, "v13", false, SourceTO.SourceCategory.NONE, 3),
-                new SourceTO("4", "ZFIN", "ZFIN desc", 
+                new SourceTO(4, "ZFIN", "ZFIN desc", 
                         "http://zfin.org/cgi-bin/ZFIN_jump?record=[xref_id]",
                         "http://zfin.org/cgi-bin/ZFIN_jump?record=[experiment_id]", 
                         "http://zfin.org/cgi-bin/ZFIN_jump?record=[evidence_id]", 
@@ -65,39 +68,39 @@ public class SourceServiceTest extends TestAncestor {
         when(managerMock.getSourceToSpeciesDAO()).thenReturn(sourceToSpeciesDao);
         SourceToSpeciesTOResultSet mockSourceToSpeciesRs = getMockResultSet(SourceToSpeciesTOResultSet.class,
                 Arrays.asList(
-                        new SourceToSpeciesTO("2", "11", SourceToSpeciesTO.DataType.IN_SITU, InfoType.ANNOTATION),
-                        new SourceToSpeciesTO("2", "11", SourceToSpeciesTO.DataType.RNA_SEQ, InfoType.ANNOTATION),
-                        new SourceToSpeciesTO("2", "11", SourceToSpeciesTO.DataType.IN_SITU, InfoType.DATA),
-                        new SourceToSpeciesTO("2", "21", SourceToSpeciesTO.DataType.EST, InfoType.DATA),
-                        new SourceToSpeciesTO("4", "11", SourceToSpeciesTO.DataType.AFFYMETRIX, InfoType.DATA)));
+                        new SourceToSpeciesTO(2, 11, SourceToSpeciesTO.DataType.IN_SITU, InfoType.ANNOTATION),
+                        new SourceToSpeciesTO(2, 11, SourceToSpeciesTO.DataType.RNA_SEQ, InfoType.ANNOTATION),
+                        new SourceToSpeciesTO(2, 11, SourceToSpeciesTO.DataType.IN_SITU, InfoType.DATA),
+                        new SourceToSpeciesTO(2, 21, SourceToSpeciesTO.DataType.EST, InfoType.DATA),
+                        new SourceToSpeciesTO(4, 11, SourceToSpeciesTO.DataType.AFFYMETRIX, InfoType.DATA)));
         when(sourceToSpeciesDao.getAllSourceToSpecies(null)).thenReturn(mockSourceToSpeciesRs);
 
         List<Source> expectedSources = new ArrayList<Source>();
-        expectedSources.add(new Source("2", "NCBI Taxonomy", "Source taxonomy used in Bgee", "", "", "",
+        expectedSources.add(new Source(2, "NCBI Taxonomy", "Source taxonomy used in Bgee", "", "", "",
                 "http://www.ncbi.nlm.nih.gov/taxonomy", 
                 date1, "v13", false, org.bgee.model.source.SourceCategory.NONE, 3));
-        expectedSources.add(new Source("4", "ZFIN", "ZFIN desc", 
+        expectedSources.add(new Source(4, "ZFIN", "ZFIN desc", 
                 "http://zfin.org/cgi-bin/ZFIN_jump?record=[xref_id]",
                 "http://zfin.org/cgi-bin/ZFIN_jump?record=[experiment_id]", 
                 "http://zfin.org/cgi-bin/ZFIN_jump?record=[evidence_id]", 
                 "http://zfin.org/", null, "rv:2", true, org.bgee.model.source.SourceCategory.IN_SITU, 2));
         
-        SourceService service = new SourceService(managerMock);
+        SourceService service = new SourceService(serviceFactory);
         assertEquals("Incorrect sources", expectedSources, service.loadAllSources(false));
 
         // Test getting data by species
         expectedSources.clear();
-        Map<String, Set<DataType>> forData2 = new HashMap<>();
-        forData2.put("11", new HashSet<DataType>(Arrays.asList(DataType.IN_SITU)));
-        forData2.put("21", new HashSet<DataType>(Arrays.asList(DataType.EST)));
-        Map<String, Set<DataType>> forAnnot2 = new HashMap<>();
-        forAnnot2.put("11", new HashSet<DataType>(Arrays.asList(DataType.IN_SITU, DataType.RNA_SEQ)));
-        expectedSources.add(new Source("2", "NCBI Taxonomy", "Source taxonomy used in Bgee", "", "", "",
+        Map<Integer, Set<DataType>> forData2 = new HashMap<>();
+        forData2.put(11, new HashSet<DataType>(Arrays.asList(DataType.IN_SITU)));
+        forData2.put(21, new HashSet<DataType>(Arrays.asList(DataType.EST)));
+        Map<Integer, Set<DataType>> forAnnot2 = new HashMap<>();
+        forAnnot2.put(11, new HashSet<DataType>(Arrays.asList(DataType.IN_SITU, DataType.RNA_SEQ)));
+        expectedSources.add(new Source(2, "NCBI Taxonomy", "Source taxonomy used in Bgee", "", "", "",
                 "http://www.ncbi.nlm.nih.gov/taxonomy", 
                 date1, "v13", false, org.bgee.model.source.SourceCategory.NONE, 3, forData2, forAnnot2));
-        Map<String, Set<DataType>> forData4 = new HashMap<>();
-        forData4.put("11", new HashSet<DataType>(Arrays.asList(DataType.AFFYMETRIX)));
-        expectedSources.add(new Source("4", "ZFIN", "ZFIN desc", 
+        Map<Integer, Set<DataType>> forData4 = new HashMap<>();
+        forData4.put(11, new HashSet<DataType>(Arrays.asList(DataType.AFFYMETRIX)));
+        expectedSources.add(new Source(4, "ZFIN", "ZFIN desc", 
                 "http://zfin.org/cgi-bin/ZFIN_jump?record=[xref_id]",
                 "http://zfin.org/cgi-bin/ZFIN_jump?record=[experiment_id]", 
                 "http://zfin.org/cgi-bin/ZFIN_jump?record=[evidence_id]", 
@@ -112,11 +115,13 @@ public class SourceServiceTest extends TestAncestor {
         
         // initialize mocks
         DAOManager managerMock = mock(DAOManager.class);
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(managerMock);
         SourceDAO dao = mock(SourceDAO.class);
         when(managerMock.getSourceDAO()).thenReturn(dao);
          
         List<SourceTO> sourceTOsInDb = Arrays.asList(
-                new SourceTO("4", "ZFIN", "ZFIN desc", 
+                new SourceTO(4, "ZFIN", "ZFIN desc", 
                         "http://zfin.org/cgi-bin/ZFIN_jump?record=[xref_id]",
                         "http://zfin.org/cgi-bin/ZFIN_jump?record=[experiment_id]", 
                         "http://zfin.org/cgi-bin/ZFIN_jump?record=[evidence_id]", 
@@ -130,24 +135,24 @@ public class SourceServiceTest extends TestAncestor {
         when(managerMock.getSourceToSpeciesDAO()).thenReturn(sourceToSpeciesDao);
         SourceToSpeciesTOResultSet mockSourceToSpeciesRs = getMockResultSet(SourceToSpeciesTOResultSet.class,
                 Arrays.asList(
-                        new SourceToSpeciesTO("2", "21", SourceToSpeciesTO.DataType.EST, InfoType.DATA),
-                        new SourceToSpeciesTO("4", "11", SourceToSpeciesTO.DataType.AFFYMETRIX, InfoType.ANNOTATION)));
+                        new SourceToSpeciesTO(2, 21, SourceToSpeciesTO.DataType.EST, InfoType.DATA),
+                        new SourceToSpeciesTO(4, 11, SourceToSpeciesTO.DataType.AFFYMETRIX, InfoType.ANNOTATION)));
         when(sourceToSpeciesDao.getAllSourceToSpecies(null)).thenReturn(mockSourceToSpeciesRs);
 
         List<Source> expectedSources = new ArrayList<Source>();
-        expectedSources.add(new Source("4", "ZFIN", "ZFIN desc", 
+        expectedSources.add(new Source(4, "ZFIN", "ZFIN desc", 
                 "http://zfin.org/cgi-bin/ZFIN_jump?record=[xref_id]",
                 "http://zfin.org/cgi-bin/ZFIN_jump?record=[experiment_id]", 
                 "http://zfin.org/cgi-bin/ZFIN_jump?record=[evidence_id]", 
                 "http://zfin.org/", null, "rv:2", true, org.bgee.model.source.SourceCategory.IN_SITU, 2));
         
-        SourceService service = new SourceService(managerMock);
+        SourceService service = new SourceService(serviceFactory);
         assertEquals("Incorrect sources", expectedSources, service.loadDisplayableSources(false));
 
-        Map<String, Set<DataType>> forAnnot4 = new HashMap<>();
-        forAnnot4.put("11", new HashSet<DataType>(Arrays.asList(DataType.AFFYMETRIX)));
+        Map<Integer, Set<DataType>> forAnnot4 = new HashMap<>();
+        forAnnot4.put(11, new HashSet<DataType>(Arrays.asList(DataType.AFFYMETRIX)));
         expectedSources.clear();
-        expectedSources.add(new Source("4", "ZFIN", "ZFIN desc", 
+        expectedSources.add(new Source(4, "ZFIN", "ZFIN desc", 
                 "http://zfin.org/cgi-bin/ZFIN_jump?record=[xref_id]",
                 "http://zfin.org/cgi-bin/ZFIN_jump?record=[experiment_id]", 
                 "http://zfin.org/cgi-bin/ZFIN_jump?record=[evidence_id]", 

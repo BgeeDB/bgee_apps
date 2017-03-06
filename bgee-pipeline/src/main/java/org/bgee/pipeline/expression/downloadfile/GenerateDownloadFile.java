@@ -18,6 +18,9 @@ import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
+import org.bgee.model.expressiondata.baseelements.CallType.Expression;
+import org.bgee.model.expressiondata.baseelements.DataQuality;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.file.DownloadFile.CategoryEnum;
 import org.bgee.pipeline.expression.CallUser;
 
@@ -114,7 +117,11 @@ public abstract class GenerateDownloadFile extends CallUser {
      * A {@code String} that is the extension of download files to be generated.
      */
     public final static String EXTENSION = ".tsv";
-
+    /**
+     * A {@code String} that is the value of the cell containing not applicable,
+     * in the download file.
+     */
+    public final static String NO_DATA_VALUE = "no data";
     /**
      * A {@code String} that is the low quality data text, in the download file.
      */
@@ -125,6 +132,14 @@ public abstract class GenerateDownloadFile extends CallUser {
     public final static String HIGH_QUALITY_TEXT = "high quality";
 
     /**
+     * A {@code String} that is the presence of expression text for a call data, in the download file.
+     */
+    public final static String PRESENT_TEXT = "present";
+    /**
+     * A {@code String} that is the absence of expression text for a call data, in the download file.
+     */
+    public final static String ABSENT_TEXT = "absent";
+    /**
      * A {@code String} that is the weak ambiguity text for a call data, in the download file.
      */
     public final static String WEAK_AMBIGUITY = "weak ambiguity";
@@ -132,6 +147,42 @@ public abstract class GenerateDownloadFile extends CallUser {
      * A {@code String} that is the strong ambiguity text for a call data, in the download file.
      */
     public final static String STRONG_AMBIGUITY= "strong ambiguity";
+
+    /**
+     * An {@code Enum} used to define whether the call has been observed. This is to distinguish
+     * from propagated data only, that should provide a lower confidence in the call.
+     * <ul>
+     * <li>{@code OBSERVED}:    the call has been observed at least once.
+     * <li>{@code NOTOBSERVED}: the call has never been observed.
+     * </ul>
+     * 
+     * @author Valentine Rech de Laval
+     * @version Bgee 13
+     * @since Bgee 13
+     */
+    public enum ObservedData {
+        OBSERVED("yes"), NOT_OBSERVED("no");
+
+        private final String stringRepresentation;
+
+        /**
+         * Constructor providing the {@code String} representation of this {@code ObservedData}.
+         * 
+         * @param stringRepresentation A {@code String} corresponding to this {@code ObservedData}.
+         */
+        private ObservedData(String stringRepresentation) {
+            this.stringRepresentation = stringRepresentation;
+        }
+
+        public String getStringRepresentation() {
+            return this.stringRepresentation;
+        }
+
+        @Override
+        public String toString() {
+            return this.getStringRepresentation();
+        }
+    }
 
     /**
      * An {@code interface} that must be implemented by {@code Enum}s representing a file type.
@@ -246,10 +297,105 @@ public abstract class GenerateDownloadFile extends CallUser {
     }
 
     /**
+     * Convert an {@code org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary ExpressionSummary}
+     * into a {@code String}.
+     * <p>  
+     * This is because its method {@code getStringRepresentation} is not available for display in files.
+     * 
+     * @param sum   An {@code ExpressionSummary} to be converted.
+     * @return      The {@code String} corresponding to {@code sum}, to be used in files
+     */
+    protected static String convertExpressionSummaryToString(ExpressionSummary sum) {
+        log.entry(sum);
+        if (sum == null) {
+            throw new IllegalArgumentException("ExpressionSummary could not be null");
+        }
+        switch (sum) {
+        case EXPRESSED:
+            return log.exit(PRESENT_TEXT);
+        case NOT_EXPRESSED:
+            return log.exit(ABSENT_TEXT);
+        case WEAK_AMBIGUITY:
+            return log.exit(WEAK_AMBIGUITY);
+        case STRONG_AMBIGUITY:
+            return log.exit(STRONG_AMBIGUITY);
+        default:
+            throw new IllegalArgumentException("Unrecognized ExpressionSummary: " + sum);
+        }
+    }
+    
+    /**
+     * Convert an {@code org.bgee.model.expressiondata.baseelements.CallType.Expression Expression}
+     * into a {@code String}.
+     * <p>  
+     * This is because its method {@code getStringRepresentation} is not available for display in files.
+     * 
+     * @param expr  An {@code Expression} to be converted.
+     * @return      The {@code String} corresponding to {@code expr}, to be used in files
+     */
+    protected static String convertExpressionToString(Expression expr) {
+        log.entry(expr);
+        if (expr == null) {
+            return log.exit(NO_DATA_VALUE);
+        }
+        switch (expr) {
+        case EXPRESSED:
+            return log.exit(PRESENT_TEXT);
+        case NOT_EXPRESSED:
+            return log.exit(ABSENT_TEXT);
+        default:
+            throw new IllegalArgumentException("Unrecognized Expression: " + expr);
+        }
+    }
+
+    /**
+     * Convert a {@code org.bgee.model.expressiondata.baseelements.DataQuality DataQuality}
+     * into a {@code String}.
+     * <p>  
+     * This is because its method {@code getStringRepresentation} is not available for display in files.
+     * 
+     * @param qual  A {@code DataQuality} to be converted.
+     * @return      The {@code String} corresponding to {@code qual}, to be used in files
+     */
+    protected static String convertDataQualityToString(DataQuality qual) {
+        log.entry(qual);
+        if (qual == null) {
+            return log.exit(NA_VALUE);
+        }
+        switch (qual) {
+        case HIGH:
+            return log.exit(HIGH_QUALITY_TEXT);
+        case LOW:
+            return log.exit(LOW_QUALITY_TEXT);
+        case NODATA:
+            return log.exit(NA_VALUE);
+        default:
+            throw new IllegalArgumentException("Unrecognized DataQuality: " + qual);
+        }
+    }
+
+    /**
+     * Convert a {@code org.bgee.model.expressiondata.baseelements.DataQuality DataQuality}
+     * into a {@code String}.
+     * <p>  
+     * This is because its method {@code getStringRepresentation} is not available for display in files.
+     * 
+     * @param qual  A {@code DataQuality} to be converted.
+     * @return      The {@code String} corresponding to {@code qual}, to be used in files
+     */
+    protected static String convertObservedDataToString(Boolean includingObservedData) {
+        log.entry(includingObservedData);
+        if (Boolean.TRUE.equals(includingObservedData)) {
+            return log.exit(ObservedData.OBSERVED.getStringRepresentation());
+        }
+        return log.exit(ObservedData.NOT_OBSERVED.getStringRepresentation());
+    }
+
+    /**
      * A {@code List} of {@code String}s that are the IDs of species allowing 
      * to filter the calls to retrieve.
      */
-    protected List<String> speciesIds;
+    protected List<Integer> speciesIds;
     
     /**
      * A {@code List} of {@code String}s that are the file types to be generated.
@@ -285,7 +431,7 @@ public abstract class GenerateDownloadFile extends CallUser {
      * @param directory     A {@code String} that is the directory where to store files.
      * @throws IllegalArgumentException If {@code directory} is {@code null} or blank.
      */
-    public GenerateDownloadFile(List<String> speciesIds, Set<? extends FileType> fileTypes, 
+    public GenerateDownloadFile(List<Integer> speciesIds, Set<? extends FileType> fileTypes, 
             String directory) throws IllegalArgumentException {
         this(null, speciesIds, fileTypes, directory);
     }
@@ -305,9 +451,10 @@ public abstract class GenerateDownloadFile extends CallUser {
      */
     //TODO: speciesIds shoudn't be defined for multi-species classes that use map. 
     // We need to reorganize generation download file classes.
-    public GenerateDownloadFile(MySQLDAOManager manager, List<String> speciesIds, 
+    public GenerateDownloadFile(MySQLDAOManager manager, List<Integer> speciesIds, 
             Set<? extends FileType> fileTypes, String directory) throws IllegalArgumentException {
-        super(manager);
+        //FIXME: restore if CallUser is reused?
+        //super(manager);
         if (StringUtils.isBlank(directory)) {
             throw log.throwing(new IllegalArgumentException("A directory must be provided"));
         }
@@ -335,11 +482,11 @@ public abstract class GenerateDownloadFile extends CallUser {
      * @param stageId           A {@code String} that is the ID of the stage.
      * @param stageName         A {@code String} that is the name of the stage.
      */
-    protected void addIdsAndNames(Map<String, String> row, String geneId, String geneName, 
+    protected void addIdsAndNames(Map<String, Object> row, Integer geneId, String geneName, 
             String anatEntityId, String anatEntityName, String stageId, String stageName) {
         log.entry(row, geneId, geneName, anatEntityId, anatEntityName, stageId, stageName);
         
-        if (StringUtils.isBlank(geneId)) {
+        if (geneId == null) {
             throw log.throwing(new IllegalArgumentException("No Id provided for gene."));
         }
         if (StringUtils.isBlank(stageId)) {
@@ -375,17 +522,17 @@ public abstract class GenerateDownloadFile extends CallUser {
      * <p>
      * If a species ID could not be identified, an {@code IllegalArgumentException} is thrown.
      * 
-     * @param speciesIds    A {@code Set} of {@code String}s that are the species IDs 
+     * @param speciesIds    A {@code Set} of {@code Integer}s that are the species IDs 
      *                      to be checked, and for which to generate a {@code String} 
      *                      used to construct download file names. Can be {@code null} or empty 
      *                      to retrieve information for all species. 
-     * @return              A {@code Map} where keys are {@code String}s that are the species IDs, 
+     * @return              A {@code Map} where keys are {@code Integer}s that are the species IDs, 
      *                      the associated values being a {@code String} that is its latin name.
      */
-    protected Map<String, String> checkAndGetLatinNamesBySpeciesIds(Set<String> speciesIds) {
+    protected Map<Integer, String> checkAndGetLatinNamesBySpeciesIds(Set<Integer> speciesIds) {
         log.entry(speciesIds);
         
-        Map<String, String> namesByIds = new HashMap<String, String>();
+        Map<Integer, String> namesByIds = new HashMap<>();
         SpeciesDAO speciesDAO = this.getSpeciesDAO();
         speciesDAO.setAttributes(SpeciesDAO.Attribute.ID, SpeciesDAO.Attribute.GENUS, 
                 SpeciesDAO.Attribute.SPECIES_NAME);
@@ -393,7 +540,7 @@ public abstract class GenerateDownloadFile extends CallUser {
         try (SpeciesTOResultSet rs = speciesDAO.getSpeciesByIds(speciesIds)) {
             while (rs.next()) {
                 SpeciesTO speciesTO = rs.getTO();
-                if (StringUtils.isBlank(speciesTO.getId()) || 
+                if (speciesTO.getId() == null || speciesTO.getId() <= 0 || 
                         StringUtils.isBlank(speciesTO.getGenus()) || 
                         StringUtils.isBlank(speciesTO.getSpeciesName())) {
                     throw log.throwing(new IllegalStateException("Incorrect species " +
@@ -410,7 +557,7 @@ public abstract class GenerateDownloadFile extends CallUser {
         if (namesByIds.size() < speciesIds.size()) {
             //copy to avoid modifying user input, maybe the caller 
             //will recover from the exception
-            Set<String> copySpeciesIds = new HashSet<String>(speciesIds);
+            Set<Integer> copySpeciesIds = new HashSet<>(speciesIds);
             copySpeciesIds.removeAll(namesByIds.keySet());
             throw log.throwing(new IllegalArgumentException("Some species IDs provided " +
                     "do not correspond to any species: " + copySpeciesIds));
@@ -427,9 +574,8 @@ public abstract class GenerateDownloadFile extends CallUser {
     /**
      * Format the provided {@code string} replacing whitespace by "_".
      *
-     * @param string    A {@code String} that is the word to be used. 
-     * @return          A {@code String} that is the modified word where whitespace 
-     *                  are replaced by "_".
+     * @param word  A {@code String} that is the word to be used. 
+     * @return      A {@code String} that is the modified word where whitespace are replaced by "_".
      */
     protected String formatString(String word) {
         log.entry(word);
@@ -450,6 +596,7 @@ public abstract class GenerateDownloadFile extends CallUser {
             Map<T, String> generatedFileNames, String tmpExtension) {
         log.entry(generatedFileNames, tmpExtension);
         
+        // FIXME delete tmp file if contains only header
         for (String fileName: generatedFileNames.values()) {
             //if temporary file exists, rename it.
             File tmpFile = new File(this.directory, fileName + tmpExtension);

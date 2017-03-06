@@ -45,13 +45,13 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
     }
 
     @Override
-    public StageTOResultSet getStagesBySpeciesIds(Collection<String> speciesIds) throws DAOException {
+    public StageTOResultSet getStagesBySpeciesIds(Collection<Integer> speciesIds) throws DAOException {
         log.entry(speciesIds);       
         return log.exit(getStagesBySpeciesIds(speciesIds, null, null));
     }
 
     @Override
-    public StageTOResultSet getStagesBySpeciesIds(Collection<String> speciesIds, Boolean isGroupingStage,
+    public StageTOResultSet getStagesBySpeciesIds(Collection<Integer> speciesIds, Boolean isGroupingStage,
             Integer level) throws DAOException {
         log.entry(speciesIds, isGroupingStage, level);
         return log.exit(getStages(speciesIds, null, isGroupingStage, level));
@@ -64,7 +64,7 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
     }
 
     @Override
-    public StageTOResultSet getStages(Collection<String> speciesIds, Collection<String> stageIds, 
+    public StageTOResultSet getStages(Collection<Integer> speciesIds, Collection<String> stageIds, 
             Boolean isGroupingStage, Integer level) throws DAOException {
         log.entry(speciesIds, stageIds, isGroupingStage, level);
         return log.exit(this.getStages(speciesIds, true, stageIds, isGroupingStage, level, 
@@ -72,7 +72,7 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
     }
 
     @Override
-    public StageTOResultSet getStages(Collection<String> speciesIds, Boolean anySpecies, 
+    public StageTOResultSet getStages(Collection<Integer> speciesIds, Boolean anySpecies, 
             Collection<String> stageIds, Boolean isGroupingStage, Integer level, 
             Collection<StageDAO.Attribute> attributes) throws DAOException {
         log.entry(speciesIds, stageIds, isGroupingStage, level);
@@ -83,8 +83,8 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
         // FILTER ARGUMENTS
         //*******************************
         //Species
-        Set<String> clonedSpeIds = Optional.ofNullable(speciesIds)
-                .map(c -> new HashSet<String>(c)).orElse(null);
+        Set<Integer> clonedSpeIds = Optional.ofNullable(speciesIds)
+                .map(c -> new HashSet<>(c)).orElse(null);
         boolean isSpeciesFilter = clonedSpeIds != null && !clonedSpeIds.isEmpty();
         boolean realAnySpecies = isSpeciesFilter && 
                 (Boolean.TRUE.equals(anySpecies) || clonedSpeIds.size() == 1);
@@ -173,7 +173,7 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             if (isSpeciesFilter) {
-                stmt.setStringsToIntegers(1, clonedSpeIds, true);
+                stmt.setIntegers(1, clonedSpeIds, true);
             }
 
             int offsetParamIndex = (isSpeciesFilter? clonedSpeIds.size() + 1: 1);

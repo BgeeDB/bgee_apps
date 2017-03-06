@@ -22,12 +22,13 @@ BEGIN
                (4,'ZFIN','http://zfin.org/cgi-bin/ZFIN_jump?record=[xref_id]','http://zfin.org/cgi-bin/ZFIN_jump?record=[experiment_id]','http://zfin.org/cgi-bin/ZFIN_jump?record=[evidence_id]','http://zfin.org/',null,'rv:2','ZFIN desc',1,'In situ data source',2);
 
         INSERT INTO taxon (taxonId,taxonScientificName,taxonCommonName,taxonLeftBound,taxonRightBound,taxonLevel,bgeeSpeciesLCA) 
-        VALUES (111,'taxSName111','taxCName111',1,12,1,1),
+        VALUES (111,'taxSName111','taxCName111',1,14,1,1),
                (211,'taxSName211','taxCName211',2,3,2,0),
                (311,'taxSName311','taxCName311',4,11,2,0),
-               (411,'taxSName411','taxCName411',5,6,1,1),
-               (511,'taxSName511','taxCName511',7,10,1,1),
-               (611,'taxSName611','taxCName611',8,9,1,1);
+               (411,'taxSName411','taxCName411',5,6,3,1),
+               (511,'taxSName511','taxCName511',7,10,3,1),
+               (611,'taxSName611','taxCName611',8,9,4,1),
+               (711,'taxSName711','taxCName711',12,13,2,0);
 
         INSERT INTO OMAHierarchicalGroup (OMANodeId,OMAGroupId,OMANodeLeftBound,OMANodeRightBound,taxonId) 
         VALUES (1,'HOG:NAILDQY',1,8,111),
@@ -71,6 +72,15 @@ BEGIN
                ('ID2','synonym2'),
                ('ID3','syno3');
                
+        -- load existing groups in the new table
+        INSERT INTO geneToOma SELECT DISTINCT t3.geneId, t1.OMANodeId, t1.taxonId 
+          FROM OMAHierarchicalGroup AS t1         
+            INNER JOIN OMAHierarchicalGroup AS t2     
+                  ON t2.OMANodeLeftBound >= t1.OMANodeLeftBound AND       
+                     t2.OMANodeRightBound <= t1.OMANodeRightBound        
+                        INNER JOIN gene AS t3 ON t2.OMANodeId = t3.OMAParentNodeId
+        WHERE t1.taxonId IS NOT NULL;
+        
 --               --1 Stage_id1 36 ----------------------------------------------------------------------------------------------------
 --              /            |                                                         \                                              \
 -- 2 Stage_id2 7             8 Stage_id5 17--------------                            18 Stage_id10 25-------------                    26 Stage_id14 35-----------
@@ -122,6 +132,20 @@ BEGIN
                ('Stage_id16', 11), 
                ('Stage_id17', 31), 
                ('Stage_id18', 11);
+
+--               Anat_id1 ----------------
+--                   |                    \
+--           --- Anat_id2 ----         Anat_id6
+--          /        |        \            |
+--         /         |         \       Anat_id7
+--        /          |          \          |   \
+--       /           |           \         |    Anat_id8
+--      /            |            \        |   /
+--  Anat_id3     Anat_id4          --- Anat_id5 -------
+--                                         |           \
+--                                     Anat_id9     Anat_id10
+--                                                      |
+--                                                  Anat_id11
 
         INSERT INTO anatEntity(anatEntityId,anatEntityName,anatEntityDescription,startStageId,endStageId,nonInformative)
         VALUES ('Anat_id1','anatStruct','anatStruct desc','Stage_id1','Stage_id2',true),

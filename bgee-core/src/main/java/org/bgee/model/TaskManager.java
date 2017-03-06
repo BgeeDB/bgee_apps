@@ -371,7 +371,7 @@ public class TaskManager {
 	 * Interrupt the task associated with this {@code TaskManager}. 
 	 * This method first interrupt any running DAO calls requested by 
 	 * the {@code Thread} running the task, by calling {@link 
-	 * org.bgee.model.dao.api.DAOManager.kill(Thread)}. This method then calls 
+	 * org.bgee.model.dao.api.DAOManager#kill(Thread)}. This method then calls 
 	 * {@code interrupt} on the {@code Thread} running the task. 
 	 * It is then the responsibility of the applicative code running the task 
 	 * to deal with the interrupted status.

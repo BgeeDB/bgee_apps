@@ -17,14 +17,16 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
+import org.bgee.model.gene.Gene;
 import org.junit.Test;
 
 /**
  * Unit tests for {@link ExpressionCall}.
  * 
- * @author Frederic Bastian
- * @version Bgee 13 June 2016
- * @since Bgee 13 June 2016
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13, July 2016
+ * @since   Bgee 13, June 2016
  */
 public class ExpressionCallTest extends TestAncestor {
     private final static Logger log = LogManager.getLogger(ExpressionCallTest.class.getName());
@@ -79,9 +81,9 @@ public class ExpressionCallTest extends TestAncestor {
         //These calls and conditions allow a regression test for management of equal ranks
         //cond2 and cond3 will be considered more precise than cond1, and unrelated to each other. 
         //It is important for the test that cond1 would be sorted first alphabetically. 
-        Condition cond1 = new Condition("Anat1", "stage1");
-        Condition cond2 = new Condition("Anat2", "stage1");
-        Condition cond3 = new Condition("Anat3", "stage1");
+        Condition cond1 = new Condition("Anat1", "stage1", 1);
+        Condition cond2 = new Condition("Anat2", "stage1", 1);
+        Condition cond3 = new Condition("Anat3", "stage1", 1);
         //we mock the ConditionUtils used to compare Conditions
         ConditionUtils condUtils = mock(ConditionUtils.class);
         Set<Condition> allConds = new HashSet<>(Arrays.asList(cond1, cond2, cond3));
@@ -99,20 +101,20 @@ public class ExpressionCallTest extends TestAncestor {
         ExpressionCall c1 = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("1.25"));
 
         //test ordering by geneId
-        ExpressionCall c2 = new ExpressionCall("ID0", null, null, null, null, null, new BigDecimal("1.27"));
+        ExpressionCall c2 = new ExpressionCall(new Gene("ID0"), null, null, null, null, null, new BigDecimal("1.27"));
         //Test ordering based on Conditions
         //anat2 will be considered more precise than anat1, and as precise as anat3, 
         //the order between anat2 and anat3 should be based on their attributes
-        ExpressionCall c3 = new ExpressionCall("ID1", cond2, null, null, 
+        ExpressionCall c3 = new ExpressionCall(new Gene("ID1"), cond2, null, null, 
                 null, null, new BigDecimal("1.27"));
         //anat3 will be considered more precise than anat1, so we will have different ordering 
         //whether we consider the relations between Conditions, or only attributes of Conditions
-        ExpressionCall c4 = new ExpressionCall("ID1", cond3, null, null, 
+        ExpressionCall c4 = new ExpressionCall(new Gene("ID1"), cond3, null, null, 
                 null, null, new BigDecimal("1.27"));
-        ExpressionCall c5 = new ExpressionCall("ID1", cond1, null, null, 
+        ExpressionCall c5 = new ExpressionCall(new Gene("ID1"), cond1, null, null, 
                 null, null, new BigDecimal("1.27"));
         //test null Conditions last
-        ExpressionCall c6 = new ExpressionCall("ID1", null, null, null, null, null, new BigDecimal("1.27"));
+        ExpressionCall c6 = new ExpressionCall(new Gene("ID1"), null, null, null, null, null, new BigDecimal("1.27"));
         //test null geneID last
         ExpressionCall c7 = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("1.27"));
         //test equal ExpressionCalls
@@ -154,9 +156,9 @@ public class ExpressionCallTest extends TestAncestor {
     public void shouldIdentifyRedundantCalls() {
       //These calls and conditions allow a regression test for management of equal ranks
         //cond2 and cond3 will be considered more precise than cond1, and unrelated to each other
-        Condition cond1 = new Condition("Anat1", "stage1");
-        Condition cond2 = new Condition("Anat2", "stage1");
-        Condition cond3 = new Condition("Anat3", "stage1");
+        Condition cond1 = new Condition("Anat1", "stage1", 1);
+        Condition cond2 = new Condition("Anat2", "stage1", 1);
+        Condition cond3 = new Condition("Anat3", "stage1", 1);
         //we mock the ConditionUtils used to compare Conditions
         ConditionUtils condUtils = mock(ConditionUtils.class);
         Set<Condition> allConds = new HashSet<>(Arrays.asList(cond1, cond2, cond3));
@@ -176,19 +178,19 @@ public class ExpressionCallTest extends TestAncestor {
         
         
         //Nothing too complicated with gene ID1, c3 is redundant
-        ExpressionCall c1 = new ExpressionCall("ID1", cond3, null, null, null, null, new BigDecimal("1.25000"));
-        ExpressionCall c2 = new ExpressionCall("ID1", cond2, null, null, null, null, new BigDecimal("2.0"));
-        ExpressionCall c3 = new ExpressionCall("ID1", cond1, null, null, null, null, new BigDecimal("3.00"));
+        ExpressionCall c1 = new ExpressionCall(new Gene("ID1"), cond3, null, null, null, null, new BigDecimal("1.25000"));
+        ExpressionCall c2 = new ExpressionCall(new Gene("ID1"), cond2, null, null, null, null, new BigDecimal("2.0"));
+        ExpressionCall c3 = new ExpressionCall(new Gene("ID1"), cond1, null, null, null, null, new BigDecimal("3.00"));
         //for gene ID2 we test identification with equal ranks and relations between conditions. 
         //c4 is redundant because less precise condition
-        ExpressionCall c4 = new ExpressionCall("ID2", cond1, null, null, null, null, new BigDecimal("1.250"));
-        ExpressionCall c5 = new ExpressionCall("ID2", cond3, null, null, null, null, new BigDecimal("1.25000"));
-        ExpressionCall c6 = new ExpressionCall("ID2", cond2, null, null, null, null, new BigDecimal("1.25"));
+        ExpressionCall c4 = new ExpressionCall(new Gene("ID2"), cond1, null, null, null, null, new BigDecimal("1.250"));
+        ExpressionCall c5 = new ExpressionCall(new Gene("ID2"), cond3, null, null, null, null, new BigDecimal("1.25000"));
+        ExpressionCall c6 = new ExpressionCall(new Gene("ID2"), cond2, null, null, null, null, new BigDecimal("1.25"));
         //for gene ID3 we test identification with equal ranks and relations between conditions. 
         //nothing redundant
-        ExpressionCall c7 = new ExpressionCall("ID3", cond1, null, null, null, null, new BigDecimal("1"));
-        ExpressionCall c8 = new ExpressionCall("ID3", cond3, null, null, null, null, new BigDecimal("1.25000"));
-        ExpressionCall c9 = new ExpressionCall("ID3", cond2, null, null, null, null, new BigDecimal("1.25"));
+        ExpressionCall c7 = new ExpressionCall(new Gene("ID3"), cond1, null, null, null, null, new BigDecimal("1"));
+        ExpressionCall c8 = new ExpressionCall(new Gene("ID3"), cond3, null, null, null, null, new BigDecimal("1.25000"));
+        ExpressionCall c9 = new ExpressionCall(new Gene("ID3"), cond2, null, null, null, null, new BigDecimal("1.25"));
         
         Set<ExpressionCall> withRedundancy = new HashSet<>(Arrays.asList(c1, c2, c3, c4, c5, c6, c7, c8, c9));
         Set<ExpressionCall> expectedRedundants = new HashSet<>(Arrays.asList(c3, c4));

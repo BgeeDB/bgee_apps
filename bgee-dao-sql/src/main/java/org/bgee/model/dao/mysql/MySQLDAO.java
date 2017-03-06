@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -166,7 +165,7 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
      * if no {@code Attribute} corresponding to {@code colName} could be found: this is 
      * the expected behavior of the {@code getNewTO} methods.
      * <p>
-     * See {@link #getSelectExprFromAttribute(T, Map)} for the opposite helper method, 
+     * See {@link #getSelectExprFromAttribute(Enum, Map)} for the opposite helper method, 
      * that can be used to generate the 'select_expr's in the SELECT clause of a query. 
      * Note that column names of a result set can correspond exactly to the 'select_expr's used 
      * in the query, or they can differ if aliases were used. In the latter case, this method 
@@ -182,7 +181,7 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
      * @return                      An {@code Attribute} {@code T} corresponding to {@code colName}.
      * @throws UnrecognizedColumnException  If {@code colName} does not correspond to 
      *                                      any {@code Attribute} in {@code colNamesToAttributes}.
-     * @see #getSelectExprFromAttribute(T, Map)
+     * @see #getSelectExprFromAttribute(Enum, Map)
      */
     protected T getAttributeFromColName(String colName, Map<String, T> colNamesToAttributes) 
             throws UnrecognizedColumnException {
@@ -197,7 +196,7 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
      * Get the 'select_expr' of a SELECT clause corresponding to the {@code Attribute} {@code attr}.
      * The mapping is retrieved from {@code selectExprsToAttributes}. This helper method  
      * is most likely used when writing a SQL query. See also the simple helper method 
-     * {@link #generateSelectClause(String, Map)}.
+     * {@link #generateSelectClause(String, Map, boolean)}.
      * <p>
      * See {@link #getAttributeFromColName(String, Map)} for the opposite helper method, 
      * that can be used to retrieve the {@code Attribute} corresponding to the column name of a result set. 
@@ -216,30 +215,16 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
      *                                  {@code getAttributeFromColName}.
      * @return                          A {@code String} that is a 'select_expr' corresponding to {@code attr}.
      * @throws IllegalArgumentException If {@code attr} does not correspond to any 'select_expr' 
-     *                                  in {@code selectExprsToAttributes}, or if several 'select_expr's 
-     *                                  are mapped to a same {@code Attribute}.
+     *                                  in {@code selectExprsToAttributes}.
      * @see #getAttributeFromColName(String, Map)
-     * @see #reverseColNameMap(Map)
-     * @see #generateSelectClause(String, Map)
+     * @see #generateSelectClause(String, Map, boolean)
      */
-    //FIXME: we shouldn't reverse the Map at each call to this method...
     protected String getSelectExprFromAttribute(T attr, Map<String, T> selectExprsToAttributes) 
             throws IllegalArgumentException {
         log.entry(attr, selectExprsToAttributes);
         
-        //we reverse the provided Map, because anyway we want to check all Entries 
-        //to make sure there is not several 'select_expr's mapped to a same Attribute
-        Map<T, String> reverseMap = new HashMap<T, String>();
-        try {
-            reverseMap = selectExprsToAttributes.entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
-        } catch (IllegalStateException e) {
-            //wrap the IllegalStateException thrown by Collectors.toMap into an IllegalArgumentException
-            throw log.throwing(new IllegalArgumentException(
-                    "An Attribute is mapped to several 'select_expr's", e));
-        }
-        
-        String selectExpr = reverseMap.get(attr);
+        String selectExpr = selectExprsToAttributes.entrySet().stream()
+                .filter(e -> e.getValue().equals(attr)).map(e -> e.getKey()).findFirst().orElse(null);
         if (StringUtils.isBlank(selectExpr)) {
             throw log.throwing(new IllegalArgumentException(
                     "Attribute not mapped to any valid 'select_expr': " + attr));
@@ -249,7 +234,7 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
     /**
      * Helper method to generate the SELECT clause of a query, from the {@code Attribute}s 
      * returned by {@link #getAttributes()}, using the method 
-     * {@link #getSelectExprFromAttribute(T, Map)}. This method helps only in simple cases, 
+     * {@link #getSelectExprFromAttribute(Enum, Map)}. This method helps only in simple cases, 
      * more complex statements should be hand-written (for instance, when {@code Attribute}s 
      * correspond to columns in different tables, or to a sub-query). 
      * 
@@ -259,7 +244,7 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
      *                                  'select_expr's, associated to their corresponding 
      *                                  {@code Attribute} as values. This {@code Map} does not have  
      *                                  {@code Attribute}s as keys for coherence with the method 
-     *                                  {@link getAttributeFromColName(T, Map)}.
+     *                                  {@link #getAttributeFromColName(String, Map)}.
      * @param distinct                  A {@code boolean} defining whether the DISTINCT keyword 
      *                                  is needed in the SELECT clause.
      * @return                          A {@code String} that is the generated SELECT clause.
@@ -267,28 +252,56 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
      *                                  to an {@code Attribute} returned by {@link #getAttributes()}, 
      *                                  or if several 'select_expr's are mapped to a same {@code Attribute}.
      * @see #getAttributes()
-     * @see #getSelectExprFromAttribute(T, Map)
+     * @see #getSelectExprFromAttribute(Enum, Map)
      * @see #reverseColNameMap(Map)
      */
     protected String generateSelectClause(String tableName, Map<String, T> selectExprsToAttributes, 
             boolean distinct) throws IllegalArgumentException {
-        log.entry(tableName, selectExprsToAttributes);
+        log.entry(tableName, selectExprsToAttributes, distinct);
+        return log.exit(generateSelectClause(tableName, selectExprsToAttributes, distinct, 
+                this.getAttributes()));
+    }
+    /**
+     * Helper method to generate the SELECT clause of a query, from the {@code Attribute}s provided,
+     * using the method {@link #getSelectExprFromAttribute(Enum, Map)}. This method helps only 
+     * in simple cases, more complex statements should be hand-written (for instance, when {@code Attribute}s 
+     * correspond to columns in different tables, or to a sub-query). 
+     * 
+     * @param tableName                 A {@code String} that is the name of the table 
+     *                                  to retrieve data from, or its alias defined in the query.
+     * @param selectExprsToAttributes   A {@code Map} where keys are {@code String}s corresponding to 
+     *                                  'select_expr's, associated to their corresponding 
+     *                                  {@code Attribute} as values. This {@code Map} does not have  
+     *                                  {@code Attribute}s as keys for coherence with the method 
+     *                                  {@link #getAttributeFromColName(String, Map)}.
+     * @param distinct                  A {@code boolean} defining whether the DISTINCT keyword 
+     *                                  is needed in the SELECT clause.
+     * @return                          A {@code String} that is the generated SELECT clause.
+     * @throws IllegalArgumentException If {@code selectExprsToAttributes} is missing a key corresponding 
+     *                                  to an {@code Attribute} provided, 
+     *                                  or if several 'select_expr's are mapped to a same {@code Attribute}.
+     * @see #getSelectExprFromAttribute(Enum, Map)
+     * @see #reverseColNameMap(Map)
+     */
+    protected String generateSelectClause(String tableName, Map<String, T> selectExprsToAttributes, 
+            boolean distinct, Set<T> attributes) throws IllegalArgumentException {
+        log.entry(tableName, selectExprsToAttributes, distinct, attributes);
         
         StringBuilder sb = new StringBuilder("SELECT ");
         if (distinct) {
             sb.append("DISTINCT ");
         }
         //any attribute requested
-        if (this.getAttributes() == null || this.getAttributes().isEmpty() || 
+        if (attributes == null || attributes.isEmpty() || 
                 //if all attributes were requested
-                this.getAttributes().containsAll(Arrays.asList(
-                        this.getAttributes().iterator().next().getClass().getEnumConstants()))) {
+                attributes.containsAll(Arrays.asList(
+                        attributes.iterator().next().getClass().getEnumConstants()))) {
             
             sb.append(tableName).append(".* ");
             
         } else {
             //sort the Attributes to improve chances of cache hit
-            List<T> sortedAttributes = new ArrayList<T>(this.getAttributes());
+            List<T> sortedAttributes = new ArrayList<T>(attributes);
             sortedAttributes.sort(Comparator.comparing(Enum::ordinal));
             
             int attrCount = 0;

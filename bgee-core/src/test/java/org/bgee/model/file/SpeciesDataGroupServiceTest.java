@@ -1,5 +1,6 @@
 package org.bgee.model.file;
 
+import org.bgee.model.ServiceFactory;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
@@ -38,33 +39,38 @@ public class SpeciesDataGroupServiceTest extends TestAncestor {
 		SpeciesDataGroupDAO dao = mock(SpeciesDataGroupDAO.class);
         SpeciesService speciesService = mock(SpeciesService.class);
 		DownloadFileService downloadFileService = mock(DownloadFileService.class);
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(managerMock);
+        when(serviceFactory.getSpeciesService()).thenReturn(speciesService);
+        when(serviceFactory.getDownloadFileService()).thenReturn(downloadFileService);
 
 
 		// services return values
-		Species v1 = new Species("9606", "human", null, "Homo", "sapiens", "version1");
-		Species v2 = new Species("1234", "name", null, "genus", "someSpecies", "versionA");
+		Species v1 = new Species(9606, "human", null, "Homo", "sapiens", "version1", 123);
+		Species v2 = new Species(1234, "name", null, "genus", "someSpecies", "versionA", 234);
 		
         Set<Species> species = new HashSet<>();
 		species.add(v1);
 		species.add(v2);
-		DownloadFile df1 = new DownloadFile("/tmp/foo", "NAME", CategoryEnum.AFFY_ANNOT, 42L, "22");
-		DownloadFile df2 = new DownloadFile("/tmp/foo2", "NAME2", CategoryEnum.DIFF_EXPR_ANAT_COMPLETE, 1337L, "22");
-        DownloadFile df3 = new DownloadFile("/tmp/foo3", "NAME", CategoryEnum.AFFY_ANNOT, 42L, "42");
+		DownloadFile df1 = new DownloadFile("/tmp/foo", "NAME", CategoryEnum.AFFY_ANNOT, 42L, 22);
+		DownloadFile df2 = new DownloadFile("/tmp/foo2", "NAME2", CategoryEnum.DIFF_EXPR_ANAT_COMPLETE, 1337L, 22);
+        DownloadFile df3 = new DownloadFile("/tmp/foo3", "NAME", CategoryEnum.AFFY_ANNOT, 42L, 42);
 
         List<DownloadFile> downloadFiles = Arrays.asList(df1,df2,df3);
 
 
 		// DAO return values
         SpeciesDataGroupDAO.SpeciesDataGroupTO to1 =
-                new SpeciesDataGroupDAO.SpeciesDataGroupTO("22","group1","the group 1",2);
+                new SpeciesDataGroupDAO.SpeciesDataGroupTO(22, "group1", "the group 1", 2);
         SpeciesDataGroupDAO.SpeciesDataGroupTO to2 =
-                new SpeciesDataGroupDAO.SpeciesDataGroupTO("42","group2","group2",1);
+                new SpeciesDataGroupDAO.SpeciesDataGroupTO(42, "group2", "group2", 1);
 
-
-        SpeciesDataGroupDAO.SpeciesToDataGroupTO mto1 = new SpeciesDataGroupDAO.SpeciesToDataGroupTO("9606","22");
-        SpeciesDataGroupDAO.SpeciesToDataGroupTO mto2 = new SpeciesDataGroupDAO.SpeciesToDataGroupTO("1234","22");
-        SpeciesDataGroupDAO.SpeciesToDataGroupTO mto3 = new SpeciesDataGroupDAO.SpeciesToDataGroupTO("1234","42");
-
+        SpeciesDataGroupDAO.SpeciesToDataGroupTO mto1 = 
+            new SpeciesDataGroupDAO.SpeciesToDataGroupTO(9606, 22);
+        SpeciesDataGroupDAO.SpeciesToDataGroupTO mto2 =
+            new SpeciesDataGroupDAO.SpeciesToDataGroupTO(1234, 22);
+        SpeciesDataGroupDAO.SpeciesToDataGroupTO mto3 =
+            new SpeciesDataGroupDAO.SpeciesToDataGroupTO(1234, 42);
 
         // mock behavior
         SpeciesDataGroupTOResultSet sdgResultSet = getMockResultSet(
@@ -78,15 +84,15 @@ public class SpeciesDataGroupServiceTest extends TestAncestor {
         when(speciesService.loadSpeciesInDataGroups(false)).thenReturn(species);
         when(downloadFileService.getAllDownloadFiles()).thenReturn(downloadFiles);
 
-		//expectd values
+		//expected values
         Set<DownloadFile> groupFiles1 = new HashSet<>(Arrays.asList(df1,df2));
-        SpeciesDataGroup g1 = new SpeciesDataGroup("22","group1","the group 1", Arrays.asList(v1,v2), groupFiles1);
+        SpeciesDataGroup g1 = new SpeciesDataGroup(22, "group1", "the group 1", Arrays.asList(v1,v2), groupFiles1);
         Set<DownloadFile> groupFiles2 = new HashSet<>(Arrays.asList(df3));
-        SpeciesDataGroup g2 = new SpeciesDataGroup("42","group2","group2", Arrays.asList(v2), groupFiles2);
+        SpeciesDataGroup g2 = new SpeciesDataGroup(42, "group2","group2", Arrays.asList(v2), groupFiles2);
         List<SpeciesDataGroup> expDataGroups = Arrays.asList(g1,g2);
 
 		// actual use of the service
-		SpeciesDataGroupService service = new SpeciesDataGroupService(downloadFileService, speciesService, managerMock);
+		SpeciesDataGroupService service = new SpeciesDataGroupService(serviceFactory);
         List<SpeciesDataGroup> dataGroups = service.loadAllSpeciesDataGroup();
         Assert.assertEquals(2, dataGroups.size());
         Assert.assertEquals(expDataGroups, dataGroups);

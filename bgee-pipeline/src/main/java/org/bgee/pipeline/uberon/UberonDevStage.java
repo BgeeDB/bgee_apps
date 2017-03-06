@@ -353,7 +353,7 @@ public class UberonDevStage extends UberonCommon {
      * {@link #setPathToUberonOnt(String)} to make a deelopmental stage ontology, and saves it 
      * in OWL and OBO format in the path provided through {@link #setModifiedOntPath(String)}. 
      * <p>
-     * This method calls {@link #generateStageOntology(OWLOntology)}, by loading the 
+     * This method calls {@link #generateStageOntology()}, by loading the 
      * {@code OWLOntology} provided, and using attributes set before calling this method. 
      * Attributes that are used can be set prior to calling this method through the methods: 
      * {@link #setClassIdsToRemove(Collection)}, {@link #setToRemoveSubgraphRootIds(Collection)}, 
@@ -393,9 +393,8 @@ public class UberonDevStage extends UberonCommon {
     /**
      * Generates a developmental stage ontology extracted from {@code uberonOnt}, then 
      * removes the {@code OWLAnnotationAssertionAxiom}s that are problematic to convert 
-     * the ontology in OBO (using 
-     * {@link org.bgee.pipeline.OntologyUtils#removeOBOProblematicAxioms()}). 
-     * This method is very similar to {@link #simplifyUberon(OWLOntology)}, 
+     * the ontology in OBO (using {@link OntologyUtils#removeOBOProblematicAxioms()}). 
+     * This method is very similar to {@link org.bgee.pipeline.uberon.Uberon#simplifyUberon()}, 
      * but the simplification process for the developmental stages is much simpler and faster. 
      * <p>
      * Note that the {@code OWLOntology} passed as argument will be modified as a result 
@@ -419,7 +418,7 @@ public class UberonDevStage extends UberonCommon {
      * {@link #getToFilterSubgraphRootIds()}.
      * <li>{@code OWLGraphManipulator#reducePartOfIsARelations()} and 
      * {@code OWLGraphManipulator#reduceRelations()}
-     * <li>{@link org.bgee.pipeline.OntologyUtils#removeOBOProblematicAxioms()}
+     * <li>{@link OntologyUtils#removeOBOProblematicAxioms()}
      */
     public void generateStageOntology() {
         //we provide to the entry methods all class attributes that will be used 
@@ -582,8 +581,8 @@ public class UberonDevStage extends UberonCommon {
      * as the root which to start nested set model computations from (as if it was 
      * the actual root of the ontology). {@code OWLClass}es will be ordered 
      * according to their immediately_preceded_by and preceded_by relations, and 
-     * the nested set model computed using the method {@link 
-     * org.bgee.pipeline.OntologyUtils#computeNestedSetModelParams(List)}.
+     * the nested set model computed using the method
+     * {@link OntologyUtils#computeNestedSetModelParams(OWLClass, List, Set)}.
      * <p>
      * As the developmental stage ontology can include several species, 
      * {@link #getTaxonConstraints()} will be used so that stages from different species 
@@ -596,9 +595,9 @@ public class UberonDevStage extends UberonCommon {
      * 
      * @param root              An {@code OWLClass} that will be considered as the root 
      *                          of the ontology to start the conputations from.
-     * @return      See {@link org.bgee.pipeline.OntologyUtils#computeNestedSetModelParams(List)} 
+     * @return      See {@link OntologyUtils#computeNestedSetModelParams(OWLClass, List, Set)} 
      *              for details about values returned. 
-     * @see org.bgee.pipeline.OntologyUtils#computeNestedSetModelParams(List)
+     * @see OntologyUtils#computeNestedSetModelParams(OWLClass, List, Set)
      */
     public Map<OWLClass, Map<String, Integer>> generateStageNestedSetModel(OWLClass root) 
             throws IllegalStateException {
@@ -842,7 +841,7 @@ public class UberonDevStage extends UberonCommon {
      * @param providedNestedModel   A {@code Map} associating {@code OWLClass}es 
      *                              of the ontology to a {@code Map} containing 
      *                              their left bound, right bound, and level, see 
-     *                              {@link org.bgee.pipeline.OntologyUtils#computeNestedSetModelParams(
+     *                              {@link OntologyUtils#computeNestedSetModelParams(
      *                              OWLClass, List, Set)} 
      *                              for more details.
      * @param speciesId     An {@code int} that is the NCBI ID of the species for which 

@@ -386,7 +386,7 @@ public class DiffExpressionCallParams extends CallParams {
         return this.satisfyAllCallTypeConditions;
     }
     /**
-     * @param whatever  the {@code boolean} defining whether both requested minimum 
+     * @param condition the {@code boolean} defining whether both requested minimum 
      *                  contributions (Affymetrix and RNA-seq data) have to be satisfied 
      *                  or at least one of the two.
      * @see #getAffymetrixDiffExprCallTypes()

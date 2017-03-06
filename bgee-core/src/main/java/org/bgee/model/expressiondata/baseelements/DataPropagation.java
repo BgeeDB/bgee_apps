@@ -9,7 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Defines the source of expression data of a {@link CallData} or {@code Call}, along 
+ * Defines the source of expression data of a {@code CallData} or {@code Call}, along 
  * the ontologies used to capture conditions. For instance, the expression of a gene 
  * in a given anatomical entity could have been observed in the anatomical entity itself, 
  * or only in some substructures of the entity, or in both. Similarly, expression in a given 
@@ -46,18 +46,21 @@ public class DataPropagation {
      * or in some ancestor of the condition element.
      * <li>{@code SELF_OR_DESCENDANT}: data observed either in the condition element itself, 
      * or in some descendant of the condition element.
+     * <li>{@code ANCESTOR_AND_DESCENDANT}: data observed both in some descendant, 
+     * and in some ancestor of the condition element.
      * <li>{@code ALL}: data observed both in the condition element itself, 
      * and in some descendant of the condition element, and in some ancestor of the condition element.
      * </ul>
      * 
-     * @author Frederic Bastian
-     * @version Bgee 13 Nov. 2015
-     * @see DataPropagation
-     * @since Bgee 13 Sept. 2015
+     * @author  Frederic Bastian
+     * @author  Valentine Rech de Laval
+     * @version Bgee 13, May 2016
+     * @see     DataPropagation
+     * @since   Bgee 13, Sept. 2015
      */
     public static enum PropagationState {
         SELF, ANCESTOR, DESCENDANT, SELF_AND_ANCESTOR, SELF_AND_DESCENDANT, 
-        SELF_OR_ANCESTOR, SELF_OR_DESCENDANT, ALL;
+        SELF_OR_ANCESTOR, SELF_OR_DESCENDANT, ANCESTOR_AND_DESCENDANT, ALL;
     }
     
     /**
@@ -119,18 +122,29 @@ public class DataPropagation {
     public DataPropagation(PropagationState anatEntityPropagationState, 
             PropagationState devStagePropagationState, Boolean includingObservedData) 
                     throws IllegalArgumentException {
-        if (anatEntityPropagationState == null || devStagePropagationState == null) {
-            throw log.throwing(new IllegalArgumentException("The propagation states cannot be null"));
+        if (anatEntityPropagationState == null && devStagePropagationState == null) {
+            throw log.throwing(new IllegalArgumentException("The propagation states cannot be both null"));
         }
         //check consistency of the PropagationState and of the observed data state
         PropagationState[] states = new PropagationState[]{
                 anatEntityPropagationState, devStagePropagationState};
         if (new Boolean(true).equals(includingObservedData) && Arrays.stream(states).anyMatch(
-                e -> PropagationState.ANCESTOR.equals(e) || PropagationState.DESCENDANT.equals(e)) ||
+                e -> PropagationState.ANCESTOR.equals(e) || PropagationState.DESCENDANT.equals(e) || 
+                PropagationState.ANCESTOR_AND_DESCENDANT.equals(e)) ||
                 
-            new Boolean(false).equals(includingObservedData) && Arrays.stream(states).allMatch(
-                e -> PropagationState.SELF.equals(e) || PropagationState.SELF_AND_ANCESTOR.equals(e) || 
-                PropagationState.SELF_AND_DESCENDANT.equals(e) || PropagationState.ALL.equals(e))) {
+            // Here, we cannot check consistency of PropagationState.SELF_AND_ANCESTOR,
+            // PropagationState.SELF_AND_DESCENDANT, and PropagationState.ALL due to 
+            // reconciliation of calls. For instance, if we reconcile following ExpressionCalls:
+            // - call with anat. entity propa. state equals to SELF and 
+            // dev. stage propa. state equals to ANCESTOR
+            // - call with anat. entity propa. state equals to ANCESTOR and 
+            // dev. stage propa. state equals to SELF
+            // ExpressionCall will have anat. entity propa. state equals to SELF_AND_ANCESTOR and 
+            // dev. stage propa. state equals to SELF_AND_ANCESTOR
+            // with includingObservedData equals to true
+            new Boolean(false).equals(includingObservedData) && Arrays.stream(states)
+                    .filter(e -> e != null)
+                    .allMatch(e -> PropagationState.SELF.equals(e))) {
             
             throw log.throwing(new IllegalArgumentException("The provided observed data state ("
                     + includingObservedData + ") is incompatible with the provided PropagationStates ("

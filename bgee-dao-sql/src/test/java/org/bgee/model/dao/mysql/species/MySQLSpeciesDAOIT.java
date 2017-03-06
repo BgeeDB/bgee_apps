@@ -45,12 +45,12 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
         
         //create a Collection of SpeciesTOs to be inserted
         Collection<SpeciesTO> speciesTOs = new ArrayList<SpeciesTO>();
-        speciesTOs.add(new SpeciesTO("10", "commonName1", "genus1", "speciesName1", 
-                2, "100", "path/1", "1", "1", null, ""));
-        speciesTOs.add(new SpeciesTO("20", "commonName2", "genus2", "speciesName2", 
-                1, "120", "path/2", "2", "1", "200", "YEAH"));
-        speciesTOs.add(new SpeciesTO("30", "commonName3", "genus3", "speciesName3", 
-                3, "500", "path/3", "3", "1", "200", ""));
+        speciesTOs.add(new SpeciesTO(10, "commonName1", "genus1", "speciesName1", 2,
+                100, "path/1", "1", 1, null));
+        speciesTOs.add(new SpeciesTO(20, "commonName2", "genus2", "speciesName2", 1,
+                120, "path/2", "2", 1, 200));
+        speciesTOs.add(new SpeciesTO(30, "commonName3", "genus3", "speciesName3", 3,
+                500, "path/3", "3", 1, 200));
         try {
             MySQLSpeciesDAO dao = new MySQLSpeciesDAO(this.getMySQLDAOManager());
             assertEquals("Incorrect number of rows inserted", 3, 
@@ -127,18 +127,18 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
         
         // Generate manually expected result
         List<SpeciesTO> expectedSpecies = Arrays.asList(
-                new SpeciesTO("31", "spCName31", "gen31", "sp31", 1, "311", 
-                        "gen31_sp31/gen31_sp31.genome31", "genome31", "1", "0", ""),
-                new SpeciesTO("41", "spCName41", "gen41", "sp41", 2, "411", 
-                        "gen41_sp41/gen41_sp41.genome41", "genome41", "1", "0", ""),
-                new SpeciesTO("21", "spCName21", "gen21", "sp21", 3, "211", 
-                        "gen51_sp51/gen51_sp51.genome51", "genome51", "1", "51", "PREFIX51"),
-                new SpeciesTO("11", "spCName11", "gen11", "sp11", 4, "111", 
-                        "gen11_sp11/gen11_sp11.genome11", "genome11", "1", "0", ""),
-                new SpeciesTO("42", "spCName42", "gen41", "sp42", 5, "411", 
-                        "gen41_sp41/gen41_sp41.genome41", "genome41", "1", "41", "PREFIX41"),
-                new SpeciesTO("51", "spCName51", "gen51", "sp51", 6, "511", 
-                        "gen51_sp51/gen51_sp51.genome51", "genome51", "1", "0", ""));
+                new SpeciesTO(31, "spCName31", "gen31", "sp31", 1, 311, 
+                        "gen31_sp31/gen31_sp31.genome31", "genome31", 1, 0),
+                new SpeciesTO(41, "spCName41", "gen41", "sp41", 2, 411, 
+                        "gen41_sp41/gen41_sp41.genome41", "genome41", 1, 0),
+                new SpeciesTO(21, "spCName21", "gen21", "sp21", 3, 211, 
+                        "gen51_sp51/gen51_sp51.genome51", "genome51", 1, 51),
+                new SpeciesTO(11, "spCName11", "gen11", "sp11", 4, 111, 
+                        "gen11_sp11/gen11_sp11.genome11", "genome11", 1, 0),
+                new SpeciesTO(42, "spCName42", "gen41", "sp42", 5, 411, 
+                        "gen41_sp41/gen41_sp41.genome41", "genome41", 1, 41),
+                new SpeciesTO(51, "spCName51", "gen51", "sp51", 6, 511, 
+                        "gen51_sp51/gen51_sp51.genome51", "genome51", 1, 0));
         // Compare
         assertTrue("SpeciesTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methSpecies, expectedSpecies));
@@ -151,12 +151,12 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
         
         // Generate manually expected result
         expectedSpecies = Arrays.asList(
-                new SpeciesTO(null, "spCName11", null, null, null, null, null, null, null, null, null),
-                new SpeciesTO(null, "spCName21",null, null,  null, null, null, null, null, null, null),
-                new SpeciesTO(null, "spCName31", null, null, null, null, null, null, null, null, null),
-                new SpeciesTO(null, "spCName41", null, null, null, null, null, null, null, null, null),
-                new SpeciesTO(null, "spCName42", null, null, null, null, null, null, null, null, null),
-                new SpeciesTO(null, "spCName51", null, null, null, null, null, null, null, null, null));
+                new SpeciesTO(null, "spCName11", null, null, null, null, null, null, null, null),
+                new SpeciesTO(null, "spCName21",null, null,  null, null, null, null, null, null),
+                new SpeciesTO(null, "spCName31", null, null, null, null, null, null, null, null),
+                new SpeciesTO(null, "spCName41", null, null, null, null, null, null, null, null),
+                new SpeciesTO(null, "spCName42", null, null, null, null, null, null, null, null),
+                new SpeciesTO(null, "spCName51", null, null, null, null, null, null, null, null));
         // Compare
         assertTrue("SpeciesTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(methSpecies, expectedSpecies));
@@ -173,14 +173,14 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
         // Generate result with the method
         MySQLSpeciesDAO dao = new MySQLSpeciesDAO(this.getMySQLDAOManager());
         List<SpeciesTO> speciesTOs = dao.getSpeciesByIds(
-                new HashSet<String>(Arrays.asList("11", "31"))).getAllTOs();
+                new HashSet<>(Arrays.asList(11, 31))).getAllTOs();
         
         // expected result
         List<SpeciesTO> expectedSpeciesTOs = Arrays.asList(
-                new SpeciesTO("11", "spCName11", "gen11", "sp11", 4, "111", 
-                        "gen11_sp11/gen11_sp11.genome11", "genome11", "1", "0", ""), 
-                new SpeciesTO("31", "spCName31", "gen31", "sp31", 1, "311", 
-                        "gen31_sp31/gen31_sp31.genome31", "genome31", "1", "0", "")); 
+                new SpeciesTO(11, "spCName11", "gen11", "sp11", 4, 111, 
+                        "gen11_sp11/gen11_sp11.genome11", "genome11", 1, 0), 
+                new SpeciesTO(31, "spCName31", "gen31", "sp31", 1, 311, 
+                        "gen31_sp31/gen31_sp31.genome31", "genome31", 1, 0));
         // Compare
         assertTrue("SpeciesTOs incorrectly retrieved, expected: " + expectedSpeciesTOs + 
                 ", but was: " + speciesTOs, 
@@ -190,12 +190,12 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
         dao.setAttributes(SpeciesDAO.Attribute.ID, SpeciesDAO.Attribute.GENUS, 
                 SpeciesDAO.Attribute.SPECIES_NAME);
         speciesTOs = dao.getSpeciesByIds(
-                new HashSet<String>(Arrays.asList("11", "31"))).getAllTOs();
+                new HashSet<>(Arrays.asList(11, 31))).getAllTOs();
         
         // Generate manually expected result
         expectedSpeciesTOs = Arrays.asList(
-                new SpeciesTO("11", null, "gen11", "sp11", null, null, null, null, null, null, null), 
-                new SpeciesTO("31", null, "gen31", "sp31", null, null, null, null, null, null, null)); 
+                new SpeciesTO(11, null, "gen11", "sp11", null, null, null, null, null, null), 
+                new SpeciesTO(31, null, "gen31", "sp31", null, null, null, null, null, null)); 
         // Compare
         assertTrue("SpeciesTOs incorrectly retrieved, expected: " + expectedSpeciesTOs + 
                 ", but was: " + speciesTOs, 
@@ -205,12 +205,12 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
         dao.setAttributes(SpeciesDAO.Attribute.ID, SpeciesDAO.Attribute.GENUS, 
                 SpeciesDAO.Attribute.SPECIES_NAME, SpeciesDAO.Attribute.DISPLAY_ORDER);
         speciesTOs = dao.getSpeciesByIds(
-                new HashSet<String>(Arrays.asList("11", "31"))).getAllTOs();
+                new HashSet<>(Arrays.asList(11, 31))).getAllTOs();
         
         // Generate manually expected result
         expectedSpeciesTOs = Arrays.asList(
-                new SpeciesTO("11", null, "gen11", "sp11", 4, null, null, null, null, null, null), 
-                new SpeciesTO("31", null, "gen31", "sp31", 1, null, null, null, null, null, null)); 
+                new SpeciesTO(11, null, "gen11", "sp11", 4, null, null, null, null, null), 
+                new SpeciesTO(31, null, "gen31", "sp31", 1, null, null, null, null, null));
         // Compare
         assertTrue("SpeciesTOs incorrectly retrieved, expected: " + expectedSpeciesTOs + 
                 ", but was: " + speciesTOs, 
@@ -227,12 +227,12 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
 
         // Generate manually expected result
         List<SpeciesTO> expectedSpecies = Arrays.asList(
-                new SpeciesTO("41", "spCName41", "gen41", "sp41", 2, "411", 
-                        "gen41_sp41/gen41_sp41.genome41", "genome41", "1", "0", ""),
-                new SpeciesTO("21", "spCName21", "gen21", "sp21", 3, "211", 
-                        "gen51_sp51/gen51_sp51.genome51", "genome51", "1", "51", "PREFIX51"),
-                new SpeciesTO("51", "spCName51", "gen51", "sp51", 6, "511", 
-                        "gen51_sp51/gen51_sp51.genome51", "genome51", "1", "0", ""));
+                new SpeciesTO(41, "spCName41", "gen41", "sp41", 2, 411, 
+                        "gen41_sp41/gen41_sp41.genome41", "genome41", 1, 0),
+                new SpeciesTO(21, "spCName21", "gen21", "sp21", 3, 211, 
+                        "gen51_sp51/gen51_sp51.genome51", "genome51", 1, 51),
+                new SpeciesTO(51, "spCName51", "gen51", "sp51", 6, 511, 
+                        "gen51_sp51/gen51_sp51.genome51", "genome51", 1, 0));
         // Compare
         assertTrue("SpeciesTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(methSpecies, expectedSpecies));
@@ -243,9 +243,9 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
 
         // Generate manually expected result
         expectedSpecies = Arrays.asList(
-                new SpeciesTO(null, "spCName41", null, null, null, null, null, null, null, null, null),
-                new SpeciesTO(null, "spCName21",null, null,  null, null, null, null, null, null, null),
-                new SpeciesTO(null, "spCName51", null, null, null, null, null, null, null, null, null));
+                new SpeciesTO(null, "spCName41", null, null, null, null, null, null, null, null),
+                new SpeciesTO(null, "spCName21",null, null,  null, null, null, null, null, null),
+                new SpeciesTO(null, "spCName51", null, null, null, null, null, null, null, null));
         // Compare
         assertTrue("SpeciesTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(methSpecies, expectedSpecies));

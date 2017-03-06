@@ -53,17 +53,17 @@ public interface StageGroupingDAO extends DAO {
      * Note that using the {@code setAttributes} methods (see {@link DAO}) has no effect 
      * on attributes retrieved in {@code GroupToStageTO}s.
      * 
-     * @param ancestralTaxonId  A {@code String} that is the NCBI ID of the taxon 
+     * @param ancestralTaxonId  An {@code Integer} that is the NCBI ID of the taxon 
      *                          for which the stages could be used for comparisons.
-     * @param speciesIds        A {@code Set} of {@code String}s that are the IDs 
+     * @param speciesIds        A {@code Set} of {@code Integer}s that are the IDs 
      *                          of the species for which the stages retrieved 
      *                          should be valid.
      * @return                  A {@code GroupToStageTOResultSet} allowing 
      *                          to retrieve the requested {@code GroupToStageTO}s.
      * @throws DAOException     If an error occurred when accessing the data source. 
      */
-    public GroupToStageTOResultSet getGroupToStage(String ancestralTaxonId, 
-            Set<String> speciesIds) throws DAOException;
+    public GroupToStageTOResultSet getGroupToStage(Integer ancestralTaxonId, 
+            Set<Integer> speciesIds) throws DAOException;
     
     /**
      * {@code DAOResultSet} specifics to {@code GroupToStageTO}s.
@@ -127,52 +127,6 @@ public interface StageGroupingDAO extends DAO {
          */
         public String getStageId() {
             return stageId;
-        }
-
-        /* (non-Javadoc)
-         * @see java.lang.Object#hashCode()
-         */
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result
-                    + ((groupId == null) ? 0 : groupId.hashCode());
-            result = prime * result
-                    + ((stageId == null) ? 0 : stageId.hashCode());
-            return result;
-        }
-
-        /* (non-Javadoc)
-         * @see java.lang.Object#equals(java.lang.Object)
-         */
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null) {
-                return false;
-            }
-            if (!(obj instanceof GroupToStageTO)) {
-                return false;
-            }
-            GroupToStageTO other = (GroupToStageTO) obj;
-            if (groupId == null) {
-                if (other.groupId != null) {
-                    return false;
-                }
-            } else if (!groupId.equals(other.groupId)) {
-                return false;
-            }
-            if (stageId == null) {
-                if (other.stageId != null) {
-                    return false;
-                }
-            } else if (!stageId.equals(other.stageId)) {
-                return false;
-            }
-            return true;
         }
 
         /* (non-Javadoc)

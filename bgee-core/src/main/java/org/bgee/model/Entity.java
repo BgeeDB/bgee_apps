@@ -1,7 +1,5 @@
 package org.bgee.model;
 
-import org.apache.commons.lang3.StringUtils;
-
 /**
  * Parent class of all classes corresponding to real entities in the Bgee database. 
  * For instance, a {@code Gene}, a {@code Species}, 
@@ -13,12 +11,15 @@ import org.apache.commons.lang3.StringUtils;
  * @author Frederic Bastian
  * @version Bgee 13 Sept. 2015
  * @since Bgee 01
+ * 
+ * @param <T> The type of ID of this {@code Entity}
  */
-public abstract class Entity {
+//TODO: use Parametric class to specify whether ID is a String or a Integer. Same in NamedEntity.
+public abstract class Entity<T> {
 	/**
 	 * @see #getId()
 	 */
-    private final String id;
+    private final T id;
     
     /**
      * Default constructor not public, at least an ID must always be provided, 
@@ -31,13 +32,13 @@ public abstract class Entity {
     }
     /**
      * Constructor providing the ID of this {@code Entity}. 
-     * {@code id} cannot be blank, otherwise an {@code IllegalArgumentException} is thrown. 
+     * {@code id} cannot be {@code null}, otherwise an {@code IllegalArgumentException} is thrown. 
      * 
-     * @param id	A {@code String} representing the ID of this {@code Entity}.
-     * @throws IllegalArgumentException 	if {@code id} is blank. 
+     * @param id	A {@code T} representing the ID of this {@code Entity}.
+     * @throws IllegalArgumentException 	if {@code id} is {@code null}. 
      */
-    public Entity(String id) throws IllegalArgumentException {
-        if (StringUtils.isBlank(id)) {
+    public Entity(T id) throws IllegalArgumentException {
+        if (id == null) {
             throw new IllegalArgumentException("the ID provided cannot be blank.");
         }
         this.id = id;
@@ -45,43 +46,40 @@ public abstract class Entity {
     
     
 	/**
-	 * @return 	A {@code String} representing the ID of this {@code Entity}
+	 * @return 	A {@code T} representing the ID of this {@code Entity}
 	 */
-	public String getId() {
+	public T getId() {
 		return this.id;
 	}
 	
-	/**
-     * This {@code hashCode} method is solely based on the {@link #getId()} value.
-     * {@inheritDoc}
-     */
-	@Override
-	public int hashCode() {
-		return ((id == null) ? 0 : id.hashCode());
-	}
-	/**
-	 * This {@code equals} method is solely based on the {@link #getId()} value.
-	 * {@inheritDoc}
-	 */
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		Entity other = (Entity) obj;
-		if (id == null) {
-			if (other.getId() != null) {
-				return false;
-			}
-		} else if (!id.equals(other.getId())) {
-			return false;
-		}
-		return true;
-	}
+	
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((id == null) ? 0 : id.hashCode());
+        return result;
+    }
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        Entity<?> other = (Entity<?>) obj;
+        if (id == null) {
+            if (other.id != null) {
+                return false;
+            }
+        } else if (!id.equals(other.id)) {
+            return false;
+        }
+        return true;
+    }
+	
 }

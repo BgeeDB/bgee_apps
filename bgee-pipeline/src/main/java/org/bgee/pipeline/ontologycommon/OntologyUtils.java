@@ -191,22 +191,25 @@ public class OntologyUtils {
     /**
      * A {@code String} representing the key to obtain left bound value 
      * of a taxon, in the {@code Map} storing parameters of the nested set model.
-     * @see #computeNestedSetModelParams()
-     * @see #computeNestedSetModelParams(List)
+     * @see #computeNestedSetModelParams(OWLClass)
+     * @see #computeNestedSetModelParams(OWLClass, List)
+     * @see #computeNestedSetModelParams(OWLClass, List, Set)
      */
     public static final String LEFT_BOUND_KEY = "left";
     /**
      * A {@code String} representing the key to obtain right bound value 
      * of a taxon, in the {@code Map} storing parameters of the nested set model.
-     * @see #computeNestedSetModelParams()
-     * @see #computeNestedSetModelParams(List)
+     * @see #computeNestedSetModelParams(OWLClass)
+     * @see #computeNestedSetModelParams(OWLClass, List)
+     * @see #computeNestedSetModelParams(OWLClass, List, Set)
      */
     public static final String RIGHT_BOUND_KEY = "right";
     /**
      * A {@code String} representing the key to obtain level value 
      * of a taxon, in the {@code Map} storing parameters of the nested set model.
-     * @see #computeNestedSetModelParams()
-     * @see #computeNestedSetModelParams(List)
+     * @see #computeNestedSetModelParams(OWLClass)
+     * @see #computeNestedSetModelParams(OWLClass, List)
+     * @see #computeNestedSetModelParams(OWLClass, List, Set)
      */
     public static final String LEVEL_KEY = "level";
     
@@ -516,7 +519,7 @@ public class OntologyUtils {
      * 
      * @param root  An {@code OWLClass} that will be considered as the root of the ontology 
      *              to start the computations from.
-     * @return  See {@link #computeNestedSetModelParams(OWLClass, List)} 
+     * @return  See {@link #computeNestedSetModelParams(OWLClass, List, Set)} 
      * @throws IllegalStateException    If the {@code OWLOntology} provided at instantiation 
      *                                  is not a simple tree.
      * @throws UnknownOWLOntologyException      If an {@code OWLGraphWrapper} was not 
@@ -525,7 +528,7 @@ public class OntologyUtils {
      * @throws OWLOntologyCreationException     If an {@code OWLGraphWrapper} was not 
      *                                          provided at instantiation, and an error 
      *                                          occurred while loading it.
-     * @see #computeNestedSetModelParams(OWLClass, List)
+     * @see #computeNestedSetModelParams(OWLClass, List, Set)
      */
     //TODO adapt as in org.bgee.pipeline.hierarchicalGroups.ParseOrthoXML.buildNestedSet(Node)
     public Map<OWLClass, Map<String, Integer>> computeNestedSetModelParams(OWLClass root) 
@@ -618,8 +621,8 @@ public class OntologyUtils {
     /**
      * A recursive method use to walk the {@code OWLOntology} wrapped into 
      * {@link #wrapper}, to compute the parameters allowing to represent the ontology 
-     * as a nested set model. This method is first called by {@link 
-     * #computeNestedSetModelParams(List)} by providing the {@code OWLClass} 
+     * as a nested set model. This method is first called by 
+     * {@link #computeNestedSetModelParams(List)} by providing the {@code OWLClass} 
      * root of the ontology, an initialized {@code Map} to store the parameters, 
      * and possibly a {@code List} to order {@code OWLClass}es. Following 
      * this first call, all the ontology will be recursively walked, and {@code params} 
@@ -627,9 +630,8 @@ public class OntologyUtils {
      * 
      * @param params            The {@code Map} allowing to store computed parameters, 
      *                          that will be populated along the recursive calls. 
-     *                          See returned value of {@link 
-     *                          #computeNestedSetModelParams(List)} for 
-     *                          a description.
+     *                          See returned value of {@link #computeNestedSetModelParams(List)} 
+     *                          for a description.
      * @param classInspected    Current {@code OWLClass} walked, for which children 
      *                          will be iterated. 
      * @param classOrder        A {@code List} allowing to order children 
@@ -1202,7 +1204,7 @@ public class OntologyUtils {
      * @param list2 A second {@code List} of {@code OWLClass}es to be merged. 
      * @return      The resulting merged {@code List} of {@code OWLClass}es properly 
      *              ordered. 
-     * @throw IllegalArgumentException  If some of the {@code List}s contains several 
+     * @throws IllegalArgumentException If some of the {@code List}s contains several 
      *                                  equal elements. 
      */
     public static <T> List<T> mergeLists(List<T> list1, List<T> list2) 

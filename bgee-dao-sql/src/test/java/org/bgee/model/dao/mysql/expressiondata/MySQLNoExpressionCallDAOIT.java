@@ -54,728 +54,725 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
-
-    /**
-     * Test the select method {@link MySQLNoExpressionCallDAO#getNoExpressionCalls()}.
-     * @throws SQLException 
-     */
-    @Test
-    public void shouldGetNoExpressionCalls() throws SQLException {
-        this.useSelectDB();
-        
-        // On noExpression table 
-        MySQLNoExpressionCallDAO dao = new MySQLNoExpressionCallDAO(this.getMySQLDAOManager());
-        
-        // Without speciesIds and not include parent structures
-        // Generate parameters
-        Set<String> speciesIds = new HashSet<String>();
-        NoExpressionCallParams params = new NoExpressionCallParams();
-        params.addAllSpeciesIds(speciesIds);
-        params.setIncludeParentStructures(false);
-        // Generate manually expected result
-        List<NoExpressionCallTO> expectedNoExprCalls = Arrays.asList(
-                new NoExpressionCallTO("1","ID2", "Anat_id5", "Stage_id13", 
-                        DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA,
-                        DataState.HIGHQUALITY, false, OriginOfLine.SELF),
-                new NoExpressionCallTO("2","ID1", "Anat_id1", "Stage_id1",
-                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA,
-                        DataState.LOWQUALITY, false, OriginOfLine.SELF),
-                new NoExpressionCallTO("3","ID3", "Anat_id6", "Stage_id6",
-                        DataState.NODATA, DataState.NODATA, DataState.NODATA, 
-                        DataState.LOWQUALITY, false, OriginOfLine.SELF),
-                new NoExpressionCallTO("4","ID2", "Anat_id11", "Stage_id11", 
-                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
-                        DataState.HIGHQUALITY, false, OriginOfLine.SELF),
-                new NoExpressionCallTO("5","ID3", "Anat_id8", "Stage_id10",
-                        DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.NODATA,
-                        DataState.LOWQUALITY, false, OriginOfLine.SELF),
-                new NoExpressionCallTO("6","ID3", "Anat_id6", "Stage_id7", 
-                        DataState.LOWQUALITY, DataState.NODATA, DataState.NODATA,
-                        DataState.HIGHQUALITY, false, OriginOfLine.SELF),
-                new NoExpressionCallTO("7","ID3", "Anat_id5", "Stage_id6", 
-                        DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA,
-                        DataState.HIGHQUALITY, false, OriginOfLine.SELF),
-                new NoExpressionCallTO("8","ID3", "Anat_id5", "Stage_id14", 
-                        DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
-                        DataState.NODATA, false, OriginOfLine.SELF),
-                new NoExpressionCallTO("9","ID1", "Anat_id14", "Stage_id14", 
-                        DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
-                        DataState.NODATA, false, OriginOfLine.SELF)); 
-
-        // Compare
-        assertTrue("NoExpressionCallTOs incorrectly retrieved", 
-                TOComparator.areTOCollectionsEqual(expectedNoExprCalls, 
-                        dao.getNoExpressionCalls(params).getAllTOs()));
-
-        // With speciesIds but not include parent structures 
-        params.addAllSpeciesIds(Arrays.asList("21", "41"));
-        //Generate manually expected result
-        expectedNoExprCalls = Arrays.asList(
-                new NoExpressionCallTO("1","ID2", "Anat_id5", "Stage_id13", 
-                        DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA,
-                        DataState.HIGHQUALITY, false, OriginOfLine.SELF),
-                new NoExpressionCallTO("4","ID2", "Anat_id11", "Stage_id11",
-                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA,
-                        DataState.HIGHQUALITY, false, OriginOfLine.SELF)); 
-        // Compare
-        assertTrue("NoExpressionCallTOs incorrectly retrieved", 
-                TOComparator.areTOCollectionsEqual(expectedNoExprCalls, 
-                        dao.getNoExpressionCalls(params).getAllTOs()));
-
-        // On global no-expression table
-        params.setIncludeParentStructures(true);
-        
-        // With speciesIds and include parent structures 
-        // Generate parameters
-        expectedNoExprCalls = Arrays.asList(
-                new NoExpressionCallTO("1", "ID2", "Anat_id5", "Stage_id13",
-                        DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA,
-                        DataState.HIGHQUALITY, true, OriginOfLine.SELF),
-                new NoExpressionCallTO("2", "ID2", "Anat_id2", "Stage_id13", 
-                        DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA,
-                        DataState.HIGHQUALITY, true, OriginOfLine.BOTH),
-                new NoExpressionCallTO("3", "ID2", "Anat_id1", "Stage_id13", 
-                        DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
-                        DataState.HIGHQUALITY, true, OriginOfLine.PARENT),
-                new NoExpressionCallTO("7", "ID2", "Anat_id11", "Stage_id11",
-                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA,
-                        DataState.HIGHQUALITY, true, OriginOfLine.SELF),
-                new NoExpressionCallTO("8", "ID2", "Anat_id10", "Stage_id11", 
-                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA,
-                        DataState.HIGHQUALITY, true, OriginOfLine.PARENT),
-                new NoExpressionCallTO("9", "ID2", "Anat_id1", "Stage_id11", 
-                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
-                        DataState.HIGHQUALITY, true, OriginOfLine.PARENT));
-        // Compare
-        assertTrue("NoExpressionCallTOs incorrectly retrieved", 
-                TOComparator.areTOCollectionsEqual(expectedNoExprCalls, 
-                        dao.getNoExpressionCalls(params).getAllTOs()));
-
-        // Without species filter but include substructures
-        // Generate parameters
-        params.clearSpeciesIds();
-        // Generate manually expected result
-        expectedNoExprCalls = Arrays.asList(
-                new NoExpressionCallTO("1", "ID2", "Anat_id5", "Stage_id13", 
-                        DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
-                        DataState.HIGHQUALITY, true, OriginOfLine.SELF),
-                new NoExpressionCallTO("2", "ID2", "Anat_id2", "Stage_id13",
-                        DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
-                        DataState.HIGHQUALITY, true, OriginOfLine.BOTH),
-                new NoExpressionCallTO("3", "ID2", "Anat_id1", "Stage_id13",
-                        DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA,
-                        DataState.HIGHQUALITY, true, OriginOfLine.PARENT),
-                new NoExpressionCallTO("4", "ID3", "Anat_id6", "Stage_id6",
-                        DataState.NODATA, DataState.NODATA, DataState.NODATA, 
-                        DataState.LOWQUALITY, true, OriginOfLine.SELF),
-                new NoExpressionCallTO("5", "ID3", "Anat_id5", "Stage_id6",
-                        DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
-                        DataState.HIGHQUALITY, true, OriginOfLine.BOTH),
-                new NoExpressionCallTO("6", "ID3", "Anat_id1", "Stage_id6", 
-                        DataState.NODATA, DataState.NODATA, DataState.NODATA, 
-                        DataState.LOWQUALITY, true, OriginOfLine.PARENT),
-                new NoExpressionCallTO("7", "ID2", "Anat_id11", "Stage_id11",
-                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
-                        DataState.HIGHQUALITY, true, OriginOfLine.SELF),
-                new NoExpressionCallTO("8", "ID2", "Anat_id10", "Stage_id11", 
-                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
-                        DataState.HIGHQUALITY, true, OriginOfLine.PARENT),
-                new NoExpressionCallTO("9", "ID2", "Anat_id1", "Stage_id11", 
-                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
-                        DataState.HIGHQUALITY, true, OriginOfLine.PARENT),
-                new NoExpressionCallTO("10", "ID3", "Anat_id8", "Stage_id10", 
-                        DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
-                        DataState.LOWQUALITY, true, OriginOfLine.SELF),
-                new NoExpressionCallTO("11", "ID3", "Anat_id7", "Stage_id10", 
-                        DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.NODATA,
-                        DataState.LOWQUALITY, true, OriginOfLine.PARENT),
-                new NoExpressionCallTO("12", "ID3", "Anat_id6", "Stage_id7", 
-                        DataState.LOWQUALITY, DataState.NODATA, DataState.NODATA, 
-                        DataState.HIGHQUALITY, true, OriginOfLine.SELF),
-                new NoExpressionCallTO("13", "ID3", "Anat_id1", "Stage_id7", 
-                        DataState.LOWQUALITY, DataState.NODATA, DataState.NODATA, 
-                        DataState.HIGHQUALITY, true, OriginOfLine.PARENT),
-                new NoExpressionCallTO("14", "ID1", "Anat_id14", "Stage_id14", 
-                        DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
-                        DataState.NODATA, true, OriginOfLine.SELF),
-                new NoExpressionCallTO("15", "ID1", "Anat_id1", "Stage_id1", 
-                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
-                        DataState.LOWQUALITY, true, OriginOfLine.SELF));
-
-        // Compare
-        assertTrue("NoExpressionCallTOs incorrectly retrieved", 
-                TOComparator.areTOCollectionsEqual(expectedNoExprCalls, 
-                        dao.getNoExpressionCalls(params).getAllTOs()));
-        
-        // Test get only ID without species filter and without including substructures
-        dao.clearAttributes();
-        dao.setAttributes(Arrays.asList(NoExpressionCallDAO.Attribute.ID));
-        params.clearSpeciesIds();
-        params.setIncludeParentStructures(false);
-        expectedNoExprCalls = Arrays.asList(
-                new NoExpressionCallTO("1", null, null, null, null, null, null, null, null, null),
-                new NoExpressionCallTO("2", null, null, null, null, null, null, null, null, null),
-                new NoExpressionCallTO("3", null, null, null, null, null, null, null, null, null),
-                new NoExpressionCallTO("4", null, null, null, null, null, null, null, null, null),
-                new NoExpressionCallTO("5", null, null, null, null, null, null, null, null, null),
-                new NoExpressionCallTO("6", null, null, null, null, null, null, null, null, null),
-                new NoExpressionCallTO("7", null, null, null, null, null, null, null, null, null),
-                new NoExpressionCallTO("8", null, null, null, null, null, null, null, null, null),
-                new NoExpressionCallTO("9", null, null, null, null, null, null, null, null, null));
-        // Compare
-        assertTrue("NoExpressionCallTOs incorrectly retrieved", 
-                TOComparator.areTOCollectionsEqual(expectedNoExprCalls, 
-                        dao.getNoExpressionCalls(params).getAllTOs()));
-
-        // Test get INCLUDE_PARENT_STRUCTURES (and ANAT_ENTITY_ID) without species filter and 
-        // without ORIGIN_OF_LINE and without including substructures
-        dao.clearAttributes();
-        dao.setAttributes(Arrays.asList(NoExpressionCallDAO.Attribute.ANAT_ENTITY_ID, 
-                NoExpressionCallDAO.Attribute.INCLUDE_PARENT_STRUCTURES));
-        expectedNoExprCalls = Arrays.asList(
-                new NoExpressionCallTO(null, null, "Anat_id1", null, null, null, null, null, 
-                        false, null),
-                new NoExpressionCallTO(null, null, "Anat_id5", null, null, null, null, null, 
-                        false, null),
-                new NoExpressionCallTO(null, null, "Anat_id6", null, null, null, null, null, 
-                        false, null),
-                new NoExpressionCallTO(null, null, "Anat_id8", null, null, null, null, null, 
-                        false, null),
-                new NoExpressionCallTO(null, null, "Anat_id11", null, null, null, null, null, 
-                        false, null),
-                new NoExpressionCallTO(null, null, "Anat_id14", null, null, null, null, null, 
-                        false, null));
-
-                // Compare
-        assertTrue("NoExpressionCallTOs incorrectly retrieved", 
-                TOComparator.areTOCollectionsEqual(expectedNoExprCalls, 
-                        dao.getNoExpressionCalls(params).getAllTOs()));
-
-        // Test get only AFFYMETRIX_DATA without species filter and including substructures
-        dao.clearAttributes();
-        dao.setAttributes(Arrays.asList(NoExpressionCallDAO.Attribute.AFFYMETRIX_DATA));
-        params.setIncludeParentStructures(true);
-        expectedNoExprCalls = Arrays.asList(
-                new NoExpressionCallTO(null, null, null, null, DataState.NODATA, 
-                        null, null, null, null, null),
-                new NoExpressionCallTO(null, null, null, null, DataState.LOWQUALITY, 
-                        null, null, null, null, null),
-                new NoExpressionCallTO(null, null, null, null, DataState.HIGHQUALITY,
-                        null, null, null, null, null));
-        // Compare
-        assertTrue("NoExpressionCallTOs incorrectly retrieved", 
-                TOComparator.areTOCollectionsEqual(expectedNoExprCalls, 
-                        dao.getNoExpressionCalls(params).getAllTOs()));
-        
-        
-        // Test get INCLUDE_PARENT_STRUCTURES (and GENE_ID) without species filter and 
-        // without ORIGIN_OF_LINE including substructures
-        dao.clearAttributes();
-        dao.setAttributes(Arrays.asList(NoExpressionCallDAO.Attribute.GENE_ID, 
-                NoExpressionCallDAO.Attribute.INCLUDE_PARENT_STRUCTURES));
-        expectedNoExprCalls = Arrays.asList(
-                new NoExpressionCallTO(null, "ID1", null, null, null, null, null, null, true, null),
-                new NoExpressionCallTO(null, "ID2", null, null, null, null, null, null, true, null),
-                new NoExpressionCallTO(null, "ID3", null, null, null, null, null, null, true, null));
-        // Compare
-        assertTrue("NoExpressionCallTOs incorrectly retrieved", 
-                TOComparator.areTOCollectionsEqual(expectedNoExprCalls, 
-                        dao.getNoExpressionCalls(params).getAllTOs()));
-    }
-    
-    /**
-     * Test the get max method {@link MySQLNoExpressionCallDAO#getMaxNoExpressionCallID()}.
-     */
-    @Test
-    public void shouldGetMaxNoExpressionCallID() throws SQLException {
-
-        // Check on database with calls
-        this.useSelectDB();
-
-        MySQLNoExpressionCallDAO dao = new MySQLNoExpressionCallDAO(this.getMySQLDAOManager());
-
-        // Generate manually expected result for expression table
-        int expectedMaxNoExprId = 9;
-        int maxNoExprId = dao.getMaxNoExpressionCallId(false);
-        assertEquals("Max no-expression ID incorrectly retrieved", expectedMaxNoExprId, maxNoExprId);
-
-        // Generate manually expected result for global expression table
-        int expectedMaxGlobalNoExprId = 15;
-        int maxGlobalNoExprId = dao.getMaxNoExpressionCallId(true);
-        assertEquals("Max global no-expression ID incorrectly retrieved", 
-                expectedMaxGlobalNoExprId, maxGlobalNoExprId);
-        
-        // Check on database without calls
-        this.useEmptyDB();
-        
-        // Generate manually expected result for expression table
-        expectedMaxNoExprId = 0;
-        maxNoExprId = dao.getMaxNoExpressionCallId(false);
-        assertEquals("Max no-expression ID incorrectly retrieved", 
-                expectedMaxNoExprId, maxNoExprId);
-        
-        // Generate manually expected result for global expression table
-        expectedMaxGlobalNoExprId = 0;
-        maxGlobalNoExprId = dao.getMaxNoExpressionCallId(true);
-        assertEquals("Max global no-expression ID incorrectly retrieved", 
-                expectedMaxGlobalNoExprId, maxGlobalNoExprId);
-    }
-
-    /**
-     * Test the insert method {@link MySQLNoExpressionCallDAO#insertNoExpressionCalls()}.
-     * @throws SQLException 
-     */
-    @Test
-    public void shouldInsertNoExpressionCalls() throws SQLException {
-        
-        this.useEmptyDB();
-        
-        //create a Collection of NoExpressionCallTO to be inserted
-        Collection<NoExpressionCallTO> noExprCallTOs = Arrays.asList(
-                new NoExpressionCallTO("1", "ID3", "Anat_id1", "Stage_id1", 
-                        DataState.LOWQUALITY, DataState.NODATA, 
-                        DataState.NODATA, DataState.HIGHQUALITY, false, OriginOfLine.SELF),
-                new NoExpressionCallTO("7", "ID2", "Anat_id11", "Stage_id13", 
-                        DataState.NODATA, DataState.HIGHQUALITY, 
-                        DataState.NODATA, DataState.LOWQUALITY, false, OriginOfLine.SELF),
-                new NoExpressionCallTO("16", "ID2", "Anat_id3", "Stage_id18", 
-                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
-                        DataState.NODATA, DataState.HIGHQUALITY, true, OriginOfLine.BOTH),
-                new NoExpressionCallTO("20", "ID2", "Anat_id10", "Stage_id18", 
-                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
-                        DataState.NODATA, DataState.HIGHQUALITY, true, OriginOfLine.SELF),
-                new NoExpressionCallTO("21", "ID2", "Anat_id11", "Stage_id18", 
-                        DataState.LOWQUALITY, DataState.NODATA, 
-                        DataState.NODATA, DataState.HIGHQUALITY, true, OriginOfLine.PARENT));
-
-        try {
-            MySQLNoExpressionCallDAO dao = new MySQLNoExpressionCallDAO(this.getMySQLDAOManager());
-            assertEquals("Incorrect number of rows inserted", 5, 
-                    dao.insertNoExpressionCalls(noExprCallTOs));
-
-            //we manually verify the insertion, as we do not want to rely on other methods 
-            //that are tested elsewhere.
-            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
-                    prepareStatement("select 1 from noExpression where " +
-                      "noExpressionId = ? and geneId = ? and anatEntityId = ? and stageId = ? " +
-                      "and noExpressionAffymetrixData = ? and noExpressionInSituData = ? and " +
-                      "noExpressionRnaSeqData = ?")) {
-                
-                stmt.setString(1, "1");
-                stmt.setString(2, "ID3");
-                stmt.setString(3, "Anat_id1");
-                stmt.setString(4, "Stage_id1");
-                stmt.setString(5, "poor quality");
-                stmt.setString(6, "no data");
-                stmt.setString(7, "high quality");
-                assertTrue("NoExpressionCallTO incorrectly inserted", 
-                        stmt.getRealPreparedStatement().executeQuery().next());
-                
-                stmt.setString(1, "7");
-                stmt.setString(2, "ID2");
-                stmt.setString(3, "Anat_id11");
-                stmt.setString(4, "Stage_id13");
-                stmt.setString(5, "no data");
-                stmt.setString(6, "high quality");
-                stmt.setString(7, "poor quality");
-                assertTrue("NoExpressionCallTO incorrectly inserted", 
-                        stmt.getRealPreparedStatement().executeQuery().next());
-            }
-            
-            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
-                    prepareStatement("select 1 from globalNoExpression where " +
-                      "globalNoExpressionId = ? and geneId = ? and anatEntityId = ? and stageId = ? " +
-                      "and noExpressionAffymetrixData = ? and noExpressionInSituData = ? " +
-                      "and noExpressionRnaSeqData = ? and noExpressionOriginOfLine = ?")) {
-
-                stmt.setString(1, "16");
-                stmt.setString(2, "ID2");
-                stmt.setString(3, "Anat_id3");
-                stmt.setString(4, "Stage_id18");
-                stmt.setString(5, "high quality");
-                stmt.setString(6, "high quality");
-                stmt.setString(7, "high quality");
-                stmt.setString(8, "both");
-                assertTrue("NoExpressionCallTO incorrectly inserted", 
-                        stmt.getRealPreparedStatement().executeQuery().next());
-
-                stmt.setString(1, "20");
-                stmt.setString(2, "ID2");
-                stmt.setString(3, "Anat_id10");
-                stmt.setString(4, "Stage_id18");
-                stmt.setString(5, "high quality");
-                stmt.setString(6, "high quality");
-                stmt.setString(7, "high quality");
-                stmt.setString(8, "self");
-                assertTrue("NoExpressionCallTO incorrectly inserted", 
-                        stmt.getRealPreparedStatement().executeQuery().next());
-
-                stmt.setString(1, "21");
-                stmt.setString(2, "ID2");
-                stmt.setString(3, "Anat_id11");
-                stmt.setString(4, "Stage_id18");
-                stmt.setString(5, "poor quality");
-                stmt.setString(6, "no data");
-                stmt.setString(7, "high quality");
-                stmt.setString(8, "parent");
-                assertTrue("NoExpressionCallTO incorrectly inserted", 
-                        stmt.getRealPreparedStatement().executeQuery().next());
-            }
-            
-            this.thrown.expect(IllegalArgumentException.class);
-            dao.insertNoExpressionCalls(new HashSet<NoExpressionCallTO>());
-        } finally {
-            this.emptyAndUseDefaultDB();
-        }
-    }
-    
-    /**
-     * Test the insert method 
-     * {@link MySQLNoExpressionCallDAO#insertGlobalNoExpressionToNoExpression()}.
-     * @throws SQLException 
-     */
-    @Test
-    public void shouldInsertGlobalNoExpressionToNoExpression() throws SQLException {
-        
-        this.useEmptyDB();
-
-        // Create a collection of NoExpressionCallTO to be inserted
-        Collection<GlobalNoExpressionToNoExpressionTO> globalNoExprToNoExprTOs = Arrays.asList(
-                new GlobalNoExpressionToNoExpressionTO("1","10"),
-                new GlobalNoExpressionToNoExpressionTO("1","1"),
-                new GlobalNoExpressionToNoExpressionTO("2","14"));
-
-        try {
-            MySQLNoExpressionCallDAO dao = new MySQLNoExpressionCallDAO(this.getMySQLDAOManager());
-            assertEquals("Incorrect number of rows inserted", 3, 
-                    dao.insertGlobalNoExprToNoExpr(globalNoExprToNoExprTOs));
-            
-            //we manually verify the insertion, as we do not want to rely on other methods 
-            //that are tested elsewhere.
-            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
-                    prepareStatement("select 1 from globalNoExpressionToNoExpression where " +
-                      "noExpressionId = ? and globalNoExpressionId = ?")) {
-                
-                stmt.setString(1, "1");
-                stmt.setString(2, "10");
-                assertTrue("GlobalNoExpressionToNoExpressionTO incorrectly inserted", 
-                        stmt.getRealPreparedStatement().executeQuery().next());
-                
-                stmt.setString(1, "1");
-                stmt.setString(2, "1");
-                assertTrue("GlobalNoExpressionToNoExpressionTO incorrectly inserted", 
-                        stmt.getRealPreparedStatement().executeQuery().next());
-                
-                stmt.setString(1, "2");
-                stmt.setString(2, "14");
-                assertTrue("GlobalNoExpressionToNoExpressionTO incorrectly inserted", 
-                        stmt.getRealPreparedStatement().executeQuery().next());
-            }
-
-            this.thrown.expect(IllegalArgumentException.class);
-            dao.insertGlobalNoExprToNoExpr(new HashSet<GlobalNoExpressionToNoExpressionTO>());
-        } finally {
-            this.emptyAndUseDefaultDB();
-        }
-    }
-    
-    /**
-     * Test the delete methods {@link MySQLNoExpressionCallDAO#deleteNoExprCalls()} 
-     * for basic no-expression calls.
-     * @throws SQLException
-     */
-    @Test
-    public void shouldDeleteBasicNoExprCalls() throws SQLException {
-        
-        this.useEmptyDB();
-        
-        Set<String> noExprIds = new HashSet<>(Arrays.asList("1", "5", "1111"));
-        
-        try {
-            this.populateAndUseDatabase();
-            
-            MySQLNoExpressionCallDAO dao = new MySQLNoExpressionCallDAO(this.getMySQLDAOManager());
-            assertEquals("Incorrect nummber of rows deleted", 
-                    2, dao.deleteNoExprCalls(noExprIds, false));
-
-            //check removal from noExpression table
-            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
-                    prepareStatement("select 1 from noExpression where noExpressionId = ?")) {
-                stmt.setInt(1, 1);
-                assertFalse("Incorrect deletion from noExpression table", 
-                        stmt.getRealPreparedStatement().executeQuery().next());
-
-                stmt.setInt(1, 5);
-                assertFalse("Incorrect deletion from noExpression table", 
-                        stmt.getRealPreparedStatement().executeQuery().next());
-            }
-            //count number of remaining lines in table
-            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
-                    prepareStatement("select count(*) from noExpression")) {
-                ResultSet rs = stmt.getRealPreparedStatement().executeQuery();
-                rs.next();
-                assertEquals("Incorrect deletion from noExpression table", 7, rs.getInt(1));
-            }
-
-            //check removal from globalNoExpressionToNoExpression table
-            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
-                    prepareStatement("select 1 from globalNoExpressionToNoExpression where " +
-                            "noExpressionId = ?")) {
-                stmt.setInt(1, 1);
-                assertFalse("Incorrect deletion from globalNoExpressionToNoExpression table", 
-                        stmt.getRealPreparedStatement().executeQuery().next());
-                
-                stmt.setInt(1, 5);
-                assertFalse("Incorrect deletion from globalNoExpressionToNoExpression table", 
-                        stmt.getRealPreparedStatement().executeQuery().next());
-            }
-            //count number of remaining lines in table
-            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
-                    prepareStatement("select count(*) from globalNoExpressionToNoExpression")) {
-                ResultSet rs = stmt.getRealPreparedStatement().executeQuery();
-                rs.next();
-                assertEquals("Incorrect deletion from globalNoExpressionToNoExpression table", 
-                        12, rs.getInt(1));
-            }
-            
-            //check removal for global noExpression calls with no more supporting basic calls
-            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
-                    prepareStatement("select 1 from globalNoExpression where " +
-                            "globalNoExpressionId = ?")) {
-                stmt.setInt(1, 3);
-                assertFalse("Incorrect deletion from globalNoExpression table", 
-                        stmt.getRealPreparedStatement().executeQuery().next());
-                
-                stmt.setInt(1, 10);
-                assertFalse("Incorrect deletion from globalNoExpression table", 
-                        stmt.getRealPreparedStatement().executeQuery().next());
-                
-                stmt.setInt(1, 11);
-                assertFalse("Incorrect deletion from globalNoExpression table", 
-                        stmt.getRealPreparedStatement().executeQuery().next());
-            }
-            //count number of remaining lines in table
-            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
-                    prepareStatement("select count(*) from globalNoExpression")) {
-                ResultSet rs = stmt.getRealPreparedStatement().executeQuery();
-                rs.next();
-                assertEquals("Incorrect deletion from globalNoExpression table", 12, rs.getInt(1));
-            }
-            
-            thrown.expect(IllegalArgumentException.class);
-            dao.deleteNoExprCalls(new HashSet<String>(), false);
-        } finally {
-            this.emptyAndUseDefaultDB();
-        }
-    }
-    
-    /**
-     * Test the delete methods {@link MySQLNoExpressionCallDAO#deleteNoExprCalls()} 
-     * for global no-expression calls.
-     * @throws SQLException
-     */
-    @Test
-    public void shouldDeleteGlobalNoExprCalls() throws SQLException {
-        
-        this.useEmptyDB();
-        
-        Set<String> globalNoExprIds = new HashSet<>(Arrays.asList("2", "7", "13", "99"));
-        
-        try {
-            this.populateAndUseDatabase();
-            
-            MySQLNoExpressionCallDAO dao = new MySQLNoExpressionCallDAO(this.getMySQLDAOManager());
-
-            assertEquals("Incorrect nummber of rows deleted", 
-                    3, dao.deleteNoExprCalls(globalNoExprIds, true));
-            
-            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
-                    prepareStatement("select 1 from globalNoExpression where globalNoExpressionId = ?")) {
-                stmt.setInt(1, 2);
-                assertFalse("NoExpressionCallTO incorrectly deleted", 
-                        stmt.getRealPreparedStatement().executeQuery().next());
-                
-                stmt.setInt(1, 7);
-                assertFalse("NoExpressionCallTO incorrectly deleted", 
-                        stmt.getRealPreparedStatement().executeQuery().next());
-
-                stmt.setInt(1, 13);
-                assertFalse("NoExpressionCallTO incorrectly deleted", 
-                        stmt.getRealPreparedStatement().executeQuery().next());
-            }
-            //count number of remaining lines in table
-            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
-                    prepareStatement("select count(*) from globalNoExpression")) {
-                ResultSet rs = stmt.getRealPreparedStatement().executeQuery();
-                rs.next();
-                assertEquals("Incorrect deletion from globalNoExpression table", 12, rs.getInt(1));
-            }
-            
-            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
-                    prepareStatement("select 1 from globalNoExpressionToNoExpression where " +
-                            "globalNoExpressionId = ?")) {
-                stmt.setInt(1, 2);
-                assertFalse("NoExpressionCallTO incorrectly deleted", 
-                        stmt.getRealPreparedStatement().executeQuery().next());
-                
-                stmt.setInt(1, 7);
-                assertFalse("NoExpressionCallTO incorrectly deleted", 
-                        stmt.getRealPreparedStatement().executeQuery().next());
-                
-                stmt.setInt(1, 13);
-                assertFalse("NoExpressionCallTO incorrectly deleted", 
-                        stmt.getRealPreparedStatement().executeQuery().next());
-            }
-            //count number of remaining lines in table
-            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
-                    prepareStatement("select count(*) from globalNoExpressionToNoExpression")) {
-                ResultSet rs = stmt.getRealPreparedStatement().executeQuery();
-                rs.next();
-                assertEquals("Incorrect deletion from globalNoExpressionToNoExpression table", 
-                        13, rs.getInt(1));
-            }
-            
-            //check that it didn't interfere with data in noExpression table
-            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
-                    prepareStatement("select count(*) from noExpression")) {
-                ResultSet rs = stmt.getRealPreparedStatement().executeQuery();
-                rs.next();
-                assertEquals("Incorrect deletion from noExpression table", 9, rs.getInt(1));
-            }
-            
-            thrown.expect(IllegalArgumentException.class);
-            dao.deleteNoExprCalls(new HashSet<String>(), false);
-        } finally {
-            this.emptyAndUseDefaultDB();
-        }
-    }
-    
-    /**
-     * Test the update method {@link MySQLNoExpressionCallDAO#updateNoExprCalls()}.
-     * @throws SQLException 
-     */
-    @Test
-    public void shouldUpdateNoExprCalls() throws SQLException {
-        
-        this.useEmptyDB();
-
-        Collection<NoExpressionCallTO> noExprCallTOs = Arrays.asList(
-                // Basic no-expression
-                // modify stageId, noExpressionInSituData, noExpressionRelaxedInSituData, noExpressionRnaSeqData
-                new NoExpressionCallTO("1", "ID2", "Anat_id5", "Stage_id1", 
-                        DataState.LOWQUALITY, DataState.NODATA, 
-                        DataState.HIGHQUALITY, DataState.LOWQUALITY, false, OriginOfLine.SELF),
-                // modify geneId, anatEntityId, noExpressionAffymetrixData
-                new NoExpressionCallTO("8", "ID1", "Anat_id2", "Stage_id11", 
-                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
-                        DataState.NODATA, DataState.NODATA, false, OriginOfLine.SELF),
-               //TODO: add a NoExpressionCallTO as in the database, that will have a match, 
-               //but will thus not be actually updated
-                // no modification
-//                new NoExpressionCallTO("5", "ID3", "Anat_id8", "Stage_id10", 
-//                        DataState.LOWQUALITY, DataState.LOWQUALITY, 
-//                        DataState.NODATA, DataState.LOWQUALITY, false, OriginOfLine.SELF),
-                        
-                // Global no-expression
-                // modify geneId, noExpressionAffymetrixData  
-                new NoExpressionCallTO("2", "ID1", "Anat_id2", "Stage_id13", 
-                        DataState.NODATA, DataState.HIGHQUALITY, 
-                        DataState.NODATA, DataState.HIGHQUALITY, true, OriginOfLine.PARENT),
-                // modify anatEntityId, noExpressionInSituData, noExpressionOriginOfLine  
-                new NoExpressionCallTO("5", "ID3", "Anat_id2", "Stage_id6", 
-                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
-                        DataState.NODATA, DataState.HIGHQUALITY, true, OriginOfLine.SELF),
-                // modify stageId, noExpressionRelaxedInSituData, noExpressionRnaSeqData  
-                new NoExpressionCallTO("10", "ID3", "Anat_id8", "Stage_id7", 
-                        DataState.LOWQUALITY, DataState.LOWQUALITY, 
-                        DataState.HIGHQUALITY, DataState.NODATA, true, OriginOfLine.SELF));
-                // no modification
+//
+//    /**
+//     * Test the select method {@link MySQLNoExpressionCallDAO#getNoExpressionCalls()}.
+//     * @throws SQLException 
+//     */
+//    @Test
+//    public void shouldGetNoExpressionCalls() throws SQLException {
+//        this.useSelectDB();
+//        
+//        // On noExpression table 
+//        MySQLNoExpressionCallDAO dao = new MySQLNoExpressionCallDAO(this.getMySQLDAOManager());
+//        
+//        // Without speciesIds and not include parent structures
+//        // Generate parameters
+//        Set<String> speciesIds = new HashSet<String>();
+//        NoExpressionCallParams params = new NoExpressionCallParams();
+//        params.addAllSpeciesIds(speciesIds);
+//        params.setIncludeParentStructures(false);
+//        // Generate manually expected result
+//        List<NoExpressionCallTO> expectedNoExprCalls = Arrays.asList(
+//                new NoExpressionCallTO("1","ID2", "Anat_id5", "Stage_id13", 
+//                        DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA,
+//                        DataState.HIGHQUALITY, false, OriginOfLine.SELF),
+//                new NoExpressionCallTO("2","ID1", "Anat_id1", "Stage_id1",
+//                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA,
+//                        DataState.LOWQUALITY, false, OriginOfLine.SELF),
+//                new NoExpressionCallTO("3","ID3", "Anat_id6", "Stage_id6",
+//                        DataState.NODATA, DataState.NODATA, DataState.NODATA, 
+//                        DataState.LOWQUALITY, false, OriginOfLine.SELF),
+//                new NoExpressionCallTO("4","ID2", "Anat_id11", "Stage_id11", 
+//                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
+//                        DataState.HIGHQUALITY, false, OriginOfLine.SELF),
+//                new NoExpressionCallTO("5","ID3", "Anat_id8", "Stage_id10",
+//                        DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.NODATA,
+//                        DataState.LOWQUALITY, false, OriginOfLine.SELF),
+//                new NoExpressionCallTO("6","ID3", "Anat_id6", "Stage_id7", 
+//                        DataState.LOWQUALITY, DataState.NODATA, DataState.NODATA,
+//                        DataState.HIGHQUALITY, false, OriginOfLine.SELF),
+//                new NoExpressionCallTO("7","ID3", "Anat_id5", "Stage_id6", 
+//                        DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA,
+//                        DataState.HIGHQUALITY, false, OriginOfLine.SELF),
+//                new NoExpressionCallTO("8","ID3", "Anat_id5", "Stage_id14", 
+//                        DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
+//                        DataState.NODATA, false, OriginOfLine.SELF),
+//                new NoExpressionCallTO("9","ID1", "Anat_id14", "Stage_id14", 
+//                        DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
+//                        DataState.NODATA, false, OriginOfLine.SELF)); 
+//
+//        // Compare
+//        assertTrue("NoExpressionCallTOs incorrectly retrieved", 
+//                TOComparator.areTOCollectionsEqual(expectedNoExprCalls, 
+//                        dao.getNoExpressionCalls(params).getAllTOs()));
+//
+//        // With speciesIds but not include parent structures 
+//        params.addAllSpeciesIds(Arrays.asList("21", "41"));
+//        //Generate manually expected result
+//        expectedNoExprCalls = Arrays.asList(
+//                new NoExpressionCallTO("1","ID2", "Anat_id5", "Stage_id13", 
+//                        DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA,
+//                        DataState.HIGHQUALITY, false, OriginOfLine.SELF),
+//                new NoExpressionCallTO("4","ID2", "Anat_id11", "Stage_id11",
+//                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA,
+//                        DataState.HIGHQUALITY, false, OriginOfLine.SELF)); 
+//        // Compare
+//        assertTrue("NoExpressionCallTOs incorrectly retrieved", 
+//                TOComparator.areTOCollectionsEqual(expectedNoExprCalls, 
+//                        dao.getNoExpressionCalls(params).getAllTOs()));
+//
+//        // On global no-expression table
+//        params.setIncludeParentStructures(true);
+//        
+//        // With speciesIds and include parent structures 
+//        // Generate parameters
+//        expectedNoExprCalls = Arrays.asList(
+//                new NoExpressionCallTO("1", "ID2", "Anat_id5", "Stage_id13",
+//                        DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA,
+//                        DataState.HIGHQUALITY, true, OriginOfLine.SELF),
+//                new NoExpressionCallTO("2", "ID2", "Anat_id2", "Stage_id13", 
+//                        DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA,
+//                        DataState.HIGHQUALITY, true, OriginOfLine.BOTH),
+//                new NoExpressionCallTO("3", "ID2", "Anat_id1", "Stage_id13", 
+//                        DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
+//                        DataState.HIGHQUALITY, true, OriginOfLine.PARENT),
+//                new NoExpressionCallTO("7", "ID2", "Anat_id11", "Stage_id11",
+//                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA,
+//                        DataState.HIGHQUALITY, true, OriginOfLine.SELF),
+//                new NoExpressionCallTO("8", "ID2", "Anat_id10", "Stage_id11", 
+//                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA,
+//                        DataState.HIGHQUALITY, true, OriginOfLine.PARENT),
+//                new NoExpressionCallTO("9", "ID2", "Anat_id1", "Stage_id11", 
+//                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
+//                        DataState.HIGHQUALITY, true, OriginOfLine.PARENT));
+//        // Compare
+//        assertTrue("NoExpressionCallTOs incorrectly retrieved", 
+//                TOComparator.areTOCollectionsEqual(expectedNoExprCalls, 
+//                        dao.getNoExpressionCalls(params).getAllTOs()));
+//
+//        // Without species filter but include substructures
+//        // Generate parameters
+//        params.clearSpeciesIds();
+//        // Generate manually expected result
+//        expectedNoExprCalls = Arrays.asList(
 //                new NoExpressionCallTO("1", "ID2", "Anat_id5", "Stage_id13", 
-//                        DataState.LOWQUALITY, DataState.HIGHQUALITY, 
-//                        DataState.NODATA, DataState.HIGHQUALITY, true, OriginOfLine.SELF));
-        try {
-            this.populateAndUseDatabase();
-            
-            MySQLNoExpressionCallDAO dao = new MySQLNoExpressionCallDAO(this.getMySQLDAOManager());            
-            assertEquals("Incorrect nummber of rows updated", 
-                    5, dao.updateNoExprCalls(noExprCallTOs));
-
-            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
-                    prepareStatement("select 1 from noExpression where noExpressionId = ? and " +
-                            "geneId = ? and anatEntityId = ? and stageId  = ? and  " +
-                            "noExpressionAffymetrixData = ? and noExpressionInSituData = ? and  " +
-                            "noExpressionRelaxedInSituData = ? and noExpressionRnaSeqData = ?")) {
-                stmt.setInt(1, 1);
-                stmt.setString(2, "ID2");
-                stmt.setString(3, "Anat_id5");
-                stmt.setString(4, "Stage_id1");
-                stmt.setString(5, DataState.LOWQUALITY.getStringRepresentation());
-                stmt.setString(6, DataState.NODATA.getStringRepresentation());
-                stmt.setString(7, DataState.HIGHQUALITY.getStringRepresentation());
-                stmt.setString(8, DataState.LOWQUALITY.getStringRepresentation());
-                assertTrue("NoExpressionCallTO incorrectly updated", 
-                        stmt.getRealPreparedStatement().executeQuery().next());
-
-                stmt.setInt(1, 8);
-                stmt.setString(2, "ID1");
-                stmt.setString(3, "Anat_id2");
-                stmt.setString(4, "Stage_id11");
-                stmt.setString(5, DataState.HIGHQUALITY.getStringRepresentation());
-                stmt.setString(6, DataState.HIGHQUALITY.getStringRepresentation());
-                stmt.setString(7, DataState.NODATA.getStringRepresentation());
-                stmt.setString(8, DataState.NODATA.getStringRepresentation());
-                assertTrue("NoExpressionCallTO incorrectly updated", 
-                        stmt.getRealPreparedStatement().executeQuery().next());
-            }
-
-            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
-                    prepareStatement("select 1 from globalNoExpression where " +
-                            "globalNoExpressionId = ? and geneId = ? and anatEntityId = ? and " +
-                            "stageId  = ? and  noExpressionAffymetrixData = ? and " +
-                            "noExpressionInSituData = ? and noExpressionRelaxedInSituData = ? and " +
-                            "noExpressionRnaSeqData = ? and noExpressionOriginOfLine = ?")) {
-                stmt.setInt(1, 2);
-                stmt.setString(2, "ID1");
-                stmt.setString(3, "Anat_id2");
-                stmt.setString(4, "Stage_id13");
-                stmt.setString(5, DataState.NODATA.getStringRepresentation());
-                stmt.setString(6, DataState.HIGHQUALITY.getStringRepresentation());
-                stmt.setString(7, DataState.NODATA.getStringRepresentation());
-                stmt.setString(8, DataState.HIGHQUALITY.getStringRepresentation());
-                stmt.setString(9, OriginOfLine.PARENT.getStringRepresentation());
-                assertTrue("NoExpressionCallTO incorrectly updated", 
-                        stmt.getRealPreparedStatement().executeQuery().next());
-
-                stmt.setInt(1, 5);
-                stmt.setString(2, "ID3");
-                stmt.setString(3, "Anat_id2");
-                stmt.setString(4, "Stage_id6");
-                stmt.setString(5, DataState.HIGHQUALITY.getStringRepresentation());
-                stmt.setString(6, DataState.HIGHQUALITY.getStringRepresentation());
-                stmt.setString(7, DataState.NODATA.getStringRepresentation());
-                stmt.setString(8, DataState.HIGHQUALITY.getStringRepresentation());
-                stmt.setString(9, OriginOfLine.SELF.getStringRepresentation());
-                assertTrue("NoExpressionCallTO incorrectly updated", 
-                        stmt.getRealPreparedStatement().executeQuery().next());
-                
-                stmt.setInt(1, 10);
-                stmt.setString(2, "ID3");
-                stmt.setString(3, "Anat_id8");
-                stmt.setString(4, "Stage_id7");
-                stmt.setString(5, DataState.LOWQUALITY.getStringRepresentation());
-                stmt.setString(6, DataState.LOWQUALITY.getStringRepresentation());
-                stmt.setString(7, DataState.HIGHQUALITY.getStringRepresentation());
-                stmt.setString(8, DataState.NODATA.getStringRepresentation());
-                stmt.setString(9, OriginOfLine.SELF.getStringRepresentation());
-                assertTrue("NoExpressionCallTO incorrectly updated", 
-                        stmt.getRealPreparedStatement().executeQuery().next());
-            }
-            
-            // No no-expression ID given
-            thrown.expect(IllegalArgumentException.class);
-            dao.updateNoExprCalls(new HashSet<NoExpressionCallTO>());
-        } finally {
-            this.emptyAndUseDefaultDB();
-        }
-    }
+//                        DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
+//                        DataState.HIGHQUALITY, true, OriginOfLine.SELF),
+//                new NoExpressionCallTO("2", "ID2", "Anat_id2", "Stage_id13",
+//                        DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
+//                        DataState.HIGHQUALITY, true, OriginOfLine.BOTH),
+//                new NoExpressionCallTO("3", "ID2", "Anat_id1", "Stage_id13",
+//                        DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA,
+//                        DataState.HIGHQUALITY, true, OriginOfLine.PARENT),
+//                new NoExpressionCallTO("4", "ID3", "Anat_id6", "Stage_id6",
+//                        DataState.NODATA, DataState.NODATA, DataState.NODATA, 
+//                        DataState.LOWQUALITY, true, OriginOfLine.SELF),
+//                new NoExpressionCallTO("5", "ID3", "Anat_id5", "Stage_id6",
+//                        DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
+//                        DataState.HIGHQUALITY, true, OriginOfLine.BOTH),
+//                new NoExpressionCallTO("6", "ID3", "Anat_id1", "Stage_id6", 
+//                        DataState.NODATA, DataState.NODATA, DataState.NODATA, 
+//                        DataState.LOWQUALITY, true, OriginOfLine.PARENT),
+//                new NoExpressionCallTO("7", "ID2", "Anat_id11", "Stage_id11",
+//                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
+//                        DataState.HIGHQUALITY, true, OriginOfLine.SELF),
+//                new NoExpressionCallTO("8", "ID2", "Anat_id10", "Stage_id11", 
+//                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
+//                        DataState.HIGHQUALITY, true, OriginOfLine.PARENT),
+//                new NoExpressionCallTO("9", "ID2", "Anat_id1", "Stage_id11", 
+//                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
+//                        DataState.HIGHQUALITY, true, OriginOfLine.PARENT),
+//                new NoExpressionCallTO("10", "ID3", "Anat_id8", "Stage_id10", 
+//                        DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
+//                        DataState.LOWQUALITY, true, OriginOfLine.SELF),
+//                new NoExpressionCallTO("11", "ID3", "Anat_id7", "Stage_id10", 
+//                        DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.NODATA,
+//                        DataState.LOWQUALITY, true, OriginOfLine.PARENT),
+//                new NoExpressionCallTO("12", "ID3", "Anat_id6", "Stage_id7", 
+//                        DataState.LOWQUALITY, DataState.NODATA, DataState.NODATA, 
+//                        DataState.HIGHQUALITY, true, OriginOfLine.SELF),
+//                new NoExpressionCallTO("13", "ID3", "Anat_id1", "Stage_id7", 
+//                        DataState.LOWQUALITY, DataState.NODATA, DataState.NODATA, 
+//                        DataState.HIGHQUALITY, true, OriginOfLine.PARENT),
+//                new NoExpressionCallTO("14", "ID1", "Anat_id14", "Stage_id14", 
+//                        DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
+//                        DataState.NODATA, true, OriginOfLine.SELF),
+//                new NoExpressionCallTO("15", "ID1", "Anat_id1", "Stage_id1", 
+//                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
+//                        DataState.LOWQUALITY, true, OriginOfLine.SELF));
+//
+//        // Compare
+//        assertTrue("NoExpressionCallTOs incorrectly retrieved", 
+//                TOComparator.areTOCollectionsEqual(expectedNoExprCalls, 
+//                        dao.getNoExpressionCalls(params).getAllTOs()));
+//        
+//        // Test get only ID without species filter and without including substructures
+//        dao.clearAttributes();
+//        dao.setAttributes(Arrays.asList(NoExpressionCallDAO.Attribute.ID));
+//        params.clearSpeciesIds();
+//        params.setIncludeParentStructures(false);
+//        expectedNoExprCalls = Arrays.asList(
+//                new NoExpressionCallTO("1", null, null, null, null, null, null, null, null, null),
+//                new NoExpressionCallTO("2", null, null, null, null, null, null, null, null, null),
+//                new NoExpressionCallTO("3", null, null, null, null, null, null, null, null, null),
+//                new NoExpressionCallTO("4", null, null, null, null, null, null, null, null, null),
+//                new NoExpressionCallTO("5", null, null, null, null, null, null, null, null, null),
+//                new NoExpressionCallTO("6", null, null, null, null, null, null, null, null, null),
+//                new NoExpressionCallTO("7", null, null, null, null, null, null, null, null, null),
+//                new NoExpressionCallTO("8", null, null, null, null, null, null, null, null, null),
+//                new NoExpressionCallTO("9", null, null, null, null, null, null, null, null, null));
+//        // Compare
+//        assertTrue("NoExpressionCallTOs incorrectly retrieved", 
+//                TOComparator.areTOCollectionsEqual(expectedNoExprCalls, 
+//                        dao.getNoExpressionCalls(params).getAllTOs()));
+//
+//        // Test get INCLUDE_PARENT_STRUCTURES (and ANAT_ENTITY_ID) without species filter and 
+//        // without ORIGIN_OF_LINE and without including substructures
+//        dao.clearAttributes();
+//        dao.setAttributes(Arrays.asList(NoExpressionCallDAO.Attribute.ANAT_ENTITY_ID, 
+//                NoExpressionCallDAO.Attribute.INCLUDE_PARENT_STRUCTURES));
+//        expectedNoExprCalls = Arrays.asList(
+//                new NoExpressionCallTO(null, null, "Anat_id1", null, null, null, null, null, 
+//                        false, null),
+//                new NoExpressionCallTO(null, null, "Anat_id5", null, null, null, null, null, 
+//                        false, null),
+//                new NoExpressionCallTO(null, null, "Anat_id6", null, null, null, null, null, 
+//                        false, null),
+//                new NoExpressionCallTO(null, null, "Anat_id8", null, null, null, null, null, 
+//                        false, null),
+//                new NoExpressionCallTO(null, null, "Anat_id11", null, null, null, null, null, 
+//                        false, null),
+//                new NoExpressionCallTO(null, null, "Anat_id14", null, null, null, null, null, 
+//                        false, null));
+//
+//                // Compare
+//        assertTrue("NoExpressionCallTOs incorrectly retrieved", 
+//                TOComparator.areTOCollectionsEqual(expectedNoExprCalls, 
+//                        dao.getNoExpressionCalls(params).getAllTOs()));
+//
+//        // Test get only AFFYMETRIX_DATA without species filter and including substructures
+//        dao.clearAttributes();
+//        dao.setAttributes(Arrays.asList(NoExpressionCallDAO.Attribute.AFFYMETRIX_DATA));
+//        params.setIncludeParentStructures(true);
+//        expectedNoExprCalls = Arrays.asList(
+//                new NoExpressionCallTO(null, null, null, null, DataState.NODATA, 
+//                        null, null, null, null, null),
+//                new NoExpressionCallTO(null, null, null, null, DataState.LOWQUALITY, 
+//                        null, null, null, null, null),
+//                new NoExpressionCallTO(null, null, null, null, DataState.HIGHQUALITY,
+//                        null, null, null, null, null));
+//        // Compare
+//        assertTrue("NoExpressionCallTOs incorrectly retrieved", 
+//                TOComparator.areTOCollectionsEqual(expectedNoExprCalls, 
+//                        dao.getNoExpressionCalls(params).getAllTOs()));
+//        
+//        
+//        // Test get INCLUDE_PARENT_STRUCTURES (and GENE_ID) without species filter and 
+//        // without ORIGIN_OF_LINE including substructures
+//        dao.clearAttributes();
+//        dao.setAttributes(Arrays.asList(NoExpressionCallDAO.Attribute.GENE_ID, 
+//                NoExpressionCallDAO.Attribute.INCLUDE_PARENT_STRUCTURES));
+//        expectedNoExprCalls = Arrays.asList(
+//                new NoExpressionCallTO(null, "ID1", null, null, null, null, null, null, true, null),
+//                new NoExpressionCallTO(null, "ID2", null, null, null, null, null, null, true, null),
+//                new NoExpressionCallTO(null, "ID3", null, null, null, null, null, null, true, null));
+//        // Compare
+//        assertTrue("NoExpressionCallTOs incorrectly retrieved", 
+//                TOComparator.areTOCollectionsEqual(expectedNoExprCalls, 
+//                        dao.getNoExpressionCalls(params).getAllTOs()));
+//    }
+//    
+//    /**
+//     * Test the get max method {@link MySQLNoExpressionCallDAO#getMaxNoExpressionCallID()}.
+//     */
+//    @Test
+//    public void shouldGetMaxNoExpressionCallID() throws SQLException {
+//
+//        // Check on database with calls
+//        this.useSelectDB();
+//
+//        MySQLNoExpressionCallDAO dao = new MySQLNoExpressionCallDAO(this.getMySQLDAOManager());
+//
+//        // Generate manually expected result for expression table
+//        int expectedMaxNoExprId = 9;
+//        int maxNoExprId = dao.getMaxNoExpressionCallId(false);
+//        assertEquals("Max no-expression ID incorrectly retrieved", expectedMaxNoExprId, maxNoExprId);
+//
+//        // Generate manually expected result for global expression table
+//        int expectedMaxGlobalNoExprId = 15;
+//        int maxGlobalNoExprId = dao.getMaxNoExpressionCallId(true);
+//        assertEquals("Max global no-expression ID incorrectly retrieved", 
+//                expectedMaxGlobalNoExprId, maxGlobalNoExprId);
+//        
+//        // Check on database without calls
+//        this.useEmptyDB();
+//        
+//        // Generate manually expected result for expression table
+//        expectedMaxNoExprId = 0;
+//        maxNoExprId = dao.getMaxNoExpressionCallId(false);
+//        assertEquals("Max no-expression ID incorrectly retrieved", 
+//                expectedMaxNoExprId, maxNoExprId);
+//        
+//        // Generate manually expected result for global expression table
+//        expectedMaxGlobalNoExprId = 0;
+//        maxGlobalNoExprId = dao.getMaxNoExpressionCallId(true);
+//        assertEquals("Max global no-expression ID incorrectly retrieved", 
+//                expectedMaxGlobalNoExprId, maxGlobalNoExprId);
+//    }
+//
+//    /**
+//     * Test the insert method {@link MySQLNoExpressionCallDAO#insertNoExpressionCalls()}.
+//     * @throws SQLException 
+//     */
+//    @Test
+//    public void shouldInsertNoExpressionCalls() throws SQLException {
+//        
+//        this.useEmptyDB();
+//        
+//        //create a Collection of NoExpressionCallTO to be inserted
+//        Collection<NoExpressionCallTO> noExprCallTOs = Arrays.asList(
+//                new NoExpressionCallTO("1", "ID3", "Anat_id1", "Stage_id1", 
+//                        DataState.LOWQUALITY, DataState.NODATA, 
+//                        DataState.NODATA, DataState.HIGHQUALITY, false, OriginOfLine.SELF),
+//                new NoExpressionCallTO("7", "ID2", "Anat_id11", "Stage_id13", 
+//                        DataState.NODATA, DataState.HIGHQUALITY, 
+//                        DataState.NODATA, DataState.LOWQUALITY, false, OriginOfLine.SELF),
+//                new NoExpressionCallTO("16", "ID2", "Anat_id3", "Stage_id18", 
+//                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+//                        DataState.NODATA, DataState.HIGHQUALITY, true, OriginOfLine.BOTH),
+//                new NoExpressionCallTO("20", "ID2", "Anat_id10", "Stage_id18", 
+//                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+//                        DataState.NODATA, DataState.HIGHQUALITY, true, OriginOfLine.SELF),
+//                new NoExpressionCallTO("21", "ID2", "Anat_id11", "Stage_id18", 
+//                        DataState.LOWQUALITY, DataState.NODATA, 
+//                        DataState.NODATA, DataState.HIGHQUALITY, true, OriginOfLine.PARENT));
+//
+//        try {
+//            MySQLNoExpressionCallDAO dao = new MySQLNoExpressionCallDAO(this.getMySQLDAOManager());
+//            assertEquals("Incorrect number of rows inserted", 5, 
+//                    dao.insertNoExpressionCalls(noExprCallTOs));
+//
+//            //we manually verify the insertion, as we do not want to rely on other methods 
+//            //that are tested elsewhere.
+//            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+//                    prepareStatement("select 1 from noExpression where " +
+//                      "noExpressionId = ? and geneId = ? and anatEntityId = ? and stageId = ? " +
+//                      "and noExpressionAffymetrixData = ? and noExpressionInSituData = ? and " +
+//                      "noExpressionRnaSeqData = ?")) {
+//                
+//                stmt.setString(1, "1");
+//                stmt.setString(2, "ID3");
+//                stmt.setString(3, "Anat_id1");
+//                stmt.setString(4, "Stage_id1");
+//                stmt.setString(5, "poor quality");
+//                stmt.setString(6, "no data");
+//                stmt.setString(7, "high quality");
+//                assertTrue("NoExpressionCallTO incorrectly inserted", 
+//                        stmt.getRealPreparedStatement().executeQuery().next());
+//                
+//                stmt.setString(1, "7");
+//                stmt.setString(2, "ID2");
+//                stmt.setString(3, "Anat_id11");
+//                stmt.setString(4, "Stage_id13");
+//                stmt.setString(5, "no data");
+//                stmt.setString(6, "high quality");
+//                stmt.setString(7, "poor quality");
+//                assertTrue("NoExpressionCallTO incorrectly inserted", 
+//                        stmt.getRealPreparedStatement().executeQuery().next());
+//            }
+//            
+//            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+//                    prepareStatement("select 1 from globalNoExpression where " +
+//                      "globalNoExpressionId = ? and geneId = ? and anatEntityId = ? and stageId = ? " +
+//                      "and noExpressionAffymetrixData = ? and noExpressionInSituData = ? " +
+//                      "and noExpressionRnaSeqData = ? and noExpressionOriginOfLine = ?")) {
+//
+//                stmt.setString(1, "16");
+//                stmt.setString(2, "ID2");
+//                stmt.setString(3, "Anat_id3");
+//                stmt.setString(4, "Stage_id18");
+//                stmt.setString(5, "high quality");
+//                stmt.setString(6, "high quality");
+//                stmt.setString(7, "high quality");
+//                stmt.setString(8, "both");
+//                assertTrue("NoExpressionCallTO incorrectly inserted", 
+//                        stmt.getRealPreparedStatement().executeQuery().next());
+//
+//                stmt.setString(1, "20");
+//                stmt.setString(2, "ID2");
+//                stmt.setString(3, "Anat_id10");
+//                stmt.setString(4, "Stage_id18");
+//                stmt.setString(5, "high quality");
+//                stmt.setString(6, "high quality");
+//                stmt.setString(7, "high quality");
+//                stmt.setString(8, "self");
+//                assertTrue("NoExpressionCallTO incorrectly inserted", 
+//                        stmt.getRealPreparedStatement().executeQuery().next());
+//
+//                stmt.setString(1, "21");
+//                stmt.setString(2, "ID2");
+//                stmt.setString(3, "Anat_id11");
+//                stmt.setString(4, "Stage_id18");
+//                stmt.setString(5, "poor quality");
+//                stmt.setString(6, "no data");
+//                stmt.setString(7, "high quality");
+//                stmt.setString(8, "parent");
+//                assertTrue("NoExpressionCallTO incorrectly inserted", 
+//                        stmt.getRealPreparedStatement().executeQuery().next());
+//            }
+//            
+//            this.thrown.expect(IllegalArgumentException.class);
+//            dao.insertNoExpressionCalls(new HashSet<NoExpressionCallTO>());
+//        } finally {
+//            this.emptyAndUseDefaultDB();
+//        }
+//    }
+//    
+//    /**
+//     * Test the insert method 
+//     * {@link MySQLNoExpressionCallDAO#insertGlobalNoExpressionToNoExpression()}.
+//     * @throws SQLException 
+//     */
+//    @Test
+//    public void shouldInsertGlobalNoExpressionToNoExpression() throws SQLException {
+//        
+//        this.useEmptyDB();
+//
+//        // Create a collection of NoExpressionCallTO to be inserted
+//        Collection<GlobalNoExpressionToNoExpressionTO> globalNoExprToNoExprTOs = Arrays.asList(
+//                new GlobalNoExpressionToNoExpressionTO("1","10"),
+//                new GlobalNoExpressionToNoExpressionTO("1","1"),
+//                new GlobalNoExpressionToNoExpressionTO("2","14"));
+//
+//        try {
+//            MySQLNoExpressionCallDAO dao = new MySQLNoExpressionCallDAO(this.getMySQLDAOManager());
+//            assertEquals("Incorrect number of rows inserted", 3, 
+//                    dao.insertGlobalNoExprToNoExpr(globalNoExprToNoExprTOs));
+//            
+//            //we manually verify the insertion, as we do not want to rely on other methods 
+//            //that are tested elsewhere.
+//            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+//                    prepareStatement("select 1 from globalNoExpressionToNoExpression where " +
+//                      "noExpressionId = ? and globalNoExpressionId = ?")) {
+//                
+//                stmt.setString(1, "1");
+//                stmt.setString(2, "10");
+//                assertTrue("GlobalNoExpressionToNoExpressionTO incorrectly inserted", 
+//                        stmt.getRealPreparedStatement().executeQuery().next());
+//                
+//                stmt.setString(1, "1");
+//                stmt.setString(2, "1");
+//                assertTrue("GlobalNoExpressionToNoExpressionTO incorrectly inserted", 
+//                        stmt.getRealPreparedStatement().executeQuery().next());
+//                
+//                stmt.setString(1, "2");
+//                stmt.setString(2, "14");
+//                assertTrue("GlobalNoExpressionToNoExpressionTO incorrectly inserted", 
+//                        stmt.getRealPreparedStatement().executeQuery().next());
+//            }
+//
+//            this.thrown.expect(IllegalArgumentException.class);
+//            dao.insertGlobalNoExprToNoExpr(new HashSet<GlobalNoExpressionToNoExpressionTO>());
+//        } finally {
+//            this.emptyAndUseDefaultDB();
+//        }
+//    }
+//    
+//    /**
+//     * Test the delete methods {@link MySQLNoExpressionCallDAO#deleteNoExprCalls()} 
+//     * for basic no-expression calls.
+//     * @throws SQLException
+//     */
+//    @Test
+//    public void shouldDeleteBasicNoExprCalls() throws SQLException {
+//        
+//        this.useEmptyDB();
+//        this.populateAndUseDatabase();
+//        
+//        Set<String> noExprIds = new HashSet<>(Arrays.asList("1", "5", "1111"));
+//        
+//        try {
+//            MySQLNoExpressionCallDAO dao = new MySQLNoExpressionCallDAO(this.getMySQLDAOManager());
+//            assertEquals("Incorrect nummber of rows deleted", 
+//                    2, dao.deleteNoExprCalls(noExprIds, false));
+//
+//            //check removal from noExpression table
+//            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+//                    prepareStatement("select 1 from noExpression where noExpressionId = ?")) {
+//                stmt.setInt(1, 1);
+//                assertFalse("Incorrect deletion from noExpression table", 
+//                        stmt.getRealPreparedStatement().executeQuery().next());
+//
+//                stmt.setInt(1, 5);
+//                assertFalse("Incorrect deletion from noExpression table", 
+//                        stmt.getRealPreparedStatement().executeQuery().next());
+//            }
+//            //count number of remaining lines in table
+//            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+//                    prepareStatement("select count(*) from noExpression")) {
+//                ResultSet rs = stmt.getRealPreparedStatement().executeQuery();
+//                rs.next();
+//                assertEquals("Incorrect deletion from noExpression table", 7, rs.getInt(1));
+//            }
+//
+//            //check removal from globalNoExpressionToNoExpression table
+//            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+//                    prepareStatement("select 1 from globalNoExpressionToNoExpression where " +
+//                            "noExpressionId = ?")) {
+//                stmt.setInt(1, 1);
+//                assertFalse("Incorrect deletion from globalNoExpressionToNoExpression table", 
+//                        stmt.getRealPreparedStatement().executeQuery().next());
+//                
+//                stmt.setInt(1, 5);
+//                assertFalse("Incorrect deletion from globalNoExpressionToNoExpression table", 
+//                        stmt.getRealPreparedStatement().executeQuery().next());
+//            }
+//            //count number of remaining lines in table
+//            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+//                    prepareStatement("select count(*) from globalNoExpressionToNoExpression")) {
+//                ResultSet rs = stmt.getRealPreparedStatement().executeQuery();
+//                rs.next();
+//                assertEquals("Incorrect deletion from globalNoExpressionToNoExpression table", 
+//                        12, rs.getInt(1));
+//            }
+//            
+//            //check removal for global noExpression calls with no more supporting basic calls
+//            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+//                    prepareStatement("select 1 from globalNoExpression where " +
+//                            "globalNoExpressionId = ?")) {
+//                stmt.setInt(1, 3);
+//                assertFalse("Incorrect deletion from globalNoExpression table", 
+//                        stmt.getRealPreparedStatement().executeQuery().next());
+//                
+//                stmt.setInt(1, 10);
+//                assertFalse("Incorrect deletion from globalNoExpression table", 
+//                        stmt.getRealPreparedStatement().executeQuery().next());
+//                
+//                stmt.setInt(1, 11);
+//                assertFalse("Incorrect deletion from globalNoExpression table", 
+//                        stmt.getRealPreparedStatement().executeQuery().next());
+//            }
+//            //count number of remaining lines in table
+//            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+//                    prepareStatement("select count(*) from globalNoExpression")) {
+//                ResultSet rs = stmt.getRealPreparedStatement().executeQuery();
+//                rs.next();
+//                assertEquals("Incorrect deletion from globalNoExpression table", 12, rs.getInt(1));
+//            }
+//            
+//            thrown.expect(IllegalArgumentException.class);
+//            dao.deleteNoExprCalls(new HashSet<String>(), false);
+//        } finally {
+//            this.emptyAndUseDefaultDB();
+//        }
+//    }
+//    
+//    /**
+//     * Test the delete methods {@link MySQLNoExpressionCallDAO#deleteNoExprCalls()} 
+//     * for global no-expression calls.
+//     * @throws SQLException
+//     */
+//    @Test
+//    public void shouldDeleteGlobalNoExprCalls() throws SQLException {
+//        
+//        this.useEmptyDB();
+//        this.populateAndUseDatabase();
+//        
+//        Set<String> globalNoExprIds = new HashSet<>(Arrays.asList("2", "7", "13", "99"));
+//        
+//        try {
+//            MySQLNoExpressionCallDAO dao = new MySQLNoExpressionCallDAO(this.getMySQLDAOManager());
+//
+//            assertEquals("Incorrect nummber of rows deleted", 
+//                    3, dao.deleteNoExprCalls(globalNoExprIds, true));
+//            
+//            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+//                    prepareStatement("select 1 from globalNoExpression where globalNoExpressionId = ?")) {
+//                stmt.setInt(1, 2);
+//                assertFalse("NoExpressionCallTO incorrectly deleted", 
+//                        stmt.getRealPreparedStatement().executeQuery().next());
+//                
+//                stmt.setInt(1, 7);
+//                assertFalse("NoExpressionCallTO incorrectly deleted", 
+//                        stmt.getRealPreparedStatement().executeQuery().next());
+//
+//                stmt.setInt(1, 13);
+//                assertFalse("NoExpressionCallTO incorrectly deleted", 
+//                        stmt.getRealPreparedStatement().executeQuery().next());
+//            }
+//            //count number of remaining lines in table
+//            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+//                    prepareStatement("select count(*) from globalNoExpression")) {
+//                ResultSet rs = stmt.getRealPreparedStatement().executeQuery();
+//                rs.next();
+//                assertEquals("Incorrect deletion from globalNoExpression table", 12, rs.getInt(1));
+//            }
+//            
+//            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+//                    prepareStatement("select 1 from globalNoExpressionToNoExpression where " +
+//                            "globalNoExpressionId = ?")) {
+//                stmt.setInt(1, 2);
+//                assertFalse("NoExpressionCallTO incorrectly deleted", 
+//                        stmt.getRealPreparedStatement().executeQuery().next());
+//                
+//                stmt.setInt(1, 7);
+//                assertFalse("NoExpressionCallTO incorrectly deleted", 
+//                        stmt.getRealPreparedStatement().executeQuery().next());
+//                
+//                stmt.setInt(1, 13);
+//                assertFalse("NoExpressionCallTO incorrectly deleted", 
+//                        stmt.getRealPreparedStatement().executeQuery().next());
+//            }
+//            //count number of remaining lines in table
+//            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+//                    prepareStatement("select count(*) from globalNoExpressionToNoExpression")) {
+//                ResultSet rs = stmt.getRealPreparedStatement().executeQuery();
+//                rs.next();
+//                assertEquals("Incorrect deletion from globalNoExpressionToNoExpression table", 
+//                        13, rs.getInt(1));
+//            }
+//            
+//            //check that it didn't interfere with data in noExpression table
+//            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+//                    prepareStatement("select count(*) from noExpression")) {
+//                ResultSet rs = stmt.getRealPreparedStatement().executeQuery();
+//                rs.next();
+//                assertEquals("Incorrect deletion from noExpression table", 9, rs.getInt(1));
+//            }
+//            
+//            thrown.expect(IllegalArgumentException.class);
+//            dao.deleteNoExprCalls(new HashSet<String>(), false);
+//        } finally {
+//            this.emptyAndUseDefaultDB();
+//        }
+//    }
+//    
+//    /**
+//     * Test the update method {@link MySQLNoExpressionCallDAO#updateNoExprCalls()}.
+//     * @throws SQLException 
+//     */
+//    @Test
+//    public void shouldUpdateNoExprCalls() throws SQLException {
+//        
+//        this.useEmptyDB();
+//        this.populateAndUseDatabase();
+//
+//        Collection<NoExpressionCallTO> noExprCallTOs = Arrays.asList(
+//                // Basic no-expression
+//                // modify stageId, noExpressionInSituData, noExpressionRelaxedInSituData, noExpressionRnaSeqData
+//                new NoExpressionCallTO("1", "ID2", "Anat_id5", "Stage_id1", 
+//                        DataState.LOWQUALITY, DataState.NODATA, 
+//                        DataState.HIGHQUALITY, DataState.LOWQUALITY, false, OriginOfLine.SELF),
+//                // modify geneId, anatEntityId, noExpressionAffymetrixData
+//                new NoExpressionCallTO("8", "ID1", "Anat_id2", "Stage_id11", 
+//                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+//                        DataState.NODATA, DataState.NODATA, false, OriginOfLine.SELF),
+//               //TODO: add a NoExpressionCallTO as in the database, that will have a match, 
+//               //but will thus not be actually updated
+//                // no modification
+////                new NoExpressionCallTO("5", "ID3", "Anat_id8", "Stage_id10", 
+////                        DataState.LOWQUALITY, DataState.LOWQUALITY, 
+////                        DataState.NODATA, DataState.LOWQUALITY, false, OriginOfLine.SELF),
+//                        
+//                // Global no-expression
+//                // modify geneId, noExpressionAffymetrixData  
+//                new NoExpressionCallTO("2", "ID1", "Anat_id2", "Stage_id13", 
+//                        DataState.NODATA, DataState.HIGHQUALITY, 
+//                        DataState.NODATA, DataState.HIGHQUALITY, true, OriginOfLine.PARENT),
+//                // modify anatEntityId, noExpressionInSituData, noExpressionOriginOfLine  
+//                new NoExpressionCallTO("5", "ID3", "Anat_id2", "Stage_id6", 
+//                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+//                        DataState.NODATA, DataState.HIGHQUALITY, true, OriginOfLine.SELF),
+//                // modify stageId, noExpressionRelaxedInSituData, noExpressionRnaSeqData  
+//                new NoExpressionCallTO("10", "ID3", "Anat_id8", "Stage_id7", 
+//                        DataState.LOWQUALITY, DataState.LOWQUALITY, 
+//                        DataState.HIGHQUALITY, DataState.NODATA, true, OriginOfLine.SELF));
+//                // no modification
+////                new NoExpressionCallTO("1", "ID2", "Anat_id5", "Stage_id13", 
+////                        DataState.LOWQUALITY, DataState.HIGHQUALITY, 
+////                        DataState.NODATA, DataState.HIGHQUALITY, true, OriginOfLine.SELF));
+//        try {
+//            MySQLNoExpressionCallDAO dao = new MySQLNoExpressionCallDAO(this.getMySQLDAOManager());            
+//            assertEquals("Incorrect nummber of rows updated", 
+//                    5, dao.updateNoExprCalls(noExprCallTOs));
+//
+//            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+//                    prepareStatement("select 1 from noExpression where noExpressionId = ? and " +
+//                            "geneId = ? and anatEntityId = ? and stageId  = ? and  " +
+//                            "noExpressionAffymetrixData = ? and noExpressionInSituData = ? and  " +
+//                            "noExpressionRelaxedInSituData = ? and noExpressionRnaSeqData = ?")) {
+//                stmt.setInt(1, 1);
+//                stmt.setString(2, "ID2");
+//                stmt.setString(3, "Anat_id5");
+//                stmt.setString(4, "Stage_id1");
+//                stmt.setString(5, DataState.LOWQUALITY.getStringRepresentation());
+//                stmt.setString(6, DataState.NODATA.getStringRepresentation());
+//                stmt.setString(7, DataState.HIGHQUALITY.getStringRepresentation());
+//                stmt.setString(8, DataState.LOWQUALITY.getStringRepresentation());
+//                assertTrue("NoExpressionCallTO incorrectly updated", 
+//                        stmt.getRealPreparedStatement().executeQuery().next());
+//
+//                stmt.setInt(1, 8);
+//                stmt.setString(2, "ID1");
+//                stmt.setString(3, "Anat_id2");
+//                stmt.setString(4, "Stage_id11");
+//                stmt.setString(5, DataState.HIGHQUALITY.getStringRepresentation());
+//                stmt.setString(6, DataState.HIGHQUALITY.getStringRepresentation());
+//                stmt.setString(7, DataState.NODATA.getStringRepresentation());
+//                stmt.setString(8, DataState.NODATA.getStringRepresentation());
+//                assertTrue("NoExpressionCallTO incorrectly updated", 
+//                        stmt.getRealPreparedStatement().executeQuery().next());
+//            }
+//
+//            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+//                    prepareStatement("select 1 from globalNoExpression where " +
+//                            "globalNoExpressionId = ? and geneId = ? and anatEntityId = ? and " +
+//                            "stageId  = ? and  noExpressionAffymetrixData = ? and " +
+//                            "noExpressionInSituData = ? and noExpressionRelaxedInSituData = ? and " +
+//                            "noExpressionRnaSeqData = ? and noExpressionOriginOfLine = ?")) {
+//                stmt.setInt(1, 2);
+//                stmt.setString(2, "ID1");
+//                stmt.setString(3, "Anat_id2");
+//                stmt.setString(4, "Stage_id13");
+//                stmt.setString(5, DataState.NODATA.getStringRepresentation());
+//                stmt.setString(6, DataState.HIGHQUALITY.getStringRepresentation());
+//                stmt.setString(7, DataState.NODATA.getStringRepresentation());
+//                stmt.setString(8, DataState.HIGHQUALITY.getStringRepresentation());
+//                stmt.setString(9, OriginOfLine.PARENT.getStringRepresentation());
+//                assertTrue("NoExpressionCallTO incorrectly updated", 
+//                        stmt.getRealPreparedStatement().executeQuery().next());
+//
+//                stmt.setInt(1, 5);
+//                stmt.setString(2, "ID3");
+//                stmt.setString(3, "Anat_id2");
+//                stmt.setString(4, "Stage_id6");
+//                stmt.setString(5, DataState.HIGHQUALITY.getStringRepresentation());
+//                stmt.setString(6, DataState.HIGHQUALITY.getStringRepresentation());
+//                stmt.setString(7, DataState.NODATA.getStringRepresentation());
+//                stmt.setString(8, DataState.HIGHQUALITY.getStringRepresentation());
+//                stmt.setString(9, OriginOfLine.SELF.getStringRepresentation());
+//                assertTrue("NoExpressionCallTO incorrectly updated", 
+//                        stmt.getRealPreparedStatement().executeQuery().next());
+//                
+//                stmt.setInt(1, 10);
+//                stmt.setString(2, "ID3");
+//                stmt.setString(3, "Anat_id8");
+//                stmt.setString(4, "Stage_id7");
+//                stmt.setString(5, DataState.LOWQUALITY.getStringRepresentation());
+//                stmt.setString(6, DataState.LOWQUALITY.getStringRepresentation());
+//                stmt.setString(7, DataState.HIGHQUALITY.getStringRepresentation());
+//                stmt.setString(8, DataState.NODATA.getStringRepresentation());
+//                stmt.setString(9, OriginOfLine.SELF.getStringRepresentation());
+//                assertTrue("NoExpressionCallTO incorrectly updated", 
+//                        stmt.getRealPreparedStatement().executeQuery().next());
+//            }
+//            
+//            // No no-expression ID given
+//            thrown.expect(IllegalArgumentException.class);
+//            dao.updateNoExprCalls(new HashSet<NoExpressionCallTO>());
+//        } finally {
+//            this.emptyAndUseDefaultDB();
+//        }
+//    }
 }

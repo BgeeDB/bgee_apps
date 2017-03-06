@@ -119,7 +119,7 @@ public interface CallType {
          * @param representation            A {@code String} representing a data quality.
          * @return                          A {@code CallType.Expression} corresponding 
          *                                  to {@code representation}.
-         * @throw IllegalArgumentException  If {@code representation} does not correspond 
+         * @throws IllegalArgumentException If {@code representation} does not correspond 
          *                                  to any {@code CallType.Expression}.
          * @see #convert(Class, String)
          */
@@ -197,7 +197,7 @@ public interface CallType {
          * @param representation            A {@code String} representing a data quality.
          * @return                          A {@code CallType.DiffExpression} corresponding 
          *                                  to {@code representation}.
-         * @throw IllegalArgumentException  If {@code representation} does not correspond 
+         * @throws IllegalArgumentException If {@code representation} does not correspond 
          *                                  to any {@code CallType.DiffExpression}.
          * @see #convert(Class, String)
          */
@@ -258,9 +258,9 @@ public interface CallType {
      * if the propagation is not possible for this {@code CallType}.
      * <p>
      * <ul>
-     * <li>{@link Expression.EXPRESSED}: can be propagated from child anatomical entities 
+     * <li>{@link Expression#EXPRESSED}: can be propagated from child anatomical entities 
      * and child developmental stages. 
-     * <li>{@link Expression.NOT_EXPRESSED}: can be propagated from parent anatomical entities, 
+     * <li>{@link Expression#NOT_EXPRESSED}: can be propagated from parent anatomical entities, 
      * cannot be propagated along developmental stages.
      * <li>{@link DiffExpression}: none of the diff. expression call types can be propagated, 
      * neither along anatomical entities nor developmental stages.

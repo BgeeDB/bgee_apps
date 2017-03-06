@@ -26,9 +26,8 @@ public interface NoExpressionCallDAO extends CallDAO<NoExpressionCallDAO.Attribu
      * obtained from this {@code NoExpressionCallDAO}.
      * <ul>
      * <li>{@code ID}: corresponds to {@link NoExpressionCallTO#getId()}.
-     * <li>{@code GENEID}: corresponds to {@link NoExpressionCallTO#getGeneId()}.
-     * <li>{@code STAGEID}: corresponds to {@link NoExpressionCallTO#getStageId()}.
-     * <li>{@code ANATENTITYID}: corresponds to {@link NoExpressionCallTO#getAnatEntityId()}.
+     * <li>{@code GENEID}: corresponds to {@link NoExpressionCallTO#getBgeeGeneId()}.
+     * <li>{@code CONDITION_ID}: corresponds to {@link NoExpressionCallTO#getConditionId()}.
      * <li>{@code AFFYMETRIXDATA}: corresponds to {@link NoExpressionCallTO#getAffymetrixData()}.
      * <li>{@code INSITUDATA}: corresponds to {@link NoExpressionCallTO#getInSituData()}.
      * <li>{@code RNASEQDATA}: corresponds to {@link NoExpressionCallTO#getRNASeqData()}.
@@ -41,7 +40,7 @@ public interface NoExpressionCallDAO extends CallDAO<NoExpressionCallDAO.Attribu
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements CallDAO.Attribute {
-        ID(false), GENE_ID(false), STAGE_ID(false), ANAT_ENTITY_ID(false), 
+        ID(false), GENE_ID(false), CONDITION_ID(false), 
         AFFYMETRIX_DATA(true), IN_SITU_DATA(true), RNA_SEQ_DATA(true),
         INCLUDE_PARENT_STRUCTURES(false), ORIGIN_OF_LINE(false);
         
@@ -192,7 +191,7 @@ public interface NoExpressionCallDAO extends CallDAO<NoExpressionCallDAO.Attribu
 
         /**
          * A {@code Boolean} defining whether this no-expression call was generated 
-         * using the data from the anatomical entity with the ID {@link CallTO#getAnatEntityId()} 
+         * using the data from the anatomical entity with the ID {@link #getAnatEntityId()} 
          * alone, or by also considering all its parents by <em>is_a</em> or <em>part_of</em> 
          * relations, even indirect. If {@code true}, all its parents were considered. 
          * So for instance, if B is_a A, and absence of expression has been reported in A, 
@@ -227,7 +226,7 @@ public interface NoExpressionCallDAO extends CallDAO<NoExpressionCallDAO.Attribu
              * 
              * @param representation    A {@code String} representing a data state.
              * @return  A {@code OriginOfLine} corresponding to {@code representation}.
-             * @throw IllegalArgumentException  If {@code representation} does not correspond 
+             * @throws IllegalArgumentException  If {@code representation} does not correspond 
              *                                  to any {@code OriginOfLine}.
              */
             public static final OriginOfLine convertToOriginOfLine(String representation) {
@@ -272,7 +271,7 @@ public interface NoExpressionCallDAO extends CallDAO<NoExpressionCallDAO.Attribu
          * Default constructor.
          */
         NoExpressionCallTO() {
-            this(null, null, null, null, null, null, null, null, null, null);
+            this(null, null, null, null, null, null, null, null, null);
         }
 
         /**
@@ -284,12 +283,10 @@ public interface NoExpressionCallDAO extends CallDAO<NoExpressionCallDAO.Attribu
          * <p>
          * All of these parameters are optional, so they can be {@code null} when not used.
          * 
-         * @param id                   A {@code String} that is the ID of this call.
-         * @param geneId               A {@code String} that is the ID of the gene associated to 
+         * @param id                   An {@code Integer} that is the ID of this call.
+         * @param bgeeGeneId           An {@code Integer} that is the ID of the gene associated to 
          *                             this call.
-         * @param anatEntityId         A {@code String} that is the ID of the anatomical entity
-         *                             associated to this call. 
-         * @param stageId              A {@code String} that is the ID of the developmental stage 
+         * @param conditionId          An {@code Integer} that is the ID of the condition
          *                             associated to this call. 
          * @param affymetrixData       A {@code DataSate} that is the contribution of Affymetrix  
          *                             data to the generation of this call.
@@ -306,11 +303,11 @@ public interface NoExpressionCallDAO extends CallDAO<NoExpressionCallDAO.Attribu
          *                             part_of relations, even indirect.
          * @param originOfLine         An {@code OriginOfLine} defining the origin of line.
          */
-        public NoExpressionCallTO(String id, String geneId, String anatEntityId, String stageId,
+        public NoExpressionCallTO(Integer id, Integer bgeeGeneId, Integer conditionId,
                 DataState affymetrixData, DataState inSituData,  
                 DataState relaxedInSituData, DataState rnaSeqData, 
                 Boolean includeParentStructures, OriginOfLine originOfLine) {
-            super(id, geneId, anatEntityId, stageId, affymetrixData, null, 
+            super(id, bgeeGeneId, conditionId, affymetrixData, null, 
                     inSituData, relaxedInSituData, rnaSeqData);
             this.includeParentStructures = includeParentStructures;
             this.originOfLine = originOfLine;
@@ -336,7 +333,7 @@ public interface NoExpressionCallDAO extends CallDAO<NoExpressionCallDAO.Attribu
          * <p>
          * The data types are represented as {@code Attribute}s allowing to request a data type parameter 
          * (see {@link CallDAO.Attribute#isDataTypeAttribute()}). The {@code DataState}s 
-         * associated to each data type are retrieved using {@link CallTO#extractDataTypesToDataStates()}. 
+         * associated to each data type are retrieved using {@link #extractDataTypesToDataStates()}. 
          * A check is then performed to ensure that the {@code CallTO} will actually result 
          * in a filtering of the data. For instance, if all data qualities are {@code null},  
          * then it is equivalent to requesting no filtering at all, and the {@code EnumMap} returned 
@@ -364,7 +361,7 @@ public interface NoExpressionCallDAO extends CallDAO<NoExpressionCallDAO.Attribu
 
         /**
          * Returns the {@code Boolean} defining whether this no-expression call was generated 
-         * using the data from the anatomical entity with the ID {@link CallTO#getAnatEntityId()} 
+         * using the data from the anatomical entity with the ID {@link #getAnatEntityId()} 
          * alone, or by also considering all its parents by <em>is_a</em> or <em>part_of</em> 
          * relations, even indirect. If {@code true}, all its parents were considered. 
          * So for instance, if B is_a A, and absence of expression has been reported in A, 
@@ -391,7 +388,7 @@ public interface NoExpressionCallDAO extends CallDAO<NoExpressionCallDAO.Attribu
 
         /**
          * Sets the {@code boolean} defining whether this no-expression call was generated 
-         * using the data from the anatomical entity with the ID {@link CallTO#getAnatEntityId()} 
+         * using the data from the anatomical entity with the ID {@link #getAnatEntityId()} 
          * alone, or by also considering all its parents by <em>is_a</em> or <em>part_of</em> 
          * relations, even indirect. If {@code true}, all its parents were considered. 
          * So for instance, if B is_a A, and absence of expression has been reported in A, 
@@ -437,42 +434,6 @@ public interface NoExpressionCallDAO extends CallDAO<NoExpressionCallDAO.Attribu
                     " - Include Parent Structures: " + this.isIncludeParentStructures() +
                     " - Origin Of Line: " + this.getOriginOfLine();
         }
-
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = super.hashCode();
-            if (this.useOtherAttributesForHashCodeEquals()) {
-                result = prime * result + 
-                        ((includeParentStructures == null) ? 0 : includeParentStructures.hashCode());
-                result = prime * result +
-                        ((originOfLine == null) ? 0 : originOfLine.hashCode());
-            }
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (!(obj instanceof NoExpressionCallTO)) {
-                return false;
-            }
-            if (!super.equals(obj)) {
-                return false;
-            }
-            if (this.useOtherAttributesForHashCodeEquals()) {
-                NoExpressionCallTO other = (NoExpressionCallTO) obj;
-                if (includeParentStructures != other.includeParentStructures) {
-                    return false;
-                }
-                if (originOfLine != other.originOfLine) {
-                    return false;
-                }
-            }
-            return true;
-        }
     }
     
     /**
@@ -499,35 +460,35 @@ public interface NoExpressionCallDAO extends CallDAO<NoExpressionCallDAO.Attribu
         private static final long serialVersionUID = -5283534395161770005L;
 
         /**
-         * A {@code String} representing the ID of the no-expression call.
+         * A {@code Integer} representing the ID of the no-expression call.
          */
-        private final String noExpressionId;
+        private final Integer noExpressionId;
 
         /**
-         * A {@code String} representing the ID of the global no-expression call.
+         * A {@code Integer} representing the ID of the global no-expression call.
          */
-        private final String globalNoExpressionId;
+        private final Integer globalNoExpressionId;
 
         /**
          * Constructor providing the no-expression call ID and the global no-expression call ID.  
          **/
-        public GlobalNoExpressionToNoExpressionTO(String noExpressionId, 
-                String globalNoExpressionId) {
+        public GlobalNoExpressionToNoExpressionTO(Integer noExpressionId, 
+                Integer globalNoExpressionId) {
             this.noExpressionId = noExpressionId;
             this.globalNoExpressionId = globalNoExpressionId;
         }
 
         /**
-         * @return  the {@code String} representing the ID of the no-expression call.
+         * @return  the {@code Integer} representing the ID of the no-expression call.
          */
-        public String getNoExpressionId() {
+        public Integer getNoExpressionId() {
             return noExpressionId;
         }
 
         /**
-         * @return  the {@code String} representing the ID of the global no-expression call.
+         * @return  the {@code Integer} representing the ID of the global no-expression call.
          */
-        public String getGlobalNoExpressionId() {
+        public Integer getGlobalNoExpressionId() {
             return globalNoExpressionId;
         }
         
@@ -535,45 +496,6 @@ public interface NoExpressionCallDAO extends CallDAO<NoExpressionCallDAO.Attribu
         public String toString() {
             return "noExpressionId: " + noExpressionId + 
                     " - globalNoExpressionId: " + globalNoExpressionId;
-        }
-
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * 
-                    result + ((globalNoExpressionId == null) ? 0 : globalNoExpressionId.hashCode());
-            result = prime * result + ((noExpressionId == null) ? 0 : noExpressionId.hashCode());
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null) {
-                return false;
-            }
-            if (getClass() != obj.getClass()) {
-                return false;
-            }
-            GlobalNoExpressionToNoExpressionTO other = (GlobalNoExpressionToNoExpressionTO) obj;
-            if (globalNoExpressionId == null) {
-                if (other.globalNoExpressionId != null) {
-                    return false;
-                }
-            } else if (!globalNoExpressionId.equals(other.globalNoExpressionId)) {
-                return false;
-            }
-            if (noExpressionId == null) {
-                if (other.noExpressionId != null) {
-                    return false;
-                }
-            } else if (!noExpressionId.equals(other.noExpressionId)) {
-                return false;
-            }
-            return true;
         }
     }
 }

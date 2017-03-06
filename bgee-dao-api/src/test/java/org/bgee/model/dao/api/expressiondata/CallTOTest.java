@@ -2,17 +2,13 @@ package org.bgee.model.dao.api.expressiondata;
 
 import static org.junit.Assert.*;
 
-import java.math.BigDecimal;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.TOComparator;
 import org.bgee.model.dao.api.TestAncestor;
-import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.DiffExprCallType;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.ComparisonFactor;
-import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO;
-import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO.OriginOfLine;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.GlobalExpressionToExpressionTO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.GlobalNoExpressionToNoExpressionTO;
@@ -181,188 +177,17 @@ public class CallTOTest extends TestAncestor {
     }
     
     /**
-     * Test {@link DiffExpressionCallTO#hashCode()} and 
-     * {@link DiffExpressionCallTO#equals(Object)}
-     */
-    @Test
-    public void testDiffExpressionCallTOHashCodeEquals() {
-        DiffExpressionCallTO callTO1 = 
-                new DiffExpressionCallTO("1", "1", null, null, null, null, null, null, null, 
-                        null, null, null, null, null, null);
-        DiffExpressionCallTO callTO2 = 
-                new DiffExpressionCallTO("1", "3", null, null, null, null, null, null, null, 
-                        null, null, null, null, null, null);
-        assertEquals("CallTOs with same IDs should be equal whatever their other attributes", 
-                callTO1, callTO2);
-        assertEquals("CallTOs with same IDs should have equal hashCode whatever " +
-        		"their other attributes", callTO1.hashCode(), callTO2.hashCode());
-        
-        callTO1 = new DiffExpressionCallTO(null, "1", "2", "3", null, null, null, null, null, 
-                null, null, null, null, null, 0);
-        callTO2 = new DiffExpressionCallTO(null, "1", "2", "3", null, null, null, null, null, 
-                null, null, null, null, null, 2);
-        assertEquals("CallTOs with a null ID but same geneId-stageId-anatEntityId " +
-                "should be equal whatever their other attributes", 
-                callTO1, callTO2);
-        assertEquals("CallTOs with a null ID but same geneId-stageId-anatEntityId " +
-                "should be have equal hashCode whatever their other attributes", 
-                callTO1.hashCode(), callTO2.hashCode());
-        
-        callTO1 = new DiffExpressionCallTO(null, "1", "2", null, null, null, null, null, null, 
-                null, null, null, null, null, 2);
-        callTO2 = new DiffExpressionCallTO(null, "1", "2", null, null, null, null, null, null, 
-                null, null, null, null, null, 0);
-        assertNotEquals("CallTOs with a null ID, and at least one of " +
-                "geneId-stageId-anatEntityId also null, " +
-                "should be compared over all attributes", callTO1, callTO2);
-        //we do not test hashCode, as it is not mandatory to have different hashCode 
-        //for non-equal objects
-        
-    }
-    
-    /**
-     * Test {@link ExpressionCallTO#hashCode()} and {@link ExpressionCallTO#equals(Object)}
-     */
-    @Test
-    public void testExpressionCallTOHashCodeEquals() {
-        ExpressionCallTO callTO1 = 
-                new ExpressionCallTO("1", "1", null, null, new BigDecimal("1.2"), 
-                        DataState.NODATA, null, DataState.NODATA, null, 
-                        DataState.NODATA, null, DataState.NODATA, null, false, false, 
-                        OriginOfLine.SELF, OriginOfLine.SELF, true);
-        ExpressionCallTO callTO2 = 
-                new ExpressionCallTO("1", "3", null, null, null, DataState.NODATA, null, 
-                        DataState.NODATA, null, DataState.NODATA, null, DataState.NODATA, null, 
-                        false, false, OriginOfLine.SELF, OriginOfLine.SELF, true);
-        assertEquals("CallTOs with same IDs should be equal whatever their other attributes", 
-                callTO1, callTO2);
-        assertEquals("CallTOs with same IDs should have equal hashCode whatever " +
-                "their other attributes", callTO1.hashCode(), callTO2.hashCode());
-        
-        callTO1 = new ExpressionCallTO(null, "1", "2", "3", new BigDecimal("2.566"), 
-                DataState.NODATA, new BigDecimal("1.566"), DataState.NODATA, null, 
-                DataState.NODATA, null, DataState.NODATA, null, false, true, 
-                OriginOfLine.SELF, OriginOfLine.DESCENT, false);
-        callTO2 = new ExpressionCallTO(null, "1", "2", "3", null, 
-                DataState.NODATA, null, DataState.NODATA, new BigDecimal("1.566"), 
-                DataState.NODATA, null, DataState.NODATA, null, false, false, 
-                OriginOfLine.SELF, OriginOfLine.SELF, true);
-        assertEquals("CallTOs with a null ID but same geneId-stageId-anatEntityId " +
-                "should be equal whatever their other attributes", 
-                callTO1, callTO2);
-        assertEquals("CallTOs with a null ID but same geneId-stageId-anatEntityId " +
-                "should be have equal hashCode whatever their other attributes", 
-                callTO1.hashCode(), callTO2.hashCode());
-
-        callTO1 = new ExpressionCallTO(null, "1", "2", null, new BigDecimal("1.5"), 
-                DataState.NODATA, new BigDecimal("2.5"), DataState.NODATA, null, 
-                DataState.NODATA, new BigDecimal("3.5"), DataState.NODATA, new BigDecimal("4.5"), 
-                false, true, OriginOfLine.SELF, OriginOfLine.BOTH, true);
-        callTO2 = new ExpressionCallTO(null, "1", "2", null, new BigDecimal("1.5"), 
-                DataState.NODATA, new BigDecimal("2.5"), DataState.NODATA, null, 
-                DataState.NODATA, new BigDecimal("3.5"), DataState.NODATA, new BigDecimal("4.5"), 
-                false, true, OriginOfLine.SELF, OriginOfLine.BOTH, true);
-        assertEquals("CallTOs with a null ID, and at least one of " +
-                "geneId-stageId-anatEntityId also null, " +
-                "should be compared over all attributes", callTO1, callTO2);
-        assertEquals("CallTOs with a null ID, and at least one of " +
-                "geneId-stageId-anatEntityId also null, " +
-                "should be compared over all attributes", 
-                callTO1.hashCode(), callTO2.hashCode());
-        
-        callTO1 = new ExpressionCallTO(null, "1", "2", null, new BigDecimal("1.5"), 
-                DataState.NODATA, new BigDecimal("2.5"), DataState.NODATA, null, 
-                DataState.NODATA, new BigDecimal("3.5"), DataState.NODATA, new BigDecimal("4.5"), 
-                false, true, OriginOfLine.SELF, OriginOfLine.BOTH, true);
-        callTO2 = new ExpressionCallTO(null, "1", "2", null, new BigDecimal("1.5"), 
-                DataState.NODATA, new BigDecimal("2.5"), DataState.NODATA, null, 
-                DataState.NODATA, new BigDecimal("0.5"), DataState.NODATA, new BigDecimal("4.5"), 
-                false, true, OriginOfLine.SELF, OriginOfLine.SELF, true);
-        assertNotEquals("CallTOs with a null ID, and at least one of " +
-                "geneId-stageId-anatEntityId also null, " +
-                "should be compared over all attributes", callTO1, callTO2);
-        //we do not test hashCode, as it is not mandatory to have different hashCode 
-        //for non-equal objects
-
-        callTO1 = new ExpressionCallTO(null, "1", "2", null, new BigDecimal("1.5"), 
-                DataState.NODATA, new BigDecimal("2.5"), DataState.NODATA, null, 
-                DataState.NODATA, new BigDecimal("3.5"), DataState.NODATA, new BigDecimal("4.5"), 
-                false, true, OriginOfLine.SELF, OriginOfLine.BOTH, true);
-        callTO2 = new ExpressionCallTO(null, "1", "2", null, new BigDecimal("1.5"), 
-                DataState.NODATA, new BigDecimal("2.5"), DataState.NODATA, null, 
-                DataState.NODATA, new BigDecimal("3.5"), DataState.NODATA, new BigDecimal("4.5"), 
-                false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, true);
-        assertNotEquals("CallTOs with a null ID, and at least one of " +
-                "geneId-stageId-anatEntityId also null, " +
-                "should be compared over all attributes", callTO1, callTO2);
-        //we do not test hashCode, as it is not mandatory to have different hashCode 
-        //for non-equal objects
-        
-    }
-    
-    /**
      * Test {@link GlobalExpressionToExpressionTO#hashCode()} and 
      * {@link GlobalExpressionToExpressionTO#equals(Object)}.
      */
     @Test
     public void testGlobalExpressionToExpressionTOHashCodeEquals() {
         GlobalExpressionToExpressionTO to1 = 
-                new GlobalExpressionToExpressionTO("1", "2");
+                new GlobalExpressionToExpressionTO(1, 2);
         GlobalExpressionToExpressionTO to2 = 
-                new GlobalExpressionToExpressionTO("1", "2");
-        assertEquals("GlobalExpressionToExpressionTO incorrectly seen as non equal", 
-                to1, to2);
-        assertEquals("GlobalExpressionToExpressionTO incorrectly seen as non equal", 
-                to1.hashCode(), to2.hashCode());
+                new GlobalExpressionToExpressionTO(1, 2);
         
-    }
-    
-    /**
-     * Test {@link NoExpressionCallTO#hashCode()} and {@link NoExpressionCallTO#equals(Object)}
-     */
-    @Test
-    public void testNoExpressionCallTOHashCodeEquals() {
-        NoExpressionCallTO callTO1 = 
-                new NoExpressionCallTO("1", "1", null, null, DataState.NODATA, DataState.NODATA, 
-                        DataState.NODATA, DataState.NODATA, false, 
-                        NoExpressionCallTO.OriginOfLine.SELF);
-        NoExpressionCallTO callTO2 = 
-                new NoExpressionCallTO("1", "3", null, null, DataState.NODATA, DataState.NODATA, 
-                        DataState.NODATA, DataState.NODATA, false, 
-                        NoExpressionCallTO.OriginOfLine.SELF);
-        assertEquals("CallTOs with same IDs should be equal whatever their other attributes", 
-                callTO1, callTO2);
-        assertEquals("CallTOs with same IDs should have equal hashCode whatever " +
-                "their other attributes", callTO1.hashCode(), callTO2.hashCode());
-        
-        callTO1 = new NoExpressionCallTO(null, "1", "2", "3", 
-                DataState.NODATA, DataState.NODATA, 
-                DataState.NODATA, DataState.NODATA, false, 
-                NoExpressionCallTO.OriginOfLine.SELF);
-        callTO2 = new NoExpressionCallTO(null, "1", "2", "3", 
-                DataState.NODATA, DataState.NODATA, 
-                DataState.NODATA, DataState.NODATA, true, 
-                NoExpressionCallTO.OriginOfLine.SELF);
-        assertEquals("CallTOs with a null ID but same geneId-stageId-anatEntityId " +
-                "should be equal whatever their other attributes", 
-                callTO1, callTO2);
-        assertEquals("CallTOs with a null ID but same geneId-stageId-anatEntityId " +
-                "should be have equal hashCode whatever their other attributes", 
-                callTO1.hashCode(), callTO2.hashCode());
-        
-        callTO1 = new NoExpressionCallTO(null, "1", "2", null, 
-                DataState.NODATA, DataState.NODATA, 
-                DataState.NODATA, DataState.NODATA, false, 
-                NoExpressionCallTO.OriginOfLine.SELF);
-        callTO2 = new NoExpressionCallTO(null, "1", "2", null, 
-                DataState.NODATA, DataState.NODATA, 
-                DataState.NODATA, DataState.NODATA, true, 
-                NoExpressionCallTO.OriginOfLine.SELF);
-        assertNotEquals("CallTOs with a null ID, and at least one of " +
-                "geneId-stageId-anatEntityId also null, " +
-                "should be compared over all attributes", callTO1, callTO2);
-        //we do not test hashCode, as it is not mandatory to have different hashCode 
-        //for non-equal objects
+        assertTrue(TOComparator.areTOsEqual(to1, to2));
     }
     
     /**
@@ -372,118 +197,11 @@ public class CallTOTest extends TestAncestor {
     @Test
     public void testGlobalNoExpressionToNoExpressionTOHashCodeEquals() {
         GlobalNoExpressionToNoExpressionTO to1 = 
-                new GlobalNoExpressionToNoExpressionTO("1", "2");
+                new GlobalNoExpressionToNoExpressionTO(1, 2);
         GlobalNoExpressionToNoExpressionTO to2 = 
-                new GlobalNoExpressionToNoExpressionTO("1", "2");
-        assertEquals("GlobalNoExpressionToNoExpressionTO incorrectly seen as non equal", 
-                to1, to2);
-        assertEquals("GlobalNoExpressionToNoExpressionTO incorrectly seen as non equal", 
-                to1.hashCode(), to2.hashCode());
-        
-    }
-    
-    /**
-     * Simply test the getters and setters of {@code CallTO}.
-     */
-    @Test
-    public void shouldSetGetCallTO() {
-        //get an ExpressionCallTO, CallTO is abstract, we can still use 
-        //the protected method anyway
-        CallTO callTO = new ExpressionCallTO();
-        
-        String geneId = "geneId1";
-        callTO.setGeneId(geneId);
-        assertEquals("Incorrect geneId set/get", geneId, callTO.getGeneId());
-        
-        String stageId = "stageId1";
-        callTO.setStageId(stageId);
-        assertEquals("Incorrect stageId set/get", stageId, callTO.getStageId());
-        
-        String anatEntityId = "anatEntityId1";
-        callTO.setAnatEntityId(anatEntityId);
-        assertEquals("Incorrect anatEntityId set/get", anatEntityId, callTO.getAnatEntityId());
-        
-        DataState state = DataState.HIGHQUALITY;
-        
-        callTO.setAffymetrixData(state);
-        assertEquals("Incorrect Affymetrix DataState set/get", state, callTO.getAffymetrixData());
-        //to be sure to not interfere with other setters in case of bug
-        callTO.setAffymetrixData(null);
+                new GlobalNoExpressionToNoExpressionTO(1, 2);
 
-        callTO.setESTData(state);
-        assertEquals("Incorrect EST DataState set/get", state, callTO.getESTData());
-        //to be sure to not interfere with other setters in case of bug
-        callTO.setESTData(null);
-
-        callTO.setInSituData(state);
-        assertEquals("Incorrect in situ DataState set/get", state, callTO.getInSituData());
-        //to be sure to not interfere with other setters in case of bug
-        callTO.setInSituData(null);
-
-        callTO.setRelaxedInSituData(state);
-        assertEquals("Incorrect relaxed in situ DataState set/get", state, 
-                callTO.getRelaxedInSituData());
-        //to be sure to not interfere with other setters in case of bug
-        callTO.setRelaxedInSituData(null);
-
-        callTO.setRNASeqData(state);
-        assertEquals("Incorrect RNA-Seq DataState set/get", state, callTO.getRNASeqData());
-        //to be sure to not interfere with other setters in case of bug
-        callTO.setRNASeqData(null);
-    }
-    
-    /**
-     * Simply test the getters and setters of {@code ExpressionCallTO}.
-     */
-    @Test
-    public void shouldSetGetExpressionCallTO() {
-        ExpressionCallTO callTO = new ExpressionCallTO();
+        assertTrue(TOComparator.areTOsEqual(to1, to2));
         
-        callTO.setIncludeSubstructures(true);
-        assertTrue("Incorrect includeSubstructures set/get", callTO.isIncludeSubstructures());
-        callTO.setIncludeSubstructures(false);
-
-        callTO.setIncludeSubStages(true);
-        assertTrue("Incorrect includeSubStages set/get", callTO.isIncludeSubStages());
-        
-    }
-    
-    /**
-     * Simply test the getters and setters of {@code NoExpressionCallTO}.
-     */
-    @Test
-    public void shouldSetGetNoExpressionCallTO() {
-        NoExpressionCallTO callTO = new NoExpressionCallTO();
-        
-        callTO.setIncludeParentStructures(true);
-        assertTrue("Incorrect includeParentStructures set/get", callTO.isIncludeParentStructures());
-        
-    }
-    
-    /**
-     * Simply test the getters and setters of {@code DiffExpressionCallTO}.
-     */
-    @Test
-    public void shouldSetGetDiffExpressionCallTO() {
-        DiffExpressionCallTO callTO = new DiffExpressionCallTO();
-        
-        DiffExprCallType callType = DiffExprCallType.UNDER_EXPRESSED;
-        callTO.setDiffExprCallTypeAffymetrix(callType);
-        assertEquals("Incorrect DiffCallType set/get for Affymetrix", callType, 
-                callTO.getDiffExprCallTypeAffymetrix());
-        
-        callType = DiffExprCallType.OVER_EXPRESSED;
-        callTO.setDiffExprCallTypeRNASeq(callType);
-        assertEquals("Incorrect DiffCallType set/get for RNA-Seq", callType, 
-                callTO.getDiffExprCallTypeRNASeq());
-
-        ComparisonFactor factor = ComparisonFactor.DEVELOPMENT;
-        callTO.setComparisonFactor(factor);
-        assertEquals("Incorrect Factor set/get", factor, callTO.getComparisonFactor());
-        
-//        int count = 10;
-//        callTO.setMinConditionCount(count);
-//        assertEquals("Incorrect minConditionCount set/get", 
-//                count, (int) callTO.getMinConditionCount());
     }
 }

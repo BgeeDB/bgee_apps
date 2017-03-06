@@ -179,7 +179,7 @@ public interface GenerateMultiSpeciesDownloadFile {
          * @return  the {@code List} of {@code String}s that are the names of the anatomical
          *          entities. There is more than one entity only in multi-species files.
          *          When there is several, they are returned in the same order as their 
-         *          corresponding ID, as returned by {@link #getGeneIds()}.
+         *          corresponding ID, as returned by {@link #getEntityIds()}.
          */
         public List<String> getEntityNames() {
             return entityNames;

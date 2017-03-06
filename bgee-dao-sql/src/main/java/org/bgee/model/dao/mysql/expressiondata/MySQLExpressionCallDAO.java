@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 import java.util.Optional;
 import java.util.Set;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
@@ -50,6 +49,12 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 //      If including substages, the mean rank (over the GROUP BY) of the mean rank 
 //      (over the requested data types) should be used.
 //TODO: manage ancestralTaxonId in new method getExpressionCalls
+//TODO: FINAL SOLUTION!! the DAO should never "merge" calls when include substructures 
+//or substages is true, it should return ALL calls. Meaning that it should not be possible to query, 
+//e.g. includeSubstructures=true AND EST=HIGH AND Affy=HIGH, because this information needs call "merging". 
+//Rather, all calls, in a structure should be retrieved, including calls in substructures, 
+//that satisfy EST=HIGH OR Affy=HIGH. Call merging should be performed solely in bgee-core.
+//=> NO MORE GROUP BY NOR HAVING CLAUSES NEEDED!!
 public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute> 
 implements ExpressionCallDAO {
     
@@ -257,8 +262,7 @@ implements ExpressionCallDAO {
         //this is important to know if a GROUP BY is needed in some situations.
         boolean primaryKey = (originalAttrs.contains(ExpressionCallDAO.Attribute.ID) || 
                 (originalAttrs.contains(ExpressionCallDAO.Attribute.GENE_ID) && 
-                 originalAttrs.contains(ExpressionCallDAO.Attribute.ANAT_ENTITY_ID) && 
-                 originalAttrs.contains(ExpressionCallDAO.Attribute.STAGE_ID)));
+                 originalAttrs.contains(ExpressionCallDAO.Attribute.CONDITION_ID)));
         
         if (includeSubStages || !primaryKey) {
             if (originalAttrs.stream().anyMatch(e -> e.isDataTypeAttribute()) || 
@@ -367,8 +371,7 @@ implements ExpressionCallDAO {
             groupByAttrs = originalAttrs.stream()
                 .filter(e -> e.equals(ExpressionCallDAO.Attribute.ID) || 
                         e.equals(ExpressionCallDAO.Attribute.GENE_ID) || 
-                        e.equals(ExpressionCallDAO.Attribute.ANAT_ENTITY_ID) || 
-                        e.equals(ExpressionCallDAO.Attribute.STAGE_ID))
+                        e.equals(ExpressionCallDAO.Attribute.CONDITION_ID))
                 .collect(Collectors.toCollection(() -> EnumSet.noneOf(ExpressionCallDAO.Attribute.class)));
         }
 
@@ -438,8 +441,8 @@ implements ExpressionCallDAO {
         try (MySQLExpressionCallTOResultSet resultSet = new MySQLExpressionCallTOResultSet(
                 this.getManager().getConnection().prepareStatement(sql), null)) {
             
-            if (resultSet.next() && StringUtils.isNotBlank(resultSet.getTO().getId())) {
-                return log.exit(Integer.valueOf(resultSet.getTO().getId()));
+            if (resultSet.next() && resultSet.getTO().getId() != null) {
+                return log.exit(resultSet.getTO().getId());
             } 
             return log.exit(0);
         } catch (SQLException e) {
@@ -514,8 +517,7 @@ implements ExpressionCallDAO {
         //if no filtering based on stage ID is requested, and no group by on stage is needed, 
         //then we don't need the join to stage table
         final boolean realIncludeSubStages = includeSubStages && 
-                (updatedAttrs.contains(ExpressionCallDAO.Attribute.ID) || 
-                 updatedAttrs.contains(ExpressionCallDAO.Attribute.STAGE_ID) 
+                (updatedAttrs.contains(ExpressionCallDAO.Attribute.ID)
                 ||
                 callFilters.stream().anyMatch(
                         callFilter -> callFilter.getConditionFilters().stream().anyMatch(
@@ -527,8 +529,7 @@ implements ExpressionCallDAO {
         boolean distinct = !(groupByAttrs != null || (!realIncludeSubStages && 
                 (updatedAttrs.contains(ExpressionCallDAO.Attribute.ID) || 
                 (updatedAttrs.contains(ExpressionCallDAO.Attribute.GENE_ID) && 
-                 updatedAttrs.contains(ExpressionCallDAO.Attribute.ANAT_ENTITY_ID) && 
-                 updatedAttrs.contains(ExpressionCallDAO.Attribute.STAGE_ID)))));
+                 updatedAttrs.contains(ExpressionCallDAO.Attribute.CONDITION_ID)))));
         String sql = this.generateSelectClause(
                 updatedAttrs, 
                 //Attributes corresponding to data types used for filtering the results
@@ -569,18 +570,18 @@ implements ExpressionCallDAO {
                 
                 genesAndSpeciesFilteredForPropagation = true;
                 
-                sql += " INNER JOIN (SELECT geneId from gene AS tempGene where exists " 
-                    + "(select 1 from expression where expression.geneId = tempGene.geneId) ";
+                sql += " INNER JOIN (SELECT bgeeGeneId from gene AS tempGene where exists " 
+                    + "(select 1 from expression where expression.bgeeGeneId = tempGene.bgeeGeneId) ";
                 if (!allSpeciesIds.isEmpty()) {
                     sql += "AND tempGene.speciesId IN (" + BgeePreparedStatement.generateParameterizedQueryString(
                             allSpeciesIds.size()) + ") ";
                 }
                 if (!allGeneIds.isEmpty()) {
-                    sql += "AND tempGene.geneId IN (" + BgeePreparedStatement.generateParameterizedQueryString(
+                    sql += "AND tempGene.bgeeGeneId IN (" + BgeePreparedStatement.generateParameterizedQueryString(
                             allGeneIds.size()) + ") ";
                 }
-                sql += "ORDER BY tempGene.geneId LIMIT ?, ?) as tempTable on " 
-                    + exprTableName + ".geneId = tempTable.geneId ";
+                sql += "ORDER BY tempGene.bgeeGeneId LIMIT ?, ?) as tempTable on " 
+                    + exprTableName + ".bgeeGeneId = tempTable.bgeeGeneId ";
             }
         }
         //even if we already joined the gene table because includeSubStages is true, 
@@ -588,13 +589,13 @@ implements ExpressionCallDAO {
         //defined in the CallFilters. 
         if (!allSpeciesIds.isEmpty() || 
                 callFilters.stream().anyMatch(filter -> !filter.getSpeciesIds().isEmpty())) {
-            sql += " INNER JOIN gene ON (gene.geneId = " + exprTableName + ".geneId) ";
+            sql += " INNER JOIN gene ON (gene.bgeeGeneId = " + exprTableName + ".bgeeGeneId) ";
         }
         //If a global gene filter is defined, we can apply it to all conditions in all cases, 
         //only if not already apply to the sub-query. 
         boolean whereClauseStarted = false;
         if (!allGeneIds.isEmpty() && !genesAndSpeciesFilteredForPropagation && globalGeneFilter) {
-            sql += " WHERE " + exprTableName + ".geneId IN (" 
+            sql += " WHERE " + exprTableName + ".bgeeGeneId IN (" 
                 + BgeePreparedStatement.generateParameterizedQueryString(allGeneIds.size()) + ") ";
             whereClauseStarted = true;
         }
@@ -649,12 +650,9 @@ implements ExpressionCallDAO {
                     case ID: 
                         return "exprId";
                     case GENE_ID: 
-                        return exprTableName + ".geneId";
-                    case ANAT_ENTITY_ID: 
-                        return exprTableName + ".anatEntityId";
-                    case STAGE_ID: 
-                        return (realIncludeSubStages? propagatedStageTableName: exprTableName) 
-                                + ".stageId";
+                        return exprTableName + ".bgeeGeneId";
+                    case CONDITION_ID: 
+                        return exprTableName + ".conditionId";
                     default: 
                         throw log.throwing(new IllegalStateException("GROUP BY Attribute not supported: "
                                 + attr));
@@ -676,14 +674,10 @@ implements ExpressionCallDAO {
                         orderBy = "globalMeanRank";
                         break;
                     case GENE_ID: 
-                        orderBy = exprTableName + ".geneId";
+                        orderBy = exprTableName + ".bgeeGeneId";
                         break;
-                    case ANAT_ENTITY_ID: 
-                        orderBy = exprTableName + ".anatEntityId";
-                        break;
-                    case STAGE_ID: 
-                        orderBy = (realIncludeSubStages? propagatedStageTableName: exprTableName) 
-                                + ".stageId";
+                    case CONDITION_ID: 
+                        orderBy = exprTableName + ".conditionId";
                         break;
                     default: 
                         throw log.throwing(new IllegalStateException("Unsupported OrderingAttribute: " 
@@ -805,7 +799,7 @@ implements ExpressionCallDAO {
     //  duplication event? They don't have any taxonId...
     //
     @Deprecated
-    private ExpressionCallTOResultSet getExpressionCalls(Set<String> speciesIds, 
+    private ExpressionCallTOResultSet getExpressionCalls(Set<Integer> speciesIds, 
             boolean isIncludeSubstructures, boolean isIncludeSubStages, 
             String commonAncestralTaxonId) throws DAOException {
         log.entry(speciesIds, isIncludeSubstructures, isIncludeSubStages, 
@@ -849,24 +843,24 @@ implements ExpressionCallDAO {
             //to make sure we will not look up for data not present in the expression table.
             //here, we generate the first part of the subquery, as we may need 
             //to set speciesIds afterwards.
-            sql += " INNER JOIN (SELECT geneId from gene where exists " +
-            		"(select 1 from expression where expression.geneId = gene.geneId) ";
+            sql += " INNER JOIN (SELECT bgeeGeneId from gene where exists " +
+            		"(select 1 from expression where expression.bgeeGeneId = gene.bgeeGeneId) ";
         }
         if (speciesIds != null && speciesIds.size() > 0) {
             if (isIncludeSubStages) {
                 sql += "AND ";
             } else {
-                sql += " INNER JOIN gene ON (gene.geneId = " + exprTableName + ".geneId) WHERE ";
+                sql += " INNER JOIN gene ON (gene.bgeeGeneId = " + exprTableName + ".bgeeGeneId) WHERE ";
             }
             sql += "gene.speciesId IN (" + BgeePreparedStatement.generateParameterizedQueryString(
                             speciesIds.size()) + ") ";
         }
         if (isIncludeSubStages) {
             //finish the subquery and the join to the expression table
-            sql += "LIMIT ?, ?) as tempTable on " + exprTableName + ".geneId = tempTable.geneId ";
+            sql += "LIMIT ?, ?) as tempTable on " + exprTableName + ".bgeeGeneId = tempTable.bgeeGeneId ";
             //and now, finish the main query
-            sql += " GROUP BY " + exprTableName + ".geneId, " + 
-                   exprTableName + ".anatEntityId, " + propagatedStageTableName + ".stageId";
+            sql += " GROUP BY " + exprTableName + ".bgeeGeneId, " + 
+                   exprTableName + ".conditionId";
         }
 
         //we don't use a try-with-resource, because we return a pointer to the results, 
@@ -874,7 +868,7 @@ implements ExpressionCallDAO {
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             if (speciesIds != null && !speciesIds.isEmpty()) {
-                stmt.setStringsToIntegers(1, speciesIds, true);
+                stmt.setIntegers(1, speciesIds, true);
             }
 
             if (!isIncludeSubStages) {
@@ -1008,24 +1002,17 @@ implements ExpressionCallDAO {
                     //XXX: transform into a bit value for lower memory consumption?
                     //see convert unsigned: http://dev.mysql.com/doc/refman/5.5/en/cast-functions.html#function_convert
                     //We always use the three attributes, otherwise it wouldn't be an ID...
-                    sql += "CONCAT(" + exprTableName + ".geneId, '__', " + 
-                            exprTableName + ".anatEntityId, '__', " + 
-                            propagatedStageTableName + ".stageId) ";
+                    sql += "CONCAT(" + exprTableName + ".bgeeGeneId, '__', " + 
+                            exprTableName + ".conditionId) ";
                 } else {
                     sql += includeSubstructures? "globalExpressionId ": "expressionId ";
                 }
                 sql += "AS exprId ";
             } else if (attribute.equals(ExpressionCallDAO.Attribute.GENE_ID)) {
-                sql += exprTableName + ".geneId ";
-            } else if (attribute.equals(ExpressionCallDAO.Attribute.ANAT_ENTITY_ID)) {
-                sql += exprTableName + ".anatEntityId ";
+                sql += exprTableName + ".bgeeGeneId ";
+            } else if (attribute.equals(ExpressionCallDAO.Attribute.CONDITION_ID)) {
+                sql += exprTableName + ".conditionId ";
                 
-            } else if (attribute.equals(ExpressionCallDAO.Attribute.STAGE_ID)) {
-                if (!includeSubStages) {
-                    sql += exprTableName + ".stageId ";
-                } else {
-                    sql += propagatedStageTableName + ".stageId ";
-                }
             } else if (attribute.equals(ExpressionCallDAO.Attribute.ANAT_ORIGIN_OF_LINE)) {
                 //the attribute ANAT_ORIGIN_OF_LINE corresponds to a column only 
                 //in the global expression table, not in the basic expression table. 
@@ -1308,7 +1295,7 @@ implements ExpressionCallDAO {
                 if (exprTableName != null) {
                     sb2.append(exprTableName).append(".");
                 }
-                sb2.append("geneId IN (")
+                sb2.append("bgeeGeneId IN (")
                 .append(BgeePreparedStatement.generateParameterizedQueryString(callFilter.getGeneIds().size()))
                 .append(") ");
                 hasPreviousClause = true;
@@ -1575,19 +1562,18 @@ implements ExpressionCallDAO {
 
         // And we need to build two different queries. 
         String sqlExpression = "INSERT INTO expression " +
-                "(expressionId, geneId, anatEntityId, stageId, "+
+                "(expressionId, bgeeGeneId, conditionId, "+
                 "estData, affymetrixData, inSituData, rnaSeqData) " +
-                "values (?, ?, ?, ?, ?, ?, ?, ?)";
+                "values (?, ?, ?, ?, ?, ?, ?)";
         
         // To not overload MySQL with an error com.mysql.jdbc.PacketTooBigException, 
         // and because of laziness, we insert expression calls one at a time
         try (BgeePreparedStatement stmt = 
                 this.getManager().getConnection().prepareStatement(sqlExpression)) {
             for (ExpressionCallTO call: toInsertInExpression) {
-                stmt.setInt(1, Integer.parseInt(call.getId()));
-                stmt.setString(2, call.getGeneId());
-                stmt.setString(3, call.getAnatEntityId());
-                stmt.setString(4, call.getStageId());
+                stmt.setInt(1, call.getId());
+                stmt.setInt(2, call.getBgeeGeneId());
+                stmt.setInt(3, call.getConditionId());
                 stmt.setString(5, call.getESTData().getStringRepresentation());
                 stmt.setString(6, call.getAffymetrixData().getStringRepresentation());
                 stmt.setString(7, call.getInSituData().getStringRepresentation());
@@ -1604,16 +1590,15 @@ implements ExpressionCallDAO {
         }
 
         String sqlGlobalExpression = "INSERT INTO globalExpression " +
-                "(globalExpressionId, geneId, anatEntityId, stageId, "+
+                "(globalExpressionId, bgeeGeneId, conditionId, "+
                 "estData, affymetrixData, inSituData, rnaSeqData, originOfLine) " +
-                "values (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "values (?, ?, ?, ?, ?, ?, ?, ?)";
         try (BgeePreparedStatement stmt = 
                 this.getManager().getConnection().prepareStatement(sqlGlobalExpression)) {
             for (ExpressionCallTO call: toInsertInGlobalExpression) {
-                stmt.setInt(1, Integer.parseInt(call.getId()));
-                stmt.setString(2, call.getGeneId());
-                stmt.setString(3, call.getAnatEntityId());
-                stmt.setString(4, call.getStageId());
+                stmt.setInt(1, call.getId());
+                stmt.setInt(2, call.getBgeeGeneId());
+                stmt.setInt(3, call.getConditionId());
                 stmt.setString(5, call.getESTData().getStringRepresentation());
                 stmt.setString(6, call.getAffymetrixData().getStringRepresentation());
                 stmt.setString(7, call.getInSituData().getStringRepresentation());
@@ -1655,8 +1640,8 @@ implements ExpressionCallDAO {
         try (BgeePreparedStatement stmt = 
                 this.getManager().getConnection().prepareStatement(sqlExpression)) {
             for (GlobalExpressionToExpressionTO call: globalExpressionToExpression) {
-                stmt.setString(1, call.getGlobalExpressionId());
-                stmt.setString(2, call.getExpressionId());
+                stmt.setInt(1, call.getGlobalExpressionId());
+                stmt.setInt(2, call.getExpressionId());
                 rowInsertedCount += stmt.executeUpdate();
                 stmt.clearParameters();
                 if (log.isDebugEnabled() && rowInsertedCount % 100000 == 0) {
@@ -1747,7 +1732,7 @@ implements ExpressionCallDAO {
         protected ExpressionCallTO getNewTO() throws DAOException {
             log.entry();
 
-            String id = null, geneId = null, anatEntityId = null, stageId = null;
+            Integer id = null, geneId = null, conditionId = null;
             DataState affymetrixData = null, estData = null, inSituData = null, rnaSeqData = null;
             BigDecimal globalMeanRank = null, affymetrixMeanRank = null, estMeanRank = null, 
                     inSituMeanRank = null, rnaSeqMeanRank = null;
@@ -1764,16 +1749,13 @@ implements ExpressionCallDAO {
                 try {
                     switch(attr) {
                     case ID:
-                        id = this.getCurrentResultSet().getString(column.getKey());
+                        id = this.getCurrentResultSet().getInt(column.getKey());
                         break;
                     case GENE_ID:
-                        geneId = this.getCurrentResultSet().getString(column.getKey());
+                        geneId = this.getCurrentResultSet().getInt(column.getKey());
                         break;
-                    case ANAT_ENTITY_ID:
-                        anatEntityId = this.getCurrentResultSet().getString(column.getKey());
-                        break;
-                    case STAGE_ID:
-                        stageId = this.getCurrentResultSet().getString(column.getKey());
+                    case CONDITION_ID:
+                        conditionId = this.getCurrentResultSet().getInt(column.getKey());
                         break;
                     case GLOBAL_MEAN_RANK:
                         globalMeanRank = this.getCurrentResultSet().getBigDecimal(column.getKey());
@@ -1841,7 +1823,7 @@ implements ExpressionCallDAO {
                     throw log.throwing(new DAOException(e));
                 }
             }
-            return log.exit(new ExpressionCallTO(id, geneId, anatEntityId, stageId, globalMeanRank, 
+            return log.exit(new ExpressionCallTO(id, geneId, conditionId, globalMeanRank, 
                     affymetrixData, affymetrixMeanRank, estData, estMeanRank, 
                     inSituData, inSituMeanRank, rnaSeqData, rnaSeqMeanRank, 
                     includeSubstructures, includeSubStages, 
@@ -1855,15 +1837,12 @@ implements ExpressionCallDAO {
             if (colName.equals("exprId")) {
                 return log.exit(ExpressionCallDAO.Attribute.ID);
             } 
-            if (colName.equals("geneId")) {
+            if (colName.equals("bgeeGeneId")) {
                 return log.exit(ExpressionCallDAO.Attribute.GENE_ID);
             } 
-            if (colName.equals("anatEntityId")) {
-                return log.exit(ExpressionCallDAO.Attribute.ANAT_ENTITY_ID);
-            } 
-            if (colName.equals("stageId")) {
-                return log.exit(ExpressionCallDAO.Attribute.STAGE_ID);
-            } 
+            if (colName.equals("conditionId")) {
+                return log.exit(ExpressionCallDAO.Attribute.CONDITION_ID);
+            }
             if (colName.equals("globalMeanRank")) {
                 return log.exit(ExpressionCallDAO.Attribute.GLOBAL_MEAN_RANK);
             } 
@@ -1933,15 +1912,15 @@ implements ExpressionCallDAO {
         @Override
         protected GlobalExpressionToExpressionTO getNewTO() throws DAOException {
             log.entry();
-            String globalExpressionId = null, expressionId = null;
+            Integer globalExpressionId = null, expressionId = null;
 
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
                     if (column.getValue().equals("globalExpressionId")) {
-                        globalExpressionId = this.getCurrentResultSet().getString(column.getKey());
+                        globalExpressionId = this.getCurrentResultSet().getInt(column.getKey());
 
                     } else if (column.getValue().equals("expressionId")) {
-                        expressionId = this.getCurrentResultSet().getString(column.getKey());
+                        expressionId = this.getCurrentResultSet().getInt(column.getKey());
 
                     }  else {
                         throw log.throwing(new UnrecognizedColumnException(column.getValue()));

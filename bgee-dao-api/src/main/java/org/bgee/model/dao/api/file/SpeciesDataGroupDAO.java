@@ -5,7 +5,7 @@ import java.util.LinkedHashMap;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
-import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.NamedEntityTO;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 
@@ -51,7 +51,7 @@ public interface SpeciesDataGroupDAO extends DAO<SpeciesDataGroupDAO.Attribute> 
     /**
      * The {@code TransferObject} for species data group
      */
-    class SpeciesDataGroupTO extends EntityTO {
+    class SpeciesDataGroupTO extends NamedEntityTO<Integer> {
 
         private static final long serialVersionUID = 2341412341214324L;
         /**
@@ -61,13 +61,13 @@ public interface SpeciesDataGroupDAO extends DAO<SpeciesDataGroupDAO.Attribute> 
 
         /**
          * The constructor providing all fields.
-         * @param id                A {@code String} that is the ID of the species data group.
+         * @param id                An {@code Integer} that is the ID of the species data group.
          * @param name              A {@code String} that is the name of the species data group.
          * @param description       A {@code String} that is the description of the species data group.
          * @param preferredOrder    An {@code int} allowing to order {@code SpeciesDataGroupTO}s 
          *                          in preferred order.
          */
-        public SpeciesDataGroupTO(String id, String name, String description, Integer preferredOrder) {
+        public SpeciesDataGroupTO(Integer id, String name, String description, Integer preferredOrder) {
             super(id, name, description);
             this.preferredOrder = preferredOrder;
         }
@@ -149,19 +149,19 @@ public interface SpeciesDataGroupDAO extends DAO<SpeciesDataGroupDAO.Attribute> 
         /**
          * The id of the species data group
          */
-        private final String groupId;
+        private final Integer groupId;
 
         /**
          * The id of the species
          */
-        private final String speciesId;
+        private final Integer speciesId;
 
         /**
          * Default constructor.
          * @param speciesId The id of the species
          * @param groupId The id of the species data group
          */
-        public SpeciesToDataGroupTO(String speciesId, String groupId) {
+        public SpeciesToDataGroupTO(Integer speciesId, Integer groupId) {
             this.groupId = groupId;
             this.speciesId = speciesId;
         }
@@ -170,7 +170,7 @@ public interface SpeciesDataGroupDAO extends DAO<SpeciesDataGroupDAO.Attribute> 
          * Get the group id
          * @return the group id
          */
-        public String getGroupId() {
+        public Integer getGroupId() {
             return groupId;
         }
 
@@ -178,46 +178,8 @@ public interface SpeciesDataGroupDAO extends DAO<SpeciesDataGroupDAO.Attribute> 
          * Get the species id
          * @return the species id
          */
-        public String getSpeciesId() {
+        public Integer getSpeciesId() {
             return speciesId;
-        }
-
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + ((groupId == null) ? 0 : groupId.hashCode());
-            result = prime * result + ((speciesId == null) ? 0 : speciesId.hashCode());
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null) {
-                return false;
-            }
-            if (getClass() != obj.getClass()) {
-                return false;
-            }
-            SpeciesToDataGroupTO other = (SpeciesToDataGroupTO) obj;
-            if (groupId == null) {
-                if (other.groupId != null) {
-                    return false;
-                }
-            } else if (!groupId.equals(other.groupId)) {
-                return false;
-            }
-            if (speciesId == null) {
-                if (other.speciesId != null) {
-                    return false;
-                }
-            } else if (!speciesId.equals(other.speciesId)) {
-                return false;
-            }
-            return true;
         }
 
         @Override

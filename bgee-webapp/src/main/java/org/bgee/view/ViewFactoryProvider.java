@@ -53,8 +53,8 @@ public class ViewFactoryProvider {
     }
 
     /**
-     * Return the appropriate {@code ViewFactory} (see {@link #DisplayType}), based on 
-     * the display type requested in the provided {@code requestParameters}.
+     * Return the appropriate {@code ViewFactory} (see {@link DisplayType}),
+     * based on the display type requested in the provided {@code requestParameters}.
      *
      * @param response          the {@code HttpServletResponse} where the outputs of the view 
      *                          classes will be written
@@ -85,7 +85,7 @@ public class ViewFactoryProvider {
     }
 
     /**
-     * Return the appropriate {@code ViewFactory} (see {@link #DisplayType}), based on 
+     * Return the appropriate {@code ViewFactory} (see {@link DisplayType}), based on 
      * the display type requested by the {@code displayType} parameter.
      * 
      * @param response          the {@code HttpServletResponse} where the outputs of the view 

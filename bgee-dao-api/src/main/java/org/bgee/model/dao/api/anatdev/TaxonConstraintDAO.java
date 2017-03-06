@@ -11,10 +11,11 @@ import org.bgee.model.dao.api.exception.DAOException;
 /**
  * DAO defining queries using or retrieving {@link TaxonConstraintTO}s. 
  *
- * @author Valentine Rech de Laval
- * @version Bgee 13
- * @see TaxonConstraintTO
- * @since Bgee 13
+ * @author  Valentine Rech de Laval
+ * @author Frederic Bastian
+ * @version Bgee 14 Feb. 2017
+ * @see     TaxonConstraintTO
+ * @since   Bgee 13
  */
 public interface TaxonConstraintDAO {
 
@@ -34,6 +35,69 @@ public interface TaxonConstraintDAO {
     }
 
     /**
+     * Retrieve anatomical entity taxon constrains from data source.
+     * The constrains can be filtered by species IDs.
+     * <p>
+     * The taxon constrains are retrieved and returned as a {@code TaxonConstraintTOResultSet}.
+     * It is the responsibility of the caller to close this {@code DAOResultSet}
+     * once results are retrieved.
+     * 
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that are the IDs of species 
+     *                      to retrieve taxon constrains for.
+     * @param attributes    A {@code Collection} of {@code TaxonConstraintDAO.Attribute}s defining  
+     *                      the attributes to populate in the returned {@code TaxonConstraintTO}s.
+     *                      If {@code null} or empty, all attributes are populated. 
+     * @return              A {@code TaxonConstraintTOResultSet} allowing to retrieve 
+     *                      anatomical entity taxon constrains from data source.
+     * @throws DAOException If an error occurred when accessing the data source. 
+     */
+    public TaxonConstraintTOResultSet<String> getAnatEntityTaxonConstraints(
+            Collection<Integer> speciesIds, Collection<TaxonConstraintDAO.Attribute> attributes)
+            throws DAOException;
+    
+    /**
+     * Retrieve anatomical entity relation taxon constrains from data source.
+     * The constrains can be filtered by species IDs.
+     * <p>
+     * The taxon constrains are retrieved and returned as a {@code TaxonConstraintTOResultSet}.
+     * It is the responsibility of the caller to close this {@code DAOResultSet}
+     * once results are retrieved.
+     * 
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that are the IDs of species 
+     *                      to retrieve taxon constrains for.
+     * @param attributes    A {@code Collection} of {@code TaxonConstraintDAO.Attribute}s defining  
+     *                      the attributes to populate in the returned {@code TaxonConstraintTO}s.
+     *                      If {@code null} or empty, all attributes are populated. 
+     * @return              A {@code TaxonConstraintTOResultSet} allowing to retrieve 
+     *                      anatomical entity taxon constrains from data source.
+     * @throws DAOException If an error occurred when accessing the data source. 
+     */
+    public TaxonConstraintTOResultSet<Integer> getAnatEntityRelationTaxonConstraints(
+            Collection<Integer> speciesIds, Collection<TaxonConstraintDAO.Attribute> attributes)
+            throws DAOException;
+
+    /**
+     * Retrieve developmental stage taxon constrains from data source.
+     * The constrains can be filtered by species IDs.
+     * <p>
+     * The taxon constrains are retrieved and returned as a {@code TaxonConstraintTOResultSet}.
+     * It is the responsibility of the caller to close this {@code DAOResultSet}
+     * once results are retrieved.
+     * 
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that are the IDs of species 
+     *                      to retrieve taxon constrains for.
+     * @param attributes    A {@code Collection} of {@code TaxonConstraintDAO.Attribute}s defining  
+     *                      the attributes to populate in the returned {@code TaxonConstraintTO}s.
+     *                      If {@code null} or empty, all attributes are populated. 
+     * @return              A {@code TaxonConstraintTOResultSet} allowing to retrieve 
+     *                      developmental stage taxon constrains from data source.
+     * @throws DAOException If an error occurred when accessing the data source. 
+     */
+    public TaxonConstraintTOResultSet<String> getStageTaxonConstraints(
+            Collection<Integer> speciesIds, Collection<TaxonConstraintDAO.Attribute> attributes)
+            throws DAOException;
+
+    /**
      * Inserts the provided developmental stage taxon constraints into the Bgee database, 
      * represented as a {@code Collection} of {@code TaxonConstraintTO}s. 
      * 
@@ -47,7 +111,7 @@ public interface TaxonConstraintDAO {
      *                                  {@code DAOException} ({@code DAO}s do not expose these kind 
      *                                  of implementation details).
      */
-    public int insertStageTaxonConstraints(Collection<TaxonConstraintTO> taxonConstraintTOs) 
+    public int insertStageTaxonConstraints(Collection<TaxonConstraintTO<String>> taxonConstraintTOs) 
             throws DAOException, IllegalArgumentException;
     
     /**
@@ -64,7 +128,7 @@ public interface TaxonConstraintDAO {
      *                      a {@code DAOException} ({@code DAOs} do not expose these kind of 
      *                      implementation details).
      */
-    public int insertAnatEntityTaxonConstraints(Collection<TaxonConstraintTO> taxonConstraintTOs) 
+    public int insertAnatEntityTaxonConstraints(Collection<TaxonConstraintTO<String>> taxonConstraintTOs) 
             throws DAOException, IllegalArgumentException;
     
     /**
@@ -82,17 +146,20 @@ public interface TaxonConstraintDAO {
      *                      kind of implementation details).
      */
     public int insertAnatEntityRelationTaxonConstraints(
-            Collection<TaxonConstraintTO> taxonConstraintTOs)
+            Collection<TaxonConstraintTO<Integer>> taxonConstraintTOs)
                     throws DAOException, IllegalArgumentException;
     
     /**
      * {@code DAOResultSet} specifics to {@code TaxonConstraintTO}s
      * 
      * @author Valentine Rech de Laval
-     * @version Bgee 13
+     * @author Frederic Bastian
+     * @version Bgee 14 Feb. 2017
      * @since Bgee 13
+     * 
+     * @param <T> the type of ID of the related entity.
      */
-    public interface TaxonConstraintTOResultSet extends DAOResultSet<TaxonConstraintTO> {
+    public interface TaxonConstraintTOResultSet<T> extends DAOResultSet<TaxonConstraintTO<T>> {
         
     }
 
@@ -100,35 +167,38 @@ public interface TaxonConstraintDAO {
      * A {@code TransferObject} representing a taxon constraint for an entity in the Bgee database.
      * 
      * @author Valentine Rech de Laval
-     * @version Bgee 13
+     * @author Frederic Bastian
+     * @version Bgee 14 Feb. 2017
      * @since Bgee 13
+     * 
+     * @param <T> the type of ID of the related entity.
      */
-    public class TaxonConstraintTO extends TransferObject {
+    public class TaxonConstraintTO<T> extends TransferObject {
 
         private static final long serialVersionUID = -4793134010857365138L;
 
         /**
-         * A {@code String} that is the ID of the entity that has a taxon constraint.
+         * A {@code T} that is the ID of the entity that has a taxon constraint.
          */
-        private final String entityId;
+        private final T entityId;
         
         /**
-         * A {@code String} that is the ID of the species that define the taxon constraint. 
+         * An {@code Integer} that is the ID of the species that define the taxon constraint. 
          * If it is {@code null}, it means that the entity exists in all species.
          */
-        private final String speciesId;
+        private final Integer speciesId;
 
         /**
          * Constructor providing the entity ID and the species ID defining this taxon constraint.
          * <p>
          * All of these parameters are optional, so they can be {@code null} when not used.
          * 
-         * @param entityId      A {@code String} that is the ID of the entity that has a taxon 
+         * @param entityId      A {@code T} that is the ID of the entity that has a taxon 
          *                      constraint. 
-         * @param speciesId     A {@code String} that is the ID of the species that define the 
+         * @param speciesId     An {@code Integer} that is the ID of the species that define the 
          *                      taxon constraint.
          */
-        public TaxonConstraintTO(String entityId, String speciesId) {
+        public TaxonConstraintTO(T entityId, Integer speciesId) {
             this.entityId = entityId;
             this.speciesId = speciesId;
         }
@@ -136,49 +206,19 @@ public interface TaxonConstraintDAO {
         /**
          * @return  the {@code String} that is ID of the entity that has a taxon constraint.
          */
-        public String getEntityId() {
+        public T getEntityId() {
             return this.entityId;
         }
 
         /**
-         * @return  the {@code String} that is the ID of the species that define the taxon 
+         * @return  the {@code Integer} that is the ID of the species that define the taxon 
          *          constraint. If it is {@code null}, it means that the entity exists in all 
          *          species.
          */
-        public String getSpeciesId() {
+        public Integer getSpeciesId() {
             return this.speciesId;
         }
 
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + ((entityId == null) ? 0 : entityId.hashCode());
-            result = prime * result + ((speciesId == null) ? 0 : speciesId.hashCode());
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            TaxonConstraintTO other = (TaxonConstraintTO) obj;
-            if (entityId == null) {
-                if (other.entityId != null)
-                    return false;
-            } else if (!entityId.equals(other.entityId))
-                return false;
-            if (speciesId == null) {
-                if (other.speciesId != null)
-                    return false;
-            } else if (!speciesId.equals(other.speciesId))
-                return false;
-            return true;
-        }
         @Override
         public String toString() {
             return "Entity ID: " + this.getEntityId() + " - Species ID: " + this.getSpeciesId();

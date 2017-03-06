@@ -50,16 +50,17 @@ public class MySQLGeneNameSynonymDAO extends MySQLDAO<GeneNameSynonymDAO.Attribu
 
 	static {
 		Map<String, GeneNameSynonymDAO.Attribute> tempMap = new HashMap<String, GeneNameSynonymDAO.Attribute>();
-		tempMap.put("geneId", GeneNameSynonymDAO.Attribute.GENE_ID);
+		tempMap.put("bgeeGeneId", GeneNameSynonymDAO.Attribute.GENE_ID);
 		tempMap.put("geneNameSynonym", GeneNameSynonymDAO.Attribute.GENE_NAME_SYNONYM);
 		COL_NAMES_TO_ATTRS = Collections.unmodifiableMap(tempMap);
 	}
 
 	/**
-	 * The MySQL implementation of {@link GeneNameSynonymTOResultSet}
+	 * The MySQL implementation of {@link org.bgee.model.dao.api.gene.GeneNameSynonymDAO.GeneNameSynonymTOResultSet}
+	 * 
      * @version Bgee 13.2
- 	 * @author Philippe Moret
- 	 * @since Bgee 13.2
+ 	 * @author  Philippe Moret
+ 	 * @since   Bgee 13.2
 	 */
 	public class MySQLGeneNameSynonymTOResultSet extends MySQLDAOResultSet<GeneNameSynonymTO>
 	        implements GeneNameSynonymTOResultSet {
@@ -73,7 +74,8 @@ public class MySQLGeneNameSynonymDAO extends MySQLDAO<GeneNameSynonymDAO.Attribu
 			log.entry();
 			try {
 				final ResultSet currentResultSet = this.getCurrentResultSet();
-				String geneId = null, geneNameSynonym = null;
+				Integer geneId = null;
+				String geneNameSynonym = null;
 
 				for (Map.Entry<Integer, String> col : this.getColumnLabels().entrySet()) {
 					String columnName = col.getValue();
@@ -81,7 +83,7 @@ public class MySQLGeneNameSynonymDAO extends MySQLDAO<GeneNameSynonymDAO.Attribu
 					        COL_NAMES_TO_ATTRS);
 					switch (attr) {
 					case GENE_ID:
-						geneId = currentResultSet.getString(col.getKey());
+						geneId = currentResultSet.getInt(col.getKey());
 						break;
 					case GENE_NAME_SYNONYM:
 						geneNameSynonym = currentResultSet.getString(col.getKey());
@@ -99,17 +101,17 @@ public class MySQLGeneNameSynonymDAO extends MySQLDAO<GeneNameSynonymDAO.Attribu
 	}
 
 	@Override
-	public GeneNameSynonymTOResultSet getGeneNameSynonyms(Set<String> geneIds) {
+	public GeneNameSynonymTOResultSet getGeneNameSynonyms(Set<Integer> geneIds) {
 		log.entry(geneIds);
 		// Construct sql query
 		String sql = this.generateSelectClause(GENE_NAME_SYNONYM_TABLE, COL_NAMES_TO_ATTRS, true);
 		sql += " FROM " + GENE_NAME_SYNONYM_TABLE;
-		sql += " WHERE geneId IN ("+BgeePreparedStatement.generateParameterizedQueryString(geneIds.size())+")";
+		sql += " WHERE bgeeGeneId IN ("+BgeePreparedStatement.generateParameterizedQueryString(geneIds.size())+")";
 		
 		try {
 			BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
 			
-			stmt.setStrings(1, geneIds, true);
+			stmt.setIntegers(1, geneIds, true);
 			// we don't use a try-with-resource, because we return a pointer to the
 			// results,
 			// not the actual results, so we should not close this

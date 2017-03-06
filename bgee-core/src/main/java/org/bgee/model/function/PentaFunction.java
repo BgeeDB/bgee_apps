@@ -1,9 +1,9 @@
 package org.bgee.model.function;
 
 /**
- * Represents a function that accepts three arguments and produces a result. 
+ * Represents a function that accepts five arguments and produces a result. 
  * This is a functional interface whose functional method is 
- * {@link #apply(Object, Object, Object)}.
+ * {@link #apply(Object, Object, Object, Object, Object)}.
  * 
  * @param T the type of the first argument to the function
  * @param U the type of the second argument to the function

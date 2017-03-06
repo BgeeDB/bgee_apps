@@ -6,7 +6,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLAnatEntityDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLTaxonConstraintDAO;
@@ -14,9 +13,12 @@ import org.bgee.model.dao.mysql.anatdev.mapping.MySQLRawSimilarityAnnotationDAO;
 import org.bgee.model.dao.mysql.anatdev.mapping.MySQLStageGroupingDAO;
 import org.bgee.model.dao.mysql.anatdev.mapping.MySQLSummarySimilarityAnnotationDAO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
+import org.bgee.model.dao.mysql.expressiondata.MySQLConditionDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLDiffExpressionCallDAO;
+import org.bgee.model.dao.mysql.expressiondata.MySQLExperimentExpressionDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLNoExpressionCallDAO;
+import org.bgee.model.dao.mysql.expressiondata.MySQLRawExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.affymetrix.MySQLAffymetrixProbesetDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituSpotDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqResultDAO;
@@ -28,6 +30,7 @@ import org.bgee.model.dao.mysql.gene.MySQLHierarchicalGroupDAO;
 import org.bgee.model.dao.mysql.keyword.MySQLKeywordDAO;
 import org.bgee.model.dao.mysql.ontologycommon.MySQLCIOStatementDAO;
 import org.bgee.model.dao.mysql.ontologycommon.MySQLEvidenceOntologyDAO;
+import org.bgee.model.dao.mysql.ontologycommon.MySQLRelationDAO;
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO;
 import org.bgee.model.dao.mysql.species.MySQLTaxonDAO;
 
@@ -97,7 +100,7 @@ public abstract class MySQLDAOUser {
      * {@code MySQLDAOManager}. Subclasses willing to provide this feature needs 
      * to override this constructor to make it public.
      * 
-     * @param manager   The {@code MySQLDAOManager} that will be used by this object.
+     * @param providedManager   The {@code MySQLDAOManager} that will be used by this object.
      */
     protected MySQLDAOUser(MySQLDAOManager providedManager) {
         if (providedManager == null) {
@@ -169,8 +172,14 @@ public abstract class MySQLDAOUser {
     /**
      * @return  A {@code MySQLRelationDAO}.
      */
-    protected RelationDAO getRelationDAO() {
-        return this.manager.getRelationDAO();
+    protected MySQLRelationDAO getRelationDAO() {
+        return (MySQLRelationDAO) this.manager.getRelationDAO();
+    }
+    /**
+     * @return  A {@code MySQLConditionDAO}.
+     */
+    protected MySQLConditionDAO getConditionDAO() {
+        return (MySQLConditionDAO) this.manager.getConditionDAO();
     }
     /**
      * @return  A {@code MySQLExpressionCallDAO}.
@@ -189,6 +198,18 @@ public abstract class MySQLDAOUser {
      */
     protected MySQLNoExpressionCallDAO getNoExpressionCallDAO() {
         return (MySQLNoExpressionCallDAO) this.manager.getNoExpressionCallDAO();
+    }
+    /**
+     * @return  A {@code MySQLNoExpressionCallDAO}.
+     */
+    protected MySQLRawExpressionCallDAO getNewRawExpressionCallDAO() {
+        return (MySQLRawExpressionCallDAO) this.manager.getRawExpressionCallDAO();
+    }
+    /**
+     * @return  A {@code MySQLExperimentExpressionDAO}.
+     */
+    protected MySQLExperimentExpressionDAO getExperimentExpressionDAO() {
+        return (MySQLExperimentExpressionDAO) this.manager.getExperimentExpressionDAO();
     }
     /**
      * @return  A {@code MySQLAnatEntityDAO}.

@@ -135,7 +135,7 @@ public class MailSender {
      * method to send mails.
      * <p>
      * Please note that the value returned by {@code getMailWaitTime} on {@code props} 
-     * will have no effect, it is needed to call {@link #setWaitTimeInMs(int)}.
+     * will have no effect, it is needed to call {@link #setWaitTimeInMs(long)}.
      * 
      * @param props The {@code BgeeProperties} which to retrieve parameters to connect to the mail server from.
      * @throws IllegalArgumentException If {@code props} is {@code null} or does not allow to send mails.
@@ -151,7 +151,7 @@ public class MailSender {
     }
     /**
      * Please note that the value returned by {@code getMailWaitTime} on {@code props} 
-     * will have no effect, it is needed to call {@link #setWaitTimeInMs(int)}.
+     * will have no effect, it is needed to call {@link #setWaitTimeInMs(long)}.
      * 
      * @param props             The {@code BgeeProperties} which to retrieve parameters to connect 
      *                          to the mail server from.

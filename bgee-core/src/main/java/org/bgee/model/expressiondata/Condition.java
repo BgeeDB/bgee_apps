@@ -1,10 +1,15 @@
 package org.bgee.model.expressiondata;
 
+import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.expressiondata.baseelements.DataType;
 
 /**
  * This class describes the conditions related to gene expression. It notably captures 
@@ -16,9 +21,10 @@ import org.apache.logging.log4j.Logger;
  * simple comparisons based on the attributes of this class. For an ordering based 
  * on the relations between {@code Condition}s, see {@link ConditionUtils#compare(Condition, Condition)}.
  * 
- * @author Frederic Bastian
- * @version Bgee 13 June 2016
- * @since Bgee 13 Sept. 2015
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, Feb. 2017
+ * @since   Bgee 13. Sept. 2015
  */
 //XXX: how to manage multi-species conditions? Should we have a class SingleSpeciesCondition 
 //and a class MultiSpeciesCondition? Or, only a Condition, using a "SingleSpeciesAnatEntity" 
@@ -36,7 +42,9 @@ public class Condition implements Comparable<Condition> {
      */
     private static final Comparator<Condition> COND_COMPARATOR = Comparator
             .comparing(Condition::getAnatEntityId, Comparator.nullsLast(String::compareTo))
-            .thenComparing(Condition::getDevStageId, Comparator.nullsLast(String::compareTo));
+            .thenComparing(Condition::getDevStageId, Comparator.nullsLast(String::compareTo))
+            .thenComparing(Condition::getSpeciesId, Comparator.nullsLast(Integer::compareTo));
+    
     
     /**
      * @see #getAnatEntityId()
@@ -46,24 +54,62 @@ public class Condition implements Comparable<Condition> {
      * @see #getDevStageId()
      */
     private final String devStageId;
+    /**
+     * @see #getSpeciesId()
+     */
+    private final Integer speciesId;
+
+    private final Map<DataType, BigDecimal> maxRanksByDataType;
     
     /**
-     * Constructor providing the IDs of the anatomical entity and the developmental stage 
-     * of this {@code Condition}.
+     * Constructor providing the IDs of the anatomical entity, the developmental stage, 
+     * and species ID of this {@code Condition}.
      * 
      * @param anatEntityId  A {@code String} that is the ID of the anatomical entity 
      *                      used in this gene expression condition.
      * @param devStageId    A {@code String} that is the ID of the developmental stage  
      *                      used in this gene expression condition.
-     * @throws IllegalArgumentException if both {@code anatEntity} and {@code devStage} are blank. 
+     * @param speciesId     An {@code Integer} that is the ID of the species  
+     *                      used in this gene expression condition.
+     * @throws IllegalArgumentException If both {@code anatEntity} and {@code devStage} are blanks 
+     *                                  or if {@code speciesId} is empty or less than 1. 
      */
-    public Condition(String anatEntityId, String devStageId) throws IllegalArgumentException {
+    public Condition(String anatEntityId, String devStageId, Integer speciesId)
+            throws IllegalArgumentException {
+        this(anatEntityId, devStageId, speciesId, null);
+    }
+
+    /**
+     * Constructor providing the IDs of the anatomical entity, the developmental stage, 
+     * and species ID of this {@code Condition}.
+     * 
+     * @param anatEntityId          A {@code String} that is the ID of the anatomical entity 
+     *                              used in this gene expression condition.
+     * @param devStageId            A {@code String} that is the ID of the developmental stage  
+     *                              used in this gene expression condition.
+     * @param speciesId             An {@code Integer} that is the ID of the species  
+     *                              used in this gene expression condition.
+     * @param maxRanksByDataType    A {@code Map} where keys are {@code DataType}s corresponding
+     *                              to the data type, the associated values being
+     *                              {@code BigDecimal}s corresponding to max ranks.
+     * @throws IllegalArgumentException If both {@code anatEntity} and {@code devStage} are blanks 
+     *                                  or if {@code speciesId} is empty or less than 1. 
+     */
+    public Condition(String anatEntityId, String devStageId, Integer speciesId,
+            Map<DataType, BigDecimal> maxRanksByDataType) throws IllegalArgumentException {
         if (StringUtils.isBlank(anatEntityId) && StringUtils.isBlank(devStageId)) {
             throw log.throwing(new IllegalArgumentException(
                     "The anat. entity ID and the dev. stage ID cannot be both blank."));
         }
-        this.anatEntityId = anatEntityId;
-        this.devStageId   = devStageId;
+        if (speciesId == null || speciesId <= 0) {
+            throw log.throwing(new IllegalArgumentException(
+                "The species ID cannot be null or equals or less than 1."));
+        }
+        this.anatEntityId       = anatEntityId;
+        this.devStageId         = devStageId;
+        this.speciesId          = speciesId;
+        this.maxRanksByDataType = Collections.unmodifiableMap(maxRanksByDataType == null?
+                                    new HashMap<>(): maxRanksByDataType);
     }
     
     /**
@@ -103,6 +149,20 @@ public class Condition implements Comparable<Condition> {
     public String getDevStageId() {
         return devStageId;
     }
+    /**
+     * @return  An {@code Integer} that is the ID of the species 
+     *          used in this gene expression condition.
+     */
+    public Integer getSpeciesId() {
+        return speciesId;
+    }
+
+    /** TODO
+     * @return
+     */
+    public Map<DataType, BigDecimal> getMaxRanksByDataType() {
+        return maxRanksByDataType;
+    }
 
     //*********************************
     //  COMPARETO/HASHCODE/EQUALS/TOSTRING
@@ -121,12 +181,14 @@ public class Condition implements Comparable<Condition> {
         return COND_COMPARATOR.compare(this, other);
     }
     
+    //TODO: to remove to rely on the Entity hashCode/equals method
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((anatEntityId == null) ? 0 : anatEntityId.hashCode());
         result = prime * result + ((devStageId == null) ? 0 : devStageId.hashCode());
+        result = prime * result + ((speciesId == null) ? 0 : speciesId.hashCode());
         return result;
     }
     @Override
@@ -155,11 +217,19 @@ public class Condition implements Comparable<Condition> {
         } else if (!devStageId.equals(other.devStageId)) {
             return false;
         }
+        if (speciesId == null) {
+            if (other.speciesId != null) {
+                return false;
+            }
+        } else if (!speciesId.equals(other.speciesId)) {
+            return false;
+        }
         return true;
     }
     
     @Override
     public String toString() {
-        return "Condition [anatEntityId=" + anatEntityId + ", devStageId=" + devStageId + "]";
+        return "Condition [anatEntityId=" + anatEntityId + ", devStageId=" + devStageId + 
+            ", speciesId=" + speciesId + "]";
     }
 }

@@ -173,7 +173,7 @@ public class Uberon extends UberonCommon {
      *   
      * <li>If the first element in {@code args} is "extractXRefMappings", the action will be 
      * to retrieve mappings from XRef IDs to Uberon IDs from Uberon, and to save them 
-     * to a TSV file, see {@link #saveXRefMappingsToFile(String, String)} for details.
+     * to a TSV file, see {@link #saveXRefMappingsToFile(String)} for details.
      * Following elements in {@code args} must then be: 
      *   <ol>
      *   <li>path to the Uberon ontology.
@@ -536,7 +536,7 @@ public class Uberon extends UberonCommon {
      * {@code #saveSimplificationInfo} method). This attribute can be left {@code null} 
      * or blank if this information does not need to be stored. 
      * <p>
-     * This method calls {@link #simplifyUberon(OWLOntology)}, by loading the {@code OWLOntology} 
+     * This method calls {@link #simplifyUberon()}, by loading the {@code OWLOntology} 
      * provided, and using attributes set before calling this method. Attributes that are used 
      * can be set prior to calling this method through the methods: 
      * {@link #setClassIdsToRemove(Collection)}, {@link #setToRemoveSubgraphRootIds(Collection)}, 
@@ -558,7 +558,7 @@ public class Uberon extends UberonCommon {
      *                                          the ontology to modify it.
      * @throws OWLOntologyStorageException      If an error occurred while saving the resulting 
      *                                          ontology in OWL.
-     * @see #simplifyUberon(OWLOntology)
+     * @see #simplifyUberon()
      */
     public void simplifyUberonAndSaveToFile() throws UnknownOWLOntologyException, 
             OWLOntologyCreationException, OBOFormatParserException, IOException, 
@@ -596,7 +596,7 @@ public class Uberon extends UberonCommon {
      * calls various methods of {@code owltools.graph.OWLGraphManipulator} using the attributes 
      * set before calling this method, then removes the {@code OWLAnnotationAssertionAxiom}s 
      * that are problematic to convert the ontology in OBO, using 
-     * {@link org.bgee.pipeline.OntologyUtils#removeOBOProblematicAxioms()}.
+     * {@link org.bgee.pipeline.ontologycommon.OntologyUtils#removeOBOProblematicAxioms()}.
      * <p>
      * Note that the {@code OWLOntology} passed as argument will be modified as a result 
      * of the call to this method. Information about the simplification process 
@@ -625,10 +625,9 @@ public class Uberon extends UberonCommon {
      * <li>{@code OWLGraphManipulator#removeRelsToSubsets(Collection, Collection)} using 
      * value returned by {@link #getSubsetNames()} as first argument, returned by 
      * {@link #getClassIdsExcludedFromSubsetRemoval()} as second argument.
-     * <li>{@link org.bgee.pipeline.OntologyUtils#removeOBOProblematicAxioms()}
+     * <li>{@link org.bgee.pipeline.ontologycommon.OntologyUtils#removeOBOProblematicAxioms()}
      * </ul>
      *  
-     * @param uberonOnt                         The {@code OWLOntology} to simplify.
      * @throws UnknownOWLOntologyException      If an error occurred while wrapping 
      *                                          the {@code uberonOnt} into an 
      *                                          {@code OWLGraphManipulator}.
@@ -972,13 +971,13 @@ public class Uberon extends UberonCommon {
      * to {@code outputFile}. {@code outputFile} will be a TSV file with a header, 
      * and two columns, that are in order: {@link #XREF_ID_COL} and 
      * {@link #UBERON_ENTITY_ID_COL}. The XRef mappings are obtained using the method 
-     * {@link org.bgee.pipeline.OntologyUtils#getXRefMappings()}.
+     * {@link org.bgee.pipeline.ontologycommon.OntologyUtils#getXRefMappings()}.
      * 
      * @param outputFile        A {@code String} that is the path to the generated output file.
      * @throws IOException      If an error occurred while writing in the output file, 
      *                          or when reading the ontology file.
      * 
-     * @see org.bgee.pipeline.OntologyUtils#getXRefMappings()
+     * @see org.bgee.pipeline.ontologycommon.OntologyUtils#getXRefMappings()
      */
     public void saveXRefMappingsToFile(String outputFile) throws IOException {
         log.entry(outputFile);

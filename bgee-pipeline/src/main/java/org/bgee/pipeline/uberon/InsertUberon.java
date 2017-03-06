@@ -60,7 +60,7 @@ public class InsertUberon extends MySQLDAOUser {
      * see {@link #insertStageOntologyIntoDataSource(UberonDevStage, Collection)}.
      * Following elements in {@code args} must then be: 
      *   <ol>
-     *   <li>path to the file storing the Uberon ontology.
+     *   <li>path to the file storing the Uberon ontology, see {@link UberonCommon#setPathToUberonOnt(String)}.
      *   <li>path to the file storing the taxonomy ontology.
      *   <li>path to a file storing the Uberon taxon constraints
      *   <li>A Map<String, Set<Integer>> to potentially override taxon constraints 
@@ -76,17 +76,17 @@ public class InsertUberon extends MySQLDAOUser {
      *   InsertUberon insertStages dev_stage_ontology.owl taxonConstraints.tsv 
      *   HsapDv:/9606,MmusDv:/10090 
      *   NCBITaxon:1 
-     *   bgeeSpecies.tsv
+     *   bgeeSpecies.tsv}
      * <li>If the first element in {@code args} is "insertAnatomy", the action 
      * will be to insert the anatomical ontology into the database, 
      * see {@link #insertAnatOntologyIntoDataSource(Uberon, Collection)}.
      * Following elements in {@code args} must then be:
      *   <ol>
-     *   <li>path to the file storing the Uberon ontology, see {@link #setPathToUberonOnt(String)}.
+     *   <li>path to the file storing the Uberon ontology, see {@link UberonCommon#setPathToUberonOnt(String)}.
      *   <li>path to a file storing the Uberon taxon constraints
      *   <li>A Map<String, Set<Integer>> to potentially override taxon constraints 
-     *   (recommended for developmental stages), see {@link 
-     *   org.bgee.pipeline.CommandRunner#parseMapArgumentAsInteger(String)} to see 
+     *   (recommended for developmental stages), see 
+     *   {@link org.bgee.pipeline.CommandRunner#parseMapArgumentAsInteger(String)} to see 
      *   how to provided it. Can be empty.
      *   <li>A list of OBO-like IDs of terms that are roots of subgraph to ignore, 
      *   see {@link UberonCommon#getToIgnoreSubgraphRootIds()}. Can be empty.
@@ -164,20 +164,20 @@ public class InsertUberon extends MySQLDAOUser {
      * of the Uberon anatomy into the data source. They represent the taxon constraints 
      * for each anatomical entity stored in {@link #anatEntityTOs}.
      */
-    private Set<TaxonConstraintTO> anatEntityTaxonConstraintTOs;
+    private Set<TaxonConstraintTO<String>> anatEntityTaxonConstraintTOs;
     /**
      * A {@code Set} of {@code RelationTO}s generated as part of the insertion 
      * of the Uberon anatomy into the data source. They represent the relations between 
      * anatomical entities to be inserted. Related taxon constraints to be inserted 
      * for each of them is stored in {@link #anatRelTaxonConstraintTOs}.
      */
-    private Set<RelationTO> anatRelationTOs;
+    private Set<RelationTO<String>> anatRelationTOs;
     /**
      * A {@code Set} of {@code TaxonConstraintTO}s generated as part of the insertion 
      * of the Uberon anatomy into the data source. They represent the taxon constraints 
      * for each relation stored in {@link #anatRelationTOs}.
      */
-    private Set<TaxonConstraintTO> anatRelTaxonConstraintTOs;
+    private Set<TaxonConstraintTO<Integer>> anatRelTaxonConstraintTOs;
 
     /**
      * Default constructor using default {@code MySQLDAOManager}.
@@ -195,9 +195,9 @@ public class InsertUberon extends MySQLDAOUser {
         super(manager);
 
         this.anatEntityTOs = new HashSet<AnatEntityTO>();
-        this.anatEntityTaxonConstraintTOs = new HashSet<TaxonConstraintTO>();
-        this.anatRelationTOs = new HashSet<RelationTO>();
-        this.anatRelTaxonConstraintTOs = new HashSet<TaxonConstraintTO>();
+        this.anatEntityTaxonConstraintTOs = new HashSet<TaxonConstraintTO<String>>();
+        this.anatRelationTOs = new HashSet<>();
+        this.anatRelTaxonConstraintTOs = new HashSet<TaxonConstraintTO<Integer>>();
     }
     
     /**
@@ -238,7 +238,7 @@ public class InsertUberon extends MySQLDAOUser {
         
         //generate the StageTOs and taxonConstraintTOs
         Set<StageTO> stageTOs = new HashSet<StageTO>();
-        Set<TaxonConstraintTO> constraintTOs = new HashSet<TaxonConstraintTO>();
+        Set<TaxonConstraintTO<String>> constraintTOs = new HashSet<TaxonConstraintTO<String>>();
         OWLGraphWrapper wrapper = uberon.getOntologyUtils().getWrapper();
         for (Entry<OWLClass, Map<String, Integer>> stageEntry: nestedSetModel.entrySet()) {
             OWLClass OWLClassStage = stageEntry.getKey();
@@ -271,10 +271,10 @@ public class InsertUberon extends MySQLDAOUser {
             //generate the TaxonConstraintTOs
             if (uberon.existsInAllSpecies(OWLClassStage, speciesIds)) {
                 //a null speciesId means: exists in all species
-                constraintTOs.add(new TaxonConstraintTO(id, null));
+                constraintTOs.add(new TaxonConstraintTO<>(id, null));
             } else {
                 for (int speciesId: uberon.existsInSpecies(OWLClassStage, speciesIds)) {
-                    constraintTOs.add(new TaxonConstraintTO(id, Integer.toString(speciesId)));
+                    constraintTOs.add(new TaxonConstraintTO<>(id, speciesId));
                 }
             }
         }
@@ -344,13 +344,13 @@ public class InsertUberon extends MySQLDAOUser {
             this.anatEntityTOs = new HashSet<AnatEntityTO>();
             this.getTaxonConstraintDAO().insertAnatEntityTaxonConstraints(
                     this.anatEntityTaxonConstraintTOs);
-            this.anatEntityTaxonConstraintTOs = new HashSet<TaxonConstraintTO>();
+            this.anatEntityTaxonConstraintTOs = new HashSet<TaxonConstraintTO<String>>();
             //insert relations between anat entities and their taxon constraints
             this.getRelationDAO().insertAnatEntityRelations(this.anatRelationTOs);
-            this.anatRelationTOs = new HashSet<RelationTO>();
+            this.anatRelationTOs = new HashSet<>();
             this.getTaxonConstraintDAO().insertAnatEntityRelationTaxonConstraints(
                     this.anatRelTaxonConstraintTOs);
-            this.anatRelTaxonConstraintTOs = new HashSet<TaxonConstraintTO>();
+            this.anatRelTaxonConstraintTOs = new HashSet<TaxonConstraintTO<Integer>>();
             
             this.commit();
             log.info("Done inserting info into data source.");
@@ -429,13 +429,12 @@ public class InsertUberon extends MySQLDAOUser {
                 //and anatRelTaxonConstraintTOs for "identity" relation
                 if (uberon.existsInAllSpecies(cls, speciesIds)) {
                     //a null speciesId means: exists in all species
-                    TaxonConstraintTO taxConstrTO = new TaxonConstraintTO(id, null);
+                    TaxonConstraintTO<String> taxConstrTO = new TaxonConstraintTO<>(id, null);
                     this.anatEntityTaxonConstraintTOs.add(taxConstrTO);
                     log.trace("Generating taxon constraint: {}", taxConstrTO);
                 } else {
                     for (int speciesId: uberon.existsInSpecies(cls, speciesIds)) {
-                        TaxonConstraintTO taxConstrTO = 
-                                new TaxonConstraintTO(id, Integer.toString(speciesId));
+                        TaxonConstraintTO<String> taxConstrTO = new TaxonConstraintTO<>(id, speciesId);
                         this.anatEntityTaxonConstraintTOs.add(taxConstrTO);
                         log.trace("Generating taxon constraint: {}", taxConstrTO);
                     }
@@ -484,10 +483,8 @@ public class InsertUberon extends MySQLDAOUser {
         //Also, we need to distinguish direct and indirect relations, 
         //to filter redundant direct relations with different taxon constraints 
         //as compared to the same indirect relations. 
-        Map<RelationTO, Set<Integer>> directRelationTOs = 
-                new HashMap<RelationTO, Set<Integer>>();
-        Map<RelationTO, Set<Integer>> indirectRelationTOs = 
-                new HashMap<RelationTO, Set<Integer>>();
+        Map<RelationTO<String>, Set<Integer>> directRelationTOs = new HashMap<>();
+        Map<RelationTO<String>, Set<Integer>> indirectRelationTOs = new HashMap<>();
         
         //this method will fill the Maps directRelationTOs and indirectRelationTOs 
         this.generateRelationTOsFirstPass(directRelationTOs, indirectRelationTOs, uberon, 
@@ -555,8 +552,8 @@ public class InsertUberon extends MySQLDAOUser {
      *                                  and a label for an {@code OWLClass} that should 
      *                                  have been considered.
      */
-    private void generateRelationTOsFirstPass(Map<RelationTO, Set<Integer>> directRelationTOs, 
-            Map<RelationTO, Set<Integer>> indirectRelationTOs, 
+    private void generateRelationTOsFirstPass(Map<RelationTO<String>, Set<Integer>> directRelationTOs, 
+            Map<RelationTO<String>, Set<Integer>> indirectRelationTOs, 
             Uberon uberon, Set<OWLClass> classesToIgnore, Collection<Integer> speciesIds) {
         log.entry(directRelationTOs, indirectRelationTOs, speciesIds);
         
@@ -798,7 +795,7 @@ public class InsertUberon extends MySQLDAOUser {
                     //we create a RelationTO with null RelationStatus in any case, 
                     //to be able to compare relations. Correct RelationStatus and relation ID 
                     //will be assigned during the second pass.
-                    RelationTO relTO = new RelationTO(null, id, targetId, relType, null);
+                    RelationTO<String> relTO = new RelationTO<>(null, id, targetId, relType, null);
                     log.trace("RelationTO generated: {} - is direct relation: {}", 
                             relTO, isDirect);
                     //generate taxon constraints
@@ -916,17 +913,17 @@ public class InsertUberon extends MySQLDAOUser {
      * @see #generateRelationInformation(Uberon, Set, Collection)
      * @see #generateRelationTOsFirstPass(Map, Map, Uberon, Set, Collection)
      */
-    private void generateRelationTOsSecondPass(Map<RelationTO, Set<Integer>> directRelationTOs, 
-            Map<RelationTO, Set<Integer>> indirectRelationTOs, Collection<Integer> speciesIds) {
+    private void generateRelationTOsSecondPass(Map<RelationTO<String>, Set<Integer>> directRelationTOs, 
+            Map<RelationTO<String>, Set<Integer>> indirectRelationTOs, Collection<Integer> speciesIds) {
         log.entry(directRelationTOs, indirectRelationTOs, speciesIds);
         
         int relationId = 0;
-        Set<RelationTO> allRelationTOs = new HashSet<RelationTO>(directRelationTOs.keySet());
+        Set<RelationTO<String>> allRelationTOs = new HashSet<>(directRelationTOs.keySet());
         allRelationTOs.addAll(indirectRelationTOs.keySet());
         log.info("Generating proper RelationTOs (second pass), number of relations: {}...", 
                 allRelationTOs.size());
         
-        for (RelationTO relTO: allRelationTOs) {
+        for (RelationTO<String> relTO: allRelationTOs) {
             log.trace("Iterating relation: {}", relTO);
             
             RelationStatus relStatus = null;
@@ -957,7 +954,7 @@ public class InsertUberon extends MySQLDAOUser {
                     if (!directInSpecies.isEmpty()) {
                         
                         relationId++;
-                        RelationTO newRelTO = new RelationTO(Integer.toString(relationId), 
+                        RelationTO<String> newRelTO = new RelationTO<>(relationId, 
                                 relTO.getSourceId(), relTO.getTargetId(), 
                                 relTO.getRelationType(), RelationStatus.DIRECT);
                         this.anatRelationTOs.add(newRelTO);
@@ -984,7 +981,7 @@ public class InsertUberon extends MySQLDAOUser {
             }
             
             relationId++;
-            RelationTO newRelTO = new RelationTO(Integer.toString(relationId), 
+            RelationTO<String> newRelTO = new RelationTO<>(relationId, 
                     relTO.getSourceId(), relTO.getTargetId(), 
                     relTO.getRelationType(), relStatus);
             this.anatRelationTOs.add(newRelTO);
@@ -1016,14 +1013,14 @@ public class InsertUberon extends MySQLDAOUser {
         
         if (inSpecies.containsAll(allowedSpeciesIds)) {
             //a null speciesId means: exists in all species
-            TaxonConstraintTO taxConstraintTO = 
-                    new TaxonConstraintTO(Integer.toString(relationId), null);
+            TaxonConstraintTO<Integer> taxConstraintTO = 
+                    new TaxonConstraintTO<>(relationId, null);
             this.anatRelTaxonConstraintTOs.add(taxConstraintTO);
             log.trace("Taxon constraint: {}", taxConstraintTO);
         } else if (!inSpecies.isEmpty()) {
             for (int speciesId: inSpecies) {
-                TaxonConstraintTO taxConstraintTO = new TaxonConstraintTO(
-                        Integer.toString(relationId), Integer.toString(speciesId));
+                TaxonConstraintTO<Integer> taxConstraintTO = new TaxonConstraintTO<>(
+                        relationId, speciesId);
                 this.anatRelTaxonConstraintTOs.add(taxConstraintTO);
                 log.trace("Taxon constraint: {}", taxConstraintTO);
             }

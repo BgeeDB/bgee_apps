@@ -187,7 +187,7 @@ public class InsertTaxa extends MySQLDAOUser {
      * to modify to add/remove a species. The first line should be a header line, 
      * defining 7 columns, named exactly as: {@link #SPECIES_ID_KEY}, 
      * {@link #SPECIES_GENUS_KEY}, {@link #SPECIES_NAME_KEY}, {@link #SPECIES_COMMON_NAME_KEY}, 
-     * {@link #SPECIES_GENOME_FILE_KEY}, {@link SPECIES_GENOME_VERSION_KEY},
+     * {@link #SPECIES_GENOME_FILE_KEY}, {@link #SPECIES_GENOME_VERSION_KEY},
      * {@link #SPECIES_GENOME_ID_KEY}, {@link #SPECIES_FAKE_GENE_PREFIX_KEY} (in whatever order).
      * the IDs should correspond to the NCBI taxonomy ID (e.g., 9606 for human).
      * <li>path to the tsv files containing the IDs of the taxa to be inserted in Bgee, 
@@ -239,7 +239,7 @@ public class InsertTaxa extends MySQLDAOUser {
      * to modify to add/remove a species. The first line should be a header line, 
      * defining 7 columns, named exactly as: {@link #SPECIES_ID_KEY}, 
      * {@link #SPECIES_GENUS_KEY}, {@link #SPECIES_NAME_KEY}, {@link #SPECIES_COMMON_NAME_KEY}, 
-     * {@link #SPECIES_GENOME_FILE_KEY}, {@link SPECIES_GENOME_VERSION_KEY},
+     * {@link #SPECIES_GENOME_FILE_KEY}, {@link #SPECIES_GENOME_VERSION_KEY},
      * {@link #SPECIES_GENOME_ID_KEY}, {@link #SPECIES_FAKE_GENE_PREFIX_KEY} (in whatever order).
      * the IDs should correspond to the NCBI taxonomy ID (e.g., 9606 for human).
      * <li>the path to a TSV file containing the NCBI taxonomy IDs of additional taxa 
@@ -461,14 +461,14 @@ public class InsertTaxa extends MySQLDAOUser {
                 //insert keywords
                 this.getKeywordDAO().insertKeywords(allKeywords);
                 //now we retrieve the keywords to find their IDs
-                final Map<String, String> keywordToId = this.getKeywordDAO().getKeywords(allKeywords).stream()
+                final Map<String, Integer> keywordToId = this.getKeywordDAO().getKeywords(allKeywords).stream()
                         .collect(Collectors.toMap(keywordTO -> keywordTO.getName(), 
                                                   keywordTO -> keywordTO.getId()));
                 //and we insert relations to species IDs
                 this.getKeywordDAO().insertKeywordToSpecies(speciesIdToKeywords.entrySet().stream()
                         .filter(entry -> entry.getValue() != null && !entry.getValue().isEmpty())
                         .flatMap(entry -> entry.getValue().stream().map(keyword -> 
-                            new EntityToKeywordTO(Integer.toString(entry.getKey()), keywordToId.get(keyword))))
+                            new EntityToKeywordTO<>(entry.getKey(), keywordToId.get(keyword))))
                         .collect(Collectors.toSet()));
                 
                 this.commit();
@@ -532,8 +532,8 @@ public class InsertTaxa extends MySQLDAOUser {
             //we retrieve the Integer value of the ID used on the NCBI website, 
             //because this is how we store this ID in the database. But we convert it 
             //to a String because the Bgee classes only accept IDs as Strings.
-            String parentTaxonId = String.valueOf(OntologyUtils.getTaxNcbiId(
-                    this.taxOntWrapper.getIdentifier(parents.iterator().next())));
+            Integer parentTaxonId = OntologyUtils.getTaxNcbiId(
+                    this.taxOntWrapper.getIdentifier(parents.iterator().next()));
             
             String genus       = (String) species.get(SPECIES_GENUS_KEY);
             String speciesName = (String) species.get(SPECIES_NAME_KEY);
@@ -568,13 +568,9 @@ public class InsertTaxa extends MySQLDAOUser {
             Integer dataSourceId = (Integer) species.get(SPECIES_GENOME_DATA_SOURCE_ID_KEY);
             
             Integer genomeSpeciesId = (Integer) species.get(SPECIES_GENOME_ID_KEY);
-            String fakeGeneIdPrefix = (String) species.get(SPECIES_FAKE_GENE_PREFIX_KEY);
             
-            speciesTOs.add(new SpeciesTO(String.valueOf(speciesId), commonName, genus, 
-                    speciesName, displayOrder, parentTaxonId, genomeFilePath, genomeVersion, 
-                    (dataSourceId == null ? null: String.valueOf(dataSourceId)), 
-                    (genomeSpeciesId == null ? null: String.valueOf(genomeSpeciesId)), 
-                    fakeGeneIdPrefix));
+            speciesTOs.add(new SpeciesTO(speciesId, commonName, genus, speciesName, displayOrder,
+                    parentTaxonId, genomeFilePath, genomeVersion, dataSourceId, genomeSpeciesId));
         }
         if (speciesTOs.size() != allSpecies.size()) {
             throw log.throwing(new IllegalStateException("The taxonomy ontology " +
@@ -677,8 +673,7 @@ public class InsertTaxa extends MySQLDAOUser {
             //we retrieve the Integer value of the ID used on the NCBI website, 
             //because this is how we store this ID in the database. But we convert it 
             //to a String because the Bgee classes only accept IDs as Strings.
-            String taxonId = String.valueOf(OntologyUtils.getTaxNcbiId(
-                    this.taxOntWrapper.getIdentifier(taxon)));
+            Integer taxonId = OntologyUtils.getTaxNcbiId(this.taxOntWrapper.getIdentifier(taxon));
             String commonName = this.getCommonNameSynonym(taxon);
             String scientificName = this.taxOntWrapper.getLabel(taxon);
             Map<String, Integer> taxonParams = nestedSetModelParams.get(taxon);

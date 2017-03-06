@@ -12,8 +12,10 @@ package org.bgee.model;
  * @author Frederic Bastian
  * @version Bgee 13 Sept. 2015
  * @since Bgee 13 Sept. 2015
+ * 
+ * @param <T> The type of ID of this {@code NamedEntity}.
  */
-public abstract class NamedEntity extends Entity {
+public abstract class NamedEntity<T> extends Entity<T> {
 
     /**
      * @see #getName()
@@ -40,7 +42,7 @@ public abstract class NamedEntity extends Entity {
      * @param id    A {@code String} representing the ID of this {@code NamedEntity}.
      * @throws IllegalArgumentException     if {@code id} is blank. 
      */
-    protected NamedEntity(String id) {
+    protected NamedEntity(T id) {
         this(id, null, null);
     }
     /**
@@ -48,13 +50,13 @@ public abstract class NamedEntity extends Entity {
      * {@code id} cannot be blank, otherwise an {@code IllegalArgumentException} is thrown. 
      * Other arguments can be blank.
      * 
-     * @param id            A {@code String} representing the ID of this {@code NamedEntity}. 
+     * @param id            A {@code T} representing the ID of this {@code NamedEntity}. 
      *                      Cannot be blank.
      * @param name          A {@code String} that is the name of this {@code NamedEntity}.
      * @param description   A {@code String} that is the description of this {@code NamedEntity}.
      * @throws IllegalArgumentException     if {@code id} is blank. 
      */
-    protected NamedEntity(String id, String name, String description) {
+    protected NamedEntity(T id, String name, String description) {
         super(id);
         this.name = name;
         this.description = description;
@@ -94,7 +96,7 @@ public abstract class NamedEntity extends Entity {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		NamedEntity other = (NamedEntity) obj;
+		NamedEntity<?> other = (NamedEntity<?>) obj;
 		if (description == null) {
 			if (other.description != null) {
 				return false;

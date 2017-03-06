@@ -26,7 +26,6 @@ public interface InSituExpDAO {
      * @see org.bgee.model.expressiondata.rawdata.insitu.InSituExp
      * @since Bgee 11
      */
-    //TODO: implements equals/hashCode
     public final class InSituExpTO extends TransferObject {
 
         /**

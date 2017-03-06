@@ -49,7 +49,7 @@ public enum SourceCategory implements BgeeEnumField {
      * 
      * @param representation            A {@code String} representing a source category.
      * @return                          A {@code SourceCategory} corresponding to {@code representation}.
-     * @throw IllegalArgumentException  If {@code representation} does not correspond 
+     * @throws IllegalArgumentException If {@code representation} does not correspond 
      *                                  to any {@code SourceCategory}.
      * @see #convert(Class, String)
      */

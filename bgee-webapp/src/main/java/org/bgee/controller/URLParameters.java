@@ -73,7 +73,7 @@ public class URLParameters {
     /**
      * A {@code List} of {@code String}s that are the default values to use to separate values
      * of one parameter. Contains: "\r\n", "\r", "\n", ",".
-     * ({@see URLParameters.Parameter#allowsSeparatedValues}).
+     * @see URLParameters.Parameter#allowsSeparatedValues().
      */
     protected static final List<String> DEFAULT_SEPARATORS = Arrays.asList("\r\n", "\r", "\n", ",");
 

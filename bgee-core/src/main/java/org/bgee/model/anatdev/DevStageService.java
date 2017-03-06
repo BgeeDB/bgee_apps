@@ -9,52 +9,44 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
-import org.bgee.model.dao.api.DAOManager;
+import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.anatdev.StageDAO.StageTO;
+import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO.GroupToStageTO;
 
 /**
  * A {@link Service} to obtain {@link DevStage} objects. 
  * Users should use the {@link org.bgee.model.ServiceFactory} to obtain {@code DevStageService}s.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Nov. 2013
- * @since   Bgee 13, Nov. 2013
+ * @author  Frederic Bastian
+ * @author  Philippe Moret
+ * @version Bgee 13, Aug. 2016
+ * @since   Bgee 13, Nov. 2015
  */
 public class DevStageService extends Service {
 
     private final static Logger log = LogManager.getLogger(DevStageService.class.getName());
 
     /**
-     * 0-arg constructor private, because it might be difficult to determine 
-     * the {@code Service}s and {@code DAOManager} to use by default, see 
-     * {@link #DevStageService(DAOManager)}.
+     * @param serviceFactory            The {@code ServiceFactory} to be used to obtain {@code Service}s 
+     *                                  and {@code DAOManager}.
+     * @throws IllegalArgumentException If {@code serviceFactory} is {@code null}.
      */
-    @SuppressWarnings("unused")
-    private DevStageService() {
-        this(DAOManager.getDAOManager());
-    }
-    
-    /**
-     *
-     * @param daoManager                The {@code DAOManager} to be used by this 
-     *                                  {@code DevStageService} to obtain {@code DAO}s.
-     * @throws IllegalArgumentException If {@code daoManager} is {@code null}.
-     */
-    public DevStageService(DAOManager daoManager) throws IllegalArgumentException {
-        super(daoManager);
+    public DevStageService(ServiceFactory serviceFactory) {
+        super(serviceFactory);
     }
 
     /**
      * Retrieve grouping {@code DevStage}s for the given species IDs and level.
      * 
-     * @param speciesIds    A {@code Collection} of {@code String}s that are IDs of species 
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that are IDs of species 
      *                      for which to return the {@code DevStage}s.
      * @param level         An {@code Integer} that is the level of dev. stages 
      *                      for which to return the {@code DevStage}s.
      * @return              A {@code List} of {@code DevStage}s that are the grouping 
      *                      dev. stages for {@code speciesIds} and {@code level}.
      */
-    public Set<DevStage> loadGroupingDevStages(Collection<String> speciesIds, Integer level) {
+    public Set<DevStage> loadGroupingDevStages(Collection<Integer> speciesIds, Integer level) {
         log.entry(speciesIds, level);
         return log.exit(getDaoManager().getStageDAO().getStages(
                     speciesIds == null? null: new HashSet<>(speciesIds),
@@ -65,15 +57,21 @@ public class DevStageService extends Service {
     }
 
     /**
-     * Retrieve {@code DevStage}s for given dev. stage IDs.
+     * Retrieve {@code DevStage}s for the requested species filtering and developmental stage IDs. 
+     * If a stage in {@code stageIds} does not exists according to the species filtering, 
+     * it will not be returned.
      * 
-     * @param stageIds  A {@code Collection} of {@code String}s that are IDs of dev. stages 
-     *                  for which to return the {@code DevStage}s.
-     * @return          A {@code Stream} of {@code DevStage}s that are the 
-     *                  dev. stages for the given set of stage IDs.
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that are the IDs of species 
+     *                      to filter developmental stages to retrieve. Can be {@code null} or empty.
+     * @param anySpecies    A {@code Boolean} defining, when {@code speciesIds} contains several IDs, 
+     *                      whether the stages retrieved should be valid in any 
+     *                      of the requested species (if {@code true}), or in all 
+     *                      of the requested species (if {@code false} or {@code null}).
+     * @param stageIds      A {@code Collection} of {@code String}s that are IDs of developmental
+     *                      stages to retrieve. Can be {@code null} or empty.
+     * @return              A {@code Stream} of {@code DevStage}s retrieved for the requested parameters.
      */
-    //TODO: javadoc/method name consistency (see AnatEntityService)/parameter order
-    public Stream<DevStage> loadDevStages(Collection<String> speciesIds, Boolean anySpecies, 
+    public Stream<DevStage> loadDevStages(Collection<Integer> speciesIds, Boolean anySpecies, 
             Collection<String> stageIds) {
         log.entry(speciesIds, anySpecies, stageIds);
         return log.exit(getDaoManager().getStageDAO().getStages(
@@ -83,6 +81,30 @@ public class DevStageService extends Service {
                     null, null, null)
                 .stream()
                 .map(DevStageService::mapFromTO));
+    }
+
+    /**
+     * Load developmental stage similarities from provided {@code taxonId} and {@code speciesIds}.
+     * 
+     * @param taxonId       An {@code Integer} that is the NCBI ID of the taxon for which the similarity 
+     *                      annotations should be valid, including all its ancestral taxa.
+     * @param speciesIds    A {@code Set} of {@code Integer}s that are the IDs of the species
+     *                      for which the similarity annotations should be restricted.
+     *                      If empty or {@code null} all available species are used.
+     * @return              The {@code Set} of {@link DevStageSimilarity} that are dev. stage 
+     *                      similarities from provided {@code taxonId} and {@code speciesIds}.
+     */
+    public Set<DevStageSimilarity> loadDevStageSimilarities(Integer taxonId, Set<Integer> speciesIds) {
+       log.entry(taxonId, speciesIds);
+       return log.exit(this.getDaoManager().getStageGroupingDAO().getGroupToStage(
+               taxonId, speciesIds == null? null: new HashSet<>(speciesIds)).stream()
+             .collect(Collectors.groupingBy(GroupToStageTO::getGroupId)) // group by groupId
+                  .entrySet().stream()
+                  .map(e -> new DevStageSimilarity(e.getKey(),              // map to DevStageSimilarity
+                          e.getValue().stream()
+                              .map(GroupToStageTO::getStageId)
+                              .collect(Collectors.toSet())))
+                  .collect(Collectors.toSet()));
     }
 
     /**
@@ -96,7 +118,7 @@ public class DevStageService extends Service {
         if (stageTO == null) {
             return log.exit(null);
         }
-        
+
         return log.exit(new DevStage(stageTO.getId(), stageTO.getName(), 
                 stageTO.getDescription(), stageTO.getLeftBound(), stageTO.getRightBound(), 
                 stageTO.getLevel(), stageTO.isTooGranular(), stageTO.isGroupingStage()));

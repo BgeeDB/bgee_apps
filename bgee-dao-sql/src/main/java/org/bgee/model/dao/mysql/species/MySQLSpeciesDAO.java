@@ -49,7 +49,7 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
     }
     
     @Override
-    public SpeciesTOResultSet getSpeciesByIds(Set<String> speciesIds) throws DAOException {
+    public SpeciesTOResultSet getSpeciesByIds(Set<Integer> speciesIds) throws DAOException {
         log.entry(speciesIds);
         
         String sql = this.generateSelectClause(this.getAttributes(), "species");
@@ -68,7 +68,7 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             if (speciesIds != null && speciesIds.size() > 0) {
-                stmt.setStringsToIntegers(1, speciesIds, true);
+                stmt.setIntegers(1, speciesIds, true);
             }  
             return log.exit(new MySQLSpeciesTOResultSet(stmt));
         } catch (SQLException e) {
@@ -133,8 +133,6 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
                     sql += speciesTableName + ".dataSourceId";
                 } else if (attribute.equals(SpeciesDAO.Attribute.GENOME_SPECIES_ID)) {
                     sql += speciesTableName + ".genomeSpeciesId";
-                } else if (attribute.equals(SpeciesDAO.Attribute.FAKE_GENE_ID_PREFIX)) {
-                    sql += speciesTableName + ".fakeGeneIdPrefix";
                 } else {
                     throw log.throwing(new IllegalArgumentException(
                             "The attribute provided (" + attribute.toString() + 
@@ -170,20 +168,19 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
         
         StringBuilder sql = new StringBuilder(); 
         sql.append("INSERT INTO species" +  
-                   "(speciesId, genus, species, speciesCommonName, speciesDisplayOrder, taxonId, " + 
-                   "genomeFilePath, genomeVersion, dataSourceId, " + 
-                   "genomeSpeciesId, fakeGeneIdPrefix) values ");
+                   "(speciesId, genus, species, speciesCommonName, speciesDisplayOrder, taxonId, " +
+                   "genomeFilePath, genomeVersion, dataSourceId, genomeSpeciesId) values ");
         for (int i = 0; i < specieTOs.size(); i++) {
             if (i > 0) {
                 sql.append(", ");
             }
-            sql.append("(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ");
+            sql.append("(?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ");
         }
         try (BgeePreparedStatement stmt = 
                 this.getManager().getConnection().prepareStatement(sql.toString())) {
             int paramIndex = 1;
             for (SpeciesTO speciesTO: specieTOs) {
-                stmt.setInt(paramIndex, Integer.parseInt(speciesTO.getId()));
+                stmt.setInt(paramIndex, speciesTO.getId());
                 paramIndex++;
                 stmt.setString(paramIndex, speciesTO.getGenus());
                 paramIndex++;
@@ -193,29 +190,21 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
                 paramIndex++;
                 stmt.setInt(paramIndex, speciesTO.getDisplayOrder());
                 paramIndex++;
-                stmt.setInt(paramIndex, Integer.parseInt(speciesTO.getParentTaxonId()));
+                stmt.setInt(paramIndex, speciesTO.getParentTaxonId());
                 paramIndex++;
                 stmt.setString(paramIndex, speciesTO.getGenomeFilePath());
                 paramIndex++;
                 stmt.setString(paramIndex, speciesTO.getGenomeVersion());
                 paramIndex++;
-                stmt.setInt(paramIndex, Integer.parseInt(speciesTO.getDataSourceId()));
+                stmt.setInt(paramIndex, speciesTO.getDataSourceId());
                 paramIndex++;
                 //TODO: handles default values in a better way
                 //We should create setter methods in BgeePreparedStatement, accepting a third argument, being the default value
                 if (speciesTO.getGenomeSpeciesId() != null && 
                         !speciesTO.getGenomeSpeciesId().equals(speciesTO.getId())) {
-                    stmt.setInt(paramIndex, Integer.parseInt(speciesTO.getGenomeSpeciesId()));
+                    stmt.setInt(paramIndex, speciesTO.getGenomeSpeciesId());
                 } else {
                     stmt.setInt(paramIndex, 0);
-                }
-                paramIndex++;
-                //TODO: handles default values in a better way
-                //We should create setter methods in BgeePreparedStatement, accepting a third argument, being the default value
-                if (speciesTO.getFakeGeneIdPrefix() != null) {
-                    stmt.setString(paramIndex, speciesTO.getFakeGeneIdPrefix());
-                } else {
-                    stmt.setString(paramIndex, "");
                 }
                 paramIndex++;
             }
@@ -252,15 +241,15 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
         @Override
         protected SpeciesTO getNewTO() {
             log.entry();
-            String speciesId = null, genus = null, species = null, speciesCommonName = null, 
-                   taxonId = null, genomeFilePath = null, genomeVersion = null,
-                   dataSourceId = null, genomeSpeciesId = null, fakeGeneIdPrefix=null;
-            Integer displayOrder = null;
+            Integer speciesId = null, taxonId = null, genomeSpeciesId = null, displayOrder = null, 
+                    dataSourceId = null;
+            String genus = null, species = null, speciesCommonName = null, 
+                   genomeFilePath = null, genomeVersion = null;
             // Get results
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
                     if (column.getValue().equals("speciesId")) {
-                        speciesId = this.getCurrentResultSet().getString(column.getKey());
+                        speciesId = this.getCurrentResultSet().getInt(column.getKey());
                         
                     } else if (column.getValue().equals("genus")) {
                         genus = this.getCurrentResultSet().getString(column.getKey());
@@ -275,7 +264,7 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
                         displayOrder = this.getCurrentResultSet().getInt(column.getKey());
                         
                     } else if (column.getValue().equals("taxonId")) {
-                        taxonId = this.getCurrentResultSet().getString(column.getKey());
+                        taxonId = this.getCurrentResultSet().getInt(column.getKey());
                         
                     } else if (column.getValue().equals("genomeFilePath")) {
                         genomeFilePath = this.getCurrentResultSet().getString(column.getKey());
@@ -284,13 +273,11 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
                         genomeVersion = this.getCurrentResultSet().getString(column.getKey());
 
                     } else if (column.getValue().equals("dataSourceId")) {
-                        dataSourceId = this.getCurrentResultSet().getString(column.getKey());
+                        dataSourceId = this.getCurrentResultSet().getInt(column.getKey());
 
                     } else if (column.getValue().equals("genomeSpeciesId")) {
-                        genomeSpeciesId = this.getCurrentResultSet().getString(column.getKey());
+                        genomeSpeciesId = this.getCurrentResultSet().getInt(column.getKey());
 
-                    } else if (column.getValue().equals("fakeGeneIdPrefix")) {
-                        fakeGeneIdPrefix = this.getCurrentResultSet().getString(column.getKey());
                     } else {
                         throw log.throwing(new UnrecognizedColumnException(column.getValue()));
                     }
@@ -301,7 +288,7 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
             //Set SpeciesTO
             return log.exit(new SpeciesTO(speciesId, speciesCommonName, genus, species,
                     displayOrder, taxonId, genomeFilePath, genomeVersion, dataSourceId, 
-                    genomeSpeciesId, fakeGeneIdPrefix));
+                    genomeSpeciesId));
         }
     }
 

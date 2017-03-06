@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -11,22 +12,23 @@ import org.apache.logging.log4j.Logger;
 /**
  * A filter to parameterize queries using expression data conditions. 
  * 
- * @author Frederic Bastian
- * @version Bgee 13 Oct. 2015
- * @since Bgee 13 Oct. 2015
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13, July 2016
+ * @since   Bgee 13, Oct. 2015
  */
-public class ConditionFilter {
+public class ConditionFilter implements Predicate<Condition> {
     private final static Logger log = LogManager.getLogger(ConditionFilter.class.getName());
     
     /**
-     * @see #getAnatEntitieIds()
+     * @see #getAnatEntityIds()
      */
     private final Set<String> anatEntitieIds;
     /**
      * @see #getDevStageIds()
      */
     private final Set<String> devStageIds;
-    
+
     /**
      * @param anatEntitieIds    A {@code Collection} of {@code String}s that are the IDs 
      *                          of the anatomical entities that this {@code ConditionFilter} 
@@ -34,15 +36,15 @@ public class ConditionFilter {
      * @param devStageIds       A {@code Collection} of {@code String}s that are the IDs 
      *                          of the developmental stages that this {@code ConditionFilter} 
      *                          will specify to use.
-     * @throws IllegalArgumentException If no anatomical entity IDs and no developmental stage IDs 
-     *                                  are provided. 
+     * @throws IllegalArgumentException If no anatomical entity IDs, no developmental stage IDs,
+     *                                  and no species ID are provided. 
      */
-    public ConditionFilter(Collection<String> anatEntitieIds, Collection<String> devStageIds) 
+    public ConditionFilter(Collection<String> anatEntitieIds, Collection<String> devStageIds)
             throws IllegalArgumentException {
         if ((anatEntitieIds == null || anatEntitieIds.isEmpty()) && 
                 (devStageIds == null || devStageIds.isEmpty())) {
-            throw log.throwing(new IllegalArgumentException(
-                    "Some anatatomical entity IDs or developmental stage IDs must be provided."));
+            throw log.throwing(new IllegalArgumentException("Some anatatomical entity IDs,"
+                    + " developmental stage IDs or species IDs must be provided."));
         }
         this.anatEntitieIds = Collections.unmodifiableSet(anatEntitieIds == null ? 
                 new HashSet<>(): new HashSet<>(anatEntitieIds));
@@ -50,11 +52,12 @@ public class ConditionFilter {
                 new HashSet<>(): new HashSet<>(devStageIds));
     }
 
+
     /**
      * @return  An unmodifiable {@code Set} of {@code String}s that are the IDs 
      *          of the anatomical entities that this {@code ConditionFilter} will specify to use.
      */
-    public Set<String> getAnatEntitieIds() {
+    public Set<String> getAnatEntityIds() {
         return anatEntitieIds;
     }
     /**
@@ -106,5 +109,38 @@ public class ConditionFilter {
     public String toString() {
         return "ConditionFilter [anatEntitieIds=" + anatEntitieIds 
                 + ", devStageIds=" + devStageIds + "]";
+    }
+    
+    /**
+     * Evaluates this {@code ConditionFilter} on the given {@code Condition}.
+     * 
+     * @param condition A {@code Condition} that is the condition to be evaluated.
+     * @return          {@code true} if the {@code condition} matches the {@code ConditionFilter}.
+     */
+    @Override
+    public boolean test(Condition condition) {
+        log.entry(condition);
+
+        boolean isValid = true;
+        
+        // Check dev. stage ID 
+        if (condition.getDevStageId() != null 
+            && this.getDevStageIds() != null && !this.getDevStageIds().isEmpty()
+            && !this.getDevStageIds().contains(condition.getDevStageId())) {
+            log.debug("Dev. stage {} not validated: not in {}",
+                condition.getDevStageId(), this.getDevStageIds());
+            isValid = false;
+        }
+    
+        // Check anat. entity ID 
+        if (condition.getAnatEntityId() != null 
+            && this.getAnatEntityIds() != null && !this.getAnatEntityIds().isEmpty()
+            && !this.getAnatEntityIds().contains(condition.getAnatEntityId())) {
+            log.debug("Anat. entity {} not validated: not in {}",
+                condition.getAnatEntityId(), this.getAnatEntityIds());
+            isValid = false;
+        }
+        
+        return log.exit(isValid);
     }
 }

@@ -55,9 +55,9 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
         
         //create a Collection of TaxonTOs to be inserted
         Collection<TaxonTO> taxonTOs = new ArrayList<TaxonTO>();
-        taxonTOs.add(new TaxonTO("10", "commonName1", "sciName1", 1, 10, 1, true));
-        taxonTOs.add(new TaxonTO("50", "commonName2", "sciName2", 2, 5, 2, false));
-        taxonTOs.add(new TaxonTO("60", "commonName3", "sciName3", 6, 9, 3, true));
+        taxonTOs.add(new TaxonTO(10, "commonName1", "sciName1", 1, 10, 1, true));
+        taxonTOs.add(new TaxonTO(50, "commonName2", "sciName2", 2, 5, 2, false));
+        taxonTOs.add(new TaxonTO(60, "commonName3", "sciName3", 6, 9, 3, true));
         try {
             MySQLTaxonDAO dao = new MySQLTaxonDAO(this.getMySQLDAOManager());
             assertEquals("Incorrect number of rows inserted", 3, 
@@ -125,12 +125,13 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
 
         // Generate manually expected result
         List<TaxonTO> expectedTaxa = Arrays.asList(
-                new TaxonTO("111", "taxCName111", "taxSName111", 1, 12, 1, true),
-                new TaxonTO("211", "taxCName211", "taxSName211", 2, 3, 2, false), 
-                new TaxonTO("311", "taxCName311", "taxSName311", 4, 11, 2, false),
-                new TaxonTO("411", "taxCName411", "taxSName411", 5, 6, 1, true), 
-                new TaxonTO("511", "taxCName511", "taxSName511", 7, 10, 1, true),
-                new TaxonTO("611", "taxCName611", "taxSName611", 8, 9, 1, true));
+                new TaxonTO(111, "taxCName111", "taxSName111", 1, 14, 1, true),
+                new TaxonTO(211, "taxCName211", "taxSName211", 2, 3, 2, false), 
+                new TaxonTO(311, "taxCName311", "taxSName311", 4, 11, 2, false),
+                new TaxonTO(411, "taxCName411", "taxSName411", 5, 6, 3, true), 
+                new TaxonTO(511, "taxCName511", "taxSName511", 7, 10, 3, true),
+                new TaxonTO(611, "taxCName611", "taxSName611", 8, 9, 4, true),
+                new TaxonTO(711, "taxCName711", "taxSName711", 12, 13, 2, false));
         // Compare
         assertTrue("TaxonTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methResults, expectedTaxa));
@@ -147,6 +148,30 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
     }
     
     /**
+     * Test the select method {@link MySQLTaxonDAO#getAllLeastCommonAncestorAndParentTaxa(Collection)}.
+     */
+    @Test
+    public void shouldGetAllLeastCommonAncestorAndParentTaxa() throws SQLException {
+        
+        this.useSelectDB();
+        
+        // Generate result with the method
+        MySQLTaxonDAO dao = new MySQLTaxonDAO(this.getMySQLDAOManager());
+
+        // Generate manually expected result
+        List<TaxonTO> expectedTaxa = Arrays.asList(
+                new TaxonTO(111, "taxCName111", "taxSName111", 1, 14, 1, true),
+                new TaxonTO(211, "taxCName211", "taxSName211", 2, 3, 2, false), 
+                new TaxonTO(311, "taxCName311", "taxSName311", 4, 11, 2, false),
+                new TaxonTO(411, "taxCName411", "taxSName411", 5, 6, 3, true), 
+                new TaxonTO(511, "taxCName511", "taxSName511", 7, 10, 3, true),
+                new TaxonTO(611, "taxCName611", "taxSName611", 8, 9, 4, true));
+        // Compare
+        assertTrue("TaxonTOs incorrectly retrieved", TOComparator.areTOCollectionsEqual(
+                dao.getAllLeastCommonAncestorAndParentTaxa(null).getAllTOs(), expectedTaxa));
+    }
+    
+    /**
      * Test the select method {@link MySQLTaxonDAO#getLeastCommonAncestor()}.
      */
     @Test
@@ -154,7 +179,7 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
         
         this.useSelectDB();
         
-        Set<String> speciesIds = new HashSet<String>();
+        Set<Integer> speciesIds = new HashSet<>();
         boolean includeAncestors = false;
         
         MySQLTaxonDAO dao = new MySQLTaxonDAO(this.getMySQLDAOManager());
@@ -165,7 +190,7 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
         List<TaxonTO> actualResults =
                 dao.getLeastCommonAncestor(speciesIds, includeAncestors).getAllTOs();
         List<TaxonTO> expectedTaxa = Arrays.asList(
-                new TaxonTO("111", "taxCName111", "taxSName111", 1, 12, 1, true));
+                new TaxonTO(111, "taxCName111", "taxSName111", 1, 14, 1, true));
         assertTrue("TaxonTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(actualResults, expectedTaxa));
 
@@ -179,11 +204,11 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
                 
         // One species ID - includeAncestors = false
         // => find the LCA of the species
-        speciesIds.add("41");
+        speciesIds.add(41);
         includeAncestors = false;
         actualResults = dao.getLeastCommonAncestor(speciesIds, includeAncestors).getAllTOs();
         expectedTaxa = Arrays.asList(
-                new TaxonTO("411", "taxCName411", "taxSName411", 5, 6, 1, true));
+                new TaxonTO(411, "taxCName411", "taxSName411", 5, 6, 3, true));
         assertTrue("TaxonTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(actualResults, expectedTaxa));
 
@@ -202,22 +227,23 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
         // Severals species IDs (species are member of a same taxon leaf) - includeAncestors = true
         // => find the LCA of the species and its ancestors
         dao.setAttributes(Arrays.asList(TaxonDAO.Attribute.LCA, TaxonDAO.Attribute.LEVEL));
-        speciesIds.add("42");
+        speciesIds.add(42);
         actualResults = dao.getLeastCommonAncestor(speciesIds, includeAncestors).getAllTOs();
         expectedTaxa = Arrays.asList(
-                new TaxonTO(null, null, null, null, null, 1, true),
-                new TaxonTO(null, null, null, null, null, 2, false));
+                new TaxonTO(null, null, null, null, null, 3, true),
+                new TaxonTO(null, null, null, null, null, 2, false),
+                new TaxonTO(null, null, null, null, null, 1, true));
         assertTrue("TaxonTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(actualResults, expectedTaxa));
 
         // Severals species IDs (species 31 is member of parent taxon) - includeAncestors = true
         // => find the LCA of the species and its ancestors
         dao.setAttributes(Arrays.asList(TaxonDAO.Attribute.ID));
-        speciesIds.add("31");
+        speciesIds.add(31);
         actualResults = dao.getLeastCommonAncestor(speciesIds, includeAncestors).getAllTOs();
         expectedTaxa = Arrays.asList(
-                new TaxonTO("111", null, null, null, null, null, null),
-                new TaxonTO("311", null, null, null, null, null, null));
+                new TaxonTO(111, null, null, null, null, null, null),
+                new TaxonTO(311, null, null, null, null, null, null));
         assertTrue("TaxonTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(actualResults, expectedTaxa));
     }

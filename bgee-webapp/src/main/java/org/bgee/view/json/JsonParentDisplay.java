@@ -15,8 +15,8 @@ import org.bgee.view.JsonHelper;
 
 /**
  * Super class of JSON views. Subclasses should solely used the methods 
- * {@link #sendResponse(int, String, LinkedHashMap, boolean)} and 
- * {@link #sendResponse(String, LinkedHashMap, boolean)} to send responses to client.
+ * {@link #sendResponse(int, String, LinkedHashMap)} and 
+ * {@link #sendResponse(String, LinkedHashMap)} to send responses to client.
  * 
  * @author Frederic Bastian
  * @version Bgee 13 Nov. 2015
@@ -38,8 +38,7 @@ public class JsonParentDisplay extends ConcreteDisplayParent {
      * @author Frederic Bastian
      * @version Bgee 13 Nov. 2015
      * @since Bgee 13 Nov. 2015
-     * @see https://www.npmjs.com/package/structured-json-response
-     *
+     * @see <a href="https://www.npmjs.com/package/structured-json-response">https://www.npmjs.com/package/structured-json-response</a>
      */
     public static enum ResponseStatus {
         SUCCESS("success"), FAIL("fail"), ERROR("error");
@@ -119,7 +118,7 @@ public class JsonParentDisplay extends ConcreteDisplayParent {
     }
 
     /**
-     * Delegate to {@link #sendResponse(int, String, LinkedHashMap, boolean)} 
+     * Delegate to {@link #sendResponse(int, String, LinkedHashMap)} 
      * with a "200" HTTP response status.
      * 
      * @param msg

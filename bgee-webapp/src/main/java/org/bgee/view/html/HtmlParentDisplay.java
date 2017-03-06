@@ -628,11 +628,11 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * Write the HTML code allowing to include the javascript file named {@code fileName}. 
      * This method will notably retrieve the directory hosting the files, and will 
      * define the versioned file name corresponding to {@code fileName}, as hosted 
-     * on the server. HTML is written using {@link #writeln()}.
+     * on the server. HTML is written using {@link #writeln(String)}.
      * <strong>It should be called only within a {@link #includeJs()} method, whether overridden 
      * or not.</strong>.
      * 
-     * @param filename  The original name of the javascript file to include.
+     * @param fileName  The original name of the javascript file to include.
      * @see #getVersionedJsFileName(String)
      */
     protected void includeJs(String fileName) {
@@ -714,7 +714,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * Write the HTML code allowing to include the CSS file named {@code fileName}. 
      * This method will notably retrieve the directory hosting the files, and will 
      * define the versioned file name corresponding to {@code fileName}, as hosted 
-     * on the server. HTML is written using {@link #writeln()}.
+     * on the server. HTML is written using {@link #writeln(String)}.
      * <strong>It should be called only within a {@link #includeCss()} method, whether overridden 
      * or not.</strong>.
      * 
@@ -790,7 +790,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     }
     /**
      * @return  The {@code ViewFactory} that instantiated this object, of type {@code HtmlFactory}.
-     *          See {@link getHtmlFactory()} for a method returning directly the factory 
+     *          See {@link #getHtmlFactory()} for a method returning directly the factory 
      *          as a {@code HtmlFactory}.
      */
     @Override

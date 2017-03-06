@@ -1,11 +1,10 @@
 package org.bgee.model.dao.api.gene;
 
 import java.util.Collection;
-import java.util.Set;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
-import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.NamedEntityTO;
 import org.bgee.model.dao.api.exception.DAOException;
 
 /**
@@ -23,6 +22,7 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      * obtained from this {@code GeneDAO}.
      * <ul>
      * <li>{@code ID}: corresponds to {@link GeneTO#getId()}.
+     * <li>{@code ENSEMBL_ID}: corresponds to {@link GeneTO#getGeneId()}.
      * <li>{@code NAME}: corresponds to {@link GeneTO#getName()}.
      * <li>{@code DESCRIPTION}: corresponds to {@link GeneTO#getDescription()}.
      * <li>{@code SPECIESID}: corresponds to {@link GeneTO#getSpeciesId()}.
@@ -35,7 +35,7 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        ID, NAME, DESCRIPTION, SPECIES_ID, GENE_BIO_TYPE_ID, OMA_PARENT_NODE_ID, ENSEMBL_GENE;
+        ID, ENSEMBL_ID, NAME, DESCRIPTION, SPECIES_ID, GENE_BIO_TYPE_ID, OMA_PARENT_NODE_ID, ENSEMBL_GENE;
 //        ANCESTRAL_OMA_NODE_ID, ANCESTRAL_OMA_TAXON_ID;
     }
     
@@ -52,52 +52,66 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
     
     /**
      * Retrieve genes by their ids.
-     * @param geneIds A {Set} of gene ids.
+     * @param geneIds A {Collection} of gene ids.
      * @return  A {@code GeneTOResultSet} containing genes found from the data source.
      * @throws DAOException
      */
-    public GeneTOResultSet getGenesByIds(Set<String> geneIds) throws DAOException;
+    public GeneTOResultSet getGenesByIds(Collection<String> geneIds) throws DAOException;
     
     /**
-     * Retrieves genes from data source according to a {@code Set} of {@code String}s
+     * Retrieves genes from data source according to a {@code Collection} of {@code Integer}s
      * that are the IDs of species allowing to filter the genes to use.
      * <p>
      * The genes are retrieved and returned as a {@code GeneTOResultSet}. It is the
      * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that are the IDs of species 
      *                      allowing to filter the genes to use.
      * @return              An {@code GeneTOResultSet} containing all genes from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public GeneTOResultSet getGenesBySpeciesIds(Set<String> speciesIds) throws DAOException;
+    public GeneTOResultSet getGenesBySpeciesIds(Collection<Integer> speciesIds) throws DAOException;
+    /**
+     * Retrieves genes with expression data for the requested species IDs. If no species IDs
+     * provided, retrieve data for all species.
+     * <p>
+     * The genes are retrieved and returned as a {@code GeneTOResultSet}. It is the
+     * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
+     * 
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that are the IDs of species 
+     *                      to retrieve genes for. Can be {@code null} or empty.
+     * @return              An {@code GeneTOResultSet} containing all genes from data source.
+     * @throws DAOException If an error occurred when accessing the data source. 
+     */
+    public GeneTOResultSet getGenesWithDataBySpeciesIds(Collection<Integer> speciesIds)
+            throws DAOException;
 
     /**
-     * Retrieves genes from data source according to a {@code Set} of {@code String}s
+     * Retrieves genes from data source according to a {@code Collection} of {@code Integer}s
      * that are the IDs of species allowing to filter the genes to use.
      * <p>
      * The genes are retrieved and returned as a {@code GeneTOResultSet}. It is the
      * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that are the IDs of species 
      *                      allowing to filter the genes to use.
-     * @param geneIds       A {@code Set} of {@code String}s that are the IDs of genes 
+     * @param geneIds       A {@code Collection} of {@code String}s that are the IDs of genes 
                             allowing to filter the genes to use.
      * @return              An {@code GeneTOResultSet} containing all genes from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public GeneTOResultSet getGenesBySpeciesIds(Set<String> speciesIds, Set<String> geneIds) 
+    public GeneTOResultSet getGenesBySpeciesIds(Collection<Integer> speciesIds, Collection<String> geneIds) 
             throws DAOException;
     
     /**
      * Returns genes according to a search term, matching gene name, id or one synonym.
      * @param searchTerm A {@code String} containing the term to be searched
-     * @param speciesIds A {@code Set} of species Ids (may be empty to search on all species)
+     * @param speciesIds A {@code Collection} of {@code Integer}s that are species Ids (may be empty to search on all species)
      * @param limitStart An {@code int} representing the index of the first element to return.
      * @param resultPerPage An {@code int} representing the number of elements to return
      * @return A @{code {@link GeneTOResultSet} encapsulating the results.
      */
-    public GeneTOResultSet getGeneBySearchTerm(String searchTerm, Set<String> speciesIds, int limitStart,
+    public GeneTOResultSet getGeneBySearchTerm(String searchTerm, Collection<Integer> speciesIds, int limitStart,
 	        int resultPerPage);
 
     /**
@@ -114,8 +128,7 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      *                                  {@code attributesToUpdate} is empty or null or contains 
      *                                  an ancestral OMA node ID or an ancestral OMA taxon ID.   
      */
-    public int updateGenes(Collection<GeneTO> genes, 
-            Collection<GeneDAO.Attribute> attributesToUpdate) 
+    public int updateGenes(Collection<GeneTO> genes, Collection<GeneDAO.Attribute> attributesToUpdate) 
                     throws DAOException, IllegalArgumentException;
     
     /**
@@ -136,16 +149,20 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      * @version Bgee 13
      * @since Bgee 13
      */
-    public class GeneTO extends EntityTO {
+    public class GeneTO extends NamedEntityTO<Integer> {
 
         private static final long serialVersionUID = -9011956802137411474L;
+
+        /**
+         * A {@code String} that is the ID of this gene in the Ensembl database.
+         */
+        private final String geneId;
 
         /**
          * An {@code Integer} that is the species ID of the gene.
          */
         private final Integer speciesId;
-        
-        
+
         /**
          * An {@code Integer} that is the gene type ID (for instance, the ID for protein_coding).
          */
@@ -171,23 +188,25 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
          * All of these parameters are optional, so they can be {@code null} when not used.
          * Other attributes are set to {@code null}.
          * 
-         * @param geneId    A {@code String} that is the ID of this gene.
+         * @param bgeeGeneId    An {@code Integer} that is the ID of this gene.
+         * @param geneId        A {@code String} that is the ID of this gene in the Ensembl database.
          * @param geneName  A {@code String} that is the name of this gene.
          * @param speciesId An {@code Integer} of the species which this gene belongs to.
          */
-        public GeneTO(String geneId, String geneName, Integer speciesId) {
-            this(geneId, geneName, null, speciesId, null, null, null);
+        public GeneTO(Integer bgeeGeneId, String geneId, String geneName, Integer speciesId) {
+            this(bgeeGeneId, geneId, geneName, null, speciesId, null, null, null);
         }
 
         /**
-         * Constructor providing the ID (for instance, {@code Ensembl:ENSMUSG00000038253}), 
+         * Constructor providing the Bgee gene ID, the Ensembl ID (for instance, {@code Ensembl:ENSMUSG00000038253}), 
          * the name (for instance, {@code Hoxa5}), the description, the species ID, the BioType, 
          * the ID of the OMA Hierarchical Orthologous Group, whether this gene is present in 
          * Ensembl (see {@link #isEnsemblGene()}).  
          * <p>
          * All of these parameters are optional, so they can be {@code null} when not used.
          * 
-         * @param geneId                A {@code String} that is the ID of this gene.
+         * @param bgeeGeneId            An {@code Integer} that is the ID of this gene.
+         * @param geneId                A {@code String} that is the ID of this gene in the Ensembl database.
          * @param geneName              A {@code String} that is the name of this gene.
          * @param geneDescription       A {@code String} that is the description of this gene.
          * @param speciesId             An {@code Integer} that is the species ID which this 
@@ -198,9 +217,10 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
          * @param ensemblGene           A {code Boolean} defining whether this gene is present 
          *                              in Ensembl.
          */
-        public GeneTO(String geneId, String geneName, String geneDescription, Integer speciesId,
-                Integer geneBioTypeId, Integer OMAParentNodeId, Boolean ensemblGene) {
-            super(geneId, geneName, geneDescription);
+        public GeneTO(Integer bgeeGeneId, String geneId, String geneName, String geneDescription, 
+                Integer speciesId, Integer geneBioTypeId, Integer OMAParentNodeId, Boolean ensemblGene) {
+            super(bgeeGeneId, geneName, geneDescription);
+            this.geneId = geneId;
             this.speciesId = speciesId;
             this.geneBioTypeId = geneBioTypeId;
             this.OMAParentNodeId = OMAParentNodeId;
@@ -208,38 +228,29 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
         }
 
         /**
-         * @return  The {@code String} that is the name of this gene (for instance, "Hoxa5").
-         *          Corresponds to the DAO {@code Attribute} {@link GeneDAO.Attribute 
-         *          NAME}. Returns {@code null} if value not set.
+         * @return  A {@code String} that is the Ensembl gene ID.
          */
-        @Override
-        public String getName() {
-            //method overridden only to provide a more accurate javadoc
-            return super.getName();
+        public String getGeneId() {
+            return this.geneId;
         }
-
-
         /**
          * @return  The species ID.
          */
         public Integer getSpeciesId() {
             return this.speciesId;
         }
-
         /**
          * @return The gene bio type ID (for instance, the ID for protein_coding).
          */
         public Integer getGeneBioTypeId() {
             return this.geneBioTypeId;
         }
-        
         /**
          * @return  The OMA Hierarchical Orthologous Group ID that this gene belongs to.
          */
         public Integer getOMAParentNodeId() {
             return this.OMAParentNodeId;
         }
-        
         /**
          * @return  The {@code Boolean} defining whether this gene is present in Ensembl.
          */
@@ -249,7 +260,8 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
 
         @Override
         public String toString() {
-            return "ID: " + this.getId() + " - Label: " + this.getName() + 
+            return "ID: " + this.getId() + " - Ensembl ID: " + this.getGeneId() + 
+                   " - Label: " + this.getName() + 
                    " - Species ID: " + this.getSpeciesId() + 
                    " - Gene bio type ID: " + this.getGeneBioTypeId() + 
                    " - OMA Hierarchical Orthologous Group ID: " + this.getOMAParentNodeId() + 

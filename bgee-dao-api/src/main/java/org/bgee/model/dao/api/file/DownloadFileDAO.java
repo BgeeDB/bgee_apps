@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.NamedEntityTO;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 
@@ -53,7 +54,7 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
      * The {@code TransferObject} representing a Download File.
      */
     //TODO: standardize javadoc
-    final class DownloadFileTO extends EntityTO {
+    final class DownloadFileTO extends NamedEntityTO<Integer> {
 
         private static final long serialVersionUID = 19171223459721L;
 
@@ -81,7 +82,7 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
          * The id of this file's species data group,
          * see {@link SpeciesDataGroupDAO}
          */
-        private final String speciesDataGroupId;
+        private final Integer speciesDataGroupId;
 
         /**
          * The constructor providing all fields
@@ -93,8 +94,8 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
          * @param category The category of the download file
          * @param speciesDataGroupId The id of this file's species data group
          */
-        public DownloadFileTO(String id, String name, String description, String path, Long size,
-                              CategoryEnum category, String speciesDataGroupId){
+        public DownloadFileTO(Integer id, String name, String description, String path, Long size,
+                              CategoryEnum category, Integer speciesDataGroupId){
             super(id, name, description);
             this.category = category;
             this.size = size;
@@ -130,7 +131,7 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
          * Get the species data group id
          * @return the species data group id
          */
-        public String getSpeciesDataGroupId() {
+        public Integer getSpeciesDataGroupId() {
             return speciesDataGroupId;
         }
 
@@ -203,7 +204,7 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
              * @see org.bgee.model.dao.api.TransferObject.EnumDAOField#convert(Class, String)
              */
             public static CategoryEnum convertToCategoryEnum(String stringRepresentation){
-                log.entry();
+                log.entry(stringRepresentation);
                 return log.exit(EntityTO.convert(CategoryEnum.class, stringRepresentation));
             }
 

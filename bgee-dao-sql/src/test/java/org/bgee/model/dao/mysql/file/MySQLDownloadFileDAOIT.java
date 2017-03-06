@@ -47,12 +47,12 @@ public class MySQLDownloadFileDAOIT extends MySQLITAncestor {
 
         List<DownloadFileDAO.DownloadFileTO> allDownloadFiles = dao.getAllDownloadFiles().getAllTOs();
         List<DownloadFileDAO.DownloadFileTO> expectedDownloadFiles = Arrays.asList(
-                new DownloadFileDAO.DownloadFileTO("1", "file1.zip", "this is file1", "/dir/to/file1", 0L, 
-                        DownloadFileDAO.DownloadFileTO.CategoryEnum.EXPR_CALLS_SIMPLE,"1"),
-                new DownloadFileDAO.DownloadFileTO("2", "file2.zip", "this is file2", "/dir/to/file2", 0L, 
-                        DownloadFileDAO.DownloadFileTO.CategoryEnum.EXPR_CALLS_SIMPLE,"2"),
-                new DownloadFileDAO.DownloadFileTO("3", "file3.zip", null, "/dir/to/file3", 10L, 
-                        DownloadFileDAO.DownloadFileTO.CategoryEnum.DIFF_EXPR_ANAT_COMPLETE,"2")
+                new DownloadFileDAO.DownloadFileTO(1, "file1.zip", "this is file1", "/dir/to/file1", 0L, 
+                        DownloadFileDAO.DownloadFileTO.CategoryEnum.EXPR_CALLS_SIMPLE,1),
+                new DownloadFileDAO.DownloadFileTO(2, "file2.zip", "this is file2", "/dir/to/file2", 0L, 
+                        DownloadFileDAO.DownloadFileTO.CategoryEnum.EXPR_CALLS_SIMPLE,2),
+                new DownloadFileDAO.DownloadFileTO(3, "file3.zip", null, "/dir/to/file3", 10L, 
+                        DownloadFileDAO.DownloadFileTO.CategoryEnum.DIFF_EXPR_ANAT_COMPLETE,2)
         );
 
         assertTrue("DownloadFileTOs are incorrectly retrieved\nGOT\n"+allDownloadFiles+"\nEXPECTED\n"+expectedDownloadFiles,
@@ -72,9 +72,9 @@ public class MySQLDownloadFileDAOIT extends MySQLITAncestor {
                 .Attribute.FILE_SIZE, DownloadFileDAO.Attribute.SPECIES_DATA_GROUP_ID});
         List<DownloadFileDAO.DownloadFileTO> allDownloadFiles = dao.getAllDownloadFiles().getAllTOs();
         List<DownloadFileDAO.DownloadFileTO> expectedDownloadFiles = Arrays.asList(
-                new DownloadFileDAO.DownloadFileTO(null, null, "this is file1", null, 0L, null,"1"),
-                new DownloadFileDAO.DownloadFileTO(null, null, "this is file2", null, 0L, null, "2"),
-                new DownloadFileDAO.DownloadFileTO(null, null, null, null, 10L, null, "2")
+                new DownloadFileDAO.DownloadFileTO(null, null, "this is file1", null, 0L, null,1),
+                new DownloadFileDAO.DownloadFileTO(null, null, "this is file2", null, 0L, null, 2),
+                new DownloadFileDAO.DownloadFileTO(null, null, null, null, 10L, null, 2)
         );
 
         assertTrue("DownloadFileTOs are incorrectly retrieved\nGOT\n"+allDownloadFiles+"\nEXPECTED\n"
@@ -93,12 +93,12 @@ public class MySQLDownloadFileDAOIT extends MySQLITAncestor {
         
         //create a Collection of DownloadFileTOs to be inserted
         Collection<DownloadFileTO> fileTOs = Arrays.asList(
-                new DownloadFileTO("1", "file name 1", "file desc 1", "path/file1", 6L,
-                        CategoryEnum.EXPR_CALLS_SIMPLE, "11"),
-                new DownloadFileTO("2", "file name 2", "file desc 2", "path/file2/xx", 2L,
-                        CategoryEnum.DIFF_EXPR_ANAT_COMPLETE, "11"),
-                new DownloadFileTO("3", "file name 3", "file desc 3", "path/file3", 10L,
-                        CategoryEnum.AFFY_ANNOT, "22"));
+                new DownloadFileTO(1, "file name 1", "file desc 1", "path/file1", 6L,
+                        CategoryEnum.EXPR_CALLS_SIMPLE, 11),
+                new DownloadFileTO(2, "file name 2", "file desc 2", "path/file2/xx", 2L,
+                        CategoryEnum.DIFF_EXPR_ANAT_COMPLETE, 11),
+                new DownloadFileTO(3, "file name 3", "file desc 3", "path/file3", 10L,
+                        CategoryEnum.AFFY_ANNOT, 22));
         try {
             MySQLDownloadFileDAO dao = new MySQLDownloadFileDAO(this.getMySQLDAOManager());
             assertEquals("Incorrect number of rows inserted", 3, 

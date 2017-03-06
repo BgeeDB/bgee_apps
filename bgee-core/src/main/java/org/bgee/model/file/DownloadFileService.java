@@ -3,7 +3,7 @@ package org.bgee.model.file;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
-import org.bgee.model.dao.api.DAOManager;
+import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
 import org.bgee.model.dao.api.file.DownloadFileDAO;
@@ -22,22 +22,12 @@ public class DownloadFileService extends Service {
     private static final Logger log = LogManager.getLogger(DownloadFileService.class.getName());
 
     /**
-    * 0-arg constructor that will cause this {@code DownloadFileService} to use
-    * the default {@code DAOManager} returned by {@link DAOManager#getDAOManager()}.
-    *
-    * @see #DownloadFileService(DAOManager)
-    */
-    public DownloadFileService() {
-        this(DAOManager.getDAOManager());
-    }
-
-    /**
-     * @param daoManager    The {@code DAOManager} to be used by this {@code DownloadFileService}
-     *                      to obtain {@code DAO}s.
-     * @throws IllegalArgumentException If {@code daoManager} is {@code null}.
+     * @param serviceFactory            The {@code ServiceFactory} to be used to obtain {@code Service}s 
+     *                                  and {@code DAOManager}.
+     * @throws IllegalArgumentException If {@code serviceFactory} is {@code null}.
      */
-    public DownloadFileService(DAOManager daoManager){
-        super(daoManager);
+    public DownloadFileService(ServiceFactory serviceFactory) {
+        super(serviceFactory);
     }
 
     /**

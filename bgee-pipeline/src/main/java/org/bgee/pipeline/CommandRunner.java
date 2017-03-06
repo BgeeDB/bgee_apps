@@ -13,6 +13,7 @@ import org.bgee.pipeline.annotations.InsertSimilarityAnnotation;
 import org.bgee.pipeline.annotations.SimilarityAnnotation;
 import org.bgee.pipeline.expression.FilterNoExprCalls;
 import org.bgee.pipeline.expression.InsertGlobalCalls;
+import org.bgee.pipeline.expression.InsertPropagatedCalls;
 import org.bgee.pipeline.expression.downloadfile.GenerateExprFile;
 import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile;
 import org.bgee.pipeline.expression.downloadfile.GenerateMultiSpeciesDiffExprFile;
@@ -62,8 +63,7 @@ public class CommandRunner {
     public static final String JDK_LOG_CONFIG_FILE = "/jdkLogConfig.properties";
     /**
      * A {@code String} that is used to separate elements from a list when providing 
-     * a response to a socket client (see {@link #socketUberonStagesBetween(Uberon, 
-     * int)}).
+     * a response to a socket client (see {@link #socketUberonStagesBetween(Uberon, int)}).
      */
     public static final String SOCKET_RESPONSE_SEPARATOR = "\t";
 
@@ -245,15 +245,21 @@ public class CommandRunner {
             
         //---------- Hierarchical groups -----------
         case "ParseOrthoXML":
-            ParseOrthoXML.main(newArgs);
-            break;
+            throw log.throwing(new UnsupportedOperationException("Method disabled while updated"));
+            //ParseOrthoXML.main(newArgs);
+            //break;
 
         //---------- Call propagation -----------
         case "InsertGlobalCalls":
-            InsertGlobalCalls.main(newArgs);
-            break;
+            throw log.throwing(new UnsupportedOperationException("Method disabled while updated"));
+//            InsertGlobalCalls.main(newArgs);
+//            break;
         case "FilterNoExprCalls":
-            FilterNoExprCalls.main(newArgs);
+            throw log.throwing(new UnsupportedOperationException("Method disabled while updated"));
+//            FilterNoExprCalls.main(newArgs);
+//            break;
+        case "InsertPropagatedCalls": 
+            InsertPropagatedCalls.main(newArgs);
             break;
  
         //---------- Download file generation -----------
@@ -261,18 +267,21 @@ public class CommandRunner {
             GenerateDiffExprFile.main(newArgs);
             break;
         case "GenerateBasicExprFile":
-            GenerateExprFile.main(newArgs);
-            break;
+            throw log.throwing(new UnsupportedOperationException("Method disabled while updated"));
+//            GenerateExprFile.main(newArgs);
+//            break;
         case "GenerateMultiSpeciesDiffExprFile":
-            GenerateMultiSpeciesDiffExprFile.main(newArgs);
-            break;
+            throw log.throwing(new UnsupportedOperationException("Method disabled while updated"));
+//            GenerateMultiSpeciesDiffExprFile.main(newArgs);
+//            break;
         case "InsertSpeciesDataGroups":
             InsertSpeciesDataGroups.main(newArgs);
             break;
         //Rank download files
         case "GenerateRankFile": 
-            GenerateRankFile.main(newArgs);
-            break;
+            throw log.throwing(new UnsupportedOperationException("Method disabled while updated"));
+//            GenerateRankFile.main(newArgs);
+//            break;
             
         default: 
             throw log.throwing(new UnsupportedOperationException("The following action " +
@@ -284,8 +293,7 @@ public class CommandRunner {
     
     /**
      * Return a filtered value of {@code arg}: if {@code arg} is equal to {@link #EMPTY_ARG}, 
-     * this method returns {@code null}; all substrings equal to {@link #SPACE_IN_ARG} 
-     * will be replaced by a space; the returned {@code String} is trimmed.
+     * this method returns {@code null}; the returned {@code String} is trimmed.
      * 
      * 
      * @param arg   A {@code String} that is an argument from a command line usage.

@@ -28,9 +28,10 @@ import org.bgee.model.BgeeProperties;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
+import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
-import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneService;
 import org.bgee.model.topanat.exception.InvalidForegroundException;
@@ -40,6 +41,9 @@ import org.bgee.model.topanat.exception.RAnalysisException;
 /**
  * @author Mathieu Seppey
  * @author Frederic Bastian
+ * @author Valentine Rech de Laval
+ * @version Bgee 14, Feb. 2017
+ * @since   Bgee 13, Sept. 2015
  */
 public class TopAnatAnalysis {
 
@@ -222,7 +226,7 @@ public class TopAnatAnalysis {
         }
         allGeneIds.removeAll(this.geneService.loadGenesByIdsAndSpeciesIds(allGeneIds, 
                 Arrays.asList(this.params.getSpeciesId())).stream()
-                .map(Gene::getId)
+                .map(Gene::getEnsemblGeneId)
                 .collect(Collectors.toSet()));
         if (!allGeneIds.isEmpty()) {
             throw log.throwing(new InvalidSpeciesGenesException("Some gene IDs are unrecognized, "
@@ -542,14 +546,14 @@ public class TopAnatAnalysis {
 
         try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(
                 geneToAnatEntitiesFile)))) {
-            this.callService.loadCalls(
+            this.callService.loadExpressionCalls(
                     this.params.getSpeciesId(), 
-                    Arrays.asList(this.params.convertRawParametersToCallFilter()), 
+                    (ExpressionCallFilter) this.params.convertRawParametersToCallFilter(), 
                     EnumSet.of(CallService.Attribute.GENE_ID, CallService.Attribute.ANAT_ENTITY_ID), 
                     null
                 ).forEach(
                     call -> out.println(
-                        call.getGeneId() + '\t' + 
+                        call.getGene().getEnsemblGeneId() + '\t' + 
                         call.getCondition().getAnatEntityId()
                     )
                 );
@@ -860,7 +864,7 @@ public class TopAnatAnalysis {
             .orElse(EnumSet.allOf(DataType.class))
             .stream()
             .forEach(e -> sb.append("_").append(e.toString()));
-            sb.append("_").append(Optional.ofNullable(this.params.getDataQuality()).orElse(DataQuality.LOW)
+            sb.append("_").append(Optional.ofNullable(this.params.getSummaryQuality()).orElse(SummaryQuality.SILVER)
                     .toString());
             
             paramsEncoded = sb.toString();

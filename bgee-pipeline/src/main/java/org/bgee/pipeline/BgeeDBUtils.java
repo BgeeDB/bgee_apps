@@ -14,6 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.NamedEntityTO;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
 import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.exception.DAOException;
@@ -50,16 +51,16 @@ public class BgeeDBUtils {
      * 
      * @param speciesDAO    A {@code SpeciesDAO} to use to retrieve information about species 
      *                      from the Bgee data source.
-     * @return A {@code Set} of {@code String}s containing species IDs of the Bgee database.
+     * @return A {@code Set} of {@code Integer}s containing species IDs of the Bgee database.
      * @throws DAOException If an error occurred while getting the data from the Bgee database.
      */
-    public static List<String> getSpeciesIdsFromDb(SpeciesDAO speciesDAO) throws DAOException {
+    public static List<Integer> getSpeciesIdsFromDb(SpeciesDAO speciesDAO) throws DAOException {
         log.entry(speciesDAO);
 
         speciesDAO.setAttributes(SpeciesDAO.Attribute.ID);
         
         try (SpeciesTOResultSet rsSpecies = speciesDAO.getAllSpecies()) {
-            List<String> speciesIdsInBgee = new ArrayList<String>();
+            List<Integer> speciesIdsInBgee = new ArrayList<>();
             while (rsSpecies.next()) {
                 speciesIdsInBgee.add(rsSpecies.getTO().getId());
             }
@@ -75,27 +76,27 @@ public class BgeeDBUtils {
      * will return the validated {@code Collection} provided as argument. If an ID 
      * is not found in Bgee, this method will throw an {@code IllegalArgumentException}.
      * 
-     * @param speciesIds    A {@code List} of {@code String}s that are IDs of species, 
+     * @param speciesIds    A {@code List} of {@code Integer}s that are IDs of species, 
      *                      to be validated.
      * @param speciesDAO    A {@code SpeciesDAO} to use to retrieve information about species 
      *                      from the Bgee data source
-     * @return              A {@code List} of {@code String}s that are the IDs of all species 
+     * @return              A {@code List} of {@code Integer}s that are the IDs of all species 
      *                      in Bgee, if {@code speciesIds} was {@code null} or empty, 
      *                      otherwise, returns the argument {@code speciesIds} itself.
      * @throws IllegalArgumentException If {@code speciesIds} is not {@code null} nor empty 
      *                                  and an ID is not found in Bgee.
      */
-    public static List<String> checkAndGetSpeciesIds(List<String> speciesIds, SpeciesDAO speciesDAO) 
+    public static List<Integer> checkAndGetSpeciesIds(List<Integer> speciesIds, SpeciesDAO speciesDAO) 
             throws IllegalArgumentException {
         log.entry(speciesIds, speciesDAO);
         
-        List<String> speciesIdsFromDb = BgeeDBUtils.getSpeciesIdsFromDb(speciesDAO); 
+        List<Integer> speciesIdsFromDb = BgeeDBUtils.getSpeciesIdsFromDb(speciesDAO); 
         if (speciesIds == null || speciesIds.isEmpty()) {
             return log.exit(speciesIdsFromDb);
         } else if (!speciesIdsFromDb.containsAll(speciesIds)) {
             //copy to avoid modifying user input, maybe the caller 
             //will recover from the exception
-            List<String> debugSpeciesIds = new ArrayList<String>(speciesIds);
+            List<Integer> debugSpeciesIds = new ArrayList<>(speciesIds);
             debugSpeciesIds.removeAll(speciesIdsFromDb);
             throw log.throwing(new IllegalArgumentException("Some species IDs " +
                     "could not be found in Bgee: " + debugSpeciesIds));
@@ -115,7 +116,7 @@ public class BgeeDBUtils {
      * but with any {@code RelationStatus} ({@code REFLEXIVE}, {@code DIRECT}, 
      * {@code INDIRECT}). 
      * 
-     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
+     * @param speciesIds    A {@code Set} of {@code Integer}s that are the IDs of species 
      *                      to retrieve relations for. Can be {@code null} or empty.
      * @param relationDAO   A {@code RelationDAO} to use to retrieve information about 
      *                      relations between anatomical entities from the Bgee data source.
@@ -125,7 +126,7 @@ public class BgeeDBUtils {
      *                      that are the IDs of their associated sources. 
      * @throws DAOException If an error occurred while getting the data from the Bgee database.
      */
-    public static Map<String, Set<String>> getAnatEntityChildrenFromParents(Set<String> speciesIds, 
+    public static Map<String, Set<String>> getAnatEntityChildrenFromParents(Set<Integer> speciesIds, 
             RelationDAO relationDAO) throws DAOException {
         log.entry(speciesIds, relationDAO);
         return log.exit(BgeeDBUtils.getIsAPartOfRelativesFromDb(
@@ -144,7 +145,7 @@ public class BgeeDBUtils {
      * but with any {@code RelationStatus} ({@code REFLEXIVE}, {@code DIRECT}, 
      * {@code INDIRECT}). 
      * 
-     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
+     * @param speciesIds    A {@code Set} of {@code Integer}s that are the IDs of species 
      *                      to retrieve relations for. Can be {@code null} or empty.
      * @param relationDAO   A {@code RelationDAO} to use to retrieve information about 
      *                      relations between anatomical entities from the Bgee data source.
@@ -154,7 +155,7 @@ public class BgeeDBUtils {
      *                      that are the IDs of their associated targets. 
      * @throws DAOException If an error occurred while getting the data from the Bgee database.
      */
-    public static Map<String, Set<String>> getAnatEntityParentsFromChildren(Set<String> speciesIds, 
+    public static Map<String, Set<String>> getAnatEntityParentsFromChildren(Set<Integer> speciesIds, 
             RelationDAO relationDAO) throws DAOException {
         log.entry(speciesIds, relationDAO);
         return log.exit(BgeeDBUtils.getIsAPartOfRelativesFromDb(
@@ -173,7 +174,7 @@ public class BgeeDBUtils {
      * but with any {@code RelationStatus} ({@code REFLEXIVE}, {@code DIRECT}, 
      * {@code INDIRECT}). 
      * 
-     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
+     * @param speciesIds    A {@code Set} of {@code Integer}s that are the IDs of species 
      *                      to retrieve relations for. Can be {@code null} or empty.
      * @param relationDAO   A {@code RelationDAO} to use to retrieve information about 
      *                      relations between stages from the Bgee data source.
@@ -183,7 +184,7 @@ public class BgeeDBUtils {
      *                      that are the IDs of their associated sources. 
      * @throws DAOException If an error occurred while getting the data from the Bgee database.
      */
-    public static Map<String, Set<String>> getStageChildrenFromParents(Set<String> speciesIds, 
+    public static Map<String, Set<String>> getStageChildrenFromParents(Set<Integer> speciesIds, 
             RelationDAO relationDAO) throws DAOException {
         log.entry(speciesIds, relationDAO);
         return log.exit(BgeeDBUtils.getIsAPartOfRelativesFromDb(
@@ -202,7 +203,7 @@ public class BgeeDBUtils {
      * but with any {@code RelationStatus} ({@code REFLEXIVE}, {@code DIRECT}, 
      * {@code INDIRECT}). 
      * 
-     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
+     * @param speciesIds    A {@code Set} of {@code Integer}s that are the IDs of species 
      *                      to retrieve relations for. Can be {@code null} or empty.
      * @param relationDAO   A {@code RelationDAO} to use to retrieve information about 
      *                      relations between stages from the Bgee data source.
@@ -212,7 +213,7 @@ public class BgeeDBUtils {
      *                      that are the IDs of their associated targets. 
      * @throws DAOException If an error occurred while getting the data from the Bgee database.
      */
-    public static Map<String, Set<String>> getStageParentsFromChildren(Set<String> speciesIds, 
+    public static Map<String, Set<String>> getStageParentsFromChildren(Set<Integer> speciesIds, 
             RelationDAO relationDAO) throws DAOException {
         log.entry(speciesIds, relationDAO);
         return log.exit(BgeeDBUtils.getIsAPartOfRelativesFromDb(
@@ -238,7 +239,7 @@ public class BgeeDBUtils {
      * but with any {@code RelationStatus} ({@code REFLEXIVE}, {@code DIRECT}, 
      * {@code INDIRECT}). 
      * 
-     * @param speciesIds            A {@code Set} of {@code String}s that are the IDs of species 
+     * @param speciesIds            A {@code Set} of {@code Integer}s that are the IDs of species 
      *                              to retrieve relations for. Can be {@code null} or empty.
      * @param anatEntityRelatives   A {@code boolean} defining whether to retrieve relations 
      *                              for anatomical entities, or for developmental stages. 
@@ -259,7 +260,7 @@ public class BgeeDBUtils {
      *                      sources to their targets. 
      * @throws DAOException If an error occurred while getting the data from the Bgee database.
      */
-    private static Map<String, Set<String>> getIsAPartOfRelativesFromDb(Set<String> speciesIds, 
+    private static Map<String, Set<String>> getIsAPartOfRelativesFromDb(Set<Integer> speciesIds, 
             boolean anatEntityRelatives, boolean childrenFromParents, RelationDAO relationDAO) 
                     throws DAOException {
         log.entry(speciesIds, anatEntityRelatives, childrenFromParents, relationDAO);
@@ -270,7 +271,7 @@ public class BgeeDBUtils {
         relationDAO.setAttributes(RelationDAO.Attribute.SOURCE_ID, 
                 RelationDAO.Attribute.TARGET_ID);
         // get direct, indirect, and reflexive is_a/part_of relations 
-        RelationTOResultSet relTORs = null;
+        RelationTOResultSet<String> relTORs = null;
         Map<String, Set<String>> relativesMap = new HashMap<String, Set<String>>();
         try {
             if (anatEntityRelatives) {
@@ -283,7 +284,7 @@ public class BgeeDBUtils {
             //now, populate Map where keys are sourceId and values the associated targetIds, 
             //or the opposite, depending on descendantsByParent
             while (relTORs.next()) {
-                RelationTO relTO = relTORs.getTO();
+                RelationTO<String> relTO = relTORs.getTO();
                 String key = null;
                 String value = null;
                 if (childrenFromParents) {
@@ -322,17 +323,17 @@ public class BgeeDBUtils {
      *              the method {@code DAOResultSet#getTO()}. It should not have been closed, 
      *              and the method {@code next} should not have been already called.
      * @param <T>   The type of {@code EntityTO} in {@code rs}.
-     * @return      A {@code Map} where keys are {@code String}s corresponding to 
+     * @param <U>   The type of ID in {@code EntityTO} in {@code rs}.
+     * @return      A {@code Map} where keys are {@code U}s corresponding to 
      *              entity IDs, the associated values being {@code T}s 
      *              corresponding to entity TOs. 
      * @throws IllegalArgumentException If {@code rs} does not allow to retrieve EntityTO IDs.
      * @throws IllegalStateException	If several TOs associated to a same ID.
      */
-    //TODO Modify when NamedEntityTO implemented 
-    private static <T extends EntityTO> Map<String, T> generateTOsByIdsMap(DAOResultSet<T> rs) {
+    private static <U, T extends EntityTO<U>> Map<U, T> generateTOsByIdsMap(DAOResultSet<T> rs) {
         log.entry(rs);
         
-        Map<String, T> tosByIds = new HashMap<String, T>();
+        Map<U, T> tosByIds = new HashMap<>();
         try {
             while (rs.next()) {
                 T entityTO = rs.getTO();
@@ -363,6 +364,7 @@ public class BgeeDBUtils {
      *              the method {@code DAOResultSet#getTO()}. It should not have been closed, 
      *              and the method {@code next} should not have been already called.
      * @param <T>   The type of {@code EntityTO} in {@code rs}.
+     * @param <U>   The type of ID in {@code EntityTO} in {@code rs}.
      * @return      A {@code Map} where keys are {@code String}s corresponding to 
      *              entity IDs, the associated values being {@code String}s 
      *              corresponding to entity names. 
@@ -372,12 +374,12 @@ public class BgeeDBUtils {
     //XXX: Currently, we keep specific methods to be able to store and restore specific attributes.
     //     This could be generic using Java 8, but we are just lazy to implement it now.
 
-    private static <T extends EntityTO> Map<String, String> generateNamesByIdsMap(DAOResultSet<T> rs) 
+    private static <U, T extends NamedEntityTO<U>> Map<U, String> generateNamesByIdsMap(DAOResultSet<T> rs) 
     		throws IllegalArgumentException, IllegalStateException {
         log.entry(rs);
         
-        Map<String, String> namesByIds = new HashMap<String, String>();
-        for (Entry<String, T> entry: generateTOsByIdsMap(rs).entrySet()) {
+        Map<U, String> namesByIds = new HashMap<>();
+        for (Entry<U, T> entry: generateTOsByIdsMap(rs).entrySet()) {
             if (entry.getValue().getName() == null) {
                 throw log.throwing(new IllegalArgumentException("The provided DAOResultSet " +
                         "does not allow to retrieve EntityTO names"));                   
@@ -406,14 +408,14 @@ public class BgeeDBUtils {
     //XXX: Currently, we keep this specific method to be able to store and restore 
     //     specific attributes. This could be generic in generateNamesByIdsMap using Java 8, 
     //     but we are just lazy to implement it now. 
-    public static Map<String, String> getGeneNamesByIds(Set<String> speciesIds, GeneDAO geneDAO) {
+    public static Map<Integer, String> getGeneNamesByIds(Set<Integer> speciesIds, GeneDAO geneDAO) {
         log.entry(speciesIds, geneDAO);
         log.debug("Start retrieving gene names for species: {}", speciesIds);
         //store original attributes to restore geneDAO in proper state afterwards.
         Collection<GeneDAO.Attribute> attributes = geneDAO.getAttributes();
         geneDAO.setAttributes(GeneDAO.Attribute.ID, GeneDAO.Attribute.NAME);
         
-        Map<String, String> geneNamesByIds = 
+        Map<Integer, String> geneNamesByIds = 
                 generateNamesByIdsMap(geneDAO.getGenesBySpeciesIds(speciesIds));
         
         //restore geneDAO in proper state
@@ -436,12 +438,12 @@ public class BgeeDBUtils {
      *                      gene IDs, the associated values being {@code GeneTO}s 
      *                      corresponding to gene TOs. 
      */
-    public static Map<String, GeneTO> getGeneTOsByIds(Set<String> speciesIds, GeneDAO geneDAO) {
+    public static Map<Integer, GeneTO> getGeneTOsByIds(Set<Integer> speciesIds, GeneDAO geneDAO) {
         log.entry(speciesIds, geneDAO);
         
         log.debug("Start retrieving gene TOs for species: {}", speciesIds);
         
-        Map<String, GeneTO> geneTOsByIds = 
+        Map<Integer, GeneTO> geneTOsByIds = 
                 generateTOsByIdsMap(geneDAO.getGenesBySpeciesIds(speciesIds));
 
         log.debug("Done retrieving gene TOs for species: {}, {} TOs retrieved", 
@@ -465,7 +467,7 @@ public class BgeeDBUtils {
     //XXX: Currently, we keep this specific method to be able to store and restore 
     //     specific attributes. This could be generic in generateNamesByIdsMap using Java 8, 
     //     but we are just lazy to implement it now. 
-    public static Map<String, String> getStageNamesByIds(Set<String> speciesIds, 
+    public static Map<String, String> getStageNamesByIds(Set<Integer> speciesIds, 
             StageDAO stageDAO) {
         log.entry(speciesIds, stageDAO);
         log.debug("Start retrieving stage names for species: {}", speciesIds);
@@ -500,7 +502,7 @@ public class BgeeDBUtils {
     //XXX: Currently, we keep this specific method to be able to store and restore 
     //     specific attributes. This could be generic in generateNamesByIdsMap using Java 8, 
     //     but we are just lazy to implement it now. 
-    public static Map<String, String> getAnatEntityNamesByIds(Set<String> speciesIds, 
+    public static Map<String, String> getAnatEntityNamesByIds(Set<Integer> speciesIds, 
             AnatEntityDAO anatEntityDAO) {
         log.entry(speciesIds, anatEntityDAO);
         log.debug("Start retrieving anatomical entity names for species: {}", speciesIds);

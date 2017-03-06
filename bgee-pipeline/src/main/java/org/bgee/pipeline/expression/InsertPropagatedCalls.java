@@ -18,7 +18,9 @@ import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -76,8 +78,11 @@ public class InsertPropagatedCalls extends CallService {
     /**
      * An {@code int} that is the number of genes to load at a same time to propagate calls for,
      * and to run computations in parallel between groups of genes of this size.
+     * The lower this number the higher the nuber of query to the database, but then they should be fast,
+     * and the number of threads working in parallel until the end will be higher (for not waiting,
+     * e.g., that remaining threads handle 2000 genes.)
      */
-    public final static int GENE_PARALLEL_GROUP_SIZE = 2000;
+    public final static int GENE_PARALLEL_GROUP_SIZE = 200;
     
     private final static Set<Set<ConditionDAO.Attribute>> COND_PARAM_SET;
     private final static Map<Set<ConditionDAO.Attribute>, AtomicInteger> COND_ID_COUNTERS;
@@ -119,6 +124,13 @@ public class InsertPropagatedCalls extends CallService {
      */
     private volatile boolean jobCompleted;
     /**
+     * A {@code Thread} responsible for inserting data into the data source.
+     * Is stored in this attribute for allowing different threads to notify it if an error occurred.
+     * Is not initialized at instantiation because we need to retrieve a {@code Condition} map
+     * to do so.
+     */
+    private volatile Thread insertThread;
+    /**
      * A {@code Supplier} of {@code ServiceFactory}s to be acquired from different threads.
      */
     private final Supplier<ServiceFactory> serviceFactorySupplier;
@@ -129,6 +141,13 @@ public class InsertPropagatedCalls extends CallService {
      * and the insertion thread will remove them from the queue for insertion.
      */
     private final BlockingQueue<Set<PipelineCall>> callsToInsert;
+    /**
+     * A concurrent {@code Set} of {@code DAOManager}s backed by a {@code ConcurrentMap},
+     * in order to kill queries run in different threads in case of error in any thread.
+     * The killing will be performed by {@link #insertThread}, as we know this thread
+     * will be running during the whole process and will performing fast queries only.
+     */
+    private final Set<DAOManager> daoManagers;
     /**
      * A {@code Set} of {@code ConditionDAO.Attribute}s defining the combination
      * of condition parameters that were requested for queries, allowing to determine 
@@ -153,8 +172,10 @@ public class InsertPropagatedCalls extends CallService {
         //because we don't care about element order, and because we don't want to block
         //when reaching maximal capacity
         this.callsToInsert = new LinkedBlockingDeque<>();
+        this.daoManagers = Collections.newSetFromMap(new ConcurrentHashMap<>());
         this.errorOccured = null;
         this.jobCompleted = false;
+        this.insertThread = null;
     }
     
     /**
@@ -633,6 +654,9 @@ public class InsertPropagatedCalls extends CallService {
      * to be able to have a single transaction to insert these data.
      * This should not impact performances, as anyway INSERT statements are executed
      * sequentially in MySQL.
+     * <p>
+     * This thread is also for killing all queries performed by different threads
+     * when an error occurs in any thread.
      * 
      * @author  Frederic Bastian
      * @version Bgee 14 Feb. 2017
@@ -681,7 +705,7 @@ public class InsertPropagatedCalls extends CallService {
                 ((MySQLDAOManager) daoManager).getConnection().startTransaction();
             
                 int groupsInserted = 0;
-                while ((!this.callPropagator.jobCompleted || 
+                INSERT: while ((!this.callPropagator.jobCompleted || 
                             //important to check that there is no remaining calls to insert,
                             //as other thread might set the jobCompleted flag to true
                             //before this thread finishes to insert all data.
@@ -689,7 +713,19 @@ public class InsertPropagatedCalls extends CallService {
                        //but if an error occurred, we stop immediately in any case.
                        this.callPropagator.errorOccured == null) {
                     
-                    Set<PipelineCall> toInsert = this.callPropagator.callsToInsert.take();
+                    //wait for consuming new data
+                    Set<PipelineCall> toInsert = null;
+                    try {
+                        //here we ask to wait indefinitely 
+                        toInsert = this.callPropagator.callsToInsert.take();
+                    } catch (InterruptedException e) {
+                        //this Thread will be interrupted if an error occurred in an other Thread
+                        //or if all computations are finished and this thread is waiting
+                        //for more data to consume.
+                        log.catching(Level.DEBUG, e);
+                        continue INSERT;
+                    }
+                    assert toInsert != null;
                     
                     // Here, we insert new conditions, and add them to the known conditions
                     Map<Condition, Integer> newCondMap = this.insertNewConditions(
@@ -709,44 +745,71 @@ public class InsertPropagatedCalls extends CallService {
                     // And we finish by inserting the computed calls
                     this.insertPropagatedCalls(toInsert, this.condMap, exprDAO);
                     
-                    if (log.isDebugEnabled() && groupsInserted % 100 == 0) {
-                        log.debug("{} genes inserted.", groupsInserted);
+                    if (log.isInfoEnabled() && groupsInserted % 100 == 0) {
+                        log.info("{} genes inserted.", groupsInserted);
                     }
                     groupsInserted++;
                 }
             } catch (Exception e) {
-                //note: we don't set this.callPropagator.errorOccured here, it will be done
-                //in the main thread.
                 errorInThisThread = true;
+                if (this.callPropagator.errorOccured == null) {
+                    this.callPropagator.errorOccured = e;
+                }
                 if (e instanceof RuntimeException) {
                     throw log.throwing((RuntimeException) e);
                 }
                 throw log.throwing(new IllegalStateException(e));
+                
             } finally {
                 assert this.callPropagator.jobCompleted ||
-                       this.callPropagator.errorOccured != null ||
-                       errorInThisThread;
+                       this.callPropagator.errorOccured != null;
                 //we assume the insertion is done using MySQL, and we commit/rollback the transaction
                 try {
-                    if (!errorInThisThread && this.callPropagator.errorOccured == null) {
-                        assert this.callPropagator.jobCompleted;
-                        log.debug("Committing transaction");
-                        ((MySQLDAOManager) daoManager).getConnection().commit();
-                    } else {
-                        log.debug("Rollbacking transaction");
-                        ((MySQLDAOManager) daoManager).getConnection().rollback();
-                    }
-                } catch (SQLException e) {
-                    if (errorInThisThread) {
-                        //we are already going to throw an exception, so that's enough
-                        log.catching(e);
-                    } else {
-                        throw log.throwing(new IllegalStateException(e));
-                    }
+                    this.killAllDAOManagersIfNeeded();
                 } finally {
-                    daoManager.close();
+                    try {
+                        //recheck the jobCompleted flag in case this Thread was interrupted
+                        //for unknown reason
+                        if (this.callPropagator.jobCompleted && this.callPropagator.errorOccured == null) {
+                            log.debug("Committing transaction");
+                            ((MySQLDAOManager) daoManager).getConnection().commit();
+                        } else {
+                            log.debug("Rollbacking transaction");
+                            ((MySQLDAOManager) daoManager).getConnection().rollback();
+                        }
+                    } catch (SQLException e) {
+                        if (errorInThisThread) {
+                            //we are already going to throw an exception, so that's enough
+                            log.catching(e);
+                        } else {
+                            if (this.callPropagator.errorOccured == null) {
+                                this.callPropagator.errorOccured = e;
+                            }
+                            throw log.throwing(new IllegalStateException(e));
+                        }
+                    } finally {
+                        daoManager.close();
+                    }
                 }
             }
+            
+            log.debug("Insert thread shut down");
+            log.exit();
+        }
+        
+        /**
+         * Kill the running queries to data source launched by other threads if an error occurred
+         * in any thread.
+         */
+        private void killAllDAOManagersIfNeeded() {
+            log.entry();
+            if (this.callPropagator.errorOccured == null) {
+                log.exit(); return;
+            }
+            log.debug("Killing all DAO managers");
+            this.callPropagator.daoManagers.stream()
+                    .filter(dm -> !dm.isClosed() && !dm.isKilled())
+                    .forEach(dm -> dm.kill());
             
             log.exit();
         }
@@ -1038,7 +1101,14 @@ public class InsertPropagatedCalls extends CallService {
         final Set<Set<ConditionDAO.Attribute>> clonedCondParamsSet = 
                 Collections.unmodifiableSet(new HashSet<>(conditionParamsCollection));
 
+        
         try(DAOManager commonManager = daoManagerSupplier.get()) {
+            //You can set max number of parallel threads from common pool.
+            //we'll use the common pool and not a forked pool because forked pool
+            //can't currently define parallelism for Streams
+            //(see http://stackoverflow.com/questions/28985704/parallel-stream-from-a-hashset-doesnt-run-in-parallel)
+            //use the sys prop "java.util.concurrent.ForkJoinPool.common.parallelism" in command line argument.
+            
             // Get all species in Bgee even if some species IDs were provided, to check user input.
             // We need a specific DAOManager for this (commonManager), to not use the same as the one used
             // for each species.
@@ -1132,10 +1202,8 @@ public class InsertPropagatedCalls extends CallService {
 
             //PARALLEL EXECUTION: now we launch the independent thread responsible for
             //inserting the data into the data source
-            Thread insertThread = new Thread(new InsertJob(this, condMap));
-            //no need for a try-catch clause, this.errorOccured will be set in the main thread
-            //if an exception is thrown.
-            insertThread.start();
+            this.insertThread = new Thread(new InsertJob(this, condMap));
+            this.insertThread.start();
             
             //PARALLEL EXECUTION: we generate groups of genes of size GENES_PER_ITERATION
             //and run the computations in parallel between groups
@@ -1145,17 +1213,21 @@ public class InsertPropagatedCalls extends CallService {
                     ((i + 1) * GENE_PARALLEL_GROUP_SIZE) > bgeeGeneIds.size()? 
                             bgeeGeneIds.size(): ((i + 1) * GENE_PARALLEL_GROUP_SIZE)))
             .forEach(subsetGeneIds -> {
-                //Check error status
-                if (this.errorOccured != null) {
-                    return;
-                }
-                log.info("Processing {} genes...", subsetGeneIds.size());
-
+                //check at each iteration if an error occurred in another thread
+                this.checkErrorOccurred();
+                
                 //We need a new connection to the database for each thread, so we use
                 //a ServiceFactory Supplier
                 final ServiceFactory threadServiceFactory = this.serviceFactorySupplier.get();
                 
                 try (DAOManager threadDAOManager = threadServiceFactory.getDAOManager()) {
+                    //PARALLEL EXECUTION: each thread-specific DAOManager is registered
+                    //to be able to kill all queries in case of error in any thread.
+                    //The killing will be performed by this.insertThread, as we know this thread
+                    //will be running during the whole process and will be performing fast queries only.
+                    this.daoManagers.add(threadDAOManager);
+                    
+                    log.debug("Processing {} genes...", subsetGeneIds.size());
                     final RawExpressionCallDAO rawCallDAO = threadDAOManager.getRawExpressionCallDAO();
                     final ExperimentExpressionDAO expExprDAO = threadDAOManager.getExperimentExpressionDAO();
                     
@@ -1167,36 +1239,84 @@ public class InsertPropagatedCalls extends CallService {
                     //through the dedicated BlockingQueue
                     propagatedCalls.forEach(set -> {
                         //Check error status
-                        if (this.errorOccured != null) {
-                            return;
-                        }
+                        this.checkErrorOccurred();
                         try {
-                            this.callsToInsert.put(set);
+                            //if resizing needed, wait no more than 3 minutes (yeah, why not 2.99).
+                            this.callsToInsert.offer(set, 3, TimeUnit.MINUTES);
                         } catch (InterruptedException e) {
-                            throw new IllegalStateException(e);
+                            this.exceptionOccurs(e);
                         }
                     });
+                    
+                    log.debug("Done processing {} genes.", subsetGeneIds.size());
+                } catch (Exception e) {
+                    this.exceptionOccurs(e);
                 }
-                //no need for a catch clause, this.errorOccured will be set in the main thread
-                //if an exception is thrown.
-                
-                log.info("Done processing {} genes.", subsetGeneIds.size());
             });
-        } catch (Exception e) {
-            //very important to set this flag for other threads to know they should stop their work
-            this.errorOccured = e;
             
-            if (e instanceof RuntimeException) {
-                throw log.throwing((RuntimeException) e);
-            }
-            throw log.throwing(new IllegalStateException(e));
+            //very important to set this flag here for the insertion thread to know it should quit.
+            this.jobCompleted = true;
+            
+        } catch (Exception e) {
+            this.exceptionOccurs(e);
+        } finally {
+            //if there are no more data to be inserted,
+            //wake up the insert thread that might still be waiting for new data to insert
+            this.interruptInsertIfNeeded();
         }
-        //very important to set this flag for the insertion thread to know it should quit.
-        this.jobCompleted = true;
+        assert this.jobCompleted || this.errorOccured != null;
         
         log.info("Done inserting of propagated calls for the species {} with combination of condition {}...",
             this.speciesId, this.conditionParams);
         
+        log.exit();
+    }
+
+    /**
+     * Method to check if an {@code Exception} occurred in a different {@code Thread}
+     * than the caller {@code Thread}, launched by this {@code InsertPropagatedCalls} object.
+     * @throws IllegalStateException    If an {@code Exception} occurred in a different {@code Thread}.
+     */
+    private void checkErrorOccurred() throws IllegalStateException {
+        log.entry();
+        if (this.errorOccured != null) {
+            log.debug("Stop execution following error in other Thread.");
+            throw new IllegalStateException("Exception thrown in another thread, stop job.");
+        }
+        log.exit();
+    }
+
+    /**
+     * Method rethrowing any {@code Exception} as a {@code RuntimeException} and storing
+     * it in {@link #errorOccurred} and notifying {@link #insertThread} that an error occurred.
+     * @param e
+     * @throws RuntimeException
+     */
+    private void exceptionOccurs(Exception e) throws RuntimeException {
+        log.entry(e);
+        //set errorOccured for all threads to know there was an error
+        if (this.errorOccured == null) {
+            this.errorOccured = e;
+        }
+        //wake up the insert thread that might be waiting to consume new data.
+        //important to set errorOccured before calling this method.
+        this.interruptInsertIfNeeded();
+        //throw exception appropriately
+        if (e instanceof RuntimeException) {
+            throw log.throwing((RuntimeException) e);
+        }
+        throw log.throwing(new IllegalStateException(e));
+    }
+
+    private void interruptInsertIfNeeded() {
+        log.entry();
+        Set<Thread.State> waitingStates = EnumSet.of(Thread.State.BLOCKED, Thread.State.WAITING,
+                Thread.State.TIMED_WAITING);
+        if (this.insertThread != null && waitingStates.contains(this.insertThread.getState()) &&
+                (this.errorOccured != null || (this.jobCompleted && this.callsToInsert.isEmpty()))) {
+            log.debug("Interrupting insert thread");
+            this.insertThread.interrupt();
+        }
         log.exit();
     }
 
@@ -1218,9 +1338,11 @@ public class InsertPropagatedCalls extends CallService {
             RawExpressionCallDAO rawCallDAO, ExperimentExpressionDAO expExprDAO) {
         log.entry(geneIds, condMap, conditionUtils, rawCallDAO, expExprDAO);
         
+        this.checkErrorOccurred();
         final Stream<RawExpressionCallTO> streamRawCallTOs = 
             this.performsRawExpressionCallTOQuery(geneIds, rawCallDAO);
-        
+
+        this.checkErrorOccurred();
         final Map<DataType, Stream<ExperimentExpressionTO>> experimentExprTOsByDataType =
             performsExperimentExpressionQuery(geneIds, expExprDAO);
         
@@ -1251,6 +1373,7 @@ public class InsertPropagatedCalls extends CallService {
             //then we reconcile calls for a same gene-condition
             //g: Map<PipelineCall, Set<PipelineCallData>>
             .map(g -> {
+                this.checkErrorOccurred();
                 //group calls per Condition (they all are about the same gene already)
                 final Map<Condition, Set<PipelineCall>> callGroup = g.entrySet().stream()
                     .collect(Collectors.groupingBy(e -> e.getKey().getCondition(), Collectors.mapping(e2 -> e2.getKey(), Collectors.toSet())));
@@ -1386,9 +1509,7 @@ public class InsertPropagatedCalls extends CallService {
         log.entry(data, conditionUtils);
 
         Map<PipelineCall, Set<PipelineCallData>> propagatedData = new HashMap<>();
-        if (this.errorOccured != null) {
-            return log.exit(propagatedData);
-        }
+        this.checkErrorOccurred();
 
         assert data != null && !data.isEmpty();
         assert conditionUtils != null;
@@ -1416,6 +1537,7 @@ public class InsertPropagatedCalls extends CallService {
         int analyzedCallCount = 0;
 
         for (Entry<PipelineCall, Set<PipelineCallData>> entry: data.entrySet()) {
+            this.checkErrorOccurred();
             if (log.isTraceEnabled() && analyzedCallCount % 100 == 0) {
                 log.trace("{}/{} expression calls analyzed.", analyzedCallCount, callCount);
             }
@@ -1470,9 +1592,7 @@ public class InsertPropagatedCalls extends CallService {
         log.entry(data, propagatedConds, areAncestors);
 
         Map<PipelineCall, Set<PipelineCallData>> map = new HashMap<>();
-        if (this.errorOccured != null) {
-            return log.exit(map);
-        }
+        this.checkErrorOccurred();
         
         if (propagatedConds.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("No provided propagated conditions"));
@@ -1492,6 +1612,7 @@ public class InsertPropagatedCalls extends CallService {
             //for each original PipelineCallData, create a new PipelineCallData with DataPropagation updated 
             //and ExperimentExpressionTOs stored in the appropriate attributes
             for (PipelineCallData pipelineData: data.getValue()) {
+                this.checkErrorOccurred();
 
                 // Here, we define propagation states.
                 // A state should stay to null if we do not have this information in call condition. 
@@ -1579,9 +1700,7 @@ public class InsertPropagatedCalls extends CallService {
             Set<PipelineCallData> pipelineData) {
         log.entry(calls, pipelineData);
 
-        if (this.errorOccured != null) {
-            return log.exit(null);
-        }
+        this.checkErrorOccurred();
     
         assert calls != null && !calls.isEmpty();
         assert pipelineData != null && !pipelineData.isEmpty();
@@ -1674,10 +1793,8 @@ public class InsertPropagatedCalls extends CallService {
     private ExpressionCallData mergePipelineCallDataIntoExpressionCallData(DataType dataType,
             Set<PipelineCallData> pipelineCallData, RawExpressionCallTO selfSourceCallTO) {
         log.entry(dataType, pipelineCallData, selfSourceCallTO);
-        
-        if (this.errorOccured != null) {
-            return log.exit(null);
-        }
+
+        this.checkErrorOccurred();
 
         assert pipelineCallData.stream().noneMatch(pcd -> !dataType.equals(pcd.getDataType()));
         if (pipelineCallData.stream().anyMatch(pcd -> 

@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.math.MathContext;
 import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.Instant;
@@ -13,19 +12,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.OptionalDouble;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.commons.math3.ode.FirstOrderConverter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
@@ -133,8 +129,9 @@ public class TestTest extends TestAncestor {
 			}
 			List<String> tissueEnhanced = new ArrayList<>();
 			List<String> housekeeper = new ArrayList<>();
-			List<String> groupspecific = new ArrayList<>();
-			List<String> tissuespecific = new ArrayList<>();
+			List<String> undefined = new ArrayList<>();
+			List<String> grouppecific = new ArrayList<>();
+			List<String> tissuepecific = new ArrayList<>();
 			genes.values().parallelStream().forEach(gene -> {
 				LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = new LinkedHashMap<>();
 				serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
@@ -146,41 +143,99 @@ public class TestTest extends TestAncestor {
 								EnumSet.of(CallService.Attribute.GENE_ID, CallService.Attribute.ANAT_ENTITY_ID,
 										CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.GLOBAL_RANK),
 								serviceOrdering)
-						//remove anat entities part of the linkedElementsOntology
-						//XXX do we really need to remove those element directly???
-						.filter(s -> linkedElementsOntology.getElement(s.getCondition().getAnatEntityId())==null||s.getCondition().getAnatEntityId().equals(anatEntityID))
 						// return best ranked expression call for each anat entity. Don't take into account devStage
 						.collect(Collectors.toMap(p -> p.getCondition().getAnatEntityId(), p -> p, (v1, v2) -> v1,
 								LinkedHashMap::new));
 				List<ExpressionCall> calls = new ArrayList<>(callsByAnatEntityId.values());
 				if(calls!=null&&!calls.isEmpty()){
-					ExpressionCall call0 = calls.get(0);
-					if(calls.size()>1){
-						Boolean find = false;
-						ExpressionCall call1 = calls.get(1);
-						if(call0.getCondition().getAnatEntityId().equals(anatEntityID)&&(call0.getGlobalMeanRank().multiply(new BigDecimal(CLUSTER_THRESHOLD)).compareTo(call1.getGlobalMeanRank())) < 0){
-							tissuespecific.add(call0.getGeneId() + "\t" + gene.getName() + "\t" + call0.getFormattedGlobalMeanRank() + "\t" + call1.getGlobalMeanRank().divide(call0.getGlobalMeanRank(),1, RoundingMode.HALF_UP)
-									+ "\t" + gene.getDescription());
-							find = true;
+					ExpressionCall anatEntityCall = callsByAnatEntityId.get(anatEntityID);
+					//if we only have one anat. entity with gene expression, we considerate it tissue specific with a ratio of Integer.MAX_VALUE
+					if(calls.size()==1){
+						tissuepecific.add(anatEntityCall.getGeneId() + "\t" + gene.getName() + "\t" + anatEntityCall.getFormattedGlobalMeanRank() + "\t" + Integer.MAX_VALUE
+								+ "\t" + gene.getDescription());
+					}else{
+						String outputString = null;
+						//XXX lot of genes are considered as tissue enhanced because of low quality scores (shown in gray in the gene page)
+						//XXX It's necessary to take these low quality scores into account for mean rank determination
+						if((outputString = testTissueEnhanced(calls, anatEntityCall, gene))== null){
+							if(calls.size()>150){
+								housekeeper.add(gene.getId() + "\t" + gene.getName() + "\t" + anatEntityCall.getFormattedGlobalMeanRank() +  "\t" + gene.getDescription());
+							}else{
+								undefined.add(gene.getId() + "\t" + gene.getName() + "\t" + anatEntityCall.getFormattedGlobalMeanRank() +  "\t" + gene.getDescription());
+							}
 						}else{
-							String geneOutput = testGroupSpecificity(calls,gene, anatEntityID, serviceFactory);
-							if (geneOutput == null){
-								//XXX How to define housekeeper genes
-								if(calls.size()<150){
-									tissueEnhanced.add(testTissueEnhanced(calls,callsByAnatEntityId.get(anatEntityID),gene));
-									find = true;
+							boolean findCategory = false;
+							//remove all elements coming from the parent/descendant ontology of the selected anat. entity
+							calls = calls.stream()
+							.filter(s -> linkedElementsOntology.getElement(s.getCondition().getAnatEntityId())==null||s.getCondition().getAnatEntityId().equals(anatEntityID))
+							.collect(Collectors.toList());
+							ExpressionCall firstCall = calls.get(0);
+							if(calls.size()==1){
+								tissuepecific.add(firstCall.getGeneId() + "\t" + gene.getName() + "\t" + firstCall.getFormattedGlobalMeanRank() + "\t" + Integer.MAX_VALUE
+										+ "\t" + gene.getDescription());
+							}
+							// search for tissue specific genes
+							BigDecimal ratio = null;
+							boolean findAnatEntity = false;
+							if(firstCall.equals(anatEntityCall)){
+								findAnatEntity=true;
+								ratio = calls.get(1).getGlobalMeanRank().divide(firstCall.getGlobalMeanRank(),1, RoundingMode.HALF_UP);
+								if(ratio.compareTo(new BigDecimal(5))>0){
+									tissuepecific.add(firstCall.getGeneId() + "\t" + gene.getName() + "\t" + firstCall.getFormattedGlobalMeanRank() + "\t" + ratio
+											+ "\t" + gene.getDescription());
+									findCategory = true;
+								}else{
 									
 								}
-							}else{
-								groupspecific.add(geneOutput);
 							}
-							//housekeeping gene
-							if (!find){
-								log.debug("housekeeping gene");
-								housekeeper.add(gene.getId() + "\t" + gene.getName() + "\t" + call0.getFormattedGlobalMeanRank() +  "\t" + gene.getDescription());
+							//search for group specific genes
+							if(!findCategory){
+								int currentAnatEntityPosition = 1;
+								
+								while(currentAnatEntityPosition< MAX_NUMBER_GROUP_SPECIFIC){
+									final Ontology <AnatEntity> currentAnatEntityOntology = serviceFactory.getOntologyService().getAnatEntityOntology(new ArrayList<String>(Collections.singleton(speciesID)), new ArrayList<String>(Collections.singleton(calls.get(currentAnatEntityPosition).getCondition().getAnatEntityId())), new ArrayList<RelationType>(Collections.singleton(RelationType.ISA_PARTOF)), true, true, serviceFactory.getAnatEntityService());
+									calls = calls.stream()
+											.filter(s -> currentAnatEntityOntology.getElement(s.getCondition().getAnatEntityId())==null||s.getCondition().getAnatEntityId().equals(anatEntityID))
+											.collect(Collectors.toList());
+									if(calls.size()>(currentAnatEntityPosition+1)){
+										if(!findAnatEntity){
+											if(calls.get(currentAnatEntityPosition).equals(anatEntityCall)){
+												findAnatEntity=true;
+											}
+										}
+										if(findAnatEntity){
+											BigDecimal currentRatio = calls.get(currentAnatEntityPosition+1).getGlobalMeanRank().divide(calls.get(currentAnatEntityPosition).getGlobalMeanRank(),1, RoundingMode.HALF_UP);
+											if(currentRatio.compareTo(new BigDecimal(5))>=0&&(ratio==null||currentRatio.compareTo(ratio)>0)){
+												ratio=currentRatio;
+												findCategory = true;
+											}
+										}
+									}else{
+										if(!findAnatEntity){ // if there is less than 7 anat. entities associated to this gene, this gene is tag as group specific.
+											ratio = new BigDecimal(Integer.MAX_VALUE);
+											findCategory = true;
+											findAnatEntity=true;
+											currentAnatEntityPosition = MAX_NUMBER_GROUP_SPECIFIC;
+										}else{
+											findCategory = true;
+											currentAnatEntityPosition = MAX_NUMBER_GROUP_SPECIFIC;
+										}
+									}
+									currentAnatEntityPosition++;
+								}
+								if(findCategory){
+									grouppecific.add(firstCall.getGeneId() + "\t" + gene.getName() + "\t" + firstCall.getFormattedGlobalMeanRank() + "\t" + ratio
+											+ "\t" + gene.getDescription());
+								}
 							}
+							if(!findCategory){
+								tissueEnhanced.add(outputString);
+							}
+							
 						}
 					}
+					
+					
 					//XXX How to manage genes having expression only in organs descendants || parents of this organ. The List will have a size of one
 					//XXX How to manage genes having expression only in 1 organ
 //					else if(call.getCondition().getAnatEntityId().equals(anatEntityID)){
@@ -190,14 +245,11 @@ public class TestTest extends TestAncestor {
 				}		
 				
 			});
-//			System.out.println("tissue specific\n"+tissuespecific);
-//			System.out.println("group specific\n"+groupspecific);
-//			System.out.println("tissue enhanced\n"+tissueEnhanced);
-//			System.out.println("housekeeper\n"+housekeeper);
-			writeOutputTissueSpe("TISSUESPE_", tissuespecific, species.getName(), anatEntity.getName(),true);
-			writeOutputTissueSpe("GROUPSPE_", groupspecific, species.getName(), anatEntity.getName(),true);
+			writeOutputTissueSpe("TISSUESPE_", tissuepecific, species.getName(), anatEntity.getName(),true);
+			writeOutputTissueSpe("GROUPSPE_", grouppecific, species.getName(), anatEntity.getName(),true);
+			writeOutputTissueSpe("UNDEFINED_", undefined, species.getName(), anatEntity.getName(),false);
 			writeOutputTissueSpe("TISSUEENHANCED_", tissueEnhanced, species.getName(), anatEntity.getName(),false);
-			writeOutputTissueSpe("OTHER_", housekeeper, species.getName(), anatEntity.getName(),false);
+			writeOutputTissueSpe("HOUSEKEEPER", housekeeper, species.getName(), anatEntity.getName(),false);
 			serviceFactory.close();
 			Instant endTime = Instant.now();
 			log.debug("execution time : "+Duration.between(startTime, endTime).getSeconds());
@@ -244,7 +296,7 @@ public class TestTest extends TestAncestor {
 	private void writeOutputTissueSpe(String filePrefix, List<String> output, String speciesName, String anatEntityName, boolean tissueSpeColumn) throws IOException{
 		if(!output.isEmpty()){
 			String columnsNames = "gene_ID" + "\t" + "gene_name" + "\t" + "rank_value" + "\t";
-			columnsNames += tissueSpeColumn ? "tissue spe"+ "\t" + "gene_definition\n" : "gene_definition";
+			columnsNames += tissueSpeColumn ? "tissue spe"+ "\t" + "gene_definition" : "gene_definition";
 			output.add(0,columnsNames);
 			String fileName = FILE_PATH + filePrefix + "_" + speciesName.replace(" ", "_") + "_"
 					+ anatEntityName.replace(" ", "_")+"_"+CLUSTER_THRESHOLD.toString();// + "_"+ANAT_ENTITY_PROPAGATION+"_"+DEV_STAGE_PROPAGATION;

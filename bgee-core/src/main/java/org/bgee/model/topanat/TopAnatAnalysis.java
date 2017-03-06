@@ -39,6 +39,8 @@ import org.bgee.model.topanat.exception.InvalidSpeciesGenesException;
 import org.bgee.model.topanat.exception.RAnalysisException;
 
 /**
+ * TODO comment me.
+ * 
  * @author Mathieu Seppey
  * @author Frederic Bastian
  * @author Valentine Rech de Laval

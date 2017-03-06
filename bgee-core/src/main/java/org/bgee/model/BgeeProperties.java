@@ -665,4 +665,16 @@ public class BgeeProperties {
     public String getTopAnatResultsWritingDirectory() {
         return topAnatResultsWritingDirectory;
     }
+    
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("BgeeProperties [topAnatRScriptExecutable=").append(topAnatRScriptExecutable)
+                .append(", topAnatRWorkingDirectory=").append(topAnatRWorkingDirectory)
+                .append(", topAnatFunctionFile=").append(topAnatFunctionFile)
+                .append(", topAnatResultsWritingDirectory=").append(topAnatResultsWritingDirectory)
+                .append("]");
+        return builder.toString();
+    }
+    
 }

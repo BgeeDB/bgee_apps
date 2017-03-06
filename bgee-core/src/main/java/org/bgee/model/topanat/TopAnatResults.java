@@ -22,6 +22,15 @@ import org.supercsv.io.ICsvMapReader;
 import org.supercsv.prefs.CsvPreference;
 import org.supercsv.util.CsvContext;
 
+/**
+ * TODO comment me.
+ * 
+ * @author Mathieu Seppey
+ * @author Frederic Bastian
+ * 
+ * @version Bgee 13, March 2016
+ * @since Bgee 13
+ */
 public class TopAnatResults {
     private final static Logger log = LogManager
             .getLogger(TopAnatResults.class.getName());

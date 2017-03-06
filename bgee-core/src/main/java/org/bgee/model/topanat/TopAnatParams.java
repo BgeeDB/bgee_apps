@@ -29,219 +29,257 @@ import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.topanat.exception.MissingParameterException;
 
-
+/**
+ * This class provides the parameters needed to define a {@code TopAnatAnalysis}.
+ * It has to be instanced through its Builder class.
+ * 
+ * @author Mathieu Seppey
+ * @author Frederic Bastian
+ * 
+ * @version Bgee 13, March 2016
+ * @since Bgee 13
+ */
 public class TopAnatParams {
 
-    /**
-     * 
-     */
     private final static Logger log = LogManager
             .getLogger(TopAnatParams.class.getName());
 
     /**
-     * 
+     * A {@code DataQuality} that is the default quality value when running a {@code TopAnatAnalysis}
      */
     private final static SummaryQuality DATA_QUALITY_DEFAULT = SummaryQuality.SILVER;
 
     /**
-     * 
+     * A {@code DecorrelationType} that is the default decorrelation parameter 
+     * when running a {@code TopAnatAnalysis}
      */
     private final static DecorrelationType DECORLATION_TYPE_DEFAULT = DecorrelationType.WEIGTH;
 
     /**
-     * 
+     * A {@code StatisticTest} that is the default static test 
+     * when running a {@code TopAnatAnalysis}
      */
     private final static StatisticTest STATISTIC_TEST_DEFAULT = StatisticTest.FISHER;
 
     /**
-     * 
+     * A {@code int} that is the default node size
+     * when running a {@code TopAnatAnalysis}
      */
     private final static int NODE_SIZE_DEFAULT = 5;
 
     /**
-     * 
+     * A {@code Double} that is the default False Discovery Rate
+     * when running a {@code TopAnatAnalysis}
      */
     private final static Double FDR_THRESHOLD_DEFAULT = 0.05d;
 
     /**
-     * 
+     * A {@code Double} that is the default p-value threshold
+     * when running a {@code TopAnatAnalysis}
      */
     private final static Double PVALUE_THRESHOLD_DEFAULT = 0.05d;
 
     /**
-     * 
+     * An {@code int} that is the default number of nodes to display in the
+     * generated graph of results when running a {@code TopAnatAnalysis}
      */
     private final static int NUMBER_OF_NODES_TO_DISPLAX_DEFAULT = 10;
 
     /**
-     * 
+     * A {@code Set} of {@code String} that contains all foreground gene ids to be tested
      */
     private final Set<String> submittedForegroundIds;
 
     /**
-     * 
+     * A {@code Set} of {@code String} which specifies the genes ids that constitute the background
      */
     private final Set<String> submittedBackgroundIds;
 
     /**
-     * 
+     * A {@code String} that contains the id of the species tested in the analysis
      */
     private final Integer speciesId;
 
     /**
-     * 
+     * A {@code CallType} that specifies the type of expression call in the analysis
      */
     private final CallType callType;
 
     /**
-     * 
+     * A {@code DataQuality} that specifies the minimal quality taken into account in the analysis
      */
     private final SummaryQuality summaryQuality;
 
     /**
-     * 
+     * A {@code Set} of {@code DataType} that contains all data type to be included in the analysis
      */
     private final Set<DataType> dataTypes;
 
     /**
-     * 
+     * A {@code String} that contains the developmental stage id to be considered during the analysis
      */
     private final String devStageId;
 
     /**
-     * 
+     * A {@code DecorrelationType} that contains the type of decorrelation to be used for the analysis
      */
     private final DecorrelationType decorrelationType;
 
     /**
-     * 
+     * A {@code StatisticTest} that contains the statistic test to be used for the analysis
      */
     private final StatisticTest statisticTest;
 
     /**
-     * 
+     * An {@code Integer} that contains the minimal node size below which an anatomical ontology
+     * will not be considered in the analysis
      */
     private final Integer nodeSize;
 
     /**
-     * 
+     * A {@code Double} that contains the False Discovery Rate to be used in the analysis
      */
     private final Double fdrThreshold;
 
     /**
-     * 
+     * A {@code Double} that contains the p-value threshold to be used in the analysis
      */
     private final Double pvalueThreshold;
 
     /**
-     * 
+     * An {@code Integer} that contains the number of significant nodes to be displayed in the
+     * generated graph of results
      */
     private final Integer numberOfSignificantNodes;
 
     /**
-     * 
+     * A {@code String} that contains a unique hash for identifying the analysis, based on its 
+     * parameters
      */
     private final String key;
     
     /**
-     * 
+     * A {@code Boolean} that tells whether all results should be included in a zip file
      */
     private final Boolean isWithZip;
 
     /**
-     * 
+     * Builder for {@code TopAnatParams}.
+     * It is the sole mean for obtaining a TopAnatParams instance through
+     * the method {@code build}
      */
     public static class Builder {
 
-        /**
-         * 
-         */
         private final static Logger log = LogManager
                 .getLogger(TopAnatParams.Builder.class.getName());
 
         /**
-         * 
+         * A {@code Collection} of {@code String} that contains all foreground gene ids to be tested
          */
         private final Collection<String> submittedForegroundIds;
 
         /**
-         * 
+         * A {@code String} that contains the id of the species tested in the analysis         
          */
         private final Integer speciesId;
 
         /**
-         * 
+         * A {@code Collection} of {@code String} which specifies the genes ids that constitute 
+         * the background
          */
         private Collection<String> submittedBackgroundIds;
 
         /**
-         * 
+         * A {@code CallType} that specifies the type of expression call in the analysis
          */
         private CallType callType;
 
         /**
-         * 
+         * A {@code DataQuality} that specifies the minimal quality taken into account in 
+         * the analysis
          */
         private SummaryQuality summaryQuality;
 
         /**
-         * 
+         * A {@code Set} of {@code DataType} that contains all data type to be included
+         * in the analysis
          */
         private Set<DataType> dataTypes;
 
         /**
-         * 
+         * A {@code String} that contains the developmental stage id to be considered
+         * during the analysis
          */
         private String devStageId;
 
         /**
-         * 
+         * A {@code DecorrelationType} that contains the type of decorrelation to be used
+         * for the analysis
          */
         private DecorrelationType decorrelationType;
 
         /**
-         * 
+         * A {@code StatisticTest} that contains the statistic test to be used for the analysis
          */
         private StatisticTest statisticTest;
 
         /**
-         * 
+         * An {@code Integer} that contains the minimal node size below which an anatomical ontology
+         * will not be considered in the analysis
          */
         private Integer nodeSize;
 
         /**
-         * 
+         * A {@code Double} that contains the False Discovery Rate to be used in the analysis
          */
         private Double fdrThreshold;
 
         /**
-         * 
+         * A {@code Double} that contains the p-value threshold to be used in the analysis
          */
         private Double pvalueThreshold;
 
         /**
-         * 
+         * An {@code Integer} that contains the number of significant nodes to be displayed in the
+         * generated graph of results         
          */
         private Integer numberOfSignificantNode;
         
         /**
-         * 
+         * A {@code Boolean} that tells whether all results should be included in a zip file
          */
         private Boolean isWithZip;
 
         /**
-         * @param submittedForegroundIds
-         * @param callType
+         * Constructor of the Builder class with minimal attributes
+         * 
+         * @param submittedForegroundIds    A {@code Collection} of {@code String} that contains all 
+         *                                  foreground gene ids to be tested
+         *                                  
+         * @param speciesId                 A {@code String} that contains the id of the species
+         *                                  tested in the analysis            
+         *                                                          
+         * @param callType                  A {@code CallType} that specifies the type of
+         *                                  expression call in the analysis
          */
         public Builder(Collection<String> submittedForegroundIds, Integer speciesId, CallType callType){
             this(submittedForegroundIds, null, speciesId, callType);
         }
 
         /**
-         * @param submittedForegroundIds
-         * @param submittedBackgroundIds
-         * @param speciesId
-         * @param callType
+         * Constructor of the Builder class with extended attributes
+         *
+         * @param submittedForegroundIds    A {@code Collection} of {@code String} that contains all 
+         *                                  foreground gene ids to be tested
+         *                                  
+         * @param submittedBackgroundIds    A {@code Collection} of {@code String} which specifies 
+         *                                  the genes ids that constitute the background
+         *                                  
+         * @param speciesId                 A {@code String} that contains the id of the species
+         *                                  tested in the analysis         
+         *
+         * @param callType                  A {@code CallType} that specifies the type of
+         *                                  expression call in the analysis
          */
         public Builder(Collection<String> submittedForegroundIds, Collection<String> submittedBackgroundIds,
                 Integer speciesId, CallType callType) {
@@ -254,9 +292,11 @@ public class TopAnatParams {
         }
 
         /**
+         * Update the attribute dataQuality
          * 
-         * @param dataQuality
-         * @return
+         * @param dataQuality   A {@code DataQuality} that specifies the minimal quality 
+         *                      taken into account in the analysis
+         * @return the updated current Builder instance
          */
         public Builder summaryQuality(SummaryQuality summaryQuality){
             log.entry(summaryQuality);
@@ -265,8 +305,11 @@ public class TopAnatParams {
         } 
 
         /**
-         * @param dataTypes
-         * @return
+         * Update the attribute dataTypes
+         * 
+         * @param dataTypes     A {@code Set} of {@code DataType} that contains all data type 
+         *                      to be included in the analysis
+         * @return the updated current Builder instance
          */
         public Builder dataTypes(Set<DataType> dataTypes){
             log.entry(dataTypes);
@@ -276,9 +319,11 @@ public class TopAnatParams {
         }  
 
         /**
+         * Update the attribute devStageId
          * 
-         * @param devStageId
-         * @return
+         * @param devStageId    A {@code String} that contains the developmental stage id 
+         *                      to be considered during the analysis
+         * @return the updated current Builder instance
          */
         public Builder devStageId(String devStageId){
             log.entry(devStageId);
@@ -287,9 +332,11 @@ public class TopAnatParams {
         }         
 
         /**
+         * Update the attribute decorrelationType
          * 
-         * @param decorrelationType
-         * @return
+         * @param decorrelationType     A {@code DecorrelationType} that contains the type of 
+         *                              decorrelation to be used for the analysis
+         * @return the updated current Builder instance
          */
         public Builder decorrelationType(DecorrelationType decorrelationType){
             log.entry(decorrelationType);
@@ -298,9 +345,11 @@ public class TopAnatParams {
         } 
 
         /**
+         * Update the attribute statisticTest
          * 
-         * @param statisticTest
-         * @return
+         * @param statisticTest     A {@code StatisticTest} that contains the statistic test
+         *                          to be used for the analysis
+         * @return the updated current Builder instance
          */
         public Builder statisticTest(StatisticTest statisticTest){
             log.entry(statisticTest);
@@ -309,9 +358,11 @@ public class TopAnatParams {
         } 
 
         /**
+         * Update the attribute nodeSize
          * 
-         * @param nodeSize
-         * @return
+         * @param nodeSize      An {@code Integer} that contains the minimal node size 
+         *                      below which an anatomical ontology will not be considered in the analysis
+         * @return the updated current Builder instance
          */
         public Builder nodeSize(int nodeSize){
             log.entry(nodeSize);
@@ -320,9 +371,11 @@ public class TopAnatParams {
         }  
 
         /**
+         * Update the attribute fdrThreshold
          * 
-         * @param fdrThreshold
-         * @return
+         * @param fdrThreshold      A {@code Double} that contains the False Discovery Rate
+         *                          to be used in the analysis
+         * @return the updated current Builder instance
          */
         public Builder fdrThreshold(double fdrThreshold){
             log.entry(fdrThreshold);
@@ -331,9 +384,11 @@ public class TopAnatParams {
         }   
 
         /**
+         * Update the attribute pvalueThreshold
          * 
-         * @param pvalueThreshold
-         * @return
+         * @param pvalueThreshold       A {@code Double} that contains the p-value threshold
+         *                              to be used in the analysis
+         * @return the updated current Builder instance
          */
         public Builder pvalueThreshold(double pvalueThreshold){
             log.entry(pvalueThreshold);
@@ -342,9 +397,12 @@ public class TopAnatParams {
         }   
 
         /**
+         * Update the attribute numberOfSignificantNode
          * 
-         * @param numberOfSignificantNode
-         * @return
+         * @param numberOfSignificantNode       An {@code Integer} that contains the number of 
+         *                                      significant nodes to be displayed in the
+         *                                      generated graph of results  
+         * @return the updated current Builder instance
          */
         public Builder numberOfSignificantNode(int numberOfSignificantNode){
             log.entry(numberOfSignificantNode);
@@ -353,9 +411,11 @@ public class TopAnatParams {
         }  
 
         /**
+         * Update the attribute isWithZip
          * 
-         * @param isWithZip
-         * @return
+         * @param isWithZip         A {@code Boolean} that tells whether all results should be
+         *                          included in a zip file
+         * @return the updated current Builder instance
          */
         public Builder isWithZip(boolean isWithZip){
             log.entry(isWithZip);
@@ -364,18 +424,23 @@ public class TopAnatParams {
         }  
 
         /**
+         * Create the TopAnatParams instance
          * 
-         * @return
-         * @throws MissingParameterException 
+         * @return A {@code TopAnatParams} having all provided attributes
+         * @throws MissingParameterException    If a mandatory parameter is not properly set
          */
         public TopAnatParams build() throws MissingParameterException{
             log.entry();
             return log.exit(new TopAnatParams(this));
         }
-
-
     }
 
+    /**
+     * Private constructor
+     * 
+     * @param builder   The Builder instance that provides all attributes
+     * @throws MissingParameterException    If a mandatory parameter is not properly set
+     */
     private TopAnatParams(Builder builder) throws MissingParameterException {
         log.entry(builder);
         // mandatory params
@@ -419,114 +484,122 @@ public class TopAnatParams {
     }
 
     /**
-     * @return the submittedIds
+     * @return A {@code Set} of {@code String} that contains all foreground gene ids to be tested
      */
     public Set<String> getSubmittedForegroundIds() {
         return submittedForegroundIds;
     }
 
     /**
-     * @return the submittedBackgroundIds
+     * @return  A {@code Set} of {@code String} which specifies the genes ids that constitute 
+     *          the background
      */
     public Set<String> getSubmittedBackgroundIds() {
         return submittedBackgroundIds;
     }
 
     /**
-     * 
-     * @return
+     * @return A {@code String} that contains the id of the species tested in the analysis  
      */
     public Integer getSpeciesId(){
         return speciesId; 
     }
 
     /**
-     * @return the callType
+     * @return A {@code CallType} that specifies the type of expression call in the analysis
      */
     public CallType getCallType() {
         return callType;
     }
 
     /**
-     * @return
+     * @return  A {@code DataQuality} that specifies the minimal quality taken into account in 
+     *          the analysis
      */
     public SummaryQuality getSummaryQuality() {
         return summaryQuality;
     }
 
     /**
-     * @return the dataTypes
+     * @return  A {@code Set} of {@code DataType} that contains all data type to be included
+     *          in the analysis
      */
     public Set<DataType> getDataTypes() {
         return dataTypes;
     }
 
     /**
-     * @return the devStageId
+     * @return  A {@code String} that contains the developmental stage id to be considered
+     *          during the analysis
      */
     public String getDevStageId() {
         return devStageId;
     }
 
     /**
-     * @return the decorrelationType
+     * @return  A {@code DecorrelationType} that contains the type of decorrelation to be used
+     *          for the analysis
      */
     public DecorrelationType getDecorrelationType() {
         return decorrelationType;
     }
 
     /**
-     * @return the statisticTest
+     * @return A {@code StatisticTest} that contains the statistic test to be used for the analysis
      */
     public StatisticTest getStatisticTest() {
         return statisticTest;
     }
 
     /**
-     * @return the nodeSize
+     * @return  An {@code Integer} that contains the minimal node size below which an anatomical
+     *          ontology will not be considered in the analysis
      */
     public Integer getNodeSize() {
         return nodeSize;
     }
 
     /**
-     * @return the fdrThreshold
+     * @return  A {@code Double} that contains the False Discovery Rate to be used in the analysis
      */
     public Double getFdrThreshold() {
         return fdrThreshold;
     }
 
     /**
-     * @return the pvalueThreashold
+     * @return  A {@code Double} that contains the p-value threshold to be used in the analysis
      */
-    public Double getPvalueThreashold() {
+    public Double getPvalueThreshold() {
         return pvalueThreshold;
     }
 
     /**
-     * @return the numberOfSignificantNodes
+     * @return  An {@code Integer} that contains the number of significant nodes to be displayed
+     *          in the generated graph of results  
      */
     public Integer getNumberOfSignificantNodes() {
         return numberOfSignificantNodes;
     }
 
     /**
-     * @return the key
+     * @return  A {@code String} that contains a unique hash for identifying the analysis,
+     *          based on its parameters
      */
     public String getKey() {
         return key;
     }
 
     /**
-     * 
-     * @return
+     * @return  A {@code Boolean} that tells whether all results should be included in a zip file
      */
     public Boolean isWithZip(){
         return this.isWithZip;
     }
     
     /**
-     * @return
+     * Create an return a {@code CallFilter} based on the parameter values 
+     * 
+     * @return A {@code CallFilter} to be used for the analysis
      */
     public CallFilter<?> convertRawParametersToCallFilter() {
         log.entry();
@@ -568,9 +641,60 @@ public class TopAnatParams {
         }
         throw log.throwing(new IllegalStateException("Unsupported CallType: " + this.callType));
     }
+ 
+//TODO: following methods to be used?
+//    /**
+//     * @return a {@code Collection} of {@code ExpressionCallData}
+//     * TODO improve comment here
+//     */
+//    private Collection<ExpressionCallData> getExpressionCallData() {
+//        log.entry();
+//
+//        return log.exit(this.getCallData((dataType, dataQual) -> 
+//            new ExpressionCallData(CallType.Expression.EXPRESSED,
+//                dataQual, dataType, 
+//                new DataPropagation(PropagationState.SELF, 
+//                        PropagationState.SELF_OR_DESCENDANT))));
+//    }
+//
+//    /**
+//     * XXX check if correct: DiffExpressionFactor.ANATOMY ? DiffExpression.DIFF_EXPRESSED ?
+//     * => storyboard says over-expressed of diff. expressed? I don't remember.
+//     * XXX check if correct: DataPropagation
+//     * @return
+//     */
+//    private Collection<DiffExpressionCallData> getDiffExpressionCallData() {
+//        log.entry();
+//
+//        return log.exit(this.getCallData((dataType, dataQual) -> 
+//            new DiffExpressionCallData(DiffExpressionFactor.ANATOMY, 
+//                CallType.DiffExpression.OVER_EXPRESSED, dataQual, dataType)));
+//    }
+//
+//    /**
+//     * TODO improve comment here
+//     * @param callDataSupplier
+//     * @return a {@code Collection} of {@code ExpressionCallData}
+//     */
+//    private <T extends CallData<?>> Collection<T> getCallData(
+//            BiFunction<DataType, DataQuality, T> callDataSupplier) {
+//        log.entry(callDataSupplier);
+//
+//        final DataQuality dataQual = this.dataQuality == null? DataQuality.LOW: this.dataQuality;
+//
+//        if (this.dataTypes == null || this.dataTypes.isEmpty() || 
+//                this.dataTypes.containsAll(this.callType.getAllowedDataTypes())) {
+//            return log.exit(Arrays.asList(callDataSupplier.apply(null, dataQual)));
+//        }
+//        return log.exit(this.dataTypes.stream()
+//                .map(dataType -> callDataSupplier.apply(dataType, dataQual))
+//                .collect(Collectors.toSet()));
+//    }
 
     /**
-     * @return
+     * Generate the unique key for the analysis based on the parameters
+     * 
+     * @return  A {@code String} that is the unique key
      */
     private String generateKey() {
         log.entry();
@@ -616,15 +740,14 @@ public class TopAnatParams {
     }
 
     @Override
-    /**
-     * 
-     */
     public String toString(){
         return this.toString(": ", System.lineSeparator(), true);
     }
 
     /**
-     * 
+     * A formatted toString methods that is suitable for writing the params in a file
+     * @param prettyPrinting    A {@code boolean} that enables the pretty format
+     * @return  A formatted {@code String} 
      */
     public String toString(String valSep, String paramSep, boolean displayDetails){
         StringBuffer ret = new StringBuffer();

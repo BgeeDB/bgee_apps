@@ -75,6 +75,7 @@ public class InsertPropagatedCalls extends CallService {
     private final static Logger log = LogManager.getLogger(InsertPropagatedCalls.class.getName());
     private static final Marker BLOCKING_QUEUE_MARKER = MarkerManager.getMarker("BLOCKING_QUEUE_MARKER");
     private static final Marker INSERTION_MARKER = MarkerManager.getMarker("INSERTION_MARKER");
+    private static final Marker COMPUTE_MARKER = MarkerManager.getMarker("COMPUTE_MARKER");
 
     /**
      * An {@code int} that is the maximum number of levels to propagate expression calls 
@@ -1367,6 +1368,7 @@ public class InsertPropagatedCalls extends CallService {
             RawExpressionCallDAO rawCallDAO, ExperimentExpressionDAO expExprDAO) {
         log.entry(geneIds, condMap, conditionUtils, rawCallDAO, expExprDAO);
         
+        log.trace(COMPUTE_MARKER, "Creating Splitereator with DAO queries...");
         this.checkErrorOccurred();
         final Stream<RawExpressionCallTO> streamRawCallTOs = 
             this.performsRawExpressionCallTOQuery(geneIds, rawCallDAO);
@@ -1379,6 +1381,8 @@ public class InsertPropagatedCalls extends CallService {
             spliterator = new CallSpliterator<>(streamRawCallTOs, experimentExprTOsByDataType);
         final Stream<Map<RawExpressionCallTO, Map<DataType, Set<ExperimentExpressionTO>>>> callTOsByGeneStream =
             StreamSupport.stream(spliterator, false).onClose(() -> spliterator.close());
+        
+        log.trace(COMPUTE_MARKER, "Done creating Splitereator with DAO queries.");
         
         Stream<Set<PipelineCall>> reconciledCalls = callTOsByGeneStream
             // First we convert Map<RawExpressionCallTO, Map<DataType, Set<ExperimentExpressionTO>>
@@ -1402,6 +1406,7 @@ public class InsertPropagatedCalls extends CallService {
             //then we reconcile calls for a same gene-condition
             //g: Map<PipelineCall, Set<PipelineCallData>>
             .map(g -> {
+                log.trace(COMPUTE_MARKER, "Starting to reconcile {} PipelineCalls.", g.size());
                 this.checkErrorOccurred();
                 //group calls per Condition (they all are about the same gene already)
                 final Map<Condition, Set<PipelineCall>> callGroup = g.entrySet().stream()
@@ -1414,12 +1419,14 @@ public class InsertPropagatedCalls extends CallService {
                             .stream().flatMap(ps -> ps.stream()).collect(Collectors.toSet()))); // produce Map<Condition, Set<PipelineCallData>>
                 
                 // Reconcile calls and return all of them in one Set
-                return callGroup.keySet().stream()
+                Set<PipelineCall> s = callGroup.keySet().stream()
                     .map(c -> reconcileGeneCalls(callGroup.get(c), callDataGroup.get(c)))
                     //reconcileGeneCalls return null if there was no valid data to propagate
                     //(e.g., only "present" calls in parent conditions)
                     .filter(c -> c != null)
                     .collect(Collectors.toSet());
+                log.trace(COMPUTE_MARKER, "Done reconciliation, {} PipelineCalls produced.", s.size());
+                return s;
             });
 
         return log.exit(reconciledCalls);
@@ -1536,6 +1543,7 @@ public class InsertPropagatedCalls extends CallService {
             Map<PipelineCall, Set<PipelineCallData>> data, ConditionUtils conditionUtils)
                 throws IllegalArgumentException {
         log.entry(data, conditionUtils);
+        log.trace(COMPUTE_MARKER, "Starting to propagate {} PipelineCalls.", data.size());
 
         Map<PipelineCall, Set<PipelineCallData>> propagatedData = new HashMap<>();
         this.checkErrorOccurred();
@@ -1550,16 +1558,12 @@ public class InsertPropagatedCalls extends CallService {
 //        // Here, no calls should include non-observed data
 //        assert !calls.stream().anyMatch(c -> !c.getDataPropagation().getIncludingObservedData()); 
         // Check conditionUtils contains all conditions of calls
-        if (!conditionUtils.getConditions().containsAll(
-                calls.stream().map(c -> c.getCondition()).collect(Collectors.toSet()))) {
-            throw log.throwing(new IllegalArgumentException(
-                "Conditions are not registered to provided ConditionUtils"));
-        }
+        assert conditionUtils.getConditions().containsAll(
+                calls.stream().map(c -> c.getCondition()).collect(Collectors.toSet()));
 
         //*****************************
         // PROPAGATE CALLS
         //*****************************
-        log.trace("Generating propagated calls...");
     
         // Counts for log tracing 
         int callCount = calls.size();
@@ -1573,12 +1577,16 @@ public class InsertPropagatedCalls extends CallService {
             analyzedCallCount++;
     
             ExpressionCall curCall = entry.getKey();
-            log.trace("Propagation for call: {}", curCall);
+            log.trace(COMPUTE_MARKER, "Propagation for call: {}", curCall);
     
             // Retrieve conditions
+            log.trace(COMPUTE_MARKER, "Starting to retrieve ancestral conditions for {}.", 
+                    curCall.getCondition());
             Set<Condition> ancestorConditions = conditionUtils.getAncestorConditions(
                 curCall.getCondition());
-            log.trace("Ancestor conditions for {}: {}", curCall.getCondition(), ancestorConditions);
+            log.trace(COMPUTE_MARKER, "Done retrieving ancestral conditions for {}: {}.", 
+                    curCall.getCondition(), ancestorConditions.size());
+            log.trace("Ancestor conditions: {}", ancestorConditions);
             if (!ancestorConditions.isEmpty()) {
                 Map<PipelineCall, Set<PipelineCallData>> ancestorCalls =
                         propagatePipelineData(entry, ancestorConditions, true);
@@ -1586,19 +1594,25 @@ public class InsertPropagatedCalls extends CallService {
                 propagatedData.putAll(ancestorCalls);
             }
 
+            log.trace(COMPUTE_MARKER, "Starting to retrieve descendant conditions for {}.", 
+                    curCall.getCondition());
             Set<Condition> descendantConditions = conditionUtils.getDescendantConditions(
                     curCall.getCondition(), false, false, NB_SUBLEVELS_MAX, null);
-            log.trace("Descendant conditions for {}: {}",  curCall.getCondition(), descendantConditions);
+            log.trace(COMPUTE_MARKER, "Done retrieving descendant conditions for {}: {}.", 
+                    curCall.getCondition(), descendantConditions.size());
+            log.trace("Descendant conditions: {}", descendantConditions);
             if (!descendantConditions.isEmpty()) {
                 Map<PipelineCall, Set<PipelineCallData>> descendantCalls =
                         propagatePipelineData(entry, descendantConditions, false);
                 assert !descendantCalls.isEmpty();
                 propagatedData.putAll(descendantCalls);
             }
+            
+            log.trace(COMPUTE_MARKER, "Done propagation for call: {}", curCall);
         }
-    
-        log.trace("Done generating propagated calls.");
-    
+
+        log.trace(COMPUTE_MARKER, "Done propagating {} PipelineCalls, {} new propagated PipelineCalls.", 
+                data.size(), propagatedData.size());
         return log.exit(propagatedData);
     }
     
@@ -1619,6 +1633,7 @@ public class InsertPropagatedCalls extends CallService {
             Entry<PipelineCall, Set<PipelineCallData>> data, Set<Condition> propagatedConds, 
             boolean areAncestors) {
         log.entry(data, propagatedConds, areAncestors);
+        log.trace(COMPUTE_MARKER, "Start to propagate PipelineData, to ancestor? {}.", areAncestors);
 
         Map<PipelineCall, Set<PipelineCallData>> map = new HashMap<>();
         this.checkErrorOccurred();
@@ -1709,7 +1724,8 @@ public class InsertPropagatedCalls extends CallService {
         if (map.isEmpty()) {
             throw log.throwing(new IllegalStateException("No propagated calls"));
         }
-        
+
+        log.trace(COMPUTE_MARKER, "Done propagating PipelineData, to ancestor? {}.", areAncestors);
         return log.exit(map);
     }
     

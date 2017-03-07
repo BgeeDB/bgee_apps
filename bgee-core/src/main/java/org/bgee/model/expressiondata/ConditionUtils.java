@@ -435,6 +435,7 @@ public class ConditionUtils implements Comparator<Condition> {
     public Set<Condition> getAncestorConditions(Condition cond, boolean directRelOnly) 
             throws IllegalArgumentException {
         log.entry(cond, directRelOnly);
+        log.trace("Start retrieving ancestral conditions for {}", cond);
         if (!this.getConditions().contains(cond)) {
             throw log.throwing(new IllegalArgumentException("The provided condition "
                     + "is not registered to this ConditionUtils: " + cond));
@@ -462,11 +463,13 @@ public class ConditionUtils implements Comparator<Condition> {
         log.trace("Stage IDs retrieved: {}", devStageIds);
         log.trace("Anat. entity IDs retrieved: {}", anatEntityIds);
         
-        return log.exit(this.conditions.stream()
+        Set<Condition> conds = this.conditions.stream()
                 .filter(e -> !e.equals(cond) && 
-                             devStageIds.contains(e.getDevStageId()) && 
-                             anatEntityIds.contains(e.getAnatEntityId()))
-                .collect(Collectors.toSet()));
+                        devStageIds.contains(e.getDevStageId()) && 
+                        anatEntityIds.contains(e.getAnatEntityId()))
+           .collect(Collectors.toSet());
+        log.trace("Done retrieving ancestral conditions for {}: {}", cond, conds.size());
+        return log.exit(conds);
     }
 
     /**

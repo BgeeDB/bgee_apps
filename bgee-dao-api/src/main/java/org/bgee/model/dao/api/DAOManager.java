@@ -272,7 +272,7 @@ public abstract class DAOManager implements AutoCloseable
 	 */
 	private final static List<DAOManager> getServiceProviders() {
 		log.entry();
-		log.info("Loading DAOManager service providers");
+		log.debug("Loading DAOManager service providers");
         List<DAOManager> providers = new ArrayList<DAOManager>();
 		//first, we try to load the classes that are the service providers: 
 		//Using the ServiceLoader in a servlet container context can be problematic, 
@@ -299,7 +299,7 @@ public abstract class DAOManager implements AutoCloseable
                 log.debug("A DAOManager service provider was loaded by the ServiceLoader");
 		    }
 		}
-		log.info("Providers found: {}", providers);
+		log.debug("Providers found: {}", providers);
 		return log.exit(Collections.unmodifiableList(providers));
 	}
 	

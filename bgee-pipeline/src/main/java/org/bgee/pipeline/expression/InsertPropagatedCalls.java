@@ -2,6 +2,7 @@ package org.bgee.pipeline.expression;
 
 import java.math.BigDecimal;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -10,6 +11,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -33,6 +35,8 @@ import java.util.stream.StreamSupport;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.Marker;
+import org.apache.logging.log4j.MarkerManager;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.exception.DAOException;
@@ -69,6 +73,8 @@ import org.bgee.pipeline.CommandRunner;
  */
 public class InsertPropagatedCalls extends CallService {
     private final static Logger log = LogManager.getLogger(InsertPropagatedCalls.class.getName());
+    private static final Marker BLOCKING_QUEUE_MARKER = MarkerManager.getMarker("BLOCKING_QUEUE_MARKER");
+    private static final Marker INSERTION_MARKER = MarkerManager.getMarker("INSERTION_MARKER");
 
     /**
      * An {@code int} that is the maximum number of levels to propagate expression calls 
@@ -84,28 +90,28 @@ public class InsertPropagatedCalls extends CallService {
      */
     public final static int GENE_PARALLEL_GROUP_SIZE = 200;
     
-    private final static Set<Set<ConditionDAO.Attribute>> COND_PARAM_SET;
+    private final static List<Set<ConditionDAO.Attribute>> COND_PARAM_COMB_LIST;
     private final static Map<Set<ConditionDAO.Attribute>, AtomicInteger> COND_ID_COUNTERS;
     private final static Map<Set<ConditionDAO.Attribute>, AtomicInteger> EXPR_ID_COUNTERS;
     
     static {
-        Set<Set<ConditionDAO.Attribute>> condParamSet = new HashSet<>();
+        List<Set<ConditionDAO.Attribute>> condParamList = new ArrayList<>();
         
         Set<ConditionDAO.Attribute> anatEntityParams = new HashSet<>();
         anatEntityParams.add(ConditionDAO.Attribute.ANAT_ENTITY_ID);
-        condParamSet.add(Collections.unmodifiableSet(anatEntityParams));
+        condParamList.add(Collections.unmodifiableSet(anatEntityParams));
         
         Set<ConditionDAO.Attribute> anatEntityStageParams = new HashSet<>();
         anatEntityStageParams.add(ConditionDAO.Attribute.ANAT_ENTITY_ID);
         anatEntityStageParams.add(ConditionDAO.Attribute.STAGE_ID);
-        condParamSet.add(Collections.unmodifiableSet(anatEntityStageParams));
+        condParamList.add(Collections.unmodifiableSet(anatEntityStageParams));
         
-        COND_PARAM_SET = Collections.unmodifiableSet(condParamSet);
+        COND_PARAM_COMB_LIST = Collections.unmodifiableList(condParamList);
         
 
         Map<Set<ConditionDAO.Attribute>, AtomicInteger> condIdCounters = new HashMap<>();
         Map<Set<ConditionDAO.Attribute>, AtomicInteger> exprIdCounters = new HashMap<>();
-        for (Set<ConditionDAO.Attribute> s: COND_PARAM_SET) {
+        for (Set<ConditionDAO.Attribute> s: COND_PARAM_COMB_LIST) {
             condIdCounters.put(s, new AtomicInteger(0));
             exprIdCounters.put(s, new AtomicInteger(0));
         }
@@ -184,7 +190,10 @@ public class InsertPropagatedCalls extends CallService {
      * <ol>
      * <li> a list of NCBI species IDs (for instance, {@code 9606} for human) that will be used to
      * propagate expression, separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}.
-     * If it is not provided, all species contained in database will be used.
+     * If empty (see {@link CommandRunner#EMPTY_LIST}), all species in database will be used.
+     * <li> a {@code Map} where keys are whatever, and each value is a set of strings, 
+     * corresponding to {@code ConditionDAO.Attribute}s, allowing to target a specific
+     * condition parameter combination. Example: 1//ANAT_ENTITY_ID,2//ANAT_ENTITY_ID--STAGE_ID
      * </ol>
      * 
      * @param args           An {@code Array} of {@code String}s containing the requested parameters.
@@ -193,23 +202,31 @@ public class InsertPropagatedCalls extends CallService {
     public static void main(String[] args) throws DAOException {
         log.entry((Object[]) args);
 
-        int expectedArgLengthWithoutSpecies = 0;
-        int expectedArgLengthWithSpecies = 1;
+        int expectedArgLength = 2;
 
-        if (args.length != expectedArgLengthWithSpecies &&
-            args.length != expectedArgLengthWithoutSpecies) {
+        if (args.length != expectedArgLength) {
             throw log.throwing(new IllegalArgumentException("Incorrect number of arguments " +
-                "provided, expected " + expectedArgLengthWithoutSpecies + " or " + 
-                expectedArgLengthWithSpecies + " arguments, " + args.length + 
+                "provided, expected " + expectedArgLength + " arguments, " + args.length + 
                 " provided."));
         }
 
-        List<Integer> speciesIds = null;
-        if (args.length == expectedArgLengthWithSpecies) {
-            speciesIds = CommandRunner.parseListArgumentAsInt(args[0]);
+        List<Integer> speciesIds = CommandRunner.parseListArgumentAsInt(args[0]);
+        LinkedHashMap<String, List<String>> condParamCombMap = CommandRunner.parseMapArgument(args[1]);
+        //we keep the order of combinations requested by the user
+        List<Set<ConditionDAO.Attribute>> condParamCombinations = condParamCombMap.values().stream()
+                .distinct()
+                .map(l -> l.stream().map(s -> ConditionDAO.Attribute.valueOf(s)).collect(Collectors.toSet()))
+                .collect(Collectors.toList());
+        if (condParamCombinations.isEmpty()) {
+            condParamCombinations = COND_PARAM_COMB_LIST;
+        }
+        if (!COND_PARAM_COMB_LIST.containsAll(condParamCombinations)) {
+            condParamCombinations.removeAll(COND_PARAM_COMB_LIST);
+            throw log.throwing(new IllegalArgumentException("Unrecognized condition parameter combination: "
+                    + condParamCombinations));
         }
 
-        InsertPropagatedCalls.insert(speciesIds, COND_PARAM_SET);
+        InsertPropagatedCalls.insert(speciesIds, condParamCombinations);
 
         log.exit();
     }
@@ -701,7 +718,7 @@ public class InsertPropagatedCalls extends CallService {
             boolean errorInThisThread = false;
             try {
                 //we assume the insertion is done using MySQL, and we start a transaction
-                log.debug("Starting transaction");
+                log.info("Starting transaction");
                 ((MySQLDAOManager) daoManager).getConnection().startTransaction();
             
                 int groupsInserted = 0;
@@ -716,8 +733,10 @@ public class InsertPropagatedCalls extends CallService {
                     //wait for consuming new data
                     Set<PipelineCall> toInsert = null;
                     try {
+                        log.trace(BLOCKING_QUEUE_MARKER, "Trying to take Set of PipelineCalls");
                         //here we ask to wait indefinitely 
                         toInsert = this.callPropagator.callsToInsert.take();
+                        log.trace(BLOCKING_QUEUE_MARKER, "Done taking Set of {} PipelineCalls", toInsert.size());
                     } catch (InterruptedException e) {
                         //this Thread will be interrupted if an error occurred in an other Thread
                         //or if all computations are finished and this thread is waiting
@@ -745,10 +764,11 @@ public class InsertPropagatedCalls extends CallService {
                     // And we finish by inserting the computed calls
                     this.insertPropagatedCalls(toInsert, this.condMap, exprDAO);
                     
-                    if (log.isInfoEnabled() && groupsInserted % 100 == 0) {
-                        log.info("{} genes inserted.", groupsInserted);
-                    }
+                    log.trace(INSERTION_MARKER, "Calls inserted.");
                     groupsInserted++;
+                    if (log.isInfoEnabled() && groupsInserted % 100 == 0) {
+                        log.info(INSERTION_MARKER, "{} genes inserted.", groupsInserted);
+                    }
                 }
             } catch (Exception e) {
                 errorInThisThread = true;
@@ -771,10 +791,10 @@ public class InsertPropagatedCalls extends CallService {
                         //recheck the jobCompleted flag in case this Thread was interrupted
                         //for unknown reason
                         if (this.callPropagator.jobCompleted && this.callPropagator.errorOccured == null) {
-                            log.debug("Committing transaction");
+                            log.info("Committing transaction");
                             ((MySQLDAOManager) daoManager).getConnection().commit();
                         } else {
-                            log.debug("Rollbacking transaction");
+                            log.info("Rollbacking transaction");
                             ((MySQLDAOManager) daoManager).getConnection().rollback();
                         }
                     } catch (SQLException e) {
@@ -877,16 +897,19 @@ public class InsertPropagatedCalls extends CallService {
                                     condMap.get(c.getCondition()), c), 
                             c -> c
                     ));
+            log.trace("Inserting {} GlobalExpressionCallTOs", callMap.keySet().size());
             //XXX: maybe it would generate a query too large to insert all calls for one gene
             //at once. But I think our max_allowed_packet_size is big enough and should be OK.
             //Worst case scenario we'll add a loop here.
             assert !callMap.isEmpty();
             dao.insertGlobalCalls(callMap.keySet(), this.callPropagator.conditionParams);
+            log.trace("Done inserting GlobalExpressionCallTOs");
             
             //insert the relations between global expr IDs and raw expr IDs.
             //Note that we insert all relation, even the "invalid" ones (ABSENT calls in descendant, 
             //PRESENT calls in parents; having all relations for descendants is essential for computing
             //a global rank score)
+            log.trace("Start inserting GlobalExpressionToRawExpressionTOs");
             Set<GlobalExpressionToRawExpressionTO> globalToRawTOs = callMap.entrySet().stream()
                     .flatMap(e -> {
                         int globalExprId = e.getKey().getId();
@@ -915,6 +938,8 @@ public class InsertPropagatedCalls extends CallService {
                     .collect(Collectors.toSet());
             assert !globalToRawTOs.isEmpty();
             dao.insertGlobalExpressionToRawExpression(globalToRawTOs, this.callPropagator.conditionParams);
+            log.trace("Done inserting {} GlobalExpressionToRawExpressionTOs", globalToRawTOs.size());
+            log.exit();
         }
 
         private static GlobalExpressionCallTO mapPipelineCallToGlobalExprCallTO(int exprId, int condId, 
@@ -1098,8 +1123,11 @@ public class InsertPropagatedCalls extends CallService {
         if (conditionParamsCollection == null || conditionParamsCollection.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Condition attributes should not be empty"));
         }
-        final Set<Set<ConditionDAO.Attribute>> clonedCondParamsSet = 
-                Collections.unmodifiableSet(new HashSet<>(conditionParamsCollection));
+        //in case a predictable iteration order of combination was requested, use a List
+        final List<Set<ConditionDAO.Attribute>> clonedCondParamList = Collections.unmodifiableList(
+                conditionParamsCollection.stream()
+                        .distinct()
+                        .collect(Collectors.toList()));
 
         
         try(DAOManager commonManager = daoManagerSupplier.get()) {
@@ -1119,7 +1147,7 @@ public class InsertPropagatedCalls extends CallService {
             //condition parameter combination
             ConditionDAO condDAO = commonManager.getConditionDAO();
             GlobalExpressionCallDAO exprDAO = commonManager.getGlobalExpressionCallDAO();
-            for (Set<ConditionDAO.Attribute> condParams: clonedCondParamsSet) {
+            for (Set<ConditionDAO.Attribute> condParams: clonedCondParamList) {
                 AtomicInteger condIdCounter = COND_ID_COUNTERS.get(condParams);
                 if (condIdCounter == null) {
                     throw log.throwing(new IllegalStateException(
@@ -1149,7 +1177,7 @@ public class InsertPropagatedCalls extends CallService {
             //but we could, because each condition parameter combination
             //will target different condition and expression tables.
             speciesIdsToUse.stream().forEach(speciesId -> {
-                clonedCondParamsSet.stream().forEach(condParams -> {
+                clonedCondParamList.stream().forEach(condParams -> {
                     //Give as argument a Supplier of ServiceFactory so that this object
                     //can provide a new connection to each parallel thread.
                     InsertPropagatedCalls insert = new InsertPropagatedCalls(
@@ -1179,10 +1207,10 @@ public class InsertPropagatedCalls extends CallService {
             log.info("{} Conditions already inserted for species {}", condMap.size(), speciesId);
 
             // We use all existing conditions in the species, and infer all propagated conditions
-            log.debug("Starting condition inference...");
+            log.info("Starting condition inference...");
             ConditionUtils conditionUtils = new ConditionUtils(condMap.values(), true, true,
                 this.getServiceFactory());
-            log.debug("Done condition inference.");
+            log.info("Done condition inference.");
             
             //we retrieve the IDs of genes with expression data. This is because making the computation
             //a whole species at a time can use too much memory for species with large amount of data.
@@ -1242,6 +1270,7 @@ public class InsertPropagatedCalls extends CallService {
                         this.checkErrorOccurred();
                         try {
                             //if resizing needed, wait no more than 3 minutes (yeah, why not 2.99).
+                            log.trace(BLOCKING_QUEUE_MARKER, "Offering Set of {} PipelineCalls", set.size());
                             this.callsToInsert.offer(set, 3, TimeUnit.MINUTES);
                         } catch (InterruptedException e) {
                             this.exceptionOccurs(e);

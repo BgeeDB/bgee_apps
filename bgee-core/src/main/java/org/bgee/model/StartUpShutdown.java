@@ -1,5 +1,7 @@
 package org.bgee.model;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOManager;
 
 /**
@@ -12,6 +14,7 @@ import org.bgee.model.dao.api.DAOManager;
  * @since Bgee 13
  */
 public class StartUpShutdown {
+    private final static Logger log = LogManager.getLogger(StartUpShutdown.class.getName());
 	/**
 	 * Start up the resources used by the Application. For instance, start up a cache 
 	 * if one is configured. Note that this method will not start up resources 
@@ -26,30 +29,28 @@ public class StartUpShutdown {
 	 * living outside of the JVM, such as for instance, a MySQL database. 
      */
     public static void shutdownApplication() {
-    	
+        log.entry();
+    	DAOManager.closeAll();
+    	//Should we have something like 'JobService.releaseAll()'?
+    	//Would mean to store all JobService instances, not sure how we can make sure they would be deallocated.
+    	log.exit();
     }
     
     /**
-     * Release all resources hold by the current {@code Thread}. For instance, 
-     * if the current {@code Thread} was holding a connection to a database, 
-     * this connection is closed. 
+     * Kill and release all resources hold by the current {@code Thread}. For instance, 
+     * if the current {@code Thread} was running a query to a database, 
+     * this query is killed and the connection to the database is closed.
      * <p>
-     * This method should always be called just before the end of the execution 
-     * of a {@code Thread}, for instance by calling it in a {@code finally} 
-     * block. 
+     * This method will usually be called from a different {@code Thread} than {@code t}.
+     * 
+     * @param t     The {@code Thread} that was interrupted.
      */
-    public static void threadTerminated() {
-    	try {
-    		//release DAO
-    		if (DAOManager.hasDAOManager()) {
-    			DAOManager.getDAOManager().close();
-    		}
-    	} finally {
-    		//release TaskManager
-    		TaskManager manager = TaskManager.getTaskManager();
-    		if (manager != null) {
-    			manager.release();
-    		}
-    	}
+    //XXX:Maybe this method should accept the DAOManager as argument, when we'll remove 
+    //these DAOManager static methods?
+    public static void interruptThread(Thread t) {
+        log.entry(t);
+        //Kill any running DAO queries
+        DAOManager.kill(t);
+        log.exit();
     }
 }

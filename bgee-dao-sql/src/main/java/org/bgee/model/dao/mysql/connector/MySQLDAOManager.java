@@ -65,11 +65,7 @@ import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO;
 import org.bgee.model.dao.mysql.species.MySQLTaxonDAO;
 
 public class MySQLDAOManager extends DAOManager {
-    /**
-     * {@code Logger} of the class. 
-     */
-    private final static Logger log = 
-            LogManager.getLogger(MySQLDAOManager.class.getName());
+    private final static Logger log = LogManager.getLogger(MySQLDAOManager.class.getName());
     
     /**
      * This {@code ConcurrentMap} is used to store all registered JDBC {@code Driver}s, 
@@ -786,9 +782,18 @@ public class MySQLDAOManager extends DAOManager {
     @Override
     public void setParameters(Properties props) throws IllegalArgumentException {
         log.entry(props);
+
+        if (props == null) {
+            log.exit(); return;
+        }
+        
+        //Store Properties used to create this DAOManager
+        super.setParameters(props);
+        
 //      log.trace("Current parameters: DataSource name: {} - JDBC URL: {} - Driver names: {} - User: {} - Password: {}", 
 //              this.getDataSourceResourceName(), this.getJdbcUrl(), 
 //              this.getJdbcDriverNames(), this.getUser(), this.getPassword());
+        
         
         String resourceName = props.getProperty(RESOURCE_NAME_KEY);
         String jdbcUrl      = props.getProperty(JDBC_URL_KEY);

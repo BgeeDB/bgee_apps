@@ -15,6 +15,7 @@ import org.bgee.view.DownloadDisplay;
 import org.bgee.view.ErrorDisplay;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.GeneralDisplay;
+import org.bgee.view.JobDisplay;
 import org.bgee.view.JsonHelper;
 import org.bgee.view.SearchDisplay;
 import org.bgee.view.SourceDisplay;
@@ -124,5 +125,12 @@ public class JsonFactory extends ViewFactory {
     public DAODisplay getDAODisplay() throws IOException {
         log.entry();
         throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
+    }
+
+    @Override
+    public JobDisplay getJobDisplay() throws IOException {
+        log.entry();
+        return log.exit(new JsonJobDisplay(this.response, this.requestParameters,
+            this.prop, this.jsonHelper, this));
     }
 }

@@ -40,14 +40,10 @@ import org.apache.logging.log4j.Logger;
  * @author Frederic Bastian
  * @author Mathieu Seppey
  * @author Valentine Rech de Laval
- * @version Bgee 13, Oct. 2015
+ * @version Bgee 13, Oct. 2016
  * @since Bgee 13
  */
 public class BgeeProperties {
-
-    /**
-     * {@code Logger} of the class. 
-     */
     private final static Logger log = LogManager.getLogger(BgeeProperties.class.getName());
 
     /**
@@ -58,8 +54,7 @@ public class BgeeProperties {
      * 
      * @see #PROPERTIES_FILE_NAME_DEFAULT
      */
-    public final static String PROPERTIES_FILE_NAME_KEY = 
-            "org.bgee.core.properties.file";
+    public final static String PROPERTIES_FILE_NAME_KEY = "org.bgee.core.properties.file";
     /**
      * A {@code String} that is the default value of the name
      * of the file in the classpath that is read at the initialization 
@@ -69,15 +64,14 @@ public class BgeeProperties {
      */
     public final static String PROPERTIES_FILE_NAME_DEFAULT = "/bgee.properties";
     
+    //TopAnat
     /**
      * A {@code String} that is the key to access to the System property that contains the value
      * of the path of RScript Executable file which is used to execute the R code.
      * 
      * @see #TOP_ANAT_R_SCRIPT_EXECUTABLE_DEFAULT
      */
-    public final static String TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY = 
-            "org.bgee.core.topAnatRScriptExecutable";
-    
+    public final static String TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY = "org.bgee.core.topAnatRScriptExecutable";
     /**
      * A {@code String} that is the default value of the path of RScript Executable file 
      * which is used to execute the R code.
@@ -93,17 +87,14 @@ public class BgeeProperties {
      * 
      * @see #TOP_ANAT_R_WORKING_DIRECTORY_DEFAULT
      */
-    public final static String TOP_ANAT_R_WORKING_DIRECTORY_KEY = 
-            "org.bgee.core.topAnatRWorkingDirectory";
-
+    public final static String TOP_ANAT_R_WORKING_DIRECTORY_KEY = "org.bgee.core.topAnatRWorkingDirectory";
     /**
      * A {@code String} that is the default value of the current working directory of {@code R}, 
      * where all the other files required for the processing of the topAnat analysis are kept.
      * 
      * @see #TOP_ANAT_R_WORKING_DIRECTORY_KEY
      */
-    public final static String TOP_ANAT_R_WORKING_DIRECTORY_DEFAULT = 
-            "topanat/results/";
+    public final static String TOP_ANAT_R_WORKING_DIRECTORY_DEFAULT = "topanat/results/";
     
     /**
      * A {@code String} that is the key to access to the System property that contains the name of 
@@ -111,17 +102,14 @@ public class BgeeProperties {
      * 
      * @see #TOP_ANAT_FUNCTION_FILE_DEFAULT
      */
-    public final static String TOP_ANAT_FUNCTION_FILE_KEY = 
-            "org.bgee.core.topAnatFunctionFile";
-
+    public final static String TOP_ANAT_FUNCTION_FILE_KEY = "org.bgee.core.topAnatFunctionFile";
     /**
      * A {@code String} that is the default value of the name of the file which contains the 
      * additional modified topGO R functions used by topAnat to perform the analyses.
      * 
      * @see #TOP_ANAT_FUNCTION_FILE_KEY
      */
-    public final static String TOP_ANAT_FUNCTION_FILE_DEFAULT = 
-            "/R_scripts/topAnat_functions.R";   
+    public final static String TOP_ANAT_FUNCTION_FILE_DEFAULT = "/R_scripts/topAnat_functions.R";   
 
     /**
      * A {@code String} that is the key to access to the System property that contains the name of 
@@ -132,7 +120,6 @@ public class BgeeProperties {
      */
     public final static String TOP_ANAT_RESULTS_WRITING_DIRECTORY_KEY = 
             "org.bgee.core.topAnatResultsWritingDirectory";
-
     /**
      * A {@code String} that is the default value of the name of the directory to store outputs of
      * the TopAnat analyses that should be kept to be retrieved in case the same TopAnat query
@@ -140,55 +127,24 @@ public class BgeeProperties {
      * 
      * @see #TOP_ANAT_RESULTS_WRITING_DIRECTORY_KEY
      */
-    public final static String TOP_ANAT_RESULTS_WRITING_DIRECTORY_DEFAULT = 
-            "topanat/results/";   
+    public final static String TOP_ANAT_RESULTS_WRITING_DIRECTORY_DEFAULT = "topanat/results/";
    
+    //Jobs
     /**
-     * A {@code String} that is the path of RScript Executable file 
-     * which is used to execute the R code.
-     */
-    private final String topAnatRScriptExecutable;
-
-    /**
-     * A {@code String} that is the current working directory of {@code R}, 
-     * where all the other files required for the processing of the topAnat analysis
-     * are kept.
-     * <p>
-     * This directory should only be used with the library for calling R, to set the
-     * working directory of the {@code R}. If you need to use the directory
-     * to access a result file or get the directory to write TopAnat result
-     * files, use {@code #topAnatResultsWritingDirectory}
-     * <p>
-     * If you want to link to such a file using a URL, you must use
-     * {@code #topAnatResultsUrlDirectory}.
+     * A {@code String} that is the key to access to the System property that contains 
+     * the maximum number of allowed running jobs per user. If equals to 0, no limit 
+     * on the number of simultaneously running jobs is set. 
      * 
-     * @see #topAnatResultsWritingDirectory
-     * @see #topAnatResultsUrlDirectory
+     * @see #MAX_JOB_COUNT_PER_USER_DEFAULT
      */
-    private final String topAnatRWorkingDirectory;
-    
+    public final static String MAX_JOB_COUNT_PER_USER_KEY = "org.bgee.core.maxJobCountPerUser";
     /**
-     * A {@code String} that is the name of the file which contains the additional modified
-     * topGO R functions used by topAnat to perform the analyses.
-     */
-    private final String topAnatFunctionFile;  
-    
-    /**
-     * A {@code String} that is the name of the directory to store outputs of the TopAnat analyses
-     * that should be kept to be retrieved in case the same TopAnat query is performed again.
-     * <p>
-     * This directory has to be used when writing files. If you want to link to
-     * such a file using a URL, you must use
-     * {@code #topAnatResultsUrlDirectory}.
-     * <p>
-     * If you want to set the working directory for {@code R}, use
-     * {@code #topAnatRWorkingDirectory}
+     * An {@code int} that is the default value of the maximum number of allowed running jobs per user.
      * 
-     * @see #topAnatResultsUrlDirectory
-     * @see #topAnatCallerWorkingDirectory
-     */ 
-    private final String topAnatResultsWritingDirectory;    
-     
+     * @see #MAX_JOB_COUNT_PER_USER_KEY
+     */
+    public final static int MAX_JOB_COUNT_PER_USER_DEFAULT = 0;
+    
     /**
      * A {@code ConcurrentMap} used to store {@code BgeeProperties}, 
      * associated to their ID as key (corresponding to the ID of the thread 
@@ -281,32 +237,41 @@ public class BgeeProperties {
      * @param defaultValue  default value that will be returned if the property 
      *                      is undefined or empty in all {@code Properties}.
      *
-     * @return              A {@code String} corresponding to the value
+     * @return              An {@code Object} corresponding to the value
      *                      for that property key. 
      *                      Or {@code defaultValue} if not defined or empty.
      */
-    protected static String getStringOption(Properties prop, Properties sysProps, 
+    protected static Object getObjectOption(Properties prop, Properties sysProps, 
             Properties fileProps, String key, String defaultValue) {
         log.entry(prop, sysProps, fileProps, key, defaultValue);
     
-        String propValue = null;
+        Object propValue = null;
     
         if (prop != null) {
-            propValue = prop.getProperty(key);
+            propValue = prop.get(key);
+            if (!isValidValue(propValue)) {
+                propValue = prop.getProperty(key);
+            }
         }
     
-        if (StringUtils.isNotBlank(propValue)) {
+        if (isValidValue(propValue)) {
             log.debug("Retrieved from injected properties {}={}", key, propValue);
         } else {
-            propValue = sysProps.getProperty(key);
-            if(StringUtils.isNotBlank(propValue)){
+            propValue = sysProps.get(key);
+            if (!isValidValue(propValue)) {
+                propValue = sysProps.getProperty(key);
+            }
+            if(isValidValue(propValue)){
                 log.debug("Retrieved from System properties {}={}", key, propValue);
             }
-            else{
+            else {
                 if (fileProps != null) {
-                    propValue = fileProps.getProperty(key);
+                    propValue = fileProps.get(key);
+                    if (!isValidValue(propValue)) {
+                        propValue = fileProps.getProperty(key);
+                    }
                 }
-                if (StringUtils.isNotBlank(propValue)) {
+                if (isValidValue(propValue)) {
                     log.debug("Retrieved from properties file {}={}", key, propValue);
                 } else {
                     log.debug("Property {} not defined neither in injected properties nor in properties file nor in System properties, using default value {}", 
@@ -317,6 +282,51 @@ public class BgeeProperties {
         }
     
         return log.exit(propValue);
+    }
+    /**
+     * Determines the value of a property was correctly set.
+     * @param propValue An {@code Object} that is a property value to evaluate.
+     * @return          {@code true} if {@code propValue} was correctly set, {@code false} otherwise.
+     */
+    private static boolean isValidValue(Object propValue) {
+        log.entry(propValue);
+        return log.exit(propValue != null && 
+                (!(propValue instanceof String) || StringUtils.isNotBlank((String) propValue)));
+    }
+    
+    /**
+     * Try to retrieve the property corresponding to {@code key}, 
+     * first from the injected {@code Properties} ({@code prop}), then from the System properties 
+     * ({@code SYS_PROPS}), then, if undefined or empty, from properties retrieved from the 
+     * Bgee property file ({@code FILE_PROPS}). If the property is still undefined or empty 
+     * return {@code defaultValue}.
+     *
+     * @param prop          A {@code java.util.Properties} instance that contains the system 
+     *                      properties to look for {@code key} first
+     * @param SYS_PROPS      {@code java.util.Properties} retrieved from System properties, 
+     *                      where {@code key} is searched in second
+     * @param FILE_PROPS     {@code java.util.Properties} retrieved from the Bgee properties file, 
+     *                      where {@code key} is searched in if {@code prop} and {@code SYS_PROPS}
+     *                      were undefined or empty for {@code key}. 
+     *                      Can be {@code null} if no properties file was found.
+     * @param defaultValue  default value that will be returned if the property 
+     *                      is undefined or empty in all {@code Properties}.
+     *
+     * @return              A {@code String} corresponding to the value
+     *                      for that property key. 
+     *                      Or {@code defaultValue} if not defined or empty.
+     */
+    protected static String getStringOption(Properties prop, Properties sysProps, 
+            Properties fileProps, String key, String defaultValue) {
+        log.entry(prop, fileProps, sysProps, key, defaultValue);
+    
+        Object propValue = getObjectOption(prop, sysProps, fileProps, key, null);
+        String val = defaultValue;
+        if (propValue != null && propValue instanceof String) {
+            val= (String) propValue;
+        }
+    
+        return log.exit(val);
     }
 
     /**
@@ -343,14 +353,18 @@ public class BgeeProperties {
      *                     for that property key.
      *                     Or {@code defaultValue} if not defined or empty.
      */
-    protected static int getIntegerOption(Properties prop, Properties sysProps, 
-            Properties fileProps, String key, int defaultValue) {
+    protected static Integer getIntegerOption(Properties prop, Properties sysProps, 
+            Properties fileProps, String key, Integer defaultValue) {
         log.entry(prop, fileProps, sysProps, key, defaultValue);
     
-        String propValue = getStringOption(prop, sysProps, fileProps, key, null);
-        int val = defaultValue;
+        Object propValue = getObjectOption(prop, sysProps, fileProps, key, null);
+        Integer val = defaultValue;
         if (propValue != null) {
-            val= Integer.valueOf(propValue);
+            if (propValue instanceof String) {
+                val= Integer.valueOf((String) propValue);
+            } else if (propValue instanceof Integer) {
+                val = (Integer) propValue;
+            }
         }
     
         return log.exit(val);
@@ -383,10 +397,14 @@ public class BgeeProperties {
             Properties fileProps, String key, Double defaultValue) {
         log.entry(prop, fileProps, sysProps, key, defaultValue);
     
-        String propValue = getStringOption(prop, sysProps, fileProps, key, null);
+        Object propValue = getObjectOption(prop, sysProps, fileProps, key, null);
         Double val = defaultValue;
         if (propValue != null) {
-            val = Double.parseDouble(propValue);
+            if (propValue instanceof String) {
+                val= Double.parseDouble((String) propValue);
+            } else if (propValue instanceof Double) {
+                val = (Double) propValue;
+            }
         }
     
         return log.exit(val);
@@ -415,18 +433,22 @@ public class BgeeProperties {
      *                     for that property key.
      *                     Or {@code defaultValue} if not defined or empty.
      */
-    protected static boolean getBooleanOption(Properties prop, Properties sysProps, 
-            Properties fileProps, String key, boolean defaultValue) {
+    protected static Boolean getBooleanOption(Properties prop, Properties sysProps, 
+            Properties fileProps, String key, Boolean defaultValue) {
         log.entry(prop, sysProps, fileProps, key, defaultValue);
         
-        String propValue = getStringOption(prop, sysProps, fileProps, key, null);
-        boolean val = defaultValue;
-        if (StringUtils.isNotBlank(propValue)) {
-            String trimLowCase = propValue.trim().toLowerCase();
-            val= "true".equals(trimLowCase) ||
-                 "yes".equals(trimLowCase) || 
-                 "on".equals(trimLowCase) || 
-                 "1".equals(trimLowCase);
+        Object propValue = getObjectOption(prop, sysProps, fileProps, key, null);
+        Boolean val = defaultValue;
+        if (propValue != null) {
+            if (propValue instanceof String) {
+                String trimLowCase = ((String) propValue).trim().toLowerCase();
+                val= "true".equals(trimLowCase) ||
+                     "yes".equals(trimLowCase) || 
+                     "on".equals(trimLowCase) || 
+                     "1".equals(trimLowCase);
+            } else if (propValue instanceof Boolean) {
+                val = (Boolean) propValue;
+            }
         }
         
         return log.exit(val);
@@ -606,10 +628,67 @@ public class BgeeProperties {
         topAnatResultsWritingDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 TOP_ANAT_RESULTS_WRITING_DIRECTORY_KEY,
                 TOP_ANAT_RESULTS_WRITING_DIRECTORY_DEFAULT);
+        maxJobCountPerUser = getIntegerOption(prop, SYS_PROPS, FILE_PROPS, 
+                MAX_JOB_COUNT_PER_USER_KEY,
+                MAX_JOB_COUNT_PER_USER_DEFAULT);
         log.debug("Initialization done.");
         log.exit();
     }
 
+    /**
+     * A {@code String} that is the path of RScript Executable file 
+     * which is used to execute the R code.
+     */
+    private final String topAnatRScriptExecutable;
+
+    /**
+     * A {@code String} that is the current working directory of {@code R}, 
+     * where all the other files required for the processing of the topAnat analysis
+     * are kept.
+     * <p>
+     * This directory should only be used with the library for calling R, to set the
+     * working directory of the {@code R}. If you need to use the directory
+     * to access a result file or get the directory to write TopAnat result
+     * files, use {@code #topAnatResultsWritingDirectory}
+     * <p>
+     * If you want to link to such a file using a URL, you must use
+     * {@code #topAnatResultsUrlDirectory}.
+     * 
+     * @see #topAnatResultsWritingDirectory
+     * @see #topAnatResultsUrlDirectory
+     */
+    private final String topAnatRWorkingDirectory;
+
+    /**
+     * A {@code String} that is the name of the file which contains the additional modified
+     * topGO R functions used by topAnat to perform the analyses.
+     */
+    private final String topAnatFunctionFile;
+
+    /**
+     * A {@code String} that is the name of the directory to store outputs of the TopAnat analyses
+     * that should be kept to be retrieved in case the same TopAnat query is performed again.
+     * <p>
+     * This directory has to be used when writing files. If you want to link to
+     * such a file using a URL, you must use
+     * {@code #topAnatResultsUrlDirectory}.
+     * <p>
+     * If you want to set the working directory for {@code R}, use
+     * {@code #topAnatRWorkingDirectory}
+     * 
+     * @see #topAnatResultsUrlDirectory
+     * @see #topAnatCallerWorkingDirectory
+     */ 
+    private final String topAnatResultsWritingDirectory;
+    
+    /**
+     * @see #getMaxJobCountPerUser()
+     */
+    private final int maxJobCountPerUser; 
+
+    //******************
+    // RELEASE METHODS
+    //******************
     /**
      * Releases this {@code BgeeProperties}. 
      * A call to {@link #getBgeeProperties()} from the thread that was holding it 
@@ -634,6 +713,10 @@ public class BgeeProperties {
         return log.exit(!bgeeProperties.containsValue(this));
     }
 
+    //**************************
+    // PROPERTY GETTERS
+    //**************************
+    //TopAnat
     /**
      * @return A {@code String} that is the path of RScript Executable file which is used 
      * to execute the {@code R} code.
@@ -641,7 +724,6 @@ public class BgeeProperties {
     public String getTopAnatRScriptExecutable() {
         return topAnatRScriptExecutable;
     }
-
     /**
      * @return A {@code String} that is the current working directory of {@code R}, where all
      * the other files required for the processing of the topAnat analysis are kept.
@@ -649,7 +731,6 @@ public class BgeeProperties {
     public String getTopAnatRWorkingDirectory() {
         return topAnatRWorkingDirectory;
     }
-
     /**
      * @return A {@code String} that is the name of the file which contains the additional modified 
      * topGO {@code R} functions used by topAnat to perform the analyses.
@@ -657,13 +738,21 @@ public class BgeeProperties {
     public String getTopAnatFunctionFile() {
         return topAnatFunctionFile;
     }
-
     /**
      * @return A {@code String} that is the name of the directory to store outputs of the TopAnat 
      * analyses that should be kept to be retrieved in case the same TopAnat query is performed again.
      */
     public String getTopAnatResultsWritingDirectory() {
         return topAnatResultsWritingDirectory;
+    }
+
+    //Jobs
+    /**
+     * @return  An {@code int} that is the maximum number of allowed running jobs per user.
+     *          If equals to 0, no limit on the number of simultaneously running jobs is set. 
+     */
+    public int getMaxJobCountPerUser() {
+        return maxJobCountPerUser;
     }
     
     @Override
@@ -676,5 +765,4 @@ public class BgeeProperties {
                 .append("]");
         return builder.toString();
     }
-    
 }

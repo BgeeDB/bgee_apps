@@ -2,7 +2,7 @@ package org.bgee.view.json;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
-import java.util.Set;
+import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -41,7 +41,7 @@ public class JsonSpeciesDisplay extends JsonParentDisplay implements SpeciesDisp
     }
 
     @Override
-    public void sendSpeciesResponse(Set<Species> species) {
+    public void sendSpeciesResponse(List<Species> species) {
         log.entry(species);
         
         LinkedHashMap<String, Object> data = new LinkedHashMap<>();

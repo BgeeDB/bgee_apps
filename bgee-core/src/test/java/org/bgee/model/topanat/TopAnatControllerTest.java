@@ -37,8 +37,6 @@ import org.bgee.model.gene.GeneService;
 import org.junit.Before;
 import org.junit.Test;
 
-import rcaller.exception.ParseException;
-
 /**
  * Unit tests for {@link TopAnatController}.
  * 
@@ -228,10 +226,9 @@ public class TopAnatControllerTest extends TestAncestor {
      */
     @Test
     public void testParseException() throws FileNotFoundException{
-        ParseException mockException = mock(ParseException.class);
-        when(mockException.getMessage()).thenReturn("Can not parse output: "
+        FileNotFoundException e = new FileNotFoundException("Can not parse output: "
                 + "The generated file filename is empty.");
-        doThrow(mockException).when(this.mockTopAnatRManager).performRFunction(any()); 
+        doThrow(e).when(this.mockTopAnatRManager).performRFunction(any()); 
         this.topAnatController.proceedToTopAnatAnalyses().forEach(topAnatResult -> 
         assertTrue(topAnatResult.toString().matches("TopAnatResults \\[topAnatParams=mockTopAnatParams, "
                 + "resultFileName=topAnat_results.tsv, resultPDFFileName=topAnat_results.pdf, "

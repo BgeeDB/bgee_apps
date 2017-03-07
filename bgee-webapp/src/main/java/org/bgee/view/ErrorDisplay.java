@@ -8,6 +8,7 @@ import org.bgee.controller.exception.RequestParametersNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotStorableException;
 import org.bgee.controller.exception.RequestSizeExceededException;
 import org.bgee.controller.exception.ValueSizeExceededException;
+import org.bgee.model.job.exception.TooManyJobsException;
 
 /**
  * Interface defining the methods to be implemented by views to display error messages.
@@ -62,6 +63,11 @@ public interface ErrorDisplay {
      * @param e     The {@link InvalidFormatException} to display details about.
      */
     public void displayControllerException(RequestParametersNotStorableException e);
+    /**
+     * Display an error message following a {@link TooManyJobsException}.
+     * @param e     The {@link TooManyJobsException} to display details about.
+     */
+    public void displayControllerException(TooManyJobsException e);
     
     //******************************
     // OTHER EXCEPTION TYPES

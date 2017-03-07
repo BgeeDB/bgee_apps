@@ -15,6 +15,7 @@ import org.bgee.view.DownloadDisplay;
 import org.bgee.view.ErrorDisplay;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.GeneralDisplay;
+import org.bgee.view.JobDisplay;
 import org.bgee.view.SearchDisplay;
 import org.bgee.view.SourceDisplay;
 import org.bgee.view.SpeciesDisplay;
@@ -84,7 +85,9 @@ public class CsvFactory extends ViewFactory {
 
     @Override
     public SpeciesDisplay getSpeciesDisplay() throws IOException {
-        throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
+        log.entry();
+        return log.exit(new CsvSpeciesDisplay(this.response, this.requestParameters, this.prop, this, 
+                this.delimiter));
     }
 
 	@Override
@@ -101,6 +104,13 @@ public class CsvFactory extends ViewFactory {
     public DAODisplay getDAODisplay() throws IOException {
         log.entry();
         return log.exit(new CsvDAODisplay(this.response, this.requestParameters, this.prop, this, 
+                this.delimiter));
+    }
+
+    @Override
+    public JobDisplay getJobDisplay() throws IOException {
+        log.entry();
+        return log.exit(new CsvJobDisplay(this.response, this.requestParameters, this.prop, this, 
                 this.delimiter));
     }
 }

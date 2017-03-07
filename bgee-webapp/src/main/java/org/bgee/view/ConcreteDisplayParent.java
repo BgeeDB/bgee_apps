@@ -126,30 +126,59 @@ public abstract class ConcreteDisplayParent {
         log.exit();
     }
     /**
-     * Send the headers of the response. The MIME content type is defined 
-     * by calling {@link #getContentType()}. The headers sent vary 
-     * depending on whether the current request is an AJAX request 
-     * (specific cache control, expiration date, etc, are sent). 
+     * Delegates to {@link #sendHeaders(int)} with the status code set to {@code HttpServletResponse.SC_OK}.
+     * @see #sendHeaders(int)
+     */
+    protected void sendHeaders() {
+        log.entry();
+        this.sendHeaders(HttpServletResponse.SC_OK);
+        log.exit();
+    }
+    /**
+     * Delegates to {@link #sendHeaders(int, boolean)} with the {@code boolean} {@code noCache} argument 
+     * defined depending on whether the current response follows an AJAX request. 
+     * In case an AJAX request is sent, we do not want the client to store the response in cache, 
+     * the {@code noCache} argument will be defined as {@code true}.
      * <p>
-     * To determine whether the current request is from an AJAX query, 
+     * To determine whether the current response follows an AJAX request, 
      * it is possible to call {@link RequestParameters#isAnAjaxRequest()} 
      * on the object returned by {@link #getRequestParameters()}. 
+     * 
+     * @see #sendHeaders(int, boolean)
+     */
+    protected void sendHeaders(int statusCode) {
+        log.entry(statusCode);
+        this.sendHeaders(statusCode, this.getRequestParameters().isAnAjaxRequest());
+        log.exit();
+    }
+    /**
+     * Send the headers of the response with the provided status code. The MIME content type is defined 
+     * by calling {@link #getContentType()}. Whether specific headers should be sent to disable 
+     * cache on the client side is defined with the argument {@code noCache} (cache control, proxy cache,
+     * expiration date, etc). For instance, it is desirable to disable cache in response of an AJAX request, 
+     * or in case of server error.
      * <p>
      * Note that this method sends headers only at the first call on a given object:
      * sometimes, a same container can be used as a standalone response, 
      * or embedded into another container (already sending its own headers), 
      * so, some methods of a same view can redundantly call this method.
+     * 
+     * @parameters statusCode   An {@code int} corresponding to the status code to return, as defined 
+     *                          in the static variables of {@code javax.servlet.http.HttpServletResponse}.
+     * @parameters noCache      A {@code boolean} defining whether specific headers disabling cache 
+     *                          on the client side should be sent (if {@code true}).
+     * @see #sendHeaders(int)
      */
-    protected void sendHeaders() {
-        log.entry();
+    protected void sendHeaders(int statusCode, boolean noCache) {
+        log.entry(statusCode, noCache);
         if (this.response == null) {
             log.exit(); return;
         }
         if (!this.headersAlreadySent) {
-            this.response.setStatus(HttpServletResponse.SC_OK);
-            this.setContentTypeAndEncoding();
+            this.response.setStatus(statusCode);
+            this.defineResponseContentTypeAndEncoding();
             
-            if (this.getRequestParameters().isAnAjaxRequest()) {
+            if (noCache) {
                 this.response.setDateHeader("Expires", 1);
                 this.response.setHeader("Cache-Control", 
                         "no-store, no-cache, must-revalidate, proxy-revalidate");
@@ -167,7 +196,7 @@ public abstract class ConcreteDisplayParent {
      * on {@link #requestParameters}) and the character encoding (using the method 
      * {@code getCharacterEncoding} on {@link #requestParameters}).
      */
-    private void setContentTypeAndEncoding() {
+    private void defineResponseContentTypeAndEncoding() {
         log.entry();
         log.trace("Set content type to {}", this.getContentType());
         this.response.setContentType(this.getContentType());
@@ -177,70 +206,64 @@ public abstract class ConcreteDisplayParent {
     }
 
     /**
-     * Send the header in case of HTTP 503 error, with MIME content type defined 
-     * by calling {@link #getContentType()}.
+     * Delegates to {@link #sendHeaders(int, boolean)} with the status code set to 
+     * {@code HttpServletResponse.SC_SERVICE_UNAVAILABLE} and the {@code noCache} argument set to {@code true}.
+     * @see #sendHeaders(int, boolean)
      */
     public void sendServiceUnavailableHeaders() {
         log.entry();
-        if (this.response == null) {
-            return;
-        }
-        if (!this.headersAlreadySent) {
-            this.setContentTypeAndEncoding();
-            this.response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
-            this.headersAlreadySent = true;
-        }
+        this.sendHeaders(HttpServletResponse.SC_SERVICE_UNAVAILABLE, true);
         log.exit();
     }
-    
     /**
-     * Send the header in case of HTTP 400 error, with MIME content type defined 
-     * by calling {@link #getContentType()}.
+     * Delegates to {@link #sendHeaders(int, boolean)} with the status code set to 
+     * {@code HttpServletResponse.SC_BAD_REQUEST} and the {@code noCache} argument set to {@code true}.
+     * @see #sendHeaders(int, boolean)
      */
     protected void sendBadRequestHeaders() {
         log.entry();
-        if (this.response == null) {
-            return;
-        }
-        if (!this.headersAlreadySent) {
-            this.setContentTypeAndEncoding();
-            this.response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            this.headersAlreadySent = true;
-        }
+        this.sendHeaders(HttpServletResponse.SC_BAD_REQUEST, true);
         log.exit();
     }
-    
     /**
-     * Send the header in case of HTTP 404 error, with MIME content type defined 
-     * by calling {@link #getContentType()}.
+     * Delegates to {@link #sendHeaders(int, boolean)} with the status code set to 
+     * {@code 429} "Too Many Requests" and the {@code noCache} argument set to {@code true}.
+     * @see #sendHeaders(int, boolean)
+     */
+    protected void sendTooManyRequeststHeaders() {
+        log.entry();
+        this.sendHeaders(429, true);
+        log.exit();
+    }
+    /**
+     * Delegates to {@link #sendHeaders(int, boolean)} with the status code set to 
+     * {@code HttpServletResponse.SC_NOT_FOUND} and the {@code noCache} argument set to {@code true}.
+     * @see #sendHeaders(int, boolean)
      */
     protected void sendPageNotFoundHeaders() {
         log.entry();
-        if (this.response == null) {
-            return;
-        }
-        if (!this.headersAlreadySent) {
-            this.setContentTypeAndEncoding();
-            this.response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            this.headersAlreadySent = true;
-        }
+        this.sendHeaders(HttpServletResponse.SC_NOT_FOUND, true);
+        log.exit();
+    }
+    /**
+     * Delegates to {@link #sendHeaders(int, boolean)} with the status code set to 
+     * {@code HttpServletResponse.SC_INTERNAL_SERVER_ERROR} and the {@code noCache} argument set to {@code true}.
+     * @see #sendHeaders(int, boolean)
+     */
+    protected void sendInternalErrorHeaders() {
+        log.entry();
+        this.sendHeaders(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, true);
         log.exit();
     }
     
     /**
-     * Send the header in case of HTTP 500 error, with MIME content type defined 
-     * by calling {@link #getContentType()}.
+     * Delegates to {@link #sendHeaders(int, boolean)} with the status code set to 
+     * {@code HttpServletResponse.SC_NO_CONTENT} and the {@code noCache} argument set to {@code true}.
+     * @see #sendHeaders(int, boolean)
      */
-    protected void sendInternalErrorHeaders() {
+    public void respondSuccessNoContent() {
         log.entry();
-        if (this.response == null) {
-            return;
-        }
-        if (!this.headersAlreadySent) {
-            this.setContentTypeAndEncoding();
-            this.response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            this.headersAlreadySent = true;
-        }
+        this.sendHeaders(HttpServletResponse.SC_NO_CONTENT, true);
         log.exit();
     }
     

@@ -8,8 +8,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
 
-import rcaller.RCaller;
-import rcaller.RCode;
+import com.github.rcaller.rStuff.RCaller;
+import com.github.rcaller.rStuff.RCode;
 
 /**
  * TODO comment me.
@@ -211,7 +211,7 @@ public class TopAnatRManager {
         return log.exit(code.toString());
 
     }
-    protected void performRFunction(String consoleFileName) throws FileNotFoundException{
+    protected void performRFunction(String consoleFileName) throws FileNotFoundException {
 
         log.info("Running statistical tests in R...");
         if(this.code.toString().equals(new RCode().toString())){

@@ -1,7 +1,10 @@
 package org.bgee.controller;
 
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -51,18 +54,26 @@ public class CommandSpecies extends CommandParent {
         SpeciesDisplay display = this.viewFactory.getSpeciesDisplay();
         
         // Get submitted species IDs
-        Set<String> submittedSpeciesIds = new HashSet<String>(this.requestParameters.getValues(
-                this.requestParameters.getUrlParametersInstance().getParamSpeciesList()));
+        Collection<String> submittedSpeciesIds = this.requestParameters.getValues(
+                this.requestParameters.getUrlParametersInstance().getParamSpeciesList());
 
         // Load detected species
         Set<Species> species = this.serviceFactory.getSpeciesService().
-                loadSpeciesByIds(submittedSpeciesIds, false);
+                loadSpeciesByIds(submittedSpeciesIds, true);
         if (species.isEmpty()) {
             throw log.throwing(new IllegalStateException(
                     "A SpeciesService did not allow to obtain any Species."));
         }
 
-        display.sendSpeciesResponse(species);
+        display.sendSpeciesResponse(
+                species.stream()
+                //filter species with no data (insertion error in Bgee 13 database)
+                .filter(s -> !s.getDataTypesByDataSourcesForData().isEmpty())
+                //order species by ID for consistent rendering
+                //XXX: should we add ordering attributes to SpeciesService?
+                .sorted(Comparator.comparing(s -> Integer.parseInt(s.getId())))
+                .collect(Collectors.toList())
+        );
 
         log.exit();
     }

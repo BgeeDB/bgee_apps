@@ -33,7 +33,7 @@
         </dependency>
 
         <dependency>
-            <groupId>rcaller</groupId>
+            <groupId>com.github.jbytecode</groupId>
             <artifactId>RCaller</artifactId>
         </dependency>
 

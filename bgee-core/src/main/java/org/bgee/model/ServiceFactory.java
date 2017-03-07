@@ -1,5 +1,7 @@
 package org.bgee.model;
 
+import java.util.Properties;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.analysis.AnalysisService;
@@ -76,6 +78,16 @@ public class ServiceFactory implements AutoCloseable {
      */
     public ServiceFactory() {
         this(DAOManager.getDAOManager());
+    }
+    /**
+     * Construct a new {@code ServiceFactory}by providing the properties needed to instantiate 
+     * a new {@code DAOManager}.
+     * 
+     * @param props The {@code Properties} allowing to obtain a new {@code DAOManager}, 
+     *              to be used by this {@code ServiceFactory}.
+     */
+    public ServiceFactory(Properties props) {
+        this(DAOManager.getDAOManager(props));
     }
     /**
      * @param daoManager    The {@code DAOManager} to be used by this {@code ServiceFactory},  

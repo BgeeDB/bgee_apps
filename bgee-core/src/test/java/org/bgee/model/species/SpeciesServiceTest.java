@@ -92,7 +92,7 @@ public class SpeciesServiceTest extends TestAncestor {
         expectedSpecies.add(new Species(9606, "human", null, "Homo", "sapiens", "version1", 
                 forData9606, forAnnot9606));
         expectedSpecies.add(new Species(1234, "name", null, "genus", "someSpecies", "versionA", 
-                null, forAnnot1234));
+                new HashMap<>(), forAnnot1234));
 
 		assertEquals(expectedSpecies, speciesService.loadSpeciesInDataGroups(true));
 	}
@@ -153,7 +153,7 @@ public class SpeciesServiceTest extends TestAncestor {
         expected.add(new Species(9606, "human", null, "Homo", "sapiens", "version1", 
                 forData9606, forAnnot9606));
         expected.add(new Species(1234, "name", null, "genus", "someSpecies", "versionA", 
-                null, forAnnot1234));
+                new HashMap<>(), forAnnot1234));
 
         assertEquals(expected, service.loadSpeciesByIds(speciesIds, true));
 	}

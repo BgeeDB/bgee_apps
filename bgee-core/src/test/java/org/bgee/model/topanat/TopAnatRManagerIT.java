@@ -23,8 +23,6 @@ import org.bgee.model.expressiondata.baseelements.StatisticTest;
 import org.junit.Before;
 import org.junit.Test;
 
-import rcaller.exception.ParseException;
-
 /**
  * Integration tests for {@link TopAnatRManager}.
  * It uses precomputed input files needed by the topAnat R script, located in the resources folder,
@@ -158,14 +156,14 @@ public class TopAnatRManagerIT extends TestAncestor {
      * Validate the presence and the message of the ParseException
      * @throws IOException 
      */
-    @Test(expected=ParseException.class)
+    @Test(expected=FileNotFoundException.class)
     public void testPerformRFunctionNoResults() throws IOException{
         // Play with the FDR threshold to exclude all results from the output
         when(this.mockTopAnatParams.getFdrThreshold()).thenReturn(0d);
         try{
             this.performRFunction();
         }
-        catch(ParseException e){
+        catch(FileNotFoundException e){
             assertTrue(e.getMessage().matches(".*Can not parse output: The generated file "
                     + ".* is empty"));  
             throw(e);

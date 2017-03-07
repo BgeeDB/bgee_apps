@@ -9,7 +9,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
-import org.bgee.model.TaskManager;
 import org.bgee.view.TopAnatDisplay;
 
 /**
@@ -17,7 +16,7 @@ import org.bgee.view.TopAnatDisplay;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Nov 2015
+ * @version Bgee 13, Oct 2016
  * @since   Bgee 13
  */
 public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisplay {
@@ -94,11 +93,6 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
 
     @Override
     public void sendTrackingJobResponse(LinkedHashMap<String, Object> data, String msg) {
-        throw log.throwing(new UnsupportedOperationException("Not available for HTML display"));
-    }
-
-    @Override
-    public void sendJobErrorResponse(TaskManager taskManager) {
         throw log.throwing(new UnsupportedOperationException("Not available for HTML display"));
     }
 

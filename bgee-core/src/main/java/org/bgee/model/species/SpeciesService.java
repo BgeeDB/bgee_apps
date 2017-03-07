@@ -81,7 +81,8 @@ public class SpeciesService extends Service {
     public Set<Species> loadSpeciesByIds(Set<Integer> speciesIds, boolean withSpeciesInfo)
             throws DAOException, QueryInterruptedException {
         log.entry(speciesIds, withSpeciesInfo);
-        Set<Species> species = this.getDaoManager().getSpeciesDAO().getSpeciesByIds(speciesIds).stream()
+        Set<Integer> filteredSpecieIds = speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds);
+        Set<Species> species = this.getDaoManager().getSpeciesDAO().getSpeciesByIds(filteredSpecieIds).stream()
                 .map(SpeciesService::mapFromTO)
                 .collect(Collectors.toSet());
         if (withSpeciesInfo) {
@@ -115,7 +116,7 @@ public class SpeciesService extends Service {
                     sourceToSpeciesTOs, sources, species.getId(), InfoType.ANNOTATION);
             completedSpecies.add(new Species(species.getId(), species.getName(), species.getDescription(),
                     species.getGenus(), species.getSpeciesName(), species.getGenomeVersion(),
-                    forData.isEmpty() ? null : forData, forAnnotation.isEmpty() ? null : forAnnotation));
+                    forData, forAnnotation));
         }
 
         return log.exit(completedSpecies);

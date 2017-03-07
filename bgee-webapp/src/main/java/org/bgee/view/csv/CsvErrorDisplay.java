@@ -16,6 +16,7 @@ import org.bgee.controller.exception.RequestParametersNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotStorableException;
 import org.bgee.controller.exception.RequestSizeExceededException;
 import org.bgee.controller.exception.ValueSizeExceededException;
+import org.bgee.model.job.exception.TooManyJobsException;
 import org.bgee.view.ErrorDisplay;
 import org.bgee.view.ViewFactory;
 
@@ -31,28 +32,30 @@ public class CsvErrorDisplay extends CsvParentDisplay implements ErrorDisplay {
     @Override
     public void displayServiceUnavailable() {
         log.entry();
+        
         this.sendServiceUnavailableHeaders();
 
         this.startDisplay();
-
-        this.writeln("Due to technical problems, Bgee is currently unavailable. " +
+        this.displayErrorMessage("Due to technical problems, Bgee is currently unavailable. " +
                 "We are working to restore Bgee as soon as possible. " +
                 "We apologize for any inconvenience.");
-
         this.endDisplay();
+        
         log.exit();
     }
 
     @Override
     public void displayUnexpectedError() {
         log.entry();
+        
         this.sendInternalErrorHeaders();
+        
         this.startDisplay();
-        this.writeln("Something wrong happened! ");
-        this.writeln("500 internal server error. " +
+        this.displayErrorMessage("500 internal server error. " +
                 "An error occurred on our side. This error was logged and will be investigated. " +
                 "We apologize for any inconvenience.");
         this.endDisplay();
+        
         log.exit();
     }
 
@@ -63,11 +66,10 @@ public class CsvErrorDisplay extends CsvParentDisplay implements ErrorDisplay {
         this.sendBadRequestHeaders();
 
         this.startDisplay();
-
-        this.writeln("One of the request parameters has an incorrect format.");
-        this.writeln("Incorrect parameter: " + e.getURLParameter().getName());
-
+        this.displayErrorMessage("One of the request parameters has an incorrect format. "
+                + "Incorrect parameter: " + e.getURLParameter().getName());
         this.endDisplay();
+        
         log.exit();
     }
 
@@ -78,10 +80,9 @@ public class CsvErrorDisplay extends CsvParentDisplay implements ErrorDisplay {
         this.sendBadRequestHeaders();
 
         this.startDisplay();
-
-        this.writeln(e.getMessage());
-
+        this.displayErrorMessage(e.getMessage());
         this.endDisplay();
+        
         log.exit();
     }
 
@@ -92,12 +93,10 @@ public class CsvErrorDisplay extends CsvParentDisplay implements ErrorDisplay {
         this.sendBadRequestHeaders();
 
         this.startDisplay();
-
-        this.writeln("One of the request parameters was incorrectly assigned "
-                + "multiple values.");
-        this.writeln("Incorrect parameter: " + e.getURLParameter().getName());
-
+        this.displayErrorMessage("One of the request parameters was incorrectly assigned "
+                + "multiple values. Incorrect parameter: " + e.getURLParameter().getName());
         this.endDisplay();
+        
         log.exit();
     }
 
@@ -108,10 +107,9 @@ public class CsvErrorDisplay extends CsvParentDisplay implements ErrorDisplay {
         this.sendBadRequestHeaders();
 
         this.startDisplay();
-
-        this.writeln("Request maximum size exceeded.");
-
+        this.displayErrorMessage("Request maximum size exceeded.");
         this.endDisplay();
+        
         log.exit();
     }
 
@@ -122,12 +120,10 @@ public class CsvErrorDisplay extends CsvParentDisplay implements ErrorDisplay {
         this.sendBadRequestHeaders();
 
         this.startDisplay();
-
-        this.writeln("One of the request parameters exceeded "
-                + "its maximum allowed length.");
-        this.writeln("Incorrect parameter: " + e.getURLParameter().getName());
-
+        this.displayErrorMessage("One of the request parameters exceeded "
+                + "its maximum allowed length. Incorrect parameter: " + e.getURLParameter().getName());
         this.endDisplay();
+        
         log.exit();
     }
 
@@ -136,11 +132,11 @@ public class CsvErrorDisplay extends CsvParentDisplay implements ErrorDisplay {
         log.entry(e);
         
         this.sendPageNotFoundHeaders();
+        
         this.startDisplay();
-        this.writeln("Something wrong happened! ");
-        this.writeln("404 not found. We could not understand your query.");
-
+        this.displayErrorMessage("404 not found. We could not understand your query.");
         this.endDisplay();
+        
         log.exit();
     }
 
@@ -149,15 +145,15 @@ public class CsvErrorDisplay extends CsvParentDisplay implements ErrorDisplay {
         log.entry(e);
         
         this.sendBadRequestHeaders();
+        
         this.startDisplay();
-        this.writeln("Something wrong happened! ");
-        this.writeln("You tried to use in your query some parameters supposed to be stored "
+        this.displayErrorMessage("You tried to use in your query some parameters supposed to be stored "
                 + "on our server, but we could not find them. Either the key you used was wrong, "
                 + "or we were not able to save these parameters. Your query should be rebuilt "
-                + "by setting all the parameters again. We apologize for any inconvenience.");
-        this.writeln("Invalid key: " + e.getKey());
-
+                + "by setting all the parameters again. We apologize for any inconvenience. "
+                + "Invalid key: " + e.getKey());
         this.endDisplay();
+        
         log.exit();
     }
 
@@ -166,13 +162,13 @@ public class CsvErrorDisplay extends CsvParentDisplay implements ErrorDisplay {
         log.entry(e);
         
         this.sendInternalErrorHeaders();
+        
         this.startDisplay();
-        this.writeln("Something wrong happened! ");
-        this.writeln("We could not store your parameters, "
+        this.displayErrorMessage("We could not store your parameters, "
                 + "or a key could not be generated to retrieve them. "
                 + "We apologize for any inconvenience.</p>");
-
         this.endDisplay();
+        
         log.exit();
     }
 
@@ -181,12 +177,37 @@ public class CsvErrorDisplay extends CsvParentDisplay implements ErrorDisplay {
         log.entry();
         
         this.sendBadRequestHeaders();
+        
         this.startDisplay();
-        this.writeln("Something wrong happened! ");
-        this.writeln("This operation is not supported "
+        this.displayErrorMessage("This operation is not supported "
                 + "for the requesed view or the requested parameters.");
-
         this.endDisplay();
+        
+        log.exit();
+    }
+
+    @Override
+    public void displayControllerException(TooManyJobsException e) {
+        log.entry();
+        
+        this.sendTooManyRequeststHeaders();
+        
+        this.startDisplay();
+        this.displayErrorMessage("Too Many Requests - " + e.getMessage());
+        this.endDisplay();
+        
+        log.exit();
+    }
+    
+    /**
+     * Format an error message before displaying it. Notably, all CSV error messages 
+     * have to start with "Query error: ".
+     * 
+     * @param msg   A {@code String} that is the error message to display.
+     */
+    private void displayErrorMessage(String msg) {
+        log.entry(msg);
+        this.writeln("Query error: " + msg);
         log.exit();
     }
 }

@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.commons.io.input.ReversedLinesFileReader;
@@ -283,7 +284,8 @@ public class TopAnatAnalysis {
 
             try {
                 this.rManager.performRFunction(this.getRScriptConsoleFilePath());
-            } catch (rcaller.exception.ParseException e) {
+            //TODO: This exception specific to RCaller should be encapsulated into RManager    
+            } catch (com.github.rcaller.exception.ParseException e) {
                 log.catching(e);
                 //RCaller throws an exception when there is no result, with a message 
                 //corresponding to the regex: 
@@ -304,9 +306,13 @@ public class TopAnatAnalysis {
                 }
                 //we don't create an empty result file: either it was created by R if there was no result, 
                 //or, if there was an error, then we don't want to prevent re-runnning the analysis.
-                
-            } catch (rcaller.exception.ExecutionException e) {
-                throw log.throwing(new RAnalysisException("The R analysis threw an Exception ", e));
+
+            //TODO: This exception specific to RCaller should be encapsulated into RManager    
+            } catch (com.github.rcaller.exception.ExecutionException e) {
+                //because RCaller throws this exception in case of InterruptedException, 
+                //log as debug
+                throw log.throwing(Level.DEBUG, 
+                        new RAnalysisException("The R analysis threw an Exception ", e));
             }
 
             this.move(tmpFile, finalFile, false);

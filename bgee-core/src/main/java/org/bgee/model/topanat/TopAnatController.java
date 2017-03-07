@@ -10,22 +10,26 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Stream;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.TaskManager;
 import org.bgee.model.function.PentaFunction;
+import org.bgee.model.job.Job;
 
 /**
  * This class controls the whole topAnat process by running a {@link TopAnatAnalysis} for each
  * provided {@link TopAnatParams} instance and returns {@link TopAnatResults} objects.
  * 
  * @author Mathieu Seppey
- * 
- * @version Bgee 13, March 2016
+ * @author Frederic Bastian
+ * @version Bgee 13 Oct. 2016
  * @since Bgee 13
  */
+//XXX: rename to TopAnatService, to be obtain through the ServiceFactory?
+//Or create another TopAnatService class?
+//This TopAnatService should receive the JobService instance at instantiation?
 public class TopAnatController {
 
     private final static Logger log = LogManager.getLogger(TopAnatController.class.getName()); 
@@ -58,11 +62,11 @@ public class TopAnatController {
     private final PentaFunction<TopAnatParams, BgeeProperties, ServiceFactory, TopAnatRManager,
     TopAnatController, TopAnatAnalysis> 
     topAnatAnalysisSupplier;
-
+    
     /**
-     * An optional {@code TaskManager}
+     * An {@code Optional} {@code Job} allowing to track advancement of the analyses.
      */
-    private final Optional<TaskManager> taskManager;
+    private final Optional<Job> job;
 
     /**
      * Constructor building a {@code TopAnatController} given a list of {@code TopAnatParams}
@@ -99,8 +103,8 @@ public class TopAnatController {
      * @param taskManager       A {@code TaskManager}
      */
     public TopAnatController(List<TopAnatParams> topAnatParams, BgeeProperties props, 
-            ServiceFactory serviceFactory, TaskManager taskManager) {
-        this(topAnatParams, props, serviceFactory, TopAnatAnalysis::new, taskManager);
+            ServiceFactory serviceFactory, Job job) {
+        this(topAnatParams, props, serviceFactory, TopAnatAnalysis::new, job);
     }
 
     /**
@@ -140,8 +144,8 @@ public class TopAnatController {
     public TopAnatController(List<TopAnatParams> topAnatParams, BgeeProperties props, 
             ServiceFactory serviceFactory, 
             PentaFunction<TopAnatParams, BgeeProperties, ServiceFactory, TopAnatRManager, TopAnatController,
-            TopAnatAnalysis> topAnatAnalysisSupplier, TaskManager taskManager) {
-        log.entry(topAnatParams, props, serviceFactory, topAnatAnalysisSupplier, taskManager);
+            TopAnatAnalysis> topAnatAnalysisSupplier, Job job) {
+        log.entry(topAnatParams, props, serviceFactory, topAnatAnalysisSupplier, job);
 
         if (topAnatParams == null || topAnatParams.isEmpty() || 
                 topAnatParams.stream().anyMatch(Objects::isNull)) {
@@ -162,7 +166,7 @@ public class TopAnatController {
         this.topAnatAnalysisSupplier = topAnatAnalysisSupplier;
         this.props = props;
         this.serviceFactory = serviceFactory;
-        this.taskManager = Optional.ofNullable(taskManager);
+        this.job = Optional.ofNullable(job);
 
         log.exit();
     }
@@ -176,37 +180,44 @@ public class TopAnatController {
         log.entry();
 
         // Create TopAnatAnalysis for each TopAnatParams
+        //TODO: TopAnatAnalysis should be provided with the Job instance to be able to use 
+        //'checkInterrupted'
+
         return log.exit(this.topAnatParams.stream()
                 .map(params -> this.topAnatAnalysisSupplier.apply(params, this.props, 
                         this.serviceFactory, new TopAnatRManager(this.props, params),this))
                 .map(analysis -> {
                     try {
-                        //if task in TaskManager not yet started (first analysis), start it.
-                        if (this.taskManager.map(t -> !t.isStarted()).orElse(false)) {
-                            this.taskManager.ifPresent(t -> 
-                            t.startQuery("Proceeding to " + this.topAnatParams.size() + 
-                                    (this.topAnatParams.size() > 1? " analyses": " analysis"), 
-                                    this.topAnatParams.size(), ""));
+                        //if task in job not yet started (first analysis), start it.
+                        if (this.job.map(t -> !t.isStarted()).orElse(false)) {
+                            this.job.ifPresent(t -> t.startJob());
                         } else {
-                            //otherwise, move to next subtask
-                            this.taskManager.ifPresent(t -> t.nextSubTask(""));
+                            //otherwise, check if job was interrupted and move to next subtask
+                            this.job.ifPresent(t -> {
+                                try {
+                                    t.checkInterrupted();
+                                    t.nextTask();
+                                } catch (InterruptedException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            });
                         }
 
                         TopAnatResults results = analysis.proceedToAnalysis();
-
-                        //end subtask in TaskManager
-                        this.taskManager.ifPresent(t -> t.endSubTask());
-                        //end main task in TaskManager if last analysis
-                        if (this.taskManager.map(t -> t.getCurrentSubTaskIndex()).orElse(-1) == 
+                        
+                        //end job if last analysis
+                        if (this.job.map(t -> t.getCurrentTaskIndex()).orElse(-1) == 
                                 (this.topAnatParams.size() - 1)) {
-                            this.taskManager.ifPresent(t -> t.endQuery(true));
+                            this.job.ifPresent(t -> t.completeWithSuccess());
                         }
 
                         return results;
                     } catch (Throwable e) {
-                        log.catching(e);
-                        this.taskManager.ifPresent(t -> t.endQuery(false));
-                        throw log.throwing(new RuntimeException(e));
+                        //catch and throw this error in DEBUG level because we don't want 
+                        //to log those as errors when we requested a Thread interruption
+                        log.catching(Level.DEBUG, e);
+                        this.job.ifPresent(t -> t.complete());
+                        throw log.throwing(Level.DEBUG, new RuntimeException(e));
                     }
                 }));
     }
@@ -217,12 +228,11 @@ public class TopAnatController {
     public BgeeProperties getBgeeProperties() {
         return this.props;
     }
-
     /**
-     * @return  An optional {@code TaskManager}
+     * @return  An {@code Optional} {@code Job} allowing to track advancement of the analyses.
      */
-    public Optional<TaskManager> getTaskManager() {
-        return taskManager;
+    public Optional<Job> getJob() {
+        return job;
     }
 
     /**
@@ -477,7 +487,7 @@ public class TopAnatController {
         StringBuilder builder = new StringBuilder();
         builder.append("TopAnatController [readWriteLocks=").append(readWriteLocks).append(", props=")
         .append(props).append(", serviceFactory=").append(serviceFactory)
-        .append(", taskManager=").append(taskManager).append(", topAnatAnalysisSupplier=")
+        .append(", job=").append(job).append(", topAnatAnalysisSupplier=")
         .append("").append(", topAnatParams=").append(topAnatParams)
         .append("]");
         return builder.toString();

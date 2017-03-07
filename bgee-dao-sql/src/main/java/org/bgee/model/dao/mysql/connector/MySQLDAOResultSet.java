@@ -559,7 +559,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
             throw log.throwing(e);
         } catch (QueryInterruptedException e) {
             this.close();
-            throw log.throwing(e);
+            throw log.throwing(Level.DEBUG, e);
         }
     }
     
@@ -856,7 +856,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
         if (this.currentStatement.isCanceled()) {
             //to close remaining BgeePreparedStatements
             this.close();
-            throw log.throwing(new QueryInterruptedException());
+            throw log.throwing(Level.DEBUG, new QueryInterruptedException());
         }
         log.exit();
     }

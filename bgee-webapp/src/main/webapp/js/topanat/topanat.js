@@ -139,7 +139,7 @@ angular
                                 console.log("catchdata");
                                 console.log(data);
                                 console.timeEnd("getJobResultService");
-                                bgeejobservice.getJobStatus(hash, 999999, true)
+                                bgeejobservice.getJobStatus(hash, -1, true)
                                     .then(function(data, status){
                                         //console.log(data);
                                         deferred.resolve(data)

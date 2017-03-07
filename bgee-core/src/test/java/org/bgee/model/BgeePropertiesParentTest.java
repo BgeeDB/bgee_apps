@@ -14,7 +14,7 @@ import org.junit.Before;
  * @author Mathieu Seppey
  * @author Valentine Rech de Laval
  * @author Frederic Bastian
- * @version Bgee 13, August 2015
+ * @version Bgee 13, Oct 2016
  * @since Bgee 13
  * @see BgeePropertiesParentTest
  * @see BgeePropertiesFirstTest
@@ -48,6 +48,9 @@ public abstract class BgeePropertiesParentTest {
     public void resetProperties(){
         this.clearCommonProperties();
         System.clearProperty(BgeeProperties.PROPERTIES_FILE_NAME_KEY);
+        if (BgeeProperties.hasBgeeProperties()) {
+            BgeeProperties.getBgeeProperties().release();
+        }
     }
 
     /**

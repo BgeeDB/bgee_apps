@@ -21,6 +21,7 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -165,6 +166,30 @@ public class InsertPropagatedCalls extends CallService {
      * An {@code int} that is the ID of the species to propagate calls for.
      */
     private final int speciesId;
+    
+    /**
+     * A {@code ConcurrentMap} where keys are {@code Condition}s, the associated value
+     * being a {@code Set} of {@code Condition}s that are their ancestral conditions,
+     * as retrieved in the method {@link #propagatePipelineCalls(Map, ConditionUtils)}.
+     * This {@code ConcurrentMap} serves as a cache, to not query the {@code ConditionUtils}
+     * each time. 
+     */
+    //XXX: should a similar mechanism be directly implemented in ConditionUtils?
+    //Seems complicated and might not worth it in all situations.
+    //But it seems to result in a 30% speed increase in this class.
+    private final ConcurrentMap<Condition, Set<Condition>> condToAncestors;
+    /**
+     * A {@code ConcurrentMap} where keys are {@code Condition}s, the associated value
+     * being a {@code Set} of {@code Condition}s that are their descendant conditions,
+     * as retrieved in the method {@link #propagatePipelineCalls(Map, ConditionUtils)}.
+     * This {@code ConcurrentMap} serves as a cache, to not query the {@code ConditionUtils}
+     * each time. 
+     */
+    //XXX: should a similar mechanism be directly implemented in ConditionUtils?
+    //Seems complicated and might not worth it in all situations.
+    //But it seems to result in a 30% speed increase in this class.
+    private final ConcurrentMap<Condition, Set<Condition>> condToDescendants;
+    
 
     public InsertPropagatedCalls(Supplier<ServiceFactory> serviceFactorySupplier, 
             Collection<ConditionDAO.Attribute> conditionParams, int speciesId) {
@@ -183,6 +208,9 @@ public class InsertPropagatedCalls extends CallService {
         this.errorOccured = null;
         this.jobCompleted = false;
         this.insertThread = null;
+        
+        this.condToAncestors = new ConcurrentHashMap<>();
+        this.condToDescendants = new ConcurrentHashMap<>();
     }
     
     /**
@@ -1582,8 +1610,9 @@ public class InsertPropagatedCalls extends CallService {
             // Retrieve conditions
             log.trace(COMPUTE_MARKER, "Starting to retrieve ancestral conditions for {}.", 
                     curCall.getCondition());
-            Set<Condition> ancestorConditions = conditionUtils.getAncestorConditions(
-                curCall.getCondition());
+            Set<Condition> ancestorConditions = this.condToAncestors.computeIfAbsent(
+                    curCall.getCondition(), 
+                    k -> conditionUtils.getAncestorConditions(k));
             log.trace(COMPUTE_MARKER, "Done retrieving ancestral conditions for {}: {}.", 
                     curCall.getCondition(), ancestorConditions.size());
             log.trace("Ancestor conditions: {}", ancestorConditions);
@@ -1596,8 +1625,10 @@ public class InsertPropagatedCalls extends CallService {
 
             log.trace(COMPUTE_MARKER, "Starting to retrieve descendant conditions for {}.", 
                     curCall.getCondition());
-            Set<Condition> descendantConditions = conditionUtils.getDescendantConditions(
-                    curCall.getCondition(), false, false, NB_SUBLEVELS_MAX, null);
+            Set<Condition> descendantConditions = this.condToDescendants.computeIfAbsent(
+                    curCall.getCondition(), 
+                    k -> conditionUtils.getDescendantConditions(
+                            k, false, false, NB_SUBLEVELS_MAX, null));
             log.trace(COMPUTE_MARKER, "Done retrieving descendant conditions for {}: {}.", 
                     curCall.getCondition(), descendantConditions.size());
             log.trace("Descendant conditions: {}", descendantConditions);

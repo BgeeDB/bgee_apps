@@ -1,18 +1,21 @@
 package org.bgee.model.ontology;
 
+import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.NamedEntity;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.anatdev.AnatEntity;
-import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.TaxonConstraint;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 
@@ -20,7 +23,8 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
  * Class allowing to describe a multi-species ontology, or the sub-graph of a multi-species ontology.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Oct. 2016
+ * @author Frederic Bastian
+ * @version Bgee 14 Mar. 2017
  * @since   Bgee 13, July 2016
  * @param <T>   The type of element in this ontology or sub-graph.
  * @param <U>   The type of ID of the elements in this ontology or sub-graph.
@@ -35,12 +39,29 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
      * between {@code OntologyElement}s of this ontology.
      */
     private final Set<TaxonConstraint<Integer>> relationTaxonConstraints;
+    
+    /**
+     * A {@code Map} where keys are {@code Integer}s representing species IDs,
+     * the associated value being a {@code Set} of {@code RelationTO}s present in {@link #relations},
+     * valid in the related species.
+     * <p>
+     * A {@code null} key means: relations valid in any species.
+     */
+    private final Map<Integer, Set<RelationTO<U>>> relationsBySpeciesId;
 
     /**
      * A {@code Set} of {@code TaxonConstraint}s that are taxon constrains on 
      * {@code OntologyElement}s of this ontology.
      */
-    private final Set<TaxonConstraint<String>> entityTaxonConstraints;
+    private final Set<TaxonConstraint<U>> entityTaxonConstraints;
+    /**
+     * A {@code Map} where keys are {@code Integer}s representing species IDs,
+     * the associated value being a {@code Set} of {@code T}s present in {@link #getElements()},
+     * valid in the related species.
+     * <p>
+     * A {@code null} key means: entities valid in any species.
+     */
+    private final Map<Integer, Set<T>> entitiesBySpeciesId;
 
     /**
      * @see #getSpeciesIds()
@@ -68,17 +89,140 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
      *                                  to be store by this {@code MultiSpeciesOntology}.
      */
     protected MultiSpeciesOntology(Collection<Integer> speciesIds, Collection<T> elements, 
-            Collection<RelationTO<U>> relations, Collection<TaxonConstraint<String>> taxonConstraints, 
+            Collection<RelationTO<U>> relations, Collection<TaxonConstraint<U>> taxonConstraints, 
             Collection<TaxonConstraint<Integer>> relationTaxonConstraints, 
             Collection<RelationType> relationTypes,
             ServiceFactory serviceFactory, Class<T> type) {
         super(elements, relations, relationTypes, serviceFactory, type);
+        log.entry(speciesIds, elements, relations, taxonConstraints, relationTaxonConstraints, 
+                relationTypes, serviceFactory, type);
         this.speciesIds = Collections.unmodifiableSet(
                 speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds));
         this.relationTaxonConstraints = Collections.unmodifiableSet(
                 relationTaxonConstraints == null? new HashSet<>(): new HashSet<>(relationTaxonConstraints));
         this.entityTaxonConstraints = Collections.unmodifiableSet(
                 taxonConstraints == null? new HashSet<>(): new HashSet<>(taxonConstraints));
+
+        //then store valid entities per species
+        Map<Integer, Set<T>> entitiesBySpeciesId = new HashMap<>();
+        if (this.entityTaxonConstraints.isEmpty()) {
+            //no taxon constraints provided, we consider all entities are valid in all species.
+            entitiesBySpeciesId.put(null, this.getElements());
+        } else {
+            //Sadly, Collectors.groupingBy methods do not accept null keys
+            entitiesBySpeciesId = this.entityTaxonConstraints.stream()
+                .collect(Collectors.toMap(
+                        tc -> tc.getSpeciesId(),
+                        tc -> {
+                            T element = this.getElement(tc.getEntityId());
+                            if (element != null) {
+                                return new HashSet<>(Arrays.asList(element));
+                            }
+                            return new HashSet<>();
+                        },
+                        (v1, v2) -> {v1.addAll(v2); return v1;}
+                 ));
+        }
+        this.entitiesBySpeciesId = Collections.unmodifiableMap(
+                entitiesBySpeciesId.entrySet().stream()
+                    .collect(Collectors.toMap(e -> e.getKey(), 
+                            e -> Collections.unmodifiableSet((e.getValue())))));
+        log.trace("Entities by speciesId: {}", this.entitiesBySpeciesId);
+        
+        Map<Integer, Set<RelationTO<U>>> relationsBySpeciesId = null;
+        if (this.relationTaxonConstraints.isEmpty()) {
+            log.trace("Inferring relation taxon constraints from entity taxon constraints");
+            //no relation taxon constraints provided, so we'll try to use the entity taxon constraints:
+            //both the source and the target need to be valid in a species for the relation to be valid
+            //in that species.
+            //We generate a Map to easily retrieve all species an entity is valid in from its ID.
+            //we use entitiesBySpeciesId because we already made modifications above using it.
+            //Sadly, Collectors.groupingBy methods do not accept null keys,
+            //and Collectors.toMap does not support null values (see http://stackoverflow.com/a/24634007/1768736)
+            final Map<U, Set<Integer>> speIdsByEntityId =  this.entitiesBySpeciesId.entrySet().stream()
+                    .flatMap(e -> e.getValue().stream()
+                              .map(entity -> new AbstractMap.SimpleEntry<>(entity.getId(), e.getKey())))
+                    .collect(HashMap::new, 
+                            (m, e2) -> m.put(e2.getKey(), new HashSet<>(Arrays.asList(e2.getValue()))),
+                            (m1, m2) -> {
+                                for (Entry<U, Set<Integer>> e2: m2.entrySet()) {
+                                    Set<Integer> m1Value = m1.get(e2.getKey());
+                                    if (m1Value != null) {
+                                        m1Value.addAll(e2.getValue());
+                                    } else {
+                                        m1.put(e2.getKey(), e2.getValue());
+                                    }
+                                }
+                            });
+            log.trace("Species IDs by entity ID: {}", speIdsByEntityId);
+            
+            //Sadly, Collectors.groupingBy methods do not accept null keys, so we use toMap
+            relationsBySpeciesId = this.getRelations().stream()
+            .flatMap(rel -> {
+                final Set<Integer> speIdsSource = speIdsByEntityId.get(rel.getSourceId());
+                if (speIdsSource == null) {
+                    throw log.throwing(new IllegalArgumentException(
+                            "Missing taxon constraints for source of relation " + rel));
+                }
+                final Set<Integer> speIdsTarget = speIdsByEntityId.get(rel.getTargetId());
+                if (speIdsTarget == null) {
+                    throw log.throwing(new IllegalArgumentException(
+                            "Missing taxon constraints for target of relation " + rel));
+                }
+                
+                if (speIdsSource.contains(null) && speIdsTarget.contains(null)) {
+                    //if both source and target valid in all species
+                    return Stream.of(new AbstractMap.SimpleEntry<Integer, RelationTO<U>>(null, rel));
+                } else if (speIdsSource.contains(null)) {
+                    //if source valid in all species but not target, restrain the relation
+                    //based on target restriction
+                    return speIdsTarget.stream().map(id -> new AbstractMap.SimpleEntry<Integer, RelationTO<U>>(id, rel));
+                } else if (speIdsTarget.contains(null)) {
+                    //if target valid in all species but not source, restrain the relation
+                    //based on source restriction
+                    return speIdsSource.stream().map(id -> new AbstractMap.SimpleEntry<Integer, RelationTO<U>>(id, rel));
+                } else {
+                    //both source and target have restrictions, keep the intersection of valid species
+                    return speIdsSource.stream()
+                            .filter(sourceSpeId -> speIdsTarget.contains(sourceSpeId))
+                            .map(id -> new AbstractMap.SimpleEntry<Integer, RelationTO<U>>(id, rel));
+                }
+            }).collect(Collectors.toMap(
+                    e -> e.getKey(), 
+                    e -> new HashSet<>(Arrays.asList(e.getValue())),
+                    (v1, v2) -> {v1.addAll(v2); return v1;}
+            ));
+            
+        } else {
+            log.trace("Retrieving relation taxon constraints from data source.");
+            //first, build a Map to easily retrieve a relation from its ID
+            final Map<Integer, RelationTO<U>> relMap = this.getRelations().stream()
+                    .collect(Collectors.toMap(r -> r.getId(), r -> r));
+            //then store valid relations per species
+            //Sadly, Collectors.groupingBy methods do not accept null keys, so we use toMap
+            relationsBySpeciesId = this.relationTaxonConstraints.stream()
+                    .collect(Collectors.toMap(
+                            tc -> tc.getSpeciesId(),
+                            tc -> {
+                                RelationTO<U> rel = relMap.get(tc.getEntityId());
+                                //maybe the relation taxon constraint is about a relation
+                                //that we filtered out (e.g., develops_from relation),
+                                //so we just return empty Set in that case.
+                                if (rel == null) {
+                                    return new HashSet<>();
+                                }
+                                return new HashSet<>(Arrays.asList(rel));
+                            },
+                            (v1, v2) -> {v1.addAll(v2); return v1;}
+                    ));
+        }
+        log.trace("Relations by species ID: {}", relationsBySpeciesId);
+        this.relationsBySpeciesId = Collections.unmodifiableMap(
+                relationsBySpeciesId.entrySet().stream()
+                    .collect(Collectors.toMap(e -> e.getKey(), 
+                            e -> Collections.unmodifiableSet(e.getValue()))));
+        
+        log.exit();
     }
     
     /**
@@ -101,16 +245,29 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
     public  Set<T> getElements(Collection<Integer> speciesIds) {
         log.entry(speciesIds);
         
-        // Get stage or anat. entity IDs according to taxon constraints
-        Set<String> entityIds = entityTaxonConstraints.stream()
-                .filter(tc -> tc.getSpeciesId() == null || speciesIds.contains(tc.getSpeciesId()))
-                .map(tc -> tc.getEntityId())
+        if (speciesIds == null || speciesIds.isEmpty()) {
+            //copy the Set so that it becomes modifiable, to be consistent with use of Streams
+            //in other methods
+            return new HashSet<>(this.getElements());
+        }
+        
+        Set<T> retrievedElements = speciesIds.stream()
+                .flatMap(id -> {
+                    Set<T> speElements = this.entitiesBySpeciesId.get(id);
+                    if (speElements == null) {
+                        return Stream.empty();
+                    }
+                    return speElements.stream();
+                })
                 .collect(Collectors.toSet());
-                
-        // Filter elements according to taxon constraints
-        return log.exit(this.getElements().stream()
-                .filter(e -> entityIds.contains(e.getId()))
-                .collect(Collectors.toSet()));
+
+        //finally, add elements valid in all species (mapped to key null)
+        Set<T> allSpeElements = this.entitiesBySpeciesId.get(null);
+        if (allSpeElements != null) {
+            retrievedElements.addAll(allSpeElements);
+        }
+
+        return log.exit(retrievedElements);
     }
     
     /**
@@ -125,24 +282,28 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
     private  Set<RelationTO<U>> getRelations(Collection<Integer> speciesIds) {
         log.entry(speciesIds);
         
-        // XXX: according to type of according to if relationTaxonConstraints is null?
-        // No, we should inspect why but I'm just lasy to do it now
-        if (this.getType().equals(AnatEntity.class)) {
-            // Get relation IDs according to taxon constraints
-            Set<Integer> relationsIds = relationTaxonConstraints.stream()
-                    .filter(tc -> tc.getSpeciesId() == null || speciesIds.contains(tc.getSpeciesId()))
-                    .map(tc -> tc.getEntityId())
-                    .collect(Collectors.toSet());
-                    
-            // Filter relations according to taxon constraints
-            return log.exit(this.getRelations().stream()
-                    .filter(r -> relationsIds.contains(r.getId()))
-                    .collect(Collectors.toSet()));
-        } else if (this.getType().equals(DevStage.class)) {
-            return log.exit(this.getRelations());
-        } else {
-            throw log.throwing(new IllegalArgumentException("Unsupported OntologyElement"));
+        if (speciesIds == null || speciesIds.isEmpty()) {
+            //copy the Set so that it becomes modifiable, to be consistent with use of Streams below
+            return new HashSet<>(this.getRelations());
         }
+        
+        Set<RelationTO<U>> retrievedRels = speciesIds.stream()
+                .flatMap(id -> {
+                    Set<RelationTO<U>> speRels = this.relationsBySpeciesId.get(id);
+                    if (speRels == null) {
+                        return Stream.empty();
+                    }
+                    return speRels.stream();
+                })
+                .collect(Collectors.toSet());
+        
+        //finally, add elements valid in all species (mapped to key null)
+        Set<RelationTO<U>> allSpeRels = this.relationsBySpeciesId.get(null);
+        if (allSpeRels != null) {
+            retrievedRels.addAll(allSpeRels);
+        }
+
+        return log.exit(retrievedRels);
     }
     
     /**
@@ -192,7 +353,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
             boolean directRelOnly, Collection<Integer> speciesIds) {
         log.entry(element, relationTypes, directRelOnly, speciesIds);
         return log.exit(this.getRelatives(element, this.getElements(speciesIds), 
-                true, relationTypes, directRelOnly, speciesIds, this.relationTaxonConstraints));
+                true, relationTypes, directRelOnly, this.getRelations(speciesIds)));
     }
     
     /**
@@ -242,7 +403,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
             boolean directRelOnly, Collection<Integer> speciesIds) {
         log.entry(element, relationTypes, directRelOnly, speciesIds);
         return log.exit(this.getRelatives(element, this.getElements(speciesIds), false, 
-                relationTypes, directRelOnly, speciesIds, this.relationTaxonConstraints));
+                relationTypes, directRelOnly, this.getRelations(speciesIds)));
     }
 
     /** 

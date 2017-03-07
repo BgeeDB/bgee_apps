@@ -227,6 +227,7 @@ public class OntologyTest extends TestAncestor {
         // stage3 sp1             stage3p sp2
                 new TaxonConstraint<>("stage1", null),
                 new TaxonConstraint<>("stage2", null),
+                new TaxonConstraint<>("stage3", 1),
                 new TaxonConstraint<>("stage2p", 2),
                 new TaxonConstraint<>("stage3p", 2)));
 

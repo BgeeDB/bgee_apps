@@ -36,6 +36,84 @@ import org.bgee.model.species.Taxon;
 public class OntologyService extends Service {
 
     private static final Logger log = LogManager.getLogger(OntologyService.class.getName());
+    
+    /**
+     * The only purpose of this class is to provide an implementation of equals/hashCode
+     * for {@code RelationTO}. {@code TransferObject}s do not implement these method
+     * to return whatever results from the data source.
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 14 Mar. 2017
+     * @version Bgee 14 Mar. 2017
+     *
+     * @param <T>   the type of ID of the related entities
+     */
+    protected static class WrapperRelationTO<T> extends RelationTO<T> {
+        private static final long serialVersionUID = 4746776041672427443L;
+        
+        public WrapperRelationTO(RelationTO<T> relTO) {
+            super(relTO.getId(), relTO.getSourceId(), relTO.getTargetId(), 
+                    relTO.getRelationType(), relTO.getRelationStatus());
+        }
+        
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((this.getId() == null) ? 0 : 
+                this.getId().hashCode());
+            result = prime * result + ((this.getRelationStatus() == null) ? 0 : 
+                this.getRelationStatus().hashCode());
+            result = prime * result + ((this.getRelationType() == null) ? 0 : 
+                this.getRelationType().hashCode());
+            result = prime * result + ((this.getSourceId() == null) ? 0 : 
+                this.getSourceId().hashCode());
+            result = prime * result + ((this.getTargetId() == null) ? 0 : 
+                this.getTargetId().hashCode());
+            return result;
+        }
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            RelationTO<?> other = (RelationTO<?>) obj;
+            if (getId() == null) {
+                if (other.getId() != null) {
+                    return false;
+                }
+            } else if (!getId().equals(other.getId())) {
+                return false;
+            }
+            if (getRelationStatus() != other.getRelationStatus()) {
+                return false;
+            }
+            if (getRelationType() != other.getRelationType()) {
+                return false;
+            }
+            if (getSourceId() == null) {
+                if (other.getSourceId() != null) {
+                    return false;
+                }
+            } else if (!getSourceId().equals(other.getSourceId())) {
+                return false;
+            }
+            if (getTargetId() == null) {
+                if (other.getTargetId() != null) {
+                    return false;
+                }
+            } else if (!getTargetId().equals(other.getTargetId())) {
+                return false;
+            }
+            return true;
+        }
+    }
 
     /**
      * Constructs a {@code OntologyService}.
@@ -290,9 +368,8 @@ public class OntologyService extends Service {
             getDaoManager().getRelationDAO().getAnatEntityRelations(
                 speciesIds, true, s, t, b, 
                 relationTypes.stream()
-                .map(OntologyBase::convertRelationType)
-                .collect(Collectors.toCollection(() -> 
-                EnumSet.noneOf(RelationTO.RelationType.class))), 
+                    .map(OntologyBase::convertRelationType)
+                    .collect(Collectors.toCollection(() -> EnumSet.noneOf(RelationTO.RelationType.class))), 
                 r, 
                 null);
         return log.exit(getRelationTOs(fun, entityIds, getAncestors, getDescendants));
@@ -502,7 +579,9 @@ public class OntologyService extends Service {
         
         Set<RelationTO<U>> relations = new HashSet<>();
         relations.addAll(relationRetrievalFun.apply(sourceIds, targetIds, sourceOrTarget, relationStatus)
-                    .getAllTOs());
+                    //need to wrap the RelationTOs to get hashCode/equals
+                    .stream().map(relTO -> new WrapperRelationTO<>(relTO))
+                    .collect(Collectors.toSet()));
         //if it is requested to infer entities,  
         if (getAncestors || getDescendants) {
             assert sourceOrTarget: "Incorrect source/target condition status: sourceOrTarget should be true";
@@ -530,7 +609,10 @@ public class OntologyService extends Service {
             //Query only if new terms have been discovered
             if (!newSourceIds.isEmpty() || !newTargetIds.isEmpty()) {
                 relations.addAll(relationRetrievalFun.apply(newSourceIds, newTargetIds, 
-                        sourceOrTarget, relationStatus).getAllTOs());
+                                sourceOrTarget, relationStatus)
+                        //need to wrap the RelationTOs to get hashCode/equals
+                        .stream().map(relTO -> new WrapperRelationTO<>(relTO))
+                        .collect(Collectors.toSet()));
             }
         }
         return log.exit(relations);

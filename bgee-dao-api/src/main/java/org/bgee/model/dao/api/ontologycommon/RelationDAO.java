@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
+import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
@@ -285,7 +286,7 @@ public interface RelationDAO extends DAO<RelationDAO.Attribute> {
      * 
      * @param <T> the type of target and source IDs
      */
-    public class RelationTO<T> extends TransferObject {
+    public class RelationTO<T> extends EntityTO<Integer> {
 
         private static final long serialVersionUID = 6320202680108735124L;
 
@@ -423,11 +424,6 @@ public interface RelationDAO extends DAO<RelationDAO.Attribute> {
                 return this.getStringRepresentation();
             }
         }
-
-        /**
-         * An {@code Integer} representing the ID of this relation.
-         */
-        private final Integer id;
         
         /**
          * A {@code T} that is the OBO-like ID of the parent term of this relation.
@@ -498,19 +494,13 @@ public interface RelationDAO extends DAO<RelationDAO.Attribute> {
          */
         public RelationTO(Integer relationId, T sourceId, T targetId, 
                 RelationType relType, RelationStatus relationStatus) {
-            this.id = relationId;
+            super(relationId);
             this.sourceId = sourceId;
             this.targetId = targetId;
             this.relationType = relType;
             this.relationStatus = relationStatus;
         }
 
-        /**
-         * @return the {@code Integer} representing the ID of this relation.
-         */
-        public Integer getId() {
-            return this.id;
-        }
         /**
          * @return  A {@code T} that is the OBO-like ID of the parent term of this relation.
          *          For instance, if {@code GO:0000080 "mitotic G1 phase" part_of 

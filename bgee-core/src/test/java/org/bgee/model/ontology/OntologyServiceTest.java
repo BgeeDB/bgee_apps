@@ -69,11 +69,11 @@ public class OntologyServiceTest extends TestAncestor {
         // UBERON:0003 ------------------
         
         List<RelationTO<String>> allRelations = Arrays.asList(
-                new RelationTO<>(1, "UBERON:0002", "UBERON:0001", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-                new RelationTO<>(2, "UBERON:0002p", "UBERON:0001", RelationTO.RelationType.DEVELOPSFROM, RelationStatus.DIRECT),
-                new RelationTO<>(3, "UBERON:0003", "UBERON:0002", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-                new RelationTO<>(4, "UBERON:0003", "UBERON:0002p", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-                new RelationTO<>(5, "UBERON:0003", "UBERON:0001", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT));
+                new OntologyService.WrapperRelationTO<>(new RelationTO<>(1, "UBERON:0002", "UBERON:0001", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT)),
+                new OntologyService.WrapperRelationTO<>(new RelationTO<>(2, "UBERON:0002p", "UBERON:0001", RelationTO.RelationType.DEVELOPSFROM, RelationStatus.DIRECT)),
+                new OntologyService.WrapperRelationTO<>(new RelationTO<>(3, "UBERON:0003", "UBERON:0002", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT)),
+                new OntologyService.WrapperRelationTO<>(new RelationTO<>(4, "UBERON:0003", "UBERON:0002p", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT)),
+                new OntologyService.WrapperRelationTO<>(new RelationTO<>(5, "UBERON:0003", "UBERON:0001", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT)));
 
         List<RelationTO<String>> relationTOs1 = Arrays.asList(allRelations.get(0), allRelations.get(1),
                 allRelations.get(2), allRelations.get(3));
@@ -241,12 +241,12 @@ public class OntologyServiceTest extends TestAncestor {
 
         // UBERON:0001 is_a UBERON:0002 is_a UBERON:0003 is_a UBERON:0004
         List<RelationTO<String>> allRelations = Arrays.asList(
-                new RelationTO<>(1, "UBERON:0002", "UBERON:0001", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-                new RelationTO<>(2, "UBERON:0003", "UBERON:0002", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-                new RelationTO<>(3, "UBERON:0003", "UBERON:0001", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT),     
-                new RelationTO<>(4, "UBERON:0004", "UBERON:0003", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-                new RelationTO<>(5, "UBERON:0004", "UBERON:0002", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT),
-                new RelationTO<>(6, "UBERON:0004", "UBERON:0001", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT));
+                new OntologyService.WrapperRelationTO<>(new RelationTO<>(1, "UBERON:0002", "UBERON:0001", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT)),
+                new OntologyService.WrapperRelationTO<>(new RelationTO<>(2, "UBERON:0003", "UBERON:0002", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT)),
+                new OntologyService.WrapperRelationTO<>(new RelationTO<>(3, "UBERON:0003", "UBERON:0001", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT)),     
+                new OntologyService.WrapperRelationTO<>(new RelationTO<>(4, "UBERON:0004", "UBERON:0003", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT)),
+                new OntologyService.WrapperRelationTO<>(new RelationTO<>(5, "UBERON:0004", "UBERON:0002", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT)),
+                new OntologyService.WrapperRelationTO<>(new RelationTO<>(6, "UBERON:0004", "UBERON:0001", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT)));
         List<RelationTO<String>> relationTOs1 = Arrays.asList(allRelations.get(3), allRelations.get(4), allRelations.get(5));
 
         RelationTOResultSet<String> mockRelationRs1 = getMockResultSet(RelationTOResultSet.class, relationTOs1);
@@ -341,11 +341,11 @@ public class OntologyServiceTest extends TestAncestor {
         Set<RelationStatus> relationStatus = EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE));
 
         List<RelationTO<String>> allRelationTOs = Arrays.asList(
-        		new RelationTO<>(null, "Stage_id2", "Stage_id1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-        		new RelationTO<>(null, "Stage_id2p", "Stage_id1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-        		new RelationTO<>(null, "Stage_id3", "Stage_id2", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-        		new RelationTO<>(null, "Stage_id3", "Stage_id2p", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-        		new RelationTO<>(null, "Stage_id3", "Stage_id1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT));
+        		new OntologyService.WrapperRelationTO<>(new RelationTO<>(null, "Stage_id2", "Stage_id1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT)),
+        		new OntologyService.WrapperRelationTO<>(new RelationTO<>(null, "Stage_id2p", "Stage_id1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT)),
+        		new OntologyService.WrapperRelationTO<>(new RelationTO<>(null, "Stage_id3", "Stage_id2", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT)),
+        		new OntologyService.WrapperRelationTO<>(new RelationTO<>(null, "Stage_id3", "Stage_id2p", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT)),
+        		new OntologyService.WrapperRelationTO<>(new RelationTO<>(null, "Stage_id3", "Stage_id1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT)));
         List<RelationTO<String>> relationTOs1 = Arrays.asList(allRelationTOs.get(0),
                 allRelationTOs.get(1), allRelationTOs.get(2), allRelationTOs.get(4));
         RelationTOResultSet<String> mockRelationRs1 = getMockResultSet(RelationTOResultSet.class, relationTOs1);
@@ -375,7 +375,7 @@ public class OntologyServiceTest extends TestAncestor {
             .thenReturn(mockRelationRs2b);
         
         List<RelationTO<String>> relationTOs3 = Arrays.asList(
-        		new RelationTO<>(null, "Stage_id2", "Stage_id1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT));
+                new OntologyService.WrapperRelationTO<>(new RelationTO<>(null, "Stage_id2", "Stage_id1", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT)));
         RelationTOResultSet<String> mockRelationRs3 = getMockResultSet(RelationTOResultSet.class, relationTOs3);
         when(relationDao.getStageRelations(speciesIds, true, sourceStageIds, targetStageIds,
         		false, relationStatus, null))
@@ -387,28 +387,28 @@ public class OntologyServiceTest extends TestAncestor {
         when(serviceFactory.getDevStageService()).thenReturn(devStageService);
 
         Set<DevStage> devStages1 = new HashSet<>(Arrays.asList(
-        		new DevStage("1", "Stage_id1", "desc1", 0, 0, 0, false, false),
-        		new DevStage("2", "Stage_id2", "desc2", 0, 0, 0, false, false),
-        		new DevStage("3", "Stage_id2p", "desc2p", 0, 0, 0, false, false),
-        		new DevStage("4", "Stage_id3", "desc3", 0, 0, 0, false, false)));
+        		new DevStage("Stage_id1", "Stage_id1", "desc1", 0, 0, 0, false, false),
+        		new DevStage("Stage_id2", "Stage_id2", "desc2", 0, 0, 0, false, false),
+        		new DevStage("Stage_id2p", "Stage_id2p", "desc2p", 0, 0, 0, false, false),
+        		new DevStage("Stage_id3", "Stage_id3", "desc3", 0, 0, 0, false, false)));
         Set<String> expStageIds1 = new HashSet<String>(
         		Arrays.asList("Stage_id1", "Stage_id2", "Stage_id2p", "Stage_id3"));
         when(devStageService.loadDevStages(speciesIds, true, expStageIds1))
             .thenReturn(devStages1.stream()).thenReturn(devStages1.stream());
 
         Set<DevStage> devStages2 = new HashSet<>(Arrays.asList(
-        		new DevStage("1", "Stage_id1", "desc1", 0, 0, 0, false, false),
-        		new DevStage("2", "Stage_id2", "desc2", 0, 0, 0, false, false),
-                new DevStage("3", "Stage_id2p", "desc2p", 0, 0, 0, false, false),
-        		new DevStage("4", "Stage_id3", "desc3", 0, 0, 0, false, false)));
+        		new DevStage("Stage_id1", "Stage_id1", "desc1", 0, 0, 0, false, false),
+        		new DevStage("Stage_id2", "Stage_id2", "desc2", 0, 0, 0, false, false),
+                new DevStage("Stage_id2p", "Stage_id2p", "desc2p", 0, 0, 0, false, false),
+        		new DevStage("Stage_id3", "Stage_id3", "desc3", 0, 0, 0, false, false)));
         Set<String> expStageIds2 = new HashSet<String>(
         		Arrays.asList("Stage_id1", "Stage_id2", "Stage_id3"));
         when(devStageService.loadDevStages(speciesIds, true, expStageIds2))
             .thenReturn(devStages2.stream()).thenReturn(devStages2.stream());
 
         Set<DevStage> devStages3 = new HashSet<>(Arrays.asList(
-        		new DevStage("1", "Stage_id1", "desc1", 0, 0, 0, false, false),
-        		new DevStage("2", "Stage_id2", "desc2", 0, 0, 0, false, false)));
+        		new DevStage("Stage_id1", "Stage_id1", "desc1", 0, 0, 0, false, false),
+        		new DevStage("Stage_id2", "Stage_id2", "desc2", 0, 0, 0, false, false)));
         Set<String> expStageIds3 = new HashSet<String>(Arrays.asList("Stage_id1", "Stage_id2"));
         when(devStageService.loadDevStages(speciesIds, true, expStageIds3)).thenReturn(devStages3.stream());
 
@@ -421,11 +421,11 @@ public class OntologyServiceTest extends TestAncestor {
                 // |               /      | 
                 // stage3 sp1             stage3p sp2
                 new HashSet<>(Arrays.asList(
-                        new TaxonConstraint<>("stage1", null),
-                        new TaxonConstraint<>("stage2", null),
-                        new TaxonConstraint<>("stage2p", 2),
-                        new TaxonConstraint<>("stage3", 1),
-                        new TaxonConstraint<>("stage3p", 2)));
+                        new TaxonConstraint<>("Stage_id1", null),
+                        new TaxonConstraint<>("Stage_id2", null),
+                        new TaxonConstraint<>("Stage_id2p", 2),
+                        new TaxonConstraint<>("Stage_id3", 1),
+                        new TaxonConstraint<>("Stage_id3p", 2)));
 
         // Note: we need to use thenReturn() twice because a stream can be use only once
         when(tcService.loadDevStageTaxonConstraintBySpeciesIds(speciesIds))
@@ -492,10 +492,10 @@ public class OntologyServiceTest extends TestAncestor {
         daoRelationTypes.add(RelationTO.RelationType.ISA_PARTOF);
         
         List<RelationTO<Integer>> relationTOs1 = Arrays.asList(
-                new RelationTO<>(null, 2, 1, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-                new RelationTO<>(null, 21, 1, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-                new RelationTO<>(null, 3, 2, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-                new RelationTO<>(null, 3, 1, RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT));
+                new OntologyService.WrapperRelationTO<>(new RelationTO<>(null, 2, 1, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT)),
+                new OntologyService.WrapperRelationTO<>(new RelationTO<>(null, 21, 1, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT)),
+                new OntologyService.WrapperRelationTO<>(new RelationTO<>(null, 3, 2, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT)),
+                new OntologyService.WrapperRelationTO<>(new RelationTO<>(null, 3, 1, RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT)));
         RelationTOResultSet<Integer> mockRelationRs1 = getMockResultSet(RelationTOResultSet.class, relationTOs1);
         when(relationDao.getTaxonRelations(sourceTaxonIds, targetTaxonIds,
                 true, EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE)), null))
@@ -504,8 +504,8 @@ public class OntologyServiceTest extends TestAncestor {
         sourceTaxonIds = new HashSet<>(Arrays.asList(3, 21));
         targetTaxonIds = new HashSet<>(Arrays.asList(3, 21));
         List<RelationTO<Integer>> relationTOs1b = Arrays.asList(
-            new RelationTO<>(null, 21, 1, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-            new RelationTO<>(null, 3, 21, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT));
+            new OntologyService.WrapperRelationTO<>(new RelationTO<>(null, 21, 1, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT)),
+            new OntologyService.WrapperRelationTO<>(new RelationTO<>(null, 3, 21, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT)));
         RelationTOResultSet<Integer> mockRelationRs1b = getMockResultSet(RelationTOResultSet.class, relationTOs1b);
         when(relationDao.getTaxonRelations(sourceTaxonIds, targetTaxonIds,
                 true, EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE)), null))
@@ -513,8 +513,8 @@ public class OntologyServiceTest extends TestAncestor {
 
         targetTaxonIds = new HashSet<>(Arrays.asList(1, 2));
         List<RelationTO<Integer>> relationTOs2 = Arrays.asList(
-                new RelationTO<>(null, 2, 1, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-                new RelationTO<>(null, 3, 2, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT));
+                new OntologyService.WrapperRelationTO<>(new RelationTO<>(null, 2, 1, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT)),
+                new OntologyService.WrapperRelationTO<>(new RelationTO<>(null, 3, 2, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT)));
         RelationTOResultSet<Integer> mockRelationRs2 = getMockResultSet(RelationTOResultSet.class, relationTOs2);
         when(relationDao.getTaxonRelations(null, targetTaxonIds,
                 true, EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE)), null))
@@ -522,8 +522,8 @@ public class OntologyServiceTest extends TestAncestor {
         
         targetTaxonIds = new HashSet<>(Arrays.asList(3));
         List<RelationTO<Integer>> relationTOs2b = Arrays.asList(
-            new RelationTO<>(null, 3, 2, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-            new RelationTO<>(null, 3, 1, RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT));
+            new OntologyService.WrapperRelationTO<>(new RelationTO<>(null, 3, 2, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT)),
+            new OntologyService.WrapperRelationTO<>(new RelationTO<>(null, 3, 1, RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT)));
         RelationTOResultSet<Integer> mockRelationRs2b = getMockResultSet(RelationTOResultSet.class, relationTOs2b);
         when(relationDao.getTaxonRelations(new HashSet<>(), targetTaxonIds,
                 true, EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE)), null))
@@ -532,14 +532,14 @@ public class OntologyServiceTest extends TestAncestor {
         sourceTaxonIds = new HashSet<>(Arrays.asList(1, 2));
         targetTaxonIds = new HashSet<>(Arrays.asList(1, 2));
         List<RelationTO<Integer>> relationTOs3 = Arrays.asList(
-                new RelationTO<>(null, 2, 1, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT));
+                new OntologyService.WrapperRelationTO<>(new RelationTO<>(null, 2, 1, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT)));
         RelationTOResultSet<Integer> mockRelationRs3 = getMockResultSet(RelationTOResultSet.class, relationTOs3);
         when(relationDao.getTaxonRelations(sourceTaxonIds, targetTaxonIds,
                 false, EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE)), null))
             .thenReturn(mockRelationRs3);
         
         List<RelationTO<Integer>> relationTOs3b = Arrays.asList(
-            new RelationTO<>(null, 2, 1, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT));
+                new OntologyService.WrapperRelationTO<>(new RelationTO<>(null, 2, 1, RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT)));
         RelationTOResultSet<Integer> mockRelationRs3b = getMockResultSet(RelationTOResultSet.class, relationTOs3b);
         when(relationDao.getTaxonRelations(sourceTaxonIds, targetTaxonIds,
             false, EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE)), null))

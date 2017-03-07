@@ -2,9 +2,11 @@ package org.bgee.model.ontology;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +20,6 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.NamedEntity;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.DevStage;
-import org.bgee.model.anatdev.TaxonConstraint;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
 import org.bgee.model.species.Taxon;
@@ -28,7 +29,7 @@ import org.bgee.model.species.Taxon;
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, Jan. 2017
+ * @version Bgee 14, Mar. 2017
  * @since   Bgee 13, Dec. 2015
  * @param <T>   The type of element in this ontology or sub-graph.
  * @param <U>   The type of ID of the elements in this ontology or sub-graph.
@@ -51,6 +52,19 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
      * @see #getRelationTypes()
      */
     private final Set<RelationType> relationTypes;
+    
+    /**
+     * A {@code Map} where keys are {@code T}s, the associated value being
+     * a {@code Set} of {@code RelationTO}s having the key as the source of the relation.
+     * Not needed to be used in equals/hashCode methods, this attribute is derived from others.
+     */
+    private final Map<T, Set<RelationTO<U>>> relationsBySourceElement;
+    /**
+     * A {@code Map} where keys are {@code T}s, the associated value being
+     * a {@code Set} of {@code RelationTO}s having the key as the target of the relation.
+     * Not needed to be used in equals/hashCode methods, this attribute is derived from others.
+     */
+    private final Map<T, Set<RelationTO<U>>> relationsByTargetElement;
     
     /**
      * The {@code ServiceFactory} to obtain {@code Service} objects.
@@ -110,9 +124,6 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
         if (this.elements.values().stream().anyMatch(Objects::isNull)) {
             throw log.throwing(new IllegalArgumentException("No element can be null."));
         }
-        if (this.relations.stream().anyMatch(Objects::isNull)) {
-            throw log.throwing(new IllegalArgumentException("No relation can be null."));
-        }
         if (this.relationTypes.stream().anyMatch(Objects::isNull)) {
             throw log.throwing(new IllegalArgumentException("No relation type can be null."));
         }
@@ -120,6 +131,32 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
             throw log.throwing(new IllegalArgumentException(
                     "The class of all elements should be equals to provided class " + type));
         }
+        
+        Map<T, Set<RelationTO<U>>> relationsBySourceElement = new HashMap<>();
+        Map<T, Set<RelationTO<U>>> relationsByTargetElement = new HashMap<>();
+        REL: for (RelationTO<U> relTO: this.relations) {
+            if (relTO == null) {
+                throw log.throwing(new IllegalArgumentException("No relation can be null."));
+            }
+            T sourceElement = this.getElement(relTO.getSourceId());
+            T targetElement = this.getElement(relTO.getTargetId());
+            if (sourceElement == null || targetElement == null) {
+                continue REL;
+            }
+            
+            relationsBySourceElement.merge(sourceElement, 
+                    new HashSet<>(Arrays.asList(relTO)), (s1, s2) -> {s1.addAll(s2); return s1;});
+            relationsByTargetElement.merge(targetElement, 
+                    new HashSet<>(Arrays.asList(relTO)), (s1, s2) -> {s1.addAll(s2); return s1;});
+        }
+        this.relationsBySourceElement = Collections.unmodifiableMap(
+            relationsBySourceElement.entrySet().stream()
+                .collect(Collectors.toMap(e -> e.getKey(), 
+                e -> Collections.unmodifiableSet(e.getValue()))));
+        this.relationsByTargetElement = Collections.unmodifiableMap(
+            relationsByTargetElement.entrySet().stream()
+                .collect(Collectors.toMap(e -> e.getKey(), 
+                e -> Collections.unmodifiableSet(e.getValue()))));
         
         log.exit();
     }
@@ -307,7 +344,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
     public Set<T> getAncestors(T element, Collection<RelationType> relationTypes, boolean directRelOnly) {
         log.entry(element, relationTypes, directRelOnly);
         return log.exit(this.getRelatives(element, this.getElements(), true, relationTypes, directRelOnly, 
-                null, null));
+                this.getRelations()));
     }
 
     /**
@@ -385,7 +422,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
     public Set<T> getDescendants(T element, Collection<RelationType> relationTypes, boolean directRelOnly) {
         log.entry(element, relationTypes, directRelOnly);
         return log.exit(this.getRelatives(element, this.getElements(), false, relationTypes, directRelOnly, 
-                null, null));
+                this.getRelations()));
     }
 
     /**
@@ -453,80 +490,68 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
      */
     // XXX could be used in BgeeDBUtils.getIsAPartOfRelativesFromDb()
     //TODO: unit test with multi-species nested set model ontologies (e.g., DevStageOntology)
-    protected Set<T> getRelatives(T element, Set<T> elements, boolean isAncestor, 
-            Collection<RelationType> relationTypes, boolean directRelOnly, Collection<Integer> speciesIds, 
-            Set<TaxonConstraint<Integer>> relationTaxonConstraints) {
-        log.entry(element, elements, isAncestor, relationTypes, directRelOnly, speciesIds, 
-                relationTaxonConstraints);
+    protected Set<T> getRelatives(T element, Set<T> elementsToConsider, boolean isAncestor, 
+            Collection<RelationType> relationTypes, boolean directRelOnly, 
+            Set<RelationTO<U>> relationsToConsider) {
+        log.entry(element, elementsToConsider, isAncestor, relationTypes, directRelOnly, 
+                relationsToConsider);
+        log.trace("Start retrieving relatives for {}", element);
         
-        final Set<Integer> filteredSpeciesIds = speciesIds == null? null: new HashSet<>(speciesIds);
-        boolean isMultiSpecies = filteredSpeciesIds != null && !filteredSpeciesIds.isEmpty();
-        
-        if (isMultiSpecies && relationTaxonConstraints == null) {
-            //could be empty if no valid relations with provided parameters, 
-            //but should not be null
-            throw log.throwing(new IllegalArgumentException("Relation taxon constraints not provided."));
-        }
-        if (elements == null) {
+        if (elementsToConsider == null) {
             //could be empty if no valid relations with provided parameters, 
             //but should not be null
             throw log.throwing(new IllegalArgumentException("Valid entities not provided."));
         }
-        if (!elements.contains(element)) {
+        if (!elementsToConsider.contains(element)) {
             throw log.throwing(new IllegalArgumentException(
                     "Element does not exist in the requested species or ontology: " + element));
         }
+        assert element != null;
 
-        final Set<RelationTO.RelationType> usedRelationTypes = (relationTypes == null?
-                EnumSet.allOf(RelationType.class): relationTypes)
+        final Set<RelationTO.RelationType> usedRelationTypes = (relationTypes == null? 
+                EnumSet.noneOf(RelationType.class): relationTypes)
                 .stream()
                 .map(OntologyBase::convertRelationType)
                 .collect(Collectors.toCollection(() -> EnumSet.noneOf(RelationTO.RelationType.class)));
         log.trace("Used relation types: {}", usedRelationTypes);
-
-        final Set<U> allowedEntityIds = elements.stream().map(e -> e.getId()).collect(Collectors.toSet());   
-        final Set<Integer> allowedRelIds;
-        final boolean relIdFiltering;
-        if (isMultiSpecies && !relationTaxonConstraints.isEmpty()) {
-            allowedRelIds = relationTaxonConstraints.stream()
-                    .filter(tc -> tc.getSpeciesId() == null || filteredSpeciesIds.contains(tc.getSpeciesId()))
-                    .map(tc -> tc.getEntityId()).collect(Collectors.toSet());
-            relIdFiltering = true;
+        
+        Set<RelationTO<U>> toKeep = null;
+        if (isAncestor) {
+            toKeep = this.relationsBySourceElement.get(element);
         } else {
-            //there is no relation IDs for nested set models, so no TaxonConstraints for relations. 
-            //Relations simply exist if both the source and target of the relations 
-            //exists in the targeted species.
-            allowedRelIds = null;
-            relIdFiltering = false;
+            toKeep = this.relationsByTargetElement.get(element);
+        }
+        if (toKeep == null || toKeep.isEmpty()) {
+            return log.exit(new HashSet<>());
         }
 
-        final Set<RelationTO<U>> filteredRelations = relations.stream()
-                .filter(r -> usedRelationTypes.contains(r.getRelationType()) && 
-                             (!directRelOnly || 
-                                  RelationTO.RelationStatus.DIRECT.equals(r.getRelationStatus())))
-                .filter(r -> !isMultiSpecies || //not multi-species, take all
-                        relIdFiltering && allowedRelIds.contains(r.getId()) || //allowed rel
-                        !relIdFiltering && allowedEntityIds.contains(r.getSourceId()) && 
-                                allowedEntityIds.contains(r.getTargetId())) //or, both the source and target 
-                                                                            //are allowed entities
-                .collect(Collectors.toSet());
-        log.trace("Filtered relations: {}", filteredRelations);
+        Stream<RelationTO<U>> filteredRelations1 = toKeep.stream()
+                .filter(r -> relationsToConsider.contains(r));
+        Stream<RelationTO<U>> filteredRelations2 = filteredRelations1;
+        if (!usedRelationTypes.isEmpty()) {
+            filteredRelations2 = filteredRelations1
+                    .filter(r -> usedRelationTypes.contains(r.getRelationType()));
+        }
+        Stream<RelationTO<U>> filteredRelationsFinal = filteredRelations2;
+        if (directRelOnly) {
+            filteredRelationsFinal = filteredRelations2
+                    .filter(r -> RelationTO.RelationStatus.DIRECT.equals(r.getRelationStatus()));
+        }
 
         Stream<T> relatives = null;
         if (isAncestor) {
-            relatives = filteredRelations.stream()
-                .filter(r -> r.getSourceId().equals(element.getId()))
-                .map(r -> this.getElement(r.getTargetId()));
+            relatives = filteredRelationsFinal.map(r -> this.getElement(r.getTargetId()));
         } else {
-            relatives = filteredRelations.stream()
-                .filter(r-> r.getTargetId().equals(element.getId()))
-                .map(r -> this.getElement(r.getSourceId()));
+            relatives = filteredRelationsFinal.map(r -> this.getElement(r.getSourceId()));
         }
-        return log.exit(relatives
-            .filter(e -> e != null)
-            .filter(e -> allowedEntityIds.contains(e.getId()))
-            .filter(e -> !e.getId().equals(element.getId()))
-            .collect(Collectors.toSet()));
+        
+        Set<T> returned = relatives
+                .filter(e -> e != null)
+                .filter(e -> elementsToConsider.contains(e))
+                .filter(e -> !e.getId().equals(element.getId()))
+                .collect(Collectors.toSet());
+        log.trace("Done retrieving relatives for {}: {}", element, returned.size());
+        return log.exit(returned);
     }
 
     /**

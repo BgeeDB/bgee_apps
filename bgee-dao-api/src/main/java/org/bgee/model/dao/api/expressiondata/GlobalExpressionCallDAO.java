@@ -16,9 +16,10 @@ import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO.RawExpressionC
  * with all data integrated and pre-computed. Also allows to insert and retrieve 
  * {@code GlobalExpressionToRawExpressionTO}s.
  * 
- * @author Frederic Bastian
- * @version Bgee 14 Feb. 2017
- * @since Bgee 14 Feb. 2017
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14 Mar. 2017
+ * @since   Bgee 14 Feb. 2017
  */
 public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Attribute> {
     
@@ -64,9 +65,14 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      * It is the responsibility of the caller to close this {@code DAOResultSet} once results 
      * are retrieved.
      * 
-     * @param geneIds               A {@code Set} of {@code Integer}s that are bgee IDs of genes 
-     *                              to filter this query. 
-     *                              Can be {@code null} or empty.
+     * @param callFilters           A {@code Collection} of {@code CallDAOFilter}s, 
+     *                              allowing to configure this query. If several 
+     *                              {@code CallDAOFilter}s are provided, they are seen 
+     *                              as "OR" conditions. Can be {@code null} or empty.
+     * @param callFilters           A {@code Collection} of {@code CallDataDAOFilter}s, 
+     *                              allowing to configure this query. If several 
+     *                              {@code CallDAOFilter}s are provided, they are seen 
+     *                              as "OR" conditions. Can be {@code null} or empty.
      * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
      *                              combination of condition parameters that were requested for queries, 
      *                              allowing to determine which condition and expression tables to target
@@ -83,7 +89,8 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      *                                  is not a condition parameter attributes (see 
      *                                  {@link ConditionDAO.Attribute#isConditionParameter()}).
      */
-    public GlobalExpressionCallTOResultSet getGlobalCalls(Collection<Integer> bgeeGeneIds,
+    public GlobalExpressionCallTOResultSet getGlobalExpressionCalls(
+            Collection<CallDAOFilter> callFilters, Collection<CallDataDAOFilter> callDataFilters,
             Collection<ConditionDAO.Attribute> conditionParameters,
             Collection<GlobalExpressionCallDAO.Attribute> attributes)
                 throws DAOException, IllegalArgumentException;

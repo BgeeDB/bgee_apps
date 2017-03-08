@@ -15,6 +15,8 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.expressiondata.CallDAOFilter;
+import org.bgee.model.dao.api.expressiondata.CallDataDAOFilter;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionToRawExpressionTO.CallOrigin;
@@ -897,11 +899,12 @@ implements GlobalExpressionCallDAO {
     }
 
     @Override
-    public GlobalExpressionCallTOResultSet getGlobalCalls(Collection<Integer> arg0,
-            Collection<org.bgee.model.dao.api.expressiondata.ConditionDAO.Attribute> arg1,
-            Collection<org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.Attribute> arg2)
-            throws DAOException, IllegalArgumentException {
-        // TODO Auto-generated method stub
-        return null;
+    public GlobalExpressionCallTOResultSet getGlobalExpressionCalls(
+            Collection<CallDAOFilter> callFilters, Collection<CallDataDAOFilter> callDataFilters,
+            Collection<ConditionDAO.Attribute> conditionParameters,
+            Collection<GlobalExpressionCallDAO.Attribute> attributes)
+                throws DAOException, IllegalArgumentException {
+        log.entry(callFilters, callDataFilters, conditionParameters, attributes);
+        throw log.throwing(new UnsupportedOperationException("Load of global calls not implemented yet"));
     }
 }

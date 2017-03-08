@@ -753,12 +753,9 @@ public class InsertPropagatedCalls extends CallService {
             final GlobalExpressionCallDAO exprDAO = daoManager.getGlobalExpressionCallDAO();
             
             boolean errorInThisThread = false;
+            int groupsInserted = 0;
             try {
-                //we assume the insertion is done using MySQL, and we start a transaction
-                log.info("Starting transaction");
-                ((MySQLDAOManager) daoManager).getConnection().startTransaction();
-            
-                int groupsInserted = 0;
+                boolean firstInsert = true;
                 INSERT: while ((!this.callPropagator.jobCompleted || 
                             //important to check that there is no remaining calls to insert,
                             //as other thread might set the jobCompleted flag to true
@@ -783,6 +780,39 @@ public class InsertPropagatedCalls extends CallService {
                     }
                     assert toInsert != null;
                     
+                    //wait for receiving data for starting the transaction,
+                    //otherwise there might be some lock issues
+                    if (firstInsert) {
+                        //we assume the insertion is done using MySQL, and we start a transaction
+                        log.debug(INSERTION_MARKER, "Trying to start transaction...");
+                        //try several attempts in case the first SELECT queries lock relevant tables
+                        int maxAttempt = 10;
+                        int i = 0;
+                        TRANSACTION: while (true) {
+                            try {
+                                ((MySQLDAOManager) daoManager).getConnection().startTransaction();
+                                break TRANSACTION;
+                            } catch (Exception e) {
+                                if (i < maxAttempt - 1) {
+                                    log.catching(Level.DEBUG, e);
+                                    log.debug(INSERTION_MARKER, 
+                                            "Trying to start transaction failed, {} try over {}", 
+                                            i + 1, maxAttempt);
+                                } else {
+                                    log.debug(INSERTION_MARKER, 
+                                            "Starting transaction failed, {} try over {}", 
+                                            i + 1, maxAttempt);
+                                    //that was the last try, throw exception
+                                    throw e;
+                                }
+                            }
+                            i++;
+                        }
+
+                        log.info(INSERTION_MARKER, "Starting transaction");
+                        firstInsert = false;
+                    }
+
                     // Here, we insert new conditions, and add them to the known conditions
                     Map<Condition, Integer> newCondMap = this.insertNewConditions(
                             toInsert, this.condMap.keySet(), condDAO);
@@ -828,7 +858,7 @@ public class InsertPropagatedCalls extends CallService {
                         //recheck the jobCompleted flag in case this Thread was interrupted
                         //for unknown reason
                         if (this.callPropagator.jobCompleted && this.callPropagator.errorOccured == null) {
-                            log.info("Committing transaction");
+                            log.info("{} genes inserted, committing transaction", groupsInserted);
                             ((MySQLDAOManager) daoManager).getConnection().commit();
                         } else {
                             log.info("Rollbacking transaction");

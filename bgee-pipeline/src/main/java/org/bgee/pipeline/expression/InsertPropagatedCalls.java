@@ -24,6 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -150,6 +151,12 @@ public class InsertPropagatedCalls extends CallService {
      */
     private final BlockingQueue<Set<PipelineCall>> callsToInsert;
     /**
+     * An {@code AtomicBoolean} that will allow the main thread to acquire a lock and wait on it,
+     * to be notified by the insert thread when all calls are inserted (computations can be faster
+     * than insertions).
+     */
+    private final AtomicBoolean insertFinished;
+    /**
      * A concurrent {@code Set} of {@code DAOManager}s backed by a {@code ConcurrentMap},
      * in order to kill queries run in different threads in case of error in any thread.
      * The killing will be performed by {@link #insertThread}, as we know this thread
@@ -204,6 +211,7 @@ public class InsertPropagatedCalls extends CallService {
         //because we don't care about element order, and because we don't want to block
         //when reaching maximal capacity
         this.callsToInsert = new LinkedBlockingDeque<>();
+        this.insertFinished = new AtomicBoolean(false);
         this.daoManagers = Collections.newSetFromMap(new ConcurrentHashMap<>());
         this.errorOccured = null;
         this.jobCompleted = false;
@@ -837,6 +845,12 @@ public class InsertPropagatedCalls extends CallService {
                             throw log.throwing(new IllegalStateException(e));
                         }
                     } finally {
+                        //notify the producer that the insertion is completed
+                        synchronized(this.callPropagator.insertFinished) {
+                            this.callPropagator.insertFinished.set(true);
+                            this.callPropagator.insertFinished.notifyAll();
+                        }
+                        //close connection
                         daoManager.close();
                     }
                 }
@@ -1324,6 +1338,23 @@ public class InsertPropagatedCalls extends CallService {
         }
         assert this.jobCompleted || this.errorOccured != null;
         
+        //now we need to wait for the Insert thread to complete the call insertions
+        //before quitting: moving to another combination would be OK, but moving to another species
+        //while we still lock the tables for a same combination would be bad.
+        //If we run the computations with a high enough number of threads,
+        //the computations are faster than the insertions
+        log.info("Computations finished, continuing insertion.");
+        synchronized(this.insertFinished) {
+            while (!this.insertFinished.get()) {
+                try {
+                    this.insertFinished.wait();
+                } catch (InterruptedException e) {
+                    throw log.throwing(new IllegalStateException(e));
+                }
+            }
+        }
+
+
         log.info("Done inserting of propagated calls for the species {} with combination of condition {}...",
             this.speciesId, this.conditionParams);
         

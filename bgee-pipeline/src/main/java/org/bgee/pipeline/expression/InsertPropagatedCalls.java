@@ -24,6 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -150,6 +151,12 @@ public class InsertPropagatedCalls extends CallService {
      */
     private final BlockingQueue<Set<PipelineCall>> callsToInsert;
     /**
+     * An {@code AtomicBoolean} that will allow the main thread to acquire a lock and wait on it,
+     * to be notified by the insert thread when all calls are inserted (computations can be faster
+     * than insertions).
+     */
+    private final AtomicBoolean insertFinished;
+    /**
      * A concurrent {@code Set} of {@code DAOManager}s backed by a {@code ConcurrentMap},
      * in order to kill queries run in different threads in case of error in any thread.
      * The killing will be performed by {@link #insertThread}, as we know this thread
@@ -204,6 +211,7 @@ public class InsertPropagatedCalls extends CallService {
         //because we don't care about element order, and because we don't want to block
         //when reaching maximal capacity
         this.callsToInsert = new LinkedBlockingDeque<>();
+        this.insertFinished = new AtomicBoolean(false);
         this.daoManagers = Collections.newSetFromMap(new ConcurrentHashMap<>());
         this.errorOccured = null;
         this.jobCompleted = false;
@@ -745,12 +753,9 @@ public class InsertPropagatedCalls extends CallService {
             final GlobalExpressionCallDAO exprDAO = daoManager.getGlobalExpressionCallDAO();
             
             boolean errorInThisThread = false;
+            int groupsInserted = 0;
             try {
-                //we assume the insertion is done using MySQL, and we start a transaction
-                log.info("Starting transaction");
-                ((MySQLDAOManager) daoManager).getConnection().startTransaction();
-            
-                int groupsInserted = 0;
+                boolean firstInsert = true;
                 INSERT: while ((!this.callPropagator.jobCompleted || 
                             //important to check that there is no remaining calls to insert,
                             //as other thread might set the jobCompleted flag to true
@@ -775,6 +780,39 @@ public class InsertPropagatedCalls extends CallService {
                     }
                     assert toInsert != null;
                     
+                    //wait for receiving data for starting the transaction,
+                    //otherwise there might be some lock issues
+                    if (firstInsert) {
+                        //we assume the insertion is done using MySQL, and we start a transaction
+                        log.debug(INSERTION_MARKER, "Trying to start transaction...");
+                        //try several attempts in case the first SELECT queries lock relevant tables
+                        int maxAttempt = 10;
+                        int i = 0;
+                        TRANSACTION: while (true) {
+                            try {
+                                ((MySQLDAOManager) daoManager).getConnection().startTransaction();
+                                break TRANSACTION;
+                            } catch (Exception e) {
+                                if (i < maxAttempt - 1) {
+                                    log.catching(Level.DEBUG, e);
+                                    log.debug(INSERTION_MARKER, 
+                                            "Trying to start transaction failed, {} try over {}", 
+                                            i + 1, maxAttempt);
+                                } else {
+                                    log.debug(INSERTION_MARKER, 
+                                            "Starting transaction failed, {} try over {}", 
+                                            i + 1, maxAttempt);
+                                    //that was the last try, throw exception
+                                    throw e;
+                                }
+                            }
+                            i++;
+                        }
+
+                        log.info(INSERTION_MARKER, "Starting transaction");
+                        firstInsert = false;
+                    }
+
                     // Here, we insert new conditions, and add them to the known conditions
                     Map<Condition, Integer> newCondMap = this.insertNewConditions(
                             toInsert, this.condMap.keySet(), condDAO);
@@ -820,7 +858,7 @@ public class InsertPropagatedCalls extends CallService {
                         //recheck the jobCompleted flag in case this Thread was interrupted
                         //for unknown reason
                         if (this.callPropagator.jobCompleted && this.callPropagator.errorOccured == null) {
-                            log.info("Committing transaction");
+                            log.info("{} genes inserted, committing transaction", groupsInserted);
                             ((MySQLDAOManager) daoManager).getConnection().commit();
                         } else {
                             log.info("Rollbacking transaction");
@@ -837,6 +875,12 @@ public class InsertPropagatedCalls extends CallService {
                             throw log.throwing(new IllegalStateException(e));
                         }
                     } finally {
+                        //notify the producer that the insertion is completed
+                        synchronized(this.callPropagator.insertFinished) {
+                            this.callPropagator.insertFinished.set(true);
+                            this.callPropagator.insertFinished.notifyAll();
+                        }
+                        //close connection
                         daoManager.close();
                     }
                 }
@@ -1324,6 +1368,23 @@ public class InsertPropagatedCalls extends CallService {
         }
         assert this.jobCompleted || this.errorOccured != null;
         
+        //now we need to wait for the Insert thread to complete the call insertions
+        //before quitting: moving to another combination would be OK, but moving to another species
+        //while we still lock the tables for a same combination would be bad.
+        //If we run the computations with a high enough number of threads,
+        //the computations are faster than the insertions
+        log.info("Computations finished, continuing insertion.");
+        synchronized(this.insertFinished) {
+            while (!this.insertFinished.get()) {
+                try {
+                    this.insertFinished.wait();
+                } catch (InterruptedException e) {
+                    throw log.throwing(new IllegalStateException(e));
+                }
+            }
+        }
+
+
         log.info("Done inserting of propagated calls for the species {} with combination of condition {}...",
             this.speciesId, this.conditionParams);
         

@@ -1,12 +1,19 @@
 package org.bgee.model.expressiondata;
 
 import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.expressiondata.baseelements.CountType;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.CallType.DiffExpression;
 import org.bgee.model.expressiondata.baseelements.CallType.Expression;
+import org.bgee.model.expressiondata.baseelements.DataPropagation.PropagationState;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
@@ -25,7 +32,7 @@ import org.bgee.model.expressiondata.baseelements.DiffExpressionFactor;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Feb. 2017
+ * @version Bgee 14, Mar. 2017
  * @since   Bgee 13, Sept. 2015
  */
 //XXX: examples of attributes that could be managed by this class: 
@@ -110,7 +117,8 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         @Override
         // FIXME do implementation
         public boolean isObservedData() {
-            return log.exit(false);
+            return log.exit(dataPropagation != null && dataPropagation.getIncludingObservedData() != null?
+                dataPropagation.getIncludingObservedData(): false);
         }
 
         @Override
@@ -160,30 +168,8 @@ public abstract class CallData<T extends Enum<T> & CallType> {
     
     public static class ExpressionCallData extends CallData<Expression> {
 
-        private final int presentHighSelfCount;
+        private final Map<CountType, Integer> counts;
         
-        private final int presentLowSelfCount;
-        
-        private final int absentHighSelfCount;
-
-        private final int absentLowSelfCount;
-
-        private final int presentHighDescCount;
-        
-        private final int presentLowDescCount;
-        
-        private final int absentHighParentCount;
-
-        private final int absentLowParentCount;
-
-        private final int presentHighTotalCount;
-        
-        private final int presentLowTotalCount;
-        
-        private final int absentHighTotalCount;
-        
-        private final int absentLowTotalCount;
-
         private final int propagatedCount;
 
         private final BigDecimal rank;
@@ -196,88 +182,51 @@ public abstract class CallData<T extends Enum<T> & CallType> {
 //            this(callType, dataType, 0, 0, 0, 0, 0, 0, 0, 0);
 //        }
 
-        public ExpressionCallData(DataType dataType, int presentHighSelfCount, 
-            int presentLowSelfCount, int absentHighSelfCount, int absentLowSelfCount,
-            int presentHighDescCount, int presentLowDescCount, int absentHighParentCount,
-            int absentLowParentCount, int presentHighTotalCount, int presentLowTotalCount,
-            int absentHighTotalCount, int absentLowTotalCount, int propagatedCount,
-            BigDecimal rank, BigDecimal rankNorm, BigDecimal rankSum) {
-            super(dataType, inferCallType(presentHighTotalCount,
-                presentLowTotalCount, absentHighTotalCount, absentLowTotalCount));
-            
-            if (presentHighTotalCount < 0 || presentLowTotalCount < 0 || 
-                absentHighTotalCount < 0 || absentLowTotalCount < 0 || 
-                presentHighSelfCount < 0 || presentLowSelfCount < 0 || 
-                absentHighSelfCount < 0 || absentLowSelfCount < 0) {
-                throw log.throwing(new IllegalArgumentException("Incorrect count values"));
+        //TODO Javadoc
+        //FIXME non provided counts are considered equals to 0 or all counts should be provided? 
+        public ExpressionCallData(DataType dataType, Map<CountType, Integer> counts,
+            int propagatedCount, BigDecimal rank, BigDecimal rankNorm, BigDecimal rankSum) {
+            super(dataType, inferCallType(counts));
+            // sanity checks
+            if (counts.values().stream().anyMatch(c -> c == null || c < 0)) {
+                throw log.throwing(new IllegalArgumentException(
+                    "All experiment counts must be not null and equals or greater than 0"));
             }
-            if (presentHighTotalCount == 0 && presentLowTotalCount == 0 && 
-                absentHighTotalCount == 0 && absentLowTotalCount == 0) {
+            Map<CountType, Integer> positiveTotalCounts = counts.entrySet().stream()
+                .filter(c -> PropagationState.ALL.equals(c.getKey().getPropagationState())
+                                && c.getValue() > 0)
+                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+            if (positiveTotalCounts.isEmpty()) {
                 throw log.throwing(new IllegalArgumentException(
                     "Total experiment counts must be provided to infer call type and quality"));
             }
-            this.presentHighSelfCount = presentHighSelfCount;
-            this.presentLowSelfCount = presentLowSelfCount;
-            this.absentHighSelfCount = absentHighSelfCount;
-            this.absentLowSelfCount = absentLowSelfCount;
-            this.presentHighDescCount = presentHighDescCount;
-            this.presentLowDescCount = presentLowDescCount;
-            this.absentHighParentCount = absentHighParentCount;
-            this.absentLowParentCount = absentLowParentCount;
-            this.presentHighTotalCount = presentHighTotalCount;
-            this.presentLowTotalCount = presentLowTotalCount;
-            this.absentHighTotalCount = absentHighTotalCount;
-            this.absentLowTotalCount = absentLowTotalCount;
+            this.counts = counts == null? new HashMap<>(): Collections.unmodifiableMap(new HashMap<>(counts));
             this.propagatedCount = propagatedCount;
             this.rank = rank;
             this.rankNorm = rankNorm;
             this.rankSum = rankSum;
-
         }
 
-        public int getPresentHighSelfCount() {
-            return presentHighSelfCount;
+        public Map<CountType, Integer> getCounts() {
+            return counts;
         }
-        public int getPresentLowSelfCount() {
-            return presentLowSelfCount;
-        }
-        public int getAbsentHighSelfCount() {
-            return absentHighSelfCount;
-        }
-        public int getAbsentLowSelfCount() {
-            return absentLowSelfCount;
-        }
+        
         public int getAllSelfCount() {
-            return presentHighSelfCount + presentLowSelfCount + absentHighSelfCount + absentLowSelfCount;
+            return counts.entrySet().stream()
+                .filter(c -> PropagationState.SELF.equals(c.getKey().getPropagationState()) 
+                    && c.getValue() > 0)
+                .map(Entry::getValue)
+                .mapToInt(Integer::intValue)
+                .sum();
         }
 
-        public int getPresentHighDescCount() {
-            return presentHighDescCount;
-        }
-        public int getPresentLowDescCount() {
-            return presentLowDescCount;
-        }
-        public int getAbsentHighParentCount() {
-            return absentHighParentCount;
-        }
-        public int getAbsentLowParentCount() {
-            return absentLowParentCount;
-        }
-
-        public int getPresentHighTotalCount() {
-            return presentHighTotalCount;
-        }
-        public int getPresentLowTotalCount() {
-            return presentLowTotalCount;
-        }
-        public int getAbsentHighTotalCount() {
-            return absentHighTotalCount;
-        }
-        public int getAbsentLowTotalCount() {
-            return absentLowTotalCount;
-        }
         public int getAllTotalCount() {
-            return presentHighTotalCount + presentLowTotalCount + absentHighTotalCount + absentLowTotalCount;
+            return counts.entrySet().stream()
+                .filter(c -> PropagationState.ALL.equals(c.getKey().getPropagationState()) 
+                    && c.getValue() > 0)
+                .map(Entry::getValue)
+                .mapToInt(Integer::intValue)
+                .sum();
         }
 
         public int getPropagatedCount() {
@@ -296,18 +245,26 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             return rankSum;
         }
 
-        private static Expression inferCallType(int presentHighTotalCount, int presentLowTotalCount, 
-            int absentHighTotalCount, int absentLowTotalCount) {
-            log.entry(presentHighTotalCount, presentLowTotalCount,
-                absentHighTotalCount, absentLowTotalCount);
-            if (presentHighTotalCount > 0 || presentLowTotalCount > 0) {
+        private static Expression inferCallType(Map<CountType, Integer> counts) {
+            log.entry(counts);
+            Map<CountType, Integer> positiveTotalCounts = counts.entrySet().stream()
+                .filter(c -> PropagationState.ALL.equals(c.getKey().getPropagationState()) &&
+                    c.getValue() != null && c.getValue() > 0)
+                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+            if (positiveTotalCounts.isEmpty()) {
+                throw log.throwing(new IllegalStateException("Inference of expression is not possible"
+                    + " because all total counts are null or less than 1"));
+            }
+            if (positiveTotalCounts.entrySet().stream()
+                    .anyMatch(c -> CallType.Expression.EXPRESSED.equals(c.getKey().getCallType()))) {
                 return log.exit(Expression.EXPRESSED);
             }
-            if (absentHighTotalCount > 0 || absentLowTotalCount > 0) {
+            if (positiveTotalCounts.entrySet().stream()
+                    .anyMatch(c -> CallType.Expression.NOT_EXPRESSED.equals(c.getKey().getCallType()))) {
                 return log.exit(Expression.NOT_EXPRESSED);
             }
             throw log.throwing(new IllegalStateException("Inference of expression is not possible"
-                + " because all total counts are null"));
+                + " because all total counts as no call type"));
         }
 
         //DataQual is now inferred only from the integration of all data types, 
@@ -333,8 +290,9 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         @Override
         public boolean isObservedData() {
             log.entry();
-            if (this.presentHighSelfCount != 0 || this.presentLowSelfCount != 0 || 
-                this.absentHighSelfCount != 0 || this.absentLowSelfCount != 0) {
+            if (this.counts.entrySet().stream().anyMatch(c ->
+                    PropagationState.SELF.equals(c.getKey().getPropagationState()) &&
+                    c.getValue() != null && c.getValue() > 0)) {
                 return log.exit(true);
             }
             return log.exit(false);
@@ -345,18 +303,7 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         public int hashCode() {
             final int prime = 31;
             int result = super.hashCode();
-            result = prime * result + absentHighParentCount;
-            result = prime * result + absentHighSelfCount;
-            result = prime * result + absentHighTotalCount;
-            result = prime * result + absentLowParentCount;
-            result = prime * result + absentLowSelfCount;
-            result = prime * result + absentLowTotalCount;
-            result = prime * result + presentHighDescCount;
-            result = prime * result + presentHighSelfCount;
-            result = prime * result + presentHighTotalCount;
-            result = prime * result + presentLowDescCount;
-            result = prime * result + presentLowSelfCount;
-            result = prime * result + presentLowTotalCount;
+            result = prime * result + ((counts == null) ? 0 : counts.hashCode());
             result = prime * result + propagatedCount;
             result = prime * result + ((rank == null) ? 0 : rank.hashCode());
             result = prime * result + ((rankNorm == null) ? 0 : rankNorm.hashCode());
@@ -376,40 +323,11 @@ public abstract class CallData<T extends Enum<T> & CallType> {
                 return false;
             }
             ExpressionCallData other = (ExpressionCallData) obj;
-            if (absentHighParentCount != other.absentHighParentCount) {
-                return false;
-            }
-            if (absentHighSelfCount != other.absentHighSelfCount) {
-                return false;
-            }
-            if (absentHighTotalCount != other.absentHighTotalCount) {
-                return false;
-            }
-            if (absentLowParentCount != other.absentLowParentCount) {
-                return false;
-            }
-            if (absentLowSelfCount != other.absentLowSelfCount) {
-                return false;
-            }
-            if (absentLowTotalCount != other.absentLowTotalCount) {
-                return false;
-            }
-            if (presentHighDescCount != other.presentHighDescCount) {
-                return false;
-            }
-            if (presentHighSelfCount != other.presentHighSelfCount) {
-                return false;
-            }
-            if (presentHighTotalCount != other.presentHighTotalCount) {
-                return false;
-            }
-            if (presentLowDescCount != other.presentLowDescCount) {
-                return false;
-            }
-            if (presentLowSelfCount != other.presentLowSelfCount) {
-                return false;
-            }
-            if (presentLowTotalCount != other.presentLowTotalCount) {
+            if (counts == null) {
+                if (other.counts != null) {
+                    return false;
+                }
+            } else if (!counts.equals(other.counts)) {
                 return false;
             }
             if (propagatedCount != other.propagatedCount) {
@@ -441,19 +359,7 @@ public abstract class CallData<T extends Enum<T> & CallType> {
 
         @Override
         public String toString() {
-            return "ExpressionCallData [presentHighSelfCount=" + presentHighSelfCount +
-                ", presentLowSelfCount=" + presentLowSelfCount + 
-                ", absentHighSelfCount=" + absentHighSelfCount + 
-                ", absentLowSelfCount=" + absentLowSelfCount + 
-                ", presentHighDescCount=" + presentHighDescCount + 
-                ", presentLowDescCount=" + presentLowDescCount + 
-                ", absentHighParentCount=" + absentHighParentCount + 
-                ", absentLowParentCount=" + absentLowParentCount + 
-                ", presentHighTotalCount=" + presentHighTotalCount + 
-                ", presentLowTotalCount=" + presentLowTotalCount + 
-                ", absentHighTotalCount=" + absentHighTotalCount + 
-                ", absentLowTotalCount=" + absentLowTotalCount + 
-                ", propagatedCount=" + propagatedCount +
+            return "ExpressionCallData [counts=" + counts + ", propagatedCount=" + propagatedCount +
                 ", rank=" + rank + ", rankNorm=" + rankNorm + ", rankSum=" + rankSum + "]";
         }
     }

@@ -23,7 +23,6 @@ import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.ConditionFilter;
 import org.bgee.model.expressiondata.MultiSpeciesCall;
-import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
@@ -36,7 +35,7 @@ import org.bgee.model.species.Taxon;
  * 
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Feb. 2017
+ * @version Bgee 14, Mar. 2017
  * @since   Bgee 13, May 2016
  */
 // XXX: why not call it MultiSpeciesCallService?
@@ -140,7 +139,7 @@ public class AnalysisService extends Service {
                 conditionFilters,
                 null, null,
                 ExpressionSummary.EXPRESSED,
-                new DataPropagation());
+                true);
             
             // For each species, we load propagated and reconciled calls
             // (filtered by previous filters)

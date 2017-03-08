@@ -59,13 +59,12 @@ public abstract class CallFilter<T extends CallData<?>> implements Predicate<Cal
      * 
      * @author  Frederic Bastian
      * @author  Valentine Rech de Laval
-     * @version Bgee 14, Feb. 2017
+     * @version Bgee 14, Mar. 2017
      * @since   Bgee 13
      */
     public static class ExpressionCallFilter extends CallFilter<ExpressionCallData> {
         
-        //XXX: here, we only interested in having: organ: SELF or ALL; stage: SELF or ALL
-        private final DataPropagation propagationFilter;
+        private final Boolean observedDataOnly;
         
         /**
          * Basic constructor allowing to provide one {@code SummaryCallType} filter.
@@ -82,7 +81,12 @@ public abstract class CallFilter<T extends CallData<?>> implements Predicate<Cal
         
         public ExpressionCallFilter(GeneFilter geneFilter, Collection<ConditionFilter> conditionFilters,
             ExpressionSummary summaryCallTypeFilter) {
-            this(geneFilter, conditionFilters, null, null, summaryCallTypeFilter, null);
+            this(geneFilter, conditionFilters, summaryCallTypeFilter, false);
+        }
+        
+        public ExpressionCallFilter(GeneFilter geneFilter, Collection<ConditionFilter> conditionFilters,
+            ExpressionSummary summaryCallTypeFilter, Boolean observedDataOnly) {
+            this(geneFilter, conditionFilters, null, null, summaryCallTypeFilter, observedDataOnly);
         }
 
         /**
@@ -90,14 +94,14 @@ public abstract class CallFilter<T extends CallData<?>> implements Predicate<Cal
          */
         public ExpressionCallFilter(GeneFilter geneFilter, Collection<ConditionFilter> conditionFilters,
             Collection<DataType> dataTypeFilter, SummaryQuality summaryQualityFilter,
-            ExpressionSummary summaryCallTypeFilter, DataPropagation propagationFilter)
+            ExpressionSummary summaryCallTypeFilter, Boolean observedDataOnly)
                 throws IllegalArgumentException {
             super(geneFilter, conditionFilters, dataTypeFilter, summaryQualityFilter, summaryCallTypeFilter);
             if (this.checkEmptyFilters(geneFilter, conditionFilters, dataTypeFilter, summaryQualityFilter,
-                summaryCallTypeFilter, propagationFilter)) {
+                summaryCallTypeFilter, observedDataOnly)) {
                 throw log.throwing(new IllegalArgumentException("All filters could not be empty"));
             }
-            this.propagationFilter = propagationFilter;
+            this.observedDataOnly = observedDataOnly;
         }
 
         /** 
@@ -120,31 +124,27 @@ public abstract class CallFilter<T extends CallData<?>> implements Predicate<Cal
          */
         protected boolean checkEmptyFilters(GeneFilter geneFilter, Collection<ConditionFilter> conditionFilters,
             Collection<DataType> dataTypeFilter, SummaryQuality summaryQualityFilter,
-            ExpressionSummary summaryCallTypeFilter, DataPropagation propagationFilter) {
+            ExpressionSummary summaryCallTypeFilter, Boolean observedDataOnly) {
             log.entry(geneFilter, conditionFilters, dataTypeFilter, summaryQualityFilter,
-                summaryCallTypeFilter, propagationFilter);
+                summaryCallTypeFilter, observedDataOnly);
             return log.exit(super.checkEmptyFilters(geneFilter, conditionFilters, dataTypeFilter,
-                summaryQualityFilter, summaryCallTypeFilter) && propagationFilter == null);
+                summaryQualityFilter, summaryCallTypeFilter) && observedDataOnly == null);
         }
-
-        public DataPropagation getPropagationFilter() {
-            return propagationFilter;
+        
+        public boolean isObservedDataOnly() {
+            return observedDataOnly;
         }
 
         @Override
         public boolean test(Call<?, ExpressionCallData> call) {
+            // Filter on common fields of Calls
             if (!super.test(call)) {
                 return log.exit(false);
             }
-            
-            // Filter on DataPropagation
-            if (propagationFilter != null
-                    && propagationFilter.getIncludingObservedData() != null
-                    && propagationFilter.getIncludingObservedData() 
-                        != call.getIsObservedData()) {
+            // Filter on observed data
+            if (observedDataOnly != null && observedDataOnly != call.getIsObservedData()) {
                 return log.exit(false);
             }
-            
             return log.exit(true);
         }
     }

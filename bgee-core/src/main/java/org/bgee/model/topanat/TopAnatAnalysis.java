@@ -45,7 +45,7 @@ import org.bgee.model.topanat.exception.RAnalysisException;
  * @author Mathieu Seppey
  * @author Frederic Bastian
  * @author Valentine Rech de Laval
- * @version Bgee 14, Feb. 2017
+ * @version Bgee 14, Mar. 2017
  * @since   Bgee 13, Sept. 2015
  */
 public class TopAnatAnalysis {
@@ -557,7 +557,7 @@ public class TopAnatAnalysis {
             this.callService.loadExpressionCalls(
                     this.params.getSpeciesId(), 
                     (ExpressionCallFilter) this.params.convertRawParametersToCallFilter(), 
-                    EnumSet.of(CallService.Attribute.GENE_ID, CallService.Attribute.ANAT_ENTITY_ID), 
+                    EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID), 
                     null
                 ).forEach(
                     call -> out.println(

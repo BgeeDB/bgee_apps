@@ -22,9 +22,10 @@ import org.junit.Test;
 /**
  * Unit tests for {@link HtmlDownloadDisplay}.
  * 
- * @author Frederic Bastian
- * @version Bgee 13 Oct. 2015
- * @since Bgee 13 Oct. 2015
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, Mar. 2017
+ * @since   Bgee 13, Oct. 2015
  */
 public class HtmlDownloadDisplayTest extends TestAncestor {
     
@@ -78,8 +79,8 @@ public class HtmlDownloadDisplayTest extends TestAncestor {
         
         //test that an Exception is thrown if not all species have associated terms
         try {
-            Map<String, Set<String>> speToTerms = CommandDownloadTest.getTestSpeciesToTerms();
-            speToTerms.remove("9606");
+            Map<Integer, Set<String>> speToTerms = CommandDownloadTest.getTestSpeciesToTerms();
+            speToTerms.remove(9606);
             if (pageType == DownloadPageType.EXPR_CALLS) {
                 display.displayGeneExpressionCallDownloadPage(groups, speToTerms);
             } else {

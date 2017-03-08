@@ -19,12 +19,12 @@ import org.bgee.view.html.HtmlDownloadDisplay.DownloadPageType;
 /**
  * HTML View for the general category display
  * 
- * @author Mathieu Seppey
- * @author Frederic Bastian
- * @author Valentine Rech de Laval
- * @author Philippe Moret
- * @version Bgee 13, Mar. 2016
- * @since Bgee 13
+ * @author  Mathieu Seppey
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @author  Philippe Moret
+ * @version Bgee 14, Mar. 2017
+ * @since   Bgee 13
  */
 public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisplay {
 
@@ -96,7 +96,8 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	    groups.stream().filter(sdg -> sdg.isSingleSpecies()).forEach(sdg -> {
 	        Species species = sdg.getMembers().get(0);
 	        Map<String,String> attrs = new HashMap<>();
-	        attrs.put("src", this.prop.getSpeciesImagesRootDirectory() + htmlEntities(species.getId())+"_light.jpg");
+	        attrs.put("src", this.prop.getSpeciesImagesRootDirectory() 
+	                            + String.valueOf(species.getId()) + "_light.jpg");
 	        attrs.put("alt", htmlEntities(species.getShortName()));
 	        attrs.put("class", "species_img");
 	        homePageSpeciesSection.append(getHTMLTag("img", attrs));

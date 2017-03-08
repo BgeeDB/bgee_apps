@@ -45,11 +45,11 @@ import org.bgee.model.expressiondata.baseelements.DecorrelationType;
  * in their order of importance that will define their order in the URL. 
  * The list is accessible through the method {@link #getList()}.
  *
- * @author Mathieu Seppey
- * @author Valentine Rech de Laval
- * @author Frederic Bastian
- * @version Bgee 13, Feb. 2016
- * @since Bgee 13 Nov. 2014
+ * @author  Mathieu Seppey
+ * @author  Valentine Rech de Laval
+ * @author  Frederic Bastian
+ * @version Bgee 14, Mar. 2017
+ * @since   Bgee 13 Nov. 2014
  * @see URLParameters.Parameter
  * @see	RequestParameters
  */
@@ -198,9 +198,9 @@ public class URLParameters {
     //XXX: Do we really need this parameter. Maybe we could simply allow species_id 
     //to provide multiple values. And we could keep the word "list" for textarea upload, 
     //where multiple values are separated by a specific separator in a same parameter value.
-    private static final Parameter<String> SPECIES_LIST = new Parameter<String>("species_list",
+    private static final Parameter<Integer> SPECIES_LIST = new Parameter<Integer>("species_list",
             true, false, null, true, DEFAULT_IS_SECURE, 
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Integer.class);
 
     /**
      * A {@code Parameter<Boolean>} defining whether to display the {@code GeneListResponse} 
@@ -608,10 +608,10 @@ public class URLParameters {
     }
     
     /**
-     * @return  A {@code Parameter<String>} defining a species ID list.
+     * @return  A {@code Parameter<Integer>} defining a species ID list.
      *          Corresponds to the URL parameter "species_list".
      */
-    public Parameter<String> getParamSpeciesList(){
+    public Parameter<Integer> getParamSpeciesList(){
         return SPECIES_LIST;
     }
     /**

@@ -39,7 +39,7 @@ import org.junit.Test;
  * Unit tests for {@link CommandTopAnat}.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, July 2015
+ * @version Bgee 14, Mar. 2017
  * @since   Bgee 13, Nov. 2015
  */
 public class CommandTopAnatTest extends TestAncestor {
@@ -76,18 +76,18 @@ public class CommandTopAnatTest extends TestAncestor {
         //mock data returned by Services
         List<String> fgSubmittedGeneIds = Arrays.asList("ID3");
         TreeSet<String> fgNotSelectedGeneIdSet = new TreeSet<>();
-        String fgSelectedSpeciesId = "10090";
+        Integer fgSelectedSpeciesId = 10090;
 
         List<String> bgSubmittedGeneIds = Arrays.asList("ID1", "ID2", "ID3", "ID4");
         TreeSet<String> bgNotSelectedGeneIdSet = new TreeSet<>(Arrays.asList("ID3"));
-        String bgSelectedSpeciesId = "9606";
+        Integer bgSelectedSpeciesId = 9606;
 
-        List<Gene> fgGenes = Arrays.asList(new Gene("ID3", "10090"));
+        List<Gene> fgGenes = Arrays.asList(new Gene("ID3", 10090));
         when(geneService.loadGenesByIdsAndSpeciesIds(new HashSet<>(fgSubmittedGeneIds), null))
             .thenReturn(fgGenes);
 
         List<Gene> bgGenes = Arrays.asList(
-                new Gene("ID1", "9606"), new Gene("ID2", "9606"), new Gene("ID3", "10090"));
+                new Gene("ID1", 9606), new Gene("ID2", 9606), new Gene("ID3", 10090));
         when(geneService.loadGenesByIdsAndSpeciesIds(new HashSet<>(bgSubmittedGeneIds), null))
             .thenReturn(bgGenes);
         
@@ -95,7 +95,7 @@ public class CommandTopAnatTest extends TestAncestor {
 
         TreeSet<String> bgUndeterminedGeneIds = new TreeSet<>(bgSubmittedGeneIds);
         bgUndeterminedGeneIds.removeAll(bgGenes.stream()
-                .map(Gene::getId)
+                .map(Gene::getEnsemblGeneId)
                 .collect(Collectors.toSet()));
 
         Set<DevStage> devStages = new HashSet<>(Arrays.asList(
@@ -109,14 +109,14 @@ public class CommandTopAnatTest extends TestAncestor {
             .thenReturn(devStages);
 
         List<Species> fgSpecies = Arrays.asList(
-                new Species("10090", "mouse", "", "Mus", "musculus", "genome10090", null));
-        when(speciesService.loadSpeciesByIds(new HashSet<>(Arrays.asList("10090")), false))
+                new Species(10090, "mouse", "", "Mus", "musculus", "genome10090", null));
+        when(speciesService.loadSpeciesByIds(new HashSet<>(Arrays.asList(10090)), false))
             .thenReturn(new HashSet<>(fgSpecies));
 
         List<Species> bgSpecies = Arrays.asList(
-                new Species("9606", "human", "", "Homo", "sapiens", "genome9606", null), 
-                new Species("10090", "mouse", "", "Mus", "musculus", "genome10090", null));
-        when(speciesService.loadSpeciesByIds(new HashSet<>(Arrays.asList("9606", "10090")), false))
+                new Species(9606, "human", "", "Homo", "sapiens", "genome9606", null), 
+                new Species(10090, "mouse", "", "Mus", "musculus", "genome10090", null));
+        when(speciesService.loadSpeciesByIds(new HashSet<>(Arrays.asList(9606, 10090)), false))
             .thenReturn(new HashSet<>(bgSpecies)).thenReturn(new HashSet<>(bgSpecies));
 
         //mock view
@@ -139,18 +139,18 @@ public class CommandTopAnatTest extends TestAncestor {
                 null, mailSender);
         controller.processRequest();
 
-        LinkedHashMap<String, Long> fgSpToGeneCount = new LinkedHashMap<>();
+        LinkedHashMap<Integer, Long> fgSpToGeneCount = new LinkedHashMap<>();
         fgSpToGeneCount.put(fgSpecies.get(0).getId(), 1L);
 
-        LinkedHashMap<String, Long> bgSpToGeneCount = new LinkedHashMap<>();
+        LinkedHashMap<Integer, Long> bgSpToGeneCount = new LinkedHashMap<>();
         bgSpToGeneCount.put(bgSpecies.get(0).getId(), 2L);
         bgSpToGeneCount.put(bgSpecies.get(1).getId(), 1L);
-        bgSpToGeneCount.put("UNDETERMINED", 1L);
+        bgSpToGeneCount.put(-1, 1L);
         
-        TreeMap<String, Species> fgDetectedSpecies = new TreeMap<>();
+        TreeMap<Integer, Species> fgDetectedSpecies = new TreeMap<>();
         fgDetectedSpecies.put(fgSpecies.get(0).getId(), fgSpecies.get(0));
 
-        TreeMap<String, Species> bgDetectedSpecies = new TreeMap<>();
+        TreeMap<Integer, Species> bgDetectedSpecies = new TreeMap<>();
         bgDetectedSpecies.put(bgSpecies.get(0).getId(), bgSpecies.get(0));
         bgDetectedSpecies.put(bgSpecies.get(1).getId(), bgSpecies.get(1));
         

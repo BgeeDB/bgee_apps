@@ -19,8 +19,8 @@ import org.bgee.controller.user.User;
 import org.bgee.controller.utils.MailSender;
 import org.bgee.model.BgeeEnum;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.job.JobService;
 import org.bgee.view.ViewFactory;
 
@@ -38,7 +38,8 @@ import org.bgee.view.ViewFactory;
  * 
  * @author 	Frederic Bastian
  * @author  Mathieu Seppey
- * @version Bgee 13 Aug 2014
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, Mar. 2017
  * @see 	#processRequest()
  * @since 	Bgee 1
  *
@@ -270,23 +271,23 @@ abstract class CommandParent {
         return log.exit(DataType.convertToDataTypeSet(rqDatatypes));
     }
     /**
-     * Check and retrieve the data quality requested in the {@code RequestParameters} object 
+     * Check and retrieve the summary quality requested in the {@code RequestParameters} object 
      * provided at instantiation. 
      * 
      * @return  A {@code DataQuality} retrieved from the request parameters.
-     * @throws InvalidRequestException  If the data quality request parameter is incorrectly used.
+     * @throws InvalidRequestException  If the summary quality request parameter is incorrectly used.
      */
-    protected DataQuality checkAndGetDataQuality() throws InvalidRequestException {
+    protected SummaryQuality checkAndGetDataQuality() throws InvalidRequestException {
         log.entry();
         
         String rqDataQual = this.requestParameters.getDataQuality();
-        DataQuality dataQuality = null; 
+        SummaryQuality dataQuality = null; 
         if (rqDataQual != null) {
-            if (rqDataQual.equalsIgnoreCase(DataQuality.HIGH.name())) {
-                dataQuality = DataQuality.HIGH;
-            } else if (rqDataQual.equalsIgnoreCase(DataQuality.LOW.name()) || 
+            if (rqDataQual.equalsIgnoreCase(SummaryQuality.GOLD.name())) {
+                dataQuality = SummaryQuality.GOLD;
+            } else if (rqDataQual.equalsIgnoreCase(SummaryQuality.SILVER.name()) || 
                     rqDataQual.equalsIgnoreCase(RequestParameters.ALL_VALUE)) {
-                dataQuality = DataQuality.LOW;
+                dataQuality = SummaryQuality.SILVER;
             } else {
                 throw log.throwing(new InvalidRequestException("Incorrect data quality provided: "
                         + rqDataQual));

@@ -1,7 +1,6 @@
 package org.bgee.controller;
 
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -23,11 +22,10 @@ import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.Call.ExpressionCall.ClusteringMethod;
-import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.ConditionUtils;
-import org.bgee.model.expressiondata.baseelements.CallType.Expression;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.view.GeneDisplay;
@@ -39,7 +37,7 @@ import org.bgee.view.ViewFactory;
  * @author  Philippe Moret
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, July 2016
+ * @version Bgee 14, Mar. 2017
  * @since   Bgee 13, Nov. 2015
  */
 public class CommandGene extends CommandParent {
@@ -363,13 +361,12 @@ public class CommandGene extends CommandParent {
 		CallService service = serviceFactory.getCallService();
 		return log.exit(service.loadExpressionCalls(
 		        gene.getSpeciesId(), 
-                new ExpressionCallFilter(new GeneFilter(gene.getId()), null, 
-                        Arrays.asList(new ExpressionCallData(Expression.EXPRESSED))), 
-                EnumSet.of(CallService.Attribute.GENE_ID, CallService.Attribute.ANAT_ENTITY_ID, 
+                new ExpressionCallFilter(new GeneFilter(gene.getEnsemblGeneId()), null, 
+                    ExpressionSummary.EXPRESSED, false), 
+                EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID, 
                         CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.CALL_DATA, 
-                        CallService.Attribute.GLOBAL_DATA_QUALITY, CallService.Attribute.GLOBAL_RANK), 
-                serviceOrdering,
-                false)
+                        CallService.Attribute.DATA_QUALITY, CallService.Attribute.RANK), 
+                serviceOrdering)
             .collect(Collectors.toList()));
 	}
 	

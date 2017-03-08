@@ -12,7 +12,7 @@ import java.util.Set;
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
- * @version Bgee 13 May 2015
+ * @version Bgee 14, Mar. 2017
  * @since   Bgee 13
  */
 public interface DownloadDisplay {
@@ -26,12 +26,12 @@ public interface DownloadDisplay {
      * Display the download page of processed raw data files.
      */
      void displayProcessedExpressionValuesDownloadPage(List<SpeciesDataGroup> groups, 
-                                                       Map<String, Set<String>> keywords);
+                                                       Map<Integer, Set<String>> keywords);
 
     /**
      * Display the download page of gene expression call files.
      */
      void displayGeneExpressionCallDownloadPage(List<SpeciesDataGroup> groups,
-    		                                    Map<String, Set<String>> keywords);
+    		                                    Map<Integer, Set<String>> keywords);
 
 }

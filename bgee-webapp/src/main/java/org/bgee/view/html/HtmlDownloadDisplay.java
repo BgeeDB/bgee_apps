@@ -28,7 +28,7 @@ import org.bgee.view.JsonHelper;
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
- * @version Bgee 13, Mar. 2016
+ * @version Bgee 14, Mar. 2017
  * @since   Bgee 13
  */
 public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDisplay {
@@ -87,7 +87,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     
     @Override
     public void displayGeneExpressionCallDownloadPage(List<SpeciesDataGroup> groups, 
-            Map<String, Set<String>> keywords) {
+            Map<Integer, Set<String>> keywords) {
         log.entry(groups, keywords);
         
         this.startDisplay("Bgee gene expression call download page");
@@ -131,7 +131,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
     @Override
     public void displayProcessedExpressionValuesDownloadPage(List<SpeciesDataGroup> groups,
-    		                                                 Map<String, Set<String>> keywords) {
+    		                                                 Map<Integer, Set<String>> keywords) {
         log.entry(groups, keywords);
         
         this.startDisplay("Bgee " + PROCESSED_EXPR_VALUES_PAGE_NAME.toLowerCase() + " download page");
@@ -321,7 +321,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     	for (SpeciesDataGroup sdg: groups) {
     		if (sdg.isMultipleSpecies()) {
     			Map<String, String> attr = new HashMap<>();
-    			attr.put("id", htmlEntities(sdg.getId()));
+    			attr.put("id", String.valueOf(sdg.getId()));
     			attr.put("name", htmlEntities(sdg.getName()));
     			sb.append(getHTMLTag("figure", attr, getHTMLTag("div", 
     			        getSpeciesImages(sdg.getMembers(), pageType) + getCaption(sdg))));
@@ -598,7 +598,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         StringBuilder images = new StringBuilder();
         for (Species spe : species) {
             Map<String,String> attrs = new HashMap<>();
-            attrs.put("src", this.prop.getSpeciesImagesRootDirectory() + htmlEntities(spe.getId())+"_light.jpg");
+            attrs.put("src", this.prop.getSpeciesImagesRootDirectory() 
+                            + String.valueOf(spe.getId()) + "_light.jpg");
             attrs.put("alt", htmlEntities(spe.getShortName()));
             attrs.put("class", "species_img");
             images.append(getHTMLTag("img", attrs));
@@ -690,7 +691,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         groups.stream().filter(sdg -> sdg.isSingleSpecies()).forEach(sdg -> {
             Species species = sdg.getMembers().get(0);
             Map<String, String> attr = new HashMap<>();
-            attr.put("id", htmlEntities(sdg.getId()));
+            attr.put("id", String.valueOf(sdg.getId()));
             sb.append(getHTMLTag("figure", attr, getHTMLTag("div", 
                     getSpeciesImages(sdg.getMembers(), pageType)) + getCaption(species, sdg)));
         });
@@ -723,7 +724,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      * @throws IllegalArgumentException If {@code keywords} is missing a mapping 
      *                                  for a {@code Species} member of a {@code SpeciesDataGroup}.
      */
-    private String getKeywordScriptTag(Map<String, Set<String>> keywords, 
+    private String getKeywordScriptTag(Map<Integer, Set<String>> keywords, 
             List<SpeciesDataGroup> groups, DownloadPageType pageType) throws IllegalArgumentException {
         log.entry(keywords, groups, pageType);
 
@@ -736,7 +737,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         }
         
         //Map group ID -> associated search terms
-        Map<String, Set<String>> groupIdsToTerms = groups.stream()
+        Map<Integer, Set<String>> groupIdsToTerms = groups.stream()
                 //skip multi-species groups for processed expression values pages, 
                 //to avoid proposing completion for multi-species group names (e.g., "macaque/chimpanzee")
                 .filter(e -> pageType == DownloadPageType.EXPR_CALLS || e.isSingleSpecies())

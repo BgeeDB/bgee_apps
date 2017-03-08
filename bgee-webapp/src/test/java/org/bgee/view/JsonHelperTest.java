@@ -34,8 +34,11 @@ import org.junit.Test;
 /**
  * Unit tests for {@link JsonHelper}.
  * 
- * @author Philippe Moret
- * @author Frederic Bastian
+ * @author  Philippe Moret
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, Mar. 2017
+ * @since   Bgee 13, Oct. 2015
  */
 public class JsonHelperTest extends TestAncestor {
     
@@ -52,7 +55,7 @@ public class JsonHelperTest extends TestAncestor {
      */
     @Test
     public void testSpeciesToJson() {
-        Species species = new Species("12", "SpeciesName", "A string description of that species");
+        Species species = new Species(12, "SpeciesName", "A string description of that species");
 
         String json = new JsonHelper().toJson(species);
         String expected = "{\n  \"name\": \"SpeciesName\",\n  " +
@@ -66,11 +69,11 @@ public class JsonHelperTest extends TestAncestor {
      */
     @Test
     public void testSpeciesDataGroupToJson() {
-        SpeciesDataGroup group = new SpeciesDataGroup("singleSpeG1", "single spe g1", null, 
-                Arrays.asList(new Species("9606", "human", null, "Homo", "sapiens", "hsap1", null)), 
+        SpeciesDataGroup group = new SpeciesDataGroup(1, "single spe g1", null, 
+                Arrays.asList(new Species(9606, "human", null, "Homo", "sapiens", "hsap1", null)), 
                 new HashSet<>(Arrays.asList(
                         new DownloadFile("my/path/fileg1_1.tsv.zip", "fileg1_1.tsv.zip", 
-                        CategoryEnum.EXPR_CALLS_SIMPLE, 5000L, "singleSpeG1"))));
+                        CategoryEnum.EXPR_CALLS_SIMPLE, 5000L, 1))));
         
         BgeeProperties props = mock(BgeeProperties.class);
         when(props.getDownloadRootDirectory()).thenReturn("/myrootpath/");
@@ -155,8 +158,8 @@ public class JsonHelperTest extends TestAncestor {
         
         LinkedHashMap<String, Object> data = new LinkedHashMap<>();
         data.put("speciesList", Arrays.asList(
-                new Species("12", "SpeciesName", "A string description of that species"), 
-                new Species("13", "SpeciesName", "A string description of that species")));
+                new Species(12, "SpeciesName", "A string description of that species"), 
+                new Species(13, "SpeciesName", "A string description of that species")));
         
         LinkedHashMap<String, Object> response = new LinkedHashMap<>();
         response.put("code", 200);

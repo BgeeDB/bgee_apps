@@ -30,8 +30,8 @@ import org.junit.Test;
  * Unit tests for {@link JsonTopAnatDisplay}.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13 Nov. 2015
- * @since   Bgee 13 Nov. 2015
+ * @version Bgee 14, Mar. 2017
+ * @since   Bgee 13, Nov. 2015
  */
 public class JsonTopAnatDisplayTest extends TestAncestor {
     
@@ -51,15 +51,15 @@ public class JsonTopAnatDisplayTest extends TestAncestor {
     @Test
     public void shouldSendGeneListReponse() throws IllegalArgumentException, IOException {
 
-        LinkedHashMap<String, Long> speciesToGeneCount = new LinkedHashMap<>();
-        speciesToGeneCount.put("9606", 2L);
-        speciesToGeneCount.put("10090", 1L);
+        LinkedHashMap<Integer, Long> speciesToGeneCount = new LinkedHashMap<>();
+        speciesToGeneCount.put(9606, 2L);
+        speciesToGeneCount.put(10090, 1L);
         
-        TreeMap<String, Species> detectedSpecies = new TreeMap<>();
-        detectedSpecies.put("9606", new Species("9606", "human", "", "Homo", "sapiens", "genome9606", null));
-        detectedSpecies.put("10090", new Species("10090", "mouse", "", "Mus", "musculus", "genome10090", null));
+        TreeMap<Integer, Species> detectedSpecies = new TreeMap<>();
+        detectedSpecies.put(9606, new Species(9606, "human", "", "Homo", "sapiens", "genome9606", null));
+        detectedSpecies.put(10090, new Species(10090, "mouse", "", "Mus", "musculus", "genome10090", null));
 
-        String selectedSpeciesId = "9606";
+        Integer selectedSpeciesId = 9606;
         
         List<DevStage> validStages = new ArrayList<DevStage>();
         validStages.add(new DevStage("2443", "embryo", null, 1, 2, 1, false, true));

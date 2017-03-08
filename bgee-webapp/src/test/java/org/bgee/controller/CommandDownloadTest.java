@@ -36,7 +36,7 @@ import org.junit.Test;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13 Nov. 2015
+ * @version Bgee 14, Mar. 2017
  * @since   Bgee 13 Oct. 2015
  */
 public class CommandDownloadTest extends TestAncestor {
@@ -72,7 +72,7 @@ public class CommandDownloadTest extends TestAncestor {
         when(viewFac.getDownloadDisplay()).thenReturn(display);
         
         //launch tests
-        Map<String, Set<String>> speToTerms = getTestSpeciesToTerms();
+        Map<Integer, Set<String>> speToTerms = getTestSpeciesToTerms();
         
         RequestParameters params = new RequestParameters();
         params.setPage(RequestParameters.PAGE_DOWNLOAD);
@@ -98,72 +98,72 @@ public class CommandDownloadTest extends TestAncestor {
     public static List<SpeciesDataGroup> getTestGroups() {
         log.entry();
         //Species:
-        Species spe1 = new Species("9606", "human", null, "Homo", "sapiens", "hsap1","1234");
-        Species spe2 = new Species("10090", "mouse", null, "Mus", "musculus", "mmus1", "2322");
-        Species spe3 = new Species("7955", "zebrafish", null, "Danio", "rerio", "dre1", "2311");
-        Species spe4 = new Species("7227", "fly", null, "Drosophila", "melanogaster", "dmel1","211");
+        Species spe1 = new Species(9606, "human", null, "Homo", "sapiens", "hsap1", 1234);
+        Species spe2 = new Species(10090, "mouse", null, "Mus", "musculus", "mmus1", 2322);
+        Species spe3 = new Species(7955, "zebrafish", null, "Danio", "rerio", "dre1", 2311);
+        Species spe4 = new Species(7227, "fly", null, "Drosophila", "melanogaster", "dmel1", 211);
         
         //make all file types available for at least one species
         Set<DownloadFile> dlFileGroup1 = new HashSet<DownloadFile>();
         int i = 0;
         for (CategoryEnum cat: CategoryEnum.values()) {
             dlFileGroup1.add(new DownloadFile("my/path/file" + i + ".tsv.zip", "file" + i + ".tsv.zip", 
-                    cat, i * 200L, "singleSpeG1"));
+                    cat, i * 200L, 11));
             i++;
         }
         //arbitrary files for other groups
         Set<DownloadFile> dlFileGroup2 = new HashSet<DownloadFile>(Arrays.asList(
                 new DownloadFile("my/path/fileg2_1.tsv.zip", "fileg2_1.tsv.zip", 
-                        CategoryEnum.EXPR_CALLS_SIMPLE, 5000L, "singleSpeG2"), 
+                        CategoryEnum.EXPR_CALLS_SIMPLE, 5000L, 22), 
                 new DownloadFile("my/path/fileg2_2.tsv.zip", "fileg2_2.tsv.zip", 
-                        CategoryEnum.EXPR_CALLS_COMPLETE, 50000L, "singleSpeG2"), 
+                        CategoryEnum.EXPR_CALLS_COMPLETE, 50000L, 22), 
                 new DownloadFile("my/path/fileg2_3.tsv.zip", "fileg2_3.tsv.zip", 
-                        CategoryEnum.RNASEQ_ANNOT, 5000L, "singleSpeG2")
+                        CategoryEnum.RNASEQ_ANNOT, 5000L, 22)
                 ));
         Set<DownloadFile> dlFileGroup3 = new HashSet<DownloadFile>(Arrays.asList(
                 new DownloadFile("my/path/fileg3_1.tsv.zip", "fileg3_1.tsv.zip", 
-                        CategoryEnum.DIFF_EXPR_ANAT_SIMPLE, 500L, "singleSpeG3"), 
+                        CategoryEnum.DIFF_EXPR_ANAT_SIMPLE, 500L, 33), 
                 new DownloadFile("my/path/fileg3_2.tsv.zip", "fileg3_2.tsv.zip", 
-                        CategoryEnum.DIFF_EXPR_ANAT_COMPLETE, 5000L, "singleSpeG3"), 
+                        CategoryEnum.DIFF_EXPR_ANAT_COMPLETE, 5000L, 33), 
                 new DownloadFile("my/path/fileg3_3.tsv.zip", "fileg3_3.tsv.zip", 
-                        CategoryEnum.AFFY_DATA, 5000L, "singleSpeG3"), 
+                        CategoryEnum.AFFY_DATA, 5000L, 33), 
                 new DownloadFile("my/path/fileg3_4.tsv.zip", "fileg3_4.tsv.zip", 
-                        CategoryEnum.AFFY_ANNOT, 5000L, "singleSpeG3")
+                        CategoryEnum.AFFY_ANNOT, 5000L, 33)
                 ));
         Set<DownloadFile> dlFileGroup4 = new HashSet<DownloadFile>(Arrays.asList(
                 new DownloadFile("my/path/fileg4_1.tsv.zip", "fileg4_1.tsv.zip", 
-                        CategoryEnum.DIFF_EXPR_ANAT_SIMPLE, 5500L, "singleSpeG4"), 
+                        CategoryEnum.DIFF_EXPR_ANAT_SIMPLE, 5500L, 44), 
                 new DownloadFile("my/path/fileg4_2.tsv.zip", "fileg4_2.tsv.zip", 
-                        CategoryEnum.DIFF_EXPR_ANAT_COMPLETE, 55000L, "singleSpeG4"), 
+                        CategoryEnum.DIFF_EXPR_ANAT_COMPLETE, 55000L, 44), 
                 new DownloadFile("my/path/fileg4_3.tsv.zip", "fileg4_3.tsv.zip", 
-                        CategoryEnum.AFFY_DATA, 55000L, "singleSpeG4"), 
+                        CategoryEnum.AFFY_DATA, 55000L, 44), 
                 new DownloadFile("my/path/fileg4_4.tsv.zip", "fileg4_4.tsv.zip", 
-                        CategoryEnum.AFFY_ANNOT, 55000L, "singleSpeG4"), 
+                        CategoryEnum.AFFY_ANNOT, 55000L, 44), 
                 new DownloadFile("my/path/fileg4_5.tsv.zip", "fileg4_5.tsv.zip", 
-                        CategoryEnum.RNASEQ_ANNOT, 55000L, "singleSpeG4"), 
+                        CategoryEnum.RNASEQ_ANNOT, 55000L, 44), 
                 new DownloadFile("my/path/fileg4_6.tsv.zip", "fileg4_6.tsv.zip", 
-                        CategoryEnum.RNASEQ_DATA, 55000L, "singleSpeG4")
+                        CategoryEnum.RNASEQ_DATA, 55000L, 44)
                 ));
         Set<DownloadFile> dlFileGroup5 = new HashSet<DownloadFile>(Arrays.asList(
                 new DownloadFile("my/path/fileg5_1.tsv.zip", "fileg5_1.tsv.zip", 
-                        CategoryEnum.DIFF_EXPR_ANAT_SIMPLE, 55000L, "multiSpeG5"), 
+                        CategoryEnum.DIFF_EXPR_ANAT_SIMPLE, 55000L, 55), 
                 new DownloadFile("my/path/fileg5_2.tsv.zip", "fileg5_2.tsv.zip", 
-                        CategoryEnum.DIFF_EXPR_ANAT_COMPLETE, 55000L, "multiSpeG5"), 
+                        CategoryEnum.DIFF_EXPR_ANAT_COMPLETE, 55000L, 55), 
                 new DownloadFile("my/path/fileg5_3.tsv.zip", "fileg5_3.tsv.zip", 
-                        CategoryEnum.ORTHOLOG, 55000L, "multiSpeG5")
+                        CategoryEnum.ORTHOLOG, 55000L, 55)
                 ));
         
         //groups: 
         return log.exit(Arrays.asList(
-                new SpeciesDataGroup("singleSpeG1", "single spe g1", null, 
+                new SpeciesDataGroup(11, "single spe g1", null, 
                         Arrays.asList(spe1), dlFileGroup1), 
-                new SpeciesDataGroup("singleSpeG2", "single spe g2", null, 
+                new SpeciesDataGroup(22, "single spe g2", null, 
                         Arrays.asList(spe2), dlFileGroup2), 
-                new SpeciesDataGroup("singleSpeG3", "single spe g3", null, 
+                new SpeciesDataGroup(33, "single spe g3", null, 
                         Arrays.asList(spe3), dlFileGroup3), 
-                new SpeciesDataGroup("singleSpeG4", "single spe g4", null, 
+                new SpeciesDataGroup(44, "single spe g4", null, 
                         Arrays.asList(spe4), dlFileGroup4), 
-                new SpeciesDataGroup("multiSpeG5", "multi spe g5", null, 
+                new SpeciesDataGroup(55, "multi spe g5", null, 
                         Arrays.asList(spe2, spe3, spe4), dlFileGroup5)
                 ));
     }
@@ -172,14 +172,14 @@ public class CommandDownloadTest extends TestAncestor {
      * @return  A {@code Map} allowing to mock the value returned by 
      *          {@link KeywordService#getKeywordForAllSpecies()}.
      */
-    public static Map<String, Set<String>> getTestSpeToKeywords() {
+    public static Map<Integer, Set<String>> getTestSpeToKeywords() {
         log.entry();
         return log.exit(Stream.of(
             //regression test, no keywords associated to species 9606 on purpose, 
             //a previous version of the code threw a NPE
-            new AbstractMap.SimpleEntry<>("10090", new HashSet<>(Arrays.asList("house mouse", "mice"))), 
-            new AbstractMap.SimpleEntry<>("7955", new HashSet<>(Arrays.asList("leopard danio", "zebra danio"))), 
-            new AbstractMap.SimpleEntry<>("7227", new HashSet<>(Arrays.asList("vinegar fly", "fruit fly"))))
+            new AbstractMap.SimpleEntry<>(10090, new HashSet<>(Arrays.asList("house mouse", "mice"))), 
+            new AbstractMap.SimpleEntry<>(7955, new HashSet<>(Arrays.asList("leopard danio", "zebra danio"))), 
+            new AbstractMap.SimpleEntry<>(7227, new HashSet<>(Arrays.asList("vinegar fly", "fruit fly"))))
             .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue())));
     }
     
@@ -191,7 +191,7 @@ public class CommandDownloadTest extends TestAncestor {
      *          {@link #getTestGroups()}, and the mapping to keywords returned by 
      *          {@link #getTestSpeToKeywords()}.
      */
-    public static Map<String, Set<String>> getTestSpeciesToTerms() {
+    public static Map<Integer, Set<String>> getTestSpeciesToTerms() {
         log.entry();
         List<SpeciesDataGroup> groups = getTestGroups();
         return log.exit(Stream.of(
@@ -199,25 +199,25 @@ public class CommandDownloadTest extends TestAncestor {
                         Arrays.asList(groups.get(0).getMembers().get(0).getName(), 
                                 groups.get(0).getMembers().get(0).getScientificName(), 
                                 groups.get(0).getMembers().get(0).getShortName(), 
-                                groups.get(0).getMembers().get(0).getId()))), 
+                                String.valueOf(groups.get(0).getMembers().get(0).getId())))), 
                 new AbstractMap.SimpleEntry<>(groups.get(1).getMembers().get(0).getId(), new HashSet<>(
                         Arrays.asList("house mouse", "mice", 
                                 groups.get(1).getMembers().get(0).getName(), 
                                 groups.get(1).getMembers().get(0).getScientificName(), 
                                 groups.get(1).getMembers().get(0).getShortName(), 
-                                groups.get(1).getMembers().get(0).getId()))), 
+                                String.valueOf(groups.get(1).getMembers().get(0).getId())))), 
                 new AbstractMap.SimpleEntry<>(groups.get(2).getMembers().get(0).getId(), new HashSet<>(
                         Arrays.asList("leopard danio", "zebra danio", 
                                 groups.get(2).getMembers().get(0).getName(), 
                                 groups.get(2).getMembers().get(0).getScientificName(), 
                                 groups.get(2).getMembers().get(0).getShortName(), 
-                                groups.get(2).getMembers().get(0).getId()))), 
+                                String.valueOf(groups.get(2).getMembers().get(0).getId())))), 
                 new AbstractMap.SimpleEntry<>(groups.get(3).getMembers().get(0).getId(), new HashSet<>(
                         Arrays.asList("vinegar fly", "fruit fly", 
                                 groups.get(3).getMembers().get(0).getName(), 
                                 groups.get(3).getMembers().get(0).getScientificName(), 
                                 groups.get(3).getMembers().get(0).getShortName(), 
-                                groups.get(3).getMembers().get(0).getId()))))
+                                String.valueOf(groups.get(3).getMembers().get(0).getId())))))
                 .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue())));
     }
 }

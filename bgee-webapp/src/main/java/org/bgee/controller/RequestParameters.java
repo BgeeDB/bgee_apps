@@ -81,11 +81,11 @@ import org.bgee.controller.servletutils.BgeeHttpServletRequest;
  * This class has a js counterpart called {@code requestparameters.js} that should be kept 
  * consistent as much as possible if the class evolves.
  * 
- * @author Mathieu Seppey
- * @author Frederic Bastian
- * @author Valentine Rech de Laval
- * @version Bgee 13, Feb. 2016
- * @since Bgee 1
+ * @author  Mathieu Seppey
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, Mar. 2017
+ * @since   Bgee 1
  */
 public class RequestParameters {
 
@@ -2019,7 +2019,7 @@ public class RequestParameters {
      * @return  A {@code List} of {@code String}s that are the values of 
      *          the {@code species_list} URL parameter. Can be {@code null}. 
      */
-    public List<String> getSpeciesList(){
+    public List<Integer> getSpeciesList(){
         return this.getValues(this.getUrlParametersInstance().getParamSpeciesList());
     }
     /**

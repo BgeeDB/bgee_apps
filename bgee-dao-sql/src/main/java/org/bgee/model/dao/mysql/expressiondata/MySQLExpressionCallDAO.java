@@ -149,7 +149,7 @@ implements ExpressionCallDAO {
     public ExpressionCallTOResultSet getExpressionCalls(
             Collection<CallDAOFilter> callFilters, Collection<ExpressionCallTO> callTOFilters, 
             boolean includeSubstructures, boolean includeSubStages, 
-            Collection<String> globalGeneIds, String taxonId, 
+            Collection<Integer> globalGeneIds, String taxonId, 
             Collection<ExpressionCallDAO.Attribute> attributes, 
             LinkedHashMap<ExpressionCallDAO.OrderingAttribute, DAO.Direction> orderingAttributes) 
                     throws DAOException, IllegalArgumentException {
@@ -195,12 +195,12 @@ implements ExpressionCallDAO {
         //**********************************************
 
         //store the global gene ID filtering, or try to create one based on the CallDAOFilters
-        Set<String> geneIds = Optional.ofNullable(globalGeneIds)
+        Set<Integer> geneIds = Optional.ofNullable(globalGeneIds)
                 .map(e -> new HashSet<>(e)).orElse(new HashSet<>());
         boolean globalGeneFilter = false;
         if (geneIds.isEmpty()) {
             //if all callFilters have the same gene ID filter
-            Set<Set<String>> allGeneIdFilters = clonedCallFilters.stream().map(e -> e.getGeneIds())
+            Set<Set<Integer>> allGeneIdFilters = clonedCallFilters.stream().map(e -> e.getGeneIds())
                     .collect(Collectors.toSet());
             if (allGeneIdFilters.size() == 1 && !allGeneIdFilters.iterator().next().isEmpty()) {
                 geneIds = new HashSet<>(allGeneIdFilters.iterator().next());
@@ -224,8 +224,8 @@ implements ExpressionCallDAO {
         //same principle for species IDs: if all callFilters specify some species ID filtering, 
         //then we can apply a "global" species ID filtering to the query.
         boolean globalSpeciesFilter = false;
-        Set<String> speciesIds = new HashSet<>();
-        Set<Set<String>> allSpeciesIdFilters = clonedCallFilters.stream().map(e -> e.getSpeciesIds())
+        Set<Integer> speciesIds = new HashSet<>();
+        Set<Set<Integer>> allSpeciesIdFilters = clonedCallFilters.stream().map(e -> e.getSpeciesIds())
                 .collect(Collectors.toSet());
         if (allSpeciesIdFilters.size() == 1 && !allSpeciesIdFilters.iterator().next().isEmpty()) {
             speciesIds = new HashSet<>(allSpeciesIdFilters.iterator().next());
@@ -467,7 +467,7 @@ implements ExpressionCallDAO {
      * It is the responsibility of the caller to close this {@code DAOResultSet} once 
      * results are retrieved.
      * 
-     * @param speciesIds             A {@code Set} of {@code String}s that are the IDs of species 
+     * @param speciesIds             A {@code Set} of {@code Integer}s that are the IDs of species 
      *                               allowing to filter the calls to use
      * @param isIncludeSubstructures A {@code boolean} defining whether descendants 
      *                               of the anatomical entity were considered.
@@ -497,8 +497,8 @@ implements ExpressionCallDAO {
     //TODO: update javadoc
     private ExpressionCallTOResultSet getExpressionCalls(
             LinkedHashSet<CallDAOFilter> callFilters, LinkedHashSet<ExpressionCallTO> callTOFilters, 
-            Set<String> allGeneIds, boolean globalGeneFilter, 
-            Set<String> allSpeciesIds, boolean globalSpeciesFilter, 
+            Set<Integer> allGeneIds, boolean globalGeneFilter, 
+            Set<Integer> allSpeciesIds, boolean globalSpeciesFilter, 
             boolean includeSubstructures, final boolean includeSubStages, 
             String commonAncestralTaxonId, 
             Set<ExpressionCallDAO.Attribute> originalAttrs, Set<ExpressionCallDAO.Attribute> updatedAttrs, 
@@ -711,11 +711,11 @@ implements ExpressionCallDAO {
                     allGeneIds.size() > this.getManager().getExprPropagationGeneCount())) {
                     
                 if (!allSpeciesIds.isEmpty()) {
-                    stmt.setStringsToIntegers(index, allSpeciesIds, true);
+                    stmt.setIntegers(index, allSpeciesIds, true);
                     index += allSpeciesIds.size();
                 }
                 if (!allGeneIds.isEmpty()) {
-                    stmt.setStrings(index, allGeneIds, true);
+                    stmt.setIntegers(index, allGeneIds, true);
                     index += allGeneIds.size();
                 }
                 //keep two parameters for the offset and count LIMIT arguments
@@ -724,11 +724,11 @@ implements ExpressionCallDAO {
             }
             
             if (!allGeneIds.isEmpty() && !genesAndSpeciesFilteredForPropagation && globalGeneFilter) {
-                stmt.setStrings(index, allGeneIds, true);
+                stmt.setIntegers(index, allGeneIds, true);
                 index += allGeneIds.size();
             }
             if (!allSpeciesIds.isEmpty() && !genesAndSpeciesFilteredForPropagation && globalSpeciesFilter) {
-                stmt.setStringsToIntegers(index, allSpeciesIds, true);
+                stmt.setIntegers(index, allSpeciesIds, true);
                 index += allSpeciesIds.size();
             }
             
@@ -1473,12 +1473,12 @@ implements ExpressionCallDAO {
         for (CallDAOFilter callFilter: callFilters) {
             //genes
             if (useGeneIds && !callFilter.getGeneIds().isEmpty()) {
-                stmt.setStrings(index, callFilter.getGeneIds(), true);
+                stmt.setIntegers(index, callFilter.getGeneIds(), true);
                 index += callFilter.getGeneIds().size();
             }
             //species
             if (useSpeciesIds && !callFilter.getSpeciesIds().isEmpty()) {
-                stmt.setStringsToIntegers(index, callFilter.getSpeciesIds(), true);
+                stmt.setIntegers(index, callFilter.getSpeciesIds(), true);
                 index += callFilter.getSpeciesIds().size();
             }
             

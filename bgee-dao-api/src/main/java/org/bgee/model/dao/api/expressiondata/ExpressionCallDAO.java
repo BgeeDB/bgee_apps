@@ -187,7 +187,7 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
      *                              from developmental stages, and all of their descendants 
      *                              by is_a and part_of relations (expression taking into account 
      *                              sub-stages).
-     * @param globalGeneIds         A {@code Set} of {@code String}s that are IDs of genes 
+     * @param globalGeneIds         A {@code Set} of {@code Integer}s that are IDs of genes 
      *                              to globally filter this query, overriding any gene IDs 
      *                              provided in the {@code CallDAOFilter}s. 
      *                              Can be {@code null} or empty.
@@ -213,7 +213,7 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
     public ExpressionCallTOResultSet getExpressionCalls(
             Collection<CallDAOFilter> callFilters, Collection<ExpressionCallTO> callTOFilters, 
             boolean includeSubstructures, boolean includeSubStages, 
-            Collection<String> globalGeneIds, String taxonId, Collection<Attribute> attributes, 
+            Collection<Integer> globalGeneIds, String taxonId, Collection<Attribute> attributes, 
             LinkedHashMap<OrderingAttribute, DAO.Direction> orderingAttributes) 
                     throws DAOException, IllegalArgumentException;
     

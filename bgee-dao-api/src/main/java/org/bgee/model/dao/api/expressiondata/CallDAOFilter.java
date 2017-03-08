@@ -13,9 +13,10 @@ import org.apache.logging.log4j.Logger;
 /**
  * A filter to parameterize expression data queries. 
  * 
- * @author Frederic Bastian
- * @version Bgee 13 Oct. 2015
- * @since Bgee 13 Oct. 2015
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, Mar. 2017
+ * @since   Bgee 13, Oct. 2015
  */
 public class CallDAOFilter {
     private final static Logger log = LogManager.getLogger(CallDAOFilter.class.getName());
@@ -23,11 +24,11 @@ public class CallDAOFilter {
     /**
      * @see #getGeneIds()
      */
-    private final Set<String> geneIds;
+    private final Set<Integer> geneIds;
     /**
      * @see #getSpeciesIds()
      */
-    private final Set<String> speciesIds;
+    private final Set<Integer> speciesIds;
     /**
      * @see #getConditionFilters()
      */
@@ -36,16 +37,16 @@ public class CallDAOFilter {
     /**
      * Constructor accepting all requested parameters. 
      * 
-     * @param geneIds           A {@code Collection} of {@code String}s that are IDs of genes 
+     * @param geneIds           A {@code Collection} of {@code Integer}s that are IDs of genes 
      *                          to filter expression queries. Can be {@code null} or empty.
-     * @param speciesIds        A {@code Collection} of {@code String}s that are IDs of species 
+     * @param speciesIds        A {@code Collection} of {@code Integer}s that are IDs of species 
      *                          to filter expression queries. Can be {@code null} or empty.
      * @param conditionFilters  A {@code Collection} of {@code ConditionFilter}s to configure 
      *                          the filtering of conditions with expression data. If several 
      *                          {@code ConditionFilter}s are provided, they are seen as "OR" conditions.
      *                          Can be {@code null} or empty.
      */
-    public CallDAOFilter(Collection<String> geneIds, Collection<String> speciesIds, 
+    public CallDAOFilter(Collection<Integer> geneIds, Collection<Integer> speciesIds, 
             Collection<DAOConditionFilter> conditionFilters) 
                     throws IllegalArgumentException {
         log.entry(geneIds, speciesIds, conditionFilters);
@@ -64,17 +65,17 @@ public class CallDAOFilter {
     }
 
     /**
-     * @return  An unmodifiable {@code Set} of {@code String}s containing the IDs of genes used
+     * @return  An unmodifiable {@code Set} of {@code Integer}s containing the IDs of genes used
      *          to filter expression queries. Can be {@code null} or empty.
      */
-    public Set<String> getGeneIds() {
+    public Set<Integer> getGeneIds() {
         return geneIds;
     }
     /**
-     * @return  An unmodifiable {@code Set} of {@code String}s containing the IDs of species used
+     * @return  An unmodifiable {@code Set} of {@code Integer}s containing the IDs of species used
      *          to filter expression queries. Can be {@code null} or empty.
      */
-    public Set<String> getSpeciesIds() {
+    public Set<Integer> getSpeciesIds() {
         return speciesIds;
     }
     /**

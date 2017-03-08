@@ -1,6 +1,7 @@
 package org.bgee.model.species;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -26,7 +27,7 @@ import org.bgee.model.source.Source;
  * @author  Philippe Moret
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, July 2016
+ * @version Bgee 14, Mar. 2017
  * @since   Bgee 13, Sept. 2015
  */
 public class SpeciesService extends Service {
@@ -69,7 +70,7 @@ public class SpeciesService extends Service {
     /**
      * Loads species for a given set of species IDs .
      * 
-     * @param speciesIds        A {@code Set} of {@code Integer}s that are IDs of species 
+     * @param speciesIds        A {@code Collection} of {@code Integer}s that are IDs of species 
      *                          for which to return the {@code Species}s.
      * @param withSpeciesInfo   A {@code boolean}s defining whether data sources of the species
      *                          is retrieved or not.
@@ -78,7 +79,7 @@ public class SpeciesService extends Service {
      * @throws DAOException                 If an error occurred while accessing a {@code DAO}.
      * @throws QueryInterruptedException    If a query to a {@code DAO} was intentionally interrupted.
      */
-    public Set<Species> loadSpeciesByIds(Set<Integer> speciesIds, boolean withSpeciesInfo)
+    public Set<Species> loadSpeciesByIds(Collection<Integer> speciesIds, boolean withSpeciesInfo)
             throws DAOException, QueryInterruptedException {
         log.entry(speciesIds, withSpeciesInfo);
         Set<Integer> filteredSpecieIds = speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds);

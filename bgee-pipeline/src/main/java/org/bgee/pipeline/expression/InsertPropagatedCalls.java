@@ -23,7 +23,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -96,6 +95,14 @@ public class InsertPropagatedCalls extends CallService {
      */
     public final static int GENE_PARALLEL_GROUP_SIZE = 200;
     
+    /**
+     * The maximum number of {@code Set}s that can be stored in {@link #callsToInsert}.
+     * If this threshold is exceeded, computation threads will wait for {@link #insertThread}
+     * to deal with the {@code Set}s already present for insertion (computations can be faster
+     * than insertion in some cases).
+     */
+    private final static int MAX_NUMBER_OF_CALLS_TO_INSERT = 200;
+
     private final static List<Set<ConditionDAO.Attribute>> COND_PARAM_COMB_LIST;
     private final static Map<Set<ConditionDAO.Attribute>, AtomicInteger> COND_ID_COUNTERS;
     private final static Map<Set<ConditionDAO.Attribute>, AtomicInteger> EXPR_ID_COUNTERS;
@@ -211,9 +218,9 @@ public class InsertPropagatedCalls extends CallService {
         this.conditionParams = Collections.unmodifiableSet(EnumSet.copyOf(conditionParams));
         this.speciesId = speciesId;
         //use a LinkedBlockingDeque because we are going to do lots of insert/remove,
-        //because we don't care about element order, and because we don't want to block
-        //when reaching maximal capacity
-        this.callsToInsert = new LinkedBlockingDeque<>();
+        //and because we don't care about element order. We are going to block
+        //if there are too many results waiting to be inserted, to not overload the memory
+        this.callsToInsert = new LinkedBlockingDeque<>(MAX_NUMBER_OF_CALLS_TO_INSERT);
         this.insertFinished = new AtomicBoolean(false);
         this.daoManagers = Collections.newSetFromMap(new ConcurrentHashMap<>());
         this.errorOccured = null;
@@ -766,14 +773,15 @@ public class InsertPropagatedCalls extends CallService {
                             !this.callPropagator.callsToInsert.isEmpty()) && 
                        //but if an error occurred, we stop immediately in any case.
                        this.callPropagator.errorOccured == null) {
-                    
+
                     //wait for consuming new data
                     Set<PipelineCall> toInsert = null;
                     try {
                         log.trace(BLOCKING_QUEUE_MARKER, "Trying to take Set of PipelineCalls");
                         //here we ask to wait indefinitely 
                         toInsert = this.callPropagator.callsToInsert.take();
-                        log.trace(BLOCKING_QUEUE_MARKER, "Done taking Set of {} PipelineCalls", toInsert.size());
+                        log.trace(BLOCKING_QUEUE_MARKER, "Done taking Set of {} PipelineCalls",
+                                toInsert.size());
                     } catch (InterruptedException e) {
                         //this Thread will be interrupted if an error occurred in an other Thread
                         //or if all computations are finished and this thread is waiting
@@ -782,7 +790,7 @@ public class InsertPropagatedCalls extends CallService {
                         continue INSERT;
                     }
                     assert toInsert != null;
-                    
+
                     //wait for receiving data for starting the transaction,
                     //otherwise there might be some lock issues
                     if (firstInsert) {
@@ -1432,9 +1440,11 @@ public class InsertPropagatedCalls extends CallService {
                         //Check error status
                         this.checkErrorOccurred();
                         try {
-                            //if resizing needed, wait no more than 3 minutes (yeah, why not 2.99).
-                            log.trace(BLOCKING_QUEUE_MARKER, "Offering Set of {} PipelineCalls", set.size());
-                            this.callsToInsert.offer(set, 3, TimeUnit.MINUTES);
+                            //wait indefinitely for space in the queue to be available
+                            //(to not overload the memory)
+                            log.trace(BLOCKING_QUEUE_MARKER, "Offering Set of {} PipelineCalls", 
+                                    set.size());
+                            this.callsToInsert.put(set);
                         } catch (InterruptedException e) {
                             this.exceptionOccurs(e);
                         }

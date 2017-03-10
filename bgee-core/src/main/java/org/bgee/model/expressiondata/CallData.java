@@ -1,26 +1,28 @@
 package org.bgee.model.expressiondata;
 
 import java.math.BigDecimal;
+import java.util.AbstractMap;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.expressiondata.baseelements.CountType;
+import org.bgee.model.expressiondata.baseelements.ExperimentExpressionCount;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.CallType.DiffExpression;
 import org.bgee.model.expressiondata.baseelements.CallType.Expression;
 import org.bgee.model.expressiondata.baseelements.DataPropagation.PropagationState;
-import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DiffExpressionFactor;
 
 /**
- * A {@code CallData} represents the expression state of a {@link Gene}, in a {@link Condition}. 
+ * A {@code CallData} represents the expression state of a {@link Gene} in a {@link Condition}
+ * computed from a specific {@code DataType}, as part of a {@link Call}. 
  * This class only manages the expression state part, not the spatio-temporal location, 
  * or gene definition part. It represents the expression state of a baseline present/absent call, 
  * or a differential expression call; a call represents an overall summary 
@@ -35,15 +37,8 @@ import org.bgee.model.expressiondata.baseelements.DiffExpressionFactor;
  * @version Bgee 14, Mar. 2017
  * @since   Bgee 13, Sept. 2015
  */
-//XXX: examples of attributes that could be managed by this class: 
-//* count of experiments supporting and contradicting the CallType.
-//this is meaningful both from a "query filter" perspective and a "data retrieval" perspective, 
-//and this could be common to baseline present/absent and diff. expression analyses 
-//(even if we currently store the information only for diff. expression analyses). 
+//TODO: javadoc of all attributes and methods
 public abstract class CallData<T extends Enum<T> & CallType> {
-    /**
-     * {@code Logger} of the class. 
-     */
     private final static Logger log = LogManager.getLogger(CallData.class.getName());
 
     //**********************************************
@@ -66,7 +61,8 @@ public abstract class CallData<T extends Enum<T> & CallType> {
 
         private final DataQuality dataQuality;
 
-        private final DataPropagation dataPropagation;
+        //XXX: certainly this will change in a similar way as ExpressionCallData
+        private final PropagationState propagationState;
 
         public DiffExpressionCallData(DiffExpressionFactor factor, DiffExpression callType) {
             this(factor, callType, null);
@@ -77,27 +73,27 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         }
         public DiffExpressionCallData(DiffExpressionFactor factor, DiffExpression callType, 
                 DataQuality dataQual, DataType dataType) {
-            this(factor, callType, dataQual, dataType, new DataPropagation());
+            this(factor, callType, dataQual, dataType, PropagationState.SELF);
         }
         public DiffExpressionCallData(DiffExpressionFactor factor, DiffExpression callType, 
-                DataQuality dataQual, DataType dataType, DataPropagation dataPropagation) {
+                DataQuality dataQual, DataType dataType, PropagationState propagationState) {
             super(dataType, callType);
             
-            log.entry(factor, callType, dataQual, dataType, dataPropagation);
+            log.entry(factor, callType, dataQual, dataType, propagationState);
             
             if (callType == null || dataQual == null || DataQuality.NODATA.equals(dataQual) || 
-                dataPropagation == null) {
+                    propagationState == null) {
                         throw log.throwing(new IllegalArgumentException("A DiffExpressionFactor, "
-                            + "a CallType, a DataQuality, and a DataPropagation must be defined "
+                            + "a CallType, a DataQuality, and a PropagationState must be defined "
                             + "to instantiate a CallData."));
             }
-            callType.checkDataPropagation(dataPropagation);
+            callType.checkPropagationState(propagationState);
             if (dataType != null) {
                 callType.checkDataType(dataType);
             }
 
             this.dataQuality = dataQual;
-            this.dataPropagation = dataPropagation;
+            this.propagationState = propagationState;
             this.diffExpressionFactor = factor;            
             log.exit();
         }
@@ -110,27 +106,25 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             return dataQuality;
         }
         //XXX: to remove?
-        public DataPropagation getDataPropagation() {
-            return dataPropagation;
+        public PropagationState getPropagationStage() {
+            return propagationState;
         }
 
         @Override
         // FIXME do implementation
         public boolean isObservedData() {
-            return log.exit(dataPropagation != null && dataPropagation.getIncludingObservedData() != null?
-                dataPropagation.getIncludingObservedData(): false);
+            return log.exit(true);
         }
 
         @Override
         public int hashCode() {
             final int prime = 31;
             int result = super.hashCode();
-            result = prime * result + ((diffExpressionFactor == null) ? 0 : diffExpressionFactor.hashCode());
-            result = prime * result + ((dataPropagation == null) ? 0 : dataPropagation.hashCode());
             result = prime * result + ((dataQuality == null) ? 0 : dataQuality.hashCode());
+            result = prime * result + ((diffExpressionFactor == null) ? 0 : diffExpressionFactor.hashCode());
+            result = prime * result + ((propagationState == null) ? 0 : propagationState.hashCode());
             return result;
         }
-        
         @Override
         public boolean equals(Object obj) {
             if (this == obj) {
@@ -143,132 +137,169 @@ public abstract class CallData<T extends Enum<T> & CallType> {
                 return false;
             }
             DiffExpressionCallData other = (DiffExpressionCallData) obj;
+            if (dataQuality != other.dataQuality) {
+                return false;
+            }
             if (diffExpressionFactor != other.diffExpressionFactor) {
                 return false;
             }
-            if (dataPropagation == null) {
-                if (other.dataPropagation != null) {
-                    return false;
-                }
-            } else if (!dataPropagation.equals(other.dataPropagation)) {
-                return false;
-            }
-            if (dataQuality != other.dataQuality) {
+            if (propagationState != other.propagationState) {
                 return false;
             }
             return true;
         }
-        
+
         @Override
         public String toString() {
-            return super.toString() + " - Data quality: " + dataQuality +
-                " - Data propagation: " + dataPropagation + " - Diff. expression factor: " + diffExpressionFactor;
+            StringBuilder builder = new StringBuilder();
+            builder.append("DiffExpressionCallData [diffExpressionFactor=").append(diffExpressionFactor)
+                    .append(", dataQuality=").append(dataQuality)
+                    .append(", propagationState=").append(propagationState).append("]");
+            return builder.toString();
         }
     }
-    
-    public static class ExpressionCallData extends CallData<Expression> {
 
-        private final Map<CountType, Integer> counts;
+    //TODO: javadoc of all methods and attributes
+    public static class ExpressionCallData extends CallData<Expression> {
+        //********************************************
+        // STATIC ATTRIBUTES AND METHODS
+        //********************************************
+        /**
+         * A {@code Map} where keys are {@code DataType}s, the associated value being
+         * a {@code Set} of {@code ExperimentExpressionCount}s that are all the types
+         * of {@code ExperimentExpressionCount}s that must be associated to this {@code DataType}.
+         * {@link org.bgee.model.expressiondata.baseelements.ExperimentExpressionCount#getExperimentCount() 
+         * ExperimentExpressionCount.getExperimentCount()} returns 0 for all
+         * {@code ExperimentExpressionCount}s in these {@code Set}s.
+         */
+        private static final Map<DataType, Set<ExperimentExpressionCount>> VALID_EXP_COUNTS = 
+            //we go through all combinations of DataType, CallType.Expression,
+            //PropagationState, and DataQuality, to identify and store the valid ones.
+            Collections.unmodifiableMap(EnumSet.allOf(DataType.class).stream()
+            .flatMap(dataType -> EnumSet.allOf(CallType.Expression.class).stream()
+                .filter(callType -> callType.isValidDataType(dataType))
+                .flatMap(callType -> ExperimentExpressionCount.ALLOWED_PROP_STATES.stream()
+                    .filter(propState -> callType.isValidPropagationState(propState))
+                    .flatMap(propState -> EnumSet.allOf(DataQuality.class).stream()
+                        .map(
+                            dataQuality -> new AbstractMap.SimpleEntry<>(dataType, 
+                                new ExperimentExpressionCount(callType, dataQuality, propState, 0))
+                        )
+                    )
+                )
+            ).collect(Collectors.groupingBy(e -> e.getKey(), 
+                    Collectors.mapping(e -> e.getValue(), Collectors.toSet()))));
+
+        /**
+         * Computes the {@code CallType.Expression} that the {@code ExperimentExpressionCount}s
+         * of this {@code CallData} allow to produce.
+         * 
+         * @param counts    A {@code Set} of {@code ExperimentExpressionCount}s producing
+         *                  the {@code CallType.Expression}.
+         * @return          The {@code CallType.Expression} inferred.
+         * @throws IllegalArgumentException If {@code expCounts} do not allow to produce
+         *                                  a {@code CallType.Expression}.
+         */
+        private static Expression inferCallType(Set<ExperimentExpressionCount> expCounts) {
+            log.entry(expCounts);
         
-        private final int propagatedCount;
+            Set<ExperimentExpressionCount> propAllPositiveCounts = expCounts.stream()
+                    //we don't do sanity checks on null here, so we filter them out
+                    //to not have a null pointer exception
+                    .filter(c -> c != null && PropagationState.ALL.equals(c.getPropagationState()) && 
+                            c.getExperimentCount() > 0)
+                    .collect(Collectors.toSet());
+            if (propAllPositiveCounts.isEmpty()) {
+                throw log.throwing(new IllegalArgumentException("Inference of expression is not possible"
+                    + " because all total experimentCounts are missing or equal to 0"));
+            }
+            
+            if (propAllPositiveCounts.stream()
+                    .anyMatch(c -> Expression.EXPRESSED.equals(c.getCallType()))) {
+                return log.exit(Expression.EXPRESSED);
+            }
+            if (propAllPositiveCounts.stream()
+                    .anyMatch(c -> Expression.NOT_EXPRESSED.equals(c.getCallType()))) {
+                return log.exit(Expression.NOT_EXPRESSED);
+            }
+            //this point should be reached only if a new CallType.Expression is not supported here,
+            //so it's an IllegalStateException, not an IllegalArgumentException
+            throw log.throwing(new IllegalStateException(
+                    "Could not infer CallType from ExperimentExpressionCount"));
+        }
+
+        //********************************************
+        // INSTANCE ATTRIBUTES AND CONSTRUCTORS
+        //********************************************
+        private final Set<ExperimentExpressionCount> experimentCounts;
+        
+        private final int propagatedExperimentCount;
 
         private final BigDecimal rank;
         
-        private final BigDecimal rankNorm;
+        private final BigDecimal normalizedRank;
         
-        private final BigDecimal rankSum;
-        //CallType always inferred from experiment count, constructor useless
-//        public ExpressionCallData(CallType callType, DataType dataType) {
-//            this(callType, dataType, 0, 0, 0, 0, 0, 0, 0, 0);
+        private final BigDecimal distinctRankSum;
+
+        public ExpressionCallData(DataType dataType, Set<ExperimentExpressionCount> experimentCounts,
+            int propagatedExperimentCount, BigDecimal rank, BigDecimal normalizedRank, BigDecimal distinctRankSum) {
+            super(dataType, inferCallType(experimentCounts));
+
+            // sanity checks
+            if (experimentCounts.stream().anyMatch(c -> c == null)) {
+                throw log.throwing(new IllegalArgumentException(
+                        "All ExpressionExperimentCounts must be not null."));
+            }
+            final Set<ExperimentExpressionCount> expectedExpCounts = VALID_EXP_COUNTS.get(dataType);
+            //map experimentCounts to ExperimentExpressionCounts with count of 0 to compare
+            //to the expected ExperimentExpressionCounts
+            Set<ExperimentExpressionCount> fakeCounts = experimentCounts.stream()
+                    .map(c -> new ExperimentExpressionCount(c.getCallType(), c.getDataQuality(), 
+                            c.getPropagationState(), 0))
+                    .collect(Collectors.toSet());
+            if (!expectedExpCounts.equals(fakeCounts)) {
+                Set<ExperimentExpressionCount> missingCounts = new HashSet<>(expectedExpCounts);
+                missingCounts.removeAll(fakeCounts);
+                fakeCounts.removeAll(expectedExpCounts);
+                throw log.throwing(new IllegalArgumentException("Missing or additional combinations of "
+                        + "CallType/DataQuality/PropagationState in ExperimentExpressionCount. "
+                        + "Missing counts: " + missingCounts + ". Additional counts: "
+                        + fakeCounts));
+            }
+
+            this.experimentCounts = experimentCounts == null? new HashSet<>(): 
+                Collections.unmodifiableSet(new HashSet<>(experimentCounts));
+            this.propagatedExperimentCount = propagatedExperimentCount;
+            //BigDecimal are immutable so we're good
+            this.rank = rank;
+            this.normalizedRank = normalizedRank;
+            this.distinctRankSum = distinctRankSum;
+        }
+
+
+        //********************************************
+        // INSTANCE METHODS
+        //********************************************
+//        public int getExperimentCounts() {
+//            return experimentCounts.stream()
+//                .filter(c -> PropagationState.SELF.equals(c.getKey().getPropagationState()) 
+//                    && c.getValue() > 0)
+//                .map(Entry::getValue)
+//                .mapToInt(Integer::intValue)
+//                .sum();
+//        }
+//
+//        public int getAllTotalCount() {
+//            return experimentCounts.entrySet().stream()
+//                .filter(c -> PropagationState.ALL.equals(c.getKey().getPropagationState()) 
+//                    && c.getValue() > 0)
+//                .map(Entry::getValue)
+//                .mapToInt(Integer::intValue)
+//                .sum();
 //        }
 
-        //TODO Javadoc
-        //FIXME non provided counts are considered equals to 0 or all counts should be provided? 
-        public ExpressionCallData(DataType dataType, Map<CountType, Integer> counts,
-            int propagatedCount, BigDecimal rank, BigDecimal rankNorm, BigDecimal rankSum) {
-            super(dataType, inferCallType(counts));
-            // sanity checks
-            if (counts.values().stream().anyMatch(c -> c == null || c < 0)) {
-                throw log.throwing(new IllegalArgumentException(
-                    "All experiment counts must be not null and equals or greater than 0"));
-            }
-            Map<CountType, Integer> positiveTotalCounts = counts.entrySet().stream()
-                .filter(c -> PropagationState.ALL.equals(c.getKey().getPropagationState())
-                                && c.getValue() > 0)
-                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
-            if (positiveTotalCounts.isEmpty()) {
-                throw log.throwing(new IllegalArgumentException(
-                    "Total experiment counts must be provided to infer call type and quality"));
-            }
-            this.counts = counts == null? new HashMap<>(): Collections.unmodifiableMap(new HashMap<>(counts));
-            this.propagatedCount = propagatedCount;
-            this.rank = rank;
-            this.rankNorm = rankNorm;
-            this.rankSum = rankSum;
-        }
-
-        public Map<CountType, Integer> getCounts() {
-            return counts;
-        }
-        
-        public int getAllSelfCount() {
-            return counts.entrySet().stream()
-                .filter(c -> PropagationState.SELF.equals(c.getKey().getPropagationState()) 
-                    && c.getValue() > 0)
-                .map(Entry::getValue)
-                .mapToInt(Integer::intValue)
-                .sum();
-        }
-
-        public int getAllTotalCount() {
-            return counts.entrySet().stream()
-                .filter(c -> PropagationState.ALL.equals(c.getKey().getPropagationState()) 
-                    && c.getValue() > 0)
-                .map(Entry::getValue)
-                .mapToInt(Integer::intValue)
-                .sum();
-        }
-
-        public int getPropagatedCount() {
-            return propagatedCount;
-        }
-
-        public BigDecimal getRank() {
-            return rank;
-        }
-
-        public BigDecimal getRankNorm() {
-            return rankNorm;
-        }
-
-        public BigDecimal getRankSum() {
-            return rankSum;
-        }
-
-        private static Expression inferCallType(Map<CountType, Integer> counts) {
-            log.entry(counts);
-            Map<CountType, Integer> positiveTotalCounts = counts.entrySet().stream()
-                .filter(c -> PropagationState.ALL.equals(c.getKey().getPropagationState()) &&
-                    c.getValue() != null && c.getValue() > 0)
-                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
-            if (positiveTotalCounts.isEmpty()) {
-                throw log.throwing(new IllegalStateException("Inference of expression is not possible"
-                    + " because all total counts are null or less than 1"));
-            }
-            if (positiveTotalCounts.entrySet().stream()
-                    .anyMatch(c -> CallType.Expression.EXPRESSED.equals(c.getKey().getCallType()))) {
-                return log.exit(Expression.EXPRESSED);
-            }
-            if (positiveTotalCounts.entrySet().stream()
-                    .anyMatch(c -> CallType.Expression.NOT_EXPRESSED.equals(c.getKey().getCallType()))) {
-                return log.exit(Expression.NOT_EXPRESSED);
-            }
-            throw log.throwing(new IllegalStateException("Inference of expression is not possible"
-                + " because all total counts as no call type"));
-        }
-
-        //DataQual is now inferred only from the integration of all data types, 
-        //so it doesn't make sense to have a quality score per data type. We only need experiment counts.
+        //XXX: DataQual is now inferred only from the integration of all data types, 
+        //so it doesn't make sense to have a quality score per data type. We only need experiment experimentCounts.
 //        @Override
 //        public DataQuality getDataQuality() {
 //            log.entry();
@@ -290,24 +321,43 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         @Override
         public boolean isObservedData() {
             log.entry();
-            if (this.counts.entrySet().stream().anyMatch(c ->
-                    PropagationState.SELF.equals(c.getKey().getPropagationState()) &&
-                    c.getValue() != null && c.getValue() > 0)) {
-                return log.exit(true);
-            }
-            return log.exit(false);
+            return log.exit(this.experimentCounts.stream().anyMatch(c ->
+                    PropagationState.SELF.equals(c.getPropagationState()) && c.getExperimentCount() > 0));
         }
 
-        
+
+        //********************************************
+        // GETTERS
+        //********************************************
+        public Set<ExperimentExpressionCount> getExperimentCounts() {
+            return experimentCounts;
+        }
+        public int getPropagatedExperimentCount() {
+            return propagatedExperimentCount;
+        }
+        public BigDecimal getRank() {
+            return rank;
+        }
+        public BigDecimal getNormalizedRank() {
+            return normalizedRank;
+        }
+        public BigDecimal getDistinctRankSum() {
+            return distinctRankSum;
+        }
+
+
+        //********************************************
+        // hashCode/equals/toString
+        //********************************************
         @Override
         public int hashCode() {
             final int prime = 31;
             int result = super.hashCode();
-            result = prime * result + ((counts == null) ? 0 : counts.hashCode());
-            result = prime * result + propagatedCount;
+            result = prime * result + ((experimentCounts == null) ? 0 : experimentCounts.hashCode());
+            result = prime * result + propagatedExperimentCount;
             result = prime * result + ((rank == null) ? 0 : rank.hashCode());
-            result = prime * result + ((rankNorm == null) ? 0 : rankNorm.hashCode());
-            result = prime * result + ((rankSum == null) ? 0 : rankSum.hashCode());
+            result = prime * result + ((normalizedRank == null) ? 0 : normalizedRank.hashCode());
+            result = prime * result + ((distinctRankSum == null) ? 0 : distinctRankSum.hashCode());
             return result;
         }
 
@@ -323,14 +373,14 @@ public abstract class CallData<T extends Enum<T> & CallType> {
                 return false;
             }
             ExpressionCallData other = (ExpressionCallData) obj;
-            if (counts == null) {
-                if (other.counts != null) {
+            if (experimentCounts == null) {
+                if (other.experimentCounts != null) {
                     return false;
                 }
-            } else if (!counts.equals(other.counts)) {
+            } else if (!experimentCounts.equals(other.experimentCounts)) {
                 return false;
             }
-            if (propagatedCount != other.propagatedCount) {
+            if (propagatedExperimentCount != other.propagatedExperimentCount) {
                 return false;
             }
             if (rank == null) {
@@ -340,18 +390,18 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             } else if (!rank.equals(other.rank)) {
                 return false;
             }
-            if (rankNorm == null) {
-                if (other.rankNorm != null) {
+            if (normalizedRank == null) {
+                if (other.normalizedRank != null) {
                     return false;
                 }
-            } else if (!rankNorm.equals(other.rankNorm)) {
+            } else if (!normalizedRank.equals(other.normalizedRank)) {
                 return false;
             }
-            if (rankSum == null) {
-                if (other.rankSum != null) {
+            if (distinctRankSum == null) {
+                if (other.distinctRankSum != null) {
                     return false;
                 }
-            } else if (!rankSum.equals(other.rankSum)) {
+            } else if (!distinctRankSum.equals(other.distinctRankSum)) {
                 return false;
             }
             return true;
@@ -359,13 +409,14 @@ public abstract class CallData<T extends Enum<T> & CallType> {
 
         @Override
         public String toString() {
-            return "ExpressionCallData [counts=" + counts + ", propagatedCount=" + propagatedCount +
-                ", rank=" + rank + ", rankNorm=" + rankNorm + ", rankSum=" + rankSum + "]";
+            return "ExpressionCallData [experimentCounts=" + experimentCounts + ", propagatedExperimentCount=" + propagatedExperimentCount +
+                ", rank=" + rank + ", normalizedRank=" + normalizedRank + ", distinctRankSum=" + distinctRankSum + "]";
         }
     }
 
+
     //**********************************************
-    //   INSTANCE ATTRIBUTES AND METHODS
+    //   INSTANCE ATTRIBUTES AND CONSTRUCTORS
     //**********************************************
     
     private final DataType dataType;
@@ -390,7 +441,11 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         this.callType = callType;
         log.exit();
     }
-	
+
+
+    //**********************************************
+    //   GETTERS
+    //**********************************************
     public DataType getDataType() {
         return dataType;
     }
@@ -398,19 +453,21 @@ public abstract class CallData<T extends Enum<T> & CallType> {
     public T getCallType() {
         return callType;
     }
-    
-    //TODO: javadoc
+
     public abstract boolean isObservedData();
-    
+
+
+    //**********************************************
+    //  hashCode/equals/toString
+    //**********************************************
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((dataType == null) ? 0 : dataType.hashCode());
         result = prime * result + ((callType == null) ? 0 : callType.hashCode());
+        result = prime * result + ((dataType == null) ? 0 : dataType.hashCode());
         return result;
     }
-    
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -423,17 +480,24 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             return false;
         }
         CallData<?> other = (CallData<?>) obj;
-        if (dataType != other.dataType) {
+        if (callType == null) {
+            if (other.callType != null) {
+                return false;
+            }
+        } else if (!callType.equals(other.callType)) {
             return false;
         }
-        if (callType != other.callType) {
+        if (dataType != other.dataType) {
             return false;
         }
         return true;
     }
-    
+
     @Override
     public String toString() {
-        return "Data type: " + dataType + " - Call type: " + callType;
+        StringBuilder builder = new StringBuilder();
+        builder.append("CallData [dataType=").append(dataType)
+        .append(", callType=").append(callType).append("]");
+        return builder.toString();
     }
 }

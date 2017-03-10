@@ -28,6 +28,7 @@ import org.apache.logging.log4j.Logger;
 //could be performed to ensure that all ConditionElement enum elements are in the key set of the Map.
 //If we don't want to change the class signature, we could keep the getAnatEntityPropagationState etc 
 //as helper methods. 
+//XXX: should this class be removed/deprecated?
 public class DataPropagation {
     private final static Logger log = LogManager.getLogger(DataPropagation.class.getName());
     

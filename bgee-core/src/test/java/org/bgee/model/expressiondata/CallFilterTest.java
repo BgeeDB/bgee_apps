@@ -7,9 +7,7 @@ import static org.junit.Assert.fail;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import org.bgee.model.TestAncestor;
@@ -18,7 +16,7 @@ import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.CallFilter.DiffExpressionCallFilter;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.baseelements.CallType;
-import org.bgee.model.expressiondata.baseelements.CountType;
+import org.bgee.model.expressiondata.baseelements.ExperimentExpressionCount;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
@@ -77,14 +75,18 @@ public class CallFilterTest extends TestAncestor {
     @Test
     public void shouldTest() {
         Collection<ExpressionCallData> callData = new HashSet<>();
-        Map<CountType, Integer> counts = new HashMap<>();
-        counts.put(new CountType(CallType.Expression.EXPRESSED, DataQuality.HIGH, PropagationState.SELF), 2);
-        counts.put(new CountType(CallType.Expression.EXPRESSED, DataQuality.HIGH, PropagationState.ALL), 2);
+        Set<ExperimentExpressionCount> counts = new HashSet<>();
+        counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.HIGH,
+                PropagationState.SELF, 2));
+        counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.HIGH,
+                PropagationState.ALL, 2));
         callData.add(new ExpressionCallData(DataType.EST, counts, 0, null, null, null));
         
-        counts = new HashMap<>();
-        counts.put(new CountType(CallType.Expression.EXPRESSED, DataQuality.LOW, PropagationState.SELF), 1);
-        counts.put(new CountType(CallType.Expression.EXPRESSED, DataQuality.LOW, PropagationState.ALL), 1);
+        counts = new HashSet<>();
+        counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.LOW,
+                PropagationState.SELF, 1));
+        counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.LOW,
+                PropagationState.ALL, 1));
         callData.add(new ExpressionCallData(DataType.AFFYMETRIX, counts, 0, null, null, null));
 
         ExpressionCall call1 = new ExpressionCall(new Gene("g1"), new Condition("ae1", "ds1", 1), true, 
@@ -122,9 +124,11 @@ public class CallFilterTest extends TestAncestor {
         assertFalse("Call should not pass the filter", callFilter.test(call1));
 
         callData.clear();
-        counts = new HashMap<>();
-        counts.put(new CountType(CallType.Expression.EXPRESSED, DataQuality.LOW, PropagationState.SELF), 1);
-        counts.put(new CountType(CallType.Expression.EXPRESSED, DataQuality.LOW, PropagationState.ALL), 1);
+        counts = new HashSet<>();
+        counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.LOW,
+                PropagationState.SELF, 1));
+        counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.LOW,
+                PropagationState.ALL, 1));
         callData.add(new ExpressionCallData(DataType.AFFYMETRIX, counts, 0, null, null, null));
         
         ExpressionCall call2 = new ExpressionCall(new Gene("g1"), new Condition("ae1", "ds1", 1),

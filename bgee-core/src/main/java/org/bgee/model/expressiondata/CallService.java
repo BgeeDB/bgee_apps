@@ -567,14 +567,14 @@ public class CallService extends CommonService {
                 .map(callType -> new DAOExperimentCountFilter(callType,
                         DAOExperimentCountFilter.DataQuality.LOW,
                         DAOExperimentCountFilter.PropagationState.ALL,
-                        DAOExperimentCountFilter.Qualifier.GREATER_THAN, MIN_LOW_BRONZE))
+                        DAOExperimentCountFilter.Qualifier.GREATER_THAN, MIN_LOW_BRONZE - 1))
                 .collect(Collectors.toSet());
                 //also need to get calls supported by high quality data only
                 generalFilters.addAll(consideredCallTypes.stream()
                         .map(callType -> new DAOExperimentCountFilter(callType,
                                 DAOExperimentCountFilter.DataQuality.HIGH,
                                 DAOExperimentCountFilter.PropagationState.ALL,
-                                DAOExperimentCountFilter.Qualifier.GREATER_THAN, MIN_HIGH_BRONZE))
+                                DAOExperimentCountFilter.Qualifier.GREATER_THAN, MIN_HIGH_BRONZE - 1))
                         .collect(Collectors.toSet()));
                 break;
             case SILVER:
@@ -582,13 +582,13 @@ public class CallService extends CommonService {
                 .map(callType -> new DAOExperimentCountFilter(callType,
                         DAOExperimentCountFilter.DataQuality.LOW,
                         DAOExperimentCountFilter.PropagationState.ALL,
-                        DAOExperimentCountFilter.Qualifier.GREATER_THAN, MIN_LOW_SILVER))
+                        DAOExperimentCountFilter.Qualifier.GREATER_THAN, MIN_LOW_SILVER - 1))
                 .collect(Collectors.toSet());
                 generalFilters.addAll(consideredCallTypes.stream()
                         .map(callType -> new DAOExperimentCountFilter(callType,
                                 DAOExperimentCountFilter.DataQuality.HIGH,
                                 DAOExperimentCountFilter.PropagationState.ALL,
-                                DAOExperimentCountFilter.Qualifier.GREATER_THAN, MIN_HIGH_SILVER))
+                                DAOExperimentCountFilter.Qualifier.GREATER_THAN, MIN_HIGH_SILVER - 1))
                         .collect(Collectors.toSet()));
                 break;
             case GOLD:
@@ -596,7 +596,7 @@ public class CallService extends CommonService {
                 .map(callType -> new DAOExperimentCountFilter(callType,
                         DAOExperimentCountFilter.DataQuality.HIGH,
                         DAOExperimentCountFilter.PropagationState.ALL,
-                        DAOExperimentCountFilter.Qualifier.GREATER_THAN, MIN_HIGH_GOLD))
+                        DAOExperimentCountFilter.Qualifier.GREATER_THAN, MIN_HIGH_GOLD - 1))
                 .collect(Collectors.toSet());
                 break;
             default:

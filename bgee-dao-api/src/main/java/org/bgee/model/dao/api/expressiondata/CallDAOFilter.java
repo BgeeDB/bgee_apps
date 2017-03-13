@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -37,29 +36,36 @@ public class CallDAOFilter {
     /**
      * Constructor accepting all requested parameters. 
      * 
-     * @param geneIds           A {@code Collection} of {@code Integer}s that are IDs of genes 
-     *                          to filter expression queries. Can be {@code null} or empty.
-     * @param speciesIds        A {@code Collection} of {@code Integer}s that are IDs of species 
-     *                          to filter expression queries. Can be {@code null} or empty.
-     * @param conditionFilters  A {@code Collection} of {@code ConditionFilter}s to configure 
-     *                          the filtering of conditions with expression data. If several 
-     *                          {@code ConditionFilter}s are provided, they are seen as "OR" conditions.
-     *                          Can be {@code null} or empty.
+     * @param geneIds               A {@code Collection} of {@code Integer}s that are IDs of genes 
+     *                              to filter expression queries. Can be {@code null} or empty.
+     * @param speciesIds            A {@code Collection} of {@code Integer}s that are IDs of species 
+     *                              to filter expression queries. Can be {@code null} or empty.
+     * @param conditionFilters      A {@code Collection} of {@code ConditionFilter}s to configure 
+     *                              the filtering of conditions with expression data. If several 
+     *                              {@code ConditionFilter}s are provided, they are seen as "OR" conditions.
+     *                              Can be {@code null} or empty.
      */
     public CallDAOFilter(Collection<Integer> geneIds, Collection<Integer> speciesIds, 
             Collection<DAOConditionFilter> conditionFilters) 
                     throws IllegalArgumentException {
         log.entry(geneIds, speciesIds, conditionFilters);
+        if (geneIds != null && geneIds.stream().anyMatch(id -> id == null)) {
+            throw log.throwing(new IllegalArgumentException("No gene ID can be null"));
+        }
+        if (speciesIds != null && speciesIds.stream().anyMatch(id -> id == null)) {
+            throw log.throwing(new IllegalArgumentException("No species ID can be null"));
+        }
+        if (conditionFilters != null && conditionFilters.stream().anyMatch(cf -> cf == null)) {
+            throw log.throwing(new IllegalArgumentException("No DAOConditionFilter can be null"));
+        }
 
         this.geneIds = Collections.unmodifiableSet(
                 geneIds == null? new HashSet<>(): new HashSet<>(geneIds));
         this.speciesIds = Collections.unmodifiableSet(
                 speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds));
-        //we'll use defensive copying for those ones, no unmodifiableLinkedHashSet method
+        //we'll use defensive copying for this one, no unmodifiableLinkedHashSet method
         this.conditionFilters = conditionFilters == null? new LinkedHashSet<>(): 
-            new LinkedHashSet<>(
-                conditionFilters.stream().filter(filter -> filter != null).collect(Collectors.toSet())
-            );
+            new LinkedHashSet<>(conditionFilters);
         
         log.exit();
     }
@@ -79,7 +85,7 @@ public class CallDAOFilter {
         return speciesIds;
     }
     /**
-     * @return  A {@code LinkedHashSet} of {@code ConditionFilter}s to configure the filtering 
+     * @return  A {@code LinkedHashSet} of {@code DAOConditionFilter}s to configure the filtering 
      *          of conditions with expression data. If several {@code ConditionFilter}s are provided, 
      *          they are seen as "OR" conditions. Can be {@code null} or empty. 
      *          Provided as a {@code LinkedHashSet} for convenience, to consistently set parameters 
@@ -137,8 +143,12 @@ public class CallDAOFilter {
 
     @Override
     public String toString() {
-        return "CallDAOFilter [geneIds=" + geneIds 
-                + ", speciesIds=" + speciesIds 
-                + ", conditionFilters=" + conditionFilters + "]";
+        StringBuilder builder = new StringBuilder();
+        builder.append("CallDAOFilter [geneIds=").append(geneIds)
+               .append(", speciesIds=").append(speciesIds)
+               .append(", conditionFilters=").append(conditionFilters).append("]");
+        return builder.toString();
     }
+
+    
 }

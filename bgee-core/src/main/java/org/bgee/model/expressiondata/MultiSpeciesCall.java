@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.CommonService;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntitySimilarity;
 import org.bgee.model.anatdev.DevStageSimilarity;
@@ -21,7 +22,7 @@ import org.bgee.model.anatdev.DevStageSimilarity;
  * @version Bgee 13, Aug. 2016
  * @since   Bgee 13, Apr. 2016
  */
-public class MultiSpeciesCall<T extends Call<?, ?>> {
+public class MultiSpeciesCall<T extends Call<?, ?>> extends CommonService {
 
     private static final Logger log = LogManager.getLogger(MultiSpeciesCall.class.getName());
 
@@ -64,11 +65,6 @@ public class MultiSpeciesCall<T extends Call<?, ?>> {
      * A {@code BigDecimal} that is the conservation score of this {@code MultiSpeciesCall}.
      */
     private final BigDecimal conservationScore;
-    
-    /**
-     * A {@code ServiceFactory} to obtain {@code Service} objects.
-     */
-    private final ServiceFactory serviceFactory;
 
     /**
      * Constructor providing the anat entity similarity group, the dev. stage similarity group,
@@ -91,9 +87,7 @@ public class MultiSpeciesCall<T extends Call<?, ?>> {
     public MultiSpeciesCall(AnatEntitySimilarity anatSimilarity, DevStageSimilarity stageSimilarity,
             Integer taxonId, Integer omaNodeId, Collection<String> orthologousGeneIds, Collection<T> calls,
             BigDecimal conservationScore, ServiceFactory serviceFactory) {
-        if (serviceFactory == null) {
-            throw log.throwing(new IllegalArgumentException("A ServiceFactory must be provided."));
-        }
+        super(serviceFactory);
 
         this.anatSimilarity = anatSimilarity;
         this.stageSimilarity = stageSimilarity;
@@ -103,7 +97,6 @@ public class MultiSpeciesCall<T extends Call<?, ?>> {
                 orthologousGeneIds == null? new HashSet<>(): new HashSet<>(orthologousGeneIds));
         this.calls = Collections.unmodifiableSet(calls == null? new HashSet<>(): new HashSet<>(calls));
         this.conservationScore = conservationScore;
-        this.serviceFactory = serviceFactory;
     }
     
     /**
@@ -167,10 +160,12 @@ public class MultiSpeciesCall<T extends Call<?, ?>> {
      * @return  The {@code Set} of {@code Integer}s that are the IDs of the species of 
      *          orthologous genes of this {@code MultiSpeciesCall}.
      */
-    public Set<Integer> getSpeciesIds() {
-        return log.exit(this.serviceFactory.getGeneService()
-                .loadGenesByIdsAndSpeciesIds(this.getOrthologousGeneIds(), null).stream()
-                .map(g -> g.getSpeciesId()).collect(Collectors.toSet()));
+    public Set<Integer> loadSpeciesIds() {
+        //FIXME: to reimplement
+        throw new UnsupportedOperationException("To implement");
+//        return log.exit(this.getServiceFactory().getGeneService()
+//                .loadGenesByIdsAndSpeciesIds(this.getOrthologousGeneIds(), null).stream()
+//                .map(g -> g.getSpeciesId()).collect(Collectors.toSet()));
     }
     
     @Override

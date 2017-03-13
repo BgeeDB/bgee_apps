@@ -73,13 +73,13 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
     }
     
     /**
-     * Retrieves conditions from data source according to a {@code Set} of {@code Integer}s
+     * Retrieves conditions from data source according to a {@code Collection} of {@code Integer}s
      * that are the IDs of species allowing to filter the conditions to use.
      * <p>
      * The conditions are retrieved and returned as a {@code ConditionTOResultSet}. It is the
      * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesIds            A {@code Set} of {@code Integer}s that are the IDs of species 
+     * @param speciesIds            A {@code Collection} of {@code Integer}s that are the IDs of species 
      *                              allowing to filter the conditions to use.
      * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
      *                              combination of condition parameters that were requested for queries, 

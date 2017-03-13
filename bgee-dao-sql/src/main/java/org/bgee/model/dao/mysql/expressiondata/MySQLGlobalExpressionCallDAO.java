@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -14,6 +15,7 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.CallDAOFilter;
 import org.bgee.model.dao.api.expressiondata.CallDataDAOFilter;
@@ -176,6 +178,17 @@ implements GlobalExpressionCallDAO {
 
     public MySQLGlobalExpressionCallDAO(MySQLDAOManager manager) throws IllegalArgumentException {
         super(manager);
+    }
+
+    @Override
+    public GlobalExpressionCallTOResultSet getGlobalExpressionCalls(
+            Collection<CallDAOFilter> callFilters, Collection<CallDataDAOFilter> callDataFilters,
+            Collection<ConditionDAO.Attribute> conditionParameters,
+            Collection<GlobalExpressionCallDAO.Attribute> attributes, 
+            LinkedHashMap<GlobalExpressionCallDAO.OrderingAttribute, DAO.Direction> orderingAttributes)
+                throws DAOException, IllegalArgumentException {
+        log.entry(callFilters, callDataFilters, conditionParameters, attributes);
+        throw log.throwing(new UnsupportedOperationException("Load of global calls not implemented yet"));
     }
 
     @Override
@@ -896,15 +909,5 @@ implements GlobalExpressionCallDAO {
                 throw log.throwing(new DAOException(e));
             }
         }
-    }
-
-    @Override
-    public GlobalExpressionCallTOResultSet getGlobalExpressionCalls(
-            Collection<CallDAOFilter> callFilters, Collection<CallDataDAOFilter> callDataFilters,
-            Collection<ConditionDAO.Attribute> conditionParameters,
-            Collection<GlobalExpressionCallDAO.Attribute> attributes)
-                throws DAOException, IllegalArgumentException {
-        log.entry(callFilters, callDataFilters, conditionParameters, attributes);
-        throw log.throwing(new UnsupportedOperationException("Load of global calls not implemented yet"));
     }
 }

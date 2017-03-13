@@ -33,7 +33,10 @@ import org.bgee.model.expressiondata.baseelements.DataType;
 //and simply have a mandatory speciesId attribute. Mapping between homologous conditions 
 //should be managed in a different way. 
 //TODO: I guess this means the ConditionUtils should use the new MultiSpeciesOntology mechanism, 
-//to be able to perform computations over any species. 
+//to be able to perform computations over any species.
+//FIXME: provides the Species object rather than the speciesId
+//FIXME: in a second step, also provides the AnatEntity and DevStage objects rather than the IDs?
+//Not sure about this one, organ and stage descriptions are rather big Strings.
 public class Condition implements Comparable<Condition> {
     private final static Logger log = LogManager.getLogger(Condition.class.getName());
 

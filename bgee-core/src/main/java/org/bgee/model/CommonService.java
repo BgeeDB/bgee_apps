@@ -1,20 +1,14 @@
 package org.bgee.model;
 
 import java.math.BigDecimal;
-import java.util.Collection;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.expressiondata.Condition;
-import org.bgee.model.expressiondata.ConditionService;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.species.Species;
@@ -61,9 +55,9 @@ public class CommonService extends Service {
 //            }
 //        }).collect(Collectors.toCollection(() -> EnumSet.noneOf(ConditionDAO.Attribute.class))));
 //    }
-    
     /**
-     * Map {@code ConditionTO} to a {@code Condition}.
+     * Map {@code ConditionTO} to a {@code Condition}. In case of single-species retrieval
+     * of {@code ConditionTO}s, see {@link #mapConditionTOToCondition(ConditionTO, Integer)}.
      * 
      * @param condTO    A {@code ConditionTO} that is the condition from db
      *                  to map into {@code Condition}.
@@ -71,8 +65,25 @@ public class CommonService extends Service {
      */
     protected static Condition mapConditionTOToCondition(ConditionTO condTO) {
         log.entry(condTO);
+        return log.exit(mapConditionTOToCondition(condTO, null));
+    }
+    /**
+     * Map {@code ConditionTO} to a {@code Condition}.
+     * 
+     * @param condTO    A {@code ConditionTO} that is the condition from db
+     *                  to map into {@code Condition}.
+     * @param speciesId An {@code Integer} that is the ID of the species for which
+     *                  the {@code ConditionTO}s were retrieved. Allows to avoid requesting
+     *                  this attribute from the {@code ConditionDAO} if only one species was requested.
+     * @return          The mapped {@code Condition}.
+     */
+    protected static Condition mapConditionTOToCondition(ConditionTO condTO, Integer speciesId) {
+        log.entry(condTO, speciesId);
         if (condTO == null) {
             return log.exit(null);
+        }
+        if (speciesId != null && speciesId <= 0) {
+            throw log.throwing(new IllegalArgumentException("Invalid speciesId: " + speciesId));
         }
         Map<DataType, BigDecimal> ranks = new HashMap<>();
         for (DataType dt: DataType.values()) {
@@ -97,7 +108,7 @@ public class CommonService extends Service {
             ranks = null;
         }
         return log.exit(new Condition(condTO.getAnatEntityId(), condTO.getStageId(),
-            condTO.getSpeciesId(), ranks));
+            speciesId != null? speciesId: condTO.getSpeciesId(), ranks));
     }
     protected static ConditionTO mapConditionToConditionTO(int condId, int exprMappedCondId, 
             Condition cond) {
@@ -125,7 +136,14 @@ public class CommonService extends Service {
         if (geneTO == null) {
             return log.exit(null);
         }
-        return log.exit(new Gene(geneTO.getGeneId(), geneTO.getSpeciesId(),
-                geneTO.getName(), geneTO.getDescription(), species));
+        if (species == null) {
+            throw log.throwing(new IllegalArgumentException("A Species must be provided."));
+        }
+        if (geneTO.getSpeciesId() != null && !geneTO.getSpeciesId().equals(species.getId())) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Species ID of the gene does not match provied Species."));
+        }
+        return log.exit(new Gene(geneTO.getGeneId(), geneTO.getName(), geneTO.getDescription(),
+                species));
     }
 }

@@ -144,19 +144,31 @@ public class GeneService extends CommonService {
      *                      OMA Node IDs, the associated value being a {@code Set} of {@code Integer}s
      *                      corresponding to their gene IDs.
      */
-    //FIXME: change this method to return a Map<Integer, Set<Gene>>? We don't want to expose
-    //internal Bgee gene IDs
-    public Map<Integer, Set<Integer>> getOrthologs(Integer taxonId, Set<Integer> speciesIds) {
+    public Map<Integer, Set<Gene>> getOrthologs(Integer taxonId, Set<Integer> speciesIds) {
         log.entry(taxonId, speciesIds);
         HierarchicalGroupToGeneTOResultSet resultSet = getDaoManager().getHierarchicalGroupDAO()
                 .getGroupToGene(taxonId, speciesIds);
-        Map<Integer, Set<Integer>> results = resultSet.stream()
+
+        final Set<Integer> clnSpId =  speciesIds == null? new HashSet<>():
+                Collections.unmodifiableSet(new HashSet<>(speciesIds));
+        
+        final Map<Integer, Species> speciesMap = this.getServiceFactory().getSpeciesService()
+            .loadSpeciesByIds(clnSpId, false).stream()
+            .collect(Collectors.toMap(sp -> sp.getId(), sp -> sp));
+
+        final Map<Integer, Gene> geneMap = Collections.unmodifiableMap(this.getDaoManager().getGeneDAO()
+            .getGenesBySpeciesIds(speciesIds).stream()
+                .collect(Collectors.toMap(
+                    gTO -> gTO.getId(),
+                    gTO -> mapGeneTOToGene(gTO, speciesMap.get(gTO.getSpeciesId())))));
+
+        Map<Integer, Set<Gene>> results = resultSet.stream()
                 .collect(Collectors.groupingBy(hg -> hg.getNodeId()))
                 .entrySet().stream()
                 .collect(Collectors.toMap(
                         e -> e.getKey(), 
                         e -> e.getValue().stream()
-                            .map(to -> to.getBgeeGeneId()).collect(Collectors.toSet())));
+                            .map(to -> geneMap.get(to.getBgeeGeneId())).collect(Collectors.toSet())));
         return log.exit(results);
     }
 

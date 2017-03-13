@@ -1,5 +1,8 @@
 package org.bgee.model.gene;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bgee.model.species.Species;
 
 /**
@@ -7,10 +10,14 @@ import org.bgee.model.species.Species;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, July 2016
+ * @version Bgee 14 Mar. 2017
  * @since   Bgee 01
  */
+//Note: this class does not extend NamedEntity, because we don't want to expose
+//the internal Bgee gene IDs, and because Ensembl gene IDs are not unique in Bgee,
+//as we sometimes use genomes of closely-related species.
 public class Gene {
+    private final static Logger log = LogManager.getLogger(Gene.class.getName());
     
     /**
      * A {@code String} that is the Ensembl gene ID.
@@ -31,68 +38,6 @@ public class Gene {
 	 * The {@code Species} this {@code Gene} belongs to.
 	 */
 	private final Species species;
-	
-	/**
-	 * An {@code Integer} representing the ID of the {@code Species} 
-	 * this {@code Gene} belongs to. If {@link #species} is not null, 
-	 * should correspond to the value returned by the {@code getId()} method 
-	 * on this {@code Species} object.
-	 */
-	private final Integer speciesId;
-	
-	/**
-     * Constructor providing the {@code id} of this {@code Gene}.
-     * This {@code id} cannot be {@code null}, or blank,
-     * otherwise an {@code IllegalArgumentException} will be thrown.
-     * 
-     * @param id            A {@code String} representing the ID of this object.
-     * @throws IllegalArgumentException If {@code id} is {@code null}, or blank. 
-     */
-    public Gene (String ensemblGeneId) throws IllegalArgumentException {
-    	this(ensemblGeneId, null);
-    }
-    /**
-     * Constructor providing the {@code id} of this {@code Gene} and of the species.
-     * This {@code id} cannot be {@code null}, or blank,
-     * otherwise an {@code IllegalArgumentException} will be thrown.
-     * 
-     * @param id            A {@code String} representing the ID of this object.
-     * @param speciesId     An {@code Integer} representing the ID of the species this gene belongs to.
-     * @throws IllegalArgumentException     if {@code id} is {@code null}, or blank.
-     */
-    public Gene (String ensemblGeneId, Integer speciesId) throws IllegalArgumentException {
-        this(ensemblGeneId, speciesId, null);
-    }
-
-    /**
-     * Constructor providing the {@code id} of this {@code Gene} and of the species, and the name. 
-     * This {@code id} cannot be {@code null}, or blank,
-     * otherwise an {@code IllegalArgumentException} will be thrown.
-     * 
-     * @param id            A {@code String} representing the ID of this object.
-     * @param speciesId     An {@code Integer} representing the ID of the species this gene belongs to.
-     * @param name          A {@code String} representing the name of this gene.
-     * @throws IllegalArgumentException     if {@code id} is {@code null}, or blank.
-     */
-    public Gene(String ensemblGeneId, Integer speciesId, String name) throws IllegalArgumentException {
-    	this(ensemblGeneId, speciesId, name, null);
-    }
-    
-    /**
-     * Constructor providing the {@code id} of this {@code Gene} and of the species, the name, and the description. 
-     * This {@code id} cannot be {@code null}, or blank,
-     * otherwise an {@code IllegalArgumentException} will be thrown.
-     * 
-     * @param id            A {@code String} representing the ID of this object.
-     * @param speciesId     An {@code Integer} representing the ID of the species this gene belongs to.
-     * @param name          A {@code String} representing the name of this gene.
-     * @param description   A {@code String} representing the description of this gene.
-     * @throws IllegalArgumentException     if {@code id} is {@code null}, or blank.
-     */
-    public Gene(String ensemblGeneId, Integer speciesId, String name, String description)
-            throws IllegalArgumentException {
-    	this(ensemblGeneId, speciesId, name, description, null);
-    }
     
     /**
      * Constructor providing the {@code id} of this {@code Gene} and of the species, the name,
@@ -101,18 +46,23 @@ public class Gene {
      * otherwise an {@code IllegalArgumentException} will be thrown.
      * 
      * @param id            A {@code String} representing the ID of this object.
-     * @param speciesId     An {@code Integer} representing the ID of the species this gene belongs to.
      * @param name          A {@code String} representing the name of this gene.
      * @param description   A {@code String} representing the description of this gene.
      * @param species       A {@code Species} representing the species this gene belongs to.
-     * @throws IllegalArgumentException     if {@code id} is {@code null}, or blank.
+     * @throws IllegalArgumentException     if {@code ensemblGeneId} is blank,
+     *                                      or {@code Species} is {@code null}.
      */
-    public Gene(String ensemblGeneId, Integer speciesId, String name, String description, Species species)
+    public Gene(String ensemblGeneId, String name, String description, Species species)
         throws IllegalArgumentException {
+        if (StringUtils.isBlank(ensemblGeneId)) {
+            throw log.throwing(new IllegalArgumentException("The Ensembl gene ID must be provided."));
+        }
+        if (species == null) {
+            throw log.throwing(new IllegalArgumentException("The Species must be provided."));
+        }
         this.ensemblGeneId = ensemblGeneId;
         this.name = name;
         this.description = description;
-        this.speciesId = speciesId;
         this.species = species;
     }
     
@@ -135,31 +85,10 @@ public class Gene {
         return description;
     }
     /**
-	 * Returns the {@code Species} this {@code Gene} belongs to.
-	 * 
 	 * @return The {@code Species} this {@code Gene} belongs to.
 	 */
 	public Species getSpecies() {
 		return this.species;
-	}
-	
-	/**
-	 * Return the ID of the species this {@code Gene} belongs to. 
-	 * <p>
-	 * If the method {@link #getSpecies()} returned an object not {@code null}, 
-	 * then this method is equivalent to calling {@code getId()} on this {@code Species} object.
-	 * Otherwise, it returns the value sets at the instantiation.
-	 * 
-	 * @return 	The {@code Integer} corresponding to the ID of the species 
-	 * 			this {@code Gene} belongs to. Equivalent to calling {@code getId()} 
-	 * 			on the {@code Species} returned by the {@code getSpecies()} method, 
-	 * 			if not {@code null}. Otherwise, returns the value sets at the instantiation.
-	 */
-	public Integer getSpeciesId() {
-		if (this.getSpecies() != null) {
-			return this.getSpecies().getId();
-		}
-		return this.speciesId;
 	}
 	
 	@Override
@@ -170,10 +99,8 @@ public class Gene {
         result = prime * result + ((name == null) ? 0 : name.hashCode());
         result = prime * result + ((description == null) ? 0 : description.hashCode());
         result = prime * result + ((species == null) ? 0 : species.hashCode());
-        result = prime * result + ((speciesId == null) ? 0 : speciesId.hashCode());
         return result;
     }
-
 	@Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -214,19 +141,18 @@ public class Gene {
         } else if (!species.equals(other.species)) {
             return false;
         }
-        if (speciesId == null) {
-            if (other.speciesId != null) {
-                return false;
-            }
-        } else if (!speciesId.equals(other.speciesId)) {
-            return false;
-        }
         return true;
     }
 
-	@Override
+    @Override
     public String toString() {
-            return super.toString() + 
-                    " - Species: " + getSpecies() + " - Species ID: " + getSpeciesId();
+        StringBuilder builder = new StringBuilder();
+        builder.append("Gene [ensemblGeneId=").append(ensemblGeneId)
+               .append(", name=").append(name)
+               .append(", description=").append(description)
+               .append(", species=").append(species).append("]");
+        return builder.toString();
     }
+
+	
 }

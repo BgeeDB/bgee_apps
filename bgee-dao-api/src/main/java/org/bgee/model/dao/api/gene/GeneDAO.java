@@ -1,6 +1,8 @@
 package org.bgee.model.dao.api.gene;
 
 import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
@@ -12,7 +14,8 @@ import org.bgee.model.dao.api.exception.DAOException;
  * 
  * @author Valentine Rech de Laval
  * @author Philippe Moret
- * @version Bgee 13
+ * @author Frederic Bastian
+ * @version Bgee 14 Mar. 2017
  * @see GeneTO
  * @since Bgee 13
  */
@@ -93,26 +96,29 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      * The genes are retrieved and returned as a {@code GeneTOResultSet}. It is the
      * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesIds    A {@code Collection} of {@code Integer}s that are the IDs of species 
-     *                      allowing to filter the genes to use.
-     * @param geneIds       A {@code Collection} of {@code String}s that are the IDs of genes 
-                            allowing to filter the genes to use.
-     * @return              An {@code GeneTOResultSet} containing all genes from data source.
+     * @param speciesIdToGeneIds    A {@code Map} where keys are {@code Integer}s that are
+     *                              species IDs, the associated value being a {@code Set}
+     *                              of {@code String}s that are the Ensembl IDs of the genes
+     *                              to retrieve in the associated species.
+     * @return                      A {@code GeneTOResultSet} containing matching genes from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public GeneTOResultSet getGenesBySpeciesIds(Collection<Integer> speciesIds, Collection<String> geneIds) 
+    public GeneTOResultSet getGenesBySpeciesAndGeneIds(Map<Integer, Set<String>> speciesIdToGeneIds) 
             throws DAOException;
     
     /**
      * Returns genes according to a search term, matching gene name, id or one synonym.
-     * @param searchTerm A {@code String} containing the term to be searched
-     * @param speciesIds A {@code Collection} of {@code Integer}s that are species Ids (may be empty to search on all species)
-     * @param limitStart An {@code int} representing the index of the first element to return.
+     * 
+     * @param searchTerm    A {@code String} containing the term to be searched.
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that are species Ids
+     *                      (may be empty to search on all species).
+     * @param limitStart    An {@code int} representing the index of the first element to return.
      * @param resultPerPage An {@code int} representing the number of elements to return
+     * 
      * @return A @{code {@link GeneTOResultSet} encapsulating the results.
      */
-    public GeneTOResultSet getGeneBySearchTerm(String searchTerm, Collection<Integer> speciesIds, int limitStart,
-	        int resultPerPage);
+    public GeneTOResultSet getGeneBySearchTerm(String searchTerm, Collection<Integer> speciesIds,
+            int limitStart, int resultPerPage);
 
     /**
      * Update {@code Attribute}s of the provided genes, which are represented as a 

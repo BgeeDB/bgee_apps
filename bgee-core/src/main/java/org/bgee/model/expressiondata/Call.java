@@ -26,7 +26,6 @@ import org.apache.commons.math3.ml.distance.CanberraDistance;
 import org.apache.commons.math3.ml.distance.DistanceMeasure;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.DiffExpressionCallData;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
@@ -226,7 +225,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                         .thenComparing(c -> c.getGene() == null? null : c.getGene().getEnsemblGeneId(), 
                                 Comparator.nullsLast(Comparator.naturalOrder()))
                         //Order by species as, in bgee 14, gene IDs are not unique
-                        .thenComparing(c -> c.getGene() == null? null : c.getGene().getSpeciesId(), 
+                        .thenComparing(c -> c.getGene() == null? null : c.getGene().getSpecies().getId(), 
                     Comparator.nullsLast(Comparator.naturalOrder()));
                 if (condUtils != null) {
                     tmpComparator = tmpComparator
@@ -391,8 +390,8 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                             call.getGene() == null ? null: call.getGene().getEnsemblGeneId()))
                         //Filter by species as, in bgee 14, gene IDs are not unique
                         .filter(c -> Objects.equals(
-                            c.getGene() == null ? null: c.getGene().getSpeciesId(),
-                            call.getGene() == null ? null: call.getGene().getSpeciesId()))
+                            c.getGene() == null ? null: c.getGene().getSpecies().getId(),
+                            call.getGene() == null ? null: call.getGene().getSpecies().getId()))
                         .map(ExpressionCall::getCondition)
                         .collect(Collectors.toSet());
                 //check whether any of the validated Condition is a descendant 

@@ -40,12 +40,27 @@ public class Gene {
 	private final Species species;
     
     /**
-     * Constructor providing the {@code id} of this {@code Gene} and of the species, the name,
-     * the description, and the {@code Species}. 
-     * This {@code id} cannot be {@code null}, or blank,
+     * Constructor providing the {@code ensemblGeneId} and the {@code Species} of this {@code Gene}.
+     * <p>  
+     * These {@code ensemblGeneId} and {@code species} cannot be {@code null}, or blank,
+     * otherwise an {@code IllegalArgumentException} will be thrown.
+     *  
+     * @param ensemblGeneId A {@code String} representing the ID of this object.
+     * @param species       A {@code Species} representing the species this gene belongs to.
+     * @throws IllegalArgumentException     if {@code ensemblGeneId} is blank,
+     *                                      or {@code Species} is {@code null}.
+     */
+    public Gene(String ensemblGeneId, Species species) throws IllegalArgumentException {
+        this(ensemblGeneId, null, null, species);
+    }
+    /**
+     * Constructor providing the {@code ensemblGeneId}, the name, the description,
+     * and the {@code Species} of this {@code Gene}.  
+     * <p>
+     * These {@code ensemblGeneId} and {@code species} cannot be {@code null}, or blank,
      * otherwise an {@code IllegalArgumentException} will be thrown.
      * 
-     * @param id            A {@code String} representing the ID of this object.
+     * @param ensemblGeneId A {@code String} representing the ID of this object.
      * @param name          A {@code String} representing the name of this gene.
      * @param description   A {@code String} representing the description of this gene.
      * @param species       A {@code Species} representing the species this gene belongs to.

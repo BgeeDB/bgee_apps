@@ -245,13 +245,16 @@ public class Species extends NamedEntity<Integer> {
 	}
 
 	@Override
-	public String toString() {
-		return super.toString() + " - Genus: " + genus + " - Species name: " + speciesName + 
-		        " - Genome version: " + genomeVersion + 
-		        " - Data types by sources for data: " + dataTypesByDataSourcesForData + 
-                " - Data types by sources for annotation: " + dataTypesByDataSourcesForAnnotation +
-                " - Parent taxon ID: " + parentTaxonId;
-	}
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Species [").append(super.toString()).append(", genus=").append(genus)
+                .append(", speciesName=").append(speciesName)
+                .append(", genomeVersion=").append(genomeVersion)
+                .append(", dataTypesByDataSourcesForData=").append(dataTypesByDataSourcesForData)
+                .append(", dataTypesByDataSourcesForAnnotation=").append(dataTypesByDataSourcesForAnnotation)
+                .append(", parentTaxonId=").append(parentTaxonId).append("]");
+        return builder.toString();
+    }
 
 	@Override
 	public boolean equals(Object obj) {

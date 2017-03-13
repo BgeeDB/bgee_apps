@@ -2,6 +2,7 @@ package org.bgee.model.dao.api.expressiondata;
 
 import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,37 +25,96 @@ import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO.RawExpressionC
 public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Attribute> {
     
     public enum Attribute implements DAO.Attribute {
-        ID, BGEE_GENE_ID, CONDITION_ID, 
-        AFFYMETRIX_EXP_PRESENT_HIGH_SELF_COUNT, AFFYMETRIX_EXP_PRESENT_LOW_SELF_COUNT, 
-        AFFYMETRIX_EXP_ABSENT_HIGH_SELF_COUNT, AFFYMETRIX_EXP_ABSENT_LOW_SELF_COUNT, 
-        AFFYMETRIX_EXP_PRESENT_HIGH_DESCENDANT_COUNT, AFFYMETRIX_EXP_PRESENT_LOW_DESCENDANT_COUNT, 
-        AFFYMETRIX_EXP_ABSENT_HIGH_PARENT_COUNT, AFFYMETRIX_EXP_ABSENT_LOW_PARENT_COUNT, 
-        AFFYMETRIX_EXP_PRESENT_HIGH_TOTAL_COUNT, AFFYMETRIX_EXP_PRESENT_LOW_TOTAL_COUNT, 
-        AFFYMETRIX_EXP_ABSENT_HIGH_TOTAL_COUNT, AFFYMETRIX_EXP_ABSENT_LOW_TOTAL_COUNT, 
-        AFFYMETRIX_EXP_PROPAGATED_COUNT, RNA_SEQ_EXP_PRESENT_HIGH_SELF_COUNT, 
-        RNA_SEQ_EXP_PRESENT_LOW_SELF_COUNT, RNA_SEQ_EXP_ABSENT_HIGH_SELF_COUNT, 
-        RNA_SEQ_EXP_ABSENT_LOW_SELF_COUNT, RNA_SEQ_EXP_PRESENT_HIGH_DESCENDANT_COUNT, 
-        RNA_SEQ_EXP_PRESENT_LOW_DESCENDANT_COUNT, RNA_SEQ_EXP_ABSENT_HIGH_PARENT_COUNT, 
-        RNA_SEQ_EXP_ABSENT_LOW_PARENT_COUNT, RNA_SEQ_EXP_PRESENT_HIGH_TOTAL_COUNT, 
-        RNA_SEQ_EXP_PRESENT_LOW_TOTAL_COUNT, RNA_SEQ_EXP_ABSENT_HIGH_TOTAL_COUNT, 
-        RNA_SEQ_EXP_ABSENT_LOW_TOTAL_COUNT, RNA_SEQ_EXP_PROPAGATED_COUNT, 
-        EST_LIB_PRESENT_HIGH_SELF_COUNT, EST_LIB_PRESENT_LOW_SELF_COUNT, 
-        EST_LIB_PRESENT_HIGH_DESCENDANT_COUNT, EST_LIB_PRESENT_LOW_DESCENDANT_COUNT, 
-        EST_LIB_PRESENT_HIGH_TOTAL_COUNT, EST_LIB_PRESENT_LOW_TOTAL_COUNT, EST_LIB_PROPAGATED_COUNT, 
-        IN_SITU_EXP_PRESENT_HIGH_SELF_COUNT, IN_SITU_EXP_PRESENT_LOW_SELF_COUNT, 
-        IN_SITU_EXP_ABSENT_HIGH_SELF_COUNT, IN_SITU_EXP_ABSENT_LOW_SELF_COUNT, 
-        IN_SITU_EXP_PRESENT_HIGH_DESCENDANT_COUNT, IN_SITU_EXP_PRESENT_LOW_DESCENDANT_COUNT, 
-        IN_SITU_EXP_ABSENT_HIGH_PARENT_COUNT, IN_SITU_EXP_ABSENT_LOW_PARENT_COUNT, 
-        IN_SITU_EXP_PRESENT_HIGH_TOTAL_COUNT, IN_SITU_EXP_PRESENT_LOW_TOTAL_COUNT, 
-        IN_SITU_EXP_ABSENT_HIGH_TOTAL_COUNT, IN_SITU_EXP_ABSENT_LOW_TOTAL_COUNT, 
-        IN_SITU_EXP_PROPAGATED_COUNT,
-        GLOBAL_MEAN_RANK,
-        AFFYMETRIX_MEAN_RANK, RNA_SEQ_MEAN_RANK, 
-        EST_RANK, IN_SITU_RANK, 
-        AFFYMETRIX_MEAN_RANK_NORM, RNA_SEQ_MEAN_RANK_NORM, 
-        EST_RANK_NORM, IN_SITU_RANK_NORM, 
-        AFFYMETRIX_DISTINCT_RANK_SUM, 
-        RNA_SEQ_DISTINCT_RANK_SUM;
+        ID(false, false), BGEE_GENE_ID(false, false), CONDITION_ID(false, false), 
+        AFFYMETRIX_EXP_PRESENT_HIGH_SELF_COUNT(true, false),
+        AFFYMETRIX_EXP_PRESENT_LOW_SELF_COUNT(true, false), 
+        AFFYMETRIX_EXP_ABSENT_HIGH_SELF_COUNT(true, false),
+        AFFYMETRIX_EXP_ABSENT_LOW_SELF_COUNT(true, false), 
+        AFFYMETRIX_EXP_PRESENT_HIGH_DESCENDANT_COUNT(false, false),
+        AFFYMETRIX_EXP_PRESENT_LOW_DESCENDANT_COUNT(false, false), 
+        AFFYMETRIX_EXP_ABSENT_HIGH_PARENT_COUNT(false, false),
+        AFFYMETRIX_EXP_ABSENT_LOW_PARENT_COUNT(false, false), 
+        AFFYMETRIX_EXP_PRESENT_HIGH_TOTAL_COUNT(false, true),
+        AFFYMETRIX_EXP_PRESENT_LOW_TOTAL_COUNT(false, true), 
+        AFFYMETRIX_EXP_ABSENT_HIGH_TOTAL_COUNT(false, true),
+        AFFYMETRIX_EXP_ABSENT_LOW_TOTAL_COUNT(false, true), 
+        AFFYMETRIX_EXP_PROPAGATED_COUNT(false, false),
+        RNA_SEQ_EXP_PRESENT_HIGH_SELF_COUNT(true, false), 
+        RNA_SEQ_EXP_PRESENT_LOW_SELF_COUNT(true, false),
+        RNA_SEQ_EXP_ABSENT_HIGH_SELF_COUNT(true, false), 
+        RNA_SEQ_EXP_ABSENT_LOW_SELF_COUNT(true, false),
+        RNA_SEQ_EXP_PRESENT_HIGH_DESCENDANT_COUNT(false, false), 
+        RNA_SEQ_EXP_PRESENT_LOW_DESCENDANT_COUNT(false, false),
+        RNA_SEQ_EXP_ABSENT_HIGH_PARENT_COUNT(false, false), 
+        RNA_SEQ_EXP_ABSENT_LOW_PARENT_COUNT(false, false),
+        RNA_SEQ_EXP_PRESENT_HIGH_TOTAL_COUNT(false, true), 
+        RNA_SEQ_EXP_PRESENT_LOW_TOTAL_COUNT(false, true),
+        RNA_SEQ_EXP_ABSENT_HIGH_TOTAL_COUNT(false, true), 
+        RNA_SEQ_EXP_ABSENT_LOW_TOTAL_COUNT(false, true),
+        RNA_SEQ_EXP_PROPAGATED_COUNT(false, false), 
+        EST_LIB_PRESENT_HIGH_SELF_COUNT(true, false),
+        EST_LIB_PRESENT_LOW_SELF_COUNT(true, false), 
+        EST_LIB_PRESENT_HIGH_DESCENDANT_COUNT(false, false),
+        EST_LIB_PRESENT_LOW_DESCENDANT_COUNT(false, false), 
+        EST_LIB_PRESENT_HIGH_TOTAL_COUNT(false, true),
+        EST_LIB_PRESENT_LOW_TOTAL_COUNT(false, true),
+        EST_LIB_PROPAGATED_COUNT(false, false), 
+        IN_SITU_EXP_PRESENT_HIGH_SELF_COUNT(true, false),
+        IN_SITU_EXP_PRESENT_LOW_SELF_COUNT(true, false), 
+        IN_SITU_EXP_ABSENT_HIGH_SELF_COUNT(true, false),
+        IN_SITU_EXP_ABSENT_LOW_SELF_COUNT(true, false), 
+        IN_SITU_EXP_PRESENT_HIGH_DESCENDANT_COUNT(false, false),
+        IN_SITU_EXP_PRESENT_LOW_DESCENDANT_COUNT(false, false), 
+        IN_SITU_EXP_ABSENT_HIGH_PARENT_COUNT(false, false),
+        IN_SITU_EXP_ABSENT_LOW_PARENT_COUNT(false, false), 
+        IN_SITU_EXP_PRESENT_HIGH_TOTAL_COUNT(false, true),
+        IN_SITU_EXP_PRESENT_LOW_TOTAL_COUNT(false, true), 
+        IN_SITU_EXP_ABSENT_HIGH_TOTAL_COUNT(false, true),
+        IN_SITU_EXP_ABSENT_LOW_TOTAL_COUNT(false, true), 
+        IN_SITU_EXP_PROPAGATED_COUNT(false, false),
+        GLOBAL_MEAN_RANK(false, false),
+        AFFYMETRIX_MEAN_RANK(false, false), RNA_SEQ_MEAN_RANK(false, false), 
+        EST_RANK(false, false), IN_SITU_RANK(false, false), 
+        AFFYMETRIX_MEAN_RANK_NORM(false, false), RNA_SEQ_MEAN_RANK_NORM(false, false), 
+        EST_RANK_NORM(false, false), IN_SITU_RANK_NORM(false, false), 
+        AFFYMETRIX_DISTINCT_RANK_SUM(false, false), 
+        RNA_SEQ_DISTINCT_RANK_SUM(false, false);
+        
+        private final boolean selfAttribute;
+        private final boolean totalAttribute;
+        
+        private Attribute(boolean selfAttribute, boolean totalAttribute) {
+            this.selfAttribute = selfAttribute;
+            this.totalAttribute = totalAttribute;
+            assert !(selfAttribute && totalAttribute);
+        }
+        
+        public boolean isSelfAttribute() {
+            return selfAttribute;
+        }
+        public boolean isTotalAttribute() {
+            return totalAttribute;
+        }
+    }
+    /**
+     * The attributes available to order retrieved {@code GlobalExpressionCallTO}s
+     * <ul>
+     * <li>{@code GENE_ID}: corresponds to {@link GlobalExpressionCallTO#getBgeeGeneId()}.
+     * <li>{@code CONDITION_ID}: corresponds to {@link GlobalExpressionCallTO#getConditionId()}.
+     * <li>{@code ANAT_ENTITY_ID}: order by the anat. entity ID used in the conditions of the calls.
+     * <li>{@code STAGE_ID}: order by the dev. stage ID used in the conditions of the calls.
+     * <li>{@code OMA_GROUP_ID}: order results by the OMA group genes belong to. 
+     * If this {@code OrderingAttribute} is used in a query not specifying any targeted taxon 
+     * for gene orthology, then the {@code OMAParentNodeId} of the gene is used (see 
+     * {@link org.bgee.model.dao.api.gene.GeneDAO.GeneTO#getOMAParentNodeId()}); otherwise, 
+     * the OMA group the gene belongs to at the level of the targeted taxon is used. 
+     * <li>{@code MEAN_RANK}: Corresponds to {@link GlobalExpressionCallTO#getGlobalMeanRank()}. 
+     * Order results by mean rank of the gene in the corresponding condition. 
+     * Only the mean ranks computed from the data types requested in the query are considered. 
+     * </ul>
+     */
+    enum OrderingAttribute implements DAO.OrderingAttribute {
+        GENE_ID, CONDITION_ID, ANAT_ENTITY_ID, STAGE_ID, OMA_GROUP_ID, MEAN_RANK;
     }
     
     /** 
@@ -69,10 +129,10 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      *                              allowing to configure this query. If several 
      *                              {@code CallDAOFilter}s are provided, they are seen 
      *                              as "OR" conditions. Can be {@code null} or empty.
-     * @param callFilters           A {@code Collection} of {@code CallDataDAOFilter}s, 
-     *                              allowing to configure this query. If several 
+     * @param callDataFilters       A {@code Collection} of {@code CallDataDAOFilter}s to configure
+     *                              the filtering based on experiment expression counts. If several 
      *                              {@code CallDAOFilter}s are provided, they are seen 
-     *                              as "OR" conditions. Can be {@code null} or empty.
+     *                              as "AND" conditions. Can be {@code null} or empty.
      * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
      *                              combination of condition parameters that were requested for queries, 
      *                              allowing to determine which condition and expression tables to target
@@ -80,8 +140,14 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      * @param attributes            A {@code Collection} of {@code GlobalExpressionCallDAO.Attribute}s 
      *                              defining the attributes to populate in the returned 
      *                              {@code GlobalExpressionCallTO}s. If {@code null} or empty, 
-     *                              all attributes are populated. 
-     * @return                      An {@code GlobalExpressionCallTOResultSet} containing global
+     *                              all attributes are populated.
+     * @param orderingAttributes    A {@code LinkedHashMap} where keys are
+     *                              {@code GlobalExpressionCallDAO.OrderingAttribute}s defining
+     *                              the attributes used to order the returned {@code GlobalExpressionCallTO}s,
+     *                              the associated value being a {@code DAO.Direction}
+     *                              defining whether the ordering should be ascendant or descendant.
+     *                              If {@code null} or empty, then no ordering is performed.
+     * @return                      A {@code GlobalExpressionCallTOResultSet} containing global
      *                              calls from data source according to {@code attributes} and
      *                              {@code conditionParameters}.
      * @throws DAOException         If an error occurred when accessing the data source. 
@@ -92,7 +158,8 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
     public GlobalExpressionCallTOResultSet getGlobalExpressionCalls(
             Collection<CallDAOFilter> callFilters, Collection<CallDataDAOFilter> callDataFilters,
             Collection<ConditionDAO.Attribute> conditionParameters,
-            Collection<GlobalExpressionCallDAO.Attribute> attributes)
+            Collection<Attribute> attributes, 
+            LinkedHashMap<OrderingAttribute, DAO.Direction> orderingAttributes)
                 throws DAOException, IllegalArgumentException;
 
     /**

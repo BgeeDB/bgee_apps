@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -28,8 +29,8 @@ import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.ConditionUtils;
-import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.source.Source;
 import org.bgee.view.GeneDisplay;
@@ -41,7 +42,7 @@ import org.bgee.view.JsonHelper;
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 13, July 2016
+ * @version Bgee 14, Mar. 2017
  * @since   Bgee 13, Oct. 2015
  */
 public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
@@ -82,13 +83,58 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		log.exit();
 	}
     
+	@Override
+	public void displayMultipleGenes(List<Gene> genes) {
+	    log.entry(genes);
+	    
+	    List<Gene> clnGenes = Collections.unmodifiableList(genes);
+	    
+	    Gene gene = clnGenes.stream().findFirst().get();
+	    String titleStart = "Genes: " + gene.getName() + " - " + gene.getEnsemblGeneId();
+	    
+	    this.startDisplay(titleStart);
+
+        StringBuilder geneList = new StringBuilder();
+        geneList.append("<div class='row'>");
+        geneList.append("<ul class='col-xs-offset-1 col-xs-10 col-md-offset-2 col-md-8 col-lg-offset-3 col-lg-6'>");
+        geneList.append(clnGenes.stream()
+            .map(g -> getSpecificGenePageLink(g))
+            .collect(Collectors.toList()));
+        geneList.append("</ul>");
+        geneList.append("</div>");
+        
+        this.endDisplay();
+        log.exit();
+	}
+    
+	/** 
+	 * Get the link to the gene page as a HTML 'a' element.
+	 *  
+	 * @param gene A {@code Gene} that is the gene for which retrieve the link.
+	 * @return     The {@code String} that is the link to the gene page as a HTML 'a' element.
+	 */
+	private String getSpecificGenePageLink(Gene gene) {
+        log.entry(gene);
+        RequestParameters url = this.getNewRequestParameters();
+        url.setPage(RequestParameters.PAGE_GENE);
+        url.setGeneId(gene.getEnsemblGeneId());
+        url.setSpeciesId(gene.getSpecies().getId());
+
+        StringBuilder genePageLink = new StringBuilder();
+        genePageLink.append("<a href='").append(url.getRequestURL()).append("'>")
+                    .append(gene.getName()).append(" in ").append(gene.getSpecies().getShortName())
+                    .append("</a>");
+
+        return log.exit(genePageLink.toString());
+    }
+
     /**
      * Get the search box of a gene as a HTML 'div' element. 
      *
      * @return  the {@code String} that is the search box as HTML 'div' element.
      */
     protected String getGeneSearchBox(boolean isSmallBox) {
-        log.entry();
+        log.entry(isSmallBox);
     
         RequestParameters urlExample = this.getNewRequestParameters();
         urlExample.setPage(RequestParameters.PAGE_GENE);
@@ -136,7 +182,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 	    
 	    Gene gene = geneResponse.getGene();
 	    
-	    String titleStart = "Gene: " + gene.getName() + " - " + gene.getId(); 
+	    String titleStart = "Gene: " + gene.getName() + " - " + gene.getEnsemblGeneId(); 
 		this.startDisplay(titleStart);
 
 		this.writeln("<div class='row'>");
@@ -148,7 +194,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
 		//page title
 		this.writeln("<h1 class='gene_title col-sm-9 col-lg-7'><img src='" 
-		        + this.prop.getSpeciesImagesRootDirectory() + urlEncode(gene.getSpeciesId())
+		        + this.prop.getSpeciesImagesRootDirectory() + String.valueOf(gene.getSpecies().getId())
 		        + "_light.jpg' alt='" + htmlEntities(gene.getSpecies().getShortName()) 
 		        + "' />" + htmlEntities(titleStart) 
 				+ " - <em>" + htmlEntities(gene.getSpecies().getScientificName()) + "</em> ("
@@ -457,12 +503,13 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
 		// Quality cell
 		sb.append("<td>")
-		        .append(getQualitySpans(
-		                calls.stream().flatMap(e -> e.getCallData().stream()).collect(Collectors.toList())))
+                .append(getQualitySpan(
+                    calls.stream().map(c -> c.getSummaryQuality()).collect(Collectors.toSet())))
 				.append("<ul class='masked quality-list'>")
 				.append(calls.stream().map(call -> {
 						StringBuilder sb2 = new StringBuilder();
-						sb2.append("<li class='qualities'>").append(getQualitySpans(call.getCallData())).append("</li>");
+						sb2.append("<li class='qualities'>")
+						    .append(getQualitySpan(Arrays.asList(call.getSummaryQuality()))).append("</li>");
 						return sb2.toString();
 					}).collect(Collectors.joining("\n")))
 				.append("</ul></td>")
@@ -483,7 +530,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 	    log.entry(gene);
 	    
 		final StringBuilder table = new StringBuilder("<table id='geneinfo'>");
-		table.append("<tr><th>").append("Ensembl ID</th><td>").append(htmlEntities(gene.getId()))
+		table.append("<tr><th>").append("Ensembl ID</th><td>").append(htmlEntities(gene.getEnsemblGeneId()))
 		        .append("</td></tr>");
 		table.append("<tr><th>").append("Name</th><td>").append(htmlEntities(gene.getName())).append("</td></tr>");
 		table.append("<tr><th>").append("Description</th><td>").append(htmlEntities(gene.getDescription()))
@@ -502,25 +549,25 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 	 * @param callData     A {@code Collection} of {@code ExpressionCallData} as input
 	 * @return             A {@String} containing the HTML code of the span
 	 */
-	private static String getQualitySpans(Collection<ExpressionCallData> callData) {
-	    log.entry(callData);
-	    
-		final Map<DataType, Set<DataQuality>> qualities = callData.stream()
-		        .collect(Collectors.groupingBy(ExpressionCallData::getDataType,
-		                Collectors.mapping(ExpressionCallData::getDataQuality, Collectors.toSet())));
-		return log.exit(EnumSet.allOf(DataType.class).stream().map(type -> {
-			Set<DataQuality> quals = qualities.get(type);
-			DataQuality quality = DataQuality.NODATA;
-			if (quals != null) {
-				if (quals.contains(DataQuality.HIGH)) {
-					quality = DataQuality.HIGH;
-				} else if (quals.contains(DataQuality.LOW))
-					quality = DataQuality.LOW;
-			}
-			return getSpan(quality, type);
-		}).collect(Collectors.joining()));
-
-	}
+//	private static String getQualitySpans(Collection<ExpressionCallData> callData) {
+//	    log.entry(callData);
+//	    
+//		final Map<DataType, Set<DataQuality>> qualities = callData.stream()
+//		        .collect(Collectors.groupingBy(ExpressionCallData::getDataType,
+//		                Collectors.mapping(ExpressionCallData::getDataQuality, Collectors.toSet())));
+//		return log.exit(EnumSet.allOf(DataType.class).stream().map(type -> {
+//			Set<DataQuality> quals = qualities.get(type);
+//			DataQuality quality = DataQuality.NODATA;
+//			if (quals != null) {
+//				if (quals.contains(DataQuality.HIGH)) {
+//					quality = DataQuality.HIGH;
+//				} else if (quals.contains(DataQuality.LOW))
+//					quality = DataQuality.LOW;
+//			}
+//			return getSpan(quality, type);
+//		}).collect(Collectors.joining()));
+//
+//	}
 
 	/**
 	 * Builds a 'span' element representing the quality for a given {@code DataType}
@@ -529,46 +576,67 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 	 * @param type     The {@code DataType}
 	 * @return         A {@code String} containing the HTML code for the quality 'span'.
 	 */
-	private static String getSpan(DataQuality quality, DataType type) {
-	    log.entry(quality, type);
+	private static String getQualitySpan(Collection<SummaryQuality> qualities) {
+	    log.entry(qualities);
 	    
 		StringBuilder sb = new StringBuilder();
 		sb.append("<span class='quality ");
 
-		switch (quality) {
-		case HIGH:
-			sb.append("high");
-			break;
-		case LOW:
+		if (qualities.isEmpty()) {
+            throw log.throwing(new IllegalStateException("Empty qualityies"));
+		}
+
+		SummaryQuality sq = SummaryQuality.BRONZE;
+		if (qualities.contains(SummaryQuality.GOLD)) {
+            sb.append("high");
+            sq = SummaryQuality.GOLD;
+	    } else if (qualities.contains(SummaryQuality.SILVER)) {
             //XXX: temporarily "hide" qualities, as they are so incorrect at the moment. 
             //for now we only report presence/absence of data per data type.
-//			sb.append("low");
+//            sb.append("low");
             sb.append("high");
-			break;
-		case NODATA:
-			sb.append("nodata");
-			break;
-	    default: 
-	        throw log.throwing(new IllegalStateException("Unsupported quality: " + quality));
-		}
+            sq = SummaryQuality.SILVER;
+	    } else if (qualities.contains(SummaryQuality.BRONZE)) {
+	        // FIXME should be hide no?
+            sb.append("nodata");
+            sq = SummaryQuality.BRONZE;
+	    } else {
+	        throw log.throwing(new IllegalStateException("Unsupported qualities: " + qualities));
+	    }
+//		switch (quality) {
+//		case GOLD:
+//			sb.append("high");
+//			break;
+//		case SILVER:
+//            //XXX: temporarily "hide" qualities, as they are so incorrect at the moment. 
+//            //for now we only report presence/absence of data per data type.
+////			sb.append("low");
+//            sb.append("low");
+//			break;
+//		case BRONZE:
+//			sb.append("nodata");
+//			break;
+//	    default: 
+//	        throw log.throwing(new IllegalStateException("Unsupported quality: " + quality));
+//		}
 
-		sb.append("' title='").append(htmlEntities(type.getStringRepresentation())).append(": ")
-		        .append(htmlEntities(quality.getStringRepresentation())).append("'>");
+		sb.append("' title='") //.append(htmlEntities(type.getStringRepresentation())).append(": ")
+		        .append(htmlEntities(sq.getStringRepresentation())).append("'>");
 
-		switch (type) {
-		case AFFYMETRIX:
-			sb.append("A");
-			break;
-		case RNA_SEQ:
-			sb.append("R");
-			break;
-		case IN_SITU:
-			sb.append("I");
-			break;
-		case EST:
-			sb.append("E");
-			break;
-		}
+//		switch (type) {
+//		case AFFYMETRIX:
+//			sb.append("A");
+//			break;
+//		case RNA_SEQ:
+//			sb.append("R");
+//			break;
+//		case IN_SITU:
+//			sb.append("I");
+//			break;
+//		case EST:
+//			sb.append("E");
+//			break;
+//		}
 		sb.append("</span>");
 		return log.exit(sb.toString());
 	}

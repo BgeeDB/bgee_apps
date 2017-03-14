@@ -63,8 +63,9 @@ public interface CallType {
         public void checkPropagationState(PropagationState propState) throws IllegalArgumentException {
             log.entry(propState);
             boolean incorrectPropagation = false;
-            
-            if (this.equals(EXPRESSED)) {
+
+            switch (this) {
+            case EXPRESSED:
                 //no propagation from parents allowed for expression calls, 
                 //all other propagations allowed. 
                 if (PropagationState.ANCESTOR.equals(propState) ||
@@ -72,16 +73,18 @@ public interface CallType {
                         PropagationState.SELF_OR_ANCESTOR.equals(propState)) {
                     incorrectPropagation = true;
                 }
-            } else if (this.equals(NOT_EXPRESSED)) {
+                break;
+            case NOT_EXPRESSED:
                 //for no-expression calls, propagation from parent anat. entities.
                 if (PropagationState.DESCENDANT.equals(propState) ||
                         PropagationState.SELF_AND_DESCENDANT.equals(propState) ||
                         PropagationState.SELF_OR_DESCENDANT.equals(propState)) {
                     incorrectPropagation = true;
                 }
-            } else {
+                break;
+            default:
                 throw log.throwing(new IllegalStateException("CallType not supported: " 
-                        + this.toString()));
+                        + this));
             }
             
             if (incorrectPropagation) {
@@ -152,7 +155,7 @@ public interface CallType {
          * Allowed {@code DataType}s are the same for all {@code DiffExpression} {@code CallType}s.
          * @see #getAllowedDataTypes()
          */
-        private static final Set<DataType> DIFF_EXPR_DATA_TYPES = 
+        static final Set<DataType> DIFF_EXPR_DATA_TYPES = 
                 Collections.unmodifiableSet(EnumSet.of(DataType.AFFYMETRIX, DataType.RNA_SEQ));
         
         @Override

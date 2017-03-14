@@ -137,7 +137,7 @@ public class AnalysisService extends Service {
             Set<ExpressionCall> calls = new HashSet<>();
             for (Integer spId: clonedSpeIds) {
                 ExpressionCallFilter callFilter = new ExpressionCallFilter(
-                    new GeneFilter(orthologousEnsemblGeneIds, spId),
+                    new GeneFilter(spId, orthologousEnsemblGeneIds),
                     conditionFilters,
                     null,   // dataTypeFilter
                     ExpressionSummary.EXPRESSED,

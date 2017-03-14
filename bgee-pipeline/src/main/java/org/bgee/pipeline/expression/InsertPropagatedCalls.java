@@ -59,11 +59,11 @@ import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.ConditionUtils;
 import org.bgee.model.expressiondata.baseelements.CallType;
-import org.bgee.model.expressiondata.baseelements.CountType;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataPropagation.PropagationState;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.ExperimentExpressionCount;
 import org.bgee.pipeline.BgeeDBUtils;
 import org.bgee.pipeline.CommandRunner;
 
@@ -1067,157 +1067,157 @@ public class InsertPropagatedCalls extends CallService {
             BigDecimal affymetrixDistinctRankSum = null, rnaSeqDistinctRankSum = null;
         
             for (ExpressionCallData e: pipelineCall.getCallData()) {
-                if (e.getCounts() == null) {
+                if (e.getExperimentCounts() == null) {
                     throw log.throwing(new IllegalArgumentException("No count found in: " + e));
                 }
                 switch (e.getDataType()) {
                     case AFFYMETRIX: 
-                        affymetrixExpPresentHighSelfCount = e.getCounts().get(
-                            new CountType(CallType.Expression.EXPRESSED, DataQuality.HIGH,
-                                PropagationState.SELF));
-                        affymetrixExpPresentLowSelfCount = e.getCounts().get(
-                            new CountType(CallType.Expression.EXPRESSED, DataQuality.LOW,
-                                PropagationState.SELF));
-                        affymetrixExpAbsentHighSelfCount = e.getCounts().get(
-                            new CountType(CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH,
-                                PropagationState.SELF));
-                        affymetrixExpAbsentLowSelfCount = e.getCounts().get(
-                            new CountType(CallType.Expression.NOT_EXPRESSED, DataQuality.LOW,
-                                PropagationState.SELF));
-                        affymetrixExpPresentHighDescendantCount = e.getCounts().get(
-                            new CountType(CallType.Expression.EXPRESSED, DataQuality.HIGH,
-                                PropagationState.DESCENDANT));
-                        affymetrixExpPresentLowDescendantCount = e.getCounts().get(
-                            new CountType(CallType.Expression.EXPRESSED, DataQuality.LOW,
-                                PropagationState.DESCENDANT));
-                        affymetrixExpAbsentHighParentCount = e.getCounts().get(
-                            new CountType(CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH,
-                                PropagationState.ANCESTOR));
-                        affymetrixExpAbsentLowParentCount = e.getCounts().get(
-                            new CountType(CallType.Expression.NOT_EXPRESSED, DataQuality.LOW,
-                                PropagationState.ANCESTOR));
-                        affymetrixExpPresentHighTotalCount = e.getCounts().get(
-                            new CountType(CallType.Expression.EXPRESSED, DataQuality.HIGH,
-                                PropagationState.ALL));
-                        affymetrixExpPresentLowTotalCount = e.getCounts().get(
-                            new CountType(CallType.Expression.EXPRESSED, DataQuality.LOW,
-                                PropagationState.ALL));
-                        affymetrixExpAbsentHighTotalCount = e.getCounts().get(
-                            new CountType(CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH,
-                                PropagationState.ALL));
-                        affymetrixExpAbsentLowTotalCount = e.getCounts().get(
-                            new CountType(CallType.Expression.NOT_EXPRESSED, DataQuality.LOW,
-                                PropagationState.ALL));
-                        affymetrixExpPropagatedCount = e.getPropagatedCount();
+                        affymetrixExpPresentHighSelfCount = e.getExperimentCount(
+                                CallType.Expression.EXPRESSED, DataQuality.HIGH, PropagationState.SELF
+                            ).getCount();
+                        affymetrixExpPresentLowSelfCount = e.getExperimentCount(
+                                CallType.Expression.EXPRESSED, DataQuality.LOW, PropagationState.SELF
+                            ).getCount();
+                        affymetrixExpAbsentHighSelfCount = e.getExperimentCount(
+                                CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH, PropagationState.SELF
+                            ).getCount();
+                        affymetrixExpAbsentLowSelfCount = e.getExperimentCount(
+                                CallType.Expression.NOT_EXPRESSED, DataQuality.LOW, PropagationState.SELF
+                            ).getCount();
+                        affymetrixExpPresentHighDescendantCount = e.getExperimentCount(
+                                CallType.Expression.EXPRESSED, DataQuality.HIGH, PropagationState.DESCENDANT
+                            ).getCount();
+                        affymetrixExpPresentLowDescendantCount = e.getExperimentCount(
+                                CallType.Expression.EXPRESSED, DataQuality.LOW, PropagationState.DESCENDANT
+                            ).getCount();
+                        affymetrixExpAbsentHighParentCount = e.getExperimentCount(
+                                CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH, PropagationState.ANCESTOR
+                            ).getCount();
+                        affymetrixExpAbsentLowParentCount = e.getExperimentCount(
+                                CallType.Expression.NOT_EXPRESSED, DataQuality.LOW, PropagationState.ANCESTOR
+                            ).getCount();
+                        affymetrixExpPresentHighTotalCount = e.getExperimentCount(
+                                CallType.Expression.EXPRESSED, DataQuality.HIGH, PropagationState.ALL
+                            ).getCount();
+                        affymetrixExpPresentLowTotalCount = e.getExperimentCount(
+                                CallType.Expression.EXPRESSED, DataQuality.LOW, PropagationState.ALL
+                            ).getCount();
+                        affymetrixExpAbsentHighTotalCount = e.getExperimentCount(
+                                CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH, PropagationState.ALL
+                            ).getCount();
+                        affymetrixExpAbsentLowTotalCount = e.getExperimentCount(
+                                CallType.Expression.NOT_EXPRESSED, DataQuality.LOW, PropagationState.ALL
+                            ).getCount();
+                        affymetrixExpPropagatedCount = e.getPropagatedExperimentCount();
                         affymetrixMeanRank = e.getRank();
-                        affymetrixMeanRankNorm = e.getRankNorm();
-                        affymetrixDistinctRankSum = e.getRankSum();
+                        affymetrixMeanRankNorm = e.getNormalizedRank();
+                        affymetrixDistinctRankSum = e.getDistinctRankSum();
                         break;
                     case EST: 
-                        estLibPresentHighSelfCount = e.getCounts().get(
-                            new CountType(CallType.Expression.EXPRESSED, DataQuality.HIGH,
-                                PropagationState.SELF));
-                        estLibPresentLowSelfCount = e.getCounts().get(
-                            new CountType(CallType.Expression.EXPRESSED, DataQuality.LOW,
-                                PropagationState.SELF));
-                        estLibPresentHighDescendantCount = e.getCounts().get(
-                            new CountType(CallType.Expression.EXPRESSED, DataQuality.HIGH,
-                                PropagationState.DESCENDANT));
-                        estLibPresentLowDescendantCount = e.getCounts().get(
-                            new CountType(CallType.Expression.EXPRESSED, DataQuality.LOW,
-                                PropagationState.DESCENDANT));
-                        estLibPresentHighTotalCount = e.getCounts().get(
-                            new CountType(CallType.Expression.EXPRESSED, DataQuality.HIGH,
-                                PropagationState.ALL));
-                        estLibPresentLowTotalCount = e.getCounts().get(
-                            new CountType(CallType.Expression.EXPRESSED, DataQuality.LOW,
-                                PropagationState.ALL));
-                        estLibPropagatedCount = e.getPropagatedCount();
+                        estLibPresentHighSelfCount = e.getExperimentCount(
+                                CallType.Expression.EXPRESSED, DataQuality.HIGH, PropagationState.SELF
+                            ).getCount();
+                        estLibPresentLowSelfCount = e.getExperimentCount(
+                                CallType.Expression.EXPRESSED, DataQuality.LOW, PropagationState.SELF
+                            ).getCount();
+                        estLibPresentHighDescendantCount = e.getExperimentCount(
+                                CallType.Expression.EXPRESSED, DataQuality.HIGH, PropagationState.DESCENDANT
+                            ).getCount();
+                        estLibPresentLowDescendantCount = e.getExperimentCount(
+                                CallType.Expression.EXPRESSED, DataQuality.LOW, PropagationState.DESCENDANT
+                            ).getCount();
+                        estLibPresentHighTotalCount = e.getExperimentCount(
+                                CallType.Expression.EXPRESSED, DataQuality.HIGH, PropagationState.ALL
+                            ).getCount();
+                        estLibPresentLowTotalCount = e.getExperimentCount(
+                                CallType.Expression.EXPRESSED, DataQuality.LOW, PropagationState.ALL
+                            ).getCount();
+                        estLibPropagatedCount = e.getPropagatedExperimentCount();
                         estRank = e.getRank();
-                        estRankNorm = e.getRankNorm();
+                        estRankNorm = e.getNormalizedRank();
                         break;
                     case IN_SITU: 
-                        inSituExpPresentHighSelfCount = e.getCounts().get(
-                            new CountType(CallType.Expression.EXPRESSED, DataQuality.HIGH,
-                                PropagationState.SELF));
-                        inSituExpPresentLowSelfCount = e.getCounts().get(
-                            new CountType(CallType.Expression.EXPRESSED, DataQuality.LOW,
-                                PropagationState.SELF));
-                        inSituExpAbsentHighSelfCount = e.getCounts().get(
-                            new CountType(CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH,
-                                PropagationState.SELF));
-                        inSituExpAbsentLowSelfCount = e.getCounts().get(
-                            new CountType(CallType.Expression.NOT_EXPRESSED, DataQuality.LOW,
-                                PropagationState.SELF));
-                        inSituExpPresentHighDescendantCount = e.getCounts().get(
-                            new CountType(CallType.Expression.EXPRESSED, DataQuality.HIGH,
-                                PropagationState.DESCENDANT));
-                        inSituExpPresentLowDescendantCount = e.getCounts().get(
-                            new CountType(CallType.Expression.EXPRESSED, DataQuality.LOW,
-                                PropagationState.DESCENDANT));
-                        inSituExpAbsentHighParentCount = e.getCounts().get(
-                            new CountType(CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH,
-                                PropagationState.ANCESTOR));
-                        inSituExpAbsentLowParentCount = e.getCounts().get(
-                            new CountType(CallType.Expression.NOT_EXPRESSED, DataQuality.LOW,
-                                PropagationState.ANCESTOR));
-                        inSituExpPresentHighTotalCount = e.getCounts().get(
-                            new CountType(CallType.Expression.EXPRESSED, DataQuality.HIGH,
-                                PropagationState.ALL));
-                        inSituExpPresentLowTotalCount = e.getCounts().get(
-                            new CountType(CallType.Expression.EXPRESSED, DataQuality.LOW,
-                                PropagationState.ALL));
-                        inSituExpAbsentHighTotalCount = e.getCounts().get(
-                            new CountType(CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH,
-                                PropagationState.ALL));
-                        inSituExpAbsentLowTotalCount = e.getCounts().get(
-                            new CountType(CallType.Expression.NOT_EXPRESSED, DataQuality.LOW,
-                                PropagationState.ALL));
-                        inSituExpPropagatedCount = e.getPropagatedCount();
+                        inSituExpPresentHighSelfCount = e.getExperimentCount(
+                                CallType.Expression.EXPRESSED, DataQuality.HIGH, PropagationState.SELF
+                            ).getCount();
+                        inSituExpPresentLowSelfCount = e.getExperimentCount(
+                                CallType.Expression.EXPRESSED, DataQuality.LOW, PropagationState.SELF
+                            ).getCount();
+                        inSituExpAbsentHighSelfCount = e.getExperimentCount(
+                                CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH, PropagationState.SELF
+                            ).getCount();
+                        inSituExpAbsentLowSelfCount = e.getExperimentCount(
+                                CallType.Expression.NOT_EXPRESSED, DataQuality.LOW, PropagationState.SELF
+                            ).getCount();
+                        inSituExpPresentHighDescendantCount = e.getExperimentCount(
+                                CallType.Expression.EXPRESSED, DataQuality.HIGH, PropagationState.DESCENDANT
+                            ).getCount();
+                        inSituExpPresentLowDescendantCount = e.getExperimentCount(
+                                CallType.Expression.EXPRESSED, DataQuality.LOW, PropagationState.DESCENDANT
+                            ).getCount();
+                        inSituExpAbsentHighParentCount = e.getExperimentCount(
+                                CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH, PropagationState.ANCESTOR
+                            ).getCount();
+                        inSituExpAbsentLowParentCount = e.getExperimentCount(
+                                CallType.Expression.NOT_EXPRESSED, DataQuality.LOW, PropagationState.ANCESTOR
+                            ).getCount();
+                        inSituExpPresentHighTotalCount = e.getExperimentCount(
+                                CallType.Expression.EXPRESSED, DataQuality.HIGH, PropagationState.ALL
+                            ).getCount();
+                        inSituExpPresentLowTotalCount = e.getExperimentCount(
+                                CallType.Expression.EXPRESSED, DataQuality.LOW, PropagationState.ALL
+                            ).getCount();
+                        inSituExpAbsentHighTotalCount = e.getExperimentCount(
+                                CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH, PropagationState.ALL
+                            ).getCount();
+                        inSituExpAbsentLowTotalCount = e.getExperimentCount(
+                                CallType.Expression.NOT_EXPRESSED, DataQuality.LOW, PropagationState.ALL
+                            ).getCount();
+                        inSituExpPropagatedCount = e.getPropagatedExperimentCount();
                         inSituRank = e.getRank();
-                        inSituRankNorm = e.getRankNorm();
+                        inSituRankNorm = e.getNormalizedRank();
                         break;
                     case RNA_SEQ:
-                        rnaSeqExpPresentHighSelfCount = e.getCounts().get(
-                            new CountType(CallType.Expression.EXPRESSED, DataQuality.HIGH,
-                                PropagationState.SELF));
-                        rnaSeqExpPresentLowSelfCount = e.getCounts().get(
-                            new CountType(CallType.Expression.EXPRESSED, DataQuality.LOW,
-                                PropagationState.SELF));
-                        rnaSeqExpAbsentHighSelfCount = e.getCounts().get(
-                            new CountType(CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH,
-                                PropagationState.SELF));
-                        rnaSeqExpAbsentLowSelfCount = e.getCounts().get(
-                            new CountType(CallType.Expression.NOT_EXPRESSED, DataQuality.LOW,
-                                PropagationState.SELF));
-                        rnaSeqExpPresentHighDescendantCount = e.getCounts().get(
-                            new CountType(CallType.Expression.EXPRESSED, DataQuality.HIGH,
-                                PropagationState.DESCENDANT));
-                        rnaSeqExpPresentLowDescendantCount = e.getCounts().get(
-                            new CountType(CallType.Expression.EXPRESSED, DataQuality.LOW,
-                                PropagationState.DESCENDANT));
-                        rnaSeqExpAbsentHighParentCount = e.getCounts().get(
-                            new CountType(CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH,
-                                PropagationState.ANCESTOR));
-                        rnaSeqExpAbsentLowParentCount = e.getCounts().get(
-                            new CountType(CallType.Expression.NOT_EXPRESSED, DataQuality.LOW,
-                                PropagationState.ANCESTOR));
-                        rnaSeqExpPresentHighTotalCount = e.getCounts().get(
-                            new CountType(CallType.Expression.EXPRESSED, DataQuality.HIGH,
-                                PropagationState.ALL));
-                        rnaSeqExpPresentLowTotalCount = e.getCounts().get(
-                            new CountType(CallType.Expression.EXPRESSED, DataQuality.LOW,
-                                PropagationState.ALL));
-                        rnaSeqExpAbsentHighTotalCount = e.getCounts().get(
-                            new CountType(CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH,
-                                PropagationState.ALL));
-                        rnaSeqExpAbsentLowTotalCount = e.getCounts().get(
-                            new CountType(CallType.Expression.NOT_EXPRESSED, DataQuality.LOW,
-                                PropagationState.ALL));
-                        rnaSeqExpPropagatedCount = e.getPropagatedCount();
+                        rnaSeqExpPresentHighSelfCount = e.getExperimentCount(
+                                CallType.Expression.EXPRESSED, DataQuality.HIGH, PropagationState.SELF
+                            ).getCount();
+                        rnaSeqExpPresentLowSelfCount = e.getExperimentCount(
+                                CallType.Expression.EXPRESSED, DataQuality.LOW, PropagationState.SELF
+                            ).getCount();
+                        rnaSeqExpAbsentHighSelfCount = e.getExperimentCount(
+                                CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH, PropagationState.SELF
+                            ).getCount();
+                        rnaSeqExpAbsentLowSelfCount = e.getExperimentCount(
+                                CallType.Expression.NOT_EXPRESSED, DataQuality.LOW, PropagationState.SELF
+                            ).getCount();
+                        rnaSeqExpPresentHighDescendantCount = e.getExperimentCount(
+                                CallType.Expression.EXPRESSED, DataQuality.HIGH, PropagationState.DESCENDANT
+                            ).getCount();
+                        rnaSeqExpPresentLowDescendantCount = e.getExperimentCount(
+                                CallType.Expression.EXPRESSED, DataQuality.LOW, PropagationState.DESCENDANT
+                            ).getCount();
+                        rnaSeqExpAbsentHighParentCount = e.getExperimentCount(
+                                CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH, PropagationState.ANCESTOR
+                            ).getCount();
+                        rnaSeqExpAbsentLowParentCount = e.getExperimentCount(
+                                CallType.Expression.NOT_EXPRESSED, DataQuality.LOW, PropagationState.ANCESTOR
+                            ).getCount();
+                        rnaSeqExpPresentHighTotalCount = e.getExperimentCount(
+                                CallType.Expression.EXPRESSED, DataQuality.HIGH, PropagationState.ALL
+                            ).getCount();
+                        rnaSeqExpPresentLowTotalCount = e.getExperimentCount(
+                                CallType.Expression.EXPRESSED, DataQuality.LOW, PropagationState.ALL
+                            ).getCount();
+                        rnaSeqExpAbsentHighTotalCount = e.getExperimentCount(
+                                CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH, PropagationState.ALL
+                            ).getCount();
+                        rnaSeqExpAbsentLowTotalCount = e.getExperimentCount(
+                                CallType.Expression.NOT_EXPRESSED, DataQuality.LOW, PropagationState.ALL
+                            ).getCount();
+                        rnaSeqExpPropagatedCount = e.getPropagatedExperimentCount();
                         rnaSeqMeanRank = e.getRank();
-                        rnaSeqMeanRankNorm = e.getRankNorm();
-                        rnaSeqDistinctRankSum = e.getRankSum();
+                        rnaSeqMeanRankNorm = e.getNormalizedRank();
+                        rnaSeqDistinctRankSum = e.getDistinctRankSum();
                         break;
                     default:
                         throw log.throwing(new IllegalStateException("Unsupported DataType: " + e.getDataType()));
@@ -1994,13 +1994,19 @@ public class InsertPropagatedCalls extends CallService {
             return log.exit(null);
         }
         
-        assert expressionCallData.stream().mapToInt(ecd -> ecd.getAllTotalCount()).sum() != 0;
-        assert includingObservedData && 
-                   expressionCallData.stream().mapToInt(ecd -> ecd.getAllSelfCount()).sum() > 0 ||
-               !includingObservedData && 
-                   expressionCallData.stream().mapToInt(ecd -> ecd.getAllSelfCount()).sum() == 0 &&
-                   expressionCallData.stream().mapToInt(ecd -> ecd.getPropagatedCount()).sum() > 0 &&
-                   expressionCallData.stream().allMatch(ecd -> ecd.getAllTotalCount() == ecd.getPropagatedCount());
+        assert expressionCallData.stream()
+            .flatMap(ecd -> ecd.getExperimentCounts(PropagationState.ALL).stream())
+            .mapToInt(c -> c.getCount()).sum() != 0;
+        assert includingObservedData && expressionCallData.stream()
+            .flatMap(ecd -> ecd.getExperimentCounts(PropagationState.SELF).stream())
+            .mapToInt(c -> c.getCount()).sum() > 0 ||
+               !includingObservedData && expressionCallData.stream()
+            .flatMap(ecd -> ecd.getExperimentCounts(PropagationState.SELF).stream())
+            .mapToInt(c -> c.getCount()).sum() == 0 &&
+                   expressionCallData.stream().mapToInt(ecd -> ecd.getPropagatedExperimentCount()).sum() > 0 &&
+                   expressionCallData.stream().allMatch(ecd -> 
+                       ecd.getExperimentCounts(PropagationState.ALL).stream()
+                           .mapToInt(c -> c.getCount()).sum() == ecd.getPropagatedExperimentCount());
 
     
         // It is not necessary to infer ExpressionSummary, SummaryQuality using
@@ -2158,31 +2164,31 @@ public class InsertPropagatedCalls extends CallService {
             }
         }
 
-        Map<CountType, Integer> counts = new HashMap<>();
-        counts.put(new CountType(CallType.Expression.EXPRESSED, DataQuality.HIGH,
-            PropagationState.SELF), presentHighSelfCount);
-        counts.put(new CountType(CallType.Expression.EXPRESSED, DataQuality.LOW,
-            PropagationState.SELF), presentLowSelfCount);
-        counts.put(new CountType(CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH,
-            PropagationState.SELF), absentHighSelfCount);
-        counts.put(new CountType(CallType.Expression.NOT_EXPRESSED, DataQuality.LOW,
-            PropagationState.SELF), absentLowSelfCount);
-        counts.put(new CountType(CallType.Expression.EXPRESSED, DataQuality.HIGH,
-            PropagationState.DESCENDANT), presentHighDescCount);
-        counts.put(new CountType(CallType.Expression.EXPRESSED, DataQuality.LOW,
-            PropagationState.DESCENDANT), presentLowDescCount);
-        counts.put(new CountType(CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH,
-            PropagationState.ANCESTOR), absentHighParentCount);
-        counts.put(new CountType(CallType.Expression.NOT_EXPRESSED, DataQuality.LOW,
-            PropagationState.ANCESTOR), absentLowParentCount);
-        counts.put(new CountType(CallType.Expression.EXPRESSED, DataQuality.HIGH,
-            PropagationState.ALL), presentHighTotalCount);
-        counts.put(new CountType(CallType.Expression.EXPRESSED, DataQuality.LOW,
-            PropagationState.ALL), presentLowTotalCount);
-        counts.put(new CountType(CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH,
-            PropagationState.ALL), absentHighTotalCount);
-        counts.put(new CountType(CallType.Expression.NOT_EXPRESSED, DataQuality.LOW,
-            PropagationState.ALL), absentLowTotalCount);
+        Set<ExperimentExpressionCount> counts = new HashSet<>();
+        counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.HIGH,
+            PropagationState.SELF, presentHighSelfCount));
+        counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.LOW,
+            PropagationState.SELF, presentLowSelfCount));
+        counts.add(new ExperimentExpressionCount(CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH,
+            PropagationState.SELF, absentHighSelfCount));
+        counts.add(new ExperimentExpressionCount(CallType.Expression.NOT_EXPRESSED, DataQuality.LOW,
+            PropagationState.SELF, absentLowSelfCount));
+        counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.HIGH,
+            PropagationState.DESCENDANT, presentHighDescCount));
+        counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.LOW,
+            PropagationState.DESCENDANT, presentLowDescCount));
+        counts.add(new ExperimentExpressionCount(CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH,
+            PropagationState.ANCESTOR, absentHighParentCount));
+        counts.add(new ExperimentExpressionCount(CallType.Expression.NOT_EXPRESSED, DataQuality.LOW,
+            PropagationState.ANCESTOR, absentLowParentCount));
+        counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.HIGH,
+            PropagationState.ALL, presentHighTotalCount));
+        counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.LOW,
+            PropagationState.ALL, presentLowTotalCount));
+        counts.add(new ExperimentExpressionCount(CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH,
+            PropagationState.ALL, absentHighTotalCount));
+        counts.add(new ExperimentExpressionCount(CallType.Expression.NOT_EXPRESSED, DataQuality.LOW,
+            PropagationState.ALL, absentLowTotalCount));
         return log.exit(new ExpressionCallData(dataType, counts, propagatedCount,
             rank, rankNorm, rankSum));
     }

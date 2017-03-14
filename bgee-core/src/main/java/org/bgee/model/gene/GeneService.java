@@ -47,6 +47,17 @@ public class GeneService extends CommonService {
         super(serviceFactory);
         this.speciesService = this.getServiceFactory().getSpeciesService();
     }
+    
+    /**
+     * Retrieve {@code Gene}s based on the provided {@code GeneFiter}.
+     * 
+     * @param filter        A {@code GeneFilter}s allowing to filter the {@code Gene}s to retrieve.
+     * @return              A {@code Stream} of matching {@code Gene}s.
+     */
+    public Stream<Gene> loadGenes(GeneFilter filter) {
+        log.entry(filter);
+        return log.exit(this.loadGenes(Collections.singleton(filter)));
+    }
 
     /**
      * Retrieve {@code Gene}s based on the provided {@code GeneFiter}s.
@@ -152,9 +163,7 @@ public class GeneService extends CommonService {
         final Set<Integer> clnSpId =  speciesIds == null? new HashSet<>():
                 Collections.unmodifiableSet(new HashSet<>(speciesIds));
         
-        final Map<Integer, Species> speciesMap = this.getServiceFactory().getSpeciesService()
-            .loadSpeciesByIds(clnSpId, false).stream()
-            .collect(Collectors.toMap(sp -> sp.getId(), sp -> sp));
+        final Map<Integer, Species> speciesMap = getSpeciesMap(clnSpId);
 
         final Map<Integer, Gene> geneMap = Collections.unmodifiableMap(this.getDaoManager().getGeneDAO()
             .getGenesBySpeciesIds(speciesIds).stream()

@@ -315,10 +315,6 @@ public abstract class GenerateDownloadFile extends CallUser {
             return log.exit(PRESENT_TEXT);
         case NOT_EXPRESSED:
             return log.exit(ABSENT_TEXT);
-        case WEAK_AMBIGUITY:
-            return log.exit(WEAK_AMBIGUITY);
-        case STRONG_AMBIGUITY:
-            return log.exit(STRONG_AMBIGUITY);
         default:
             throw new IllegalArgumentException("Unrecognized ExpressionSummary: " + sum);
         }

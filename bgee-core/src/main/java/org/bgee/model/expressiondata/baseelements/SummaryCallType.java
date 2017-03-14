@@ -1,17 +1,23 @@
 package org.bgee.model.expressiondata.baseelements;
 
+import java.util.Set;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.bgee.model.expressiondata.baseelements.DataPropagation.PropagationState;
+
 /**
  * This interface is used to type the summary call types associated to 
  * {@link org.bgee.model.expressiondata.Call Call}s. They represent an overall summary 
  * of the {@link CallType}s from individual data types, associated to a same {@code Call}.
  * 
  * @author Frederic Bastian
- * @version Bgee 13 Nov. 2015
+ * @version Bgee 14 Mar. 2017
  * @see CallType
  * @see org.bgee.model.expressiondata.Call Call
  * @since Bgee 13 Sept. 2015
  */
-public interface SummaryCallType {
+public interface SummaryCallType extends CallType {
     /**
      * {@link SummaryCallType} associated to {@link org.bgee.model.expressiondata.Call.ExpressionCall 
      * ExpressionCall}s. They represent an overall summary of the {@link CallType.Expression Expression}
@@ -38,14 +44,53 @@ public interface SummaryCallType {
      * </ul>
      * 
      * @author Frederic Bastian
-     * @version Bgee 13 Nov. 2015
+     * @version Bgee 14 Mar. 2017
      * @see CallType.Expression 
      * @see org.bgee.model.expressiondata.Call.ExpressionCall ExpressionCall
      * @since Bgee 13 Sept. 2015
      */
-    // XXX: to be remove if there is no ambiguity in bgee_v14? See also DiffExpressionSummary
+    //XXX: although there is no more "ambiguity" status starting from Bgee 14,
+    //maybe the distinction between ExpressionSummary and Expression is still useful?
     public static enum ExpressionSummary implements SummaryCallType {
-        EXPRESSED, NOT_EXPRESSED, WEAK_AMBIGUITY, STRONG_AMBIGUITY;
+        EXPRESSED, NOT_EXPRESSED;
+        private final static Logger log = LogManager.getLogger(ExpressionSummary.class.getName());
+
+        @Override
+        public void checkPropagationState(PropagationState propState) throws IllegalArgumentException {
+            log.entry(propState);
+            
+            try {
+                switch (this) {
+                case EXPRESSED:
+                    CallType.Expression.EXPRESSED.checkPropagationState(propState);
+                    break;
+                case NOT_EXPRESSED:
+                    CallType.Expression.NOT_EXPRESSED.checkPropagationState(propState);
+                    break;
+                default:
+                    throw log.throwing(new IllegalStateException("CallType not supported: " 
+                            + this));
+                }
+            } catch (IllegalArgumentException e) {
+                throw log.throwing(new IllegalArgumentException("The following propagation "
+                        + "is incorrect for the CallType " + this + ": " + propState));
+            }
+            log.exit();
+        }
+
+        @Override
+        public Set<DataType> getAllowedDataTypes() {
+            log.entry();
+            switch (this) {
+            case EXPRESSED:
+                return log.exit(CallType.Expression.EXPRESSED.getAllowedDataTypes());
+            case NOT_EXPRESSED:
+                return log.exit(CallType.Expression.NOT_EXPRESSED.getAllowedDataTypes());
+            default:
+                throw log.throwing(new IllegalStateException("CallType not supported: " 
+                        + this));
+            }
+        }
     }
     /**
      * {@link SummaryCallType} associated to {@link org.bgee.model.expressiondata.Call.DiffExpressionCall 
@@ -83,7 +128,7 @@ public interface SummaryCallType {
      * </ul>
      * 
      * @author Frederic Bastian
-     * @version Bgee 13 Nov. 2015
+     * @version Bgee 14 Mar. 2017
      * @see CallType.DiffExpression 
      * @see org.bgee.model.expressiondata.Call.DiffExpressionCall DiffExpressionCall
      * @since Bgee 13 Sept. 2015
@@ -91,5 +136,22 @@ public interface SummaryCallType {
     public static enum DiffExpressionSummary implements SummaryCallType {
         DIFF_EXPRESSED, OVER_EXPRESSED, UNDER_EXPRESSED, NOT_DIFF_EXPRESSED, 
         WEAK_AMBIGUITY_OVER, WEAK_AMBIGUITY_UNDER, WEAK_AMBIGUITY_NOT_DIFF, STRONG_AMBIGUITY;
+        private final static Logger log = LogManager.getLogger(DiffExpressionSummary.class.getName());
+
+        @Override
+        public void checkPropagationState(PropagationState propState) throws IllegalArgumentException {
+            log.entry(propState);
+            //no propagation allowed for any diff. expression call type
+            if (!PropagationState.SELF.equals(propState)) {
+                throw log.throwing(new IllegalArgumentException("The following propagation "
+                        + "is incorrect for the CallType " + this + ": " + propState));
+            }
+            log.exit();
+        }
+
+        @Override
+        public Set<DataType> getAllowedDataTypes() {
+            return CallType.DiffExpression.DIFF_EXPR_DATA_TYPES;
+        }
     }
 }

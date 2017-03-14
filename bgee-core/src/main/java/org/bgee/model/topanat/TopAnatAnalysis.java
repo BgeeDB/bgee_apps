@@ -11,7 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Map;
@@ -34,6 +34,7 @@ import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.gene.GeneService;
 import org.bgee.model.topanat.exception.InvalidForegroundException;
 import org.bgee.model.topanat.exception.InvalidSpeciesGenesException;
@@ -227,9 +228,9 @@ public class TopAnatAnalysis {
         if (this.params.getSubmittedBackgroundIds() != null) {
             allGeneIds.addAll(this.params.getSubmittedBackgroundIds());
         }
-        allGeneIds.removeAll(this.geneService.loadGenesByIdsAndSpeciesIds(allGeneIds, 
-                Arrays.asList(this.params.getSpeciesId())).stream()
-                .map(Gene::getEnsemblGeneId)
+        allGeneIds.removeAll(this.geneService.loadGenes(
+                    new GeneFilter(this.params.getSpeciesId(), allGeneIds)
+                ).map(Gene::getEnsemblGeneId)
                 .collect(Collectors.toSet()));
         if (!allGeneIds.isEmpty()) {
             throw log.throwing(new InvalidSpeciesGenesException("Some gene IDs are unrecognized, "
@@ -505,7 +506,7 @@ public class TopAnatAnalysis {
         //we need to get the anat. entities, both for anatEntitiesNameFile, and for 
         //correct generation of the anatEntitiesRelFile
         Set<AnatEntity> entities = this.anatEntityService.loadAnatEntitiesBySpeciesIds(
-                Arrays.asList(this.params.getSpeciesId())).collect(Collectors.toSet());
+                Collections.singleton(this.params.getSpeciesId())).collect(Collectors.toSet());
         try (PrintWriter out = new PrintWriter(new BufferedWriter(
                 new FileWriter(anatEntitiesNameFile)))) {
             entities.stream().forEach(entity 
@@ -516,7 +517,7 @@ public class TopAnatAnalysis {
         
         //relations
         Map<String, Set<String>> relations = this.anatEntityService.loadDirectIsAPartOfRelationships(
-                Arrays.asList(this.params.getSpeciesId()));
+                Collections.singleton(this.params.getSpeciesId()));
         
         //We add a fake root, and we map all orphan terms to it: TopAnat don't manage multiple roots. 
         //Search for terms never seen as child of another term.
@@ -555,7 +556,6 @@ public class TopAnatAnalysis {
         try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(
                 geneToAnatEntitiesFile)))) {
             this.callService.loadExpressionCalls(
-                    this.params.getSpeciesId(), 
                     (ExpressionCallFilter) this.params.convertRawParametersToCallFilter(), 
                     EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID), 
                     null

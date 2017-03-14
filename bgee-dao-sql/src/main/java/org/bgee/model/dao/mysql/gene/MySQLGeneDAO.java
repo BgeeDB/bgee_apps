@@ -2,12 +2,18 @@ package org.bgee.model.dao.mysql.gene;
 
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
@@ -55,29 +61,34 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
     @Override
     public GeneTOResultSet getAllGenes() throws DAOException {
         log.entry();
-        return log.exit(getGenesBySpeciesIds(null, null));
+        return log.exit(getGenes(null, null, null));
     }
 
     @Override
     public GeneTOResultSet getGenesBySpeciesIds(Collection<Integer> speciesIds) throws DAOException {
         log.entry(speciesIds);
-        return log.exit(this.getGenesBySpeciesIds(speciesIds, null));
+        return log.exit(this.getGenes(convertSpeciesIdsTOMap(speciesIds), null, null));
     }
+
     @Override
     public GeneTOResultSet getGenesWithDataBySpeciesIds(Collection<Integer> speciesIds) throws DAOException {
         log.entry(speciesIds);
-        return log.exit(this.getGenes(speciesIds, null, null, true));
+        return log.exit(this.getGenes(convertSpeciesIdsTOMap(speciesIds), null, true));
     }
 
     @Override
     public GeneTOResultSet getGenesByIds(Collection<String> geneIds) throws DAOException {
         log.entry(geneIds);
-        return log.exit(getGenesBySpeciesIds(null, geneIds));
+        Map<Integer, Set<String>> speToGeneMap = new HashMap<>();
+        //sanity checks on geneIds will be performed by the getGenes method
+        speToGeneMap.put(null, geneIds == null? null: new HashSet<>(geneIds));
+        return log.exit(getGenes(speToGeneMap, null, null));
     }
 
     @Override
     public GeneTOResultSet getGeneBySearchTerm(String searchTerm, Collection<Integer> speciesIds,
             int limitStart, int resultPerPage) {
+        log.entry(searchTerm, speciesIds, limitStart, resultPerPage);
 
         String sql = "select distinct t1.* " + 
                 "from gene as t1 "
@@ -146,72 +157,123 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
     }
     
     @Override
-    public GeneTOResultSet getGenesBySpeciesIds(Collection<Integer> speciesIds,
-            Collection<String> geneIds) throws DAOException {
-        log.entry(speciesIds, geneIds);
-        return log.exit(this.getGenes(speciesIds, geneIds, null, null));
+    public GeneTOResultSet getGenesBySpeciesAndGeneIds(Map<Integer, Set<String>> speciesIdToGeneIds)
+            throws DAOException {
+        log.entry(speciesIdToGeneIds);
+        return log.exit(this.getGenes(speciesIdToGeneIds, null, null));
     }
-
-    private GeneTOResultSet getGenes(Collection<Integer> speciesIds, Collection<String> ensemblGeneIds, 
+    
+    private GeneTOResultSet getGenes(Map<Integer, Set<String>> speciesIdToGeneIds, 
             Collection<Integer> bgeeGeneIds, Boolean withExprData) throws DAOException {
-        log.entry(speciesIds, ensemblGeneIds, bgeeGeneIds, withExprData);
+        log.entry(speciesIdToGeneIds, bgeeGeneIds, withExprData);
+        
+        if (speciesIdToGeneIds != null &&
+                speciesIdToGeneIds.containsKey(null) && speciesIdToGeneIds.size() != 1) {
+            throw log.throwing(new IllegalArgumentException(
+                    "If a null species ID is provided, it should ne the only Entry in the Map."));
+        }
 
-        Set<Integer> clonedSpeIds = speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds);
-        Set<String> clonedEnsemblIds = ensemblGeneIds == null? new HashSet<>(): new HashSet<>(ensemblGeneIds);
-        Set<Integer> clonedGeneIds = bgeeGeneIds == null? new HashSet<>(): new HashSet<>(bgeeGeneIds);
+        //need a LinkedHashMap for consistent setting of the query parameters.
+        //Copy it with Collectors.toMap to create copies of the gene ID Sets.
+        LinkedHashMap<Integer, Set<String>> clonedSpeciesIdToGeneIds = speciesIdToGeneIds == null?
+                new LinkedHashMap<>(): speciesIdToGeneIds.entrySet().stream()
+                //eliminate entries with no species IDs and no gene IDs
+                .filter(e -> e.getKey() != null || e.getValue() != null && !e.getValue().isEmpty())
+                //sort the the species IDs for maximizing chances of cache hits.
+                //Gene IDs in the Set values will be sorted by the method BgeePreparedStatement.setIntegers
+                .sorted(Comparator.comparing(e -> e.getKey(),
+                        //null species ID is allowed for method such as getGenesByIds,
+                        //but in that case it should be the only entry in the Map
+                        Comparator.nullsLast(Comparator.naturalOrder())))
+                .collect(Collectors.toMap(
+                        e -> {
+                            if (e.getKey() != null && e.getKey() <= 0) {
+                                throw log.throwing(new IllegalArgumentException(
+                                        "No species ID can be less than 1"));
+                            }
+                            return e.getKey();
+                        },
+                        e -> {
+                            if (e.getValue() == null) {
+                                return new HashSet<>();
+                            }
+                            if (e.getValue().stream().anyMatch(geneId -> StringUtils.isBlank(geneId))) {
+                                throw log.throwing(new IllegalArgumentException("No gene ID can be null"));
+                            }
+                            return new HashSet<>(e.getValue());
+                        }, 
+                        (v1, v2) -> {throw new IllegalStateException("Impossible to have duplicated keys.");},
+                        () -> new LinkedHashMap<>()));
+        Set<Integer> clonedBgeeGeneIds = bgeeGeneIds == null? new HashSet<>(): new HashSet<>(bgeeGeneIds);
 
         String sql = this.generateSelectClause(this.getAttributes(), GENE_TABLE_NAME);
 
         sql += " FROM " + GENE_TABLE_NAME;
 
-        if (!clonedSpeIds.isEmpty() || !clonedEnsemblIds.isEmpty() || !clonedGeneIds.isEmpty() || 
+        if (!clonedSpeciesIdToGeneIds.isEmpty() || !clonedBgeeGeneIds.isEmpty() || 
                 Boolean.TRUE.equals(withExprData)) {
             sql += " WHERE ";
         }
-        if (!clonedSpeIds.isEmpty()) {
-            sql += GENE_TABLE_NAME + ".speciesId IN (" 
-                   + BgeePreparedStatement.generateParameterizedQueryString(clonedSpeIds.size()) + ")";
+        if (clonedSpeciesIdToGeneIds.values().stream().anyMatch(geneIds -> !geneIds.isEmpty())) {
+            clonedSpeciesIdToGeneIds.entrySet().stream().map(
+                    e -> {
+                        String where = "";
+                        //a null species ID key is allowed for methods such as getGenesbyIds,
+                        //but it should be the only entry in the Map then.
+                        if (e.getKey() != null) {
+                            where += GENE_TABLE_NAME + ".speciesId = ?";
+                            if (!e.getValue().isEmpty()) {
+                                where += " AND ";
+                            }
+                        }
+                        if (!e.getValue().isEmpty()) {
+                            where += GENE_TABLE_NAME + ".geneId IN ("
+                                     + BgeePreparedStatement.generateParameterizedQueryString(
+                                            e.getValue().size());
+                        }
+                        return where;
+                    }).collect(Collectors.joining(" OR ", "(", ") "));
+        } else if (!clonedSpeciesIdToGeneIds.isEmpty()) {
+            sql += GENE_TABLE_NAME + ".speciesId IN ("
+                   + BgeePreparedStatement.generateParameterizedQueryString(
+                           clonedSpeciesIdToGeneIds.size())
+                   + ") ";
         }
-        if (!clonedEnsemblIds.isEmpty()) {
-            if (!clonedSpeIds.isEmpty()) {
-                sql += " AND ";
-            }
-            sql += GENE_TABLE_NAME + ".geneId IN (" 
-                   + BgeePreparedStatement.generateParameterizedQueryString(clonedEnsemblIds.size()) + ")";
-        }
-        if (!clonedGeneIds.isEmpty()) {
-            if (!clonedSpeIds.isEmpty() || !clonedEnsemblIds.isEmpty()) {
+        
+        if (!clonedBgeeGeneIds.isEmpty()) {
+            if (!clonedSpeciesIdToGeneIds.isEmpty()) {
                 sql += " AND ";
             }
             sql += GENE_TABLE_NAME + ".bgeeGeneId IN (" 
-                   + BgeePreparedStatement.generateParameterizedQueryString(clonedGeneIds.size()) + ")";
+                   + BgeePreparedStatement.generateParameterizedQueryString(clonedBgeeGeneIds.size())
+                   + ")";
         }
         if (Boolean.TRUE.equals(withExprData)) {
-            if (!clonedSpeIds.isEmpty() || !clonedEnsemblIds.isEmpty() || !clonedGeneIds.isEmpty()) {
+            if (!clonedSpeciesIdToGeneIds.isEmpty() || !clonedBgeeGeneIds.isEmpty()) {
                 sql += " AND ";
             }
             sql += "EXISTS (SELECT 1 FROM expression WHERE expression.bgeeGeneId = " 
                    + GENE_TABLE_NAME + ".bgeeGeneId)";
         }
 
-        // we don't use a try-with-resource, because we return a pointer to the
-        // results,
-        // not the actual results, so we should not close this
-        // BgeePreparedStatement.
+        // we don't use a try-with-resource, because we return a pointer to the results,
+        // not the actual results, so we should not close this BgeePreparedStatement.
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             int offsetParamIndex = 1;
-            if (!clonedSpeIds.isEmpty()) {
-                stmt.setIntegers(offsetParamIndex, clonedSpeIds, true);
-                offsetParamIndex += clonedSpeIds.size();
+            for (Entry<Integer, Set<String>> speToGenes: clonedSpeciesIdToGeneIds.entrySet()) {
+                if (speToGenes.getKey() != null) {
+                    stmt.setInt(offsetParamIndex, speToGenes.getKey());
+                    offsetParamIndex++;
+                }
+                if (!speToGenes.getValue().isEmpty()) {
+                    stmt.setStrings(offsetParamIndex, speToGenes.getValue(), true);
+                    offsetParamIndex += speToGenes.getValue().size();
+                }
             }
-            if (!clonedEnsemblIds.isEmpty()) {
-                stmt.setStrings(offsetParamIndex, clonedEnsemblIds, true);
-                offsetParamIndex += clonedEnsemblIds.size();
-            }
-            if (!clonedGeneIds.isEmpty()) {
-                stmt.setIntegers(offsetParamIndex, clonedGeneIds, true);
-                offsetParamIndex += clonedGeneIds.size();
+            if (!clonedBgeeGeneIds.isEmpty()) {
+                stmt.setIntegers(offsetParamIndex, clonedBgeeGeneIds, true);
+                offsetParamIndex += clonedBgeeGeneIds.size();
             }
 
             return log.exit(new MySQLGeneTOResultSet(stmt));
@@ -376,6 +438,18 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
                     "The attribute provided (" + attribute.toString() + ") is unknown for " + GeneDAO.class.getName()));
         }
         return log.exit(label);
+    }
+
+    private Map<Integer, Set<String>> convertSpeciesIdsTOMap(Collection<Integer> speciesIds) {
+        log.entry(speciesIds);
+        return log.exit(speciesIds == null? null: speciesIds.stream()
+                .collect(Collectors.toMap(id -> {
+                    if (id == null || id <= 0) {
+                        throw log.throwing(new IllegalStateException(
+                                "No species ID can be null or less than 1."));
+                    }
+                    return id;
+                }, id -> null, (v1, v2) -> v1)));
     }
 
     /**

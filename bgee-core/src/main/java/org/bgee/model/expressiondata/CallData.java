@@ -202,12 +202,17 @@ public abstract class CallData<T extends Enum<T> & CallType> {
          */
         private static Expression inferCallType(Set<ExperimentExpressionCount> expCounts) {
             log.entry(expCounts);
+            
+            if (expCounts == null) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Some ExperimentExpressionCount must be provided"));
+            }
         
             Set<ExperimentExpressionCount> propAllPositiveCounts = expCounts.stream()
                     //we don't do sanity checks on null here, so we filter them out
                     //to not have a null pointer exception
                     .filter(c -> c != null && PropagationState.ALL.equals(c.getPropagationState()) && 
-                            c.getExperimentCount() > 0)
+                            c.getCount() > 0)
                     .collect(Collectors.toSet());
             if (propAllPositiveCounts.isEmpty()) {
                 throw log.throwing(new IllegalArgumentException("Inference of expression is not possible"
@@ -322,9 +327,47 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         public boolean isObservedData() {
             log.entry();
             return log.exit(this.experimentCounts.stream().anyMatch(c ->
-                    PropagationState.SELF.equals(c.getPropagationState()) && c.getExperimentCount() > 0));
+                    PropagationState.SELF.equals(c.getPropagationState()) && c.getCount() > 0));
         }
 
+        public ExperimentExpressionCount getExperimentCount(CallType.Expression callType,
+                DataQuality dataQuality, PropagationState propState) {
+            log.entry(callType, dataQuality, propState);
+            if (callType == null || dataQuality == null || propState == null) {
+                throw log.throwing(new IllegalArgumentException("No argument can be null."));
+            }
+            if (!ExperimentExpressionCount.ALLOWED_PROP_STATES.contains(propState)) {
+                throw log.throwing(new IllegalArgumentException(
+                        "The provided PropagationState is invalid for ExperimentExpressionCounts: "
+                        + propState));
+            }
+            Set<ExperimentExpressionCount> matchingExpCounts = experimentCounts.stream()
+                    .filter(c -> callType.equals(c.getCallType()) &&
+                            dataQuality.equals(c.getDataQuality()) &&
+                            propState.equals(c.getPropagationState()))
+                    .collect(Collectors.toSet());
+            if (matchingExpCounts.size() != 1) {
+                throw log.throwing(new IllegalStateException(
+                        "Could not find matching ExperimentExpressionCount for parameters: "
+                        + callType + " - " + dataQuality + " - " + propState));
+            }
+            return log.exit(matchingExpCounts.iterator().next());
+        }
+
+        public Set<ExperimentExpressionCount> getExperimentCounts(PropagationState propState) {
+            log.entry(propState);
+            if (propState == null) {
+                throw log.throwing(new IllegalArgumentException("PropagationState cannot be null."));
+            }
+            if (!ExperimentExpressionCount.ALLOWED_PROP_STATES.contains(propState)) {
+                throw log.throwing(new IllegalArgumentException(
+                        "The provided PropagationState is invalid for ExperimentExpressionCounts: "
+                        + propState));
+            }
+            return log.exit(experimentCounts.stream()
+                    .filter(c -> propState.equals(c.getPropagationState()))
+                    .collect(Collectors.toSet()));
+        }
 
         //********************************************
         // GETTERS

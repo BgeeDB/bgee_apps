@@ -6,9 +6,12 @@ import static org.junit.Assert.assertTrue;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -89,10 +92,10 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
     }
 
     /**
-     * Test the select method {@link MySQLGeneDAO#getGenes()}.
+     * Test the select method {@link MySQLGeneDAO#getGenesBySpeciesIds(Collection)}.
      */
     @Test
-    public void shouldGetGenes() throws SQLException {
+    public void shouldGetGenesBySpeciesIds() throws SQLException {
         
         this.useSelectDB();
 
@@ -121,27 +124,99 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
         //Compare
         assertTrue("GeneTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
+    }
+
+    /**
+     * Test the select method {@link MySQLGeneDAO#getGenesWithDataBySpeciesIds(Collection)}.
+     */
+    @Test
+    //TODO: implement
+    public void shouldGetGenesWithDataBySpeciesIds() throws SQLException {
+    }
+
+    /**
+     * Test the select method {@link MySQLGeneDAO#getGenesByIds(Collection)}.
+     */
+    @Test
+    public void shouldGetGenesByIds() throws SQLException {
         
-        // With specified species IDs AND gene IDs
-        dao.setAttributes(GeneDAO.Attribute.ID, GeneDAO.Attribute.DESCRIPTION);
-        Set<String> geneIds = new HashSet<String>();
-        geneIds.addAll(Arrays.asList("ID1"));
-        methGenes = dao.getGenesBySpeciesIds(speciesIds, geneIds).getAllTOs();
-        expectedGenes = Arrays.asList(
-                new GeneTO(1, "ID1", null, "genDesc1", null, null, null, null)); 
+        this.useSelectDB();
+
+        MySQLGeneDAO dao = new MySQLGeneDAO(this.getMySQLDAOManager());
+
+        // Without specified species IDs and gene IDs
+        dao.setAttributes(Arrays.asList(GeneDAO.Attribute.ID));
+        List<GeneTO> methGenes = dao.getGenesByIds(null).getAllTOs();
+        List<GeneTO> expectedGenes = Arrays.asList(
+                new GeneTO(1, "ID1", null, null, null, null, null, null), 
+                new GeneTO(2, "ID2", null, null, null, null, null, null), 
+                new GeneTO(3, "ID3", null, null, null, null, null, null),
+                new GeneTO(4, "ID4", null, null, null, null, null, null));
         //Compare
         assertTrue("GeneTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
 
         // With specified gene IDs without species IDs
+        // TODO: should test with several genes mapped to a same Ensembl gene ID
         dao.clearAttributes();
         dao.setAttributes(GeneDAO.Attribute.NAME);
-        geneIds.addAll(Arrays.asList("ID2", "ID4"));
-        methGenes = dao.getGenesBySpeciesIds(null, geneIds).getAllTOs();
+        Set<String> geneIds = new HashSet<String>();
+        geneIds.addAll(Arrays.asList("ID1", "ID2", "ID4"));
+        methGenes = dao.getGenesByIds(geneIds).getAllTOs();
         expectedGenes = Arrays.asList(
                 new GeneTO(null, null, "genN1", null, null, null, null, null), 
                 new GeneTO(null, null, "genN2", null, null, null, null, null), 
                 new GeneTO(null, null, "genN4", null, null, null, null, null));
+        //Compare
+        assertTrue("GeneTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
+    }
+
+    /**
+     * Test the select method {@link MySQLGeneDAO#getGenesBySpeciesAndGeneIds(Map)}.
+     */
+    @Test
+    public void shouldGetGenesBySpeciesAndGeneIds() throws SQLException {
+        
+        this.useSelectDB();
+
+        MySQLGeneDAO dao = new MySQLGeneDAO(this.getMySQLDAOManager());
+
+        // Without specified species IDs and gene IDs
+        dao.setAttributes(Arrays.asList(GeneDAO.Attribute.ID));
+        List<GeneTO> methGenes = dao.getGenesBySpeciesAndGeneIds(null).getAllTOs();
+        List<GeneTO> expectedGenes = Arrays.asList(
+                new GeneTO(1, "ID1", null, null, null, null, null, null), 
+                new GeneTO(2, "ID2", null, null, null, null, null, null), 
+                new GeneTO(3, "ID3", null, null, null, null, null, null),
+                new GeneTO(4, "ID4", null, null, null, null, null, null));
+        //Compare
+        assertTrue("GeneTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
+
+        // With specified species IDs without gene IDs
+        Set<Integer> speciesIds = new HashSet<>();
+        speciesIds.addAll(Arrays.asList(11, 31, 44));
+        dao.clearAttributes();
+        methGenes = dao.getGenesBySpeciesAndGeneIds(speciesIds.stream().collect(
+                Collectors.toMap(id -> id, id -> null))).getAllTOs();
+        expectedGenes = Arrays.asList(
+                new GeneTO(1, "ID1", "genN1", "genDesc1", 11, 12, 5, true), 
+                new GeneTO(3, "ID3", "genN3", "genDesc3", 31, 0, 3, false)); 
+        //Compare
+        assertTrue("GeneTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
+        
+        // With specified species IDs AND gene IDs
+        // TODO: should test with several genes mapped to a same Ensembl gene ID
+        dao.setAttributes(GeneDAO.Attribute.ID, GeneDAO.Attribute.DESCRIPTION);
+        Set<String> geneIds = new HashSet<String>();
+        geneIds.addAll(Arrays.asList("ID1"));
+        Map<Integer, Set<String>> speMap = new HashMap<>();
+        speMap.put(11, geneIds);
+        methGenes = dao.getGenesBySpeciesAndGeneIds(speMap).getAllTOs();
+        expectedGenes = Arrays.asList(
+                new GeneTO(1, "ID1", null, "genDesc1", null, null, null, null)); 
         //Compare
         assertTrue("GeneTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));

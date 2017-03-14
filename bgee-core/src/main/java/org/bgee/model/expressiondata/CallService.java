@@ -1124,7 +1124,7 @@ public class CallService extends CommonService {
         return log.exit(cd.getExperimentCounts().stream()
             .filter(c -> expr.equals(c.getCallType()) && qual.equals(c.getDataQuality())
                         && state.equals(c.getPropagationState()))
-            .map(c -> c.getExperimentCount())
+            .map(c -> c.getCount())
             .mapToInt(Integer::intValue)
             .sum());
     }

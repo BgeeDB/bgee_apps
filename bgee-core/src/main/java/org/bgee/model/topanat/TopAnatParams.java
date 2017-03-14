@@ -1,6 +1,5 @@
 package org.bgee.model.topanat;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -16,15 +15,12 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.CallFilter;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.ConditionFilter;
-import org.bgee.model.expressiondata.baseelements.CallType;
-import org.bgee.model.expressiondata.baseelements.CallType.DiffExpression;
-import org.bgee.model.expressiondata.baseelements.CallType.Expression;
-import org.bgee.model.expressiondata.baseelements.DataPropagation;
-import org.bgee.model.expressiondata.baseelements.DataPropagation.PropagationState;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DecorrelationType;
 import org.bgee.model.expressiondata.baseelements.StatisticTest;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.DiffExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.topanat.exception.MissingParameterException;
@@ -101,9 +97,9 @@ public class TopAnatParams {
     private final Integer speciesId;
 
     /**
-     * A {@code CallType} that specifies the type of expression call in the analysis
+     * A {@code SummaryCallType} that specifies the type of expression call in the analysis
      */
-    private final CallType callType;
+    private final SummaryCallType callType;
 
     /**
      * A {@code DataQuality} that specifies the minimal quality taken into account in the analysis
@@ -190,9 +186,9 @@ public class TopAnatParams {
         private Collection<String> submittedBackgroundIds;
 
         /**
-         * A {@code CallType} that specifies the type of expression call in the analysis
+         * A {@code SummaryCallType} that specifies the type of expression call in the analysis
          */
-        private CallType callType;
+        private SummaryCallType callType;
 
         /**
          * A {@code DataQuality} that specifies the minimal quality taken into account in 
@@ -259,10 +255,11 @@ public class TopAnatParams {
          * @param speciesId                 A {@code String} that contains the id of the species
          *                                  tested in the analysis            
          *                                                          
-         * @param callType                  A {@code CallType} that specifies the type of
+         * @param callType                  A {@code SummaryCallType} that specifies the type of
          *                                  expression call in the analysis
          */
-        public Builder(Collection<String> submittedForegroundIds, Integer speciesId, CallType callType){
+        public Builder(Collection<String> submittedForegroundIds, Integer speciesId,
+                SummaryCallType callType){
             this(submittedForegroundIds, null, speciesId, callType);
         }
 
@@ -278,11 +275,11 @@ public class TopAnatParams {
          * @param speciesId                 A {@code String} that contains the id of the species
          *                                  tested in the analysis         
          *
-         * @param callType                  A {@code CallType} that specifies the type of
+         * @param callType                  A {@code SummaryCallType} that specifies the type of
          *                                  expression call in the analysis
          */
         public Builder(Collection<String> submittedForegroundIds, Collection<String> submittedBackgroundIds,
-                Integer speciesId, CallType callType) {
+                Integer speciesId, SummaryCallType callType) {
             log.entry(submittedForegroundIds,submittedBackgroundIds,speciesId,callType);
             this.submittedForegroundIds = submittedForegroundIds;
             this.submittedBackgroundIds = submittedBackgroundIds;
@@ -506,9 +503,9 @@ public class TopAnatParams {
     }
 
     /**
-     * @return A {@code CallType} that specifies the type of expression call in the analysis
+     * @return A {@code SummaryCallType} that specifies the type of expression call in the analysis
      */
-    public CallType getCallType() {
+    public SummaryCallType getCallType() {
         return callType;
     }
 
@@ -604,28 +601,24 @@ public class TopAnatParams {
     public CallFilter<?> convertRawParametersToCallFilter() {
         log.entry();
         
-        GeneFilter geneFilter = this.submittedBackgroundIds != null?
-            new GeneFilter(this.submittedBackgroundIds): null;
+        GeneFilter geneFilter = new GeneFilter(this.speciesId, this.submittedBackgroundIds);
         
         Collection<ConditionFilter> condFilters = StringUtils.isBlank(this.devStageId)? null: 
-            Arrays.asList(new ConditionFilter(null, Arrays.asList(this.devStageId)));
+            Collections.singleton(new ConditionFilter(null, Collections.singleton(this.devStageId)));
         
-        SummaryQuality summaryQualityFilter = this.summaryQuality == null?
-            SummaryQuality.SILVER: this.summaryQuality;
-        
-        if (this.callType == Expression.EXPRESSED) {
+        if (this.callType == ExpressionSummary.EXPRESSED) {
             return log.exit(new ExpressionCallFilter(
                 //gene filter 
                 geneFilter, 
                 //condition filter
                 condFilters,
                 this.dataTypes,
-                summaryQualityFilter,
                 ExpressionSummary.EXPRESSED,
-                new DataPropagation(PropagationState.SELF, PropagationState.SELF_OR_DESCENDANT)
+                this.summaryQuality,
+                true
                 ));
         }
-        if (this.callType == DiffExpression.OVER_EXPRESSED) {
+        if (this.callType == DiffExpressionSummary.OVER_EXPRESSED) {
             //TODO: to implement, and use method getDiffExpressionCallData
             throw log.throwing(new UnsupportedOperationException(
                     "CallService for diff. expression not yet implemented"));
@@ -651,7 +644,7 @@ public class TopAnatParams {
 //        log.entry();
 //
 //        return log.exit(this.getCallData((dataType, dataQual) -> 
-//            new ExpressionCallData(CallType.Expression.EXPRESSED,
+//            new ExpressionCallData(SummaryCallType.Expression.EXPRESSED,
 //                dataQual, dataType, 
 //                new DataPropagation(PropagationState.SELF, 
 //                        PropagationState.SELF_OR_DESCENDANT))));
@@ -668,7 +661,7 @@ public class TopAnatParams {
 //
 //        return log.exit(this.getCallData((dataType, dataQual) -> 
 //            new DiffExpressionCallData(DiffExpressionFactor.ANATOMY, 
-//                CallType.DiffExpression.OVER_EXPRESSED, dataQual, dataType)));
+//                SummaryCallType.DiffExpression.OVER_EXPRESSED, dataQual, dataType)));
 //    }
 //
 //    /**
@@ -684,7 +677,7 @@ public class TopAnatParams {
 //
 //        if (this.dataTypes == null || this.dataTypes.isEmpty() || 
 //                this.dataTypes.containsAll(this.callType.getAllowedDataTypes())) {
-//            return log.exit(Arrays.asList(callDataSupplier.apply(null, dataQual)));
+//            return log.exit(Collections.singleton(callDataSupplier.apply(null, dataQual)));
 //        }
 //        return log.exit(this.dataTypes.stream()
 //                .map(dataType -> callDataSupplier.apply(dataType, dataQual))

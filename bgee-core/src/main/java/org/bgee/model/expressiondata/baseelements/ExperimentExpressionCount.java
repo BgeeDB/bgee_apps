@@ -44,9 +44,9 @@ public class ExperimentExpressionCount {
      */
     private final PropagationState propagationState;
     /**
-     * @see #getExperimentCount()
+     * @see #getCount()
      */
-    private final int experimentCount;
+    private final int count;
     
     /**
      * Instantiate a new {@code ExperimentExpressionCount} with a {@code CallType}, a {@code DataQuality},
@@ -79,7 +79,7 @@ public class ExperimentExpressionCount {
         this.callType = callType;
         this.dataQuality = dataQuality;
         this.propagationState = propagationState;
-        this.experimentCount = experimentCount;
+        this.count = experimentCount;
     }
 
     /**
@@ -107,8 +107,8 @@ public class ExperimentExpressionCount {
      *          in this object by their {@code CallType} and {@code DataQuality}, with an origin
      *          related to the global summary {@code ExpressionCall} described by the {@code PropagationState}.
      */
-    public int getExperimentCount() {
-        return experimentCount;
+    public int getCount() {
+        return count;
     }
 
     @Override
@@ -117,7 +117,7 @@ public class ExperimentExpressionCount {
         int result = 1;
         result = prime * result + ((callType == null) ? 0 : callType.hashCode());
         result = prime * result + ((dataQuality == null) ? 0 : dataQuality.hashCode());
-        result = prime * result + experimentCount;
+        result = prime * result + count;
         result = prime * result + ((propagationState == null) ? 0 : propagationState.hashCode());
         return result;
     }
@@ -143,7 +143,7 @@ public class ExperimentExpressionCount {
         if (dataQuality != other.dataQuality) {
             return false;
         }
-        if (experimentCount != other.experimentCount) {
+        if (count != other.count) {
             return false;
         }
         if (propagationState != other.propagationState) {
@@ -157,7 +157,7 @@ public class ExperimentExpressionCount {
         StringBuilder builder = new StringBuilder();
         builder.append("ExperimentExpressionCount [callType=").append(callType).append(", dataQuality=")
                 .append(dataQuality).append(", propagationState=").append(propagationState)
-                .append(", experimentCount=").append(experimentCount).append("]");
+                .append(", count=").append(count).append("]");
         return builder.toString();
     }
 }

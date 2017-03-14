@@ -21,6 +21,7 @@ import org.bgee.controller.exception.RequestParametersNotFoundException;
 import org.bgee.controller.exception.InvalidFormatException;
 import org.bgee.controller.servletutils.BgeeHttpServletRequest;
 import org.bgee.model.expressiondata.baseelements.CallType;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.file.DownloadFile;
 import org.bgee.model.file.SpeciesDataGroup;
 import org.bgee.model.file.DownloadFile.CategoryEnum;
@@ -231,7 +232,7 @@ public class JsonHelperTest extends TestAncestor {
         
         TopAnatParams params = mock(TopAnatParams.class);
         when(params.getDevStageId()).thenReturn("stageId1");
-        when(params.getCallType()).thenReturn(CallType.Expression.EXPRESSED);
+        when(params.getCallType()).thenReturn(SummaryCallType.ExpressionSummary.EXPRESSED);
         when(params.getKey()).thenReturn("mykey");
         BgeeProperties props = mock(BgeeProperties.class);
         when(props.getTopAnatResultsUrlDirectory()).thenReturn("top_anat/results/");

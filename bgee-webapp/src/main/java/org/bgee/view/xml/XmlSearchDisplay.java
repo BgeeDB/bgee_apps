@@ -60,7 +60,7 @@ public class XmlSearchDisplay extends XmlParentDisplay implements SearchDisplay 
         			"name='" + XmlParentDisplay.xmlEntities(gene.getGene().getName()) + "' " +
         			"label='" + XmlParentDisplay.xmlEntities(label) + "' " +
         			"label_source='" + labelSource + "' " +
-        			"species_id='" + String.valueOf(gene.getGene().getSpeciesId()) + "' " +
+        			"species_id='" + String.valueOf(gene.getGene().getSpecies().getId()) + "' " +
         			"species_name='" + XmlParentDisplay.xmlEntities(
         			        StringUtils.isNotBlank(gene.getGene().getSpecies().getName())? 
         			                gene.getGene().getSpecies().getName(): 

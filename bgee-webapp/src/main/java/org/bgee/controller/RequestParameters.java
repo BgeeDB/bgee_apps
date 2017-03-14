@@ -1966,6 +1966,25 @@ public class RequestParameters {
     }
 
     /**
+     * @return the species_id parameter
+     */
+    public Integer getSpeciesId() {
+        return this.getFirstValue(this.getUrlParametersInstance().getParamSpeciesId());
+    }
+    /**
+     * Convenient method to set value of the parameter returned by 
+     * {@link URLParameters#getParamSpeciesId()}. Equivalent to calling 
+     * {@link #addValue(URLParameters.Parameter, Object)} for this parameter.
+     * 
+     * @param speciesId     An {@code Integer} that is the value of the {@code species_id}
+     *                      URL parameter to set.
+     */
+    public void setSpeciesId(Integer speciesId) {
+        this.resetValues(this.getUrlParametersInstance().getParamSpeciesId());
+        this.addValue(this.getUrlParametersInstance().getParamSpeciesId(), speciesId);
+    }
+
+    /**
      * @return the search parameter
      */
     public String getSearch() {

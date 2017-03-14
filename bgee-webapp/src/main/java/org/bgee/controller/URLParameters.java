@@ -182,6 +182,15 @@ public class URLParameters {
     		new Parameter<String>("gene_id", false,false, null, false, false, 50, DEFAULT_FORMAT, String.class);
     
     /**
+     * A {@code Parameter<Integer>} representing a species id, typically for the gene page.
+     * Category of the parameter: controller parameter.
+     * Corresponds to the URL parameter "species_id".
+     */
+    private static final Parameter<Integer> SPECIES_ID = 
+            new Parameter<Integer>("species_id", false,false, null, false, false, 10,
+                    DEFAULT_FORMAT, Integer.class);
+    
+    /**
      * A {@code Parameter<String>} representing a search, typically for the gene page.
      * Category of the parameter: controller parameter.
      * Corresponds to the URL parameter "search".
@@ -583,7 +592,14 @@ public class URLParameters {
     public Parameter<String> getParamGeneId() {
     	return GENE_ID;
     }
-    
+   
+    /**
+     * @return  A {@code Parameter<Integer>} that contains the species id.
+     */
+     public Parameter<Integer> getParamSpeciesId() {
+         return SPECIES_ID;
+     }
+     
     /**
      * @return  A {@code Parameter<String>} that contains the search text.
      */

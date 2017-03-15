@@ -186,54 +186,92 @@ public class CommandGene extends CommandParent {
      * @param viewFactory       A {@code ViewFactory} that provides the display type to be used.
      * @param serviceFactory    A {@code ServiceFactory} that provides bgee services.
      */
-	public CommandGene(HttpServletResponse response, RequestParameters requestParameters, BgeeProperties prop,
-	        ViewFactory viewFactory, ServiceFactory serviceFactory) {
-		super(response, requestParameters, prop, viewFactory, serviceFactory);
-	}
+    public CommandGene(HttpServletResponse response, RequestParameters requestParameters, BgeeProperties prop,
+            ViewFactory viewFactory, ServiceFactory serviceFactory) {
+        super(response, requestParameters, prop, viewFactory, serviceFactory);
+    }
 
-	@Override
-	public void processRequest() throws Exception {
-		log.entry();
-		GeneDisplay display = viewFactory.getGeneDisplay();
-		String geneId = requestParameters.getGeneId();
-		if (geneId == null) {
-			display.displayGeneHomePage();
-		} else {
-			display.displayGene(this.buildGeneResponse(geneId));
-		}
-		log.exit();
-	}
+    @Override
+    public void processRequest() throws Exception {
+        log.entry();
+        GeneDisplay display = viewFactory.getGeneDisplay();
+        String geneId = requestParameters.getGeneId();
+        Integer speciesId = requestParameters.getSpeciesId();
+        Set<Gene> genes = serviceFactory.getGeneService().loadGenesByEnsemblId(geneId);
 
-	private GeneResponse buildGeneResponse(String geneId) 
-	        throws PageNotFoundException, IllegalStateException {
-	    log.entry(geneId);
+        if (geneId == null) {
+            display.displayGeneHomePage();
+            log.exit(); return;
+        }
 
-        //**************************************
-        // Retrieve Gene
-        //**************************************
-	    Gene gene = this.getGene(geneId);
+        if (genes.size() == 0) {
+            throw log.throwing(new PageNotFoundException("No gene corresponding to " + geneId));
+        }
+
+        if (genes.size() == 1 && speciesId != null) {
+            //we want to avoid the use of 'species_id' parameter in URL if not necessary,
+            //so if an Ensembl ID has an unique hit in Bgee, and there is a 'species_id'
+            //in the URL, then we redirect to a page without 'species_id' in the URL,
+            //for nicer URLs, and to avoid duplicated content.
+            RequestParameters url = new RequestParameters(
+                    this.requestParameters.getUrlParametersInstance(), this.prop, false, "&");
+            url.setPage(RequestParameters.PAGE_GENE);
+            url.setGeneId(genes.iterator().next().getEnsemblGeneId());
+            this.response.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
+            this.response.addHeader("Location", url.getRequestURL());
+            log.exit(); return;
+        }
+
+        Gene selectedGene = null;
+        if (genes.size() == 1) {
+            selectedGene = genes.iterator().next();
+        } else if (genes.size() > 1)  {
+            //if several gene IDs match, then we need to get the speciesId information,
+            //otherwise we need to let the user choose the species he/she wants
+            if (speciesId == null || speciesId <= 0) {
+                //TODO: implement
+                display.displayGeneChoice(genes);
+                log.exit(); return;
+            }
+            Set<Gene> speciesGenes = genes.stream().filter(g -> g.getSpecies().getId().equals(speciesId))
+                    .collect(Collectors.toSet());
+            if (speciesGenes.size() != 1) {
+                throw log.throwing(new PageNotFoundException("No gene corresponding to "
+                        + geneId + " for species " + speciesId));
+            }
+            selectedGene = speciesGenes.iterator().next();
+        } else {
+            throw log.throwing(new AssertionError("Impossible case"));
+        }
+
+        display.displayGene(this.buildGeneResponse(selectedGene));
+        log.exit();
+    }
+
+    private GeneResponse buildGeneResponse(Gene gene) throws IllegalStateException {
+        log.entry(gene);
 
         //**************************************
         // Expression calls, ConditionUtils, 
-	    // sorting, and redundant calls
+        // sorting, and redundant calls
         //**************************************
-	    List<ExpressionCall> exprCalls = this.getExpressions(gene);
-	    
-	    if (exprCalls.isEmpty()) {
-	        log.debug("No calls for gene {}", geneId);
-	         return log.exit(new GeneResponse(gene, exprCalls, new HashSet<>(), true, 
-	                 new LinkedHashMap<>(), new HashMap<>(), new HashMap<>(), null));
-	    }
+        List<ExpressionCall> exprCalls = this.getExpressions(gene);
+        
+        if (exprCalls.isEmpty()) {
+            log.debug("No calls for gene {}", gene.getEnsemblGeneId());
+             return log.exit(new GeneResponse(gene, exprCalls, new HashSet<>(), true, 
+                     new LinkedHashMap<>(), new HashMap<>(), new HashMap<>(), null));
+        }
         
         ConditionUtils conditionUtils = new ConditionUtils(
                 exprCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()), 
                 serviceFactory);
         
         //we need to make sure that the ExpressionCalls are ordered in exactly the same way 
-	    //for the display and for the clustering, otherwise the display will be buggy, 
-	    //notably for calls with equal ranks. And we need to take into account 
-	    //relations between Conditions for filtering them, which would be difficult to achieve
-	    //only by a query to the data source. So, we order them anyway. 
+        //for the display and for the clustering, otherwise the display will be buggy, 
+        //notably for calls with equal ranks. And we need to take into account 
+        //relations between Conditions for filtering them, which would be difficult to achieve
+        //only by a query to the data source. So, we order them anyway. 
         long startFilteringTimeInMs = System.currentTimeMillis();
         Collections.sort(exprCalls, new ExpressionCall.RankComparator(conditionUtils));
         log.debug("Calls sorted in {} ms", System.currentTimeMillis() - startFilteringTimeInMs);
@@ -245,28 +283,28 @@ public class CommandGene extends CommandParent {
         // Grouping of Calls per anat. entity, 
         // Clustering, Building GeneResponse
         //**************************************
-	    return log.exit(this.buildGeneResponse(gene, exprCalls, redundantCalls, true, conditionUtils));
-	}
-	
-	/**
-	 * Continue the building of a {@code GeneResponse}, by taking care of the steps 
-	 * of grouping of {@code ExpressionCall}s per anatomical entity, and of clustering. 
-	 * 
-	 * @param gene                     The requested {@code Gene}.
-	 * @param exprCalls                A {@code List} of {@code ExpressionCall}s sorted using 
-	 *                                 the {@link ExpressionCall.RankComparator}.
-	 * @param redundantCalls           A {@code Set} of {@code ExpressionCall}s that are redundant.
-	 * @param filterRedundantCalls     A {@code boolean} defining whether redundant calls 
-	 *                                 should be filtered for the grouping and clustering steps.
-	 * @param conditionUtils           A {@code ConditionUtils} built from {@code exprCalls}.
-	 * @return                         A built {@code GeneResponse}.
-	 */
-	private GeneResponse buildGeneResponse(Gene gene, List<ExpressionCall> exprCalls, 
-	        Set<ExpressionCall> redundantCalls, boolean filterRedundantCalls, 
-	        ConditionUtils conditionUtils) {
-	    log.entry(exprCalls, redundantCalls, filterRedundantCalls, conditionUtils);
-	    
-	    //*********************
+        return log.exit(this.buildGeneResponse(gene, exprCalls, redundantCalls, true, conditionUtils));
+    }
+    
+    /**
+     * Continue the building of a {@code GeneResponse}, by taking care of the steps 
+     * of grouping of {@code ExpressionCall}s per anatomical entity, and of clustering. 
+     * 
+     * @param gene                     The requested {@code Gene}.
+     * @param exprCalls                A {@code List} of {@code ExpressionCall}s sorted using 
+     *                                 the {@link ExpressionCall.RankComparator}.
+     * @param redundantCalls           A {@code Set} of {@code ExpressionCall}s that are redundant.
+     * @param filterRedundantCalls     A {@code boolean} defining whether redundant calls 
+     *                                 should be filtered for the grouping and clustering steps.
+     * @param conditionUtils           A {@code ConditionUtils} built from {@code exprCalls}.
+     * @return                         A built {@code GeneResponse}.
+     */
+    private GeneResponse buildGeneResponse(Gene gene, List<ExpressionCall> exprCalls, 
+            Set<ExpressionCall> redundantCalls, boolean filterRedundantCalls, 
+            ConditionUtils conditionUtils) {
+        log.entry(exprCalls, redundantCalls, filterRedundantCalls, conditionUtils);
+        
+        //*********************
         // Grouping
         //*********************
         long startFilteringTimeInMs = System.currentTimeMillis();
@@ -322,74 +360,59 @@ public class CommandGene extends CommandParent {
         return log.exit(new GeneResponse(gene, exprCalls, redundantCalls, !filterRedundantCalls, 
                 callsByAnatEntityId, clusteringBestEachAnatEntity, clusteringWithinAnatEntity, 
                 conditionUtils));
-	}
-	
-	/**
-	 * Gets the {@code Gene} instance from its id. 
-	 * 
-	 * @param geneId A {@code String} containing the gene id.
-	 * @return       The {@code Gene} instance.
-	 * @throws PageNotFoundException   If no {@code Gene} could be found corresponding to {@code geneId}.
-	 */
-	private Gene getGene(String geneId) throws PageNotFoundException {
-	    log.entry(geneId);
-		Gene gene = serviceFactory.getGeneService().loadGeneById(geneId);
-		if (gene == null) {
-		    throw log.throwing(new PageNotFoundException("No gene corresponding to " + geneId));
-		}
-		return log.exit(gene);
-	}
-	
-	/**
-	 * Retrieves the sorted list of {@code ExpressionCall} associated to this gene, 
-	 * ordered by global mean rank.
-	 * 
-	 * @param gene The {@code Gene}
-	 * @return     The {@code List} of {@code ExpressionCall} associated to this gene, 
-	 *             ordered by global mean rank.
-	 */
-	private List<ExpressionCall> getExpressions(Gene gene) {
-	    log.entry(gene);
-	    
-		LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
-	                new LinkedHashMap<>();
-		//The ordering is not essential here, because anyway we will need to order calls 
-		//with an equal rank, based on the relations between their conditions, which is difficult 
-		//to make in a query to the data source. 
-	    serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
-	        
-		CallService service = serviceFactory.getCallService();
-		return log.exit(service.loadExpressionCalls(
-		        gene.getSpeciesId(), 
-                new ExpressionCallFilter(new GeneFilter(gene.getEnsemblGeneId()), null, 
-                    ExpressionSummary.EXPRESSED, false), 
+    }
+    
+    /**
+     * Retrieves the sorted list of {@code ExpressionCall} associated to this gene, 
+     * ordered by global mean rank.
+     * 
+     * @param gene The {@code Gene}
+     * @return     The {@code List} of {@code ExpressionCall} associated to this gene, 
+     *             ordered by global mean rank.
+     */
+    private List<ExpressionCall> getExpressions(Gene gene) {
+        log.entry(gene);
+        
+        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
+                    new LinkedHashMap<>();
+        //The ordering is not essential here, because anyway we will need to order calls 
+        //with an equal rank, based on the relations between their conditions, which is difficult 
+        //to make in a query to the data source. 
+        serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
+            
+        CallService service = serviceFactory.getCallService();
+        return log.exit(service.loadExpressionCalls(
+                new ExpressionCallFilter(
+                        new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId()),
+                        ExpressionSummary.EXPRESSED, true
+                ), 
                 EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID, 
                         CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.CALL_DATA, 
                         CallService.Attribute.DATA_QUALITY, CallService.Attribute.RANK), 
                 serviceOrdering)
             .collect(Collectors.toList()));
-	}
-	
-	/**
-	 * Return the {@code Function} corresponding to the clustering method to used, 
-	 * based on the properties {@link BgeeProperties#getGeneScoreClusteringMethod()} 
-	 * and {@link BgeeProperties#getGeneScoreClusteringThreshold()}. The {@code Function} 
-	 * will trigger a call to {@link ExpressionCall#generateMeanRankScoreClustering(
-	 * List, ClusteringMethod, Double)}.
-	 * 
-	 * @return     A {@code Function} accepting a {@code List} of {@code ExpressionCall}s 
-	 *             as input, and returns a {@code Map} corresponding to the clustering as output.
-	 * @throws IllegalStateException   If {@link #props} does not provide properties 
-	 *                                 allowing to parameterize the clustering function.
-	 * @see ExpressionCall#generateMeanRankScoreClustering(List, ClusteringMethod, Double)
-	 */
-	private Function<List<ExpressionCall>, Map<ExpressionCall, Integer>> getClusteringFunction() 
-	        throws IllegalStateException {
-	    log.entry();
-	    if (this.prop.getGeneScoreClusteringMethod() == null) {
-	        throw log.throwing(new IllegalStateException("No clustering method specified."));
-	    }
-	    //Distance threshold
+    }
+    
+    /**
+     * Return the {@code Function} corresponding to the clustering method to used, 
+     * based on the properties {@link BgeeProperties#getGeneScoreClusteringMethod()} 
+     * and {@link BgeeProperties#getGeneScoreClusteringThreshold()}. The {@code Function} 
+     * will trigger a call to {@link ExpressionCall#generateMeanRankScoreClustering(
+     * List, ClusteringMethod, Double)}.
+     * 
+     * @return     A {@code Function} accepting a {@code List} of {@code ExpressionCall}s 
+     *             as input, and returns a {@code Map} corresponding to the clustering as output.
+     * @throws IllegalStateException   If {@link #props} does not provide properties 
+     *                                 allowing to parameterize the clustering function.
+     * @see ExpressionCall#generateMeanRankScoreClustering(List, ClusteringMethod, Double)
+     */
+    private Function<List<ExpressionCall>, Map<ExpressionCall, Integer>> getClusteringFunction() 
+            throws IllegalStateException {
+        log.entry();
+        if (this.prop.getGeneScoreClusteringMethod() == null) {
+            throw log.throwing(new IllegalStateException("No clustering method specified."));
+        }
+        //Distance threshold
         if (this.prop.getGeneScoreClusteringThreshold() == null || 
                 //we don't want negative nor near-zero values
                 this.prop.getGeneScoreClusteringThreshold() < 0.000001) {
@@ -411,5 +434,5 @@ public class CommandGene extends CommandParent {
             throw log.throwing(new IllegalStateException("No custering method corresponding to "
                     + this.prop.getGeneScoreClusteringMethod().trim()));
         }
-	}
+    }
 }

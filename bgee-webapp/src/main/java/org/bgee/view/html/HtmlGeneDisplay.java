@@ -118,7 +118,10 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         RequestParameters url = this.getNewRequestParameters();
         url.setPage(RequestParameters.PAGE_GENE);
         url.setGeneId(gene.getEnsemblGeneId());
-        url.setSpeciesId(gene.getSpecies().getId());
+        //speciesId only necessary if there are several genes matching a same Ensembl ID
+        if (gene.getGeneMappedToSameEnsemblGeneIdCount() > 1) {
+            url.setSpeciesId(gene.getSpecies().getId());
+        }
 
         StringBuilder genePageLink = new StringBuilder();
         genePageLink.append("<a href='").append(url.getRequestURL()).append("'>")

@@ -144,6 +144,6 @@ public class CommonService extends Service {
                     "Species ID of the gene does not match provied Species."));
         }
         return log.exit(new Gene(geneTO.getGeneId(), geneTO.getName(), geneTO.getDescription(),
-                species));
+                species, geneTO.getGeneMappedToGeneIdCount()));
     }
 }

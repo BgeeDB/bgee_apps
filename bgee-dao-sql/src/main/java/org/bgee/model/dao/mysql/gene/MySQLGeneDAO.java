@@ -433,6 +433,8 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
             // } else if
             // (attribute.equals(GeneDAO.Attribute.ANCESTRAL_OMA_TAXON_ID)) {
             // label = "ancestralOMATaxonId";
+        } else if (attribute.equals(GeneDAO.Attribute.GENE_MAPPED_TO_SAME_GENE_ID_COUNT)) {
+            label = "geneMappedToGeneIdCount";
         } else {
             throw log.throwing(new IllegalArgumentException(
                     "The attribute provided (" + attribute.toString() + ") is unknown for " + GeneDAO.class.getName()));
@@ -478,7 +480,8 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         protected GeneTO getNewTO() {
             log.entry();
             String geneId = null, geneName = null, geneDescription = null;
-            Integer id = null, speciesId = null, geneBioTypeId = null, OMAParentNodeId = null;
+            Integer id = null, speciesId = null, geneBioTypeId = null, OMAParentNodeId = null,
+                    geneMappedToGeneIdCount = null;
             Boolean ensemblGene = null;
             // Get results
             for (Entry<Integer, String> column : this.getColumnLabels().entrySet()) {
@@ -507,6 +510,9 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
                     } else if (column.getValue().equals("ensemblGene")) {
                         ensemblGene = this.getCurrentResultSet().getBoolean(column.getKey());
 
+                    } else if (column.getValue().equals("geneMappedToGeneIdCount")) {
+                        geneMappedToGeneIdCount = this.getCurrentResultSet().getInt(column.getKey());
+
                     } else {
                         throw log.throwing(new UnrecognizedColumnException(column.getValue()));
                     }
@@ -516,7 +522,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
             }
             // Set GeneTO
             return log.exit(new GeneTO(id, geneId, geneName, geneDescription, speciesId, geneBioTypeId, OMAParentNodeId,
-                    ensemblGene));
+                    ensemblGene, geneMappedToGeneIdCount));
         }
     }
 }

@@ -32,13 +32,15 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      * <li>{@code GENEBIOTYPEID}: corresponds to {@link GeneTO#getGeneBioTypeId()}.
      * <li>{@code OMAPARENTNODEID}: corresponds to {@link GeneTO#getOMAParentNodeId()}.
      * <li>{@code ENSEMBLGENE}: corresponds to {@link GeneTO#isEnsemblGene()}.
+     * <li>{@code GENE_MAPPED_TO_SAME_GENE_ID_COUNT}: corresponds to {@link GeneTO#getGeneMappedToGeneIdCount()}.
      * </ul>
      * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
      * @see org.bgee.model.dao.api.DAO#setAttributes(Enum[])
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        ID, ENSEMBL_ID, NAME, DESCRIPTION, SPECIES_ID, GENE_BIO_TYPE_ID, OMA_PARENT_NODE_ID, ENSEMBL_GENE;
+        ID, ENSEMBL_ID, NAME, DESCRIPTION, SPECIES_ID, GENE_BIO_TYPE_ID, OMA_PARENT_NODE_ID,
+        ENSEMBL_GENE, GENE_MAPPED_TO_SAME_GENE_ID_COUNT;
 //        ANCESTRAL_OMA_NODE_ID, ANCESTRAL_OMA_TAXON_ID;
     }
     
@@ -186,6 +188,11 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
          * they are not (for instance, we generate our own custom IDs for some species)
          */
         private final Boolean ensemblGene;
+        
+        /**
+         * @see #getGeneMappedToIdCount()
+         */
+        private final Integer geneMappedToGeneIdCount;
 
         /**
          * Constructor providing the ID (for instance, {@code Ensembl:ENSMUSG00000038253}), 
@@ -200,7 +207,7 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
          * @param speciesId An {@code Integer} of the species which this gene belongs to.
          */
         public GeneTO(Integer bgeeGeneId, String geneId, String geneName, Integer speciesId) {
-            this(bgeeGeneId, geneId, geneName, null, speciesId, null, null, null);
+            this(bgeeGeneId, geneId, geneName, null, speciesId, null, null, null, null);
         }
 
         /**
@@ -211,26 +218,30 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
          * <p>
          * All of these parameters are optional, so they can be {@code null} when not used.
          * 
-         * @param bgeeGeneId            An {@code Integer} that is the ID of this gene.
-         * @param geneId                A {@code String} that is the ID of this gene in the Ensembl database.
-         * @param geneName              A {@code String} that is the name of this gene.
-         * @param geneDescription       A {@code String} that is the description of this gene.
-         * @param speciesId             An {@code Integer} that is the species ID which this 
-         *                              gene belongs to.
-         * @param geneBioTypeId         An {@code Integer} that is the BioType of this gene.
-         * @param OMAParentNodeId       An {@code Integer} that is the ID of the OMA Hierarchical 
-         *                              Orthologous Group.
-         * @param ensemblGene           A {code Boolean} defining whether this gene is present 
-         *                              in Ensembl.
+         * @param bgeeGeneId                An {@code Integer} that is the ID of this gene.
+         * @param geneId                    A {@code String} that is the ID of this gene in the Ensembl database.
+         * @param geneName                  A {@code String} that is the name of this gene.
+         * @param geneDescription           A {@code String} that is the description of this gene.
+         * @param speciesId                 An {@code Integer} that is the species ID which this 
+         *                                  gene belongs to.
+         * @param geneBioTypeId             An {@code Integer} that is the BioType of this gene.
+         * @param OMAParentNodeId           An {@code Integer} that is the ID of the OMA Hierarchical 
+         *                                  Orthologous Group.
+         * @param ensemblGene               A {code Boolean} defining whether this gene is present 
+         *                                  in Ensembl.
+         * @param geneMappedToGeneIdCount   An {@code Integer} that is the number of genes
+         *                                  in the Bgee database with the same Ensembl gene ID.
          */
         public GeneTO(Integer bgeeGeneId, String geneId, String geneName, String geneDescription, 
-                Integer speciesId, Integer geneBioTypeId, Integer OMAParentNodeId, Boolean ensemblGene) {
+                Integer speciesId, Integer geneBioTypeId, Integer OMAParentNodeId, Boolean ensemblGene,
+                Integer geneMappedToGeneIdCount) {
             super(bgeeGeneId, geneName, geneDescription);
             this.geneId = geneId;
             this.speciesId = speciesId;
             this.geneBioTypeId = geneBioTypeId;
             this.OMAParentNodeId = OMAParentNodeId;
             this.ensemblGene = ensemblGene;
+            this.geneMappedToGeneIdCount = geneMappedToGeneIdCount;
         }
 
         /**
@@ -263,15 +274,30 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
         public Boolean isEnsemblGene() {
             return this.ensemblGene;
         }
+        /**
+         * @return  An {@code Integer} that is the number of genes in the Bgee database
+         *          with the same Ensembl gene ID. In Bgee, for some species with no genome available,
+         *          we use the genome of a closely-related species, such as chimpanzee genome
+         *          for analyzing bonobo data. For this reason, a same Ensembl gene ID
+         *          can be mapped to several species in Bgee. The value returned here is equal to 1
+         *          when the Ensembl gene ID is uniquely used in the Bgee database.
+         */
+        public Integer getGeneMappedToGeneIdCount() {
+            return this.geneMappedToGeneIdCount;
+        }
 
         @Override
         public String toString() {
-            return "ID: " + this.getId() + " - Ensembl ID: " + this.getGeneId() + 
-                   " - Label: " + this.getName() + 
-                   " - Species ID: " + this.getSpeciesId() + 
-                   " - Gene bio type ID: " + this.getGeneBioTypeId() + 
-                   " - OMA Hierarchical Orthologous Group ID: " + this.getOMAParentNodeId() + 
-                   " - Is Ensembl Gene: " + this.isEnsemblGene();
+            StringBuilder builder = new StringBuilder();
+            builder.append("GeneTO [geneId=").append(geneId)
+                   .append(", speciesId=").append(speciesId)
+                   .append(", geneBioTypeId=").append(geneBioTypeId)
+                   .append(", OMAParentNodeId=").append(OMAParentNodeId)
+                   .append(", ensemblGene=").append(ensemblGene)
+                   .append(", geneMappedToGeneIdCount=").append(geneMappedToGeneIdCount).append("]");
+            return builder.toString();
         }
+
+        
     }
 }

@@ -438,7 +438,8 @@ public class TOComparator {
                 Objects.equals(geneTO1.getSpeciesId(), geneTO2.getSpeciesId()) && 
                 Objects.equals(geneTO1.getGeneBioTypeId(), geneTO2.getGeneBioTypeId()) && 
                 Objects.equals(geneTO1.getOMAParentNodeId(), geneTO2.getOMAParentNodeId()) && 
-                Objects.equals(geneTO1.isEnsemblGene(), geneTO2.isEnsemblGene())) {
+                Objects.equals(geneTO1.isEnsemblGene(), geneTO2.isEnsemblGene()) &&
+                Objects.equals(geneTO1.getGeneMappedToGeneIdCount(), geneTO2.getGeneMappedToGeneIdCount())) {
             return log.exit(true);
         }
         return log.exit(false);

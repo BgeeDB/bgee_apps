@@ -38,6 +38,11 @@ public class Gene {
 	 * The {@code Species} this {@code Gene} belongs to.
 	 */
 	private final Species species;
+	
+	/**
+	 * @see #getGeneMappedToSameEnsemblGeneIdCount()
+	 */
+	private final int geneMappedToSameEnsemblGeneIdCount;
     
     /**
      * Constructor providing the {@code ensemblGeneId} and the {@code Species} of this {@code Gene}.
@@ -51,7 +56,7 @@ public class Gene {
      *                                      or {@code Species} is {@code null}.
      */
     public Gene(String ensemblGeneId, Species species) throws IllegalArgumentException {
-        this(ensemblGeneId, null, null, species);
+        this(ensemblGeneId, null, null, species, 1);
     }
     /**
      * Constructor providing the {@code ensemblGeneId}, the name, the description,
@@ -60,14 +65,22 @@ public class Gene {
      * These {@code ensemblGeneId} and {@code species} cannot be {@code null}, or blank,
      * otherwise an {@code IllegalArgumentException} will be thrown.
      * 
-     * @param ensemblGeneId A {@code String} representing the ID of this object.
-     * @param name          A {@code String} representing the name of this gene.
-     * @param description   A {@code String} representing the description of this gene.
-     * @param species       A {@code Species} representing the species this gene belongs to.
+     * @param ensemblGeneId                         A {@code String} representing the Ensembl ID
+     *                                              of this {@code Gene}.
+     * @param name                                  A {@code String} representing the name of this gene.
+     * @param description                           A {@code String} representing the description
+     *                                              of this gene.
+     * @param species                               A {@code Species} representing the species
+     *                                              this gene belongs to.
+     * @param geneMappedToSameEnsemblGeneIdCount    An {@code Integer} that is the number of genes
+     *                                              in the Bgee database with the same Ensembl gene ID.
+     *                                              See {@link #getGeneMappedToSameEnsemblGeneIdCount()}
+     *                                              for more details.
      * @throws IllegalArgumentException     if {@code ensemblGeneId} is blank,
      *                                      or {@code Species} is {@code null}.
      */
-    public Gene(String ensemblGeneId, String name, String description, Species species)
+    public Gene(String ensemblGeneId, String name, String description, Species species,
+            int geneMappedToSameEnsemblGeneIdCount)
         throws IllegalArgumentException {
         if (StringUtils.isBlank(ensemblGeneId)) {
             throw log.throwing(new IllegalArgumentException("The Ensembl gene ID must be provided."));
@@ -75,10 +88,15 @@ public class Gene {
         if (species == null) {
             throw log.throwing(new IllegalArgumentException("The Species must be provided."));
         }
+        if (geneMappedToSameEnsemblGeneIdCount < 1) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Each gene has at least one match with same Ensembl ID: itself."));
+        }
         this.ensemblGeneId = ensemblGeneId;
         this.name = name;
         this.description = description;
         this.species = species;
+        this.geneMappedToSameEnsemblGeneIdCount = geneMappedToSameEnsemblGeneIdCount;
     }
     
 	/**
@@ -105,18 +123,30 @@ public class Gene {
 	public Species getSpecies() {
 		return this.species;
 	}
-	
-	@Override
+	/**
+	 * @return  An {@code Integer} that is the number of genes in the Bgee database
+     *          with the same Ensembl gene ID. In Bgee, for some species with no genome available,
+     *          we use the genome of a closely-related species, such as chimpanzee genome
+     *          for analyzing bonobo data. For this reason, a same Ensembl gene ID
+     *          can be mapped to several species in Bgee. The value returned here is equal to 1
+     *          when the Ensembl gene ID is uniquely used in the Bgee database.
+	 */
+	public int getGeneMappedToSameEnsemblGeneIdCount() {
+	    return this.geneMappedToSameEnsemblGeneIdCount;
+	}
+
+    @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((ensemblGeneId == null) ? 0 : ensemblGeneId.hashCode());
-        result = prime * result + ((name == null) ? 0 : name.hashCode());
         result = prime * result + ((description == null) ? 0 : description.hashCode());
+        result = prime * result + ((ensemblGeneId == null) ? 0 : ensemblGeneId.hashCode());
+        result = prime * result + geneMappedToSameEnsemblGeneIdCount;
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
         result = prime * result + ((species == null) ? 0 : species.hashCode());
         return result;
     }
-	@Override
+    @Override
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;
@@ -142,6 +172,9 @@ public class Gene {
         } else if (!ensemblGeneId.equals(other.ensemblGeneId)) {
             return false;
         }
+        if (geneMappedToSameEnsemblGeneIdCount != other.geneMappedToSameEnsemblGeneIdCount) {
+            return false;
+        }
         if (name == null) {
             if (other.name != null) {
                 return false;
@@ -165,9 +198,8 @@ public class Gene {
         builder.append("Gene [ensemblGeneId=").append(ensemblGeneId)
                .append(", name=").append(name)
                .append(", description=").append(description)
-               .append(", species=").append(species).append("]");
+               .append(", species=").append(species)
+               .append(", geneMappedToSameEnsemblGeneIdCount=").append(geneMappedToSameEnsemblGeneIdCount).append("]");
         return builder.toString();
     }
-
-	
 }

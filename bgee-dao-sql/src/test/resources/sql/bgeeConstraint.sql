@@ -181,7 +181,7 @@ add unique (geneBioTypeName);
 
 /*!40000 ALTER TABLE `gene` DISABLE KEYS */;
 alter table gene
-modify bgeeGeneId int unsigned not null auto_increment primary key,
+modify bgeeGeneId MEDIUMINT unsigned not null auto_increment primary key,
 add unique(geneId, speciesId);
 /*!40000 ALTER TABLE `gene` ENABLE KEYS */;
 
@@ -430,12 +430,12 @@ add unique(bgeeGeneId, conditionId, comparisonFactor);
 
 /*!40000 ALTER TABLE `differentialExpressionAnalysis` DISABLE KEYS */;
 alter table differentialExpressionAnalysis
-modify deaId int unsigned not null auto_increment primary key;
+modify deaId SMALLINT unsigned not null auto_increment primary key;
 /*!40000 ALTER TABLE `differentialExpressionAnalysis` ENABLE KEYS */;
 
 /*!40000 ALTER TABLE `deaSampleGroup` DISABLE KEYS */;
 alter table deaSampleGroup
-modify deaSampleGroupId int unsigned not null auto_increment primary key;
+modify deaSampleGroupId MEDIUMINT unsigned not null auto_increment primary key;
 /*!40000 ALTER TABLE `deaSampleGroup` ENABLE KEYS */;
 
 -- ****************************************************
@@ -485,7 +485,7 @@ add primary key (chipTypeId);
 
 /*!40000 ALTER TABLE `affymetrixChip` DISABLE KEYS */;
 alter table affymetrixChip
-modify bgeeAffymetrixChipId int unsigned not null auto_increment primary key,
+modify bgeeAffymetrixChipId SMALLINT unsigned not null auto_increment primary key,
 add unique (affymetrixChipId, microarrayExperimentId);
 /*!40000 ALTER TABLE `affymetrixChip` ENABLE KEYS */;
 

@@ -467,7 +467,8 @@ create table geneBioType (
 ) engine = innodb;
 
 create table gene (
-    bgeeGeneId int unsigned not null COMMENT 'Numeric internal gene ID used for improving performances',
+-- warning, maybe this bgeeGeneId will need to be changed to an 'int' when we reach around 200 species
+    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Numeric internal gene ID used for improving performances',
     geneId varchar(20) not null COMMENT 'Real gene id',
     geneName varchar(255) not null default '' COMMENT 'Gene name',
     geneDescription TEXT COMMENT 'Gene description',
@@ -483,25 +484,25 @@ create table gene (
 ) engine = innodb;
 
 create table geneToOma ( 
-    bgeeGeneId int unsigned not null,
+    bgeeGeneId MEDIUMINT unsigned not null,
     OMANodeId int unsigned not null COMMENT 'OMA Hierarchical Orthologous node id',
     taxonId mediumint unsigned not null
 ) engine = innodb;
 
 create table geneNameSynonym (
-    bgeeGeneId int unsigned not null COMMENT 'Internal gene ID',
+    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
     geneNameSynonym varchar(255) not null COMMENT 'Gene name synonym'
 ) engine = innodb;
 
 create table geneXRef (
-    bgeeGeneId int unsigned not null COMMENT 'Internal gene ID',
+    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
     XRefId varchar(20) not null COMMENT 'Cross-reference id',
     XRefName varchar(255) not null default '' COMMENT 'Cross-reference name',
     dataSourceId smallInt unsigned not null COMMENT 'Data Source id the cross-reference comes from'
 ) engine = innodb;
 
 create table geneToTerm (
-    bgeeGeneId int unsigned not null COMMENT 'Internal gene ID',
+    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
     term varchar(255) not null COMMENT '???Gene alias name'
 ) engine = innodb;
 
@@ -511,14 +512,14 @@ create table geneToTerm (
 -- for the application inserting data in this table to retrieve the mapping between
 -- ECO IDs and Evidence Codes from the Evidence Ontology.
 create table geneToGeneOntologyTerm (
-    bgeeGeneId int unsigned not null COMMENT 'Internal gene ID',
+    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
     goId char(10) not null COMMENT 'Gene Ontology id',
     goEvidenceCode varchar(20) not null default '' COMMENT 'Gene Ontology Evidence Code'
 ) engine = innodb;
 
 create table transcript (
     bgeeTranscriptId int unsigned not null COMMENT 'Numeric internal transcript ID used for improving performances',
-    bgeeGeneId int unsigned not null COMMENT 'Internal gene ID this transcript is mapped to',
+    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID this transcript is mapped to',
     transcriptId varchar(40) not null COMMENT 'Real transcript ID',
     transcriptName varchar(255) not null default '',
     transcriptDescription TEXT,
@@ -675,7 +676,7 @@ create table expressedSequenceTag (
 -- ESTs have two IDs in Unigene
     estId2 varchar(50) not null default '',
     estLibraryId varchar(50) not null,
-    bgeeGeneId int unsigned not null COMMENT 'Internal gene ID',
+    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
     UniGeneClusterId varchar(70) not null default '',
     expressionId int unsigned,
 -- Warning, qualities must be ordered, the index in the enum is used in many queries
@@ -729,13 +730,14 @@ create table chipType (
 -- create table affymetrixProbesetMapping(
 -- chipTypeId varchar(70) not null,
 -- affymetrixProbesetId varchar(70) not null,
--- bgeeGeneId int unsigned not null COMMENT 'Internal gene ID'
+-- bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID'
 -- ) engine = innodb;
 
 create table affymetrixChip (
 -- affymetrixChipId are not unique (couple affymetrixChipId - microarrayExperimentId is)
 -- then we need an internal ID to link to affymetrixProbeset
-    bgeeAffymetrixChipId int unsigned not null,
+-- warning, SMALLINT UNSIGNED only allows for 65535 chips to be inserted (we have 12,996 as of Bgee 14)
+    bgeeAffymetrixChipId SMALLINT unsigned not null,
     affymetrixChipId varchar(255) not null,
     microarrayExperimentId varchar(70) not null,
 -- define only if CEL file available, normalization gcRMA, detection schuster
@@ -772,8 +774,8 @@ create table affymetrixChip (
 
 create table affymetrixProbeset (
     affymetrixProbesetId varchar(70) not null,
-    bgeeAffymetrixChipId int unsigned not null,
-    bgeeGeneId int unsigned not null COMMENT 'Internal gene ID',
+    bgeeAffymetrixChipId SMALLINT unsigned not null,
+    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
     normalizedSignalIntensity decimal(13,5) unsigned not null default 0,
 -- Warning, flags must be ordered, the index in the enum is used in many queries
     detectionFlag enum('undefined', 'absent', 'marginal', 'present') not null default 'undefined',
@@ -862,7 +864,7 @@ create table inSituSpot (
     -- for control purpose only (used in other databases)
     inSituExpressionPatternId varchar(70) not null,
     conditionId mediumint unsigned not null,
-    bgeeGeneId int unsigned not null COMMENT 'Internal gene ID',
+    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
 -- Warning, tags must be ordered, the index in the enum is used in many queries
     detectionFlag enum('undefined', 'absent', 'present') default 'undefined',
     expressionId int unsigned,
@@ -986,7 +988,7 @@ create table rnaSeqLibraryDiscarded (
 -- and link them to an expressionId
 create table rnaSeqResult (
     rnaSeqLibraryId varchar(70) not null,
-    bgeeGeneId int unsigned not null COMMENT 'Internal gene ID',
+    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
     fpkm decimal(16, 6) not null,
     tpm decimal(16, 6) not null,
 -- rank is not "not null" because we update this information afterwards
@@ -1058,7 +1060,7 @@ comment = 'This table stores information about expression calls produced from RN
 -- several differential expression analyses can be performed
 -- on the same experiment
 create table differentialExpressionAnalysis (
-    deaId int unsigned not null,
+    deaId SMALLINT unsigned not null,
     detectionType enum('Limma - MCM'),
 -- defines whether different organs at a same (broad) developmental stage
 -- were compared ('anatomy'), or a same organ at different developmental stages
@@ -1094,8 +1096,8 @@ create table differentialExpressionAnalysis (
 -- the fields microarrayExperimentId and rnaSeqExperimentId, to determine whether
 -- the DEA was using Affymetrix, or RNA-Seq.
 create table deaSampleGroup (
-    deaSampleGroupId int unsigned not null,
-    deaId int unsigned not null,
+    deaSampleGroupId MEDIUMINT unsigned not null,
+    deaId SMALLINT unsigned not null,
     conditionId mediumint unsigned not null
 ) engine = innodb;
 
@@ -1104,8 +1106,8 @@ create table deaSampleGroup (
 -- with different comparisonFactors. But all the affymetrixChips inside a deaSampleGroup
 -- are unique
 create table deaSampleGroupToAffymetrixChip (
-    deaSampleGroupId int unsigned not null,
-    bgeeAffymetrixChipId int unsigned not null
+    deaSampleGroupId MEDIUMINT unsigned not null,
+    bgeeAffymetrixChipId SMALLINT unsigned not null
 ) engine = innodb;
 
 -- An association table to link a rnaSeqLibrary to the deaSampleGroup it belongs to.
@@ -1113,7 +1115,7 @@ create table deaSampleGroupToAffymetrixChip (
 -- with different comparisonFactors. But all the rnaSeqLibraries inside a deaSampleGroup
 -- are unique
 create table deaSampleGroupToRnaSeqLibrary (
-    deaSampleGroupId int unsigned not null,
+    deaSampleGroupId MEDIUMINT unsigned not null,
     rnaSeqLibraryId varchar(70) not null
 ) engine = innodb;
 
@@ -1126,8 +1128,8 @@ create table deaAffymetrixProbesetSummary (
 -- (all of them have the same of course). These probesets belong to the affymetrix chips, retrieved using the field `deaChipsGroupId`
 -- and the table `deaChipsGroupToAffymetrixChip`
     deaAffymetrixProbesetSummaryId varchar(70) not null,
-    deaSampleGroupId int unsigned not null,
-    bgeeGeneId int unsigned not null COMMENT 'Internal gene ID',
+    deaSampleGroupId MEDIUMINT unsigned not null,
+    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
     foldChange decimal(7,2) not null default 0,
     differentialExpressionId int unsigned,
 -- Warning, qualities must be ordered, the index in the enum is used in many queries
@@ -1146,8 +1148,8 @@ create table deaAffymetrixProbesetSummary (
 -- a line in this table is a summary of a set of RNA-Seq results, used for the
 -- differential expression analysis, belonging to different runs, corresponding to one group of runs
 create table deaRNASeqSummary (
-    geneSummaryId int unsigned not null,
-    deaSampleGroupId int unsigned not null,
+    geneSummaryId MEDIUMINT unsigned not null,
+    deaSampleGroupId MEDIUMINT unsigned not null,
     foldChange decimal(7,2) not null default 0,
     differentialExpressionId int unsigned,
 -- Warning, qualities must be ordered, the index in the enum is used in many queries
@@ -1171,7 +1173,7 @@ create table deaRNASeqSummary (
 -- for all data types with no propagation nor experiment expression summary.
 create table expression (
     expressionId int unsigned not null COMMENT 'Internal expression ID, not stable between releases.',
-    bgeeGeneId int unsigned not null COMMENT 'Internal gene ID, not stable between releases.',
+    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID, not stable between releases.',
     conditionId mediumint unsigned not null COMMENT 'ID of condition in the related condition table ("cond"), not stable between releases.',
 
 -- ** RANKS **
@@ -1231,7 +1233,7 @@ comment = 'This table is a summary of expression calls for a given gene-conditio
 -- for all data types, with all data propagated and reconciled, with experiment expression summaries computed.
 create table globalExpression (
     globalExpressionId int unsigned not null COMMENT 'Internal expression ID, not stable between releases.',
-    bgeeGeneId int unsigned not null COMMENT 'Internal gene ID, not stable between releases.',
+    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID, not stable between releases.',
     conditionId mediumint unsigned not null COMMENT 'ID of condition in the related condition table ("cond"), not stable between releases.',
 
 -- ** EXPRESSION SUMMARIES **
@@ -1352,7 +1354,7 @@ comment = 'this table allows to link the propagated global calls in "globalExpre
 -- See main "expression" table for comments.
 create table anatEntityExpression (
     anatEntityExpressionId int unsigned not null,
-    bgeeGeneId int unsigned not null COMMENT 'Internal gene ID',
+    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
     anatEntityConditionId mediumint unsigned not null,
 
     rnaSeqMeanRank decimal(9, 2) unsigned,
@@ -1374,7 +1376,7 @@ create table anatEntityExpression (
 -- for all data types, with all data propagated and reconciled, with experiment expression summaries computed.
 create table globalAnatEntityExpression (
     globalAnatEntityExpressionId int unsigned not null COMMENT 'Internal expression ID, not stable between releases.',
-    bgeeGeneId int unsigned not null COMMENT 'Internal gene ID, not stable between releases.',
+    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID, not stable between releases.',
     anatEntityConditionId mediumint unsigned not null COMMENT 'ID of condition in the related condition table ("anatEntityCond"), not stable between releases.',
 
 -- ** EXPRESSION SUMMARIES **
@@ -1456,7 +1458,7 @@ comment = 'See globalExpressionToExpression table for comments. This table allow
 -- See main "expression" table for comments.
 create table anatEntityStageExpression (
     anatEntityStageExpressionId int unsigned not null,
-    bgeeGeneId int unsigned not null COMMENT 'Internal gene ID',
+    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
     anatEntityStageConditionId mediumint unsigned not null,
 
     rnaSeqMeanRank decimal(9, 2) unsigned,
@@ -1478,7 +1480,7 @@ create table anatEntityStageExpression (
 -- for all data types, with all data propagated and reconciled, with experiment expression summaries computed.
 create table globalAnatEntityStageExpression (
     globalAnatEntityStageExpressionId int unsigned not null COMMENT 'Internal expression ID, not stable between releases.',
-    bgeeGeneId int unsigned not null COMMENT 'Internal gene ID, not stable between releases.',
+    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID, not stable between releases.',
     anatEntityStageConditionId mediumint unsigned not null COMMENT 'ID of condition in the related condition table ("anatEntityCond"), not stable between releases.',
 
 -- ** EXPRESSION SUMMARIES **
@@ -1560,7 +1562,7 @@ comment = 'See globalExpressionToExpression table for comments. This table allow
 -- See main "expression" table for comments.
 create table anatEntitySexExpression (
     anatEntitySexExpressionId int unsigned not null,
-    bgeeGeneId int unsigned not null COMMENT 'Internal gene ID',
+    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
     anatEntitySexConditionId mediumint unsigned not null,
 
     rnaSeqMeanRank decimal(9, 2) unsigned,
@@ -1582,7 +1584,7 @@ create table anatEntitySexExpression (
 -- for all data types, with all data propagated and reconciled, with experiment expression summaries computed.
 create table globalAnatEntitySexExpression (
     globalAnatEntitySexExpressionId int unsigned not null COMMENT 'Internal expression ID, not stable between releases.',
-    bgeeGeneId int unsigned not null COMMENT 'Internal gene ID, not stable between releases.',
+    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID, not stable between releases.',
     anatEntitySexConditionId mediumint unsigned not null COMMENT 'ID of condition in the related condition table ("anatEntityCond"), not stable between releases.',
 
 -- ** EXPRESSION SUMMARIES **
@@ -1664,7 +1666,7 @@ comment = 'See globalExpressionToExpression table for comments. This table allow
 -- See main "expression" table for comments.
 create table anatEntityStrainExpression (
     anatEntityStrainExpressionId int unsigned not null,
-    bgeeGeneId int unsigned not null COMMENT 'Internal gene ID',
+    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
     anatEntityStrainConditionId mediumint unsigned not null,
 
     rnaSeqMeanRank decimal(9, 2) unsigned,
@@ -1686,7 +1688,7 @@ create table anatEntityStrainExpression (
 -- for all data types, with all data propagated and reconciled, with experiment expression summaries computed.
 create table globalAnatEntityStrainExpression (
     globalAnatEntityStrainExpressionId int unsigned not null COMMENT 'Internal expression ID, not stable between releases.',
-    bgeeGeneId int unsigned not null COMMENT 'Internal gene ID, not stable between releases.',
+    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID, not stable between releases.',
     anatEntityStrainConditionId mediumint unsigned not null COMMENT 'ID of condition in the related condition table ("anatEntityCond"), not stable between releases.',
 
 -- ** EXPRESSION SUMMARIES **
@@ -1768,7 +1770,7 @@ comment = 'See globalExpressionToExpression table for comments. This table allow
 -- See main "expression" table for comments.
 create table anatEntityStageSexExpression (
     anatEntityStageSexExpressionId int unsigned not null,
-    bgeeGeneId int unsigned not null COMMENT 'Internal gene ID',
+    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
     anatEntityStageSexConditionId mediumint unsigned not null,
 
     rnaSeqMeanRank decimal(9, 2) unsigned,
@@ -1790,7 +1792,7 @@ create table anatEntityStageSexExpression (
 -- for all data types, with all data propagated and reconciled, with experiment expression summaries computed.
 create table globalAnatEntityStageSexExpression (
     globalAnatEntityStageSexExpressionId int unsigned not null COMMENT 'Internal expression ID, not stable between releases.',
-    bgeeGeneId int unsigned not null COMMENT 'Internal gene ID, not stable between releases.',
+    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID, not stable between releases.',
     anatEntityStageSexConditionId mediumint unsigned not null COMMENT 'ID of condition in the related condition table ("anatEntityCond"), not stable between releases.',
 
 -- ** EXPRESSION SUMMARIES **
@@ -1872,7 +1874,7 @@ comment = 'See globalExpressionToExpression table for comments. This table allow
 -- See main "expression" table for comments.
 create table anatEntityStageStrainExpression (
     anatEntityStageStrainExpressionId int unsigned not null,
-    bgeeGeneId int unsigned not null COMMENT 'Internal gene ID',
+    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
     anatEntityStageStrainConditionId mediumint unsigned not null,
 
     rnaSeqMeanRank decimal(9, 2) unsigned,
@@ -1894,7 +1896,7 @@ create table anatEntityStageStrainExpression (
 -- for all data types, with all data propagated and reconciled, with experiment expression summaries computed.
 create table globalAnatEntityStageStrainExpression (
     globalAnatEntityStageStrainExpressionId int unsigned not null COMMENT 'Internal expression ID, not stable between releases.',
-    bgeeGeneId int unsigned not null COMMENT 'Internal gene ID, not stable between releases.',
+    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID, not stable between releases.',
     anatEntityStageStrainConditionId mediumint unsigned not null COMMENT 'ID of condition in the related condition table ("anatEntityCond"), not stable between releases.',
 
 -- ** EXPRESSION SUMMARIES **
@@ -1976,7 +1978,7 @@ comment = 'See globalExpressionToExpression table for comments. This table allow
 -- See main "expression" table for comments.
 create table anatEntitySexStrainExpression (
     anatEntitySexStrainExpressionId int unsigned not null,
-    bgeeGeneId int unsigned not null COMMENT 'Internal gene ID',
+    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
     anatEntitySexStrainConditionId mediumint unsigned not null,
 
     rnaSeqMeanRank decimal(9, 2) unsigned,
@@ -1998,7 +2000,7 @@ create table anatEntitySexStrainExpression (
 -- for all data types, with all data propagated and reconciled, with experiment expression summaries computed.
 create table globalAnatEntitySexStrainExpression (
     globalAnatEntitySexStrainExpressionId int unsigned not null COMMENT 'Internal expression ID, not stable between releases.',
-    bgeeGeneId int unsigned not null COMMENT 'Internal gene ID, not stable between releases.',
+    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID, not stable between releases.',
     anatEntitySexStrainConditionId mediumint unsigned not null COMMENT 'ID of condition in the related condition table ("anatEntityCond"), not stable between releases.',
 
 -- ** EXPRESSION SUMMARIES **
@@ -2080,7 +2082,7 @@ comment = 'See globalExpressionToExpression table for comments. This table allow
 
 create table differentialExpression (
     differentialExpressionId int unsigned not null,
-    bgeeGeneId int unsigned not null COMMENT 'Internal gene ID',
+    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
     conditionId mediumint unsigned not null,
 -- defines whether different organs at a same (broad) developmental stage
 -- were compared ('anatomy'), or a same organ at different developmental stages
@@ -2121,7 +2123,7 @@ create table differentialExpression (
 -- this version of the diff expression table is not considered as of Bgee 13
 /*create table differentialExpression (
     differentialExpressionId int unsigned not null,
-    bgeeGeneId int unsigned not null COMMENT 'Internal gene ID',
+    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
     conditionId mediumint unsigned not null,
 -- defines whether different organs at a same (broad) developmental stage
 -- were compared ('anatomy'), or a same organ at different developmental stages

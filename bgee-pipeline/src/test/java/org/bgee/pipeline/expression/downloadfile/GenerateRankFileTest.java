@@ -37,7 +37,7 @@ import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.CallService.OrderingAttribute;
 import org.bgee.model.expressiondata.Condition;
-import org.bgee.model.expressiondata.ConditionUtils;
+import org.bgee.model.expressiondata.ConditionGraph;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
@@ -134,15 +134,15 @@ public class GenerateRankFileTest extends TestAncestor {
 //        
 //        
 //        //*** Mock services and utils ***
-//        ConditionUtils condUtils = mock(ConditionUtils.class);
-//        when(condUtils.getAnatEntity(cond1)).thenReturn(anatEntity1);
-//        when(condUtils.getAnatEntity(anatEntity1.getId())).thenReturn(anatEntity1);
-//        when(condUtils.getAnatEntity(cond2)).thenReturn(anatEntity2);
-//        when(condUtils.getAnatEntity(anatEntity2.getId())).thenReturn(anatEntity2);
-//        when(condUtils.getDevStage(cond1)).thenReturn(devStage1);
-//        when(condUtils.getDevStage(devStage1.getId())).thenReturn(devStage1);
-//        when(condUtils.getDevStage(cond2)).thenReturn(devStage2);
-//        when(condUtils.getDevStage(devStage2.getId())).thenReturn(devStage2);
+//        ConditionGraph condGraph = mock(ConditionGraph.class);
+//        when(condGraph.getAnatEntity(cond1)).thenReturn(anatEntity1);
+//        when(condGraph.getAnatEntity(anatEntity1.getId())).thenReturn(anatEntity1);
+//        when(condGraph.getAnatEntity(cond2)).thenReturn(anatEntity2);
+//        when(condGraph.getAnatEntity(anatEntity2.getId())).thenReturn(anatEntity2);
+//        when(condGraph.getDevStage(cond1)).thenReturn(devStage1);
+//        when(condGraph.getDevStage(devStage1.getId())).thenReturn(devStage1);
+//        when(condGraph.getDevStage(cond2)).thenReturn(devStage2);
+//        when(condGraph.getDevStage(devStage2.getId())).thenReturn(devStage2);
 //        
 //        ExpressionCall.RankComparator comparator = mock(ExpressionCall.RankComparator.class);
 //        when(comparator.compare(c1, c1)).thenReturn(0);
@@ -156,7 +156,7 @@ public class GenerateRankFileTest extends TestAncestor {
 //        when(comparator.compare(c2, c3)).thenReturn(-1);
 //        when(comparator.compare(c3, c2)).thenReturn(1);
 //        
-//        BiFunction<List<ExpressionCall>, ConditionUtils, Set<ExpressionCall>> redundantCallsFuncSupplier = 
+//        BiFunction<List<ExpressionCall>, ConditionGraph, Set<ExpressionCall>> redundantCallsFuncSupplier = 
 //                (list, utils) -> list.contains(c3)? new HashSet<>(Arrays.asList(c3)): new HashSet<>();
 //
 //        OWLGraphWrapper wrapper = mock(OWLGraphWrapper.class);
@@ -245,7 +245,7 @@ public class GenerateRankFileTest extends TestAncestor {
 //        
 //        //*** Launch test ***
 //        GenerateRankFile generate = new GenerateRankFile(() -> serviceFactory, uberon, 
-//                ((conds, anatOnt, devOnt) -> condUtils), 
+//                ((conds, anatOnt, devOnt) -> condGraph), 
 //                (cu -> comparator), redundantCallsFuncSupplier);
 //        File folder1 = testFolder.newFolder("f1");
 //        File folder2 = testFolder.newFolder("f2");

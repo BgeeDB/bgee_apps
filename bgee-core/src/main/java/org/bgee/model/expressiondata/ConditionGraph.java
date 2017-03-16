@@ -30,9 +30,9 @@ import org.bgee.model.ontology.RelationType;
 //TODO: Actually, maybe we should have an UtilsFactory, as we have a ServiceFactory. 
 //Could return also the ExpressionCallUtils, the ExpressionCall.RankComparator... 
 //that would be much cleaner for unit tests. 
-public class ConditionUtils implements Comparator<Condition> {
+public class ConditionGraph implements Comparator<Condition> {
 
-    private static final Logger log = LogManager.getLogger(ConditionUtils.class.getName());
+    private static final Logger log = LogManager.getLogger(ConditionGraph.class.getName());
     
     /**
      * A {@code Map} associating IDs of {@code Condition}s as key to the corresponding {@code Condition} as value.
@@ -64,13 +64,13 @@ public class ConditionUtils implements Comparator<Condition> {
      * The constructor retrieves ontologies.
      *   
      * @param conditions        A {@code Collection} of {@code Condition}s that will be managed 
-     *                          by this {@code ConditionUtils}.
+     *                          by this {@code ConditionGraph}.
      * @param serviceFactory    A {@code ServiceFactory} to acquire {@code Service}s from.
      * @throws IllegalArgumentException If any of the arguments is {@code null} or empty, 
      *                                  or if the anat. entity or dev. stage of a {@code Condition} 
      *                                  does not exist in the requested species.
      */
-    public ConditionUtils(Collection<Condition> conditions, ServiceFactory serviceFactory) {
+    public ConditionGraph(Collection<Condition> conditions, ServiceFactory serviceFactory) {
         this(conditions, false, false, serviceFactory);
     }
     
@@ -81,7 +81,7 @@ public class ConditionUtils implements Comparator<Condition> {
      * The constructor retrieves ontologies.  
      * 
      * @param conditions            A {@code Collection} of {@code Condition}s that will be managed 
-     *                              by this {@code ConditionUtils}.
+     *                              by this {@code ConditionGraph}.
      * @param inferAncestralConds   A {@code boolean} defining whether the ancestral conditions
      *                              should be inferred.
      * @param inferDescendantConds  A {@code boolean} defining whether the descendant conditions
@@ -89,7 +89,7 @@ public class ConditionUtils implements Comparator<Condition> {
      * @throws IllegalArgumentException If any of the arguments is {@code null} or empty, 
      *                                  or if {@code Condition}s does not exist in the same species.
      */
-    public ConditionUtils(Collection<Condition> conditions, boolean inferAncestralConds,
+    public ConditionGraph(Collection<Condition> conditions, boolean inferAncestralConds,
             boolean inferDescendantConds, ServiceFactory serviceFactory) throws IllegalArgumentException {
         this(conditions, inferAncestralConds, inferDescendantConds, serviceFactory, null, null);
     }
@@ -101,7 +101,7 @@ public class ConditionUtils implements Comparator<Condition> {
      * The constructor retrieves ontologies if {@code null}.  
      * 
      * @param conditions            A {@code Collection} of {@code Condition}s that will be managed 
-     *                              by this {@code ConditionUtils}.
+     *                              by this {@code ConditionGraph}.
      * @param anatEntityOnt         An {@code Ontology} of {@code AnatEntity}s that is 
      *                              the ontology of anatomical entities of a single species.
      *                              If {@code null}, the constructor retrieves the ontology.  
@@ -111,7 +111,7 @@ public class ConditionUtils implements Comparator<Condition> {
      * @throws IllegalArgumentException If any of the arguments is {@code null} or empty, 
      *                                  or if {@code Condition}s does not exist in the same species.
      */
-    public ConditionUtils(Collection<Condition> conditions, Ontology<AnatEntity, String> anatEntityOnt,
+    public ConditionGraph(Collection<Condition> conditions, Ontology<AnatEntity, String> anatEntityOnt,
             Ontology<DevStage, String> devStageOnt) throws IllegalArgumentException {
         this(conditions, false, false, anatEntityOnt, devStageOnt);
     }
@@ -123,7 +123,7 @@ public class ConditionUtils implements Comparator<Condition> {
      * The constructor retrieves ontologies if {@code null}.  
      * 
      * @param conditions            A {@code Collection} of {@code Condition}s that will be managed 
-     *                              by this {@code ConditionUtils}.
+     *                              by this {@code ConditionGraph}.
      * @param inferAncestralConds   A {@code boolean} defining whether the ancestral conditions
      *                              should be inferred.
      * @param anatEntityOnt         An {@code Ontology} of {@code AnatEntity}s that is 
@@ -135,7 +135,7 @@ public class ConditionUtils implements Comparator<Condition> {
      * @throws IllegalArgumentException If any of the arguments is {@code null} or empty, 
      *                                  or if {@code Condition}s does not exist in the same species.
      */
-    public ConditionUtils(Collection<Condition> conditions, boolean inferAncestralConds,
+    public ConditionGraph(Collection<Condition> conditions, boolean inferAncestralConds,
             boolean inferDescendantConds, Ontology<AnatEntity, String> anatEntityOnt,
             Ontology<DevStage, String> devStageOnt) throws IllegalArgumentException {
         this(conditions, inferAncestralConds, inferDescendantConds, null, anatEntityOnt, devStageOnt);
@@ -147,7 +147,7 @@ public class ConditionUtils implements Comparator<Condition> {
      * The constructor retrieves ontologies if {@code null}.  
      * 
      * @param conditions            A {@code Collection} of {@code Condition}s that will be managed 
-     *                              by this {@code ConditionUtils}.
+     *                              by this {@code ConditionGraph}.
      * @param inferAncestralConds   A {@code boolean} defining whether the ancestral conditions
      *                              should be inferred.
      * @param serviceFactory        A {@code ServiceFactory} to acquire {@code Service}s from.
@@ -164,7 +164,7 @@ public class ConditionUtils implements Comparator<Condition> {
     //I guess multi-species would need a separate class, e.g., MultiSpeciesConditionUtils.
     //TODO: unit test for ancestral condition inferences
     //TODO: refactor this constructor, methods getAncestorConditions and getDescendantConditions
-    private ConditionUtils(Collection<Condition> conditions, 
+    private ConditionGraph(Collection<Condition> conditions, 
             boolean inferAncestralConds, boolean inferDescendantConds,
             ServiceFactory serviceFactory, Ontology<AnatEntity, String> anatEntityOnt,
             Ontology<DevStage, String> devStageOnt) throws IllegalArgumentException {
@@ -240,39 +240,31 @@ public class ConditionUtils implements Comparator<Condition> {
         //TODO: test inference of descendant conditions
         if (inferAncestralConds || inferDescendantConds) {
             Set<Condition> newPropagatedConditions = tempConditions.stream().flatMap(cond -> {
-                Set<String> propStageIds = new HashSet<>();
-                propStageIds.add(cond.getDevStageId());
+                Set<DevStage> propStages = new HashSet<>();
+                propStages.add(cond.getDevStage());
                 if (this.devStageOnt != null && cond.getDevStageId() != null) {
                     if (inferAncestralConds) {
-                        propStageIds.addAll(this.devStageOnt.getAncestors(
-                            this.devStageOnt.getElement(cond.getDevStageId()))
-                            .stream().map(e -> e.getId()).collect(Collectors.toSet()));
+                        propStages.addAll(this.devStageOnt.getAncestors(cond.getDevStage()));
                     }
                     if (inferDescendantConds) {
-                        propStageIds.addAll(this.devStageOnt.getDescendants(
-                            this.devStageOnt.getElement(cond.getDevStageId()))
-                            .stream().map(e -> e.getId()).collect(Collectors.toSet()));
+                        propStages.addAll(this.devStageOnt.getDescendants(cond.getDevStage()));
                     }
                 }
                 
-                Set<String> propAnatEntityIds = new HashSet<>();
-                propAnatEntityIds.add(cond.getAnatEntityId());
+                Set<AnatEntity> propAnatEntitys = new HashSet<>();
+                propAnatEntitys.add(cond.getAnatEntity());
                 if (this.anatEntityOnt != null && cond.getAnatEntityId() != null) {
                     if (inferAncestralConds) {
-                        propAnatEntityIds.addAll(this.anatEntityOnt.getAncestors(
-                            this.anatEntityOnt.getElement(cond.getAnatEntityId()))
-                            .stream().map(e -> e.getId()).collect(Collectors.toSet()));
+                        propAnatEntitys.addAll(this.anatEntityOnt.getAncestors(cond.getAnatEntity()));
                     }
                     if (inferDescendantConds) {
-                        propAnatEntityIds.addAll(this.anatEntityOnt.getDescendants(
-                            this.anatEntityOnt.getElement(cond.getAnatEntityId()))
-                            .stream().map(e -> e.getId()).collect(Collectors.toSet()));
+                        propAnatEntitys.addAll(this.anatEntityOnt.getDescendants(cond.getAnatEntity()));
                     }
                 }
                 
-                return propAnatEntityIds.stream()
-                        .flatMap(propAnatEntityId -> propStageIds.stream().map(propStageId -> 
-                            new Condition(propAnatEntityId, propStageId, speciesId)))
+                return propAnatEntitys.stream()
+                        .flatMap(propAnatEntity -> propStages.stream().map(propStage -> 
+                            new Condition(propAnatEntity, propStage, speciesId)))
                         .filter(propCond -> !cond.equals(propCond));
 
             }).collect(Collectors.toSet());
@@ -327,7 +319,7 @@ public class ConditionUtils implements Comparator<Condition> {
      * @param secondCond    The second {@code Condition} to be checked for relations to {@code firstCond}. 
      * @return              {@code true} if {@code secondCond} is more precise than {@code firstCond}.
      * @throws IllegalArgumentException If one of the provided {@code Condition}s is not registered 
-     *                                  to this {@code ConditionUtils}.
+     *                                  to this {@code ConditionGraph}.
      */
     public boolean isConditionMorePrecise(Condition firstCond, Condition secondCond) throws IllegalArgumentException {
         log.entry(firstCond, secondCond);
@@ -339,7 +331,7 @@ public class ConditionUtils implements Comparator<Condition> {
         }
         if (!this.getConditions().contains(firstCond) || !this.getConditions().contains(secondCond)) {
             throw log.throwing(new IllegalArgumentException("Some of the provided conditions "
-                    + "are not registered to this ConditionUtils. First condition: " + firstCond 
+                    + "are not registered to this ConditionGraph. First condition: " + firstCond 
                     + " - Second condition: " + secondCond));
         }
         if (firstCond.equals(secondCond)) {
@@ -413,7 +405,7 @@ public class ConditionUtils implements Comparator<Condition> {
      * 
      * @param cond          A {@code Condition} for which we want to retrieve ancestors {@code Condition}s.
      * @return              A {@code Set} of {@code Condition}s that are ancestors of {@code cond}.
-     * @throws IllegalArgumentException If {@code cond} is not registered to this {@code ConditionUtils}.
+     * @throws IllegalArgumentException If {@code cond} is not registered to this {@code ConditionGraph}.
      */
     public Set<Condition> getAncestorConditions(Condition cond) {
         log.entry(cond);
@@ -430,7 +422,7 @@ public class ConditionUtils implements Comparator<Condition> {
      * @param directRelOnly A {@code boolean} defining whether only direct parents 
      *                      or children of {@code element} should be returned.
      * @return              A {@code Set} of {@code Condition}s that are ancestors of {@code cond}.
-     * @throws IllegalArgumentException If {@code cond} is not registered to this {@code ConditionUtils}.
+     * @throws IllegalArgumentException If {@code cond} is not registered to this {@code ConditionGraph}.
      */
     public Set<Condition> getAncestorConditions(Condition cond, boolean directRelOnly) 
             throws IllegalArgumentException {
@@ -438,7 +430,7 @@ public class ConditionUtils implements Comparator<Condition> {
         log.trace("Start retrieving ancestral conditions for {}", cond);
         if (!this.getConditions().contains(cond)) {
             throw log.throwing(new IllegalArgumentException("The provided condition "
-                    + "is not registered to this ConditionUtils: " + cond));
+                    + "is not registered to this ConditionGraph: " + cond));
         }
         
         Set<String> devStageIds = new HashSet<>();
@@ -478,7 +470,7 @@ public class ConditionUtils implements Comparator<Condition> {
      * 
      * @param cond  A {@code Condition} for which we want to retrieve descendant {@code Condition}s.
      * @return      A {@code Set} of {@code Condition}s that are descendants of {@code cond}.
-     * @throws IllegalArgumentException If {@code cond} is not registered to this {@code ConditionUtils}.
+     * @throws IllegalArgumentException If {@code cond} is not registered to this {@code ConditionGraph}.
      */
     public Set<Condition> getDescendantConditions(Condition cond) {
         log.entry(cond);
@@ -493,7 +485,7 @@ public class ConditionUtils implements Comparator<Condition> {
      * @param directRelOnly A {@code boolean} defining whether only direct parents 
      *                      or children of {@code element} should be returned.
      * @return              A {@code Set} of {@code Condition}s that are descendants of {@code cond}.
-     * @throws IllegalArgumentException If {@code cond} is not registered to this {@code ConditionUtils}.
+     * @throws IllegalArgumentException If {@code cond} is not registered to this {@code ConditionGraph}.
      */
     public Set<Condition> getDescendantConditions(Condition cond, boolean directRelOnly) {
         log.entry(cond, directRelOnly);
@@ -510,7 +502,7 @@ public class ConditionUtils implements Comparator<Condition> {
      * @param includeSubstages  A {@code boolean} defining whether conditions with child stages
      *                          should be returned.
      * @return                  A {@code Set} of {@code Condition}s that are descendants of {@code cond}.
-     * @throws IllegalArgumentException If {@code cond} is not registered to this {@code ConditionUtils}.
+     * @throws IllegalArgumentException If {@code cond} is not registered to this {@code ConditionGraph}.
      */
     // TODO: refactor this method with constructor and getAncestorConditions
     public Set<Condition> getDescendantConditions(Condition cond, boolean directRelOnly,
@@ -531,7 +523,7 @@ public class ConditionUtils implements Comparator<Condition> {
      * @param substageMaxLevel  An {@code Integer} that is the maximal sub-level in which child stages
      *                          should be retrieved. If less than 1, there is no limitation.
      * @return                  A {@code Set} of {@code Condition}s that are descendants of {@code cond}.
-     * @throws IllegalArgumentException If {@code cond} is not registered to this {@code ConditionUtils}.
+     * @throws IllegalArgumentException If {@code cond} is not registered to this {@code ConditionGraph}.
      */
     // TODO: refactor this method with constructor and getAncestorConditions
     public Set<Condition> getDescendantConditions(Condition cond, boolean directRelOnly,
@@ -540,7 +532,7 @@ public class ConditionUtils implements Comparator<Condition> {
 
         if (!this.getConditions().contains(cond)) {
             throw log.throwing(new IllegalArgumentException("The provided condition "
-                    + "is not registered to this ConditionUtils: " + cond));
+                    + "is not registered to this ConditionGraph: " + cond));
         }
         
         Set<String> devStageIds = new HashSet<>();
@@ -579,84 +571,13 @@ public class ConditionUtils implements Comparator<Condition> {
                              anatEntityIds.contains(e.getAnatEntityId()))
                 .collect(Collectors.toSet()));
     }
-
-    /**
-     * Retrieve an {@code AnatEntity} present in a {@code Condition} provided at instantiation, 
-     * based on its ID.
-     * 
-     * @param anatEntityId  A {@code String} that is the ID of the {@code AnatEntity} to retrieve.
-     * @return              The corresponding {@code AnatEntity}. {@code null} if no corresponding 
-     *                      {@code AnatEntity} was present in the {@code Condition}s provided 
-     *                      at instantiation.
-     */
-    public AnatEntity getAnatEntity(String anatEntityId) {
-        log.entry(anatEntityId);
-        if (this.getAnatEntityOntology() == null) {
-            return log.exit(null);
-        }
-        return log.exit(this.getAnatEntityOntology().getElement(anatEntityId));
-    }
-    /**
-     * Retrieve an {@code AnatEntity} from a {@code Condition}.
-     * 
-     * @param condition     The {@code Condition} which to retrieve the ID of the requested 
-     *                      {@code AnatEntity} from.
-     * @return              The {@code AnatEntity} corresponding to the ID provided by {@code condition}. 
-     * @throws IllegalArgumentException If {@code condition} was not part of the {@code Condition}s 
-     *                                  provided at instantiation of this {@code ConditionUtils}.
-     */
-    public AnatEntity getAnatEntity(Condition condition) {
-        log.entry(condition);
-        if (this.getAnatEntityOntology() == null) {
-            return log.exit(null);
-        }
-        if (!this.conditions.contains(condition)) {
-            throw log.throwing(new IllegalArgumentException("Unrecognized condition: " + condition));
-        }
-        return log.exit(this.getAnatEntityOntology().getElement(condition.getAnatEntityId()));
-    }
-    /**
-     * Retrieve a {@code DevStage} present in a {@code Condition} provided at instantiation, 
-     * based on its ID.
-     * 
-     * @param devStageId    A {@code String} that is the ID of the {@code DevStage} to retrieve.
-     * @return              The corresponding {@code DevStage}. {@code null} if no corresponding 
-     *                      {@code DevStage} was present in the {@code Condition}s provided 
-     *                      at instantiation.
-     */
-    public DevStage getDevStage(String devStageId) {
-        log.entry(devStageId);
-        if (this.getDevStageOntology() == null) {
-            return log.exit(null);
-        }
-        return log.exit(this.getDevStageOntology().getElement(devStageId));
-    }
-    /**
-     * Retrieve a {@code DevStage} from a {@code Condition}.
-     * 
-     * @param condition     The {@code Condition} which to retrieve the ID of the requested 
-     *                      {@code DevStage} from.
-     * @return              The {@code DevStage} corresponding to the ID provided by {@code condition}. 
-     * @throws IllegalArgumentException If {@code condition} was not part of the {@code Condition}s 
-     *                                  provided at instantiation of this {@code ConditionUtils}.
-     */
-    public DevStage getDevStage(Condition condition) {
-        log.entry(condition);
-        if (this.getDevStageOntology() == null) {
-            return log.exit(null);
-        }
-        if (!this.conditions.contains(condition)) {
-            throw log.throwing(new IllegalArgumentException("Unrecognized condition: " + condition));
-        }
-        return log.exit(this.getDevStageOntology().getElement(condition.getDevStageId()));
-    }
     
     //*********************************
     //  GETTERS/SETTERS
     //*********************************
     /**
      * @return  The {@code Set} of {@code Condition}s to be considered for operations
-     *          on this {@code ConditionUtils}.
+     *          on this {@code ConditionGraph}.
      */
     public Set<Condition> getConditions() {
         return this.conditions;

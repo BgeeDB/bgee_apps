@@ -85,19 +85,19 @@ public class ExpressionCallTest extends TestAncestor {
         Condition cond1 = new Condition("Anat1", "stage1", 1);
         Condition cond2 = new Condition("Anat2", "stage1", 1);
         Condition cond3 = new Condition("Anat3", "stage1", 1);
-        //we mock the ConditionUtils used to compare Conditions
-        ConditionUtils condUtils = mock(ConditionUtils.class);
+        //we mock the ConditionGraph used to compare Conditions
+        ConditionGraph condGraph = mock(ConditionGraph.class);
         Set<Condition> allConds = new HashSet<>(Arrays.asList(cond1, cond2, cond3));
-        when(condUtils.getConditions()).thenReturn(allConds);
-        when(condUtils.compare(cond1, cond1)).thenReturn(0);
-        when(condUtils.compare(cond2, cond2)).thenReturn(0);
-        when(condUtils.compare(cond3, cond3)).thenReturn(0);
-        when(condUtils.compare(cond1, cond2)).thenReturn(1);
-        when(condUtils.compare(cond2, cond1)).thenReturn(-1);
-        when(condUtils.compare(cond1, cond3)).thenReturn(1);
-        when(condUtils.compare(cond3, cond1)).thenReturn(-1);
-        when(condUtils.compare(cond2, cond3)).thenReturn(0);
-        when(condUtils.compare(cond3, cond2)).thenReturn(0);
+        when(condGraph.getConditions()).thenReturn(allConds);
+        when(condGraph.compare(cond1, cond1)).thenReturn(0);
+        when(condGraph.compare(cond2, cond2)).thenReturn(0);
+        when(condGraph.compare(cond3, cond3)).thenReturn(0);
+        when(condGraph.compare(cond1, cond2)).thenReturn(1);
+        when(condGraph.compare(cond2, cond1)).thenReturn(-1);
+        when(condGraph.compare(cond1, cond3)).thenReturn(1);
+        when(condGraph.compare(cond3, cond1)).thenReturn(-1);
+        when(condGraph.compare(cond2, cond3)).thenReturn(0);
+        when(condGraph.compare(cond3, cond2)).thenReturn(0);
 
         ExpressionCall c1 = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("1.25"));
 
@@ -128,7 +128,7 @@ public class ExpressionCallTest extends TestAncestor {
         
         List<ExpressionCall> toSort = Arrays.asList(c10, c2, c1, c6, c8, c4, c9, c7, c3, c5);
         List<ExpressionCall> expectedResult = Arrays.asList(c1, c2, c3, c4, c5, c6, c7, c7, c9, c10);
-        Collections.sort(toSort, new ExpressionCall.RankComparator(condUtils));
+        Collections.sort(toSort, new ExpressionCall.RankComparator(condGraph));
         
         assertEquals("Incorrect sorting of ExpressionCalls based on their rank and relations", 
                 expectedResult, toSort);
@@ -153,7 +153,7 @@ public class ExpressionCallTest extends TestAncestor {
     }
     
     /**
-     * Test for {@link ExpressionCall#identifyRedundantCalls(Collection, ConditionUtils)}.
+     * Test for {@link ExpressionCall#identifyRedundantCalls(Collection, ConditionGraph)}.
      */
     @Test
     public void shouldIdentifyRedundantCalls() {
@@ -162,22 +162,22 @@ public class ExpressionCallTest extends TestAncestor {
         Condition cond1 = new Condition("Anat1", "stage1", 1);
         Condition cond2 = new Condition("Anat2", "stage1", 1);
         Condition cond3 = new Condition("Anat3", "stage1", 1);
-        //we mock the ConditionUtils used to compare Conditions
-        ConditionUtils condUtils = mock(ConditionUtils.class);
+        //we mock the ConditionGraph used to compare Conditions
+        ConditionGraph condGraph = mock(ConditionGraph.class);
         Set<Condition> allConds = new HashSet<>(Arrays.asList(cond1, cond2, cond3));
-        when(condUtils.getConditions()).thenReturn(allConds);
-        when(condUtils.compare(cond1, cond1)).thenReturn(0);
-        when(condUtils.compare(cond2, cond2)).thenReturn(0);
-        when(condUtils.compare(cond3, cond3)).thenReturn(0);
-        when(condUtils.compare(cond1, cond2)).thenReturn(1);
-        when(condUtils.compare(cond2, cond1)).thenReturn(-1);
-        when(condUtils.compare(cond1, cond3)).thenReturn(1);
-        when(condUtils.compare(cond3, cond1)).thenReturn(-1);
-        when(condUtils.compare(cond2, cond3)).thenReturn(0);
-        when(condUtils.compare(cond3, cond2)).thenReturn(0);
-        when(condUtils.getDescendantConditions(cond1)).thenReturn(new HashSet<>(Arrays.asList(cond2, cond3)));
-        when(condUtils.getDescendantConditions(cond2)).thenReturn(new HashSet<>());
-        when(condUtils.getDescendantConditions(cond3)).thenReturn(new HashSet<>());
+        when(condGraph.getConditions()).thenReturn(allConds);
+        when(condGraph.compare(cond1, cond1)).thenReturn(0);
+        when(condGraph.compare(cond2, cond2)).thenReturn(0);
+        when(condGraph.compare(cond3, cond3)).thenReturn(0);
+        when(condGraph.compare(cond1, cond2)).thenReturn(1);
+        when(condGraph.compare(cond2, cond1)).thenReturn(-1);
+        when(condGraph.compare(cond1, cond3)).thenReturn(1);
+        when(condGraph.compare(cond3, cond1)).thenReturn(-1);
+        when(condGraph.compare(cond2, cond3)).thenReturn(0);
+        when(condGraph.compare(cond3, cond2)).thenReturn(0);
+        when(condGraph.getDescendantConditions(cond1)).thenReturn(new HashSet<>(Arrays.asList(cond2, cond3)));
+        when(condGraph.getDescendantConditions(cond2)).thenReturn(new HashSet<>());
+        when(condGraph.getDescendantConditions(cond3)).thenReturn(new HashSet<>());
         
         
         //Nothing too complicated with gene ID1, c3 is redundant
@@ -207,7 +207,7 @@ public class ExpressionCallTest extends TestAncestor {
         Set<ExpressionCall> withRedundancy = new HashSet<>(Arrays.asList(c1, c2, c3, c4, c5, c6, c7, c8, c9));
         Set<ExpressionCall> expectedRedundants = new HashSet<>(Arrays.asList(c3, c4));
         assertEquals("Incorrect redundant calls identified", 
-                expectedRedundants, ExpressionCall.identifyRedundantCalls(withRedundancy, condUtils));
+                expectedRedundants, ExpressionCall.identifyRedundantCalls(withRedundancy, condGraph));
     }
     
     /**

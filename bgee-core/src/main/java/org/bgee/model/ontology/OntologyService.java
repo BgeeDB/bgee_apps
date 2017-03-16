@@ -240,7 +240,8 @@ public class OntologyService extends Service {
                     .collect(Collectors.toSet());
         return log.exit(new MultiSpeciesOntology<AnatEntity, String>(speciesIds, 
                 this.getServiceFactory().getAnatEntityService()
-                    .loadAnatEntities(speciesIds, true, this.getRequestedEntityIds(anatEntityIds, rels))
+                    .loadAnatEntities(speciesIds, true,
+                            this.getRequestedEntityIds(anatEntityIds, rels), true)
                     .collect(Collectors.toSet()), 
                 rels, taxonConstraints, relationTaxonConstraints, relationTypes,
                 this.getServiceFactory(), AnatEntity.class));

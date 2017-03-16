@@ -28,30 +28,30 @@ import org.bgee.model.ontology.Ontology;
 import org.junit.Test;
 
 /**
- * Unit tests for {@link ConditionUtils}.
+ * Unit tests for {@link ConditionGraph}.
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @version Bgee 13, Oct. 2016
  * @since   Bgee 13, Dec. 2015
  */
-public class ConditionUtilsTest extends TestAncestor {
-    private final static Logger log = LogManager.getLogger(ConditionUtilsTest.class.getName());
+public class ConditionGraphTest extends TestAncestor {
+    private final static Logger log = LogManager.getLogger(ConditionGraphTest.class.getName());
     
     @Override
     protected Logger getLogger() {
         return log;
     } 
     
-    private ConditionUtils conditionUtils;
+    private ConditionGraph conditionGraph;
     private List<Condition> conditions;
     
     /**
-     * @param fromService   A {@code boolean} {@code true} if the {@code ConditionUtils} 
+     * @param fromService   A {@code boolean} {@code true} if the {@code ConditionGraph} 
      *                      should be loaded from the {@code ServiceFactory}, 
      *                      {@code false} if it should be loaded directly from {@code Ontology}s.
      */
-    private void loadConditionUtils(boolean fromService) {
+    private void loadConditionGraph(boolean fromService) {
         String anatEntityId1 = "anat1";
         AnatEntity anatEntity1 = new AnatEntity(anatEntityId1);
         String anatEntityId2 = "anat2";
@@ -145,66 +145,66 @@ public class ConditionUtilsTest extends TestAncestor {
         when(devStageOnt.getDescendants(devStage1, false)).thenReturn(new HashSet<>());
         
         if (fromService) {
-            this.conditionUtils = new ConditionUtils(this.conditions, mockFact);
+            this.conditionGraph = new ConditionGraph(this.conditions, mockFact);
         } else {
-            this.conditionUtils = new ConditionUtils(this.conditions, anatEntityOnt, devStageOnt);
+            this.conditionGraph = new ConditionGraph(this.conditions, anatEntityOnt, devStageOnt);
         }
     }
 
     /**
-     * Test the method {@link ConditionUtils#isConditionMorePrecise(Condition, Condition)}.
+     * Test the method {@link ConditionGraph#isConditionMorePrecise(Condition, Condition)}.
      */
     @Test
     public void testIsConditionMorePreciseDifferentLoadings() {
-        this.loadConditionUtils(true);
+        this.loadConditionGraph(true);
         this.testIsConditionMorePrecise();
-        this.loadConditionUtils(false);
+        this.loadConditionGraph(false);
         this.testIsConditionMorePrecise();
     }
     /**
-     * Test the method {@link ConditionUtils#isConditionMorePrecise(Condition, Condition)}.
+     * Test the method {@link ConditionGraph#isConditionMorePrecise(Condition, Condition)}.
      */
     private void testIsConditionMorePrecise() {
         assertTrue("Incorrect determination of precision for more precise condition", 
-                this.conditionUtils.isConditionMorePrecise(this.conditions.get(0), this.conditions.get(1)));
+                this.conditionGraph.isConditionMorePrecise(this.conditions.get(0), this.conditions.get(1)));
         assertTrue("Incorrect determination of precision for more precise condition", 
-                this.conditionUtils.isConditionMorePrecise(this.conditions.get(8), this.conditions.get(9)));
+                this.conditionGraph.isConditionMorePrecise(this.conditions.get(8), this.conditions.get(9)));
         assertFalse("Incorrect determination of precision for less precise condition", 
-                this.conditionUtils.isConditionMorePrecise(this.conditions.get(1), this.conditions.get(0)));
+                this.conditionGraph.isConditionMorePrecise(this.conditions.get(1), this.conditions.get(0)));
         assertFalse("Incorrect determination of precision for less precise condition", 
-                this.conditionUtils.isConditionMorePrecise(this.conditions.get(9), this.conditions.get(8)));
+                this.conditionGraph.isConditionMorePrecise(this.conditions.get(9), this.conditions.get(8)));
         assertTrue("Incorrect determination of precision for more precise condition", 
-                this.conditionUtils.isConditionMorePrecise(this.conditions.get(0), this.conditions.get(2)));
+                this.conditionGraph.isConditionMorePrecise(this.conditions.get(0), this.conditions.get(2)));
         assertTrue("Incorrect determination of precision for more precise condition", 
-                this.conditionUtils.isConditionMorePrecise(this.conditions.get(10), this.conditions.get(11)));
+                this.conditionGraph.isConditionMorePrecise(this.conditions.get(10), this.conditions.get(11)));
         assertFalse("Incorrect determination of precision for less precise condition", 
-                this.conditionUtils.isConditionMorePrecise(this.conditions.get(2), this.conditions.get(0)));
+                this.conditionGraph.isConditionMorePrecise(this.conditions.get(2), this.conditions.get(0)));
         assertFalse("Incorrect determination of precision for less precise condition", 
-                this.conditionUtils.isConditionMorePrecise(this.conditions.get(11), this.conditions.get(10)));
+                this.conditionGraph.isConditionMorePrecise(this.conditions.get(11), this.conditions.get(10)));
         assertFalse("Incorrect determination of precision for less precise condition", 
-                this.conditionUtils.isConditionMorePrecise(this.conditions.get(8), this.conditions.get(11)));
+                this.conditionGraph.isConditionMorePrecise(this.conditions.get(8), this.conditions.get(11)));
         assertFalse("Incorrect determination of precision for as precise conditions", 
-                this.conditionUtils.isConditionMorePrecise(this.conditions.get(1), this.conditions.get(2)));
+                this.conditionGraph.isConditionMorePrecise(this.conditions.get(1), this.conditions.get(2)));
 
         assertFalse("Incorrect determination of precision for condition with anat. entity as precise", 
-                this.conditionUtils.isConditionMorePrecise(this.conditions.get(5), this.conditions.get(1)));
+                this.conditionGraph.isConditionMorePrecise(this.conditions.get(5), this.conditions.get(1)));
         assertTrue("Incorrect determination of precision for condition with anat. entity as precise", 
-                this.conditionUtils.isConditionMorePrecise(this.conditions.get(0), this.conditions.get(4)));
+                this.conditionGraph.isConditionMorePrecise(this.conditions.get(0), this.conditions.get(4)));
         assertFalse("Incorrect determination of precision for condition with dev. stage as precise", 
-                this.conditionUtils.isConditionMorePrecise(this.conditions.get(1), this.conditions.get(1)));
+                this.conditionGraph.isConditionMorePrecise(this.conditions.get(1), this.conditions.get(1)));
         assertTrue("Incorrect determination of precision for condition with dev. stage as precise", 
-                this.conditionUtils.isConditionMorePrecise(this.conditions.get(0), this.conditions.get(3)));
+                this.conditionGraph.isConditionMorePrecise(this.conditions.get(0), this.conditions.get(3)));
         
         AnatEntity anatEntity1 = new AnatEntity(this.conditions.get(0).getAnatEntityId());
-        assertEquals("Incorrect AnatEntity retrieved", anatEntity1, this.conditionUtils.getAnatEntity(
+        assertEquals("Incorrect AnatEntity retrieved", anatEntity1, this.conditionGraph.getAnatEntity(
                 this.conditions.get(0).getAnatEntityId()));
         DevStage devStage1 = new DevStage(this.conditions.get(0).getDevStageId());
-        assertEquals("Incorrect DevStage retrieved", devStage1, this.conditionUtils.getDevStage(
+        assertEquals("Incorrect DevStage retrieved", devStage1, this.conditionGraph.getDevStage(
                 this.conditions.get(0).getDevStageId()));
         
         //check that an Exception is correctly thrown if a condition used was not provided at instantiation
         try {
-            this.conditionUtils.isConditionMorePrecise(this.conditions.get(0), 
+            this.conditionGraph.isConditionMorePrecise(this.conditions.get(0), 
                     new Condition("test1", "test2", 3));
             //test fail
             fail("An exception should be thrown when a Condition was not provided at instantiation.");
@@ -215,116 +215,116 @@ public class ConditionUtilsTest extends TestAncestor {
     }
 
     /**
-     * Test {@link ConditionUtils#compare(Condition, Condition)}
+     * Test {@link ConditionGraph#compare(Condition, Condition)}
      */
     @Test
     public void testCompareDifferentLoadings() {
-        this.loadConditionUtils(true);
+        this.loadConditionGraph(true);
         this.testCompare();
-        this.loadConditionUtils(false);
+        this.loadConditionGraph(false);
         this.testCompare();
     }
     /**
-     * Test {@link ConditionUtils#compare(Condition, Condition)}
+     * Test {@link ConditionGraph#compare(Condition, Condition)}
      */
     private void testCompare() {
         assertEquals("Incorrect comparison based on rels between Conditions", 1, 
-                this.conditionUtils.compare(this.conditions.get(0), this.conditions.get(1)));
+                this.conditionGraph.compare(this.conditions.get(0), this.conditions.get(1)));
         assertEquals("Incorrect comparison based on rels between Conditions", -1, 
-                this.conditionUtils.compare(this.conditions.get(1), this.conditions.get(0)));
+                this.conditionGraph.compare(this.conditions.get(1), this.conditions.get(0)));
         assertEquals("Incorrect comparison based on rels between Conditions", 1, 
-                this.conditionUtils.compare(this.conditions.get(0), this.conditions.get(2)));
+                this.conditionGraph.compare(this.conditions.get(0), this.conditions.get(2)));
         assertEquals("Incorrect comparison based on rels between Conditions", -1, 
-                this.conditionUtils.compare(this.conditions.get(2), this.conditions.get(0)));
+                this.conditionGraph.compare(this.conditions.get(2), this.conditions.get(0)));
         assertEquals("Incorrect comparison based on rels between Conditions", 0, 
-                this.conditionUtils.compare(this.conditions.get(1), this.conditions.get(2)));
+                this.conditionGraph.compare(this.conditions.get(1), this.conditions.get(2)));
         assertEquals("Incorrect comparison based on rels between Conditions", 0, 
-                this.conditionUtils.compare(this.conditions.get(2), this.conditions.get(1)));
+                this.conditionGraph.compare(this.conditions.get(2), this.conditions.get(1)));
 
         assertEquals("Incorrect comparison based on rels between Conditions", 0, 
-                this.conditionUtils.compare(this.conditions.get(5), this.conditions.get(1)));
+                this.conditionGraph.compare(this.conditions.get(5), this.conditions.get(1)));
         assertEquals("Incorrect comparison based on rels between Conditions", 0, 
-                this.conditionUtils.compare(this.conditions.get(1), this.conditions.get(5)));
+                this.conditionGraph.compare(this.conditions.get(1), this.conditions.get(5)));
         assertEquals("Incorrect comparison based on rels between Conditions", 1, 
-                this.conditionUtils.compare(this.conditions.get(0), this.conditions.get(4)));
+                this.conditionGraph.compare(this.conditions.get(0), this.conditions.get(4)));
         assertEquals("Incorrect comparison based on rels between Conditions", -1, 
-                this.conditionUtils.compare(this.conditions.get(4), this.conditions.get(0)));
+                this.conditionGraph.compare(this.conditions.get(4), this.conditions.get(0)));
         assertEquals("Incorrect comparison based on rels between Conditions", 0, 
-                this.conditionUtils.compare(this.conditions.get(1), this.conditions.get(1)));
+                this.conditionGraph.compare(this.conditions.get(1), this.conditions.get(1)));
         assertEquals("Incorrect comparison based on rels between Conditions", 1, 
-                this.conditionUtils.compare(this.conditions.get(0), this.conditions.get(3)));
+                this.conditionGraph.compare(this.conditions.get(0), this.conditions.get(3)));
         assertEquals("Incorrect comparison based on rels between Conditions", -1, 
-                this.conditionUtils.compare(this.conditions.get(3), this.conditions.get(0)));
+                this.conditionGraph.compare(this.conditions.get(3), this.conditions.get(0)));
     }
 
     /**
-     * Test the method {@link ConditionUtils#getDescendantConditions(Condition)}.
+     * Test the method {@link ConditionGraph#getDescendantConditions(Condition)}.
      */
     @Test
     public void shouldGetDescendantConditionsDifferentLoadings() {
-        this.loadConditionUtils(true);
+        this.loadConditionGraph(true);
         this.shouldGetDescendantConditions();
-        this.loadConditionUtils(false);
+        this.loadConditionGraph(false);
         this.shouldGetDescendantConditions();
     }
     /**
-     * Test the method {@link ConditionUtils#getDescendantConditions(Condition)}.
+     * Test the method {@link ConditionGraph#getDescendantConditions(Condition)}.
      */
     private void shouldGetDescendantConditions() {
         Set<Condition> expectedDescendants = new HashSet<>(Arrays.asList(this.conditions.get(3)));
         assertEquals("Incorrect descendants retrieved", expectedDescendants, 
-                this.conditionUtils.getDescendantConditions(this.conditions.get(0)));
+                this.conditionGraph.getDescendantConditions(this.conditions.get(0)));
         
         expectedDescendants = new HashSet<>();
         assertEquals("Incorrect descendants retrieved", expectedDescendants, 
-                this.conditionUtils.getDescendantConditions(this.conditions.get(3)));
+                this.conditionGraph.getDescendantConditions(this.conditions.get(3)));
         
         expectedDescendants = new HashSet<>(Arrays.asList(this.conditions.get(2), this.conditions.get(5)));
         assertEquals("Incorrect descendants retrieved", expectedDescendants, 
-                this.conditionUtils.getDescendantConditions(this.conditions.get(4)));
+                this.conditionGraph.getDescendantConditions(this.conditions.get(4)));
         
         expectedDescendants = new HashSet<>();
         assertEquals("Incorrect descendants retrieved", expectedDescendants, 
-                this.conditionUtils.getDescendantConditions(this.conditions.get(6)));
+                this.conditionGraph.getDescendantConditions(this.conditions.get(6)));
         
         expectedDescendants = new HashSet<>(Arrays.asList(this.conditions.get(9)));
         assertEquals("Incorrect descendants retrieved", expectedDescendants, 
-                this.conditionUtils.getDescendantConditions(this.conditions.get(8)));
+                this.conditionGraph.getDescendantConditions(this.conditions.get(8)));
         
         expectedDescendants = new HashSet<>();
         assertEquals("Incorrect descendants retrieved", expectedDescendants, 
-                this.conditionUtils.getDescendantConditions(this.conditions.get(10)));
+                this.conditionGraph.getDescendantConditions(this.conditions.get(10)));
     }
 
     /**
-     * Test the method {@link ConditionUtils#getAncestorConditions(Condition, boolean)}.
+     * Test the method {@link ConditionGraph#getAncestorConditions(Condition, boolean)}.
      */
     @Test
     public void shouldGetAncestorConditionsDifferentLoadings() {
-        this.loadConditionUtils(true);
+        this.loadConditionGraph(true);
         this.shouldGetAncestorConditions();
-        this.loadConditionUtils(false);
+        this.loadConditionGraph(false);
         this.shouldGetAncestorConditions();
     }
     /**
-     * Test the method {@link ConditionUtils#getAncestorConditions(Condition, boolean)}.
+     * Test the method {@link ConditionGraph#getAncestorConditions(Condition, boolean)}.
      */
     private void shouldGetAncestorConditions() {
         Set<Condition> expectedAncestors = new HashSet<>(Arrays.asList(this.conditions.get(0)));
         assertEquals("Incorrect ancestors retrieved", expectedAncestors, 
-                this.conditionUtils.getAncestorConditions(this.conditions.get(6), false));
+                this.conditionGraph.getAncestorConditions(this.conditions.get(6), false));
         
         expectedAncestors = new HashSet<>(Arrays.asList(this.conditions.get(0)));
         assertEquals("Incorrect ancestors retrieved", expectedAncestors, 
-                this.conditionUtils.getAncestorConditions(this.conditions.get(3), false));
+                this.conditionGraph.getAncestorConditions(this.conditions.get(3), false));
 
         expectedAncestors = new HashSet<>();
         assertEquals("Incorrect ancestors retrieved", expectedAncestors, 
-                this.conditionUtils.getAncestorConditions(this.conditions.get(0), false));
+                this.conditionGraph.getAncestorConditions(this.conditions.get(0), false));
         
         expectedAncestors = new HashSet<>(Arrays.asList(
                 this.conditions.get(0), this.conditions.get(2), this.conditions.get(4)));
         assertEquals("Incorrect ancestors retrieved", expectedAncestors, 
-                this.conditionUtils.getAncestorConditions(this.conditions.get(7), false));
+                this.conditionGraph.getAncestorConditions(this.conditions.get(7), false));
     }
 }

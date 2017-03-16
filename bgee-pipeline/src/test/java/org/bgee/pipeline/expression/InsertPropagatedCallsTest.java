@@ -53,7 +53,7 @@ public class InsertPropagatedCallsTest extends TestAncestor {
 
 //  /**
 //  * Test the method 
-//  * {@link CallService#propagateExpressionCalls(Collection, Collection, ConditionUtils, String)}.
+//  * {@link CallService#propagateExpressionCalls(Collection, Collection, ConditionGraph, String)}.
 //  */
 // @Test
 // public void shouldPropagateExpressedCalls() {
@@ -69,7 +69,7 @@ public class InsertPropagatedCallsTest extends TestAncestor {
 //         // test passed
 //     }
 //
-//     ConditionUtils mockConditionUtils = mock(ConditionUtils.class);
+//     ConditionGraph mockConditionGraph = mock(ConditionGraph.class);
 //     String speciesId = "speciesId1";
 //     
 //     Set<Condition> conditions = new HashSet<>(Arrays.asList(
@@ -78,28 +78,28 @@ public class InsertPropagatedCallsTest extends TestAncestor {
 //             new Condition("parentOrganA1", "stageA", speciesId),
 //             new Condition("parentOrganA1", "parentStageA1", speciesId),
 //             new Condition("organB", "stageB", speciesId)));
-//     when(mockConditionUtils.getConditions()).thenReturn(conditions);
-//     when(mockConditionUtils.isInferredAncestralConditions()).thenReturn(true);
+//     when(mockConditionGraph.getConditions()).thenReturn(conditions);
+//     when(mockConditionGraph.isInferredAncestralConditions()).thenReturn(true);
 //     
 //     Condition childCond = new Condition("organA", "stageA", speciesId);
 //     Set<Condition> ancestorConds = new HashSet<>(Arrays.asList(
 //             new Condition("organA", "parentStageA1", speciesId),
 //             new Condition("parentOrganA1", "stageA", speciesId),
 //             new Condition("parentOrganA1", "parentStageA1", speciesId)));
-//     when(mockConditionUtils.getAncestorConditions(childCond, false)).thenReturn(ancestorConds);
+//     when(mockConditionGraph.getAncestorConditions(childCond, false)).thenReturn(ancestorConds);
 //     
 //     childCond = new Condition("organA", "parentStageA1", speciesId);
 //     ancestorConds = new HashSet<>(Arrays.asList(
 //             new Condition("parentOrganA1", "parentStageA1", speciesId)));
-//     when(mockConditionUtils.getAncestorConditions(childCond, false)).thenReturn(ancestorConds);
+//     when(mockConditionGraph.getAncestorConditions(childCond, false)).thenReturn(ancestorConds);
 //
 //     childCond = new Condition("parentOrganA1", "parentStageA1", speciesId);
 //     ancestorConds = new HashSet<>();
-//     when(mockConditionUtils.getAncestorConditions(childCond, false)).thenReturn(ancestorConds);
+//     when(mockConditionGraph.getAncestorConditions(childCond, false)).thenReturn(ancestorConds);
 //
 //     childCond = new Condition("organB", "stageB", speciesId);
 //     ancestorConds = new HashSet<>(Arrays.asList(new Condition("organB", "parentStageB1", speciesId)));
-//     when(mockConditionUtils.getAncestorConditions(childCond, false)).thenReturn(ancestorConds);
+//     when(mockConditionGraph.getAncestorConditions(childCond, false)).thenReturn(ancestorConds);
 //
 //     ExpressionCall call1 = new ExpressionCall("geneA", new Condition("organA", "stageA", speciesId),
 //         dpSelfAndSelf, ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
@@ -178,7 +178,7 @@ public class InsertPropagatedCallsTest extends TestAncestor {
 //                     null, Arrays.asList(call4))));
 //
 //     Set<ExpressionCall> actualResults = service.propagateExpressionCalls(
-//             exprCalls, new HashSet<>(), mockConditionUtils, speciesId);
+//             exprCalls, new HashSet<>(), mockConditionGraph, speciesId);
 //     assertEquals("Incorrect ExpressionCalls generated", allResults, actualResults);
 //     
 //     final Set<String> allOrgans = allResults.stream().map(c -> c.getCondition().getAnatEntityId()).collect(Collectors.toSet());
@@ -194,7 +194,7 @@ public class InsertPropagatedCallsTest extends TestAncestor {
 //                 .map(s -> new Condition(o, s, speciesId)).collect(Collectors.toSet()))
 //         .flatMap(Set::stream)
 //         .collect(Collectors.toSet()),
-//         mockConditionUtils, speciesId);
+//         mockConditionGraph, speciesId);
 //     assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
 //
 //     Set<String> allowedStageIds = new HashSet<>(Arrays.asList("parentStageA1"));
@@ -207,7 +207,7 @@ public class InsertPropagatedCallsTest extends TestAncestor {
 //                 .map(s -> new Condition(o, s, speciesId)).collect(Collectors.toSet()))
 //         .flatMap(Set::stream)
 //         .collect(Collectors.toSet()),
-//         mockConditionUtils, speciesId);
+//         mockConditionGraph, speciesId);
 //     assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
 //
 //     expectedResults = allResults.stream()
@@ -221,12 +221,12 @@ public class InsertPropagatedCallsTest extends TestAncestor {
 //                 .map(s -> new Condition(o, s, speciesId)).collect(Collectors.toSet()))
 //         .flatMap(Set::stream)
 //         .collect(Collectors.toSet()),
-//         mockConditionUtils, speciesId);
+//         mockConditionGraph, speciesId);
 //     assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
 // }
 // 
 // /**
-//  * Test the method {@link CallService#propagateExpressionCalls(Collection, Collection, ConditionUtils, String)}.
+//  * Test the method {@link CallService#propagateExpressionCalls(Collection, Collection, ConditionGraph, String)}.
 //  */
 // @Test
 // public void shouldPropagateNotExpressedCalls() {
@@ -242,7 +242,7 @@ public class InsertPropagatedCallsTest extends TestAncestor {
 //         // test passed
 //     }
 //
-//     ConditionUtils mockConditionUtils = mock(ConditionUtils.class);
+//     ConditionGraph mockConditionGraph = mock(ConditionGraph.class);
 //     String speciesId = "speciesId1";
 //
 //     Set<Condition> conditions = new HashSet<>(Arrays.asList(
@@ -253,28 +253,28 @@ public class InsertPropagatedCallsTest extends TestAncestor {
 //             new Condition("organB", "stageB", speciesId),
 //             new Condition("parentOrganB1", "stageB", speciesId),
 //             new Condition("parentOrganB2", "stageB", speciesId)));
-//     when(mockConditionUtils.getConditions()).thenReturn(conditions);
-//     when(mockConditionUtils.isInferredAncestralConditions()).thenReturn(true);
+//     when(mockConditionGraph.getConditions()).thenReturn(conditions);
+//     when(mockConditionGraph.isInferredAncestralConditions()).thenReturn(true);
 //     
 //     Condition parentCond = new Condition("organA", "stageA", speciesId);
 //     Set<Condition> descendantConds = new HashSet<>();
-//     when(mockConditionUtils.getDescendantConditions(parentCond, false, false)).thenReturn(descendantConds);
+//     when(mockConditionGraph.getDescendantConditions(parentCond, false, false)).thenReturn(descendantConds);
 //     
 //     parentCond = new Condition("organA", "parentStageA1", speciesId);
 //     descendantConds = new HashSet<>();
-//     when(mockConditionUtils.getDescendantConditions(parentCond, false, false)).thenReturn(descendantConds);
+//     when(mockConditionGraph.getDescendantConditions(parentCond, false, false)).thenReturn(descendantConds);
 //
 //     parentCond = new Condition("parentOrganA2", "parentStageA1", speciesId);
 //     descendantConds = new HashSet<>(Arrays.asList(
 //             new Condition("parentOrganA1", "parentStageA1", speciesId),
 //             new Condition("organA", "parentStageA1", speciesId)));
-//     when(mockConditionUtils.getDescendantConditions(parentCond, false, false)).thenReturn(descendantConds);
+//     when(mockConditionGraph.getDescendantConditions(parentCond, false, false)).thenReturn(descendantConds);
 //
 //     parentCond = new Condition("parentOrganB2", "stageB", speciesId);
 //     descendantConds = new HashSet<>(Arrays.asList(
 //             new Condition("parentOrganB1", "stageB", speciesId),
 //             new Condition("organB", "stageB", speciesId)));
-//     when(mockConditionUtils.getDescendantConditions(parentCond, false, false)).thenReturn(descendantConds);
+//     when(mockConditionGraph.getDescendantConditions(parentCond, false, false)).thenReturn(descendantConds);
 //     
 //     ExpressionCall call1 = new ExpressionCall("geneA", new Condition("organA", "stageA", speciesId),
 //             dpSelfAndSelf, ExpressionSummary.NOT_EXPRESSED, DataQuality.LOW, Arrays.asList(
@@ -367,7 +367,7 @@ public class InsertPropagatedCallsTest extends TestAncestor {
 //     final Set<String> allStages = allResults.stream().map(c -> c.getCondition().getDevStageId()).collect(Collectors.toSet());
 //
 //     Set<ExpressionCall> actualResults = service.propagateExpressionCalls(
-//             noExprCalls, null, mockConditionUtils, speciesId);
+//             noExprCalls, null, mockConditionGraph, speciesId);
 //     assertEquals("Incorrect ExpressionCalls generated", allResults, actualResults);
 //     
 //     Set<String> allowedOrganIds = new HashSet<>(Arrays.asList("organA"));
@@ -380,7 +380,7 @@ public class InsertPropagatedCallsTest extends TestAncestor {
 //                 .map(s -> new Condition(o, s, speciesId)).collect(Collectors.toSet()))
 //             .flatMap(Set::stream)
 //             .collect(Collectors.toSet()),
-//         mockConditionUtils, speciesId);
+//         mockConditionGraph, speciesId);
 //     assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
 //
 //     Set<String> allowedStageIds = new HashSet<>(Arrays.asList("parentStageA1"));
@@ -393,7 +393,7 @@ public class InsertPropagatedCallsTest extends TestAncestor {
 //             .map(s -> new Condition(o, s, speciesId)).collect(Collectors.toSet()))
 //         .flatMap(Set::stream)
 //         .collect(Collectors.toSet()),
-//             mockConditionUtils, speciesId);
+//             mockConditionGraph, speciesId);
 //     assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
 //
 //     expectedResults = allResults.stream()
@@ -406,7 +406,7 @@ public class InsertPropagatedCallsTest extends TestAncestor {
 //                 .map(s -> new Condition(o, s, speciesId)).collect(Collectors.toSet()))
 //             .flatMap(Set::stream)
 //             .collect(Collectors.toSet()),
-//         mockConditionUtils, speciesId);
+//         mockConditionGraph, speciesId);
 //     assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
 // }
 // 

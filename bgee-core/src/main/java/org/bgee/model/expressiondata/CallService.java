@@ -22,14 +22,21 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.CommonService;
 import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.anatdev.AnatEntityService;
+import org.bgee.model.anatdev.DevStage;
+import org.bgee.model.anatdev.DevStageService;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.expressiondata.CallDAOFilter;
 import org.bgee.model.dao.api.expressiondata.CallDataDAOFilter;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTOResultSet;
 import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
 import org.bgee.model.dao.api.expressiondata.DAOExperimentCountFilter;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallTO;
+import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.expressiondata.Call.DiffExpressionCall;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
@@ -233,8 +240,13 @@ public class CallService extends CommonService {
         .collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue)));
 
     //*************************************************
-    // INSTANCE METHODS
+    // INSTANCE ATTRIBUTES AND CONSTRUCTOR
     //*************************************************
+    private final ConditionDAO conditionDAO;
+    private final GeneDAO geneDAO;
+    private final GlobalExpressionCallDAO globalExprCallDAO;
+    private final AnatEntityService anatEntityService;
+    private final DevStageService devStageService;
     /**
      * @param serviceFactory            The {@code ServiceFactory} to be used to obtain {@code Service}s 
      *                                  and {@code DAOManager}.
@@ -242,6 +254,11 @@ public class CallService extends CommonService {
      */
     public CallService(ServiceFactory serviceFactory) {
         super(serviceFactory);
+        this.conditionDAO = this.getDaoManager().getConditionDAO();
+        this.geneDAO = this.getDaoManager().getGeneDAO();
+        this.globalExprCallDAO = this.getDaoManager().getGlobalExpressionCallDAO();
+        this.anatEntityService = this.getServiceFactory().getAnatEntityService();
+        this.devStageService = this.getServiceFactory().getDevStageService();
     }
     
     //XXX: example multi-species query, signature/returned value to be better defined. 
@@ -309,18 +326,14 @@ public class CallService extends CommonService {
                 callFilter, clonedAttrs, clonedOrderingAttrs.keySet());
         
         // Retrieve conditions by condition IDs if necessary
-        Set<ConditionDAO.Attribute> conditionDAOAttrs = convertServiceAttrsToConditionDAOAttrs(
-                clonedAttrs);
         final Map<Integer, Condition> condMap = Collections.unmodifiableMap(
-                conditionDAOAttrs.isEmpty()? new HashMap<>(): this.getDaoManager().getConditionDAO()
-                    .getConditionsBySpeciesIds(clnSpId, condParamCombination, conditionDAOAttrs).stream()
-                    .collect(Collectors.toMap(cTO -> cTO.getId(), 
-                            cTO -> mapConditionTOToCondition(cTO, species.getId()))));
+                clonedAttrs.isEmpty()? new HashMap<>(): this.loadConditionMap(species.getId(),
+                        condParamCombination, convertServiceAttrsToConditionDAOAttrs(clonedAttrs)));
         
         // Retrieve a Map of Bgee gene IDs to Gene
         Map<Integer, Set<String>> speToGeneIdsMap = new HashMap<>();
         speToGeneIdsMap.put(species.getId(), callFilter.getGeneFilter().getEnsemblGeneIds());
-        final Map<Integer, Gene> geneMap = Collections.unmodifiableMap(this.getDaoManager().getGeneDAO()
+        final Map<Integer, Gene> geneMap = Collections.unmodifiableMap(this.geneDAO
             .getGenesBySpeciesAndGeneIds(speToGeneIdsMap)
                 .stream()
                 .collect(Collectors.toMap(
@@ -351,6 +364,61 @@ public class CallService extends CommonService {
     //*************************************************************************
     // METHODS PERFORMING THE QUERIES TO THE DAOs
     //*************************************************************************
+    /**
+     * 
+     * @param speciesId
+     * @param condParamCombination  A {@code Set} of {@code ConditionDAO.Attribute}s defining
+     *                              the combination of condition parameters that were requested
+     *                              for queries, allowing to determine which condition and expression
+     *                              results to target.
+     * @param conditionDAOAttrs     A {@code Set} of {@code ConditionDAO.Attribute}s defining
+     *                              the attributes to populate in the retrieved {@code ConditionTO}s,
+     *                              and thus, in the returned {@code Condition}s.
+     *                              If {@code null} or empty, then all attributes are retrieved.
+     * @return                      A {@code Map} where keys are {@code Integer}s
+     *                              that are condition IDs, the associated value being
+     *                              the corresponding {@code Condition}.
+     */
+    protected Map<Integer, Condition> loadConditionMap(Integer speciesId,
+            Set<ConditionDAO.Attribute> condParamCombination,
+            Set<ConditionDAO.Attribute> conditionDAOAttrs) {
+        log.entry(speciesId, condParamCombination, conditionDAOAttrs);
+
+        Collection<Integer> speIds = Collections.singleton(speciesId);
+        Set<String> anatEntityIds = new HashSet<>();
+        Set<String> stageIds = new HashSet<>();
+        Set<ConditionTO> conditionTOs = new HashSet<>();
+
+        ConditionTOResultSet rs = this.conditionDAO.getConditionsBySpeciesIds(
+                speIds, condParamCombination, conditionDAOAttrs);
+        while (rs.next()) {
+            ConditionTO condTO = rs.getTO();
+            conditionTOs.add(condTO);
+            if (condTO.getAnatEntityId() != null) {
+                anatEntityIds.add(condTO.getAnatEntityId());
+            }
+            if (condTO.getStageId() != null) {
+                stageIds.add(condTO.getStageId());
+            }
+        }
+
+        final Map<String, AnatEntity> anatMap = anatEntityIds.isEmpty()? new HashMap<>():
+            this.anatEntityService.loadAnatEntities(
+                    speIds, true, anatEntityIds, false)
+            .collect(Collectors.toMap(a -> a.getId(), a -> a));
+        final Map<String, DevStage> stageMap = stageIds.isEmpty()? new HashMap<>():
+            this.devStageService.loadDevStages(
+                    speIds, true, stageIds, false)
+            .collect(Collectors.toMap(s -> s.getId(), s -> s));
+
+        return log.exit(conditionTOs.stream()
+                .collect(Collectors.toMap(cTO -> cTO.getId(), 
+                        cTO -> mapConditionTOToCondition(cTO, speciesId,
+                                anatMap.get(cTO.getAnatEntityId()), stageMap.get(cTO.getStageId()))
+                        ))
+                );
+    }
+
     /**
      * Perform query to retrieve expressed calls without the post-processing of 
      * the results returned by {@code DAO}s.
@@ -395,7 +463,7 @@ public class CallService extends CommonService {
             assert !geneIdFilter.contains(null);
         }
         
-        Stream<GlobalExpressionCallTO> calls = this.getDaoManager().getGlobalExpressionCallDAO()
+        Stream<GlobalExpressionCallTO> calls = this.globalExprCallDAO
             .getGlobalExpressionCalls(Arrays.asList(
                 //generate an ExpressionCallDAOFilter from callFilter 
                 new CallDAOFilter(

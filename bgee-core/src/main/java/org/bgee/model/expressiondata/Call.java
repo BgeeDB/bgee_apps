@@ -178,9 +178,9 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          * <ol>
          * <li>comparison based on {@link ExpressionCall#getGlobalMeanRank()}
          * <li>in case of equality, comparison based on {@link ExpressionCall#getGeneId()}
-         * <li>in case of equality, and if a {@code ConditionUtils} was provided at instantiation, 
+         * <li>in case of equality, and if a {@code ConditionGraph} was provided at instantiation, 
          * comparison based on the relations between {@code Condition}s (see 
-         * {@link ExpressionCall#getCondition()} and {@link ConditionUtils#compare(Condition, Condition)})
+         * {@link ExpressionCall#getCondition()} and {@link ConditionGraph#compare(Condition, Condition)})
          * <li>in case of equality, comparison based on the attributes of {@code Condition}s 
          * (see {@link ExpressionCall#getCondition()} and {@link Condition#compareTo(Condition)}.
          * </ol>
@@ -196,26 +196,26 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
              */
             private final Comparator<ExpressionCall> rankComparator;
             /**
-             * The {@code ConditionUtils} used by the {@link #rankComparator}. Can be {@code null}.
+             * The {@code ConditionGraph} used by the {@link #rankComparator}. Can be {@code null}.
              */
-            private final ConditionUtils conditionUtils;
+            private final ConditionGraph conditionGraph;
             
             /**
-             * Instantiate a {@code RankComparator} not using any {@code ConditionUtils}.
+             * Instantiate a {@code RankComparator} not using any {@code ConditionGraph}.
              */
             public RankComparator() {
                 this(null);
             }
             /**
              * Instantiate a {@code RankComparator} that can take into account 
-             * relations between {@code Condition}s, thanks to a {@code ConditionUtils}.
+             * relations between {@code Condition}s, thanks to a {@code ConditionGraph}.
              * 
-             * @param condUtils A {@code ConditionUtils} used to sort {@code Condition}s based on 
+             * @param condGraph A {@code ConditionGraph} used to sort {@code Condition}s based on 
              *                  their relations between each other, in case of equal ranks 
              *                  and equal gene IDs. Can be {@code null} if it is not needed 
              *                  to do such a sorting based on relations.
              */
-            public RankComparator(ConditionUtils condUtils) {
+            public RankComparator(ConditionGraph condGraph) {
                 Comparator<ExpressionCall> tmpComparator = Comparator
                         //Order first by global mean rank
                         .comparing(ExpressionCall::getGlobalMeanRank, 
@@ -227,18 +227,18 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                         //Order by species as, in bgee 14, gene IDs are not unique
                         .thenComparing(c -> c.getGene() == null? null : c.getGene().getSpecies().getId(), 
                     Comparator.nullsLast(Comparator.naturalOrder()));
-                if (condUtils != null) {
+                if (condGraph != null) {
                     tmpComparator = tmpComparator
                             //Then, we want the most precise conditions first (for the method 
                             //identifyRedundantCalls, and also for better display)
                             .thenComparing(ExpressionCall::getCondition, 
-                                    Comparator.nullsLast(condUtils::compare));
+                                    Comparator.nullsLast(condGraph::compare));
                 }
                 this.rankComparator = tmpComparator
                         //If everything else fails, simply order by the attributes of the Condition
                         .thenComparing(ExpressionCall::getCondition, 
                                 Comparator.nullsLast(Comparator.naturalOrder()));
-                this.conditionUtils = condUtils;
+                this.conditionGraph = condGraph;
             }
             @Override
             public int compare(ExpressionCall call1, ExpressionCall call2) {
@@ -246,11 +246,11 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                 return log.exit(this.rankComparator.compare(call1, call2));
             }
             /**
-             * @return  The {@code ConditionUtils} used by this {@code Comparator}. Can be {@code null} 
+             * @return  The {@code ConditionGraph} used by this {@code Comparator}. Can be {@code null} 
              *          if none was used. 
              */
-            public ConditionUtils getConditionUtils() {
-                return conditionUtils;
+            public ConditionGraph getConditionGraphs() {
+                return conditionGraph;
             }
         }
         
@@ -279,7 +279,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          * 
          * @param calls     A {@code Collection} of {@code ExpressionCall}s to filter 
          *                  for redundant calls and to order based on their global mean rank.
-         * @param condUtils A {@code ConditionUtils} used to sort {@code Condition}s based on 
+         * @param condGraph A {@code ConditionGraph} used to sort {@code Condition}s based on 
          *                  their relations between each other, in case of equal ranks 
          *                  and equal gene IDs. Can be {@code null} if it is not needed 
          *                  to do such a sorting based on relations.
@@ -288,14 +288,14 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          * @see ExpressionCall.RankComparator
          */
         private static List<ExpressionCall> filterAndOrderByGlobalMeanRank(
-                Collection<ExpressionCall> calls, ConditionUtils conditionUtils) {
-            log.entry(calls, conditionUtils);
+                Collection<ExpressionCall> calls, ConditionGraph conditionGraph) {
+            log.entry(calls, conditionGraph);
             if (calls == null) {
                 return log.exit(null);
             }
             List<ExpressionCall> sortedCalls = new ArrayList<>(new HashSet<ExpressionCall>(calls));
             long startFilteringTimeInMs = System.currentTimeMillis();
-            Collections.sort(sortedCalls, new RankComparator(conditionUtils));
+            Collections.sort(sortedCalls, new RankComparator(conditionGraph));
             log.debug("Calls sorted in {} ms", System.currentTimeMillis() - startFilteringTimeInMs);
             return log.exit(sortedCalls);
         }
@@ -310,56 +310,56 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          * @param calls            A {@code Collection} of {@code ExpressionCall}s to filter. 
          *                         If the information of global mean rank or of Condition is missing, 
          *                         an {@code IllegalArgumentException} is thrown. 
-         * @param conditionUtils   A {@code ConditionUtils}, containing all the {@code Condition}s 
+         * @param conditionGraph   A {@code ConditionGraph}, containing all the {@code Condition}s 
          *                         related to {@code calls}. Otherwise, an {@code IllegalArgumentException} 
          *                         is thrown. 
          * @return                 A {@code Set} containing the {@code ExpressionCall}s that are redundant.
          * @throws IllegalArgumentException If the {@code Condition} of a provided {@code ExpressionCall} 
-         *                                  could not be found in the provided {@code ConditionUtils}, 
+         *                                  could not be found in the provided {@code ConditionGraph}, 
          *                                  or if an information of global mean rank or of Condition 
          *                                  was missing in an {@code ExpressionCall}.
-         * @see #identifyRedundantCalls(List, ConditionUtils)
-         * @see ConditionUtils#isConditionMorePrecise(Condition, Condition)
-         * @see ConditionUtils#getDescendantConditions(Condition)
+         * @see #identifyRedundantCalls(List, ConditionGraph)
+         * @see ConditionGraph#isConditionMorePrecise(Condition, Condition)
+         * @see ConditionGraph#getDescendantConditions(Condition)
          */
         public static Set<ExpressionCall> identifyRedundantCalls(Collection<ExpressionCall> calls, 
-                ConditionUtils conditionUtils) throws IllegalArgumentException {
-            log.entry(calls, conditionUtils);
+                ConditionGraph conditionGraph) throws IllegalArgumentException {
+            log.entry(calls, conditionGraph);
             
             //for the computations, we absolutely need to order the calls using RankComparator
-            return log.exit(identifyRedundantCalls(filterAndOrderByGlobalMeanRank(calls, conditionUtils), 
-                    conditionUtils));
+            return log.exit(identifyRedundantCalls(filterAndOrderByGlobalMeanRank(calls, conditionGraph), 
+                    conditionGraph));
             
         }
         
         /**
          * Identifies redundant {@code ExpressionCall}s using an already sorted {@code List}. 
          * This method performs exactly the same operation as {@link #identifyRedundantCalls(
-         * Collection, ConditionUtils)}, but is provided for performance issue: several methods, 
+         * Collection, ConditionGraph)}, but is provided for performance issue: several methods, 
          * in this class and outside, absolutely need to use a {@code List} of {@code ExpressionCall}s 
-         * sorted by the {@code RankComparator} using a {@code ConditionUtils}, which can be costly 
+         * sorted by the {@code RankComparator} using a {@code ConditionGraph}, which can be costly 
          * for considering relations between {@code Condition}s; it is then possible 
          * to sort a {@code List} of {@code ExpressionCall}s outside of this method, to reuse it 
          * for different method calls.
          * 
          * @param calls            A {@code List} of {@code ExpressionCall}s to filter, sorted using 
          *                         the {@code RankComparator}. 
-         * @param conditionUtils   A {@code ConditionUtils}, containing all the {@code Condition}s 
+         * @param conditionGraph   A {@code ConditionGraph}, containing all the {@code Condition}s 
          *                         related to {@code calls}. Otherwise, an {@code IllegalArgumentException} 
          *                         is thrown. 
          * @return                 A {@code Set} containing the {@code ExpressionCall}s that are redundant.
          * @throws IllegalArgumentException If the {@code Condition} of a provided {@code ExpressionCall} 
-         *                                  could not be found in the provided {@code ConditionUtils}, 
+         *                                  could not be found in the provided {@code ConditionGraph}, 
          *                                  or if an information of global mean rank or of Condition 
          *                                  was missing in an {@code ExpressionCall}, or if the list 
          *                                  was not sorted at least based on ranks.
          * @see ExpressionCall.RankComparator
-         * @see ConditionUtils#isConditionMorePrecise(Condition, Condition)
-         * @see ConditionUtils#getDescendantConditions(Condition)
+         * @see ConditionGraph#isConditionMorePrecise(Condition, Condition)
+         * @see ConditionGraph#getDescendantConditions(Condition)
          */
         public static Set<ExpressionCall> identifyRedundantCalls(List<ExpressionCall> calls, 
-                ConditionUtils conditionUtils) throws IllegalArgumentException {
-            log.entry(calls, conditionUtils);
+                ConditionGraph conditionGraph) throws IllegalArgumentException {
+            log.entry(calls, conditionGraph);
         
             long startFilteringTimeInMs = System.currentTimeMillis();
             
@@ -368,7 +368,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             ExpressionCall previousCall = null;
             for (ExpressionCall call: calls) {
                 //We cannot make sure that the List was ordered using a RankComparator 
-                //with a ConditionUtils, it would be too costly, but we perform a minimal check 
+                //with a ConditionGraph, it would be too costly, but we perform a minimal check 
                 //on ranks and conditions
                 if (call.getGlobalMeanRank() == null) {
                     throw log.throwing(new IllegalArgumentException("Missing rank for call: "
@@ -397,7 +397,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                 //check whether any of the validated Condition is a descendant 
                 //of the Condition of the iterated call
                 if (validatedCondition.isEmpty() || Collections.disjoint(validatedCondition, 
-                        conditionUtils.getDescendantConditions(call.getCondition()))) {
+                        conditionGraph.getDescendantConditions(call.getCondition()))) {
                     
                     log.trace("Valid call: {}", call);
                     validatedCalls.add(call);

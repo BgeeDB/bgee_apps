@@ -37,7 +37,7 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
-import org.bgee.model.expressiondata.ConditionUtils;
+import org.bgee.model.expressiondata.ConditionGraph;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
@@ -78,7 +78,7 @@ public class GenerateRankFile {
     private final static Logger log = LogManager.getLogger(GenerateRankFile.class.getName());
 //    
 //    /**
-//     * Functional interface created to be able to inject ConditionUtils by providing a supplier.
+//     * Functional interface created to be able to inject ConditionGraph by providing a supplier.
 //     * TODO: to remove once we'll have created an UtilsFactory in bgee-core 
 //     */
 //    @FunctionalInterface
@@ -456,24 +456,24 @@ public class GenerateRankFile {
 //    private final Uberon uberonOnt;
 //    
 //    /**
-//     * A {@code QuadriFunction} matching the constructor of {@code ConditionUtils}, 
+//     * A {@code QuadriFunction} matching the constructor of {@code ConditionGraph}, 
 //     * for injection purposes. 
 //     * TODO: to remove once we'll have created an UtilsFactory in bgee-core 
 //     */
 //    private final TriFunction<Collection<Condition>, Ontology<AnatEntity>, 
-//    Ontology<DevStage>, ConditionUtils> condUtilsSupplier;
+//    Ontology<DevStage>, ConditionGraph> condGraphSupplier;
 //    /**
 //     * A {@code Function} matching the constructor of {@code ExpressionCall.RankComparator}, 
 //     * for injection purposes. 
 //     * TODO: to remove once we'll have created an UtilsFactory in bgee-core 
 //     */
-//    private final Function<ConditionUtils, ExpressionCall.RankComparator> rankComparatorSupplier;
+//    private final Function<ConditionGraph, ExpressionCall.RankComparator> rankComparatorSupplier;
 //    /**
 //     * A {@code Function} matching the signature of the method of {@code ExpressionCall::identifyRedundantCalls}, 
 //     * for injection purposes. 
 //     * TODO: to remove once we'll have created an UtilsFactory in bgee-core 
 //     */
-//    private final BiFunction<List<ExpressionCall>, ConditionUtils, Set<ExpressionCall>> 
+//    private final BiFunction<List<ExpressionCall>, ConditionGraph, Set<ExpressionCall>> 
 //            redundantCallsFuncSupplier;
 //    
 //    
@@ -494,26 +494,26 @@ public class GenerateRankFile {
 //     * @param uberonOnt                 An {@code Uberon} utiliy to extract XRefs to BTO from.
 //     */
 //    public GenerateRankFile(Supplier<ServiceFactory> serviceFactorySupplier, Uberon uberonOnt) {
-//        this(serviceFactorySupplier, uberonOnt, ConditionUtils::new, ExpressionCall.RankComparator::new, 
+//        this(serviceFactorySupplier, uberonOnt, ConditionGraph::new, ExpressionCall.RankComparator::new, 
 //                ExpressionCall::identifyRedundantCalls);
 //    }
 //    /**
 //     * @param serviceFactorySupplier        A {@code Supplier} of {@code ServiceFactory}s 
 //     *                                      to be able to provide one to each thread.
 //     * @param uberonOnt                     An {@code Uberon} utiliy to extract XRefs to BTO from.
-//     * @param condUtilsSupplier             To inject {@code ConditionUtils} instances.
+//     * @param condGraphSupplier             To inject {@code ConditionGraph} instances.
 //     * @param rankComparatorSupplier        To inject {@code ExpressionCall.RankComparator} instances.
 //     * @param redundantCallsFuncSupplier    To inject the method {@code ExpressionCall::identifyRedundantCalls}.
 //     */
 //    //TODO: stop using these functional interfaces once we'll have created an UtilsFactory in bgee-core
 //    protected GenerateRankFile(Supplier<ServiceFactory> serviceFactorySupplier, Uberon uberonOnt, 
 //            TriFunction<Collection<Condition>, Ontology<AnatEntity>, Ontology<DevStage>, 
-//            ConditionUtils> condUtilsSupplier, 
-//            Function<ConditionUtils, ExpressionCall.RankComparator> rankComparatorSupplier, 
-//            BiFunction<List<ExpressionCall>, ConditionUtils, Set<ExpressionCall>> redundantCallsFuncSupplier) {
+//            ConditionGraph> condGraphSupplier, 
+//            Function<ConditionGraph, ExpressionCall.RankComparator> rankComparatorSupplier, 
+//            BiFunction<List<ExpressionCall>, ConditionGraph, Set<ExpressionCall>> redundantCallsFuncSupplier) {
 //        this.serviceFactorySupplier = serviceFactorySupplier;
 //        this.uberonOnt = uberonOnt;
-//        this.condUtilsSupplier = condUtilsSupplier;
+//        this.condGraphSupplier = condGraphSupplier;
 //        this.rankComparatorSupplier = rankComparatorSupplier;
 //        this.redundantCallsFuncSupplier = redundantCallsFuncSupplier;
 //    }
@@ -745,9 +745,9 @@ public class GenerateRankFile {
 //     *                              Note that it will be reordered. 
 //     * @param gene                  The {@code Gene} the {@code ExpressionCall}s are related to.
 //     * @param anatEntityOnt         An {@code Ontology} containing all the {@code AnatEntity}s 
-//     *                              of the related species. Will be used to obtain {@code ConditionUtils}s. 
+//     *                              of the related species. Will be used to obtain {@code ConditionGraph}s. 
 //     * @param devStageOnt           An {@code Ontology} containing all the {@code DevStage}s 
-//     *                              of the related species. Will be used to obtain {@code ConditionUtils}s.
+//     *                              of the related species. Will be used to obtain {@code ConditionGraph}s.
 //     * @param beanWriter            An {@code ICsvBeanWriter} used to write {@code ExpressionCallBean}s 
 //     *                              into a TSV file.
 //     * @param colToAttribute        An {@code Array} of {@code String}s providing the names 
@@ -786,9 +786,9 @@ public class GenerateRankFile {
 //     *                              Note that it will be reordered. 
 //     * @param gene                  The {@code Gene} the {@code ExpressionCall}s are related to.
 //     * @param anatEntityOnt         An {@code Ontology} containing all the {@code AnatEntity}s 
-//     *                              of the related species. Will be used to obtain {@code ConditionUtils}s. 
+//     *                              of the related species. Will be used to obtain {@code ConditionGraph}s. 
 //     * @param devStageOnt           An {@code Ontology} containing all the {@code DevStage}s 
-//     *                              of the related species. Will be used to obtain {@code ConditionUtils}s.
+//     *                              of the related species. Will be used to obtain {@code ConditionGraph}s.
 //     * @return                      A {@code Stream} of {@code ExpressionCallBean}s. The {@code Stream} 
 //     *                              is sorted, it is important, and the sort might be different 
 //     *                              than the input list of {@code ExpressionCall}s.
@@ -797,18 +797,18 @@ public class GenerateRankFile {
 //            Gene gene, Ontology<AnatEntity> anatEntityOnt, Ontology<DevStage> devStageOnt) {
 //        log.entry(singleGeneExprCalls, gene, anatEntityOnt, devStageOnt);
 //        
-//        //Instantiate a ConditionUtils for computations and for display purpose
-//        ConditionUtils conditionUtils = this.condUtilsSupplier.apply( 
+//        //Instantiate a ConditionGraph for computations and for display purpose
+//        ConditionGraph conditionGraph = this.condGraphSupplier.apply( 
 //                singleGeneExprCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()), 
 //                anatEntityOnt, devStageOnt);
 //
 //        //XXX: deactivate because too slow
 ////        //first, we rank the calls with the ExpressionCall.RankComparator, it is mandatory 
 ////        //for correct detection of redundant calls and consistency with the display. 
-////        Collections.sort(singleGeneExprCalls, this.rankComparatorSupplier.apply(conditionUtils));
+////        Collections.sort(singleGeneExprCalls, this.rankComparatorSupplier.apply(conditionGraph));
 ////        //identify redundant calls
 ////        Set<ExpressionCall> redundantCalls = this.redundantCallsFuncSupplier.apply(
-////                singleGeneExprCalls, conditionUtils);
+////                singleGeneExprCalls, conditionGraph);
 //        
 //        //map ExpressionCalls to ExpressionCallBean to be written in output file
 //        return log.exit(singleGeneExprCalls.stream().map(c -> {
@@ -818,8 +818,8 @@ public class GenerateRankFile {
 //            }
 //            
 //            Condition cond = c.getCondition();
-//            AnatEntity anatEntity = conditionUtils.getAnatEntity(cond);
-//            DevStage devStage = conditionUtils.getDevStage(cond);
+//            AnatEntity anatEntity = conditionGraph.getAnatEntity(cond);
+//            DevStage devStage = conditionGraph.getDevStage(cond);
 //            //generate a Map DataType -> presence/absence of data
 //            Map<DataType, Boolean> dataTypeToStatus = Arrays.stream(DataType.values())
 //                    .collect(Collectors.toMap(

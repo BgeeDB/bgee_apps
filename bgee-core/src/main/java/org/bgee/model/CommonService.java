@@ -6,6 +6,8 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.expressiondata.Condition;
@@ -35,7 +37,7 @@ public class CommonService extends Service {
         super(serviceFactory);
     }
     
-    //FIXME: there shouldn't be any ConditionService for now
+    //NOTE: there shouldn't be any ConditionService for now
     //This method should rather map selected CallService attributes to ConditionDAO.Attribute
 //    protected static Set<ConditionDAO.Attribute> convertConditionServiceAttrsToConditionDAOAttrs(
 //        Collection<ConditionService.Attribute> attributes) {
@@ -59,26 +61,36 @@ public class CommonService extends Service {
      * Map {@code ConditionTO} to a {@code Condition}. In case of single-species retrieval
      * of {@code ConditionTO}s, see {@link #mapConditionTOToCondition(ConditionTO, Integer)}.
      * 
-     * @param condTO    A {@code ConditionTO} that is the condition from db
-     *                  to map into {@code Condition}.
-     * @return          The mapped {@code Condition}.
+     * @param condTO        A {@code ConditionTO} that is the condition from db
+     *                      to map into {@code Condition}.
+     * @param anatEntity    The {@code AnatEntity} corresponding to the ID returned by
+     *                      {@link ConditionTO#getAnatEntityId()}.
+     * @param devStage      The {@code DevStage} corresponding to the ID returned by
+     *                      {@link ConditionTO#getStageId()}.
+     * @return              The mapped {@code Condition}.
      */
-    protected static Condition mapConditionTOToCondition(ConditionTO condTO) {
-        log.entry(condTO);
-        return log.exit(mapConditionTOToCondition(condTO, null));
+    protected static Condition mapConditionTOToCondition(ConditionTO condTO,
+            AnatEntity anatEntity, DevStage devStage) {
+        log.entry(condTO, anatEntity, devStage);
+        return log.exit(mapConditionTOToCondition(condTO, null, anatEntity, devStage));
     }
     /**
      * Map {@code ConditionTO} to a {@code Condition}.
      * 
-     * @param condTO    A {@code ConditionTO} that is the condition from db
-     *                  to map into {@code Condition}.
-     * @param speciesId An {@code Integer} that is the ID of the species for which
-     *                  the {@code ConditionTO}s were retrieved. Allows to avoid requesting
-     *                  this attribute from the {@code ConditionDAO} if only one species was requested.
-     * @return          The mapped {@code Condition}.
+     * @param condTO        A {@code ConditionTO} that is the condition from db
+     *                      to map into {@code Condition}.
+     * @param speciesId     An {@code Integer} that is the ID of the species for which
+     *                      the {@code ConditionTO}s were retrieved. Allows to avoid requesting
+     *                      this attribute from the {@code ConditionDAO} if only one species was requested.
+     * @param anatEntity    The {@code AnatEntity} corresponding to the ID returned by
+     *                      {@link ConditionTO#getAnatEntityId()}.
+     * @param devStage      The {@code DevStage} corresponding to the ID returned by
+     *                      {@link ConditionTO#getStageId()}.
+     * @return              The mapped {@code Condition}.
      */
-    protected static Condition mapConditionTOToCondition(ConditionTO condTO, Integer speciesId) {
-        log.entry(condTO, speciesId);
+    protected static Condition mapConditionTOToCondition(ConditionTO condTO, Integer speciesId,
+            AnatEntity anatEntity, DevStage devStage) {
+        log.entry(condTO, speciesId, anatEntity, devStage);
         if (condTO == null) {
             return log.exit(null);
         }
@@ -107,8 +119,9 @@ public class CommonService extends Service {
         if (ranks.isEmpty()) {
             ranks = null;
         }
-        return log.exit(new Condition(condTO.getAnatEntityId(), condTO.getStageId(),
-            speciesId != null? speciesId: condTO.getSpeciesId(), ranks));
+        //FIXME: implements use of propagatedMaxRanks
+        return log.exit(new Condition(anatEntity, devStage,
+            speciesId != null? speciesId: condTO.getSpeciesId(), ranks, null));
     }
     protected static ConditionTO mapConditionToConditionTO(int condId, int exprMappedCondId, 
             Condition cond) {

@@ -6,9 +6,10 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.expressiondata.baseelements.DataType;
 
 /**
@@ -17,12 +18,12 @@ import org.bgee.model.expressiondata.baseelements.DataType;
  * It could be easily extended to also manage other parameters, such as the sex of a sample, 
  * the strain, or other experimental conditions (gene knock-out, drug treatment, etc).
  * <p>
- * Users should acquire {@code Condition}s as part of a {@link ConditionUtils} or a {@link Call},
+ * Users should acquire {@code Condition}s as part of a {@link ConditionGraph} or a {@link Call},
  * using a {@link CallService}.
  * <p>
  * Note that this class implements {@code Comparable<Condition>}, allowing to perform 
  * simple comparisons based on the attributes of this class. For an ordering based 
- * on the relations between {@code Condition}s, see {@link ConditionUtils#compare(Condition, Condition)}.
+ * on the relations between {@code Condition}s, see {@link ConditionGraph#compare(Condition, Condition)}.
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
@@ -35,7 +36,7 @@ import org.bgee.model.expressiondata.baseelements.DataType;
 //TODO: for various reasons, I think this class should be single species, 
 //and simply have a mandatory speciesId attribute. Mapping between homologous conditions 
 //should be managed in a different way. 
-//TODO: I guess this means the ConditionUtils should use the new MultiSpeciesOntology mechanism, 
+//TODO: I guess this means the ConditionGraph should use the new MultiSpeciesOntology mechanism, 
 //to be able to perform computations over any species.
 //FIXME: provides the Species object rather than the speciesId
 //FIXME: in a second step, also provides the AnatEntity and DevStage objects rather than the IDs?
@@ -58,13 +59,13 @@ public class Condition implements Comparable<Condition> {
     //  ATTRIBUTES AND CONSTRUCTORS
     //*********************************
     /**
-     * @see #getAnatEntityId()
+     * @see #getAnatEntity()
      */
-    private final String anatEntityId;
+    private final AnatEntity anatEntity;
     /**
-     * @see #getDevStageId()
+     * @see #getDevStage()
      */
-    private final String devStageId;
+    private final DevStage devStage;
     /**
      * @see #getSpeciesId()
      */
@@ -82,29 +83,31 @@ public class Condition implements Comparable<Condition> {
     /**
      * Constructor providing the IDs of the anatomical entity, the developmental stage, 
      * and species ID of this {@code Condition}.
-     * 
-     * @param anatEntityId  A {@code String} that is the ID of the anatomical entity 
-     *                      used in this gene expression condition.
-     * @param devStageId    A {@code String} that is the ID of the developmental stage  
-     *                      used in this gene expression condition.
+     *
+     * @param anatEntity    The {@code AnatEntity} used in this gene expression condition,
+     *                      without the descriptions loaded for lower memory usage.
+     * @param devStage      The {@code DevStage} used in this gene expression condition,
+     *                      without the descriptions loaded for lower memory usage.
      * @param speciesId     An {@code Integer} that is the ID of the species  
      *                      used in this gene expression condition.
-     * @throws IllegalArgumentException If both {@code anatEntity} and {@code devStage} are blanks 
+     * @throws IllegalArgumentException If both {@code anatEntity} and {@code devStage} are {@code null}, 
      *                                  or if {@code speciesId} is less than 1.
      */
-    public Condition(String anatEntityId, String devStageId, int speciesId)
+    public Condition(AnatEntity anatEntity, DevStage devStage, int speciesId)
             throws IllegalArgumentException {
-        this(anatEntityId, devStageId, speciesId, null, null);
+        this(anatEntity, devStage, speciesId, null, null);
     }
 
     /**
      * Constructor providing the IDs of the anatomical entity, the developmental stage, 
      * and species ID of this {@code Condition}.
-     * 
-     * @param anatEntityId                  A {@code String} that is the ID of the anatomical entity
-     *                                      used in this gene expression condition.
-     * @param devStageId                    A {@code String} that is the ID of the developmental stage
-     *                                      used in this gene expression condition.
+     *
+     * @param anatEntity                    The {@code AnatEntity} used in this gene expression
+     *                                      condition, without the descriptions loaded
+     *                                      for lower memory usage.
+     * @param devStage                      The {@code DevStage} used in this gene expression
+     *                                      condition, without the descriptions loaded
+     *                                      for lower memory usage.
      * @param speciesId                     An {@code Integer} that is the ID of the species
      *                                      used in this gene expression condition.
      * @param maxRanksByDataType            A {@code Map} where keys are {@code DataType}s,
@@ -120,19 +123,19 @@ public class Condition implements Comparable<Condition> {
      * @throws IllegalArgumentException     If both {@code anatEntity} and {@code devStage} are blanks
      *                                      or if {@code speciesId} is less than 1.
      */
-    public Condition(String anatEntityId, String devStageId, int speciesId,
+    public Condition(AnatEntity anatEntity, DevStage devStage, int speciesId,
             Map<DataType, BigDecimal> maxRanksByDataType,
             Map<DataType, BigDecimal> globalMaxRanksByDataType) throws IllegalArgumentException {
-        if (StringUtils.isBlank(anatEntityId) && StringUtils.isBlank(devStageId)) {
+        if (anatEntity == null && devStage == null) {
             throw log.throwing(new IllegalArgumentException(
-                    "The anat. entity ID and the dev. stage ID cannot be both blank."));
+                    "The anat. entity and the dev. stage cannot be both null."));
         }
         if (speciesId <= 0) {
             throw log.throwing(new IllegalArgumentException(
                 "The species ID cannot be null or equals or less than 1."));
         }
-        this.anatEntityId       = anatEntityId;
-        this.devStageId         = devStageId;
+        this.anatEntity         = anatEntity;
+        this.devStage           = devStage;
         this.speciesId          = speciesId;
         this.maxRanksByDataType = Collections.unmodifiableMap(maxRanksByDataType == null?
                                     new HashMap<>(): maxRanksByDataType);
@@ -146,39 +149,57 @@ public class Condition implements Comparable<Condition> {
     /**
      * Determine whether the other {@code Condition} is more precise than this {@code Condition}. 
      * This method is only used for convenience, and actually delegates to 
-     * {@link ConditionUtils#isConditionMorePrecise(Condition, Condition)}, with this {@code Condition} 
+     * {@link ConditionGraph#isConditionMorePrecise(Condition, Condition)}, with this {@code Condition} 
      * as first argument, and {@code other} as second argument. See this other method's description 
      * for more information.
      * 
      * @param other     A {@code Condition} to be checked whether it is more precise 
      *                  than this {@code Condition}.
-     * @param utils     A {@code ConditionUtils} used to determine relations between {@code Condition}s. 
+     * @param graph     A {@code ConditionGraph} used to determine relations between {@code Condition}s. 
      *                  It should contain this {@code Condition} and {@code other}.
      * @return          {@code true} if {@code other} is more precise than this {@code Condition}. 
      * @throws IllegalArgumentException If this {@code Condition}, or {@code other}, are not registered to 
-     *                                  {@code utils}.
+     *                                  {@code graph}.
      */
-    public boolean isConditionMorePrecise(Condition other, ConditionUtils utils) throws IllegalArgumentException {
-        log.entry(other, utils);
-        return log.exit(utils.isConditionMorePrecise(this, other));
+    public boolean isConditionMorePrecise(Condition other, ConditionGraph graph) throws IllegalArgumentException {
+        log.entry(other, graph);
+        return log.exit(graph.isConditionMorePrecise(this, other));
     }
 
     //*********************************
     //  GETTERS
     //*********************************
     /**
+     * @return  The {@code AnatEntity} used in this gene expression condition,
+     *          without the descriptions loaded for lower memory usage.
+     *          Can be {@code null}.
+     */
+    public AnatEntity getAnatEntity() {
+        return anatEntity;
+    }
+    /**
      * @return  A {@code String} that is the ID of the anatomical entity 
      *          used in this gene expression condition.
+     *          Can be {@code null}.
      */
     public String getAnatEntityId() {
-        return anatEntityId;
+        return anatEntity == null? null: anatEntity.getId();
+    }
+    /**
+     * @return  The {@code DevStage} used in this gene expression condition,
+     *          without the descriptions loaded for lower memory usage.
+     *          Can be {@code null}.
+     */
+    public DevStage getDevStage() {
+        return devStage;
     }
     /**
      * @return  A {@code String} that is the ID of the developmental stage 
      *          used in this gene expression condition.
+     *          Can be {@code null}.
      */
     public String getDevStageId() {
-        return devStageId;
+        return devStage == null? null: devStage.getId();
     }
     /**
      * @return  An {@code Integer} that is the ID of the species 
@@ -210,12 +231,12 @@ public class Condition implements Comparable<Condition> {
     //*********************************
     /**
      * Performs a simple comparison based on the attributes of this class. For an ordering based 
-     * on the relations between {@code Condition}s, see {@link ConditionUtils#compare(Condition, Condition)}.
+     * on the relations between {@code Condition}s, see {@link ConditionGraph#compare(Condition, Condition)}.
      * 
      * @param other A {@code Condition} to be compared to this one.
      * @return      a negative {@code int}, zero, or a positive {@code int} 
      *              as the first argument is less than, equal to, or greater than the second.
-     * @see ConditionUtils#compare(Condition, Condition)
+     * @see ConditionGraph#compare(Condition, Condition)
      */
     @Override
     public int compareTo(Condition other) {
@@ -226,8 +247,8 @@ public class Condition implements Comparable<Condition> {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((anatEntityId == null) ? 0 : anatEntityId.hashCode());
-        result = prime * result + ((devStageId == null) ? 0 : devStageId.hashCode());
+        result = prime * result + ((anatEntity == null) ? 0 : anatEntity.hashCode());
+        result = prime * result + ((devStage == null) ? 0 : devStage.hashCode());
         result = prime * result + ((speciesId == null) ? 0 : speciesId.hashCode());
         //Note that we don't rely on maxRanksByDataType and globalMaxRanksByDataType on purpose.
         return result;
@@ -244,18 +265,18 @@ public class Condition implements Comparable<Condition> {
             return false;
         }
         Condition other = (Condition) obj;
-        if (anatEntityId == null) {
-            if (other.anatEntityId != null) {
+        if (anatEntity == null) {
+            if (other.anatEntity != null) {
                 return false;
             }
-        } else if (!anatEntityId.equals(other.anatEntityId)) {
+        } else if (!anatEntity.equals(other.anatEntity)) {
             return false;
         }
-        if (devStageId == null) {
-            if (other.devStageId != null) {
+        if (devStage == null) {
+            if (other.devStage != null) {
                 return false;
             }
-        } else if (!devStageId.equals(other.devStageId)) {
+        } else if (!devStage.equals(other.devStage)) {
             return false;
         }
         if (speciesId == null) {
@@ -272,8 +293,8 @@ public class Condition implements Comparable<Condition> {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("Condition [anatEntityId=").append(anatEntityId)
-               .append(", devStageId=").append(devStageId)
+        builder.append("Condition [anatEntity=").append(anatEntity)
+               .append(", devStage=").append(devStage)
                .append(", speciesId=").append(speciesId)
                .append(", maxRanksByDataType=").append(maxRanksByDataType)
                .append(", globalMaxRanksByDataType=").append(globalMaxRanksByDataType)

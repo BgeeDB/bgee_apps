@@ -3,7 +3,6 @@ package org.bgee.pipeline.expression;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -57,7 +56,7 @@ import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
-import org.bgee.model.expressiondata.ConditionUtils;
+import org.bgee.model.expressiondata.ConditionGraph;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
@@ -187,22 +186,22 @@ public class InsertPropagatedCalls extends CallService {
     /**
      * A {@code ConcurrentMap} where keys are {@code Condition}s, the associated value
      * being a {@code Set} of {@code Condition}s that are their ancestral conditions,
-     * as retrieved in the method {@link #propagatePipelineCalls(Map, ConditionUtils)}.
-     * This {@code ConcurrentMap} serves as a cache, to not query the {@code ConditionUtils}
+     * as retrieved in the method {@link #propagatePipelineCalls(Map, ConditionGraph)}.
+     * This {@code ConcurrentMap} serves as a cache, to not query the {@code ConditionGraph}
      * each time. 
      */
-    //XXX: should a similar mechanism be directly implemented in ConditionUtils?
+    //XXX: should a similar mechanism be directly implemented in ConditionGraph?
     //Seems complicated and might not worth it in all situations.
     //But it seems to result in a 30% speed increase in this class.
     private final ConcurrentMap<Condition, Set<Condition>> condToAncestors;
     /**
      * A {@code ConcurrentMap} where keys are {@code Condition}s, the associated value
      * being a {@code Set} of {@code Condition}s that are their descendant conditions,
-     * as retrieved in the method {@link #propagatePipelineCalls(Map, ConditionUtils)}.
-     * This {@code ConcurrentMap} serves as a cache, to not query the {@code ConditionUtils}
+     * as retrieved in the method {@link #propagatePipelineCalls(Map, ConditionGraph)}.
+     * This {@code ConcurrentMap} serves as a cache, to not query the {@code ConditionGraph}
      * each time. 
      */
-    //XXX: should a similar mechanism be directly implemented in ConditionUtils?
+    //XXX: should a similar mechanism be directly implemented in ConditionGraph?
     //Seems complicated and might not worth it in all situations.
     //But it seems to result in a 30% speed increase in this class.
     private final ConcurrentMap<Condition, Set<Condition>> condToDescendants;
@@ -1373,13 +1372,12 @@ public class InsertPropagatedCalls extends CallService {
             
             //First, we retrieve the conditions already present in database
             final Map<Integer, Condition> condMap = Collections.unmodifiableMap(
-                    this.performConditionTOQuery(mainManager.getConditionDAO())
-                    .collect(Collectors.toMap(cTO -> cTO.getId(), cTO -> mapConditionTOToCondition(cTO))));
+                    this.loadConditionMap(this.speciesId, this.conditionParams, null));
             log.info("{} Conditions already inserted for species {}", condMap.size(), speciesId);
 
             // We use all existing conditions in the species, and infer all propagated conditions
             log.info("Starting condition inference...");
-            ConditionUtils conditionUtils = new ConditionUtils(condMap.values(), true, true,
+            ConditionGraph conditionGraph = new ConditionGraph(condMap.values(), true, true,
                 this.getServiceFactory());
             log.info("Done condition inference.");
             
@@ -1432,7 +1430,7 @@ public class InsertPropagatedCalls extends CallService {
                     
                     // We propagate calls. Each Set contains all propagated calls for one gene
                     final Stream<Set<PipelineCall>> propagatedCalls = this.generatePropagatedCalls(
-                            new HashSet<>(subsetGeneIds), condMap, conditionUtils, rawCallDAO, expExprDAO);
+                            new HashSet<>(subsetGeneIds), condMap, conditionGraph, rawCallDAO, expExprDAO);
                     
                     //Provide the calls to insert to the Thread managing the insertions
                     //through the dedicated BlockingQueue
@@ -1553,9 +1551,9 @@ public class InsertPropagatedCalls extends CallService {
      *                      containing all {@code ExpressionCall}s for one gene.
      */
     private Stream<Set<PipelineCall>> generatePropagatedCalls(Set<Integer> geneIds,
-            Map<Integer, Condition> condMap, ConditionUtils conditionUtils, 
+            Map<Integer, Condition> condMap, ConditionGraph conditionGraph, 
             RawExpressionCallDAO rawCallDAO, ExperimentExpressionDAO expExprDAO) {
-        log.entry(geneIds, condMap, conditionUtils, rawCallDAO, expExprDAO);
+        log.entry(geneIds, condMap, conditionGraph, rawCallDAO, expExprDAO);
         
         log.trace(COMPUTE_MARKER, "Creating Splitereator with DAO queries...");
         this.checkErrorOccurred();
@@ -1588,7 +1586,7 @@ public class InsertPropagatedCalls extends CallService {
                 //propagatePipelineCalls returns only the new propagated calls, 
                 //we need to add the original calls to the Map for following steps
                 Map<PipelineCall, Set<PipelineCallData>> calls = 
-                    this.propagatePipelineCalls(g, conditionUtils);
+                    this.propagatePipelineCalls(g, conditionGraph);
                 calls.putAll(g);
                 return calls;
             })
@@ -1624,26 +1622,6 @@ public class InsertPropagatedCalls extends CallService {
     //*************************************************************************
     // METHODS PERFORMING THE QUERIES TO THE DAOs
     //*************************************************************************
-    /**
-     * Perform query to retrieve conditions without the post-processing of 
-     * the results returned by {@code DAO}s.
-     * 
-     * @param condDAO   The {@code ConditionDAO} to use to retrieve {@code ConditionTO}s
-     *                  from data source.
-     * @return          The {@code Stream} of {@code ConditionTO}s.
-     */
-    private Stream<ConditionTO> performConditionTOQuery(ConditionDAO condDAO) {
-        log.entry(condDAO);
-        
-        Stream<ConditionTO> conds = condDAO
-            .getConditionsBySpeciesIds(Arrays.asList(this.speciesId), this.conditionParams, null)
-            //retrieve the Stream resulting from the query. Note that the query is not executed 
-            //as long as the Stream is not consumed (lazy-loading).
-            .stream();
-
-        return log.exit(conds);
-    }
-
     /**
      * Perform query to retrieve expressed calls without the post-processing of 
      * the results returned by {@code DAO}s.
@@ -1715,30 +1693,30 @@ public class InsertPropagatedCalls extends CallService {
     
     /**
      * Propagate {@code ExpressionCall}s to descendant and ancestor conditions 
-     * from {@code conditionUtils}.
+     * from {@code conditionGraph}.
      * <p>
      * Returned {@code ExpressionCall}s have {@code DataPropagation}, {@code ExpressionSummary}, 
      * and {@code DataQuality} equal to {@code null}. 
      *  
      * @param calls             A {@code Collection} of {@code ExpressionCall}s to be propagated.
-     * @param conditionUtils    A {@code ConditionUtils} containing at least anat. entity
+     * @param conditionGraph    A {@code ConditionGraph} containing at least anat. entity
      *                          {@code Ontology} to use for the propagation.
      * @return                  A {@code Map} where keys are {@code PipelineCall}, the associated
      *                          values are {@code Set}s of {@code PipelineCallData}. 
-     * @throws IllegalArgumentException If {@code calls} or {@code conditionUtils} are {@code null},
+     * @throws IllegalArgumentException If {@code calls} or {@code conditionGraph} are {@code null},
      *                                  empty.
      */
     private Map<PipelineCall, Set<PipelineCallData>> propagatePipelineCalls(
-            Map<PipelineCall, Set<PipelineCallData>> data, ConditionUtils conditionUtils)
+            Map<PipelineCall, Set<PipelineCallData>> data, ConditionGraph conditionGraph)
                 throws IllegalArgumentException {
-        log.entry(data, conditionUtils);
+        log.entry(data, conditionGraph);
         log.trace(COMPUTE_MARKER, "Starting to propagate {} PipelineCalls.", data.size());
 
         Map<PipelineCall, Set<PipelineCallData>> propagatedData = new HashMap<>();
         this.checkErrorOccurred();
 
         assert data != null && !data.isEmpty();
-        assert conditionUtils != null;
+        assert conditionGraph != null;
         
         Set<PipelineCall> calls = data.keySet();
     
@@ -1746,8 +1724,8 @@ public class InsertPropagatedCalls extends CallService {
         assert !calls.stream().anyMatch(c -> !c.getIsObservedData()); 
 //        // Here, no calls should include non-observed data
 //        assert !calls.stream().anyMatch(c -> !c.getDataPropagation().getIncludingObservedData()); 
-        // Check conditionUtils contains all conditions of calls
-        assert conditionUtils.getConditions().containsAll(
+        // Check conditionGraph contains all conditions of calls
+        assert conditionGraph.getConditions().containsAll(
                 calls.stream().map(c -> c.getCondition()).collect(Collectors.toSet()));
 
         //*****************************
@@ -1773,7 +1751,7 @@ public class InsertPropagatedCalls extends CallService {
                     curCall.getCondition());
             Set<Condition> ancestorConditions = this.condToAncestors.computeIfAbsent(
                     curCall.getCondition(), 
-                    k -> conditionUtils.getAncestorConditions(k));
+                    k -> conditionGraph.getAncestorConditions(k));
             log.trace(COMPUTE_MARKER, "Done retrieving ancestral conditions for {}: {}.", 
                     curCall.getCondition(), ancestorConditions.size());
             log.trace("Ancestor conditions: {}", ancestorConditions);
@@ -1788,7 +1766,7 @@ public class InsertPropagatedCalls extends CallService {
                     curCall.getCondition());
             Set<Condition> descendantConditions = this.condToDescendants.computeIfAbsent(
                     curCall.getCondition(), 
-                    k -> conditionUtils.getDescendantConditions(
+                    k -> conditionGraph.getDescendantConditions(
                             k, false, false, NB_SUBLEVELS_MAX, null));
             log.trace(COMPUTE_MARKER, "Done retrieving descendant conditions for {}: {}.", 
                     curCall.getCondition(), descendantConditions.size());

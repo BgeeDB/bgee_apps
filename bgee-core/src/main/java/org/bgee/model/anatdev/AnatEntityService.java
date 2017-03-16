@@ -29,7 +29,7 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
- * @version Bgee 13, Aug. 2016
+ * @version Bgee 14 Mar. 2017
  * @since   Bgee 13, Nov. 2015
 */
 public class AnatEntityService extends Service {
@@ -45,17 +45,33 @@ public class AnatEntityService extends Service {
     }
     
     /**
-     * Retrieve {@code AnatEntity}s for the requested species IDs. If several species IDs 
-     * are provided, the {@code AnatEntity}s existing in any of them are retrieved. 
+     * Retrieve {@code AnatEntity}s for the requested species IDs, with all descriptions loaded.
+     * If several species IDs are provided, the {@code AnatEntity}s existing in any of them are retrieved. 
      *      
      * @param speciesIds    A {@code Collection} of {@code Integer}s that are IDs of species 
      *                      for which to return the {@code AnatEntity}s.
      * @return              A {@code Stream} of {@code AnatEntity}s retrieved for the requested 
-     *                      species IDs.
+     *                      species IDs, with all descriptions loaded.
      */
     public Stream<AnatEntity> loadAnatEntitiesBySpeciesIds(Collection<Integer> speciesIds) {
         log.entry(speciesIds);
-        return log.exit(this.loadAnatEntities(speciesIds, true, null));
+        return log.exit(this.loadAnatEntities(speciesIds, true, null, true));
+    }
+    /**
+     * Retrieve {@code AnatEntity}s for the requested species IDs.
+     * If several species IDs are provided, the {@code AnatEntity}s existing in any of them are retrieved. 
+     *      
+     * @param speciesIds        A {@code Collection} of {@code Integer}s that are IDs of species 
+     *                          for which to return the {@code AnatEntity}s.
+     * @param withDescription   A {@code boolean} defining whether the description of the {@code AnatEntity}s
+     *                          should be retrieved (higher memory usage).
+     * @return                  A {@code Stream} of {@code AnatEntity}s retrieved for the requested 
+     *                          species IDs.
+     */
+    public Stream<AnatEntity> loadAnatEntitiesBySpeciesIds(Collection<Integer> speciesIds,
+            boolean withDescription) {
+        log.entry(speciesIds);
+        return log.exit(this.loadAnatEntities(speciesIds, true, null, withDescription));
     }
     
     /**
@@ -71,17 +87,20 @@ public class AnatEntityService extends Service {
      *                          of the requested species (if {@code false} or {@code null}).
      * @param anatEntitiesIds   A {@code Collection} of {@code String}s that are IDs of anatomical
      *                          entities to retrieve. Can be {@code null} or empty.
+     * @param withDescription   A {@code boolean} defining whether the description of the {@code AnatEntity}s
+     *                          should be retrieved (higher memory usage).
      * @return                  A {@code Stream} of {@code AnatEntity}s retrieved for the requested parameters.
      */
+    //TODO: unit test with/without description
     public Stream<AnatEntity> loadAnatEntities(Collection<Integer> speciesIds, 
-            Boolean anySpecies, Collection<String> anatEntitiesIds) {
-        log.entry(speciesIds, anySpecies, anatEntitiesIds);
+            Boolean anySpecies, Collection<String> anatEntitiesIds, boolean withDescription) {
+        log.entry(speciesIds, anySpecies, anatEntitiesIds, withDescription);
         
         return log.exit(this.getDaoManager().getAnatEntityDAO().getAnatEntities(
                     speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds), 
                     anySpecies, 
                     anatEntitiesIds == null? null: new HashSet<>(anatEntitiesIds), 
-                    null)
+                    withDescription? null: EnumSet.complementOf(EnumSet.of(AnatEntityDAO.Attribute.DESCRIPTION)))
                 .stream()
                 .map(AnatEntityService::mapFromTO));
     }
@@ -104,8 +123,8 @@ public class AnatEntityService extends Service {
                 .map(AnatEntityService::mapFromTO));
     }
 
-    //FIXME: a similar method should be part of the Ontology or OntologyService classes, 
-    //with a better returned value. To be written.
+    //TODO: replace all use of this method by use of AnatEntityOntology loaded
+    //with correct relation types and status
     @Deprecated
     public Map<String, Set<String>> loadDirectIsAPartOfRelationships(Collection<Integer> speciesIds) {
         log.entry(speciesIds);

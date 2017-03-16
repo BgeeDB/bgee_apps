@@ -120,7 +120,7 @@ public class OntologyServiceTest extends TestAncestor {
         Stream<AnatEntity> anatEntityStream1 = anatEntities1.stream();
         Set<String> expAnatEntityIds1 = new HashSet<String>(
         		Arrays.asList("UBERON:0001", "UBERON:0002", "UBERON:0002p", "UBERON:0003"));
-        when(anatEntityService.loadAnatEntities(speciesIds, true, expAnatEntityIds1))
+        when(anatEntityService.loadAnatEntities(speciesIds, true, expAnatEntityIds1, true))
         	.thenReturn(anatEntityStream1);
 
         Set<AnatEntity> anatEntities2 = new HashSet<>(Arrays.asList(
@@ -130,7 +130,7 @@ public class OntologyServiceTest extends TestAncestor {
         Stream<AnatEntity> anatEntityStream2 = anatEntities2.stream();
         Set<String> expAnatEntityIds2 = new HashSet<String>(
         		Arrays.asList("UBERON:0001", "UBERON:0002", "UBERON:0002p"));
-        when(anatEntityService.loadAnatEntities(speciesIds, true, expAnatEntityIds2))
+        when(anatEntityService.loadAnatEntities(speciesIds, true, expAnatEntityIds2, true))
         	.thenReturn(anatEntityStream2);
 
         Set<AnatEntity> anatEntities3 = new HashSet<>(Arrays.asList(
@@ -139,7 +139,7 @@ public class OntologyServiceTest extends TestAncestor {
         Stream<AnatEntity> anatEntityStream3 = anatEntities3.stream();
         Set<String> expAnatEntityIds3 = new HashSet<String>(
         		Arrays.asList("UBERON:0002", "UBERON:0002p"));
-        when(anatEntityService.loadAnatEntities(speciesIds, true, expAnatEntityIds3))
+        when(anatEntityService.loadAnatEntities(speciesIds, true, expAnatEntityIds3, true))
         	.thenReturn(anatEntityStream3);
 
         
@@ -277,7 +277,7 @@ public class OntologyServiceTest extends TestAncestor {
         Stream<AnatEntity> anatEntityStream1 = anatEntities.stream();
         Set<String> expAnatEntityIds1 = new HashSet<String>(
                 Arrays.asList("UBERON:0001", "UBERON:0002", "UBERON:0003", "UBERON:0004"));
-        when(anatEntityService.loadAnatEntities(speciesIds, true, expAnatEntityIds1))
+        when(anatEntityService.loadAnatEntities(speciesIds, true, expAnatEntityIds1, true))
             .thenReturn(anatEntityStream1);
 
         TaxonConstraintService tcService = mock(TaxonConstraintService.class);

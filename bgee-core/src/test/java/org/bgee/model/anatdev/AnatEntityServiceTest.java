@@ -110,7 +110,7 @@ public class AnatEntityServiceTest extends TestAncestor {
                 new AnatEntity("UBERON:0011606", "hyomandibular bone", "hyomandibular bone description"));
         AnatEntityService service = new AnatEntityService(serviceFactory);
         assertEquals("Incorrect anat. entities", expectedAnatEntity,
-                service.loadAnatEntities(speciesIds, true, anatEntityIds).collect(Collectors.toList()));
+                service.loadAnatEntities(speciesIds, true, anatEntityIds, true).collect(Collectors.toList()));
     }
     
     /**

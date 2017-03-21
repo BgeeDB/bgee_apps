@@ -80,14 +80,14 @@ public class TestTest extends TestAncestor {
 	@Test
 	public void testGetSpecies() {
 		ServiceFactory factory = new ServiceFactory();
-		// log.debug(factory.getGeneService().loadGeneById("ENSG00000244734"));
-		Set<Species> speciesSet = factory.getSpeciesService().loadSpeciesInDataGroups(true);// loadSpeciesByIds(Collections.singleton("9606"),
-																							// false));
+		Set<Species> speciesSet = factory.getSpeciesService().loadSpeciesInDataGroups(true);
 		for (Species species : speciesSet) {
 			log.debug(species.getId() + "\t" + species.getName());
 		}
 		factory.close();
 	}
+	
+	
 	
 	@Test
 	public void testTissueSpecificityBasedOnRankComparison() throws PageNotFoundException, IOException{

@@ -1,3 +1,4 @@
+package org.bgee.model.expressiondata.multispecies;
 //package org.bgee.model.analysis;
 //
 //import static org.junit.Assert.assertEquals;
@@ -44,7 +45,7 @@
 //import org.junit.Test;
 //
 ///**
-// * This class holds the unit tests for the {@code AnalysisService} class.
+// * This class holds the unit tests for the {@code MultiSpeciesCallService} class.
 // * 
 // * @author  Valentine Rech de Laval
 // * @version Bgee 14, Feb. 2017
@@ -53,7 +54,7 @@
 //public class AnalysisServiceTest extends TestAncestor {
 //
 //    /**
-//     * Test the method {@link AnalysisService#loadMultiSpeciesExpressionCalls(Gene, Collection)}.
+//     * Test the method {@link MultiSpeciesCallService#loadMultiSpeciesExpressionCalls(Gene, Collection)}.
 //     */
 //    @Test
 //    @Ignore("Test ignored until it is re-implemented following many modifications.")
@@ -202,7 +203,7 @@
 //        when(callService.loadExpressionCalls(spId3, callFilter100, null, orderAttrs))
 //            .thenReturn(Arrays.asList(call6).stream());
 //        
-//        AnalysisService analysisService = new AnalysisService(serviceFactory);
+//        MultiSpeciesCallService analysisService = new MultiSpeciesCallService(serviceFactory);
 //        Gene gene = new Gene("sp1g1", spId1, null, null, new Species(spId1, null, null, null, null, null, taxId1, null, null));
 //        Map<String, Set<MultiSpeciesCall<ExpressionCall>>> actual = 
 //            analysisService.loadMultiSpeciesExpressionCalls(gene, speciesIds);

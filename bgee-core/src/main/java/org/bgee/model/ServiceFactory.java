@@ -4,13 +4,13 @@ import java.util.Properties;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.analysis.AnalysisService;
 import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.anatdev.DevStageService;
 import org.bgee.model.anatdev.TaxonConstraintService;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.ConditionService;
+import org.bgee.model.expressiondata.multispecies.MultiSpeciesCallService;
 import org.bgee.model.file.DownloadFileService;
 import org.bgee.model.file.SpeciesDataGroupService;
 import org.bgee.model.gene.GeneService;
@@ -160,11 +160,11 @@ public class ServiceFactory implements AutoCloseable {
     }
     
     /**
-     * @return A newly instantiated {@code AnalysisService}
+     * @return A newly instantiated {@code MultiSpeciesCallService}
      */
-    public AnalysisService getAnalysisService() {
+    public MultiSpeciesCallService getMultiSpeciesCallService() {
         log.entry();
-        return log.exit(new AnalysisService(this));
+        return log.exit(new MultiSpeciesCallService(this));
     }
 
     /**

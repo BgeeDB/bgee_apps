@@ -1,4 +1,4 @@
-package org.bgee.model.expressiondata;
+package org.bgee.model.expressiondata.multispecies;
 
 import java.math.BigDecimal;
 import java.util.Collection;
@@ -13,6 +13,7 @@ import org.bgee.model.CommonService;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntitySimilarity;
 import org.bgee.model.anatdev.DevStageSimilarity;
+import org.bgee.model.expressiondata.Call;
 
 /**
  * Class describing multi-species calls.
@@ -22,22 +23,15 @@ import org.bgee.model.anatdev.DevStageSimilarity;
  * @version Bgee 13, Aug. 2016
  * @since   Bgee 13, Apr. 2016
  */
-public class MultiSpeciesCall<T extends Call<?, ?>> extends CommonService {
+public class MultiSpeciesCall<T extends Call<?, ?>> {
 
     private static final Logger log = LogManager.getLogger(MultiSpeciesCall.class.getName());
 
-    /**
-     * An {@code AnatEntitySimilarity} that is the group of homologous anatomical entities
-     * of this {@code MultiSpeciesCall}.
-     */
-    private final AnatEntitySimilarity anatSimilarity;
     
-    /**
-     * A {@code DevStageSimilarity} that is the group of developmental stages
-     * of this {@code MultiSpeciesCall}.
-     */
-    private final DevStageSimilarity stageSimilarity;
-    
+    private final MultiSpeciesCondition multiSpeciesCondition;
+    //FIXME: we should have a class describing groups of orthologous genes, storing the taxon ID,
+    //OMA ID etc, in the same way we have a MultiSpeciesCondition. The 3 following attributes
+    //should then be replaced.
     /**
      * A {@code Integer} that is the ID of the taxon of this {@code MultiSpeciesCall}.
      */
@@ -84,13 +78,11 @@ public class MultiSpeciesCall<T extends Call<?, ?>> extends CommonService {
      * @param conservationScore A {@code BigDecimal} that is the conservation score
      *                          of this {@code MultiSpeciesCall}.
      */
-    public MultiSpeciesCall(AnatEntitySimilarity anatSimilarity, DevStageSimilarity stageSimilarity,
+    public MultiSpeciesCall(MultiSpeciesCondition cond,
             Integer taxonId, Integer omaNodeId, Collection<String> orthologousGeneIds, Collection<T> calls,
-            BigDecimal conservationScore, ServiceFactory serviceFactory) {
-        super(serviceFactory);
+            BigDecimal conservationScore) {
 
-        this.anatSimilarity = anatSimilarity;
-        this.stageSimilarity = stageSimilarity;
+        this.multiSpeciesCondition = cond;
         this.taxonId = taxonId;
         this.omaNodeId = omaNodeId;
         this.orthologousGeneIds = Collections.unmodifiableSet(
@@ -99,21 +91,9 @@ public class MultiSpeciesCall<T extends Call<?, ?>> extends CommonService {
         this.conservationScore = conservationScore;
     }
     
-    /**
-     * @return  The {@code AnatEntitySimilarity} that is the group of homologous anatomical entities
-     *          of this {@code MultiSpeciesCall}.
-     */
-    public AnatEntitySimilarity getAnatEntitySimilarity() {
-        return anatSimilarity;
-    }
 
-
-    /**
-     * @return  The {@code DevStageSimilarity} that is the group of developmental stages
-     *          of this {@code MultiSpeciesCall}.
-     */
-    public DevStageSimilarity getDevStageSimilarity() {
-        return stageSimilarity;
+    public MultiSpeciesCondition getMultiSpeciesCondition() {
+        return multiSpeciesCondition;
     }
 
     /**
@@ -160,25 +140,26 @@ public class MultiSpeciesCall<T extends Call<?, ?>> extends CommonService {
      * @return  The {@code Set} of {@code Integer}s that are the IDs of the species of 
      *          orthologous genes of this {@code MultiSpeciesCall}.
      */
-    public Set<Integer> loadSpeciesIds() {
+    public Set<Integer> getSpeciesIds() {
         //FIXME: to reimplement
         throw new UnsupportedOperationException("To implement");
 //        return log.exit(this.getServiceFactory().getGeneService()
 //                .loadGenesByIdsAndSpeciesIds(this.getOrthologousGeneIds(), null).stream()
 //                .map(g -> g.getSpeciesId()).collect(Collectors.toSet()));
     }
-    
+
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((omaNodeId == null) ? 0 : omaNodeId.hashCode());
-        result = prime * result + ((anatSimilarity == null) ? 0 : anatSimilarity.hashCode());
-        result = prime * result + ((stageSimilarity == null) ? 0 : stageSimilarity.hashCode());
         result = prime * result + ((calls == null) ? 0 : calls.hashCode());
+        result = prime * result + ((conservationScore == null) ? 0 : conservationScore.hashCode());
+        result = prime * result + ((multiSpeciesCondition == null) ? 0 : multiSpeciesCondition.hashCode());
+        result = prime * result + ((omaNodeId == null) ? 0 : omaNodeId.hashCode());
+        result = prime * result + ((orthologousGeneIds == null) ? 0 : orthologousGeneIds.hashCode());
+        result = prime * result + ((taxonId == null) ? 0 : taxonId.hashCode());
         return result;
     }
-
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -191,27 +172,6 @@ public class MultiSpeciesCall<T extends Call<?, ?>> extends CommonService {
             return false;
         }
         MultiSpeciesCall<?> other = (MultiSpeciesCall<?>) obj;
-        if (omaNodeId == null) {
-            if (other.omaNodeId != null) {
-                return false;
-            }
-        } else if (!omaNodeId.equals(other.omaNodeId)) {
-            return false;
-        }
-        if (anatSimilarity == null) {
-            if (other.anatSimilarity != null) {
-                return false;
-            }
-        } else if (!anatSimilarity.equals(other.anatSimilarity)) {
-            return false;
-        }
-        if (stageSimilarity == null) {
-            if (other.stageSimilarity != null) {
-                return false;
-            }
-        } else if (!stageSimilarity.equals(other.stageSimilarity)) {
-            return false;
-        }
         if (calls == null) {
             if (other.calls != null) {
                 return false;
@@ -219,12 +179,55 @@ public class MultiSpeciesCall<T extends Call<?, ?>> extends CommonService {
         } else if (!calls.equals(other.calls)) {
             return false;
         }
+        if (conservationScore == null) {
+            if (other.conservationScore != null) {
+                return false;
+            }
+        } else if (!conservationScore.equals(other.conservationScore)) {
+            return false;
+        }
+        if (multiSpeciesCondition == null) {
+            if (other.multiSpeciesCondition != null) {
+                return false;
+            }
+        } else if (!multiSpeciesCondition.equals(other.multiSpeciesCondition)) {
+            return false;
+        }
+        if (omaNodeId == null) {
+            if (other.omaNodeId != null) {
+                return false;
+            }
+        } else if (!omaNodeId.equals(other.omaNodeId)) {
+            return false;
+        }
+        if (orthologousGeneIds == null) {
+            if (other.orthologousGeneIds != null) {
+                return false;
+            }
+        } else if (!orthologousGeneIds.equals(other.orthologousGeneIds)) {
+            return false;
+        }
+        if (taxonId == null) {
+            if (other.taxonId != null) {
+                return false;
+            }
+        } else if (!taxonId.equals(other.taxonId)) {
+            return false;
+        }
         return true;
     }
 
+
     @Override
     public String toString() {
-        return "Anat. entity similarity: " + getAnatEntitySimilarity() + " - Dev. stage similarity: "
-                + getDevStageSimilarity() + " - OMA node ID: " + getOMANodeId() + " - Calls: " + getCalls();
+        StringBuilder builder = new StringBuilder();
+        builder.append("MultiSpeciesCall [multiSpeciesCondition=").append(multiSpeciesCondition)
+               .append(", taxonId=").append(taxonId)
+               .append(", omaNodeId=").append(omaNodeId)
+               .append(", orthologousGeneIds=").append(orthologousGeneIds)
+               .append(", calls=").append(calls)
+               .append(", conservationScore=").append(conservationScore).append("]");
+        return builder.toString();
     }
+
 }

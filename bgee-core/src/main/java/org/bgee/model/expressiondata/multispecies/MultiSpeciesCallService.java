@@ -1,4 +1,4 @@
-package org.bgee.model.analysis;
+package org.bgee.model.expressiondata.multispecies;
 
 import java.math.BigDecimal;
 import java.util.Collection;
@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -22,34 +23,103 @@ import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.ConditionFilter;
-import org.bgee.model.expressiondata.MultiSpeciesCall;
-import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.gene.Gene;
-import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.ontology.MultiSpeciesOntology;
 import org.bgee.model.species.Taxon;
+import org.bgee.model.species.TaxonomyFilter;
 
 /**
  * A {@link Service} to obtain {@link MultiSpeciesCall} objects. 
  * Users should use the {@link org.bgee.model.ServiceFactory} to obtain {@code CallService}s.
  * 
- * @author  Philippe Moret
+ * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @version Bgee 14, Mar. 2017
  * @since   Bgee 13, May 2016
  */
-// XXX: why not call it MultiSpeciesCallService?
-public class AnalysisService extends Service {
+public class MultiSpeciesCallService extends Service {
+    private static final Logger log = LogManager.getLogger(MultiSpeciesCallService.class.getName());
 
-    private static final Logger log = LogManager.getLogger(AnalysisService.class.getName());
+    //XXX: certainly we need different Attributes, just an example
+    public static enum Attribute implements Service.Attribute {
+        GENE, ANAT_ENTITY_ID, DEV_STAGE_ID, CALL_TYPE,
+        DATA_QUALITY, OBSERVED_DATA, GLOBAL_MEAN_RANK,
+        EXPERIMENT_COUNTS, DATA_TYPE_RANK_INFO;
+    }
+
+    //XXX: certainly we need different OrderingAttributes, just an example
+    public static enum OrderingAttribute implements Service.OrderingAttribute {
+        GENE_ID, ANAT_ENTITY_ID, DEV_STAGE_ID, GLOBAL_RANK;
+    }
+    
+    private final CallService callService;
 
     /**
      * @param serviceFactory            The {@code ServiceFactory} to be used to obtain
      *                                  {@code Service}s and {@code DAOManager}.
      * @throws IllegalArgumentException If {@code serviceFactory} is {@code null}.
      */
-    public AnalysisService(ServiceFactory serviceFactory) {
+    public MultiSpeciesCallService(ServiceFactory serviceFactory) {
         super(serviceFactory);
+        this.callService = this.getServiceFactory().getCallService();
+    }
+    
+    /**
+     * 
+     * @param gene          A {@code Gene} allowing to target one specific HOG.
+     *                      if {@code null}, all HOGs for the requested {@code taxonId}
+     *                      are considered.
+     * @return
+     */
+    //XXX: this method should use loadMultiSpeciesCalls(Collection) at some point
+    //
+    //XXX: I think we should have a MultiSpeciesExpressionCallFilter, in the same spirit
+    //of the ExpressionCallFilter used in the CallService. It could have:
+    //  * Collection<MultiSpeciesConditionFilter>, allowing to specify the targeted similarity relations,
+    //    the confidence level of the similarity relations, the organs and stages
+    //    that should be part of the similarity groups.
+    //  * a TaxonomyFilter, allowing to specify the targeted taxon and/or species.
+    //    If no taxon is provided but only species, this would mean "target their last common ancestor".
+    //  * Collection<GeneFilter> allowing to specify the "starting" genes.So it would be
+    //    a slightly different use as compared to the use in the CallFilter.
+    //  * the minimum quality level for each CallType through a Map<ExpressionSummary, SummaryQuality>.
+    //    Again, this would be a slightly different use as compared to the CallFilter,
+    //    as it would not allow to specify the CallTypes to use, since we will always need
+    //    to look at both EXPRESSED and NOT_EXPRESSED calls for making the comparisons.
+    //  * DataTypeFilters, as in CallFilter
+    //  * ObservedData states, as in ExpressionCallFiter
+    //  * => Maybe the MultiSpeciesExpressionCallFilter should actually include an ExpressionCallFilter?
+    //    but then the conditionFilters attribute would be inappropriate,
+    //    cleaner to create a new class IMO.
+    //  * => the Gene argument of this method could then be removed if we specify "starting" genes
+    //    from the GeneFilters in MultiSpeciesExpressionCallFilter. And several "starting" genes
+    //    could be specified at once then?
+    //  * => this method's signature would then perfectly mirror the signature of method
+    //    CallService.loadExpressionCalls(ExpressionCallFilter, Collection, LinkedHashMap)
+    //
+    //XXX: note: the CallService can returned ExpressionCalls ordered by OMA HOG ID,
+    //this is how several "starting" genes could be managed at once, by loading into memory all genes
+    //belonging to a same orthology group before moving to the next group
+    //(this should be added to org.bgee.model.expressiondata.CallService.OrderingAttribute then,
+    //the Attribute already exists in the DAO).
+    public Stream<MultiSpeciesCall<ExpressionCall>> loadMultiSpeciesCalls(TaxonomyFilter taxonomyFilter,
+            Gene gene, ExpressionCallFilter callFilter, Collection<Attribute> attributes, 
+            LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes) {
+        log.entry(taxonomyFilter, gene, callFilter, attributes, orderingAttributes);
+        throw new UnsupportedOperationException("Not implemented");
+    }
+    /**
+     * Allows to perform gene expression comparisons for any arbitrary group of genes,
+     * and not only for orthologous genes, as in method {@link #loadMultiSpeciesCalls(TaxonomyFilter, Gene)}.
+     *  
+     * @param genes
+     * @return
+     */
+    public Stream<MultiSpeciesCall<ExpressionCall>> loadMultiSpeciesCalls(TaxonomyFilter taxonomyFilter,
+            Collection<Gene> genes, ExpressionCallFilter callFilter, Collection<Attribute> attributes, 
+            LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes) {
+        log.entry(taxonomyFilter, genes, callFilter, attributes, orderingAttributes);
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     /**
@@ -90,29 +160,35 @@ public class AnalysisService extends Service {
             throw log.throwing(new IllegalStateException("Taxon ID " + gene.getSpecies().getParentTaxonId() +
                     "not found in retrieved taxonomy"));
         }
-        List<Integer> taxonIds = taxonOnt.getOrderedAncestors(
-                    taxonOnt.getElement(parentTaxonId)).stream()
-                .map(t -> t.getId())
-                .collect(Collectors.toList());
         
         LinkedHashMap<Integer, Set<MultiSpeciesCall<ExpressionCall>>> taxaToCalls = new LinkedHashMap<>();
         
         LinkedHashMap<CallService.OrderingAttribute, Direction> orderAttrs = new LinkedHashMap<>();
         orderAttrs.put(CallService.OrderingAttribute.GENE_ID, Direction.ASC);
 
+
+        //XXX: the retrieval of the taxon IDs could be moved at the end of this method,
+        //when you start iterating from the more precise taxon and to the root of the taxon ontology
+        List<Integer> taxonIds = taxonOnt.getOrderedAncestors(
+                taxonOnt.getElement(parentTaxonId)).stream()
+            .map(t -> t.getId())
+            .collect(Collectors.toList());
+
+        //FIXME: getOrthologs should take a Gene, a Taxon and a collection of species,
+        //and return Map<taxonId, Set<Gene>>, using the highest taxon ID
+        int highestTaxonId = 0;// to implement
+        Map<Integer, Set<Gene>> omaToGenes = this.getServiceFactory().getGeneService()
+                .getOrthologs(highestTaxonId, clonedSpeIds);
         for (Integer taxonId : taxonIds) {
             log.trace("Starting generation of multi-species calls for taxon ID {}", taxonId);
             // Retrieve homologous organ groups with gene IDs
-            Map<Integer, Set<Gene>> omaToGenes = this.getServiceFactory().getGeneService()
-                    .getOrthologs(taxonId, clonedSpeIds);
             log.trace("Homologous organ groups with genes: {}", omaToGenes);
-            // XXX filter by Gene should be done in GeneService or DAO?
-            Set<String> orthologousEnsemblGeneIds = omaToGenes.values().stream()
-                    .filter(geneSet -> geneSet.stream()
-                            .anyMatch(g -> gene.getEnsemblGeneId().equals(g.getEnsemblGeneId())))
-                    .flatMap(Set::stream)
-                    .map(g -> g.getEnsemblGeneId())
-                    .collect(Collectors.toSet());
+//            Set<String> orthologousEnsemblGeneIds = omaToGenes.values().stream()
+//                    .filter(geneSet -> geneSet.stream()
+//                            .anyMatch(g -> gene.getEnsemblGeneId().equals(g.getEnsemblGeneId())))
+//                    .flatMap(Set::stream)
+//                    .map(g -> g.getEnsemblGeneId())
+//                    .collect(Collectors.toSet());
 
             // Retrieve anat. entity similarities
             Set<AnatEntitySimilarity> anatEntitySimilarities = this.getServiceFactory()
@@ -133,22 +209,24 @@ public class AnalysisService extends Service {
             conditionFilters.add(new ConditionFilter(anatEntityIds, devStageIds));
             log.warn("Only expressed calls are retrieved");
             
-            // For each species, we load propagated and reconciled calls
-            Set<ExpressionCall> calls = new HashSet<>();
-            for (Integer spId: clonedSpeIds) {
-                ExpressionCallFilter callFilter = new ExpressionCallFilter(
-                    new GeneFilter(spId, orthologousEnsemblGeneIds),
-                    conditionFilters,
-                    null,   // dataTypeFilter
-                    ExpressionSummary.EXPRESSED,
-                    null,   // SummaryQuality
-                    true);
-                // FIXME do propagation???
-                Set<ExpressionCall> currentCalls = this.getServiceFactory().getCallService().
-                    loadExpressionCalls(callFilter, null, orderAttrs).collect(Collectors.toSet());
-                calls.addAll(currentCalls);
-            }
-
+//            // For each species, we load propagated and reconciled calls
+//            Set<ExpressionCall> calls = new HashSet<>();
+//            for (Integer spId: clonedSpeIds) {
+//                //FIXME: adapt to new API
+////                ExpressionCallFilter callFilter =
+////                        new ExpressionCallFilter(
+////                    new GeneFilter(spId, orthologousEnsemblGeneIds),
+////                    conditionFilters,
+////                    null,   // dataTypeFilter
+////                    ExpressionSummary.EXPRESSED,
+////                    null,   // SummaryQuality
+////                    true);
+////                // FIXME do propagation???
+////                Set<ExpressionCall> currentCalls = this.getServiceFactory().getCallService().
+////                    loadExpressionCalls(callFilter, null, orderAttrs).collect(Collectors.toSet());
+////                calls.addAll(currentCalls);
+//            }
+            Set<ExpressionCall> calls = null; //to implement
             taxaToCalls.put(taxonId, this.groupCalls(taxonId,
                     omaToGenes, anatEntitySimilarities, devStageSimilarities, calls));
             log.trace("Done generation of multi-species calls for taxon ID {}", taxonId);
@@ -255,16 +333,16 @@ public class AnalysisService extends Service {
             }
             associatedCalls.add(call);
         }
-        
-        return log.exit(multiSpCallToCalls.entrySet().stream()
-                .map(e -> {
-                    MultiSpeciesCall<ExpressionCall> call = e.getKey();
-                    return this.computeConservationScore(new MultiSpeciesCall<ExpressionCall>(
-                            call.getAnatEntitySimilarity(), call.getDevStageSimilarity(),
-                            call.getTaxonId(), call.getOMANodeId(), call.getOrthologousGeneIds(),
-                            new HashSet<>(e.getValue()), null, this.getServiceFactory()));
-                })
-                .collect(Collectors.toSet()));
+        throw new UnsupportedOperationException("To continue");
+//        return log.exit(multiSpCallToCalls.entrySet().stream()
+//                .map(e -> {
+//                    MultiSpeciesCall<ExpressionCall> call = e.getKey();
+//                    return this.computeConservationScore(new MultiSpeciesCall<ExpressionCall>(
+//                            call.getAnatEntitySimilarity(), call.getDevStageSimilarity(),
+//                            call.getTaxonId(), call.getOMANodeId(), call.getOrthologousGeneIds(),
+//                            new HashSet<>(e.getValue()), null, this.getServiceFactory()));
+//                })
+//                .collect(Collectors.toSet()));
     }
     
     /**
@@ -279,10 +357,10 @@ public class AnalysisService extends Service {
         log.entry(inputCall);
         BigDecimal conservationScore = null;
         // FIXME computation of conservation score must be implemented.        
-        log.warn("Conservation score is not calculated: implementation of computation must be done");
-        return log.exit(new MultiSpeciesCall<ExpressionCall>(
-                inputCall.getAnatEntitySimilarity(), inputCall.getDevStageSimilarity(),
-                inputCall.getTaxonId(), inputCall.getOMANodeId(), inputCall.getOrthologousGeneIds(),
-                inputCall.getCalls(), conservationScore, this.getServiceFactory()));
+        throw new UnsupportedOperationException("To continue");
+//        return log.exit(new MultiSpeciesCall<ExpressionCall>(
+//                inputCall.getAnatEntitySimilarity(), inputCall.getDevStageSimilarity(),
+//                inputCall.getTaxonId(), inputCall.getOMANodeId(), inputCall.getOrthologousGeneIds(),
+//                inputCall.getCalls(), conservationScore, this.getServiceFactory()));
     }
 }

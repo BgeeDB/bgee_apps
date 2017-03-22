@@ -2,7 +2,11 @@ package org.bgee.model.dao.api.expressiondata;
 
 import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,76 +29,10 @@ import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO.RawExpressionC
 public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Attribute> {
     
     public enum Attribute implements DAO.Attribute {
-        ID(false, false), BGEE_GENE_ID(false, false), CONDITION_ID(false, false), 
-        AFFYMETRIX_EXP_PRESENT_HIGH_SELF_COUNT(true, false),
-        AFFYMETRIX_EXP_PRESENT_LOW_SELF_COUNT(true, false), 
-        AFFYMETRIX_EXP_ABSENT_HIGH_SELF_COUNT(true, false),
-        AFFYMETRIX_EXP_ABSENT_LOW_SELF_COUNT(true, false), 
-        AFFYMETRIX_EXP_PRESENT_HIGH_DESCENDANT_COUNT(false, false),
-        AFFYMETRIX_EXP_PRESENT_LOW_DESCENDANT_COUNT(false, false), 
-        AFFYMETRIX_EXP_ABSENT_HIGH_PARENT_COUNT(false, false),
-        AFFYMETRIX_EXP_ABSENT_LOW_PARENT_COUNT(false, false), 
-        AFFYMETRIX_EXP_PRESENT_HIGH_TOTAL_COUNT(false, true),
-        AFFYMETRIX_EXP_PRESENT_LOW_TOTAL_COUNT(false, true), 
-        AFFYMETRIX_EXP_ABSENT_HIGH_TOTAL_COUNT(false, true),
-        AFFYMETRIX_EXP_ABSENT_LOW_TOTAL_COUNT(false, true), 
-        AFFYMETRIX_EXP_PROPAGATED_COUNT(false, false),
-        RNA_SEQ_EXP_PRESENT_HIGH_SELF_COUNT(true, false), 
-        RNA_SEQ_EXP_PRESENT_LOW_SELF_COUNT(true, false),
-        RNA_SEQ_EXP_ABSENT_HIGH_SELF_COUNT(true, false), 
-        RNA_SEQ_EXP_ABSENT_LOW_SELF_COUNT(true, false),
-        RNA_SEQ_EXP_PRESENT_HIGH_DESCENDANT_COUNT(false, false), 
-        RNA_SEQ_EXP_PRESENT_LOW_DESCENDANT_COUNT(false, false),
-        RNA_SEQ_EXP_ABSENT_HIGH_PARENT_COUNT(false, false), 
-        RNA_SEQ_EXP_ABSENT_LOW_PARENT_COUNT(false, false),
-        RNA_SEQ_EXP_PRESENT_HIGH_TOTAL_COUNT(false, true), 
-        RNA_SEQ_EXP_PRESENT_LOW_TOTAL_COUNT(false, true),
-        RNA_SEQ_EXP_ABSENT_HIGH_TOTAL_COUNT(false, true), 
-        RNA_SEQ_EXP_ABSENT_LOW_TOTAL_COUNT(false, true),
-        RNA_SEQ_EXP_PROPAGATED_COUNT(false, false), 
-        EST_LIB_PRESENT_HIGH_SELF_COUNT(true, false),
-        EST_LIB_PRESENT_LOW_SELF_COUNT(true, false), 
-        EST_LIB_PRESENT_HIGH_DESCENDANT_COUNT(false, false),
-        EST_LIB_PRESENT_LOW_DESCENDANT_COUNT(false, false), 
-        EST_LIB_PRESENT_HIGH_TOTAL_COUNT(false, true),
-        EST_LIB_PRESENT_LOW_TOTAL_COUNT(false, true),
-        EST_LIB_PROPAGATED_COUNT(false, false), 
-        IN_SITU_EXP_PRESENT_HIGH_SELF_COUNT(true, false),
-        IN_SITU_EXP_PRESENT_LOW_SELF_COUNT(true, false), 
-        IN_SITU_EXP_ABSENT_HIGH_SELF_COUNT(true, false),
-        IN_SITU_EXP_ABSENT_LOW_SELF_COUNT(true, false), 
-        IN_SITU_EXP_PRESENT_HIGH_DESCENDANT_COUNT(false, false),
-        IN_SITU_EXP_PRESENT_LOW_DESCENDANT_COUNT(false, false), 
-        IN_SITU_EXP_ABSENT_HIGH_PARENT_COUNT(false, false),
-        IN_SITU_EXP_ABSENT_LOW_PARENT_COUNT(false, false), 
-        IN_SITU_EXP_PRESENT_HIGH_TOTAL_COUNT(false, true),
-        IN_SITU_EXP_PRESENT_LOW_TOTAL_COUNT(false, true), 
-        IN_SITU_EXP_ABSENT_HIGH_TOTAL_COUNT(false, true),
-        IN_SITU_EXP_ABSENT_LOW_TOTAL_COUNT(false, true), 
-        IN_SITU_EXP_PROPAGATED_COUNT(false, false),
-        GLOBAL_MEAN_RANK(false, false),
-        AFFYMETRIX_MEAN_RANK(false, false), RNA_SEQ_MEAN_RANK(false, false), 
-        EST_RANK(false, false), IN_SITU_RANK(false, false), 
-        AFFYMETRIX_MEAN_RANK_NORM(false, false), RNA_SEQ_MEAN_RANK_NORM(false, false), 
-        EST_RANK_NORM(false, false), IN_SITU_RANK_NORM(false, false), 
-        AFFYMETRIX_DISTINCT_RANK_SUM(false, false), 
-        RNA_SEQ_DISTINCT_RANK_SUM(false, false);
-        
-        private final boolean selfAttribute;
-        private final boolean totalAttribute;
-        
-        private Attribute(boolean selfAttribute, boolean totalAttribute) {
-            this.selfAttribute = selfAttribute;
-            this.totalAttribute = totalAttribute;
-            assert !(selfAttribute && totalAttribute);
-        }
-        
-        public boolean isSelfAttribute() {
-            return selfAttribute;
-        }
-        public boolean isTotalAttribute() {
-            return totalAttribute;
-        }
+        ID, BGEE_GENE_ID, CONDITION_ID, GLOBAL_MEAN_RANK,
+        DATA_TYPE_OBSERVED_DATA,
+        DATA_TYPE_EXPERIMENT_TOTAL_COUNTS, DATA_TYPE_EXPERIMENT_SELF_COUNTS,
+        DATA_TYPE_EXPERIMENT_PROPAGATED_COUNTS, DATA_TYPE_RANK_INFO;
     }
     /**
      * The attributes available to order retrieved {@code GlobalExpressionCallTO}s
@@ -129,10 +67,6 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      *                              allowing to configure this query. If several 
      *                              {@code CallDAOFilter}s are provided, they are seen 
      *                              as "OR" conditions. Can be {@code null} or empty.
-     * @param callDataFilters       A {@code Collection} of {@code CallDataDAOFilter}s to configure
-     *                              the filtering based on experiment expression counts. If several 
-     *                              {@code CallDAOFilter}s are provided, they are seen 
-     *                              as "AND" conditions. Can be {@code null} or empty.
      * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
      *                              combination of condition parameters that were requested for queries, 
      *                              allowing to determine which condition and expression tables to target
@@ -156,28 +90,19 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      *                                  {@link ConditionDAO.Attribute#isConditionParameter()}).
      */
     public GlobalExpressionCallTOResultSet getGlobalExpressionCalls(
-            Collection<CallDAOFilter> callFilters, Collection<CallDataDAOFilter> callDataFilters,
-            Collection<ConditionDAO.Attribute> conditionParameters,
-            Collection<Attribute> attributes, 
+            Collection<CallDAOFilter> callFilters, Collection<ConditionDAO.Attribute> conditionParameters,
+            Collection<Attribute> attributes,
             LinkedHashMap<OrderingAttribute, DAO.Direction> orderingAttributes)
-                throws DAOException, IllegalArgumentException;
+                    throws DAOException, IllegalArgumentException;
 
     /**
-     * Retrieve the maximum of global expression IDs in the appropriate table specified by {@code conditionParameters}.
-     * 
-     * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
-     *                              combination of condition parameters that were requested for queries, 
-     *                              allowing to determine which condition and expression tables to target
-     *                              (see {@link ConditionDAO.Attribute#isConditionParameter()}).
-     * @return                      An {@code int} that is maximum of expression IDs in the appropriate table.
+     * Retrieve the maximum of global expression IDs.
+     *
+     * @return                      An {@code int} that is maximum of expression IDs.
      *                              If there is no call, return 0.
-     * @throws DAOException             If an error occurred when accessing the data source. 
-     * @throws IllegalArgumentException If one of the {@code Attribute}s in {@code conditionParameters}
-     *                                  is not a condition parameter attributes (see 
-     *                                  {@link ConditionDAO.Attribute#isConditionParameter()}).
+     * @throws DAOException             If an error occurred when accessing the data source.
      */
-    public int getMaxGlobalExprId(Collection<ConditionDAO.Attribute> conditionParameters) 
-            throws DAOException, IllegalArgumentException;
+    public int getMaxGlobalExprId() throws DAOException;
 
     /**
      * Insert into the datasource the provided {@code GlobalExpressionCallTO}s. Which expression table 
@@ -238,148 +163,20 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      * @version Bgee 14, Feb. 2017
      * @since   Bgee 14, Feb. 2017
      */
-    public class GlobalExpressionCallTO extends RawExpressionCallTO {
+    public static class GlobalExpressionCallTO extends RawExpressionCallTO {
 
         private static final long serialVersionUID = -1057540315343857464L;
         
         private final BigDecimal globalMeanRank;
         
-        private final Integer affymetrixExpPresentHighSelfCount;
-        private final Integer affymetrixExpPresentLowSelfCount;
-        private final Integer affymetrixExpAbsentHighSelfCount;
-        private final Integer affymetrixExpAbsentLowSelfCount;
-        private final Integer affymetrixExpPresentHighDescendantCount;
-        private final Integer affymetrixExpPresentLowDescendantCount;
-        private final Integer affymetrixExpAbsentHighParentCount;
-        private final Integer affymetrixExpAbsentLowParentCount;
-        private final Integer affymetrixExpPresentHighTotalCount;
-        private final Integer affymetrixExpPresentLowTotalCount;
-        private final Integer affymetrixExpAbsentHighTotalCount;
-        private final Integer affymetrixExpAbsentLowTotalCount;
-        private final Integer affymetrixExpPropagatedCount;
-        
-        private final Integer rnaSeqExpPresentHighSelfCount;
-        private final Integer rnaSeqExpPresentLowSelfCount;
-        private final Integer rnaSeqExpAbsentHighSelfCount;
-        private final Integer rnaSeqExpAbsentLowSelfCount;
-        private final Integer rnaSeqExpPresentHighDescendantCount;
-        private final Integer rnaSeqExpPresentLowDescendantCount;
-        private final Integer rnaSeqExpAbsentHighParentCount;
-        private final Integer rnaSeqExpAbsentLowParentCount;
-        private final Integer rnaSeqExpPresentHighTotalCount;
-        private final Integer rnaSeqExpPresentLowTotalCount;
-        private final Integer rnaSeqExpAbsentHighTotalCount;
-        private final Integer rnaSeqExpAbsentLowTotalCount;
-        private final Integer rnaSeqExpPropagatedCount;
-        
-        private final Integer estLibPresentHighSelfCount;
-        private final Integer estLibPresentLowSelfCount;
-        private final Integer estLibPresentHighDescendantCount;
-        private final Integer estLibPresentLowDescendantCount;
-        private final Integer estLibPresentHighTotalCount;
-        private final Integer estLibPresentLowTotalCount;
-        private final Integer estLibPropagatedCount;
-        
-        private final Integer inSituExpPresentHighSelfCount;
-        private final Integer inSituExpPresentLowSelfCount;
-        private final Integer inSituExpAbsentHighSelfCount;
-        private final Integer inSituExpAbsentLowSelfCount;
-        private final Integer inSituExpPresentHighDescendantCount;
-        private final Integer inSituExpPresentLowDescendantCount;
-        private final Integer inSituExpAbsentHighParentCount;
-        private final Integer inSituExpAbsentLowParentCount;
-        private final Integer inSituExpPresentHighTotalCount;
-        private final Integer inSituExpPresentLowTotalCount;
-        private final Integer inSituExpAbsentHighTotalCount;
-        private final Integer inSituExpAbsentLowTotalCount;
-        private final Integer inSituExpPropagatedCount;
+        private final Set<GlobalExpressionCallDataTO> callDataTOs;
         
         public GlobalExpressionCallTO(Integer id, Integer bgeeGeneId, Integer conditionId,
-                BigDecimal globalMeanRank,
-                Integer affymetrixExpPresentHighSelfCount, Integer affymetrixExpPresentLowSelfCount, 
-                Integer affymetrixExpAbsentHighSelfCount, Integer affymetrixExpAbsentLowSelfCount, 
-                Integer affymetrixExpPresentHighDescendantCount, 
-                Integer affymetrixExpPresentLowDescendantCount, 
-                Integer affymetrixExpAbsentHighParentCount, Integer affymetrixExpAbsentLowParentCount, 
-                Integer affymetrixExpPresentHighTotalCount, Integer affymetrixExpPresentLowTotalCount, 
-                Integer affymetrixExpAbsentHighTotalCount, Integer affymetrixExpAbsentLowTotalCount, 
-                Integer affymetrixExpPropagatedCount, Integer rnaSeqExpPresentHighSelfCount, 
-                Integer rnaSeqExpPresentLowSelfCount, Integer rnaSeqExpAbsentHighSelfCount, 
-                Integer rnaSeqExpAbsentLowSelfCount, Integer rnaSeqExpPresentHighDescendantCount, 
-                Integer rnaSeqExpPresentLowDescendantCount, Integer rnaSeqExpAbsentHighParentCount, 
-                Integer rnaSeqExpAbsentLowParentCount, Integer rnaSeqExpPresentHighTotalCount, 
-                Integer rnaSeqExpPresentLowTotalCount, Integer rnaSeqExpAbsentHighTotalCount, 
-                Integer rnaSeqExpAbsentLowTotalCount, Integer rnaSeqExpPropagatedCount, 
-                Integer estLibPresentHighSelfCount, Integer estLibPresentLowSelfCount, 
-                Integer estLibPresentHighDescendantCount, Integer estLibPresentLowDescendantCount, 
-                Integer estLibPresentHighTotalCount, Integer estLibPresentLowTotalCount, 
-                Integer estLibPropagatedCount, Integer inSituExpPresentHighSelfCount, 
-                Integer inSituExpPresentLowSelfCount, Integer inSituExpAbsentHighSelfCount, 
-                Integer inSituExpAbsentLowSelfCount, Integer inSituExpPresentHighDescendantCount, 
-                Integer inSituExpPresentLowDescendantCount, Integer inSituExpAbsentHighParentCount, 
-                Integer inSituExpAbsentLowParentCount, Integer inSituExpPresentHighTotalCount, 
-                Integer inSituExpPresentLowTotalCount, Integer inSituExpAbsentHighTotalCount, 
-                Integer inSituExpAbsentLowTotalCount, Integer inSituExpPropagatedCount, 
-                BigDecimal affymetrixMeanRank, BigDecimal rnaSeqMeanRank, BigDecimal estRank,
-                BigDecimal inSituRank, BigDecimal affymetrixMeanRankNorm,
-                BigDecimal rnaSeqMeanRankNorm, BigDecimal estRankNorm, BigDecimal inSituRankNorm,
-                BigDecimal affymetrixDistinctRankSum, BigDecimal rnaSeqDistinctRankSum) {
-            
-            super(id, bgeeGeneId, conditionId, affymetrixMeanRank, rnaSeqMeanRank, estRank,
-                  inSituRank, affymetrixMeanRankNorm, rnaSeqMeanRankNorm, estRankNorm,
-                  inSituRankNorm, affymetrixDistinctRankSum, rnaSeqDistinctRankSum);
+                BigDecimal globalMeanRank, Set<GlobalExpressionCallDataTO> callDataTOs) {
+            super(id, bgeeGeneId, conditionId);
             
             this.globalMeanRank = globalMeanRank;
-            
-            this.affymetrixExpPresentHighSelfCount = affymetrixExpPresentHighSelfCount;
-            this.affymetrixExpPresentLowSelfCount = affymetrixExpPresentLowSelfCount;
-            this.affymetrixExpAbsentHighSelfCount = affymetrixExpAbsentHighSelfCount;
-            this.affymetrixExpAbsentLowSelfCount = affymetrixExpAbsentLowSelfCount;
-            this.affymetrixExpPresentHighDescendantCount = affymetrixExpPresentHighDescendantCount;
-            this.affymetrixExpPresentLowDescendantCount = affymetrixExpPresentLowDescendantCount;
-            this.affymetrixExpAbsentHighParentCount = affymetrixExpAbsentHighParentCount;
-            this.affymetrixExpAbsentLowParentCount = affymetrixExpAbsentLowParentCount;
-            this.affymetrixExpPresentHighTotalCount = affymetrixExpPresentHighTotalCount;
-            this.affymetrixExpPresentLowTotalCount = affymetrixExpPresentLowTotalCount;
-            this.affymetrixExpAbsentHighTotalCount = affymetrixExpAbsentHighTotalCount;
-            this.affymetrixExpAbsentLowTotalCount = affymetrixExpAbsentLowTotalCount;
-            this.affymetrixExpPropagatedCount = affymetrixExpPropagatedCount;
-            
-            this.rnaSeqExpPresentHighSelfCount = rnaSeqExpPresentHighSelfCount;
-            this.rnaSeqExpPresentLowSelfCount = rnaSeqExpPresentLowSelfCount;
-            this.rnaSeqExpAbsentHighSelfCount = rnaSeqExpAbsentHighSelfCount;
-            this.rnaSeqExpAbsentLowSelfCount = rnaSeqExpAbsentLowSelfCount;
-            this.rnaSeqExpPresentHighDescendantCount = rnaSeqExpPresentHighDescendantCount;
-            this.rnaSeqExpPresentLowDescendantCount = rnaSeqExpPresentLowDescendantCount;
-            this.rnaSeqExpAbsentHighParentCount = rnaSeqExpAbsentHighParentCount;
-            this.rnaSeqExpAbsentLowParentCount = rnaSeqExpAbsentLowParentCount;
-            this.rnaSeqExpPresentHighTotalCount = rnaSeqExpPresentHighTotalCount;
-            this.rnaSeqExpPresentLowTotalCount = rnaSeqExpPresentLowTotalCount;
-            this.rnaSeqExpAbsentHighTotalCount = rnaSeqExpAbsentHighTotalCount;
-            this.rnaSeqExpAbsentLowTotalCount = rnaSeqExpAbsentLowTotalCount;
-            this.rnaSeqExpPropagatedCount = rnaSeqExpPropagatedCount;
-            
-            this.estLibPresentHighSelfCount = estLibPresentHighSelfCount;
-            this.estLibPresentLowSelfCount = estLibPresentLowSelfCount;
-            this.estLibPresentHighDescendantCount = estLibPresentHighDescendantCount;
-            this.estLibPresentLowDescendantCount = estLibPresentLowDescendantCount;
-            this.estLibPresentHighTotalCount = estLibPresentHighTotalCount;
-            this.estLibPresentLowTotalCount = estLibPresentLowTotalCount;
-            this.estLibPropagatedCount = estLibPropagatedCount;
-            
-            this.inSituExpPresentHighSelfCount = inSituExpPresentHighSelfCount;
-            this.inSituExpPresentLowSelfCount = inSituExpPresentLowSelfCount;
-            this.inSituExpAbsentHighSelfCount = inSituExpAbsentHighSelfCount;
-            this.inSituExpAbsentLowSelfCount = inSituExpAbsentLowSelfCount;
-            this.inSituExpPresentHighDescendantCount = inSituExpPresentHighDescendantCount;
-            this.inSituExpPresentLowDescendantCount = inSituExpPresentLowDescendantCount;
-            this.inSituExpAbsentHighParentCount = inSituExpAbsentHighParentCount;
-            this.inSituExpAbsentLowParentCount = inSituExpAbsentLowParentCount;
-            this.inSituExpPresentHighTotalCount = inSituExpPresentHighTotalCount;
-            this.inSituExpPresentLowTotalCount = inSituExpPresentLowTotalCount;
-            this.inSituExpAbsentHighTotalCount = inSituExpAbsentHighTotalCount;
-            this.inSituExpAbsentLowTotalCount = inSituExpAbsentLowTotalCount;
-            this.inSituExpPropagatedCount = inSituExpPropagatedCount;
+            this.callDataTOs = callDataTOs;
         }
 
         /**
@@ -392,212 +189,130 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
         public BigDecimal getGlobalMeanRank() {
             return globalMeanRank;
         }
-
-        public Integer getAffymetrixExpPresentHighSelfCount() {
-            return affymetrixExpPresentHighSelfCount;
+        /**
+         * @return  A {@code Set} of {@code GlobalExpressionCallDataTO}s storing the data supporting this call,
+         *          one for each of the requested
+         *          {@link org.bgee.model.dao.api.expressiondata.DAODataType DAODataType}s.
+         */
+        public Set<GlobalExpressionCallDataTO> getCallDataTOs() {
+            return callDataTOs;
         }
-        public Integer getAffymetrixExpPresentLowSelfCount() {
-            return affymetrixExpPresentLowSelfCount;
-        }
-        public Integer getAffymetrixExpAbsentHighSelfCount() {
-            return affymetrixExpAbsentHighSelfCount;
-        }
-        public Integer getAffymetrixExpAbsentLowSelfCount() {
-            return affymetrixExpAbsentLowSelfCount;
-        }
-        public Integer getAffymetrixExpPresentHighDescendantCount() {
-            return affymetrixExpPresentHighDescendantCount;
-        }
-        public Integer getAffymetrixExpPresentLowDescendantCount() {
-            return affymetrixExpPresentLowDescendantCount;
-        }
-        public Integer getAffymetrixExpAbsentHighParentCount() {
-            return affymetrixExpAbsentHighParentCount;
-        }
-        public Integer getAffymetrixExpAbsentLowParentCount() {
-            return affymetrixExpAbsentLowParentCount;
-        }
-        public Integer getAffymetrixExpPresentHighTotalCount() {
-            return affymetrixExpPresentHighTotalCount;
-        }
-        public Integer getAffymetrixExpPresentLowTotalCount() {
-            return affymetrixExpPresentLowTotalCount;
-        }
-        public Integer getAffymetrixExpAbsentHighTotalCount() {
-            return affymetrixExpAbsentHighTotalCount;
-        }
-        public Integer getAffymetrixExpAbsentLowTotalCount() {
-            return affymetrixExpAbsentLowTotalCount;
-        }
-        public Integer getAffymetrixExpPropagatedCount() {
-            return affymetrixExpPropagatedCount;
-        }
-        public Integer getRNASeqExpPresentHighSelfCount() {
-            return rnaSeqExpPresentHighSelfCount;
-        }
-        public Integer getRNASeqExpPresentLowSelfCount() {
-            return rnaSeqExpPresentLowSelfCount;
-        }
-        public Integer getRNASeqExpAbsentHighSelfCount() {
-            return rnaSeqExpAbsentHighSelfCount;
-        }
-        public Integer getRNASeqExpAbsentLowSelfCount() {
-            return rnaSeqExpAbsentLowSelfCount;
-        }
-        public Integer getRNASeqExpPresentHighDescendantCount() {
-            return rnaSeqExpPresentHighDescendantCount;
-        }
-        public Integer getRNASeqExpPresentLowDescendantCount() {
-            return rnaSeqExpPresentLowDescendantCount;
-        }
-        public Integer getRNASeqExpAbsentHighParentCount() {
-            return rnaSeqExpAbsentHighParentCount;
-        }
-        public Integer getRNASeqExpAbsentLowParentCount() {
-            return rnaSeqExpAbsentLowParentCount;
-        }
-        public Integer getRNASeqExpPresentHighTotalCount() {
-            return rnaSeqExpPresentHighTotalCount;
-        }
-        public Integer getRNASeqExpPresentLowTotalCount() {
-            return rnaSeqExpPresentLowTotalCount;
-        }
-        public Integer getRNASeqExpAbsentHighTotalCount() {
-            return rnaSeqExpAbsentHighTotalCount;
-        }
-        public Integer getRNASeqExpAbsentLowTotalCount() {
-            return rnaSeqExpAbsentLowTotalCount;
-        }
-        public Integer getRNASeqExpPropagatedCount() {
-            return rnaSeqExpPropagatedCount;
-        }
-        public Integer getESTLibPresentHighSelfCount() {
-            return estLibPresentHighSelfCount;
-        }
-        public Integer getESTLibPresentLowSelfCount() {
-            return estLibPresentLowSelfCount;
-        }
-        public Integer getESTLibPresentHighDescendantCount() {
-            return estLibPresentHighDescendantCount;
-        }
-        public Integer getESTLibPresentLowDescendantCount() {
-            return estLibPresentLowDescendantCount;
-        }
-        public Integer getESTLibPresentHighTotalCount() {
-            return estLibPresentHighTotalCount;
-        }
-        public Integer getESTLibPresentLowTotalCount() {
-            return estLibPresentLowTotalCount;
-        }
-        public Integer getESTLibPropagatedCount() {
-            return estLibPropagatedCount;
-        }
-        public Integer getInSituExpPresentHighSelfCount() {
-            return inSituExpPresentHighSelfCount;
-        }
-        public Integer getInSituExpPresentLowSelfCount() {
-            return inSituExpPresentLowSelfCount;
-        }
-        public Integer getInSituExpAbsentHighSelfCount() {
-            return inSituExpAbsentHighSelfCount;
-        }
-        public Integer getInSituExpAbsentLowSelfCount() {
-            return inSituExpAbsentLowSelfCount;
-        }
-        public Integer getInSituExpPresentHighDescendantCount() {
-            return inSituExpPresentHighDescendantCount;
-        }
-        public Integer getInSituExpPresentLowDescendantCount() {
-            return inSituExpPresentLowDescendantCount;
-        }
-        public Integer getInSituExpAbsentHighParentCount() {
-            return inSituExpAbsentHighParentCount;
-        }
-        public Integer getInSituExpAbsentLowParentCount() {
-            return inSituExpAbsentLowParentCount;
-        }
-        public Integer getInSituExpPresentHighTotalCount() {
-            return inSituExpPresentHighTotalCount;
-        }
-        public Integer getInSituExpPresentLowTotalCount() {
-            return inSituExpPresentLowTotalCount;
-        }
-        public Integer getInSituExpAbsentHighTotalCount() {
-            return inSituExpAbsentHighTotalCount;
-        }
-        public Integer getInSituExpAbsentLowTotalCount() {
-            return inSituExpAbsentLowTotalCount;
-        }
-        public Integer getInSituExpPropagatedCount() {
-            return inSituExpPropagatedCount;
-        }
-
 
         @Override
         public String toString() {
-            return "GlobalExpressionCallTO [id=" + this.getId() + ", bgeeGeneId=" + this.getBgeeGeneId() 
-                    + ", conditionId=" + this.getConditionId() 
-                    
-                    + ", globalMeanRank=" + globalMeanRank
-                    
-                    + ", affymetrixExpPresentHighSelfCount=" + affymetrixExpPresentHighSelfCount
-                    + ", affymetrixExpPresentLowSelfCount=" + affymetrixExpPresentLowSelfCount
-                    + ", affymetrixExpAbsentHighSelfCount=" + affymetrixExpAbsentHighSelfCount
-                    + ", affymetrixExpAbsentLowSelfCount=" + affymetrixExpAbsentLowSelfCount
-                    + ", affymetrixExpPresentHighDescendantCount=" + affymetrixExpPresentHighDescendantCount
-                    + ", affymetrixExpPresentLowDescendantCount=" + affymetrixExpPresentLowDescendantCount
-                    + ", affymetrixExpAbsentHighParentCount=" + affymetrixExpAbsentHighParentCount
-                    + ", affymetrixExpAbsentLowParentCount=" + affymetrixExpAbsentLowParentCount
-                    + ", affymetrixExpPresentHighTotalCount=" + affymetrixExpPresentHighTotalCount
-                    + ", affymetrixExpPresentLowTotalCount=" + affymetrixExpPresentLowTotalCount
-                    + ", affymetrixExpAbsentHighTotalCount=" + affymetrixExpAbsentHighTotalCount
-                    + ", affymetrixExpAbsentLowTotalCount=" + affymetrixExpAbsentLowTotalCount
-                    + ", affymetrixExpPropagatedCount=" + affymetrixExpPropagatedCount
-                    
-                    + ", rnaSeqExpPresentHighSelfCount=" + rnaSeqExpPresentHighSelfCount
-                    + ", rnaSeqExpPresentLowSelfCount=" + rnaSeqExpPresentLowSelfCount
-                    + ", rnaSeqExpAbsentHighSelfCount=" + rnaSeqExpAbsentHighSelfCount
-                    + ", rnaSeqExpAbsentLowSelfCount=" + rnaSeqExpAbsentLowSelfCount
-                    + ", rnaSeqExpPresentHighDescendantCount=" + rnaSeqExpPresentHighDescendantCount
-                    + ", rnaSeqExpPresentLowDescendantCount=" + rnaSeqExpPresentLowDescendantCount
-                    + ", rnaSeqExpAbsentHighParentCount=" + rnaSeqExpAbsentHighParentCount
-                    + ", rnaSeqExpAbsentLowParentCount=" + rnaSeqExpAbsentLowParentCount
-                    + ", rnaSeqExpPresentHighTotalCount=" + rnaSeqExpPresentHighTotalCount
-                    + ", rnaSeqExpPresentLowTotalCount=" + rnaSeqExpPresentLowTotalCount
-                    + ", rnaSeqExpAbsentHighTotalCount=" + rnaSeqExpAbsentHighTotalCount
-                    + ", rnaSeqExpAbsentLowTotalCount=" + rnaSeqExpAbsentLowTotalCount
-                    + ", rnaSeqExpPropagatedCount=" + rnaSeqExpPropagatedCount
-                    
-                    + ", estLibPresentHighSelfCount=" + estLibPresentHighSelfCount
-                    + ", estLibPresentLowSelfCount=" + estLibPresentLowSelfCount
-                    + ", estLibPresentHighDescendantCount=" + estLibPresentHighDescendantCount
-                    + ", estLibPresentLowDescendantCount=" + estLibPresentLowDescendantCount
-                    + ", estLibPresentHighTotalCount=" + estLibPresentHighTotalCount
-                    + ", estLibPresentLowTotalCount=" + estLibPresentLowTotalCount
-                    + ", estLibPropagatedCount=" + estLibPropagatedCount
-                    
-                    + ", inSituExpPresentHighSelfCount=" + inSituExpPresentHighSelfCount
-                    + ", inSituExpPresentLowSelfCount=" + inSituExpPresentLowSelfCount
-                    + ", inSituExpAbsentHighSelfCount=" + inSituExpAbsentHighSelfCount
-                    + ", inSituExpAbsentLowSelfCount=" + inSituExpAbsentLowSelfCount
-                    + ", inSituExpPresentHighDescendantCount=" + inSituExpPresentHighDescendantCount
-                    + ", inSituExpPresentLowDescendantCount=" + inSituExpPresentLowDescendantCount
-                    + ", inSituExpAbsentHighParentCount=" + inSituExpAbsentHighParentCount
-                    + ", inSituExpAbsentLowParentCount=" + inSituExpAbsentLowParentCount
-                    + ", inSituExpPresentHighTotalCount=" + inSituExpPresentHighTotalCount
-                    + ", inSituExpPresentLowTotalCount=" + inSituExpPresentLowTotalCount
-                    + ", inSituExpAbsentHighTotalCount=" + inSituExpAbsentHighTotalCount
-                    + ", inSituExpAbsentLowTotalCount=" + inSituExpAbsentLowTotalCount
-                    + ", inSituExpPropagatedCount=" + inSituExpPropagatedCount
-                    
-                    + ", rnaSeqMeanRank=" + this.getRNASeqMeanRank() + ", affymetrixMeanRank=" 
-                    + this.getAffymetrixMeanRank() + ", estRank=" + this.getESTRank() 
-                    + ", inSituRank=" + this.getInSituRank() + ", affymetrixMeanRankNorm=" 
-                    + this.getAffymetrixMeanRankNorm() + ", rnaSeqMeanRankNorm=" 
-                    + this.getRNASeqMeanRankNorm() + ", estRankNorm=" + this.getESTRankNorm() 
-                    + ", inSituRankNorm=" + this.getInSituRankNorm() + ", affymetrixDistinctRankSum=" 
-                    + this.getAffymetrixDistinctRankSum() + ", rnaSeqDistinctRankSum=" 
-                    + this.getRNASeqDistinctRankSum() + "]";
+            StringBuilder builder = new StringBuilder();
+            builder.append("GlobalExpressionCallTO [id=").append(getId())
+                   .append(", getBgeeGeneId()=").append(getBgeeGeneId())
+                   .append(", getConditionId()=").append(getConditionId())
+                   .append(", globalMeanRank=").append(globalMeanRank)
+                   .append(", callDataTOs=").append(callDataTOs)
+                   .append("]");
+            return builder.toString();
+        }
+    }
+
+    /**
+     * This {@code TransferObject} stores the supporting data of {@link GlobalExpressionCallTO}s
+     * from a specific {@link org.bgee.model.dao.api.expressiondata.DAODataType DAODataType}.
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 14 Mar. 2017
+     * @see GlobalExpressionCallTO
+     * @since Bgee 14 Mar. 2017
+     */
+    public static class GlobalExpressionCallDataTO extends TransferObject {
+        private final static Logger log = LogManager.getLogger(GlobalExpressionCallDataTO.class.getName());
+        private static final long serialVersionUID = -3316700982321337127L;
+
+        private final DAODataType dataType;
+
+        private final Boolean conditionObservedData;
+
+        private final Map<ConditionDAO.Attribute, DAOPropagationState> dataPropagation;
+
+        private final Set<DAOExperimentCount> experimentCounts;
+
+        private final Integer propagatedCount;
+
+        private final BigDecimal rank;
+        private final BigDecimal rankNorm;
+        private final BigDecimal weightForMeanRank;
+
+        public GlobalExpressionCallDataTO(DAODataType dataType, Boolean conditionObservedData,
+                Map<ConditionDAO.Attribute, DAOPropagationState> dataPropagation,
+                Set<DAOExperimentCount> experimentCounts, Integer propagatedCount,
+                BigDecimal rank, BigDecimal rankNorm, BigDecimal weightForMeanRank) {
+
+            if (dataPropagation.keySet().stream().anyMatch(a -> !a.isConditionParameter())) {
+                throw log.throwing(new IllegalArgumentException("Invalid condition parameters: "
+                        + dataPropagation.keySet()));
+            }
+            this.dataType = dataType;
+            this.conditionObservedData = conditionObservedData;
+            this.dataPropagation = Collections.unmodifiableMap(dataPropagation == null? null:
+                new HashMap<>(dataPropagation));
+
+            this.experimentCounts = experimentCounts;
+            this.propagatedCount = propagatedCount;
+
+            this.rank = rank;
+            this.rankNorm = rankNorm;
+            this.weightForMeanRank = weightForMeanRank;
+        }
+
+        public DAODataType getDataType() {
+            return dataType;
+        }
+        /**
+         * @return  A {@code Boolean} defining whether the call was observed in the condition.
+         *          This is independent from {@link #getDataPropagation()},
+         *          because even if a data aggregation have produced only SELF propagation states,
+         *          we cannot have the guarantee that data were actually observed in the condition
+         *          by looking at these independent propagation states.
+         */
+        public Boolean isConditionObservedData() {
+            return conditionObservedData;
+        }
+        /**
+         * @return  A {@code Map} where keys are {@code ConditionDAO.Attribute}s that are
+         *          condition parameters (see {@link ConditionDAO.Attribute#isConditionParameter()}),
+         *          the associated value being a {@code DAOPropagationState} indicating where the call
+         *          originated from in that condition parameter
+         *          (for instance, data observed in a given anatomical entity).
+         */
+        public Map<ConditionDAO.Attribute, DAOPropagationState> getDataPropagation() {
+            return dataPropagation;
+        }
+
+        public Set<DAOExperimentCount> getExperimentCounts() {
+            return experimentCounts;
+        }
+        public Integer getPropagatedCount() {
+            return propagatedCount;
+        }
+
+        public BigDecimal getRank() {
+            return rank;
+        }
+        public BigDecimal getRankNorm() {
+            return rankNorm;
+        }
+        public BigDecimal getWeightForMeanRank() {
+            return weightForMeanRank;
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("GlobalExpressionCallDataTO [dataType=").append(dataType)
+                   .append(", dataPropagation=").append(dataPropagation)
+                   .append(", experimentCounts=").append(experimentCounts)
+                   .append(", propagatedCount=").append(propagatedCount)
+                   .append(", rank=").append(rank)
+                   .append(", rankNorm=").append(rankNorm)
+                   .append(", weightForMeanRank=").append(weightForMeanRank)
+                   .append("]");
+            return builder.toString();
         }
     }
 
@@ -625,7 +340,7 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      * @version Bgee 14 Feb. 2017
      * @since Bgee 14 Feb. 2017
      */
-    public final class GlobalExpressionToRawExpressionTO extends TransferObject {
+    public static class GlobalExpressionToRawExpressionTO extends TransferObject {
         private final static Logger log = LogManager.getLogger(GlobalExpressionToRawExpressionTO.class.getName());
         private static final long serialVersionUID = -553628358149907274L;
         

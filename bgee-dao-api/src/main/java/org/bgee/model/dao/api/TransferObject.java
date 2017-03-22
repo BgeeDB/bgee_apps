@@ -61,7 +61,7 @@ public abstract class TransferObject implements Serializable {
      * @throws IllegalArgumentException If {@code representation} does not correspond 
      *                                  to any element of {@code enumField}.
      */
-    protected static final <T extends Enum<T> & EnumDAOField> T convert(Class<T> enumField, 
+    public static final <T extends Enum<T> & EnumDAOField> T convert(Class<T> enumField,
             String representation) {
         log.entry(enumField, representation);
         

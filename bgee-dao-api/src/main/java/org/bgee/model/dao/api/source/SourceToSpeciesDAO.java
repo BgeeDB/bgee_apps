@@ -8,14 +8,15 @@ import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO.DataType;
+import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO.InfoType;
 
 /**
  * DAO defining queries using or retrieving {@link SourceToSpeciesTO}s. 
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, July 2016
+ * @author  Frederic Bastian
+ * @version Bgee 14 Mar. 2017
  * @since   Bgee 13, June 2016
  * @see     SourceToSpeciesTO
  */
@@ -79,7 +80,7 @@ public interface SourceToSpeciesDAO extends DAO<SourceToSpeciesDAO.Attribute> {
      * @throws IllegalStateException    If retrieved more than one source.
      */
     public SourceToSpeciesTOResultSet getSourceToSpecies(Collection<Integer> dataSourceIds,
-            Collection<Integer> speciesIds, Collection<DataType> dataTypes, Collection<InfoType> infoTypes,
+            Collection<Integer> speciesIds, Collection<DAODataType> dataTypes, Collection<InfoType> infoTypes,
             Collection<SourceToSpeciesDAO.Attribute> attributes) throws DAOException;
 
     /**
@@ -105,63 +106,7 @@ public interface SourceToSpeciesDAO extends DAO<SourceToSpeciesDAO.Attribute> {
     public final class SourceToSpeciesTO extends TransferObject {
 
         private static final long serialVersionUID = 4658714975166874629L;
-
-        /**
-         * {@code Logger} of the class. 
-         */
         private final static Logger log = LogManager.getLogger(SourceToSpeciesTO.class.getName());
-
-        /**
-         * An {@code Enum} used to define the data type.
-         * 
-         * <ul>
-         * <li>{@code AFFYMETRIX}: the data type is Affymetrix data.
-         * <li>{@code EST}: the data type is EST data.
-         * <li>{@code IN_SITU}: the data type is <em>in situ</em> data.
-         * <li>{@code RNA_SEQ}: the data type is RNA-Seq data.
-         * </ul>
-         */
-        public enum DataType implements EnumDAOField {
-            AFFYMETRIX("affymetrix"), EST("est"), IN_SITU("in situ"), RNA_SEQ("rna-seq");
-
-            /**
-             * Convert the {@code String} representation of a data type into a {@code DataType}.
-             * Operation performed by calling {@link TransferObject#convert(Class, String)} 
-             * with {@code DataType} as the {@code Class} argument, and {@code representation} as 
-             * the {@code String} argument.
-             * 
-             * @param representation    A {@code String} representing a data type.
-             * @return                  The {@code DataType} corresponding to {@code representation}.
-             * @throws IllegalArgumentException If {@code representation} does not correspond 
-             *                                  to any {@code DataType}.
-             */
-            public static final DataType convertToDataType(String representation) {
-                log.entry(representation);
-                return log.exit(TransferObject.convert(DataType.class, representation));
-            }
-
-            /**
-             * See {@link #getStringRepresentation()}
-             */
-            private final String stringRepresentation;
-
-            /**
-             * Constructor providing the {@code String} representation of this {@code DataType}.
-             * 
-             * @param stringRepresentation  A {@code String} corresponding to this {@code DataType}.
-             */
-            private DataType(String stringRepresentation) {
-                this.stringRepresentation = stringRepresentation;
-            }
-            @Override
-            public String getStringRepresentation() {
-                return this.stringRepresentation;
-            }
-            @Override
-            public String toString() {
-                return this.getStringRepresentation();
-            }
-        }
         
         /**
          * An {@code Enum} used to define the information type.
@@ -227,7 +172,7 @@ public interface SourceToSpeciesDAO extends DAO<SourceToSpeciesDAO.Attribute> {
         /**
          * A {@code DataType} that is the data type (for instance, affymetrix).
          */
-        private DataType dataType;
+        private DAODataType dataType;
 
         /**
          * A {@code InfoType} that is the information type (for instance, annotation).
@@ -242,11 +187,11 @@ public interface SourceToSpeciesDAO extends DAO<SourceToSpeciesDAO.Attribute> {
          * 
          * @param datasourceId  An {@code Integer} that is the ID of the data source.
          * @param speciesId     An {@code Integer} that is the ID of the species.
-         * @param dataType      A {@code DataType} that is the data type.
+         * @param dataType      A {@code DAODataType} that is the data type.
          * @param infoType      A {@code InfoType} that is the information type.
          */
         public SourceToSpeciesTO(Integer datasourceId, Integer speciesId, 
-                DataType dataType, InfoType infoType) {
+                DAODataType dataType, InfoType infoType) {
             this.dataSourceId   = datasourceId;
             this.speciesId      = speciesId;
             this.dataType       = dataType;
@@ -268,9 +213,9 @@ public interface SourceToSpeciesDAO extends DAO<SourceToSpeciesDAO.Attribute> {
         }
 
         /**
-         * @return the {@code DataType} that is the data type.
+         * @return the {@code DAODataType} that is the data type.
          */
-        public DataType getDataType() {
+        public DAODataType getDataType() {
             return dataType;
         }
 

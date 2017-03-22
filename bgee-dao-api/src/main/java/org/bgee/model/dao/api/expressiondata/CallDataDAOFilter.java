@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,60 +21,63 @@ import org.apache.logging.log4j.Logger;
 public class CallDataDAOFilter {
     private final static Logger log = LogManager.getLogger(CallDataDAOFilter.class.getName());
 
-    public enum DataType {
-        AFFYMETRIX, EST, IN_SITU, RNA_SEQ;
-    }
-
     /**
      * @see #getExperimentCountFilters()
      */
-    private final Set<DAOExperimentCountFilter> daoExperimentCountFilters;
+    private final Set<Set<DAOExperimentCountFilter>> daoExperimentCountFilters;
     /**
      * @see #getDataTypes()
      */
-    private final Set<DataType> dataTypes;
+    private final Set<DAODataType> dataTypes;
 
     /**
      * 
-     * @param daoExperimentCountFilters If several {@code DAOExperimentCountFilter}s are provided,
-     *                                  they are seen as "OR" conditions. Cannot be {@code null},
-     *                                  empty, or to contain {@code null} elements.
-     * @param dataTypes                 A {@code Set} of {@code DataType}s that are the data types
+     * @param daoExperimentCountFilters A {@code Collection} of {@code Set}s of
+     *                                  {@code DAOExperimentCountFilter}s.
+     *                                  The filters in an inner {@code Set} are seen as "OR" conditions.
+     *                                  The {@code Set}s in the outer {@code Set} are seen as
+     *                                  "AND" conditions. None of the {@code Set}s (inner or outer)
+     *                                  can be {@code null}, empty, or to contain {@code null} elements.
+     * @param dataTypes                 A {@code Set} of {@code DAODataType}s that are the data types
      *                                  which attributes will be sum up to match the provided
      *                                  {@code DAOExperimentCountFilter}s. If {@code null} or empty,
      *                                  then all data types are used.
-     * @throws IllegalArgumentException If {@code dAOExperimentCountFilters} is {@code null}, empty,
-     *                                  or contains {@code null} elements.
+     * @throws IllegalArgumentException If any of the {@code Set}s used in {@code dAOExperimentCountFilters}
+     *                                  is {@code null}, empty, or contains {@code null} elements.
      */
-    public CallDataDAOFilter(Collection<DAOExperimentCountFilter> daoExperimentCountFilters,
-            Collection<DataType> dataTypes) throws IllegalArgumentException {
+    public CallDataDAOFilter(Collection<Set<DAOExperimentCountFilter>> daoExperimentCountFilters,
+            Collection<DAODataType> dataTypes) throws IllegalArgumentException {
         log.entry(daoExperimentCountFilters, dataTypes);
-        if (daoExperimentCountFilters == null || daoExperimentCountFilters.isEmpty() || 
-                daoExperimentCountFilters.stream().anyMatch(e -> e == null)) {
+        if (daoExperimentCountFilters == null || daoExperimentCountFilters.isEmpty() ||
+                daoExperimentCountFilters.stream()
+                .anyMatch(e -> e == null || e.isEmpty() || e.contains(null))) {
             throw log.throwing(new IllegalArgumentException(
                     "Some ExperimentCountFilters must be provided and none can be null."));
         }
         this.dataTypes = Collections.unmodifiableSet(
-                dataTypes == null || dataTypes.isEmpty()? EnumSet.allOf(DataType.class):
+                dataTypes == null || dataTypes.isEmpty()? EnumSet.allOf(DAODataType.class):
                     EnumSet.copyOf(dataTypes));
-        this.daoExperimentCountFilters = new HashSet<>(daoExperimentCountFilters);
+        this.daoExperimentCountFilters = Collections.unmodifiableSet(
+                daoExperimentCountFilters.stream().map(e -> Collections.unmodifiableSet(new HashSet<>(e)))
+                .collect(Collectors.toSet()));
     }
 
     /**
-     * @return      A {@code Set} of {@code DAOExperimentCountFilter}s to parameterize
-     *              global expression queries. If several {@code DAOExperimentCountFilter}s are present,
-     *              they are seen as "AND" conditions.
+     * @return      A {@code Set} of {@code Set}s of {@code DAOExperimentCountFilter}s to parameterize
+     *              global expression queries. The filters in an inner {@code Set} are seen as
+     *              "OR" conditions. The {@code Set}s in the outer {@code Set} are seen as
+     *              "AND" conditions.
      * @see #getDataTypes()
      */
-    public Set<DAOExperimentCountFilter> getExperimentCountFilters() {
+    public Set<Set<DAOExperimentCountFilter>> getExperimentCountFilters() {
         return daoExperimentCountFilters;
     }
     /**
-     * @return      A {@code Set} of {@code DataType}s that are the data types which attributes
+     * @return      A {@code Set} of {@code DAODataType}s that are the data types which attributes
      *              will be sum up to match the provided {@code DAOExperimentCountFilter}s.
      * @see #getExperimentCountFilters()
      */
-    public Set<DataType> getDataTypes() {
+    public Set<DAODataType> getDataTypes() {
         return dataTypes;
     }
 

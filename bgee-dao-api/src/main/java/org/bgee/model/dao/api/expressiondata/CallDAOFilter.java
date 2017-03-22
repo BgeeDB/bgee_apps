@@ -3,7 +3,9 @@ package org.bgee.model.dao.api.expressiondata;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -32,6 +34,18 @@ public class CallDAOFilter {
      * @see #getConditionFilters()
      */
     private final LinkedHashSet<DAOConditionFilter> conditionFilters;
+    /**
+     * @see #getDataFilters()
+     */
+    private final LinkedHashSet<CallDataDAOFilter> dataFilters;
+    /**
+     * See #isConditionObservedData()
+     */
+    private final Boolean conditionObservedData;
+    /**
+     * @see #getObservedDataFilter()
+     */
+    private final LinkedHashMap<ConditionDAO.Attribute, Boolean> observedDataFilter;
     
     /**
      * Constructor accepting all requested parameters. 
@@ -46,9 +60,10 @@ public class CallDAOFilter {
      *                              Can be {@code null} or empty.
      */
     public CallDAOFilter(Collection<Integer> geneIds, Collection<Integer> speciesIds, 
-            Collection<DAOConditionFilter> conditionFilters) 
+            Collection<DAOConditionFilter> conditionFilters, Collection<CallDataDAOFilter> dataFilters,
+            Boolean conditionObservedData, Map<ConditionDAO.Attribute, Boolean> observedDataFilter)
                     throws IllegalArgumentException {
-        log.entry(geneIds, speciesIds, conditionFilters);
+        log.entry(geneIds, speciesIds, conditionFilters, dataFilters, conditionObservedData, observedDataFilter);
         if (geneIds != null && geneIds.stream().anyMatch(id -> id == null)) {
             throw log.throwing(new IllegalArgumentException("No gene ID can be null"));
         }
@@ -58,14 +73,26 @@ public class CallDAOFilter {
         if (conditionFilters != null && conditionFilters.stream().anyMatch(cf -> cf == null)) {
             throw log.throwing(new IllegalArgumentException("No DAOConditionFilter can be null"));
         }
+        if (dataFilters != null && dataFilters.stream().anyMatch(df -> df == null)) {
+            throw log.throwing(new IllegalArgumentException("No CallDataDAOFilter can be null"));
+        }
+        if (observedDataFilter != null && observedDataFilter.entrySet().stream()
+                .anyMatch(e -> e.getKey() == null || e.getValue() == null)) {
+            throw log.throwing(new IllegalArgumentException("No ObservedData Entry can have null key or value"));
+        }
 
         this.geneIds = Collections.unmodifiableSet(
                 geneIds == null? new HashSet<>(): new HashSet<>(geneIds));
         this.speciesIds = Collections.unmodifiableSet(
                 speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds));
+        this.conditionObservedData = conditionObservedData;
         //we'll use defensive copying for this one, no unmodifiableLinkedHashSet method
         this.conditionFilters = conditionFilters == null? new LinkedHashSet<>(): 
             new LinkedHashSet<>(conditionFilters);
+        this.dataFilters = dataFilters == null? new LinkedHashSet<>(): 
+            new LinkedHashSet<>(dataFilters);
+        this.observedDataFilter = observedDataFilter == null? new LinkedHashMap<>():
+            new LinkedHashMap<>(observedDataFilter);
         
         log.exit();
     }
@@ -95,13 +122,49 @@ public class CallDAOFilter {
         //defensive copying
         return new LinkedHashSet<>(conditionFilters);
     }
+    /**
+     * @return  A {@code LinkedHashSet} of {@code CallDataDAOFilter}s to configure the filtering
+     *          of conditions with expression data. If several {@code CallDataDAOFilter}s are provided,
+     *          they are seen as "OR" conditions. Can be {@code null} or empty.
+     *          Provided as a {@code LinkedHashSet} for convenience, to consistently set parameters 
+     *          in queries.
+     */
+    public LinkedHashSet<CallDataDAOFilter> getDataFilters() {
+        //defensive copying
+        return new LinkedHashSet<>(dataFilters);
+    }
+    /**
+     * @return  A {@code Boolean} defining a filtering on whether the call was observed in the condition,
+     *          if not {@code null}. This is independent from {@link #getObservedDataFilter()},
+     *          because even if a data aggregation have produced only SELF propagation states,
+     *          we cannot have the guarantee that data were actually observed in the condition
+     *          by looking at these independent propagation states.
+     */
+    public Boolean isConditionObservedData() {
+        return conditionObservedData;
+    }
+    /**
+     * @return  A {@code LinkedHashMap} where keys are {@code ConditionDAO.Attribute}s that are 
+     *          condition parameters (see {@link ConditionDAO.Attribute#isConditionParameter()}),
+     *          the associated value being a {@code Boolean} indicating whether the retrieved data
+     *          should have been observed in the specified condition parameter.
+     *          Provided as a {@code LinkedHashMap} for convenience, to consistently set parameters
+     *          in queries.
+     */
+    public LinkedHashMap<ConditionDAO.Attribute, Boolean> getObservedDataFilter() {
+        //defensive copying
+        return new LinkedHashMap<>(observedDataFilter);
+    }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((conditionFilters == null) ? 0 : conditionFilters.hashCode());
+        result = prime * result + ((dataFilters == null) ? 0 : dataFilters.hashCode());
         result = prime * result + ((geneIds == null) ? 0 : geneIds.hashCode());
+        result = prime * result + ((conditionObservedData == null) ? 0 : conditionObservedData.hashCode());
+        result = prime * result + ((observedDataFilter == null) ? 0 : observedDataFilter.hashCode());
         result = prime * result + ((speciesIds == null) ? 0 : speciesIds.hashCode());
         return result;
     }
@@ -124,11 +187,32 @@ public class CallDAOFilter {
         } else if (!conditionFilters.equals(other.conditionFilters)) {
             return false;
         }
+        if (dataFilters == null) {
+            if (other.dataFilters != null) {
+                return false;
+            }
+        } else if (!dataFilters.equals(other.dataFilters)) {
+            return false;
+        }
         if (geneIds == null) {
             if (other.geneIds != null) {
                 return false;
             }
         } else if (!geneIds.equals(other.geneIds)) {
+            return false;
+        }
+        if (conditionObservedData == null) {
+            if (other.conditionObservedData != null) {
+                return false;
+            }
+        } else if (!conditionObservedData.equals(other.conditionObservedData)) {
+            return false;
+        }
+        if (observedDataFilter == null) {
+            if (other.observedDataFilter != null) {
+                return false;
+            }
+        } else if (!observedDataFilter.equals(other.observedDataFilter)) {
             return false;
         }
         if (speciesIds == null) {
@@ -146,9 +230,11 @@ public class CallDAOFilter {
         StringBuilder builder = new StringBuilder();
         builder.append("CallDAOFilter [geneIds=").append(geneIds)
                .append(", speciesIds=").append(speciesIds)
-               .append(", conditionFilters=").append(conditionFilters).append("]");
+               .append(", conditionFilters=").append(conditionFilters)
+               .append(", dataFilters=").append(dataFilters)
+               .append(", conditionObservedData=").append(conditionObservedData)
+               .append(", observedDataFilter=").append(observedDataFilter)
+               .append("]");
         return builder.toString();
     }
-
-    
 }

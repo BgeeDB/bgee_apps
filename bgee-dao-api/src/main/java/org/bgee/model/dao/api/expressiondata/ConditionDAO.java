@@ -2,10 +2,13 @@ package org.bgee.model.dao.api.expressiondata;
 
 import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 
 /**
@@ -13,7 +16,7 @@ import org.bgee.model.dao.api.exception.DAOException;
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, Feb. 2017
+ * @version Bgee 14, Mar. 2017
  * @since   Bgee 14, Feb. 2017
  * @see ConditionTO
  */
@@ -31,18 +34,14 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
      * <li>{@code SEX}: corresponds to {@link ConditionTO#getSex()}.
      * <li>{@code SEX_INFERRED}: corresponds to {@link ConditionTO#getSexInferred()}.
      * <li>{@code STRAIN}: corresponds to {@link ConditionTO#getStrain()}.
-     * <li>{@code AFFYMETRIX_MAX_RANK}: corresponds to {@link ConditionTO#getAffymetrixMaxRank()}.
-     * <li>{@code RNA_SEQ_MAX_RANK}: corresponds to {@link ConditionTO#getRNASeqMaxRank()}.
-     * <li>{@code EST_MAX_RANK}: corresponds to {@link ConditionTO#getESTMaxRank()}.
-     * <li>{@code IN_SITU_MAX_RANK}: corresponds to {@link ConditionTO#getInSituMaxRank()}.
      * </ul>
      */
+    //XXX: retrieval of GlobalConditionMaxRanksTOs associated to a ConditionTO not yet implemented,
+    //to be added when needed.
     public enum Attribute implements DAO.Attribute {
         ID("id", false), EXPR_MAPPED_CONDITION_ID("exprMappedConditionId", false), 
         SPECIES_ID("speciesId", false), 
-        ANAT_ENTITY_ID("anatEntityId", true), STAGE_ID("stageId", true), 
-        AFFYMETRIX_MAX_RANK("affymetrixMaxRank", false), RNA_SEQ_MAX_RANK("rnaSeqMaxRank", false), 
-        EST_MAX_RANK("estMaxRank", false), IN_SITU_MAX_RANK("inSituMaxRank", false);
+        ANAT_ENTITY_ID("anatEntityId", true), STAGE_ID("stageId", true);
 
         /**
          * A {@code String} that is the corresponding field name in {@code AnatEntityTO} class.
@@ -73,23 +72,46 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
     }
     
     /**
-     * Retrieves conditions from data source according to a {@code Collection} of {@code Integer}s
-     * that are the IDs of species allowing to filter the conditions to use.
+     * Retrieves raw conditions used to annotate data and used in the "raw" expression table,
+     * where data are not propagated nor precomputed.
+     *
+     * @param speciesIds            A {@code Collection} of {@code Integer}s that are the IDs of species 
+     *                              allowing to filter the conditions to retrieve. If {@code null}
+     *                              or empty, condition for all species are retrieved.
+     * @param attributes            A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
+     *                              attributes to populate in the returned {@code ConditionTO}s.
+     *                              If {@code null} or empty, all attributes are populated. 
+     * @return
+     * @throws DAOException
+     * @throws IllegalArgumentException
+     */
+    public ConditionTOResultSet getRawConditionsBySpeciesIds(Collection<Integer> speciesIds, 
+            Collection<Attribute> attributes) throws DAOException, IllegalArgumentException;
+    
+    /**
+     * Retrieves global conditions belonging to the provided {@code speciesIds} with parameters defined
+     * as specified by {@code conditionParameters}. These global conditions result from
+     * the computation of propagated calls according to different condition parameters combinations.
+     * For instance, grouping all data related to a same anatomical entity whatever
+     * the developmental stage is, or all data in a same anatomical entity - stage whatever the sex is.
+     * {@code conditionParameters} defines the condition parameters considered for aggregating the data.
+     * A call to {@link Attribute#isConditionParameter()} must return {@code true} for an {@code Attribute}
+     * to be accepted in this {@code Collection}.
      * <p>
      * The conditions are retrieved and returned as a {@code ConditionTOResultSet}. It is the
      * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
      * @param speciesIds            A {@code Collection} of {@code Integer}s that are the IDs of species 
-     *                              allowing to filter the conditions to use.
+     *                              allowing to filter the conditions to retrieve. If {@code null}
+     *                              or empty, condition for all species are retrieved.
      * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
-     *                              combination of condition parameters that were requested for queries, 
-     *                              allowing to determine which condition and expression tables to target
+     *                              condition parameters considered for aggregating the expression data
      *                              (see {@link Attribute#isConditionParameter()}).
      *                              It is different from {@code attributes}, because you might want 
      *                              to retrieve, for instance, only anatomical entity IDs, 
      *                              while your expression query was using a stage ID parameter for filtering, 
-     *                              and thus the targeted tables must include information for both 
-     *                              anatomical entities and stages.
+     *                              and thus the data must have been aggregated by taking stages
+     *                              into account.
      * @param attributes            A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
      *                              attributes to populate in the returned {@code ConditionTO}s.
      *                              If {@code null} or empty, all attributes are populated. 
@@ -100,49 +122,50 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
      *                                  is not a condition parameter attributes (see 
      *                                  {@link Attribute#isConditionParameter()}). 
      */
-    public ConditionTOResultSet getConditionsBySpeciesIds(Collection<Integer> speciesIds,
+    public ConditionTOResultSet getGlobalConditionsBySpeciesIds(Collection<Integer> speciesIds,
         Collection<Attribute> conditionParameters, Collection<Attribute> attributes) 
             throws DAOException, IllegalArgumentException;
     
     /**
-     * Retrieve the maximum of condition IDs in the appropriate table specified by {@code conditionParameters}.
-     * 
-     * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
-     *                              combination of condition parameters that were requested for queries, 
-     *                              allowing to determine which condition and expression tables to target
-     *                              (see {@link Attribute#isConditionParameter()}). This is to make sure
-     *                              that attributes requested for insertion are not accidentally missing 
-     *                              from the {@code ConditionTO}s.
-     * @return                      An {@code int} that is maximum of condition IDs in the appropriate table.
+     * Retrieve the maximum of global condition IDs, used in the global expression data,
+     * pre-computed and propagated.
+     * @return                      An {@code int} that is maximum of global condition IDs.
      *                              If there is no condition, return 0.
-     * @throws DAOException             If an error occurred when accessing the data source. 
-     * @throws IllegalArgumentException If one of the {@code Attribute}s in {@code conditionParameters}
-     *                                  is not a condition parameter attributes (see 
-     *                                  {@link Attribute#isConditionParameter()}).
+     * @throws DAOException             If an error occurred when accessing the data source.
      */
-    public int getMaxConditionId(Collection<Attribute> conditionParameters) 
-            throws DAOException, IllegalArgumentException;
-    
+    public int getMaxGlobalConditionId() throws DAOException;
+
     /**
-     * Insert into the datasource the provided {@code ConditionTO}s. Which condition table 
-     * should be targeted will be determined by {@code conditionParameters}. 
+     * Retrieve the max ranks and global max ranks over all conditions and data types,
+     * for all condition parameter combinations. Only the attributes returned by
+     * {@link GlobalConditionMaxRanksTO#getMaxRank()} and
+     * {@link GlobalConditionMaxRanksTO#getGlobalMaxRank()} are populated in the returned
+     * {@code GlobalConditionMaxRanksTO}s.
+     * @return                          A {@code Map} where keys are combinations of condition parameters
+     *                                  described by {@code Set}s of {@code ConditionDAO.Attribute}s,
+     *                                  the associated value being a {@code GlobalConditionMaxRanksTO}
+     *                                  allowing to retrieve the max rank and global max rank
+     *                                  for this combination.
+     * @throws DAOException             If an error occurred when accessing the data source.
+     */
+    public Map<Set<ConditionDAO.Attribute>, GlobalConditionMaxRanksTO> getMaxRanks()
+            throws DAOException, IllegalArgumentException;
+
+    /**
+     * Insert into the datasource the provided global {@code ConditionTO}s. These global conditions
+     * result from the computation of propagated calls according to different
+     * condition parameters combinations. For instance, grouping all data related to
+     * a same anatomical entity whatever the developmental stage is, or all data
+     * in a same anatomical entity - stage whatever the sex is. Only the condition attributes
+     * that were considered for aggregating the data should be set in the provided {@code ConditionTO}s.
      * 
      * @param conditionTOs          A {@code Collection} of {@code ConditionTO}s to be inserted 
      *                              into the datasource.
-     * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
-     *                              combination of condition parameters that were requested for queries, 
-     *                              allowing to determine which condition and expression tables to target
-     *                              (see {@link Attribute#isConditionParameter()}).
      * @return                      An {@code int} that is the number of conditions inserted.
      * @throws DAOException If an error occurred while inserting the conditions.
-     * @throws IllegalArgumentException If an attribute necessary for the targeted tables is missing, 
-     *                                  or if one of the {@code Attribute}s in {@code conditionParameters}
-     *                                  is not a condition parameter attributes (see 
-     *                                  {@link Attribute#isConditionParameter()}).
      */
-    public int insertConditions(Collection<ConditionTO> conditionTOs, 
-            Collection<Attribute> conditionParameters) throws DAOException, IllegalArgumentException;
-        
+    public int insertGlobalConditions(Collection<ConditionTO> conditionTOs) throws DAOException;
+
     /**
      * {@code DAOResultSet} specifics to {@code ConditionTO}s
      * 
@@ -152,12 +175,13 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
      */
     public interface ConditionTOResultSet extends DAOResultSet<ConditionTO> {
     }
-    
+
     /**
      * {@code EntityTO} representing a condition in the Bgee database.
      * 
      * @author  Valentine Rech de Laval
-     * @version Bgee 14, Feb. 2017
+     * @author Frederic Bastian
+     * @version Bgee 14, Mar. 2017
      * @since   Bgee 14, Feb. 2017
      */
     public class ConditionTO extends EntityTO<Integer> {
@@ -168,35 +192,14 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
         private final String anatEntityId;
         private final String stageId;
         private final Integer speciesId;
-        /**
-         * @see #getAffymetrixMaxRank()
-         */
-        private final BigDecimal affymetrixMaxRank;
-        /**
-         * @see #getRNASeqMaxRank()
-         */
-        private final BigDecimal rnaSeqMaxRank;
-        /**
-         * @see #getESTMaxRank()
-         */
-        private final BigDecimal estMaxRank;
-        /**
-         * @see #getInSituMaxRank()
-         */
-        private final BigDecimal inSituMaxRank;
         
         public ConditionTO(Integer id, Integer exprMappedConditionId, String anatEntityId,
-            String stageId, Integer speciesId, BigDecimal affymetrixMaxRank, 
-            BigDecimal rnaSeqMaxRank, BigDecimal estMaxRank, BigDecimal inSituMaxRank) {
+            String stageId, Integer speciesId) {
             super(id);
             this.exprMappedConditionId = exprMappedConditionId;
             this.anatEntityId = anatEntityId;
             this.stageId = stageId;
             this.speciesId = speciesId;
-            this.affymetrixMaxRank = affymetrixMaxRank;
-            this.rnaSeqMaxRank = rnaSeqMaxRank;
-            this.estMaxRank = estMaxRank;
-            this.inSituMaxRank = inSituMaxRank;
         }
         
         /**
@@ -227,41 +230,91 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
             return speciesId;
         }
 
-        /**
-         * @return  A {@code BigDecimal} that is the max rank in this condition, over all genes, 
-         *          based on Affymetrix data.
-         */
-        public BigDecimal getAffymetrixMaxRank() {
-            return affymetrixMaxRank;
-        }
-        /**
-         * @return  A {@code BigDecimal} that is the max rank in this condition, over all genes, 
-         *          based on RNA-Seq data.
-         */
-        public BigDecimal getRNASeqMaxRank() {
-            return rnaSeqMaxRank;
-        }
-        /**
-         * @return  A {@code BigDecimal} that is the max rank in this condition, over all genes, 
-         *          based on EST data.
-         */
-        public BigDecimal getESTMaxRank() {
-            return estMaxRank;
-        }
-        /**
-         * @return  A {@code BigDecimal} that is the max rank in this condition, over all genes, 
-         *          based on in situ data.
-         */
-        public BigDecimal getInSituMaxRank() {
-            return inSituMaxRank;
-        }
-        
         @Override
         public String toString() {
-            return "ConditionTO [id=" + getId() + ", exprMappedConditionId=" + exprMappedConditionId
-                + ", anatEntityId=" + anatEntityId + ", stageId=" + stageId + ", speciesId=" + speciesId
-                + ", affymetrixMaxRank=" + affymetrixMaxRank + ", rnaSeqMaxRank=" + rnaSeqMaxRank
-                + ", estMaxRank=" + estMaxRank + ", inSituMaxRank=" + inSituMaxRank + "]";
+            StringBuilder builder = new StringBuilder();
+            builder.append("ConditionTO [id=").append(getId())
+                   .append(", exprMappedConditionId=").append(exprMappedConditionId)
+                   .append(", anatEntityId=").append(anatEntityId)
+                   .append(", stageId=").append(stageId)
+                   .append(", speciesId=").append(speciesId).append("]");
+            return builder.toString();
+        }
+    }
+
+    /**
+     * Allows to store the max gene expression ranks in each global condition,
+     * whether by taking into account the conditions itself, or all child conditions.
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 14 Mar. 2017
+     * @since Bgee 14 mar. 2017
+     */
+    public class GlobalConditionMaxRanksTO extends TransferObject {
+        private static final long serialVersionUID = 1170648972684653250L;
+
+        /**
+         * @see #getConditionId()
+         */
+        private final Integer conditionId;
+        /**
+         * @see #getDataType()
+         */
+        private final DAODataType dataType;
+        /**
+         * @see #getMaxRank()
+         */
+        private final BigDecimal maxRank;
+        /**
+         * @see #getGlobalMaxRank()
+         */
+        private final BigDecimal globalMaxRank;
+
+        public GlobalConditionMaxRanksTO(Integer conditionId, DAODataType dataType,
+                BigDecimal maxRank, BigDecimal globalMaxRank) {
+            this.conditionId = conditionId;
+            this.dataType = dataType;
+            this.maxRank = maxRank;
+            this.globalMaxRank = globalMaxRank;
+        }
+
+        /**
+         * @return  An {@code Integer} that is the ID of the global condition which the max ranks
+         *          are related to.
+         */
+        public Integer getConditionId() {
+            return conditionId;
+        }
+        /**
+         * @return  A {@code DAODataType} that is the data type considered to compute
+         *          the max ranks.
+         */
+        public DAODataType getDataType() {
+            return dataType;
+        }
+        /**
+         * @return  A {@code BigDecimal} that is the max rank observed by this data type
+         *          in this condition, without considering child conditions.
+         */
+        public BigDecimal getMaxRank() {
+            return maxRank;
+        }
+        /**
+         * @return  A {@code BigDecimal} that is the max rank observed by this data type
+         *          in this condition, taking also into account all child conditions.
+         */
+        public BigDecimal getGlobalMaxRank() {
+            return globalMaxRank;
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("ConditionMaxRanksTO [conditionId=").append(conditionId)
+                   .append(", dataType=").append(dataType)
+                   .append(", maxRank=").append(maxRank)
+                   .append(", globalMaxRank=").append(globalMaxRank).append("]");
+            return builder.toString();
         }
     }
 }

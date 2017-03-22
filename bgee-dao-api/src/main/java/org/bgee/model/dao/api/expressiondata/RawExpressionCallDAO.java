@@ -1,6 +1,5 @@
 package org.bgee.model.dao.api.expressiondata;
 
-import java.math.BigDecimal;
 import java.util.Collection;
 
 import org.bgee.model.dao.api.DAO;
@@ -112,37 +111,10 @@ public interface RawExpressionCallDAO extends DAO<RawExpressionCallDAO.Attribute
          */
         private final Integer conditionId;
         
-        private final BigDecimal rnaSeqMeanRank;
-        private final BigDecimal affymetrixMeanRank;
-        private final BigDecimal estRank;
-        private final BigDecimal inSituRank;
-        
-        private final BigDecimal affymetrixMeanRankNorm;
-        private final BigDecimal rnaSeqMeanRankNorm;
-        private final BigDecimal estRankNorm;
-        private final BigDecimal inSituRankNorm;
-        
-        private final BigDecimal affymetrixDistinctRankSum;
-        private final BigDecimal rnaSeqDistinctRankSum;
-        
-        public RawExpressionCallTO(Integer id, Integer bgeeGeneId, Integer conditionId,
-                BigDecimal affymetrixMeanRank, BigDecimal rnaSeqMeanRank, BigDecimal estRank,
-                BigDecimal inSituRank, BigDecimal affymetrixMeanRankNorm,
-                BigDecimal rnaSeqMeanRankNorm, BigDecimal estRankNorm, BigDecimal inSituRankNorm,
-                BigDecimal affymetrixDistinctRankSum, BigDecimal rnaSeqDistinctRankSum) {
+        public RawExpressionCallTO(Integer id, Integer bgeeGeneId, Integer conditionId) {
             super(id);
             this.bgeeGeneId = bgeeGeneId;
             this.conditionId = conditionId;
-            this.affymetrixMeanRank = affymetrixMeanRank;
-            this.rnaSeqMeanRank = rnaSeqMeanRank;
-            this.estRank = estRank;
-            this.inSituRank = inSituRank;
-            this.affymetrixMeanRankNorm = affymetrixMeanRankNorm;
-            this.rnaSeqMeanRankNorm = rnaSeqMeanRankNorm;
-            this.estRankNorm = estRankNorm;
-            this.inSituRankNorm = inSituRankNorm;
-            this.affymetrixDistinctRankSum = affymetrixDistinctRankSum;
-            this.rnaSeqDistinctRankSum = rnaSeqDistinctRankSum;
         }
         
         public Integer getBgeeGeneId() {
@@ -152,49 +124,10 @@ public interface RawExpressionCallDAO extends DAO<RawExpressionCallDAO.Attribute
             return this.conditionId;
         }
         
-        public BigDecimal getRNASeqMeanRank() {
-            return rnaSeqMeanRank;
-        }
-        public BigDecimal getAffymetrixMeanRank() {
-            return affymetrixMeanRank;
-        }
-        public BigDecimal getESTRank() {
-            return estRank;
-        }
-        public BigDecimal getInSituRank() {
-            return inSituRank;
-        }
-        
-        public BigDecimal getAffymetrixMeanRankNorm() {
-            return affymetrixMeanRankNorm;
-        }
-        public BigDecimal getRNASeqMeanRankNorm() {
-            return rnaSeqMeanRankNorm;
-        }
-        public BigDecimal getESTRankNorm() {
-            return estRankNorm;
-        }
-        public BigDecimal getInSituRankNorm() {
-            return inSituRankNorm;
-        }
-        
-        public BigDecimal getAffymetrixDistinctRankSum() {
-            return affymetrixDistinctRankSum;
-        }
-        public BigDecimal getRNASeqDistinctRankSum() {
-            return rnaSeqDistinctRankSum;
-        }
-        
         @Override
         public String toString() {
             return "RawExpressionCallTO [id=" + this.getId() + ", bgeeGeneId=" + bgeeGeneId 
-                    + ", conditionId=" + conditionId + ", rnaSeqMeanRank=" + rnaSeqMeanRank 
-                    + ", affymetrixMeanRank=" + affymetrixMeanRank + ", estRank=" + estRank 
-                    + ", inSituRank=" + inSituRank + ", affymetrixMeanRankNorm=" 
-                    + affymetrixMeanRankNorm + ", rnaSeqMeanRankNorm=" + rnaSeqMeanRankNorm
-                    + ", estRankNorm=" + estRankNorm + ", inSituRankNorm=" + inSituRankNorm 
-                    + ", affymetrixDistinctRankSum=" + affymetrixDistinctRankSum 
-                    + ", rnaSeqDistinctRankSum=" + rnaSeqDistinctRankSum + "]";
+                    + ", conditionId=" + conditionId + "]";
         }
     }
 }

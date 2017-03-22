@@ -17,6 +17,7 @@ import org.bgee.model.dao.api.anatdev.StageDAO.StageTO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
+import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.ComparisonFactor;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.DiffExprCallType;
@@ -44,7 +45,6 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType
 import org.bgee.model.dao.api.source.SourceDAO.SourceTO;
 import org.bgee.model.dao.api.source.SourceDAO.SourceTO.SourceCategory;
 import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO;
-import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO.DataType;
 import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO.InfoType;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
@@ -370,27 +370,18 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreConditionTOsEqual() {
-        ConditionTO to1 = new ConditionTO(1, 2, "anatEntityId1", "stageId1", 99, 
-                new BigDecimal("1.5"), new BigDecimal("2.5"), new BigDecimal("3.5"), new BigDecimal("4"));
-        ConditionTO to2 = new ConditionTO(1, 2, "anatEntityId1", "stageId1", 99, 
-                new BigDecimal("1.5"), new BigDecimal("2.5"), new BigDecimal("3.5"), new BigDecimal("4"));
+        ConditionTO to1 = new ConditionTO(1, 2, "anatEntityId1", "stageId1", 99);
+        ConditionTO to2 = new ConditionTO(1, 2, "anatEntityId1", "stageId1", 99);
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
-        to2 = new ConditionTO(1, 2, "anatEntityId1", "stageId1", 8, 
-                new BigDecimal("1.5"), new BigDecimal("2.5"), new BigDecimal("3.5"), new BigDecimal("4"));
+        to2 = new ConditionTO(1, 2, "anatEntityId1", "stageId1", 8);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         
-        to2 = new ConditionTO(1, 2, "anatEntityId2", "stageId1", 99, 
-                new BigDecimal("1.5"), new BigDecimal("2.5"), new BigDecimal("3.5"), new BigDecimal("4"));
+        to2 = new ConditionTO(1, 2, "anatEntityId2", "stageId1", 99);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         
-        to2 = new ConditionTO(1, 2, "anatEntityId1", "stageId1", 99, 
-                new BigDecimal("1.5"), new BigDecimal("2.5"), new BigDecimal("3.5"), new BigDecimal("3"));
-        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
-        
-        to2 = new ConditionTO(86, 2, "anatEntityId1", "stageId1", 99, 
-                new BigDecimal("1.5"), new BigDecimal("2.5"), new BigDecimal("3.5"), new BigDecimal("4"));
+        to2 = new ConditionTO(86, 2, "anatEntityId1", "stageId1", 99);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
     }
@@ -738,20 +729,20 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreSourceToSpeciesTOEqual() {
-        SourceToSpeciesTO to1 = new SourceToSpeciesTO(1, 11, DataType.EST, InfoType.DATA);
-        SourceToSpeciesTO to2 = new SourceToSpeciesTO(1, 11, DataType.EST, InfoType.DATA);
+        SourceToSpeciesTO to1 = new SourceToSpeciesTO(1, 11, DAODataType.EST, InfoType.DATA);
+        SourceToSpeciesTO to2 = new SourceToSpeciesTO(1, 11, DAODataType.EST, InfoType.DATA);
         assertTrue(TOComparator.areTOsEqual(to1, to2));
 
-        to2 = new SourceToSpeciesTO(1, 11, DataType.AFFYMETRIX, InfoType.DATA);
+        to2 = new SourceToSpeciesTO(1, 11, DAODataType.AFFYMETRIX, InfoType.DATA);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
 
-        to2 = new SourceToSpeciesTO(1, 11, DataType.EST, InfoType.ANNOTATION);
+        to2 = new SourceToSpeciesTO(1, 11, DAODataType.EST, InfoType.ANNOTATION);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
         
-        to2 = new SourceToSpeciesTO(1, 21, DataType.EST, InfoType.DATA);
+        to2 = new SourceToSpeciesTO(1, 21, DAODataType.EST, InfoType.DATA);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
 
-        to2 = new SourceToSpeciesTO(2, 11, DataType.EST, InfoType.DATA);
+        to2 = new SourceToSpeciesTO(2, 11, DAODataType.EST, InfoType.DATA);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertFalse(TOComparator.areTOsEqual(to1, to2, false));
     }

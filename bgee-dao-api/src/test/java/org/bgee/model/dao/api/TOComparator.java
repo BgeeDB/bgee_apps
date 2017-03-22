@@ -18,12 +18,16 @@ import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.Sim
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO.GlobalConditionMaxRanksTO;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.GlobalExpressionToExpressionTO;
+import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallDataTO;
+import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.GlobalNoExpressionToNoExpressionTO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO.RawExpressionCallTO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesDataGroupTO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesToDataGroupTO;
@@ -130,9 +134,19 @@ public class TOComparator {
             return log.exit(areTOsEqual((RelationTO<?>) to1, (RelationTO<?>) to2, compareId));
         } else if (to1 instanceof ConditionTO) {
             return log.exit(areTOsEqual((ConditionTO) to1, (ConditionTO) to2, compareId));
+        } else if (to1 instanceof GlobalConditionMaxRanksTO) {
+            return log.exit(areTOsEqual((GlobalConditionMaxRanksTO) to1, (GlobalConditionMaxRanksTO) to2));
         } else if (to1 instanceof ExpressionCallTO) {
             return log.exit(areTOsEqual((ExpressionCallTO) to1, (ExpressionCallTO) to2, 
                     compareId));
+        } else if (to1 instanceof RawExpressionCallTO) {
+            return log.exit(areTOsEqual((RawExpressionCallTO) to1, (RawExpressionCallTO) to2, 
+                    compareId));
+        } else if (to1 instanceof GlobalExpressionCallTO) {
+            return log.exit(areTOsEqual((GlobalExpressionCallTO) to1, (GlobalExpressionCallTO) to2, 
+                    compareId));
+        } else if (to1 instanceof GlobalExpressionCallDataTO) {
+            return log.exit(areTOsEqual((GlobalExpressionCallDataTO) to1, (GlobalExpressionCallDataTO) to2));
         } else if (to1 instanceof NoExpressionCallTO) {
             return log.exit(areTOsEqual((NoExpressionCallTO) to1, (NoExpressionCallTO) to2, 
                     compareId));
@@ -669,11 +683,27 @@ public class TOComparator {
                 Objects.equals(to1.getExprMappedConditionId(), to2.getExprMappedConditionId()) &&
                 StringUtils.equals(to1.getAnatEntityId(), to2.getAnatEntityId()) && 
                 StringUtils.equals(to1.getStageId(), to2.getStageId()) && 
-                Objects.equals(to1.getSpeciesId(), to2.getSpeciesId()) && 
-                areBigDecimalEquals(to1.getAffymetrixMaxRank(), to2.getAffymetrixMaxRank()) && 
-                areBigDecimalEquals(to1.getRNASeqMaxRank(), to2.getRNASeqMaxRank()) && 
-                areBigDecimalEquals(to1.getESTMaxRank(), to2.getESTMaxRank()) && 
-                areBigDecimalEquals(to1.getInSituMaxRank(), to2.getInSituMaxRank())) {
+                Objects.equals(to1.getSpeciesId(), to2.getSpeciesId())) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    /**
+     * Method to compare two {@code GlobalConditionMaxRanksTO}s, to check for complete equality of each
+     * attribute.
+     * 
+     * @param to1       An {@code ConditionTO} to be compared to {@code to2}.
+     * @param to2       An {@code ConditionTO} to be compared to {@code to1}.
+     * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
+     */
+    //TODO: unit test
+    private static boolean areTOsEqual(GlobalConditionMaxRanksTO to1, GlobalConditionMaxRanksTO to2) {
+        log.entry(to1, to2);
+
+        if (Objects.equals(to1.getConditionId(), to2.getConditionId()) && 
+                Objects.equals(to1.getDataType(), to2.getDataType()) &&
+                areBigDecimalEquals(to1.getMaxRank(), to2.getMaxRank()) && 
+                areBigDecimalEquals(to1.getGlobalMaxRank(), to2.getGlobalMaxRank())) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -704,6 +734,89 @@ public class TOComparator {
                 Objects.equals(to1.getInSituData(), to2.getInSituData()) &&
                 Objects.equals(to1.getRelaxedInSituData(), to2.getRelaxedInSituData()) &&
                 Objects.equals(to1.getRNASeqData(), to2.getRNASeqData())) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
+     * Method to compare two {@code RawExpressionCallTO}s, to check for complete equality of each
+     * attribute. 
+     * <p>
+     * If {@code compareId} is {@code false}, the value returned by the method {@code getId} 
+     * will not be used for comparison.
+     * 
+     * @param to1   An {@code RawExpressionCallTO} to be compared to {@code to2}.
+     * @param to2   An {@code RawExpressionCallTO} to be compared to {@code to1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
+     *                  used for comparisons. 
+     * @return      {@code true} if {@code to1} and {@code to2} have all 
+     *              attributes equal.
+     */
+    //TODO: unit test
+    private static boolean areTOsEqual(RawExpressionCallTO to1, RawExpressionCallTO to2, 
+            boolean compareId) {
+        log.entry(to1, to2, compareId);
+        if (areEntityTOsEqual(to1, to2, compareId) && 
+                Objects.equals(to1.getBgeeGeneId(), to2.getBgeeGeneId()) && 
+                Objects.equals(to1.getConditionId(), to2.getConditionId())) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
+     * Method to compare two {@code GlobalExpressionCallTO}s, to check for complete equality of each
+     * attribute. 
+     * <p>
+     * If {@code compareId} is {@code false}, the value returned by the method {@code getId} 
+     * will not be used for comparison.
+     * 
+     * @param to1   An {@code GlobalExpressionCallTO} to be compared to {@code to2}.
+     * @param to2   An {@code GlobalExpressionCallTO} to be compared to {@code to1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
+     *                  used for comparisons. 
+     * @return      {@code true} if {@code to1} and {@code to2} have all 
+     *              attributes equal.
+     */
+    //TODO: unit test
+    private static boolean areTOsEqual(GlobalExpressionCallTO to1, GlobalExpressionCallTO to2, 
+            boolean compareId) {
+        log.entry(to1, to2, compareId);
+        if (areTOsEqual((RawExpressionCallTO) to1, (RawExpressionCallTO) to2, compareId) &&
+                areBigDecimalEquals(to1.getGlobalMeanRank(), to2.getGlobalMeanRank()) &&
+
+                //GlobalExpressionCallDataTOs do not implement hashCode/equals
+                (to1.getCallDataTOs() == null && to2.getCallDataTOs() == null || 
+                to1.getCallDataTOs() != null && to2.getCallDataTOs() != null &&
+                to1.getCallDataTOs().stream()
+                    .allMatch(c1 -> to2.getCallDataTOs().stream()
+                            .anyMatch(c2 -> areTOsEqual(c1, c2))))) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
+     * Method to compare two {@code GlobalExpressionCallDataTO}s, to check for complete 
+     * equality of each attribute. 
+     * 
+     * @param to1   A {@code GlobalExpressionCallDataTO} to be compared to {@code to2}.
+     * @param to2   A {@code GlobalExpressionCallDataTO} to be compared to {@code to1}.
+     * @return      {@code true} if {@code to1} and {@code to2} have all 
+     *              attributes equal.
+     */
+    //TODO: unit test
+    private static boolean areTOsEqual(GlobalExpressionCallDataTO to1, GlobalExpressionCallDataTO to2) {
+        log.entry(to1, to2);
+        if (Objects.equals(to1.getDataType(), to2.getDataType()) &&
+                Objects.equals(to1.getDataPropagation(), to2.getDataPropagation()) &&
+                Objects.equals(to1.isConditionObservedData(), to2.isConditionObservedData()) &&
+                Objects.equals(to1.getExperimentCounts(), to2.getExperimentCounts()) &&
+                Objects.equals(to1.getPropagatedCount(), to2.getPropagatedCount()) &&
+                areBigDecimalEquals(to1.getRank(), to2.getRank()) &&
+                areBigDecimalEquals(to1.getRankNorm(), to2.getRankNorm()) &&
+                areBigDecimalEquals(to1.getWeightForMeanRank(), to2.getWeightForMeanRank())) {
             return log.exit(true);
         }
         return log.exit(false);

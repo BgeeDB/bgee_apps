@@ -33,6 +33,17 @@ public class Tau extends TestAncestor{
 		return log;
 	}
 	
+	//calculate Tau value from one TSV file. This file contains 3 columns : bgeeGeneId, anatEntityName, rank
+	@Test
+	public void tauValueFromTSVFile(){
+		try {
+			System.out.println("tau value  : "+tauValue(readWithCsvBeanReader()));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	//return Tau values for all genes of one species
 	@Test
 	public void tauValuesForAllGenesOfOneSpecies(){
 		Integer speciesId = 7227;
@@ -54,6 +65,7 @@ public class Tau extends TestAncestor{
 		}
 	}
 	
+	//return Tau value for one gene
 	@Test
 	public void tauValueForOneGene(){
 		String geneId = "ENSG00000213144";
@@ -68,6 +80,7 @@ public class Tau extends TestAncestor{
 		} 
 	}
 
+	//calculate Tau value for a Set of Row. Each Row summaryze expression data for one anat entity.
 	public Double tauValue(Set<Row> rows) throws Exception{
 		//XXX It's maybe wrong to use the max rank value for one gene. We must probably use the max rank of the whole database
 		double max = rows.stream().map(i -> i.getRank().doubleValue()).reduce(0.0, (a, b) -> Double.max(a, b));
@@ -85,6 +98,7 @@ public class Tau extends TestAncestor{
 		return tau;	
 	}
 
+	// Bean initially used by SuperCSV in order to load tsv File containing all expressions for one gene
 	public static class Row{
 
 		private int bgeeGeneId;

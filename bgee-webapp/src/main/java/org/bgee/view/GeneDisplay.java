@@ -1,6 +1,6 @@
 package org.bgee.view;
 
-import java.util.List;
+import java.util.Set;
 
 import org.bgee.controller.CommandGene.GeneResponse;
 import org.bgee.model.gene.Gene;
@@ -32,10 +32,9 @@ public interface GeneDisplay {
 	void displayGene(GeneResponse geneResponse);
 
     /**
-     * Displays a {@code List} of {@code Gene}s.
+     * Displays a {@code Set} of {@code Gene}s.
      * 
-     * @param geneResponse     A {@code List} of {@code Gene} containing information about
-     *                         several {@code Gene}s to be displayed.
+     * @param genes     A {@code Set} of {@code Gene}s to be displayed.
      */
-    void displayMultipleGenes(List<Gene> genes);
+    void displayGeneChoice(Set<Gene> genes);
 }

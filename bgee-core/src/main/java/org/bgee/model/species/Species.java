@@ -37,6 +37,9 @@ public class Species extends NamedEntity<Integer> {
 
     private final Integer parentTaxonId;
     
+    /**@see #getPreferredDisplayOrder() */
+    private final Integer preferredDisplayOrder;
+
     /**
      * 0-arg constructor private, at least an ID must be provided, see {@link #Species(String)}.
      */
@@ -83,9 +86,32 @@ public class Species extends NamedEntity<Integer> {
      */
     public Species(Integer id, String name, String description, String genus, String speciesName,
             String genomeVersion, Integer parentTaxonId) throws IllegalArgumentException {
-        this(id, name, description, genus, speciesName, genomeVersion, parentTaxonId, null, null);
+        this(id, name, description, genus, speciesName, genomeVersion, parentTaxonId, null, null, null);
     }
     
+    /**
+     * Constructor of {@code Species}.
+     * @param id            An {@code Integer} representing the ID of this {@code Species}. 
+     *                      Cannot be blank.
+     * @param name          A {@code String} representing the (common) name of this {@code Species}.
+     * @param description   A {@code String} description of this {@code Species}.
+     * @param genus         A {@code String} representing the genus of this {@code Species} 
+     *                      (e.g., "Homo" for human).
+     * @param speciesName   A {@code String} representing the species name of this 
+     *                      {@code Species} (e.g., "sapiens" for human).
+     * @param genomeVersion A {@code String} representing the genome version used for 
+     *                      this {@code Species}.
+     * @param parentTaxonId An {@code Integer} representing the ID of the parent taxon of this species.
+     * @param preferredDisplayOrder     An {@code Integer} allowing to sort {@code Species}
+     *                                  in preferred display order.
+     */
+    public Species(Integer id, String name, String description, String genus, String speciesName,
+        String genomeVersion, Integer parentTaxonId, Integer preferredDisplayOrder)
+            throws IllegalArgumentException {
+        this(id, name, description, genus, speciesName, genomeVersion, parentTaxonId,
+            null, null, preferredDisplayOrder);
+    }
+
     /**
      * Constructor of {@code Species}.
      * @param id            An {@code Integer} representing the ID of this {@code Species}. 
@@ -111,7 +137,7 @@ public class Species extends NamedEntity<Integer> {
             String genomeVersion, Map<Source, Set<DataType>> dataTypesByDataSourcesForData, 
             Map<Source, Set<DataType>> dataTypesByDataSourcesForAnnotation) throws IllegalArgumentException {
         this(id, name, description, genus, speciesName, genomeVersion, null, 
-                dataTypesByDataSourcesForData, dataTypesByDataSourcesForAnnotation);
+                dataTypesByDataSourcesForData, dataTypesByDataSourcesForAnnotation, null);
     }
     /**
      * Constructor of {@code Species}.
@@ -135,10 +161,13 @@ public class Species extends NamedEntity<Integer> {
      *                                              corresponding to data sources, the associated values 
      *                                              being a {@code Set} of {@code DataType}s corresponding
      *                                              to data types of annotation data of this data source.
+     * @param preferredDisplayOrder                 An {@code Integer} allowing to sort {@code Species}
+     *                                              in preferred display order.
      */
     public Species(Integer id, String name, String description, String genus, String speciesName,
             String genomeVersion, Integer parentTaxonId, Map<Source, Set<DataType>> dataTypesByDataSourcesForData, 
-            Map<Source, Set<DataType>> dataTypesByDataSourcesForAnnotation) throws IllegalArgumentException {
+            Map<Source, Set<DataType>> dataTypesByDataSourcesForAnnotation, Integer preferredDisplayOrder)
+                throws IllegalArgumentException {
         super(id, name, description);
         this.genus = genus;
         this.speciesName = speciesName;
@@ -148,6 +177,7 @@ public class Species extends NamedEntity<Integer> {
                 null: Collections.unmodifiableMap(new HashMap<>(dataTypesByDataSourcesForData));
         this.dataTypesByDataSourcesForAnnotation = dataTypesByDataSourcesForAnnotation == null ? 
                 null: Collections.unmodifiableMap(new HashMap<>(dataTypesByDataSourcesForAnnotation));
+        this.preferredDisplayOrder = preferredDisplayOrder;
     }
 
     /**
@@ -231,6 +261,13 @@ public class Species extends NamedEntity<Integer> {
         return dataTypesByDataSourcesForAnnotation;
     }
 
+    /**
+     * @return An {@code Integer} allowing to sort {@code Species in preferred display order.
+     */
+    public Integer getPreferredDisplayOrder() {
+        return preferredDisplayOrder;
+    }
+
     @Override
 	public int hashCode() {
 		final int prime = 31;
@@ -241,6 +278,7 @@ public class Species extends NamedEntity<Integer> {
         result = prime * result + ((dataTypesByDataSourcesForData == null) ? 0 : dataTypesByDataSourcesForData.hashCode());
         result = prime * result + ((dataTypesByDataSourcesForAnnotation == null) ? 0 : dataTypesByDataSourcesForAnnotation.hashCode());
         result = prime * result + ((parentTaxonId == null) ? 0 : parentTaxonId.hashCode());
+        result = prime * result + ((preferredDisplayOrder == null) ? 0 : preferredDisplayOrder.hashCode());
 		return result;
 	}
 
@@ -252,7 +290,8 @@ public class Species extends NamedEntity<Integer> {
                 .append(", genomeVersion=").append(genomeVersion)
                 .append(", dataTypesByDataSourcesForData=").append(dataTypesByDataSourcesForData)
                 .append(", dataTypesByDataSourcesForAnnotation=").append(dataTypesByDataSourcesForAnnotation)
-                .append(", parentTaxonId=").append(parentTaxonId).append("]");
+                .append(", parentTaxonId=").append(parentTaxonId)
+                .append(", preferredDisplayOrder=").append(preferredDisplayOrder).append("]");
         return builder.toString();
     }
 
@@ -303,6 +342,11 @@ public class Species extends NamedEntity<Integer> {
             if (other.parentTaxonId != null)
                 return false;
         } else if (!parentTaxonId.equals(other.parentTaxonId))
+            return false;
+        if (preferredDisplayOrder == null) {
+            if (other.preferredDisplayOrder != null)
+                return false;
+        } else if (!preferredDisplayOrder.equals(other.preferredDisplayOrder))
             return false;
 		return true;
 	}

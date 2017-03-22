@@ -3,9 +3,11 @@ package org.bgee.view.html;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -28,7 +30,7 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
-import org.bgee.model.expressiondata.ConditionUtils;
+import org.bgee.model.expressiondata.ConditionGraph;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
@@ -84,20 +86,22 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 	}
     
 	@Override
-	public void displayMultipleGenes(List<Gene> genes) {
+	public void displayGeneChoice(Set<Gene> genes) {
 	    log.entry(genes);
 	    
-	    List<Gene> clnGenes = Collections.unmodifiableList(genes);
+	    List<Gene> clnGenes = new ArrayList<>(genes);
 	    
 	    Gene gene = clnGenes.stream().findFirst().get();
 	    String titleStart = "Genes: " + gene.getName() + " - " + gene.getEnsemblGeneId();
 	    
 	    this.startDisplay(titleStart);
 
-        StringBuilder geneList = new StringBuilder();
+	    StringBuilder geneList = new StringBuilder();
         geneList.append("<div class='row'>");
         geneList.append("<ul class='col-xs-offset-1 col-xs-10 col-md-offset-2 col-md-8 col-lg-offset-3 col-lg-6'>");
         geneList.append(clnGenes.stream()
+            .sorted(Comparator.comparing(g -> g.getSpecies() == null?
+                null: g.getSpecies().getPreferredDisplayOrder(), Comparator.nullsLast(Comparator.naturalOrder())))
             .map(g -> getSpecificGenePageLink(g))
             .collect(Collectors.toList()));
         geneList.append("</ul>");
@@ -221,10 +225,10 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		this.writeln("<div id='table-container'>");
 
 		this.writeln(getExpressionHTMLByAnat(
-		        geneResponse.getCallsByAnatEntityId(), 
+		        geneResponse.getCallsByAnatEntity(), 
 		        geneResponse.getClusteringBestEachAnatEntity(), 
 		        geneResponse.getClusteringWithinAnatEntity(), 
-		        geneResponse.getConditionUtils()));
+		        geneResponse.getConditionGraph()));
         
 		this.writeln("</div>"); // end table-container
 		this.writeln("</div>"); // end class
@@ -366,23 +370,23 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      *                                     for each anatomical entity (so, {@code ExpressionCall}s 
      *                                     associated to a same value in the {@code Map} 
      *                                     might not be part of a same cluster).
-	 * @param conditionUtils               A {@code ConditionUtils} containing information 
+	 * @param conditionGraph               A {@code ConditionGraph} containing information 
 	 *                                     about all {@code Condition}s retrieved from 
 	 *                                     the {@code ExpressionCall}s in {@code byAnatEntityId}.
 	 * @return                             A {@code String} that is the generated HTML.
 	 */
-	private String getExpressionHTMLByAnat(Map<String, List<ExpressionCall>> byAnatEntityId, 
+	private String getExpressionHTMLByAnat(Map<AnatEntity, List<ExpressionCall>> byAnatEntityId, 
 	        Map<ExpressionCall, Integer> clusteringBestEachAnatEntity, 
 	        Map<ExpressionCall, Integer> clusteringWithinAnatEntity, 
-	        final ConditionUtils conditionUtils) {
+	        final ConditionGraph conditionGraph) {
 	    log.entry(byAnatEntityId, clusteringBestEachAnatEntity, clusteringWithinAnatEntity, 
-	            conditionUtils);
+	            conditionGraph);
 
 
 		StringBuilder rowSb = new StringBuilder();
 		Integer previousGroupIndex = null;
-		for (Entry<String, List<ExpressionCall>> anatRow: byAnatEntityId.entrySet()) {
-            final AnatEntity a = conditionUtils.getAnatEntity(anatRow.getKey());
+		for (Entry<AnatEntity, List<ExpressionCall>> anatRow: byAnatEntityId.entrySet()) {
+            final AnatEntity a = anatRow.getKey();
             final List<ExpressionCall> calls = anatRow.getValue();
             
             boolean scoreShift = false;
@@ -392,7 +396,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 scoreShift = true;
             }
             
-            rowSb.append(getExpressionRowsForAnatEntity(a, conditionUtils, calls, scoreShift, 
+            rowSb.append(getExpressionRowsForAnatEntity(a, conditionGraph, calls, scoreShift, 
                     clusteringWithinAnatEntity))
                  .append("\n");
             previousGroupIndex = currentGroupIndex;
@@ -421,7 +425,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 	 * 
 	 * @param anatEntity                   The {@code AnatEntity} for which the expression calls 
 	 *                                     will be displayed.
-     * @param conditionUtils               A {@code ConditionUtils} containing information 
+     * @param conditionGraph               A {@code ConditionGraph} containing information 
      *                                     about all {@code Condition}s retrieved from the {@code calls}.
 	 * @param calls                        A {@code List} of {@code ExpressionCall}s related to 
 	 *                                     {@code anatEntity}, ordered by their global mean rank. 
@@ -438,10 +442,10 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      *                                     might not be part of a same cluster).
 	 * @return                             A {@code String} that is the generated HTML.
 	 */
-	private String getExpressionRowsForAnatEntity(AnatEntity anatEntity, ConditionUtils conditionUtils,
+	private String getExpressionRowsForAnatEntity(AnatEntity anatEntity, ConditionGraph conditionGraph,
 	        List<ExpressionCall> calls, boolean scoreShift, 
 	        Map<ExpressionCall, Integer> clusteringWithinAnatEntity) {
-	    log.entry(anatEntity, conditionUtils, calls, scoreShift, clusteringWithinAnatEntity);
+	    log.entry(anatEntity, conditionGraph, calls, scoreShift, clusteringWithinAnatEntity);
         
 		StringBuilder sb = new StringBuilder();
 		String scoreShiftClassName = "gene-score-shift";
@@ -473,7 +477,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 			.append("<ul class='masked dev-stage-list'>");
 		Integer previousGroupInd = null;
 		for (ExpressionCall call: calls) {
-		    DevStage stage = conditionUtils.getDevStage(call.getCondition().getDevStageId());
+		    final DevStage stage = call.getCondition().getDevStage();
 		    int currentGroupInd = clusteringWithinAnatEntity.get(call);
             sb.append("<li class='dev-stage ");
             if (previousGroupInd != null && previousGroupInd != currentGroupInd) {

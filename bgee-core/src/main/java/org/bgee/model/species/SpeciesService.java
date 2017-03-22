@@ -172,7 +172,7 @@ public class SpeciesService extends Service {
         log.entry(speciesTO);
         return log.exit(new Species(Integer.valueOf(speciesTO.getId()), speciesTO.getName(), 
                 speciesTO.getDescription(), speciesTO.getGenus(), speciesTO.getSpeciesName(), 
-                speciesTO.getGenomeVersion(), speciesTO.getParentTaxonId()));
+                speciesTO.getGenomeVersion(), speciesTO.getParentTaxonId(), speciesTO.getDisplayOrder()));
     }
     
     //FIXME: DRY see SourceService

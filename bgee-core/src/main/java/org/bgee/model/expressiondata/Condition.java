@@ -11,6 +11,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.species.Species;
 
 /**
  * This class describes the conditions related to gene expression. It notably captures 
@@ -33,14 +34,6 @@ import org.bgee.model.expressiondata.baseelements.DataType;
 //XXX: how to manage multi-species conditions? Should we have a class SingleSpeciesCondition 
 //and a class MultiSpeciesCondition? Or, only a Condition, using a "SingleSpeciesAnatEntity" 
 //or a "MultiSpeciesAnatEntity", etc?
-//TODO: for various reasons, I think this class should be single species, 
-//and simply have a mandatory speciesId attribute. Mapping between homologous conditions 
-//should be managed in a different way. 
-//TODO: I guess this means the ConditionGraph should use the new MultiSpeciesOntology mechanism, 
-//to be able to perform computations over any species.
-//FIXME: provides the Species object rather than the speciesId
-//FIXME: in a second step, also provides the AnatEntity and DevStage objects rather than the IDs?
-//Not sure about this one, organ and stage descriptions are rather big Strings.
 public class Condition implements Comparable<Condition> {
     private final static Logger log = LogManager.getLogger(Condition.class.getName());
 
@@ -52,7 +45,7 @@ public class Condition implements Comparable<Condition> {
     private static final Comparator<Condition> COND_COMPARATOR = Comparator
             .comparing(Condition::getAnatEntityId, Comparator.nullsLast(String::compareTo))
             .thenComparing(Condition::getDevStageId, Comparator.nullsLast(String::compareTo))
-            .thenComparing(Condition::getSpeciesId, Comparator.nullsLast(Integer::compareTo));
+            .thenComparing(c -> c.getSpecies().getId(), Comparator.nullsLast(Integer::compareTo));
     
 
     //*********************************
@@ -67,9 +60,9 @@ public class Condition implements Comparable<Condition> {
      */
     private final DevStage devStage;
     /**
-     * @see #getSpeciesId()
+     * @see #getSpecies()
      */
-    private final Integer speciesId;
+    private final Species species;
 
     /**
      * @see #getMaxRanksByDataType()
@@ -88,14 +81,13 @@ public class Condition implements Comparable<Condition> {
      *                      without the descriptions loaded for lower memory usage.
      * @param devStage      The {@code DevStage} used in this gene expression condition,
      *                      without the descriptions loaded for lower memory usage.
-     * @param speciesId     An {@code Integer} that is the ID of the species  
-     *                      used in this gene expression condition.
+     * @param species       The {@code Species} considered in this gene expression condition.
      * @throws IllegalArgumentException If both {@code anatEntity} and {@code devStage} are {@code null}, 
      *                                  or if {@code speciesId} is less than 1.
      */
-    public Condition(AnatEntity anatEntity, DevStage devStage, int speciesId)
+    public Condition(AnatEntity anatEntity, DevStage devStage, Species species)
             throws IllegalArgumentException {
-        this(anatEntity, devStage, speciesId, null, null);
+        this(anatEntity, devStage, species, null, null);
     }
 
     /**
@@ -108,8 +100,7 @@ public class Condition implements Comparable<Condition> {
      * @param devStage                      The {@code DevStage} used in this gene expression
      *                                      condition, without the descriptions loaded
      *                                      for lower memory usage.
-     * @param speciesId                     An {@code Integer} that is the ID of the species
-     *                                      used in this gene expression condition.
+     * @param species                       The {@code Species} considered in this gene expression condition.
      * @param maxRanksByDataType            A {@code Map} where keys are {@code DataType}s,
      *                                      the associated values being {@code BigDecimal}s
      *                                      corresponding to the max rank for this data type,
@@ -123,20 +114,19 @@ public class Condition implements Comparable<Condition> {
      * @throws IllegalArgumentException     If both {@code anatEntity} and {@code devStage} are blanks
      *                                      or if {@code speciesId} is less than 1.
      */
-    public Condition(AnatEntity anatEntity, DevStage devStage, int speciesId,
+    public Condition(AnatEntity anatEntity, DevStage devStage, Species species,
             Map<DataType, BigDecimal> maxRanksByDataType,
             Map<DataType, BigDecimal> globalMaxRanksByDataType) throws IllegalArgumentException {
         if (anatEntity == null && devStage == null) {
             throw log.throwing(new IllegalArgumentException(
                     "The anat. entity and the dev. stage cannot be both null."));
         }
-        if (speciesId <= 0) {
-            throw log.throwing(new IllegalArgumentException(
-                "The species ID cannot be null or equals or less than 1."));
+        if (species == null) {
+            throw log.throwing(new IllegalArgumentException("The species cannot be null."));
         }
         this.anatEntity         = anatEntity;
         this.devStage           = devStage;
-        this.speciesId          = speciesId;
+        this.species            = species;
         this.maxRanksByDataType = Collections.unmodifiableMap(maxRanksByDataType == null?
                                     new HashMap<>(): maxRanksByDataType);
         this.globalMaxRanksByDataType = Collections.unmodifiableMap(
@@ -202,11 +192,17 @@ public class Condition implements Comparable<Condition> {
         return devStage == null? null: devStage.getId();
     }
     /**
-     * @return  An {@code Integer} that is the ID of the species 
-     *          used in this gene expression condition.
+     * @return  The {@code Species} considered in this gene expression condition.
      */
-    public Integer getSpeciesId() {
-        return speciesId;
+    public Species getSpecies() {
+        return species;
+    }
+    /**
+     * @return  An {@code int} that is the NCBI ID of the {@code Species} considered
+     *          in this gene expression condition.
+     */
+    public int getSpeciesId() {
+        return species.getId();
     }
 
     /**
@@ -249,7 +245,7 @@ public class Condition implements Comparable<Condition> {
         int result = 1;
         result = prime * result + ((anatEntity == null) ? 0 : anatEntity.hashCode());
         result = prime * result + ((devStage == null) ? 0 : devStage.hashCode());
-        result = prime * result + ((speciesId == null) ? 0 : speciesId.hashCode());
+        result = prime * result + ((species == null) ? 0 : species.hashCode());
         //Note that we don't rely on maxRanksByDataType and globalMaxRanksByDataType on purpose.
         return result;
     }
@@ -279,11 +275,11 @@ public class Condition implements Comparable<Condition> {
         } else if (!devStage.equals(other.devStage)) {
             return false;
         }
-        if (speciesId == null) {
-            if (other.speciesId != null) {
+        if (species == null) {
+            if (other.species != null) {
                 return false;
             }
-        } else if (!speciesId.equals(other.speciesId)) {
+        } else if (!species.equals(other.species)) {
             return false;
         }
         //Note that we don't rely on maxRanksByDataType and globalMaxRanksByDataType on purpose.
@@ -295,7 +291,7 @@ public class Condition implements Comparable<Condition> {
         StringBuilder builder = new StringBuilder();
         builder.append("Condition [anatEntity=").append(anatEntity)
                .append(", devStage=").append(devStage)
-               .append(", speciesId=").append(speciesId)
+               .append(", species=").append(species)
                .append(", maxRanksByDataType=").append(maxRanksByDataType)
                .append(", globalMaxRanksByDataType=").append(globalMaxRanksByDataType)
                .append("]");

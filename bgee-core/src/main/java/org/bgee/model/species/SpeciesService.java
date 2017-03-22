@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.Service;
+import org.bgee.model.CommonService;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
@@ -30,7 +30,7 @@ import org.bgee.model.source.Source;
  * @version Bgee 14, Mar. 2017
  * @since   Bgee 13, Sept. 2015
  */
-public class SpeciesService extends Service {
+public class SpeciesService extends CommonService {
     
     private static final Logger log = LogManager.getLogger(SpeciesService.class.getName());
 
@@ -173,22 +173,5 @@ public class SpeciesService extends Service {
         return log.exit(new Species(Integer.valueOf(speciesTO.getId()), speciesTO.getName(), 
                 speciesTO.getDescription(), speciesTO.getGenus(), speciesTO.getSpeciesName(), 
                 speciesTO.getGenomeVersion(), speciesTO.getParentTaxonId(), speciesTO.getDisplayOrder()));
-    }
-    
-    //FIXME: DRY see SourceService
-    private static DataType convertDaoDataTypeToDataType(SourceToSpeciesTO.DataType dt) {
-        log.entry(dt);
-        switch(dt) {
-            case AFFYMETRIX: 
-                return log.exit(DataType.AFFYMETRIX);
-            case EST:
-                return log.exit(DataType.EST);
-            case IN_SITU: 
-                return log.exit(DataType.IN_SITU);
-            case RNA_SEQ: 
-                return log.exit(DataType.RNA_SEQ);
-        default: 
-            throw log.throwing(new IllegalStateException("Unsupported SourceToSpeciesTO.DataType: " + dt));
-        }
     }
 }

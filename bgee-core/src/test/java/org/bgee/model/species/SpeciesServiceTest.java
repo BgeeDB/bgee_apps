@@ -14,6 +14,7 @@ import java.util.Set;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.dao.api.DAOManager;
+import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.source.SourceToSpeciesDAO;
 import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO;
 import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO.InfoType;
@@ -58,11 +59,11 @@ public class SpeciesServiceTest extends TestAncestor {
 		
 		SourceToSpeciesTOResultSet sToSpRS = getMockResultSet(SourceToSpeciesTOResultSet.class, 
 		        Arrays.asList(
-		                new SourceToSpeciesTO(1, 9606, SourceToSpeciesTO.DataType.EST, InfoType.DATA),
-		                new SourceToSpeciesTO(1, 9606, SourceToSpeciesTO.DataType.IN_SITU, InfoType.DATA),
-                        new SourceToSpeciesTO(2, 9606, SourceToSpeciesTO.DataType.AFFYMETRIX, InfoType.ANNOTATION),
-                        new SourceToSpeciesTO(3, 9606, SourceToSpeciesTO.DataType.RNA_SEQ, InfoType.DATA),
-		                new SourceToSpeciesTO(2, 1234, SourceToSpeciesTO.DataType.IN_SITU, InfoType.ANNOTATION)));
+		                new SourceToSpeciesTO(1, 9606, DAODataType.EST, InfoType.DATA),
+		                new SourceToSpeciesTO(1, 9606, DAODataType.IN_SITU, InfoType.DATA),
+                        new SourceToSpeciesTO(2, 9606, DAODataType.AFFYMETRIX, InfoType.ANNOTATION),
+                        new SourceToSpeciesTO(3, 9606, DAODataType.RNA_SEQ, InfoType.DATA),
+		                new SourceToSpeciesTO(2, 1234, DAODataType.IN_SITU, InfoType.ANNOTATION)));
 		when(sourceToSpeciesDAOMock.getSourceToSpecies(null, 
 		        new HashSet<>(Arrays.asList(9606, 1234)), null, null, null)).thenReturn(sToSpRS);
 
@@ -120,11 +121,11 @@ public class SpeciesServiceTest extends TestAncestor {
 
 	    SourceToSpeciesTOResultSet sToSpRS = getMockResultSet(SourceToSpeciesTOResultSet.class, 
 	            Arrays.asList(
-	                    new SourceToSpeciesTO(1, 9606, SourceToSpeciesTO.DataType.EST, InfoType.DATA),
-	                    new SourceToSpeciesTO(1, 9606, SourceToSpeciesTO.DataType.IN_SITU, InfoType.DATA),
-	                    new SourceToSpeciesTO(2, 9606, SourceToSpeciesTO.DataType.AFFYMETRIX, InfoType.ANNOTATION),
-	                    new SourceToSpeciesTO(3, 9606, SourceToSpeciesTO.DataType.RNA_SEQ, InfoType.DATA),
-	                    new SourceToSpeciesTO(2, 1234, SourceToSpeciesTO.DataType.IN_SITU, InfoType.ANNOTATION)));
+	                    new SourceToSpeciesTO(1, 9606, DAODataType.EST, InfoType.DATA),
+	                    new SourceToSpeciesTO(1, 9606, DAODataType.IN_SITU, InfoType.DATA),
+	                    new SourceToSpeciesTO(2, 9606, DAODataType.AFFYMETRIX, InfoType.ANNOTATION),
+	                    new SourceToSpeciesTO(3, 9606, DAODataType.RNA_SEQ, InfoType.DATA),
+	                    new SourceToSpeciesTO(2, 1234, DAODataType.IN_SITU, InfoType.ANNOTATION)));
 	    when(sourceToSpeciesDAOMock.getSourceToSpecies(null, 
 	            new HashSet<>(Arrays.asList(9606, 1234)), null, null, null)).thenReturn(sToSpRS);
 

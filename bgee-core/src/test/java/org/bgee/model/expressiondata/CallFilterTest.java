@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -21,7 +22,8 @@ import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.CallFilter.DiffExpressionCallFilter;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.baseelements.CallType;
-import org.bgee.model.expressiondata.baseelements.DataPropagation.PropagationState;
+import org.bgee.model.expressiondata.baseelements.PropagationState;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.ExperimentExpressionCount;
@@ -68,29 +70,31 @@ public class CallFilterTest extends TestAncestor {
     @Test
     public void testSanityChecks() {
         try {
-            new ExpressionCallFilter(null, null, null, null, null, null);
+            new ExpressionCallFilter(null, null, null, null, null);
             fail("An exception should be thrown when no CallData Set is provided.");
         } catch (IllegalArgumentException e) {
             //test passed
         }
         try {
-            new ExpressionCallFilter(null, null, new HashSet<>(), null, null, null);
+            new ExpressionCallFilter(null, null, new HashSet<>(), null, null);
             fail("An exception should be thrown when the CallData Set is empty.");
         } catch (IllegalArgumentException e) {
             //test passed
         }
         try {
-            new DiffExpressionCallFilter(null, null, new HashSet<>(), null, null);
+            new DiffExpressionCallFilter(null, null, new HashSet<>(), null);
             fail("An exception should be thrown when the CallData Set is empty.");
         } catch (IllegalArgumentException e) {
             //test passed
         }
         
         //now, test when everything is fine
-        new ExpressionCallFilter(null, null, null, null, null, true);
+        new ExpressionCallFilter(null, null, null, null, true);
 
         //now, test when everything is fine
-        new DiffExpressionCallFilter(null, null, null, SummaryQuality.BRONZE, null);
+        Map<SummaryCallType.DiffExpressionSummary, SummaryQuality> callTypeMap = new HashMap<>();
+        callTypeMap.put(SummaryCallType.DiffExpressionSummary.OVER_EXPRESSED, SummaryQuality.BRONZE);
+        new DiffExpressionCallFilter(callTypeMap, null, null, null);
     }
     
     /**
@@ -113,7 +117,7 @@ public class CallFilterTest extends TestAncestor {
                 PropagationState.SELF, 2));
         counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.HIGH,
                 PropagationState.ALL, 2));
-        callData.add(new ExpressionCallData(DataType.EST, counts, 0, null, null, null));
+        callData.add(new ExpressionCallData(DataType.EST, counts, 0, null, null, null, null));
         
         counts = new HashSet<>();
         counts.addAll(VALID_EXP_COUNTS.get(DataType.AFFYMETRIX).stream()
@@ -138,41 +142,51 @@ public class CallFilterTest extends TestAncestor {
                 PropagationState.SELF, 0));
         counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.HIGH,
                 PropagationState.ALL, 0));
-        callData.add(new ExpressionCallData(DataType.AFFYMETRIX, counts, 0, null, null, null));
+        callData.add(new ExpressionCallData(DataType.AFFYMETRIX, counts, 0, null, null, null, null));
 
         ExpressionCall call1 = new ExpressionCall(new Gene("g1", new Species(1)),
             new Condition("ae1", "ds1", 1), true, ExpressionSummary.EXPRESSED, SummaryQuality.GOLD,
-            callData, new BigDecimal(125.00));
+            callData, new BigDecimal(125.00), null);
         
         // Test with no GeneFilter and ConditionFilters 
-        ExpressionCallFilter callFilter = new ExpressionCallFilter(null, null,
-            Arrays.asList(DataType.EST), ExpressionSummary.EXPRESSED, SummaryQuality.SILVER,
-            true);
+        Map<SummaryCallType.ExpressionSummary, SummaryQuality> callTypeMap = new HashMap<>();
+        callTypeMap.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
+        ExpressionCallFilter callFilter = new ExpressionCallFilter(callTypeMap, null, null,
+            Arrays.asList(DataType.EST), true);
         assertTrue("Call should pass the filter", callFilter.test(call1));
 
-        callFilter = new ExpressionCallFilter(null, null, Arrays.asList(DataType.AFFYMETRIX),
-            ExpressionSummary.EXPRESSED, SummaryQuality.SILVER, null);
+        callTypeMap = new HashMap<>();
+        callTypeMap.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
+        callFilter = new ExpressionCallFilter(callTypeMap, null, null,
+                Arrays.asList(DataType.AFFYMETRIX), null);
         assertTrue("Call should pass the filter", callFilter.test(call1));
 
-        callFilter = new ExpressionCallFilter(null, null, null, ExpressionSummary.EXPRESSED,
-            SummaryQuality.GOLD, true);
+        callTypeMap = new HashMap<>();
+        callTypeMap.put(ExpressionSummary.EXPRESSED, SummaryQuality.GOLD);
+        callFilter = new ExpressionCallFilter(callTypeMap, null, null, null, true);
         assertTrue("Call should pass the filter", callFilter.test(call1));
 
-        callFilter = new ExpressionCallFilter(null, null,
-            Arrays.asList(DataType.AFFYMETRIX, DataType.EST), ExpressionSummary.EXPRESSED,
-            SummaryQuality.GOLD, true);
+        callTypeMap = new HashMap<>();
+        callTypeMap.put(ExpressionSummary.EXPRESSED, SummaryQuality.GOLD);
+        callFilter = new ExpressionCallFilter(callTypeMap, null, null,
+            Arrays.asList(DataType.AFFYMETRIX, DataType.EST), true);
         assertTrue("Call should pass the filter", callFilter.test(call1));
 
-        callFilter = new ExpressionCallFilter(null, null, Arrays.asList(DataType.RNA_SEQ),
-            ExpressionSummary.EXPRESSED, SummaryQuality.GOLD, true);
+        callTypeMap = new HashMap<>();
+        callTypeMap.put(ExpressionSummary.EXPRESSED, SummaryQuality.GOLD);
+        callFilter = new ExpressionCallFilter(callTypeMap, null, null,
+                Arrays.asList(DataType.RNA_SEQ), true);
         assertFalse("Call should not pass the filter", callFilter.test(call1));
 
-        callFilter = new ExpressionCallFilter(null, null, Arrays.asList(DataType.AFFYMETRIX),
-            ExpressionSummary.NOT_EXPRESSED, SummaryQuality.BRONZE, true);
+        callTypeMap = new HashMap<>();
+        callTypeMap.put(ExpressionSummary.NOT_EXPRESSED, SummaryQuality.BRONZE);
+        callFilter = new ExpressionCallFilter(callTypeMap, null, null,
+                Arrays.asList(DataType.AFFYMETRIX), true);
         assertFalse("Call should not pass the filter", callFilter.test(call1));
 
-        callFilter = new ExpressionCallFilter(null, null, null, ExpressionSummary.EXPRESSED, 
-            SummaryQuality.GOLD, false);
+        callTypeMap = new HashMap<>();
+        callTypeMap.put(ExpressionSummary.EXPRESSED, SummaryQuality.GOLD);
+        callFilter = new ExpressionCallFilter(callTypeMap, null, null, null, false);
         assertFalse("Call should not pass the filter", callFilter.test(call1));
 
         callData.clear();
@@ -189,30 +203,32 @@ public class CallFilterTest extends TestAncestor {
                 PropagationState.SELF, 1));
         counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.LOW,
                 PropagationState.ALL, 1));
-        callData.add(new ExpressionCallData(DataType.AFFYMETRIX, counts, 0, null, null, null));
+        callData.add(new ExpressionCallData(DataType.AFFYMETRIX, counts, 0, null, null, null, null));
         
         ExpressionCall call2 = new ExpressionCall(new Gene("g1", new Species(1)), new Condition("ae1", "ds1", 1),
-                true, ExpressionSummary.EXPRESSED, SummaryQuality.SILVER, callData, new BigDecimal(125.00));
-        callFilter = new ExpressionCallFilter(null, null, null, ExpressionSummary.EXPRESSED,
-            SummaryQuality.GOLD, true);
+                true, ExpressionSummary.EXPRESSED, SummaryQuality.SILVER, callData, new BigDecimal(125.00),
+                null);
+        callTypeMap = new HashMap<>();
+        callTypeMap.put(ExpressionSummary.EXPRESSED, SummaryQuality.GOLD);
+        callFilter = new ExpressionCallFilter(callTypeMap, null, null, null, true);
         assertFalse("Call should not pass the filter", callFilter.test(call2));
 
         // Test condition filter
         Set<ConditionFilter> validConditionFilters = new HashSet<>();
         validConditionFilters.add(new ConditionFilter(Arrays.asList("ae1", "ae2"), Arrays.asList("ds1", "ds2")));
-        callFilter = new ExpressionCallFilter(new GeneFilter("g1", 1), validConditionFilters,
-            null, null, null, null);
+        callFilter = new ExpressionCallFilter(null, Collections.singleton(new GeneFilter(1, "g1")),
+                validConditionFilters, null, null);
         assertTrue("Call should pass the filter", callFilter.test(call1));
 
         Set<ConditionFilter> notValidConditionFilters = new HashSet<>();
         notValidConditionFilters.add(new ConditionFilter(Arrays.asList("ae1", "ae2"), Arrays.asList("ds2")));
-        callFilter = new ExpressionCallFilter(new GeneFilter("g1", 1), notValidConditionFilters, 
-            null, null, null, null);
+        callFilter = new ExpressionCallFilter(null, Collections.singleton(new GeneFilter(1, "g1")),
+                notValidConditionFilters, null, null);
         assertFalse("Call should not pass the filter", callFilter.test(call1));
 
         // Test gene filter
-        callFilter = new ExpressionCallFilter(new GeneFilter("g2", 1), validConditionFilters, 
-            null, null, null, null);
+        callFilter = new ExpressionCallFilter(null, Collections.singleton(new GeneFilter(1, "g2")),
+                validConditionFilters, null, null);
         assertFalse("Call should not pass the filter", callFilter.test(call1));
     }
 }

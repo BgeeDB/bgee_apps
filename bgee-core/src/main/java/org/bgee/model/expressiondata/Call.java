@@ -28,6 +28,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.CallData.DiffExpressionCallData;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
+import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DiffExpressionFactor;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
@@ -272,7 +273,9 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          * @see #generateMeanRankScoreClustering(Collection, ClusteringMethod, double)
          */
         public static final double DEFAULT_DISTANCE_THRESHOLD = 1.9;
-        
+
+        public static final int MAX_EXPRESSION_SCORE = 1000;
+
         /**
          * Remove equal calls from the {@code Collection} and order them using 
          * {@link ExpressionCall.RankComparator}.
@@ -816,10 +819,14 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             } else if (max < 1000) {
                 formatter.setMaximumFractionDigits(0);
                 formatter.setMinimumFractionDigits(0);
+            //FIXME: the javadoc for DecimalFormat explicitly states that NumberFormat.getInstance
+            //may return subclasses of NumberFormat other than DecimalFormat, this means this code
+            //is potentially broken on some machines. (Note FB: otherwise, why do you think I bothered
+            //using this NumberFormat mechanism, seriously? :p)
             } else if (formatter instanceof DecimalFormat) {
                 ((DecimalFormat) formatter).applyPattern("0.00E0");
             } else {
-                throw log.throwing(new AssertionError("No formatter could be defined"));
+                throw log.throwing(new IllegalStateException("No formatter could be defined"));
             }
             return log.exit(formatter);
         }
@@ -829,38 +836,48 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         //*******************************************
         /**
          * @see #getGlobalMeanRank()
+         * ATTRIBUTE NOT TAKEN INTO ACCOUNT IN HASHCODE/EQUALS METHODS.
          */
         //TODO: Maybe create a new RankScore class, storing the rank, 
         //plus an information of confidence about it.
         private final BigDecimal globalMeanRank;
-        
-        public ExpressionCall(Gene gene, Condition condition,
-            Collection<ExpressionCallData> callData, BigDecimal globalMeanRank) {
-            this(gene, condition, null, null, null, callData, globalMeanRank);
-        }
-        
-        public ExpressionCall(Gene gene, Condition condition, Boolean isObservedData, 
-            ExpressionSummary summaryCallType, SummaryQuality summaryQual, 
-            Collection<ExpressionCallData> callData, BigDecimal globalMeanRank) {
-            this(gene, condition, isObservedData, summaryCallType, summaryQual, callData,
-                globalMeanRank, null);
-        }
+        /**
+         * A {@code BigDecimal} that is the max rank over all conditions and data types
+         * for the combination of condition parameters used to produce this {@code ExpressionCall}.
+         * Stores for convenience to be able to compute a global expression score.
+         * ATTRIBUTE NOT TAKEN INTO ACCOUNT IN HASHCODE/EQUALS METHODS.
+         */
+        private final BigDecimal maxRank;
 
-        public ExpressionCall(Gene gene, Condition condition, Boolean isObservedData, 
+        public ExpressionCall(Gene gene, Condition condition, DataPropagation dataPropagation, 
                 ExpressionSummary summaryCallType, SummaryQuality summaryQual, 
-                Collection<ExpressionCallData> callData, BigDecimal globalMeanRank,
+                Collection<ExpressionCallData> callData,
+                BigDecimal globalMeanRank, BigDecimal maxRank) {
+            this(gene, condition, dataPropagation, summaryCallType, summaryQual, callData,
+                    globalMeanRank, maxRank, null);
+        }
+        public ExpressionCall(Gene gene, Condition condition, DataPropagation dataPropagation, 
+                ExpressionSummary summaryCallType, SummaryQuality summaryQual, 
+                Collection<ExpressionCallData> callData,
+                BigDecimal globalMeanRank, BigDecimal maxRank,
                 Collection<ExpressionCall> sourceCalls) {
-            super(gene, condition, isObservedData, summaryCallType, summaryQual, callData,
+            super(gene, condition, dataPropagation, summaryCallType, summaryQual, callData,
                 sourceCalls == null ? new HashSet<>() : sourceCalls.stream()
                     .map(c -> (Call<ExpressionSummary, ExpressionCallData>) c)
                     .collect(Collectors.toSet()));
             
-            if (globalMeanRank != null && globalMeanRank.compareTo(new BigDecimal(0)) <= 0) {
+            if (globalMeanRank != null && globalMeanRank.compareTo(new BigDecimal(0)) <= 0 ||
+                    maxRank != null && maxRank.compareTo(new BigDecimal(0)) <= 0) {
                 throw log.throwing(new IllegalArgumentException(
                         "A rank cannot be less than or equal to 0."));
             }
-            //BigDecimal are immutable, no need to copy it
+            if (globalMeanRank != null && maxRank == null) {
+                throw log.throwing(new IllegalArgumentException(
+                        "The max rank must be provided when a rank is provided."));
+            }
+            //BigDecimal are immutable, no need to copy them
             this.globalMeanRank = globalMeanRank;
+            this.maxRank = maxRank;
         }
         
         /**
@@ -871,6 +888,9 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          */
         public BigDecimal getGlobalMeanRank() {
             return this.globalMeanRank;
+        }
+        public Integer getExpressionScore() {
+            throw new UnsupportedOperationException("Not implemented");
         }
         /**
          * @return  A {@code String} corresponding to the rank score of this call, formatted 
@@ -900,9 +920,8 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         
         @Override
         public int hashCode() {
-            final int prime = 31;
             int result = super.hashCode();
-            result = prime * result + ((globalMeanRank == null) ? 0 : globalMeanRank.hashCode());
+            //we don't take into account rank information for hashCode/equals methods
             return result;
         }
         @Override
@@ -916,27 +935,25 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             if (getClass() != obj.getClass()) {
                 return false;
             }
-            ExpressionCall other = (ExpressionCall) obj;
-            if (globalMeanRank == null) {
-                if (other.globalMeanRank != null) {
-                    return false;
-                }
-            } else if (!globalMeanRank.equals(other.globalMeanRank)) {
-                return false;
-            }
+            //we don't take into account rank information for hashCode/equals methods
             return true;
         }
 
         @Override
         public String toString() {
             StringBuilder builder = new StringBuilder();
-            builder.append("ExpressionCall [getGlobalMeanRank()=").append(getGlobalMeanRank())
-                   .append(", super Call=").append(super.toString())
+            builder.append("ExpressionCall [gene=").append(getGene())
+                   .append(", condition=").append(getCondition())
+                   .append(", dataPropagation=").append(getDataPropagation())
+                   .append(", summaryCallType=").append(getSummaryCallType())
+                   .append(", summaryQuality=").append(getSummaryQuality())
+                   .append(", callData=").append(getCallData())
+                   .append(", sourceCalls()=").append(getSourceCalls())
+                   .append(", globalMeanRank=").append(globalMeanRank)
+                   .append(", maxRank=").append(maxRank)
                    .append("]");
             return builder.toString();
         }
-        
-        
     }
     
     //TODO: check that all DiffExpressionCallData 
@@ -1015,8 +1032,9 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
     private final Gene gene;
     
     private final Condition condition;
-    
-    private final Boolean isObservedData;
+
+    //XXX:to move to ExpressionCall? (also in CallData, to be moved to ExpressionCallData?)
+    private final DataPropagation dataPropagation;
     
     private final T summaryCallType;
     
@@ -1024,18 +1042,10 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
     
     private final Set<U> callData;
 
+    //XXX: to remove? Seems useless now
     private final Set<Call<T, U>> sourceCalls;
 
-    protected Call(Gene gene, Condition condition, Boolean isObservedData, 
-        T summaryCallType, SummaryQuality summaryQual, Collection<U> callData) {
-        this(gene, condition, isObservedData, summaryCallType, summaryQual, callData, null);
-    }
-
-    protected Call(Gene gene, Condition condition, Collection<U> callData, Set<Call<T, U>> sourceCalls) {
-        this(gene, condition, null, null, null, callData, sourceCalls);
-    }
-
-    private Call(Gene gene, Condition condition, Boolean isObservedData, 
+    private Call(Gene gene, Condition condition, DataPropagation dataPropagation,
         T summaryCallType, SummaryQuality summaryQuality, Collection<U> callData, 
         Set<Call<T, U>> sourceCalls) {
         if (DataQuality.NODATA.equals(summaryQuality)) {
@@ -1054,7 +1064,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
 //            this.summaryCallType = summaryCallType != null? summaryCallType : inferSummaryCallType(this.callData);
 //            this.summaryQuality = summaryQuality != null? summaryQuality : inferSummaryQuality(this.callData);            
 //        } else {
-            this.isObservedData = isObservedData;
+            this.dataPropagation = dataPropagation;
             this.summaryCallType = summaryCallType;
             this.summaryQuality = summaryQuality;            
 //        }
@@ -1068,8 +1078,8 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
     public Condition getCondition() {
         return condition;
     }
-    public Boolean getIsObservedData() {
-        return isObservedData;
+    public DataPropagation getDataPropagation() {
+        return dataPropagation;
     }
     public T getSummaryCallType() {
         return summaryCallType;
@@ -1090,7 +1100,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         int result = 1;
         result = prime * result + ((gene == null) ? 0 : gene.hashCode());
         result = prime * result + ((condition == null) ? 0 : condition.hashCode());
-        result = prime * result + ((isObservedData == null) ? 0 : isObservedData.hashCode());
+        result = prime * result + ((dataPropagation == null) ? 0 : dataPropagation.hashCode());
         result = prime * result + ((summaryCallType == null) ? 0 : summaryCallType.hashCode());
         result = prime * result + ((summaryQuality == null) ? 0 : summaryQuality.hashCode());
         result = prime * result + ((callData == null) ? 0 : callData.hashCode());
@@ -1124,10 +1134,10 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         } else if (!condition.equals(other.condition)) {
             return false;
         }
-        if (isObservedData == null) {
-            if (other.isObservedData != null)
+        if (dataPropagation == null) {
+            if (other.dataPropagation != null)
                 return false;
-        } else if (!isObservedData.equals(other.isObservedData))
+        } else if (!dataPropagation.equals(other.dataPropagation))
             return false;
         if (summaryCallType == null) {
             if (other.summaryCallType != null) {
@@ -1158,12 +1168,15 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
 
     @Override
     public String toString() {
-        return    "Gene: " + gene 
-                + " - Condition:" + condition
-                + " - Is observed data: " + isObservedData
-                + " - Summary call type: " + summaryCallType 
-                + " - Summary quality: " + summaryQuality 
-                + " - Call data: " + callData 
-                + " - Source calls: " + sourceCalls;
+        StringBuilder builder = new StringBuilder();
+        builder.append("Call [gene=").append(gene)
+               .append(", condition=").append(condition)
+               .append(", dataPropagation=").append(dataPropagation)
+               .append(", summaryCallType=").append(summaryCallType)
+               .append(", summaryQuality=").append(summaryQuality)
+               .append(", callData=").append(callData)
+               .append(", sourceCalls=").append(sourceCalls)
+               .append("]");
+        return builder.toString();
     }
 }

@@ -1,6 +1,5 @@
 package org.bgee.model.expressiondata.baseelements;
 
-import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -27,42 +26,9 @@ import org.apache.logging.log4j.Logger;
 //The constructor could accept a Map ConditionElement -> PropagationState. And a sanity check 
 //could be performed to ensure that all ConditionElement enum elements are in the key set of the Map.
 //If we don't want to change the class signature, we could keep the getAnatEntityPropagationState etc 
-//as helper methods. 
-//XXX: should this class be removed/deprecated?
+//as helper methods.
 public class DataPropagation {
     private final static Logger log = LogManager.getLogger(DataPropagation.class.getName());
-    
-    /**
-     * An {@code Enum} describing the different methods of call propagation available, 
-     * along any ontology used to capture conditions. 
-     * <ul>
-     * <li>{@code SELF}: no propagation, data observed in the condition element itself.
-     * <li>{@code ANCESTOR}: data observed in some ancestor of the condition element.
-     * <li>{@code DESCENDANT}: data observed in some descendant of the condition element.
-     * <li>{@code SELF_AND_ANCESTOR}: data observed both in the condition element itself, 
-     * and in some ancestor of the condition element.
-     * <li>{@code SELF_AND_DESCENDANT}: data observed both in the condition element itself, 
-     * and in some descendant of the condition element.
-     * <li>{@code SELF_OR_ANCESTOR}: data observed either in the condition element itself, 
-     * or in some ancestor of the condition element.
-     * <li>{@code SELF_OR_DESCENDANT}: data observed either in the condition element itself, 
-     * or in some descendant of the condition element.
-     * <li>{@code ANCESTOR_AND_DESCENDANT}: data observed both in some descendant, 
-     * and in some ancestor of the condition element.
-     * <li>{@code ALL}: data observed both in the condition element itself, 
-     * and in some descendant of the condition element, and in some ancestor of the condition element.
-     * </ul>
-     * 
-     * @author  Frederic Bastian
-     * @author  Valentine Rech de Laval
-     * @version Bgee 13, May 2016
-     * @see     DataPropagation
-     * @since   Bgee 13, Sept. 2015
-     */
-    public static enum PropagationState {
-        SELF, ANCESTOR, DESCENDANT, SELF_AND_ANCESTOR, SELF_AND_DESCENDANT, 
-        SELF_OR_ANCESTOR, SELF_OR_DESCENDANT, ANCESTOR_AND_DESCENDANT, ALL;
-    }
     
     /**
      * @see #getAnatEntityPropagationState()
@@ -123,37 +89,24 @@ public class DataPropagation {
     public DataPropagation(PropagationState anatEntityPropagationState, 
             PropagationState devStagePropagationState, Boolean includingObservedData) 
                     throws IllegalArgumentException {
-        if (anatEntityPropagationState == null && devStagePropagationState == null) {
-            throw log.throwing(new IllegalArgumentException("The propagation states cannot be both null"));
-        }
-        //check consistency of the PropagationState and of the observed data state
-        PropagationState[] states = new PropagationState[]{
-                anatEntityPropagationState, devStagePropagationState};
-        if (new Boolean(true).equals(includingObservedData) && Arrays.stream(states).anyMatch(
-                e -> PropagationState.ANCESTOR.equals(e) || PropagationState.DESCENDANT.equals(e) || 
-                PropagationState.ANCESTOR_AND_DESCENDANT.equals(e)) ||
-                
-            // Here, we cannot check consistency of PropagationState.SELF_AND_ANCESTOR,
-            // PropagationState.SELF_AND_DESCENDANT, and PropagationState.ALL due to 
-            // reconciliation of calls. For instance, if we reconcile following ExpressionCalls:
-            // - call with anat. entity propa. state equals to SELF and 
-            // dev. stage propa. state equals to ANCESTOR
-            // - call with anat. entity propa. state equals to ANCESTOR and 
-            // dev. stage propa. state equals to SELF
-            // ExpressionCall will have anat. entity propa. state equals to SELF_AND_ANCESTOR and 
-            // dev. stage propa. state equals to SELF_AND_ANCESTOR
-            // with includingObservedData equals to true
-            new Boolean(false).equals(includingObservedData) && Arrays.stream(states)
-                    .filter(e -> e != null)
-                    .allMatch(e -> PropagationState.SELF.equals(e))) {
-            
+        //Actually, we cannot infer the ObservedData state from looking at all individual
+        //condition parameter propagation state: see comments inside method
+        //org.bgee.model.expressiondata.CallService.mergeDataPropagations(DataPropagation, DataPropagation)
+        //The only check we can make is the following:
+        if (Boolean.TRUE.equals(includingObservedData) && EnumSet.of(
+                anatEntityPropagationState == null? PropagationState.UNKNOWN: anatEntityPropagationState,
+                devStagePropagationState == null? PropagationState.UNKNOWN: devStagePropagationState)
+                .stream().anyMatch(s -> Boolean.FALSE.equals(s.isIncludingObservedData()))) {
             throw log.throwing(new IllegalArgumentException("The provided observed data state ("
                     + includingObservedData + ") is incompatible with the provided PropagationStates ("
                     + "anatomy: " + anatEntityPropagationState + " - stage: " + devStagePropagationState));
-        } 
-        this.anatEntityPropagationState = anatEntityPropagationState;
-        this.devStagePropagationState   = devStagePropagationState;
-        this.includingObservedData      = includingObservedData;
+        }
+
+        this.anatEntityPropagationState = anatEntityPropagationState == null? PropagationState.UNKNOWN:
+            anatEntityPropagationState;
+        this.devStagePropagationState = devStagePropagationState == null? PropagationState.UNKNOWN:
+            devStagePropagationState;
+        this.includingObservedData  = includingObservedData;
     }
     
     /**
@@ -174,7 +127,7 @@ public class DataPropagation {
      *          in the condition itself, and not only in an ancestor or a descendant. 
      *          If {@code null}, it means that this information is unknown.  
      */
-    public Boolean getIncludingObservedData() {
+    public Boolean isIncludingObservedData() {
         return includingObservedData;
     }
     
@@ -185,7 +138,8 @@ public class DataPropagation {
     //this method is useful to abstract away what are the elements defining a condition.
     public EnumSet<PropagationState> getAllPropagationStates() {
         return Stream.of(anatEntityPropagationState, devStagePropagationState)
-        .collect(Collectors.toCollection(() -> EnumSet.noneOf(PropagationState.class)));
+                .filter(s -> s != null)
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(PropagationState.class)));
     }
     
     @Override

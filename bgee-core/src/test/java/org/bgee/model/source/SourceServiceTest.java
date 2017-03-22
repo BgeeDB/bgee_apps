@@ -19,6 +19,7 @@ import java.util.Set;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.dao.api.DAOManager;
+import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.source.SourceDAO;
 import org.bgee.model.dao.api.source.SourceDAO.SourceTO;
 import org.bgee.model.dao.api.source.SourceDAO.SourceTOResultSet;
@@ -68,11 +69,11 @@ public class SourceServiceTest extends TestAncestor {
         when(managerMock.getSourceToSpeciesDAO()).thenReturn(sourceToSpeciesDao);
         SourceToSpeciesTOResultSet mockSourceToSpeciesRs = getMockResultSet(SourceToSpeciesTOResultSet.class,
                 Arrays.asList(
-                        new SourceToSpeciesTO(2, 11, SourceToSpeciesTO.DataType.IN_SITU, InfoType.ANNOTATION),
-                        new SourceToSpeciesTO(2, 11, SourceToSpeciesTO.DataType.RNA_SEQ, InfoType.ANNOTATION),
-                        new SourceToSpeciesTO(2, 11, SourceToSpeciesTO.DataType.IN_SITU, InfoType.DATA),
-                        new SourceToSpeciesTO(2, 21, SourceToSpeciesTO.DataType.EST, InfoType.DATA),
-                        new SourceToSpeciesTO(4, 11, SourceToSpeciesTO.DataType.AFFYMETRIX, InfoType.DATA)));
+                        new SourceToSpeciesTO(2, 11, DAODataType.IN_SITU, InfoType.ANNOTATION),
+                        new SourceToSpeciesTO(2, 11, DAODataType.RNA_SEQ, InfoType.ANNOTATION),
+                        new SourceToSpeciesTO(2, 11, DAODataType.IN_SITU, InfoType.DATA),
+                        new SourceToSpeciesTO(2, 21, DAODataType.EST, InfoType.DATA),
+                        new SourceToSpeciesTO(4, 11, DAODataType.AFFYMETRIX, InfoType.DATA)));
         when(sourceToSpeciesDao.getAllSourceToSpecies(null)).thenReturn(mockSourceToSpeciesRs);
 
         List<Source> expectedSources = new ArrayList<Source>();
@@ -135,8 +136,8 @@ public class SourceServiceTest extends TestAncestor {
         when(managerMock.getSourceToSpeciesDAO()).thenReturn(sourceToSpeciesDao);
         SourceToSpeciesTOResultSet mockSourceToSpeciesRs = getMockResultSet(SourceToSpeciesTOResultSet.class,
                 Arrays.asList(
-                        new SourceToSpeciesTO(2, 21, SourceToSpeciesTO.DataType.EST, InfoType.DATA),
-                        new SourceToSpeciesTO(4, 11, SourceToSpeciesTO.DataType.AFFYMETRIX, InfoType.ANNOTATION)));
+                        new SourceToSpeciesTO(2, 21, DAODataType.EST, InfoType.DATA),
+                        new SourceToSpeciesTO(4, 11, DAODataType.AFFYMETRIX, InfoType.ANNOTATION)));
         when(sourceToSpeciesDao.getAllSourceToSpecies(null)).thenReturn(mockSourceToSpeciesRs);
 
         List<Source> expectedSources = new ArrayList<Source>();

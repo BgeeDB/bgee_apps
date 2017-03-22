@@ -173,9 +173,6 @@ public class ConditionGraph implements Comparator<Condition> {
         if (conditions == null || conditions.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Some conditions must be provided."));
         }
-        if (conditions.stream().anyMatch(c -> c.getSpeciesId() == null)) {
-            throw log.throwing(new IllegalArgumentException("Species IDs must be provided in all conditions."));
-        }
         if (serviceFactory == null && anatEntityOnt == null && devStageOnt == null) {
             throw log.throwing(new IllegalArgumentException(
                     "A ServiceFactory or some ontologies must be provided."));
@@ -197,7 +194,7 @@ public class ConditionGraph implements Comparator<Condition> {
         }
         
         //Get species ID from conditions and check if it is the same in all conditions
-        Set<Integer> speciesIds = conditions.stream().map(c -> c.getSpeciesId()).collect(Collectors.toSet());
+        Set<Integer> speciesIds = conditions.stream().map(c -> c.getSpecies().getId()).collect(Collectors.toSet());
         if (speciesIds.size() != 1) {
             throw log.throwing(new IllegalArgumentException("Conditions should be in the same species."));
         }
@@ -264,7 +261,7 @@ public class ConditionGraph implements Comparator<Condition> {
                 
                 return propAnatEntitys.stream()
                         .flatMap(propAnatEntity -> propStages.stream().map(propStage -> 
-                            new Condition(propAnatEntity, propStage, speciesId)))
+                            new Condition(propAnatEntity, propStage, cond.getSpecies())))
                         .filter(propCond -> !cond.equals(propCond));
 
             }).collect(Collectors.toSet());
@@ -324,8 +321,7 @@ public class ConditionGraph implements Comparator<Condition> {
     public boolean isConditionMorePrecise(Condition firstCond, Condition secondCond) throws IllegalArgumentException {
         log.entry(firstCond, secondCond);
         
-        if (firstCond.getSpeciesId() != secondCond.getSpeciesId()
-                && firstCond.getSpeciesId().equals(secondCond.getSpeciesId())) {
+        if (!firstCond.getSpecies().equals(secondCond.getSpecies())) {
             throw log.throwing(new IllegalArgumentException("Conditions are not in the same species."
                     + " First condition: " + firstCond + " - Second condition: " + secondCond));
         }

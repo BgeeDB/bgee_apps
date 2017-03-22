@@ -153,7 +153,7 @@ public class GeneService extends CommonService {
      *                      considered. If {@code null}, all species available for the taxon are used.
      * @return              The {@code Map} where keys are {@code Integer}s corresponding to 
      *                      OMA Node IDs, the associated value being a {@code Set} of {@code Integer}s
-     *                      corresponding to their gene IDs.
+     *                      corresponding to their {@code Gene}.
      */
     public Map<Integer, Set<Gene>> getOrthologs(Integer taxonId, Set<Integer> speciesIds) {
         log.entry(taxonId, speciesIds);

@@ -1,13 +1,10 @@
 package org.bgee.model;
 
-import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
+import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.expressiondata.Condition;
@@ -58,23 +55,6 @@ public class CommonService extends Service {
 //        }).collect(Collectors.toCollection(() -> EnumSet.noneOf(ConditionDAO.Attribute.class))));
 //    }
     /**
-     * Map {@code ConditionTO} to a {@code Condition}. In case of single-species retrieval
-     * of {@code ConditionTO}s, see {@link #mapConditionTOToCondition(ConditionTO, Integer)}.
-     * 
-     * @param condTO        A {@code ConditionTO} that is the condition from db
-     *                      to map into {@code Condition}.
-     * @param anatEntity    The {@code AnatEntity} corresponding to the ID returned by
-     *                      {@link ConditionTO#getAnatEntityId()}.
-     * @param devStage      The {@code DevStage} corresponding to the ID returned by
-     *                      {@link ConditionTO#getStageId()}.
-     * @return              The mapped {@code Condition}.
-     */
-    protected static Condition mapConditionTOToCondition(ConditionTO condTO,
-            AnatEntity anatEntity, DevStage devStage) {
-        log.entry(condTO, anatEntity, devStage);
-        return log.exit(mapConditionTOToCondition(condTO, null, anatEntity, devStage));
-    }
-    /**
      * Map {@code ConditionTO} to a {@code Condition}.
      * 
      * @param condTO        A {@code ConditionTO} that is the condition from db
@@ -88,52 +68,28 @@ public class CommonService extends Service {
      *                      {@link ConditionTO#getStageId()}.
      * @return              The mapped {@code Condition}.
      */
-    protected static Condition mapConditionTOToCondition(ConditionTO condTO, Integer speciesId,
-            AnatEntity anatEntity, DevStage devStage) {
-        log.entry(condTO, speciesId, anatEntity, devStage);
+    protected static Condition mapConditionTOToCondition(ConditionTO condTO,
+            AnatEntity anatEntity, DevStage devStage, Species species) {
+        log.entry(condTO, anatEntity, devStage, species);
         if (condTO == null) {
             return log.exit(null);
         }
-        if (speciesId != null && speciesId <= 0) {
-            throw log.throwing(new IllegalArgumentException("Invalid speciesId: " + speciesId));
+        if (species == null) {
+            throw log.throwing(new IllegalArgumentException("The Species must be provided."));
         }
-        Map<DataType, BigDecimal> ranks = new HashMap<>();
-        for (DataType dt: DataType.values()) {
-            switch (dt) {
-                case AFFYMETRIX:
-                    ranks.put(dt, condTO.getAffymetrixMaxRank());
-                    break;
-                case EST:
-                    ranks.put(dt, condTO.getESTMaxRank());
-                    break;
-                case IN_SITU:
-                    ranks.put(dt, condTO.getInSituMaxRank());
-                    break;
-                case RNA_SEQ:
-                    ranks.put(dt, condTO.getRNASeqMaxRank());
-                    break;
-                default:
-                  throw log.throwing(new IllegalStateException("Unsupported DataType: " + dt));
-            }
+        if (condTO.getSpeciesId() != null && !condTO.getSpeciesId().equals(species.getId())) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Incorrect species ID in ConditionTO, expected " + species.getId() + " but was "
+                    + condTO.getSpeciesId()));
         }
-        if (ranks.isEmpty()) {
-            ranks = null;
-        }
-        //FIXME: implements use of propagatedMaxRanks
-        return log.exit(new Condition(anatEntity, devStage,
-            speciesId != null? speciesId: condTO.getSpeciesId(), ranks, null));
+        return log.exit(new Condition(anatEntity, devStage, species));
     }
-    protected static ConditionTO mapConditionToConditionTO(int condId, int exprMappedCondId, 
+    protected static ConditionTO mapConditionToConditionTO(int condId, Integer exprMappedCondId,
             Condition cond) {
         log.entry(condId, exprMappedCondId, cond);
-        
-        Map<DataType, BigDecimal> ranksByDataType = cond.getMaxRanksByDataType() == null?
-                new HashMap<>(): cond.getMaxRanksByDataType();
                 
         return log.exit(new ConditionTO(condId, exprMappedCondId, 
-                cond.getAnatEntityId(), cond.getDevStageId(), cond.getSpeciesId(), 
-                ranksByDataType.get(DataType.AFFYMETRIX), ranksByDataType.get(DataType.RNA_SEQ), 
-                ranksByDataType.get(DataType.EST), ranksByDataType.get(DataType.IN_SITU)));
+                cond.getAnatEntityId(), cond.getDevStageId(), cond.getSpecies().getId()));
     }
     
     /**
@@ -154,9 +110,25 @@ public class CommonService extends Service {
         }
         if (geneTO.getSpeciesId() != null && !geneTO.getSpeciesId().equals(species.getId())) {
             throw log.throwing(new IllegalArgumentException(
-                    "Species ID of the gene does not match provied Species."));
+                    "Species ID of the gene does not match provided Species."));
         }
         return log.exit(new Gene(geneTO.getGeneId(), geneTO.getName(), geneTO.getDescription(),
                 species, geneTO.getGeneMappedToGeneIdCount()));
+    }
+
+    protected static DataType convertDaoDataTypeToDataType(DAODataType dt) {
+        log.entry(dt);
+        switch(dt) {
+            case AFFYMETRIX:
+                return log.exit(DataType.AFFYMETRIX);
+            case EST:
+                return log.exit(DataType.EST);
+            case IN_SITU:
+                return log.exit(DataType.IN_SITU);
+            case RNA_SEQ:
+                return log.exit(DataType.RNA_SEQ);
+        default:
+            throw log.throwing(new IllegalStateException("Unsupported SourceToSpeciesTO.DataType: " + dt));
+        }
     }
 }

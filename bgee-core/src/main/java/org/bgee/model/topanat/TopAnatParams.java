@@ -3,7 +3,9 @@ package org.bgee.model.topanat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -598,7 +600,7 @@ public class TopAnatParams {
      * 
      * @return A {@code CallFilter} to be used for the analysis
      */
-    public CallFilter<?> convertRawParametersToCallFilter() {
+    public CallFilter<?, ?> convertRawParametersToCallFilter() {
         log.entry();
         
         GeneFilter geneFilter = new GeneFilter(this.speciesId, this.submittedBackgroundIds);
@@ -607,16 +609,21 @@ public class TopAnatParams {
             Collections.singleton(new ConditionFilter(null, Collections.singleton(this.devStageId)));
         
         if (this.callType == ExpressionSummary.EXPRESSED) {
+            Map<ExpressionSummary, SummaryQuality> callQualFilter = new HashMap<>();
+            callQualFilter.put(ExpressionSummary.EXPRESSED, this.summaryQuality);
             return log.exit(new ExpressionCallFilter(
-                //gene filter 
-                geneFilter, 
-                //condition filter
-                condFilters,
-                this.dataTypes,
-                ExpressionSummary.EXPRESSED,
-                this.summaryQuality,
-                true
-                ));
+                    //call type and quality filter
+                    callQualFilter,
+                    //gene filter 
+                    Collections.singleton(geneFilter), 
+                    //condition filter
+                    condFilters,
+                    //data type filter
+                    this.dataTypes,
+                    //observed data filter
+                    //XXX: this should be adapted if we want TopAnat to work on a graph of conditions
+                    null, true, null
+            ));
         }
         if (this.callType == DiffExpressionSummary.OVER_EXPRESSED) {
             //TODO: to implement, and use method getDiffExpressionCallData

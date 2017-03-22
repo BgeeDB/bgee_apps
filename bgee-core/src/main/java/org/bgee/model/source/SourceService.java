@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.Service;
+import org.bgee.model.CommonService;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.source.SourceDAO.SourceTO;
 import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO;
@@ -25,7 +25,7 @@ import org.bgee.model.expressiondata.baseelements.DataType;
  * @version Bgee 13, July 2016
  * @since   Bgee 13, Mar. 2016
  */
-public class SourceService extends Service {
+public class SourceService extends CommonService {
 
     private static final Logger log = LogManager.getLogger(SourceService.class.getName());
 
@@ -178,22 +178,6 @@ public class SourceService extends Service {
                 return log.exit(SourceCategory.ONTOLOGY);
         default: 
             throw log.throwing(new IllegalStateException("Unsupported SourceTO.SourceCategory: " + cat));
-        }
-    }
-    
-    private static DataType convertDaoDataTypeToDataType(SourceToSpeciesTO.DataType dt) {
-        log.entry(dt);
-        switch(dt) {
-            case AFFYMETRIX: 
-                return log.exit(DataType.AFFYMETRIX);
-            case EST:
-                return log.exit(DataType.EST);
-            case IN_SITU: 
-                return log.exit(DataType.IN_SITU);
-            case RNA_SEQ: 
-                return log.exit(DataType.RNA_SEQ);
-        default: 
-            throw log.throwing(new IllegalStateException("Unsupported SourceToSpeciesTO.DataType: " + dt));
         }
     }
 }

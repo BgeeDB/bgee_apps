@@ -1,20 +1,21 @@
 package org.bgee.model.expressiondata;
 
+import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.expressiondata.CallData.DiffExpressionCallData;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
-import org.bgee.model.expressiondata.baseelements.SummaryCallType.DiffExpressionSummary;
-import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.GeneFilter;
 
@@ -29,6 +30,7 @@ import org.bgee.model.gene.GeneFilter;
  * @param T The type of {@code CallData} to be used by this {@code CallFilter}. 
  *          Can be declared as {@code CallData}, to include a mixture of {@code CallData} subtypes, 
  *          or as a specific subtype, for instance, {@code ExpressionCallData}.
+ * @param U The type of {@code SummaryCallType} to be used by this {@code CallFilter}.
  */
 //XXX: would several CallFilters represent AND or OR conditions.
 //If OR conditions, we could provide a Set<Set<CallFilter>> to CallService methods, 
@@ -50,7 +52,7 @@ import org.bgee.model.gene.GeneFilter;
 //(e.g., calls including substructures for Affymetrix, not including substructures for RNA-Seq).
 //If these two points wanted to be achieved, we could use the new fields of, e.g., ExpressionCallData: 
 // absentHighParentExpCount, presentHighDescExpCount, etc.
-public abstract class CallFilter<T extends CallData<?>> implements Predicate<Call<?, T>> {
+public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & SummaryCallType> implements Predicate<Call<?, T>> {
     private final static Logger log = LogManager.getLogger(CallFilter.class.getName());
     
     /**
@@ -61,35 +63,25 @@ public abstract class CallFilter<T extends CallData<?>> implements Predicate<Cal
      * @version Bgee 14, Mar. 2017
      * @since   Bgee 13
      */
-    public static class ExpressionCallFilter extends CallFilter<ExpressionCallData> {
+    public static class ExpressionCallFilter
+    extends CallFilter<ExpressionCallData, SummaryCallType.ExpressionSummary> {
         
-        private final Boolean observedDataOnly;
-        
-        /**
-         * Basic constructor allowing to provide one {@code SummaryCallType} filter.
-         * 
-         * @param summaryCallTypeFilter A {@code ExpressionSummary} to configure the filtering 
-         *                              based on the call type (for instance, 
-         *                              {@link ExpressionSummary#EXPRESSED EXPRESSED).
-         * @see ExpressionCallFilter#ExpressionCallFilter(GeneFilter, Collection, Collection,
-         *                                  SummaryQuality, ExpressionSummary, DataPropagation)
-         */
-        public ExpressionCallFilter(ExpressionSummary summaryCallTypeFilter) {
-            this(summaryCallTypeFilter, null);
-        }
-        public ExpressionCallFilter(ExpressionSummary summaryCallTypeFilter, Boolean observedDataOnly) {
-            this(null, summaryCallTypeFilter, observedDataOnly);
-        }
-        public ExpressionCallFilter(GeneFilter geneFilter, ExpressionSummary summaryCallTypeFilter,
-                Boolean observedDataOnly) {
-            this(geneFilter, null, null, summaryCallTypeFilter, null, observedDataOnly);
-        }
-        public ExpressionCallFilter(GeneFilter geneFilter, Collection<ConditionFilter> conditionFilters,
-            Collection<DataType> dataTypeFilter, ExpressionSummary summaryCallTypeFilter,
-            SummaryQuality summaryQualityFilter, Boolean observedDataOnly)
-                throws IllegalArgumentException {
-            super(geneFilter, conditionFilters, dataTypeFilter, summaryCallTypeFilter, summaryQualityFilter);
-            this.observedDataOnly = observedDataOnly;
+        private final Boolean conditionObservedData;
+
+        private final Boolean anatEntityObservedData;
+        private final Boolean devStageObservedData;
+
+        public ExpressionCallFilter(
+                Map<SummaryCallType.ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter,
+                Set<GeneFilter> geneFilters, Collection<ConditionFilter> conditionFilters,
+                Collection<DataType> dataTypeFilter, Boolean conditionObservedData,
+                Boolean anatEntityObservedData, Boolean devStageObservedData)
+                        throws IllegalArgumentException {
+            super(summaryCallTypeQualityFilter, geneFilters, conditionFilters, dataTypeFilter,
+                    SummaryCallType.ExpressionSummary.class);
+            this.conditionObservedData = conditionObservedData;
+            this.anatEntityObservedData = anatEntityObservedData;
+            this.devStageObservedData = devStageObservedData;
             try {
                 this.checkEmptyFilters();
             } catch (IllegalStateException e) {
@@ -98,17 +90,22 @@ public abstract class CallFilter<T extends CallData<?>> implements Predicate<Cal
         }
 
         @Override
-        protected void checkEmptyFilters() {
+        protected void checkEmptyFilters() throws IllegalStateException {
             log.entry();
-            if (this.observedDataOnly != null) {
-                log.exit(); return;
-            }
+            //nothing special in this subclass, the observedData filter alone is not enough,
+            //so we let the superclass decide whether it's happy about the filters it manages.
             super.checkEmptyFilters();
             log.exit();
         }
         
-        public boolean isObservedDataOnly() {
-            return observedDataOnly;
+        public Boolean getConditionObservedData() {
+            return conditionObservedData;
+        }
+        public Boolean getAnatEntityObservedData() {
+            return anatEntityObservedData;
+        }
+        public Boolean getDevStageObservedData() {
+            return devStageObservedData;
         }
 
         @Override
@@ -120,12 +117,45 @@ public abstract class CallFilter<T extends CallData<?>> implements Predicate<Cal
             // Filter on observed data
             //XXX: actually, we can now filter calls based on this information directly in the DAO,
             //so maybe we should force to retrieve this information in the Call solely to test it.
-            if (observedDataOnly != null) {
-                if (call.getIsObservedData() == null) {
+            if (conditionObservedData != null || anatEntityObservedData != null ||
+                    devStageObservedData != null) {
+
+                if (call.getDataPropagation() == null) {
                     throw log.throwing(new IllegalArgumentException(
                             "The provided Call does not allow to retrieve observedData information"));
                 }
-                return log.exit(observedDataOnly.equals(call.getIsObservedData()));
+                if (conditionObservedData != null &&
+                        call.getDataPropagation().isIncludingObservedData() == null) {
+                    throw log.throwing(new IllegalArgumentException(
+                            "The provided Call does not allow to retrieve observedData information"));
+                }
+                if (!conditionObservedData.equals(call.getDataPropagation().isIncludingObservedData())) {
+                    return log.exit(false);
+                }
+
+                if (anatEntityObservedData != null &&
+                        (call.getDataPropagation().getAnatEntityPropagationState() == null ||
+                        call.getDataPropagation().getAnatEntityPropagationState()
+                        .isIncludingObservedData() == null)) {
+                    throw log.throwing(new IllegalArgumentException(
+                            "The provided Call does not allow to retrieve observedData information"));
+                }
+                if (!anatEntityObservedData.equals(call.getDataPropagation()
+                        .getAnatEntityPropagationState().isIncludingObservedData())) {
+                    return log.exit(false);
+                }
+
+                if (devStageObservedData != null &&
+                        (call.getDataPropagation().getDevStagePropagationState() == null ||
+                        call.getDataPropagation().getDevStagePropagationState()
+                        .isIncludingObservedData() == null)) {
+                    throw log.throwing(new IllegalArgumentException(
+                            "The provided Call does not allow to retrieve observedData information"));
+                }
+                if (!devStageObservedData.equals(call.getDataPropagation()
+                        .getDevStagePropagationState().isIncludingObservedData())) {
+                    return log.exit(false);
+                }
             }
             return log.exit(true);
         }
@@ -134,7 +164,10 @@ public abstract class CallFilter<T extends CallData<?>> implements Predicate<Cal
         public int hashCode() {
             final int prime = 31;
             int result = super.hashCode();
-            result = prime * result + ((observedDataOnly == null) ? 0 : observedDataOnly.hashCode());
+            result = prime * result + ((conditionObservedData == null) ? 0 : conditionObservedData.hashCode());
+            result = prime * result
+                    + ((anatEntityObservedData == null) ? 0 : anatEntityObservedData.hashCode());
+            result = prime * result + ((devStageObservedData == null) ? 0 : devStageObservedData.hashCode());
             return result;
         }
         @Override
@@ -149,11 +182,25 @@ public abstract class CallFilter<T extends CallData<?>> implements Predicate<Cal
                 return false;
             }
             ExpressionCallFilter other = (ExpressionCallFilter) obj;
-            if (observedDataOnly == null) {
-                if (other.observedDataOnly != null) {
+            if (conditionObservedData == null) {
+                if (other.conditionObservedData != null) {
                     return false;
                 }
-            } else if (!observedDataOnly.equals(other.observedDataOnly)) {
+            } else if (!conditionObservedData.equals(other.conditionObservedData)) {
+                return false;
+            }
+            if (anatEntityObservedData == null) {
+                if (other.anatEntityObservedData != null) {
+                    return false;
+                }
+            } else if (!anatEntityObservedData.equals(other.anatEntityObservedData)) {
+                return false;
+            }
+            if (devStageObservedData == null) {
+                if (other.devStageObservedData != null) {
+                    return false;
+                }
+            } else if (!devStageObservedData.equals(other.devStageObservedData)) {
                 return false;
             }
             return true;
@@ -162,13 +209,14 @@ public abstract class CallFilter<T extends CallData<?>> implements Predicate<Cal
         @Override
         public String toString() {
             StringBuilder builder = new StringBuilder();
-            builder.append("ExpressionCallFilter [observedDataOnly=").append(observedDataOnly)
-                    .append(", getGeneFilter()=").append(getGeneFilter())
-                    .append(", getConditionFilters()=").append(getConditionFilters())
-                    .append(", getDataTypeFilters()=").append(getDataTypeFilters())
-                    .append(", getSummaryQualityFilter()=").append(getSummaryQualityFilter())
-                    .append(", getSummaryCallTypeFilter()=").append(getSummaryCallTypeFilter())
-                    .append("]");
+            builder.append("ExpressionCallFilter [conditionObservedData=").append(conditionObservedData)
+                   .append(", anatEntityObservedData=").append(anatEntityObservedData)
+                   .append(", devStageObservedData=").append(devStageObservedData)
+                   .append(", geneFilters=").append(getGeneFilters())
+                   .append(", conditionFilters=").append(getConditionFilters())
+                   .append(", dataTypeFilters=").append(getDataTypeFilters())
+                   .append(", summaryCallTypeQualityFilter=").append(getSummaryCallTypeQualityFilter())
+                   .append("]");
             return builder.toString();
         }
     }
@@ -181,26 +229,17 @@ public abstract class CallFilter<T extends CallData<?>> implements Predicate<Cal
      * @version Bgee 14, Feb. 2017
      * @since   Bgee 13
      */
-    public static class DiffExpressionCallFilter extends CallFilter<DiffExpressionCallData> {
-        /**
-         * Basic constructor allowing to provide one {@code DiffExpressionCallData} filter.
-         * 
-         * @param summaryCallTypeFilter A {@code DiffExpressionSummary} to configure the filtering 
-         *                              based on the call type (for instance,
-                                        {@link DiffExpressionSummary#OVER_EXPRESSED OVER_EXPRESSED}).
-         * @see DiffExpressionCallFilter#DiffExpressionCallFilter(
-         *              GeneFilter, Collection, Collection, SummaryQuality, DiffExpressionSummary)
-         */
-        public DiffExpressionCallFilter(DiffExpressionSummary summaryCallTypeFilter) {
-            this(null, null, null, null, summaryCallTypeFilter);
-        }
+    public static class DiffExpressionCallFilter
+    extends CallFilter<ExpressionCallData, SummaryCallType.DiffExpressionSummary> {
         /**
          * See {@link CallFilter#CallFilter(GeneFilter, Collection, Collection, SummaryQuality, SummaryCallType)}.
          */
-        public DiffExpressionCallFilter(GeneFilter geneFilter, Collection<ConditionFilter> conditionFilters, 
-            Collection<DataType> dataTypeFilter, SummaryQuality summaryQualityFilter,
-            DiffExpressionSummary summaryCallTypeFilter) throws IllegalArgumentException {
-            super(geneFilter, conditionFilters, dataTypeFilter, summaryCallTypeFilter, summaryQualityFilter);
+        public DiffExpressionCallFilter(
+                Map<SummaryCallType.DiffExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter,
+                Set<GeneFilter> geneFilters, Collection<ConditionFilter> conditionFilters, 
+            Collection<DataType> dataTypeFilter) throws IllegalArgumentException {
+            super(summaryCallTypeQualityFilter, geneFilters, conditionFilters, dataTypeFilter,
+                    SummaryCallType.DiffExpressionSummary.class);
             try {
                 this.checkEmptyFilters();
             } catch (IllegalStateException e) {
@@ -230,19 +269,17 @@ public abstract class CallFilter<T extends CallData<?>> implements Predicate<Cal
         @Override
         public String toString() {
             StringBuilder builder = new StringBuilder();
-            builder.append("DiffExpressionCallFilter [")
-                    .append("getGeneFilter()=").append(getGeneFilter())
-                    .append(", getConditionFilters()=").append(getConditionFilters())
-                    .append(", getDataTypeFilters()=").append(getDataTypeFilters())
-                    .append(", getSummaryQualityFilter()=").append(getSummaryQualityFilter())
-                    .append(", getSummaryCallTypeFilter()=").append(getSummaryCallTypeFilter())
+            builder.append("DiffExpressionCallFilter [geneFilters=").append(getGeneFilters())
+                    .append(", conditionFilters=").append(getConditionFilters())
+                    .append(", dataTypeFilters=").append(getDataTypeFilters())
+                    .append(", summaryCallTypeQualityFilter=").append(getSummaryCallTypeQualityFilter())
                     .append("]");
             return builder.toString();
         }
     }
     
     /**
-     * @see #getGeneFilter()
+     * @see #getGeneFilters()
      */
     //XXX: The only problem with using directly ConditionFilters and CallDatas in this class, 
     //is that GeneFilters are costly to use in a query; using the class CallDataConditionFilter 
@@ -251,7 +288,7 @@ public abstract class CallFilter<T extends CallData<?>> implements Predicate<Cal
     //reused several times. This is costly, but we could have a mechanism to provide a global GeneFilter 
     //to the DAO when we see it is always the same GeneFilter used. 
     //I think it's worth it for the simplification it allows in the class CallFilter.
-    private final GeneFilter geneFilter;
+    private final Set<GeneFilter> geneFilters;
     
     /**
      * @see #getConditionFilters()
@@ -274,16 +311,11 @@ public abstract class CallFilter<T extends CallData<?>> implements Predicate<Cal
      * @see #getDataTypeFilter()
      */
     private final Set<DataType> dataTypeFilters;
-    
-    /**
-     * @see #getSummaryQualityFilter()
-     */
-    private final SummaryQuality summaryQualityFilter;
 
     /**
-     * @see #getSummaryCallTypeFilter()
+     * @see #getSummaryCallTypeQualityFilter()
      */
-    private final SummaryCallType summaryCallTypeFilter;
+    private final Map<U, SummaryQuality> summaryCallTypeQualityFilter;
     
     /**FIXME javadoc
      * Constructor accepting all requested parameters to build a new {@code CallFilter}. 
@@ -314,27 +346,32 @@ public abstract class CallFilter<T extends CallData<?>> implements Predicate<Cal
      *                              {@code ConditionFilter}s are provided, they are seen as "OR" conditions.
      * @param dataTypeFilters        TODO javadoc
      * @param summaryQualityFilter  TODO javadoc
-     * @throws IllegalArgumentException If {@code callDataFilters} is {@code null} or empty, 
-     *                                  or contains a {@code null} {@code CallData}; 
-     *                                  or if the {@code ExpressionCallData}s provided target 
-     *                                  a redundant combination of {@code CallType} and {@code DataType}; 
-     *                                  or if the {@code DiffExpressionCallData}s provided target 
-     *                                  a redundant combination of {@code CallType}, {@code DataType}, 
-     *                                  and {@code DiffExpressionFactor}.
+     * @throws IllegalArgumentException If any filter contains {@code null} elements,
+     *                                  or if no filter is defined at all.
      */
-    //IMPORTANT: note that subclasses must override chekEmptyFilters as needed,
-    //and call it in their constructor (this cannot be done in this constructor,
-    //as subclasses might need to set their own attributes before calling chekEmptyFilters)
-    public CallFilter(GeneFilter geneFilter, Collection<ConditionFilter> conditionFilters,
-        Collection<DataType> dataTypeFilter, SummaryCallType summaryCallTypeFilter,
-        SummaryQuality summaryQualityFilter) throws IllegalArgumentException {        
-        this.geneFilter = geneFilter;
+    //IMPORTANT: note that subclasses must override checkEmptyFilters as needed,
+    //use in it super.checkEmptyFilters(), and call it in their constructor (this cannot be done
+    //in this constructor, as subclasses might need to set their own attributes before calling checkEmptyFilters)
+    protected CallFilter(Map<U, SummaryQuality> summaryCallTypeQualityFilter,
+            Set<GeneFilter> geneFilters, Collection<ConditionFilter> conditionFilters,
+            Collection<DataType> dataTypeFilter, Class<U> callTypeCls) throws IllegalArgumentException {
+
+        this.geneFilters = Collections.unmodifiableSet(
+                geneFilters == null? new HashSet<>(): new HashSet<>(geneFilters));
         this.conditionFilters = Collections.unmodifiableSet(
             conditionFilters == null? new HashSet<>(): new HashSet<>(conditionFilters));
         this.dataTypeFilters = Collections.unmodifiableSet(
             dataTypeFilter == null? new HashSet<>(): new HashSet<>(dataTypeFilter));
-        this.summaryQualityFilter = summaryQualityFilter;
-        this.summaryCallTypeFilter = summaryCallTypeFilter;
+        this.summaryCallTypeQualityFilter = Collections.unmodifiableMap(
+                summaryCallTypeQualityFilter == null?
+
+                        EnumSet.allOf(callTypeCls).stream()
+                        .map(c -> new AbstractMap.SimpleEntry<>(c, SummaryQuality.BRONZE))
+                        .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue())):
+
+                        new HashMap<>(summaryCallTypeQualityFilter));
+        //just to make sure bronze quality is the lowest quality/that qualities are correctly ordered
+        assert SummaryQuality.BRONZE.equals(SummaryQuality.values()[0]);
 
         if (this.conditionFilters.contains(null)) {
             throw log.throwing(new IllegalStateException("No ConditionFilter can be null."));
@@ -342,30 +379,47 @@ public abstract class CallFilter<T extends CallData<?>> implements Predicate<Cal
         if (this.dataTypeFilters.contains(null)) {
             throw log.throwing(new IllegalStateException("No DataTypeFilter can be null."));
         }
+        if (this.summaryCallTypeQualityFilter.keySet().contains(null)) {
+            throw log.throwing(new IllegalStateException("No SummaryCallType can be null."));
+        }
+        if (this.summaryCallTypeQualityFilter.values().contains(null)) {
+            throw log.throwing(new IllegalStateException("No SummaryQuality can be null."));
+        }
+
+        //make sure we don't have a same species in different GeneFilters
+        if (this.geneFilters.stream().collect(Collectors.groupingBy(gf -> gf.getSpeciesId()))
+                .values().stream().anyMatch(l -> l.size() > 1)) {
+            throw log.throwing(new IllegalArgumentException(
+                    "A species ID must be present in only one GeneFilter."));
+        }
     }
     
     /** 
-     * Check that at least one filter was provided.
+     * Check fitlers.
      * 
      * @throws IllegalStateException    If some filters are not satisfactory.
      */
+    //IMPORTANT: note that subclasses must override checkEmptyFilters as needed,
+    //use in it super.checkEmptyFilters(), and call it in their constructor
+    //(this cannot be done in the sub-class constructor, as subclasses might need
+    //to set their own attributes before calling checkEmptyFilters)
     protected void checkEmptyFilters() throws IllegalStateException {
         log.entry();
-        if (this.geneFilter == null &&
-            this.conditionFilters.isEmpty() && this.dataTypeFilters.isEmpty() &&
-            this.summaryQualityFilter == null && this.summaryCallTypeFilter == null) {
-            throw log.throwing(new IllegalStateException("No filter provided at all."));
+        //To make sure we never pull all data in the database at once.
+        if (this.geneFilters.isEmpty() && this.conditionFilters.isEmpty()) {
+            throw log.throwing(new IllegalStateException(
+                    "At least a GeneFilter or a ConditionFilter must be provided."));
         }
         log.exit();
     }
     
     /**
-     * @return  The {@code GeneFilter} allowing to configure gene-related filtering.
+     * @return  An unmodifiable {@code Set} {@code GeneFilter}s allowing to configure gene-related
+     *          filtering. If several {@code GeneFilter}s are configured, they are seen as "OR" conditions.
      */
-    public GeneFilter getGeneFilter() {
-        return geneFilter;
+    public Set<GeneFilter> getGeneFilters() {
+        return geneFilters;
     }
-    
     /**
      * @return  An unmodifiable {@code Set} of {@code ConditionFilter}s, allowing to configure 
      *          the filtering of conditions with expression data. If several 
@@ -374,8 +428,6 @@ public abstract class CallFilter<T extends CallData<?>> implements Predicate<Cal
     public Set<ConditionFilter> getConditionFilters() {
         return conditionFilters;
     }
-    
-    
     /**
      * @return  An unmodifiable {@code Set} of {@code DataType}s, allowing to configure 
      *          the filtering of data types with expression data.
@@ -384,71 +436,77 @@ public abstract class CallFilter<T extends CallData<?>> implements Predicate<Cal
     public Set<DataType> getDataTypeFilters() {
         return dataTypeFilters;
     }
-
-    /**
-     * @return  The {@code SummaryQuality} allowing to configure summary quality filtering.
-     */
-    public SummaryQuality getSummaryQualityFilter() {
-        return summaryQualityFilter;
-    }
-    
     /**
      * @return  The {@code SummaryCallType} allowing to configure summary call type filtering.
      */
-    public SummaryCallType getSummaryCallTypeFilter() {
-        return summaryCallTypeFilter;
+    public Map<U, SummaryQuality> getSummaryCallTypeQualityFilter() {
+        return summaryCallTypeQualityFilter;
     }
+
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((geneFilter == null) ? 0 : geneFilter.hashCode());
         result = prime * result + ((conditionFilters == null) ? 0 : conditionFilters.hashCode());
         result = prime * result + ((dataTypeFilters == null) ? 0 : dataTypeFilters.hashCode());
-        result = prime * result + ((summaryQualityFilter == null) ? 0 : summaryQualityFilter.hashCode());
-        result = prime * result + ((summaryCallTypeFilter == null) ? 0 : summaryCallTypeFilter.hashCode());
+        result = prime * result + ((geneFilters == null) ? 0 : geneFilters.hashCode());
+        result = prime * result
+                + ((summaryCallTypeQualityFilter == null) ? 0 : summaryCallTypeQualityFilter.hashCode());
         return result;
     }
-    
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
-        CallFilter<?> other = (CallFilter<?>) obj;
-        if (geneFilter == null) {
-            if (other.geneFilter != null)
-                return false;
-        } else if (!geneFilter.equals(other.geneFilter))
-            return false;
+        }
+        CallFilter<?, ?> other = (CallFilter<?, ?>) obj;
         if (conditionFilters == null) {
-            if (other.conditionFilters != null)
+            if (other.conditionFilters != null) {
                 return false;
-        } else if (!conditionFilters.equals(other.conditionFilters))
+            }
+        } else if (!conditionFilters.equals(other.conditionFilters)) {
             return false;
+        }
         if (dataTypeFilters == null) {
-            if (other.dataTypeFilters != null)
+            if (other.dataTypeFilters != null) {
                 return false;
-        } else if (!dataTypeFilters.equals(other.dataTypeFilters))
+            }
+        } else if (!dataTypeFilters.equals(other.dataTypeFilters)) {
             return false;
-        if (summaryQualityFilter != other.summaryQualityFilter)
+        }
+        if (geneFilters == null) {
+            if (other.geneFilters != null) {
+                return false;
+            }
+        } else if (!geneFilters.equals(other.geneFilters)) {
             return false;
-        if (summaryCallTypeFilter != other.summaryCallTypeFilter)
+        }
+        if (summaryCallTypeQualityFilter == null) {
+            if (other.summaryCallTypeQualityFilter != null) {
+                return false;
+            }
+        } else if (!summaryCallTypeQualityFilter.equals(other.summaryCallTypeQualityFilter)) {
             return false;
+        }
         return true;
     }
 
     @Override
     public String toString() {
-        return "CallFilter [geneFilter=" + geneFilter 
-            + ", conditionFilters=" + conditionFilters 
-            + ", dataTypeFilters=" + dataTypeFilters
-            + ", summaryQualityFilter=" + summaryQualityFilter
-            + ", summaryCallTypeFilter=" + summaryCallTypeFilter + "]";
+        StringBuilder builder = new StringBuilder();
+        builder.append("CallFilter [summaryCallTypeQualityFilter=").append(summaryCallTypeQualityFilter)
+               .append(", dataTypeFilters=").append(dataTypeFilters)
+               .append(", geneFilters=").append(geneFilters)
+               .append(", conditionFilters=").append(conditionFilters)
+               .append("]");
+        return builder.toString();
     }
 
     @Override
@@ -464,14 +522,14 @@ public abstract class CallFilter<T extends CallData<?>> implements Predicate<Cal
         }
 
         // Filter according GeneFilter
-        if (geneFilter != null && !geneFilter.test(call.getGene())) {
-            log.debug("Gene {} not validated: not in {}", call.getGene(), geneFilter.getEnsemblGeneIds());
+        if (geneFilters != null && !geneFilters.isEmpty()
+                && geneFilters.stream().noneMatch(f -> f.test(call.getGene()))) {
             return log.exit(false);
         }
 
         // Filter according ConditionFilters
         if (conditionFilters != null && !conditionFilters.isEmpty()
-                && !conditionFilters.stream().anyMatch(f -> f.test(call.getCondition()))) {
+                && conditionFilters.stream().noneMatch(f -> f.test(call.getCondition()))) {
             return log.exit(false);
         }
         
@@ -485,21 +543,14 @@ public abstract class CallFilter<T extends CallData<?>> implements Predicate<Cal
             log.debug("Data type {} not validated: not in {}", dataTypes, dataTypeFilters);
             return log.exit(false);
         }
+        
+        // Filter according SummaryCallTypeQualityFilter
+        if (summaryCallTypeQualityFilter.entrySet().stream()
+                .noneMatch(e -> e.getKey().equals(call.getSummaryCallType()) &&
+                        call.getSummaryQuality().compareTo(e.getValue()) >= 0)) {
 
-        // Filter according SummaryQualityFilter
-        if (summaryQualityFilter != null && call.getSummaryQuality() != null
-            && summaryQualityFilter.compareTo(call.getSummaryQuality()) > 0) {
-            log.debug(summaryQualityFilter.compareTo(call.getSummaryQuality()));
-            log.debug("Summary quality {} not validated: should be at least {}",
-                call.getSummaryQuality(), summaryQualityFilter);
-            return log.exit(false);
-        }
-
-        // Filter according SummaryCallTypeFilter (EXPRESSED, NOT_EXPRESSED, etc.)
-        if (summaryCallTypeFilter != null 
-            && summaryCallTypeFilter != call.getSummaryCallType()) {
-            log.debug("Summary call type {} not validated: should be {}",
-                call.getSummaryCallType(), summaryCallTypeFilter);
+            log.debug("Summary call type and quality {}-{} not validated, should be one of {}",
+                call.getSummaryCallType(), call.getSummaryQuality(), summaryCallTypeQualityFilter);
             return log.exit(false);
         }
         

@@ -13,9 +13,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.baseelements.ExperimentExpressionCount;
 import org.bgee.model.expressiondata.baseelements.CallType;
+import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.CallType.DiffExpression;
 import org.bgee.model.expressiondata.baseelements.CallType.Expression;
-import org.bgee.model.expressiondata.baseelements.DataPropagation.PropagationState;
+import org.bgee.model.expressiondata.baseelements.PropagationState;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DiffExpressionFactor;
@@ -61,9 +62,6 @@ public abstract class CallData<T extends Enum<T> & CallType> {
 
         private final DataQuality dataQuality;
 
-        //XXX: certainly this will change in a similar way as ExpressionCallData
-        private final PropagationState propagationState;
-
         public DiffExpressionCallData(DiffExpressionFactor factor, DiffExpression callType) {
             this(factor, callType, null);
         }
@@ -73,47 +71,24 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         }
         public DiffExpressionCallData(DiffExpressionFactor factor, DiffExpression callType, 
                 DataQuality dataQual, DataType dataType) {
-            this(factor, callType, dataQual, dataType, PropagationState.SELF);
+            this(factor, callType, dataQual, dataType,
+                    new DataPropagation(PropagationState.SELF, PropagationState.SELF, true));
         }
         public DiffExpressionCallData(DiffExpressionFactor factor, DiffExpression callType, 
-                DataQuality dataQual, DataType dataType, PropagationState propagationState) {
-            super(dataType, callType);
-            
-            log.entry(factor, callType, dataQual, dataType, propagationState);
-            
-            if (callType == null || dataQual == null || DataQuality.NODATA.equals(dataQual) || 
-                    propagationState == null) {
-                        throw log.throwing(new IllegalArgumentException("A DiffExpressionFactor, "
-                            + "a CallType, a DataQuality, and a PropagationState must be defined "
-                            + "to instantiate a CallData."));
-            }
-            callType.checkPropagationState(propagationState);
-            if (dataType != null) {
-                callType.checkDataType(dataType);
-            }
+                DataQuality dataQual, DataType dataType, DataPropagation dataPropagation) {
+            super(dataType, callType, dataPropagation);
 
             this.dataQuality = dataQual;
-            this.propagationState = propagationState;
-            this.diffExpressionFactor = factor;            
-            log.exit();
+            this.diffExpressionFactor = factor;
         }
         
         public DiffExpressionFactor getDiffExpressionFactor() {
             return diffExpressionFactor;
         }
         
+        //XXX: this will certainly change as in ExpressionCallData
         public DataQuality getDataQuality() {
             return dataQuality;
-        }
-        //XXX: to remove?
-        public PropagationState getPropagationStage() {
-            return propagationState;
-        }
-
-        @Override
-        // FIXME do implementation
-        public boolean isObservedData() {
-            return log.exit(true);
         }
 
         @Override
@@ -122,7 +97,6 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             int result = super.hashCode();
             result = prime * result + ((dataQuality == null) ? 0 : dataQuality.hashCode());
             result = prime * result + ((diffExpressionFactor == null) ? 0 : diffExpressionFactor.hashCode());
-            result = prime * result + ((propagationState == null) ? 0 : propagationState.hashCode());
             return result;
         }
         @Override
@@ -143,20 +117,19 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             if (diffExpressionFactor != other.diffExpressionFactor) {
                 return false;
             }
-            if (propagationState != other.propagationState) {
-                return false;
-            }
             return true;
         }
-
         @Override
         public String toString() {
             StringBuilder builder = new StringBuilder();
             builder.append("DiffExpressionCallData [diffExpressionFactor=").append(diffExpressionFactor)
-                    .append(", dataQuality=").append(dataQuality)
-                    .append(", propagationState=").append(propagationState).append("]");
+                   .append(", dataQuality=").append(dataQuality)
+                   .append(", dataType=").append(getDataType())
+                   .append(", callType=").append(getCallType())
+                   .append(", dataPropagation=").append(getDataPropagation()).append("]");
             return builder.toString();
         }
+
     }
 
     //TODO: javadoc of all methods and attributes
@@ -203,9 +176,8 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         private static Expression inferCallType(Set<ExperimentExpressionCount> expCounts) {
             log.entry(expCounts);
             
-            if (expCounts == null) {
-                throw log.throwing(new IllegalArgumentException(
-                        "Some ExperimentExpressionCount must be provided"));
+            if (expCounts == null || expCounts.isEmpty()) {
+                return log.exit(null);
             }
         
             Set<ExperimentExpressionCount> propAllPositiveCounts = expCounts.stream()
@@ -244,32 +216,32 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         
         private final BigDecimal normalizedRank;
         
-        private final BigDecimal distinctRankSum;
+        private final BigDecimal weightForMeanRank;
 
         public ExpressionCallData(DataType dataType, Set<ExperimentExpressionCount> experimentCounts,
-            int propagatedExperimentCount, BigDecimal rank, BigDecimal normalizedRank, BigDecimal distinctRankSum) {
-            super(dataType, inferCallType(experimentCounts));
+            int propagatedExperimentCount, BigDecimal rank, BigDecimal normalizedRank, BigDecimal weightForMeanRank,
+            DataPropagation dataPropagation) {
+            super(dataType, inferCallType(experimentCounts), dataPropagation);
 
             // sanity checks
-            if (experimentCounts.stream().anyMatch(c -> c == null)) {
-                throw log.throwing(new IllegalArgumentException(
-                        "All ExpressionExperimentCounts must be not null."));
-            }
-            final Set<ExperimentExpressionCount> expectedExpCounts = VALID_EXP_COUNTS.get(dataType);
-            //map experimentCounts to ExperimentExpressionCounts with count of 0 to compare
-            //to the expected ExperimentExpressionCounts
-            Set<ExperimentExpressionCount> fakeCounts = experimentCounts.stream()
-                    .map(c -> new ExperimentExpressionCount(c.getCallType(), c.getDataQuality(), 
-                            c.getPropagationState(), 0))
-                    .collect(Collectors.toSet());
-            if (!expectedExpCounts.equals(fakeCounts)) {
-                Set<ExperimentExpressionCount> missingCounts = new HashSet<>(expectedExpCounts);
-                missingCounts.removeAll(fakeCounts);
-                fakeCounts.removeAll(expectedExpCounts);
-                throw log.throwing(new IllegalArgumentException("Missing or additional combinations of "
-                        + "CallType/DataQuality/PropagationState in ExperimentExpressionCount. "
-                        + "Missing counts: " + missingCounts + ". Additional counts: "
-                        + fakeCounts));
+            if (experimentCounts != null && !experimentCounts.isEmpty()) {
+                if (experimentCounts.stream().anyMatch(c -> c == null)) {
+                    throw log.throwing(new IllegalArgumentException(
+                            "All ExpressionExperimentCounts must be not null."));
+                }
+                final Set<ExperimentExpressionCount> expectedExpCounts = VALID_EXP_COUNTS.get(dataType);
+                //map experimentCounts to ExperimentExpressionCounts with count of 0 to compare
+                //to the expected ExperimentExpressionCounts
+                Set<ExperimentExpressionCount> fakeCounts = experimentCounts.stream()
+                        .map(c -> new ExperimentExpressionCount(c.getCallType(), c.getDataQuality(), 
+                                c.getPropagationState(), 0))
+                        .collect(Collectors.toSet());
+                if (!expectedExpCounts.containsAll(fakeCounts)) {
+                    fakeCounts.removeAll(expectedExpCounts);
+                    throw log.throwing(new IllegalArgumentException("Unexpected combinations of "
+                            + "CallType/DataQuality/PropagationState in ExperimentExpressionCount. "
+                            + "Unexpected counts: " + fakeCounts));
+                }
             }
 
             this.experimentCounts = experimentCounts == null? new HashSet<>(): 
@@ -278,7 +250,7 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             //BigDecimal are immutable so we're good
             this.rank = rank;
             this.normalizedRank = normalizedRank;
-            this.distinctRankSum = distinctRankSum;
+            this.weightForMeanRank = weightForMeanRank;
         }
 
 
@@ -322,13 +294,6 @@ public abstract class CallData<T extends Enum<T> & CallType> {
 //            }
 //            return log.exit(DataQuality.NODATA);
 //        }
-
-        @Override
-        public boolean isObservedData() {
-            log.entry();
-            return log.exit(this.experimentCounts.stream().anyMatch(c ->
-                    PropagationState.SELF.equals(c.getPropagationState()) && c.getCount() > 0));
-        }
 
         public ExperimentExpressionCount getExperimentCount(CallType.Expression callType,
                 DataQuality dataQuality, PropagationState propState) {
@@ -384,8 +349,8 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         public BigDecimal getNormalizedRank() {
             return normalizedRank;
         }
-        public BigDecimal getDistinctRankSum() {
-            return distinctRankSum;
+        public BigDecimal getWeightForMeanRank() {
+            return weightForMeanRank;
         }
 
 
@@ -400,7 +365,7 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             result = prime * result + propagatedExperimentCount;
             result = prime * result + ((rank == null) ? 0 : rank.hashCode());
             result = prime * result + ((normalizedRank == null) ? 0 : normalizedRank.hashCode());
-            result = prime * result + ((distinctRankSum == null) ? 0 : distinctRankSum.hashCode());
+            result = prime * result + ((weightForMeanRank == null) ? 0 : weightForMeanRank.hashCode());
             return result;
         }
 
@@ -440,11 +405,11 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             } else if (!normalizedRank.equals(other.normalizedRank)) {
                 return false;
             }
-            if (distinctRankSum == null) {
-                if (other.distinctRankSum != null) {
+            if (weightForMeanRank == null) {
+                if (other.weightForMeanRank != null) {
                     return false;
                 }
-            } else if (!distinctRankSum.equals(other.distinctRankSum)) {
+            } else if (!weightForMeanRank.equals(other.weightForMeanRank)) {
                 return false;
             }
             return true;
@@ -452,8 +417,16 @@ public abstract class CallData<T extends Enum<T> & CallType> {
 
         @Override
         public String toString() {
-            return "ExpressionCallData [experimentCounts=" + experimentCounts + ", propagatedExperimentCount=" + propagatedExperimentCount +
-                ", rank=" + rank + ", normalizedRank=" + normalizedRank + ", distinctRankSum=" + distinctRankSum + "]";
+            StringBuilder builder = new StringBuilder();
+            builder.append("ExpressionCallData [dataType=").append(getDataType())
+                   .append(", callType=").append(getCallType())
+                   .append(", dataPropagation=").append(getDataPropagation())
+                   .append(", experimentCounts=").append(experimentCounts)
+                   .append(", propagatedExperimentCount=").append(propagatedExperimentCount)
+                   .append(", rank=").append(rank)
+                   .append(", normalizedRank=").append(normalizedRank)
+                   .append(", weightForMeanRank=").append(weightForMeanRank).append("]");
+            return builder.toString();
         }
     }
 
@@ -465,6 +438,9 @@ public abstract class CallData<T extends Enum<T> & CallType> {
     private final DataType dataType;
     
     private final T callType;
+
+    //XXX:to move to ExpressionCall? (also in CallData, to be moved to ExpressionCallData?)
+    private final DataPropagation dataPropagation;
     
     /**
      * Constructor allowing to specify a {@code DataType}. 
@@ -472,16 +448,26 @@ public abstract class CallData<T extends Enum<T> & CallType> {
      * @param dataType  The {@code DataType} that allowed to generate the {@code CallType}.
      * @throws IllegalArgumentException    If {@code dataType} is not {@code null}.
      */
-    protected CallData(DataType dataType, T callType) throws IllegalArgumentException {
-        log.entry(dataType);
+    protected CallData(DataType dataType, T callType, DataPropagation dataPropagation)
+            throws IllegalArgumentException {
+        log.entry(dataType, callType, dataPropagation);
         
         if (dataType == null) {
             throw log.throwing(new IllegalArgumentException
                 ("A DataType must be defined to instantiate a CallData."));
         }
+        if (callType != null) {
+            callType.checkDataType(dataType);
+
+            if (dataPropagation != null) {
+                dataPropagation.getAllPropagationStates().stream()
+                        .forEach(state -> callType.checkPropagationState(state));
+            }
+        }
 
         this.dataType = dataType;
         this.callType = callType;
+        this.dataPropagation = dataPropagation;
         log.exit();
     }
 
@@ -492,12 +478,12 @@ public abstract class CallData<T extends Enum<T> & CallType> {
     public DataType getDataType() {
         return dataType;
     }
-
     public T getCallType() {
         return callType;
     }
-
-    public abstract boolean isObservedData();
+    public DataPropagation getDataPropagation() {
+        return dataPropagation;
+    }
 
 
     //**********************************************
@@ -509,6 +495,7 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         int result = 1;
         result = prime * result + ((callType == null) ? 0 : callType.hashCode());
         result = prime * result + ((dataType == null) ? 0 : dataType.hashCode());
+        result = prime * result + ((dataPropagation == null) ? 0 : dataPropagation.hashCode());
         return result;
     }
     @Override
@@ -533,6 +520,13 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         if (dataType != other.dataType) {
             return false;
         }
+        if (dataPropagation == null) {
+            if (other.dataPropagation != null) {
+                return false;
+            }
+        } else if (!dataPropagation.equals(other.dataPropagation)) {
+            return false;
+        }
         return true;
     }
 
@@ -540,7 +534,9 @@ public abstract class CallData<T extends Enum<T> & CallType> {
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append("CallData [dataType=").append(dataType)
-        .append(", callType=").append(callType).append("]");
+               .append(", callType=").append(callType)
+               .append(", dataPropagation=").append(dataPropagation)
+               .append("]");
         return builder.toString();
     }
 }

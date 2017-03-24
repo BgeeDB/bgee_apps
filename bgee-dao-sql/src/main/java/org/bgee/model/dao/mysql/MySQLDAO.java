@@ -219,7 +219,8 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
      * @see #getAttributeFromColName(String, Map)
      * @see #generateSelectClause(String, Map, boolean)
      */
-    protected String getSelectExprFromAttribute(T attr, Map<String, T> selectExprsToAttributes) 
+    protected static <T extends Enum<T> & DAO.Attribute> String getSelectExprFromAttribute(
+            T attr, Map<String, T> selectExprsToAttributes) 
             throws IllegalArgumentException {
         log.entry(attr, selectExprsToAttributes);
         

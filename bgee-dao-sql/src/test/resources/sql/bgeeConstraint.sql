@@ -115,10 +115,11 @@ add primary key (anatEntityXRefId, anatEntityId);
 
 /*!40000 ALTER TABLE `anatEntityRelation` DISABLE KEYS */;
 alter table anatEntityRelation
-modify anatEntityRelationId int unsigned not null auto_increment primary key,
+modify anatEntityRelationId int unsigned not null auto_increment,
+ADD UNIQUE(anatEntityRelationId),
 -- we allow a same relation with same source and target, but different status (direct/indirect)
 -- because they can have different taxon constraints.
-add unique (anatEntitySourceId, anatEntityTargetId, relationType, relationStatus);
+add PRIMARY KEY (anatEntitySourceId, anatEntityTargetId, relationType, relationStatus);
 /*!40000 ALTER TABLE `anatEntityRelation` ENABLE KEYS */;
 
 /*!40000 ALTER TABLE `anatEntityRelationTaxonConstraint` DISABLE KEYS */;
@@ -226,65 +227,33 @@ add unique(transcriptId, bgeeGeneId);
 -- ****************************************************
 /*!40000 ALTER TABLE `cond` DISABLE KEYS */;
 alter table cond
-modify conditionId mediumint unsigned not null auto_increment primary key,
-add unique(anatEntityId, stageId, speciesId, sex, sexInferred, strain);
+modify conditionId mediumint unsigned not null auto_increment,
+ADD UNIQUE(conditionId),
+add PRIMARY KEY(anatEntityId, stageId, speciesId, sex, sexInferred, strain);
 /*!40000 ALTER TABLE `cond` ENABLE KEYS */;
 
-/*!40000 ALTER TABLE `anatEntityCond` DISABLE KEYS */;
-alter table anatEntityCond
-modify anatEntityConditionId mediumint unsigned not null auto_increment primary key,
-add unique(anatEntityId, speciesId);
-/*!40000 ALTER TABLE `anatEntityCond` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `anatEntityStageCond` DISABLE KEYS */;
-alter table anatEntityStageCond
-modify anatEntityStageConditionId mediumint unsigned not null auto_increment primary key,
-add unique(anatEntityId, stageId, speciesId);
-/*!40000 ALTER TABLE `anatEntityStageCond` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `anatEntitySexCond` DISABLE KEYS */;
-alter table anatEntitySexCond
-modify anatEntitySexConditionId mediumint unsigned not null auto_increment primary key,
-add unique(anatEntityId, speciesId, sex);
-/*!40000 ALTER TABLE `anatEntitySexCond` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `anatEntityStrainCond` DISABLE KEYS */;
-alter table anatEntityStrainCond
-modify anatEntityStrainConditionId mediumint unsigned not null auto_increment primary key,
-add unique(anatEntityId, speciesId, strain);
-/*!40000 ALTER TABLE `anatEntityStrainCond` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `anatEntityStageSexCond` DISABLE KEYS */;
-alter table anatEntityStageSexCond
-modify anatEntityStageSexConditionId mediumint unsigned not null auto_increment primary key,
-add unique(anatEntityId, stageId, speciesId, sex);
-/*!40000 ALTER TABLE `anatEntityStageSexCond` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `anatEntityStageStrainCond` DISABLE KEYS */;
-alter table anatEntityStageStrainCond
-modify anatEntityStageStrainConditionId mediumint unsigned not null auto_increment primary key,
-add unique(anatEntityId, stageId, speciesId, strain);
-/*!40000 ALTER TABLE `anatEntityStageStrainCond` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `anatEntitySexStrainCond` DISABLE KEYS */;
-alter table anatEntitySexStrainCond
-modify anatEntitySexStrainConditionId mediumint unsigned not null auto_increment primary key,
-add unique(anatEntityId, speciesId, sex, strain);
-/*!40000 ALTER TABLE `anatEntitySexStrainCond` ENABLE KEYS */;
+/*!40000 ALTER TABLE `globalCond` DISABLE KEYS */;
+alter table globalCond
+modify globalConditionId mediumint unsigned not null auto_increment PRIMARY KEY,
+-- not a primary key because some field can be null
+ADD UNIQUE(anatEntityId, stageId, speciesId, sex, strain);
+/*!40000 ALTER TABLE `globalCond` ENABLE KEYS */;
 
 -- ****************************************************
 -- EXPRESSION DATA
 -- ****************************************************
 /*!40000 ALTER TABLE `expression` DISABLE KEYS */;
 alter table expression
-modify expressionId int unsigned not null auto_increment primary key,
-add unique(bgeeGeneId, conditionId);
+modify expressionId int unsigned not null auto_increment,
+ADD UNIQUE(expressionId),
+add PRIMARY KEY(bgeeGeneId, conditionId);
 /*!40000 ALTER TABLE `expression` ENABLE KEYS */;
 
 /*!40000 ALTER TABLE `globalExpression` DISABLE KEYS */;
 alter table globalExpression
-modify globalExpressionId int unsigned not null auto_increment primary key,
-add unique(bgeeGeneId, conditionId);
+modify globalExpressionId int unsigned not null auto_increment,
+ADD UNIQUE(globalExpressionId),
+add PRIMARY KEY(bgeeGeneId, globalConditionId);
 /*!40000 ALTER TABLE `globalExpression` ENABLE KEYS */;
 
 /*!40000 ALTER TABLE `globalExpressionToExpression` DISABLE KEYS */;
@@ -292,140 +261,15 @@ alter table globalExpressionToExpression
 add primary key (globalExpressionId, expressionId);
 /*!40000 ALTER TABLE `globalExpressionToExpression` ENABLE KEYS */;
 
-
-/*!40000 ALTER TABLE `anatEntityExpression` DISABLE KEYS */;
-alter table anatEntityExpression
-modify anatEntityExpressionId int unsigned not null auto_increment primary key,
-add unique(bgeeGeneId, anatEntityConditionId);
-/*!40000 ALTER TABLE `anatEntityExpression` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `globalAnatEntityExpression` DISABLE KEYS */;
-alter table globalAnatEntityExpression
-modify globalAnatEntityExpressionId int unsigned not null auto_increment primary key,
-add unique(bgeeGeneId, anatEntityConditionId);
-/*!40000 ALTER TABLE `globalAnatEntityExpression` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `anatEntityGlobalExpressionToExpression` DISABLE KEYS */;
-alter table anatEntityGlobalExpressionToExpression
-add primary key (globalAnatEntityExpressionId, anatEntityExpressionId);
-/*!40000 ALTER TABLE `anatEntityGlobalExpressionToExpression` ENABLE KEYS */;
-
-
-/*!40000 ALTER TABLE `anatEntityStageExpression` DISABLE KEYS */;
-alter table anatEntityStageExpression
-modify anatEntityStageExpressionId int unsigned not null auto_increment primary key,
-add unique(bgeeGeneId, anatEntityStageConditionId);
-/*!40000 ALTER TABLE `anatEntityStageExpression` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `globalAnatEntityStageExpression` DISABLE KEYS */;
-alter table globalAnatEntityStageExpression
-modify globalAnatEntityStageExpressionId int unsigned not null auto_increment primary key,
-add unique(bgeeGeneId, anatEntityStageConditionId);
-/*!40000 ALTER TABLE `globalAnatEntityStageExpression` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `anatEntityStageGlobalExpressionToExpression` DISABLE KEYS */;
-alter table anatEntityStageGlobalExpressionToExpression
-add primary key (globalAnatEntityStageExpressionId, anatEntityStageExpressionId);
-/*!40000 ALTER TABLE `anatEntityStageGlobalExpressionToExpression` ENABLE KEYS */;
-
-
-/*!40000 ALTER TABLE `anatEntitySexExpression` DISABLE KEYS */;
-alter table anatEntitySexExpression
-modify anatEntitySexExpressionId int unsigned not null auto_increment primary key,
-add unique(bgeeGeneId, anatEntitySexConditionId);
-/*!40000 ALTER TABLE `anatEntitySexExpression` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `globalAnatEntitySexExpression` DISABLE KEYS */;
-alter table globalAnatEntitySexExpression
-modify globalAnatEntitySexExpressionId int unsigned not null auto_increment primary key,
-add unique(bgeeGeneId, anatEntitySexConditionId);
-/*!40000 ALTER TABLE `globalAnatEntitySexExpression` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `anatEntitySexGlobalExpressionToExpression` DISABLE KEYS */;
-alter table anatEntitySexGlobalExpressionToExpression
-add primary key (globalAnatEntitySexExpressionId, anatEntitySexExpressionId);
-/*!40000 ALTER TABLE `anatEntitySexGlobalExpressionToExpression` ENABLE KEYS */;
-
-
-/*!40000 ALTER TABLE `anatEntityStrainExpression` DISABLE KEYS */;
-alter table anatEntityStrainExpression
-modify anatEntityStrainExpressionId int unsigned not null auto_increment primary key,
-add unique(bgeeGeneId, anatEntityStrainConditionId);
-/*!40000 ALTER TABLE `anatEntityStrainExpression` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `globalAnatEntityStrainExpression` DISABLE KEYS */;
-alter table globalAnatEntityStrainExpression
-modify globalAnatEntityStrainExpressionId int unsigned not null auto_increment primary key,
-add unique(bgeeGeneId, anatEntityStrainConditionId);
-/*!40000 ALTER TABLE `globalAnatEntityStrainExpression` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `anatEntityStrainGlobalExpressionToExpression` DISABLE KEYS */;
-alter table anatEntityStrainGlobalExpressionToExpression
-add primary key (globalAnatEntityStrainExpressionId, anatEntityStrainExpressionId);
-/*!40000 ALTER TABLE `anatEntityStrainGlobalExpressionToExpression` ENABLE KEYS */;
-
-
-/*!40000 ALTER TABLE `anatEntityStageSexExpression` DISABLE KEYS */;
-alter table anatEntityStageSexExpression
-modify anatEntityStageSexExpressionId int unsigned not null auto_increment primary key,
-add unique(bgeeGeneId, anatEntityStageSexConditionId);
-/*!40000 ALTER TABLE `anatEntityStageSexExpression` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `globalAnatEntityStageSexExpression` DISABLE KEYS */;
-alter table globalAnatEntityStageSexExpression
-modify globalAnatEntityStageSexExpressionId int unsigned not null auto_increment primary key,
-add unique(bgeeGeneId, anatEntityStageSexConditionId);
-/*!40000 ALTER TABLE `globalAnatEntityStageSexExpression` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `anatEntityStageSexGlobalExpressionToExpression` DISABLE KEYS */;
-alter table anatEntityStageSexGlobalExpressionToExpression
-add primary key (globalAnatEntityStageSexExpressionId, anatEntityStageSexExpressionId);
-/*!40000 ALTER TABLE `anatEntityStageSexGlobalExpressionToExpression` ENABLE KEYS */;
-
-
-/*!40000 ALTER TABLE `anatEntityStageStrainExpression` DISABLE KEYS */;
-alter table anatEntityStageStrainExpression
-modify anatEntityStageStrainExpressionId int unsigned not null auto_increment primary key,
-add unique(bgeeGeneId, anatEntityStageStrainConditionId);
-/*!40000 ALTER TABLE `anatEntityStageStrainExpression` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `globalAnatEntityStageStrainExpression` DISABLE KEYS */;
-alter table globalAnatEntityStageStrainExpression
-modify globalAnatEntityStageStrainExpressionId int unsigned not null auto_increment primary key,
-add unique(bgeeGeneId, anatEntityStageStrainConditionId);
-/*!40000 ALTER TABLE `globalAnatEntityStageStrainExpression` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `anatEntityStageStrainGlobalExpressionToExpression` DISABLE KEYS */;
-alter table anatEntityStageStrainGlobalExpressionToExpression
-add primary key (globalAnatEntityStageStrainExpressionId, anatEntityStageStrainExpressionId);
-/*!40000 ALTER TABLE `anatEntityStageStrainGlobalExpressionToExpression` ENABLE KEYS */;
-
-
-/*!40000 ALTER TABLE `anatEntitySexStrainExpression` DISABLE KEYS */;
-alter table anatEntitySexStrainExpression
-modify anatEntitySexStrainExpressionId int unsigned not null auto_increment primary key,
-add unique(bgeeGeneId, anatEntitySexStrainConditionId);
-/*!40000 ALTER TABLE `anatEntitySexStrainExpression` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `globalAnatEntitySexStrainExpression` DISABLE KEYS */;
-alter table globalAnatEntitySexStrainExpression
-modify globalAnatEntitySexStrainExpressionId int unsigned not null auto_increment primary key,
-add unique(bgeeGeneId, anatEntitySexStrainConditionId);
-/*!40000 ALTER TABLE `globalAnatEntitySexStrainExpression` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `anatEntitySexStrainGlobalExpressionToExpression` DISABLE KEYS */;
-alter table anatEntitySexStrainGlobalExpressionToExpression
-add primary key (globalAnatEntitySexStrainExpressionId, anatEntitySexStrainExpressionId);
-/*!40000 ALTER TABLE `anatEntitySexStrainGlobalExpressionToExpression` ENABLE KEYS */;
-
 -- ****************************************************
 -- DIFFERENTIAL EXPRESSION DATA
 -- ****************************************************
 /*!40000 ALTER TABLE `differentialExpression` DISABLE KEYS */;
 alter table differentialExpression
-modify differentialExpressionId int unsigned not null auto_increment primary key,
+modify differentialExpressionId int unsigned not null auto_increment,
+ADD UNIQUE(differentialExpressionId),
 -- TODO: manage maxNumberOfConditions
-add unique(bgeeGeneId, conditionId, comparisonFactor);
+add PRIMARY KEY(bgeeGeneId, conditionId, comparisonFactor);
 /*!40000 ALTER TABLE `differentialExpression` ENABLE KEYS */;
 
 /*!40000 ALTER TABLE `differentialExpressionAnalysis` DISABLE KEYS */;

@@ -180,50 +180,12 @@ add foreign key (stageId) references stage(stageId) on delete cascade,
 add foreign key (speciesId) references species(speciesId) on delete cascade;
 /*!40000 ALTER TABLE `cond` ENABLE KEYS */;
 
-/*!40000 ALTER TABLE `anatEntityCond` DISABLE KEYS */;
-alter table anatEntityCond 
-add foreign key (anatEntityId) references anatEntity(anatEntityId) on delete cascade,
-add foreign key (speciesId) references species(speciesId) on delete cascade;
-/*!40000 ALTER TABLE `anatEntityCond` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `anatEntityStageCond` DISABLE KEYS */;
-alter table anatEntityStageCond 
+/*!40000 ALTER TABLE `globalCond` DISABLE KEYS */;
+alter table globalCond
 add foreign key (anatEntityId) references anatEntity(anatEntityId) on delete cascade,
 add foreign key (stageId) references stage(stageId) on delete cascade, 
 add foreign key (speciesId) references species(speciesId) on delete cascade;
-/*!40000 ALTER TABLE `anatEntityStageCond` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `anatEntitySexCond` DISABLE KEYS */;
-alter table anatEntitySexCond 
-add foreign key (anatEntityId) references anatEntity(anatEntityId) on delete cascade,
-add foreign key (speciesId) references species(speciesId) on delete cascade;
-/*!40000 ALTER TABLE `anatEntitySexCond` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `anatEntityStrainCond` DISABLE KEYS */;
-alter table anatEntityStrainCond 
-add foreign key (anatEntityId) references anatEntity(anatEntityId) on delete cascade,
-add foreign key (speciesId) references species(speciesId) on delete cascade;
-/*!40000 ALTER TABLE `anatEntityStrainCond` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `anatEntityStageSexCond` DISABLE KEYS */;
-alter table anatEntityStageSexCond 
-add foreign key (anatEntityId) references anatEntity(anatEntityId) on delete cascade,
-add foreign key (stageId) references stage(stageId) on delete cascade, 
-add foreign key (speciesId) references species(speciesId) on delete cascade;
-/*!40000 ALTER TABLE `anatEntityStageSexCond` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `anatEntityStageStrainCond` DISABLE KEYS */;
-alter table anatEntityStageStrainCond 
-add foreign key (anatEntityId) references anatEntity(anatEntityId) on delete cascade,
-add foreign key (stageId) references stage(stageId) on delete cascade, 
-add foreign key (speciesId) references species(speciesId) on delete cascade;
-/*!40000 ALTER TABLE `anatEntityStageStrainCond` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `anatEntitySexStrainCond` DISABLE KEYS */;
-alter table anatEntitySexStrainCond 
-add foreign key (anatEntityId) references anatEntity(anatEntityId) on delete cascade,
-add foreign key (speciesId) references species(speciesId) on delete cascade;
-/*!40000 ALTER TABLE `anatEntitySexStrainCond` ENABLE KEYS */;
+/*!40000 ALTER TABLE `globalCond` ENABLE KEYS */;
 
 -- ****************************************************
 -- EXPRESSION DATA
@@ -237,7 +199,7 @@ add foreign key (conditionId) references cond(conditionId) on delete cascade;
 /*!40000 ALTER TABLE `globalExpression` DISABLE KEYS */;
 alter table globalExpression
 add foreign key (bgeeGeneId) references gene(bgeeGeneId) on delete cascade,
-add foreign key (conditionId) references cond(conditionId) on delete cascade;
+add foreign key (globalConditionId) references globalCond(globalConditionId) on delete cascade;
 /*!40000 ALTER TABLE `globalExpression` ENABLE KEYS */;
 
 /*!40000 ALTER TABLE `globalExpressionToExpression` DISABLE KEYS */;
@@ -245,139 +207,6 @@ alter table globalExpressionToExpression
 add foreign key (expressionId) references expression(expressionId) on delete cascade,
 add foreign key (globalExpressionId) references globalExpression(globalExpressionId) on delete cascade;
 /*!40000 ALTER TABLE `globalExpressionToExpression` ENABLE KEYS */;
-
-
-/*!40000 ALTER TABLE `anatEntityExpression` DISABLE KEYS */;
-alter table anatEntityExpression
-add foreign key (bgeeGeneId) references gene(bgeeGeneId) on delete cascade,
-add foreign key (anatEntityConditionId) references anatEntityCond(anatEntityConditionId) on delete cascade;
-/*!40000 ALTER TABLE `anatEntityExpression` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `globalAnatEntityExpression` DISABLE KEYS */;
-alter table globalAnatEntityExpression
-add foreign key (bgeeGeneId) references gene(bgeeGeneId) on delete cascade,
-add foreign key (anatEntityConditionId) references anatEntityCond(anatEntityConditionId) on delete cascade;
-/*!40000 ALTER TABLE `globalAnatEntityExpression` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `anatEntityGlobalExpressionToExpression` DISABLE KEYS */;
-alter table anatEntityGlobalExpressionToExpression
-add foreign key (anatEntityExpressionId) references anatEntityExpression(anatEntityExpressionId) on delete cascade,
-add foreign key (globalAnatEntityExpressionId) references globalAnatEntityExpression(globalAnatEntityExpressionId) on delete cascade;
-/*!40000 ALTER TABLE `anatEntityGlobalExpressionToExpression` ENABLE KEYS */;
-
-
-/*!40000 ALTER TABLE `anatEntityStageExpression` DISABLE KEYS */;
-alter table anatEntityStageExpression
-add foreign key (bgeeGeneId) references gene(bgeeGeneId) on delete cascade,
-add foreign key (anatEntityStageConditionId) references anatEntityStageCond(anatEntityStageConditionId) on delete cascade;
-/*!40000 ALTER TABLE `anatEntityStageExpression` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `globalAnatEntityStageExpression` DISABLE KEYS */;
-alter table globalAnatEntityStageExpression
-add foreign key (bgeeGeneId) references gene(bgeeGeneId) on delete cascade,
-add foreign key (anatEntityStageConditionId) references anatEntityStageCond(anatEntityStageConditionId) on delete cascade;
-/*!40000 ALTER TABLE `globalAnatEntityStageExpression` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `anatEntityStageGlobalExpressionToExpression` DISABLE KEYS */;
-alter table anatEntityStageGlobalExpressionToExpression
-add foreign key (anatEntityStageExpressionId) references anatEntityStageExpression(anatEntityStageExpressionId) on delete cascade,
-add foreign key (globalAnatEntityStageExpressionId) references globalAnatEntityStageExpression(globalAnatEntityStageExpressionId) on delete cascade;
-/*!40000 ALTER TABLE `anatEntityStageGlobalExpressionToExpression` ENABLE KEYS */;
-
-
-/*!40000 ALTER TABLE `anatEntitySexExpression` DISABLE KEYS */;
-alter table anatEntitySexExpression
-add foreign key (bgeeGeneId) references gene(bgeeGeneId) on delete cascade,
-add foreign key (anatEntitySexConditionId) references anatEntitySexCond(anatEntitySexConditionId) on delete cascade;
-/*!40000 ALTER TABLE `anatEntitySexExpression` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `globalAnatEntitySexExpression` DISABLE KEYS */;
-alter table globalAnatEntitySexExpression
-add foreign key (bgeeGeneId) references gene(bgeeGeneId) on delete cascade,
-add foreign key (anatEntitySexConditionId) references anatEntitySexCond(anatEntitySexConditionId) on delete cascade;
-/*!40000 ALTER TABLE `globalAnatEntitySexExpression` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `anatEntitySexGlobalExpressionToExpression` DISABLE KEYS */;
-alter table anatEntitySexGlobalExpressionToExpression
-add foreign key (anatEntitySexExpressionId) references anatEntitySexExpression(anatEntitySexExpressionId) on delete cascade,
-add foreign key (globalAnatEntitySexExpressionId) references globalAnatEntitySexExpression(globalAnatEntitySexExpressionId) on delete cascade;
-/*!40000 ALTER TABLE `anatEntitySexGlobalExpressionToExpression` ENABLE KEYS */;
-
-
-/*!40000 ALTER TABLE `anatEntityStrainExpression` DISABLE KEYS */;
-alter table anatEntityStrainExpression
-add foreign key (bgeeGeneId) references gene(bgeeGeneId) on delete cascade,
-add foreign key (anatEntityStrainConditionId) references anatEntityStrainCond(anatEntityStrainConditionId) on delete cascade;
-/*!40000 ALTER TABLE `anatEntityStrainExpression` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `globalAnatEntityStrainExpression` DISABLE KEYS */;
-alter table globalAnatEntityStrainExpression
-add foreign key (bgeeGeneId) references gene(bgeeGeneId) on delete cascade,
-add foreign key (anatEntityStrainConditionId) references anatEntityStrainCond(anatEntityStrainConditionId) on delete cascade;
-/*!40000 ALTER TABLE `globalAnatEntityStrainExpression` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `anatEntityStrainGlobalExpressionToExpression` DISABLE KEYS */;
-alter table anatEntityStrainGlobalExpressionToExpression
-add foreign key (anatEntityStrainExpressionId) references anatEntityStrainExpression(anatEntityStrainExpressionId) on delete cascade,
-add foreign key (globalAnatEntityStrainExpressionId) references globalAnatEntityStrainExpression(globalAnatEntityStrainExpressionId) on delete cascade;
-/*!40000 ALTER TABLE `anatEntityStrainGlobalExpressionToExpression` ENABLE KEYS */;
-
-
-/*!40000 ALTER TABLE `anatEntityStageSexExpression` DISABLE KEYS */;
-alter table anatEntityStageSexExpression
-add foreign key (bgeeGeneId) references gene(bgeeGeneId) on delete cascade,
-add foreign key (anatEntityStageSexConditionId) references anatEntityStageSexCond(anatEntityStageSexConditionId) on delete cascade;
-/*!40000 ALTER TABLE `anatEntityStageSexExpression` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `globalAnatEntityStageSexExpression` DISABLE KEYS */;
-alter table globalAnatEntityStageSexExpression
-add foreign key (bgeeGeneId) references gene(bgeeGeneId) on delete cascade,
-add foreign key (anatEntityStageSexConditionId) references anatEntityStageSexCond(anatEntityStageSexConditionId) on delete cascade;
-/*!40000 ALTER TABLE `globalAnatEntityStageSexExpression` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `anatEntityStageSexGlobalExpressionToExpression` DISABLE KEYS */;
-alter table anatEntityStageSexGlobalExpressionToExpression
-add foreign key (anatEntityStageSexExpressionId) references anatEntityStageSexExpression(anatEntityStageSexExpressionId) on delete cascade,
-add foreign key (globalAnatEntityStageSexExpressionId) references globalAnatEntityStageSexExpression(globalAnatEntityStageSexExpressionId) on delete cascade;
-/*!40000 ALTER TABLE `anatEntityStageSexGlobalExpressionToExpression` ENABLE KEYS */;
-
-
-/*!40000 ALTER TABLE `anatEntityStageStrainExpression` DISABLE KEYS */;
-alter table anatEntityStageStrainExpression
-add foreign key (bgeeGeneId) references gene(bgeeGeneId) on delete cascade,
-add foreign key (anatEntityStageStrainConditionId) references anatEntityStageStrainCond(anatEntityStageStrainConditionId) on delete cascade;
-/*!40000 ALTER TABLE `anatEntityStageStrainExpression` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `globalAnatEntityStageStrainExpression` DISABLE KEYS */;
-alter table globalAnatEntityStageStrainExpression
-add foreign key (bgeeGeneId) references gene(bgeeGeneId) on delete cascade,
-add foreign key (anatEntityStageStrainConditionId) references anatEntityStageStrainCond(anatEntityStageStrainConditionId) on delete cascade;
-/*!40000 ALTER TABLE `globalAnatEntityStageStrainExpression` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `anatEntityStageStrainGlobalExpressionToExpression` DISABLE KEYS */;
-alter table anatEntityStageStrainGlobalExpressionToExpression
-add foreign key (anatEntityStageStrainExpressionId) references anatEntityStageStrainExpression(anatEntityStageStrainExpressionId) on delete cascade,
-add foreign key (globalAnatEntityStageStrainExpressionId) references globalAnatEntityStageStrainExpression(globalAnatEntityStageStrainExpressionId) on delete cascade;
-/*!40000 ALTER TABLE `anatEntityStageStrainGlobalExpressionToExpression` ENABLE KEYS */;
-
-
-/*!40000 ALTER TABLE `anatEntitySexStrainExpression` DISABLE KEYS */;
-alter table anatEntitySexStrainExpression
-add foreign key (bgeeGeneId) references gene(bgeeGeneId) on delete cascade,
-add foreign key (anatEntitySexStrainConditionId) references anatEntitySexStrainCond(anatEntitySexStrainConditionId) on delete cascade;
-/*!40000 ALTER TABLE `anatEntitySexStrainExpression` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `globalAnatEntitySexStrainExpression` DISABLE KEYS */;
-alter table globalAnatEntitySexStrainExpression
-add foreign key (bgeeGeneId) references gene(bgeeGeneId) on delete cascade,
-add foreign key (anatEntitySexStrainConditionId) references anatEntitySexStrainCond(anatEntitySexStrainConditionId) on delete cascade;
-/*!40000 ALTER TABLE `globalAnatEntitySexStrainExpression` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `anatEntitySexStrainGlobalExpressionToExpression` DISABLE KEYS */;
-alter table anatEntitySexStrainGlobalExpressionToExpression
-add foreign key (anatEntitySexStrainExpressionId) references anatEntitySexStrainExpression(anatEntitySexStrainExpressionId) on delete cascade,
-add foreign key (globalAnatEntitySexStrainExpressionId) references globalAnatEntitySexStrainExpression(globalAnatEntitySexStrainExpressionId) on delete cascade;
-/*!40000 ALTER TABLE `anatEntitySexStrainGlobalExpressionToExpression` ENABLE KEYS */;
 
 -- ****************************************************
 -- DIFFERENTIAL EXPRESSION DATA

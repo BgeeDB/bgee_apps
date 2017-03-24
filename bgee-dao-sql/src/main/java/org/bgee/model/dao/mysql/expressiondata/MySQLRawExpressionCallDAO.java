@@ -1,9 +1,9 @@
 package org.bgee.model.dao.mysql.expressiondata;
 
-import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -12,7 +12,6 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO;
 import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
@@ -34,37 +33,20 @@ public class MySQLRawExpressionCallDAO extends MySQLDAO<RawExpressionCallDAO.Att
     implements RawExpressionCallDAO {
     private final static Logger log = LogManager.getLogger(MySQLRawExpressionCallDAO.class.getName());
 
-    /**
-     * Get a {@code Map} associating column names to corresponding {@code RawExpressionCallDAO.Attribute}.
-     * 
-     * @param comb  The {@code CondParamCombination} allowing to target the appropriate 
-     *              field and table names.
-     * @return      A {@code Map} where keys are {@code String}s that are column names, 
-     *              the associated value being the corresponding {@code RawExpressionCallDAO.Attribute}.
-     */
-    private static Map<String, RawExpressionCallDAO.Attribute> getColToAttributesMap(
-            CondParamCombination comb) {
-        log.entry(comb);
+    public final static String EXPR_TABLE_NAME = "expression";
+    public final static String EXPR_ID_FIELD = "expressionId";
+    private final static Map<String, RawExpressionCallDAO.Attribute> colToAttrMap;
+
+    static {
+        log.entry();
         Map<String, RawExpressionCallDAO.Attribute> colToAttributesMap = new HashMap<>();
-        colToAttributesMap.put(comb.getRawExprIdField(), RawExpressionCallDAO.Attribute.ID);
+        colToAttributesMap.put(EXPR_ID_FIELD, RawExpressionCallDAO.Attribute.ID);
         colToAttributesMap.put(MySQLGeneDAO.BGEE_GENE_ID, RawExpressionCallDAO.Attribute.BGEE_GENE_ID);
-        colToAttributesMap.put(comb.getCondIdField(), RawExpressionCallDAO.Attribute.CONDITION_ID);
-        colToAttributesMap.put("affymetrixMeanRank", RawExpressionCallDAO.Attribute.AFFYMETRIX_MEAN_RANK);
-        colToAttributesMap.put("rnaSeqMeanRank", RawExpressionCallDAO.Attribute.RNA_SEQ_MEAN_RANK);
-        colToAttributesMap.put("estRank", RawExpressionCallDAO.Attribute.EST_RANK);
-        colToAttributesMap.put("inSituRank", RawExpressionCallDAO.Attribute.IN_SITU_RANK);
-        colToAttributesMap.put("affymetrixMeanRankNorm", 
-                RawExpressionCallDAO.Attribute.AFFYMETRIX_MEAN_RANK_NORM);
-        colToAttributesMap.put("rnaSeqMeanRankNorm", 
-                RawExpressionCallDAO.Attribute.RNA_SEQ_MEAN_RANK_NORM);
-        colToAttributesMap.put("estRankNorm", RawExpressionCallDAO.Attribute.EST_RANK_NORM);
-        colToAttributesMap.put("inSituRankNorm", RawExpressionCallDAO.Attribute.IN_SITU_RANK_NORM);
-        colToAttributesMap.put("affymetrixDistinctRankSum", 
-                RawExpressionCallDAO.Attribute.AFFYMETRIX_DISTINCT_RANK_SUM);
-        colToAttributesMap.put("rnaSeqDistinctRankSum", 
-                RawExpressionCallDAO.Attribute.RNA_SEQ_DISTINCT_RANK_SUM);
-        
-        return log.exit(colToAttributesMap);
+        colToAttributesMap.put(MySQLConditionDAO.RAW_COND_ID_FIELD,
+                RawExpressionCallDAO.Attribute.CONDITION_ID);
+ 
+        colToAttrMap = Collections.unmodifiableMap(colToAttributesMap);
+        log.exit();
     }
 
     public MySQLRawExpressionCallDAO(MySQLDAOManager manager) throws IllegalArgumentException {
@@ -74,28 +56,26 @@ public class MySQLRawExpressionCallDAO extends MySQLDAO<RawExpressionCallDAO.Att
 
     @Override
     public RawExpressionCallTOResultSet getExpressionCallsOrderedByGeneIdAndExprId(
-            Collection<Integer> geneIds,
-            Collection<ConditionDAO.Attribute> condParameters) throws DAOException, IllegalArgumentException {
-        log.entry(geneIds, condParameters);
+            Collection<Integer> geneIds) throws DAOException, IllegalArgumentException {
+        log.entry(geneIds);
         
         if (geneIds == null || geneIds.isEmpty() || geneIds.stream().anyMatch(id -> id == null)) {
             throw log.throwing(new IllegalArgumentException("No gene IDs or null gene ID provided"));
         }
         Set<Integer> clonedGeneIds = new HashSet<>(geneIds);
 
-        CondParamCombination comb = CondParamCombination.getCombination(condParameters);
-        
-        String sql = generateSelectClause(comb.getRawExprTable(), getColToAttributesMap(comb), 
-                false, null) 
-                + " FROM " + comb.getRawExprTable()
-                + " WHERE " + comb.getRawExprTable() + "." + MySQLGeneDAO.BGEE_GENE_ID + " IN ("
-                    + BgeePreparedStatement.generateParameterizedQueryString(clonedGeneIds.size()) + ")"
-                + " ORDER BY " + comb.getRawExprTable() + "." + MySQLGeneDAO.BGEE_GENE_ID + ", " 
-                    + comb.getRawExprTable() + "." + comb.getRawExprIdField();
+        StringBuilder sb = new StringBuilder();
+        sb.append(generateSelectClause(EXPR_TABLE_NAME, colToAttrMap, false, null))
+          .append(" FROM ").append(EXPR_TABLE_NAME)
+          .append(" WHERE ").append(EXPR_TABLE_NAME).append(".")
+          .append(MySQLGeneDAO.BGEE_GENE_ID).append(" IN (")
+          .append(BgeePreparedStatement.generateParameterizedQueryString(clonedGeneIds.size())).append(")")
+          .append(" ORDER BY ").append(EXPR_TABLE_NAME).append(".").append(MySQLGeneDAO.BGEE_GENE_ID)
+          .append(", ").append(EXPR_TABLE_NAME).append(".").append(EXPR_ID_FIELD);
         try {
-            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
+            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());
             stmt.setIntegers(1, clonedGeneIds, true);
-            return log.exit(new MySQLRawExpressionCallTOResultSet(stmt, comb));
+            return log.exit(new MySQLRawExpressionCallTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -110,21 +90,14 @@ public class MySQLRawExpressionCallDAO extends MySQLDAO<RawExpressionCallDAO.Att
      */
     class MySQLRawExpressionCallTOResultSet extends MySQLDAOResultSet<RawExpressionCallDAO.RawExpressionCallTO>
             implements RawExpressionCallTOResultSet {
-
-        /**
-         * The {@code CondParamCombination} allowing to target the appropriate field and table names.
-         */
-        private final CondParamCombination comb;
         
         /**
          * @param statement The {@code BgeePreparedStatement}
          * @param comb      The {@code CondParamCombination} allowing to target the appropriate 
          *                  field and table names.
          */
-        private MySQLRawExpressionCallTOResultSet(BgeePreparedStatement statement, 
-                CondParamCombination comb) {
+        private MySQLRawExpressionCallTOResultSet(BgeePreparedStatement statement) {
             super(statement);
-            this.comb = comb;
         }
 
         @Override
@@ -133,15 +106,18 @@ public class MySQLRawExpressionCallDAO extends MySQLDAO<RawExpressionCallDAO.Att
                 log.entry();
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 Integer id = null, bgeeGeneId = null, conditionId = null;
-                BigDecimal affymetrixMeanRank = null, rnaSeqMeanRank = null, estRank = null, 
-                        inSituRank = null, affymetrixMeanRankNorm = null, rnaSeqMeanRankNorm = null, 
-                        estRankNorm = null, inSituRankNorm = null, 
-                        affymetrixDistinctRankSum = null, rnaSeqDistinctRankSum = null;
-                Map<String, RawExpressionCallDAO.Attribute> colToAttrMap = getColToAttributesMap(comb);
 
-                for (Map.Entry<Integer, String> col : this.getColumnLabels().entrySet()) {
+                COL: for (Map.Entry<Integer, String> col : this.getColumnLabels().entrySet()) {
                     String columnName = col.getValue();
-                    RawExpressionCallDAO.Attribute attr = getAttributeFromColName(columnName, colToAttrMap);
+                    //don't use MySQLDAO.getAttributeFromColName because we don't cover all columns
+                    //with ConditionDAO.Attributes (we don't use all rank columns)
+                    //FIXME: reuse getAttributeFromColName when rank columns will be removed from
+                    //raw expression table
+                    RawExpressionCallDAO.Attribute attr = colToAttrMap.get(columnName);
+                    if (attr == null) {
+                        continue COL;
+                    }
+//                    RawExpressionCallDAO.Attribute attr = getAttributeFromColName(columnName, colToAttrMap);
                     switch (attr) {
                         case ID:
                             id = currentResultSet.getInt(columnName);
@@ -152,44 +128,11 @@ public class MySQLRawExpressionCallDAO extends MySQLDAO<RawExpressionCallDAO.Att
                         case CONDITION_ID:
                             conditionId = currentResultSet.getInt(columnName);
                             break;
-                        case AFFYMETRIX_MEAN_RANK:
-                            affymetrixMeanRank = currentResultSet.getBigDecimal(columnName);
-                            break;
-                        case RNA_SEQ_MEAN_RANK:
-                            rnaSeqMeanRank = currentResultSet.getBigDecimal(columnName);
-                            break;
-                        case EST_RANK:
-                            estRank = currentResultSet.getBigDecimal(columnName);
-                            break;
-                        case IN_SITU_RANK:
-                            inSituRank = currentResultSet.getBigDecimal(columnName);
-                            break;
-                        case AFFYMETRIX_MEAN_RANK_NORM:
-                            affymetrixMeanRankNorm = currentResultSet.getBigDecimal(columnName);
-                            break;
-                        case RNA_SEQ_MEAN_RANK_NORM:
-                            rnaSeqMeanRankNorm = currentResultSet.getBigDecimal(columnName);
-                            break;
-                        case EST_RANK_NORM:
-                            estRankNorm = currentResultSet.getBigDecimal(columnName);
-                            break;
-                        case IN_SITU_RANK_NORM:
-                            inSituRankNorm = currentResultSet.getBigDecimal(columnName);
-                            break;
-                        case AFFYMETRIX_DISTINCT_RANK_SUM:
-                            affymetrixDistinctRankSum = currentResultSet.getBigDecimal(columnName);
-                            break;
-                        case RNA_SEQ_DISTINCT_RANK_SUM:
-                            rnaSeqDistinctRankSum = currentResultSet.getBigDecimal(columnName);
-                            break;
                         default:
                             log.throwing(new UnrecognizedColumnException(columnName));
                     }
                 }
-                return log.exit(new RawExpressionCallTO(id, bgeeGeneId, conditionId,
-                        affymetrixMeanRank, rnaSeqMeanRank, estRank, inSituRank, 
-                        affymetrixMeanRankNorm, rnaSeqMeanRankNorm, estRankNorm, inSituRankNorm,
-                        affymetrixDistinctRankSum, rnaSeqDistinctRankSum));
+                return log.exit(new RawExpressionCallTO(id, bgeeGeneId, conditionId));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }

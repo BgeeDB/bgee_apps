@@ -550,6 +550,26 @@ create table cond (
 -- 'NA', 'not annotated', 'wild-type', 'confidential_restricted_data'.
 -- This should be improved in a further release (free-text is hardly satisfiable).
     strain varchar(100) not null default 'not annotated'
+    COMMENT 'Strain information. NA: not available from source information; not annotated: information not captured by Bgee; confidential_restricted_data: information cannot be disclosed publicly. Note that all conditions used in the expression tables have "NA", "not annotated" and "confidential_restricted_data" replaced with "wild-type"',
+) engine = innodb COMMENT 'This table stores the "raw" conditions used to annotate data and used in the "raw" expression table, where data are not propagated nor precomputed';
+
+create table globalCond (
+    globalConditionId mediumint unsigned not null,
+    anatEntityId          varchar(20)  COMMENT 'Uberon anatomical entity ID. Can be null in this table if this condition aggregates data according to other condition parameters (e.g., grouping all data in a same stage whatever the organ is).',
+    stageId               varchar(20)  COMMENT 'Uberon stage ID. Can be null in this table if this condition aggregates data according to other condition parameters (e.g., grouping all data in a same organ whatever the dev. stage is).',
+    speciesId             mediumint unsigned not null COMMENT 'NCBI species taxon ID',
+-- NA: not available from source information
+-- not annotated: information not captured by Bgee
+-- If an ENUM column is declared NOT NULL, its default value is the first element of the list
+-- In this table, only 'not annotated' is used to replace 'NA', as for conditions
+-- used in expression table
+    sex enum('not annotated', 'hermaphrodite', 'female', 'male', 'mixed')
+    COMMENT 'Sex information. NA: not available from source information; not annotated: not used in this table, since all conditions used in the expression tables have "NA" replaced with "not annotated". Can be null in this table if this condition aggregates data according to other condition parameters (e.g., grouping all data in a same organ whatever the sex is).',
+-- For now, strains are captured as free-text format, only 4 term are "standardized":
+-- 'NA', 'not annotated', 'wild-type', 'confidential_restricted_data'.
+-- In this table, only 'wild-type' is used to replace 'NA', 'not annotated', and
+-- 'confidential_restricted_data', as for conditions used in expression table.
+    strain varchar(100)
     COMMENT 'Strain information. NA: not available from source information; not annotated: information not captured by Bgee; confidential_restricted_data: information cannot be disclosed publicly',
 
 -- ** RANKS **
@@ -564,97 +584,13 @@ create table cond (
     affymetrixMaxRank decimal(9,2) unsigned,
     rnaSeqMaxRank decimal(9,2) unsigned,
     estMaxRank decimal(9,2) unsigned,
-    inSituMaxRank decimal(9,2) unsigned
-) engine = innodb;
+    inSituMaxRank decimal(9,2) unsigned,
 
--- table used to summarize expression calls for anatomical entities
--- no need for exprMappedConditionId, because these conditions are only used in summary expression tables, 
--- not for annotations
-create table anatEntityCond (
-    anatEntityConditionId mediumint unsigned not null,
-    anatEntityId          varchar(20)  not null,
-    speciesId             mediumint unsigned not null,
-
-    affymetrixMaxRank decimal(9,2) unsigned,
-    rnaSeqMaxRank decimal(9,2) unsigned,
-    estMaxRank decimal(9,2) unsigned,
-    inSituMaxRank decimal(9,2) unsigned
-) engine = innodb;
-
-create table anatEntityStageCond (
-    anatEntityStageConditionId mediumint unsigned not null,
-    anatEntityId          varchar(20)  not null,
-    stageId               varchar(20)  not null,
-    speciesId             mediumint unsigned not null,
-
-    affymetrixMaxRank decimal(9,2) unsigned,
-    rnaSeqMaxRank decimal(9,2) unsigned,
-    estMaxRank decimal(9,2) unsigned,
-    inSituMaxRank decimal(9,2) unsigned
-) engine = innodb;
-
-create table anatEntitySexCond (
-    anatEntitySexConditionId mediumint unsigned not null,
-    anatEntityId          varchar(20)  not null,
-    speciesId             mediumint unsigned not null,
-    sex enum('not annotated', 'hermaphrodite', 'female', 'male', 'mixed', 'NA') not null,
-
-    affymetrixMaxRank decimal(9,2) unsigned,
-    rnaSeqMaxRank decimal(9,2) unsigned,
-    estMaxRank decimal(9,2) unsigned,
-    inSituMaxRank decimal(9,2) unsigned
-) engine = innodb;
-
-create table anatEntityStrainCond (
-    anatEntityStrainConditionId mediumint unsigned not null,
-    anatEntityId          varchar(20)  not null,
-    speciesId             mediumint unsigned not null,
-    strain varchar(100) not null default 'not annotated',
-
-    affymetrixMaxRank decimal(9,2) unsigned,
-    rnaSeqMaxRank decimal(9,2) unsigned,
-    estMaxRank decimal(9,2) unsigned,
-    inSituMaxRank decimal(9,2) unsigned
-) engine = innodb;
-
-create table anatEntityStageSexCond (
-    anatEntityStageSexConditionId mediumint unsigned not null,
-    anatEntityId          varchar(20)  not null,
-    stageId               varchar(20)  not null,
-    speciesId             mediumint unsigned not null,
-    sex enum('not annotated', 'hermaphrodite', 'female', 'male', 'mixed', 'NA') not null,
-
-    affymetrixMaxRank decimal(9,2) unsigned,
-    rnaSeqMaxRank decimal(9,2) unsigned,
-    estMaxRank decimal(9,2) unsigned,
-    inSituMaxRank decimal(9,2) unsigned
-) engine = innodb;
-
-create table anatEntityStageStrainCond (
-    anatEntityStageStrainConditionId mediumint unsigned not null,
-    anatEntityId          varchar(20)  not null,
-    stageId               varchar(20)  not null,
-    speciesId             mediumint unsigned not null,
-    strain varchar(100) not null default 'not annotated',
-
-    affymetrixMaxRank decimal(9,2) unsigned,
-    rnaSeqMaxRank decimal(9,2) unsigned,
-    estMaxRank decimal(9,2) unsigned,
-    inSituMaxRank decimal(9,2) unsigned
-) engine = innodb;
-
-create table anatEntitySexStrainCond (
-    anatEntitySexStrainConditionId mediumint unsigned not null,
-    anatEntityId          varchar(20)  not null,
-    speciesId             mediumint unsigned not null,
-    sex enum('not annotated', 'hermaphrodite', 'female', 'male', 'mixed', 'NA') not null,
-    strain varchar(100) not null default 'not annotated',
-
-    affymetrixMaxRank decimal(9,2) unsigned,
-    rnaSeqMaxRank decimal(9,2) unsigned,
-    estMaxRank decimal(9,2) unsigned,
-    inSituMaxRank decimal(9,2) unsigned
-) engine = innodb;
+    affymetrixGlobalMaxRank decimal(9,2) unsigned COMMENT 'This max rank is computed by taking into account all data in this condition, but also in all child conditions.',
+    rnaSeqGlobalMaxRank decimal(9,2) unsigned COMMENT 'This max rank is computed by taking into account all data in this condition, but also in all child conditions.',
+    estGlobalMaxRank decimal(9,2) unsigned COMMENT 'This max rank is computed by taking into account all data in this condition, but also in all child conditions.',
+    inSituGlobalMaxRank decimal(9,2) unsigned COMMENT 'This max rank is computed by taking into account all data in this condition, but also in all child conditions.'
+) engine = innodb COMMENT 'This table contains all condition used in the globalExpression table. It thus includes "real" conditions used in the raw expression table, but mostly conditions resulting from the propagation of expression calls in the globalExpression table. It results from the computation of propagated calls according to different condition parameters combination (e.g., grouping all data in a same anat. entity, or all data in a same anat. entity - stage, or data in anat. entity - sex). This is why the fields anatEntityId, stageId, sex, strain, can be null in this table (but not all of them at the same time).';
 
 -- ****************************************************
 -- RAW EST DATA
@@ -1176,66 +1112,50 @@ create table expression (
     expressionId int unsigned not null COMMENT 'Internal expression ID, not stable between releases.',
     bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID, not stable between releases.',
     conditionId mediumint unsigned not null COMMENT 'ID of condition in the related condition table ("cond"), not stable between releases.',
-
--- ** RANKS **
--- For RNA-Seq data: mean ranks before normalization between data types and conditions.
--- Used for convenience during rank computations. It corresponds to the following:
--- gene ranks are computed for each sample, then a mean is computed for each gene and condition
--- of the expression table, weighted by the number of distinct ranks in each sample.
-    rnaSeqMeanRank decimal(9, 2) unsigned COMMENT 'RNA-Seq mean rank for this gene-condition before normalization over all data types, conditions and species.',
--- For Affymetrix:
--- mean ranks *after within-datatype normalization*, before normalization between data types and conditions.
--- Used for convenience during rank computations. It corresponds to the following:
--- ranks are computed for each sample, then "normalized" between samples in a same condition
--- of the expression table ("within-datatype normalization", based on the genomic coverage of each chip type);
--- then a mean is computed for each gene and condition, weighted by the number of distinct ranks
--- in each sample.
-    affymetrixMeanRank decimal(9, 2) unsigned COMMENT 'Affymetrix mean rank for this gene-condition, after normalization between different chip types, but before normalization over all data types, conditions and species.',
--- For EST and in situ data: ranks before normalization between data types and conditions.
--- Used for convenience during rank computations. It corresponds to the following:
--- For each condition of the expression table, all data are pooled together; they are not first
--- analyzed independently per libraries or experiments, as for Affymetrix and RNA-Seq data.
--- This is because the genomic coverage of EST or in situ experiments is usually very low,
--- and highly variable. Genes are ranked based on number of ESTs or of in situ evidence in each condition.
--- They are ranked using "dense ranking" instead of fractional ranking.
-    estRank decimal(9, 2) unsigned COMMENT 'EST rank for this gene-condition before normalization over all data types, conditions and species. All EST libraries in a same condition are pulled together, so there is no concept of "mean", only a single rank is computed from EST data for each gene-condition.',
-    inSituRank decimal(9, 2) unsigned COMMENT 'In situ hybridization rank for this gene-condition before normalization over all data types, conditions and species. All in situ evidence in a same condition are pulled together, so there is no concept of "mean", only a single rank is computed from in situ data for each gene-condition.',
-
--- All ranks are normalized between all data types and conditons, this is what we use to compute
--- the global mean rank of a gene in a condition. Basically, the max rank over all data types
--- and all conditions is retrieved, and used to normalize all ranks.
--- normalized rank = rank * (max of max rank over all conditions and data types) / (max rank for this condition and data type)
-    rnaSeqMeanRankNorm decimal(9, 2) unsigned COMMENT 'RNA-Seq normalized mean rank for this gene-condition after normalization over all data types, conditions and species, computed from the field rnaSeqMeanRank, and rnaSeqMaxRank in the related condition table.',
-    affymetrixMeanRankNorm decimal(9, 2) unsigned COMMENT 'Affymetrix normalized mean rank for this gene-condition after normalization over all data types, conditions and species, computed from the field affymetrixMeanRank, and affymetrixMaxRank in the related condition table.',
--- For EST and in situ, the rank is not a mean
-    estRankNorm decimal(9, 2) unsigned COMMENT 'EST normalized rank for this gene-condition after normalization over all data types, conditions and species, computed from the field estRank, and estMaxRank in the related condition table.',
-    inSituRankNorm decimal(9, 2) unsigned COMMENT 'In situ hybridization normalized rank for this gene-condition after normalization over all data types, conditions and species, computed from the field inSituRank, and inSituMaxRank in the related condition table.',
-
--- For Affymetrix and RNA-Seq data: sum of the number of distinct ranks in each sample
--- where this gene is considered, in this condition and data type (for RNA-Seq: the same set of genes
--- is considered in all conditions, so these values are all the same for all genes in a same condition-species;
--- for Affymetrix, it depends on the chip types, so it can vary between genes of same condition-species ).
--- Distinct ranks in samples are used to weight the mean rank of genes for each data type and condition.
--- By storing the sum of the distinct rank count, we will be able to compute the weighted mean
--- over all data types in a condition.
--- XXX: shoud we store this information in the condition table for RNA-Seq?
--- Or maybe we shouldn't constrain to have the same genomic coverage in all libraries of a condition?
---
--- For EST and in situ data, this is irrelevant as we pool all data for a same condition together,
--- and use dense ranking instead of fractional ranking. As a result, the max rank in each condition
--- is used for weighted mean computation between data types.
-    rnaSeqDistinctRankSum decimal(9, 2) unsigned COMMENT 'Factor used to weight the RNA-Seq normalized mean rank (rnaSeqMeanRankNorm), to compute a global weighted mean rank between all data types. Corresponds to the sum of distinct ranks in each library mapped to this condition. Note that for EST and in situ data, the max rank found in the related condition table is instead used to compute the weighted mean between data types.', 
-    affymetrixDistinctRankSum decimal(9, 2) unsigned COMMENT 'Factor used to weight the Affymetrix normalized mean rank (affymetrixMeanRankNorm), to compute a global weighted mean rank between all data types. Corresponds to the sum of distinct ranks in each chip mapped to this condition. Note that for EST and in situ data, the max rank found in the related condition table is instead used to compute the weighted mean between data types.'
 ) engine = innodb
 comment = 'This table is a summary of expression calls for a given gene-condition (anatomical entity - developmental stage - sex- strain), over all the experiments and data types, with no propagation nor experiment expression summary.';
 
 -- This table is a summary of expression calls for a given gene-condition
 -- gene - anatomical entity - developmental stage - sex- strain, over all the experiments
 -- for all data types, with all data propagated and reconciled, with experiment expression summaries computed.
+-- DESIGN note: this table uses an ugly design with enumerated columns. For a discussion about this decision,
+-- see http://stackoverflow.com/q/42781299/1768736
 create table globalExpression (
     globalExpressionId int unsigned not null COMMENT 'Internal expression ID, not stable between releases.',
     bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID, not stable between releases.',
-    conditionId mediumint unsigned not null COMMENT 'ID of condition in the related condition table ("cond"), not stable between releases.',
+    globalConditionId mediumint unsigned not null COMMENT 'ID of condition in the related condition table ("cond"), not stable between releases.',
+
+-- ** OBSERVED DATA STATES ** --
+-- It is not enough to only know that there are some data in the condition itself
+-- (see 'SELF' expression summaries below), because we need to distinguish between
+-- data propagated along a condition parameter (e.g., a developmental stage),
+-- but observed in another (e.g., an anat. entity).
+-- Note that these enum values must stay in sync with org.bgee.model.dao.api.expressiondata.DAOPropagationState.
+-- And these enum are null when the expression calls were propagated without taking into account
+-- the related condition parameter.
+-- Note that for EST data, there is no propagation of ABSENT calls from parent conditions,
+-- so this simplifies its enum.
+    estAnatEntityPropagationState ENUM('self', 'descendant', 'self and descendant') COMMENT 'The origin of the propagated EST data related to the anatomical entity of the related condition. If null, it means that anatomical entities were not considered in this propagated call, or that the call is not supported by any EST data.',
+    estStagePropagationState ENUM('self', 'descendant', 'self and descendant') COMMENT 'The origin of the propagated EST data related to the developmental stage of the related condition. If null, it means that developmental stages were not considered in this propagated call, or that the call is not supported by any EST data.',
+    estConditionObservedData BOOLEAN COMMENT 'Whether some EST data were observed in this condition itself. If null, it means that the call is not supported by any EST data. This field is redundant as compared to the "self" experiment counts below, but is more practical to use.',
+
+    affymetrixAnatEntityPropagationState ENUM('all', 'self', 'ancestor', 'descendant', 'self and ancestor',
+    'self and descendant', 'ancestor and descendant') COMMENT 'The origin of the propagated Affymetrix data related to the anatomical entity of the related condition. If null, it means that anatomical entities were not considered in this propagated call, or that the call is not supported by any Affymetrix data.',
+    affymetrixStagePropagationState ENUM('all', 'self', 'ancestor', 'descendant', 'self and ancestor',
+    'self and descendant', 'ancestor and descendant') COMMENT 'The origin of the propagated Affymetrix data related to the developmental stage of the related condition. If null, it means that developmental stages were not considered in this propagated call, or that the call is not supported by any Affymetrix data.',
+    affymetrixConditionObservedData BOOLEAN COMMENT 'Whether some Affymetrix data were observed in this condition itself. If null, it means that the call is not supported by any Affymetrix data. This field is redundant as compared to the "self" experiment counts below, but is more practical to use.',
+
+    inSituAnatEntityPropagationState ENUM('all', 'self', 'ancestor', 'descendant', 'self and ancestor',
+    'self and descendant', 'ancestor and descendant') COMMENT 'The origin of the propagated in situ hybridization data related to the anatomical entity of the related condition. If null, it means that anatomical entities were not considered in this propagated call, or that the call is not supported by any in situ hybridization data.',
+    inSituStagePropagationState ENUM('all', 'self', 'ancestor', 'descendant', 'self and ancestor',
+    'self and descendant', 'ancestor and descendant') COMMENT 'The origin of the propagated in situ hybridization data related to the developmental stage of the related condition. If null, it means that developmental stages were not considered in this propagated call, or that the call is not supported by any in situ hybridization data.',
+    inSituConditionObservedData BOOLEAN COMMENT 'Whether some in situ hybridization data were observed in this condition itself. If null, it means that the call is not supported by any in situ hybridization data. This field is redundant as compared to the "self" experiment counts below, but is more practical to use.',
+
+    rnaSeqAnatEntityPropagationState ENUM('all', 'self', 'ancestor', 'descendant', 'self and ancestor',
+    'self and descendant', 'ancestor and descendant') COMMENT 'The origin of the propagated RNA-Seq data related to the anatomical entity of the related condition. If null, it means that anatomical entities were not considered in this propagated call, or that the call is not supported by any RNA-Seq data.',
+    rnaSeqStagePropagationState ENUM('all', 'self', 'ancestor', 'descendant', 'self and ancestor',
+    'self and descendant', 'ancestor and descendant') COMMENT 'The origin of the propagated RNA-Seq data related to the developmental stage of the related condition. If null, it means that developmental stages were not considered in this propagated call, or that the call is not supported by any RNA-Seq data.',
+    rnaSeqConditionObservedData BOOLEAN COMMENT 'Whether some RNA-Seq data were observed in this condition itself. If null, it means that the call is not supported by any RNA-Seq data. This field is redundant as compared to the "self" experiment counts below, but is more practical to use.',
 
 -- ** EXPRESSION SUMMARIES **
 -- Note: EST data are not used to produce no-expression calls
@@ -1337,7 +1257,22 @@ create table globalExpression (
 -- and use dense ranking instead of fractional ranking. As a result, the max rank in each condition
 -- is used for weighted mean computation between data types.
     rnaSeqDistinctRankSum decimal(9, 2) unsigned COMMENT 'Factor used to weight the RNA-Seq normalized mean rank (rnaSeqMeanRankNorm), to compute a global weighted mean rank between all data types. Corresponds to the sum of distinct ranks in each library mapped to this condition. Note that for EST and in situ data, the max rank found in the related condition table is instead used to compute the weighted mean between data types.', 
-    affymetrixDistinctRankSum decimal(9, 2) unsigned COMMENT 'Factor used to weight the Affymetrix normalized mean rank (affymetrixMeanRankNorm), to compute a global weighted mean rank between all data types. Corresponds to the sum of distinct ranks in each chip mapped to this condition. Note that for EST and in situ data, the max rank found in the related condition table is instead used to compute the weighted mean between data types.'
+    affymetrixDistinctRankSum decimal(9, 2) unsigned COMMENT 'Factor used to weight the Affymetrix normalized mean rank (affymetrixMeanRankNorm), to compute a global weighted mean rank between all data types. Corresponds to the sum of distinct ranks in each chip mapped to this condition. Note that for EST and in situ data, the max rank found in the related condition table is instead used to compute the weighted mean between data types.',
+
+-- Same fields, but dedicated to "global" ranks, computed by taking into account
+-- all data in a condition, but also all data in its descendant conditions.
+    rnaSeqGlobalMeanRank decimal(9, 2) unsigned COMMENT 'RNA-Seq global mean rank for this gene in this condition and all its descendant conditions, before normalization over all data types, conditions and species.',
+    affymetrixGlobalMeanRank decimal(9, 2) unsigned COMMENT 'Affymetrix global mean rank for this gene in this condition and all its descendant conditions, after normalization between different chip types, but before normalization over all data types, conditions and species.',
+    estGlobalRank decimal(9, 2) unsigned COMMENT 'EST global rank for this gene in this condition and all its descendant conditions, before normalization over all data types, conditions and species. All EST libraries in a same condition in this condition and its descendant conditions are pulled together, so there is no concept of "mean", only a single rank is computed from EST data for each gene-condition.',
+    inSituGlobalRank decimal(9, 2) unsigned COMMENT 'In situ hybridization global rank for this gene in this condition and all its descendant conditions, before normalization over all data types, conditions and species. All in situ evidence in a same condition and its descendant conditions are pulled together, so there is no concept of "mean", only a single rank is computed from in situ data for each gene-condition.',
+
+    rnaSeqGlobalMeanRankNorm decimal(9, 2) unsigned COMMENT 'RNA-Seq normalized mean rank for this gene in this condition and all its descendant conditions, after normalization over all data types, conditions and species, computed from the field rnaSeqMeanRank, and rnaSeqMaxRank in the related condition table.',
+    affymetrixGlobalMeanRankNorm decimal(9, 2) unsigned COMMENT 'Affymetrix normalized mean rank for this gene in this condition and all its descendant conditions, after normalization over all data types, conditions and species, computed from the field affymetrixMeanRank, and affymetrixMaxRank in the related condition table.',
+    estGlobalRankNorm decimal(9, 2) unsigned COMMENT 'EST normalized rank for this gene in this condition and all its descendant conditions, after normalization over all data types, conditions and species, computed from the field estRank, and estMaxRank in the related condition table.',
+    inSituGlobalRankNorm decimal(9, 2) unsigned COMMENT 'In situ hybridization normalized rank for this gene in this condition and all its descendant conditions, after normalization over all data types, conditions and species, computed from the field inSituRank, and inSituMaxRank in the related condition table.',
+
+    rnaSeqGlobalDistinctRankSum decimal(9, 2) unsigned COMMENT 'Factor used to weight the RNA-Seq normalized global mean rank (rnaSeqGlobalMeanRankNorm), to compute a global weighted mean rank between all data types. Corresponds to the sum of distinct ranks in each library mapped to this condition and all its descendant conditions. Note that for EST and in situ data, the global max rank found in the related condition table is instead used to compute the weighted mean between data types.', 
+    affymetrixGlobalDistinctRankSum decimal(9, 2) unsigned COMMENT 'Factor used to weight the Affymetrix normalized global mean rank (affymetrixGlobalMeanRankNorm), to compute a global weighted mean rank between all data types. Corresponds to the sum of distinct ranks in each chip mapped to this condition and all its descendant conditions. Note that for EST and in situ data, the global max rank found in the related condition table is instead used to compute the weighted mean between data types.'
 ) engine = innodb
 comment = 'This table is a summary of expression calls for a given gene-condition (anatomical entity - developmental stage - sex- strain), over all the experiments and data types, with all data propagated and reconciled, and with experiment expression summaries computed.';
 
@@ -1347,735 +1282,6 @@ create table globalExpressionToExpression (
     callOrigin enum('self', 'descendant', 'parent') not null COMMENT 'Define whether the raw call used for production of the global call comes from the condition itself, a descendant condition, or a parent condition.'
 ) engine = innodb 
 comment = 'this table allows to link the propagated global calls in "globalExpression" table to the raw original calls in "expression" table';
-
-
--- This table is a summary of expression calls for a given gene-condition
--- gene - anatomical entity, over all the experiments
--- for all data types with no propagation nor experiment expression summary.
--- See main "expression" table for comments.
-create table anatEntityExpression (
-    anatEntityExpressionId int unsigned not null,
-    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
-    anatEntityConditionId mediumint unsigned not null,
-
-    rnaSeqMeanRank decimal(9, 2) unsigned,
-    affymetrixMeanRank decimal(9, 2) unsigned,
-    estRank decimal(9, 2) unsigned,
-    inSituRank decimal(9, 2) unsigned,
-
-    affymetrixMeanRankNorm decimal(9, 2) unsigned,
-    rnaSeqMeanRankNorm decimal(9, 2) unsigned,
-    estRankNorm decimal(9, 2) unsigned,
-    inSituRankNorm decimal(9, 2) unsigned,
-
-    affymetrixDistinctRankSum decimal(9, 2) unsigned,
-    rnaSeqDistinctRankSum decimal(9, 2) unsigned
-) engine = innodb;
-
--- This table is a summary of expression calls for a given gene-condition
--- gene - anatomical entity, over all the experiments
--- for all data types, with all data propagated and reconciled, with experiment expression summaries computed.
-create table globalAnatEntityExpression (
-    globalAnatEntityExpressionId int unsigned not null COMMENT 'Internal expression ID, not stable between releases.',
-    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID, not stable between releases.',
-    anatEntityConditionId mediumint unsigned not null COMMENT 'ID of condition in the related condition table ("anatEntityCond"), not stable between releases.',
-
--- ** EXPRESSION SUMMARIES **
-    estLibPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    estLibPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-
-    affymetrixExpPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    affymetrixExpPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentHighParentCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentLowParentCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    affymetrixExpPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    affymetrixExpPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-
-    inSituExpPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    inSituExpPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentHighParentCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentLowParentCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,  
-    inSituExpPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-
-    rnaSeqExpPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    rnaSeqExpPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentHighParentCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentLowParentCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,  
-    rnaSeqExpPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-
--- ** RANKS **
-    rnaSeqMeanRank decimal(9, 2) unsigned,
-    affymetrixMeanRank decimal(9, 2) unsigned,
-    estRank decimal(9, 2) unsigned,
-    inSituRank decimal(9, 2) unsigned,
-    rnaSeqMeanRankNorm decimal(9, 2) unsigned,
-    affymetrixMeanRankNorm decimal(9, 2) unsigned,
-    estRankNorm decimal(9, 2) unsigned,
-    inSituRankNorm decimal(9, 2) unsigned,
-    rnaSeqDistinctRankSum decimal(9, 2) unsigned, 
-    affymetrixDistinctRankSum decimal(9, 2) unsigned
-) engine = innodb
-comment = 'See globalExpression table for comments. This table is a summary of expression calls for a given gene-condition (anatomical entity), over all the experiments and data types, with all data propagated and reconciled, and with experiment expression summaries computed.';
-
-create table anatEntityGlobalExpressionToExpression (
-    globalAnatEntityExpressionId int unsigned not null,
-    anatEntityExpressionId int unsigned not null, 
-    callOrigin enum('self', 'descendant', 'parent') not null
-) engine = innodb 
-comment = 'See globalExpressionToExpression table for comments. This table allows to link the propagated global calls in "globalAnatEntityExpression" table to the raw original calls in "anatEntityExpression" table';
-
-
--- This table is a summary of expression calls for a given gene-condition
--- gene - anatomical entity - developmental stage, over all the experiments
--- for all data types with no propagation nor experiment expression summary.
--- See main "expression" table for comments.
-create table anatEntityStageExpression (
-    anatEntityStageExpressionId int unsigned not null,
-    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
-    anatEntityStageConditionId mediumint unsigned not null,
-
-    rnaSeqMeanRank decimal(9, 2) unsigned,
-    affymetrixMeanRank decimal(9, 2) unsigned,
-    estRank decimal(9, 2) unsigned,
-    inSituRank decimal(9, 2) unsigned,
-
-    affymetrixMeanRankNorm decimal(9, 2) unsigned,
-    rnaSeqMeanRankNorm decimal(9, 2) unsigned,
-    estRankNorm decimal(9, 2) unsigned,
-    inSituRankNorm decimal(9, 2) unsigned,
-
-    affymetrixDistinctRankSum decimal(9, 2) unsigned,
-    rnaSeqDistinctRankSum decimal(9, 2) unsigned
-) engine = innodb;
-
--- This table is a summary of expression calls for a given gene-condition
--- gene - anatomical entity - stage, over all the experiments
--- for all data types, with all data propagated and reconciled, with experiment expression summaries computed.
-create table globalAnatEntityStageExpression (
-    globalAnatEntityStageExpressionId int unsigned not null COMMENT 'Internal expression ID, not stable between releases.',
-    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID, not stable between releases.',
-    anatEntityStageConditionId mediumint unsigned not null COMMENT 'ID of condition in the related condition table ("anatEntityCond"), not stable between releases.',
-
--- ** EXPRESSION SUMMARIES **
-    estLibPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    estLibPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-
-    affymetrixExpPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    affymetrixExpPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentHighParentCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentLowParentCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    affymetrixExpPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    affymetrixExpPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-
-    inSituExpPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    inSituExpPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentHighParentCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentLowParentCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,  
-    inSituExpPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-
-    rnaSeqExpPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    rnaSeqExpPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentHighParentCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentLowParentCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,  
-    rnaSeqExpPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-
--- ** RANKS **
-    rnaSeqMeanRank decimal(9, 2) unsigned,
-    affymetrixMeanRank decimal(9, 2) unsigned,
-    estRank decimal(9, 2) unsigned,
-    inSituRank decimal(9, 2) unsigned,
-    rnaSeqMeanRankNorm decimal(9, 2) unsigned,
-    affymetrixMeanRankNorm decimal(9, 2) unsigned,
-    estRankNorm decimal(9, 2) unsigned,
-    inSituRankNorm decimal(9, 2) unsigned,
-    rnaSeqDistinctRankSum decimal(9, 2) unsigned, 
-    affymetrixDistinctRankSum decimal(9, 2) unsigned
-) engine = innodb
-comment = 'See globalExpression table for comments. This table is a summary of expression calls for a given gene-condition (anatomical entity - stage), over all the experiments and data types, with all data propagated and reconciled, and with experiment expression summaries computed.';
-
-create table anatEntityStageGlobalExpressionToExpression (
-    globalAnatEntityStageExpressionId int unsigned not null,
-    anatEntityStageExpressionId int unsigned not null, 
-    callOrigin enum('self', 'descendant', 'parent') not null
-) engine = innodb 
-comment = 'See globalExpressionToExpression table for comments. This table allows to link the propagated global calls in "globalAnatEntityStageExpression" table to the raw original calls in "anatEntityStageExpression" table';
-
-
--- This table is a summary of expression calls for a given gene-condition
--- gene - anatomical entity - sex, over all the experiments
--- for all data types with no propagation nor experiment expression summary.
--- See main "expression" table for comments.
-create table anatEntitySexExpression (
-    anatEntitySexExpressionId int unsigned not null,
-    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
-    anatEntitySexConditionId mediumint unsigned not null,
-
-    rnaSeqMeanRank decimal(9, 2) unsigned,
-    affymetrixMeanRank decimal(9, 2) unsigned,
-    estRank decimal(9, 2) unsigned,
-    inSituRank decimal(9, 2) unsigned,
-
-    affymetrixMeanRankNorm decimal(9, 2) unsigned,
-    rnaSeqMeanRankNorm decimal(9, 2) unsigned,
-    estRankNorm decimal(9, 2) unsigned,
-    inSituRankNorm decimal(9, 2) unsigned,
-
-    affymetrixDistinctRankSum decimal(9, 2) unsigned,
-    rnaSeqDistinctRankSum decimal(9, 2) unsigned
-) engine = innodb;
-
--- This table is a summary of expression calls for a given gene-condition
--- gene - anatomical entity - sex, over all the experiments
--- for all data types, with all data propagated and reconciled, with experiment expression summaries computed.
-create table globalAnatEntitySexExpression (
-    globalAnatEntitySexExpressionId int unsigned not null COMMENT 'Internal expression ID, not stable between releases.',
-    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID, not stable between releases.',
-    anatEntitySexConditionId mediumint unsigned not null COMMENT 'ID of condition in the related condition table ("anatEntityCond"), not stable between releases.',
-
--- ** EXPRESSION SUMMARIES **
-    estLibPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    estLibPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-
-    affymetrixExpPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    affymetrixExpPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentHighParentCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentLowParentCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    affymetrixExpPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    affymetrixExpPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-
-    inSituExpPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    inSituExpPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentHighParentCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentLowParentCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,  
-    inSituExpPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-
-    rnaSeqExpPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    rnaSeqExpPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentHighParentCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentLowParentCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,  
-    rnaSeqExpPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-
--- ** RANKS **
-    rnaSeqMeanRank decimal(9, 2) unsigned,
-    affymetrixMeanRank decimal(9, 2) unsigned,
-    estRank decimal(9, 2) unsigned,
-    inSituRank decimal(9, 2) unsigned,
-    rnaSeqMeanRankNorm decimal(9, 2) unsigned,
-    affymetrixMeanRankNorm decimal(9, 2) unsigned,
-    estRankNorm decimal(9, 2) unsigned,
-    inSituRankNorm decimal(9, 2) unsigned,
-    rnaSeqDistinctRankSum decimal(9, 2) unsigned, 
-    affymetrixDistinctRankSum decimal(9, 2) unsigned
-) engine = innodb
-comment = 'See globalExpression table for comments. This table is a summary of expression calls for a given gene-condition (anatomical entity - sex), over all the experiments and data types, with all data propagated and reconciled, and with experiment expression summaries computed.';
-
-create table anatEntitySexGlobalExpressionToExpression (
-    globalAnatEntitySexExpressionId int unsigned not null,
-    anatEntitySexExpressionId int unsigned not null, 
-    callOrigin enum('self', 'descendant', 'parent') not null
-) engine = innodb 
-comment = 'See globalExpressionToExpression table for comments. This table allows to link the propagated global calls in "globalAnatEntitySexExpression" table to the raw original calls in "anatEntitySexExpression" table';
-
-
--- This table is a summary of expression calls for a given gene-condition
--- gene - anatomical entity - strain, over all the experiments
--- for all data types with no propagation nor experiment expression summary.
--- See main "expression" table for comments.
-create table anatEntityStrainExpression (
-    anatEntityStrainExpressionId int unsigned not null,
-    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
-    anatEntityStrainConditionId mediumint unsigned not null,
-
-    rnaSeqMeanRank decimal(9, 2) unsigned,
-    affymetrixMeanRank decimal(9, 2) unsigned,
-    estRank decimal(9, 2) unsigned,
-    inSituRank decimal(9, 2) unsigned,
-
-    affymetrixMeanRankNorm decimal(9, 2) unsigned,
-    rnaSeqMeanRankNorm decimal(9, 2) unsigned,
-    estRankNorm decimal(9, 2) unsigned,
-    inSituRankNorm decimal(9, 2) unsigned,
-
-    affymetrixDistinctRankSum decimal(9, 2) unsigned,
-    rnaSeqDistinctRankSum decimal(9, 2) unsigned
-) engine = innodb;
-
--- This table is a summary of expression calls for a given gene-condition
--- gene - anatomical entity - strain, over all the experiments
--- for all data types, with all data propagated and reconciled, with experiment expression summaries computed.
-create table globalAnatEntityStrainExpression (
-    globalAnatEntityStrainExpressionId int unsigned not null COMMENT 'Internal expression ID, not stable between releases.',
-    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID, not stable between releases.',
-    anatEntityStrainConditionId mediumint unsigned not null COMMENT 'ID of condition in the related condition table ("anatEntityCond"), not stable between releases.',
-
--- ** EXPRESSION SUMMARIES **
-    estLibPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    estLibPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-
-    affymetrixExpPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    affymetrixExpPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentHighParentCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentLowParentCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    affymetrixExpPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    affymetrixExpPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-
-    inSituExpPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    inSituExpPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentHighParentCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentLowParentCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,  
-    inSituExpPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-
-    rnaSeqExpPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    rnaSeqExpPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentHighParentCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentLowParentCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,  
-    rnaSeqExpPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-
--- ** RANKS **
-    rnaSeqMeanRank decimal(9, 2) unsigned,
-    affymetrixMeanRank decimal(9, 2) unsigned,
-    estRank decimal(9, 2) unsigned,
-    inSituRank decimal(9, 2) unsigned,
-    rnaSeqMeanRankNorm decimal(9, 2) unsigned,
-    affymetrixMeanRankNorm decimal(9, 2) unsigned,
-    estRankNorm decimal(9, 2) unsigned,
-    inSituRankNorm decimal(9, 2) unsigned,
-    rnaSeqDistinctRankSum decimal(9, 2) unsigned, 
-    affymetrixDistinctRankSum decimal(9, 2) unsigned
-) engine = innodb
-comment = 'See globalExpression table for comments. This table is a summary of expression calls for a given gene-condition (anatomical entity - strain), over all the experiments and data types, with all data propagated and reconciled, and with experiment expression summaries computed.';
-
-create table anatEntityStrainGlobalExpressionToExpression (
-    globalAnatEntityStrainExpressionId int unsigned not null,
-    anatEntityStrainExpressionId int unsigned not null, 
-    callOrigin enum('self', 'descendant', 'parent') not null
-) engine = innodb 
-comment = 'See globalExpressionToExpression table for comments. This table allows to link the propagated global calls in "globalAnatEntityStrainExpression" table to the raw original calls in "anatEntityStrainExpression" table';
-
-
--- This table is a summary of expression calls for a given gene-condition
--- gene - anatomical entity - developmental stage - sex, over all the experiments
--- for all data types with no propagation nor experiment expression summary.
--- See main "expression" table for comments.
-create table anatEntityStageSexExpression (
-    anatEntityStageSexExpressionId int unsigned not null,
-    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
-    anatEntityStageSexConditionId mediumint unsigned not null,
-
-    rnaSeqMeanRank decimal(9, 2) unsigned,
-    affymetrixMeanRank decimal(9, 2) unsigned,
-    estRank decimal(9, 2) unsigned,
-    inSituRank decimal(9, 2) unsigned,
-
-    affymetrixMeanRankNorm decimal(9, 2) unsigned,
-    rnaSeqMeanRankNorm decimal(9, 2) unsigned,
-    estRankNorm decimal(9, 2) unsigned,
-    inSituRankNorm decimal(9, 2) unsigned,
-
-    affymetrixDistinctRankSum decimal(9, 2) unsigned,
-    rnaSeqDistinctRankSum decimal(9, 2) unsigned
-) engine = innodb;
-
--- This table is a summary of expression calls for a given gene-condition
--- gene - anatomical entity - stage - sex, over all the experiments
--- for all data types, with all data propagated and reconciled, with experiment expression summaries computed.
-create table globalAnatEntityStageSexExpression (
-    globalAnatEntityStageSexExpressionId int unsigned not null COMMENT 'Internal expression ID, not stable between releases.',
-    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID, not stable between releases.',
-    anatEntityStageSexConditionId mediumint unsigned not null COMMENT 'ID of condition in the related condition table ("anatEntityCond"), not stable between releases.',
-
--- ** EXPRESSION SUMMARIES **
-    estLibPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    estLibPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-
-    affymetrixExpPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    affymetrixExpPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentHighParentCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentLowParentCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    affymetrixExpPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    affymetrixExpPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-
-    inSituExpPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    inSituExpPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentHighParentCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentLowParentCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,  
-    inSituExpPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-
-    rnaSeqExpPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    rnaSeqExpPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentHighParentCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentLowParentCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,  
-    rnaSeqExpPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-
--- ** RANKS **
-    rnaSeqMeanRank decimal(9, 2) unsigned,
-    affymetrixMeanRank decimal(9, 2) unsigned,
-    estRank decimal(9, 2) unsigned,
-    inSituRank decimal(9, 2) unsigned,
-    rnaSeqMeanRankNorm decimal(9, 2) unsigned,
-    affymetrixMeanRankNorm decimal(9, 2) unsigned,
-    estRankNorm decimal(9, 2) unsigned,
-    inSituRankNorm decimal(9, 2) unsigned,
-    rnaSeqDistinctRankSum decimal(9, 2) unsigned, 
-    affymetrixDistinctRankSum decimal(9, 2) unsigned
-) engine = innodb
-comment = 'See globalExpression table for comments. This table is a summary of expression calls for a given gene-condition (anatomical entity - stage - sex), over all the experiments and data types, with all data propagated and reconciled, and with experiment expression summaries computed.';
-
-create table anatEntityStageSexGlobalExpressionToExpression (
-    globalAnatEntityStageSexExpressionId int unsigned not null,
-    anatEntityStageSexExpressionId int unsigned not null, 
-    callOrigin enum('self', 'descendant', 'parent') not null
-) engine = innodb 
-comment = 'See globalExpressionToExpression table for comments. This table allows to link the propagated global calls in "globalAnatEntityStageSexExpression" table to the raw original calls in "anatEntityStageSexExpression" table';
-
-
--- This table is a summary of expression calls for a given gene-condition
--- gene - anatomical entity - developmental stage - strain, over all the experiments
--- for all data types with no propagation nor experiment expression summary.
--- See main "expression" table for comments.
-create table anatEntityStageStrainExpression (
-    anatEntityStageStrainExpressionId int unsigned not null,
-    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
-    anatEntityStageStrainConditionId mediumint unsigned not null,
-
-    rnaSeqMeanRank decimal(9, 2) unsigned,
-    affymetrixMeanRank decimal(9, 2) unsigned,
-    estRank decimal(9, 2) unsigned,
-    inSituRank decimal(9, 2) unsigned,
-
-    affymetrixMeanRankNorm decimal(9, 2) unsigned,
-    rnaSeqMeanRankNorm decimal(9, 2) unsigned,
-    estRankNorm decimal(9, 2) unsigned,
-    inSituRankNorm decimal(9, 2) unsigned,
-
-    affymetrixDistinctRankSum decimal(9, 2) unsigned,
-    rnaSeqDistinctRankSum decimal(9, 2) unsigned
-) engine = innodb;
-
--- This table is a summary of expression calls for a given gene-condition
--- gene - anatomical entity - stage - strain, over all the experiments
--- for all data types, with all data propagated and reconciled, with experiment expression summaries computed.
-create table globalAnatEntityStageStrainExpression (
-    globalAnatEntityStageStrainExpressionId int unsigned not null COMMENT 'Internal expression ID, not stable between releases.',
-    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID, not stable between releases.',
-    anatEntityStageStrainConditionId mediumint unsigned not null COMMENT 'ID of condition in the related condition table ("anatEntityCond"), not stable between releases.',
-
--- ** EXPRESSION SUMMARIES **
-    estLibPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    estLibPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-
-    affymetrixExpPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    affymetrixExpPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentHighParentCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentLowParentCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    affymetrixExpPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    affymetrixExpPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-
-    inSituExpPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    inSituExpPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentHighParentCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentLowParentCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,  
-    inSituExpPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-
-    rnaSeqExpPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    rnaSeqExpPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentHighParentCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentLowParentCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,  
-    rnaSeqExpPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-
--- ** RANKS **
-    rnaSeqMeanRank decimal(9, 2) unsigned,
-    affymetrixMeanRank decimal(9, 2) unsigned,
-    estRank decimal(9, 2) unsigned,
-    inSituRank decimal(9, 2) unsigned,
-    rnaSeqMeanRankNorm decimal(9, 2) unsigned,
-    affymetrixMeanRankNorm decimal(9, 2) unsigned,
-    estRankNorm decimal(9, 2) unsigned,
-    inSituRankNorm decimal(9, 2) unsigned,
-    rnaSeqDistinctRankSum decimal(9, 2) unsigned, 
-    affymetrixDistinctRankSum decimal(9, 2) unsigned
-) engine = innodb
-comment = 'See globalExpression table for comments. This table is a summary of expression calls for a given gene-condition (anatomical entity - stage - strain), over all the experiments and data types, with all data propagated and reconciled, and with experiment expression summaries computed.';
-
-create table anatEntityStageStrainGlobalExpressionToExpression (
-    globalAnatEntityStageStrainExpressionId int unsigned not null,
-    anatEntityStageStrainExpressionId int unsigned not null, 
-    callOrigin enum('self', 'descendant', 'parent') not null
-) engine = innodb 
-comment = 'See globalExpressionToExpression table for comments. This table allows to link the propagated global calls in "globalAnatEntityStageStrainExpression" table to the raw original calls in "anatEntityStageStrainExpression" table';
-
-
--- This table is a summary of expression calls for a given gene-condition
--- gene - anatomical entity - sex - strain, over all the experiments
--- for all data types with no propagation nor experiment expression summary.
--- See main "expression" table for comments.
-create table anatEntitySexStrainExpression (
-    anatEntitySexStrainExpressionId int unsigned not null,
-    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
-    anatEntitySexStrainConditionId mediumint unsigned not null,
-
-    rnaSeqMeanRank decimal(9, 2) unsigned,
-    affymetrixMeanRank decimal(9, 2) unsigned,
-    estRank decimal(9, 2) unsigned,
-    inSituRank decimal(9, 2) unsigned,
-
-    affymetrixMeanRankNorm decimal(9, 2) unsigned,
-    rnaSeqMeanRankNorm decimal(9, 2) unsigned,
-    estRankNorm decimal(9, 2) unsigned,
-    inSituRankNorm decimal(9, 2) unsigned,
-
-    affymetrixDistinctRankSum decimal(9, 2) unsigned,
-    rnaSeqDistinctRankSum decimal(9, 2) unsigned
-) engine = innodb;
-
--- This table is a summary of expression calls for a given gene-condition
--- gene - anatomical entity - sex - strain, over all the experiments
--- for all data types, with all data propagated and reconciled, with experiment expression summaries computed.
-create table globalAnatEntitySexStrainExpression (
-    globalAnatEntitySexStrainExpressionId int unsigned not null COMMENT 'Internal expression ID, not stable between releases.',
-    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID, not stable between releases.',
-    anatEntitySexStrainConditionId mediumint unsigned not null COMMENT 'ID of condition in the related condition table ("anatEntityCond"), not stable between releases.',
-
--- ** EXPRESSION SUMMARIES **
-    estLibPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    estLibPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    estLibPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-
-    affymetrixExpPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    affymetrixExpPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentHighParentCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentLowParentCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    affymetrixExpPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    affymetrixExpAbsentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    affymetrixExpPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-
-    inSituExpPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    inSituExpPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentHighParentCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentLowParentCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,  
-    inSituExpPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpAbsentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    inSituExpPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-
-    rnaSeqExpPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    rnaSeqExpPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentHighParentCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentLowParentCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,  
-    rnaSeqExpPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpAbsentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0, 
-    rnaSeqExpPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-
--- ** RANKS **
-    rnaSeqMeanRank decimal(9, 2) unsigned,
-    affymetrixMeanRank decimal(9, 2) unsigned,
-    estRank decimal(9, 2) unsigned,
-    inSituRank decimal(9, 2) unsigned,
-    rnaSeqMeanRankNorm decimal(9, 2) unsigned,
-    affymetrixMeanRankNorm decimal(9, 2) unsigned,
-    estRankNorm decimal(9, 2) unsigned,
-    inSituRankNorm decimal(9, 2) unsigned,
-    rnaSeqDistinctRankSum decimal(9, 2) unsigned, 
-    affymetrixDistinctRankSum decimal(9, 2) unsigned
-) engine = innodb
-comment = 'See globalExpression table for comments. This table is a summary of expression calls for a given gene-condition (anatomical entity - sex - strain), over all the experiments and data types, with all data propagated and reconciled, and with experiment expression summaries computed.';
-
-create table anatEntitySexStrainGlobalExpressionToExpression (
-    globalAnatEntitySexStrainExpressionId int unsigned not null,
-    anatEntitySexStrainExpressionId int unsigned not null, 
-    callOrigin enum('self', 'descendant', 'parent') not null
-) engine = innodb 
-comment = 'See globalExpressionToExpression table for comments. This table allows to link the propagated global calls in "globalAnatEntitySexStrainExpression" table to the raw original calls in "anatEntitySexStrainExpression" table';
-
 
 -- ****************************************************
 -- SUMMARY DIFF EXPRESSION CALLS

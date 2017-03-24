@@ -4,7 +4,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.sql.SQLException;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -17,7 +16,7 @@ import org.bgee.model.dao.api.TOComparator;
 import org.bgee.model.dao.api.source.SourceToSpeciesDAO;
 import org.bgee.model.dao.api.source.SourceToSpeciesDAO.Attribute;
 import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO;
-import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO.DataType;
+import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO.InfoType;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.junit.Test;
@@ -113,7 +112,7 @@ public class MySQLSourceToSpeciesDAOIT extends MySQLITAncestor {
         // Test recovery of one attribute with filter on data source IDs and data types
         EnumSet<Attribute> attributes = EnumSet.of(SourceToSpeciesDAO.Attribute.DATA_TYPE);
         Set<Integer> dataSourceIds = new HashSet<>(Arrays.asList(4, 99));
-        EnumSet<DataType> dataTypes = EnumSet.of(DataType.EST, DataType.IN_SITU);
+        EnumSet<DAODataType> dataTypes = EnumSet.of(DAODataType.EST, DAODataType.IN_SITU);
         expectedTOs = this.getAllSourceToSpeciesTOs().stream()
                 .filter(s -> dataSourceIds.contains(s.getDataSourceId()))
                 .filter(s -> dataTypes.contains(s.getDataType()))
@@ -144,15 +143,15 @@ public class MySQLSourceToSpeciesDAOIT extends MySQLITAncestor {
 
     private List<SourceToSpeciesTO> getAllSourceToSpeciesTOs() {
         return Arrays.asList(
-                new SourceToSpeciesTO(1, 11, DataType.AFFYMETRIX, InfoType.DATA),
-                new SourceToSpeciesTO(1, 11, DataType.AFFYMETRIX, InfoType.ANNOTATION),
-                new SourceToSpeciesTO(1, 21, DataType.AFFYMETRIX, InfoType.DATA),
-                new SourceToSpeciesTO(1, 21, DataType.AFFYMETRIX, InfoType.ANNOTATION),
-                new SourceToSpeciesTO(2, 11, DataType.EST, InfoType.DATA),
-                new SourceToSpeciesTO(3, 11, DataType.EST, InfoType.ANNOTATION),
-                new SourceToSpeciesTO(4, 11, DataType.EST, InfoType.DATA),
-                new SourceToSpeciesTO(4, 11, DataType.EST, InfoType.ANNOTATION),
-                new SourceToSpeciesTO(4, 21, DataType.RNA_SEQ, InfoType.DATA),
-                new SourceToSpeciesTO(4, 21, DataType.IN_SITU, InfoType.ANNOTATION));
+                new SourceToSpeciesTO(1, 11, DAODataType.AFFYMETRIX, InfoType.DATA),
+                new SourceToSpeciesTO(1, 11, DAODataType.AFFYMETRIX, InfoType.ANNOTATION),
+                new SourceToSpeciesTO(1, 21, DAODataType.AFFYMETRIX, InfoType.DATA),
+                new SourceToSpeciesTO(1, 21, DAODataType.AFFYMETRIX, InfoType.ANNOTATION),
+                new SourceToSpeciesTO(2, 11, DAODataType.EST, InfoType.DATA),
+                new SourceToSpeciesTO(3, 11, DAODataType.EST, InfoType.ANNOTATION),
+                new SourceToSpeciesTO(4, 11, DAODataType.EST, InfoType.DATA),
+                new SourceToSpeciesTO(4, 11, DAODataType.EST, InfoType.ANNOTATION),
+                new SourceToSpeciesTO(4, 21, DAODataType.RNA_SEQ, InfoType.DATA),
+                new SourceToSpeciesTO(4, 21, DAODataType.IN_SITU, InfoType.ANNOTATION));
     }
 }

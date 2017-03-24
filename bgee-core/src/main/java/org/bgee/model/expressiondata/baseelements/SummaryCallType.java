@@ -2,6 +2,7 @@ package org.bgee.model.expressiondata.baseelements;
 
 import java.util.Set;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.baseelements.PropagationState;
@@ -72,7 +73,9 @@ public interface SummaryCallType extends CallType {
                             + this));
                 }
             } catch (IllegalArgumentException e) {
-                throw log.throwing(new IllegalArgumentException("The following propagation "
+                //log in TRACE level, since this method can simply be used to check validity
+                //of a propagation state
+                throw log.throwing(Level.TRACE, new IllegalArgumentException("The following propagation "
                         + "is incorrect for the CallType " + this + ": " + propState));
             }
             log.exit();

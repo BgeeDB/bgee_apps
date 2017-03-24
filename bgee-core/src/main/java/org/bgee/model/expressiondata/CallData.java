@@ -224,28 +224,37 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             super(dataType, inferCallType(experimentCounts), dataPropagation);
 
             // sanity checks
+            Set<ExperimentExpressionCount> validCounts = new HashSet<>();
             if (experimentCounts != null && !experimentCounts.isEmpty()) {
                 if (experimentCounts.stream().anyMatch(c -> c == null)) {
                     throw log.throwing(new IllegalArgumentException(
                             "All ExpressionExperimentCounts must be not null."));
                 }
                 final Set<ExperimentExpressionCount> expectedExpCounts = VALID_EXP_COUNTS.get(dataType);
+                //We store only valid experimentCounts
                 //map experimentCounts to ExperimentExpressionCounts with count of 0 to compare
-                //to the expected ExperimentExpressionCounts
-                Set<ExperimentExpressionCount> fakeCounts = experimentCounts.stream()
-                        .map(c -> new ExperimentExpressionCount(c.getCallType(), c.getDataQuality(), 
-                                c.getPropagationState(), 0))
-                        .collect(Collectors.toSet());
-                if (!expectedExpCounts.containsAll(fakeCounts)) {
-                    fakeCounts.removeAll(expectedExpCounts);
+                //to the expected ExperimentExpressionCounts.
+                Set<ExperimentExpressionCount> invalidCounts = new HashSet<>();
+                for (ExperimentExpressionCount count: experimentCounts) {
+                    if (!expectedExpCounts.contains(new ExperimentExpressionCount(
+                            count.getCallType(), count.getDataQuality(), count.getPropagationState(), 0))) {
+                        invalidCounts.add(count);
+                    } else {
+                        validCounts.add(count);
+                    }
+                }
+                //Check only ExperimentExpressionCounts with a count greater than 0,
+                //because invalid call types can be provided this way
+                //(e.g., providing EST absent counts set to 0)
+                if (invalidCounts.stream().anyMatch(c -> c.getCount() > 0)) {
                     throw log.throwing(new IllegalArgumentException("Unexpected combinations of "
-                            + "CallType/DataQuality/PropagationState in ExperimentExpressionCount. "
-                            + "Unexpected counts: " + fakeCounts));
+                        + "CallType/DataQuality/PropagationState in ExperimentExpressionCount "
+                        + "for data type " + dataType + ". Unexpected counts: "
+                        + invalidCounts.stream().filter(c -> c.getCount() > 0).collect(Collectors.toSet())));
                 }
             }
 
-            this.experimentCounts = experimentCounts == null? new HashSet<>(): 
-                Collections.unmodifiableSet(new HashSet<>(experimentCounts));
+            this.experimentCounts = Collections.unmodifiableSet(new HashSet<>(validCounts));
             this.propagatedExperimentCount = propagatedExperimentCount;
             //BigDecimal are immutable so we're good
             this.rank = rank;

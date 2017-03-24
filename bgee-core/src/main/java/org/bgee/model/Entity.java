@@ -81,5 +81,11 @@ public abstract class Entity<T> {
         }
         return true;
     }
-	
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Entity [id=").append(id).append("]");
+        return builder.toString();
+    }
 }

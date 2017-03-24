@@ -102,10 +102,8 @@ public class DataPropagation {
                     + "anatomy: " + anatEntityPropagationState + " - stage: " + devStagePropagationState));
         }
 
-        this.anatEntityPropagationState = anatEntityPropagationState == null? PropagationState.UNKNOWN:
-            anatEntityPropagationState;
-        this.devStagePropagationState = devStagePropagationState == null? PropagationState.UNKNOWN:
-            devStagePropagationState;
+        this.anatEntityPropagationState = anatEntityPropagationState;
+        this.devStagePropagationState = devStagePropagationState;
         this.includingObservedData  = includingObservedData;
     }
     
@@ -132,8 +130,8 @@ public class DataPropagation {
     }
     
     /**
-     * @return  A {@code Set} of {@code PropagationState}s that are all the states 
-     *          associated to all condition elements. 
+     * @return  A {@code Set} of {@code PropagationState}s that are all non-null states 
+     *          associated to any condition parameter. 
      */
     //this method is useful to abstract away what are the elements defining a condition.
     public EnumSet<PropagationState> getAllPropagationStates() {

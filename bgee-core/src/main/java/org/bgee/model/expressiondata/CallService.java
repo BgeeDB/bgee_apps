@@ -199,28 +199,45 @@ public class CallService extends CommonService {
     private final AnatEntityService anatEntityService;
     private final DevStageService devStageService;
     /**
-     * A {@code Map} where keys are combinations of condition parameters described
-     * by {@code Set}s of {@code ConditionDAO.Attribute}s, the associated value being
-     * a {@code BigDecimal} that is the max rank for this combination over all data types.
+     * @see #getMaxRank()
      */
-    private final Map<Set<ConditionDAO.Attribute>, BigDecimal> maxRanks;
+    private final BigDecimal maxRank;
     /**
      * @param serviceFactory            The {@code ServiceFactory} to be used to obtain {@code Service}s 
      *                                  and {@code DAOManager}.
      * @throws IllegalArgumentException If {@code serviceFactory} is {@code null}.
      */
     public CallService(ServiceFactory serviceFactory) {
+        this(serviceFactory,
+                Optional.ofNullable(serviceFactory.getDAOManager().getConditionDAO().getMaxRank())
+                .map(maxRankTO -> maxRankTO.getGlobalMaxRank())
+                .orElseThrow(() -> new IllegalStateException("No max rank could be retrieved.")));
+    }
+    /**
+     * Constructor useful in case the ranks and max ranks have not yet been inserted,
+     * before expression call propagation. There is no check performed to make sure
+     * a max rank could be retrieved.
+     *
+     * @param serviceFactory    The {@code ServiceFactory} to be used to obtain {@code Service}s 
+     *                          and {@code DAOManager}.
+     * @param maxRank           A {@code BigDecimal} that is the max expression rank over
+     *                          all conditions and data types. Can be {@code null}.
+     */
+    protected CallService(ServiceFactory serviceFactory, BigDecimal maxRank) {
         super(serviceFactory);
         this.conditionDAO = this.getDaoManager().getConditionDAO();
         this.geneDAO = this.getDaoManager().getGeneDAO();
         this.globalExprCallDAO = this.getDaoManager().getGlobalExpressionCallDAO();
         this.anatEntityService = this.getServiceFactory().getAnatEntityService();
         this.devStageService = this.getServiceFactory().getDevStageService();
-        
-        this.maxRanks = Collections.unmodifiableMap(
-                this.conditionDAO.getMaxRanks().entrySet().stream()
-                .map(e -> new AbstractMap.SimpleEntry<>(e.getKey(), e.getValue().getGlobalMaxRank()))
-                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue())));
+        this.maxRank = maxRank;
+    }
+
+    /**
+     * @return  A {@code BigDecimal} that is the max expression rank over all conditions and data types.
+     */
+    public BigDecimal getMaxRank() {
+        return maxRank;
     }
 
     //*************************************************
@@ -293,15 +310,9 @@ public class CallService extends CommonService {
                         condParamCombination, convertCondParamAttrsToCondDAOAttrs(clonedAttrs)));
 
         // Retrieve calls
-        final BigDecimal maxRank = this.maxRanks.get(condParamCombination);
-        if (maxRank == null) {
-            throw log.throwing(new IllegalStateException(
-                    "No max rank provided for requested condition parameter combination: "
-                    + condParamCombination));
-        }
         Stream<ExpressionCall> calls = this.performsGlobalExprCallQuery(geneMap, callFilter,
                 condParamCombination, clonedAttrs, clonedOrderingAttrs)
-            .map(to -> mapGlobalCallTOToExpressionCall(to, geneMap, condMap, callFilter, maxRank,
+            .map(to -> mapGlobalCallTOToExpressionCall(to, geneMap, condMap, callFilter, this.getMaxRank(),
                     clonedAttrs))
 //            // Job of the DAO to filter retrieved calls now.
 //            .filter(c -> callFilter == null || callFilter.test(c))
@@ -364,7 +375,8 @@ public class CallService extends CommonService {
         Set<ConditionTO> conditionTOs = new HashSet<>();
 
         //we need to retrieve the attributes requested, plus the condition ID and species ID in all cases.
-        Set<ConditionDAO.Attribute> clonedAttrs = EnumSet.copyOf(conditionDAOAttrs);
+        Set<ConditionDAO.Attribute> clonedAttrs = conditionDAOAttrs == null || conditionDAOAttrs.isEmpty()?
+                EnumSet.allOf(ConditionDAO.Attribute.class): EnumSet.copyOf(conditionDAOAttrs);
         clonedAttrs.addAll(EnumSet.of(ConditionDAO.Attribute.ID, ConditionDAO.Attribute.SPECIES_ID));
         ConditionTOResultSet rs = rsFunc.apply(clonedAttrs);
 
@@ -1301,6 +1313,13 @@ public class CallService extends CommonService {
             DataPropagation dataProp2) {
         log.entry(dataProp1, dataProp2);
 
+        if (dataProp1 == null || dataProp1.equals(DATA_PROPAGATION_IDENTITY)) {
+            return log.exit(dataProp2);
+        }
+        if (dataProp2 == null || dataProp2.equals(DATA_PROPAGATION_IDENTITY)) {
+            return log.exit(dataProp1);
+        }
+
         PropagationState anatEntityPropState = mergePropagationStates(
                 dataProp1.getAnatEntityPropagationState(), dataProp2.getAnatEntityPropagationState());
         PropagationState stagePropState = mergePropagationStates(
@@ -1323,7 +1342,8 @@ public class CallService extends CommonService {
             //if one of the DataPropagation isIncludingObservedData is null, and none is True,
             //then we cannot know for sure whether there are observed data,
             //so retrievedObservedData will stay null. In practice this should never happen
-            throw log.throwing(new IllegalArgumentException("Inconconsistent DataPropagations"));
+            throw log.throwing(new IllegalArgumentException("Inconconsistent DataPropagations: "
+                    + dataProp1 + " - " + dataProp2));
         }
 
         return log.exit(new DataPropagation(anatEntityPropState, stagePropState, retrievedObservedData));

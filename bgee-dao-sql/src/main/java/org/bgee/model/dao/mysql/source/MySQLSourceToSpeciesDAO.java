@@ -11,7 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.source.SourceToSpeciesDAO;
-import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO.DataType;
+import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO.InfoType;
 import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
@@ -59,7 +59,7 @@ public class MySQLSourceToSpeciesDAO extends MySQLDAO<SourceToSpeciesDAO.Attribu
 
     @Override
     public SourceToSpeciesTOResultSet getSourceToSpecies(Collection<Integer> dataSourceIds,
-            Collection<Integer> speciesIds, Collection<DataType> dataTypes, Collection<InfoType> infoTypes,
+            Collection<Integer> speciesIds, Collection<DAODataType> dataTypes, Collection<InfoType> infoTypes,
             Collection<SourceToSpeciesDAO.Attribute> attributes) throws DAOException {
         log.entry(dataSourceIds, speciesIds, dataTypes, infoTypes, attributes);
 
@@ -173,7 +173,7 @@ public class MySQLSourceToSpeciesDAO extends MySQLDAO<SourceToSpeciesDAO.Attribu
         protected SourceToSpeciesTO getNewTO() {
             log.entry();
             Integer dataSourceId = null, speciesId = null;
-            DataType dataType = null;
+            DAODataType dataType = null;
             InfoType infoType = null;
             
             // Get results
@@ -186,7 +186,7 @@ public class MySQLSourceToSpeciesDAO extends MySQLDAO<SourceToSpeciesDAO.Attribu
                         speciesId = this.getCurrentResultSet().getInt(column.getKey());
 
                     } else if (column.getValue().equals("dataType")) {
-                        dataType = DataType.convertToDataType(
+                        dataType = DAODataType.convertToDataType(
                                 this.getCurrentResultSet().getString(column.getKey()));
 
                     } else if (column.getValue().equals("infoType")) {

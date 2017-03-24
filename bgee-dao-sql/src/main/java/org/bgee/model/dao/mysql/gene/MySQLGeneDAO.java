@@ -451,7 +451,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
                                 "No species ID can be null or less than 1."));
                     }
                     return id;
-                }, id -> null, (v1, v2) -> v1)));
+                }, id -> new HashSet<>(), (v1, v2) -> v1)));
     }
 
     /**

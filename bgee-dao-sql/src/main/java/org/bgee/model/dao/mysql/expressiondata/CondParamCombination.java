@@ -18,11 +18,13 @@ import org.bgee.model.dao.api.expressiondata.ConditionDAO;
  * is {@link CondParamCombination#getCombination(Collection)}.
  * 
  * @author Frederic Bastian
+ * @deprecated not needed anymore since we group all global conditions in a same table
  * @version Bgee 14 Feb. 2017
  * @see ConditionDAO
  * @see RawExpressionCallDAO
  * @since Bgee 14 Feb. 2017
  */
+@Deprecated
 public enum CondParamCombination {    
     ANAT(EnumSet.of(ConditionDAO.Attribute.ANAT_ENTITY_ID), false, 
             "anatEntityCond", "anatEntityConditionId", 

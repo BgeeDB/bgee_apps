@@ -57,7 +57,7 @@ public class DAOExperimentCount {
             throw log.throwing(new IllegalArgumentException(
                     "Invalid DAOPropagationState: " + daoPropagationState));
         }
-        if (count <= 0) {
+        if (count < 0) {
             throw log.throwing(new IllegalArgumentException("Count cannot be negative."));
         }
         

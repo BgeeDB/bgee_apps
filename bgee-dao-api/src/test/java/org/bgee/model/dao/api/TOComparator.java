@@ -18,7 +18,7 @@ import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.Sim
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
-import org.bgee.model.dao.api.expressiondata.ConditionDAO.GlobalConditionMaxRanksTO;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO.GlobalConditionMaxRankTO;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
@@ -134,8 +134,8 @@ public class TOComparator {
             return log.exit(areTOsEqual((RelationTO<?>) to1, (RelationTO<?>) to2, compareId));
         } else if (to1 instanceof ConditionTO) {
             return log.exit(areTOsEqual((ConditionTO) to1, (ConditionTO) to2, compareId));
-        } else if (to1 instanceof GlobalConditionMaxRanksTO) {
-            return log.exit(areTOsEqual((GlobalConditionMaxRanksTO) to1, (GlobalConditionMaxRanksTO) to2));
+        } else if (to1 instanceof GlobalConditionMaxRankTO) {
+            return log.exit(areTOsEqual((GlobalConditionMaxRankTO) to1, (GlobalConditionMaxRankTO) to2));
         } else if (to1 instanceof ExpressionCallTO) {
             return log.exit(areTOsEqual((ExpressionCallTO) to1, (ExpressionCallTO) to2, 
                     compareId));
@@ -690,7 +690,7 @@ public class TOComparator {
         return log.exit(false);
     }
     /**
-     * Method to compare two {@code GlobalConditionMaxRanksTO}s, to check for complete equality of each
+     * Method to compare two {@code GlobalConditionMaxRankTO}s, to check for complete equality of each
      * attribute.
      * 
      * @param to1       An {@code ConditionTO} to be compared to {@code to2}.
@@ -698,7 +698,7 @@ public class TOComparator {
      * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
      */
     //TODO: unit test
-    private static boolean areTOsEqual(GlobalConditionMaxRanksTO to1, GlobalConditionMaxRanksTO to2) {
+    private static boolean areTOsEqual(GlobalConditionMaxRankTO to1, GlobalConditionMaxRankTO to2) {
         log.entry(to1, to2);
 
         if (Objects.equals(to1.getConditionId(), to2.getConditionId()) && 

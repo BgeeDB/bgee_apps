@@ -37,59 +37,48 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
     }
     
     /**
-     * Retrieve affymetrix experiment expressions from the data source.
+     * Retrieve affymetrix experiment expressions from the data source, linked to expression IDs
+     * of the raw expression table, and ordered by gene ID and expression ID of raw expression table.
      * <p>
      * The expressions are retrieved and returned as an {@code ExperimentExpressionTOResultSet}.
      * It is the responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
      * @param geneIds               A {@code Collection of {@code Integer}s that are the Bgee IDs 
      *                              of the genes to retrieve calls for.
-     * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
-     *                              combination of condition parameters that were requested for queries, 
-     *                              allowing to determine which condition and expression tables to target
-     *                              (see {@link ConditionDAO.Attribute#isConditionParameter()}).
      * @return                      An {@code ExperimentExpressionTOResultSet} allowing to obtain 
      *                              the requested {@code ExperimentExpressionTO}s.
      * @throws DAOException             If an error occurred while accessing the data source.
      * @throws IllegalArgumentException If {@code geneIds} is {@code null} or empty.
      */
     public ExperimentExpressionTOResultSet getAffymetrixExpExprsOrderedByGeneIdAndExprId(
-            Collection<Integer> geneIds,
-            Collection<ConditionDAO.Attribute> condParameters) throws DAOException, IllegalArgumentException;
+            Collection<Integer> geneIds) throws DAOException, IllegalArgumentException;
 
     /**
-     * Retrieve RNA-Seq experiment expressions from the data source.
+     * Retrieve RNA-Seq experiment expressions from the data source, linked to expression IDs
+     * of the raw expression table, and ordered by gene ID and expression ID of raw expression table.
      * <p>
      * The expressions are retrieved and returned as an {@code ExperimentExpressionTOResultSet}.
      * It is the responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
      * @param geneIds               A {@code Collection of {@code Integer}s that are the Bgee IDs 
      *                              of the genes to retrieve calls for.
-     * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
-     *                              combination of condition parameters that were requested for queries, 
-     *                              allowing to determine which condition and expression tables to target
-     *                              (see {@link ConditionDAO.Attribute#isConditionParameter()}).
      * @return                      An {@code ExperimentExpressionTOResultSet} allowing to obtain 
      *                              the requested {@code ExperimentExpressionTO}s.
      * @throws DAOException             If an error occurred while accessing the data source.
      * @throws IllegalArgumentException If {@code geneIds} is {@code null} or empty.
      */
     public ExperimentExpressionTOResultSet getRNASeqExpExprsOrderedByGeneIdAndExprId(
-            Collection<Integer> geneIds,
-            Collection<ConditionDAO.Attribute> condParameters) throws DAOException, IllegalArgumentException;
+            Collection<Integer> geneIds) throws DAOException, IllegalArgumentException;
 
     /**
-     * Retrieve EST experiment expressions from the data source.
+     * Retrieve EST experiment expressions from the data source, linked to expression IDs
+     * of the raw expression table, and ordered by gene ID and expression ID of raw expression table.
      * <p>
      * The expressions are retrieved and returned as an {@code ExperimentExpressionTOResultSet}.
      * It is the responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
      * @param geneIds               A {@code Collection of {@code Integer}s that are the Bgee IDs 
      *                              of the genes to retrieve calls for.
-     * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
-     *                              combination of condition parameters that were requested for queries, 
-     *                              allowing to determine which condition and expression tables to target
-     *                              (see {@link ConditionDAO.Attribute#isConditionParameter()}).
      * @param speciesId             A {@code String} that is the ID of the species to retrieve calls for.
      * @return                      An {@code ExperimentExpressionTOResultSet} allowing to obtain 
      *                              the requested {@code ExperimentExpressionTO}s.
@@ -97,21 +86,17 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
      * @throws IllegalArgumentException If {@code geneIds} is {@code null} or empty.
      */
     public ExperimentExpressionTOResultSet getESTExpExprsOrderedByGeneIdAndExprId(
-            Collection<Integer> geneIds,
-            Collection<ConditionDAO.Attribute> condParameters) throws DAOException, IllegalArgumentException;
+            Collection<Integer> geneIds) throws DAOException, IllegalArgumentException;
 
     /**
-     * Retrieve <em>in situ</em> experiment expressions from the data source.
+     * Retrieve <em>in situ</em> experiment expressions from the data source, linked to expression IDs
+     * of the raw expression table, and ordered by gene ID and expression ID of raw expression table.
      * <p>
      * The expressions are retrieved and returned as an {@code ExperimentExpressionTOResultSet}.
      * It is the responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
      * @param geneIds               A {@code Collection of {@code Integer}s that are the Bgee IDs 
      *                              of the genes to retrieve calls for.
-     * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
-     *                              combination of condition parameters that were requested for queries, 
-     *                              allowing to determine which condition and expression tables to target
-     *                              (see {@link ConditionDAO.Attribute#isConditionParameter()}).
      * @param speciesId             A {@code String} that is the ID of the species to retrieve calls for.
      * @return                      An {@code ExperimentExpressionTOResultSet} allowing to obtain 
      *                              the requested {@code ExperimentExpressionTO}s.
@@ -119,8 +104,7 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
      * @throws IllegalArgumentException If {@code geneIds} is {@code null} or empty.
      */
     public ExperimentExpressionTOResultSet getInSituExpExprsOrderedByGeneIdAndExprId(
-            Collection<Integer> geneIds,
-            Collection<ConditionDAO.Attribute> condParameters) throws DAOException, IllegalArgumentException;
+            Collection<Integer> geneIds) throws DAOException, IllegalArgumentException;
 
     /**
      * {@code DAOResultSet} specifics to {@code ExperimentExpressionTO}s
@@ -337,14 +321,16 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
 
         @Override
         public String toString() {
-            return " - Expression ID: " + getExpressionId() 
-                + " - Experiment ID: " + getExperimentId()
-                + " - Present high count: " + getPresentHighCount()
-                + " - Present low count: " + getPresentLowCount() 
-                + " - Absent high count: " + getAbsentHighCount()
-                + " - Absent low count: " + getAbsentLowCount()
-                + " - Call quality: " + getCallQuality()
-                + " - Call direction: " + getCallDirection();
+            StringBuilder builder = new StringBuilder();
+            builder.append("ExperimentExpressionTO [expressionId=").append(expressionId)
+                   .append(", experimentId=").append(experimentId)
+                   .append(", presentHighCount=").append(presentHighCount)
+                   .append(", presentLowCount=").append(presentLowCount)
+                   .append(", absentHighCount=").append(absentHighCount)
+                   .append(", absentLowCount=").append(absentLowCount)
+                   .append(", callQuality=").append(callQuality)
+                   .append(", callDirection=").append(callDirection).append("]");
+            return builder.toString();
         }
     }
 }

@@ -2,8 +2,6 @@ package org.bgee.model.dao.api.expressiondata;
 
 import java.math.BigDecimal;
 import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
@@ -83,10 +81,9 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
      *                              If {@code null} or empty, all attributes are populated. 
      * @return
      * @throws DAOException
-     * @throws IllegalArgumentException
      */
     public ConditionTOResultSet getRawConditionsBySpeciesIds(Collection<Integer> speciesIds, 
-            Collection<Attribute> attributes) throws DAOException, IllegalArgumentException;
+            Collection<Attribute> attributes) throws DAOException;
     
     /**
      * Retrieves global conditions belonging to the provided {@code speciesIds} with parameters defined
@@ -118,7 +115,8 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
      * @return                      An {@code ConditionTOResultSet} containing all conditions 
      *                              from data source.
      * @throws DAOException If an error occurred when accessing the data source.
-     * @throws IllegalArgumentException If one of the {@code Attribute}s in {@code conditionParameters}
+     * @throws IllegalArgumentException If {@code conditionParameters} is {@code null}, empty,
+     *                                  or one of the {@code Attribute}s in {@code conditionParameters}
      *                                  is not a condition parameter attributes (see 
      *                                  {@link Attribute#isConditionParameter()}). 
      */
@@ -136,20 +134,15 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
     public int getMaxGlobalConditionId() throws DAOException;
 
     /**
-     * Retrieve the max ranks and global max ranks over all conditions and data types,
-     * for all condition parameter combinations. Only the attributes returned by
-     * {@link GlobalConditionMaxRanksTO#getMaxRank()} and
-     * {@link GlobalConditionMaxRanksTO#getGlobalMaxRank()} are populated in the returned
-     * {@code GlobalConditionMaxRanksTO}s.
-     * @return                          A {@code Map} where keys are combinations of condition parameters
-     *                                  described by {@code Set}s of {@code ConditionDAO.Attribute}s,
-     *                                  the associated value being a {@code GlobalConditionMaxRanksTO}
-     *                                  allowing to retrieve the max rank and global max rank
-     *                                  for this combination.
+     * Retrieve the max ranks and global max ranks over all conditions and data types.
+     * Only the attributes returned by {@link GlobalConditionMaxRankTO#getMaxRank()} and
+     * {@link GlobalConditionMaxRankTO#getGlobalMaxRank()} are populated in the returned
+     * {@code GlobalConditionMaxRankTO}s.
+     * @return                          A {@code GlobalConditionMaxRankTO} allowing to retrieve
+     *                                  the max rank and global max rank.
      * @throws DAOException             If an error occurred when accessing the data source.
      */
-    public Map<Set<ConditionDAO.Attribute>, GlobalConditionMaxRanksTO> getMaxRanks()
-            throws DAOException, IllegalArgumentException;
+    public GlobalConditionMaxRankTO getMaxRank() throws DAOException;
 
     /**
      * Insert into the datasource the provided global {@code ConditionTO}s. These global conditions
@@ -250,7 +243,7 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
      * @version Bgee 14 Mar. 2017
      * @since Bgee 14 mar. 2017
      */
-    public class GlobalConditionMaxRanksTO extends TransferObject {
+    public class GlobalConditionMaxRankTO extends TransferObject {
         private static final long serialVersionUID = 1170648972684653250L;
 
         /**
@@ -270,7 +263,10 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
          */
         private final BigDecimal globalMaxRank;
 
-        public GlobalConditionMaxRanksTO(Integer conditionId, DAODataType dataType,
+        public GlobalConditionMaxRankTO(BigDecimal maxRank, BigDecimal globalMaxRank) {
+            this(null, null, maxRank, globalMaxRank);
+        }
+        public GlobalConditionMaxRankTO(Integer conditionId, DAODataType dataType,
                 BigDecimal maxRank, BigDecimal globalMaxRank) {
             this.conditionId = conditionId;
             this.dataType = dataType;

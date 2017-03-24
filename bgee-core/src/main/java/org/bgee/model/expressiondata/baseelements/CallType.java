@@ -7,6 +7,7 @@ import java.util.EnumSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeEnum;
@@ -62,23 +63,20 @@ public interface CallType {
         @Override
         public void checkPropagationState(PropagationState propState) throws IllegalArgumentException {
             log.entry(propState);
+
             boolean incorrectPropagation = false;
 
             switch (this) {
             case EXPRESSED:
                 //no propagation from parents allowed for expression calls, 
                 //all other propagations allowed. 
-                if (PropagationState.ANCESTOR.equals(propState) ||
-                        PropagationState.SELF_AND_ANCESTOR.equals(propState) ||
-                        PropagationState.SELF_OR_ANCESTOR.equals(propState)) {
+                if (PropagationState.ANCESTOR.equals(propState)) {
                     incorrectPropagation = true;
                 }
                 break;
             case NOT_EXPRESSED:
                 //for no-expression calls, propagation from parent anat. entities.
-                if (PropagationState.DESCENDANT.equals(propState) ||
-                        PropagationState.SELF_AND_DESCENDANT.equals(propState) ||
-                        PropagationState.SELF_OR_DESCENDANT.equals(propState)) {
+                if (PropagationState.DESCENDANT.equals(propState)) {
                     incorrectPropagation = true;
                 }
                 break;
@@ -88,7 +86,9 @@ public interface CallType {
             }
             
             if (incorrectPropagation) {
-                throw log.throwing(new IllegalArgumentException("The following propagation "
+                //log in TRACE level, since this method can simply be used to check validity
+                //of a propagation state
+                throw log.throwing(Level.TRACE, new IllegalArgumentException("The following propagation "
                         + "is incorrect for the CallType " + this + ": " + propState));
             }
             log.exit();
@@ -165,9 +165,11 @@ public interface CallType {
         @Override
         public void checkPropagationState(PropagationState propState) throws IllegalArgumentException {
             log.entry(propState);
-            //no propagation allowed for any diff. expression call type
+            //no propagation allowed for any diff. expression call type.
+            //log in TRACE level, since this method can simply be used to check validity
+            //of a propagation state
             if (!PropagationState.SELF.equals(propState)) {
-                throw log.throwing(new IllegalArgumentException("The following propagation "
+                throw log.throwing(Level.TRACE, new IllegalArgumentException("The following propagation "
                         + "is incorrect for the CallType " + this + ": " + propState));
             }
             log.exit();

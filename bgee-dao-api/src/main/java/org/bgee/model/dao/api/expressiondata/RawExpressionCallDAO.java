@@ -12,7 +12,7 @@ import org.bgee.model.dao.api.exception.DAOException;
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, Feb. 2017
+ * @version Bgee 14, Mar. 2017
  * @since   Bgee 14, Feb. 2017
  * @see RawExpressionCallTO
  */
@@ -25,26 +25,10 @@ public interface RawExpressionCallDAO extends DAO<RawExpressionCallDAO.Attribute
      * <li>{@code ID}: corresponds to {@link RawExpressionCallTO#getId()}.
      * <li>{@code BGEE_GENE_ID}: corresponds to {@link RawExpressionCallTO#getBgeeGeneId()}.
      * <li>{@code CONDITION_ID}: corresponds to {@link RawExpressionCallTO#getConditionId()}.
-     * <li>{@code AFFYMETRIX_MEAN_RANK}: corresponds to {@link RawExpressionCallTO#getAffymetrixMeanRank()}.
-     * <li>{@code RNA_SEQ_MEAN_RANK}: corresponds to {@link RawExpressionCallTO#getRNASeqMeanRank()}.
-     * <li>{@code EST_RANK}: corresponds to {@link RawExpressionCallTO#getESTRank()}.
-     * <li>{@code IN_SITU_RANK}: corresponds to {@link RawExpressionCallTO#getInSituRank()}.
-     * <li>{@code AFFYMETRIX_MEAN_RANK_NORM}: corresponds to {@link RawExpressionCallTO#getAffymetrixMeanRankNorm()}.
-     * <li>{@code RNA_SEQ_MEAN_RANK_NORM}: corresponds to {@link RawExpressionCallTO#getRNASeqMeanRankNorm()}.
-     * <li>{@code EST_RANK_NORM}: corresponds to {@link RawExpressionCallTO#getESTRankNorm()}.
-     * <li>{@code IN_SITU_RANK_NORM}: corresponds to {@link RawExpressionCallTO#getInSituRankNorm()}.
-     * <li>{@code AFFYMETRIX_DISTINCT_RANK_SUM}: corresponds to {@link RawExpressionCallTO#getAffymetrixDistinctRankSum()}.
-     * <li>{@code RNA_SEQ_DISTINCT_RANK_SUM}: corresponds to {@link RawExpressionCallTO#getRNASeqDistinctRankSum()}.
      * </ul>
      */
     public enum Attribute implements DAO.Attribute {
-        ID("id"), BGEE_GENE_ID("bgeeGeneId"), CONDITION_ID("conditionId"), 
-        AFFYMETRIX_MEAN_RANK("affymetrixMeanRank"), RNA_SEQ_MEAN_RANK("rnaSeqMeanRank"), 
-        EST_RANK("estRank"), IN_SITU_RANK("inSituRank"), 
-        AFFYMETRIX_MEAN_RANK_NORM("affymetrixMeanRankNorm"), RNA_SEQ_MEAN_RANK_NORM("rnaSeqMeanRankNorm"), 
-        EST_RANK_NORM("estRankNorm"), IN_SITU_RANK_NORM("inSituRankNorm"), 
-        AFFYMETRIX_DISTINCT_RANK_SUM("affymetrixDistinctRankSum"), 
-        RNA_SEQ_DISTINCT_RANK_SUM("rnaSeqDistinctRankSum");
+        ID("id"), BGEE_GENE_ID("bgeeGeneId"), CONDITION_ID("conditionId");
         
         /**
          * A {@code String} that is the corresponding field name in {@code RelationTO} class.
@@ -63,22 +47,17 @@ public interface RawExpressionCallDAO extends DAO<RawExpressionCallDAO.Attribute
     
     /** 
      * Retrieve raw expression calls for a requested collection of gene IDs, ordered by gene IDs
-     * and expression IDs, for the requested combination of condition parameters.
+     * and expression IDs.
      * 
      * @param geneIds               A {@code Collection of {@code Integer}s that are the Bgee IDs 
      *                              of the genes to retrieve calls for.
-     * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
-     *                              combination of condition parameters that were requested for queries, 
-     *                              allowing to determine which condition and expression tables to target
-     *                              (see {@link ConditionDAO.Attribute#isConditionParameter()}).
      * @return                      A {@code RawExpressionCallTOResultSet} allowing to obtain 
      *                              the requested {@code RawExpressionCallTO}s.
      * @throws DAOException             If an error occurred while accessing the data source.
      * @throws IllegalArgumentException If {@code geneIds} is {@code null} or empty.
      */
     public RawExpressionCallTOResultSet getExpressionCallsOrderedByGeneIdAndExprId(
-            Collection<Integer> geneIds,
-            Collection<ConditionDAO.Attribute> condParameters) throws DAOException, IllegalArgumentException;
+            Collection<Integer> geneIds) throws DAOException, IllegalArgumentException;
     
     /**
      * {@code DAOResultSet} specifics to {@code RawExpressionCallTO}s

@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -105,23 +106,15 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
     public int getMaxGlobalExprId() throws DAOException;
 
     /**
-     * Insert into the datasource the provided {@code GlobalExpressionCallTO}s. Which expression table 
-     * should be targeted will be determined by {@code conditionParameters}. 
+     * Insert into the datasource the provided {@code GlobalExpressionCallTO}s.
      * 
      * @param callTOs               A {@code Collection} of {@code GlobalExpressionCallTO}s to be inserted 
      *                              into the datasource.
-     * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
-     *                              combination of condition parameters that were requested for queries, 
-     *                              allowing to determine which condition and expression tables to target
-     *                              (see {@link ConditionDAO.Attribute#isConditionParameter()}).
-     * @return                      An {@code int} that is the number of calls inserted.
      * @throws DAOException If an error occurred while inserting the conditions.
-     * @throws IllegalArgumentException If one of the {@code Attribute}s in {@code conditionParameters}
-     *                                  is not a condition parameter attributes (see 
-     *                                  {@link ConditionDAO.Attribute#isConditionParameter()}).
+     * @throws IllegalArgumentException If {@code callTOs} is {@code null} or empty.
      */
-    public int insertGlobalCalls(Collection<GlobalExpressionCallTO> callTOs, 
-            Collection<ConditionDAO.Attribute> conditionParameters) throws DAOException, IllegalArgumentException;
+    public int insertGlobalCalls(Collection<GlobalExpressionCallTO> callTOs)
+            throws DAOException, IllegalArgumentException;
     
     /**
      * Inserts the provided correspondence between raw expression and global expression calls 
@@ -129,20 +122,13 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      * 
      * @param globalExprToRawExprTOs    A {@code Collection} of {@code GlobalExpressionToRawExpressionTO}s
      *                                  to be inserted into the data source.
-     * @param conditionParameters       A {@code Collection} of {@code ConditionDAO.Attribute}s 
-     *                                  defining the combination of condition parameters 
-     *                                  that were requested for queries, allowing to determine 
-     *                                  which condition and expression tables to target
-     *                                  (see {@link ConditionDAO.Attribute#isConditionParameter()}).
      * @return                          An {@code int} that is the number of inserted TOs. 
      * @throws DAOException             If an error occurred while trying to insert data.
-     * @throws IllegalArgumentException If one of the {@code Attribute}s in {@code conditionParameters}
-     *                                  is not a condition parameter attributes (see 
-     *                                  {@link ConditionDAO.Attribute#isConditionParameter()}).
+     * @throws IllegalArgumentException If {@code globalExprToRawExprTOs} is {@code null} or empty.
      */
     public int insertGlobalExpressionToRawExpression(
-            Collection<GlobalExpressionToRawExpressionTO> globalExprToRawExprTOs, 
-            Collection<ConditionDAO.Attribute> conditionParameters) throws DAOException, IllegalArgumentException;
+            Collection<GlobalExpressionToRawExpressionTO> globalExprToRawExprTOs)
+                    throws DAOException, IllegalArgumentException;
     
     /**
      * {@code DAOResultSet} specifics to {@code GlobalExpressionCallTO}s
@@ -177,6 +163,11 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
             
             this.globalMeanRank = globalMeanRank;
             this.callDataTOs = callDataTOs;
+            //there should be at most one GlobalExpressionCallDataTO per data type.
+            //we simply use Collectors.toMap that throws an exception in case of key collision
+            if (this.callDataTOs != null) {
+                this.callDataTOs.stream().collect(Collectors.toMap(c -> c.getDataType(), c -> c));
+            }
         }
 
         /**

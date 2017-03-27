@@ -180,6 +180,47 @@ public class GeneService extends CommonService {
                             .map(to -> geneMap.get(to.getBgeeGeneId())).collect(Collectors.toSet())));
         return log.exit(results);
     }
+    
+    /**
+     * Get the orthologies for both given taxon and genes.
+     * 
+     * @param taxonId       A {@code Integer} that is the ID of taxon for which
+     *                      to retrieve the orthology groups.
+     * @param speciesIds    A {@code Set} of {@code Integer}s that are the IDs of species to be
+     *                      considered. If {@code null}, all species available for the taxon are used.
+     * @param geneIds	   	A {@code Set} of {@code String}s that are the IDs of species to be considered. 
+     * 						Can't be {@code null}
+     * @return              The {@code Map} where keys are {@code Integer}s corresponding to 
+     *                      OMA Node IDs, the associated value being a {@code Set} of {@code Gene}s.
+     */
+    public Map<Integer, Set<Gene>> getOrthologs(Integer taxonId, Set<Integer> speciesIds, Set<String> geneIds) {
+        log.entry(taxonId, speciesIds, geneIds);
+        if(geneIds == null){
+        	log.throwing(new IllegalArgumentException("No geneId provided."));
+        }
+        HierarchicalGroupToGeneTOResultSet resultSet = getDaoManager().getHierarchicalGroupDAO()
+                .getGroupToGene(taxonId, speciesIds);
+
+        final Set<Integer> clnSpId =  speciesIds == null? new HashSet<>():
+                Collections.unmodifiableSet(new HashSet<>(speciesIds));
+        
+        final Map<Integer, Species> speciesMap = getSpeciesMap(clnSpId);
+
+        final Map<Integer, Gene> geneMap = Collections.unmodifiableMap(this.getDaoManager().getGeneDAO().getGenesByIds(geneIds).
+        		stream()
+        		.collect(Collectors.toMap(
+        				gTO -> gTO.getId(),
+                        gTO -> mapGeneTOToGene(gTO, speciesMap.get(gTO.getSpeciesId())))));
+
+        Map<Integer, Set<Gene>> results = resultSet.stream()
+                .collect(Collectors.groupingBy(hg -> hg.getNodeId()))
+                .entrySet().stream()
+                .collect(Collectors.toMap(
+                        e -> e.getKey(), 
+                        e -> e.getValue().stream()
+                            .map(to -> geneMap.get(to.getBgeeGeneId())).collect(Collectors.toSet())));
+        return log.exit(results);
+    }
 
     /**
      * Search the genes by name, id and synonyms.

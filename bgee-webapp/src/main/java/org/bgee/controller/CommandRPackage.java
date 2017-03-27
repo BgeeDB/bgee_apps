@@ -2,20 +2,24 @@ package org.bgee.controller;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.controller.user.User;
+import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOManager;
@@ -26,15 +30,21 @@ import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
-import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTOResultSet;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallTOResultSet;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTOResultSet;
 import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
+import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
+import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.expressiondata.ConditionFilter;
+import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
+import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.job.Job;
 import org.bgee.model.job.JobService;
 import org.bgee.model.job.exception.ThreadAlreadyWorkingException;
@@ -43,19 +53,18 @@ import org.bgee.view.DAODisplay;
 import org.bgee.view.ViewFactory;
 
 /**
- * Controller that handles requests allowing to use Bgee DAOs as a webservice. 
- * It is the only controller allowed to directly manipulate DAOs, rather than the bgee-core layer.
+ * Controller that handles requests necessary for the use of the BgeeDB Bioconductor R package.
+ * This controller is needed as, starting from Bgee 14 and the new method for computing call qualities,
+ * it is simpler for generating responses to R package queries to use {@code Service} calls rather than
+ * direct {@code DAO} calls (handled in {@link CommandDAO}).
  * 
  * @author  Frederic Bastian
- * @version Bgee 13 Mar. 2016
- * @since   Bgee 13
+ * @version Bgee 14 Mar. 2017
+ * @see https://www.bioconductor.org/packages/BgeeDB/
+ * @since   Bgee 14 Mar. 2917
  */
-public class CommandDAO extends CommandParent {
-
-    /**
-     * {@code Logger} of the class. 
-     */
-    private final static Logger log = LogManager.getLogger(CommandDownload.class.getName());
+public class CommandRPackage extends CommandParent {
+    private final static Logger log = LogManager.getLogger(CommandRPackage.class.getName());
 
     /**
      * Constructor
@@ -72,7 +81,7 @@ public class CommandDAO extends CommandParent {
      *                          across the entire webapp.
      * @param user              The {@code User} who is making the query to the webapp.
      */
-    public CommandDAO (HttpServletResponse response, RequestParameters requestParameters, 
+    public CommandRPackage(HttpServletResponse response, RequestParameters requestParameters, 
             BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory, 
             JobService jobService, User user) {
         super(response, requestParameters, prop, viewFactory, serviceFactory, jobService, user, null, null);
@@ -82,27 +91,24 @@ public class CommandDAO extends CommandParent {
     public void processRequest() throws IllegalStateException, IOException, 
         PageNotFoundException, InvalidRequestException, ThreadAlreadyWorkingException, TooManyJobsException {
         log.entry();
-        throw log.throwing(new UnsupportedOperationException(
-                "To be implemented, not used anymore for R package"));
-//
-//        Job job = this.jobService.registerNewJob(this.user.getUUID().toString());
-//        try {
-//            //XXX: we should certainly have something using reflection API, 
-//            //for now we simply hardcode DAO methods that are supported
-//            if ("org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.getExpressionCalls".equals(
+        
+
+        Job job = this.jobService.registerNewJob(this.user.getUUID().toString());
+        try {
+//            if ("get_expression_calls".equals(
 //                    this.requestParameters.getAction())) {
 //                
 //                this.processGetExpressionCalls();
 //                
-//            } else if ("org.bgee.model.dao.api.anatdev.AnatEntityDAO.getAnatEntities".equals(
+//            } else if ("get_anat_entities".equals(
 //                    this.requestParameters.getAction())) { 
 //                
 //                this.processGetAnatEntities();
-//            } else if ("org.bgee.model.dao.api.ontologycommon.RelationDAO.getAnatEntityRelations".equals(
+//            } else if ("get_anat_entity_relations".equals(
 //                    this.requestParameters.getAction())) { 
 //                
 //                this.processGetAnatEntitiyRelations();
-//            } else if ("org.bgee.model.dao.api.species.SpeciesDAO.getAllSpecies".equals(
+//            } else if ("get_all_species".equals(
 //                    this.requestParameters.getAction())) { 
 //                
 //                this.processGetAllSpecies();
@@ -111,17 +117,17 @@ public class CommandDAO extends CommandParent {
 //                        this.requestParameters.getUrlParametersInstance().getParamAction() + 
 //                        " parameter value."));
 //            }
-//        } finally {
-//            //we don't care whether the job is successful or not, we just want 
-//            //to keep track of number of running jobs per user
-//            job.release();
-//        }
-//        
-//        log.exit();
+        } finally {
+            //we don't care whether the job is successful or not, we just want 
+            //to keep track of number of running jobs per user
+            job.release();
+        }
+        
+        log.exit();
     }
     
 //    /**
-//     * Performs the query and display the results when requesting {@code ExpressionCallTO}s.
+//     * Performs the query and display the results when requesting {@code ExpressionCall}s.
 //     * 
 //     * @throws InvalidRequestException  In case of invalid request parameter.
 //     * @throws IOException              In case of issue when writing results. 
@@ -129,112 +135,52 @@ public class CommandDAO extends CommandParent {
 //    private void processGetExpressionCalls() throws InvalidRequestException, IOException {
 //        log.entry();
 //        
-//        DAOManager daoManager = this.serviceFactory.getDAOManager();
-//        DAODisplay display = this.viewFactory.getDAODisplay();
+//        DAODisplay display = this.viewFactory.getRPackageDisplay();
 //        
 //        //****************************************
 //        // Retrieve and filter request parameters
 //        //****************************************
 //        //Data types and quality
 //        final Set<DataType> dataTypes = this.checkAndGetDataTypes();
-//        final DataQuality dataQuality = this.checkAndGetDataQuality();
+//        final SummaryQuality dataQuality = this.checkAndGetSummaryQuality();
 //
 //        //parameters not needing processing
-//        final List<String> speciesIds = this.requestParameters.getSpeciesList();
+//        final List<Integer> speciesIds = this.requestParameters.getSpeciesList();
 //        final List<String> stageIds   = this.requestParameters.getDevStage();
 //
-//        //For now, we exclude any param that will trigger a GROUP BY in the expression query 
-//        //(very slow when requesting data for a whole species)
-//        final List<ExpressionCallDAO.Attribute> attrs = getAttributes(this.requestParameters, 
-//                ExpressionCallDAO.Attribute.class).stream()
-//                .filter(attr -> attr.equals(ExpressionCallDAO.Attribute.GENE_ID) || 
-//                                attr.equals(ExpressionCallDAO.Attribute.ANAT_ENTITY_ID) || 
-//                                attr.equals(ExpressionCallDAO.Attribute.STAGE_ID))
-//                .collect(Collectors.toList());
-//        
-//        
+//        final List<CallService.Attribute> attrs = getAttributes(this.requestParameters, 
+//                CallService.Attribute.class);
+//
 //        //for now, we force to select one and only one species, to not return 
 //        //the complete expression table at once
-//        if (speciesIds == null || speciesIds.size() != 1) {
+//        if (speciesIds == null || speciesIds.size() != 1 ||
+//                speciesIds.stream().anyMatch(id -> id == null || id <= 0)) {
 //            throw log.throwing(new InvalidRequestException("One and only one species ID must be provided"));
 //        }
+//        int speciesId = speciesIds.iterator().next();
 //        
 //        //****************************************
-//        // Create DAO filter objects
+//        // Create Call filter objects
 //        //****************************************
 //        //CallDAOFilter: for now, we only allow to define one CallDAOFilter object.
-//        DAOConditionFilter conditionFilter = stageIds == null || stageIds.isEmpty()? 
-//                null: new DAOConditionFilter(null, stageIds);
-//        Set<String> geneIds = this.requestParameters.getBackgroundList() == null? 
-//                null: new HashSet<>(this.requestParameters.getBackgroundList());
-//        CallDAOFilter callDAOFilter = new CallDAOFilter(geneIds, speciesIds, Arrays.asList(conditionFilter));
-//        
-//        //convert data types and data qualities to ExpressionCallTO filters
-//        Set<ExpressionCallTO> callTOFilter = null;
-//        if (DataQuality.HIGH.equals(dataQuality) || 
-//                (dataTypes != null && !dataTypes.isEmpty() && 
-//                !dataTypes.containsAll(EnumSet.allOf(DataType.class)))) {
-//            
-//            Set<DataType> usedDataTypes = dataTypes == null || dataTypes.isEmpty()? 
-//                    EnumSet.allOf(DataType.class): dataTypes;
-//            callTOFilter = usedDataTypes.stream().map(dataType -> {
-//                
-//                CallTO.DataState affyState = null;
-//                CallTO.DataState estState = null;
-//                CallTO.DataState inSituState = null;
-//                CallTO.DataState rnaSeqState = null;
-//                
-//                //convert DataQuality to DAO Enum
-//                CallTO.DataState state = null;
-//                DataQuality usedDataQual = dataQuality == null? DataQuality.LOW: dataQuality;
-//                switch(usedDataQual) {
-//                case LOW: 
-//                    state = CallTO.DataState.LOWQUALITY;
-//                    break;
-//                case HIGH:
-//                    state = CallTO.DataState.HIGHQUALITY;
-//                    break;
-//                default: 
-//                    throw log.throwing(new IllegalStateException("Unsupported DataQuality: " + dataQuality));
-//                }
-//                
-//                switch (dataType) {
-//                case AFFYMETRIX: 
-//                    affyState = state;
-//                    break;
-//                case EST: 
-//                    estState = state;
-//                    break;
-//                case IN_SITU: 
-//                    inSituState = state;
-//                    break;
-//                case RNA_SEQ: 
-//                    rnaSeqState = state;
-//                    break;
-//                default: 
-//                    throw log.throwing(new IllegalStateException("Unsupported DataType: " + dataType));
-//                }
-//                
-//                return new ExpressionCallTO(affyState, estState, inSituState, rnaSeqState);
-//            }).collect(Collectors.toSet());
-//        }
+//        ConditionFilter conditionFilter = stageIds == null || stageIds.isEmpty()? 
+//                null: new ConditionFilter(null, stageIds);
+//        GeneFilter geneFilter = new GeneFilter(speciesId, this.requestParameters.getBackgroundList());
+//        ExpressionCallFilter callFilter = new ExpressionCallFilter(geneFilter,
+//                Collections.singleton(conditionFilter), this.checkAndGetDataTypes(),
+//                ExpressionSummary.EXPRESSED, this.checkAndGetSummaryQuality(), true);
 //
 //        //****************************************
 //        // Perform query and display results
 //        //****************************************
-//        GlobalExpressionCallTOResultSet rs = daoManager.getGlobalExpressionCallDAO().getGlobalExpressionCalls(
-//                Arrays.asList(callDAOFilter), 
-//                callTOFilter, 
+//        Stream<ExpressionCall> callStream = this.serviceFactory.getCallService().loadExpressionCalls(
+//                callFilter, 
 //                //for now, we always include substages and never include substructures
-//                false, true, 
-//                //no gene ID filtering
-//                null, 
-//                //no gene orthology requested
-//                null, 
+////                false, true,
 //                //Attributes requested; no ordering requested
 //                attrs, null);
 //        
-//        display.displayTOs(attrs, rs);
+//        display.displayCalls(attrs, callStream);
 //        
 //        log.exit();
 //    }
@@ -345,29 +291,5 @@ public class CommandDAO extends CommandParent {
 //        display.displayTOs(attrs, rs);
 //        
 //        log.exit();
-//    }
-//
-//    /**
-//     * Return the {@code Attribute}s of a DAO corresponding to the attributes requested 
-//     * in the request parameters of the query. 
-//     * 
-//     * @param rqParams  A {@code RequestParameters} holding parameters of a query to the webapp.
-//     * @param attrType  A {@code Class} defining the type of {@code Attribute}s needed to be retrieved.
-//     * @return          A {@code List} of {@code Attribute}s of type {@code attrType}.
-//     */
-//    private static <T extends Enum<T> & DAO.Attribute> List<T> getAttributes(RequestParameters rqParams, 
-//            Class<T> attrType) {
-//        log.entry(rqParams, attrType);
-//        
-//        List<String> requestedAttrs = rqParams.getValues(
-//                rqParams.getUrlParametersInstance().getParamAttributeList());
-//        if (requestedAttrs == null || requestedAttrs.isEmpty()) {
-//            return log.exit(Arrays.asList(attrType.getEnumConstants()));
-//        }
-//        //we don't use Enum.valueOf to be able to get parameters in lower case. 
-//        final Map<String, T> nameToAttr = Arrays.stream(attrType.getEnumConstants())
-//                .collect(Collectors.toMap(attr -> attr.name().toLowerCase(), attr -> attr));
-//        return log.exit(requestedAttrs.stream().map(rqAttr -> nameToAttr.get(rqAttr.toLowerCase()))
-//                .collect(Collectors.toList()));
 //    }
 }

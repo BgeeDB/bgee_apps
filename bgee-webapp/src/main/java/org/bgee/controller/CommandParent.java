@@ -5,9 +5,12 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URLEncoder;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletResponse;
@@ -18,6 +21,7 @@ import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.user.User;
 import org.bgee.controller.utils.MailSender;
 import org.bgee.model.BgeeEnum;
+import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
@@ -277,23 +281,42 @@ abstract class CommandParent {
      * @return  A {@code DataQuality} retrieved from the request parameters.
      * @throws InvalidRequestException  If the summary quality request parameter is incorrectly used.
      */
-    protected SummaryQuality checkAndGetDataQuality() throws InvalidRequestException {
+    protected SummaryQuality checkAndGetSummaryQuality() throws InvalidRequestException {
         log.entry();
         
         String rqDataQual = this.requestParameters.getDataQuality();
-        SummaryQuality dataQuality = null; 
-        if (rqDataQual != null) {
-            if (rqDataQual.equalsIgnoreCase(SummaryQuality.GOLD.name())) {
-                dataQuality = SummaryQuality.GOLD;
-            } else if (rqDataQual.equalsIgnoreCase(SummaryQuality.SILVER.name()) || 
-                    rqDataQual.equalsIgnoreCase(RequestParameters.ALL_VALUE)) {
-                dataQuality = SummaryQuality.SILVER;
-            } else {
-                throw log.throwing(new InvalidRequestException("Incorrect data quality provided: "
-                        + rqDataQual));
-            }
+        if (SummaryQuality.GOLD.name().equalsIgnoreCase(rqDataQual)) {
+            return log.exit(SummaryQuality.GOLD);
         }
-        return log.exit(dataQuality);
+        if (rqDataQual == null || SummaryQuality.SILVER.name().equalsIgnoreCase(rqDataQual) || 
+                RequestParameters.ALL_VALUE.equalsIgnoreCase(rqDataQual)) {
+            return log.exit(SummaryQuality.SILVER);
+        }
+        throw log.throwing(new InvalidRequestException("Incorrect data quality provided: "
+                + rqDataQual));
     }
 
+    /**
+     * Return the {@code Attribute}s of a {@code Service} corresponding to the attributes requested 
+     * in the request parameters of the query. 
+     * 
+     * @param rqParams  A {@code RequestParameters} holding parameters of a query to the webapp.
+     * @param attrType  A {@code Class} defining the type of {@code Attribute}s needed to be retrieved.
+     * @return          A {@code List} of {@code Attribute}s of type {@code attrType}.
+     */
+    protected static <T extends Enum<T> & Service.Attribute> List<T> getAttributes(
+            RequestParameters rqParams, Class<T> attrType) {
+        log.entry(rqParams, attrType);
+        
+        List<String> requestedAttrs = rqParams.getValues(
+                rqParams.getUrlParametersInstance().getParamAttributeList());
+        if (requestedAttrs == null || requestedAttrs.isEmpty()) {
+            return log.exit(Arrays.asList(attrType.getEnumConstants()));
+        }
+        //we don't use Enum.valueOf to be able to get parameters in lower case. 
+        final Map<String, T> nameToAttr = Arrays.stream(attrType.getEnumConstants())
+                .collect(Collectors.toMap(attr -> attr.name().toLowerCase(), attr -> attr));
+        return log.exit(requestedAttrs.stream().map(rqAttr -> nameToAttr.get(rqAttr.toLowerCase()))
+                .collect(Collectors.toList()));
+    }
 }

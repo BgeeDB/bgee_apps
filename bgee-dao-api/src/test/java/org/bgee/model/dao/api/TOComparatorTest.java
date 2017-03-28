@@ -35,7 +35,7 @@ import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesDataGroupTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO.Domain;
-import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalNodeTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTO;
 import org.bgee.model.dao.api.keyword.KeywordDAO.EntityToKeywordTO;
 import org.bgee.model.dao.api.keyword.KeywordDAO.KeywordTO;
@@ -168,15 +168,15 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreHierarchicalGroupTOEqual() {
-        HierarchicalGroupTO to1 = new HierarchicalGroupTO(1, "ID1", 1, 2, 10);
-        HierarchicalGroupTO to2 = new HierarchicalGroupTO(1, "ID1", 1, 2, 10);
+        HierarchicalNodeTO to1 = new HierarchicalNodeTO(1, "ID1", 1, 2, 10);
+        HierarchicalNodeTO to2 = new HierarchicalNodeTO(1, "ID1", 1, 2, 10);
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
-        to2 = new HierarchicalGroupTO(1, "ID1", 1, 2, 5);
+        to2 = new HierarchicalNodeTO(1, "ID1", 1, 2, 5);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
         
-        to2 = new HierarchicalGroupTO(2, "ID1", 1, 2, 10);
+        to2 = new HierarchicalNodeTO(2, "ID1", 1, 2, 10);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
     }
@@ -187,14 +187,14 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreHierarchicalGroupToGeneTOEqual() {
-        HierarchicalGroupToGeneTO to1 = new HierarchicalGroupToGeneTO(1, 1);
-        HierarchicalGroupToGeneTO to2 = new HierarchicalGroupToGeneTO(1, 1);
+        HierarchicalGroupToGeneTO to1 = new HierarchicalGroupToGeneTO(1, 1, null);
+        HierarchicalGroupToGeneTO to2 = new HierarchicalGroupToGeneTO(1, 1, null);
         assertTrue(TOComparator.areTOsEqual(to1, to2));
         
-        to2 = new HierarchicalGroupToGeneTO(1, 2);
+        to2 = new HierarchicalGroupToGeneTO(1, 2, null);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
         
-        to1 = new HierarchicalGroupToGeneTO(2, 2);
+        to1 = new HierarchicalGroupToGeneTO(2, 2, null);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
     }
     

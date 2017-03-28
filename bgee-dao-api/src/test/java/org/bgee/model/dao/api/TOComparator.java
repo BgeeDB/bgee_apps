@@ -33,7 +33,7 @@ import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesDataGroupTO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesToDataGroupTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO;
-import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalNodeTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTO;
 import org.bgee.model.dao.api.keyword.KeywordDAO.EntityToKeywordTO;
 import org.bgee.model.dao.api.keyword.KeywordDAO.KeywordTO;
@@ -122,8 +122,8 @@ public class TOComparator {
             return log.exit(areTOsEqual((AnatEntityTO) to1, (AnatEntityTO) to2, compareId));
         } else if (to1 instanceof StageTO) {
             return log.exit(areTOsEqual((StageTO) to1, (StageTO) to2, compareId));
-        } else if (to1 instanceof HierarchicalGroupTO) {
-            return log.exit(areTOsEqual((HierarchicalGroupTO) to1, (HierarchicalGroupTO) to2, 
+        } else if (to1 instanceof HierarchicalNodeTO) {
+            return log.exit(areTOsEqual((HierarchicalNodeTO) to1, (HierarchicalNodeTO) to2, 
                     compareId));
         } else if (to1 instanceof HierarchicalGroupToGeneTO) {
             return log.exit(areTOsEqual(
@@ -474,7 +474,7 @@ public class TOComparator {
      * @return {@code true} if {@code to1} and {@code to2} have all attributes
      *         equal.
      */
-    private static boolean areTOsEqual(HierarchicalGroupTO to1, HierarchicalGroupTO to2, 
+    private static boolean areTOsEqual(HierarchicalNodeTO to1, HierarchicalNodeTO to2, 
             boolean compareId) {
         log.entry(to1, to2, compareId);
         if (TOComparator.areEntityTOsEqual(to1, to2, compareId) && 
@@ -500,7 +500,8 @@ public class TOComparator {
         log.entry(to1, to2);
 
         if (Objects.equals(to1.getBgeeGeneId(), to2.getBgeeGeneId()) && 
-            Objects.equals(to1.getNodeId(), to2.getNodeId())) {
+            Objects.equals(to1.getNodeId(), to2.getNodeId()) &&
+        	Objects.equals(to1.getTaxonId(),  to2.getTaxonId())) {
             return log.exit(true);
         }
         return log.exit(false);

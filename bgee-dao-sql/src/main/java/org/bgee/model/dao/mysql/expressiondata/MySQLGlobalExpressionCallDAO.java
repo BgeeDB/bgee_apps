@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -25,12 +24,10 @@ import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.DAOExperimentCount;
 import org.bgee.model.dao.api.expressiondata.DAOPropagationState;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
-import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionToRawExpressionTO.CallOrigin;
 import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
-import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 
 /**
@@ -45,8 +42,7 @@ import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 public class MySQLGlobalExpressionCallDAO extends MySQLDAO<GlobalExpressionCallDAO.Attribute> 
 implements GlobalExpressionCallDAO {
     private final static Logger log = LogManager.getLogger(MySQLGlobalExpressionCallDAO.class.getName());
-    
-    private final static String CALL_ORIGIN_FIELD = "callOrigin";
+
     private final static String GLOBAL_EXPR_ID_FIELD = "globalExpressionId";
     private final static String GLOBAL_EXPR_TABLE_NAME = "globalExpression";
     private final static String GLOBAL_MEAN_RANK_FIELD = "meanRank";
@@ -736,47 +732,6 @@ implements GlobalExpressionCallDAO {
 
         return log.exit(newParamIndex);
     }
-
-    @Override
-    public int insertGlobalExpressionToRawExpression(
-            Collection<GlobalExpressionToRawExpressionTO> globalExprToRawExprTOs)
-                    throws DAOException, IllegalArgumentException {
-        log.entry(globalExprToRawExprTOs);
-        
-        if (globalExprToRawExprTOs == null || globalExprToRawExprTOs.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("No expression relation provided"));
-        }
-        
-        StringBuilder sql = new StringBuilder(); 
-        sql.append("INSERT INTO globalExpressionToExpression (")
-           .append(MySQLRawExpressionCallDAO.EXPR_ID_FIELD).append(", ")
-           .append(GLOBAL_EXPR_ID_FIELD).append(", ")
-           .append(CALL_ORIGIN_FIELD)
-           .append(") VALUES ");
-        for (int i = 0; i < globalExprToRawExprTOs.size(); i++) {
-            if (i > 0) {
-                sql.append(", ");
-            }
-            sql.append("(").append(BgeePreparedStatement.generateParameterizedQueryString(3))
-               .append(") ");
-        }
-        try (BgeePreparedStatement stmt = 
-                this.getManager().getConnection().prepareStatement(sql.toString())) {
-            int paramIndex = 1;
-            for (GlobalExpressionToRawExpressionTO to: globalExprToRawExprTOs) {
-                stmt.setInt(paramIndex, to.getRawExpressionId());
-                paramIndex++;
-                stmt.setInt(paramIndex, to.getGlobalExpressionId());
-                paramIndex++;
-                stmt.setString(paramIndex, to.getCallOrigin().getStringRepresentation());
-                paramIndex++;
-            }
-            
-            return log.exit(stmt.executeUpdate());
-        } catch (SQLException e) {
-            throw log.throwing(new DAOException(e));
-        }
-    }
     
     /**
      * Implementation of the {@code GlobalExpressionCallTOResultSet}. 
@@ -1056,51 +1011,6 @@ implements GlobalExpressionCallDAO {
             }
             
             return log.exit(null);
-        }
-    }
-    
-    /**
-     * MySQL implementation of {@code GlobalExpressionToRawExpressionTOResultSet}.
-     * 
-     * @author Frederic Bastian
-     * @version Bgee 14 Feb. 2017
-     * @since Bgee 14 Feb. 2017
-     */
-    public class MySQLGlobalExpressionToRawExpressionTOResultSet extends MySQLDAOResultSet<GlobalExpressionToRawExpressionTO> 
-    implements GlobalExpressionToRawExpressionTOResultSet {
-
-        private MySQLGlobalExpressionToRawExpressionTOResultSet(BgeePreparedStatement statement) {
-            super(statement);
-        }
-        
-        @Override
-        protected GlobalExpressionToRawExpressionTO getNewTO() throws DAOException {
-            log.entry();
-            try {
-                final ResultSet currentResultSet = this.getCurrentResultSet();
-                Integer rawExpressionId = null, globalExpressionId = null;
-                CallOrigin callOrigin = null;
-                
-                for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
-                    String columnName = column.getValue();
-                    
-                    if (columnName.equals(MySQLRawExpressionCallDAO.EXPR_ID_FIELD)) {
-                        rawExpressionId = currentResultSet.getInt(columnName);
-                    } else if (columnName.equals(GLOBAL_EXPR_ID_FIELD)) {
-                        globalExpressionId = currentResultSet.getInt(columnName);
-                    } else if (columnName.equals(CALL_ORIGIN_FIELD)) {
-                        callOrigin = CallOrigin.convertToCallOrigin(
-                                currentResultSet.getString(columnName));
-                    }  else {
-                        throw log.throwing(new UnrecognizedColumnException(columnName));
-                    }
-                }
-                
-                return log.exit(new GlobalExpressionToRawExpressionTO(
-                        rawExpressionId, globalExpressionId, callOrigin));
-            } catch (SQLException e) {
-                throw log.throwing(new DAOException(e));
-            }
         }
     }
 }

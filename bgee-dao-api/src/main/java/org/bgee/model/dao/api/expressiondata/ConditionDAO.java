@@ -3,6 +3,8 @@ package org.bgee.model.dao.api.expressiondata;
 import java.math.BigDecimal;
 import java.util.Collection;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.EntityTO;
@@ -158,6 +160,20 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
      * @throws DAOException If an error occurred while inserting the conditions.
      */
     public int insertGlobalConditions(Collection<ConditionTO> conditionTOs) throws DAOException;
+    
+    /**
+     * Inserts the provided correspondence between raw condition and global conditions 
+     * into the data source, represented as a {@code Collection} of {@code GlobalConditionToRawConditionTO}s. 
+     *
+     * @param globalCondToRawCondTOs    A {@code Collection} of {@code GlobalConditionToRawConditionTO}s
+     *                                  to be inserted into the data source.
+     * @return                          An {@code int} that is the number of inserted TOs. 
+     * @throws DAOException             If an error occurred while trying to insert data.
+     * @throws IllegalArgumentException If {@code globalCondToRawCondTOs} is {@code null} or empty.
+     */
+    public int insertGlobalConditionToRawCondition(
+            Collection<GlobalConditionToRawConditionTO> globalCondToRawCondTOs)
+                    throws DAOException, IllegalArgumentException;
 
     /**
      * {@code DAOResultSet} specifics to {@code ConditionTO}s
@@ -310,6 +326,125 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
                    .append(", dataType=").append(dataType)
                    .append(", maxRank=").append(maxRank)
                    .append(", globalMaxRank=").append(globalMaxRank).append("]");
+            return builder.toString();
+        }
+    }
+
+    /**
+     * {@code DAOResultSet} specifics to {@code GlobalConditionToRawConditionTO}s
+     *
+     * @author Frederic Bastian
+     * @version Bgee 14 Feb. 2017
+     * @since Bgee 14 Feb. 2017
+     */
+    public interface GlobalConditionToRawConditionTOResultSet
+                    extends DAOResultSet<GlobalConditionToRawConditionTO> {
+    }
+
+    /**
+     * A {@code TransferObject} representing a relation between a globalCondition and
+     * one of the raw conditions considered when aggregating the data in the related globalCondition.
+     * <p>
+     * This class defines a raw condition ID (see {@link #getConditionId()}
+     * and a global condition ID (see {@link #getGlobalConditionId()}), and also stores
+     * the origin of the relations (association from sub-conditions or parent conditions
+     * or from the same condition, see {@link #getCondtionRelationOrigin()}).
+     *
+     * @author Frederic Bastian
+     * @version Bgee 14 Mar. 2017
+     * @since Bgee 14 Mar. 2017
+     */
+    //TODO: add related method in TOComparator
+    public static class GlobalConditionToRawConditionTO extends TransferObject {
+        private final static Logger log = LogManager.getLogger(GlobalConditionToRawConditionTO.class.getName());
+        private static final long serialVersionUID = -553628358149907274L;
+
+        public enum ConditionRelationOrigin implements TransferObject.EnumDAOField {
+            SELF("self"), DESCENDANT("descendant"), PARENT("parent");
+
+            /**
+             * The {@code String} representation of the enum.
+             */
+            private String stringRepresentation;
+            /**
+             * Constructor
+             * @param stringRepresentation the {@code String} representation of the enum.
+             */
+            ConditionRelationOrigin(String stringRepresentation) {
+                this.stringRepresentation = stringRepresentation;
+            }
+            @Override
+            public String getStringRepresentation() {
+                return stringRepresentation;
+            }
+            /**
+             * Return the mapped {@link ConditionRelationOrigin} from a string representation.
+             * @param stringRepresentation A string representation
+             * @return The corresponding {@code ConditionRelationOrigin}
+             * @see org.bgee.model.dao.api.TransferObject.EnumDAOField#convert(Class, String)
+             */
+            public static ConditionRelationOrigin convertToCondRelOrigin(String stringRepresentation){
+                log.entry(stringRepresentation);
+                return log.exit(GlobalConditionToRawConditionTO.convert(ConditionRelationOrigin.class, 
+                        stringRepresentation));
+            }
+        }
+
+        /**
+         * A {@code Integer} representing the ID of the raw condition.
+         */
+        private final Integer rawConditionId;
+        /**
+         * A {@code Integer} representing the ID of the global condition.
+         */
+        private final Integer globalConditionId;
+        /**
+         * A {@code ConditionRelationOrigin} representing the origin of the association.
+         */
+        private final ConditionRelationOrigin conditionRelationOrigin;
+
+        /**
+         * Constructor providing the condition ID (see {@link #getRawConditionId()}) and
+         * the global condition ID (see {@link #getGlobalConditionId()}).
+         *
+         * @param rawExpressionId           An {@code Integer} that is the ID of the raw condition.
+         * @param globalExpressionId        An {@code Integer} that is the ID of the global condition.
+         * @param conditionRelationOrigin   An {@code ConditionRelationOrigin} representing
+         *                                  the origin of the association.
+         **/
+        public GlobalConditionToRawConditionTO(Integer rawConditionId, Integer globalConditionId,
+                ConditionRelationOrigin conditionRelationOrigin) {
+            super();
+            this.rawConditionId = rawConditionId;
+            this.globalConditionId = globalConditionId;
+            this.conditionRelationOrigin = conditionRelationOrigin;
+        }
+
+        /**
+         * @return  the {@code Integer} representing the ID of the raw condition.
+         */
+        public Integer getRawConditionId() {
+            return rawConditionId;
+        }
+        /**
+         * @return  the {@code Integer} representing the ID of the global condition.
+         */
+        public Integer getGlobalConditionId() {
+            return globalConditionId;
+        }
+        /**
+         * @return  {@code ConditionRelationOrigin} representing the origin of the association.
+         */
+        public ConditionRelationOrigin getConditionRelationOrigin() {
+            return conditionRelationOrigin;
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("GlobalConditionToRawConditionTO [rawConditionId=").append(rawConditionId)
+                    .append(", globalConditionId=").append(globalConditionId)
+                    .append(", conditionRelationOrigin=").append(conditionRelationOrigin).append("]");
             return builder.toString();
         }
     }

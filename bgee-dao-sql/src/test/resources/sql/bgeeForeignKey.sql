@@ -187,6 +187,12 @@ add foreign key (stageId) references stage(stageId) on delete cascade,
 add foreign key (speciesId) references species(speciesId) on delete cascade;
 /*!40000 ALTER TABLE `globalCond` ENABLE KEYS */;
 
+/*!40000 ALTER TABLE `globalCondToCond` DISABLE KEYS */;
+alter table globalCondToCond
+add foreign key (conditionId) references cond(conditionId) on delete cascade,
+add foreign key (globalConditionId) references globalCond(globalConditionId) on delete cascade;
+/*!40000 ALTER TABLE `globalCondToCond` ENABLE KEYS */;
+
 -- ****************************************************
 -- EXPRESSION DATA
 -- ****************************************************
@@ -201,12 +207,6 @@ alter table globalExpression
 add foreign key (bgeeGeneId) references gene(bgeeGeneId) on delete cascade,
 add foreign key (globalConditionId) references globalCond(globalConditionId) on delete cascade;
 /*!40000 ALTER TABLE `globalExpression` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `globalExpressionToExpression` DISABLE KEYS */;
-alter table globalExpressionToExpression
-add foreign key (expressionId) references expression(expressionId) on delete cascade,
-add foreign key (globalExpressionId) references globalExpression(globalExpressionId) on delete cascade;
-/*!40000 ALTER TABLE `globalExpressionToExpression` ENABLE KEYS */;
 
 -- ****************************************************
 -- DIFFERENTIAL EXPRESSION DATA

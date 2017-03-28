@@ -229,11 +229,8 @@ public interface RelationDAO extends DAO<RelationDAO.Attribute> {
      *                      entity relations into the database.
      * @return              An {@code int} that is the number of inserted anatomical entity 
      *                      relations.
-     * @throws IllegalArgumentException If {@code relationTOs} is empty or null. 
-     * @throws DAOException If a {@code SQLException} occurred while trying to insert anatomical 
-     *                      entity relations. The {@code SQLException} will be wrapped into a 
-     *                      {@code DAOException} ({@code DAOs} do not expose these kind of 
-     *                      implementation details).
+     * @throws IllegalArgumentException If {@code relationTOs} is empty or null.
+     * @throws DAOException If an {@code Exception} occurred while trying to insert relations.
      */
     public int insertAnatEntityRelations(Collection<RelationTO<String>> relationTOs) 
             throws DAOException, IllegalArgumentException;
@@ -245,11 +242,8 @@ public interface RelationDAO extends DAO<RelationDAO.Attribute> {
      * @param relationTOs   A {@code Collection} of {@code RelationTO}s to be inserted 
      *                      into the database.
      * @return              An {@code int} that is the number of inserted relations.
-     * @throws IllegalArgumentException If {@code relationTOs} is empty or null. 
-     * @throws DAOException If a {@code SQLException} occurred while trying to insert relations 
-     *                      between Gene Ontology terms. The {@code SQLException} will be wrapped 
-     *                      into a {@code DAOException} ({@code DAOs} do not expose these kind of 
-     *                      implementation details).
+     * @throws IllegalArgumentException If {@code relationTOs} is empty or null.
+     * @throws DAOException If an {@code Exception} occurred while trying to insert relations.
      */
     public int insertGeneOntologyRelations(Collection<RelationTO<String>> relationTOs) 
             throws DAOException, IllegalArgumentException;

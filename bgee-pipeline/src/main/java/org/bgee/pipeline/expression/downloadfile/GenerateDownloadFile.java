@@ -1,13 +1,16 @@
 package org.bgee.pipeline.expression.downloadfile;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -19,9 +22,11 @@ import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.expressiondata.baseelements.CallType.Expression;
-import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.file.DownloadFile.CategoryEnum;
+import org.bgee.model.species.Species;
+import org.bgee.model.species.SpeciesService;
 import org.bgee.pipeline.expression.CallUser;
 
 
@@ -65,49 +70,218 @@ public abstract class GenerateDownloadFile extends CallUser {
      * A {@code String} that is the name of the column containing anatomical entity IDs, 
      * in the download file.
      */
-    public final static String ANATENTITY_ID_COLUMN_NAME = "Anatomical entity ID";
+    public final static String ANAT_ENTITY_ID_COLUMN_NAME = "Anatomical entity ID";
     /**
      * A {@code String} that is the name of the column containing anatomical entity names, 
      * in the download file.
      */
-    public final static String ANATENTITY_NAME_COLUMN_NAME = "Anatomical entity name";
+    public final static String ANAT_ENTITY_NAME_COLUMN_NAME = "Anatomical entity name";
+
+    public final static String CALL_TYPE_COLUMN_NAME_SUFFIX  = " data";
+
+    public final static String PRESENT_HIGH_COUNT_COLUMN_NAME_SUFFIX =
+            " experiment count showing expression of this gene in this condition or"
+            + " in sub-conditions with a high quality";
+    
+    public final static String PRESENT_LOW_COUNT_COLUMN_NAME_SUFFIX =
+            " experiment count showing expression of this gene in this condition or"
+            + " in sub-conditions with a low quality";
+
+    public final static String ABSENT_HIGH_COUNT_COLUMN_NAME_SUFFIX =
+            " experiment count showing absence of expression of this gene in this"
+            + " condition or valid parent conditions with a high quality";
+    
+    public final static String ABSENT_LOW_COUNT_COLUMN_NAME_SUFFIX =
+            " experiment count showing absence of expression of this gene in this"
+            + " condition or valid parent conditions with a low quality";
+
+    public final static String OBSERVED_DATA_COLUMN_NAME_PREFIX = 
+            "Including ";
+    public final static String OBSERVED_DATA_COLUMN_NAME_SUFFIX = 
+            " observed data";
 
     /**
      * A {@code String} that is the name of the column containing expression, no-expression or
      * differential expression found with Affymetrix experiment, in the download file.
      */
-    public final static String AFFYMETRIX_DATA_COLUMN_NAME = "Affymetrix data";
+    public final static String AFFYMETRIX_DATA_COLUMN_NAME = "Affymetrix" + CALL_TYPE_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing call quality found 
      * with Affymetrix experiment, in the download file.
      */
     public final static String AFFYMETRIX_CALL_QUALITY_COLUMN_NAME = "Affymetrix call quality";
-       /**
+    /**
+     * A {@code String} that is the name of the column containing count of Affymetrix experiments
+     * showing expression of this gene in this condition or in sub-conditions with a high quality,
+     * in the download file.
+     */
+    public final static String AFFYMETRIX_PRESENT_HIGH_COUNT_COLUMN_NAME =
+            "Affymetrix " + PRESENT_HIGH_COUNT_COLUMN_NAME_SUFFIX;
+    /**
+     * A {@code String} that is the name of the column containing count of Affymetrix experiments
+     * showing expression of this gene in this condition or in sub-conditions with a low quality,
+     * in the download file.
+     */
+    public final static String AFFYMETRIX_PRESENT_LOW_COUNT_COLUMN_NAME =
+            "Affymetrix" + PRESENT_LOW_COUNT_COLUMN_NAME_SUFFIX;
+    /**
+     * A {@code String} that is the name of the column containing count of Affymetrix experiments
+     * showing absence of expression of this gene in this condition or valid parent conditions
+     * with a high quality, in the download file.
+     */
+    public final static String AFFYMETRIX_ABSENT_HIGH_COUNT_COLUMN_NAME = 
+            "Affymetrix" + ABSENT_HIGH_COUNT_COLUMN_NAME_SUFFIX;
+    /**
+     * A {@code String} that is the name of the column containing count of Affymetrix experiments
+     * showing absence of expression of this gene in this condition or valid parent conditions
+     * with a low quality, in the download file.
+     */
+    public final static String AFFYMETRIX_ABSENT_LOW_COUNT_COLUMN_NAME =
+            "Affymetrix" + ABSENT_LOW_COUNT_COLUMN_NAME_SUFFIX;
+    /**
      * A {@code String} that is the name of the column containing if an Affymetrix experiment 
      * is observed, in the download file.
      */
     public final static String AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME = 
-            "Including Affymetrix observed data"; 
+            OBSERVED_DATA_COLUMN_NAME_PREFIX + "Affymetrix" + OBSERVED_DATA_COLUMN_NAME_SUFFIX;
+    
+    /**
+     * A {@code String} that is the name of the column containing expression/no-expression found
+     * with EST experiment, in the download file.
+     */
+    public final static String EST_DATA_COLUMN_NAME = "EST" + CALL_TYPE_COLUMN_NAME_SUFFIX;
+    /**
+     * A {@code String} that is the name of the column containing count of EST libraries
+     * showing expression of this gene in this condition or in sub-conditions with a high quality,
+     * in the download file.
+     */
+    public final static String EST_PRESENT_HIGH_COUNT_COLUMN_NAME =
+            "EST" + PRESENT_HIGH_COUNT_COLUMN_NAME_SUFFIX;
+    /**
+     * A {@code String} that is the name of the column containing count of EST libraries
+     * showing expression of this gene in this condition or in sub-conditions with a low quality,
+     * in the download file.
+     */
+    public final static String EST_PRESENT_LOW_COUNT_COLUMN_NAME =
+            "EST" + PRESENT_LOW_COUNT_COLUMN_NAME_SUFFIX;
+    /**
+     * A {@code String} that is the name of the column containing if an EST experiment is observed, 
+     * in the download file.
+     */
+    public final static String EST_OBSERVED_DATA_COLUMN_NAME =
+            OBSERVED_DATA_COLUMN_NAME_PREFIX + "EST" + OBSERVED_DATA_COLUMN_NAME_SUFFIX;
+
+    /**
+     * A {@code String} that is the name of the column containing expression/no-expression
+     * found with <em>in situ</em> experiment, in the download file.
+     */
+    public final static String IN_SITU_DATA_COLUMN_NAME = "In situ hybridization" + CALL_TYPE_COLUMN_NAME_SUFFIX;
+    /**
+     * A {@code String} that is the name of the column containing count of <em>in situ</em> experiments
+     * showing expression of this gene in this condition or in sub-conditions with a high quality,
+     * in the download file.
+     */
+    public final static String IN_SITU_PRESENT_HIGH_COUNT_COLUMN_NAME =
+            "In situ hybridization" + PRESENT_HIGH_COUNT_COLUMN_NAME_SUFFIX;
+    /**
+     * A {@code String} that is the name of the column containing count of <em>in situ</em> experiments
+     * showing expression of this gene in this condition or in sub-conditions with a low quality,
+     * in the download file.
+     */
+    public final static String IN_SITU_PRESENT_LOW_COUNT_COLUMN_NAME =
+            "In situ hybridization" + PRESENT_LOW_COUNT_COLUMN_NAME_SUFFIX;
+    /**
+     * A {@code String} that is the name of the column containing count of <em>in situ</em> experiments
+     * showing absence of expression of this gene in this condition or valid parent conditions
+     * with a high quality, in the download file.
+     */
+    public final static String IN_SITU_ABSENT_HIGH_COUNT_COLUMN_NAME = 
+            "In situ hybridization" + ABSENT_HIGH_COUNT_COLUMN_NAME_SUFFIX;
+    /**
+     * A {@code String} that is the name of the column containing count of <em>in situ</em> experiments
+     * showing absence of expression of this gene in this condition or valid parent conditions
+     * with a low quality, in the download file.
+     */
+    public final static String IN_SITU_ABSENT_LOW_COUNT_COLUMN_NAME =
+            "In situ hybridization" + ABSENT_LOW_COUNT_COLUMN_NAME_SUFFIX;
+    /**
+     * A {@code String} that is the name of the column containing if an <em>in situ</em> experiment 
+     * is observed, in the download file.
+     */
+    public final static String IN_SITU_OBSERVED_DATA_COLUMN_NAME =
+            OBSERVED_DATA_COLUMN_NAME_PREFIX + "in situ hybridization" + OBSERVED_DATA_COLUMN_NAME_SUFFIX;
+
     /**
      * A {@code String} that is the name of the column containing expression, no-expression or
      * differential expression found with RNA-Seq experiment, in the download file.
      */
-    public final static String RNASEQ_DATA_COLUMN_NAME = "RNA-Seq data";
+    public final static String RNASEQ_DATA_COLUMN_NAME = "RNA-Seq" + CALL_TYPE_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing call quality found 
      * with RNA-Seq experiment, in the download file.
      */
     public final static String RNASEQ_CALL_QUALITY_COLUMN_NAME = "RNA-Seq call quality";
     /**
+     * A {@code String} that is the name of the column containing count of RNA-Seq experiments
+     * showing expression of this gene in this condition or in sub-conditions with a high quality,
+     * in the download file.
+     */
+    public final static String RNASEQ_PRESENT_HIGH_COUNT_COLUMN_NAME =
+            "RNA-Seq " + PRESENT_HIGH_COUNT_COLUMN_NAME_SUFFIX;
+    /**
+     * A {@code String} that is the name of the column containing count of RNA-Seq experiments
+     * showing expression of this gene in this condition or in sub-conditions with a low quality,
+     * in the download file.
+     */
+    public final static String RNASEQ_PRESENT_LOW_COUNT_COLUMN_NAME =
+            "RNA-Seq " + PRESENT_LOW_COUNT_COLUMN_NAME_SUFFIX;
+    /**
+     * A {@code String} that is the name of the column containing count of RNA-Seq experiments
+     * showing absence of expression of this gene in this condition or valid parent conditions
+     * with a high quality, in the download file.
+     */
+    public final static String RNASEQ_ABSENT_HIGH_COUNT_COLUMN_NAME = 
+            "RNA-Seq " + ABSENT_HIGH_COUNT_COLUMN_NAME_SUFFIX;
+    /**
+     * A {@code String} that is the name of the column containing count of RNA-Seq experiments
+     * showing absence of expression of this gene in this condition or valid parent conditions
+     * with a low quality, in the download file.
+     */
+    public final static String RNASEQ_ABSENT_LOW_COUNT_COLUMN_NAME =
+            "RNA-Seq " + ABSENT_LOW_COUNT_COLUMN_NAME_SUFFIX;
+    /**
      * A {@code String} that is the name of the column containing if a RNA-Seq experiment 
      * is observed, in the download file.
      */
-    public final static String RNASEQ_OBSERVED_DATA_COLUMN_NAME = "Including RNA-Seq observed data"; 
+    public final static String RNASEQ_OBSERVED_DATA_COLUMN_NAME =
+            OBSERVED_DATA_COLUMN_NAME_PREFIX + "RNA-Seq" + OBSERVED_DATA_COLUMN_NAME_SUFFIX;
+
+    /**
+     * A {@code String} that is the name of the column containing whether the call include
+     * observed data or not.
+     */
+    public final static String INCLUDING_OBSERVED_DATA_COLUMN_NAME = "Including observed data";
+    
+    /**
+     * A {@code String} that is the name of the column containing merged
+     * expression/no-expression from different data types, in the download file.
+     */
+    public final static String EXPRESSION_COLUMN_NAME = "Expression";
     /**
      * A {@code String} that is the name of the column containing the merged quality of the call,
      * in the download file.
      */
     public final static String QUALITY_COLUMN_NAME = "Call quality";
+    /**
+     * A {@code String} that is the name of the column containing the merged quality of the call,
+     * in the download file.
+     */
+    public final static String EXPRESSION_SCORE_COLUMN_NAME = "Expression score";
+    /**
+     * A {@code String} that is the name of the column containing the merged quality of the call,
+     * in the download file.
+     */
+    public final static String EXPRESSION_RANK_COLUMN_NAME = "Expression rank";
     /**
      * A {@code String} that is the value of the cell containing not applicable,
      * in the download file.
@@ -122,6 +296,18 @@ public abstract class GenerateDownloadFile extends CallUser {
      * in the download file.
      */
     public final static String NO_DATA_VALUE = "no data";
+    /**
+     * A {@code String} that is the bronze quality data text, in the download file.
+     */
+    public final static String BRONZE_QUALITY_TEXT = "bronze quality";
+    /**
+     * A {@code String} that is the silver quality data text, in the download file.
+     */
+    public final static String SILVER_QUALITY_TEXT = "silver quality";
+    /**
+     * A {@code String} that is the gold quality data text, in the download file.
+     */
+    public final static String GOLD_QUALITY_TEXT = "gold quality";
     /**
      * A {@code String} that is the low quality data text, in the download file.
      */
@@ -345,36 +531,52 @@ public abstract class GenerateDownloadFile extends CallUser {
     }
 
     /**
-     * Convert a {@code org.bgee.model.expressiondata.baseelements.DataQuality DataQuality}
+     * Convert a {@code org.bgee.model.expressiondata.baseelements.SummaryQuality SummaryQuality}
      * into a {@code String}.
      * <p>  
      * This is because its method {@code getStringRepresentation} is not available for display in files.
      * 
-     * @param qual  A {@code DataQuality} to be converted.
+     * @param qual  A {@code SummaryQuality} to be converted.
      * @return      The {@code String} corresponding to {@code qual}, to be used in files
      */
-    protected static String convertDataQualityToString(DataQuality qual) {
+    protected static String convertSummaryQualityToString(SummaryQuality qual) {
         log.entry(qual);
         if (qual == null) {
             return log.exit(NA_VALUE);
         }
         switch (qual) {
-        case HIGH:
-            return log.exit(HIGH_QUALITY_TEXT);
-        case LOW:
-            return log.exit(LOW_QUALITY_TEXT);
-        case NODATA:
-            return log.exit(NA_VALUE);
+        case GOLD:
+            return log.exit(GOLD_QUALITY_TEXT);
+        case SILVER:
+            return log.exit(SILVER_QUALITY_TEXT);
+        case BRONZE:
+            return log.exit(BRONZE_QUALITY_TEXT);
         default:
-            throw new IllegalArgumentException("Unrecognized DataQuality: " + qual);
+            throw new IllegalArgumentException("Unrecognized SummaryQuality: " + qual);
         }
     }
 
     /**
-     * Convert a {@code org.bgee.model.expressiondata.baseelements.DataQuality DataQuality}
-     * into a {@code String}.
-     * <p>  
-     * This is because its method {@code getStringRepresentation} is not available for display in files.
+     * Convert a {@code String} into a {@code org.bgee.model.expressiondata.baseelements.SummaryQuality SummaryQuality}.
+     * 
+     * @param string    A {@code String} to be converted.
+     * @return          A {@code SummaryQuality} corresponding to {@code string}, to be used in files.
+     */
+    protected static SummaryQuality convertStringToSummaryQuality(String string) {
+        log.entry(string);
+        switch (string) {
+            case GOLD_QUALITY_TEXT:
+                return log.exit(SummaryQuality.GOLD);
+            case SILVER_QUALITY_TEXT:
+                return log.exit(SummaryQuality.SILVER);
+            case BRONZE_QUALITY_TEXT:
+                return log.exit(SummaryQuality.BRONZE);
+        }
+        throw new IllegalArgumentException("Unrecognized summary quality text: " + string);
+    }
+
+    /**
+     * Convert a {@code Boolean} defining whether data are observed into a {@code String}.
      * 
      * @param qual  A {@code DataQuality} to be converted.
      * @return      The {@code String} corresponding to {@code qual}, to be used in files
@@ -454,12 +656,10 @@ public abstract class GenerateDownloadFile extends CallUser {
         if (StringUtils.isBlank(directory)) {
             throw log.throwing(new IllegalArgumentException("A directory must be provided"));
         }
-        this.speciesIds = speciesIds;
-        this.fileTypes = fileTypes;
-        
-        if (directory == null || directory.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("No directory is provided"));
-        }
+        this.speciesIds = Collections.unmodifiableList(speciesIds == null?
+                new ArrayList<>(): new ArrayList<>(speciesIds));
+        this.fileTypes = Collections.unmodifiableSet(fileTypes == null?
+                new HashSet<>(): new HashSet<>(fileTypes));
         this.directory = directory;
     }
     
@@ -502,8 +702,8 @@ public abstract class GenerateDownloadFile extends CallUser {
         }
         row.put(GENE_ID_COLUMN_NAME, geneId);
         row.put(GENE_NAME_COLUMN_NAME, geneName);
-        row.put(ANATENTITY_ID_COLUMN_NAME, anatEntityId);
-        row.put(ANATENTITY_NAME_COLUMN_NAME, anatEntityName);
+        row.put(ANAT_ENTITY_ID_COLUMN_NAME, anatEntityId);
+        row.put(ANAT_ENTITY_NAME_COLUMN_NAME, anatEntityName);
         row.put(STAGE_ID_COLUMN_NAME, stageId);
         row.put(STAGE_NAME_COLUMN_NAME, stageName);
 
@@ -525,31 +725,15 @@ public abstract class GenerateDownloadFile extends CallUser {
      * @return              A {@code Map} where keys are {@code Integer}s that are the species IDs, 
      *                      the associated values being a {@code String} that is its latin name.
      */
-    protected Map<Integer, String> checkAndGetLatinNamesBySpeciesIds(Set<Integer> speciesIds) {
+    protected Map<Integer, String> checkAndGetLatinNamesBySpeciesIds(Set<Integer> speciesIds,
+            SpeciesService spService) {
         log.entry(speciesIds);
-        
-        Map<Integer, String> namesByIds = new HashMap<>();
-        SpeciesDAO speciesDAO = this.getSpeciesDAO();
-        speciesDAO.setAttributes(SpeciesDAO.Attribute.ID, SpeciesDAO.Attribute.GENUS, 
-                SpeciesDAO.Attribute.SPECIES_NAME);
-        
-        try (SpeciesTOResultSet rs = speciesDAO.getSpeciesByIds(speciesIds)) {
-            while (rs.next()) {
-                SpeciesTO speciesTO = rs.getTO();
-                if (speciesTO.getId() == null || speciesTO.getId() <= 0 || 
-                        StringUtils.isBlank(speciesTO.getGenus()) || 
-                        StringUtils.isBlank(speciesTO.getSpeciesName())) {
-                    throw log.throwing(new IllegalStateException("Incorrect species " +
-                            "information retrieved: " + speciesTO));
-                    
-                }
-                //in case there is a white space in a species name, we do not simply 
-                //concatenate using "_", we replace all white spaces
-                String latinNameForFile = 
-                        speciesTO.getGenus() + " " + speciesTO.getSpeciesName();
-                namesByIds.put(speciesTO.getId(), latinNameForFile);
-            }
-        }
+
+        Set<Species> species = spService.loadSpeciesByIds(speciesIds, false);
+
+        Map<Integer, String> namesByIds = species.stream()
+                .collect(Collectors.toMap(Species::getId, sp -> sp.getGenus() + " " + sp.getSpeciesName()));
+
         if (namesByIds.size() < speciesIds.size()) {
             //copy to avoid modifying user input, maybe the caller 
             //will recover from the exception

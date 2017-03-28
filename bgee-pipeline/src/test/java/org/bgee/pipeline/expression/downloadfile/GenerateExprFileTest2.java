@@ -14,14 +14,17 @@ import static org.mockito.Mockito.when;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
@@ -30,6 +33,7 @@ import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
+import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTO;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTOResultSet;
@@ -50,6 +54,7 @@ import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.expressiondata.CallService.Attribute;
 import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.CallType.Expression;
@@ -57,7 +62,13 @@ import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.PropagationState;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.ExperimentExpressionCount;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
+import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneFilter;
+import org.bgee.model.species.Species;
+import org.bgee.model.species.SpeciesService;
 import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile.SingleSpDiffExprFileType;
 import org.bgee.pipeline.expression.downloadfile.GenerateDownloadFile.ObservedData;
 import org.bgee.pipeline.expression.downloadfile.GenerateExprFile2.SingleSpExprFileType2;
@@ -74,7 +85,7 @@ import org.supercsv.prefs.CsvPreference;
  * Unit tests for {@link GenerateExprFile2}.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Oct. 2016
+ * @version Bgee 14, Mar. 2017
  * @since   Bgee 13
  */
 //FIXME: to reactivate?
@@ -92,6 +103,119 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
     @Override
     protected Logger getLogger() {
         return log;
+    }
+    
+    
+    /**
+     * Test method {@link GenerateExprFile2#generateExprFiles()}.
+     */
+    @Test
+    public void shouldGenerateExprFiles() throws IOException {
+
+        // First, we need a mock MySQLDAOManager, for the class to acquire mock DAOs. 
+        MockDAOManager mockManager = new MockDAOManager();
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        CallService callService = mock(CallService.class);
+        when(serviceFactory.getCallService()).thenReturn(callService);
+        SpeciesService speciesService = mock(SpeciesService.class);
+        when(serviceFactory.getSpeciesService()).thenReturn(speciesService);
+        AnatEntityService anatEntityService = mock(AnatEntityService.class);
+        when(serviceFactory.getAnatEntityService()).thenReturn(anatEntityService);
+        
+        Set<Integer> speciesIds = new HashSet<>(Arrays.asList(11, 22));
+        
+        // Mock the load of species
+        when(speciesService.loadSpeciesByIds(speciesIds, false)).thenReturn(
+                new HashSet<>(Arrays.asList(
+                        new Species(11, null, null, "Genus", "spName1", null, null),
+                        new Species(22, null, null, "Genus", "spName2", null, null))));
+        
+        // Mock the load of non informative anatomical entities
+        when(anatEntityService.loadNonInformativeAnatEntitiesBySpeciesIds(Collections.singleton(11)))
+        .thenReturn(Arrays.asList(new AnatEntity("NonInfoAnatEnt1")).stream());
+        
+        when(anatEntityService.loadNonInformativeAnatEntitiesBySpeciesIds(Collections.singleton(22)))
+        .thenReturn(Arrays.asList(new AnatEntity("NonInfoAnatEnt2")).stream());
+
+        ExpressionCallFilter callFilterSp11 = new ExpressionCallFilter(null,
+                Collections.singleton(new GeneFilter(11)), null, null, true, false, false);
+        ExpressionCallFilter callFilterSp22 = new ExpressionCallFilter(null,
+                Collections.singleton(new GeneFilter(22)), null, null, true, false, false);
+
+        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
+                new LinkedHashMap<>();
+        //The ordering by gene ID is essential here, because we will load into memory 
+        //all data from one gene at a time, for clustering and redundancy discovery. 
+        //The ordering by rank is not mandatory, for a given gene we are going to reorder anyway
+        serviceOrdering.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
+        serviceOrdering.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
+        serviceOrdering.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.ASC);
+
+        Set<ExperimentExpressionCount> experimentCounts = new HashSet<>();
+        experimentCounts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.HIGH,
+                PropagationState.SELF, 1));
+        experimentCounts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.LOW,
+                PropagationState.SELF, 1));
+        experimentCounts.add(new ExperimentExpressionCount(CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH,
+                PropagationState.SELF, 1));
+        experimentCounts.add(new ExperimentExpressionCount(CallType.Expression.NOT_EXPRESSED, DataQuality.LOW,
+                PropagationState.SELF, 1));
+        experimentCounts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.HIGH,
+                PropagationState.DESCENDANT, 0));
+        experimentCounts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.LOW,
+                PropagationState.DESCENDANT, 0));
+        experimentCounts.add(new ExperimentExpressionCount(CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH,
+                PropagationState.ANCESTOR, 0));
+        experimentCounts.add(new ExperimentExpressionCount(CallType.Expression.NOT_EXPRESSED, DataQuality.LOW,
+                PropagationState.ANCESTOR, 0));
+        experimentCounts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.HIGH,
+                PropagationState.ALL, 1));
+        experimentCounts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.LOW,
+                PropagationState.ALL, 1));
+        experimentCounts.add(new ExperimentExpressionCount(CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH,
+                PropagationState.ALL, 1));
+        experimentCounts.add(new ExperimentExpressionCount(CallType.Expression.NOT_EXPRESSED, DataQuality.LOW,
+                PropagationState.ALL, 1));
+        
+        Set<ExpressionCall> calls = new HashSet<>(Arrays.asList(
+                new ExpressionCall(new Gene("ID1", new Species(1)), 
+                        new Condition(new AnatEntity("1", "aeName1", "aeDesc1"),
+                                new DevStage("1", "dsName1", "dsDesc1"), new Species(1)),
+                        new DataPropagation(), ExpressionSummary.EXPRESSED, SummaryQuality.GOLD,
+                        Arrays.asList(new ExpressionCallData(DataType.AFFYMETRIX, experimentCounts,
+                                10, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
+                                new DataPropagation())),
+                        new BigDecimal(90), new BigDecimal(44)),
+                new ExpressionCall(new Gene("ID1", new Species(1)), 
+                        new Condition(new AnatEntity("1", "aeName1", "aeDesc1"),
+                                new DevStage("1", "dsName1", "dsDesc1"), new Species(1)),
+                        new DataPropagation(), ExpressionSummary.EXPRESSED, SummaryQuality.GOLD,
+                        null, null, null),
+                new ExpressionCall(new Gene("ID1", new Species(1)), 
+                        new Condition(new AnatEntity("1", "aeName1", "aeDesc1"),
+                                new DevStage("1", "dsName1", "dsDesc1"), new Species(1)),
+                        new DataPropagation(), ExpressionSummary.EXPRESSED, SummaryQuality.GOLD,
+                        null, null, null)));
+        
+        Set<Attribute> attr = new HashSet<>(Arrays.asList(Attribute.ANAT_ENTITY_ID,
+                Attribute.DATA_QUALITY, Attribute.DATA_TYPE_RANK_INFO, Attribute.OBSERVED_DATA, 
+                Attribute.GENE, Attribute.DEV_STAGE_ID, Attribute.CALL_TYPE, Attribute.EXPERIMENT_COUNTS,
+                Attribute.GLOBAL_MEAN_RANK));
+        
+        when(callService.loadExpressionCalls(callFilterSp11, attr, serviceOrdering))
+        .thenReturn(calls.stream());
+        when(callService.loadExpressionCalls(callFilterSp22, attr, serviceOrdering))
+        .thenReturn(calls.stream());
+        
+        Set<SingleSpExprFileType2> fileTypes = new HashSet<SingleSpExprFileType2>(
+                Arrays.asList(SingleSpExprFileType2.EXPR_SIMPLE, SingleSpExprFileType2.EXPR_COMPLETE)); 
+
+        String directory = testFolder.newFolder("folder_isObservedDataOnly_" + true).getPath();
+
+        Set<Attribute> params = new HashSet<>(Arrays.asList(Attribute.ANAT_ENTITY_ID, Attribute.DEV_STAGE_ID));
+        GenerateExprFile2 generate = new GenerateExprFile2(mockManager, 
+                Arrays.asList(11, 22), fileTypes, directory, params, () -> serviceFactory);
+        generate.generateExprFiles();
     }
 //    
 //    /**

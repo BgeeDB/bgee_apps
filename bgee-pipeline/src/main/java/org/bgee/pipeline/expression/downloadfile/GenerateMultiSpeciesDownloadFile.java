@@ -16,7 +16,6 @@ public interface GenerateMultiSpeciesDownloadFile {
      * A {@code String} that is the name of the column containing OMA IDs, in the download file.
      */
     public final static String OMA_ID_COLUMN_NAME = "OMA ID";
-
     /**
      * A {@code String} that is the name of the column containing list of gene IDs, 
      * in the download file.
@@ -27,17 +26,16 @@ public interface GenerateMultiSpeciesDownloadFile {
      * in the download file.
      */
     public final static String GENE_NAME_LIST_COLUMN_NAME = "Gene names";
-
     /**
      * A {@code String} that is the name of the column containing lists of anatomical entity IDs, 
      * in the download file.
      */
-    public final static String ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME = "Anatomical entity IDs";
+    public final static String ANAT_ENTITY_ID_LIST_COLUMN_NAME = "Anatomical entity IDs";
     /**
      * A {@code String} that is the name of the column containing lists of anatomical entity names, 
      * in the download file.
      */
-    public final static String ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME = "Anatomical entity names";
+    public final static String ANAT_ENTITY_NAME_LIST_COLUMN_NAME = "Anatomical entity names";
     /**
      * A {@code String} that is the name of the column containing CIO statement IDs, 
      * in the download file.
@@ -48,6 +46,27 @@ public interface GenerateMultiSpeciesDownloadFile {
      * in the download file.
      */
     public final static String CIO_NAME_ID_COLUMN_NAME = "Anatomy homology CIO name";
+    /**
+     * A {@code String} that is the name of the column containing number of species with expressed genes, 
+     * in the download file.
+     */
+    public final static String SPECIES_WITH_EXPRESSION_COUNT_COLUMN_NAME = "Species with expressed genes count";
+    /**
+     * A {@code String} that is the name of the column containing number of species with expressed genes, 
+     * in the download file.
+     */
+    public final static String SPECIES_WITH_NO_EXPRESSION_COUNT_COLUMN_NAME = "Species with not expressed genes count";
+    /**
+     * A {@code String} that is the name of the column containing number of species with expressed genes, 
+     * in the download file.
+     */
+    public final static String SPECIES_WITHOUT_CALLS_COUNT_COLUMN_NAME = "Species without expressed genes count";
+    /**
+     * A {@code String} that is the name of the column containing number of species with expressed genes, 
+     * in the download file.
+     */
+    public final static String CONSERVATION_SCORE_COLUMN_NAME = "Conservation score";
+
     /**
      * A {@code String} that is the name of the column containing number of expressed genes, 
      * in the download file.

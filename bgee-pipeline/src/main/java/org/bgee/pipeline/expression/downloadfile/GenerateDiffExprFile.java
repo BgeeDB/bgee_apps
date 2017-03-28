@@ -351,8 +351,9 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
 
         // Check user input, retrieve info for generating file names
         // Retrieve species names and IDs (all species names if speciesIds is null or empty)
+        // FIXME give a service to checkAndGetLatinNamesBySpeciesIds
         Map<Integer, String> speciesNamesForFilesByIds = 
-                checkAndGetLatinNamesBySpeciesIds(setSpecies);
+                checkAndGetLatinNamesBySpeciesIds(setSpecies, null);
         assert speciesNamesForFilesByIds.size() >= setSpecies.size();
     
         // If no file types are given by user, we set all file types
@@ -660,8 +661,8 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
             switch (header[i]) {
             // *** CellProcessors common to all file types ***
                 case GENE_ID_COLUMN_NAME:
-                case ANATENTITY_ID_COLUMN_NAME:
-                case ANATENTITY_NAME_COLUMN_NAME:
+                case ANAT_ENTITY_ID_COLUMN_NAME:
+                case ANAT_ENTITY_NAME_COLUMN_NAME:
                 case STAGE_ID_COLUMN_NAME:
                 case STAGE_NAME_COLUMN_NAME:
                     processors[i] = new StrNotNullOrEmpty();
@@ -737,8 +738,8 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         // *** Headers common to all file types ***
         headers[0] = GENE_ID_COLUMN_NAME;
         headers[1] = GENE_NAME_COLUMN_NAME;
-        headers[2] = ANATENTITY_ID_COLUMN_NAME;
-        headers[3] = ANATENTITY_NAME_COLUMN_NAME;
+        headers[2] = ANAT_ENTITY_ID_COLUMN_NAME;
+        headers[3] = ANAT_ENTITY_NAME_COLUMN_NAME;
         headers[4] = STAGE_ID_COLUMN_NAME;
         headers[5] = STAGE_NAME_COLUMN_NAME;
         headers[6] = DIFFEXPRESSION_COLUMN_NAME;
@@ -777,7 +778,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         for (int i = 0; i < headers.length; i++) {
             switch (headers[i]) {
                 case GENE_ID_COLUMN_NAME:
-                case ANATENTITY_ID_COLUMN_NAME:
+                case ANAT_ENTITY_ID_COLUMN_NAME:
                 case STAGE_ID_COLUMN_NAME:
                 case DIFFEXPRESSION_COLUMN_NAME:
                 case QUALITY_COLUMN_NAME:
@@ -794,7 +795,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
                     quoteMode[i] = false; 
                     break;
                 case GENE_NAME_COLUMN_NAME:
-                case ANATENTITY_NAME_COLUMN_NAME:
+                case ANAT_ENTITY_NAME_COLUMN_NAME:
                 case STAGE_NAME_COLUMN_NAME:
                     quoteMode[i] = true; 
                     break;
@@ -912,7 +913,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
      * <li>information that will be generated in any case: entries with keys equal to 
      * {@link #GENE_ID_COLUMN_NAME}, {@link #GENE_NAME_COLUMN_NAME}, 
      * {@link #STAGE_ID_COLUMN_NAME}, {@link #STAGE_NAME_COLUMN_NAME}, 
-     * {@link #ANATENTITY_ID_COLUMN_NAME}, {@link #ANATENTITY_NAME_COLUMN_NAME}, 
+     * {@link #ANAT_ENTITY_ID_COLUMN_NAME}, {@link #ANAT_ENTITY_NAME_COLUMN_NAME}, 
      * {@link #DIFFEXPRESSION_COLUMN_NAME}, {@link #QUALITY_COLUMN_NAME}.
      * <li>information generated for files of the type 
      * {@link SingleSpDiffExprFileType DIFF_EXPR_ANATOMY_COMPLETE} or 

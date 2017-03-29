@@ -1,6 +1,8 @@
 package org.bgee.model.dao.api.gene;
 
 import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
@@ -54,6 +56,9 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
     public int insertHierarchicalGroups(Collection<HierarchicalNodeTO> groups)
             throws DAOException, IllegalArgumentException;
     
+    public HierarchicalNodeTOResultSet getOMANodes(Collection<Integer> taxonIds, 
+    		Map<Integer, Set<String>> speciesIdToGeneIds) throws DAOException, IllegalArgumentException;
+    
     /**
      * Retrieve the mapping from genes to groups of homologous genes, 
      * valid for the provided taxon: genes that are homologous at the level 
@@ -79,8 +84,8 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
      * @throws IllegalArgumentException If {@code taxonId} is empty or null. 
      * @throws DAOException             If an error occurred when accessing the data source. 
      */
-    public HierarchicalGroupToGeneTOResultSet getGroupToGene(Collection<Integer> taxonIds, 
-            Collection<Integer> speciesIds) throws DAOException, IllegalArgumentException;
+    public HierarchicalGroupToGeneTOResultSet getOMANodeToGeneOrderedByNodeId(Collection<Integer> taxonIds, 
+    		Map<Integer, Set<String>> speciesIdToGeneIds) throws DAOException, IllegalArgumentException;
 
     /**
      * {@code DAOResultSet} specifics to {@code HierarchicalGroupTO}s
@@ -89,7 +94,7 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
      * @version Bgee 13
      * @since Bgee 13
      */
-    public interface HierarchicalGroupTOResultSet extends
+    public interface HierarchicalNodeTOResultSet extends
             DAOResultSet<HierarchicalNodeTO> {
 
     }

@@ -1460,6 +1460,12 @@ public class InsertPropagatedCalls extends CallService {
                                             condParams, rawCondMap))
                                     )
                     ).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+            assert condMapByComb.keySet().stream()
+            .noneMatch(condParams -> condMapByComb.keySet().stream()
+                .filter(condParams2 -> !condParams2.equals(condParams))
+                .anyMatch(condParams2 -> !Collections.disjoint(
+                        condMapByComb.get(condParams).values(), condMapByComb.get(condParams2).values())
+                 ));
             log.info("{} Conditions for species {}", rawCondMap.size(), speciesId);
 
             // We use all existing conditions in the species, and infer all propagated conditions
@@ -1647,9 +1653,17 @@ public class InsertPropagatedCalls extends CallService {
                 switch (condParam) {
                 case ANAT_ENTITY_ID:
                     anatEntity = e.getValue().getAnatEntity();
+                    if (anatEntity == null) {
+                        throw log.throwing(new IllegalArgumentException(
+                                "No raw condition should have a null anat. entity"));
+                    }
                     break;
                 case STAGE_ID:
                     stage = e.getValue().getDevStage();
+                    if (stage == null) {
+                        throw log.throwing(new IllegalArgumentException(
+                                "No raw condition should have a null dev. stage"));
+                    }
                     break;
                 default:
                     throw log.throwing(new IllegalStateException("Unsupported condition parameter: "

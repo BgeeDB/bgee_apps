@@ -151,6 +151,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      * {@link CommandRunner#LIST_SEPARATOR}. If an empty list is provided 
      * (see {@link CommandRunner#EMPTY_LIST}), all possible file types will be generated.
      * <li>the directory path that will be used to generate download files.
+     * <li>a list of condition parameters that will be used to generate files. 
      * </ol>
      * 
      * @param args  An {@code Array} of {@code String}s containing the requested parameters.
@@ -172,7 +173,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             GenerateDownloadFile.convertToFileTypes(
                 CommandRunner.parseListArgument(args[1]), SingleSpExprFileType2.class),
             args[2],
-            convertToAttributes(CommandRunner.parseListArgument(args[3])));
+            GenerateExprFile2.convertToAttributes(CommandRunner.parseListArgument(args[3])));
         generator.generateExprFiles();
 
         log.exit();
@@ -442,7 +443,8 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
 
                 // Create file name
                 String fileName = this.formatString(fileNamePrefix + "_" +
-                        currentFileType.getStringRepresentation() + EXTENSION);
+                        currentFileType.getStringRepresentation() + "_" +
+                        this.convertAttributeToFileName(this.params) + EXTENSION);
                 generatedFileNames.put(currentFileType, fileName);
 
                 // write in temp file
@@ -490,6 +492,35 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         log.exit();
     }
 
+
+    /**
+     * Convert attributes into a {@code String} to be used to generate file names.
+     * 
+     * @param attributes    A {@code Set} of {@code Attribute}s defining the condition 
+     *                      parameters to be used to retrieve {@code ExpressionCall}s.
+     *                      It should not be {@code null} nor empty. 
+     * @return              The {@code String} to be used to generate file names.
+     */
+    private String convertAttributeToFileName(Set<Attribute> attributes) {
+        log.entry(attributes);
+        
+        assert attributes!= null && !attributes.isEmpty();
+        
+        List<Attribute> attributeList = new ArrayList<>(attributes);
+        Collections.sort(attributeList);
+
+        return log.exit(attributes.stream()
+                .map(a -> {
+                    switch (a) {
+                        case ANAT_ENTITY_ID:
+                            return "organ";
+                        case DEV_STAGE_ID:
+                            return "stage";
+                        default: 
+                            throw new IllegalArgumentException("Attribute not supported: " + a);
+                    }})
+                .collect(Collectors.joining("_")));
+    }
 
     /**
      * Generates an {@code Array} of {@code CellProcessor}s used to process an expression
@@ -957,10 +988,10 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                             PropagationState.ALL),
                     this.getCountValue(data, CallType.Expression.EXPRESSED, DataQuality.LOW,
                             PropagationState.ALL),
-                    this.getCountValue(data, CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH,
-                            PropagationState.ALL),
-                    this.getCountValue(data, CallType.Expression.NOT_EXPRESSED, DataQuality.LOW,
-                            PropagationState.ALL),
+                    dataType.equals(DataType.EST)? 0: this.getCountValue(data,
+                            CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH, PropagationState.ALL),
+                    dataType.equals(DataType.EST)? 0: this.getCountValue(data,
+                            CallType.Expression.NOT_EXPRESSED, DataQuality.LOW, PropagationState.ALL),
                     this.resumeIncludingObservedData(data)));
         } else if (dataTypeCallData.size() == 0) {
             return log.exit(new DataExprCounts(dataType, NO_DATA_VALUE, 0L, 0L, 0L, 0L,

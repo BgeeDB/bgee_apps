@@ -352,7 +352,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         s.append("</div>"); // close panel-heading
 	    
         s.append("<div class='panel-body'>");
-        s.append(getMultiSpeciesFigures(pageType, groups));
+        // TODO: uncomment multi-species section when files are available
+//        s.append(getMultiSpeciesFigures(pageType, groups));
+        s.append("<p>These files will be available for the next release Bgee v14.1 (May 2017)</p>");
         s.append("</div>"); // close panel-body
         
         s.append("</div>"); // close panel
@@ -377,7 +379,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         
         // Cross to close the banner
         banner.append("<div id='bgee_data_selection_cross'>");
-        banner.append("<a id='switch_page_link' href=''></a>");
+        banner.append("<a id='switch_page_link' class= 'banner_link' href=''></a>");
         banner.append("<img class='closing_cross' src='" + this.prop.getImagesRootDirectory() + "cross.png' " +
                 "title='Close banner' alt='Cross' />");
         banner.append("</div>");
@@ -457,7 +459,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 		
 		banner.append("</div>"); // end of Affy data
 		
-		//TODO uncomment when files are generated
+		//TODO uncomment in-situ and EST data in processed values section when files are available
 //		// In situ data
 //		banner.append("<div class='col-xs-12 bgee_download_file_buttons'>");
 //		banner.append("<h2><em>In situ</em> data</h2>");
@@ -504,56 +506,98 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 		banner.append("<h2>Presence/Absence of expression</h2>");
 		banner.append(this.getHelpLink("expr_help"));
 		banner.append("<p id='expr_no_data' class='no_data'>Not enough data</p>");
-		banner.append("<div id='expr_data'>" +
-		        "<a id='expr_simple_csv' class='download_link' href='' download></a>" +
-		        this.getShowHeaderLink("show_single_simple_expr_headers") +
-		        "<a id='expr_complete_csv' class='download_link' href='' download></a>" +
-		        this.getShowHeaderLink("show_single_complete_expr_headers") + "</div>");
+		banner.append("<div id='expr_data'>");
+        banner.append("<form id='expr_data_form' class='row row-eq-height'>");
+        banner.append("    <div class='col-md-2 col-md-offset-1'>");
+        banner.append("        <a id='download_expr_data' href='' class='download_link'>Download</a>");
+        banner.append("    </div>");
+//   data-placement='bottom' data-toggle='popover' data-trigger='hover' data-content='Some content inside the popover'
+        banner.append("    <div class='col-md-6'>");
+        banner.append("        <div class='item_category'>Choose condition parameters");
+        banner.append("            <span class='glyphicon glyphicon-question-sign' data-placement='right' " +
+                                        "data-toggle='popover' data-trigger='hover' " +
+                                        "data-content='Condition parameters define ...'></span>");
+        banner.append("        </div>");
+        banner.append("        <label class='checkbox-inline'>");
+        banner.append("            <input type='hidden' name='downloadParam' value='anatEntity'>" );
+        banner.append("            <input disabled id='anatEntityCheck' type='checkbox' " + 
+                                        "name='param' value='anatEntity' checked='checked'>");
+        banner.append("            Anatomical entity");
+        banner.append("        </label>");
+        banner.append("        <label class='checkbox-inline'>");
+        banner.append("            <input id='devStageCheck' type='checkbox' " + 
+                                        "name='downloadParam' value='devStage' checked='checked'>");
+        banner.append("            Developmental stage");
+        banner.append("        </label>");
+        banner.append("        <div class='item_category' >Get advanced columns ");
+        banner.append("            <span class='glyphicon glyphicon-question-sign' data-placement='right' " +
+                                        "data-toggle='popover' data-trigger='hover' " +
+                                        "data-content='Additionnal columns contains informations by data types'></span>");
+        banner.append("        </div>");
+        banner.append("        <label class='radio-inline'>");
+        banner.append("            <input type='radio' name='downloadParam' id='advancedDataRadioYes'"
+                                        + " value='yes' checked='checked'>yes");
+        banner.append("        </label>");
+        banner.append("        <label class='radio-inline'>");
+        banner.append("            <input type='radio' name='downloadParam' id='advancedDataRadioNo'"
+                                        + " value='no' checked='checked'>no");
+        banner.append("        </label>");
+        banner.append("    </div>");
+        banner.append("</form>");
+        banner.append("</div>");
 		banner.append("<div id='single_simple_expr_headers' class='header_table'>" +
 		        HtmlDocumentationCallFile.getSingleSpeciesSimpleExprFileHeaderDesc() + "</div>");
 		banner.append("<div id='single_complete_expr_headers' class='header_table'>" + 
 		        HtmlDocumentationCallFile.getSingleSpeciesCompleteExprFileHeaderDesc() + "</div>");
 		banner.append("</div>");
 		
-		// Differential expression files across anatomy
-		banner.append("<div id='diffexpr_anatomy_buttons' class='col-xs-12 bgee_download_file_buttons'>");
-		banner.append("<h2>Over-/Under-expression across anatomy</h2>");
-		banner.append(this.getHelpLink("diffexpr_anatomy_help"));
-		banner.append("<p id='diffexpr_anatomy_no_data' class='no_data'>Not enough data</p>");
-		banner.append("<div id='diffexpr_anatomy_data'>" + 
-		        "<a id='diffexpr_anatomy_simple_csv' class='download_link' href='' download></a>" +
-		        this.getShowHeaderLink("show_single_simple_diffexpr_anatomy_headers") +
-		        this.getShowHeaderLink("show_multi_simple_diffexpr_anatomy_headers") +
-		        "<a id='diffexpr_anatomy_complete_csv' class='download_link' href='' download></a>" +
-		        this.getShowHeaderLink("show_single_complete_diffexpr_anatomy_headers") +
-		        this.getShowHeaderLink("show_multi_complete_diffexpr_anatomy_headers") +
-		        "</div>");
-		banner.append("<div id='single_simple_diffexpr_anatomy_headers' class='header_table'>" + 
-		        HtmlDocumentationCallFile.getSingleSpeciesSimpleDiffExprFileHeaderDesc() + "</div>");
-		banner.append("<div id='single_complete_diffexpr_anatomy_headers' class='header_table'>" + 
-		        HtmlDocumentationCallFile.getSingleSpeciesCompleteDiffExprFileHeaderDesc() + "</div>");
-		banner.append("<div id='multi_simple_diffexpr_anatomy_headers' class='header_table'>" + 
-		        HtmlDocumentationCallFile.getMultiSpeciesSimpleDiffExprFileHeaderDesc() + "</div>");
-		banner.append("<div id='multi_complete_diffexpr_anatomy_headers' class='header_table'>" + 
-		        HtmlDocumentationCallFile.getMultiSpeciesCompleteDiffExprFileHeaderDesc() + "</div>");
-		banner.append("</div>");
-		
-		// Differential expression files across life stages
-		banner.append("<div id='diffexpr_stage_buttons' class='col-xs-12 bgee_download_file_buttons'>");
-		banner.append("<h2>Over-/Under-expression across life stages</h2>");
-		banner.append(this.getHelpLink("diffexpr_development_help"));
-		banner.append("<p id='diffexpr_development_no_data' class='no_data'>Not enough data</p>");
-		banner.append("<div id='diffexpr_development_data'>" + 
-		        "<a id='diffexpr_development_simple_csv' class='download_link' href='' download></a>" +
-		        this.getShowHeaderLink("show_single_simple_diffexpr_development_headers") +
-		        "<a id='diffexpr_development_complete_csv' class='download_link' href='' download></a>" +
-		        this.getShowHeaderLink("show_single_complete_diffexpr_development_headers") +
-		        "</div>");
-		banner.append("<div id='single_simple_diffexpr_development_headers' class='header_table'>" + 
-		        HtmlDocumentationCallFile.getSingleSpeciesSimpleDiffExprFileHeaderDesc() + "</div>");
-		banner.append("<div id='single_complete_diffexpr_development_headers' class='header_table'>" + 
-		        HtmlDocumentationCallFile.getSingleSpeciesCompleteDiffExprFileHeaderDesc() + "</div>");
-		banner.append("</div>");
+	      // Differential expression files
+        banner.append("<div id='diffexpr_anatomy_buttons' class='col-xs-12 bgee_download_file_buttons'>");
+        banner.append("<h2>Over-/Under-expression</h2>");
+        banner.append(this.getHelpLink("diffexpr_anatomy_help"));
+        banner.append("<p id='diffexpr_anatomy_no_data' class='file_info'>Improvement of these files is in progress</p>");
+        banner.append("</div>");
+
+        // TODO: uncomment differential expression sections when files are available
+//		// Differential expression files across anatomy
+//		banner.append("<div id='diffexpr_anatomy_buttons' class='col-xs-12 bgee_download_file_buttons'>");
+//		banner.append("<h2>Over-/Under-expression across anatomy</h2>");
+//		banner.append(this.getHelpLink("diffexpr_anatomy_help"));
+//		banner.append("<p id='diffexpr_anatomy_no_data' class='no_data'>Not enough data</p>");
+//		banner.append("<div id='diffexpr_anatomy_data'>" + 
+//		        "<a id='diffexpr_anatomy_simple_csv' class='download_link' href='' download></a>" +
+//		        this.getShowHeaderLink("show_single_simple_diffexpr_anatomy_headers") +
+//		        this.getShowHeaderLink("show_multi_simple_diffexpr_anatomy_headers") +
+//		        "<a id='diffexpr_anatomy_complete_csv' class='download_link' href='' download></a>" +
+//		        this.getShowHeaderLink("show_single_complete_diffexpr_anatomy_headers") +
+//		        this.getShowHeaderLink("show_multi_complete_diffexpr_anatomy_headers") +
+//		        "</div>");
+//		banner.append("<div id='single_simple_diffexpr_anatomy_headers' class='header_table'>" + 
+//		        HtmlDocumentationCallFile.getSingleSpeciesSimpleDiffExprFileHeaderDesc() + "</div>");
+//		banner.append("<div id='single_complete_diffexpr_anatomy_headers' class='header_table'>" + 
+//		        HtmlDocumentationCallFile.getSingleSpeciesCompleteDiffExprFileHeaderDesc() + "</div>");
+//		banner.append("<div id='multi_simple_diffexpr_anatomy_headers' class='header_table'>" + 
+//		        HtmlDocumentationCallFile.getMultiSpeciesSimpleDiffExprFileHeaderDesc() + "</div>");
+//		banner.append("<div id='multi_complete_diffexpr_anatomy_headers' class='header_table'>" + 
+//		        HtmlDocumentationCallFile.getMultiSpeciesCompleteDiffExprFileHeaderDesc() + "</div>");
+//		banner.append("</div>");
+//		
+//		// Differential expression files across life stages
+//		banner.append("<div id='diffexpr_stage_buttons' class='col-xs-12 bgee_download_file_buttons'>");
+//		banner.append("<h2>Over-/Under-expression across life stages</h2>");
+//		banner.append(this.getHelpLink("diffexpr_development_help"));
+//		banner.append("<p id='diffexpr_development_no_data' class='no_data'>Not enough data</p>");
+//		banner.append("<div id='diffexpr_development_data'>" + 
+//		        "<a id='diffexpr_development_simple_csv' class='download_link' href='' download></a>" +
+//		        this.getShowHeaderLink("show_single_simple_diffexpr_development_headers") +
+//		        "<a id='diffexpr_development_complete_csv' class='download_link' href='' download></a>" +
+//		        this.getShowHeaderLink("show_single_complete_diffexpr_development_headers") +
+//		        "</div>");
+//		banner.append("<div id='single_simple_diffexpr_development_headers' class='header_table'>" + 
+//		        HtmlDocumentationCallFile.getSingleSpeciesSimpleDiffExprFileHeaderDesc() + "</div>");
+//		banner.append("<div id='single_complete_diffexpr_development_headers' class='header_table'>" + 
+//		        HtmlDocumentationCallFile.getSingleSpeciesCompleteDiffExprFileHeaderDesc() + "</div>");
+//		banner.append("</div>");
 	}
 
     /**
@@ -565,9 +609,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     private String getHelpLink(String id) {
         log.entry(id);
 
-        return log.exit("<a id='" + id + "' class='specific-help' href=''>"+
-                        "<img class='details' src='" + this.prop.getImagesRootDirectory() +
-                        "help.png' title='Help' alt='Help' /></a>");
+        return log.exit("<a id='" + id + "' class='doc_link' data-placement='right' data-toggle='popover' "
+                + "data-trigger='hover' data-content='See documentation page' href=''>"
+                + "<span class='glyphicon glyphicon-info-sign'></span></a>");
     }
 
     /**

@@ -461,6 +461,7 @@ public class URLParameters {
             PAGE,
             ACTION,
             GENE_ID,
+            SPECIES_ID,
             SEARCH,
             // Species request
             SPECIES_LIST,

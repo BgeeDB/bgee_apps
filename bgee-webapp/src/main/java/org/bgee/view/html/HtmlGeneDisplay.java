@@ -95,6 +95,14 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 	    String titleStart = "Genes: " + gene.getName() + " - " + gene.getEnsemblGeneId();
 	    
 	    this.startDisplay(titleStart);
+	    
+	    this.writeln("<h1>Gene search</h1>");
+
+        this.writeln("<div id='bgee_introduction'>");
+        
+        this.writeln("<p>The search gene ID is found in several species. Select the desired gene:<p>");
+
+        this.writeln("</div>");
 
 	    StringBuilder geneList = new StringBuilder();
         geneList.append("<div class='row'>");
@@ -103,10 +111,12 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             .sorted(Comparator.comparing(g -> g.getSpecies() == null?
                 null: g.getSpecies().getPreferredDisplayOrder(), Comparator.nullsLast(Comparator.naturalOrder())))
             .map(g -> getSpecificGenePageLink(g))
-            .collect(Collectors.toList()));
+            .collect(Collectors.joining("</li><li>", "<li>", "</li>")));
         geneList.append("</ul>");
         geneList.append("</div>");
         
+        this.writeln(geneList.toString());
+
         this.endDisplay();
         log.exit();
 	}
@@ -122,6 +132,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         RequestParameters url = this.getNewRequestParameters();
         url.setPage(RequestParameters.PAGE_GENE);
         url.setGeneId(gene.getEnsemblGeneId());
+
         //speciesId only necessary if there are several genes matching a same Ensembl ID
         if (gene.getGeneMappedToSameEnsemblGeneIdCount() > 1) {
             url.setSpeciesId(gene.getSpecies().getId());
@@ -129,7 +140,9 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
         StringBuilder genePageLink = new StringBuilder();
         genePageLink.append("<a href='").append(url.getRequestURL()).append("'>")
-                    .append(gene.getName()).append(" in ").append(gene.getSpecies().getShortName())
+                    .append(htmlEntities(gene.getEnsemblGeneId())).append(" in ")
+                    .append(htmlEntities(gene.getSpecies().getScientificName()))
+                    .append(" (").append(htmlEntities(gene.getSpecies().getName())).append(")")
                     .append("</a>");
 
         return log.exit(genePageLink.toString());

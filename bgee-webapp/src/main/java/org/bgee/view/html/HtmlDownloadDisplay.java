@@ -514,6 +514,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 //   data-placement='bottom' data-toggle='popover' data-trigger='hover' data-content='Some content inside the popover'
         banner.append("    <div class='col-md-6'>");
         banner.append("        <div class='item_category'>Choose condition parameters");
+        // TODO: fix popover content
         banner.append("            <span class='glyphicon glyphicon-question-sign' data-placement='right' " +
                                         "data-toggle='popover' data-trigger='hover' " +
                                         "data-content='Condition parameters define ...'></span>");
@@ -530,6 +531,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         banner.append("            Developmental stage");
         banner.append("        </label>");
         banner.append("        <div class='item_category' >Get advanced columns ");
+        // TODO: fix popover content
         banner.append("            <span class='glyphicon glyphicon-question-sign' data-placement='right' " +
                                         "data-toggle='popover' data-trigger='hover' " +
                                         "data-content='Additionnal columns contains informations by data types'></span>");

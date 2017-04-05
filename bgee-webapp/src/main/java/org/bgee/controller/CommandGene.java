@@ -234,7 +234,6 @@ public class CommandGene extends CommandParent {
             //if several gene IDs match, then we need to get the speciesId information,
             //otherwise we need to let the user choose the species he/she wants
             if (speciesId == null || speciesId <= 0) {
-                //TODO: implement
                 display.displayGeneChoice(genes);
                 log.exit(); return;
             }

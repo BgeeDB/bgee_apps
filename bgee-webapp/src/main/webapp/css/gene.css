@@ -7,6 +7,15 @@ h1.gene_title img {
     border-radius: 8px;
 }
 
+.gene_choice img {
+    margin-top: 10px;
+    margin-right: 10px;
+    vertical-align: middle;
+    height: 100px;
+    width: 100px;
+    border-radius: 8px;
+}
+
 table#geneinfo {
 	margin: 1em 0;
 }

@@ -6,7 +6,6 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -106,13 +105,15 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
 	    StringBuilder geneList = new StringBuilder();
         geneList.append("<div class='row'>");
-        geneList.append("<ul class='col-xs-offset-1 col-xs-10 col-md-offset-2 col-md-8 col-lg-offset-3 col-lg-6'>");
         geneList.append(clnGenes.stream()
             .sorted(Comparator.comparing(g -> g.getSpecies() == null?
                 null: g.getSpecies().getPreferredDisplayOrder(), Comparator.nullsLast(Comparator.naturalOrder())))
-            .map(g -> getSpecificGenePageLink(g))
-            .collect(Collectors.joining("</li><li>", "<li>", "</li>")));
-        geneList.append("</ul>");
+            .map(g -> "<img src='" 
+                    + this.prop.getSpeciesImagesRootDirectory() + String.valueOf(g.getSpecies().getId())
+                    + "_light.jpg' alt='" + htmlEntities(g.getSpecies().getShortName()) 
+                    + "' />" + getSpecificGenePageLink(g))
+            .collect(Collectors.joining("</div><div class='col-md-offset-3 col-md-6 gene_choice'>",
+                    "<div class='col-md-offset-3 col-md-6 gene_choice'>", "</div>")));
         geneList.append("</div>");
         
         this.writeln(geneList.toString());

@@ -28,7 +28,7 @@ import org.bgee.view.JsonHelper;
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
- * @version Bgee 14, Mar. 2017
+ * @version Bgee 14, Apr. 2017
  * @since   Bgee 13
  */
 public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDisplay {
@@ -507,11 +507,13 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 		banner.append(this.getHelpLink("expr_help"));
 		banner.append("<p id='expr_no_data' class='no_data'>Not enough data</p>");
 		banner.append("<div id='expr_data'>");
-        banner.append("<form id='expr_data_form' class='row row-eq-height'>");
+        banner.append("<form id='expr_data_form' name='expr_data_form' class='row row-eq-height'>");
         banner.append("    <div class='col-md-2 col-md-offset-1'>");
-        banner.append("        <a id='download_expr_data' href='' class='download_link'>Download</a>");
+        banner.append("        <a id='download_expr_data' href='' class='download_link'>Download");
+        banner.append("        <span class='glyphicon glyphicon-download-alt'></span>");
+        banner.append("        </a>");
         banner.append("    </div>");
-//   data-placement='bottom' data-toggle='popover' data-trigger='hover' data-content='Some content inside the popover'
+
         banner.append("    <div class='col-md-6'>");
         banner.append("        <div class='item_category'>Choose condition parameters");
         // TODO: fix popover content
@@ -752,6 +754,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      */
     private String getDataGroupScriptTag(List<SpeciesDataGroup> dataGroups) {
         log.entry(dataGroups);
+        
         StringBuilder sb = new StringBuilder("<script>");
         sb.append("var speciesData = ");
         sb.append(this.getJsonHelper().toJson(dataGroups.stream()

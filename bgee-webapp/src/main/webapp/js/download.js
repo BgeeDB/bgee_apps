@@ -3,9 +3,9 @@
  * the user's actions, to proceed to the search and update the display.
  * It is run when the document is fully loaded by using the jQuery method ready()
  * 
- * @author Mathieu Seppey
- * @author Valentine Rech de Laval
- * @version Bgee 13, Jul 2014
+ * @author 	Mathieu Seppey
+ * @author 	Valentine Rech de Laval
+ * @version Bgee 14, Apr. 2017
  */
 //Declaration of an object literal to contain the download page specific code.
 //XXX: Should we let this code generate URL by using RequestParameters, or should all URLs 
@@ -32,8 +32,6 @@ var download = {
         $orthologButtons: null,
         $orthologCvs: null,
         $exprSimpleData: null,
-        $exprSimpleCsv: null,
-        $exprCompleteCsv: null,
         $diffExprAnatomyData: null,
         $diffExprAnatomySimpleCsv: null,
         $diffExprAnatomyCompleteCsv: null,   
@@ -113,8 +111,6 @@ var download = {
             this.$orthologCvs = $( "#ortholog_csv" );
             this.$exprButtons = $( "#expr_buttons" );
             this.$exprSimpleData = $( "#expr_data" );
-            this.$exprSimpleCsv = $( "#expr_simple_csv" );
-            this.$exprCompleteCsv = $( "#expr_complete_csv" );        
             this.$diffExprAnatomyButtons = $( "#diffexpr_anatomy_buttons" );
             this.$diffExprAnatomyData = $( "#diffexpr_anatomy_data" );
             this.$diffExprAnatomySimpleCsv = $( "#diffexpr_anatomy_simple_csv" );
@@ -333,37 +329,82 @@ var download = {
 		 * Gets the url of the file of the given category (undefined if not found)
 		 */
         getUrlForFileCategory: function(files, category) {
+        	return getUrlForFileCategory(files, category, undefined);
+        },
+
+        /**
+		 * Gets the url of the file of the given category and conditions combination
+		 * (undefined if not found)
+		 */
+        getUrlForFileCategory: function(files, category, conditionParams) {
         	for (var idx = 0; idx < files.length; idx++) {
         		var file = files[idx];
-        		if (file.category == category) {
+        		// '===' works  because if you know that the array is in the same order 
+        		if (file.category == category && (conditionParams === undefined
+        				|| download.compareArrays(conditionParams.sort(), file.conditionParameters.sort()))) {
         			return file.path;
         		}
         	}
         },
         
         /**
+		 * Defines whether two arrays are equals
+		 */
+        compareArrays: function(array1, array2) {
+            if (!array1 && !array2) {
+            	return true;
+            }
+
+            if (!array1) {
+            	return false;
+            }
+
+            if (array1.length != array2.length) {
+            	return false;
+            }
+
+            for (var i = 0, l = array1.length; i < l; i++) {
+                if (array1[i] instanceof Array && array2[i] instanceof Array) {
+                    if (!array1[i].equals(array2[i])) {
+                    	return false;
+                    }
+                } else if (array1[i] != array2[i]) {
+                    return false;
+                }
+            }
+            return true;
+        },
+        
+        /**
         * Returns the formatted size for the file of the given category (undefined if no file found)
         */
         getSizeForFileCategory: function(files, category) {
-        	for (var idx = 0; idx < files.length; idx++) {
-        		var file = files[idx];
-        		if (file.category == category) {
-        			var size = file.size;
-        			// formatting file size
-        			if (size > (1 <<30) * 0.4) {
-        				return ""+  Math.round((10*size / (1024*1024*1024)))/10.0 +" GB";
-        			}
-        			if (size > 1024 * 1024 * 0.4) {
-        				return ""+  Math.round((10*size / (1024*1024)))/10.0 +" MB";
-        			} else if (size > 1024*0.4){
-        				return "" + Math.round((10*size / (1024)))/10.0+" KB";
-        			} else {
-        				return "" + size +" B";
-        			}
-        		}
-        	}
+        	return getSizeForFileCategory(files, category, undefined);
         },
         
+        /**
+         * Returns the formatted size for the file of the given category (undefined if no file found)
+         */
+         getSizeForFileCategory: function(files, category, conditionParams) {
+         	for (var idx = 0; idx < files.length; idx++) {
+         		var file = files[idx];
+         		if (file.category == category && (conditionParams === undefined
+        				|| download.compareArrays(conditionParams.sort(), file.conditionParameters.sort()))) {
+         			var size = file.size;
+         			// formatting file size
+         			if (size > (1 << 30) * 0.4) {
+         				return ""+  Math.round((10*size / (1024*1024*1024)))/10.0 +" GB";
+         			}
+         			if (size > 1024 * 1024 * 0.4) {
+         				return ""+  Math.round((10*size / (1024*1024)))/10.0 +" MB";
+         			} else if (size > 1024*0.4){
+         				return "" + Math.round((10*size / (1024)))/10.0+" KB";
+         			} else {
+         				return "" + size +" B";
+         			}
+         		}
+         	}
+         },
 
         /**
          * This function update and display the detail box for the species or group provided
@@ -426,8 +467,10 @@ var download = {
             //var bgeeOrthologFileUrl = $currentSpecies.data( "bgeeorthologfileurl" );
             var bgeeOrthologFileUrl = getUrlForFileCategory(files, "ortholog");
             //var bgeeExprSimpleFileUrl = $currentSpecies.data( "bgeeexprsimplefileurl" );
-            var bgeeExprSimpleFileUrl = getUrlForFileCategory(files, "expr_simple");
-            var bgeeExprCompleteFileUrl = getUrlForFileCategory(files, "expr_complete");
+            var bgeeExprOrganSimpleFileUrl = getUrlForFileCategory(files, "expr_simple", [ "anatomicalEntity" ]);
+            var bgeeExprOrganCompleteFileUrl = getUrlForFileCategory(files, "expr_complete", [ "anatomicalEntity" ]);
+            var bgeeExprOrganStageSimpleFileUrl = getUrlForFileCategory(files, "expr_simple", [ "anatomicalEntity", "developmentalStage" ]);
+            var bgeeExprOrganStageCompleteFileUrl = getUrlForFileCategory(files, "expr_complete", [ "anatomicalEntity", "developmentalStage" ]);
             var bgeeDiffExprAnatomySimpleFileUrl = getUrlForFileCategory(files, "diff_expr_anatomy_simple");
             var bgeeDiffExprAnatomyCompleteFileUrl = getUrlForFileCategory(files, "diff_expr_anatomy_complete");
             var bgeeDiffExprDevelopmentSimpleFileUrl = getUrlForFileCategory(files, "diff_expr_dev_simple");
@@ -435,8 +478,10 @@ var download = {
 
              // get file sizes
             var bgeeOrthologFileSize = getSizeForFileCategory(files, "ortholog");
-            var bgeeExprSimpleFileSize = getSizeForFileCategory(files, "expr_simple");
-            var bgeeExprCompleteFileSize = getSizeForFileCategory(files, "expr_complete");
+            var bgeeExprOrganSimpleFileSize = getSizeForFileCategory(files, "expr_simple", [ "anatomicalEntity" ]);
+            var bgeeExprOrganCompleteFileSize = getSizeForFileCategory(files, "expr_complete", [ "anatomicalEntity" ]);
+            var bgeeExprOrganStageSimpleFileSize = getSizeForFileCategory(files, "expr_simple", [ "anatomicalEntity", "developmentalStage" ]);
+            var bgeeExprOrganStageCompleteFileSize = getSizeForFileCategory(files, "expr_complete", [ "anatomicalEntity", "developmentalStage" ]);
             var bgeeDiffExprAnatomySimpleFileSize =	getSizeForFileCategory(files, "diff_expr_anatomy_simple");
             var bgeeDiffExprAnatomyCompleteFileSize = getSizeForFileCategory(files, "diff_expr_anatomy_complete");
             var bgeeDiffExprDevelopmentSimpleFileSize = getSizeForFileCategory(files, "diff_expr_dev_simple");
@@ -450,7 +495,7 @@ var download = {
             var bgeeRnaSeqAnnotFileSize = getSizeForFileCategory(files, "rnaseq_annot");
 
             // Affymetrix processed expression values
-            var bgeeAffyDataFileUrl =getUrlForFileCategory(files, "affy_data");
+            var bgeeAffyDataFileUrl = getUrlForFileCategory(files, "affy_data");
             var bgeeAffyAnnotFileUrl = getUrlForFileCategory(files, "affy_annot");
             var bgeeAffyDataRootURL = getUrlForFileCategory(files, "affy_root");
             var bgeeAffyDataFileSize = getSizeForFileCategory(files, "affy_data");
@@ -514,7 +559,6 @@ var download = {
                 	
                 	urlDoc.setURLHash(urlDoc.HASH_DOC_CALL_OMA());
                 	this.$orthologsHelp.attr( "href", urlDoc.getRequestURL());
-                	
                 } 
             } else {
             	this.$switchPageLink.show();
@@ -522,7 +566,9 @@ var download = {
                 //we display the group name as subtitle rather than the species common name, 
                 //because we used to have incorrect common names at some point, 
                 //and because this allows more flexibility (e.g. "human including GTEx data")
-                this.$bgeeDataSelectionTextCommon.text( "("+ bgeeGroupName +")" );
+                if (bgeeGroupName) {
+                	this.$bgeeDataSelectionTextCommon.text( "("+ bgeeGroupName +")" );
+                }
                 this.$bgeeGroupDescription.text( "" );
                 this.$showMultiSimpleDiffexprAnatomyHeaders.hide();
                 this.$showMultiCompleteDiffexprAnatomyHeaders.hide();
@@ -542,6 +588,33 @@ var download = {
                 	this.$diffAnatHelp.attr( "href", urlDoc.getRequestURL());
                 }
             }
+            
+            $("#expr_data_form input").click(function() {
+            	// Form
+                var exprDataForm = document.forms["expr_data_form"];
+                
+            	// Get actual form parameters
+            	var isAnatEntity = exprDataForm.elements["anatEntityCheck"].checked;
+            	var isDevStage = exprDataForm.elements["devStageCheck"].checked;
+            	var isAdvancedColumns = exprDataForm.elements["advancedDataRadioYes"].checked;
+
+            	var url = undefined;
+            	if (isAnatEntity && isDevStage) {
+            		if (isAdvancedColumns) {
+            			url = bgeeExprOrganStageCompleteFileUrl;
+            		} else {
+            			url= bgeeExprOrganStageSimpleFileUrl;
+            		}
+            	} else {
+            		if (isAdvancedColumns) {
+            			url = bgeeExprOrganCompleteFileUrl;
+            		} else {
+            			url= bgeeExprOrganSimpleFileUrl;
+            		}
+            	}
+            	alert("New URL: " + url);
+            	$( "#download_expr_data" ).attr( "href", url );
+            });
             
             // Hide all header table to hide tables already opened in another detail box (banner)
             $( ".header_table" ).each(function() {
@@ -564,7 +637,7 @@ var download = {
             }
 
             // Expression files
-            if (bgeeExprSimpleFileUrl === undefined) {
+            if (bgeeExprOrganSimpleFileUrl === undefined) {
             	this.$exprSimpleData.hide();
             	//TODO remove when multi-species expression files are computed
             	if( bgeeIsGroup ){
@@ -578,10 +651,6 @@ var download = {
         		this.$exprButtons.show();
             	this.$exprSimpleData.show();
         		this.$exprHelp.show();
-            	this.$exprSimpleCsv.attr( "href", bgeeExprSimpleFileUrl );
-            	this.$exprSimpleCsv.text( "Download simple file (" + bgeeExprSimpleFileSize + ")" );
-            	this.$exprCompleteCsv.attr( "href", bgeeExprCompleteFileUrl );
-            	this.$exprCompleteCsv.text( "Download complete file (" + bgeeExprCompleteFileSize + ")" );
             	this.$exprNoData.hide();
             }
 

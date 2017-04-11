@@ -230,12 +230,20 @@ p.file_info a:hover {
     color: #3E3E3E;
     font-weight: bold;
     text-align: center;
+    box-shadow: 1px 1px 0 0 #eeeeee inset, 0 0 2px 2px #aaaaaa inset;
 }
 
 #sib_body .download_link:hover {
     color: #AAA;
     text-decoration: none;
     background-color: #3E3E3E;
+    box-shadow: 0px 0px 1px 1px #aaaaaa inset, 0 1px 0 0 #eeeeee inset;
+}
+
+#bgee_data_selection .download_link span {
+    display: block;
+    font-size: 2.5em;
+    margin-top: 5px;
 }
 
 #bgee_data_selection .checkbox-inline, #bgee_data_selection  .radio-inline {

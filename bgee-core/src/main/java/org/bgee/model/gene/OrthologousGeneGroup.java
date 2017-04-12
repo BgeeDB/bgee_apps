@@ -8,15 +8,17 @@ import java.util.Set;
 public class OrthologousGeneGroup {
     private final Integer taxonId;
     private final Set<Gene> genes;
-    private final Integer omaGroupId;
+    private final String omaGroupId;
+    private final Integer omaNodeId;
     
-    public OrthologousGeneGroup(Integer taxonId, Integer omaGroupId, Set<Gene> genes) {
+    public OrthologousGeneGroup(Integer taxonId, String omaGroupId, Integer omaNodeId, Set<Gene> genes) {
     	this.taxonId = taxonId;
     	this.omaGroupId = omaGroupId;
+    	this.omaNodeId = omaNodeId;
     	this.genes = Collections.unmodifiableSet(genes == null ? new HashSet<Gene>(): genes);
     }
 
-	public int getTaxonId() {
+	public Integer getTaxonId() {
 		return taxonId;
 	}
 
@@ -24,13 +26,16 @@ public class OrthologousGeneGroup {
 		return genes;
 	}
 
-	public int getOmaGroupId() {
+	public String getOmaGroupId() {
 		return omaGroupId;
 	}
     
+	public Integer getOMANodeId() {
+		return omaNodeId;
+	}
 	@Override
     public String toString(){
-    	return "OrthologousGeneGroup [taxonId=" + taxonId + ", omagroupId=" + omaGroupId + ", genes=" + genes + "]";
+    	return "OrthologousGeneGroup [taxonId=" + taxonId + ", omagroupId=" + omaGroupId + ", omaNodeId=" + omaNodeId + ", genes=" + genes + "]";
     }
 	@Override
     public boolean equals(Object obj) {
@@ -58,6 +63,13 @@ public class OrthologousGeneGroup {
         } else if (!omaGroupId.equals(other.omaGroupId)) {
             return false;
         }
+        if (omaNodeId == null) {
+            if (other.omaNodeId != null) {
+                return false;
+            }
+        } else if (!omaNodeId.equals(other.omaNodeId)) {
+            return false;
+        }
         if (genes == null) {
             if (other.genes != null) {
                 return false;
@@ -74,6 +86,7 @@ public class OrthologousGeneGroup {
         int result = 1;
         result = prime * result + ((taxonId == null) ? 0 : taxonId.hashCode());
         result = prime * result + ((genes == null) ? 0 : genes.hashCode());
+        result = prime * result + ((omaNodeId == null) ? 0 : omaNodeId.hashCode());
         result = prime * result + ((omaGroupId == null) ? 0 : omaGroupId.hashCode());
         return result;
     }

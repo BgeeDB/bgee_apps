@@ -52,8 +52,8 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
     }
     
     @Override
-    public HierarchicalGroupToGeneTOResultSet getGroupToGene(int taxonId, 
-            Set<Integer> speciesIds) throws DAOException, IllegalArgumentException {
+    public HierarchicalGroupToGeneTOResultSet getGroupToGene(Integer taxonId, 
+            Collection<Integer> speciesIds) throws DAOException, IllegalArgumentException {
         log.entry(taxonId, speciesIds);
 
         if (taxonId <= 0) {

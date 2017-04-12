@@ -2,8 +2,6 @@ package org.bgee.model.anatdev;
 
 import java.util.Set;
 
-import org.bgee.model.Entity;
-
 /**
  * This class represents a similarity group of anatomical entities.
  * 
@@ -12,16 +10,18 @@ import org.bgee.model.Entity;
  * @version Bgee 13, Aug. 2016
  * @since   Bgee 13, Apr. 2016
  */
-public class AnatEntitySimilarity extends Entity<String> {
+public class AnatEntitySimilarity {
     
     /**
      * @return The {@code Set} of {@code String}s that are anatomical entity IDs of this group.
      */
     private final Set<String> anatEntityIds;
     
+    private String taxonId;
+    
     //XXX: we might need to include these fields this at some point
     //private String cioId;    
-    //private String taxonId;
+    //
     
     /**
      * Constructor providing the ID of this {@code AnatEntitySimilarity} and 
@@ -30,8 +30,8 @@ public class AnatEntitySimilarity extends Entity<String> {
      * @param id            A {@code String} that is the ID of this {@code AnatEntitySimilarity}.
      * @param anatEntityIds A {@code Set} of {@code String}s that are anatomical entity IDs of this group.
      */
-    public AnatEntitySimilarity(String id, Set<String> anatEntityIds) {
-        super(id);
+    public AnatEntitySimilarity(String taxonId, Set<String> anatEntityIds) {
+        this.taxonId = taxonId;
         this.anatEntityIds = anatEntityIds;
     }
 
@@ -47,6 +47,7 @@ public class AnatEntitySimilarity extends Entity<String> {
         final int prime = 31;
         int result = super.hashCode();
         result = prime * result + ((anatEntityIds == null) ? 0 : anatEntityIds.hashCode());
+        result = prime * result + ((taxonId == null) ? 0 : taxonId.hashCode());
         return result;
     }
 
@@ -69,11 +70,22 @@ public class AnatEntitySimilarity extends Entity<String> {
         } else if (!anatEntityIds.equals(other.anatEntityIds)) {
             return false;
         }
+        if (taxonId == null) {
+            if (other.taxonId != null) {
+                return false;
+            }
+        } else if (!taxonId.equals(other.taxonId)) {
+            return false;
+        }
         return true;
     }
 
     @Override
     public String toString() {
-        return super.toString() + " - Anat. entity IDs: " + getAnatEntityIds();
+    	StringBuilder builder = new StringBuilder();
+        builder.append("AnatEntitySimilarity [Anat. entity IDs = ").append(getAnatEntityIds())
+        	.append(", taxonId = ").append(taxonId)
+        	.append("]");
+        return builder.toString();
     }
 }

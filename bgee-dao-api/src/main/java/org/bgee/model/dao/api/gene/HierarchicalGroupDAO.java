@@ -84,7 +84,7 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
      * @throws IllegalArgumentException If {@code taxonId} is empty or null. 
      * @throws DAOException             If an error occurred when accessing the data source. 
      */
-    public HierarchicalGroupToGeneTOResultSet getOMANodeToGeneOrderedByNodeId(Collection<Integer> taxonIds, 
+    public HierarchicalGroupToGeneTOResultSet getOMANodeToGene(Collection<Integer> taxonIds, 
     		Map<Integer, Set<String>> speciesIdToGeneIds) throws DAOException, IllegalArgumentException;
 
     /**

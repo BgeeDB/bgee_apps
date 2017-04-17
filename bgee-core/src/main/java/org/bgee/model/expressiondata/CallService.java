@@ -573,12 +573,13 @@ public class CallService extends CommonService {
                         callFilter.getConditionFilters().stream()
                         .map(condFilter -> new DAOConditionFilter(
                             condFilter.getAnatEntityIds(),
-                            condFilter.getDevStageIds()))
+                            condFilter.getDevStageIds(),
+                            condFilter.getObservedConditions()))
                         .collect(Collectors.toSet()),
                     //CallDataDAOFilters
                     convertCallFilterToCallDataDAOFilters(callFilter),
                     //observedDataFilters
-                    callFilter.getConditionObservedData(),
+                    callFilter.getCallObservedData(),
                     convertCallFilterToDAOObservedDataFilter(callFilter, condParamCombination)
                 )),
                 // Condition parameters

@@ -66,7 +66,7 @@ public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & Summ
     public static class ExpressionCallFilter
     extends CallFilter<ExpressionCallData, SummaryCallType.ExpressionSummary> {
         
-        private final Boolean conditionObservedData;
+        private final Boolean callObservedData;
 
         private final Boolean anatEntityObservedData;
         private final Boolean devStageObservedData;
@@ -74,12 +74,12 @@ public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & Summ
         public ExpressionCallFilter(
                 Map<SummaryCallType.ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter,
                 Set<GeneFilter> geneFilters, Collection<ConditionFilter> conditionFilters,
-                Collection<DataType> dataTypeFilter, Boolean conditionObservedData,
+                Collection<DataType> dataTypeFilter, Boolean callObservedData,
                 Boolean anatEntityObservedData, Boolean devStageObservedData)
                         throws IllegalArgumentException {
             super(summaryCallTypeQualityFilter, geneFilters, conditionFilters, dataTypeFilter,
                     SummaryCallType.ExpressionSummary.class);
-            this.conditionObservedData = conditionObservedData;
+            this.callObservedData = callObservedData;
             this.anatEntityObservedData = anatEntityObservedData;
             this.devStageObservedData = devStageObservedData;
             try {
@@ -98,8 +98,8 @@ public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & Summ
             log.exit();
         }
         
-        public Boolean getConditionObservedData() {
-            return conditionObservedData;
+        public Boolean getCallObservedData() {
+            return callObservedData;
         }
         public Boolean getAnatEntityObservedData() {
             return anatEntityObservedData;
@@ -117,19 +117,19 @@ public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & Summ
             // Filter on observed data
             //XXX: actually, we can now filter calls based on this information directly in the DAO,
             //so maybe we should force to retrieve this information in the Call solely to test it.
-            if (conditionObservedData != null || anatEntityObservedData != null ||
+            if (callObservedData != null || anatEntityObservedData != null ||
                     devStageObservedData != null) {
 
                 if (call.getDataPropagation() == null) {
                     throw log.throwing(new IllegalArgumentException(
                             "The provided Call does not allow to retrieve observedData information"));
                 }
-                if (conditionObservedData != null &&
+                if (callObservedData != null &&
                         call.getDataPropagation().isIncludingObservedData() == null) {
                     throw log.throwing(new IllegalArgumentException(
                             "The provided Call does not allow to retrieve observedData information"));
                 }
-                if (!conditionObservedData.equals(call.getDataPropagation().isIncludingObservedData())) {
+                if (!callObservedData.equals(call.getDataPropagation().isIncludingObservedData())) {
                     return log.exit(false);
                 }
 
@@ -164,7 +164,7 @@ public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & Summ
         public int hashCode() {
             final int prime = 31;
             int result = super.hashCode();
-            result = prime * result + ((conditionObservedData == null) ? 0 : conditionObservedData.hashCode());
+            result = prime * result + ((callObservedData == null) ? 0 : callObservedData.hashCode());
             result = prime * result
                     + ((anatEntityObservedData == null) ? 0 : anatEntityObservedData.hashCode());
             result = prime * result + ((devStageObservedData == null) ? 0 : devStageObservedData.hashCode());
@@ -182,11 +182,11 @@ public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & Summ
                 return false;
             }
             ExpressionCallFilter other = (ExpressionCallFilter) obj;
-            if (conditionObservedData == null) {
-                if (other.conditionObservedData != null) {
+            if (callObservedData == null) {
+                if (other.callObservedData != null) {
                     return false;
                 }
-            } else if (!conditionObservedData.equals(other.conditionObservedData)) {
+            } else if (!callObservedData.equals(other.callObservedData)) {
                 return false;
             }
             if (anatEntityObservedData == null) {
@@ -209,7 +209,7 @@ public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & Summ
         @Override
         public String toString() {
             StringBuilder builder = new StringBuilder();
-            builder.append("ExpressionCallFilter [conditionObservedData=").append(conditionObservedData)
+            builder.append("ExpressionCallFilter [callObservedData=").append(callObservedData)
                    .append(", anatEntityObservedData=").append(anatEntityObservedData)
                    .append(", devStageObservedData=").append(devStageObservedData)
                    .append(", geneFilters=").append(getGeneFilters())

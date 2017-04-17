@@ -41,7 +41,7 @@ public class CallDAOFilter {
     /**
      * See #isConditionObservedData()
      */
-    private final Boolean conditionObservedData;
+    private final Boolean callObservedData;
     /**
      * @see #getObservedDataFilter()
      */
@@ -61,9 +61,9 @@ public class CallDAOFilter {
      */
     public CallDAOFilter(Collection<Integer> geneIds, Collection<Integer> speciesIds, 
             Collection<DAOConditionFilter> conditionFilters, Collection<CallDataDAOFilter> dataFilters,
-            Boolean conditionObservedData, Map<ConditionDAO.Attribute, Boolean> observedDataFilter)
+            Boolean callObservedData, Map<ConditionDAO.Attribute, Boolean> observedDataFilter)
                     throws IllegalArgumentException {
-        log.entry(geneIds, speciesIds, conditionFilters, dataFilters, conditionObservedData, observedDataFilter);
+        log.entry(geneIds, speciesIds, conditionFilters, dataFilters, callObservedData, observedDataFilter);
         if (geneIds != null && geneIds.stream().anyMatch(id -> id == null)) {
             throw log.throwing(new IllegalArgumentException("No gene ID can be null"));
         }
@@ -85,7 +85,7 @@ public class CallDAOFilter {
                 geneIds == null? new HashSet<>(): new HashSet<>(geneIds));
         this.speciesIds = Collections.unmodifiableSet(
                 speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds));
-        this.conditionObservedData = conditionObservedData;
+        this.callObservedData = callObservedData;
         //we'll use defensive copying for this one, no unmodifiableLinkedHashSet method
         this.conditionFilters = conditionFilters == null? new LinkedHashSet<>(): 
             new LinkedHashSet<>(conditionFilters);
@@ -140,8 +140,8 @@ public class CallDAOFilter {
      *          we cannot have the guarantee that data were actually observed in the condition
      *          by looking at these independent propagation states.
      */
-    public Boolean isConditionObservedData() {
-        return conditionObservedData;
+    public Boolean getCallObservedData() {
+        return callObservedData;
     }
     /**
      * @return  A {@code LinkedHashMap} where keys are {@code ConditionDAO.Attribute}s that are 
@@ -163,7 +163,7 @@ public class CallDAOFilter {
         result = prime * result + ((conditionFilters == null) ? 0 : conditionFilters.hashCode());
         result = prime * result + ((dataFilters == null) ? 0 : dataFilters.hashCode());
         result = prime * result + ((geneIds == null) ? 0 : geneIds.hashCode());
-        result = prime * result + ((conditionObservedData == null) ? 0 : conditionObservedData.hashCode());
+        result = prime * result + ((callObservedData == null) ? 0 : callObservedData.hashCode());
         result = prime * result + ((observedDataFilter == null) ? 0 : observedDataFilter.hashCode());
         result = prime * result + ((speciesIds == null) ? 0 : speciesIds.hashCode());
         return result;
@@ -201,11 +201,11 @@ public class CallDAOFilter {
         } else if (!geneIds.equals(other.geneIds)) {
             return false;
         }
-        if (conditionObservedData == null) {
-            if (other.conditionObservedData != null) {
+        if (callObservedData == null) {
+            if (other.callObservedData != null) {
                 return false;
             }
-        } else if (!conditionObservedData.equals(other.conditionObservedData)) {
+        } else if (!callObservedData.equals(other.callObservedData)) {
             return false;
         }
         if (observedDataFilter == null) {
@@ -232,7 +232,7 @@ public class CallDAOFilter {
                .append(", speciesIds=").append(speciesIds)
                .append(", conditionFilters=").append(conditionFilters)
                .append(", dataFilters=").append(dataFilters)
-               .append(", conditionObservedData=").append(conditionObservedData)
+               .append(", callObservedData=").append(callObservedData)
                .append(", observedDataFilter=").append(observedDataFilter)
                .append("]");
         return builder.toString();

@@ -606,7 +606,7 @@ public class TopAnatParams {
         GeneFilter geneFilter = new GeneFilter(this.speciesId, this.submittedBackgroundIds);
         
         Collection<ConditionFilter> condFilters = StringUtils.isBlank(this.devStageId)? null: 
-            Collections.singleton(new ConditionFilter(null, Collections.singleton(this.devStageId)));
+            Collections.singleton(new ConditionFilter(null, Collections.singleton(this.devStageId), null));
         
         if (this.callType == ExpressionSummary.EXPRESSED) {
             Map<ExpressionSummary, SummaryQuality> callQualFilter = new HashMap<>();

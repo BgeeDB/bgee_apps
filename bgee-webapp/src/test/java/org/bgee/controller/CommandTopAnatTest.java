@@ -12,7 +12,6 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -29,7 +28,6 @@ import org.bgee.model.job.JobService;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.DevStageService;
 import org.bgee.model.gene.Gene;
-import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.gene.GeneService;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
@@ -80,27 +78,22 @@ public class CommandTopAnatTest extends TestAncestor {
         TreeSet<String> fgNotSelectedGeneIdSet = new TreeSet<>();
         Integer fgSelectedSpeciesId = 10090;
         Species fgSelectedSpecies = new Species(10090);
-        Set<GeneFilter> fgGeneFilter = new HashSet<>(Arrays.asList(
-            new GeneFilter(fgSelectedSpeciesId, fgSubmittedGeneIds)));
 
         List<String> bgSubmittedGeneIds = Arrays.asList("ID1", "ID2", "ID3", "ID4");
         TreeSet<String> bgNotSelectedGeneIdSet = new TreeSet<>(Arrays.asList("ID3"));
         Integer bgSelectedSpeciesId = 9606;
         Species bgSelectedSpecies = new Species(9606);
-        Set<GeneFilter> bgGeneFilter = new HashSet<>(Arrays.asList(
-            new GeneFilter(bgSelectedSpeciesId, bgSubmittedGeneIds)));
 
-        Stream<Gene> fgGenes = Arrays.asList(new Gene("ID3", fgSelectedSpecies)).stream();
-        when(geneService.loadGenes(fgGeneFilter)).thenReturn(fgGenes);
+        List<Gene> fgGenes = Arrays.asList(new Gene("ID3", fgSelectedSpecies));
+        List<Gene> bgGenes = Arrays.asList(new Gene("ID1", bgSelectedSpecies),
+                new Gene("ID2", bgSelectedSpecies), new Gene("ID3", fgSelectedSpecies));
 
-        Stream<Gene> bgGenes = Arrays.asList(new Gene("ID1", bgSelectedSpecies),
-                new Gene("ID2", bgSelectedSpecies), new Gene("ID3", fgSelectedSpecies)).stream();
-        when(geneService.loadGenes(bgGeneFilter)).thenReturn(bgGenes);
-        
+        when(geneService.loadGenesByEnsemblIds(new TreeSet<>(fgSubmittedGeneIds))).thenReturn(fgGenes.stream());
+        when(geneService.loadGenesByEnsemblIds(new TreeSet<>(bgSubmittedGeneIds))).thenReturn(bgGenes.stream());
         TreeSet<String> fgUndeterminedGeneIds = new TreeSet<>();
 
         TreeSet<String> bgUndeterminedGeneIds = new TreeSet<>(bgSubmittedGeneIds);
-        bgUndeterminedGeneIds.removeAll(bgGenes
+        bgUndeterminedGeneIds.removeAll(bgGenes.stream()
                 .map(Gene::getEnsemblGeneId)
                 .collect(Collectors.toSet()));
 

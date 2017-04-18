@@ -61,7 +61,7 @@ public class JsonHelperTest extends TestAncestor {
         String json = new JsonHelper().toJson(species);
         String expected = "{\n  \"name\": \"SpeciesName\",\n  " +
                 "\"description\": \"A string description of that species\",\n  " +
-                "\"id\": \"12\"\n}";
+                "\"id\": 12\n}";
         assertEquals(expected, json);
     }
     
@@ -83,12 +83,13 @@ public class JsonHelperTest extends TestAncestor {
         String expected = "{\n  \"members\": [\n    {\n      \"genus\": \"Homo\",\n      "
                 + "\"speciesName\": \"sapiens\",\n      "
                 + "\"genomeVersion\": \"hsap1\",\n      \"name\": \"human\",\n      "
-                + "\"id\": \"9606\"\n    }\n  ],\n  \"downloadFiles\": [\n    {\n      "
+                + "\"id\": 9606\n    }\n  ],\n  \"downloadFiles\": [\n    {\n      "
                 + "\"name\": \"fileg1_1.tsv.zip\",\n      \"size\": 5000,\n      "
-                + "\"speciesDataGroupId\": \"singleSpeG1\",\n      "
+                + "\"speciesDataGroupId\": 1,\n      "
                 + "\"path\": \"/myrootpath/my/path/fileg1_1.tsv.zip\",\n      "
-                + "\"category\": \"expr_simple\"\n    }\n  ],\n  \"name\": \"single spe g1\","
-                + "\n  \"id\": \"singleSpeG1\"\n}";
+                + "\"category\": \"expr_simple\",\n      "
+                + "\"conditionParameters\": []\n    }\n  ],\n  \"name\": \"single spe g1\","
+                + "\n  \"id\": 1\n}";
 
         assertEquals("Incorrect JSON generated from SpeciesDataGroup", expected, json);
     }
@@ -113,8 +114,8 @@ public class JsonHelperTest extends TestAncestor {
                             params.getParamForegroundList().getSeparators().get(0), 
                         "UTF-8")
                     + "ID:3&"
-                + params.getParamSpeciesList().getName() + "=abc&" 
-                + params.getParamSpeciesList().getName() + "=abc2&" 
+                + params.getParamSpeciesList().getName() + "=123&" 
+                + params.getParamSpeciesList().getName() + "=456&" 
                 + params.getParamBackgroundList().getName()  + "=ID1.1" 
                     + java.net.URLEncoder.encode(
                             params.getParamForegroundList().getSeparators().get(0), 
@@ -136,8 +137,8 @@ public class JsonHelperTest extends TestAncestor {
         JsonHelper helper = new JsonHelper();
         String json = helper.toJson(rqParams);
         String expected = "{\n  \"" + params.getParamPage().getName() + "\": \"my_page\",\n  "
-                + "\"" + params.getParamSpeciesList().getName() + "\": [\n    \"abc\",\n    "
-                + "\"abc2\"\n  ],\n  \"" + params.getParamForegroundList().getName() 
+                + "\"" + params.getParamSpeciesList().getName() + "\": [\n    \"123\",\n    "
+                + "\"456\"\n  ],\n  \"" + params.getParamForegroundList().getName() 
                 + "\": [\n    \"ID:1\",\n    \"ID:2\",\n    \"ID:3\"\n  ],\n  "
                 + "\"" + params.getParamBackgroundList().getName() + "\": [\n    "
                 + "\"ID1.1\",\n    \"ID2.2\",\n    \"ID3.3\"\n  ],\n  "
@@ -174,10 +175,10 @@ public class JsonHelperTest extends TestAncestor {
                 "{\n  \"code\": 200,\n  \"status\": \"success\",\n  \"message\": \"my msg\",\n"
                 + "  \"data\": {\n    \"speciesList\": [\n      {\n        "
                 + "\"name\": \"SpeciesName\",\n        \"description\": "
-                + "\"A string description of that species\",\n        \"id\": \"12\"\n"
+                + "\"A string description of that species\",\n        \"id\": 12\n"
                 + "      },\n      {\n        \"name\": \"SpeciesName\",\n        "
                 + "\"description\": \"A string description of that species\",\n"
-                + "        \"id\": \"13\"\n      }\n    ]\n  }\n}",  
+                + "        \"id\": 13\n      }\n    ]\n  }\n}",  
                 out.toString());
     }
     

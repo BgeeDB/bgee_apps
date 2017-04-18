@@ -278,13 +278,16 @@ abstract class CommandParent {
      * Check and retrieve the summary quality requested in the {@code RequestParameters} object 
      * provided at instantiation. 
      * 
-     * @return  A {@code DataQuality} retrieved from the request parameters.
+     * @return  A {@code SummaryQuality} retrieved from the request parameters.
      * @throws InvalidRequestException  If the summary quality request parameter is incorrectly used.
      */
     protected SummaryQuality checkAndGetSummaryQuality() throws InvalidRequestException {
         log.entry();
         
         String rqDataQual = this.requestParameters.getDataQuality();
+        if (rqDataQual == null) {
+            return log.exit(null);
+        }
         if (SummaryQuality.GOLD.name().equalsIgnoreCase(rqDataQual)) {
             return log.exit(SummaryQuality.GOLD);
         }

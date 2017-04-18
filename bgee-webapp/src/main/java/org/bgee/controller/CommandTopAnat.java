@@ -52,9 +52,10 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.expressiondata.baseelements.CallType;
-import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DecorrelationType;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.job.Job;
 import org.bgee.model.job.JobService;
@@ -386,15 +387,14 @@ public class CommandTopAnat extends CommandParent {
     private final static int DEV_STAGE_LEVEL = 2;
     
     /**
-     * A {@code String} that is the label of the count of genes whose the species is undetermined. 
+     * An {@code Integer} that is the label of the count of genes whose the species is undetermined. 
      */
-    private final static String UNDETERMINED_SPECIES_LABEL = "UNDETERMINED";
+    private final static Integer UNDETERMINED_SPECIES_LABEL = -1;
 
     /**
      * A {@code String} that is the label of the job response. 
      */
     private final static String JOB_RESPONSE_LABEL = "jobResponse";
-    
     
     /**
      * An {@code enum} defining the job status. 
@@ -760,16 +760,20 @@ public class CommandTopAnat extends CommandParent {
 
         TreeSet<String> geneSet = new TreeSet<>(geneList);
         // Load valid submitted gene IDs
-        final Set<Gene> validGenes = new HashSet<>(this.getGenes(null, geneSet));
+        System.err.println(serviceFactory.getGeneService());
+        System.err.println("serviceFactory.getGeneService().loadGenesByEnsemblIds("+geneSet+")");
+        System.err.println(serviceFactory.getGeneService().loadGenesByEnsemblIds(geneSet));
+        final Set<Gene> validGenes = serviceFactory.getGeneService().
+                loadGenesByEnsemblIds(geneSet).collect(Collectors.toSet());
         // Identify undetermined gene IDs
         final Set<String> undeterminedGeneIds = new HashSet<>(geneSet);
         undeterminedGeneIds.removeAll(validGenes.stream()
-                .map(Gene::getId)
+                .map(Gene::getEnsemblGeneId)
                 .collect(Collectors.toSet()));
         
         // Map species ID to valid gene ID count
-        final Map<String, Long> speciesIdToGeneCount = validGenes.stream()
-                    .collect(Collectors.groupingBy(Gene::getSpeciesId, Collectors.counting()));
+        final Map<Integer, Long> speciesIdToGeneCount = validGenes.stream()
+                    .collect(Collectors.groupingBy(g -> g.getSpecies().getId(), Collectors.counting()));
         // Retrieve detected species, and create a new Map Species -> Long
         final Map<Species, Long> speciesToGeneCount = speciesIdToGeneCount.isEmpty()? new HashMap<>(): 
                 this.serviceFactory.getSpeciesService()
@@ -777,7 +781,7 @@ public class CommandTopAnat extends CommandParent {
                 .stream()
                 .collect(Collectors.toMap(spe -> spe, spe -> speciesIdToGeneCount.get(spe.getId())));
         // Determine selected species ID. 
-        String selectedSpeciesId = speciesIdToGeneCount.entrySet().stream()
+        Integer selectedSpeciesId = speciesIdToGeneCount.entrySet().stream()
                 //sort based on gene count (and in case of equality, based on species ID)
                 .max((e1, e2) -> {
                     if (e1.getValue().equals(e2.getValue())) {
@@ -796,8 +800,8 @@ public class CommandTopAnat extends CommandParent {
         // Identify gene IDs not in the selected species
         TreeSet<String> notSelectedSpeciesGenes = new TreeSet<>(
                 validGenes.stream()
-                    .filter(g -> !g.getSpeciesId().equals(selectedSpeciesId))
-                    .map(Gene::getId)
+                    .filter(g -> !g.getSpecies().getId().equals(selectedSpeciesId))
+                    .map(Gene::getEnsemblGeneId)
                     .collect(Collectors.toSet()));
         
         // Determine message
@@ -813,10 +817,10 @@ public class CommandTopAnat extends CommandParent {
         //Transform speciesToGeneCount into a Map species ID -> gene count, and add
         //the invalid gene count, associated to a specific key, and make it a LinkedHashMap,
         //for sorted and predictable responses
-        LinkedHashMap<String, Long> responseSpeciesIdToGeneCount = Optional.of(speciesToGeneCount)
+        LinkedHashMap<Integer, Long> responseSpeciesIdToGeneCount = Optional.of(speciesToGeneCount)
                 .map(map -> {
                     //create a map species ID -> gene count
-                    Map<String, Long> newMap = map.entrySet().stream()
+                    Map<Integer, Long> newMap = map.entrySet().stream()
                             .collect(Collectors.toMap(e -> e.getKey().getId(), e -> e.getValue()));
                     //add an entry for undetermined genes
                     if (!undeterminedGeneIds.isEmpty()) {
@@ -902,31 +906,11 @@ public class CommandTopAnat extends CommandParent {
         
         return log.exit(msg.toString());
     }
-
-    /**
-     * Get the {@code List} of {@code Gene}s containing valid genes from a given list.
-     * 
-     * @param speciesIds    A {@code Set} of {@code String}s that are IDs of species 
-     *                      for which to return the {@code Gene}s.
-     * @param geneIds       A {@code Set} of {@code String}s that are IDs of genes 
-     *                      for which to return the {@code Gene}s.
-     * @return              A {@List} of {@code Gene}s that are valid genes.
-     * @throws IllegalStateException    If the {@code GeneService} obtained from the 
-     *                                  {@code ServiceFactory} did not allow
-     *                                  to obtain any {@code Gene}.
-     */
-    private List<Gene> getGenes(Set<String> speciesIds, Set<String> geneIds) 
-            throws IllegalStateException {
-        log.entry(speciesIds, geneIds);
-        List<Gene> genes = serviceFactory.getGeneService().
-                loadGenesByIdsAndSpeciesIds(geneIds, speciesIds);
-        return log.exit(genes);
-    }
     
     /**
      * Get the {@code Set} of {@code DevStage}s for the given {@code speciesId}.
      * 
-     * @param speciesId     A {@code String}s that are ID of species 
+     * @param speciesId     An {@code Integer} that is the ID of species 
      *                      for which to return the {@code DevStage}s.
      * @param level         An {@code Integer} that is the level of dev. stages 
      *                      allowing to filter the dev. stages.
@@ -936,7 +920,7 @@ public class CommandTopAnat extends CommandParent {
      *                                  {@code ServiceFactory} did not allow
      *                                  to obtain any {@code DevStage}.
      */
-    private Set<DevStage> getGroupingDevStages(String speciesId, Integer level) 
+    private Set<DevStage> getGroupingDevStages(Integer speciesId, Integer level) 
             throws IllegalStateException {
         log.entry(speciesId, level);
         Set<DevStage> devStages = serviceFactory.getDevStageService().
@@ -988,7 +972,7 @@ public class CommandTopAnat extends CommandParent {
         }
         
         // Data quality can be null if there is no filter to be applied
-        DataQuality dataQuality = this.checkAndGetDataQuality();
+        SummaryQuality dataQuality = this.checkAndGetSummaryQuality();
         // Data types can be null if there is no filter to be applied
         Set<DataType> dataTypes = this.checkAndGetDataTypes();
     
@@ -1028,7 +1012,7 @@ public class CommandTopAnat extends CommandParent {
         
         Set<String> cleanFgIds = new HashSet<>(subFgIds);
         Set<String> cleanBgIds = null;
-        String speciesId = null;
+        Integer speciesId = null;
         // If a bg list is provided, we do a gene validation on it and clean both lists
         if (hasBgList) {
             GeneListResponse bgGeneResponse = this.getGeneResponse(subBgIds, null);
@@ -1062,7 +1046,7 @@ public class CommandTopAnat extends CommandParent {
 
         assert cleanFgIds != null && !cleanFgIds.isEmpty();
         assert devStageIds != null && !devStageIds.isEmpty();
-        assert StringUtils.isNotBlank(speciesId);
+        assert speciesId != null && speciesId > 1;
         assert callTypes == null || callTypes.isEmpty();
 
         // One TopAnat analyze has one call type and one dev. stage
@@ -1076,12 +1060,12 @@ public class CommandTopAnat extends CommandParent {
                 if (StringUtils.isBlank(devStageId)) {
                     continue;
                 }
-                CallType callTypeEnum = null;
+                SummaryCallType callTypeEnum = null;
                 
-                if (BgeeEnum.isInEnum(CallType.Expression.class, callType)) {
-                    callTypeEnum = CallType.Expression.convertToExpression(callType);
+                if (BgeeEnum.isInEnum(SummaryCallType.ExpressionSummary.class, callType)) {
+                    callTypeEnum = SummaryCallType.ExpressionSummary.convertToExpression(callType);
                 } else if (BgeeEnum.isInEnum(CallType.DiffExpression.class, callType)) {
-                    callTypeEnum = CallType.DiffExpression.convertToDiffExpression(callType);
+                    callTypeEnum = SummaryCallType.DiffExpressionSummary.convertToDiffExpression(callType);
                 } else {
                     throw log.throwing(new InvalidRequestException("Unkown call type: " + callType));
                 }
@@ -1089,7 +1073,7 @@ public class CommandTopAnat extends CommandParent {
                 TopAnatParams.Builder builder = new TopAnatParams.Builder(
                         cleanFgIds, cleanBgIds, speciesId, callTypeEnum);
                 
-                builder.dataQuality(dataQuality);
+                builder.summaryQuality(dataQuality);
                 builder.dataTypes(dataTypes);
                 
                 builder.devStageId(devStageId);
@@ -1166,15 +1150,15 @@ public class CommandTopAnat extends CommandParent {
         /**
          * See {@link #getGeneCount()}.
          */
-        private final LinkedHashMap<String, Long> geneCount;
+        private final LinkedHashMap<Integer, Long> geneCount;
         /**
          * See {@link #getDetectedSpecies()}.
          */
-        private final TreeMap<String, Species> detectedSpecies;
+        private final TreeMap<Integer, Species> detectedSpecies;
         /**
          * See {@link #getSelectedSpecies()}.
          */
-        private final String selectedSpecies;
+        private final Integer selectedSpecies;
         /**
          * See {@link #getStages()}.
          */
@@ -1192,11 +1176,13 @@ public class CommandTopAnat extends CommandParent {
          * Constructor of {@code GeneListResponse}. All {@code Collection}s or {@code Map}s
          * have a predictable iteration order, for predictable and consistent responses.
          * 
-         * @param geneCount             A {@code LinkedHashMap} where keys are {@code String}s
+         * @param geneCount             A {@code LinkedHashMap} where keys are {@code Integer}s
          *                              corresponding to species IDs, the associated value being
          *                              a {@code Long} that is the gene count on the species.
-         * @param detectedSpecies       A {@code List} of {@code Species} detected in the gene list uploaded.
-         * @param selectedSpecies       A {@code String} representing the ID of the selected species.
+         * @param detectedSpecies       A {@code TreeMap} where keys are {@code Integer}s corresponding 
+         *                              to IDs of detected species, the associated value being the
+         *                              corresponding {@code Species} object.
+         * @param selectedSpecies       An {@code Integer} representing the ID of the selected species.
          * @param stages                A {@code Collection} of {@code DevStage}s that are
          *                              valid dev. stages for {@code selectedSpecies}. 
          *                              They will be ordered by their natural ordering.
@@ -1205,9 +1191,9 @@ public class CommandTopAnat extends CommandParent {
          * @param undeterminedGeneIds   A {@code TreeSet} of {@code String}s that are gene IDs
          *                              with undetermined species.
          */
-        public GeneListResponse(LinkedHashMap<String, Long> geneCount,
-                TreeMap<String, Species> detectedSpecies,
-                String selectedSpecies, Collection<DevStage> stages, TreeSet<String> notInSelectedSpeciesGeneIds,
+        public GeneListResponse(LinkedHashMap<Integer, Long> geneCount,
+                TreeMap<Integer, Species> detectedSpecies, Integer selectedSpecies,
+                Collection<DevStage> stages, TreeSet<String> notInSelectedSpeciesGeneIds,
                 TreeSet<String> undeterminedGeneIds) {
             log.entry(geneCount, detectedSpecies, selectedSpecies, stages,
                     notInSelectedSpeciesGeneIds, undeterminedGeneIds);
@@ -1221,24 +1207,24 @@ public class CommandTopAnat extends CommandParent {
         }
         
         /**
-         * @return  The {@code Map} where keys are {@code String}s corresponding species IDs,
+         * @return  The {@code Map} where keys are {@code Integer}s corresponding species IDs,
          *          the associated value being a {@code Long} that is the gene count on the species.
          */
-        public LinkedHashMap<String, Long> getGeneCount() {
+        public LinkedHashMap<Integer, Long> getGeneCount() {
             return this.geneCount;
         }
         /**
-         * @return  The {@code TreeMap} where keys are {@code String}s corresponding 
+         * @return  The {@code TreeMap} where keys are {@code Integer}s corresponding 
          *          to IDs of detected species, the associated value being the corresponding 
          *          {@code Species} object.
          */
-        public TreeMap<String, Species> getDetectedSpecies() {
+        public TreeMap<Integer, Species> getDetectedSpecies() {
             return this.detectedSpecies;
         }
         /**
-         * @return  The {@code String} representing the ID of the selected species.
+         * @return  The {@code Integer} representing the ID of the selected species.
          */
-        public String getSelectedSpecies() {
+        public Integer getSelectedSpecies() {
             return this.selectedSpecies;
         }
         /**

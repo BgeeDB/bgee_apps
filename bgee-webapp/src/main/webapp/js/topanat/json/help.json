@@ -5,7 +5,7 @@
 },
 {
     "topic": "Data quality",
-    "help": "For each data type, Bgee applies dedicated analysis to generate calls of baseline presence/absence of expression, and of over-/under-expression, and to assign a level of confidence to the data: low or high. This field allows to specify whether the analysis should be based on data of any quality level, or on data of high quality level only."
+    "help": "For each data type, Bgee applies dedicated analysis to generate calls of baseline presence/absence of expression, and of over-/under-expression, and to assign a level of confidence to the data: silver or gold. This field allows to specify whether the analysis should be based on data of any quality level, or on data of high quality level only."
 },
 {
     "topic": "Decorrelation type",

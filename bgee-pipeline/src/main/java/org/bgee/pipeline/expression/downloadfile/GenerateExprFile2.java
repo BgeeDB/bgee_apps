@@ -161,7 +161,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
     public static void main(String[] args) throws IllegalArgumentException, IOException {
         log.entry((Object[]) args);
 
-        int expectedArgLength = 3;
+        int expectedArgLength = 4;
         if (args.length != expectedArgLength) {
             throw log.throwing(new IllegalArgumentException(
                     "Incorrect number of arguments provided, expected " + 

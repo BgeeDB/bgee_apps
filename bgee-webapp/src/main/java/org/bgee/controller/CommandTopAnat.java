@@ -760,9 +760,6 @@ public class CommandTopAnat extends CommandParent {
 
         TreeSet<String> geneSet = new TreeSet<>(geneList);
         // Load valid submitted gene IDs
-        System.err.println(serviceFactory.getGeneService());
-        System.err.println("serviceFactory.getGeneService().loadGenesByEnsemblIds("+geneSet+")");
-        System.err.println(serviceFactory.getGeneService().loadGenesByEnsemblIds(geneSet));
         final Set<Gene> validGenes = serviceFactory.getGeneService().
                 loadGenesByEnsemblIds(geneSet).collect(Collectors.toSet());
         // Identify undetermined gene IDs

@@ -604,7 +604,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		sb.append("<span class='quality ");
 
 		if (qualities.isEmpty()) {
-            throw log.throwing(new IllegalStateException("Empty qualityies"));
+            throw log.throwing(new IllegalStateException("Empty qualities"));
 		}
 
 		SummaryQuality sq = SummaryQuality.BRONZE;

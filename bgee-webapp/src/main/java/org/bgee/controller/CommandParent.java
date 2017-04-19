@@ -285,9 +285,6 @@ abstract class CommandParent {
         log.entry();
         
         String rqDataQual = this.requestParameters.getDataQuality();
-        if (rqDataQual == null) {
-            return log.exit(null);
-        }
         if (SummaryQuality.GOLD.name().equalsIgnoreCase(rqDataQual)) {
             return log.exit(SummaryQuality.GOLD);
         }

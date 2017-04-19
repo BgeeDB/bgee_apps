@@ -139,10 +139,11 @@ public class CommandParentTest extends TestAncestor {
         
         RequestParameters params = new RequestParameters();
         log.info("Generated query URL: " + params.getRequestURL());
-        //no data quality parameter, should retrieve no data quality
+        //no data quality parameter, should retrieve silver quality to not display bronze calls
         FakeCommand command = new FakeCommand(response, params, BgeeProperties.getBgeeProperties(), 
                 null, null, null, null, context, null);
-        assertEquals("No data quality should have been retrieved", null, command.checkAndGetSummaryQuality());
+        assertEquals("No data quality should have been retrieved", SummaryQuality.SILVER,
+                command.checkAndGetSummaryQuality());
 
         //SILVER quality
         params = new RequestParameters();

@@ -457,10 +457,11 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
                 // Currently, the file description is not use, so for the moment, we set it to null.
                 downloadFileTOs.add(new DownloadFileTO(
                         downloadFileId, file.getName(), null, path, file.length(),
-                        CategoryEnum.convertToCategoryEnum(category), groupId));
+                        CategoryEnum.convertToCategoryEnum(category), groupId, null));
                 groupIdsWithData.add(groupId);
                 downloadFileId++;
             }
+            throw log.throwing(new UnsupportedOperationException("Management of condition paramter is missing"));
         }
 
         log.info("Start inserting species data groups...");

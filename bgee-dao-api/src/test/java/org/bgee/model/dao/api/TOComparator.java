@@ -552,6 +552,7 @@ public class TOComparator {
                 //see http://stackoverflow.com/a/20542511/1768736
                 && Objects.equals(to1.getSize(), to2.getSize())
                 && Objects.equals(to1.getSpeciesDataGroupId(), to2.getSpeciesDataGroupId())
+                && Objects.equals(to1.getConditionParameters(), to2.getConditionParameters())
         );
     }
 

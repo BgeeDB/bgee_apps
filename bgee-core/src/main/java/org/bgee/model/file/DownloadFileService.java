@@ -61,10 +61,13 @@ public class DownloadFileService extends Service {
                 //currently, the IDs of DownloadFile.CategoryEnum correspond exactly to
                 //the DownloadFileTO.CategoryEnum#getStringRepresentation(), 
                 //this might change in the future.
-                DownloadFile.CategoryEnum.getById(downloadFileTO.getCategory().getStringRepresentation()),
+                DownloadFile.CategoryEnum.convertToCategoryEnum(
+                            downloadFileTO.getCategory().getStringRepresentation()),
                 downloadFileTO.getSize(),
-                downloadFileTO.getSpeciesDataGroupId()));
+                downloadFileTO.getSpeciesDataGroupId(),
+                downloadFileTO.getConditionParameters().stream()
+                    .map(p -> DownloadFile.ConditionParameter.convertToConditionParameter(
+                                p.getStringRepresentation()))
+                    .collect(Collectors.toSet())));
     }
-
-
 }

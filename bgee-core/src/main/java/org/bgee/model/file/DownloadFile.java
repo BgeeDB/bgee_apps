@@ -6,6 +6,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
+import org.bgee.model.BgeeEnum;
+import org.bgee.model.BgeeEnum.BgeeEnumField;
 
 /**
  * A file (available for download), providing information such as size, category.
@@ -35,21 +37,22 @@ public class DownloadFile {
 	 * </ul>
 	 * 
 	 * @author  Philippe Moret
-	 * @version Bgee 13
+	 * @author  Valentine Rech de Laval
+	 * @version Bgee 14, Apr. 2017
 	 * @since   Bgee 13
 	 */
-    public enum CategoryEnum {
-        EXPR_CALLS_SIMPLE("expr_simple",false),
-        EXPR_CALLS_COMPLETE("expr_complete",false),
-        DIFF_EXPR_ANAT_SIMPLE("diff_expr_anatomy_simple",true),
-        DIFF_EXPR_ANAT_COMPLETE("diff_expr_anatomy_complete",true),
-        DIFF_EXPR_DEV_COMPLETE("diff_expr_dev_complete",true),
-        DIFF_EXPR_DEV_SIMPLE("diff_expr_dev_simple",true),
-        ORTHOLOG("ortholog",false),
-        AFFY_ANNOT("affy_annot",false),
-        AFFY_DATA("affy_data",false),
-        RNASEQ_ANNOT("rnaseq_annot",false),
-        RNASEQ_DATA("rnaseq_data",false);
+    public enum CategoryEnum implements BgeeEnumField {
+        EXPR_CALLS_SIMPLE("expr_simple", false),
+        EXPR_CALLS_COMPLETE("expr_complete", false),
+        DIFF_EXPR_ANAT_SIMPLE("diff_expr_anatomy_simple", true),
+        DIFF_EXPR_ANAT_COMPLETE("diff_expr_anatomy_complete", true),
+        DIFF_EXPR_DEV_COMPLETE("diff_expr_dev_complete", true),
+        DIFF_EXPR_DEV_SIMPLE("diff_expr_dev_simple", true),
+        ORTHOLOG("ortholog", false),
+        AFFY_ANNOT("affy_annot", false),
+        AFFY_DATA("affy_data", false),
+        RNASEQ_ANNOT("rnaseq_annot", false),
+        RNASEQ_DATA("rnaseq_data", false);
 
         /**
          * A {@code String} that is the string representation.
@@ -73,39 +76,39 @@ public class DownloadFile {
             this.isDiffExpr = isDiffExpr;
         }
 
-        /** 
-         * Get the string representation.
-         * 
-         * @return  The {@code String} that is the string representation.
-         */
+        @Override
         public String getStringRepresentation() {
-            return stringRepresentation;
+            return this.stringRepresentation;
         }
 
         /**
-         * Helper to get the enum value from a {@code String}.
+         * Convert the {@code String} representation of a category (for instance, 
+         * retrieved from request) into a {@code CategoryEnum}.
+         * Operation performed by calling {@link BgeeEnum#convert(Class, String)} with 
+         * {@code CategoryEnum} as the {@code Class} argument, and {@code representation} 
+         * as the {@code String} argument.
          * 
-         * @param rep   A {@code String} that is the string representation.
-         * @return      The matching {@code CategoryEnum}.
+         * @param representation            A {@code String} representing a data quality.
+         * @return                          A {@code CategoryEnum} corresponding 
+         *                                  to {@code representation}.
+         * @throws IllegalArgumentException If {@code representation} does not correspond 
+         *                                  to any {@code CategoryEnum}.
+         * @see #convert(Class, String)
          */
-        public static CategoryEnum getById(String rep){
-            for (CategoryEnum e : values()){
-                if (e.getStringRepresentation().equals(rep))
-                    return e;
-            }
-            throw new IllegalArgumentException("Could not recognize representation: "+rep);
+        public static final CategoryEnum convertToCategoryEnum(String representation) {
+            return BgeeEnum.convert(CategoryEnum.class, representation);
         }
 
         /**
          * @return {@code true} if the file category is a differential expression.
          */
         public boolean isDiffExpr() {
-            return isDiffExpr;
+            return this.isDiffExpr;
         }
         
         @Override
         public String toString() {
-            return getStringRepresentation();
+            return this.getStringRepresentation();
         }
     }
     
@@ -121,7 +124,7 @@ public class DownloadFile {
      * @since   Bgee 14, Apr. 2017
      */
     // TODO: should we use CallService.Attribute?
-    public enum ConditionParameter {
+    public enum ConditionParameter implements BgeeEnumField {
         ANAT_ENTITY("anatomicalEntity"), DEV_STAGE("developmentalStage");
         
         /** The string representation */
@@ -129,14 +132,34 @@ public class DownloadFile {
 
         /**
          * Constructor with 1-param
-         * @param stringRepresentation The {@code String representation}
+         * 
+         * @param stringRepresentation A {@code String} corresponding to this {@code ConditionParameter}.
          */
         ConditionParameter(String stringRepresentation) {
             this.stringRepresentation = stringRepresentation;
         }
 
+        @Override
         public String getStringRepresentation() {
-            return stringRepresentation;
+            return this.stringRepresentation;
+        }
+        
+        /**
+         * Convert the {@code String} representation of a condition parameter (for instance, 
+         * retrieved from request) into a {@code ConditionParameter}.
+         * Operation performed by calling {@link BgeeEnum#convert(Class, String)} with 
+         * {@code ConditionParameter} as the {@code Class} argument, and {@code representation} 
+         * as the {@code String} argument.
+         * 
+         * @param representation            A {@code String} representing a data quality.
+         * @return                          A {@code ConditionParameter} corresponding 
+         *                                  to {@code representation}.
+         * @throws IllegalArgumentException If {@code representation} does not correspond 
+         *                                  to any {@code ConditionParameter}.
+         * @see #convert(Class, String)
+         */
+        public static final ConditionParameter convertToConditionParameter(String representation) {
+            return BgeeEnum.convert(ConditionParameter.class, representation);
         }
 
         @Override
@@ -250,7 +273,7 @@ public class DownloadFile {
     /**
      * Gets the condition parameters.
      * 
-     * @return  A {@code Set} of {@code ConditionParameter} thats are the
+     * @return  A {@code Set} of {@code ConditionParameter} that are the
      *          condition parameters used to generate this file.
      */
     public Set<ConditionParameter> getConditionParameters() {

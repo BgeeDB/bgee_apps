@@ -19,6 +19,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.CommonService;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
+import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO;
 import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO.RawExpressionCallTO;
 import org.bgee.model.dao.api.gene.GeneDAO;
@@ -28,7 +29,6 @@ import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneT
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalNodeTO;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
-import org.bgee.pipeline.expression.DataType;
 
 /**
  * A {@link Service} to obtain {@link Gene} objects. Users should use the
@@ -44,40 +44,40 @@ public class GeneService extends CommonService {
     
     private static final Logger log = LogManager.getLogger(GeneService.class.getName());
     
-    public class OrthologousGroupSpliterator<U extends OrthologousGeneGroup>
-    extends Spliterators.AbstractSpliterator<U> {
-
-    	private final Map<Integer, HierarchicalNodeTO> groupMap;
-    	private final HierarchicalGroupToGeneTOResultSet rs;
-    	
-    	private OrthologousGroupSpliterator(Map<Integer, HierarchicalNodeTO> groupMap, Map<Integer, Gene> geneMap,
-    			HierarchicalGroupToGeneTOResultSet rs) {
-    		
-    	}
-        @Override
-        public boolean tryAdvance(Consumer<? super U> action) {
-        	
-
-        	Map<Integer, Set<Integer>> nodeIdToGeneIds = new HashMap<>();
-        	Integer previousNodeId = null;
-            while (true) {
-            	boolean hasNext = rs.next();
-            	if (!hasNext) {
-            		return false;
-            	}
-            	
-            	HierarchicalGroupToGeneTO nodeToGeneTO = rs.getTO();
-            	Set<Integer> geneIds = nodeIdToGeneIds.computeIfAbsent(nodeToGeneTO.getNodeId(), k -> new HashSet<>());
-            	geneIds.add(nodeToGeneTO.getBgeeGeneId());
-            	
-            	previousNodeId = nodeToGeneTO.getNodeId();
-            }
-        	
-        	
-        	OrthologousGeneGroup group = null;
-        	action.accept((U) group);
-        }
-    }
+//    public class OrthologousGroupSpliterator<U extends OrthologousGeneGroup>
+//    extends Spliterators.AbstractSpliterator<U> {
+//
+//    	private final Map<Integer, HierarchicalNodeTO> groupMap;
+//    	private final HierarchicalGroupToGeneTOResultSet rs;
+//    	
+//    	private OrthologousGroupSpliterator(Map<Integer, HierarchicalNodeTO> groupMap, Map<Integer, Gene> geneMap,
+//    			HierarchicalGroupToGeneTOResultSet rs) {
+//    		
+//    	}
+//        @Override
+//        public boolean tryAdvance(Consumer<? super U> action) {
+//        	
+//
+//        	Map<Integer, Set<Integer>> nodeIdToGeneIds = new HashMap<>();
+//        	Integer previousNodeId = null;
+//            while (true) {
+//            	boolean hasNext = rs.next();
+//            	if (!hasNext) {
+//            		return false;
+//            	}
+//            	
+//            	HierarchicalGroupToGeneTO nodeToGeneTO = rs.getTO();
+//            	Set<Integer> geneIds = nodeIdToGeneIds.computeIfAbsent(nodeToGeneTO.getNodeId(), k -> new HashSet<>());
+//            	geneIds.add(nodeToGeneTO.getBgeeGeneId());
+//            	
+//            	previousNodeId = nodeToGeneTO.getNodeId();
+//            }
+//        	
+//        	
+//        	OrthologousGeneGroup group = null;
+//        	action.accept((U) group);
+//        }
+//    }
     
     private final SpeciesService speciesService;
 
@@ -201,7 +201,7 @@ public class GeneService extends CommonService {
     public Map<Integer, Set<Gene>> getOrthologs(Integer taxonId, Set<Integer> speciesIds) {
         log.entry(taxonId, speciesIds);
         HierarchicalGroupToGeneTOResultSet resultSet = getDaoManager().getHierarchicalGroupDAO()
-                .getGroupToGene(taxonId, speciesIds);
+                .getOMANodeToGene(taxonId, speciesIds);
 
         final Set<Integer> clnSpId =  speciesIds == null? new HashSet<>():
                 Collections.unmodifiableSet(new HashSet<>(speciesIds));
@@ -225,51 +225,59 @@ public class GeneService extends CommonService {
     }
     
     /**
-     * Get the orthologies for both given taxon IDs and gene IDs.
      * 
-     * @param taxonIds      A {@code Set} of {@code Integer}s that are the IDs of taxon for which
-     *                      to retrieve the orthology groups.
-     * @param speciesIds    A {@code Set} of {@code Integer}s that are the IDs of species to be
-     *                      considered. If {@code null}, all species available for the taxon are used.
-     * @param geneIds	   	A {@code Set} of {@code String}s that are the IDs of genes to be considered. 
-     * 						Can't be {@code null}
-     * @return              The {@code Map} where keys are {@code Integer}s corresponding to 
-     *                      OMA node IDs, the associated value being a {@code Set} of {@code Gene}s.
+     * @param taxonIds		A {@code Collection} of {@code Integer} corresponding to taxon Ids for which
+     * 						orthologous genes should be returned.
+     * @param speciesIds	A {@code Collection} of {@code Integer} corresponding to species Ids for which
+     * 						orthologous genes should be returned. If null orthologous genes are returned for
+     * 						all species. 
+     * @param geneFilter	A {@code GeneFilter} corresponding to starting genes for
+     * 						which orthologous genes should be returned.
+     * @return				A A {@code Stream} of {@code OrthologousGeneGroup}
      */
-    public Stream<OrthologousGeneGroup> getOrthologs(Collection<Integer> taxonIds, Collection<GeneFilter> geneFilters) {
-        log.entry(taxonIds, geneFilters);
-        if(geneFilters == null){
-        	log.throwing(new IllegalArgumentException("No geneId provided."));
+    public Stream<OrthologousGeneGroup> getOrthologs(Collection<Integer> taxonIds,
+    		Collection<Integer> speciesIds, GeneFilter geneFilter) {
+        log.entry(taxonIds, speciesIds, geneFilter);
+        if(geneFilter == null || geneFilter.getSpeciesId() == null || geneFilter.getSpeciesId() == 0){
+        	log.throwing(new IllegalArgumentException("No species id provided for the starting genes."));
         }
-        
-        Map<Integer, HierarchicalNodeTO> groupMap = getDaoManager().getHierarchicalGroupDAO().getOMANodes().stream()
-        		.collect(Collectors.toMap(n -> n.getId(), n -> n));
-        return getDaoManager().getHierarchicalGroupDAO().getGroupToGene().stream()
-        		.
-        HierarchicalGroupToGeneTOResultSet resultSet = getDaoManager().getHierarchicalGroupDAO()
-                .getOMANodeToGeneOrderedByNodeId(taxonId, speciesIds);
-
-        final Set<Integer> clnSpId =  speciesIds == null? new HashSet<>():
-                Collections.unmodifiableSet(new HashSet<>(speciesIds));
-        
-        final Map<Integer, Species> speciesMap = getSpeciesMap(clnSpId);
-
-        final Map<Integer, Gene> geneMap = Collections.unmodifiableMap(this.getDaoManager().getGeneDAO().getGenesByIds(geneIds).
-        		stream()
-        		.collect(Collectors.toMap(
-        				gTO -> gTO.getId(),
-                        gTO -> mapGeneTOToGene(gTO, speciesMap.get(gTO.getSpeciesId())))));
-
-        Map<Integer, Set<Gene>> results = resultSet.stream()
-                .collect(Collectors.groupingBy(hg -> hg.getNodeId()))
-                .entrySet().stream()
-                .collect(Collectors.toMap(
-                        e -> e.getKey(), 
-                        e -> e.getValue().stream()
-                            .map(to -> geneMap.get(to.getBgeeGeneId())).collect(Collectors.toSet())));
-        return log.exit(results);
+        final Collection<Integer> clnSpIds =  speciesIds == null? new HashSet<>():
+            Collections.unmodifiableCollection(speciesIds);
+        final Collection<Integer> clnTaxonIds =  taxonIds == null? new HashSet<>():
+            Collections.unmodifiableCollection(taxonIds);
+        // return OrthologousGeneGroup without genes by OMA node Id
+        Map <Integer, OrthologousGeneGroup> geneGroupsByOMANodes = getDaoManager().getHierarchicalGroupDAO()
+            .getOMANodesFromStartingGenes(clnTaxonIds, geneFilter.getSpeciesId(),
+            		geneFilter.getEnsemblGeneIds())
+            .getAllTOs().stream().collect(Collectors.toMap(
+            		nTO -> nTO.getId(), 
+            		nTO -> new OrthologousGeneGroup(nTO.getTaxonId(),
+            				nTO.getOMAGroupId(), nTO.getTaxonId(), null)));
+        //return all gene ids by OMA node id
+        final Map<Integer, Set<Integer>> bgeeGeneIdsByNodeId = new HashMap<>();
+    	getDaoManager().getHierarchicalGroupDAO()
+    			.getGenesByNodeFromNodes(geneGroupsByOMANodes.keySet(), clnSpIds).getAllTOs()
+    			.stream().forEach(e -> {
+    				if(bgeeGeneIdsByNodeId.containsKey(e.getNodeId())){
+    					bgeeGeneIdsByNodeId.get(e.getNodeId()).add(e.getBgeeGeneId());
+    				}else{
+    					bgeeGeneIdsByNodeId.put(e.getNodeId(), new HashSet<>());
+    					bgeeGeneIdsByNodeId.get(e.getNodeId()).add(e.getBgeeGeneId());
+    				}
+    			}
+    			);
+//    			.stream().map(hgToG -> hgToG.getBgeeGeneId())
+//				.collect(Collectors.groupingBy(hgToG -> hgToG.getNodeId()));
+    	//XXX need to develop methods allowing to retrieve Genes by their bgeegeneId or 
+    	// add genes to OrthologousGeneGroups
+    	geneGroupsByOMANodes.entrySet().stream().forEach(e -> {
+    		geneGroupsByOMANodes.get(e.getKey()).getGenes().addAll(
+    				mapGeneTOStreamToGeneStream(getDaoManager().getGeneDAO().getGenesByIds(
+    		    			bgeeGeneIdsByNodeId.get(e.getKey()))));
+    	});
+    	return geneGroupsByOMANodes.entrySet().stream().map(e -> e.getValue());
     }
-
+    
     /**
      * Search the genes by name, id and synonyms.
      * @param term A {@code String} containing the query 

@@ -37,10 +37,10 @@ public class GeneFilter implements Predicate<Gene> {
      * 
      * @param geneId    An {@code String} that is the Ensembl ID of a gene that this {@code GeneFilter} 
      *                  will specify to use.
-     * @param speciesId An {@code int} that is the ID of the species to target.
+     * @param speciesId An {@code Integer} that is the ID of the species to target.
      * @throws IllegalArgumentException If {@code geneId} is blank or {@code speciesId} less than 1.
      */
-    public GeneFilter(int speciesId) {
+    public GeneFilter(Integer speciesId) {
         this(speciesId, (Collection<String>) null);
     }
     /**
@@ -49,12 +49,12 @@ public class GeneFilter implements Predicate<Gene> {
      * for another closely-related species, thus an Ensembl gene ID can correspond to several genes.
      * For instance, in Bgee the chimpanzee genome is used for analyzing bonobo data.
      * 
-     * @param speciesId An {@code int} that is the ID of the species to target.
+     * @param speciesId An {@code Integer} that is the ID of the species to target.
      * @param geneId    An {@code String} that is the Ensembl ID of a gene that this {@code GeneFilter} 
      *                  will specify to use.
      * @throws IllegalArgumentException If {@code geneId} is blank or {@code speciesId} is smaller than 1.
      */
-    public GeneFilter(int speciesId, String geneId) {
+    public GeneFilter(Integer speciesId, String geneId) {
         this(speciesId, Collections.singleton(geneId));
     }
     /**
@@ -63,13 +63,13 @@ public class GeneFilter implements Predicate<Gene> {
      * can be used for another closely-related species, thus an Ensembl gene ID can correspond
      * to several genes. For instance, in Bgee the chimpanzee genome is used for analyzing bonobo data.
      * 
-     * @param speciesId An {@code int} that is the ID of the species to target.
+     * @param speciesId An {@code Integer} that is the ID of the species to target.
      * @param geneIds   A {@code Collection} of {@code String}s that are the Ensembl IDs of the genes 
      *                  that this {@code GeneFilter} will specify to use. Can be {@code null} or empty.
      * @throws IllegalArgumentException If any of the gene IDs provided is blank,
      *                                  or if {@code speciesId} less than 1.
      */
-    public GeneFilter(int speciesId, Collection<String> geneIds) throws IllegalArgumentException {
+    public GeneFilter(Integer speciesId, Collection<String> geneIds) throws IllegalArgumentException {
         if (speciesId < 1) {
             throw log.throwing(new IllegalArgumentException("A species ID cannot be smaler than 1."));
         }
@@ -89,12 +89,12 @@ public class GeneFilter implements Predicate<Gene> {
         return geneIds;
     }
     /**
-     * @return  An {@code int} that is the ID of the species to target. The species ID
+     * @return  An {@code Integer} that is the ID of the species to target. The species ID
      *          is mandatory because in Bgee, the genome of a species can be used for another
      *          closely-related species, thus an Ensembl gene ID can correspond to several genes.
      *          For instance, in Bgee the chimpanzee genome is used for analyzing bonobo data.
      */
-    public int getSpeciesId() {
+    public Integer getSpeciesId() {
         return speciesId;
     }
 

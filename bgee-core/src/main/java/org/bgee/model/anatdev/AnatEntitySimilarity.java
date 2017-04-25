@@ -41,6 +41,13 @@ public class AnatEntitySimilarity {
     public Set<String> getAnatEntityIds() {
         return anatEntityIds;
     }
+    
+    /**
+     * @return The {@code String}s that is the taxon ID of this similarity group.
+     */
+    public String getTaxonId() {
+        return taxonId;
+    }
 
     @Override
     public int hashCode() {

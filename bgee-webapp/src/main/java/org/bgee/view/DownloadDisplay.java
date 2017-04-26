@@ -24,12 +24,24 @@ public interface DownloadDisplay {
 	
     /**
      * Display the download page of processed raw data files.
+     * 
+     * @param groups    A {@code Collection} of {@code SpeciesDataGroup}s for which 
+     *                  to display files.
+     * @param keywords  A {@code Map} where keys are {@code Integer}s that are species IDs,
+     *                  the associated value being a {@code Set} of {@code String}s
+     *                  corresponding to keywords associated to the species.
      */
      void displayProcessedExpressionValuesDownloadPage(List<SpeciesDataGroup> groups, 
                                                        Map<Integer, Set<String>> keywords);
 
     /**
      * Display the download page of gene expression call files.
+     * 
+     * @param groups    A {@code Collection} of {@code SpeciesDataGroup}s for which 
+     *                  to display files.
+     * @param keywords  A {@code Map} where keys are {@code Integer}s that are species IDs,
+     *                  the associated value being a {@code Set} of {@code String}s
+     *                  corresponding to keywords associated to the species.
      */
      void displayGeneExpressionCallDownloadPage(List<SpeciesDataGroup> groups,
     		                                    Map<Integer, Set<String>> keywords);

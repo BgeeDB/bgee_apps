@@ -26,6 +26,8 @@ import org.bgee.model.expressiondata.Call.ExpressionCall.ClusteringMethod;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.ConditionGraph;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
@@ -198,13 +200,14 @@ public class CommandGene extends CommandParent {
         GeneDisplay display = viewFactory.getGeneDisplay();
         String geneId = requestParameters.getGeneId();
         Integer speciesId = requestParameters.getSpeciesId();
-        Set<Gene> genes = serviceFactory.getGeneService().loadGenesByEnsemblId(geneId);
 
         if (geneId == null) {
             display.displayGeneHomePage();
             log.exit(); return;
         }
 
+        // NOTE: we retrieve genes after the sanity check on geneId to avoid to throw an exception
+        Set<Gene> genes = serviceFactory.getGeneService().loadGenesByEnsemblId(geneId);
         if (genes.size() == 0) {
             throw log.throwing(new PageNotFoundException("No gene corresponding to " + geneId));
         }
@@ -231,7 +234,6 @@ public class CommandGene extends CommandParent {
             //if several gene IDs match, then we need to get the speciesId information,
             //otherwise we need to let the user choose the species he/she wants
             if (speciesId == null || speciesId <= 0) {
-                //TODO: implement
                 display.displayGeneChoice(genes);
                 log.exit(); return;
             }
@@ -383,14 +385,16 @@ public class CommandGene extends CommandParent {
         serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
             
         CallService service = serviceFactory.getCallService();
+        
+        Map<SummaryCallType.ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
+        summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
         return log.exit(service.loadExpressionCalls(
-                new ExpressionCallFilter(
-                        new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId()),
-                        ExpressionSummary.EXPRESSED, true
-                ), 
+                new ExpressionCallFilter(summaryCallTypeQualityFilter, 
+                        Collections.singleton(new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId())),
+                        null, null, true, true, false), 
                 EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID, 
-                        CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.CALL_DATA, 
-                        CallService.Attribute.DATA_QUALITY, CallService.Attribute.RANK), 
+                        CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.CALL_TYPE, 
+                        CallService.Attribute.DATA_QUALITY, CallService.Attribute.GLOBAL_MEAN_RANK), 
                 serviceOrdering)
             .collect(Collectors.toList()));
     }

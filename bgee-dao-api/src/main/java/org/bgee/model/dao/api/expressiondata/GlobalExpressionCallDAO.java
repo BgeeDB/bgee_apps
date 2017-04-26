@@ -19,8 +19,7 @@ import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO.RawExpressionC
 
 /**
  * DAO defining queries using or retrieving {@link GlobalExpressionCallTO}s, 
- * with all data integrated and pre-computed. Also allows to insert and retrieve 
- * {@code GlobalExpressionToRawExpressionTO}s.
+ * with all data integrated and pre-computed.
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
@@ -115,20 +114,6 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      */
     public int insertGlobalCalls(Collection<GlobalExpressionCallTO> callTOs)
             throws DAOException, IllegalArgumentException;
-    
-    /**
-     * Inserts the provided correspondence between raw expression and global expression calls 
-     * into the data source, represented as a {@code Collection} of {@code GlobalExpressionToRawExpressionTO}s. 
-     * 
-     * @param globalExprToRawExprTOs    A {@code Collection} of {@code GlobalExpressionToRawExpressionTO}s
-     *                                  to be inserted into the data source.
-     * @return                          An {@code int} that is the number of inserted TOs. 
-     * @throws DAOException             If an error occurred while trying to insert data.
-     * @throws IllegalArgumentException If {@code globalExprToRawExprTOs} is {@code null} or empty.
-     */
-    public int insertGlobalExpressionToRawExpression(
-            Collection<GlobalExpressionToRawExpressionTO> globalExprToRawExprTOs)
-                    throws DAOException, IllegalArgumentException;
     
     /**
      * {@code DAOResultSet} specifics to {@code GlobalExpressionCallTO}s
@@ -303,124 +288,6 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
                    .append(", rankNorm=").append(rankNorm)
                    .append(", weightForMeanRank=").append(weightForMeanRank)
                    .append("]");
-            return builder.toString();
-        }
-    }
-
-    /**
-     * {@code DAOResultSet} specifics to {@code GlobalExpressionToRawExpressionTO}s
-     * 
-     * @author Frederic Bastian
-     * @version Bgee 14 Feb. 2017
-     * @since Bgee 14 Feb. 2017
-     */
-    public interface GlobalExpressionToRawExpressionTOResultSet 
-                    extends DAOResultSet<GlobalExpressionToRawExpressionTO> {
-    }
-
-    /**
-     * A {@code TransferObject} representing relation between a raw expression call and a global
-     * expression call in the data source.
-     * <p>
-     * This class defines a raw expression call ID (see {@link #getRawExpressionId()} 
-     * and a global expression call ID (see {@link #getGlobalExpressionId()}), and also store 
-     * the origin of the relations (association from sub-conditions or parent conditions 
-     * or from the same condition, see {@link #getCallOrigin()}).
-     * 
-     * @author Frederic Bastian
-     * @version Bgee 14 Feb. 2017
-     * @since Bgee 14 Feb. 2017
-     */
-    public static class GlobalExpressionToRawExpressionTO extends TransferObject {
-        private final static Logger log = LogManager.getLogger(GlobalExpressionToRawExpressionTO.class.getName());
-        private static final long serialVersionUID = -553628358149907274L;
-        
-        public enum CallOrigin implements TransferObject.EnumDAOField {
-            SELF("self"), DESCENDANT("descendant"), PARENT("parent");
-
-            /**
-             * The {@code String} representation of the enum.
-             */
-            private String stringRepresentation;
-            /**
-             * Constructor
-             * @param stringRepresentation the {@code String} representation of the enum.
-             */
-            CallOrigin(String stringRepresentation) {
-                this.stringRepresentation = stringRepresentation;
-            }
-            @Override
-            public String getStringRepresentation() {
-                return stringRepresentation;
-            }
-            /**
-             * Return the mapped {@link CallOrigin} from a string representation.
-             * @param stringRepresentation A string representation
-             * @return The corresponding {@code CallOrigin}
-             * @see org.bgee.model.dao.api.TransferObject.EnumDAOField#convert(Class, String)
-             */
-            public static CallOrigin convertToCallOrigin(String stringRepresentation){
-                log.entry(stringRepresentation);
-                return log.exit(GlobalExpressionToRawExpressionTO.convert(CallOrigin.class, 
-                        stringRepresentation));
-            }
-        }
-
-        /**
-         * A {@code Integer} representing the ID of the raw expression call.
-         */
-        private final Integer rawExpressionId;
-        /**
-         * A {@code Integer} representing the ID of the global expression call.
-         */
-        private final Integer globalExpressionId;
-        /**
-         * A {@code CallOrigin} representing the origin of the association.
-         */
-        private final CallOrigin callOrigin;
-
-        /**
-         * Constructor providing the expression call ID (see {@link #getExpressionId()}) and 
-         * the global expression call ID (see {@link #getGlobalExpressionId()}).
-         * 
-         * @param rawExpressionId       An {@code Integer} that is the ID of the raw expression call.
-         * @param globalExpressionId    An {@code Integer} that is the ID of the global expression 
-         *                              call.
-         * @param callOrigin            An {@code CallOrigin} representing the origin of the association.
-         **/
-        public GlobalExpressionToRawExpressionTO(Integer rawExpressionId, Integer globalExpressionId, 
-                CallOrigin callOrigin) {
-            super();
-            this.rawExpressionId = rawExpressionId;
-            this.globalExpressionId = globalExpressionId;
-            this.callOrigin = callOrigin;
-        }
-
-        /**
-         * @return  the {@code Integer} representing the ID of the expression call.
-         */
-        public Integer getRawExpressionId() {
-            return rawExpressionId;
-        }
-        /**
-         * @return  the {@code Integer} representing the ID of the global expression call.
-         */
-        public Integer getGlobalExpressionId() {
-            return globalExpressionId;
-        }
-        /**
-         * @return  {@code CallOrigin} representing the origin of the association.
-         */
-        public CallOrigin getCallOrigin() {
-            return callOrigin;
-        }
-
-        @Override
-        public String toString() {
-            StringBuilder builder = new StringBuilder();
-            builder.append("GlobalExpressionToRawExpressionTO [rawExpressionId=").append(rawExpressionId)
-                    .append(", globalExpressionId=").append(globalExpressionId).append(", callOrigin=")
-                    .append(callOrigin).append("]");
             return builder.toString();
         }
     }

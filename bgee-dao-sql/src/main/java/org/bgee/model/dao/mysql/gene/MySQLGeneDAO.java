@@ -221,7 +221,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
             sql += " WHERE ";
         }
         if (clonedSpeciesIdToGeneIds.values().stream().anyMatch(geneIds -> !geneIds.isEmpty())) {
-            clonedSpeciesIdToGeneIds.entrySet().stream().map(
+            sql += clonedSpeciesIdToGeneIds.entrySet().stream().map(
                     e -> {
                         String where = "";
                         //a null species ID key is allowed for methods such as getGenesbyIds,
@@ -235,7 +235,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
                         if (!e.getValue().isEmpty()) {
                             where += GENE_TABLE_NAME + ".geneId IN ("
                                      + BgeePreparedStatement.generateParameterizedQueryString(
-                                            e.getValue().size());
+                                            e.getValue().size()) + ")";
                         }
                         return where;
                     }).collect(Collectors.joining(" OR ", "(", ") "));

@@ -399,16 +399,37 @@ public class CallService extends CommonService {
             this.anatEntityService.loadAnatEntities(
                     speMap.keySet(), true, anatEntityIds, false)
             .collect(Collectors.toMap(a -> a.getId(), a -> a));
+        if (!anatEntityIds.isEmpty() && anatMap.size() != anatEntityIds.size()) {
+            anatEntityIds.removeAll(anatMap.keySet());
+            throw log.throwing(new IllegalStateException("Some anat. entities used in a condition "
+                    + "are not supposed to exist in the related species. Species: " + speMap.keySet()
+                    + " - anat. entities: " + anatEntityIds));
+        }
         final Map<String, DevStage> stageMap = stageIds.isEmpty()? new HashMap<>():
             this.devStageService.loadDevStages(
                     speMap.keySet(), true, stageIds, false)
             .collect(Collectors.toMap(s -> s.getId(), s -> s));
+        if (!stageIds.isEmpty() && stageMap.size() != stageIds.size()) {
+            stageIds.removeAll(stageMap.keySet());
+            throw log.throwing(new IllegalStateException("Some stages used in a condition "
+                    + "are not supposed to exist in the related species. Species: " + speMap.keySet()
+                    + " - stages: " + stageIds));
+        }
 
         return log.exit(conditionTOs.stream()
                 .collect(Collectors.toMap(cTO -> cTO.getId(), 
                         cTO -> mapConditionTOToCondition(cTO,
-                                anatMap.get(cTO.getAnatEntityId()), stageMap.get(cTO.getStageId()),
-                                speMap.get(cTO.getSpeciesId()))
+                                cTO.getAnatEntityId() == null? null:
+                                    Optional.ofNullable(anatMap.get(cTO.getAnatEntityId())).orElseThrow(
+                                        () -> new IllegalStateException("Anat. entity not found: "
+                                                + cTO.getAnatEntityId())),
+                                cTO.getStageId() == null? null:
+                                    Optional.ofNullable(stageMap.get(cTO.getStageId())).orElseThrow(
+                                        () -> new IllegalStateException("Stage not found: "
+                                                + cTO.getStageId())),
+                                Optional.ofNullable(speMap.get(cTO.getSpeciesId())).orElseThrow(
+                                        () -> new IllegalStateException("Species not found: "
+                                                + cTO.getSpeciesId())))
                         ))
                 );
     }

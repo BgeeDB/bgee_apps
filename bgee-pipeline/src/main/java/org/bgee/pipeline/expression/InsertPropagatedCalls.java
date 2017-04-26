@@ -45,6 +45,7 @@ import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO.GlobalConditionToRawConditionTO;
 import org.bgee.model.dao.api.expressiondata.DAOExperimentCount;
 import org.bgee.model.dao.api.expressiondata.DAOPropagationState;
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO;
@@ -54,7 +55,6 @@ import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentE
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallDataTO;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallTO;
-import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionToRawExpressionTO;
 import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO.RawExpressionCallTO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
@@ -111,13 +111,31 @@ public class InsertPropagatedCalls extends CallService {
 
     private final static Set<PropagationState> ALLOWED_PROP_STATES_BEFORE_MERGE = EnumSet.of(
             PropagationState.SELF, PropagationState.ANCESTOR, PropagationState.DESCENDANT);
-    private final static DataPropagation SELF_DATA_PROP =
-            new DataPropagation(PropagationState.SELF, PropagationState.SELF, true);
 
     private final static List<Set<ConditionDAO.Attribute>> COND_PARAM_COMB_LIST;
     private final static AtomicInteger COND_ID_COUNTER = new AtomicInteger(0);
     private final static AtomicInteger EXPR_ID_COUNTER = new AtomicInteger(0);
     
+    private final static DataPropagation getSelfDataProp(Set<ConditionDAO.Attribute> condParams) {
+        log.entry(condParams);
+        PropagationState anatEntityState = null;
+        PropagationState stageState = null;
+        for (ConditionDAO.Attribute condParam: condParams) {
+            switch(condParam) {
+            case ANAT_ENTITY_ID:
+                anatEntityState = PropagationState.SELF;
+                break;
+            case STAGE_ID:
+                stageState = PropagationState.SELF;
+                break;
+            default:
+                throw log.throwing(new IllegalStateException("Unsupported condition parameter: "
+                        + condParam));
+            }
+        }
+        return log.exit(new DataPropagation(anatEntityState, stageState, true));
+    }
+
     static {
         List<Set<ConditionDAO.Attribute>> condParamList = new ArrayList<>();
         
@@ -621,6 +639,67 @@ public class InsertPropagatedCalls extends CallService {
             return builder.toString();
         }
     }
+
+    /**
+     * {@code TransferObject}s do not implement equals/hashCode, and we need it for inserting
+     * {@code GlobalConditionToRawConditionTO}s, so we extend this class and implements hashCode/Equals.
+     */
+    private static class PipelineGlobalCondToRawCondTO extends GlobalConditionToRawConditionTO {
+        private static final long serialVersionUID = -4710796651567000694L;
+
+        public PipelineGlobalCondToRawCondTO(Integer rawConditionId, Integer globalConditionId,
+                ConditionRelationOrigin conditionRelationOrigin) {
+            super(rawConditionId, globalConditionId, conditionRelationOrigin);
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((this.getRawConditionId() == null) ? 0 :
+                this.getRawConditionId().hashCode());
+            result = prime * result + ((this.getGlobalConditionId() == null) ? 0 :
+                this.getGlobalConditionId().hashCode());
+            result = prime * result + ((this.getConditionRelationOrigin() == null) ? 0 :
+                this.getConditionRelationOrigin().hashCode());
+            return result;
+        }
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            PipelineGlobalCondToRawCondTO other = (PipelineGlobalCondToRawCondTO) obj;
+            if (this.getRawConditionId() == null) {
+                if (other.getRawConditionId() != null) {
+                    return false;
+                }
+            } else if (!this.getRawConditionId().equals(other.getRawConditionId())) {
+                return false;
+            }
+            if (this.getGlobalConditionId() == null) {
+                if (other.getGlobalConditionId() != null) {
+                    return false;
+                }
+            } else if (!this.getGlobalConditionId().equals(other.getGlobalConditionId())) {
+                return false;
+            }
+            if (this.getConditionRelationOrigin() == null) {
+                if (other.getConditionRelationOrigin() != null) {
+                    return false;
+                }
+            } else if (!this.getConditionRelationOrigin().equals(other.getConditionRelationOrigin())) {
+                return false;
+            }
+            return true;
+        }
+    }
     
     /**
      * Class responsible for running in a separate thread the insertions to database
@@ -643,7 +722,7 @@ public class InsertPropagatedCalls extends CallService {
          * used by this object.
          */
         private final InsertPropagatedCalls callPropagator;
-        
+
         private InsertJob(InsertPropagatedCalls callPropagator) {
             log.entry(callPropagator);
             this.callPropagator = callPropagator;
@@ -659,7 +738,10 @@ public class InsertPropagatedCalls extends CallService {
             final DAOManager daoManager = factory.getDAOManager();
             final ConditionDAO condDAO = daoManager.getConditionDAO();
             final GlobalExpressionCallDAO exprDAO = daoManager.getGlobalExpressionCallDAO();
+            //in order to insert globalConditions
             final Map<Condition, Integer> insertedCondMap = new HashMap<>();
+            //relations between globalConditions and raw conditions
+            final Set<PipelineGlobalCondToRawCondTO> globalCondToRawConds = new HashSet<>();
             
             boolean errorInThisThread = false;
             int groupsInserted = 0;
@@ -736,7 +818,7 @@ public class InsertPropagatedCalls extends CallService {
 
                     for (Entry<Set<ConditionDAO.Attribute>, Set<PipelineCall>> calls: toInsert.entrySet()) {
                         // Here, we insert new conditions, and add them to the known conditions
-                        Map<Condition, Integer> newCondMap = this.insertNewConditions(
+                        Map<Condition, Integer> newCondMap = this.insertNewGlobalConditions(
                                 calls.getValue(), insertedCondMap.keySet(), condDAO);
                         if (!Collections.disjoint(insertedCondMap.keySet(), newCondMap.keySet())) {
                             throw log.throwing(new IllegalStateException("Error, new conditions already seen. "
@@ -749,7 +831,35 @@ public class InsertPropagatedCalls extends CallService {
                                     + insertedCondMap.values()));
                         }
                         insertedCondMap.putAll(newCondMap);
-                        
+
+                        //Now, we insert relations between globalConditions and source raw conditions,
+                        //to be able to later retrieve relations between globalExpressions to expressions,
+                        //without needing the table globalExpressionToExpression, that was very much too large
+                        //(more than 10 billions rows for 29 species).
+                        Set<PipelineGlobalCondToRawCondTO> newGlobalCondToRawConds =
+                                this.insertGlobalCondToRawConds(calls.getValue(), globalCondToRawConds,
+                                        insertedCondMap, condDAO);
+                        if (!Collections.disjoint(globalCondToRawConds, newGlobalCondToRawConds)) {
+                            throw log.throwing(new IllegalStateException("Error, new condition relations already seen. "
+                                    + "new relations: " + newGlobalCondToRawConds + " - existing relations: "
+                                    + globalCondToRawConds));
+                        }
+                        //Deactivate this assert, it is very slow and, anyway, there is
+                        //a primary key(globalConditionId, conditionId) which makes
+                        //this situation impossible.
+//                        //We're not supposed to generate a same relation between a global condition
+//                        //and a raw condition having different conditionRelationOrigins.
+//                        //Since conditionRelationOrigin is taken into account in equals/hashCode,
+//                        //make an assert here based solely on global condition ID and raw condition ID.
+//                        assert newGlobalCondToRawConds.stream()
+//                        .noneMatch(r1 -> globalCondToRawConds.stream()
+//                                .anyMatch(r2 -> r1.getRawConditionId().equals(r2.getRawConditionId()) &&
+//                                        r1.getGlobalConditionId().equals(r2.getGlobalConditionId()))):
+//                        "Incorrect new relations: " + newGlobalCondToRawConds + " - " + globalCondToRawConds;
+
+                        globalCondToRawConds.addAll(newGlobalCondToRawConds);
+
+
                         // And we finish by inserting the computed calls
                         this.insertPropagatedCalls(calls.getValue(), insertedCondMap, exprDAO);
                         log.debug("{} calls inserted for one gene in combination {}",
@@ -762,6 +872,7 @@ public class InsertPropagatedCalls extends CallService {
                         log.info(INSERTION_MARKER, "{} genes inserted.", groupsInserted);
                     }
                 }
+
             } catch (Exception e) {
                 errorInThisThread = true;
                 if (this.callPropagator.errorOccured == null) {
@@ -842,7 +953,7 @@ public class InsertPropagatedCalls extends CallService {
          * @return  A {@code Map} containing only newly inserted {@code Condition}s as keys, 
          *          associated to their corresponding {@code Integer} ID.
          */
-        private Map<Condition, Integer> insertNewConditions(Set<PipelineCall> propagatedCalls,
+        private Map<Condition, Integer> insertNewGlobalConditions(Set<PipelineCall> propagatedCalls,
                 Set<Condition> insertedGlobalConditions, ConditionDAO condDAO) {
             log.entry(propagatedCalls, insertedGlobalConditions, condDAO);
             
@@ -868,6 +979,74 @@ public class InsertPropagatedCalls extends CallService {
             return log.exit(newConds);
         }
 
+        private Set<PipelineGlobalCondToRawCondTO> insertGlobalCondToRawConds(
+                Set<PipelineCall> propagatedCalls, Set<PipelineGlobalCondToRawCondTO> insertedRels,
+                Map<Condition, Integer> condMap, ConditionDAO condDAO) {
+            log.entry(propagatedCalls, insertedRels, condMap, condDAO);
+
+            //We map PipelineCalls to GlobalConditionToRawConditionTOs and remove those already inserted
+            Set<PipelineGlobalCondToRawCondTO> newRels = propagatedCalls.stream()
+                    .flatMap(c -> {
+                        Integer globalCondId = condMap.get(c.getCondition());
+                        if (globalCondId == null) {
+                            throw log.throwing(new IllegalArgumentException("Missing inserted condition: "
+                                    + c.getCondition()));
+                        }
+
+                        Set<PipelineGlobalCondToRawCondTO> relTOs = new HashSet<>();
+                        if (c.getParentSourceCallTOs() != null) {
+                            relTOs.addAll(c.getParentSourceCallTOs().stream()
+                                    .map(source -> new PipelineGlobalCondToRawCondTO(
+                                            source.getConditionId(),
+                                            globalCondId,
+                                            GlobalConditionToRawConditionTO.ConditionRelationOrigin.PARENT))
+                                    .collect(Collectors.toSet()));
+                        }
+                        if (c.getSelfSourceCallTOs() != null) {
+                            relTOs.addAll(c.getSelfSourceCallTOs().stream()
+                                    .map(source -> new PipelineGlobalCondToRawCondTO(
+                                            source.getConditionId(),
+                                            globalCondId,
+                                            GlobalConditionToRawConditionTO.ConditionRelationOrigin.SELF))
+                                    .collect(Collectors.toSet()));
+                        }
+                        if (c.getDescendantSourceCallTOs() != null) {
+                            relTOs.addAll(c.getDescendantSourceCallTOs().stream()
+                                    .map(source -> new PipelineGlobalCondToRawCondTO(
+                                            source.getConditionId(),
+                                            globalCondId,
+                                            GlobalConditionToRawConditionTO.ConditionRelationOrigin.DESCENDANT))
+                                    .collect(Collectors.toSet()));
+                        }
+                        return relTOs.stream();
+                    }).collect(Collectors.toSet());
+            newRels.removeAll(insertedRels);
+
+            //Deactivate this assert, it is very slow and, anyway, there is
+            //a primary key(globalConditionId, conditionId) which makes
+            //this situation impossible.
+//            //We're not supposed to generate a same relation between a global condition
+//            //and a raw condition having different conditionRelationOrigins.
+//            //Since conditionRelationOrigin is taken into account in equals/hashCode,
+//            //make an assert here based solely on global condition ID and raw condition ID.
+//            assert newRels.stream()
+//            .noneMatch(r1 -> newRels.stream()
+//                    .filter(r2 -> r2 != r1)
+//                    .anyMatch(r2 -> r1.getRawConditionId().equals(r2.getRawConditionId()) &&
+//                            r1.getGlobalConditionId().equals(r2.getGlobalConditionId()))):
+//            "Incorrect new relations: " + newRels;
+
+            //now we insert the relations
+            if (!newRels.isEmpty()) {
+                condDAO.insertGlobalConditionToRawCondition(newRels.stream()
+                        .map(c -> (GlobalConditionToRawConditionTO) c)
+                        .collect(Collectors.toSet()));
+            }
+
+            //return new rels
+            return log.exit(newRels);
+        }
+
         private void insertPropagatedCalls(Set<PipelineCall> propagatedCalls,
             Map<Condition, Integer> condMap, GlobalExpressionCallDAO dao) {
             log.entry(propagatedCalls, condMap, dao);
@@ -888,42 +1067,46 @@ public class InsertPropagatedCalls extends CallService {
             dao.insertGlobalCalls(callMap.keySet());
             log.trace("Done inserting GlobalExpressionCallTOs");
             
-            //insert the relations between global expr IDs and raw expr IDs.
-            //Note that we insert all relation, even the "invalid" ones (ABSENT calls in descendant, 
-            //PRESENT calls in parents; having all relations for descendants is essential for computing
-            //a global rank score)
-            log.trace("Start inserting GlobalExpressionToRawExpressionTOs");
-            Set<GlobalExpressionToRawExpressionTO> globalToRawTOs = callMap.entrySet().stream()
-                    .flatMap(e -> {
-                        int globalExprId = e.getKey().getId();
-                        PipelineCall call = e.getValue();
-                        
-                        Set<GlobalExpressionToRawExpressionTO> tos = new HashSet<>();
-                        if (call.getSelfSourceCallTOs() != null) {
-                            tos.addAll(call.getSelfSourceCallTOs().stream()
-                                    .map(p -> new GlobalExpressionToRawExpressionTO(p.getId(), 
-                                            globalExprId, GlobalExpressionToRawExpressionTO.CallOrigin.SELF))
-                                    .collect(Collectors.toSet()));
-                        }
-                        if (call.getParentSourceCallTOs() != null) {
-                            tos.addAll(call.getParentSourceCallTOs().stream()
-                                .map(p -> new GlobalExpressionToRawExpressionTO(p.getId(), 
-                                        globalExprId, GlobalExpressionToRawExpressionTO.CallOrigin.PARENT))
-                                .collect(Collectors.toSet()));
-                        }
-                        if (call.getDescendantSourceCallTOs() != null) {
-                            tos.addAll(call.getDescendantSourceCallTOs().stream()
-                                .map(d -> new GlobalExpressionToRawExpressionTO(d.getId(), 
-                                        globalExprId, GlobalExpressionToRawExpressionTO.CallOrigin.DESCENDANT))
-                                .collect(Collectors.toSet()));
-                        }
-                        
-                        return tos.stream();
-                    })
-                    .collect(Collectors.toSet());
-            assert !globalToRawTOs.isEmpty();
-            dao.insertGlobalExpressionToRawExpression(globalToRawTOs);
-            log.trace("Done inserting {} GlobalExpressionToRawExpressionTOs", globalToRawTOs.size());
+            //Note: actually, we don't fill this globalExpressionToExpression table anymore,
+            //it is very much too large (more than 10 billions rows for 29 species).
+            //We now retrieve the relations between globalExpression and expression
+            //through relations between globalConditions and conditions.
+//            //insert the relations between global expr IDs and raw expr IDs.
+//            //Note that we insert all relation, even the "invalid" ones (ABSENT calls in descendant, 
+//            //PRESENT calls in parents; having all relations for descendants is essential for computing
+//            //a global rank score)
+//            log.trace("Start inserting GlobalExpressionToRawExpressionTOs");
+//            Set<GlobalExpressionToRawExpressionTO> globalToRawTOs = callMap.entrySet().stream()
+//                    .flatMap(e -> {
+//                        int globalExprId = e.getKey().getId();
+//                        PipelineCall call = e.getValue();
+//
+//                        Set<GlobalExpressionToRawExpressionTO> tos = new HashSet<>();
+//                        if (call.getSelfSourceCallTOs() != null) {
+//                            tos.addAll(call.getSelfSourceCallTOs().stream()
+//                                    .map(p -> new GlobalExpressionToRawExpressionTO(p.getId(), 
+//                                            globalExprId, GlobalExpressionToRawExpressionTO.CallOrigin.SELF))
+//                                    .collect(Collectors.toSet()));
+//                        }
+//                        if (call.getParentSourceCallTOs() != null) {
+//                            tos.addAll(call.getParentSourceCallTOs().stream()
+//                                .map(p -> new GlobalExpressionToRawExpressionTO(p.getId(), 
+//                                        globalExprId, GlobalExpressionToRawExpressionTO.CallOrigin.PARENT))
+//                                .collect(Collectors.toSet()));
+//                        }
+//                        if (call.getDescendantSourceCallTOs() != null) {
+//                            tos.addAll(call.getDescendantSourceCallTOs().stream()
+//                                .map(d -> new GlobalExpressionToRawExpressionTO(d.getId(), 
+//                                        globalExprId, GlobalExpressionToRawExpressionTO.CallOrigin.DESCENDANT))
+//                                .collect(Collectors.toSet()));
+//                        }
+//
+//                        return tos.stream();
+//                    })
+//                    .collect(Collectors.toSet());
+//            assert !globalToRawTOs.isEmpty();
+//            dao.insertGlobalExpressionToRawExpression(globalToRawTOs);
+//            log.trace("Done inserting {} GlobalExpressionToRawExpressionTOs", globalToRawTOs.size());
             log.exit();
         }
 
@@ -1294,6 +1477,12 @@ public class InsertPropagatedCalls extends CallService {
                                             condParams, rawCondMap))
                                     )
                     ).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+            assert condMapByComb.keySet().stream()
+            .noneMatch(condParams -> condMapByComb.keySet().stream()
+                .filter(condParams2 -> !condParams2.equals(condParams))
+                .anyMatch(condParams2 -> !Collections.disjoint(
+                        condMapByComb.get(condParams).values(), condMapByComb.get(condParams2).values())
+                 ));
             log.info("{} Conditions for species {}", rawCondMap.size(), speciesId);
 
             // We use all existing conditions in the species, and infer all propagated conditions
@@ -1481,9 +1670,17 @@ public class InsertPropagatedCalls extends CallService {
                 switch (condParam) {
                 case ANAT_ENTITY_ID:
                     anatEntity = e.getValue().getAnatEntity();
+                    if (anatEntity == null) {
+                        throw log.throwing(new IllegalArgumentException(
+                                "No raw condition should have a null anat. entity"));
+                    }
                     break;
                 case STAGE_ID:
                     stage = e.getValue().getDevStage();
+                    if (stage == null) {
+                        throw log.throwing(new IllegalArgumentException(
+                                "No raw condition should have a null dev. stage"));
+                    }
                     break;
                 default:
                     throw log.throwing(new IllegalStateException("Unsupported condition parameter: "
@@ -1565,8 +1762,9 @@ public class InsertPropagatedCalls extends CallService {
                 Optional.of(geneData.entrySet().stream()
                     .collect(Collectors.toMap(
                         e -> mapRawCallTOToPipelineCall(e.getKey(),
-                                condMapByComb.get(condParams).get(e.getKey().getConditionId())),
-                        e -> mapExpExprTOsToPipelineCallData(e.getValue())))
+                                condMapByComb.get(condParams).get(e.getKey().getConditionId()),
+                                condParams),
+                        e -> mapExpExprTOsToPipelineCallData(e.getValue(), condParams)))
                 )
 
                 //Now, we group all PipelineCalls and PipelineCallDatas mapped to a same Condition
@@ -1597,7 +1795,7 @@ public class InsertPropagatedCalls extends CallService {
                             assert Integer.compare(call1.getBgeeGeneId(), call2.getBgeeGeneId()) == 0;
                             assert call1.getCondition().equals(call2.getCondition());
                             assert call1.getDataPropagation().equals(call2.getDataPropagation());
-                            assert call1.getDataPropagation().equals(SELF_DATA_PROP);
+                            assert call1.getDataPropagation().equals(getSelfDataProp(condParams));
 
                             Set<RawExpressionCallTO> combinedTOs =
                                     new HashSet<>(call1.getSelfSourceCallTOs());
@@ -2244,16 +2442,18 @@ public class InsertPropagatedCalls extends CallService {
     //*************************************************************************
 
     private static Set<PipelineCallData> mapExpExprTOsToPipelineCallData(
-        Map<DataType, Set<ExperimentExpressionTO>> expExprsByDataTypes) {
-        log.entry(expExprsByDataTypes);
+        Map<DataType, Set<ExperimentExpressionTO>> expExprsByDataTypes,
+        Set<ConditionDAO.Attribute> condParams) {
+        log.entry(expExprsByDataTypes, condParams);
         return log.exit(expExprsByDataTypes.entrySet().stream()
-            .map(eeTo -> new PipelineCallData(eeTo.getKey(), SELF_DATA_PROP,
+            .map(eeTo -> new PipelineCallData(eeTo.getKey(), getSelfDataProp(condParams),
                 null, eeTo.getValue(), null))
             .collect(Collectors.toSet()));
     }
 
-    private static PipelineCall mapRawCallTOToPipelineCall(RawExpressionCallTO callTO, Condition cond) {
-        log.entry(callTO, cond);
+    private static PipelineCall mapRawCallTOToPipelineCall(RawExpressionCallTO callTO, Condition cond,
+            Set<ConditionDAO.Attribute> condParams) {
+        log.entry(callTO, cond, condParams);
 
         if (cond == null) {
             throw log.throwing(new IllegalArgumentException("No Condition provided for CallTO: " 
@@ -2263,7 +2463,7 @@ public class InsertPropagatedCalls extends CallService {
         assert callTO.getConditionId() != null;
 
         return log.exit(new PipelineCall(
-                callTO.getBgeeGeneId(), cond, SELF_DATA_PROP,
+                callTO.getBgeeGeneId(), cond, getSelfDataProp(condParams),
                 // At this point, we do not generate data state, quality, and CallData,
                 // as we haven't reconcile data.
                 Collections.singleton(callTO)));

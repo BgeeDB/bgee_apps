@@ -6,7 +6,6 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -95,18 +94,30 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 	    String titleStart = "Genes: " + gene.getName() + " - " + gene.getEnsemblGeneId();
 	    
 	    this.startDisplay(titleStart);
+	    
+	    this.writeln("<h1>Gene search</h1>");
+
+        this.writeln("<div id='bgee_introduction'>");
+        
+        this.writeln("<p>The search gene ID is found in several species. Select the desired gene:<p>");
+
+        this.writeln("</div>");
 
 	    StringBuilder geneList = new StringBuilder();
         geneList.append("<div class='row'>");
-        geneList.append("<ul class='col-xs-offset-1 col-xs-10 col-md-offset-2 col-md-8 col-lg-offset-3 col-lg-6'>");
         geneList.append(clnGenes.stream()
             .sorted(Comparator.comparing(g -> g.getSpecies() == null?
                 null: g.getSpecies().getPreferredDisplayOrder(), Comparator.nullsLast(Comparator.naturalOrder())))
-            .map(g -> getSpecificGenePageLink(g))
-            .collect(Collectors.toList()));
-        geneList.append("</ul>");
+            .map(g -> "<img src='" 
+                    + this.prop.getSpeciesImagesRootDirectory() + String.valueOf(g.getSpecies().getId())
+                    + "_light.jpg' alt='" + htmlEntities(g.getSpecies().getShortName()) 
+                    + "' />" + getSpecificGenePageLink(g))
+            .collect(Collectors.joining("</div><div class='col-md-offset-3 col-md-6 gene_choice'>",
+                    "<div class='col-md-offset-3 col-md-6 gene_choice'>", "</div>")));
         geneList.append("</div>");
         
+        this.writeln(geneList.toString());
+
         this.endDisplay();
         log.exit();
 	}
@@ -122,6 +133,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         RequestParameters url = this.getNewRequestParameters();
         url.setPage(RequestParameters.PAGE_GENE);
         url.setGeneId(gene.getEnsemblGeneId());
+
         //speciesId only necessary if there are several genes matching a same Ensembl ID
         if (gene.getGeneMappedToSameEnsemblGeneIdCount() > 1) {
             url.setSpeciesId(gene.getSpecies().getId());
@@ -129,7 +141,9 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
         StringBuilder genePageLink = new StringBuilder();
         genePageLink.append("<a href='").append(url.getRequestURL()).append("'>")
-                    .append(gene.getName()).append(" in ").append(gene.getSpecies().getShortName())
+                    .append(htmlEntities(gene.getEnsemblGeneId())).append(" in ")
+                    .append(htmlEntities(gene.getSpecies().getScientificName()))
+                    .append(" (").append(htmlEntities(gene.getSpecies().getName())).append(")")
                     .append("</a>");
 
         return log.exit(genePageLink.toString());

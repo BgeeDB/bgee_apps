@@ -592,6 +592,13 @@ create table globalCond (
     inSituGlobalMaxRank decimal(9,2) unsigned COMMENT 'This max rank is computed by taking into account all data in this condition, but also in all child conditions.'
 ) engine = innodb COMMENT 'This table contains all condition used in the globalExpression table. It thus includes "real" conditions used in the raw expression table, but mostly conditions resulting from the propagation of expression calls in the globalExpression table. It results from the computation of propagated calls according to different condition parameters combination (e.g., grouping all data in a same anat. entity, or all data in a same anat. entity - stage, or data in anat. entity - sex). This is why the fields anatEntityId, stageId, sex, strain, can be null in this table (but not all of them at the same time).';
 
+create table globalCondToCond (
+    globalConditionId mediumint unsigned not null,
+    conditionId mediumint unsigned not null,
+    conditionRelationOrigin enum('self', 'descendant', 'parent') not null COMMENT 'Define whether the data from the raw conditions used for production of global calls in this global condition comes from raw conditions mapped to the globalCondition itself, a descendant global condition, or a parent global condition.'
+) engine = innodb
+comment = 'this table allows to link globalConditions to the raw conditions that were aggregated to produce global expression calls in the globalExpression table.';
+
 -- ****************************************************
 -- RAW EST DATA
 -- ****************************************************
@@ -1275,13 +1282,6 @@ create table globalExpression (
     affymetrixGlobalDistinctRankSum decimal(9, 2) unsigned COMMENT 'Factor used to weight the Affymetrix normalized global mean rank (affymetrixGlobalMeanRankNorm), to compute a global weighted mean rank between all data types. Corresponds to the sum of distinct ranks in each chip mapped to this condition and all its descendant conditions. Note that for EST and in situ data, the global max rank found in the related condition table is instead used to compute the weighted mean between data types.'
 ) engine = innodb
 comment = 'This table is a summary of expression calls for a given gene-condition (anatomical entity - developmental stage - sex- strain), over all the experiments and data types, with all data propagated and reconciled, and with experiment expression summaries computed.';
-
-create table globalExpressionToExpression (
-    globalExpressionId int unsigned not null,
-    expressionId int unsigned not null, 
-    callOrigin enum('self', 'descendant', 'parent') not null COMMENT 'Define whether the raw call used for production of the global call comes from the condition itself, a descendant condition, or a parent condition.'
-) engine = innodb 
-comment = 'this table allows to link the propagated global calls in "globalExpression" table to the raw original calls in "expression" table';
 
 -- ****************************************************
 -- SUMMARY DIFF EXPRESSION CALLS

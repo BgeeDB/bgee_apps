@@ -238,6 +238,13 @@ modify globalConditionId mediumint unsigned not null auto_increment PRIMARY KEY,
 -- not a primary key because some field can be null
 ADD UNIQUE(anatEntityId, stageId, speciesId, sex, strain);
 /*!40000 ALTER TABLE `globalCond` ENABLE KEYS */;
+/*!40000 ALTER TABLE `globalCondToCond` DISABLE KEYS */;
+alter table globalCondToCond
+-- we set up this primary key using conditionRelationOrigin to benefit from the clustered index
+add primary key (globalConditionId, conditionId, conditionRelationOrigin),
+-- but actually the unique constraint is on globalConditionId and conditionId
+add UNIQUE (globalConditionId, conditionId);
+/*!40000 ALTER TABLE `globalCondToCond` ENABLE KEYS */;
 
 -- ****************************************************
 -- EXPRESSION DATA
@@ -255,11 +262,6 @@ modify globalExpressionId int unsigned not null auto_increment,
 ADD UNIQUE(globalExpressionId),
 add PRIMARY KEY(bgeeGeneId, globalConditionId);
 /*!40000 ALTER TABLE `globalExpression` ENABLE KEYS */;
-
-/*!40000 ALTER TABLE `globalExpressionToExpression` DISABLE KEYS */;
-alter table globalExpressionToExpression
-add primary key (globalExpressionId, expressionId);
-/*!40000 ALTER TABLE `globalExpressionToExpression` ENABLE KEYS */;
 
 -- ****************************************************
 -- DIFFERENTIAL EXPRESSION DATA

@@ -11,12 +11,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO.GlobalConditionToRawConditionTO.ConditionRelationOrigin;
 import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
@@ -41,6 +43,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
     public final static String SPECIES_ID = "speciesId";
     public final static String RAW_COND_ID_FIELD = "conditionId";
     public final static String GLOBAL_COND_ID_FIELD = "globalConditionId";
+    private final static String COND_REL_ORIGIN_FIELD = "conditionRelationOrigin";
     
 //    /**
 //     * Create the "ON" part of a JOIN clause to link the original condition table containing 
@@ -176,6 +179,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
         return log.exit(this.getConditionsBySpeciesIds(true, speciesIds, conditionParameters, attributes));
     }
 
+
     private ConditionTOResultSet getConditionsBySpeciesIds(boolean global, Collection<Integer> speciesIds,
             Collection<ConditionDAO.Attribute> conditionParameters, 
             Collection<ConditionDAO.Attribute> attributes) throws DAOException, IllegalArgumentException {
@@ -238,7 +242,6 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
     @Override
     public GlobalConditionMaxRankTO getMaxRank() throws DAOException {
         log.entry();
-
         StringBuilder sb = new StringBuilder();
         //XXX: either we should have a ConditionMaxRankResultSet at some point,
         //or it will be managed directly by the ConditionTOResultSet if we add a 'Set' attribute
@@ -326,6 +329,47 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
             throw log.throwing(new DAOException(e));
         }
     }
+
+    @Override
+    public int insertGlobalConditionToRawCondition(
+            Collection<GlobalConditionToRawConditionTO> globalCondToRawCondTOs)
+                    throws DAOException, IllegalArgumentException {
+        log.entry(globalCondToRawCondTOs);
+
+        if (globalCondToRawCondTOs == null || globalCondToRawCondTOs.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("No condition relation provided"));
+        }
+
+        StringBuilder sql = new StringBuilder(); 
+        sql.append("INSERT INTO globalCondToCond (")
+           .append(RAW_COND_ID_FIELD).append(", ")
+           .append(GLOBAL_COND_ID_FIELD).append(", ")
+           .append(COND_REL_ORIGIN_FIELD)
+           .append(") VALUES ");
+        for (int i = 0; i < globalCondToRawCondTOs.size(); i++) {
+            if (i > 0) {
+                sql.append(", ");
+            }
+            sql.append("(").append(BgeePreparedStatement.generateParameterizedQueryString(3))
+               .append(") ");
+        }
+        try (BgeePreparedStatement stmt =
+                this.getManager().getConnection().prepareStatement(sql.toString())) {
+            int paramIndex = 1;
+            for (GlobalConditionToRawConditionTO to: globalCondToRawCondTOs) {
+                stmt.setInt(paramIndex, to.getRawConditionId());
+                paramIndex++;
+                stmt.setInt(paramIndex, to.getGlobalConditionId());
+                paramIndex++;
+                stmt.setString(paramIndex, to.getConditionRelationOrigin().getStringRepresentation());
+                paramIndex++;
+            }
+
+            return log.exit(stmt.executeUpdate());
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
     
     /**
      * Implementation of the {@code ConditionTOResultSet}. 
@@ -391,6 +435,52 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                     }
                 }
                 return log.exit(new ConditionTO(id, exprMappedCondId, anatEntityId, stageId, speciesId));
+            } catch (SQLException e) {
+                throw log.throwing(new DAOException(e));
+            }
+        }
+    }
+
+    /**
+     * MySQL implementation of {@code GlobalConditionToRawConditionTOResultSet}.
+     *
+     * @author Frederic Bastian
+     * @version Bgee 14 Mar. 2017
+     * @since Bgee 14 Mar. 2017
+     */
+    public class MySQLGlobalConditionToRawConditionTOResultSet
+    extends MySQLDAOResultSet<GlobalConditionToRawConditionTO>
+    implements GlobalConditionToRawConditionTOResultSet {
+
+        private MySQLGlobalConditionToRawConditionTOResultSet(BgeePreparedStatement statement) {
+            super(statement);
+        }
+
+        @Override
+        protected GlobalConditionToRawConditionTO getNewTO() throws DAOException {
+            log.entry();
+            try {
+                final ResultSet currentResultSet = this.getCurrentResultSet();
+                Integer rawConditionId = null, globalConditionId = null;
+                ConditionRelationOrigin relOrigin = null;
+
+                for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
+                    String columnName = column.getValue();
+
+                    if (columnName.equals(RAW_COND_ID_FIELD)) {
+                        rawConditionId = currentResultSet.getInt(columnName);
+                    } else if (columnName.equals(GLOBAL_COND_ID_FIELD)) {
+                        globalConditionId = currentResultSet.getInt(columnName);
+                    } else if (columnName.equals(COND_REL_ORIGIN_FIELD)) {
+                        relOrigin = ConditionRelationOrigin.convertToCondRelOrigin(
+                                currentResultSet.getString(columnName));
+                    }  else {
+                        throw log.throwing(new UnrecognizedColumnException(columnName));
+                    }
+                }
+
+                return log.exit(new GlobalConditionToRawConditionTO(
+                        rawConditionId, globalConditionId, relOrigin));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }

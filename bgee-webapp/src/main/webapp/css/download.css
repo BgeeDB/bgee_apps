@@ -132,12 +132,16 @@ p.file_info a:hover {
     color: #DBDBDB;
 }
 
-#bgee_data_selection_cross #switch_page_link, #bgee_data_selection_cross #switch_page_link:visited {
+#bgee_data_selection a.doc_link {
+    color: #DBDBDB;
+}
+
+#bgee_data_selection .banner_link, #bgee_data_selection_cross .banner_link:visited {
     margin-right: 10px;
 	color: #717171;
 }
 
-#bgee_data_selection_cross #switch_page_link:hover {
+#bgee_data_selection .banner_link:hover {
     color: #DBDBDB;
 }
 #bgee_data_selection_img {
@@ -173,6 +177,29 @@ p.file_info a:hover {
   width: 95%;
 }
 
+#bgee_data_selection div.item_category, #bgee_data_selection form label {
+	color: #9f9f9f;
+}
+
+#bgee_data_selection div.item_category {
+	font-weight: bold; 
+}
+
+#bgee_data_selection form {
+    display: flex;
+    margin-top: 10px;
+}
+
+#bgee_data_selection form label {
+    font-size: 0.9em;
+	font-weight: normal;
+}
+
+#bgee_data_selection div.form_item {
+    margin-right: 10px;
+    margin-left: 20px;
+}
+
 #bgee_data_selection_text div.bgee_download_file_buttons {
     margin: 0px 0px 0px 15px;
     padding: 0;
@@ -186,25 +213,34 @@ p.file_info a:hover {
 
 #sib_body .download_link, #bgee_data_selection p.no_data {
 	padding: 5px;
-	font-size: 0.9em;
+	font-size: 1.1em;
 	margin-right: 0.4em;
 	margin-top: 0.1em;
+	height: 100%;
+    width: 100%;
 }
 
 #sib_body .download_link, #sib_body .download_link:visited {
     display:inline-block;
-    background-color:#3E3E3E;
+    background-color: #717171;
     border: 1px solid #141414;
-    border-radius: 3px;
+    border-radius: 8px;
     text-decoration: none;
     white-space: nowrap;
-    color: #AAA;
+    color: #3E3E3E;
+    font-weight: bold;
+    text-align: center;
 }
 
 #sib_body .download_link:hover {
-    color: #141414;
+    color: #AAA;
     text-decoration: none;
-    background-color:#717171;
+    background-color: #3E3E3E;
+}
+
+#bgee_data_selection .checkbox-inline, #bgee_data_selection  .radio-inline {
+	margin-left: 30px;
+	margin-bottom: 5px;
 }
 
 #bgee_data_selection img.details {

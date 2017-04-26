@@ -90,6 +90,8 @@ var download = {
          * loaded once the page is ready
          */
         init: function() {
+        	$("[data-toggle='popover']").popover();
+        	
             // Fetch all needed elements from the DOM
             this.$container = $( "html, body" );
             this.$species = $( "figure" );
@@ -380,7 +382,7 @@ var download = {
             //like, e.g., species_id=id
             var hashToUse = "id"+id
             
-            //manage link to processed vaulues/gene expression calls
+            //manage link to processed values/gene expression calls
             var requestSwitchPage = new requestParameters();
             requestSwitchPage.setURLHash(hashToUse);
             
@@ -413,7 +415,7 @@ var download = {
             	 bgeeSpeciesName = species.genus +" " +species.speciesName;
                 
             }
-        	 var $images = $currentSpecies.find( ".species_img" );
+        	var $images = $currentSpecies.find( ".species_img" );
              
              // there are multiple images, in the case of group, but the field is not used in this case,
              // so no need to care about 

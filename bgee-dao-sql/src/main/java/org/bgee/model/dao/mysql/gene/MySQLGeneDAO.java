@@ -77,12 +77,18 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
     }
 
     @Override
-    public GeneTOResultSet getGenesByIds(Collection<String> geneIds) throws DAOException {
-        log.entry(geneIds);
+    public GeneTOResultSet getGenesByEnsemblGeneIds(Collection<String> ensemblGeneIds) throws DAOException {
+        log.entry(ensemblGeneIds);
         Map<Integer, Set<String>> speToGeneMap = new HashMap<>();
         //sanity checks on geneIds will be performed by the getGenes method
-        speToGeneMap.put(null, geneIds == null? null: new HashSet<>(geneIds));
+        speToGeneMap.put(null, ensemblGeneIds == null? null: new HashSet<>(ensemblGeneIds));
         return log.exit(getGenes(speToGeneMap, null, null));
+    }
+    
+    @Override
+    public GeneTOResultSet getGenesByIds(Collection<Integer> geneIds) throws DAOException {
+        log.entry(geneIds);
+        return log.exit(getGenes(null, geneIds, null));
     }
 
     @Override
@@ -170,7 +176,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         if (speciesIdToGeneIds != null &&
                 speciesIdToGeneIds.containsKey(null) && speciesIdToGeneIds.size() != 1) {
             throw log.throwing(new IllegalArgumentException(
-                    "If a null species ID is provided, it should ne the only Entry in the Map."));
+                    "If a null species ID is provided, it should be the only Entry in the Map."));
         }
 
         //need a LinkedHashMap for consistent setting of the query parameters.

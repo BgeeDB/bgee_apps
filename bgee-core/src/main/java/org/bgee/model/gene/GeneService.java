@@ -1,5 +1,6 @@
 package org.bgee.model.gene;
 
+import java.security.Provider.Service;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -8,8 +9,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Spliterators;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -18,15 +17,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.CommonService;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
-import org.bgee.model.dao.api.DAOManager;
-import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO;
-import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO.RawExpressionCallTO;
 import org.bgee.model.dao.api.gene.GeneDAO;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneNameSynonymDAO.GeneNameSynonymTO;
-import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTOResultSet;
-import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalNodeTO;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
 
@@ -150,7 +144,7 @@ public class GeneService extends CommonService {
         //we expect very few results from a single Ensembl ID, so we don't preload all species
         //in database as for method 'loadGenesByEnsemblIds'
         Set<GeneTO> geneTOs = this.getDaoManager().getGeneDAO()
-                .getGenesByIds(Collections.singleton(ensemblGeneId))
+                .getGenesByEnsemblGeneIds(Collections.singleton(ensemblGeneId))
                 .stream().collect(Collectors.toSet());
         Map<Integer, Species> speciesMap = getSpeciesMapFromGeneTOs(geneTOs);
         
@@ -182,7 +176,7 @@ public class GeneService extends CommonService {
         Map<Integer, Species> speciesMap = getSpeciesMap(null);
 
         return log.exit(mapGeneTOStreamToGeneStream(
-                getDaoManager().getGeneDAO().getGenesByIds(ensemblGeneIds).stream(),
+                getDaoManager().getGeneDAO().getGenesByEnsemblGeneIds(ensemblGeneIds).stream(),
                 speciesMap));
     	
     }
@@ -270,10 +264,12 @@ public class GeneService extends CommonService {
 //				.collect(Collectors.groupingBy(hgToG -> hgToG.getNodeId()));
     	//XXX need to develop methods allowing to retrieve Genes by their bgeegeneId or 
     	// add genes to OrthologousGeneGroups
+    	Map<Integer, Species> speciesMap = getSpeciesMap(new HashSet<>(speciesIds));
     	geneGroupsByOMANodes.entrySet().stream().forEach(e -> {
     		geneGroupsByOMANodes.get(e.getKey()).getGenes().addAll(
     				mapGeneTOStreamToGeneStream(getDaoManager().getGeneDAO().getGenesByIds(
-    		    			bgeeGeneIdsByNodeId.get(e.getKey()))));
+    		    			bgeeGeneIdsByNodeId.get(e.getKey())).stream(),speciesMap)
+    				.collect(Collectors.toSet()));
     	});
     	return geneGroupsByOMANodes.entrySet().stream().map(e -> e.getValue());
     }

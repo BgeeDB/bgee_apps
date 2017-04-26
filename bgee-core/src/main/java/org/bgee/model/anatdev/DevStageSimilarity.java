@@ -2,8 +2,6 @@ package org.bgee.model.anatdev;
 
 import java.util.Set;
 
-import org.bgee.model.Entity;
-
 /**
  * This class represents a group of developmental stages.
  * 

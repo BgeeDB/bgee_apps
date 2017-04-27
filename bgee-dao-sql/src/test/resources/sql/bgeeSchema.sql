@@ -661,7 +661,11 @@ create table chipType (
     qualityScoreThreshold decimal(10, 2) unsigned not null default 0,
 -- percentage of present probesets
 -- 100.00
-    percentPresentThreshold decimal(5, 2) unsigned not null default 0
+    percentPresentThreshold decimal(5, 2) unsigned not null default 0,
+
+-- this field is used for rank computations, and is set after all expression data insertion,
+-- this is why null value is permitted.
+    chipTypeMaxRank decimal(9,2) unsigned COMMENT 'The max fractional rank in this chip type (see `rank` field in affymetrixProbeset table)'
 ) engine = innodb;
 
 -- this table represents mapping of affymetrix probesets in general,
@@ -713,7 +717,12 @@ create table affymetrixChip (
     qualityScore decimal(10, 2) unsigned not null default 0,
 -- percentage of present probesets
 -- 100.00
-    percentPresent decimal(5, 2) unsigned not null
+    percentPresent decimal(5, 2) unsigned not null,
+
+-- the following fields are used for rank computations, and are set after all expression data insertion,
+-- this is why null value is permitted.
+    chipMaxRank decimal(9,2) unsigned COMMENT 'The max fractional rank in this chip (see `rank` field in affymetrixProbeset table)',
+    chipDistinctRankCount mediumint unsigned COMMENT 'The count of distinct rank in this chip (see `rank` field in affymetrixProbeset table, used for weighted mean rank computations)'
 ) engine = innodb;
 
 create table affymetrixProbeset (
@@ -909,7 +918,12 @@ create table rnaSeqLibrary (
 -- Is the library built using paired end?
 -- NA: info not used for pseudo-mapping. Default value in an enum is the first one.
     libraryType enum('NA', 'single', 'paired') not null,
-    libraryOrientation enum('NA', 'forward', 'reverse', 'unstranded') not null
+    libraryOrientation enum('NA', 'forward', 'reverse', 'unstranded') not null,
+
+-- the following fields are used for rank computations, and are set after all expression data insertion,
+-- this is why null value is permitted.
+    libraryMaxRank decimal(9,2) unsigned COMMENT 'The max fractional rank in this library (see `rank` field in rnaSeqResult table)',
+    libraryDistinctRankCount mediumint unsigned COMMENT 'The count of distinct rank in this library (see `rank` field in rnaSeqResult table, used for weighted mean rank computations)'
 ) engine = innodb;
 
 -- Store the information of runs used, pool together to generate the results
@@ -1263,8 +1277,8 @@ create table globalExpression (
 -- For EST and in situ data, this is irrelevant as we pool all data for a same condition together,
 -- and use dense ranking instead of fractional ranking. As a result, the max rank in each condition
 -- is used for weighted mean computation between data types.
-    rnaSeqDistinctRankSum decimal(9, 2) unsigned COMMENT 'Factor used to weight the RNA-Seq normalized mean rank (rnaSeqMeanRankNorm), to compute a global weighted mean rank between all data types. Corresponds to the sum of distinct ranks in each library mapped to this condition. Note that for EST and in situ data, the max rank found in the related condition table is instead used to compute the weighted mean between data types.', 
-    affymetrixDistinctRankSum decimal(9, 2) unsigned COMMENT 'Factor used to weight the Affymetrix normalized mean rank (affymetrixMeanRankNorm), to compute a global weighted mean rank between all data types. Corresponds to the sum of distinct ranks in each chip mapped to this condition. Note that for EST and in situ data, the max rank found in the related condition table is instead used to compute the weighted mean between data types.',
+    rnaSeqDistinctRankSum int unsigned COMMENT 'Factor used to weight the RNA-Seq normalized mean rank (rnaSeqMeanRankNorm), to compute a global weighted mean rank between all data types. Corresponds to the sum of distinct ranks in each library mapped to this condition. Note that for EST and in situ data, the max rank found in the related condition table is instead used to compute the weighted mean between data types.', 
+    affymetrixDistinctRankSum int unsigned COMMENT 'Factor used to weight the Affymetrix normalized mean rank (affymetrixMeanRankNorm), to compute a global weighted mean rank between all data types. Corresponds to the sum of distinct ranks in each chip mapped to this condition. Note that for EST and in situ data, the max rank found in the related condition table is instead used to compute the weighted mean between data types.',
 
 -- Same fields, but dedicated to "global" ranks, computed by taking into account
 -- all data in a condition, but also all data in its descendant conditions.
@@ -1278,8 +1292,8 @@ create table globalExpression (
     estGlobalRankNorm decimal(9, 2) unsigned COMMENT 'EST normalized rank for this gene in this condition and all its descendant conditions, after normalization over all data types, conditions and species, computed from the field estRank, and estMaxRank in the related condition table.',
     inSituGlobalRankNorm decimal(9, 2) unsigned COMMENT 'In situ hybridization normalized rank for this gene in this condition and all its descendant conditions, after normalization over all data types, conditions and species, computed from the field inSituRank, and inSituMaxRank in the related condition table.',
 
-    rnaSeqGlobalDistinctRankSum decimal(9, 2) unsigned COMMENT 'Factor used to weight the RNA-Seq normalized global mean rank (rnaSeqGlobalMeanRankNorm), to compute a global weighted mean rank between all data types. Corresponds to the sum of distinct ranks in each library mapped to this condition and all its descendant conditions. Note that for EST and in situ data, the global max rank found in the related condition table is instead used to compute the weighted mean between data types.', 
-    affymetrixGlobalDistinctRankSum decimal(9, 2) unsigned COMMENT 'Factor used to weight the Affymetrix normalized global mean rank (affymetrixGlobalMeanRankNorm), to compute a global weighted mean rank between all data types. Corresponds to the sum of distinct ranks in each chip mapped to this condition and all its descendant conditions. Note that for EST and in situ data, the global max rank found in the related condition table is instead used to compute the weighted mean between data types.'
+    rnaSeqGlobalDistinctRankSum int unsigned COMMENT 'Factor used to weight the RNA-Seq normalized global mean rank (rnaSeqGlobalMeanRankNorm), to compute a global weighted mean rank between all data types. Corresponds to the sum of distinct ranks in each library mapped to this condition and all its descendant conditions. Note that for EST and in situ data, the global max rank found in the related condition table is instead used to compute the weighted mean between data types.', 
+    affymetrixGlobalDistinctRankSum int unsigned COMMENT 'Factor used to weight the Affymetrix normalized global mean rank (affymetrixGlobalMeanRankNorm), to compute a global weighted mean rank between all data types. Corresponds to the sum of distinct ranks in each chip mapped to this condition and all its descendant conditions. Note that for EST and in situ data, the global max rank found in the related condition table is instead used to compute the weighted mean between data types.'
 ) engine = innodb
 comment = 'This table is a summary of expression calls for a given gene-condition (anatomical entity - developmental stage - sex- strain), over all the experiments and data types, with all data propagated and reconciled, and with experiment expression summaries computed.';
 

@@ -94,6 +94,11 @@ public class CallDAOFilter {
         this.observedDataFilter = observedDataFilter == null? new LinkedHashMap<>():
             new LinkedHashMap<>(observedDataFilter);
         
+        if (this.getGeneIds().isEmpty() && this.getSpeciesIds().isEmpty() &&
+                this.getConditionFilters().isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("No filters provided"));
+        }
+        
         log.exit();
     }
 

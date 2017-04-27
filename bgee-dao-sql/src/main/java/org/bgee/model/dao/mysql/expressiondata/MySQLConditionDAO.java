@@ -119,6 +119,10 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
             throw log.throwing(new IllegalArgumentException(
                     "A condition parameter combination must be provided."));
         }
+        if (condParamCombination.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "A combination of condition parameters must be provided"));
+        }
         final Set<ConditionDAO.Attribute> condParams = EnumSet.copyOf(condParamCombination);
         if (condParams.stream().anyMatch(a -> !a.isConditionParameter())) {
             throw log.throwing(new IllegalArgumentException("The condition parameter combination "

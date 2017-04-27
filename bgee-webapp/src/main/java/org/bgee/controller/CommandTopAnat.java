@@ -761,7 +761,12 @@ public class CommandTopAnat extends CommandParent {
         TreeSet<String> geneSet = new TreeSet<>(geneList);
         // Load valid submitted gene IDs
         final Set<Gene> validGenes = serviceFactory.getGeneService().
-                loadGenesByEnsemblIds(geneSet).collect(Collectors.toSet());
+                loadGenesByEnsemblIds(geneSet)
+                // FIXME: Remove filter on bonobo data, we should give the possibility 
+                // to the user to choose a species. In same time, remove info 
+                // under gene list textarea in TopAnat HTML file.
+                .filter(g -> g.getSpecies() == null || g.getSpecies().getId() == null || g.getSpecies().getId() != 9597)
+                .collect(Collectors.toSet());
         // Identify undetermined gene IDs
         final Set<String> undeterminedGeneIds = new HashSet<>(geneSet);
         undeterminedGeneIds.removeAll(validGenes.stream()

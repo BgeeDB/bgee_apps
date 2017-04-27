@@ -104,7 +104,6 @@
 
                         </p>
 
-
                         <p ng-show="vm.geneValidationMessage !== ''" ng-hide="vm.geneValidationMessage === '' || vm.showDevStageError" class="smaller">{{vm.geneValidationMessage}}</p>
 
                         <p ng-show="vm.showDevStageError" ng-hide="!vm.showDevStageError" class="smaller">{{vm
@@ -130,6 +129,10 @@
                           class="form-control"
                           required>
                 </textarea>
+                <!-- VRDL: FIXME: Remove that info when we give to the user the option of
+                 choosing a species. In same time, remove filter into CommandTopAnat.getGeneResponse() -->
+                <p ng-show="vm.selected_taxid === 9598" ng-hide="vm.selected_taxid !== 9598" class="alert-info small">Currently, analyses on bonobo data are not possible.
+                For accessions starting with 'ENSPTRG', selected species is chimpanzee</p>
 
                 <!-- SD, Dec, 2015: To be resurrect for milestone 3 except if Valentine gives us her green light-->
                 <!--<div class="row" style="margin-top: 8px;">

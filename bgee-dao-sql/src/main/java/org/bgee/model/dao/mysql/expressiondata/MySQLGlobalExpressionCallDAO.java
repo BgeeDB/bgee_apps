@@ -10,6 +10,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -19,9 +20,12 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.CallDAOFilter;
+import org.bgee.model.dao.api.expressiondata.CallDataDAOFilter;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
+import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.DAOExperimentCount;
+import org.bgee.model.dao.api.expressiondata.DAOExperimentCountFilter;
 import org.bgee.model.dao.api.expressiondata.DAOPropagationState;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
 import org.bgee.model.dao.mysql.MySQLDAO;
@@ -34,7 +38,7 @@ import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
  * A {@code GlobalExpressionCallDAO} for MySQL. 
  * 
  * @author Frederic Bastian
- * @version Bgee 14 Feb. 2017
+ * @version Bgee 14 Apr 2017
  * @see org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallTO
  * @see org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionToRawExpressionTO
  * @since Bgee 14 Feb. 2017
@@ -48,8 +52,8 @@ implements GlobalExpressionCallDAO {
     private final static String GLOBAL_MEAN_RANK_FIELD = "meanRank";
 
     private static String generateSelectClause(Collection<GlobalExpressionCallDAO.Attribute> attrs,
-            Collection<DAODataType> dataTypes, final String globalExprTableName) {
-        log.entry(attrs, dataTypes, globalExprTableName);
+            Collection<DAODataType> dataTypes, final String globalExprTableName, final String globalCondTableName) {
+        log.entry(attrs, dataTypes, globalExprTableName, globalCondTableName);
         
         Set<GlobalExpressionCallDAO.Attribute> clonedAttrs = Collections.unmodifiableSet(
                 attrs == null || attrs.isEmpty()? EnumSet.allOf(GlobalExpressionCallDAO.Attribute.class):
@@ -58,20 +62,39 @@ implements GlobalExpressionCallDAO {
                 dataTypes == null || dataTypes.isEmpty()? EnumSet.allOf(DAODataType.class):
                     EnumSet.copyOf(dataTypes));
 
+        //Ranks: 
+        Map<DAODataType, String> dataTypeToNormRankSql = new HashMap<>();
+        dataTypeToNormRankSql.put(DAODataType.EST, 
+                globalExprTableName + ".estRankNorm ");
+        dataTypeToNormRankSql.put(DAODataType.AFFYMETRIX, 
+                globalExprTableName + ".affymetrixMeanRankNorm ");
+        dataTypeToNormRankSql.put(DAODataType.IN_SITU, 
+                globalExprTableName + ".inSituRankNorm ");
+        dataTypeToNormRankSql.put(DAODataType.RNA_SEQ, 
+                globalExprTableName + ".rnaSeqMeanRankNorm ");
+        
+        //for weighted mean computation: sum of numbers of distinct ranks for data using 
+        //fractional ranking (Affy and RNA-Seq), max ranks for data using dense ranking 
+        //and pooling of all samples in a condition (EST and in situ)
+        Map<DAODataType, String> dataTypeToWeightSql = new HashMap<>();
+        dataTypeToWeightSql.put(DAODataType.EST, 
+                globalCondTableName + ".estMaxRank ");
+        dataTypeToWeightSql.put(DAODataType.AFFYMETRIX, 
+                globalExprTableName + ".affymetrixDistinctRankSum ");
+        dataTypeToWeightSql.put(DAODataType.IN_SITU, 
+                globalCondTableName + ".inSituMaxRank ");
+        dataTypeToWeightSql.put(DAODataType.RNA_SEQ, 
+                globalExprTableName + ".rnaSeqDistinctRankSum ");
+
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT ");
-
-        if (clonedAttrs.size() == GlobalExpressionCallDAO.Attribute.values().length &&
-                clonedDataTypes.size() == DAODataType.values().length) {
-            sb.append(globalExprTableName).append(".*");
-            return log.exit(sb.toString());
-        }
 
         if (!clonedAttrs.contains(GlobalExpressionCallDAO.Attribute.ID) &&
                 (!clonedAttrs.contains(GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID) ||
                         !clonedAttrs.contains(GlobalExpressionCallDAO.Attribute.CONDITION_ID))) {
             sb.append("DISTINCT ");
         }
+        sb.append("STRAIGHT_JOIN ");
 
         sb.append(clonedAttrs.stream().map(a -> {
             switch (a) {
@@ -82,13 +105,137 @@ implements GlobalExpressionCallDAO {
             case CONDITION_ID:
                 return globalExprTableName + "." + MySQLConditionDAO.GLOBAL_COND_ID_FIELD;
             case GLOBAL_MEAN_RANK:
-                //use GLOBAL_MEAN_RANK_FIELD
+                return clonedDataTypes.stream()
+                        .map(dataType -> {
+                            String rankSql = dataTypeToNormRankSql.get(dataType);
+                            String weightSql = dataTypeToWeightSql.get(dataType);
+                            if (rankSql == null || weightSql == null) {
+                                throw log.throwing(new IllegalStateException(
+                                        "No rank clause associated to data type: " + dataType));
+                            }
+                            return "IF(" + weightSql + " IS NULL, 0, " + rankSql + " * " + weightSql + ")";
+                        })
+                        .collect(Collectors.joining(" + ", "((", ")"))
+                        
+                        + clonedDataTypes.stream()
+                        .map(dataType -> {
+                            String weightSql = dataTypeToWeightSql.get(dataType);
+                            return "IF(" + weightSql + " IS NULL, 0, " + weightSql + ")";})
+                        .collect(Collectors.joining(" + ", "/ (", ")) AS " + GLOBAL_MEAN_RANK_FIELD));
+
             case DATA_TYPE_OBSERVED_DATA:
+                return clonedDataTypes.stream()
+                        .map(dataType -> {
+                            switch (dataType) {
+                            case EST:
+                                return "estAnatEntityPropagationState, estStagePropagationState, "
+                                        + "estConditionObservedData";
+                            case AFFYMETRIX:
+                                return "affymetrixAnatEntityPropagationState, affymetrixStagePropagationState, "
+                                + "affymetrixConditionObservedData";
+                            case IN_SITU:
+                                return "inSituAnatEntityPropagationState, inSituStagePropagationState, "
+                                + "inSituConditionObservedData";
+                            case RNA_SEQ:
+                                return "rnaSeqAnatEntityPropagationState, rnaSeqStagePropagationState, "
+                                + "rnaSeqConditionObservedData";
+                            default:
+                                throw log.throwing(new IllegalStateException(
+                                        "Unsupported data type: " + dataType));
+                            }
+                        })
+                        .collect(Collectors.joining(", "));
+                
             case DATA_TYPE_EXPERIMENT_TOTAL_COUNTS:
+                return clonedDataTypes.stream()
+                        .map(dataType -> {
+                            switch (dataType) {
+                            case EST:
+                                return "estLibPresentHighTotalCount, estLibPresentLowTotalCount";
+                            case AFFYMETRIX:
+                                return "affymetrixExpPresentHighTotalCount, affymetrixExpPresentLowTotalCount, "
+                                + "affymetrixExpAbsentHighTotalCount, affymetrixExpAbsentLowTotalCount";
+                            case IN_SITU:
+                                return "inSituExpPresentHighTotalCount, inSituExpPresentLowTotalCount, "
+                                + "inSituExpAbsentHighTotalCount, inSituExpAbsentLowTotalCount";
+                            case RNA_SEQ:
+                                return "rnaSeqExpPresentHighTotalCount, rnaSeqExpPresentLowTotalCount, "
+                                + "rnaSeqExpAbsentHighTotalCount, rnaSeqExpAbsentLowTotalCount";
+                            default:
+                                throw log.throwing(new IllegalStateException(
+                                        "Unsupported data type: " + dataType));
+                            }
+                        })
+                        .collect(Collectors.joining(", "));
+
             case DATA_TYPE_EXPERIMENT_SELF_COUNTS:
+                return clonedDataTypes.stream()
+                        .map(dataType -> {
+                            switch (dataType) {
+                            case EST:
+                                return "estLibPresentHighSelfCount, estLibPresentLowSelfCount";
+                            case AFFYMETRIX:
+                                return "affymetrixExpPresentHighSelfCount, affymetrixExpPresentLowSelfCount, "
+                                + "affymetrixExpAbsentHighSelfCount, affymetrixExpAbsentLowSelfCount";
+                            case IN_SITU:
+                                return "inSituExpPresentHighSelfCount, inSituExpPresentLowSelfCount, "
+                                + "inSituExpAbsentHighSelfCount, inSituExpAbsentLowSelfCount";
+                            case RNA_SEQ:
+                                return "rnaSeqExpPresentHighSelfCount, rnaSeqExpPresentLowSelfCount, "
+                                + "rnaSeqExpAbsentHighSelfCount, rnaSeqExpAbsentLowSelfCount";
+                            default:
+                                throw log.throwing(new IllegalStateException(
+                                        "Unsupported data type: " + dataType));
+                            }
+                        })
+                        .collect(Collectors.joining(", "));
+
             case DATA_TYPE_EXPERIMENT_PROPAGATED_COUNTS:
+                return clonedDataTypes.stream()
+                        .map(dataType -> {
+                            switch (dataType) {
+                            case EST:
+                                return "estLibPropagatedCount, estLibPresentHighDescendantCount, "
+                                        + "estLibPresentLowDescendantCount";
+                            case AFFYMETRIX:
+                                return "affymetrixExpPropagatedCount, affymetrixExpPresentHighDescendantCount, "
+                                        + "affymetrixExpPresentLowDescendantCount, affymetrixExpAbsentHighParentCount, "
+                                        + "affymetrixExpAbsentLowParentCount";
+                            case IN_SITU:
+                                return "inSituExpPropagatedCount, inSituExpPresentHighDescendantCount, "
+                                        + "inSituExpPresentLowDescendantCount, inSituExpAbsentHighParentCount, "
+                                        + "inSituExpAbsentLowParentCount";
+                            case RNA_SEQ:
+                                return "rnaSeqExpPropagatedCount, rnaSeqExpPresentHighDescendantCount, "
+                                        + "rnaSeqExpPresentLowDescendantCount, rnaSeqExpAbsentHighParentCount, "
+                                        + "rnaSeqExpAbsentLowParentCount";
+                            default:
+                                throw log.throwing(new IllegalStateException(
+                                        "Unsupported data type: " + dataType));
+                            }
+                        })
+                        .collect(Collectors.joining(", "));
+
             case DATA_TYPE_RANK_INFO:
-                throw new UnsupportedOperationException("Not yet implemented");
+                return clonedDataTypes.stream()
+                        .map(dataType -> {
+                            switch (dataType) {
+                            case EST:
+                                return "estRank, estRankNorm";
+                            case AFFYMETRIX:
+                                return "affymetrixMeanRank, affymetrixMeanRankNorm, "
+                                        + "affymetrixDistinctRankSum";
+                            case IN_SITU:
+                                return "inSituRank, inSituRankNorm";
+                            case RNA_SEQ:
+                                return "rnaSeqMeanRank, rnaSeqMeanRankNorm, "
+                                        + "rnaSeqDistinctRankSum";
+                            default:
+                                throw log.throwing(new IllegalStateException(
+                                        "Unsupported data type: " + dataType));
+                            }
+                        })
+                        .collect(Collectors.joining(", "));
 //            
 //                
 //            case AFFYMETRIX_EXP_PRESENT_HIGH_SELF_COUNT:
@@ -326,6 +473,249 @@ implements GlobalExpressionCallDAO {
 
         return log.exit(sb.toString());
     }
+
+    private static String generateTableReferences(final String globalExprTableName,
+            final String globalCondTableName, final String condTableName, final String geneTableName,
+            boolean observedConditionFiltering) {
+        log.entry(globalExprTableName, globalCondTableName, condTableName, geneTableName,
+                observedConditionFiltering);
+        
+        StringBuilder sb = new StringBuilder();
+        //the order of the tables is important in case we use a STRAIGHT_JOIN clause
+        sb.append(" FROM ");
+        
+
+        //we use the gene table to filter by species rather than the condition table,
+        //because there is a clustered index for the globalExpression table that is
+        //PRIMAR KEY(bgeeGeneId, globalConditionId). So it is much faster to filter
+        //from the gene table rather than the globalCond table
+        sb.append("gene AS ").append(geneTableName);
+        //In order to use the clustered index for the globalExpression table,
+        //if we need both to use the gene table and the globalCond table,
+        //so we link them using the speciesId field, to make one common join
+        //to the globalExpression table afterwards.
+        sb.append(" INNER JOIN ");
+        sb.append("globalCond AS ").append(globalCondTableName);
+        sb.append(" ON ").append(geneTableName).append(".speciesId = ")
+          .append(globalCondTableName).append(".speciesId");
+        sb.append(" INNER JOIN ");
+        sb.append("globalExpression AS ").append(globalExprTableName);
+        sb.append(" ON ").append(globalExprTableName).append(".").append(MySQLGeneDAO.BGEE_GENE_ID)
+                  .append(" = ").append(geneTableName).append(".").append(MySQLGeneDAO.BGEE_GENE_ID);
+        sb.append(" AND ").append(globalCondTableName).append(".")
+                  .append(MySQLConditionDAO.GLOBAL_COND_ID_FIELD).append(" = ")
+                  .append(globalExprTableName).append(".").append(MySQLConditionDAO.GLOBAL_COND_ID_FIELD);
+
+        if (observedConditionFiltering) {
+            //we want to filter for observed organs/stages without considering the species,
+            //so we don't use the globalCondToCond table
+            sb.append(" LEFT OUTER JOIN cond AS ").append(condTableName)
+              .append(" ON ");
+            sb.append(EnumSet.allOf(ConditionDAO.Attribute.class).stream()
+                    .filter(condAttr -> condAttr.isConditionParameter())
+                    //actually it should ne the same mechanism as in generateWhereClause
+                    .map(condAttr -> {
+                        switch (condAttr) {
+                        case ANAT_ENTITY_ID:
+                            return globalCondTableName + ".anatEntityId IS NULL OR "
+                                    + globalCondTableName + ".anatEntityId = " 
+                                    + condTableName + ".anatEntityId";
+                        case STAGE_ID:
+                            return globalCondTableName + ".stageId IS NULL OR "
+                                    + globalCondTableName + ".stageId = " 
+                                    + condTableName + ".stageId";
+//                        case SEX:
+//                            return globalCondTableName + ".sex IS NULL OR "
+//                                    + globalCondTableName + ".sex = " 
+//                                    + condTableName + ".sex";
+//                        case STRAIN:
+//                            return globalCondTableName + ".strain IS NULL OR "
+//                                    + globalCondTableName + ".strain = " 
+//                                    + condTableName + ".strain";
+                        default:
+                            throw log.throwing(new IllegalStateException(
+                                    "Unsupported condition parameter: " + condAttr));
+                        }
+                    }));
+        }
+
+        sb.append(" ");
+        return log.exit(sb.toString());
+    }
+    private static String generateWhereClause(final LinkedHashSet<CallDAOFilter> callFilters,
+            final Set<Integer> globalGeneIdFilter, Set<Integer> globalSpeciesIdFilter,
+            final LinkedHashSet<DAOConditionFilter> globalConditionFilters,
+            final LinkedHashSet<CallDataDAOFilter> globalDataFilters,
+            final LinkedHashMap<ConditionDAO.Attribute, Boolean> globalObservedDataFilter,
+            final Boolean globalCallObservedDataFilter, final String globalExprTableName,
+            final String globalCondTableName, final String condTableName, final String geneTableName,
+            Set<ConditionDAO.Attribute> conditionParameters) {
+        log.entry(callFilters, globalGeneIdFilter, globalSpeciesIdFilter, globalConditionFilters,
+                globalDataFilters, globalObservedDataFilter, globalCallObservedDataFilter,
+                globalExprTableName, globalCondTableName, condTableName, geneTableName,
+                conditionParameters);
+        
+        StringBuilder sb = new StringBuilder();
+        sb.append(" WHERE ");
+        
+        EnumSet.allOf(ConditionDAO.Attribute.class).stream()
+        .filter(param -> param.isConditionParameter())
+        .map(param -> globalCondTableName + "." + param.getTOFieldName()
+                + (conditionParameters.contains(param)? " IS NOT NULL": " IS NULL"))
+        .collect(Collectors.joining(" AND "));
+        
+        //FIXME: OK, this is to boring to use these global filters, 
+        //let's just iterate the CallFilters directly. The code for each CallFilter
+        //will be the sam as below
+        if (globalGeneIdFilter != null) {
+            sb.append(globalExprTableName).append(".").append(MySQLGeneDAO.BGEE_GENE_ID)
+              .append(" IN (")
+              .append(BgeePreparedStatement.generateParameterizedQueryString(globalGeneIdFilter.size()))
+              .append(")");
+        }
+
+        if (globalSpeciesIdFilter != null) {
+            sb.append(" AND ");
+            sb.append(geneTableName).append(".speciesId IN (")
+              .append(BgeePreparedStatement.generateParameterizedQueryString(globalSpeciesIdFilter.size()))
+              .append(") ");
+        }
+
+        if (globalConditionFilters != null) {
+            sb.append(" AND ");
+            sb.append(
+                    globalConditionFilters.stream().map(f -> {
+                        StringBuilder sb2 = new StringBuilder();
+                        sb2.append("(");
+                        
+                        if (!f.getAnatEntitieIds().isEmpty()) {
+                            sb2.append(globalCondTableName).append(".anatEntityId IN (")
+                            .append(BgeePreparedStatement.generateParameterizedQueryString(
+                                    f.getAnatEntitieIds().size()))
+                            .append(")");
+                        }
+                        if (!f.getDevStageIds().isEmpty()) {
+                            if (!f.getAnatEntitieIds().isEmpty()) {
+                                sb2.append(" AND ");
+                            }
+                            sb2.append(globalCondTableName).append(".stageId IN (")
+                            .append(BgeePreparedStatement.generateParameterizedQueryString(
+                                    f.getDevStageIds().size()))
+                            .append(")");
+                        }
+                        if (f.getObservedConditions() != null) {
+                            if (!f.getAnatEntitieIds().isEmpty() || !f.getDevStageIds().isEmpty()) {
+                                sb2.append(" AND ");
+                            }
+                            sb2.append(condTableName).append(".").append(MySQLConditionDAO.RAW_COND_ID_FIELD);
+                            if (f.getObservedConditions()) {
+                                sb2.append(" IS NOT NULL ");
+                            } else {
+                                sb2.append(" IS NULL ");
+                            }
+                        }
+                        
+                        sb2.append(")");
+                        return sb2.toString();
+                        
+                    }).collect(Collectors.joining(" OR ", "(", ")"))
+            );
+        }
+        
+        if (globalDataFilters != null) {
+            
+        }
+    }
+    private static String generateDataFilters(final LinkedHashSet<CallDataDAOFilter> dataFilters,
+            final String globalExprTableName) {
+        log.entry(dataFilters, globalExprTableName);
+        
+        dataFilters.stream().map(dataFilter -> {
+
+            dataFilter.getExperimentCountFilters().stream().map(countOrFilters -> {
+
+                countOrFilters.stream().map(countFilter -> {
+                    dataFilter.getDataTypes().stream().map(dataType -> {
+                        StringBuilder sb2 = new StringBuilder();
+                        sb2.append(getExpCountFilterFieldName(dataType, countFilter));
+                        //FIXME: blabla greater than etc
+                    }).collect(Collectors.joining(" OR ", "(", ")"));
+                }).collect(Collectors.joining(" OR ", "(", ")"));
+
+            }).collect(Collectors.joining(" AND "));
+        });
+    }
+    private static String getExpCountFilterFieldName(DAODataType dataType,
+            DAOExperimentCountFilter expCountFilter) {
+        log.entry(dataType, expCountFilter);
+
+        StringBuilder sb = new StringBuilder();
+        switch(dataType) {
+        case EST:
+            sb.append("estLib");
+            break;
+        case AFFYMETRIX:
+            sb.append("affymetrixExp");
+            break;
+        case IN_SITU:
+            sb.append("inSituExp");
+            break;
+        case RNA_SEQ:
+            sb.append("rnaSeqExp");
+            break;
+        default:
+            throw log.throwing(new IllegalStateException("Unsupported data type: " + dataType));
+        }
+
+        switch (expCountFilter.getCallType()) {
+        case PRESENT:
+            sb.append("Present");
+            break;
+        case ABSENT:
+            if (DAODataType.EST.equals(dataType)) {
+                throw log.throwing(new IllegalArgumentException("Impossible call type for EST data"));
+            }
+            sb.append("Absent");
+            break;
+        default:
+            throw log.throwing(new IllegalStateException("Unsupported callType " + expCountFilter.getCallType()));
+        }
+
+        switch (expCountFilter.getDataQuality()) {
+        case LOW:
+            sb.append("Low");
+            break;
+        case HIGH:
+            sb.append("High");
+            break;
+        default:
+            throw log.throwing(new IllegalStateException("Unsupported data quality " + expCountFilter.getDataQuality()));
+        }
+
+        switch (expCountFilter.getPropagationState()) {
+        case SELF:
+            sb.append("Self");
+            break;
+        case ANCESTOR:
+            if (DAODataType.EST.equals(dataType)) {
+                throw log.throwing(new IllegalArgumentException("Impossible propagation state for EST data"));
+            }
+            sb.append("Parent");
+            break;
+        case DESCENDANT:
+            sb.append("Descendant");
+            break;
+        case ALL:
+            sb.append("Total");
+            break;
+        default:
+            throw log.throwing(new IllegalStateException("Unsupported propagation state "
+                               + expCountFilter.getPropagationState()));
+        }
+
+        sb.append("Count");
+        return log.exit(sb.toString());
+    }
 //    static {
 //        log.entry();
 //        Map<String, GlobalExpressionCallDAO.Attribute> colToAttributesMap = new HashMap<>();
@@ -461,7 +851,113 @@ implements GlobalExpressionCallDAO {
             Collection<GlobalExpressionCallDAO.Attribute> attributes,
             LinkedHashMap<GlobalExpressionCallDAO.OrderingAttribute, DAO.Direction> orderingAttributes)
                     throws DAOException, IllegalArgumentException {
-        log.entry(callFilters, callFilters, conditionParameters, attributes);
+        log.entry(callFilters, conditionParameters, attributes, orderingAttributes);
+
+        //******************************************
+        // CLONE ARGUMENTS AND SANITY CHECKS
+        //******************************************
+        //needs a LinkedHashSet for consistent settings of the parameters. 
+        LinkedHashSet<CallDAOFilter> clonedCallFilters = callFilters == null?
+                new LinkedHashSet<>(): new LinkedHashSet<>(callFilters);
+        //condition parameter combination
+        Set<ConditionDAO.Attribute> clonedCondParams = conditionParameters == null?
+                EnumSet.noneOf(ConditionDAO.Attribute.class): EnumSet.copyOf(conditionParameters);
+        //attributes
+        Set<GlobalExpressionCallDAO.Attribute> clonedAttrs = attributes == null?
+                EnumSet.noneOf(GlobalExpressionCallDAO.Attribute.class): EnumSet.copyOf(attributes);
+        //ordering attributes
+        LinkedHashMap<GlobalExpressionCallDAO.OrderingAttribute, DAO.Direction> clonedOrderingAttrs = 
+                orderingAttributes == null? new LinkedHashMap<>(): new LinkedHashMap<>(orderingAttributes);
+
+        //sanity checks
+        if (clonedCallFilters.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("Some CallDAOFilters must be provided"));
+        }
+        if (clonedCondParams.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "A combination of condition parameters must be provided"));
+        }
+        if (clonedCondParams.stream().anyMatch(a -> !a.isConditionParameter())) {
+            throw log.throwing(new IllegalArgumentException("The condition parameter combination "
+                    + "contains some Attributes that are not condition parameters: " + clonedCondParams));
+        }
+
+        //******************************************
+        // FIND FILTERS APPLICABLE TO WHOLE QUERY
+        //******************************************
+        //FIXME: actually, this is too boring, just iterate directly the CallFilters
+        //(see generateWhereClause)
+        //try to find identical filters in CallDAOFilters that could be applied to the whole query.
+        //genes
+        Set<Set<Integer>> geneIdFilters = clonedCallFilters.stream()
+                .map(callFilter -> callFilter.getGeneIds())
+                .filter(f -> !f.isEmpty())
+                .collect(Collectors.toSet());
+        Set<Integer> globalGeneIdFilter =
+                geneIdFilters.size() == 1? geneIdFilters.iterator().next(): null;
+        //species
+        Set<Set<Integer>> speciesIdFilters = clonedCallFilters.stream()
+                .map(callFilter -> callFilter.getSpeciesIds())
+                .filter(f -> !f.isEmpty())
+                .collect(Collectors.toSet());
+        Set<Integer> globalSpeciesIdFilter =
+                speciesIdFilters.size() == 1? speciesIdFilters.iterator().next(): null;
+        //conditions
+        Set<LinkedHashSet<DAOConditionFilter>> conditionFilters = clonedCallFilters.stream()
+                .map(callFilter -> callFilter.getConditionFilters())
+                .filter(f -> !f.isEmpty())
+                .collect(Collectors.toSet());
+        LinkedHashSet<DAOConditionFilter> globalConditionFilters =
+                conditionFilters.size() == 1? conditionFilters.iterator().next(): null;
+        //data filters
+        Set<LinkedHashSet<CallDataDAOFilter>> dataFilters = clonedCallFilters.stream()
+                .map(callFilter -> callFilter.getDataFilters())
+                .filter(f -> !f.isEmpty())
+                .collect(Collectors.toSet());
+        LinkedHashSet<CallDataDAOFilter> globalDataFilters =
+                dataFilters.size() == 1? dataFilters.iterator().next(): null;
+        //observed data filters
+        Set<LinkedHashMap<ConditionDAO.Attribute, Boolean>> observedDataFilters =
+                clonedCallFilters.stream()
+                .map(callFilter -> callFilter.getObservedDataFilter())
+                .filter(f -> !f.isEmpty())
+                .collect(Collectors.toSet());
+        LinkedHashMap<ConditionDAO.Attribute, Boolean> globalObservedDataFilter =
+                observedDataFilters.size() == 1? observedDataFilters.iterator().next(): null;
+        //call observed data filter
+        Set<Boolean> callObservedDataFilters = clonedCallFilters.stream()
+                .map(callFilter -> callFilter.getCallObservedData())
+                .filter(f -> f != null)
+                .collect(Collectors.toSet());
+        Boolean globalCallObservedDataFilter =
+                callObservedDataFilters.size() == 1? callObservedDataFilters.iterator().next(): null;
+
+        //******************************************
+        // GENERATE QUERY
+        //******************************************
+        String globalExprTableName = "globalExpression";
+        String globalCondTableName = "globalCond";
+        String condTableName = "cond";
+        //do we need a join to the raw condition table
+        boolean observedConditionFilter = clonedCallFilters.stream()
+                .anyMatch(callFilter -> callFilter.getConditionFilters()
+                        .stream().anyMatch(condFilter -> condFilter.getObservedConditions() != null));
+        //retrieve the data types to retrieve data for
+        Set<DAODataType> dataTypes = clonedCallFilters.stream()
+                .flatMap(callFilter -> callFilter.getDataFilters().isEmpty()?
+                        EnumSet.allOf(DAODataType.class).stream():
+                            callFilter.getDataFilters().stream()
+                            .flatMap(dataFilter -> dataFilter.getDataTypes().stream()))
+                .collect(Collectors.toSet());
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(generateSelectClause(clonedAttrs, dataTypes, globalExprTableName, globalCondTableName));
+        sb.append(generateTableReferences(globalExprTableName, globalCondTableName, condTableName,
+                observedConditionFilter));
+        //FIXME: generatewhereclause started
+        
+        
+        
         throw log.throwing(new UnsupportedOperationException("Load of global calls not implemented yet"));
     }
 

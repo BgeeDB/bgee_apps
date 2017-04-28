@@ -111,13 +111,31 @@ public class InsertPropagatedCalls extends CallService {
 
     private final static Set<PropagationState> ALLOWED_PROP_STATES_BEFORE_MERGE = EnumSet.of(
             PropagationState.SELF, PropagationState.ANCESTOR, PropagationState.DESCENDANT);
-    private final static DataPropagation SELF_DATA_PROP =
-            new DataPropagation(PropagationState.SELF, PropagationState.SELF, true);
 
     private final static List<Set<ConditionDAO.Attribute>> COND_PARAM_COMB_LIST;
     private final static AtomicInteger COND_ID_COUNTER = new AtomicInteger(0);
     private final static AtomicInteger EXPR_ID_COUNTER = new AtomicInteger(0);
     
+    private final static DataPropagation getSelfDataProp(Set<ConditionDAO.Attribute> condParams) {
+        log.entry(condParams);
+        PropagationState anatEntityState = null;
+        PropagationState stageState = null;
+        for (ConditionDAO.Attribute condParam: condParams) {
+            switch(condParam) {
+            case ANAT_ENTITY_ID:
+                anatEntityState = PropagationState.SELF;
+                break;
+            case STAGE_ID:
+                stageState = PropagationState.SELF;
+                break;
+            default:
+                throw log.throwing(new IllegalStateException("Unsupported condition parameter: "
+                        + condParam));
+            }
+        }
+        return log.exit(new DataPropagation(anatEntityState, stageState, true));
+    }
+
     static {
         List<Set<ConditionDAO.Attribute>> condParamList = new ArrayList<>();
         
@@ -1745,8 +1763,9 @@ public class InsertPropagatedCalls extends CallService {
                 Optional.of(geneData.entrySet().stream()
                     .collect(Collectors.toMap(
                         e -> mapRawCallTOToPipelineCall(e.getKey(),
-                                condMapByComb.get(condParams).get(e.getKey().getConditionId())),
-                        e -> mapExpExprTOsToPipelineCallData(e.getValue())))
+                                condMapByComb.get(condParams).get(e.getKey().getConditionId()),
+                                condParams),
+                        e -> mapExpExprTOsToPipelineCallData(e.getValue(), condParams)))
                 )
 
                 //Now, we group all PipelineCalls and PipelineCallDatas mapped to a same Condition
@@ -1777,7 +1796,7 @@ public class InsertPropagatedCalls extends CallService {
                             assert Integer.compare(call1.getBgeeGeneId(), call2.getBgeeGeneId()) == 0;
                             assert call1.getCondition().equals(call2.getCondition());
                             assert call1.getDataPropagation().equals(call2.getDataPropagation());
-                            assert call1.getDataPropagation().equals(SELF_DATA_PROP);
+                            assert call1.getDataPropagation().equals(getSelfDataProp(condParams));
 
                             Set<RawExpressionCallTO> combinedTOs =
                                     new HashSet<>(call1.getSelfSourceCallTOs());
@@ -2424,16 +2443,18 @@ public class InsertPropagatedCalls extends CallService {
     //*************************************************************************
 
     private static Set<PipelineCallData> mapExpExprTOsToPipelineCallData(
-        Map<DataType, Set<ExperimentExpressionTO>> expExprsByDataTypes) {
-        log.entry(expExprsByDataTypes);
+        Map<DataType, Set<ExperimentExpressionTO>> expExprsByDataTypes,
+        Set<ConditionDAO.Attribute> condParams) {
+        log.entry(expExprsByDataTypes, condParams);
         return log.exit(expExprsByDataTypes.entrySet().stream()
-            .map(eeTo -> new PipelineCallData(eeTo.getKey(), SELF_DATA_PROP,
+            .map(eeTo -> new PipelineCallData(eeTo.getKey(), getSelfDataProp(condParams),
                 null, eeTo.getValue(), null))
             .collect(Collectors.toSet()));
     }
 
-    private static PipelineCall mapRawCallTOToPipelineCall(RawExpressionCallTO callTO, Condition cond) {
-        log.entry(callTO, cond);
+    private static PipelineCall mapRawCallTOToPipelineCall(RawExpressionCallTO callTO, Condition cond,
+            Set<ConditionDAO.Attribute> condParams) {
+        log.entry(callTO, cond, condParams);
 
         if (cond == null) {
             throw log.throwing(new IllegalArgumentException("No Condition provided for CallTO: " 
@@ -2443,7 +2464,7 @@ public class InsertPropagatedCalls extends CallService {
         assert callTO.getConditionId() != null;
 
         return log.exit(new PipelineCall(
-                callTO.getBgeeGeneId(), cond, SELF_DATA_PROP,
+                callTO.getBgeeGeneId(), cond, getSelfDataProp(condParams),
                 // At this point, we do not generate data state, quality, and CallData,
                 // as we haven't reconcile data.
                 Collections.singleton(callTO)));

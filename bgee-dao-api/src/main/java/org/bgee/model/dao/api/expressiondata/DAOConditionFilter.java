@@ -20,41 +20,50 @@ public class DAOConditionFilter {
     /**
      * @see #getAnatEntitieIds()
      */
-    private final Set<String> anatEntitieIds;
+    private final Set<String> anatEntityIds;
     /**
      * @see #getDevStageIds()
      */
     private final Set<String> devStageIds;
+    /**
+     * @see #getObservedConditions()
+     */
+    private final Boolean observedConditions;
     
     /**
-     * @param anatEntitieIds    A {@code Collection} of {@code String}s that are the IDs 
-     *                          of the anatomical entities that this {@code DAOConditionFilter} 
-     *                          will specify to use.
-     * @param devStageIds       A {@code Collection} of {@code String}s that are the IDs 
-     *                          of the developmental stages that this {@code DAOConditionFilter} 
-     *                          will specify to use.
+     * @param anatEntityIds        A {@code Collection} of {@code String}s that are the IDs 
+     *                              of the anatomical entities that this {@code DAOConditionFilter} 
+     *                              will specify to use.
+     * @param devStageIds           A {@code Collection} of {@code String}s that are the IDs 
+     *                              of the developmental stages that this {@code DAOConditionFilter} 
+     *                              will specify to use.
+     * @param observedConditions    A {@code Boolean} defining whether the conditions considered
+     *                              should have been observed in expression data in any species.
+     *                              See {@link #getObservedConditions()} for more details.
      * @throws IllegalArgumentException If no anatomical entity IDs and no developmental stage IDs 
      *                                  are provided. 
      */
-    public DAOConditionFilter(Collection<String> anatEntitieIds, Collection<String> devStageIds) 
-            throws IllegalArgumentException {
+    public DAOConditionFilter(Collection<String> anatEntitieIds, Collection<String> devStageIds,
+            Boolean observedConditions) throws IllegalArgumentException {
         if ((anatEntitieIds == null || anatEntitieIds.isEmpty()) && 
-                (devStageIds == null || devStageIds.isEmpty())) {
-            throw log.throwing(new IllegalArgumentException(
-                    "Some anatatomical entity IDs or developmental stage IDs must be provided."));
+                (devStageIds == null || devStageIds.isEmpty()) &&
+                observedConditions == null) {
+            throw log.throwing(new IllegalArgumentException("Some anatatomical entity IDs "
+                    + "or developmental stage IDs or observed data status must be provided."));
         }
-        this.anatEntitieIds = Collections.unmodifiableSet(anatEntitieIds == null ? 
+        this.anatEntityIds = Collections.unmodifiableSet(anatEntitieIds == null ? 
                 new HashSet<>(): new HashSet<>(anatEntitieIds));
         this.devStageIds = Collections.unmodifiableSet(devStageIds == null? 
                 new HashSet<>(): new HashSet<>(devStageIds));
+        this.observedConditions = observedConditions;
     }
 
     /**
      * @return  An unmodifiable {@code Set} of {@code String}s that are the IDs 
      *          of the anatomical entities that this {@code DAOConditionFilter} will specify to use.
      */
-    public Set<String> getAnatEntitieIds() {
-        return anatEntitieIds;
+    public Set<String> getAnatEntityIds() {
+        return anatEntityIds;
     }
     /**
      * @return  An unmodifiable {@code Set} of {@code String}s that are the IDs 
@@ -63,13 +72,27 @@ public class DAOConditionFilter {
     public Set<String> getDevStageIds() {
         return devStageIds;
     }
+    /**
+     * @return  A {@code Boolean} defining whether the conditions considered should have been
+     *          observed in expression data in any species. If {@code true}, only conditions
+     *          observed in expression data in any species are considered, not resulting
+     *          only from a data propagation; if {@code false}, only conditions resulting
+     *          from data propagation, never observed in expression data of any species,
+     *          are considered; if {@code null}, conditions are considered whatever
+     *          their observed data status.
+     */
+    public Boolean getObservedConditions() {
+        return observedConditions;
+    }
+
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((anatEntitieIds == null) ? 0 : anatEntitieIds.hashCode());
+        result = prime * result + ((anatEntityIds == null) ? 0 : anatEntityIds.hashCode());
         result = prime * result + ((devStageIds == null) ? 0 : devStageIds.hashCode());
+        result = prime * result + ((observedConditions == null) ? 0 : observedConditions.hashCode());
         return result;
     }
     @Override
@@ -84,11 +107,11 @@ public class DAOConditionFilter {
             return false;
         }
         DAOConditionFilter other = (DAOConditionFilter) obj;
-        if (anatEntitieIds == null) {
-            if (other.anatEntitieIds != null) {
+        if (anatEntityIds == null) {
+            if (other.anatEntityIds != null) {
                 return false;
             }
-        } else if (!anatEntitieIds.equals(other.anatEntitieIds)) {
+        } else if (!anatEntityIds.equals(other.anatEntityIds)) {
             return false;
         }
         if (devStageIds == null) {
@@ -98,12 +121,22 @@ public class DAOConditionFilter {
         } else if (!devStageIds.equals(other.devStageIds)) {
             return false;
         }
+        if (observedConditions == null) {
+            if (other.observedConditions != null) {
+                return false;
+            }
+        } else if (!observedConditions.equals(other.observedConditions)) {
+            return false;
+        }
         return true;
     }
 
     @Override
     public String toString() {
-        return "DAOConditionFilter [anatEntitieIds=" + anatEntitieIds 
-                + ", devStageIds=" + devStageIds + "]";
+        StringBuilder builder = new StringBuilder();
+        builder.append("DAOConditionFilter [anatEntityIds=").append(anatEntityIds)
+               .append(", devStageIds=").append(devStageIds)
+               .append(", observedConditions=").append(observedConditions).append("]");
+        return builder.toString();
     }
 }

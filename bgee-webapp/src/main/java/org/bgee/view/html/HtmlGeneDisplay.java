@@ -524,13 +524,12 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
 		// Quality cell
 		sb.append("<td>")
-                .append(getQualitySpan(
-                    calls.stream().map(c -> c.getSummaryQuality()).collect(Collectors.toSet())))
+                .append(getQualitySpans(calls.stream().flatMap(e -> e.getCallData().stream()).collect(Collectors.toList())))
 				.append("<ul class='masked quality-list'>")
 				.append(calls.stream().map(call -> {
 						StringBuilder sb2 = new StringBuilder();
 						sb2.append("<li class='qualities'>")
-						    .append(getQualitySpan(Arrays.asList(call.getSummaryQuality()))).append("</li>");
+						.append(getQualitySpans(call.getCallData())).append("</li>");
 						return sb2.toString();
 					}).collect(Collectors.joining("\n")))
 				.append("</ul></td>")
@@ -570,25 +569,21 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 	 * @param callData     A {@code Collection} of {@code ExpressionCallData} as input
 	 * @return             A {@String} containing the HTML code of the span
 	 */
-//	private static String getQualitySpans(Collection<ExpressionCallData> callData) {
-//	    log.entry(callData);
-//	    
-//		final Map<DataType, Set<DataQuality>> qualities = callData.stream()
-//		        .collect(Collectors.groupingBy(ExpressionCallData::getDataType,
-//		                Collectors.mapping(ExpressionCallData::getDataQuality, Collectors.toSet())));
-//		return log.exit(EnumSet.allOf(DataType.class).stream().map(type -> {
-//			Set<DataQuality> quals = qualities.get(type);
-//			DataQuality quality = DataQuality.NODATA;
-//			if (quals != null) {
-//				if (quals.contains(DataQuality.HIGH)) {
-//					quality = DataQuality.HIGH;
-//				} else if (quals.contains(DataQuality.LOW))
-//					quality = DataQuality.LOW;
-//			}
-//			return getSpan(quality, type);
-//		}).collect(Collectors.joining()));
-//
-//	}
+	private static String getQualitySpans(Collection<ExpressionCallData> callData) {
+	    log.entry(callData);
+		final Map<DataType, Set<ExpressionCallData>> callsByDataTypes = callData.stream()
+		        .collect(Collectors.groupingBy(ExpressionCallData::getDataType,Collectors.toSet()));
+		// FIXME: to be reviewed
+		return log.exit(EnumSet.allOf(DataType.class).stream().map(type -> {
+			Set<ExpressionCallData> data = callsByDataTypes.get(type);
+			SummaryQuality quality = SummaryQuality.BRONZE;
+			if (data != null) {
+			    quality = SummaryQuality.GOLD;
+			}
+			return getQualitySpan(quality, type);
+		}).collect(Collectors.joining()));
+
+	}
 
 	/**
 	 * Builds a 'span' element representing the quality for a given {@code DataType}
@@ -597,67 +592,46 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 	 * @param type     The {@code DataType}
 	 * @return         A {@code String} containing the HTML code for the quality 'span'.
 	 */
-	private static String getQualitySpan(Collection<SummaryQuality> qualities) {
-	    log.entry(qualities);
+	private static String getQualitySpan(SummaryQuality quality, DataType type) {
+	    log.entry(quality, type);
 	    
 		StringBuilder sb = new StringBuilder();
 		sb.append("<span class='quality ");
 
-		if (qualities.isEmpty()) {
-            throw log.throwing(new IllegalStateException("Empty qualities"));
+		switch (quality) {
+		    case GOLD:
+		        sb.append("high");
+		        break;
+		    case SILVER:
+		        //XXX: temporarily "hide" qualities, as they are so incorrect at the moment. 
+		        //for now we only report presence/absence of data per data type.
+		        // sb.append("low");
+		        sb.append("high");
+		        break;
+		    case BRONZE:
+		        sb.append("nodata");
+		        break;
+		    default: 
+		        throw log.throwing(new IllegalStateException("Unsupported quality: " + quality));
 		}
 
-		SummaryQuality sq = SummaryQuality.BRONZE;
-		if (qualities.contains(SummaryQuality.GOLD)) {
-            sb.append("high");
-            sq = SummaryQuality.GOLD;
-	    } else if (qualities.contains(SummaryQuality.SILVER)) {
-            //XXX: temporarily "hide" qualities, as they are so incorrect at the moment. 
-            //for now we only report presence/absence of data per data type.
-//            sb.append("low");
-            sb.append("high");
-            sq = SummaryQuality.SILVER;
-	    } else if (qualities.contains(SummaryQuality.BRONZE)) {
-	        // FIXME should be hide no?
-            sb.append("nodata");
-            sq = SummaryQuality.BRONZE;
-	    } else {
-	        throw log.throwing(new IllegalStateException("Unsupported qualities: " + qualities));
-	    }
-//		switch (quality) {
-//		case GOLD:
-//			sb.append("high");
-//			break;
-//		case SILVER:
-//            //XXX: temporarily "hide" qualities, as they are so incorrect at the moment. 
-//            //for now we only report presence/absence of data per data type.
-////			sb.append("low");
-//            sb.append("low");
-//			break;
-//		case BRONZE:
-//			sb.append("nodata");
-//			break;
-//	    default: 
-//	        throw log.throwing(new IllegalStateException("Unsupported quality: " + quality));
-//		}
+		sb.append("' title='").append(htmlEntities(type.getStringRepresentation())).append(": ")
+		        .append(htmlEntities(quality.getStringRepresentation())).append("'>");
 
-		sb.append("' title='") //.append(htmlEntities(type.getStringRepresentation())).append(": ")
-		        .append(htmlEntities(sq.getStringRepresentation())).append("'>");
-
-//		switch (type) {
-//		case AFFYMETRIX:
-//			sb.append("A");
-//			break;
-//		case RNA_SEQ:
-//			sb.append("R");
-//			break;
-//		case IN_SITU:
-//			sb.append("I");
-//			break;
-//		case EST:
-//			sb.append("E");
-//			break;
-//		}
+		switch (type) {
+		    case AFFYMETRIX:
+		        sb.append("A");
+		        break;
+		    case RNA_SEQ:
+		        sb.append("R");
+		        break;
+		    case IN_SITU:
+		        sb.append("I");
+		        break;
+		    case EST:
+		        sb.append("E");
+		        break;
+		}
 		sb.append("</span>");
 		return log.exit(sb.toString());
 	}

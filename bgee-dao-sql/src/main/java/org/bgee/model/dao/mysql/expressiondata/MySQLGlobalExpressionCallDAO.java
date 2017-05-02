@@ -518,7 +518,7 @@ implements GlobalExpressionCallDAO {
               .append(" ON ");
             sb.append(EnumSet.allOf(ConditionDAO.Attribute.class).stream()
                     .filter(condAttr -> condAttr.isConditionParameter())
-                    //actually it should ne the same mechanism as in generateWhereClause
+                    //actually it should be the same mechanism as in generateWhereClause
                     .map(condAttr -> {
                         switch (condAttr) {
                         case ANAT_ENTITY_ID:

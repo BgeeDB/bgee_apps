@@ -1123,7 +1123,8 @@ public class CallService extends CommonService {
             }
 
             return log.exit(new ExpressionCallData(dt, counts,
-                    getExperimentsCounts? cdTO.getPropagatedCount(): null,
+                    getExperimentsCounts && cdTO.getPropagatedCount() != null?
+                            cdTO.getPropagatedCount(): 0,
                     getRankInfo? cdTO.getRank(): null,
                     getRankInfo? cdTO.getRankNorm(): null,
                     getRankInfo? cdTO.getWeightForMeanRank(): null,

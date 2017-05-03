@@ -1477,7 +1477,12 @@ implements GlobalExpressionCallDAO {
                     "rnaSeqConditionObservedData".equals(columnName) &&
                         DAODataType.RNA_SEQ.equals(dataType)) {
 
-                    conditionObservedData = currentResultSet.getBoolean(columnName);
+                    // As getBoolean() returns false if the value is SQL NULL, 
+                    // we need to check if the column read had a value of SQL NULL
+                    boolean isConditionObservedData = currentResultSet.getBoolean(columnName);
+                    if (!currentResultSet.wasNull()) {
+                        conditionObservedData = isConditionObservedData;
+                    }
                     infoFound = true;
                 } else if ("estLibPropagatedCount".equals(columnName) &&
                         DAODataType.EST.equals(dataType) ||
@@ -1488,6 +1493,9 @@ implements GlobalExpressionCallDAO {
                     "rnaSeqExpPropagatedCount".equals(columnName) &&
                         DAODataType.RNA_SEQ.equals(dataType)) {
 
+                    // getInt() returns 0 if the value is SQL NULL,
+                    // but in db, propagated counts are not null so we do not need to check
+                    // if the column read had a value of SQL NULL
                     propagatedCount = currentResultSet.getInt(columnName);
                     infoFound = true;
                 } else if ("estRank".equals(columnName) &&
@@ -1528,7 +1536,12 @@ implements GlobalExpressionCallDAO {
                     }
                 }
             }
-            if (!infoFound) {
+            if (!infoFound || (conditionObservedData == null 
+                    && (dataPropagation.isEmpty() || dataPropagation.values().stream().allMatch(dp -> dp == null)) 
+                    && (experimentCounts.isEmpty() || experimentCounts.stream().allMatch(c -> c.getCount() == 0))
+                    && (propagatedCount == null || propagatedCount == 0) 
+                    && rank == null && rankNorm == null && weightForMeanRank == null)) {
+                // If all variables are null/empty/0, this means that there is no data for the current data type
                 return log.exit(null);
             }
             return log.exit(new GlobalExpressionCallDataTO(dataType, conditionObservedData,

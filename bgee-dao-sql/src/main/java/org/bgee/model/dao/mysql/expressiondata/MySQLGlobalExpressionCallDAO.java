@@ -118,7 +118,7 @@ implements GlobalExpressionCallDAO {
                                 throw log.throwing(new IllegalStateException(
                                         "No rank clause associated to data type: " + dataType));
                             }
-                            return "IF(" + weightSql + " IS NULL, 0, " + rankSql + " * " + weightSql + ")";
+                            return "IF(" + rankSql + " IS NULL, 0, " + rankSql + " * " + weightSql + ")";
                         })
                         .collect(Collectors.joining(" + ", "((", ")"))
                         
@@ -626,7 +626,7 @@ implements GlobalExpressionCallDAO {
                     sb.append(generateDataFilters(callFilter.getDataFilters(), globalExprTableName));
                 }
                 
-                if (callFilter.getCallObservedData() != null) {
+                if (callFilter.getCallObservedData() != null && callFilter.getCallObservedData()) {
                     sb.append(" AND ").append("(")
                         .append(globalExprTableName).append(".affymetrixConditionObservedData = ? OR ")
                         .append(globalExprTableName).append(".estConditionObservedData = ? OR ")
@@ -1007,6 +1007,14 @@ implements GlobalExpressionCallDAO {
             throw log.throwing(new IllegalArgumentException("The condition parameter combination "
                     + "contains some Attributes that are not condition parameters: " + clonedCondParams));
         }
+        if (clonedOrderingAttrs.containsKey(GlobalExpressionCallDAO.OrderingAttribute.MEAN_RANK) 
+                && !clonedAttrs.contains(GlobalExpressionCallDAO.Attribute.GLOBAL_MEAN_RANK)) {
+            throw log.throwing(new IllegalArgumentException("To order by " 
+                    + GlobalExpressionCallDAO.OrderingAttribute.MEAN_RANK
+                    + ", the attribute " + GlobalExpressionCallDAO.Attribute.GLOBAL_MEAN_RANK
+                    + " should be retireved"));
+        }
+
 
         //******************************************
         // GENERATE QUERY
@@ -1083,7 +1091,7 @@ implements GlobalExpressionCallDAO {
                     }
                 }
                 
-                if (callFilter.getCallObservedData() != null) {
+                if (callFilter.getCallObservedData() != null && callFilter.getCallObservedData()) {
                     stmt.setBooleans(offsetParamIndex,
                             Collections.nCopies(DATA_TYPE_COUNT, callFilter.getCallObservedData()),
                             true);

@@ -5,7 +5,7 @@
  * 
  * @author 	Mathieu Seppey
  * @author 	Valentine Rech de Laval
- * @version Bgee 14, Apr. 2017
+ * @version Bgee 14, May 2017
  */
 //Declaration of an object literal to contain the download page specific code.
 //XXX: Should we let this code generate URL by using RequestParameters, or should all URLs 
@@ -29,6 +29,12 @@ var download = {
         $bgeeDataSelectionTextCommon: null,
         $switchPageLink: null,
         $bgeeGroupDescription: null,
+        $bgeeExprDataFormInputs: null,
+        $bgeeExprDataFormSubmit: null,
+        $bgeeExprDataFormAnatEntityCheck: null,
+        $bgeeExprDataFormDevStageCheck: null,
+        $bgeeExprDataFormAdvancedColumnsYes: null,
+        $bgeeExprDataFormAdvancedColumnsNo: null,
         $orthologButtons: null,
         $orthologCvs: null,
         $exprSimpleData: null,
@@ -106,6 +112,13 @@ var download = {
                 $( "#bgee_data_selection_text span.commonname" );
             this.$switchPageLink = $( "#switch_page_link" );
             this.$bgeeGroupDescription = $( "#bgee_data_selection_text p.groupdescription" );
+            // Form to download files
+            this.$bgeeExprDataFormInputs = $( "#expr_data_form input" );
+            this.$bgeeExprDataFormSubmit = $( "#download_expr_data" );
+            this.$bgeeExprDataFormAnatEntityCheck = $( "#expr_data_form input.anatEntityCheck" );
+            this.$bgeeExprDataFormDevStageCheck = $( "#expr_data_form input.anatEntityCheck" );
+            this.$bgeeExprDataFormAdvancedColumnsYes = $( "#advancedDataRadioYes" );
+            this.$bgeeExprDataFormAdvancedColumnsNo = $( "#advancedDataRadioNo" );
             // Data
             this.$orthologButtons = $( "#ortholog_file_buttons" );
             this.$orthologCvs = $( "#ortholog_csv" );
@@ -325,6 +338,38 @@ var download = {
             window.location.hash = "!";   
         },
 
+        /**
+         * This function update the URL of the download form button.
+         */
+        updateFormURL: function(organStageCompleteFileUrl, organStageSimpleFileUrl,
+        		organCompleteFileUrl, organSimpleFileUrl) {
+        	
+        	// Form
+            var exprDataForm = document.forms["expr_data_form"];
+            
+        	// Get actual form parameters
+        	var isAnatEntity = exprDataForm.elements["anatEntityCheck"].checked;
+        	var isDevStage = exprDataForm.elements["devStageCheck"].checked;
+        	var isAdvancedColumns = exprDataForm.elements["advancedDataRadioYes"].checked;
+
+        	var url = undefined;
+        	if (isAnatEntity && isDevStage) {
+        		if (isAdvancedColumns) {
+        			url = organStageCompleteFileUrl;
+        		} else {
+        			url= organStageSimpleFileUrl;
+        		}
+        	} else {
+        		if (isAdvancedColumns) {
+        			url = organCompleteFileUrl;
+        		} else {
+        			url= organSimpleFileUrl;
+        		}
+        	}
+        	
+        	this.$bgeeExprDataFormSubmit.attr( "href", url );
+        },
+        
 		/**
 		 * Gets the url of the file of the given category (undefined if not found)
 		 */
@@ -576,10 +621,8 @@ var download = {
                 this.$showSingleCompleteDiffexprAnatomyHeaders.show();
                 if ( this.$exprCalls.length > 0 ) {
                 	var urlDoc = new requestParameters("", true, "&");
-                    urlDoc.addValue(urlParameters.getParamPage(), 
-                    		urlDoc.PAGE_DOCUMENTATION());
-                    urlDoc.addValue(urlParameters.getParamAction(), 
-                    		urlDoc.ACTION_DOC_CALL_DOWLOAD_FILES());
+                    urlDoc.addValue(urlParameters.getParamPage(), urlDoc.PAGE_DOCUMENTATION());
+                    urlDoc.addValue(urlParameters.getParamAction(), urlDoc.ACTION_DOC_CALL_DOWLOAD_FILES());
                     
                     urlDoc.setURLHash(urlDoc.HASH_DOC_CALL_SINGLE_EXPR());
                 	this.$exprHelp.attr( "href", urlDoc.getRequestURL());
@@ -587,33 +630,13 @@ var download = {
                 	this.$diffDevHelp.attr( "href", urlDoc.getRequestURL());
                 	this.$diffAnatHelp.attr( "href", urlDoc.getRequestURL());
                 }
+                this.updateFormURL( bgeeExprOrganStageCompleteFileUrl, bgeeExprOrganStageSimpleFileUrl,
+                		bgeeExprOrganCompleteFileUrl, bgeeExprOrganSimpleFileUrl );
             }
             
-            $("#expr_data_form input").click(function() {
-            	// Form
-                var exprDataForm = document.forms["expr_data_form"];
-                
-            	// Get actual form parameters
-            	var isAnatEntity = exprDataForm.elements["anatEntityCheck"].checked;
-            	var isDevStage = exprDataForm.elements["devStageCheck"].checked;
-            	var isAdvancedColumns = exprDataForm.elements["advancedDataRadioYes"].checked;
-
-            	var url = undefined;
-            	if (isAnatEntity && isDevStage) {
-            		if (isAdvancedColumns) {
-            			url = bgeeExprOrganStageCompleteFileUrl;
-            		} else {
-            			url= bgeeExprOrganStageSimpleFileUrl;
-            		}
-            	} else {
-            		if (isAdvancedColumns) {
-            			url = bgeeExprOrganCompleteFileUrl;
-            		} else {
-            			url= bgeeExprOrganSimpleFileUrl;
-            		}
-            	}
-            	alert("New URL: " + url);
-            	$( "#download_expr_data" ).attr( "href", url );
+            this.$bgeeExprDataFormInputs.click(function() {
+                download.updateFormURL( bgeeExprOrganStageCompleteFileUrl, bgeeExprOrganStageSimpleFileUrl,
+                		bgeeExprOrganCompleteFileUrl, bgeeExprOrganSimpleFileUrl );
             });
             
             // Hide all header table to hide tables already opened in another detail box (banner)

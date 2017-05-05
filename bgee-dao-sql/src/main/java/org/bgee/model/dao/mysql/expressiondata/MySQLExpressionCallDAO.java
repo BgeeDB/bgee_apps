@@ -1324,13 +1324,13 @@ implements ExpressionCallDAO {
                 sb2.append(callFilter.getConditionFilters().stream()
                     .map(cond -> {
                         StringBuilder sb3 = new StringBuilder();
-                        if (!cond.getAnatEntitieIds().isEmpty()) {
+                        if (!cond.getAnatEntityIds().isEmpty()) {
                             if (exprTableName != null) {
                                 sb3.append(exprTableName).append(".");
                             }
                             sb3.append("anatEntityId IN (")
                             .append(BgeePreparedStatement.generateParameterizedQueryString(
-                                    cond.getAnatEntitieIds().size())).append(") ");
+                                    cond.getAnatEntityIds().size())).append(") ");
                         }
                         if (!cond.getDevStageIds().isEmpty()) {
                             if (sb3.length() != 0) {
@@ -1484,9 +1484,9 @@ implements ExpressionCallDAO {
             
             //conditions
             for (DAOConditionFilter cond: callFilter.getConditionFilters()) {
-                if (!cond.getAnatEntitieIds().isEmpty()) {
-                    stmt.setStrings(index, cond.getAnatEntitieIds(), true);
-                    index += cond.getAnatEntitieIds().size();
+                if (!cond.getAnatEntityIds().isEmpty()) {
+                    stmt.setStrings(index, cond.getAnatEntityIds(), true);
+                    index += cond.getAnatEntityIds().size();
                 }
                 if (!cond.getDevStageIds().isEmpty()) {
                     stmt.setStrings(index, cond.getDevStageIds(), true);

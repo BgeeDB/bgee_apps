@@ -255,8 +255,11 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
         //(for a discussion about this design, see http://stackoverflow.com/q/42781299/1768736)
         sb.append("SELECT MAX(GREATEST(affymetrixMaxRank, rnaSeqMaxRank, ")
           .append("estMaxRank, inSituMaxRank)) AS maxRank, ")
-          .append("MAX(GREATEST(affymetrixGlobalMaxRank, rnaSeqGlobalMaxRank, ")
-          .append("estGlobalMaxRank, inSituGlobalMaxRank)) AS globalMaxRank ")
+          // FIXME: Enable usage of global max ranks. Global max ranks were not generated for the bgee v14.0
+//          .append("MAX(GREATEST(affymetrixGlobalMaxRank, rnaSeqGlobalMaxRank, ")
+//          .append("estGlobalMaxRank, inSituGlobalMaxRank)) AS globalMaxRank ")
+          .append("MAX(GREATEST(affymetrixMaxRank, rnaSeqMaxRank, ")
+          .append("estMaxRank, inSituMaxRank)) AS globalMaxRank ")
           .append("FROM globalCond");
 
         try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString())) {

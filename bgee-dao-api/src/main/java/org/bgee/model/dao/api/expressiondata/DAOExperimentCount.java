@@ -122,7 +122,7 @@ public class DAOExperimentCount {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("DAOExperimentCountFilter [callType=").append(callType)
+        builder.append("DAOExperimentCount [callType=").append(callType)
                .append(", dataQuality=").append(dataQuality)
                .append(", daoPropagationState=").append(daoPropagationState)
                .append(", count=").append(count).append("]");

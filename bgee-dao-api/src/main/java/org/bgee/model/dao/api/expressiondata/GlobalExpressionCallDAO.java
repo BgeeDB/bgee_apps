@@ -179,8 +179,8 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
         public String toString() {
             StringBuilder builder = new StringBuilder();
             builder.append("GlobalExpressionCallTO [id=").append(getId())
-                   .append(", getBgeeGeneId()=").append(getBgeeGeneId())
-                   .append(", getConditionId()=").append(getConditionId())
+                   .append(", bgeeGeneId=").append(getBgeeGeneId())
+                   .append(", conditionId=").append(getConditionId())
                    .append(", globalMeanRank=").append(globalMeanRank)
                    .append(", callDataTOs=").append(callDataTOs)
                    .append("]");

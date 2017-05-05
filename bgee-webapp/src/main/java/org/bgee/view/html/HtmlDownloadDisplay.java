@@ -508,13 +508,13 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 		banner.append("<p id='expr_no_data' class='no_data'>Not enough data</p>");
 		banner.append("<div id='expr_data'>");
         banner.append("<form id='expr_data_form' name='expr_data_form' class='row row-eq-height'>");
-        banner.append("    <div class='col-md-2 col-md-offset-1'>");
-        banner.append("        <a id='download_expr_data' href='' class='download_link'>Download");
+        banner.append("    <div class='col-md-offset-1'>");
+        banner.append("        <a id='download_expr_data' href='' class='download_link big'>Download");
         banner.append("        <span class='glyphicon glyphicon-download-alt'></span>");
         banner.append("        </a>");
         banner.append("    </div>");
 
-        banner.append("    <div class='col-md-6'>");
+        banner.append("    <div class='selection'>");
         banner.append("        <div class='item_category'>Choose condition parameters");
         // TODO: fix popover content
         banner.append("            <span class='glyphicon glyphicon-question-sign' data-placement='right' " +

@@ -31,7 +31,6 @@ import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.ConditionGraph;
 import org.bgee.model.expressiondata.baseelements.DataType;
-import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.source.Source;
 import org.bgee.view.GeneDisplay;
@@ -262,8 +261,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 //                "<tr><td><span class='quality high'>high quality</span></td></tr>" +
 //                "<tr><td><span class='quality low'>low quality</span></td></tr>" +
 //                "<tr><td><span class='quality nodata'>no data</span></td></tr></table>");
-                + "<tr><td><span class='quality high'>data</span></td></tr>" +
-                  "<tr><td><span class='quality nodata'>no data</span></td></tr></table>");
+                + "<tr><td><span class='quality presence'>data</span></td></tr>" +
+                  "<tr><td><span class='quality absence'>no data</span></td></tr></table>");
         this.writeln("<table class='col-xs-offset-2 col-xs-5 col-sm-offset-1 col-sm-4 col-md-offset-0 col-md-12'>"
                 + "<caption>Rank scores</caption>"
                 + "<tr><th><span class='low-qual-score'>3.25e4</span></th>"
@@ -524,13 +523,12 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
 		// Quality cell
 		sb.append("<td>")
-                .append(getQualitySpan(
-                    calls.stream().map(c -> c.getSummaryQuality()).collect(Collectors.toSet())))
+                .append(getDataTypeSpans(calls.stream().flatMap(e -> e.getCallData().stream()).collect(Collectors.toList())))
 				.append("<ul class='masked quality-list'>")
 				.append(calls.stream().map(call -> {
 						StringBuilder sb2 = new StringBuilder();
 						sb2.append("<li class='qualities'>")
-						    .append(getQualitySpan(Arrays.asList(call.getSummaryQuality()))).append("</li>");
+						.append(getDataTypeSpans(call.getCallData())).append("</li>");
 						return sb2.toString();
 					}).collect(Collectors.joining("\n")))
 				.append("</ul></td>")
@@ -565,99 +563,57 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 	}
 
 	/**
-	 * Builds the quality "span" elements for the given expression calls
+	 * Builds the data type 'span' elements representing presence/absence of data
+	 * for the given expression calls.
 	 * 
-	 * @param callData     A {@code Collection} of {@code ExpressionCallData} as input
-	 * @return             A {@String} containing the HTML code of the span
+	 * @param callData     A {@code Collection} of {@code ExpressionCallData} as input.
+	 * @return             The {@code String} containing the HTML code of the 'span' elements.
 	 */
-//	private static String getQualitySpans(Collection<ExpressionCallData> callData) {
-//	    log.entry(callData);
-//	    
-//		final Map<DataType, Set<DataQuality>> qualities = callData.stream()
-//		        .collect(Collectors.groupingBy(ExpressionCallData::getDataType,
-//		                Collectors.mapping(ExpressionCallData::getDataQuality, Collectors.toSet())));
-//		return log.exit(EnumSet.allOf(DataType.class).stream().map(type -> {
-//			Set<DataQuality> quals = qualities.get(type);
-//			DataQuality quality = DataQuality.NODATA;
-//			if (quals != null) {
-//				if (quals.contains(DataQuality.HIGH)) {
-//					quality = DataQuality.HIGH;
-//				} else if (quals.contains(DataQuality.LOW))
-//					quality = DataQuality.LOW;
-//			}
-//			return getSpan(quality, type);
-//		}).collect(Collectors.joining()));
-//
-//	}
+	private static String getDataTypeSpans(Collection<ExpressionCallData> callData) {
+	    log.entry(callData);
+		final Map<DataType, Set<ExpressionCallData>> callsByDataTypes = callData.stream()
+		        .collect(Collectors.groupingBy(ExpressionCallData::getDataType, Collectors.toSet()));
+
+		return log.exit(EnumSet.allOf(DataType.class).stream().map(type -> {
+			return getDataSpan(type, callsByDataTypes.containsKey(type));
+		}).collect(Collectors.joining()));
+	}
 
 	/**
-	 * Builds a 'span' element representing the quality for a given {@code DataType}
+	 * Builds a 'span' element representing presence/absence of data for a given {@code DataType}.
 	 * 
-	 * @param quality  The {@code DataQuality}
-	 * @param type     The {@code DataType}
-	 * @return         A {@code String} containing the HTML code for the quality 'span'.
+	 * @param hasData  A {@code boolean} defining whether there is data for {@code type}.
+	 * @param type     A {@code DataType} that is the data type for which 'span' should be displayed.
+	 * @return         The {@code String} containing the HTML code for the quality 'span'.
 	 */
-	private static String getQualitySpan(Collection<SummaryQuality> qualities) {
-	    log.entry(qualities);
+	private static String getDataSpan(DataType type, boolean hasData) {
+	    log.entry(hasData, type);
 	    
 		StringBuilder sb = new StringBuilder();
 		sb.append("<span class='quality ");
 
-		if (qualities.isEmpty()) {
-            throw log.throwing(new IllegalStateException("Empty qualities"));
+		if (hasData) {
+		    sb.append("presence");
+		} else {
+		    sb.append("absence");
 		}
+		sb.append("' title='").append(htmlEntities(type.getStringRepresentation())).append(": ")
+		        .append(hasData?"presence":"absence").append("'>");
 
-		SummaryQuality sq = SummaryQuality.BRONZE;
-		if (qualities.contains(SummaryQuality.GOLD)) {
-            sb.append("high");
-            sq = SummaryQuality.GOLD;
-	    } else if (qualities.contains(SummaryQuality.SILVER)) {
-            //XXX: temporarily "hide" qualities, as they are so incorrect at the moment. 
-            //for now we only report presence/absence of data per data type.
-//            sb.append("low");
-            sb.append("high");
-            sq = SummaryQuality.SILVER;
-	    } else if (qualities.contains(SummaryQuality.BRONZE)) {
-	        // FIXME should be hide no?
-            sb.append("nodata");
-            sq = SummaryQuality.BRONZE;
-	    } else {
-	        throw log.throwing(new IllegalStateException("Unsupported qualities: " + qualities));
-	    }
-//		switch (quality) {
-//		case GOLD:
-//			sb.append("high");
-//			break;
-//		case SILVER:
-//            //XXX: temporarily "hide" qualities, as they are so incorrect at the moment. 
-//            //for now we only report presence/absence of data per data type.
-////			sb.append("low");
-//            sb.append("low");
-//			break;
-//		case BRONZE:
-//			sb.append("nodata");
-//			break;
-//	    default: 
-//	        throw log.throwing(new IllegalStateException("Unsupported quality: " + quality));
-//		}
-
-		sb.append("' title='") //.append(htmlEntities(type.getStringRepresentation())).append(": ")
-		        .append(htmlEntities(sq.getStringRepresentation())).append("'>");
-
-//		switch (type) {
-//		case AFFYMETRIX:
-//			sb.append("A");
-//			break;
-//		case RNA_SEQ:
-//			sb.append("R");
-//			break;
-//		case IN_SITU:
-//			sb.append("I");
-//			break;
-//		case EST:
-//			sb.append("E");
-//			break;
-//		}
+		switch (type) {
+		    case AFFYMETRIX:
+		        sb.append("A");
+		        break;
+		    case RNA_SEQ:
+		        sb.append("R");
+		        break;
+		    case IN_SITU:
+		        sb.append("I");
+		        break;
+		    case EST:
+		        sb.append("E");
+		        break;
+		}
 		sb.append("</span>");
 		return log.exit(sb.toString());
 	}

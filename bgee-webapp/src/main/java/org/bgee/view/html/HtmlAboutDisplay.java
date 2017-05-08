@@ -87,7 +87,7 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
         this.writeln("<p>Bgee is developed by the " +
                 "<a href='http://bioinfo.unil.ch' title='External link to the Robinson-Rechavi " +
                 "group webpage' target='_blank'>Evolutionary Bioinformatics group</a>, part of " +
-                "the <a href='http://www.sib.swiss/' title='External link to SIB' target='_blank'>" +
+                "the <a href='https://www.sib.swiss/' title='External link to SIB' target='_blank'>" +
                 "SIB Swiss Institute of Bioinformatics</a>, at the "
                 + "<a href='http://www.unil.ch/central/en/home.html' title='External link to UNIL' "
                 + "target='_blank'>University of Lausanne</a>.</p>" +

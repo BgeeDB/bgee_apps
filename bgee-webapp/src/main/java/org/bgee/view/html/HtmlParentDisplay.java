@@ -300,7 +300,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("<div class='container-fluid'>");
 
         this.writeln("<ul class='nav navbar-nav'>");
-        this.writeln("<li><a href='http://www.sib.swiss'>SIB Swiss Institute of Bioinformatics</a></li>");
+        this.writeln("<li><a href='https://www.sib.swiss'>SIB Swiss Institute of Bioinformatics</a></li>");
         this.writeln("</ul>");
         
 
@@ -456,7 +456,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 "wordpress_logo.png'></a></li>");
         
         // SIB
-        navbar.append("<li><a id='sib_brand' href='http://www.sib.swiss' target='_blank' "
+        navbar.append("<li><a id='sib_brand' href='https://www.sib.swiss' target='_blank' "
                 + "title='Link to the SIB Swiss Institute of Bioinformatics'>"
                 + "<img src='" + this.prop.getLogoImagesRootDirectory() +
                 "sib_emblem.png' alt='SIB Swiss Institute of Bioinformatics' /></a></li>");

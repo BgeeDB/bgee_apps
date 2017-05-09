@@ -933,13 +933,13 @@ implements GlobalExpressionCallDAO {
                             orderBy = globalExprTableName + ".bgeeGeneId";
                             break;
                         case CONDITION_ID: 
-                            orderBy = globalExprTableName + ".conditionId";
+                            orderBy = globalExprTableName + ".globalConditionId";
                             break;
                         case ANAT_ENTITY_ID: 
-                            orderBy = globalCondTableName + ".conditionId";
+                            orderBy = globalCondTableName + ".anatEntityId";
                             break;
                         case STAGE_ID: 
-                            orderBy = globalCondTableName + ".conditionId";
+                            orderBy = globalCondTableName + ".stageId";
                             break;
                         case OMA_GROUP_ID: 
                             orderBy = geneTableName + ".OMAParentNodeId";

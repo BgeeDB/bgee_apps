@@ -1499,7 +1499,7 @@ public class CallService extends CommonService {
     private static ExpressionSummary inferSummaryCallType(Set<ExpressionCallData> callData) {
         log.entry(callData);
         
-        if (callData.stream().anyMatch(cd -> ExpressionSummary.EXPRESSED.equals(cd.getCallType()))) {
+        if (callData.stream().anyMatch(cd -> Expression.EXPRESSED.equals(cd.getCallType()))) {
             return log.exit(ExpressionSummary.EXPRESSED);
         }
         return log.exit(ExpressionSummary.NOT_EXPRESSED);

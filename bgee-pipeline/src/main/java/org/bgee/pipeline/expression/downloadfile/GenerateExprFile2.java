@@ -19,6 +19,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
@@ -97,7 +98,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      */
     public enum SingleSpExprFileType2 implements FileType {
         EXPR_SIMPLE(CategoryEnum.EXPR_CALLS_SIMPLE, true),
-        EXPR_COMPLETE(CategoryEnum.EXPR_CALLS_COMPLETE, false);
+        EXPR_ADVANCED(CategoryEnum.EXPR_CALLS_COMPLETE, false);
 
         /**
          * A {@code CategoryEnum} that is the category of files of this type.
@@ -442,9 +443,14 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 processors.put(currentFileType, fileTypeProcessors);
 
                 // Create file name
+                String suffix = this.convertAttributeToFileName(this.params);
+                if (StringUtils.isBlank(suffix)) {
+                    suffix = "";
+                } else {
+                    suffix = "_" + suffix;
+                }
                 String fileName = this.formatString(fileNamePrefix + "_" +
-                        currentFileType.getStringRepresentation() + "_" +
-                        this.convertAttributeToFileName(this.params) + EXTENSION);
+                        currentFileType.getStringRepresentation() + suffix + EXTENSION);
                 generatedFileNames.put(currentFileType, fileName);
 
                 // write in temp file
@@ -510,12 +516,12 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         Collections.sort(attributeList);
 
         return log.exit(attributes.stream()
-                .map(a -> {
+                .flatMap(a -> {
                     switch (a) {
                         case ANAT_ENTITY_ID:
-                            return "organ";
+                            return Stream.empty();
                         case DEV_STAGE_ID:
-                            return "stage";
+                            return Stream.of("development");
                         default: 
                             throw new IllegalArgumentException("Attribute not supported: " + a);
                     }})
@@ -648,9 +654,9 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         log.entry(fileType);
         
         String[] headers = null; 
-        int nbColumns = 10;
+        int nbColumns = 5 + 2 * this.params.size();
         if (!fileType.isSimpleFileType()) {
-            nbColumns = 33;
+            nbColumns = 28 + 2 * this.params.size();
         }
         headers = new String[nbColumns];
 
@@ -659,14 +665,19 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         // *** Headers common to all file types ***
         headers[idx++] = GENE_ID_COLUMN_NAME;
         headers[idx++] = GENE_NAME_COLUMN_NAME;
-        headers[idx++] = ANAT_ENTITY_ID_COLUMN_NAME;
-        headers[idx++] = ANAT_ENTITY_NAME_COLUMN_NAME;
-        headers[idx++] = STAGE_ID_COLUMN_NAME;
-        headers[idx++] = STAGE_NAME_COLUMN_NAME;
+        if (this.params.contains(CallService.Attribute.ANAT_ENTITY_ID)) {
+            headers[idx++] = ANAT_ENTITY_ID_COLUMN_NAME;
+            headers[idx++] = ANAT_ENTITY_NAME_COLUMN_NAME;
+        }
+        if (this.params.contains(CallService.Attribute.DEV_STAGE_ID)) {
+            headers[idx++] = STAGE_ID_COLUMN_NAME;
+            headers[idx++] = STAGE_NAME_COLUMN_NAME;
+        }
         headers[idx++] = EXPRESSION_COLUMN_NAME;
         headers[idx++] = QUALITY_COLUMN_NAME;
         headers[idx++] = EXPRESSION_RANK_COLUMN_NAME;
-        headers[idx++] = EXPRESSION_SCORE_COLUMN_NAME;
+        // TODO: enable when expression scores will be calculated
+//        headers[idx++] = EXPRESSION_SCORE_COLUMN_NAME;
         if (!fileType.isSimpleFileType()) {
             // *** Headers specific to complete file ***
             headers[idx++] = INCLUDING_OBSERVED_DATA_COLUMN_NAME;
@@ -922,9 +933,11 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 String geneId = c.getGene().getEnsemblGeneId();
                 String geneName = c.getGene().getName() == null? "": c.getGene().getName();
                 String anatEntityId = c.getCondition().getAnatEntityId();
-                String anatEntityName = c.getCondition().getAnatEntity().getName();
+                String anatEntityName = c.getCondition().getAnatEntity() == null? null:
+                        c.getCondition().getAnatEntity().getName();
                 String devStageId = c.getCondition().getDevStageId();
-                String devStageName = c.getCondition().getDevStage().getId();
+                String devStageName = c.getCondition().getDevStage() == null ? null:
+                        c.getCondition().getDevStage().getName();
                 String summaryCallType = convertExpressionSummaryToString(c.getSummaryCallType()); 
                 String summaryQuality = convertSummaryQualityToString(c.getSummaryQuality());
                 String expressionRank = c.getGlobalMeanRank() == null ? NA_VALUE :

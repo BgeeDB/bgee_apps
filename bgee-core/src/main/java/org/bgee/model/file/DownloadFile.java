@@ -43,7 +43,7 @@ public class DownloadFile {
 	 */
     public enum CategoryEnum implements BgeeEnumField {
         EXPR_CALLS_SIMPLE("expr_simple", false),
-        EXPR_CALLS_COMPLETE("expr_complete", false),
+        EXPR_CALLS_COMPLETE("expr_advanced", false),
         DIFF_EXPR_ANAT_SIMPLE("diff_expr_anatomy_simple", true),
         DIFF_EXPR_ANAT_COMPLETE("diff_expr_anatomy_complete", true),
         DIFF_EXPR_DEV_COMPLETE("diff_expr_dev_complete", true),

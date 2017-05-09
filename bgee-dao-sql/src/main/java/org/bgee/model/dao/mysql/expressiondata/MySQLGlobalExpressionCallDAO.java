@@ -110,7 +110,14 @@ implements GlobalExpressionCallDAO {
             case CONDITION_ID:
                 return globalExprTableName + "." + MySQLConditionDAO.GLOBAL_COND_ID_FIELD;
             case GLOBAL_MEAN_RANK:
+                
+                clonedDataTypes.stream()
+                    .map(dt -> dataTypeToNormRankSql.get(dt) + " IS NULL")
+                    .collect(Collectors.joining(" AND ", "IF (", ")"));
                 return clonedDataTypes.stream()
+                        .map(dt -> dataTypeToNormRankSql.get(dt) + " IS NULL")
+                        .collect(Collectors.joining(" AND ", "IF (", ", null, "))
+                        + clonedDataTypes.stream()
                         .map(dataType -> {
                             String rankSql = dataTypeToNormRankSql.get(dataType);
                             String weightSql = dataTypeToWeightSql.get(dataType);
@@ -126,7 +133,7 @@ implements GlobalExpressionCallDAO {
                         .map(dataType -> {
                             String weightSql = dataTypeToWeightSql.get(dataType);
                             return "IF(" + weightSql + " IS NULL, 0, " + weightSql + ")";})
-                        .collect(Collectors.joining(" + ", "/ (", ")) AS " + GLOBAL_MEAN_RANK_FIELD));
+                        .collect(Collectors.joining(" + ", "/ (", "))) AS " + GLOBAL_MEAN_RANK_FIELD));
 
             case DATA_TYPE_OBSERVED_DATA:
                 return clonedDataTypes.stream()
@@ -481,33 +488,39 @@ implements GlobalExpressionCallDAO {
 
     private static String generateTableReferences(final String globalExprTableName,
             final String globalCondTableName, final String condTableName, final String geneTableName,
-            boolean observedConditionFiltering) {
+            boolean observedConditionFiltering, final boolean isOrderByOMANodeId) {
         log.entry(globalExprTableName, globalCondTableName, condTableName, geneTableName,
-                observedConditionFiltering);
+                observedConditionFiltering, isOrderByOMANodeId);
         
         StringBuilder sb = new StringBuilder();
+        
         //the order of the tables is important in case we use a STRAIGHT_JOIN clause
         sb.append(" FROM ");
-        
 
         //we use the gene table to filter by species rather than the condition table,
         //because there is a clustered index for the globalExpression table that is
         //PRIMAR KEY(bgeeGeneId, globalConditionId). So it is much faster to filter
         //from the gene table rather than the globalCond table
-        sb.append("gene AS ").append(geneTableName);
         //In order to use the clustered index for the globalExpression table,
         //if we need both to use the gene table and the globalCond table,
         //so we link them using the speciesId field, to make one common join
         //to the globalExpression table afterwards.
-        sb.append(" INNER JOIN ");
+        // XXX: I remove usage of gene table when it is not needed because in reality,
+        // at the time of writing, queries take much more time. For instance,
+        // to retrieve calls of the zebrafish, using gene table it took 22 minutes 
+        // while without gene table it took 3 minutes.
         sb.append("globalCond AS ").append(globalCondTableName);
-        sb.append(" ON ").append(geneTableName).append(".speciesId = ")
-          .append(globalCondTableName).append(".speciesId");
+
+        if (isOrderByOMANodeId)  {
+            sb.append(" INNER JOIN ");
+            sb.append("gene AS ").append(geneTableName);
+            sb.append(" ON ").append(geneTableName).append(".").append(MySQLGeneDAO.BGEE_GENE_ID)
+                .append(" = ").append(globalCondTableName).append(".").append(MySQLGeneDAO.BGEE_GENE_ID);
+        }
+        
         sb.append(" INNER JOIN ");
         sb.append("globalExpression AS ").append(globalExprTableName);
-        sb.append(" ON ").append(globalExprTableName).append(".").append(MySQLGeneDAO.BGEE_GENE_ID)
-                  .append(" = ").append(geneTableName).append(".").append(MySQLGeneDAO.BGEE_GENE_ID);
-        sb.append(" AND ").append(globalCondTableName).append(".")
+        sb.append(" ON ").append(globalCondTableName).append(".")
                   .append(MySQLConditionDAO.GLOBAL_COND_ID_FIELD).append(" = ")
                   .append(globalExprTableName).append(".").append(MySQLConditionDAO.GLOBAL_COND_ID_FIELD);
 
@@ -549,9 +562,8 @@ implements GlobalExpressionCallDAO {
     }
     private static String generateWhereClause(final LinkedHashSet<CallDAOFilter> callFilters,
             final String globalExprTableName, final String globalCondTableName,
-            final String condTableName, final String geneTableName,
-            Set<ConditionDAO.Attribute> conditionParameters) {
-        log.entry(callFilters, globalExprTableName, globalCondTableName, condTableName, geneTableName,
+            final String condTableName, Set<ConditionDAO.Attribute> conditionParameters) {
+        log.entry(callFilters, globalExprTableName, globalCondTableName, condTableName,
                 conditionParameters);
         
         StringBuilder sb = new StringBuilder();
@@ -575,7 +587,7 @@ implements GlobalExpressionCallDAO {
 
                 if (callFilter.getSpeciesIds() != null && !callFilter.getSpeciesIds().isEmpty()) {
                     sb.append(" AND ");
-                    sb.append(geneTableName).append(".speciesId IN (")
+                    sb.append(globalCondTableName).append(".speciesId IN (")
                     .append(BgeePreparedStatement.generateParameterizedQueryString(callFilter.getSpeciesIds().size()))
                     .append(") ");
                 }
@@ -933,13 +945,13 @@ implements GlobalExpressionCallDAO {
                             orderBy = globalExprTableName + ".bgeeGeneId";
                             break;
                         case CONDITION_ID: 
-                            orderBy = globalExprTableName + ".conditionId";
+                            orderBy = globalExprTableName + ".globalConditionId";
                             break;
                         case ANAT_ENTITY_ID: 
-                            orderBy = globalCondTableName + ".conditionId";
+                            orderBy = globalCondTableName + ".anatEntityId";
                             break;
                         case STAGE_ID: 
-                            orderBy = globalCondTableName + ".conditionId";
+                            orderBy = globalCondTableName + ".stageId";
                             break;
                         case OMA_GROUP_ID: 
                             orderBy = geneTableName + ".OMAParentNodeId";
@@ -1038,9 +1050,10 @@ implements GlobalExpressionCallDAO {
         StringBuilder sb = new StringBuilder();
         sb.append(generateSelectClause(clonedAttrs, dataTypes, globalExprTableName, globalCondTableName));
         sb.append(generateTableReferences(globalExprTableName, globalCondTableName, condTableName,
-                geneTableName, observedConditionFilter));
+                geneTableName, observedConditionFilter, 
+                clonedOrderingAttrs.containsKey(GlobalExpressionCallDAO.OrderingAttribute.OMA_GROUP_ID)));
         sb.append(generateWhereClause(clonedCallFilters, globalExprTableName, globalCondTableName,
-                condTableName, geneTableName, clonedCondParams));
+                condTableName, clonedCondParams));
         sb.append(generateOrderByClause(clonedOrderingAttrs, globalExprTableName, globalCondTableName, geneTableName));
 
         //we don't use a try-with-resource, because we return a pointer to the results, 

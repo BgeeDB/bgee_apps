@@ -19,6 +19,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
@@ -97,7 +98,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      */
     public enum SingleSpExprFileType2 implements FileType {
         EXPR_SIMPLE(CategoryEnum.EXPR_CALLS_SIMPLE, true),
-        EXPR_COMPLETE(CategoryEnum.EXPR_CALLS_COMPLETE, false);
+        EXPR_ADVANCED(CategoryEnum.EXPR_CALLS_COMPLETE, false);
 
         /**
          * A {@code CategoryEnum} that is the category of files of this type.
@@ -442,9 +443,14 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 processors.put(currentFileType, fileTypeProcessors);
 
                 // Create file name
+                String suffix = this.convertAttributeToFileName(this.params);
+                if (StringUtils.isBlank(suffix)) {
+                    suffix = "";
+                } else {
+                    suffix = "_" + suffix;
+                }
                 String fileName = this.formatString(fileNamePrefix + "_" +
-                        currentFileType.getStringRepresentation() + "_" +
-                        this.convertAttributeToFileName(this.params) + EXTENSION);
+                        currentFileType.getStringRepresentation() + suffix + EXTENSION);
                 generatedFileNames.put(currentFileType, fileName);
 
                 // write in temp file
@@ -510,12 +516,12 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         Collections.sort(attributeList);
 
         return log.exit(attributes.stream()
-                .map(a -> {
+                .flatMap(a -> {
                     switch (a) {
                         case ANAT_ENTITY_ID:
-                            return "organ";
+                            return Stream.empty();
                         case DEV_STAGE_ID:
-                            return "stage";
+                            return Stream.of("development");
                         default: 
                             throw new IllegalArgumentException("Attribute not supported: " + a);
                     }})

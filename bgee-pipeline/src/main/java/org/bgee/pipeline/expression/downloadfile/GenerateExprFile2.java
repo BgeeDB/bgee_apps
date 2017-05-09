@@ -654,9 +654,9 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         log.entry(fileType);
         
         String[] headers = null; 
-        int nbColumns = 10;
+        int nbColumns = 5 + 2 * this.params.size();
         if (!fileType.isSimpleFileType()) {
-            nbColumns = 33;
+            nbColumns = 28 + 2 * this.params.size();
         }
         headers = new String[nbColumns];
 
@@ -665,14 +665,19 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         // *** Headers common to all file types ***
         headers[idx++] = GENE_ID_COLUMN_NAME;
         headers[idx++] = GENE_NAME_COLUMN_NAME;
-        headers[idx++] = ANAT_ENTITY_ID_COLUMN_NAME;
-        headers[idx++] = ANAT_ENTITY_NAME_COLUMN_NAME;
-        headers[idx++] = STAGE_ID_COLUMN_NAME;
-        headers[idx++] = STAGE_NAME_COLUMN_NAME;
+        if (this.params.contains(CallService.Attribute.ANAT_ENTITY_ID)) {
+            headers[idx++] = ANAT_ENTITY_ID_COLUMN_NAME;
+            headers[idx++] = ANAT_ENTITY_NAME_COLUMN_NAME;
+        }
+        if (this.params.contains(CallService.Attribute.DEV_STAGE_ID)) {
+            headers[idx++] = STAGE_ID_COLUMN_NAME;
+            headers[idx++] = STAGE_NAME_COLUMN_NAME;
+        }
         headers[idx++] = EXPRESSION_COLUMN_NAME;
         headers[idx++] = QUALITY_COLUMN_NAME;
         headers[idx++] = EXPRESSION_RANK_COLUMN_NAME;
-        headers[idx++] = EXPRESSION_SCORE_COLUMN_NAME;
+        // TODO: enable when expression scores will be calculated
+//        headers[idx++] = EXPRESSION_SCORE_COLUMN_NAME;
         if (!fileType.isSimpleFileType()) {
             // *** Headers specific to complete file ***
             headers[idx++] = INCLUDING_OBSERVED_DATA_COLUMN_NAME;
@@ -928,9 +933,11 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 String geneId = c.getGene().getEnsemblGeneId();
                 String geneName = c.getGene().getName() == null? "": c.getGene().getName();
                 String anatEntityId = c.getCondition().getAnatEntityId();
-                String anatEntityName = c.getCondition().getAnatEntity().getName();
+                String anatEntityName = c.getCondition().getAnatEntity() == null? null:
+                        c.getCondition().getAnatEntity().getName();
                 String devStageId = c.getCondition().getDevStageId();
-                String devStageName = c.getCondition().getDevStage().getId();
+                String devStageName = c.getCondition().getDevStage() == null ? null:
+                        c.getCondition().getDevStage().getName();
                 String summaryCallType = convertExpressionSummaryToString(c.getSummaryCallType()); 
                 String summaryQuality = convertSummaryQualityToString(c.getSummaryQuality());
                 String expressionRank = c.getGlobalMeanRank() == null ? NA_VALUE :

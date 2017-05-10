@@ -648,7 +648,9 @@ public abstract class GenerateDownloadFile extends CallUser {
     public GenerateDownloadFile(MySQLDAOManager manager, List<Integer> speciesIds, 
             Set<? extends FileType> fileTypes, String directory) throws IllegalArgumentException {
         //FIXME: restore if CallUser is reused?
-        //super(manager);
+        // XXX: to remove? restore call to super() because we need it to generate files 
+        // and we have no time to remove properly the class
+        super(manager);
         if (StringUtils.isBlank(directory)) {
             throw log.throwing(new IllegalArgumentException("A directory must be provided"));
         }

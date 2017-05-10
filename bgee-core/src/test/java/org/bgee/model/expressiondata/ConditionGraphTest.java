@@ -12,7 +12,6 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,6 +23,7 @@ import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.DevStageService;
 import org.bgee.model.ontology.OntologyService;
 import org.bgee.model.ontology.RelationType;
+import org.bgee.model.species.Species;
 import org.bgee.model.ontology.Ontology;
 import org.junit.Test;
 
@@ -32,7 +32,7 @@ import org.junit.Test;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Oct. 2016
+ * @version Bgee 14, May 2017
  * @since   Bgee 13, Dec. 2015
  */
 public class ConditionGraphTest extends TestAncestor {
@@ -69,20 +69,19 @@ public class ConditionGraphTest extends TestAncestor {
         String devStageId4 = "stage4";
         DevStage devStage4 = new DevStage(devStageId4);
 
-        Integer speciesId = 9606;
-        
-        Condition cond1 = new Condition(anatEntityId1, devStageId1, speciesId);
-        Condition cond2 = new Condition(anatEntityId2, devStageId2, speciesId);
-        Condition cond3 = new Condition(anatEntityId3, devStageId3, speciesId);
-        Condition cond4 = new Condition(anatEntityId2, devStageId1, speciesId);
-        Condition cond5 = new Condition(anatEntityId1, devStageId3, speciesId);
-        Condition cond6 = new Condition(anatEntityId2, devStageId3, speciesId);
-        Condition cond7 = new Condition(anatEntityId3, devStageId2, speciesId);
-        Condition cond8 = new Condition(anatEntityId4, devStageId4, speciesId);
-        Condition cond1_anatOnly = new Condition(anatEntityId1, null, speciesId);
-        Condition cond2_anatOnly = new Condition(anatEntityId2, null, speciesId);
-        Condition cond1_stageOnly = new Condition(null, devStageId1, speciesId);
-        Condition cond3_stageOnly = new Condition(null, devStageId3, speciesId);
+        Species sp = new Species(9606);
+        Condition cond1 = new Condition(anatEntity1, devStage1, sp);
+        Condition cond2 = new Condition(anatEntity2, devStage2, sp);
+        Condition cond3 = new Condition(anatEntity3, devStage3, sp);
+        Condition cond4 = new Condition(anatEntity2, devStage1, sp);
+        Condition cond5 = new Condition(anatEntity1, devStage3, sp);
+        Condition cond6 = new Condition(anatEntity2, devStage3, sp);
+        Condition cond7 = new Condition(anatEntity3, devStage2, sp);
+        Condition cond8 = new Condition(anatEntity4, devStage4, sp);
+        Condition cond1_anatOnly = new Condition(anatEntity1, null, sp);
+        Condition cond2_anatOnly = new Condition(anatEntity2, null, sp);
+        Condition cond1_stageOnly = new Condition(null, devStage1, sp);
+        Condition cond3_stageOnly = new Condition(null, devStage3, sp);
         this.conditions = Arrays.asList(cond1, cond2, cond3, cond4, cond5, cond6, cond7, cond8, 
                 cond1_anatOnly, cond2_anatOnly, cond1_stageOnly, cond3_stageOnly);
         
@@ -196,16 +195,16 @@ public class ConditionGraphTest extends TestAncestor {
                 this.conditionGraph.isConditionMorePrecise(this.conditions.get(0), this.conditions.get(3)));
         
         AnatEntity anatEntity1 = new AnatEntity(this.conditions.get(0).getAnatEntityId());
-        assertEquals("Incorrect AnatEntity retrieved", anatEntity1, this.conditionGraph.getAnatEntity(
+        assertEquals("Incorrect AnatEntity retrieved", anatEntity1, this.conditionGraph.getAnatEntityOntology().getElement(
                 this.conditions.get(0).getAnatEntityId()));
         DevStage devStage1 = new DevStage(this.conditions.get(0).getDevStageId());
-        assertEquals("Incorrect DevStage retrieved", devStage1, this.conditionGraph.getDevStage(
+        assertEquals("Incorrect DevStage retrieved", devStage1, this.conditionGraph.getDevStageOntology().getElement(
                 this.conditions.get(0).getDevStageId()));
         
         //check that an Exception is correctly thrown if a condition used was not provided at instantiation
         try {
             this.conditionGraph.isConditionMorePrecise(this.conditions.get(0), 
-                    new Condition("test1", "test2", 3));
+                    new Condition(new AnatEntity("test1"), new DevStage("test2"), new Species(3)));
             //test fail
             fail("An exception should be thrown when a Condition was not provided at instantiation.");
         } catch (IllegalArgumentException e) {

@@ -5,7 +5,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyCollectionOf;
-import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -38,9 +37,10 @@ import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
-import org.bgee.model.expressiondata.baseelements.CallType;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.function.PentaFunction;
 import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.gene.GeneService;
 import org.bgee.model.topanat.TopAnatResults.TopAnatResultRow;
 import org.bgee.model.topanat.exception.MissingParameterException;
@@ -52,9 +52,10 @@ import org.junit.Test;
 /**
  * Unit tests for {@link TopAnatController}.
  * 
- * @author Mathieu Seppey
- * @version Bgee 13, June 2015
- * @since Bgee 13
+ * @author  Mathieu Seppey
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, May 2017
+ * @since   Bgee 13
  */
 //TODO Mathieu: You should have one TopAnatControllerTest (test launching of analyses on mock objects, 
 //of areAnalysesDone, etc), one TopAnatAnalysisTest (with a mock TopAnatRManager creating files 
@@ -97,7 +98,7 @@ public class TopAnatTest extends TestAncestor {
         TopAnatParams.Builder topAnatParamsBuilder = new TopAnatParams.Builder(
                 new HashSet<String>(Arrays.asList("G1","G2")),
                 new HashSet<String>(Arrays.asList("G1","G2","G3","G4")), 999,
-                CallType.Expression.EXPRESSED);
+                SummaryCallType.ExpressionSummary.EXPRESSED);
 
         topAnatParamsBuilder.fdrThreshold(1000d); // extreme value to produce results easily with false data
         topAnatParamsBuilder.pvalueThreshold(1d);
@@ -144,15 +145,14 @@ public class TopAnatTest extends TestAncestor {
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> ordering = null;
         Stream<ExpressionCall> callStream = Stream.of(mockExpressionCall1, mockExpressionCall2,
                 mockExpressionCall3, mockExpressionCall4,mockExpressionCall5);
-        when(mockCallService.loadExpressionCalls(anyInt(), (ExpressionCallFilter) any(), 
+        when(mockCallService.loadExpressionCalls((ExpressionCallFilter) any(), 
                 anyCollectionOf(CallService.Attribute.class), eq(ordering))) // TODO be more specific here
         .thenReturn(callStream);    
         when(mockServiceFactory.getGeneService()).thenReturn(mockGeneService);
         when(mockServiceFactory.getCallService()).thenReturn(mockCallService);
         when(mockServiceFactory.getAnatEntityService()).thenReturn(mockAnatEntityService);
-        when(mockGeneService
-                .loadGenesByIdsAndSpeciesIds(any(),any())) // TODO be more specific here
-        .thenReturn(Arrays.asList(mockGene1,mockGene2,mockGene3,mockGene4,mockGene5));
+        when(mockGeneService.loadGenes(any(GeneFilter.class))) // TODO be more specific here
+        .thenReturn(Arrays.asList(mockGene1,mockGene2,mockGene3,mockGene4,mockGene5).stream());
         when(mockExpressionCall1.getCondition()).thenReturn(mockCondition);
         when(mockExpressionCall2.getCondition()).thenReturn(mockCondition);
         when(mockExpressionCall3.getCondition()).thenReturn(mockCondition);

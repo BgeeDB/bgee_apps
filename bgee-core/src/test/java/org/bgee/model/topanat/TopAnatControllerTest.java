@@ -29,11 +29,12 @@ import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
-import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.function.PentaFunction;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneService;
+import org.bgee.model.species.Species;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -137,7 +138,7 @@ public class TopAnatControllerTest extends TestAncestor {
         Set<DataType> dataTypes = new HashSet<DataType>(Arrays.asList(DataType.AFFYMETRIX));
         relations.put("A", new HashSet<String>(Arrays.asList("B","C")));
         ExpressionCall mockCall = mock(ExpressionCall.class);
-        Gene myGene = new Gene("ENSG001", 9606);
+        Gene myGene = new Gene("ENSG001", new Species(9606));
         Condition mockCondition = mock(Condition.class);
         when(this.mockTopAnatParams.toString()).thenReturn("mockTopAnatParams");
         when(this.mockServiceFactory.toString()).thenReturn("mockServiceFactory");
@@ -147,14 +148,14 @@ public class TopAnatControllerTest extends TestAncestor {
         when(this.mockServiceFactory.getCallService()).thenReturn(mockCallService);
         when(this.mockTopAnatParams.getSpeciesId()).thenReturn(1);
         when(this.mockTopAnatParams.getKey()).thenReturn("test");
-        when(this.mockTopAnatParams.getCallType()).thenReturn(CallType.DiffExpression.DIFF_EXPRESSED);
+        when(this.mockTopAnatParams.getCallType()).thenReturn(SummaryCallType.DiffExpressionSummary.DIFF_EXPRESSED);
         when(this.mockTopAnatParams.getDataTypes()).thenReturn(dataTypes);
         when(mockAnatEntityService.loadAnatEntitiesBySpeciesIds(any()))
         .thenReturn(Arrays.asList(mockEntity).stream());
         when(mockAnatEntityService.loadDirectIsAPartOfRelationships(any())).thenReturn(relations);
         when(mockEntity.getId()).thenReturn("2");
         when(mockEntity.getName()).thenReturn("testEntity");
-        when(mockCallService.loadExpressionCalls(any(), any(), any(), any()))
+        when(mockCallService.loadExpressionCalls(any(), any(), any()))
         .thenReturn(Stream.of(mockCall));
         when(mockCall.getGene()).thenReturn(myGene);
         when(mockCall.getCondition()).thenReturn(mockCondition);

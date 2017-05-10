@@ -622,7 +622,7 @@ public class TopAnatParams {
                     this.dataTypes,
                     //observed data filter
                     //XXX: this should be adapted if we want TopAnat to work on a graph of conditions
-                    null, true, null
+                    true, true, null
             ));
         }
         if (this.callType == DiffExpressionSummary.OVER_EXPRESSED) {

@@ -727,7 +727,7 @@ implements GlobalExpressionCallDAO {
                             })
                             .collect(Collectors.joining(" OR ", "(", ")"));
                     })
-                    .collect(Collectors.joining(" AND "));
+                    .collect(Collectors.joining(" AND ", "(", ")"));
             })
            .collect(Collectors.joining(" OR ", "(", ")"));
     }

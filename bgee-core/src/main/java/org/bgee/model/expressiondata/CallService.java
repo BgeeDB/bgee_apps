@@ -691,7 +691,7 @@ public class CallService extends CommonService {
             return log.exit(null);
         }
 
-        Set<DAODataType> daoDataTypes = Collections.unmodifiableSet(
+        final Set<DAODataType> daoDataTypes = Collections.unmodifiableSet(
                 convertDataTypeToDAODataType(callFilter.getDataTypeFilters()));
 
         //see org.bgee.model.dao.api.expressiondata.CallDAOFilter.getDataFilters()
@@ -713,17 +713,17 @@ public class CallService extends CommonService {
                 //for more details
                 Set<Set<DAOExperimentCountFilter>> daoExperimentCountFilters = new HashSet<>();
   
-                Boolean isExpression = null;
+                final Boolean isExpression;
                 switch (requestedCallType) {
-                case EXPRESSED:
-                    isExpression = true;
-                    break;
-                case NOT_EXPRESSED:
-                    isExpression = false;
-                    break;
-                default:
-                    throw log.throwing(new IllegalStateException("Unsupported call type: "
-                            + requestedCallType));
+                    case EXPRESSED:
+                        isExpression = true;
+                        break;
+                    case NOT_EXPRESSED:
+                        isExpression = false;
+                        break;
+                    default:
+                        throw log.throwing(new IllegalStateException("Unsupported call type: "
+                                + requestedCallType));
                 }
                 assert isExpression != null;
 
@@ -748,43 +748,51 @@ public class CallService extends CommonService {
                         requestedCallType);
                 Set<DAOExperimentCountFilter> acceptCallTypeFilters = new HashSet<>();
                 switch (requestedQual) {
-                case BRONZE:
-                    acceptCallTypeFilters.add(new DAOExperimentCountFilter(daoCallType,
-                            DAOExperimentCount.DataQuality.LOW,
-                            DAOPropagationState.ALL,
-                            DAOExperimentCountFilter.Qualifier.GREATER_THAN, MIN_LOW_BRONZE - 1));
-                    //also need to get calls supported by high quality data only
-                    acceptCallTypeFilters.add(new DAOExperimentCountFilter(daoCallType,
-                            DAOExperimentCount.DataQuality.HIGH,
-                            DAOPropagationState.ALL,
-                            DAOExperimentCountFilter.Qualifier.GREATER_THAN, MIN_HIGH_BRONZE - 1));
-                    break;
-                case SILVER:
-                    acceptCallTypeFilters.add(new DAOExperimentCountFilter(daoCallType,
-                            DAOExperimentCount.DataQuality.LOW,
-                            DAOPropagationState.ALL,
-                            DAOExperimentCountFilter.Qualifier.GREATER_THAN, MIN_LOW_SILVER - 1));
-                    //also need to get calls supported by high quality data only
-                    acceptCallTypeFilters.add(new DAOExperimentCountFilter(daoCallType,
-                            DAOExperimentCount.DataQuality.HIGH,
-                            DAOPropagationState.ALL,
-                            DAOExperimentCountFilter.Qualifier.GREATER_THAN, MIN_HIGH_SILVER - 1));
-                    break;
-                case GOLD:
-                    acceptCallTypeFilters.add(new DAOExperimentCountFilter(daoCallType,
-                            DAOExperimentCount.DataQuality.HIGH,
-                            DAOPropagationState.ALL,
-                            DAOExperimentCountFilter.Qualifier.GREATER_THAN, MIN_HIGH_GOLD - 1));
-                    break;
-                default:
-                    throw log.throwing(new UnsupportedOperationException(
-                            "Unsupported SummaryQuality: " + requestedQual));
+                    case BRONZE:
+                        acceptCallTypeFilters.add(new DAOExperimentCountFilter(daoCallType,
+                                DAOExperimentCount.DataQuality.LOW,
+                                DAOPropagationState.ALL,
+                                DAOExperimentCountFilter.Qualifier.GREATER_THAN, MIN_LOW_BRONZE - 1));
+                        //also need to get calls supported by high quality data only
+                        acceptCallTypeFilters.add(new DAOExperimentCountFilter(daoCallType,
+                                DAOExperimentCount.DataQuality.HIGH,
+                                DAOPropagationState.ALL,
+                                DAOExperimentCountFilter.Qualifier.GREATER_THAN, MIN_HIGH_BRONZE - 1));
+                        break;
+                    case SILVER:
+                        acceptCallTypeFilters.add(new DAOExperimentCountFilter(daoCallType,
+                                DAOExperimentCount.DataQuality.LOW,
+                                DAOPropagationState.ALL,
+                                DAOExperimentCountFilter.Qualifier.GREATER_THAN, MIN_LOW_SILVER - 1));
+                        //also need to get calls supported by high quality data only
+                        acceptCallTypeFilters.add(new DAOExperimentCountFilter(daoCallType,
+                                DAOExperimentCount.DataQuality.HIGH,
+                                DAOPropagationState.ALL,
+                                DAOExperimentCountFilter.Qualifier.GREATER_THAN, MIN_HIGH_SILVER - 1));
+                        break;
+                    case GOLD:
+                        acceptCallTypeFilters.add(new DAOExperimentCountFilter(daoCallType,
+                                DAOExperimentCount.DataQuality.HIGH,
+                                DAOPropagationState.ALL,
+                                DAOExperimentCountFilter.Qualifier.GREATER_THAN, MIN_HIGH_GOLD - 1));
+                        break;
+                    default:
+                        throw log.throwing(new UnsupportedOperationException(
+                                "Unsupported SummaryQuality: " + requestedQual));
                 }
 
                 assert !acceptCallTypeFilters.isEmpty();
                 daoExperimentCountFilters.add(acceptCallTypeFilters);
 
-                return new CallDataDAOFilter(daoExperimentCountFilters, daoDataTypes);
+                Set<DAODataType> filteredDataTypes = daoDataTypes.stream()
+                    // we do not keep filters requiring EST data and absence of expression
+                    .filter(dt -> !(DAODataType.EST.equals(dt) && !isExpression))
+                    .collect(Collectors.toSet());
+                if (filteredDataTypes.isEmpty()) {
+                    throw log.throwing(new IllegalArgumentException(
+                            "Impossible to get not expressed calls for EST data only"));
+                }
+                return new CallDataDAOFilter(daoExperimentCountFilters, filteredDataTypes);
             }).collect(Collectors.toSet());
 
         //if no filtering on call type and quality needed but not all data types requested,
@@ -815,6 +823,7 @@ public class CallService extends CommonService {
         assert callDataDAOFilters != null && !callDataDAOFilters.isEmpty();
         return log.exit(callDataDAOFilters);
     }
+    
     private static Map<ConditionDAO.Attribute, Boolean> convertCallFilterToDAOObservedDataFilter(
             ExpressionCallFilter callFilter, Set<ConditionDAO.Attribute> condParamCombination) {
         log.entry(callFilter, condParamCombination);

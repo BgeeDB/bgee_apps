@@ -37,6 +37,7 @@ import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.ExperimentExpressionCount;
 import org.bgee.model.expressiondata.baseelements.PropagationState;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.file.DownloadFile.CategoryEnum;
@@ -72,18 +73,6 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      **/
     private final static List<DataType> DATA_TYPE_ORDER = 
             Arrays.asList(DataType.AFFYMETRIX, DataType.EST, DataType.IN_SITU, DataType.RNA_SEQ);
-
-    private final static LinkedHashMap<CallService.OrderingAttribute, Service.Direction> ORDERING_ATTRIBUTES;
-
-    static {
-        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
-                new LinkedHashMap<>();
-        serviceOrdering.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
-        serviceOrdering.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
-        serviceOrdering.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.ASC);
-        
-        ORDERING_ATTRIBUTES = serviceOrdering;
-    }
 
     /**
      * An {@code Enum} used to define the possible expression file types to be generated.
@@ -333,7 +322,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
 
         // Generate expression files, species by species.
         // The generation of files are independent, so we can safely go multi-threading
-        speciesNamesForFilesByIds.keySet().parallelStream().forEach(speciesId -> {
+        speciesNamesForFilesByIds.keySet().stream().forEach(speciesId -> {
             log.info("Start generating of expression files for the species {}...", speciesId);
 
             try {
@@ -391,8 +380,12 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 .map(AnatEntity::getId)
                 .collect(Collectors.toSet());
 
-        ExpressionCallFilter callFilter = new ExpressionCallFilter(null,
-                Collections.singleton(new GeneFilter(speciesId)), null, null, true, false, false);
+        Map<SummaryCallType.ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = 
+                new HashMap<>();
+        summaryCallTypeQualityFilter.put(SummaryCallType.ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
+        summaryCallTypeQualityFilter.put(SummaryCallType.ExpressionSummary.NOT_EXPRESSED, SummaryQuality.SILVER);
+        ExpressionCallFilter callFilter = new ExpressionCallFilter(summaryCallTypeQualityFilter,
+                Collections.singleton(new GeneFilter(speciesId)), null, null, true, null, null);
 
         // We retrieve calls with all non-parametric attributes plus provided params.
         Set<Attribute> clnAttr = Arrays.stream(Attribute.values())
@@ -400,8 +393,18 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 .collect(Collectors.toSet());
         clnAttr.addAll(this.params);
 
+        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
+                new LinkedHashMap<>();
+        serviceOrdering.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
+        if (params.contains(CallService.Attribute.ANAT_ENTITY_ID)) {
+            serviceOrdering.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
+        }
+        if (params.contains(CallService.Attribute.DEV_STAGE_ID)) {
+            serviceOrdering.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.ASC);
+        }
+            
         Stream<ExpressionCall> calls = serviceFactory.getCallService().loadExpressionCalls(
-                callFilter, clnAttr, ORDERING_ATTRIBUTES)
+                callFilter, clnAttr, serviceOrdering)
                 .filter(c-> !nonInformativeAnatEntities.contains(c.getCondition().getAnatEntityId()));
 
         log.trace("Done retrieving data for expression files for the species {}.", speciesId);

@@ -242,8 +242,11 @@ public class FrontController extends HttpServlet {
             } else if (requestParameters.getAction() != null &&
                 		requestParameters.getAction().equals(RequestParameters.ACTION_AUTO_COMPLETE_GENE_SEARCH)) {
             		controller = new CommandSearch(response, requestParameters, prop, factory, serviceFactory);
-            } else if (requestParameters.isADAOPageCategory()) {
-                controller = new CommandDAO(response, requestParameters, this.prop, factory, 
+//            } else if (requestParameters.isADAOPageCategory()) {
+//                controller = new CommandDAO(response, requestParameters, this.prop, factory, 
+//                        serviceFactory, this.jobService, user);
+            }else if (requestParameters.isARPackagePageCategory()) {
+                controller = new CommandRPackage(response, requestParameters, this.prop, factory, 
                         serviceFactory, this.jobService, user);
             } else if (requestParameters.isAStatsPageCategory()) {
                 //no specific controllers for this for now. 

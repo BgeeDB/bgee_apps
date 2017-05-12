@@ -20,7 +20,7 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStat
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.baseelements.DataType;
-import org.bgee.model.ontology.ElementRelation;
+import org.bgee.model.ontology.OntologyRelation;
 import org.bgee.model.species.Species;
 import org.bgee.view.RPackageDisplay;
 import org.bgee.view.ViewFactory;
@@ -203,13 +203,13 @@ public class CsvRPackageDisplay extends CsvParentDisplay implements RPackageDisp
 	}
 
 	@Override
-	public void displayAERelations(List<String> attrs, Set<ElementRelation<String>> elementRelations) {
+	public void displayAERelations(List<String> attrs, Set<OntologyRelation<String>> elementRelations) {
 		log.entry(attrs, elementRelations);
 		String[] header = attrs.stream().map(attr -> attr.toString()).toArray(String[]::new);
 		try (final ICsvMapWriter mapWriter = new CsvMapWriter(this.getOut(), this.csvPref)) {
 			this.startDisplay();
 			mapWriter.writeHeader(header);
-			for(ElementRelation<String> elementRelation : elementRelations){
+			for(OntologyRelation<String> elementRelation : elementRelations){
 				final Map<String, Object> speMap = new HashMap<String, Object>();
 				int columnNumber = 0;
 				while (columnNumber < attrs.size()) {

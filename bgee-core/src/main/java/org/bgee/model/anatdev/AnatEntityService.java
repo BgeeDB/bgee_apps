@@ -1,12 +1,10 @@
 package org.bgee.model.anatdev;
 
 import java.util.AbstractMap;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -21,13 +19,8 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SimAnnotToAnatEntityTO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO;
-import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
-import org.bgee.model.expressiondata.Call;
-import org.bgee.model.expressiondata.Condition;
-import org.bgee.model.expressiondata.Call.ExpressionCall;
-import org.bgee.model.expressiondata.CallService.Attribute;
 
 /**
  * A {@link Service} to obtain {@link AnatEntity} objects. 
@@ -36,7 +29,8 @@ import org.bgee.model.expressiondata.CallService.Attribute;
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
- * @version Bgee 14 Mar. 2017
+ * @author  Julien Wollbrett
+ * @version Bgee 14, May 2017
  * @since   Bgee 13, Nov. 2015
 */
 public class AnatEntityService extends Service {
@@ -52,25 +46,7 @@ public class AnatEntityService extends Service {
      * </ul>
      */
     public static enum Attribute implements Service.Attribute {
-    	ANAT_ENTITY_ID(true), ANAT_ENTITY_NAME(true), DESCRIPTION(false);
-        
-        /**
-         * @see #isConditionParameter()
-         */
-        private final boolean conditionParameter;
-
-        private Attribute(boolean conditionParameter) {
-            this.conditionParameter = conditionParameter;
-        }
-
-        /**
-         * @return  A {@code boolean} defining whether this attribute corresponds 
-         *          to a condition parameter (anat entity, stage, sex, strain), allowing to 
-         *          determine which condition to target for queries.
-         */
-        public boolean isConditionParameter() {
-            return this.conditionParameter;
-        }
+    	ID, NAME, DESCRIPTION;
     }
     
     /**
@@ -161,7 +137,7 @@ public class AnatEntityService extends Service {
      */
     //TODO: unit test with/without description
     public Stream<AnatEntity> loadAnatEntities(Collection<Integer> speciesIds, 
-            Boolean anySpecies, Collection<String> anatEntitiesIds, Set<Attribute> attrs) {
+            Boolean anySpecies, Collection<String> anatEntitiesIds, Collection<Attribute> attrs) {
         log.entry(speciesIds, anySpecies, anatEntitiesIds, attrs);
         return log.exit(this.getDaoManager().getAnatEntityDAO().getAnatEntities(
                     speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds), 
@@ -274,16 +250,14 @@ public class AnatEntityService extends Service {
         return log.exit(new AbstractMap.SimpleEntry<>(relationTO.getTargetId(), relationTO.getSourceId()));
     }
     
-    private static Set<AnatEntityDAO.Attribute> convertAttrsToDAOAttrs(
-            Set<Attribute> attrs) {
+    private static Set<AnatEntityDAO.Attribute> convertAttrsToDAOAttrs(Collection<Attribute> attrs) {
         log.entry(attrs);
         return log.exit(attrs.stream()
-                .filter(a -> a.isConditionParameter())
                 .map(a -> {
                     switch (a) {
-                        case ANAT_ENTITY_ID:
+                        case ID:
                             return AnatEntityDAO.Attribute.ID;
-                        case ANAT_ENTITY_NAME: 
+                        case NAME: 
                             return AnatEntityDAO.Attribute.NAME; 
                         case DESCRIPTION: 
                             return AnatEntityDAO.Attribute.DESCRIPTION;

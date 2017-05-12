@@ -3,15 +3,15 @@ package org.bgee.model.ontology;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class OntologyElementRelation<T> {
-	private final static Logger log = LogManager.getLogger(OntologyElementRelation.class.getName());
+public class OntologyRelation<T> {
+	private final static Logger log = LogManager.getLogger(OntologyRelation.class.getName());
 	
 	private T sourceId;
 	private T targetId;
 	private RelationType relationType;
 	private RelationStatus relationStatus;
 	
-	public OntologyElementRelation(T sourceId, T targetId, RelationType relationType, RelationStatus relationStatus) {
+	public OntologyRelation(T sourceId, T targetId, RelationType relationType, RelationStatus relationStatus) {
 		if(targetId == null){
 			throw log.throwing(new IllegalArgumentException("targetIds can't be null"));
 		}
@@ -65,7 +65,7 @@ public class OntologyElementRelation<T> {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        OntologyElementRelation<T> other = (OntologyElementRelation<T>) obj;
+        OntologyRelation<?> other = (OntologyRelation<?>) obj;
         if (!sourceId.equals(other.getSourceId())) {
             return false;
         }

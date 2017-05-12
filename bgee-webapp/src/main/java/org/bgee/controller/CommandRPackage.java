@@ -34,8 +34,7 @@ import org.bgee.model.job.Job;
 import org.bgee.model.job.JobService;
 import org.bgee.model.job.exception.ThreadAlreadyWorkingException;
 import org.bgee.model.job.exception.TooManyJobsException;
-import org.bgee.model.ontology.ElementRelation;
-import org.bgee.model.ontology.Ontology;
+import org.bgee.model.ontology.OntologyRelation;
 import org.bgee.model.ontology.OntologyService;
 import org.bgee.model.ontology.RelationType;
 import org.bgee.model.species.Species;
@@ -313,9 +312,9 @@ public class CommandRPackage extends CommandParent {
 //        				anatOntology.getAncestors(ae, true).stream().map(target -> target.getId())
 //        				.collect(Collectors.toSet()));
 //        });
-        Set<ElementRelation<String>> elementRelations = ontologyService.getAnatEntityRelations(speciesIds, null,
+        Set<OntologyRelation<String>> elementRelations = ontologyService.getAnatEntityRelations(speciesIds, null,
         		Collections.singleton(RelationType.ISA_PARTOF), 
-        		Collections.singleton(ElementRelation.RelationStatus.DIRECT), false, false);
+        		Collections.singleton(OntologyRelation.RelationStatus.DIRECT), false, false);
         
         display.displayAERelations(requestedAttrs, elementRelations);
         
@@ -375,10 +374,10 @@ public class CommandRPackage extends CommandParent {
         for(String rqAttr : rqAttrs){
         	switch(rqAttr){
         		case AE_ID_PARAM :
-        			attrs.add(AnatEntityService.Attribute.ANAT_ENTITY_ID);
+        			attrs.add(AnatEntityService.Attribute.ID);
         			break;
         		case AE_NAME_PARAM :
-        			attrs.add(AnatEntityService.Attribute.ANAT_ENTITY_NAME);
+        			attrs.add(AnatEntityService.Attribute.NAME);
         			break;
         		case AE_DESCRIPTION_PARAM :
         			attrs.add(AnatEntityService.Attribute.DESCRIPTION);

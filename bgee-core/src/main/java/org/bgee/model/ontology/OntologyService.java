@@ -363,9 +363,9 @@ public class OntologyService extends Service {
                 this.getServiceFactory(), DevStage.class));
     }
     
-    public Set<OntologyElementRelation<String>> getAnatEntityRelations(Collection<Integer> speciesIds,
+    public Set<OntologyRelation<String>> getAnatEntityRelations(Collection<Integer> speciesIds,
         Collection<String> entityIds,  Collection<RelationType> relationTypes, 
-        Collection<OntologyElementRelation.RelationStatus> relationStatus,
+        Collection<OntologyRelation.RelationStatus> relationStatus,
         boolean getAncestors, boolean getDescendants){
     	log.entry(speciesIds, entityIds, relationTypes, relationStatus, getAncestors, getDescendants);
     	RelationTOResultSet<String> relationTOs = getDaoManager().getRelationDAO().getAnatEntityRelations(
@@ -663,11 +663,11 @@ public class OntologyService extends Service {
         return log.exit(requestedEntityIds);
     }
     
-    private Set<OntologyElementRelation<String>> convertAERelTOResSetToElementRelations(
+    private Set<OntologyRelation<String>> convertAERelTOResSetToElementRelations(
     		RelationTOResultSet<String> relationTOResSet){
     	log.entry(relationTOResSet);
     	return log.exit(relationTOResSet.stream().map(relTO -> {
-    		return new OntologyElementRelation<String>(relTO.getSourceId(), relTO.getTargetId(), 
+    		return new OntologyRelation<String>(relTO.getSourceId(), relTO.getTargetId(), 
     				mapRelTypeTOToRelType(relTO.getRelationType()),
     				mapRelStatusTOToRelStatus(relTO.getRelationStatus()));
     	}).collect(Collectors.toSet()));
@@ -707,23 +707,23 @@ public class OntologyService extends Service {
 		}
 	}
 	
-	private static OntologyElementRelation.RelationStatus mapRelStatusTOToRelStatus(RelationStatus relStatusTO) {
+	private static OntologyRelation.RelationStatus mapRelStatusTOToRelStatus(RelationStatus relStatusTO) {
 		switch (relStatusTO) {
 			case DIRECT:
-				return OntologyElementRelation.RelationStatus.DIRECT;
+				return OntologyRelation.RelationStatus.DIRECT;
 			case INDIRECT:
-				return OntologyElementRelation.RelationStatus.INDIRECT;
+				return OntologyRelation.RelationStatus.INDIRECT;
 			case REFLEXIVE:
-				return OntologyElementRelation.RelationStatus.REFLEXIVE;
+				return OntologyRelation.RelationStatus.REFLEXIVE;
 			default:
 				throw log.throwing(new UnsupportedOperationException("relation status not supported: " + relStatusTO));
 		}
 	}
 	
-	private static Set<RelationTO.RelationStatus> mapRelStatusToRelStatusTO(Collection<OntologyElementRelation.RelationStatus> relationStatus) {
+	private static Set<RelationTO.RelationStatus> mapRelStatusToRelStatusTO(Collection<OntologyRelation.RelationStatus> relationStatus) {
 		log.entry(relationStatus);
 		Set<RelationTO.RelationStatus> relStatusTOs= new HashSet<>();
-		for(OntologyElementRelation.RelationStatus rs : relationStatus){
+		for(OntologyRelation.RelationStatus rs : relationStatus){
 			switch (rs) {
 			case DIRECT:
 				relStatusTOs.add(RelationTO.RelationStatus.DIRECT);

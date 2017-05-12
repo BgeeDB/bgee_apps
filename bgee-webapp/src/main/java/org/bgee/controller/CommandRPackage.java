@@ -2,6 +2,7 @@ package org.bgee.controller;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,8 +34,10 @@ import org.bgee.model.job.Job;
 import org.bgee.model.job.JobService;
 import org.bgee.model.job.exception.ThreadAlreadyWorkingException;
 import org.bgee.model.job.exception.TooManyJobsException;
+import org.bgee.model.ontology.ElementRelation;
 import org.bgee.model.ontology.Ontology;
 import org.bgee.model.ontology.OntologyService;
+import org.bgee.model.ontology.RelationType;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
 import org.bgee.view.RPackageDisplay;
@@ -71,7 +74,7 @@ public class CommandRPackage extends CommandParent {
     public final static String RELATION_STATUS_PARAM = "RELATION_STATUS";
     
     public final static String SPECIES_ID_PARAM = "ID";
-    public final static String SPECIES_GENUS_PARAM = "SPECIES_GENUS";
+    public final static String SPECIES_GENUS_PARAM = "GENUS";
     public final static String SPECIES_NAME_PARAM = "SPECIES_NAME";
     public final static String SPECIES_COMMON_NAME_PARAM = "COMMON_NAME";
     public final static String SPECIES_AFFYMETRIX_PARAM = "AFFYMETRIX";
@@ -187,16 +190,17 @@ public class CommandRPackage extends CommandParent {
         // Create Call filter objects
         //****************************************
         //CallDAOFilter: for now, we only allow to define one CallDAOFilter object.
-        ConditionFilter conditionFilter = stageIds == null || stageIds.isEmpty()? 
-                null: new ConditionFilter(null, stageIds);
+        Boolean filterOnStageId = stageIds == null ? null : true;
+        Collection<ConditionFilter> conditionFilter = stageIds == null || stageIds.isEmpty()? 
+                null: Collections.singleton(new ConditionFilter(null, stageIds));
         GeneFilter geneFilter = new GeneFilter(speciesId, this.requestParameters.getBackgroundList());
         Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
         summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, this.checkAndGetSummaryQuality());
         ExpressionCallFilter callFilter = new ExpressionCallFilter(summaryCallTypeQualityFilter,
         		Collections.singleton(geneFilter),
-                Collections.singleton(conditionFilter), dataTypes,
+                conditionFilter, dataTypes,
                 //FIXME what mean these booleans??
-               true, true, true);
+               true, true, filterOnStageId);
 
 
         //****************************************
@@ -208,7 +212,7 @@ public class CommandRPackage extends CommandParent {
 //                false, true,
                 //Attributes requested; no ordering requested
                 attrs, null);
-        
+//        Set<ExpressionCall> calls = callStream.collect(Collectors.toSet());
         display.displayCalls(requestedAttrs, callStream);
         
         log.exit();
@@ -269,7 +273,6 @@ public class CommandRPackage extends CommandParent {
      */
     private void processGetAnatEntityRelations() throws InvalidRequestException, IOException {
         log.entry();
-        Map<String, Set<String>> anatEntityRelations = new HashMap<>();
         RPackageDisplay display = this.viewFactory.getRPackageDisplay();
         OntologyService ontologyService = this.serviceFactory.getOntologyService();
 
@@ -298,19 +301,23 @@ public class CommandRPackage extends CommandParent {
         if (speciesIds == null || speciesIds.size() != 1) {
             throw log.throwing(new InvalidRequestException("One and only one species ID must be provided"));
         }
-        Integer speciesId = speciesIds.iterator().next();
+//        Integer speciesId = speciesIds.iterator().next();
         //****************************************
         // Perform query and display results
         //****************************************
-        Ontology<AnatEntity, String> anatOntology = ontologyService.getAnatEntityOntology(speciesId, null);
-        Set<AnatEntity> anatEntities = anatOntology.getElements();
-        anatEntities.stream().forEach(ae -> {
-        		anatEntityRelations.put(ae.getId(), 
-        				anatOntology.getDescendants(ae, true).stream().map(target -> target.getId())
-        				.collect(Collectors.toSet()));
-        });
+//        Ontology<AnatEntity, String> anatOntology = ontologyService.getAnatEntityOntology(
+//        		speciesId, null, Collections.singleton(RelationType.ISA_PARTOF), false, false);
+//        Set<AnatEntity> anatEntities = anatOntology.getElements();
+//        anatEntities.stream().forEach(ae -> {
+//        		anatEntityRelations.put(ae.getId(), 
+//        				anatOntology.getAncestors(ae, true).stream().map(target -> target.getId())
+//        				.collect(Collectors.toSet()));
+//        });
+        Set<ElementRelation<String>> elementRelations = ontologyService.getAnatEntityRelations(speciesIds, null,
+        		Collections.singleton(RelationType.ISA_PARTOF), 
+        		Collections.singleton(ElementRelation.RelationStatus.DIRECT), false, false);
         
-        display.displayAERelations(requestedAttrs, anatEntityRelations);
+        display.displayAERelations(requestedAttrs, elementRelations);
         
         log.exit();
     }

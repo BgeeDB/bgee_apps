@@ -20,6 +20,7 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStat
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.ontology.ElementRelation;
 import org.bgee.model.species.Species;
 import org.bgee.view.RPackageDisplay;
 import org.bgee.view.ViewFactory;
@@ -39,7 +40,7 @@ public class CsvRPackageDisplay extends CsvParentDisplay implements RPackageDisp
 
 	@Override
 	public void displayCalls(List<String> attrs, Stream<ExpressionCall> callsStream) {
-		try (final ICsvBeanWriter mapWriter = new CsvBeanWriter(this.getOut(), this.csvPref)) {
+		try (final ICsvMapWriter mapWriter = new CsvMapWriter(this.getOut(), this.csvPref)) {
 			String[] header = attrs.stream().map(attr -> attr.toString()).toArray(String[]::new);
 			this.startDisplay();
 			mapWriter.writeHeader(header);
@@ -202,45 +203,73 @@ public class CsvRPackageDisplay extends CsvParentDisplay implements RPackageDisp
 	}
 
 	@Override
-	public void displayAERelations(List<String> attrs, Map<String, Set<String>> anatEntityRelations) {
-		log.entry(attrs, anatEntityRelations);
+	public void displayAERelations(List<String> attrs, Set<ElementRelation<String>> elementRelations) {
+		log.entry(attrs, elementRelations);
 		String[] header = attrs.stream().map(attr -> attr.toString()).toArray(String[]::new);
 		try (final ICsvMapWriter mapWriter = new CsvMapWriter(this.getOut(), this.csvPref)) {
 			this.startDisplay();
 			mapWriter.writeHeader(header);
-			for (String sourceId : anatEntityRelations.keySet()) {
-				Set<String> targetIds = anatEntityRelations.get(sourceId);
-				if( targetIds != null){
-					for(String targetId : targetIds){
-						int columnNumber = 0;
-						final Map<String, Object> speMap = new HashMap<String, Object>();
-						while (columnNumber < attrs.size()) {
-							switch (attrs.get(columnNumber)) {
-							case CommandRPackage.RELATIONS_SOURCE_PARAM:
-								speMap.put(header[columnNumber], sourceId);
-								columnNumber++;
-								break;
-							case CommandRPackage.RELATIONS_TARGET_PARAM:
-								speMap.put(header[columnNumber], targetId);
-								columnNumber++;
-								break;
-							case CommandRPackage.RELATION_TYPE_PARAM:
-								speMap.put(header[columnNumber], RelationType.ISA_PARTOF.getStringRepresentation());
-								columnNumber++;
-								break;
-							case CommandRPackage.RELATION_STATUS_PARAM:
-								speMap.put(header[columnNumber], RelationStatus.DIRECT.getStringRepresentation());
-								columnNumber++;
-								break;
-							default:
-								throw log.throwing(new IllegalStateException("Unknow Attribut " + attrs.get(columnNumber)));
-							}
-						}
-						mapWriter.write(speMap, header);
+			for(ElementRelation<String> elementRelation : elementRelations){
+				final Map<String, Object> speMap = new HashMap<String, Object>();
+				int columnNumber = 0;
+				while (columnNumber < attrs.size()) {
+					switch (attrs.get(columnNumber)) {
+					case CommandRPackage.RELATIONS_SOURCE_PARAM:
+						speMap.put(header[columnNumber], elementRelation.getSourceId());
+						columnNumber++;
+						break;
+					case CommandRPackage.RELATIONS_TARGET_PARAM:
+						speMap.put(header[columnNumber], elementRelation.getTargetId());
+						columnNumber++;
+						break;
+					case CommandRPackage.RELATION_TYPE_PARAM:
+						speMap.put(header[columnNumber], elementRelation.getRelationType());
+						columnNumber++;
+						break;
+					case CommandRPackage.RELATION_STATUS_PARAM:
+						speMap.put(header[columnNumber], elementRelation.getRelationStatus());
+						columnNumber++;
+						break;
+					default:
+						throw log.throwing(new IllegalStateException("Unknow Attribut " + attrs.get(columnNumber)));
 					}
-					
 				}
+				mapWriter.write(speMap, header);
 			}
+			
+//			for (String sourceId : anatEntityRelations.keySet()) {
+//				Set<String> targetIds = anatEntityRelations.get(sourceId);
+//				if( targetIds != null){
+//					for(String targetId : targetIds){
+//						int columnNumber = 0;
+//						final Map<String, Object> speMap = new HashMap<String, Object>();
+//						while (columnNumber < attrs.size()) {
+//							switch (attrs.get(columnNumber)) {
+//							case CommandRPackage.RELATIONS_SOURCE_PARAM:
+//								speMap.put(header[columnNumber], sourceId);
+//								columnNumber++;
+//								break;
+//							case CommandRPackage.RELATIONS_TARGET_PARAM:
+//								speMap.put(header[columnNumber], targetId);
+//								columnNumber++;
+//								break;
+//							case CommandRPackage.RELATION_TYPE_PARAM:
+//								speMap.put(header[columnNumber], RelationType.ISA_PARTOF.getStringRepresentation());
+//								columnNumber++;
+//								break;
+//							case CommandRPackage.RELATION_STATUS_PARAM:
+//								speMap.put(header[columnNumber], RelationStatus.DIRECT.getStringRepresentation());
+//								columnNumber++;
+//								break;
+//							default:
+//								throw log.throwing(new IllegalStateException("Unknow Attribut " + attrs.get(columnNumber)));
+//							}
+//						}
+//						mapWriter.write(speMap, header);
+//					}
+//					
+//				}
+//			}
 			mapWriter.flush();
 			this.endDisplay();
 		} catch (IOException e) {

@@ -23,11 +23,11 @@ import java.util.stream.Collectors;
 /**
  * The MySQL implementation of {@link MySQLDownloadFileDAO}.
  * 
- * @author Philippe Moret
- * @author Valentine Rech de Laval
- * @author Frederic Bastian
- * @version Bgee 14 Feb. 2017
- * @since Bgee 13
+ * @author  Philippe Moret
+ * @author  Valentine Rech de Laval
+ * @author  Frederic Bastian
+ * @version Bgee 14, May 2017
+ * @since   Bgee 13
  */
 public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> implements DownloadFileDAO {
 

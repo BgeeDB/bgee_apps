@@ -198,7 +198,19 @@ public class DownloadFile {
      */
     private final Set<ConditionParameter> conditionParameters;
 
-    // FIXME remove this constructor when DownloadFileService.mapFromTO() fill conditionParameters
+    /**
+     * The constructor provides all values except condition parameters to create a {@code DownloadFile}.
+     * <p>
+     * No argument can be null or blank.
+     * 
+     * @param path                 A {@code String} representing the path of the containing the file.
+     * @param name                 A {@code String} containing the file name. Might be {@code /} 
+     *                             by convention if the file represents a directory.
+     * @param category             A {@code CategoryEnum} that is the category of the file.
+     * @param size                 A {@code Long} representing the file size in bytes.
+     * @param speciesDataGroupId   A {@code Integer} representing the species data group that owns this file.
+     * @throws IllegalArgumentException If any of the argument is {@code null}.
+     */
     public DownloadFile(String path, String name, CategoryEnum category, Long size, Integer speciesDataGroupId){
         this(path, name, category, size, speciesDataGroupId, null);
     }
@@ -206,7 +218,7 @@ public class DownloadFile {
     /**
      * The constructor provides all values to create a {@code Download}.
      * <p>
-     * No argument can be null or blank.
+     * Only {@code conditionParameters} can be null or blank.
      * 
      * @param path                 A {@code String} representing the path of the containing the file.
      * @param name                 A {@code String} containing the file name. Might be {@code /} 

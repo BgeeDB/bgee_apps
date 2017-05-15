@@ -513,9 +513,9 @@ var download = {
             var bgeeOrthologFileUrl = getUrlForFileCategory(files, "ortholog");
             //var bgeeExprSimpleFileUrl = $currentSpecies.data( "bgeeexprsimplefileurl" );
             var bgeeExprOrganSimpleFileUrl = getUrlForFileCategory(files, "expr_simple", [ "anatomicalEntity" ]);
-            var bgeeExprOrganCompleteFileUrl = getUrlForFileCategory(files, "expr_complete", [ "anatomicalEntity" ]);
+            var bgeeExprOrganCompleteFileUrl = getUrlForFileCategory(files, "expr_advanced", [ "anatomicalEntity" ]);
             var bgeeExprOrganStageSimpleFileUrl = getUrlForFileCategory(files, "expr_simple", [ "anatomicalEntity", "developmentalStage" ]);
-            var bgeeExprOrganStageCompleteFileUrl = getUrlForFileCategory(files, "expr_complete", [ "anatomicalEntity", "developmentalStage" ]);
+            var bgeeExprOrganStageCompleteFileUrl = getUrlForFileCategory(files, "expr_advanced", [ "anatomicalEntity", "developmentalStage" ]);
             var bgeeDiffExprAnatomySimpleFileUrl = getUrlForFileCategory(files, "diff_expr_anatomy_simple");
             var bgeeDiffExprAnatomyCompleteFileUrl = getUrlForFileCategory(files, "diff_expr_anatomy_complete");
             var bgeeDiffExprDevelopmentSimpleFileUrl = getUrlForFileCategory(files, "diff_expr_dev_simple");
@@ -524,9 +524,9 @@ var download = {
              // get file sizes
             var bgeeOrthologFileSize = getSizeForFileCategory(files, "ortholog");
             var bgeeExprOrganSimpleFileSize = getSizeForFileCategory(files, "expr_simple", [ "anatomicalEntity" ]);
-            var bgeeExprOrganCompleteFileSize = getSizeForFileCategory(files, "expr_complete", [ "anatomicalEntity" ]);
+            var bgeeExprOrganCompleteFileSize = getSizeForFileCategory(files, "expr_advanced", [ "anatomicalEntity" ]);
             var bgeeExprOrganStageSimpleFileSize = getSizeForFileCategory(files, "expr_simple", [ "anatomicalEntity", "developmentalStage" ]);
-            var bgeeExprOrganStageCompleteFileSize = getSizeForFileCategory(files, "expr_complete", [ "anatomicalEntity", "developmentalStage" ]);
+            var bgeeExprOrganStageCompleteFileSize = getSizeForFileCategory(files, "expr_advanced", [ "anatomicalEntity", "developmentalStage" ]);
             var bgeeDiffExprAnatomySimpleFileSize =	getSizeForFileCategory(files, "diff_expr_anatomy_simple");
             var bgeeDiffExprAnatomyCompleteFileSize = getSizeForFileCategory(files, "diff_expr_anatomy_complete");
             var bgeeDiffExprDevelopmentSimpleFileSize = getSizeForFileCategory(files, "diff_expr_dev_simple");
@@ -629,9 +629,9 @@ var download = {
                 	urlDoc.setURLHash(urlDoc.HASH_DOC_CALL_SINGLE_DIFF());
                 	this.$diffDevHelp.attr( "href", urlDoc.getRequestURL());
                 	this.$diffAnatHelp.attr( "href", urlDoc.getRequestURL());
+                    this.updateFormURL( bgeeExprOrganStageCompleteFileUrl, bgeeExprOrganStageSimpleFileUrl,
+                    		bgeeExprOrganCompleteFileUrl, bgeeExprOrganSimpleFileUrl );
                 }
-                this.updateFormURL( bgeeExprOrganStageCompleteFileUrl, bgeeExprOrganStageSimpleFileUrl,
-                		bgeeExprOrganCompleteFileUrl, bgeeExprOrganSimpleFileUrl );
             }
             
             this.$bgeeExprDataFormInputs.click(function() {

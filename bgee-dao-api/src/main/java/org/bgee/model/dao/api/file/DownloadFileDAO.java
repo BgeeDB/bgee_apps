@@ -104,7 +104,7 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
          */
         public enum CategoryEnum implements TransferObject.EnumDAOField {
             EXPR_CALLS_SIMPLE("expr_simple"),
-            EXPR_CALLS_COMPLETE("expr_advanced"),
+            EXPR_CALLS_COMPLETE("expr_complete"),
             DIFF_EXPR_ANAT_SIMPLE("diff_expr_anatomy_simple"),
             DIFF_EXPR_ANAT_COMPLETE("diff_expr_anatomy_complete"),
             DIFF_EXPR_DEV_COMPLETE("diff_expr_dev_complete"),

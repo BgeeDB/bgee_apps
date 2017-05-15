@@ -354,7 +354,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         s.append("<div class='panel-body'>");
         // TODO: uncomment multi-species section when files are available
 //        s.append(getMultiSpeciesFigures(pageType, groups));
-        s.append("<p>These files will be available for the next release Bgee v14.1 (May 2017)</p>");
+        s.append("<p>These files will be available for the next release of Bgee (version 14.1)</p>");
         s.append("</div>"); // close panel-body
         
         s.append("</div>"); // close panel
@@ -516,10 +516,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
         banner.append("    <div class='selection'>");
         banner.append("        <div class='item_category'>Choose condition parameters");
-        // TODO: fix popover content
         banner.append("            <span class='glyphicon glyphicon-question-sign' data-placement='right' " +
                                         "data-toggle='popover' data-trigger='hover' " +
-                                        "data-content='Condition parameters define ...'></span>");
+                                        "data-content='Only anatomy, or combinations anatomy-development'></span>");
         banner.append("        </div>");
         banner.append("        <label class='checkbox-inline'>");
         banner.append("            <input type='hidden' name='downloadParam' value='anatEntity'>" );
@@ -533,10 +532,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         banner.append("            Developmental stage");
         banner.append("        </label>");
         banner.append("        <div class='item_category' >Get advanced columns ");
-        // TODO: fix popover content
         banner.append("            <span class='glyphicon glyphicon-question-sign' data-placement='right' " +
                                         "data-toggle='popover' data-trigger='hover' " +
-                                        "data-content='Additionnal columns contains informations by data types'></span>");
+                                        "data-content='Including information by data types'></span>");
         banner.append("        </div>");
         banner.append("        <label class='radio-inline'>");
         banner.append("            <input type='radio' name='downloadParam' id='advancedDataRadioYes'"

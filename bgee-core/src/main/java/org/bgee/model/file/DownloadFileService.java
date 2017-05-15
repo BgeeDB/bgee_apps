@@ -7,6 +7,8 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
 import org.bgee.model.dao.api.file.DownloadFileDAO;
+import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO;
+import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO.CategoryEnum;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -58,16 +60,44 @@ public class DownloadFileService extends Service {
         }
         return log.exit(new DownloadFile(downloadFileTO.getPath(),
                 downloadFileTO.getName(),
-                //currently, the IDs of DownloadFile.CategoryEnum correspond exactly to
-                //the DownloadFileTO.CategoryEnum#getStringRepresentation(), 
-                //this might change in the future.
-                DownloadFile.CategoryEnum.convertToCategoryEnum(
-                            downloadFileTO.getCategory().getStringRepresentation()),
+                mapDAOCategoryToServiceCategory(downloadFileTO.getCategory()),
                 downloadFileTO.getSize(),
                 downloadFileTO.getSpeciesDataGroupId(),
                 downloadFileTO.getConditionParameters().stream()
                     .map(p -> DownloadFile.ConditionParameter.convertToConditionParameter(
                                 p.getStringRepresentation()))
                     .collect(Collectors.toSet())));
+    }
+    
+    private static DownloadFile.CategoryEnum mapDAOCategoryToServiceCategory(
+            DownloadFileTO.CategoryEnum daoEnum) {
+        log.entry(daoEnum);
+        
+        switch (daoEnum) {
+            case EXPR_CALLS_COMPLETE:
+                return log.exit(DownloadFile.CategoryEnum.EXPR_CALLS_COMPLETE);
+            case EXPR_CALLS_SIMPLE:
+                return log.exit(DownloadFile.CategoryEnum.EXPR_CALLS_SIMPLE);
+            case DIFF_EXPR_ANAT_SIMPLE:
+                return log.exit(DownloadFile.CategoryEnum.DIFF_EXPR_ANAT_SIMPLE);
+            case DIFF_EXPR_ANAT_COMPLETE:
+                return log.exit(DownloadFile.CategoryEnum.DIFF_EXPR_ANAT_COMPLETE);
+            case DIFF_EXPR_DEV_COMPLETE:
+                return log.exit(DownloadFile.CategoryEnum.DIFF_EXPR_DEV_COMPLETE);
+            case DIFF_EXPR_DEV_SIMPLE:
+                return log.exit(DownloadFile.CategoryEnum.DIFF_EXPR_DEV_SIMPLE);
+            case ORTHOLOG:
+                return log.exit(DownloadFile.CategoryEnum.ORTHOLOG);
+            case AFFY_ANNOT:
+                return log.exit(DownloadFile.CategoryEnum.AFFY_ANNOT);
+            case AFFY_DATA:
+                return log.exit(DownloadFile.CategoryEnum.AFFY_DATA);
+            case RNASEQ_ANNOT:
+                return log.exit(DownloadFile.CategoryEnum.RNASEQ_ANNOT);
+            case RNASEQ_DATA:
+                return log.exit(DownloadFile.CategoryEnum.RNASEQ_DATA);
+            default:
+                throw log.throwing(new IllegalArgumentException("Category not supported: " + daoEnum));
+        }        
     }
 }

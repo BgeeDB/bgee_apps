@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -57,7 +58,7 @@ import org.supercsv.io.dozer.ICsvDozerBeanWriter;
  * the Bgee database.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Mar. 2017
+ * @version Bgee 14, May 2017
  * @since   Bgee 13, Sept. 2017
  */
 public class GenerateExprFile2 extends GenerateDownloadFile {
@@ -493,8 +494,11 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         }
         // now, if everything went fine, we rename or delete the temporary files
         if (numberOfRows > 0) {
+            log.info("Each expression file for the species {} contains {} rows.",
+                    speciesId, numberOfRows / this.fileTypes.size());
             this.renameTempFiles(generatedFileNames, tmpExtension);            
         } else {
+            log.info("Expression files for the species {} contains no rows.", speciesId);
             this.deleteTempFiles(generatedFileNames, tmpExtension);
         }
 
@@ -898,7 +902,6 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         return log.exit(quoteMode);
     }
 
-
     /**
      * Generate rows to be written and write them in a file. This methods will notably use
      * {@code ExpressionCall}s to produce information, that is different depending on {@code fileType}.
@@ -922,6 +925,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      *                              to produce the header.
      * @param calls                 A {@code Stream} of {@code ExpressionCall}s that are expression
      *                              calls to be written into files.
+     * @return                      An {@code int} that is the addition of number of rows added to files.
      * @throws UncheckedIOException If an error occurred while trying to write the {@code outputFile}.
      */
     private int writeRows(Map<SingleSpExprFileType2, ICsvDozerBeanWriter> writersUsed, 
@@ -930,8 +934,10 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             Stream<ExpressionCall> calls) throws UncheckedIOException {
         log.entry(writersUsed, processors, headers, calls);
 
-        return log.exit(calls.map(c -> {
-            int i = 0;
+        // We use an AtomicInteger instead of using .mapToInt(Integer::intValue).sum() on the stream 
+        // to try to avoid memory problems
+        AtomicInteger rowCount = new AtomicInteger();
+        calls.forEach(c -> {
             for (Entry<SingleSpExprFileType2, ICsvDozerBeanWriter> writerFileType : writersUsed.entrySet()) {
                 String geneId = c.getGene().getEnsemblGeneId();
                 String geneName = c.getGene().getName() == null? "": c.getGene().getName();
@@ -955,7 +961,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                         summaryCallType, summaryQuality, expressionRank, expressionScore);
                     try {
                         writerFileType.getValue().write(simpleBean, processors.get(writerFileType.getKey()));
-                        i++;
+                        rowCount.getAndIncrement();
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
                     }
@@ -974,14 +980,14 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                             counts);
                     try {
                         writerFileType.getValue().write(completeBean, processors.get(writerFileType.getKey()));
-                        i++;
+                        rowCount.getAndIncrement();
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
                     }
                 }
             }
-            return i;
-        }).mapToInt(Integer::intValue).sum());
+        });
+        return log.exit(rowCount.get());
     }
 
     /**

@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.TopAnatDisplay;
+import org.bgee.view.html.HtmlDownloadDisplay.DownloadPageType;
 
 /**
  * This class generates the HTML views relative to topAnat.
@@ -48,36 +49,48 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
         
         this.startDisplay("Bgee TopAnat page");
         
+        RequestParameters urlGenerator = this.getNewRequestParameters();
+        urlGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlGenerator.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
+
+        this.writeln("<h1>TopAnat - Gene Expression Enrichment</h1>");
         
-        //AngularJS module container
-        this.writeln("<div ng-app='app'>");
-
-        
-        this.writeln("<div id='appLoading' class='loader'>" + 
-        		"<!-- BEGIN: Actual animated container. -->" + 
-        		"<div class='anim-cover'>" + 
-        			"<div class='messaging'>" +
-        				"<h1>" + 
-        					"<li class='fa fa-circle-o-notch fa-spin'></li> TopAnat is Loading" +
-        				"</h1>" + 
-        			"</div>" + 
-        		"</div>" +
-        	"</div>");
-    
-        this.writeln("<!--[if lt IE 7]>" +
-        "<p class='browsehappy'>You are using an <strong>outdated</strong> browser. Please <a href='http://browsehappy.com/'>upgrade your" +
-            "browser</a> to improve your experience.</p>" +
-        "<![endif]-->");
-
-        //FB: I really hate this ribbon :p
-        //this.writeln("<div class='corner-ribbon top-left sticky red shadow'>Beta</div>");
-        
-        this.writeln("<div style='margin-left: 20px; margin-right: 20px' ng-view=''>" +
-
-        "</div>");
-
-        //End AngularJS module container
+        this.writeln("<div id='bgee_introduction' class='alert alert-danger'>");
+        this.writeln("<p>While we are solving issues with TopAnat in Bgee 14, we invite you to use TopAnat in "
+                + "<a title='TopAnat page of Bgee 13' href='http://bgee.org/bgee13/?page=top_anat' target='_blank'>"
+                + "Bgee 13</a>.</p>");
         this.writeln("</div>");
+
+//        FIXME enable when TopAnat will work on Bgee 14.
+//        //AngularJS module container
+//        this.writeln("<div ng-app='app'>");
+//
+//        
+//        this.writeln("<div id='appLoading' class='loader'>" + 
+//        		"<!-- BEGIN: Actual animated container. -->" + 
+//        		"<div class='anim-cover'>" + 
+//        			"<div class='messaging'>" +
+//        				"<h1>" + 
+//        					"<li class='fa fa-circle-o-notch fa-spin'></li> TopAnat is Loading" +
+//        				"</h1>" + 
+//        			"</div>" + 
+//        		"</div>" +
+//        	"</div>");
+//    
+//        this.writeln("<!--[if lt IE 7]>" +
+//        "<p class='browsehappy'>You are using an <strong>outdated</strong> browser. Please <a href='http://browsehappy.com/'>upgrade your" +
+//            "browser</a> to improve your experience.</p>" +
+//        "<![endif]-->");
+//
+//        //FB: I really hate this ribbon :p
+//        //this.writeln("<div class='corner-ribbon top-left sticky red shadow'>Beta</div>");
+//        
+//        this.writeln("<div style='margin-left: 20px; margin-right: 20px' ng-view=''>" +
+//
+//        "</div>");
+//
+//        //End AngularJS module container
+//        this.writeln("</div>");
 
 
         

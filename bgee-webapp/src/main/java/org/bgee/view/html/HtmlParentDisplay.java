@@ -253,7 +253,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 + "evolution, ontology, anatomy, development, evo-devo database, "
                 + "anatomical ontology, developmental ontology, gene expression "
                 + "evolution'/>");
-        this.writeln("<meta name='dcterms.rights' content='Bgee copyright 2007/2016 UNIL' />");
+        this.writeln("<meta name='dcterms.rights' content='Bgee copyright 2007/2017 UNIL' />");
         this.writeln("<link rel='shortcut icon' type='image/x-icon' href='"
                 +this.prop.getImagesRootDirectory()+"favicon.ico'/>");
         this.includeCss(); // load default css files, and css files specific of a view 

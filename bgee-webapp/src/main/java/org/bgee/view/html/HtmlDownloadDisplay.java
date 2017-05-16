@@ -243,7 +243,11 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             //pre-condition check in private method, use of assert allowed
             assert false: "Unknown DownloadPageType";
         }
-        intro.append("See also ");
+        intro.append(" It is possible to download these data directly into "
+                    + "R using our <a href='https://github.com/BgeeDB/BgeeDB_R' "
+                    + "class='external_link' target='_blank'>R package</a>.");
+
+        intro.append(" See also ");
         if (pageType == DownloadPageType.EXPR_CALLS) {
             RequestParameters urlGenerator = this.getNewRequestParameters();
             urlGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);

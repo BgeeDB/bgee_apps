@@ -49,6 +49,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             "col-xs-12 col-xs-offset-0 col-sm-offset-1 col-sm-10";
 
     /**
+     * A {@code String} to be used in {@code class} attribute.
+     */
+    protected static final String BGEE_R_PACKAGE_URL = 
+            "https://bioconductor.org/packages/release/bioc/html/BgeeDB.html";
+
+    /**
      * Escape HTML entities in the provided {@code String}
      * @param stringToWrite A {@code String} that contains the HTML to escape
      * @return  The escaped HTML
@@ -389,6 +395,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<ul class='dropdown-menu'>");
         navbar.append("<li><a title='TopAnat: Enrichment analyses of expression localization' "
               + "href='" + urlTopAnat.getRequestURL() + "'>" + TOP_ANAT_PAGE_NAME + "</a></li>");
+        navbar.append("<li><a href='" + BGEE_R_PACKAGE_URL + "' target='_blank'>"
+                + "BgeeDB R package</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
 
@@ -412,6 +420,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
               + GENE_EXPR_CALLS_PAGE_NAME + "</a></li>");
         navbar.append("<li><a href='" + urlDownloadProcValueFile.getRequestURL() + "'>"
               + PROCESSED_EXPR_VALUES_PAGE_NAME + "</a></li>");
+        navbar.append("<li><a href='" + BGEE_R_PACKAGE_URL + "' target='_blank'>"
+                + "BgeeDB R package</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
 
@@ -428,6 +438,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
               urlDocExprCallFiles.getRequestURL() + "'>" + GENE_EXPR_CALLS_PAGE_NAME + "</a></li>");
 //        navbar.append("<li><a title='Processed expression value files documentation' href='" + 
 //            urlDocProcValueFiles.getRequestURL() + "'>" + PROCESSED_EXPR_VALUES_PAGE_NAME + "</a></li>");
+        navbar.append("<li><a href='https://bioconductor.org/packages/release/bioc/manuals/BgeeDB/man/BgeeDB.pdf'"
+                + " target='_blank'>BgeeDB R package</a></li>");
         navbar.append("<li><a title='Bgee blog' href='https://bgeedb.wordpress.com' target='_blank'>Bgee blog</a></li>");
         navbar.append("<li><a title='Bgee sources' href='" + urlBgeeSources.getRequestURL()
               + "'>Bgee sources</a></li>");
@@ -445,6 +457,11 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         // Right nav links
         navbar.append("<ul class='nav navbar-nav navbar-right'>");
         
+        // R package
+        navbar.append("<li><a title='See our R package' target='_blank' href='" + BGEE_R_PACKAGE_URL + "'>" + 
+                "<img class='social-img' alt='R logo' src='" + this.prop.getLogoImagesRootDirectory() + 
+                "r_logo.png'></a></li>");
+
         // Twitter
         navbar.append("<li><a title='Follow @Bgeedb on Twitter' target='_blank' href='https://twitter.com/Bgeedb'>" + 
                 "<img class='social-img' alt='Twitter logo' src='" + this.prop.getLogoImagesRootDirectory() + 

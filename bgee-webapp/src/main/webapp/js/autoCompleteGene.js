@@ -15,8 +15,10 @@ function autocompleteGeneSelected(event, ui) {
  	event.preventDefault();
  	
  	var selectedGeneId = ui.item.id;
+ 	var selectedSpeciesId = ui.item.speciesId;
  	//XXX: should we use the requestParameters object?
- 	window.location.href = GLOBAL_PROPS.getWebAppURLStart() + "?page=gene&gene_id="+selectedGeneId;
+ 	window.location.href = GLOBAL_PROPS.getWebAppURLStart() + "?page=gene&gene_id=" + selectedGeneId
+ 		+ "&species_id=" + selectedSpeciesId;
 
  	return this;
 }

@@ -15,6 +15,7 @@ import org.bgee.pipeline.expression.FilterNoExprCalls;
 import org.bgee.pipeline.expression.InsertGlobalCalls;
 import org.bgee.pipeline.expression.InsertPropagatedCalls;
 import org.bgee.pipeline.expression.downloadfile.GenerateExprFile;
+import org.bgee.pipeline.expression.downloadfile.GenerateExprFile2;
 import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile;
 import org.bgee.pipeline.expression.downloadfile.GenerateMultiSpeciesDiffExprFile;
 import org.bgee.pipeline.expression.downloadfile.GenerateRankFile;
@@ -267,9 +268,8 @@ public class CommandRunner {
             GenerateDiffExprFile.main(newArgs);
             break;
         case "GenerateBasicExprFile":
-            throw log.throwing(new UnsupportedOperationException("Method disabled while updated"));
-//            GenerateExprFile.main(newArgs);
-//            break;
+            GenerateExprFile2.main(newArgs);
+            break;
         case "GenerateMultiSpeciesDiffExprFile":
             throw log.throwing(new UnsupportedOperationException("Method disabled while updated"));
 //            GenerateMultiSpeciesDiffExprFile.main(newArgs);

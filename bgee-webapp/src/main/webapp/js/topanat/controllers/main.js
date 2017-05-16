@@ -1437,6 +1437,7 @@
                     vm.selected_taxid = '';
                     vm.selected_species = 'None';
                     vm.isValidSpecies = false;
+                    vm.geneValidationMessage = '';
                 }
                 else {
                     vm.selected_species = mapIdtoName(data, type + "_list");
@@ -1444,8 +1445,6 @@
                     vm.isValidSpecies = true;
                     vm.geneValidationMessage = parseMessage(data.message);
                     //getNbDetectedSpecies(data, type + "_list") > 1 ? vm.geneValidationMessage = parseMessage(data.message) : vm.geneValidationMessage = '';
-
-
                 }
 
                 var stages = [];

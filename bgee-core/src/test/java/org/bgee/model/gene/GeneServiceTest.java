@@ -96,8 +96,8 @@ public class GeneServiceTest extends TestAncestor {
         String term = "Name1";
 
         GeneTOResultSet mockGeneRs = getMockResultSet(GeneTOResultSet.class,
-                Arrays.asList(new GeneTO(1, "ID1", "Name1", 11),
-                        new GeneTO(2, "ID2", "Name2", 22)));
+                Arrays.asList(new GeneTO(1, "ID1", "Name1", null, 11, null, null, null, 1),
+                        new GeneTO(2, "ID2", "Name2", null, 22, null, null, null, 1)));
         when(geneDao.getGeneBySearchTerm(term, null, 1, 100)).thenReturn(mockGeneRs);
 
         when(spService.loadSpeciesByIds(new HashSet<>(Arrays.asList(11, 22)), false))

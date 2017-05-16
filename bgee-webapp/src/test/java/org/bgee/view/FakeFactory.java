@@ -135,5 +135,10 @@ public class FakeFactory extends ViewFactory {
     public JobDisplay getJobDisplay() throws IOException {
         return null;
     }
+
+    @Override
+    public RPackageDisplay getRPackageDisplay() throws IOException {
+        return null;
+    }
     
 }

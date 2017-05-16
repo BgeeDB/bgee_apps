@@ -1,6 +1,9 @@
 package org.bgee.model.dao.api.file;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,26 +37,42 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
      * </ul>
      */
     enum Attribute implements DAO.Attribute {
-        ID,
-        NAME,
-        DESCRIPTION,
-        PATH,
-        FILE_SIZE,
-        CATEGORY,
-        SPECIES_DATA_GROUP_ID
+        ID, NAME, DESCRIPTION, PATH, FILE_SIZE, CATEGORY, SPECIES_DATA_GROUP_ID, CONDITION_PARAMETERS
     }
 
     /**
-     * The {@code DAOResultSet} specific to {@code DownloadFileTO}
+     * Get all download files.
+     * <p>
+     * The download files are retrieved and returned as a {@code DownloadFileTOResultSet}.
+     * It is the responsibility of the caller to close this {@code DAOResultSet} once results
+     * are retrieved.
+     * 
+     * @return  A {@code DownloadFileTOResultSet} containing all download files from data source.
+     * @throws DAOException If an error occurred when accessing the data source. 
+     */
+    DownloadFileTOResultSet getAllDownloadFiles() throws DAOException;
+
+    /**
+     * Insert the provided download files into the Bgee database, represented as
+     * a {@code Collection} of {@code DownloadFileTO}s.
+     * 
+     * @param files                     A {@code Collection} of {@code DownloadFileTO}s to be
+     *                                  inserted into the database.
+     * @throws IllegalArgumentException If {@code files} is empty or null.
+     * @throws DAOException             If an error occurred while trying to insert {@code files}.
+     */
+    public int insertDownloadFiles(Collection<DownloadFileTO> files)
+            throws DAOException, IllegalArgumentException;
+
+    /**
+     * The {@code DAOResultSet} specific to {@code DownloadFileTO}.
      */
     interface DownloadFileTOResultSet extends DAOResultSet<DownloadFileTO> {
-
     }
 
     /**
-     * The {@code TransferObject} representing a Download File.
+     * {@code NamedEntityTO} representing a download file in the Bgee database.
      */
-    //TODO: standardize javadoc
     final class DownloadFileTO extends NamedEntityTO<Integer> {
 
         private static final long serialVersionUID = 19171223459721L;
@@ -64,91 +83,8 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
         private final static Logger log = LogManager.getLogger(DownloadFileTO.class.getName());
 
         /**
-         * The path of the file
-         */
-        private final String path;
-
-        /**
-         * The size of the file (in bytes)
-         */
-        private final Long size;
-
-        /**
-         * The category of the file, as a {@link CategoryEnum}.
-         */
-        private final CategoryEnum category;
-
-        /**
-         * The id of this file's species data group,
-         * see {@link SpeciesDataGroupDAO}
-         */
-        private final Integer speciesDataGroupId;
-
-        /**
-         * The constructor providing all fields
-         * @param id The id of the download file
-         * @param name The name of the download file
-         * @param description The description of the download file
-         * @param path The path of the download file
-         * @param size The size of the download file
-         * @param category The category of the download file
-         * @param speciesDataGroupId The id of this file's species data group
-         */
-        public DownloadFileTO(Integer id, String name, String description, String path, Long size,
-                              CategoryEnum category, Integer speciesDataGroupId){
-            super(id, name, description);
-            this.category = category;
-            this.size = size;
-            this.path = path;
-            this.speciesDataGroupId = speciesDataGroupId;
-        }
-
-        /**
-         * Gets the path of the download file, relative to download files root directory. 
-         * @return The path of the download file
-         */
-        public String getPath() {
-            return path;
-        }
-
-        /**
-         * Gets the size of the file (in bytes).
-         * @return The size of the file (in bytes).
-         */
-        public Long getSize() {
-            return size;
-        }
-
-        /**
-         * Get the category of the file
-         * @return The category of the file
-         */
-        public CategoryEnum getCategory() {
-            return category;
-        }
-
-        /**
-         * Get the species data group id
-         * @return the species data group id
-         */
-        public Integer getSpeciesDataGroupId() {
-            return speciesDataGroupId;
-        }
-
-        @Override
-        public String toString() {
-            return "DownloadFile[id="+getId()
-                    +", name="+getName()
-                    +", description=" +getDescription()
-                    +", category="+category+""
-                    +", path="+path
-                    +", size="+size
-                    +", speciesDataGroupId="+speciesDataGroupId;
-        }
-
-        /**
-    	 * This enum contains all the different categories of files:
-    	 * <ul>
+         * This enum contains all the different categories of files:
+         * <ul>
          *   <li>{@code EXPR_CALLS_SIMPLE} a simple expression calls file</li>
          *   <li>{@code EXPR_CALLS_COMPLETE} a complete expression calls file</li>
          *   <li>{@code DIFF_EXPR_ANAT_SIMPLE} a simple differential expression across anatomy file</li>
@@ -160,12 +96,12 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
          *   <li>{@code AFFY_DATA} corresponds to an Affymetrix signal intensities file</li>
          *   <li>{@code RNASEQ_ANNOT} corresponds to RNA-Seq annotations file</li>
          *   <li>{@code RNASEQ_DATA} corresponds toRNA-Seq data file</li>
-    	 * </ul>
-    	 * @author Philippe Moret
-    	 * @version Bgee 13
-    	 * @since Bgee 13
-    	 *
-    	 */
+         * </ul>
+         * @author Philippe Moret
+         * @version Bgee 13
+         * @since Bgee 13
+         *
+         */
         public enum CategoryEnum implements TransferObject.EnumDAOField {
             EXPR_CALLS_SIMPLE("expr_simple"),
             EXPR_CALLS_COMPLETE("expr_complete"),
@@ -178,7 +114,7 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
             AFFY_DATA("affy_data"),
             RNASEQ_ANNOT("rnaseq_annot"),
             RNASEQ_DATA("rnaseq_data");
-
+        
             /**
              * Constructor
              * @param stringRepresentation the {@code String} representation of the enum.
@@ -186,17 +122,17 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
             CategoryEnum(String stringRepresentation) {
                 this.stringRepresentation = stringRepresentation;
             }
-
+        
             /**
              * The {@code String} representation of the enum.
              */
             private String stringRepresentation;
-
+        
             @Override
             public String getStringRepresentation() {
                 return stringRepresentation;
             }
-
+        
             /**
              * Return the mapped {@link DownloadFileDAO.DownloadFileTO.CategoryEnum} from a string representation.
              * @param stringRepresentation A string representation
@@ -207,32 +143,177 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
                 log.entry(stringRepresentation);
                 return log.exit(EntityTO.convert(CategoryEnum.class, stringRepresentation));
             }
-
+        
             @Override
             public String toString() {
                 return getStringRepresentation();
             }
         }
+
+        /**
+         * This enum contains all the different condition parameters of files:
+         * <ul>
+         *   <li>{@code ANAT_ENTITY} corresponds to the anatomical entity parameter</li>
+         *   <li>{@code DEV_STAGE} corresponds to the developmental stage parameter</li>
+         * </ul>
+         * @author  Valentine Rech de Laval
+         * @version Bgee 14, Apr. 2017
+         * @since   Bgee 14, Apr. 2017
+         *
+         */
+        public enum ConditionParameter implements TransferObject.EnumDAOField {
+            ANAT_ENTITY("anatomicalEntity"),
+            STAGE("developmentalStage");
+        
+            /**
+             * The {@code String} representation of the enum.
+             */
+            private final String stringRepresentation;
+        
+            /**
+             * Constructor
+             * 
+             * @param stringRepresentation  A {@code String} corresponding to
+             *                              this {@code ConditionParameter}.
+             */
+            ConditionParameter(String stringRepresentation) {
+                this.stringRepresentation = stringRepresentation;
+            }
+        
+            @Override
+            public String getStringRepresentation() {
+                return stringRepresentation;
+            }
+        
+            /**
+             * Return the mapped {@link DownloadFileDAO.DownloadFileTO.ConditionParameter} from a string representation.
+             * @param stringRepresentation A string representation
+             * @return The corresponding {@link DownloadFileDAO.DownloadFileTO.ConditionParameter}
+             * @see org.bgee.model.dao.api.TransferObject.EnumDAOField#convert(Class, String)
+             */
+            public static ConditionParameter convertToConditionParameter(String stringRepresentation){
+                log.entry(stringRepresentation);
+                return log.exit(EntityTO.convert(ConditionParameter.class, stringRepresentation));
+            }
+        
+            @Override
+            public String toString() {
+                return getStringRepresentation();
+            }
+        }
+
+        /**
+         * A {@code String} that is the path of the download file.
+         */
+        private final String path;
+
+        /**
+         * A {@code Long} that is the size of the file (in bytes).
+         */
+        private final Long size;
+
+        /**
+         * A {@code CategoryEnum} that is the category of the file.
+         */
+        private final CategoryEnum category;
+
+        /**
+         * An {@code Integer} that is the ID of this file's species data group,
+         * see {@link SpeciesDataGroupDAO}
+         */
+        private final Integer speciesDataGroupId;
+
+        /**
+         * A {@code Set} of {@code ConditionParameter}s that are the condition parameters
+         * used to generate this file.
+         */
+        private final Set<ConditionParameter> conditionParams;
+
+        /**
+         * The constructor providing all fields
+         * 
+         * @param id                    An {@code Integer} that is the ID of this file.
+         * @param name                  A {@code String} that is the name of this file.
+         * @param description           A {@code String} that is the description of this file.
+         * @param path                  A {@code String} that is the path of this file.
+         * @param size                  A {@code Long} that is the size of this file.
+         * @param category              A {@code CategoryEnum} that is the category of this file.
+         * @param speciesDataGroupId    An {@code Integer} that is the ID of this file's species data group.
+         * @param conditionParams       A {@code Collection} of {@code ConditionParameter}s that are
+         *                              the condition parameters used to generate this file.
+         */
+        public DownloadFileTO(Integer id, String name, String description, String path, Long size,
+                              CategoryEnum category, Integer speciesDataGroupId,
+                              Collection<ConditionParameter> conditionParams){
+            super(id, name, description);
+            this.category = category;
+            this.size = size;
+            this.path = path;
+            this.speciesDataGroupId = speciesDataGroupId;
+            this.conditionParams = Collections.unmodifiableSet(
+                    conditionParams == null? new HashSet<>(): new HashSet<>(conditionParams));
+        }
+
+        /**
+         * Gets the path of the download file, relative to download files root directory.
+         *  
+         * @return  The {@code String} that is the path of the download file.
+         */
+        public String getPath() {
+            return path;
+        }
+
+        /**
+         * Gets the size of the file (in bytes).
+         * 
+         * @return  The {@code Long} that is the size of the file (in bytes).
+         */
+        public Long getSize() {
+            return size;
+        }
+
+        /**
+         * Get the category of the file
+         * 
+         * @return The {@code CategoryEnum} that is the category of the file.
+         */
+        public CategoryEnum getCategory() {
+            return category;
+        }
+
+        /**
+         * Get the species data group ID.
+         * 
+         * @return  The {@code Integer} that is the species data group ID.
+         */
+        public Integer getSpeciesDataGroupId() {
+            return speciesDataGroupId;
+        }
+
+        /**
+         * Get the condition parameters used to generate this file.
+         * 
+         * @return  The {@code Collection} of {@code ConditionParameter}s that are
+         *          the condition parameters used to generate this file.
+         */
+        public Set<ConditionParameter> getConditionParameters() {
+            return conditionParams;
+        }
+
+        
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("DownloadFileTO [getId()=").append(getId())
+                    .append(", getName()=").append(getName())
+                    .append(", getDescription()=").append(getDescription())
+                    .append(", getPath()=").append(getPath())
+                    .append(", getSize()=").append(getSize())
+                    .append(", getCategory()=").append(getCategory())
+                    .append(", getSpeciesDataGroupId()=").append(getSpeciesDataGroupId())
+                    .append(", getConditionParameters()=").append(getConditionParameters())
+                    .append("]");
+            return builder.toString();
+        }
     }
-
-    /**
-     * Get all download files
-     * @return A {@link org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTOResultSet} containing the results
-     * as {@code DownloadFileTO}s
-     * @throws DAOException
-     */
-    DownloadFileTOResultSet getAllDownloadFiles() throws DAOException;
-
-    /**
-     * Insert the provided download files into the Bgee database, represented as
-     * a {@code Collection} of {@code DownloadFileTO}s.
-     * 
-     * @param files                     A {@code Collection} of {@code DownloadFileTO}s to be
-     *                                  inserted into the database.
-     * @throws IllegalArgumentException If {@code files} is empty or null.
-     * @throws DAOException             If an error occurred while trying
-     *                                  to insert {@code files}.
-     */
-    public int insertDownloadFiles(Collection<DownloadFileTO> files)
-            throws DAOException, IllegalArgumentException;
 }

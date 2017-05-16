@@ -1506,6 +1506,13 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         log.entry();
         
         this.writeln("<h1>Expression call download file documentation</h1>");
+        
+        this.writeln("<div class='alert alert-danger'>"
+                + "With the release of Bgee 14.0, the documentation has not yet been updated. "
+                + "We apologize for any inconvenience. In the meantime, please do not hesitate to "
+                + "contact us if you have any questions, at bgee@sib.swiss or @[twitter link]beedb."
+                + "</div>");
+        
         RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
         urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlDownloadGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);

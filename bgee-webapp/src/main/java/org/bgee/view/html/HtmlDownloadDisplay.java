@@ -28,7 +28,7 @@ import org.bgee.view.JsonHelper;
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
- * @version Bgee 14, Mar. 2017
+ * @version Bgee 14, Apr. 2017
  * @since   Bgee 13
  */
 public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDisplay {
@@ -236,14 +236,18 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         	intro.append("<p>This page provides annotations and experiment information "
                     + "(e.g., annotations to anatomy and development, quality scores used in QCs, "
                     + "chip or library information), and processed expression values "
-                    + "(e.g., read counts, RPKM values, log values of Affymetrix "
+                    + "(e.g., read counts, TPM and FPKM values, log values of Affymetrix "
                     + "probeset normalized signal intensities). Click on a species "
                     + "to browse files available for download.");
         } else {
             //pre-condition check in private method, use of assert allowed
             assert false: "Unknown DownloadPageType";
         }
-        intro.append("See also ");
+        intro.append(" It is possible to download these data directly into "
+                    + "R using our <a href='https://github.com/BgeeDB/BgeeDB_R' "
+                    + "class='external_link' target='_blank'>R package</a>.");
+
+        intro.append(" See also ");
         if (pageType == DownloadPageType.EXPR_CALLS) {
             RequestParameters urlGenerator = this.getNewRequestParameters();
             urlGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
@@ -257,10 +261,11 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             intro.append("<a href='" + urlGenerator.getRequestURL() 
                     + "' title='See Bgee gene expression calls'>gene expression calls</a>");
         }
-
-        intro.append(", and <a href='" + this.prop.getFTPRootDirectory() 
-                + "statistics.tsv' title='Database statistics TSV file'>"
-                + "database statistics</a>.</p>");
+        intro.append(".</p>");
+        // FIXME enable link to statistics TSV file
+//        intro.append(", and <a href='" + this.prop.getFTPRootDirectory() 
+//                + "statistics.tsv' title='Database statistics TSV file'>"
+//                + "database statistics</a>.</p>");
         return log.exit(intro.toString());
     }
     
@@ -354,7 +359,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         s.append("<div class='panel-body'>");
         // TODO: uncomment multi-species section when files are available
 //        s.append(getMultiSpeciesFigures(pageType, groups));
-        s.append("<p>These files will be available for the next release Bgee v14.1 (May 2017)</p>");
+        s.append("<p>These files will be available in a future release.</p>");
         s.append("</div>"); // close panel-body
         
         s.append("</div>"); // close panel
@@ -507,17 +512,18 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 		banner.append(this.getHelpLink("expr_help"));
 		banner.append("<p id='expr_no_data' class='no_data'>Not enough data</p>");
 		banner.append("<div id='expr_data'>");
-        banner.append("<form id='expr_data_form' class='row row-eq-height'>");
-        banner.append("    <div class='col-md-2 col-md-offset-1'>");
-        banner.append("        <a id='download_expr_data' href='' class='download_link'>Download</a>");
+        banner.append("<form id='expr_data_form' name='expr_data_form' class='row row-eq-height'>");
+        banner.append("    <div class='col-md-offset-1'>");
+        banner.append("        <a id='download_expr_data' href='' class='download_link big'>Download");
+        banner.append("        <span class='glyphicon glyphicon-download-alt'></span>");
+        banner.append("        </a>");
         banner.append("    </div>");
-//   data-placement='bottom' data-toggle='popover' data-trigger='hover' data-content='Some content inside the popover'
-        banner.append("    <div class='col-md-6'>");
+
+        banner.append("    <div class='selection'>");
         banner.append("        <div class='item_category'>Choose condition parameters");
-        // TODO: fix popover content
         banner.append("            <span class='glyphicon glyphicon-question-sign' data-placement='right' " +
                                         "data-toggle='popover' data-trigger='hover' " +
-                                        "data-content='Condition parameters define ...'></span>");
+                                        "data-content='Only anatomy, or combinations anatomy-development'></span>");
         banner.append("        </div>");
         banner.append("        <label class='checkbox-inline'>");
         banner.append("            <input type='hidden' name='downloadParam' value='anatEntity'>" );
@@ -531,10 +537,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         banner.append("            Developmental stage");
         banner.append("        </label>");
         banner.append("        <div class='item_category' >Get advanced columns ");
-        // TODO: fix popover content
         banner.append("            <span class='glyphicon glyphicon-question-sign' data-placement='right' " +
                                         "data-toggle='popover' data-trigger='hover' " +
-                                        "data-content='Additionnal columns contains informations by data types'></span>");
+                                        "data-content='Including information by data types'></span>");
         banner.append("        </div>");
         banner.append("        <label class='radio-inline'>");
         banner.append("            <input type='radio' name='downloadParam' id='advancedDataRadioYes'"
@@ -752,6 +757,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      */
     private String getDataGroupScriptTag(List<SpeciesDataGroup> dataGroups) {
         log.entry(dataGroups);
+        
         StringBuilder sb = new StringBuilder("<script>");
         sb.append("var speciesData = ");
         sb.append(this.getJsonHelper().toJson(dataGroups.stream()

@@ -39,7 +39,7 @@ public class CallDAOFilter {
      */
     private final LinkedHashSet<CallDataDAOFilter> dataFilters;
     /**
-     * See #isConditionObservedData()
+     * @see #getCallObservedData()
      */
     private final Boolean callObservedData;
     /**

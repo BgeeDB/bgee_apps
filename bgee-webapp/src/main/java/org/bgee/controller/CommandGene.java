@@ -27,8 +27,8 @@ import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.ConditionGraph;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
-import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.view.GeneDisplay;
@@ -40,7 +40,7 @@ import org.bgee.view.ViewFactory;
  * @author  Philippe Moret
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Mar. 2017
+ * @version Bgee 14, May 2017
  * @since   Bgee 13, Nov. 2015
  */
 public class CommandGene extends CommandParent {
@@ -207,7 +207,7 @@ public class CommandGene extends CommandParent {
         }
 
         // NOTE: we retrieve genes after the sanity check on geneId to avoid to throw an exception
-        Set<Gene> genes = serviceFactory.getGeneService().loadGenesByEnsemblId(geneId);
+        Set<Gene> genes = serviceFactory.getGeneService().loadGenesByEnsemblId(geneId, true);
         if (genes.size() == 0) {
             throw log.throwing(new PageNotFoundException("No gene corresponding to " + geneId));
         }
@@ -237,7 +237,8 @@ public class CommandGene extends CommandParent {
                 display.displayGeneChoice(genes);
                 log.exit(); return;
             }
-            Set<Gene> speciesGenes = genes.stream().filter(g -> g.getSpecies().getId().equals(speciesId))
+            Set<Gene> speciesGenes = genes.stream()
+                    .filter(g -> g.getSpecies().getId().equals(speciesId))
                     .collect(Collectors.toSet());
             if (speciesGenes.size() != 1) {
                 throw log.throwing(new PageNotFoundException("No gene corresponding to "
@@ -259,16 +260,16 @@ public class CommandGene extends CommandParent {
         // Expression calls, ConditionUtils, 
         // sorting, and redundant calls
         //**************************************
-        List<ExpressionCall> exprCalls = this.getExpressions(gene);
+        List<ExpressionCall> organCalls = this.getAnatEntitySilverExpressionCalls(gene);
         
-        if (exprCalls.isEmpty()) {
+        if (organCalls.isEmpty()) {
             log.debug("No calls for gene {}", gene.getEnsemblGeneId());
-             return log.exit(new GeneResponse(gene, exprCalls, new HashSet<>(), true, 
+             return log.exit(new GeneResponse(gene, organCalls, new HashSet<>(), true, 
                      new LinkedHashMap<>(), new HashMap<>(), new HashMap<>(), null));
         }
         
-        ConditionGraph conditionUtils = new ConditionGraph(
-                exprCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()), 
+        ConditionGraph organGraph = new ConditionGraph(
+                organCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()), 
                 serviceFactory);
         
         //we need to make sure that the ExpressionCalls are ordered in exactly the same way 
@@ -277,17 +278,39 @@ public class CommandGene extends CommandParent {
         //relations between Conditions for filtering them, which would be difficult to achieve
         //only by a query to the data source. So, we order them anyway. 
         long startFilteringTimeInMs = System.currentTimeMillis();
-        Collections.sort(exprCalls, new ExpressionCall.RankComparator(conditionUtils));
+        Collections.sort(organCalls, new ExpressionCall.RankComparator(organGraph));
         log.debug("Calls sorted in {} ms", System.currentTimeMillis() - startFilteringTimeInMs);
         
-        final Set<ExpressionCall> redundantCalls = ExpressionCall.identifyRedundantCalls(
-                exprCalls, conditionUtils);
+        final Set<String> orderedOrganIds = organCalls.stream()
+                .map(c ->c .getCondition().getAnatEntityId())
+                .collect(Collectors.toSet());
         
+        final List<ExpressionCall> organStageCalls = this.getAnatEntityDevStageBronzeExpressionCalls(gene);
+
+        List<ExpressionCall> orderedCalls = organStageCalls.stream()
+                .filter(c -> orderedOrganIds.contains(c.getCondition().getAnatEntityId()))
+                .collect(Collectors.toList());
+
+        ConditionGraph organStageGraph = new ConditionGraph(
+                orderedCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()), 
+                serviceFactory);
+
+        Collections.sort(orderedCalls, new ExpressionCall.RankComparator(organStageGraph));
+
+        final Set<ExpressionCall> redundantCalls = ExpressionCall.identifyRedundantCalls(
+                orderedCalls, organStageGraph);
+        
+        if (orderedCalls.isEmpty()) {
+            log.debug("No calls for gene {}", gene.getEnsemblGeneId());
+             return log.exit(new GeneResponse(gene, orderedCalls, new HashSet<>(), true, 
+                     new LinkedHashMap<>(), new HashMap<>(), new HashMap<>(), null));
+        }
+
         //**************************************
         // Grouping of Calls per anat. entity, 
         // Clustering, Building GeneResponse
         //**************************************
-        return log.exit(this.buildGeneResponse(gene, exprCalls, redundantCalls, true, conditionUtils));
+        return log.exit(this.buildGeneResponse(gene, orderedCalls, redundantCalls, true, organStageGraph));
     }
     
     /**
@@ -374,7 +397,41 @@ public class CommandGene extends CommandParent {
      * @return     The {@code List} of {@code ExpressionCall} associated to this gene, 
      *             ordered by global mean rank.
      */
-    private List<ExpressionCall> getExpressions(Gene gene) {
+    private List<ExpressionCall> getAnatEntitySilverExpressionCalls(Gene gene) {
+        log.entry(gene);
+                    
+        CallService service = serviceFactory.getCallService();
+        
+        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
+                new LinkedHashMap<>();
+        //The ordering is not essential here, because anyway we will need to order calls 
+        //with an equal rank, based on the relations between their conditions, which is difficult 
+        //to make in a query to the data source. 
+        serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
+
+        Map<SummaryCallType.ExpressionSummary, SummaryQuality> silverExpressedCallFilter = new HashMap<>();
+        silverExpressedCallFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
+        final List<ExpressionCall> calls = service.loadExpressionCalls(
+                new ExpressionCallFilter(silverExpressedCallFilter, 
+                        Collections.singleton(new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId())),
+                        null, null, true, true, false), 
+                EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID, 
+                        CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.GLOBAL_MEAN_RANK), 
+                serviceOrdering)
+            .collect(Collectors.toList());
+        
+        return log.exit(calls);
+    }
+    
+    /**
+     * Retrieves the sorted list of {@code ExpressionCall} associated to this gene, 
+     * ordered by global mean rank.
+     * 
+     * @param gene The {@code Gene}
+     * @return     The {@code List} of {@code ExpressionCall} associated to this gene, 
+     *             ordered by global mean rank.
+     */
+    private List<ExpressionCall> getAnatEntityDevStageBronzeExpressionCalls(Gene gene) {
         log.entry(gene);
         
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
@@ -387,14 +444,15 @@ public class CommandGene extends CommandParent {
         CallService service = serviceFactory.getCallService();
         
         Map<SummaryCallType.ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
-        summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
+        summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE);
         return log.exit(service.loadExpressionCalls(
                 new ExpressionCallFilter(summaryCallTypeQualityFilter, 
                         Collections.singleton(new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId())),
-                        null, null, true, true, false), 
+                        null, null, true, true, null), 
                 EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID, 
                         CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.CALL_TYPE, 
-                        CallService.Attribute.DATA_QUALITY, CallService.Attribute.GLOBAL_MEAN_RANK), 
+                        CallService.Attribute.DATA_QUALITY, CallService.Attribute.GLOBAL_MEAN_RANK,
+                        CallService.Attribute.EXPERIMENT_COUNTS), 
                 serviceOrdering)
             .collect(Collectors.toList()));
     }

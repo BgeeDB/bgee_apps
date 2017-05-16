@@ -8,7 +8,9 @@ import java.time.Month;
 import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,6 +32,7 @@ import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.GlobalNoExpress
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO.CategoryEnum;
+import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO.ConditionParameter;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesToDataGroupTO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesDataGroupTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
@@ -228,34 +231,47 @@ public class TOComparatorTest extends TestAncestor {
     @Test
     public void testAreDownloadFileTOsEqual() {
         DownloadFileTO to1 = new DownloadFileTO(1, "name1", "desc1", 
-                "path/", 10L, CategoryEnum.EXPR_CALLS_COMPLETE, 1);
+                "path/", 10L, CategoryEnum.EXPR_CALLS_COMPLETE, 1,
+                Collections.singleton(ConditionParameter.ANAT_ENTITY));
         DownloadFileTO to2 = new DownloadFileTO(1, "name1", "desc1", 
-                "path/", 10L, CategoryEnum.EXPR_CALLS_COMPLETE, 1);
+                "path/", 10L, CategoryEnum.EXPR_CALLS_COMPLETE, 1,
+                Collections.singleton(ConditionParameter.ANAT_ENTITY));
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
         to2 = new DownloadFileTO(1, "name1", "desc1", 
-                "path/", 10L, CategoryEnum.DIFF_EXPR_ANAT_COMPLETE, 1);
+                "path/", 10L, CategoryEnum.DIFF_EXPR_ANAT_COMPLETE, 1,
+                Collections.singleton(ConditionParameter.ANAT_ENTITY));
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         
         to2 = new DownloadFileTO(2, "name1", "desc1", 
-                "path/", 10L, CategoryEnum.EXPR_CALLS_COMPLETE, 1);
+                "path/", 10L, CategoryEnum.EXPR_CALLS_COMPLETE, 1,
+                Collections.singleton(ConditionParameter.ANAT_ENTITY));
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
         //regression test when using Long size value > 127, 
         //see http://stackoverflow.com/a/20542511/1768736
         to1 = new DownloadFileTO(1, "name1", "desc1", 
-                "path/", 3000L, CategoryEnum.EXPR_CALLS_COMPLETE, 1);
+                "path/", 3000L, CategoryEnum.EXPR_CALLS_COMPLETE, 1,
+                Collections.singleton(ConditionParameter.ANAT_ENTITY));
         to2 = new DownloadFileTO(1, "name1", "desc1", 
-                "path/", 3000L, CategoryEnum.EXPR_CALLS_COMPLETE, 1);
+                "path/", 3000L, CategoryEnum.EXPR_CALLS_COMPLETE, 1,
+                Collections.singleton(ConditionParameter.ANAT_ENTITY));
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         to1 = new DownloadFileTO(1, "name1", "desc1", 
-                "path/", null, CategoryEnum.EXPR_CALLS_COMPLETE, 1);
+                "path/", null, CategoryEnum.EXPR_CALLS_COMPLETE, 1,
+                Collections.singleton(ConditionParameter.ANAT_ENTITY));
         to2 = new DownloadFileTO(1, "name1", "desc1", 
-                "path/", null, CategoryEnum.EXPR_CALLS_COMPLETE, 1);
+                "path/", null, CategoryEnum.EXPR_CALLS_COMPLETE, 1,
+                Collections.singleton(ConditionParameter.ANAT_ENTITY));
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
+        
+        to2 = new DownloadFileTO(1, "name1", "desc1", 
+                "path/", null, CategoryEnum.EXPR_CALLS_COMPLETE, 1,
+                new HashSet<>(Arrays.asList(ConditionParameter.ANAT_ENTITY, ConditionParameter.STAGE)));
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
     }
 
     /**

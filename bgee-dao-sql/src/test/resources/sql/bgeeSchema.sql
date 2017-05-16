@@ -1423,7 +1423,8 @@ create table downloadFile (
    , "diff_expr_dev_complete", "diff_expr_dev_simple", "ortholog",
    "affy_annot","rnaseq_annot","affy_data","rnaseq_data"),
   speciesDataGroupId mediumint unsigned not null,
-  downloadFileSize int unsigned not null
+  downloadFileSize int unsigned not null,
+  downloadFileConditionParameters set('anatomicalEntity', 'developmentalStage')
 ) engine = innodb;
 
 -- *****************************************

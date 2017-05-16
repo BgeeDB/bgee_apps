@@ -5,6 +5,8 @@ import java.util.Set;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.BgeeEnum;
+import org.bgee.model.BgeeEnum.BgeeEnumField;
 import org.bgee.model.expressiondata.baseelements.PropagationState;
 
 /**
@@ -12,8 +14,9 @@ import org.bgee.model.expressiondata.baseelements.PropagationState;
  * {@link org.bgee.model.expressiondata.Call Call}s. They represent an overall summary 
  * of the {@link CallType}s from individual data types, associated to a same {@code Call}.
  * 
- * @author Frederic Bastian
- * @version Bgee 14 Mar. 2017
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, Apr. 2017
  * @see CallType
  * @see org.bgee.model.expressiondata.Call Call
  * @since Bgee 13 Sept. 2015
@@ -52,7 +55,7 @@ public interface SummaryCallType extends CallType {
      */
     //XXX: although there is no more "ambiguity" status starting from Bgee 14,
     //maybe the distinction between ExpressionSummary and Expression is still useful?
-    public static enum ExpressionSummary implements SummaryCallType {
+    public static enum ExpressionSummary implements SummaryCallType, BgeeEnumField {
         EXPRESSED, NOT_EXPRESSED;
         private final static Logger log = LogManager.getLogger(ExpressionSummary.class.getName());
 
@@ -93,6 +96,31 @@ public interface SummaryCallType extends CallType {
                 throw log.throwing(new IllegalStateException("CallType not supported: " 
                         + this));
             }
+        }
+
+        @Override
+        public String getStringRepresentation() {
+            log.entry();
+            return log.exit(this.name());
+        }
+        
+        /**
+         * Convert the {@code String} representation of a call type for baseline presence or 
+         * absence of expression (for instance, retrieved from request) into a
+         * {@code SummaryCallType.ExpressionSummary}.
+         * Operation performed by calling {@link BgeeEnum#convert(Class, String)} with 
+         * {@code SummaryCallType.ExpressionSummary} as the {@code Class} argument,
+         * and {@code representation} as the {@code String} argument.
+         * 
+         * @param representation            A {@code String} representing a data quality.
+         * @return                          A {@code SummaryCallType.ExpressionSummary}
+         *                                  corresponding to {@code representation}.
+         * @throws IllegalArgumentException If {@code representation} does not correspond 
+         *                                  to any {@code SummaryCallType.ExpressionSummary}.
+         * @see #convert(Class, String)
+         */
+        public static final ExpressionSummary convertToExpression(String representation) {
+            return BgeeEnum.convert(SummaryCallType.ExpressionSummary.class, representation);
         }
     }
     /**
@@ -136,7 +164,7 @@ public interface SummaryCallType extends CallType {
      * @see org.bgee.model.expressiondata.Call.DiffExpressionCall DiffExpressionCall
      * @since Bgee 13 Sept. 2015
      */
-    public static enum DiffExpressionSummary implements SummaryCallType {
+    public static enum DiffExpressionSummary implements SummaryCallType, BgeeEnumField {
         DIFF_EXPRESSED, OVER_EXPRESSED, UNDER_EXPRESSED, NOT_DIFF_EXPRESSED, 
         WEAK_AMBIGUITY_OVER, WEAK_AMBIGUITY_UNDER, WEAK_AMBIGUITY_NOT_DIFF, STRONG_AMBIGUITY;
         private final static Logger log = LogManager.getLogger(DiffExpressionSummary.class.getName());
@@ -155,6 +183,31 @@ public interface SummaryCallType extends CallType {
         @Override
         public Set<DataType> getAllowedDataTypes() {
             return CallType.DiffExpression.DIFF_EXPR_DATA_TYPES;
+        }
+        
+        @Override
+        public String getStringRepresentation() {
+            log.entry();
+            return log.exit(this.name());
+        }
+        
+        /**
+         * Convert the {@code String} representation of a call type from differential expression
+         * analyses (for instance, retrieved from request) into a 
+         * {@code SummaryCallType.DiffExpressionSummary}.
+         * Operation performed by calling {@link BgeeEnum#convert(Class, String)} with 
+         * {@code SummaryCallType.DiffExpressionSummary} as the {@code Class} argument,
+         * and {@code representation} as the {@code String} argument.
+         * 
+         * @param representation            A {@code String} representing a data quality.
+         * @return                          A {@code SummaryCallType.DiffExpressionSummary}
+         *                                  corresponding to {@code representation}.
+         * @throws IllegalArgumentException If {@code representation} does not correspond 
+         *                                  to any {@code SummaryCallType.DiffExpressionSummary}.
+         * @see #convert(Class, String)
+         */
+        public static final DiffExpressionSummary convertToDiffExpression(String representation) {
+            return BgeeEnum.convert(SummaryCallType.DiffExpressionSummary.class, representation);
         }
     }
 }

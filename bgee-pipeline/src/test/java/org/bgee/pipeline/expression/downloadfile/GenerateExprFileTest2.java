@@ -248,7 +248,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
         .thenReturn(calls.stream().filter(c -> c.getCondition().getSpeciesId() == 2));
         
         Set<SingleSpExprFileType2> fileTypes = new HashSet<SingleSpExprFileType2>(
-                Arrays.asList(SingleSpExprFileType2.EXPR_SIMPLE, SingleSpExprFileType2.EXPR_COMPLETE)); 
+                Arrays.asList(SingleSpExprFileType2.EXPR_SIMPLE, SingleSpExprFileType2.EXPR_ADVANCED)); 
 
         String directory = testFolder.newFolder("folder_isObservedDataOnly_" + true).getPath();
 
@@ -263,9 +263,9 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
                 SingleSpExprFileType2.EXPR_SIMPLE + "_organ_stage" + GenerateDownloadFile.EXTENSION).getAbsolutePath();
         
         String outputCompleteFile11 = new File(directory, "Genus11_spName1_" + 
-                SingleSpExprFileType2.EXPR_COMPLETE + "_organ_stage" + GenerateDownloadFile.EXTENSION).getAbsolutePath();
+                SingleSpExprFileType2.EXPR_ADVANCED + "_organ_stage" + GenerateDownloadFile.EXTENSION).getAbsolutePath();
         String outputCompleteFile22 = new File(directory, "Genus22_spName2_" + 
-                SingleSpExprFileType2.EXPR_COMPLETE + "_organ_stage" + GenerateDownloadFile.EXTENSION).getAbsolutePath();
+                SingleSpExprFileType2.EXPR_ADVANCED + "_organ_stage" + GenerateDownloadFile.EXTENSION).getAbsolutePath();
         
         assertExpressionFile(outputSimpleFile11, 11, true, 1, true);
         assertExpressionFile(outputSimpleFile22, 22, true, 0, true);

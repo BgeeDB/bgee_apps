@@ -5,11 +5,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Supplier;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -19,9 +24,16 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO.CategoryEnum;
+import org.bgee.model.Service;
+import org.bgee.model.ServiceFactory;
+import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesDataGroupTO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesToDataGroupTO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
+import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.file.DownloadFile;
+import org.bgee.model.file.SpeciesDataGroup;
+import org.bgee.model.species.Species;
 import org.bgee.pipeline.BgeeDBUtils;
 import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.MySQLDAOUser;
@@ -30,12 +42,12 @@ import org.bgee.pipeline.MySQLDAOUser;
  * Class responsible for inserting the species data groups, species data groups to species mappings,
  * and download files into the Bgee database.
  * 
- * @author Valentine Rech de Laval
- * @author Frederic Bastian
- * @version Bgee 13 Oct. 2015
- * @since Bgee 13
+ * @author  Valentine Rech de Laval
+ * @author  Frederic Bastian
+ * @version Bgee 14, May 2017
+ * @since   Bgee 13, Sept 2015
  */
-//FIXME: to reactivate?
+//FIXME: reactivate insertion of species data groups and species data groups to species mappings?
 public class InsertSpeciesDataGroups extends MySQLDAOUser {
     
     /**
@@ -222,6 +234,11 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
     private final String directory;
     
     /**
+     * A {@code Supplier} of {@code ServiceFactory}s to be able to provide one to each thread.
+     */
+    private final Supplier<ServiceFactory> serviceFactorySupplier;
+
+    /**
      * Constructor requesting parameters related to download files, and using 
      * the default {@code DAOManager}, see {@link #InsertSpeciesDataGroups(MySQLDAOManager, 
      * LinkedHashMap, LinkedHashMap, LinkedHashMap, Map, Map, String) main constructor}.
@@ -242,7 +259,7 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
             Map<String, String> singleSpCatToFilePattern,
             Map<String, String> multiSpCatToFilePattern,
             String directory) {
-        this(null, groupToSpecies, groupToCaterories, groupToReplacement, 
+        this(null, ServiceFactory::new, groupToSpecies, groupToCaterories, groupToReplacement, 
                 singleSpCatToFilePattern, multiSpCatToFilePattern, directory);
     }
 
@@ -251,6 +268,8 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
      * this object to perform queries to the database, and all parameters related to download files.
      * 
      * @param manager                       The {@code MySQLDAOManager} to use.
+     * @param serviceFactorySupplier        A {@code Supplier} of {@code ServiceFactory}s 
+     *                                      to be able to provide one to each thread.
      * @param groupToSpecies                A {@code LinkedHashMap} where keys are {@code String}s
      *                                      that are names given to groups of species, the associated
      *                                      value being a {@code Set} of {@code String}s that are
@@ -297,7 +316,7 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
      *                                      deduce relative paths.
      * @throws IllegalArgumentException If some mandatory parameters are incorrectly provided.
      */
-    public InsertSpeciesDataGroups(MySQLDAOManager manager,
+    public InsertSpeciesDataGroups(MySQLDAOManager manager, Supplier<ServiceFactory> serviceFactorySupplier,
             LinkedHashMap<String, Set<Integer>> groupToSpecies,
             LinkedHashMap<String, Set<String>> groupToCaterories,
             LinkedHashMap<String, String> groupToReplacement,
@@ -305,6 +324,7 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
             Map<String, String> multiSpCatToFilePattern,
             String directory) {
         super(manager);
+        this.serviceFactorySupplier = serviceFactorySupplier;
         log.entry(groupToSpecies, groupToCaterories, groupToReplacement, singleSpCatToFilePattern,
                 multiSpCatToFilePattern, directory);
         if (groupToSpecies == null || groupToSpecies.isEmpty()) {
@@ -327,10 +347,12 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
         }
         this.singleSpCatToFilePattern = new HashMap<>(singleSpCatToFilePattern);
 
-        if (multiSpCatToFilePattern == null || multiSpCatToFilePattern.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("No multiCategory-pattern mapping is provided"));
+        // FIXME enable sanity checks on multi-species files
+        if (multiSpCatToFilePattern != null && !multiSpCatToFilePattern.isEmpty()) {
+            this.multiSpCatToFilePattern = new HashMap<>(multiSpCatToFilePattern);
+        } else {
+            this.multiSpCatToFilePattern = new HashMap<>();
         }
-        this.multiSpCatToFilePattern = new HashMap<>(multiSpCatToFilePattern);
 
         if (StringUtils.isEmpty(directory)) {
             throw log.throwing(new IllegalArgumentException("No directory is provided"));
@@ -360,18 +382,19 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
                     .collect(Collectors.toSet()) + "]"));
         }
 
-        if (!this.multiSpCatToFilePattern.keySet().equals(
-                this.groupToCaterories.entrySet().stream()
-                .filter(e -> this.groupToSpecies.get(e.getKey()).size() > 1)
-                .flatMap(e -> e.getValue().stream())
-                .collect(Collectors.toSet()))) {
-            throw log.throwing(new IllegalArgumentException("Different categories between "
-                    + "mappings multiSpCategory-filePattern [" + this.multiSpCatToFilePattern.keySet()
-                    + "] and group-category with several species ["
-                    + this.groupToCaterories.values().stream().filter(e -> e.size() > 1)
-                    .flatMap(e -> e.stream())
-                    .collect(Collectors.toSet()) + "]"));
-        }
+        // FIXME enable sanity checks on multi-species files
+//        if (!this.multiSpCatToFilePattern.keySet().equals(
+//                this.groupToCaterories.entrySet().stream()
+//                .filter(e -> this.groupToSpecies.get(e.getKey()).size() > 1)
+//                .flatMap(e -> e.getValue().stream())
+//                .collect(Collectors.toSet()))) {
+//            throw log.throwing(new IllegalArgumentException("Different categories between "
+//                    + "mappings multiSpCategory-filePattern [" + this.multiSpCatToFilePattern.keySet()
+//                    + "] and group-category with several species ["
+//                    + this.groupToCaterories.values().stream().filter(e -> e.size() > 1)
+//                    .flatMap(e -> e.stream())
+//                    .collect(Collectors.toSet()) + "]"));
+//        }
         //sanity check on species IDs
         BgeeDBUtils.checkAndGetSpeciesIds(
                 new ArrayList<Integer>(this.groupToSpecies.values().stream()
@@ -390,31 +413,59 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
     public void insert() throws IOException {
         log.entry();
         
-        // First, we create SpeciesDataGroupTOs and SpeciesToDataGroupTOs
-        Set<SpeciesToDataGroupTO> speciesToDataGroupTOs = new HashSet<SpeciesToDataGroupTO>();
-        //we store the SpeciesDataGroups associated to their name, to be able 
-        //to easily retrieve the generated ID of a SpeciesDataGroup from its name 
-        //(and also to insert the SpeciesDataGroups). 
-        Map<String, SpeciesDataGroupTO> speciesDataGroupTOs = new HashMap<>(); 
-        int i = 1;
-        for (Entry<String, Set<Integer>> groupToSpecies: this.groupToSpecies.entrySet()) {
-            if (StringUtils.isBlank(groupToSpecies.getKey())) {
-                throw log.throwing(new IllegalStateException("No group name can be blank."));
-            }
-            if (groupToSpecies.getValue().isEmpty()) {
-                throw log.throwing(new IllegalStateException(
-                        "No species in group " + groupToSpecies.getKey()));
-            }
-            final String groupName = groupToSpecies.getKey().trim();
-            final Integer groupId = i;
-            speciesDataGroupTOs.put(groupName, 
-                    //we also use i to generate the preferred order
-                    new SpeciesDataGroupTO(groupId, groupName, null, i));
-            speciesToDataGroupTOs.addAll(groupToSpecies.getValue().stream()
-                    .map(e -> new SpeciesToDataGroupTO(e, groupId))
-                .collect(Collectors.toSet()));
-            i++;
-        }
+        // FIXME enable creation of SpeciesDataGroupTOs and SpeciesToDataGroupTOs
+//        // First, we create SpeciesDataGroupTOs and SpeciesToDataGroupTOs
+//        Set<SpeciesToDataGroupTO> speciesToDataGroupTOs = new HashSet<SpeciesToDataGroupTO>();
+//        //we store the SpeciesDataGroups associated to their name, to be able 
+//        //to easily retrieve the generated ID of a SpeciesDataGroup from its name 
+//        //(and also to insert the SpeciesDataGroups). 
+//        Map<String, SpeciesDataGroupTO> speciesDataGroupTOs = new HashMap<>(); 
+//        int i = 1;
+//        for (Entry<String, Set<Integer>> groupToSpecies: this.groupToSpecies.entrySet()) {
+//            if (StringUtils.isBlank(groupToSpecies.getKey())) {
+//                throw log.throwing(new IllegalStateException("No group name can be blank."));
+//            }
+//            if (groupToSpecies.getValue().isEmpty()) {
+//                throw log.throwing(new IllegalStateException(
+//                        "No species in group " + groupToSpecies.getKey()));
+//            }
+//            final String groupName = groupToSpecies.getKey().trim();
+//            final Integer groupId = i;
+//            speciesDataGroupTOs.put(groupName, 
+//                    //we also use i to generate the preferred order
+//                    new SpeciesDataGroupTO(groupId, groupName, null, i));
+//            speciesToDataGroupTOs.addAll(groupToSpecies.getValue().stream()
+//                    .map(e -> new SpeciesToDataGroupTO(e, groupId))
+//                .collect(Collectors.toSet()));
+//            i++;
+//        }
+
+//        List<SpeciesDataGroup> groups = serviceFactorySupplier.get().getSpeciesDataGroupService()
+//                .loadAllSpeciesDataGroup();
+        Set<Species> list = serviceFactorySupplier.get().getSpeciesService().loadSpeciesByIds(null, false);
+        List<SpeciesDataGroup> groups = list.stream()
+                .sorted(Comparator.comparing(Species::getPreferredDisplayOrder))
+                .map(sp -> new SpeciesDataGroup(sp.getId(), sp.getName(), sp.getDescription(),
+                        Arrays.asList(sp), sp.getId() == 9606?
+                                Collections.singleton(
+                                        new DownloadFile("path", "name", DownloadFile.CategoryEnum.RNASEQ_DATA, 30L, sp.getId())): 
+                                    new HashSet<>(Arrays.asList(
+                                new DownloadFile("SIMPLE/ANAT_ENTITY", "ANAT_ENTITY",
+                                        DownloadFile.CategoryEnum.EXPR_CALLS_SIMPLE, 10L, sp.getId(),
+                                        Arrays.asList(DownloadFile.ConditionParameter.ANAT_ENTITY)),
+                                new DownloadFile("COMPLETE/ANAT_ENTITY", "ANAT_ENTITY",
+                                        DownloadFile.CategoryEnum.EXPR_CALLS_COMPLETE, 10L, sp.getId(),
+                                        Arrays.asList(DownloadFile.ConditionParameter.ANAT_ENTITY)),
+                                new DownloadFile("SIMPLE/ANAT_ENTITYandDEV_STAGE", "ANAT_ENTITYandDEV_STAGE",
+                                        DownloadFile.CategoryEnum.EXPR_CALLS_SIMPLE, 10L, sp.getId(),
+                                        Arrays.asList(DownloadFile.ConditionParameter.ANAT_ENTITY, DownloadFile.ConditionParameter.DEV_STAGE)),
+                                new DownloadFile("COMPLETE/ANAT_ENTITYandDEV_STAGE", "ANAT_ENTITYandDEV_STAGE",
+                                        DownloadFile.CategoryEnum.EXPR_CALLS_COMPLETE, 10L, sp.getId(),
+                                        Arrays.asList(DownloadFile.ConditionParameter.ANAT_ENTITY, DownloadFile.ConditionParameter.DEV_STAGE)),
+                                new DownloadFile("path", "name", DownloadFile.CategoryEnum.RNASEQ_DATA, 30L, sp.getId()),
+                                new DownloadFile("path", "name", DownloadFile.CategoryEnum.AFFY_DATA, 40L, sp.getId())))))
+                .filter(group -> group.getId().equals(9606) || group.getId().equals(10090))
+                .collect(Collectors.toList());
 
         // Then, we create DownloadFileTOs
         Set<DownloadFileTO> downloadFileTOs = new HashSet<DownloadFileTO>();
@@ -424,7 +475,10 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
         for (Entry<String, Set<String>> groupAndCategories : this.groupToCaterories.entrySet()) {
 
             String groupName = groupAndCategories.getKey();
-            Integer groupId = speciesDataGroupTOs.get(groupName).getId();
+            Integer groupId = groups.stream()
+                    .filter(g -> groupName.equals(g.getName()))
+                    .map(g -> g.getId())
+                    .findFirst().get();
             int speciesCount = this.groupToSpecies.get(groupName).size();
             
             for (String category: groupAndCategories.getValue()) {
@@ -443,21 +497,32 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
                 //if the file doesn't exist or is empty, we just skip it, this is useful
                 //if there were no data for a file type in a group, we don't have to change 
                 //the arguments
-                if (!file.exists()) {
-                    log.warn("File not existing, skipping: {}", file);
-                    continue;
-                } else if (file.isDirectory()) {
-                    throw log.throwing(new IllegalArgumentException(
-                            "The file " + file.getAbsolutePath() + " is a directory."));
-                } else if (!this.hasEnoughLines(file)) {
-                    log.warn("File is empty, skipping: {}", file);
-                    continue;
+//                if (!file.exists()) {
+//                    log.warn("File not existing, skipping: {}", file);
+//                    continue;
+//                } else if (file.isDirectory()) {
+//                    throw log.throwing(new IllegalArgumentException(
+//                            "The file " + file.getAbsolutePath() + " is a directory."));
+//                } else if (!this.hasEnoughLines(file)) {
+//                    log.warn("File is empty, skipping: {}", file);
+//                    continue;
+//                }
+                List<DownloadFileTO.ConditionParameter> conditionParams = null;
+                // We need to define which the condition parameters was used to generate the file
+                if (category.contains(DownloadFile.CategoryEnum.EXPR_CALLS_SIMPLE.getStringRepresentation())
+                        || category.contains(DownloadFile.CategoryEnum.EXPR_CALLS_COMPLETE.getStringRepresentation())) {
+                    conditionParams = new ArrayList<>();
+                    conditionParams.add(DownloadFileTO.ConditionParameter.ANAT_ENTITY);
+                    if (file.getName().contains("development")) {
+                        conditionParams.add(DownloadFileTO.ConditionParameter.STAGE);
+                    }
                 }
-
+                Long fileLength = 10L;
                 // Currently, the file description is not use, so for the moment, we set it to null.
                 downloadFileTOs.add(new DownloadFileTO(
-                        downloadFileId, file.getName(), null, path, file.length(),
-                        CategoryEnum.convertToCategoryEnum(category), groupId));
+                        downloadFileId, file.getName(), null, path, fileLength,
+                        this.getCategoryEnum(category), groupId,
+                        conditionParams));
                 groupIdsWithData.add(groupId);
                 downloadFileId++;
             }
@@ -470,27 +535,31 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
             
             //we only insert groups with actual download files existing
             
-            // Insertion of SpeciesDataGroupTOs
-            log.debug("Start inserting species data groups...");
-            Set<SpeciesDataGroupTO> filteredSpeciesDataGroupTOs = speciesDataGroupTOs.values()
-                    .stream().filter(e -> groupIdsWithData.contains(e.getId()))
-                    .collect(Collectors.toSet());
-            this.getSpeciesDataGroupDAO().insertSpeciesDataGroups(filteredSpeciesDataGroupTOs);
-            log.debug("Done inserting species data groups, {} groups inserted", 
-                    filteredSpeciesDataGroupTOs.size());
-
-            // Insertion of SpeciesToDataGroupTOs
-            log.debug("Start inserting species data groups to species mappings...");
-            Set<SpeciesToDataGroupTO> filteredSpeciesToDataGroupTOs = speciesToDataGroupTOs
-                    .stream().filter(e -> groupIdsWithData.contains(e.getGroupId()))
-                    .collect(Collectors.toSet());
-            this.getSpeciesDataGroupDAO().insertSpeciesToDataGroup(filteredSpeciesToDataGroupTOs);
-            log.debug("Done inserting species data groups to species mappings, {} mappings inserted", 
-                    filteredSpeciesToDataGroupTOs.size());
+            // FIXME enable insertion of SpeciesDataGroupTOs and SpeciesToDataGroupTOs
+//            // Insertion of SpeciesDataGroupTOs
+//            log.debug("Start inserting species data groups...");
+//            Set<SpeciesDataGroupTO> filteredSpeciesDataGroupTOs = speciesDataGroupTOs.values()
+//                    .stream().filter(e -> groupIdsWithData.contains(e.getId()))
+//                    .collect(Collectors.toSet());
+//            this.getSpeciesDataGroupDAO().insertSpeciesDataGroups(filteredSpeciesDataGroupTOs);
+//            log.debug("Done inserting species data groups, {} groups inserted", 
+//                    filteredSpeciesDataGroupTOs.size());
+//
+//            // Insertion of SpeciesToDataGroupTOs
+//            log.debug("Start inserting species data groups to species mappings...");
+//            Set<SpeciesToDataGroupTO> filteredSpeciesToDataGroupTOs = speciesToDataGroupTOs
+//                    .stream().filter(e -> groupIdsWithData.contains(e.getGroupId()))
+//                    .collect(Collectors.toSet());
+//            this.getSpeciesDataGroupDAO().insertSpeciesToDataGroup(filteredSpeciesToDataGroupTOs);
+//            log.debug("Done inserting species data groups to species mappings, {} mappings inserted", 
+//                    filteredSpeciesToDataGroupTOs.size());
             
             // Insertion of DownloadFileTOs
             log.debug("Start inserting download files...");
-            this.getDownloadFileDAO().insertDownloadFiles(downloadFileTOs);
+
+            log.info("Download files: {}", downloadFileTOs);
+
+//            this.getDownloadFileDAO().insertDownloadFiles(downloadFileTOs);
             log.debug("Done inserting download files, {} files inserted.", downloadFileTOs.size());
             
             this.commit();
@@ -500,6 +569,32 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
 
         log.info("Done inserting species data groups.");
         log.exit();
+    }
+
+    private CategoryEnum getCategoryEnum(String category) {
+        log.entry(category);
+
+        DownloadFile.CategoryEnum serviceCategory =
+                DownloadFile.CategoryEnum.convertToCategoryEnum(category.replace("_dev", ""));
+        switch (serviceCategory) {
+                case EXPR_CALLS_SIMPLE:
+                    return log.exit(DownloadFileTO.CategoryEnum.EXPR_CALLS_SIMPLE);
+                case EXPR_CALLS_COMPLETE:
+                    return log.exit(DownloadFileTO.CategoryEnum.EXPR_CALLS_COMPLETE);
+                case DIFF_EXPR_ANAT_SIMPLE:
+                case DIFF_EXPR_ANAT_COMPLETE:
+                case DIFF_EXPR_DEV_COMPLETE:
+                case DIFF_EXPR_DEV_SIMPLE:
+                case ORTHOLOG:
+                case AFFY_ANNOT:
+                case AFFY_DATA:
+                case RNASEQ_ANNOT:
+                case RNASEQ_DATA:
+                    return log.exit(DownloadFileTO.CategoryEnum.convertToCategoryEnum(
+                            serviceCategory.getStringRepresentation()));
+                default:
+                    throw new IllegalArgumentException("Category not supported: " + serviceCategory);
+            }
     }
 
     /**

@@ -124,7 +124,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	    this.writeln("<span id='bgee_version'>version 14.0</span>");
 
 	    this.writeln("<div id='bgee_hp_logo'><img src='" + this.prop.getLogoImagesRootDirectory() 
-	            + "bgee13_hp_logo.png' alt='Bgee logo'></div>");
+	            + "bgee14beta_hp_logo.png' alt='Bgee logo'></div>");
 	
 	    this.writeln("<div class='mini_text'>Gene expression data in animals</div>");
 
@@ -306,7 +306,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	    
 	    this.writeln("<div class='panel-body'>");
 	    
-	    this.writeOneNews("2017-05", "Release of Bgee version 14.0:"
+	    this.writeOneNews("2017-05-16", "Release of Bgee version 14.0:"
 	            + "<ul>"
 	            + "  <li>12 new species, bringing the total to 29:"
 	            + "    <ul>"

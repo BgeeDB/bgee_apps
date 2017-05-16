@@ -31,6 +31,7 @@ import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.ConditionGraph;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.source.Source;
 import org.bgee.view.GeneDisplay;
@@ -42,7 +43,7 @@ import org.bgee.view.JsonHelper;
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, Mar. 2017
+ * @version Bgee 14, May 2017
  * @since   Bgee 13, Oct. 2015
  */
 public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
@@ -279,8 +280,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         this.writeln("<div id='expr_intro' class='col-xs-offset-1 col-sm-offset-2 col-sm-9 col-md-offset-0 col-md-10'>"
                 + "Rank scores of expression calls are normalized across genes, conditions and species. "
                 + "Low score means that the gene is highly expressed in the condition. "
-                + "Max rank score in all species: 4.79e4. Min rank score varies across species.</div>");
-        
+                + "Max rank score in all species: 4.10e4. Min rank score varies across species.</div>");
+
 		//Source info
 		Set<DataType> allowedDataTypes = geneResponse.getExprCalls().stream()
 		        .flatMap(call -> call.getCallData().stream())
@@ -523,7 +524,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
 		// Quality cell
 		sb.append("<td>")
-                .append(getDataTypeSpans(calls.stream().flatMap(e -> e.getCallData().stream()).collect(Collectors.toList())))
+                .append(getDataTypeSpans(calls.stream().flatMap(e -> e.getCallData().stream())
+                        .collect(Collectors.toList())))
 				.append("<ul class='masked quality-list'>")
 				.append(calls.stream().map(call -> {
 						StringBuilder sb2 = new StringBuilder();
@@ -634,9 +636,10 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         Set<DataType> dataTypes = call.getCallData().stream().map(ExpressionCallData::getDataType)
                 .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)));
         String rankScore = htmlEntities(call.getFormattedGlobalMeanRank());
-        if (dataTypes.contains(DataType.AFFYMETRIX) || 
+        if (!SummaryQuality.BRONZE.equals(call.getSummaryQuality()) && 
+                (dataTypes.contains(DataType.AFFYMETRIX) || 
                 dataTypes.contains(DataType.RNA_SEQ) || 
-                call.getGlobalMeanRank().compareTo(BigDecimal.valueOf(20000)) < 0) {
+                call.getGlobalMeanRank().compareTo(BigDecimal.valueOf(20000)) < 0)) {
             return log.exit(rankScore);
         }
         StringBuilder sb = new StringBuilder();

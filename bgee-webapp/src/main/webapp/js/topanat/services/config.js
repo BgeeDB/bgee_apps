@@ -6,6 +6,7 @@ angular.module('services.config', [])
     	//to query the server. But maybe this should be part of a bigger update, 
     	//making use of the Bgee JS objects to generate URLs, or maybe by using URLs 
     	//provided by the server in the responses...
+    	//TODO we should find a solution to manage several bgee version on the same server. 
         mockupUrl: '/',
         expr_type: 'EXPRESSED',
         data_type: ['RNA-Seq', 'Affymetrix data', 'In situ hybridization', 'EST'],

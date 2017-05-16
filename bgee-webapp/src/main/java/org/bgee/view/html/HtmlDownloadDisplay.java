@@ -261,10 +261,11 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             intro.append("<a href='" + urlGenerator.getRequestURL() 
                     + "' title='See Bgee gene expression calls'>gene expression calls</a>");
         }
-
-        intro.append(", and <a href='" + this.prop.getFTPRootDirectory() 
-                + "statistics.tsv' title='Database statistics TSV file'>"
-                + "database statistics</a>.</p>");
+        intro.append(".</p>");
+        // FIXME enable link to statistics TSV file
+//        intro.append(", and <a href='" + this.prop.getFTPRootDirectory() 
+//                + "statistics.tsv' title='Database statistics TSV file'>"
+//                + "database statistics</a>.</p>");
         return log.exit(intro.toString());
     }
     
@@ -358,7 +359,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         s.append("<div class='panel-body'>");
         // TODO: uncomment multi-species section when files are available
 //        s.append(getMultiSpeciesFigures(pageType, groups));
-        s.append("<p>These files will be available for the next release of Bgee (version 14.1)</p>");
+        s.append("<p>These files will be available in a future release.</p>");
         s.append("</div>"); // close panel-body
         
         s.append("</div>"); // close panel

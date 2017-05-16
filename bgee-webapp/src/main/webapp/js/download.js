@@ -726,7 +726,7 @@ var download = {
             	this.$rnaSeqDataCsv.attr( "href", bgeeRnaSeqDataFileUrl );
             	this.$rnaSeqAnnotCsv.attr( "href", bgeeRnaSeqAnnotFileUrl );
             	this.$rnaSeqAnnotCsv.text( "Download experiments/libraries info (" + bgeeRnaSeqAnnotFileSize + ")" );
-            	this.$rnaSeqDataCsv.text( "Download read counts and RPKMs (" + bgeeRnaSeqDataFileSize + ")" );
+            	this.$rnaSeqDataCsv.text( "Download read counts, TPMs, and FPKMs (" + bgeeRnaSeqDataFileSize + ")" );
             	this.$rnaSeqDataRoot.attr("href", rnaSeqExprValuesDirs[id]);
             }
 

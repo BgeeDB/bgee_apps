@@ -582,8 +582,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 "Bgee " + PROCESSED_EXPR_VALUES_PAGE_NAME.toLowerCase() + " page", 
                 PROCESSED_EXPR_VALUES_PAGE_NAME, 
                 this.prop.getLogoImagesRootDirectory() + "proc_values_logo.png", 
-                "Annotations and processed expression data (e.g., read counts, RPKM values, "
-                + "Affymetrix probeset signal intensities)."));
+                "Annotations and processed expression data (e.g., read counts, TPM and "
+                + "RPKM values, Affymetrix probeset signal intensities)."));
         
         return log.exit(logos.toString());
     }

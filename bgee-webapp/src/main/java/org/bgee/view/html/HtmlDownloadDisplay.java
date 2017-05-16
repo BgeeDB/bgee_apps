@@ -236,7 +236,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         	intro.append("<p>This page provides annotations and experiment information "
                     + "(e.g., annotations to anatomy and development, quality scores used in QCs, "
                     + "chip or library information), and processed expression values "
-                    + "(e.g., read counts, RPKM values, log values of Affymetrix "
+                    + "(e.g., read counts, TPM and FPKM values, log values of Affymetrix "
                     + "probeset normalized signal intensities). Click on a species "
                     + "to browse files available for download.");
         } else {

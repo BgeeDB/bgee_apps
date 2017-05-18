@@ -16,17 +16,13 @@ import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.CommandRPackage;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.anatdev.AnatEntity;
-import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
-import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.ontology.OntologyRelation;
 import org.bgee.model.species.Species;
 import org.bgee.view.RPackageDisplay;
 import org.bgee.view.ViewFactory;
-import org.supercsv.io.CsvBeanWriter;
 import org.supercsv.io.CsvMapWriter;
-import org.supercsv.io.ICsvBeanWriter;
 import org.supercsv.io.ICsvMapWriter;
 
 public class CsvRPackageDisplay extends CsvParentDisplay implements RPackageDisplay {

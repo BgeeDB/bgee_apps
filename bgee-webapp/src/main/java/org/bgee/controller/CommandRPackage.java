@@ -189,7 +189,12 @@ public class CommandRPackage extends CommandParent {
         // Create Call filter objects
         //****************************************
         //CallDAOFilter: for now, we only allow to define one CallDAOFilter object.
-        Boolean filterOnStageId = stageIds == null ? null : true;
+        Boolean onlyObservedCalls = true;
+        Boolean onlyObservedStages = true;
+        if(stageIds != null){
+        	onlyObservedCalls = false;
+        	onlyObservedStages = false;
+        }
         Collection<ConditionFilter> conditionFilter = stageIds == null || stageIds.isEmpty()? 
                 null: Collections.singleton(new ConditionFilter(null, stageIds));
         GeneFilter geneFilter = new GeneFilter(speciesId, this.requestParameters.getBackgroundList());
@@ -198,8 +203,7 @@ public class CommandRPackage extends CommandParent {
         ExpressionCallFilter callFilter = new ExpressionCallFilter(summaryCallTypeQualityFilter,
         		Collections.singleton(geneFilter),
                 conditionFilter, dataTypes,
-                //FIXME what mean these booleans??
-               true, true, filterOnStageId);
+                onlyObservedCalls, true, onlyObservedStages);
 
 
         //****************************************

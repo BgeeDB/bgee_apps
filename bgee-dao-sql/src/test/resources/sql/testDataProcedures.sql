@@ -17,7 +17,7 @@ BEGIN
         
         INSERT INTO dataSource (dataSourceId,dataSourceName,XRefUrl,experimentUrl,evidenceUrl,baseUrl,releaseDate,releaseVersion,dataSourceDescription,toDisplay,category,displayOrder)
         VALUES (1,'First DataSource','XRefUrl','experimentUrl','evidenceUrl','baseUrl','2012-10-19','1.0','My custom data source',0,'Genomics database',1),
-               (2,'NCBI Taxonomy','','','','http://www.ncbi.nlm.nih.gov/taxonomy','2012-10-20','v13','Source taxonomy used in Bgee',1,'',3),
+               (2,'NCBI Taxonomy','','','','https://www.ncbi.nlm.nih.gov/taxonomy','2012-10-20','v13','Source taxonomy used in Bgee',1,'',3),
                (3,'Ensembl','http://Oct2012.archive.ensembl.org/[species_ensembl_link]/Gene/Summary?g=[gene_id];gene_summary=das:http://bgee.unil.ch/das/bgee=label','','','http://May2012.archive.ensembl.org/','2014-02-18','v1','Ensembl desc',1,'',255),
                (4,'ZFIN','http://zfin.org/cgi-bin/ZFIN_jump?record=[xref_id]','http://zfin.org/cgi-bin/ZFIN_jump?record=[experiment_id]','http://zfin.org/cgi-bin/ZFIN_jump?record=[evidence_id]','http://zfin.org/',null,'rv:2','ZFIN desc',1,'In situ data source',2);
 

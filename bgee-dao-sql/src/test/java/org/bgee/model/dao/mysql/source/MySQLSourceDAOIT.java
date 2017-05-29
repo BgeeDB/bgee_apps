@@ -191,7 +191,7 @@ public class MySQLSourceDAOIT extends MySQLITAncestor {
                         "experimentUrl", "evidenceUrl", "baseUrl", asDate(2012, Month.OCTOBER, 19),
                         "1.0", false, SourceCategory.GENOMICS, 1),
                 new SourceTO(2, "NCBI Taxonomy", "Source taxonomy used in Bgee", "", "", "",
-                        "http://www.ncbi.nlm.nih.gov/taxonomy", 
+                        "https://www.ncbi.nlm.nih.gov/taxonomy",
                         asDate(2012, Month.OCTOBER, 20), "v13", true, SourceCategory.NONE, 3), 
                 new SourceTO(3, "Ensembl", "Ensembl desc",
                         "http://Oct2012.archive.ensembl.org/[species_ensembl_link]/Gene/Summary?g=[gene_id];gene_summary=das:http://bgee.unil.ch/das/bgee=label", 

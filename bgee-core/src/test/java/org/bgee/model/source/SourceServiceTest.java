@@ -56,10 +56,10 @@ public class SourceServiceTest extends TestAncestor {
                         "https://www.ncbi.nlm.nih.gov/taxonomy",
                         date1, "v13", false, SourceTO.SourceCategory.NONE, 3),
                 new SourceTO(4, "ZFIN", "ZFIN desc",
-                        "http://zfin.org/cgi-bin/ZFIN_jump?record=[xref_id]",
-                        "http://zfin.org/cgi-bin/ZFIN_jump?record=[experiment_id]",
-                        "http://zfin.org/cgi-bin/ZFIN_jump?record=[evidence_id]",
-                        "http://zfin.org/", null, "rv:2", true, SourceTO.SourceCategory.IN_SITU, 2));
+                        "https://zfin.org/[xref_id]",
+                        "https://zfin.org/[experiment_id]",
+                        "https://zfin.org/[evidence_id]",
+                        "https://zfin.org/", null, "rv:2", true, SourceTO.SourceCategory.IN_SITU, 2));
         // ResultSet cannot be reused. As we have 2 tests, we need 2 ResultSet
         SourceTOResultSet mockSourceRs = getMockResultSet(SourceTOResultSet.class, sourceTOsInDb);
         SourceTOResultSet mockSourceRs2 = getMockResultSet(SourceTOResultSet.class, sourceTOsInDb);
@@ -81,10 +81,10 @@ public class SourceServiceTest extends TestAncestor {
                 "https://www.ncbi.nlm.nih.gov/taxonomy",
                 date1, "v13", false, org.bgee.model.source.SourceCategory.NONE, 3));
         expectedSources.add(new Source(4, "ZFIN", "ZFIN desc",
-                "http://zfin.org/cgi-bin/ZFIN_jump?record=[xref_id]",
-                "http://zfin.org/cgi-bin/ZFIN_jump?record=[experiment_id]",
-                "http://zfin.org/cgi-bin/ZFIN_jump?record=[evidence_id]",
-                "http://zfin.org/", null, "rv:2", true, org.bgee.model.source.SourceCategory.IN_SITU, 2));
+                "https://zfin.org/[xref_id]",
+                "https://zfin.org/[experiment_id]",
+                "https://zfin.org/[evidence_id]",
+                "https://zfin.org/", null, "rv:2", true, org.bgee.model.source.SourceCategory.IN_SITU, 2));
 
         SourceService service = new SourceService(serviceFactory);
         assertEquals("Incorrect sources", expectedSources, service.loadAllSources(false));
@@ -102,10 +102,10 @@ public class SourceServiceTest extends TestAncestor {
         Map<Integer, Set<DataType>> forData4 = new HashMap<>();
         forData4.put(11, new HashSet<DataType>(Arrays.asList(DataType.AFFYMETRIX)));
         expectedSources.add(new Source(4, "ZFIN", "ZFIN desc",
-                "http://zfin.org/cgi-bin/ZFIN_jump?record=[xref_id]",
-                "http://zfin.org/cgi-bin/ZFIN_jump?record=[experiment_id]",
-                "http://zfin.org/cgi-bin/ZFIN_jump?record=[evidence_id]",
-                "http://zfin.org/", null, "rv:2", true, org.bgee.model.source.SourceCategory.IN_SITU,
+                "https://zfin.org/[xref_id]",
+                "https://zfin.org/[experiment_id]",
+                "https://zfin.org/[evidence_id]",
+                "https://zfin.org/", null, "rv:2", true, org.bgee.model.source.SourceCategory.IN_SITU,
                 2, forData4, null));
 
         assertEquals("Incorrect sources", expectedSources, service.loadAllSources(true));
@@ -123,10 +123,10 @@ public class SourceServiceTest extends TestAncestor {
 
         List<SourceTO> sourceTOsInDb = Arrays.asList(
                 new SourceTO(4, "ZFIN", "ZFIN desc",
-                        "http://zfin.org/cgi-bin/ZFIN_jump?record=[xref_id]",
-                        "http://zfin.org/cgi-bin/ZFIN_jump?record=[experiment_id]",
-                        "http://zfin.org/cgi-bin/ZFIN_jump?record=[evidence_id]",
-                        "http://zfin.org/", null, "rv:2", true, SourceTO.SourceCategory.IN_SITU, 2));
+                        "https://zfin.org/[xref_id]",
+                        "https://zfin.org/[experiment_id]",
+                        "https://zfin.org/[evidence_id]",
+                        "https://zfin.org/", null, "rv:2", true, SourceTO.SourceCategory.IN_SITU, 2));
         // ResultSet cannot be reused. As we have 2 tests, we need 2 ResultSet
         SourceTOResultSet mockSourceRs = getMockResultSet(SourceTOResultSet.class, sourceTOsInDb);
         SourceTOResultSet mockSourceRs2 = getMockResultSet(SourceTOResultSet.class, sourceTOsInDb);
@@ -142,10 +142,10 @@ public class SourceServiceTest extends TestAncestor {
 
         List<Source> expectedSources = new ArrayList<Source>();
         expectedSources.add(new Source(4, "ZFIN", "ZFIN desc",
-                "http://zfin.org/cgi-bin/ZFIN_jump?record=[xref_id]",
-                "http://zfin.org/cgi-bin/ZFIN_jump?record=[experiment_id]",
-                "http://zfin.org/cgi-bin/ZFIN_jump?record=[evidence_id]",
-                "http://zfin.org/", null, "rv:2", true, org.bgee.model.source.SourceCategory.IN_SITU, 2));
+                "https://zfin.org/[xref_id]",
+                "https://zfin.org/[experiment_id]",
+                "https://zfin.org/[evidence_id]",
+                "https://zfin.org/", null, "rv:2", true, org.bgee.model.source.SourceCategory.IN_SITU, 2));
 
         SourceService service = new SourceService(serviceFactory);
         assertEquals("Incorrect sources", expectedSources, service.loadDisplayableSources(false));
@@ -154,10 +154,10 @@ public class SourceServiceTest extends TestAncestor {
         forAnnot4.put(11, new HashSet<DataType>(Arrays.asList(DataType.AFFYMETRIX)));
         expectedSources.clear();
         expectedSources.add(new Source(4, "ZFIN", "ZFIN desc",
-                "http://zfin.org/cgi-bin/ZFIN_jump?record=[xref_id]",
-                "http://zfin.org/cgi-bin/ZFIN_jump?record=[experiment_id]",
-                "http://zfin.org/cgi-bin/ZFIN_jump?record=[evidence_id]",
-                "http://zfin.org/", null, "rv:2", true, org.bgee.model.source.SourceCategory.IN_SITU,
+                "https://zfin.org/[xref_id]",
+                "https://zfin.org/[experiment_id]",
+                "https://zfin.org/[evidence_id]",
+                "https://zfin.org/", null, "rv:2", true, org.bgee.model.source.SourceCategory.IN_SITU,
                 2, null, forAnnot4));
         assertEquals("Incorrect sources", expectedSources, service.loadDisplayableSources(true));
     }

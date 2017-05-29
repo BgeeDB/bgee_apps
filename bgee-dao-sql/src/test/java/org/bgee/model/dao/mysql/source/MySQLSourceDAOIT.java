@@ -74,7 +74,7 @@ public class MySQLSourceDAOIT extends MySQLITAncestor {
                 new SourceTO(null, "First DataSource", null, null, null, "evidenceUrl", null, null, null, null, null, null),
                 new SourceTO(null, "NCBI Taxonomy", null, null, null, "", null, null, null, null, null, null),
                 new SourceTO(null, "Ensembl", null, null, null, "", null, null, null, null, null, null), 
-                new SourceTO(null, "ZFIN", null, null, null, "http://zfin.org/cgi-bin/ZFIN_jump?record=[evidence_id]",
+                new SourceTO(null, "ZFIN", null, null, null, "https://zfin.org/[evidence_id]",
                         null, null, null, null, null, null)); 
         //Compare
         assertTrue("SourceTOs incorrectly retrieved: expectedSources= " + expectedSources + 
@@ -198,9 +198,9 @@ public class MySQLSourceDAOIT extends MySQLITAncestor {
                         "", "", "http://May2012.archive.ensembl.org/", 
                         asDate(2014, Month.FEBRUARY, 18), "v1", true, SourceCategory.NONE, 255), 
                 new SourceTO(4, "ZFIN", "ZFIN desc", 
-                        "http://zfin.org/cgi-bin/ZFIN_jump?record=[xref_id]",
-                        "http://zfin.org/cgi-bin/ZFIN_jump?record=[experiment_id]", 
-                        "http://zfin.org/cgi-bin/ZFIN_jump?record=[evidence_id]", 
-                        "http://zfin.org/", null, "rv:2", true, SourceCategory.IN_SITU, 2));
+                        "https://zfin.org/[xref_id]",
+                        "https://zfin.org/[experiment_id]", 
+                        "https://zfin.org/[evidence_id]", 
+                        "https://zfin.org/", null, "rv:2", true, SourceCategory.IN_SITU, 2));
     }
 }

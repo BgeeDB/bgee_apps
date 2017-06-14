@@ -50,8 +50,8 @@ public class TestTempDAO implements AutoCloseable{
 				+ "+ IF(rnaSeqMeanRankNorm IS NULL, 0, rnaSeqDistinctRankSum) "
 				+ "+ IF(estRankNorm IS NULL, 0, estMaxRank) "
 				+ "+ IF(InSituRankNorm IS NULL, 0, inSituMaxRank)) "
-				+ "AS rank from anatEntityExpression AS t1 inner join anatEntityCond "
-				+ "AS t2 ON t1.anatEntityConditionId = t2.anatEntityConditionId "
+				+ "AS rank from globalExpression AS t1 inner join globalCond "
+				+ "AS t2 ON t1.globalConditionId = t2.globalConditionId "
 				+ "INNER JOIN anatEntity AS t3 ON t2.anatEntityId = t3.anatEntityId "
 				+ "where bgeeGeneId IN (SELECT bgeeGeneId FROM gene WHERE geneId IN (?)) "
 				+ "ORDER BY rank DESC";
@@ -82,8 +82,8 @@ public class TestTempDAO implements AutoCloseable{
 				+ "+ IF(rnaSeqMeanRankNorm IS NULL, 0, rnaSeqDistinctRankSum) "
 				+ "+ IF(estRankNorm IS NULL, 0, estMaxRank) "
 				+ "+ IF(InSituRankNorm IS NULL, 0, inSituMaxRank)) "
-				+ "AS rank from anatEntityExpression AS t1 inner join anatEntityCond "
-				+ "AS t2 ON t1.anatEntityConditionId = t2.anatEntityConditionId "
+				+ "AS rank from globalExpression AS t1 inner join globalCond "
+				+ "AS t2 ON t1.globalConditionId = t2.globalConditionId "
 				+ "INNER JOIN anatEntity AS t3 ON t2.anatEntityId = t3.anatEntityId "
 				+ "where bgeeGeneId IN (SELECT bgeeGeneId FROM gene WHERE speciesId = ?) "
 				+ "ORDER BY rank DESC";

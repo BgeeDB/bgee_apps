@@ -5,6 +5,7 @@ import java.io.FileReader;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +47,7 @@ public class Tau extends TestAncestor{
 	//return Tau values for all genes of one species
 	@Test
 	public void tauValuesForAllGenesOfOneSpecies(){
-		Integer speciesId = 7227;
+		Integer speciesId = 9606;
 		try (TestTempDAO dao = new TestTempDAO("bgee", "bgee", "altbioinfo","bgee_v14")){
 			Map<String, Set<Row>>  geneIdsToAllExpression = dao.getRanksAndAnatEntitiesExpressionForOneSpecies(speciesId);
 			log.debug("FINISH QUERY");
@@ -68,7 +69,7 @@ public class Tau extends TestAncestor{
 	//return Tau value for one gene
 	@Test
 	public void tauValueForOneGene(){
-		String geneId = "ENSG00000213144";
+		String geneId = "ENSG00000110245";
 		try (TestTempDAO dao = new TestTempDAO("bgee", "bgee", "altbioinfo","bgee_v14")){
 			Set<Row> rows = dao.getRanksAndAnatEntitiesExpressionForOneGene(geneId);
 			System.out.println("tau value for "+geneId+" : "+tauValue(rows));
@@ -82,15 +83,29 @@ public class Tau extends TestAncestor{
 
 	//calculate Tau value for a Set of Row. Each Row summaryze expression data for one anat entity.
 	public Double tauValue(Set<Row> rows) throws Exception{
+		Map<String, Row> filteredRows = new HashMap<String, Tau.Row>();
+		for(Row row : rows){
+			if (row.getRank() != null && row.getRank() != BigDecimal.ZERO){
+				if(filteredRows.containsKey(row.getAnatEntityName())){
+					if(filteredRows.get(row.getAnatEntityName()).getRank().compareTo(row.getRank()) > 0){
+						filteredRows.put(row.getAnatEntityName(), row);
+					}
+				}
+				else {
+					filteredRows.put(row.getAnatEntityName(), row);
+				}
+			}
+		}
+		rows = new HashSet<>(filteredRows.values());
 		//XXX It's maybe wrong to use the max rank value for one gene. We must probably use the max rank of the whole database
-		double max = rows.stream().map(i -> i.getRank().doubleValue()).reduce(0.0, (a, b) -> Double.max(a, b));
-		double min = rows.stream().map(i -> i.getRank().doubleValue()).reduce(0.0, (a, b) -> Double.min(a, b));
+		double max = rows.stream().filter(i -> i.getRank()!= null).map(i -> i.getRank().doubleValue()).reduce(0.0, (a, b) -> Double.max(a, b));
+		double min = rows.stream().filter(i -> i.getRank()!= null).map(i -> i.getRank().doubleValue()).reduce(Double.POSITIVE_INFINITY, (a, b) -> Double.min(a, b));
 		int rowNumber = rows.size();
 		Set<Double> tauValues = new HashSet<Double>();
 		//in bgee min rank value corresponds to the most expressed gene.
 		//as tau used formula where the best rank is the biggest one, each rank value is defined as (max-current_rank_value)
 		//and best ranked value is defined as (max-min)
-		rows.stream().forEach( row -> {
+		rows.stream().filter(i -> i.getRank()!= null).forEach( row -> {
 			BigDecimal rankValue = row.getRank();
 			tauValues.add(1-((max-rankValue.doubleValue())/(max-min)));
 		});

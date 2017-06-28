@@ -27,6 +27,7 @@ import org.bgee.pipeline.ontologycommon.InsertECO;
 import org.bgee.pipeline.ontologycommon.OntologyTools;
 import org.bgee.pipeline.species.GenerateTaxonOntology;
 import org.bgee.pipeline.species.InsertTaxa;
+import org.bgee.pipeline.uberon.CorrectTaxonConstraints;
 import org.bgee.pipeline.uberon.InsertUberon;
 import org.bgee.pipeline.uberon.TaxonConstraints;
 import org.bgee.pipeline.uberon.Uberon;
@@ -261,6 +262,9 @@ public class CommandRunner {
 //            break;
         case "InsertPropagatedCalls": 
             InsertPropagatedCalls.main(newArgs);
+            break;
+        case "CorrectTaxonConstraints": 
+        	CorrectTaxonConstraints.main(newArgs);
             break;
  
         //---------- Download file generation -----------

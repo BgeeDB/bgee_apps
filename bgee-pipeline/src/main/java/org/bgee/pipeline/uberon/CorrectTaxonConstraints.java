@@ -71,7 +71,7 @@ public class CorrectTaxonConstraints extends MySQLDAOUser {
 		if (args.length < 1 || args.length > 2) {
 			log.error(new IllegalStateException(
 					"You must provide 1 or 2 arguments. First argument corresponds to the action. Actions can be :\n"
-							+ "\t- fromRDB : correct taxon constraints by querying the RDB (extremely long)\n"
+							+ "\t- fromRDB : correct taxon constraints by querying the RDB\n"
 							+ "\t- fromTSV : correct taxon constraints using a TSV file. With this action you must add"
 							+ " a 2nd argument correponding to TSV file path."));
 		}
@@ -84,7 +84,7 @@ public class CorrectTaxonConstraints extends MySQLDAOUser {
 		} else {
 			log.error(new IllegalStateException(
 					"First argument corresponds to the action. Actions can " + "be \"fromRDB\" or \"fromTSV\".\n"
-							+ "\t- fromRDB : correct taxon constraints by querying the RDB (extremely long)\n"
+							+ "\t- fromRDB : correct taxon constraints by querying the RDB\n"
 							+ "\t- fromTSV : correct taxon constraints using a TSV file. With this action you must add"
 							+ " a 2nd argument correponding to TSV file path."));
 		}
@@ -94,8 +94,7 @@ public class CorrectTaxonConstraints extends MySQLDAOUser {
 
 	private Set<Mismatch> loadMismatchesFromRDB() {
 		log.info(
-				"start querying RDB in order to find taxon constraints mismatches. This step is extremely long (can be longer"
-						+ "than 8 hours.");
+				"start querying RDB in order to find taxon constraints mismatches. This step is extremely long.");
 		Set<Mismatch> mismatches = new HashSet<>();
 		String sql = "SELECT t1.*, GROUP_CONCAT(DISTINCT t2.speciesId ORDER BY t2.speciesId) AS relationTaxonConstraints, "
 				+ "GROUP_CONCAT(DISTINCT t3.speciesId ORDER BY t3.speciesId) AS sourceTaxonContraints, "

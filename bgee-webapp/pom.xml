@@ -580,6 +580,8 @@
                     <!-- We do no exclude source CSS and JS files from the WAR: 
                          this will make a larger archive, but it will allow to easily 
                          activate/deactivate the use of minified files, for easier debugging. -->
+
+
                     
                     <webResources>
                         <!-- We have a problem with m2e-wtp, the resources in src/main/webapp/ 
@@ -595,6 +597,15 @@
                                  relative to the root of the WAR file -->
                             <targetPath>/</targetPath>
                         </resource>
+                        
+                        <resource>
+			                <filtering>true</filtering>
+			                <directory>src/main/webapp/WEB-INF</directory>
+			                <includes>
+			                    <include>web.xml</include>
+			                </includes>
+			                <targetPath>WEB-INF/</targetPath>
+			            </resource>
                         
                         <!-- We filter bgee-webapp.properties so that css version number 
                              and javacript version number are configured. 
@@ -638,10 +649,11 @@
                         </resource>
                         
                     </webResources>
-                    
                     <attachClasses>true</attachClasses>
                 </configuration>
             </plugin>
+            
+            
             
             <!-- In order to properly test the class BgeeProperties, we need to ensure 
                  that tests are run one at a time. -->

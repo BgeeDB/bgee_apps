@@ -113,7 +113,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
          if (StringUtils.isNotBlank(content)) {
              sb.append(content);
          }
-         sb.append("</").append(name).append(">");
+         if (!name.equals("img")) {
+             sb.append("</").append(name).append(">");
+         }
          return log.exit(sb.toString());
      }
 

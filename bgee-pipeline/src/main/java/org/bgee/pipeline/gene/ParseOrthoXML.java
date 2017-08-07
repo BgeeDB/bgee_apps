@@ -23,6 +23,7 @@ import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTOResultSet;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTO;
 import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
@@ -36,6 +37,7 @@ import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.io.CsvMapReader;
 import org.supercsv.io.ICsvMapReader;
 
+import sbc.orthoxml.Gene;
 import sbc.orthoxml.Group;
 import sbc.orthoxml.Species;
 import sbc.orthoxml.io.OrthoXMLReader;
@@ -99,6 +101,14 @@ public class ParseOrthoXML extends MySQLDAOUser {
      * @see #generateTOsFromGroup()
      */
     private Set<HierarchicalGroupTO> hierarchicalGroupTOs;
+    
+    /**
+     * A {@code Set} of {@code HierarchicalGroupToGeneTO}s containing mapping between groups, taxonomy level
+     * and genes to be inserted into the Bgee database. See this method for details.
+     * 
+     * @see #generateTOsFromGroup()
+     */
+    private Set<HierarchicalGroupToGeneTO> hierarchicalGroupToGeneTOs;
     
     /**
      * A {@code Set} of {@code GeneTO}s containing genes to be updated into the Bgee
@@ -167,6 +177,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
         this.omaNodeId = 1;
         this.nestedSetBoundSeed = 0;
         this.hierarchicalGroupTOs = new HashSet<HierarchicalGroupTO>();
+        this.hierarchicalGroupToGeneTOs = new HashSet<HierarchicalGroupToGeneTO>();
         this.geneTOs = new HashSet<GeneTO>();
         this.ensemblIdToBgeeIdInBgee = new HashMap<String, Integer>();
         this.taxonIdsInBgee = new HashSet<Integer>();
@@ -277,7 +288,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
             // Start a transaction to insert HierarchicalGroupTOs and update GeneTOs
             // in the Bgee data source. Note that we do not need to call rollback if
             // an error occurs, calling closeDAO will rollback any ongoing transaction.
-            int nbInsertedGroups = 0, nbUpdatedGenes = 0;
+            int nbInsertedGroups = 0, nbUpdatedGenes = 0, nbInsertedGroupToGene = 0;
 
             this.startTransaction(); 
 
@@ -290,10 +301,15 @@ public class ParseOrthoXML extends MySQLDAOUser {
             nbUpdatedGenes = this.getGeneDAO().updateGenes(this.geneTOs,
                     Arrays.asList(GeneDAO.Attribute.OMA_PARENT_NODE_ID));
             log.info("Done updating genes.");
+            System.out.println(this.hierarchicalGroupToGeneTOs.size());
+            log.info("Start inserting gene to hierarchical group mapping...");
+            nbInsertedGroupToGene = this.getHierarchicalGroupDAO()
+            		.insertHierarchicalGroupToGene(this.hierarchicalGroupToGeneTOs);
+            log.info("Done inserting gene to hierarchical group mapping.");
 
             this.commit();
             log.info("Done parsing of OrthoXML file: {} hierarchical groups inserted " +
-                    "and {} genes updated.", nbInsertedGroups, nbUpdatedGenes);
+                    ",{} genes updated, and {} mapping between hierarchical group and genes inserted.", nbInsertedGroups, nbUpdatedGenes, nbInsertedGroupToGene);
         } catch (IllegalStateException e) {
             log.catching(e);
             throw log.throwing(new IllegalArgumentException(
@@ -375,6 +391,9 @@ public class ParseOrthoXML extends MySQLDAOUser {
         //dao.setAttributes(GeneDAO.Attribute.ID);
         try (GeneTOResultSet rsGenes = dao.getAllGenes()) {
             while (rsGenes.next()) {
+            	if(this.ensemblIdToBgeeIdInBgee.containsKey(rsGenes.getTO().getGeneId())){
+            		log.error("Two bgeeGeneIds have the same ID :{}",rsGenes.getTO().getGeneId());
+            	}
                 this.ensemblIdToBgeeIdInBgee.put(rsGenes.getTO().getGeneId(), rsGenes.getTO().getId());
             }
         }
@@ -537,7 +556,6 @@ public class ParseOrthoXML extends MySQLDAOUser {
     private boolean generateTOsFromGroup(Group group, String omaXrefId, 
                     Map<String,String> geneMapping) {
         log.entry(group, omaXrefId, geneMapping);
-
         // First, we check if the group represents a taxon presents in Bgee or if it's a 
         // paralog group. If wrong, we don't insert a hierarchical groupTO.
         String groupTaxId = group.getProperty(TAX_ID_ATTRIBUTE);
@@ -557,7 +575,9 @@ public class ParseOrthoXML extends MySQLDAOUser {
         // So, we need to remove 1 to countGroups() to subtract the current group.
         this.addHierarchicalGroupTO(this.omaNodeId, omaXrefId, this.nestedSetBoundSeed,
                 group.getProperty(TAX_ID_ATTRIBUTE), countGroups(group) - 1);
-
+    	this.addHierarchicalGroupToGeneTO(
+    			group.getProperty(TAX_ID_ATTRIBUTE), group.getNestedGenes(),
+    			this.omaNodeId);
         // Then, we retrieve gene data.
         if (group.getGenes() != null) {
             log.debug("Retrieving genes from group {}", group);
@@ -649,6 +669,36 @@ public class ParseOrthoXML extends MySQLDAOUser {
                 new HierarchicalGroupTO(this.omaNodeId, omaXrefId, left, right, 
                         (taxId == null ? 0: Integer.valueOf(taxId)))); 
         log.exit();
+    }
+    
+    /**
+     * Given a OMA cross-reference ID with the taxonomy id and a number of children, 
+     * calculate nested set bounds and add it in the {@code Collection} of 
+     * {@code HierarchicalGroupTO}s to be as a nested set model.
+     * 
+     * @param omaNodeId             An {@code int} that is the unique ID the hierarchical
+     *                              group.
+     * @param omaXrefId             A {@code String} that is the OMA cross-reference ID.
+     * @param nestedSetBoundSeed    An {@code int} that is the seed use to determine 
+     *                              unique left and right bound values of the nested set 
+     *                              model of the hierarchical group.
+     * @param taxId                 An {@code int} that is the taxonomy id of the
+     *                              {@code HierarchicalGroupTO} to create.
+     * @param nbChild               An {@code int} that is the number of children of the
+     *                              {@code HierarchicalGroupTO} to create.
+     */
+    private void addHierarchicalGroupToGeneTO(String taxonId, List<Gene> genes, Integer OmaNodeId) {
+        log.entry(taxonId, OmaNodeId, genes);
+        if(taxonId != null){
+            genes.stream().forEach(g -> {
+            	if(ensemblIdToBgeeIdInBgee.get(g.getGeneIdentifier()) != null){
+//                	System.out.println(taxonId+" -> "+ensemblIdToBgeeIdInBgee.get(g.getGeneIdentifier())+" -> "+OmaNodeId);
+            		this.hierarchicalGroupToGeneTOs.add(new HierarchicalGroupToGeneTO(
+            				OmaNodeId, ensemblIdToBgeeIdInBgee.get(g.getGeneIdentifier()), 
+    	        			Integer.valueOf(taxonId)));
+            	}
+            });
+        }
     }
 
     /**

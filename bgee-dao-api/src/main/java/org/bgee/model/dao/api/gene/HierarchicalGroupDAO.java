@@ -15,7 +15,8 @@ import org.bgee.model.dao.api.ontologycommon.NestedSetModelElementTO;
  * @author Komal Sanjeev
  * @author Frederic Bastian
  * @author Valentine Rech de Laval
- * @version Bgee 13
+ * @author Julien Wollbrett
+ * @version Bgee 14
  * @see HierarchicalGroupTO
  * @since Bgee 13
  */
@@ -53,6 +54,21 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
      *                      implementation details).
      */
     public int insertHierarchicalGroups(Collection<HierarchicalGroupTO> groups)
+            throws DAOException, IllegalArgumentException;
+
+    /**
+     * Inserts the provided GroupToGene into the Bgee database, represented as a
+     * {@code Collection} of {@code HierarchicalGroupToGeneTO}s.
+     * 
+     * @param groupToGene   A {@code Collection} of {@code HierarchicalGroupToGeneTO}s to be
+     *                      inserted into the database.
+     * @throws IllegalArgumentException If {@code groupToGene} is empty or null. 
+     * @throws DAOException If an {@code Exception} occurred while trying to insert
+     *                      {@code terms}. The {@code SQLException} will be wrapped into a
+     *                      {@code DAOException} ({@code DAOs} do not expose these kind of
+     *                      implementation details).
+     */
+    public int insertHierarchicalGroupToGene(Collection<HierarchicalGroupToGeneTO> groupToGene)
             throws DAOException, IllegalArgumentException;
     
     /**
@@ -253,15 +269,23 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
         private final Integer bgeeGeneId;
         
         /**
+         * An {@code Integer} that is the ID of a taxonomy level belonging to the group with ID 
+         * {@link #groupId}.
+         */
+        private final Integer taxonId;
+        
+        /**
          * Constructor providing the ID of the group and the ID of a gene belonging to 
          * the group.
          * 
          * @param groupId       An {@code Integer} that is the ID of an group of homologous genes.
          * @param bgeeGeneId    An {@code Integer} that is the ID of a gene belonging to the group.
+         * @param taxonId 		An {@code Integer} that is the ID of a taxonomy level belonging to the group.
          */
-        public HierarchicalGroupToGeneTO (Integer nodeId, Integer bgeeGeneId) {
+        public HierarchicalGroupToGeneTO (Integer nodeId, Integer bgeeGeneId, Integer taxonId) {
             this.nodeId = nodeId;
             this.bgeeGeneId = bgeeGeneId;
+            this.taxonId = taxonId;
         }
 
         /**
@@ -280,9 +304,63 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
             return bgeeGeneId;
         }
         
+        /**
+         * @return  An {@code Integer} that is the ID of a taxonomy level belonging to the group with ID 
+         *          {@link #getNodeId()}.
+         */
+        public Integer getTaxonId() {
+            return taxonId;
+        }
+        
         @Override
         public String toString() {
-            return "HierarchicalGroupToGeneTO[groupId="+this.nodeId+", bgeeGeneId="+this.bgeeGeneId+"]";
+            return "HierarchicalGroupToGeneTO[groupId="+this.nodeId+", bgeeGeneId="+this.bgeeGeneId+", taxonId="+this.taxonId+"]";
+        }
+        
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((this.getBgeeGeneId() == null) ? 0 : this.getBgeeGeneId().hashCode());
+            result = prime * result + ((this.getNodeId() == null) ? 0 : this.getNodeId().hashCode());
+            result = prime * result + ((this.getTaxonId() == null) ? 0 : this.getTaxonId().hashCode());
+            return result;
+        }
+        
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            HierarchicalGroupToGeneTO other = (HierarchicalGroupToGeneTO) obj;
+            if (this.getBgeeGeneId() == null) {
+                if (other.getBgeeGeneId() != null) {
+                    return false;
+                }
+            } else if (!this.getBgeeGeneId().equals(other.getBgeeGeneId())) {
+                return false;
+            }
+            if (this.getNodeId() == null) {
+                if (other.getNodeId()  != null) {
+                    return false;
+                }
+            } else if (!this.getNodeId() .equals(other.getNodeId() )) {
+                return false;
+            }
+            if (this.getTaxonId() == null) {
+                if (other.getTaxonId()  != null) {
+                    return false;
+                }
+            } else if (!this.getTaxonId() .equals(other.getTaxonId() )) {
+                return false;
+            }
+            return true;
         }
     }
 }

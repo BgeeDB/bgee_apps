@@ -15,9 +15,9 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.baseelements.CallType;
-import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DecorrelationType;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 
 /**
  * This class is designed to declare and provide all {@code Parameter<T>} that
@@ -267,16 +267,16 @@ public class URLParameters {
                     .collect(Collectors.joining("|")) + ")", 
              String.class);
     /**
-     * A {@code Parameter<String>} that contains the data quality to be used 
+     * A {@code Parameter<String>} that contains the summary quality to be used 
      * for TopAnat analysis.
      * Corresponds to the URL parameter "data_qual".
      */
-    private static final Parameter<String> DATA_QUALITY = new Parameter<String>("data_qual",
+    private static final Parameter<String> SUMMARY_QUALITY = new Parameter<String>("data_qual",
             false, false, null, true, DEFAULT_IS_SECURE, 
-            Math.max(RequestParameters.ALL_VALUE.length(), EnumSet.allOf(DataQuality.class).stream()
+            Math.max(RequestParameters.ALL_VALUE.length(), EnumSet.allOf(SummaryQuality.class).stream()
                     .map(e -> e.getStringRepresentation().length())
                     .max(Comparator.naturalOrder()).get()), 
-            "(?i:" + RequestParameters.ALL_VALUE + "|" + EnumSet.allOf(DataQuality.class).stream()
+            "(?i:" + RequestParameters.ALL_VALUE + "|" + EnumSet.allOf(SummaryQuality.class).stream()
                 .map(e -> e.getStringRepresentation())
                 .collect(Collectors.joining("|")) + ")", 
             String.class);
@@ -467,7 +467,7 @@ public class URLParameters {
             SPECIES_LIST,
             // TopAnat analyze params
             FOREGROUND_LIST, FOREGROUND_FILE, BACKGROUND_LIST, BACKGROUND_FILE,
-            EXPRESSION_TYPE, DATA_QUALITY, DATA_TYPE, DEV_STAGE, DECORRELATION_TYPE,
+            EXPRESSION_TYPE, SUMMARY_QUALITY, DATA_TYPE, DEV_STAGE, DECORRELATION_TYPE,
             NODE_SIZE, FDR_THRESHOLD, P_VALUE_THRESHOLD, NB_NODE, 
             GENE_INFO, 
             //ID to identify a specific analysis
@@ -671,7 +671,7 @@ public class URLParameters {
      *          Corresponds to the URL parameter "data_qual".
      */
     public Parameter<String> getParamDataQuality() {
-        return DATA_QUALITY;
+        return SUMMARY_QUALITY;
     }
     /**
      * @return  A {@code Parameter<String>} defining a data type.

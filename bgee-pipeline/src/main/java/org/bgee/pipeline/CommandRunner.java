@@ -15,6 +15,7 @@ import org.bgee.pipeline.expression.FilterNoExprCalls;
 import org.bgee.pipeline.expression.InsertGlobalCalls;
 import org.bgee.pipeline.expression.InsertPropagatedCalls;
 import org.bgee.pipeline.expression.downloadfile.GenerateExprFile;
+import org.bgee.pipeline.expression.downloadfile.GenerateExprFile2;
 import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile;
 import org.bgee.pipeline.expression.downloadfile.GenerateMultiSpeciesDiffExprFile;
 import org.bgee.pipeline.expression.downloadfile.GenerateRankFile;
@@ -26,6 +27,7 @@ import org.bgee.pipeline.ontologycommon.InsertECO;
 import org.bgee.pipeline.ontologycommon.OntologyTools;
 import org.bgee.pipeline.species.GenerateTaxonOntology;
 import org.bgee.pipeline.species.InsertTaxa;
+import org.bgee.pipeline.uberon.CorrectTaxonConstraints;
 import org.bgee.pipeline.uberon.InsertUberon;
 import org.bgee.pipeline.uberon.TaxonConstraints;
 import org.bgee.pipeline.uberon.Uberon;
@@ -261,15 +263,17 @@ public class CommandRunner {
         case "InsertPropagatedCalls": 
             InsertPropagatedCalls.main(newArgs);
             break;
+        case "CorrectTaxonConstraints": 
+        	CorrectTaxonConstraints.main(newArgs);
+            break;
  
         //---------- Download file generation -----------
         case "GenerateDiffExprFile":
             GenerateDiffExprFile.main(newArgs);
             break;
         case "GenerateBasicExprFile":
-            throw log.throwing(new UnsupportedOperationException("Method disabled while updated"));
-//            GenerateExprFile.main(newArgs);
-//            break;
+            GenerateExprFile2.main(newArgs);
+            break;
         case "GenerateMultiSpeciesDiffExprFile":
             throw log.throwing(new UnsupportedOperationException("Method disabled while updated"));
 //            GenerateMultiSpeciesDiffExprFile.main(newArgs);

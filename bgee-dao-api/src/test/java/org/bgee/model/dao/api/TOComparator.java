@@ -34,7 +34,7 @@ import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesToDataGroupTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalNodeTO;
-import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTO;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalNodeToGeneTO;
 import org.bgee.model.dao.api.keyword.KeywordDAO.EntityToKeywordTO;
 import org.bgee.model.dao.api.keyword.KeywordDAO.KeywordTO;
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO;
@@ -125,9 +125,9 @@ public class TOComparator {
         } else if (to1 instanceof HierarchicalNodeTO) {
             return log.exit(areTOsEqual((HierarchicalNodeTO) to1, (HierarchicalNodeTO) to2, 
                     compareId));
-        } else if (to1 instanceof HierarchicalGroupToGeneTO) {
+        } else if (to1 instanceof HierarchicalNodeToGeneTO) {
             return log.exit(areTOsEqual(
-                    (HierarchicalGroupToGeneTO) to1, (HierarchicalGroupToGeneTO) to2));
+                    (HierarchicalNodeToGeneTO) to1, (HierarchicalNodeToGeneTO) to2));
         } else if (to1 instanceof TaxonConstraintTO) {
             return log.exit(areTOsEqual((TaxonConstraintTO<?>) to1, (TaxonConstraintTO<?>) to2));
         } else if (to1 instanceof RelationTO) {
@@ -460,15 +460,15 @@ public class TOComparator {
     }
 
     /**
-     * Method to compare two {@code HierarchicalGroupTO}s, to check for complete equality of each
+     * Method to compare two {@code HierarchicalNodeTO}s, to check for complete equality of each
      * attribute. This is because the {@code equals} method of 
-     * {@code HierarchicalGroupTO}s is solely based on their ID, not on other attributes.
+     * {@code HierarchicalNodeTO}s is solely based on their ID, not on other attributes.
      * <p>
      * If {@code compareId} is {@code false}, the value returned by the method {@code getId} 
      * will not be used for comparison.
      * 
-     * @param to1 A {@code HierarchicalGroupTO} to be compared to {@code to2}.
-     * @param to2 A {@code HierarchicalGroupTO} to be compared to {@code to1}.
+     * @param to1 A {@code HierarchicalNodeTO} to be compared to {@code to2}.
+     * @param to2 A {@code HierarchicalNodeTO} to be compared to {@code to1}.
      * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
      *                  used for comparisons. 
      * @return {@code true} if {@code to1} and {@code to2} have all attributes
@@ -488,15 +488,15 @@ public class TOComparator {
     }
     
     /**
-     * Method to compare two {@code HierarchicalGroupToGeneTO}s, to check for complete equality 
+     * Method to compare two {@code HierarchicalNodeToGeneTO}s, to check for complete equality 
      * of each attribute. This is because the {@code equals} method of 
-     * {@code HierarchicalGroupToGeneTO}s is solely based on their ID, not on other attributes.
+     * {@code HierarchicalNodeToGeneTO}s is solely based on their ID, not on other attributes.
      * 
-     * @param to1   A {@code HierarchicalGroupToGeneTO} to be compared to {@code to2}.
-     * @param to2   A {@code HierarchicalGroupToGeneTO} to be compared to {@code to1}.
+     * @param to1   A {@code HierarchicalNodeToGeneTO} to be compared to {@code to2}.
+     * @param to2   A {@code HierarchicalNodeToGeneTO} to be compared to {@code to1}.
      * @return      {@code true} if {@code to1} and {@code to2} have all attributes equal.
      */
-    private static boolean areTOsEqual(HierarchicalGroupToGeneTO to1, HierarchicalGroupToGeneTO to2) {
+    private static boolean areTOsEqual(HierarchicalNodeToGeneTO to1, HierarchicalNodeToGeneTO to2) {
         log.entry(to1, to2);
 
         if (Objects.equals(to1.getBgeeGeneId(), to2.getBgeeGeneId()) && 
@@ -553,6 +553,7 @@ public class TOComparator {
                 //see http://stackoverflow.com/a/20542511/1768736
                 && Objects.equals(to1.getSize(), to2.getSize())
                 && Objects.equals(to1.getSpeciesDataGroupId(), to2.getSpeciesDataGroupId())
+                && Objects.equals(to1.getConditionParameters(), to2.getConditionParameters())
         );
     }
 

@@ -1,41 +1,44 @@
-//package org.bgee.model.expressiondata;
-//
-//import static org.junit.Assert.assertEquals;
-//import static org.mockito.Mockito.mock;
-//import static org.mockito.Mockito.when;
-//
-//import java.math.BigDecimal;
-//import java.util.Arrays;
-//import java.util.Collections;
-//import java.util.HashMap;
-//import java.util.HashSet;
-//import java.util.List;
-//import java.util.Map;
-//import java.util.Set;
-//
-//import org.apache.logging.log4j.LogManager;
-//import org.apache.logging.log4j.Logger;
-//import org.bgee.model.TestAncestor;
-//import org.bgee.model.expressiondata.Call.ExpressionCall;
-//import org.bgee.model.gene.Gene;
-//import org.bgee.model.species.Species;
-//import org.junit.Test;
-//
-///**
-// * Unit tests for {@link ExpressionCall}.
-// * 
-// * @author  Frederic Bastian
-// * @author  Valentine Rech de Laval
-// * @version Bgee 13, July 2016
-// * @since   Bgee 13, June 2016
-// */
-//public class ExpressionCallTest extends TestAncestor {
-//    private final static Logger log = LogManager.getLogger(ExpressionCallTest.class.getName());
-//    
-//    @Override
-//    protected Logger getLogger() {
-//        return log;
-//    } 
+package org.bgee.model.expressiondata;
+
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.bgee.model.TestAncestor;
+import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.anatdev.DevStage;
+import org.bgee.model.expressiondata.Call.ExpressionCall;
+import org.bgee.model.gene.Gene;
+import org.bgee.model.species.Species;
+import org.junit.Test;
+
+/**
+ * Unit tests for {@link ExpressionCall}.
+ * 
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13, July 2016
+ * @since   Bgee 13, June 2016
+ */
+//FIXME: to reactivate
+public class ExpressionCallTest extends TestAncestor {
+    private final static Logger log = LogManager.getLogger(ExpressionCallTest.class.getName());
+    
+    @Override
+    protected Logger getLogger() {
+        return log;
+    } 
 //    
 //    /**
 //     * Test {@link #ExpressionCall#generateMeanRankScoreClustering(Collection, ClusteringMethod, double)}.
@@ -82,9 +85,9 @@
 //        //These calls and conditions allow a regression test for management of equal ranks
 //        //cond2 and cond3 will be considered more precise than cond1, and unrelated to each other. 
 //        //It is important for the test that cond1 would be sorted first alphabetically. 
-//        Condition cond1 = new Condition("Anat1", "stage1", 1);
-//        Condition cond2 = new Condition("Anat2", "stage1", 1);
-//        Condition cond3 = new Condition("Anat3", "stage1", 1);
+//        Condition cond1 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), 1);
+//        Condition cond2 = new Condition(new AnatEntity("Anat2"), new DevStage("stage1"), 1);
+//        Condition cond3 = new Condition(new AnatEntity("Anat3"), new DevStage("stage1"), 1);
 //        //we mock the ConditionGraph used to compare Conditions
 //        ConditionGraph condGraph = mock(ConditionGraph.class);
 //        Set<Condition> allConds = new HashSet<>(Arrays.asList(cond1, cond2, cond3));
@@ -159,9 +162,10 @@
 //    public void shouldIdentifyRedundantCalls() {
 //      //These calls and conditions allow a regression test for management of equal ranks
 //        //cond2 and cond3 will be considered more precise than cond1, and unrelated to each other
-//        Condition cond1 = new Condition("Anat1", "stage1", 1);
-//        Condition cond2 = new Condition("Anat2", "stage1", 1);
-//        Condition cond3 = new Condition("Anat3", "stage1", 1);
+
+//        Condition cond1 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), 1);
+//        Condition cond2 = new Condition(new AnatEntity("Anat2"), new DevStage("stage1"), 1);
+//        Condition cond3 = new Condition(new AnatEntity("Anat3"), new DevStage("stage1"), 1);
 //        //we mock the ConditionGraph used to compare Conditions
 //        ConditionGraph condGraph = mock(ConditionGraph.class);
 //        Set<Condition> allConds = new HashSet<>(Arrays.asList(cond1, cond2, cond3));
@@ -238,4 +242,6 @@
 //        c = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("20100.23"));
 //        assertEquals("Incorrect score formatting", "2.01e4", c.getFormattedGlobalMeanRank());
 //    }
-//}
+
+}
+

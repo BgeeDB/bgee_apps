@@ -15,10 +15,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
@@ -36,6 +38,7 @@ import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.ExperimentExpressionCount;
 import org.bgee.model.expressiondata.baseelements.PropagationState;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.file.DownloadFile.CategoryEnum;
@@ -55,7 +58,7 @@ import org.supercsv.io.dozer.ICsvDozerBeanWriter;
  * the Bgee database.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Mar. 2017
+ * @version Bgee 14, May 2017
  * @since   Bgee 13, Sept. 2017
  */
 public class GenerateExprFile2 extends GenerateDownloadFile {
@@ -72,18 +75,6 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
     private final static List<DataType> DATA_TYPE_ORDER = 
             Arrays.asList(DataType.AFFYMETRIX, DataType.EST, DataType.IN_SITU, DataType.RNA_SEQ);
 
-    private final static LinkedHashMap<CallService.OrderingAttribute, Service.Direction> ORDERING_ATTRIBUTES;
-
-    static {
-        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
-                new LinkedHashMap<>();
-        serviceOrdering.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
-        serviceOrdering.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
-        serviceOrdering.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.ASC);
-        
-        ORDERING_ATTRIBUTES = serviceOrdering;
-    }
-
     /**
      * An {@code Enum} used to define the possible expression file types to be generated.
      * <ul>
@@ -97,7 +88,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      */
     public enum SingleSpExprFileType2 implements FileType {
         EXPR_SIMPLE(CategoryEnum.EXPR_CALLS_SIMPLE, true),
-        EXPR_COMPLETE(CategoryEnum.EXPR_CALLS_COMPLETE, false);
+        EXPR_ADVANCED(CategoryEnum.EXPR_CALLS_COMPLETE, false);
 
         /**
          * A {@code CategoryEnum} that is the category of files of this type.
@@ -161,7 +152,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
     public static void main(String[] args) throws IllegalArgumentException, IOException {
         log.entry((Object[]) args);
 
-        int expectedArgLength = 3;
+        int expectedArgLength = 4;
         if (args.length != expectedArgLength) {
             throw log.throwing(new IllegalArgumentException(
                     "Incorrect number of arguments provided, expected " + 
@@ -332,7 +323,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
 
         // Generate expression files, species by species.
         // The generation of files are independent, so we can safely go multi-threading
-        speciesNamesForFilesByIds.keySet().parallelStream().forEach(speciesId -> {
+        speciesNamesForFilesByIds.keySet().stream().forEach(speciesId -> {
             log.info("Start generating of expression files for the species {}...", speciesId);
 
             try {
@@ -390,8 +381,12 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 .map(AnatEntity::getId)
                 .collect(Collectors.toSet());
 
-        ExpressionCallFilter callFilter = new ExpressionCallFilter(null,
-                Collections.singleton(new GeneFilter(speciesId)), null, null, true, false, false);
+        Map<SummaryCallType.ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = 
+                new HashMap<>();
+        summaryCallTypeQualityFilter.put(SummaryCallType.ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
+        summaryCallTypeQualityFilter.put(SummaryCallType.ExpressionSummary.NOT_EXPRESSED, SummaryQuality.SILVER);
+        ExpressionCallFilter callFilter = new ExpressionCallFilter(summaryCallTypeQualityFilter,
+                Collections.singleton(new GeneFilter(speciesId)), null, null, true, null, null);
 
         // We retrieve calls with all non-parametric attributes plus provided params.
         Set<Attribute> clnAttr = Arrays.stream(Attribute.values())
@@ -399,8 +394,18 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 .collect(Collectors.toSet());
         clnAttr.addAll(this.params);
 
+        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
+                new LinkedHashMap<>();
+        serviceOrdering.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
+        if (params.contains(CallService.Attribute.ANAT_ENTITY_ID)) {
+            serviceOrdering.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
+        }
+        if (params.contains(CallService.Attribute.DEV_STAGE_ID)) {
+            serviceOrdering.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.ASC);
+        }
+            
         Stream<ExpressionCall> calls = serviceFactory.getCallService().loadExpressionCalls(
-                callFilter, clnAttr, ORDERING_ATTRIBUTES)
+                callFilter, clnAttr, serviceOrdering)
                 .filter(c-> !nonInformativeAnatEntities.contains(c.getCondition().getAnatEntityId()));
 
         log.trace("Done retrieving data for expression files for the species {}.", speciesId);
@@ -442,9 +447,14 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 processors.put(currentFileType, fileTypeProcessors);
 
                 // Create file name
+                String suffix = this.convertAttributeToFileName(this.params);
+                if (StringUtils.isBlank(suffix)) {
+                    suffix = "";
+                } else {
+                    suffix = "_" + suffix;
+                }
                 String fileName = this.formatString(fileNamePrefix + "_" +
-                        currentFileType.getStringRepresentation() + "_" +
-                        this.convertAttributeToFileName(this.params) + EXTENSION);
+                        currentFileType.getStringRepresentation() + suffix + EXTENSION);
                 generatedFileNames.put(currentFileType, fileName);
 
                 // write in temp file
@@ -484,8 +494,11 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         }
         // now, if everything went fine, we rename or delete the temporary files
         if (numberOfRows > 0) {
+            log.info("Each expression file for the species {} contains {} rows.",
+                    speciesId, numberOfRows / this.fileTypes.size());
             this.renameTempFiles(generatedFileNames, tmpExtension);            
         } else {
+            log.info("Expression files for the species {} contains no rows.", speciesId);
             this.deleteTempFiles(generatedFileNames, tmpExtension);
         }
 
@@ -510,12 +523,12 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         Collections.sort(attributeList);
 
         return log.exit(attributes.stream()
-                .map(a -> {
+                .flatMap(a -> {
                     switch (a) {
                         case ANAT_ENTITY_ID:
-                            return "organ";
+                            return Stream.empty();
                         case DEV_STAGE_ID:
-                            return "stage";
+                            return Stream.of("development");
                         default: 
                             throw new IllegalArgumentException("Attribute not supported: " + a);
                     }})
@@ -648,9 +661,9 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         log.entry(fileType);
         
         String[] headers = null; 
-        int nbColumns = 10;
+        int nbColumns = 5 + 2 * this.params.size();
         if (!fileType.isSimpleFileType()) {
-            nbColumns = 33;
+            nbColumns = 28 + 2 * this.params.size();
         }
         headers = new String[nbColumns];
 
@@ -659,14 +672,19 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         // *** Headers common to all file types ***
         headers[idx++] = GENE_ID_COLUMN_NAME;
         headers[idx++] = GENE_NAME_COLUMN_NAME;
-        headers[idx++] = ANAT_ENTITY_ID_COLUMN_NAME;
-        headers[idx++] = ANAT_ENTITY_NAME_COLUMN_NAME;
-        headers[idx++] = STAGE_ID_COLUMN_NAME;
-        headers[idx++] = STAGE_NAME_COLUMN_NAME;
+        if (this.params.contains(CallService.Attribute.ANAT_ENTITY_ID)) {
+            headers[idx++] = ANAT_ENTITY_ID_COLUMN_NAME;
+            headers[idx++] = ANAT_ENTITY_NAME_COLUMN_NAME;
+        }
+        if (this.params.contains(CallService.Attribute.DEV_STAGE_ID)) {
+            headers[idx++] = STAGE_ID_COLUMN_NAME;
+            headers[idx++] = STAGE_NAME_COLUMN_NAME;
+        }
         headers[idx++] = EXPRESSION_COLUMN_NAME;
         headers[idx++] = QUALITY_COLUMN_NAME;
         headers[idx++] = EXPRESSION_RANK_COLUMN_NAME;
-        headers[idx++] = EXPRESSION_SCORE_COLUMN_NAME;
+        // TODO: enable when expression scores will be calculated
+//        headers[idx++] = EXPRESSION_SCORE_COLUMN_NAME;
         if (!fileType.isSimpleFileType()) {
             // *** Headers specific to complete file ***
             headers[idx++] = INCLUDING_OBSERVED_DATA_COLUMN_NAME;
@@ -884,7 +902,6 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         return log.exit(quoteMode);
     }
 
-
     /**
      * Generate rows to be written and write them in a file. This methods will notably use
      * {@code ExpressionCall}s to produce information, that is different depending on {@code fileType}.
@@ -908,6 +925,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      *                              to produce the header.
      * @param calls                 A {@code Stream} of {@code ExpressionCall}s that are expression
      *                              calls to be written into files.
+     * @return                      An {@code int} that is the addition of number of rows added to files.
      * @throws UncheckedIOException If an error occurred while trying to write the {@code outputFile}.
      */
     private int writeRows(Map<SingleSpExprFileType2, ICsvDozerBeanWriter> writersUsed, 
@@ -916,15 +934,19 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             Stream<ExpressionCall> calls) throws UncheckedIOException {
         log.entry(writersUsed, processors, headers, calls);
 
-        return log.exit(calls.map(c -> {
-            int i = 0;
+        // We use an AtomicInteger instead of using .mapToInt(Integer::intValue).sum() on the stream 
+        // to try to avoid memory problems
+        AtomicInteger rowCount = new AtomicInteger();
+        calls.forEach(c -> {
             for (Entry<SingleSpExprFileType2, ICsvDozerBeanWriter> writerFileType : writersUsed.entrySet()) {
                 String geneId = c.getGene().getEnsemblGeneId();
                 String geneName = c.getGene().getName() == null? "": c.getGene().getName();
                 String anatEntityId = c.getCondition().getAnatEntityId();
-                String anatEntityName = c.getCondition().getAnatEntity().getName();
+                String anatEntityName = c.getCondition().getAnatEntity() == null? null:
+                        c.getCondition().getAnatEntity().getName();
                 String devStageId = c.getCondition().getDevStageId();
-                String devStageName = c.getCondition().getDevStage().getId();
+                String devStageName = c.getCondition().getDevStage() == null ? null:
+                        c.getCondition().getDevStage().getName();
                 String summaryCallType = convertExpressionSummaryToString(c.getSummaryCallType()); 
                 String summaryQuality = convertSummaryQualityToString(c.getSummaryQuality());
                 String expressionRank = c.getGlobalMeanRank() == null ? NA_VALUE :
@@ -939,7 +961,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                         summaryCallType, summaryQuality, expressionRank, expressionScore);
                     try {
                         writerFileType.getValue().write(simpleBean, processors.get(writerFileType.getKey()));
-                        i++;
+                        rowCount.getAndIncrement();
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
                     }
@@ -958,14 +980,14 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                             counts);
                     try {
                         writerFileType.getValue().write(completeBean, processors.get(writerFileType.getKey()));
-                        i++;
+                        rowCount.getAndIncrement();
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
                     }
                 }
             }
-            return i;
-        }).mapToInt(Integer::intValue).sum());
+        });
+        return log.exit(rowCount.get());
     }
 
     /**

@@ -8,7 +8,9 @@ import java.time.Month;
 import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,13 +32,14 @@ import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.GlobalNoExpress
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO.CategoryEnum;
+import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO.ConditionParameter;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesToDataGroupTO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesDataGroupTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO.Domain;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalNodeTO;
-import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTO;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalNodeToGeneTO;
 import org.bgee.model.dao.api.keyword.KeywordDAO.EntityToKeywordTO;
 import org.bgee.model.dao.api.keyword.KeywordDAO.KeywordTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
@@ -164,10 +167,10 @@ public class TOComparatorTest extends TestAncestor {
     
     /**
      * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
-     * using {@code HierarchicalGroupTO}s.
+     * using {@code HierarchicalNodeTO}s.
      */
     @Test
-    public void testAreHierarchicalGroupTOEqual() {
+    public void testAreHierarchicalNodeTOEqual() {
         HierarchicalNodeTO to1 = new HierarchicalNodeTO(1, "ID1", 1, 2, 10);
         HierarchicalNodeTO to2 = new HierarchicalNodeTO(1, "ID1", 1, 2, 10);
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
@@ -183,18 +186,18 @@ public class TOComparatorTest extends TestAncestor {
     
     /**
      * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
-     * using {@code HierarchicalGroupToGeneTO}s.
+     * using {@code HierarchicalNodeToGeneTO}s.
      */
     @Test
-    public void testAreHierarchicalGroupToGeneTOEqual() {
-        HierarchicalGroupToGeneTO to1 = new HierarchicalGroupToGeneTO(1, 1, null);
-        HierarchicalGroupToGeneTO to2 = new HierarchicalGroupToGeneTO(1, 1, null);
+    public void testAreHierarchicalNodeToGeneTOEqual() {
+        HierarchicalNodeToGeneTO to1 = new HierarchicalNodeToGeneTO(1, 1, 1);
+        HierarchicalNodeToGeneTO to2 = new HierarchicalNodeToGeneTO(1, 1, 1);
         assertTrue(TOComparator.areTOsEqual(to1, to2));
         
-        to2 = new HierarchicalGroupToGeneTO(1, 2, null);
+        to2 = new HierarchicalNodeToGeneTO(1, 2, 1);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
         
-        to1 = new HierarchicalGroupToGeneTO(2, 2, null);
+        to1 = new HierarchicalNodeToGeneTO(2, 2, 2);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
     }
     
@@ -228,34 +231,47 @@ public class TOComparatorTest extends TestAncestor {
     @Test
     public void testAreDownloadFileTOsEqual() {
         DownloadFileTO to1 = new DownloadFileTO(1, "name1", "desc1", 
-                "path/", 10L, CategoryEnum.EXPR_CALLS_COMPLETE, 1);
+                "path/", 10L, CategoryEnum.EXPR_CALLS_COMPLETE, 1,
+                Collections.singleton(ConditionParameter.ANAT_ENTITY));
         DownloadFileTO to2 = new DownloadFileTO(1, "name1", "desc1", 
-                "path/", 10L, CategoryEnum.EXPR_CALLS_COMPLETE, 1);
+                "path/", 10L, CategoryEnum.EXPR_CALLS_COMPLETE, 1,
+                Collections.singleton(ConditionParameter.ANAT_ENTITY));
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
         to2 = new DownloadFileTO(1, "name1", "desc1", 
-                "path/", 10L, CategoryEnum.DIFF_EXPR_ANAT_COMPLETE, 1);
+                "path/", 10L, CategoryEnum.DIFF_EXPR_ANAT_COMPLETE, 1,
+                Collections.singleton(ConditionParameter.ANAT_ENTITY));
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         
         to2 = new DownloadFileTO(2, "name1", "desc1", 
-                "path/", 10L, CategoryEnum.EXPR_CALLS_COMPLETE, 1);
+                "path/", 10L, CategoryEnum.EXPR_CALLS_COMPLETE, 1,
+                Collections.singleton(ConditionParameter.ANAT_ENTITY));
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
         //regression test when using Long size value > 127, 
         //see http://stackoverflow.com/a/20542511/1768736
         to1 = new DownloadFileTO(1, "name1", "desc1", 
-                "path/", 3000L, CategoryEnum.EXPR_CALLS_COMPLETE, 1);
+                "path/", 3000L, CategoryEnum.EXPR_CALLS_COMPLETE, 1,
+                Collections.singleton(ConditionParameter.ANAT_ENTITY));
         to2 = new DownloadFileTO(1, "name1", "desc1", 
-                "path/", 3000L, CategoryEnum.EXPR_CALLS_COMPLETE, 1);
+                "path/", 3000L, CategoryEnum.EXPR_CALLS_COMPLETE, 1,
+                Collections.singleton(ConditionParameter.ANAT_ENTITY));
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         to1 = new DownloadFileTO(1, "name1", "desc1", 
-                "path/", null, CategoryEnum.EXPR_CALLS_COMPLETE, 1);
+                "path/", null, CategoryEnum.EXPR_CALLS_COMPLETE, 1,
+                Collections.singleton(ConditionParameter.ANAT_ENTITY));
         to2 = new DownloadFileTO(1, "name1", "desc1", 
-                "path/", null, CategoryEnum.EXPR_CALLS_COMPLETE, 1);
+                "path/", null, CategoryEnum.EXPR_CALLS_COMPLETE, 1,
+                Collections.singleton(ConditionParameter.ANAT_ENTITY));
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
+        
+        to2 = new DownloadFileTO(1, "name1", "desc1", 
+                "path/", null, CategoryEnum.EXPR_CALLS_COMPLETE, 1,
+                new HashSet<>(Arrays.asList(ConditionParameter.ANAT_ENTITY, ConditionParameter.STAGE)));
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
     }
 
     /**

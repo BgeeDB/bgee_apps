@@ -1,89 +1,89 @@
-package org.bgee.controller;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import javax.servlet.http.HttpServletResponse;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.bgee.controller.exception.InvalidRequestException;
-import org.bgee.controller.exception.PageNotFoundException;
-import org.bgee.controller.user.User;
-import org.bgee.model.ServiceFactory;
-import org.bgee.model.dao.api.DAO;
-import org.bgee.model.dao.api.DAOManager;
-import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
-import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTOResultSet;
-import org.bgee.model.dao.api.expressiondata.CallDAOFilter;
-import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
-import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
-import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
-import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
-import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTOResultSet;
-import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallTOResultSet;
-import org.bgee.model.dao.api.ontologycommon.RelationDAO;
-import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
-import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTOResultSet;
-import org.bgee.model.dao.api.species.SpeciesDAO;
-import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
-import org.bgee.model.expressiondata.baseelements.DataQuality;
-import org.bgee.model.expressiondata.baseelements.DataType;
-import org.bgee.model.job.Job;
-import org.bgee.model.job.JobService;
-import org.bgee.model.job.exception.ThreadAlreadyWorkingException;
-import org.bgee.model.job.exception.TooManyJobsException;
-import org.bgee.view.DAODisplay;
-import org.bgee.view.ViewFactory;
-
-/**
- * Controller that handles requests allowing to use Bgee DAOs as a webservice. 
- * It is the only controller allowed to directly manipulate DAOs, rather than the bgee-core layer.
- * 
- * @author  Frederic Bastian
- * @version Bgee 13 Mar. 2016
- * @since   Bgee 13
- */
-public class CommandDAO extends CommandParent {
-
-    /**
-     * {@code Logger} of the class. 
-     */
-    private final static Logger log = LogManager.getLogger(CommandDownload.class.getName());
-
-    /**
-     * Constructor
-     * 
-     * @param response          A {@code HttpServletResponse} that will be used to display the 
-     *                          page to the client
-     * @param requestParameters The {@code RequestParameters} that handles the parameters of the 
-     *                          current request.
-     * @param prop              A {@code BgeeProperties} instance that contains the properties
-     *                          to use.
-     * @param viewFactory       A {@code ViewFactory} that provides the display type to be used.
-     * @param serviceFactory    A {@code ServiceFactory} that provides bgee services.
-     * @param jobService        A {@code JobService} instance allowing to manage jobs between threads 
-     *                          across the entire webapp.
-     * @param user              The {@code User} who is making the query to the webapp.
-     */
-    public CommandDAO (HttpServletResponse response, RequestParameters requestParameters, 
-            BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory, 
-            JobService jobService, User user) {
-        super(response, requestParameters, prop, viewFactory, serviceFactory, jobService, user, null, null);
-    }
-
-    @Override
-    public void processRequest() throws IllegalStateException, IOException, 
-        PageNotFoundException, InvalidRequestException, ThreadAlreadyWorkingException, TooManyJobsException {
-        log.entry();
-        throw log.throwing(new UnsupportedOperationException(
-                "To be implemented, not used anymore for R package"));
+//package org.bgee.controller;
+//
+//import java.io.IOException;
+//import java.util.Arrays;
+//import java.util.EnumSet;
+//import java.util.HashSet;
+//import java.util.List;
+//import java.util.Map;
+//import java.util.Set;
+//import java.util.stream.Collectors;
+//
+//import javax.servlet.http.HttpServletResponse;
+//
+//import org.apache.logging.log4j.LogManager;
+//import org.apache.logging.log4j.Logger;
+//import org.bgee.controller.exception.InvalidRequestException;
+//import org.bgee.controller.exception.PageNotFoundException;
+//import org.bgee.controller.user.User;
+//import org.bgee.model.ServiceFactory;
+//import org.bgee.model.dao.api.DAO;
+//import org.bgee.model.dao.api.DAOManager;
+//import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
+//import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTOResultSet;
+//import org.bgee.model.dao.api.expressiondata.CallDAOFilter;
+//import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
+//import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
+//import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
+//import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
+//import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTOResultSet;
+//import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallTOResultSet;
+//import org.bgee.model.dao.api.ontologycommon.RelationDAO;
+//import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
+//import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTOResultSet;
+//import org.bgee.model.dao.api.species.SpeciesDAO;
+//import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
+//import org.bgee.model.expressiondata.baseelements.DataQuality;
+//import org.bgee.model.expressiondata.baseelements.DataType;
+//import org.bgee.model.job.Job;
+//import org.bgee.model.job.JobService;
+//import org.bgee.model.job.exception.ThreadAlreadyWorkingException;
+//import org.bgee.model.job.exception.TooManyJobsException;
+//import org.bgee.view.DAODisplay;
+//import org.bgee.view.ViewFactory;
+//
+///**
+// * Controller that handles requests allowing to use Bgee DAOs as a webservice. 
+// * It is the only controller allowed to directly manipulate DAOs, rather than the bgee-core layer.
+// * 
+// * @author  Frederic Bastian
+// * @version Bgee 13 Mar. 2016
+// * @since   Bgee 13
+// */
+//public class CommandDAO extends CommandParent {
+//
+//    /**
+//     * {@code Logger} of the class. 
+//     */
+//    private final static Logger log = LogManager.getLogger(CommandDownload.class.getName());
+//
+//    /**
+//     * Constructor
+//     * 
+//     * @param response          A {@code HttpServletResponse} that will be used to display the 
+//     *                          page to the client
+//     * @param requestParameters The {@code RequestParameters} that handles the parameters of the 
+//     *                          current request.
+//     * @param prop              A {@code BgeeProperties} instance that contains the properties
+//     *                          to use.
+//     * @param viewFactory       A {@code ViewFactory} that provides the display type to be used.
+//     * @param serviceFactory    A {@code ServiceFactory} that provides bgee services.
+//     * @param jobService        A {@code JobService} instance allowing to manage jobs between threads 
+//     *                          across the entire webapp.
+//     * @param user              The {@code User} who is making the query to the webapp.
+//     */
+//    public CommandDAO (HttpServletResponse response, RequestParameters requestParameters, 
+//            BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory, 
+//            JobService jobService, User user) {
+//        super(response, requestParameters, prop, viewFactory, serviceFactory, jobService, user, null, null);
+//    }
+//
+//    @Override
+//    public void processRequest() throws IllegalStateException, IOException, 
+//        PageNotFoundException, InvalidRequestException, ThreadAlreadyWorkingException, TooManyJobsException {
+//        log.entry();
+//        throw log.throwing(new UnsupportedOperationException(
+//                "To be implemented, not used anymore for R package"));
 //
 //        Job job = this.jobService.registerNewJob(this.user.getUUID().toString());
 //        try {
@@ -118,8 +118,8 @@ public class CommandDAO extends CommandParent {
 //        }
 //        
 //        log.exit();
-    }
-    
+//    }
+//    
 //    /**
 //     * Performs the query and display the results when requesting {@code ExpressionCallTO}s.
 //     * 
@@ -370,4 +370,4 @@ public class CommandDAO extends CommandParent {
 //        return log.exit(requestedAttrs.stream().map(rqAttr -> nameToAttr.get(rqAttr.toLowerCase()))
 //                .collect(Collectors.toList()));
 //    }
-}
+//}

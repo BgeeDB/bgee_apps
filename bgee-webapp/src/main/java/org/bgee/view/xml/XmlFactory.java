@@ -16,6 +16,7 @@ import org.bgee.view.ErrorDisplay;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.GeneralDisplay;
 import org.bgee.view.JobDisplay;
+import org.bgee.view.RPackageDisplay;
 import org.bgee.view.SearchDisplay;
 import org.bgee.view.SourceDisplay;
 import org.bgee.view.SpeciesDisplay;
@@ -106,4 +107,10 @@ public class XmlFactory extends ViewFactory {
         log.entry();
         throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
     }
+    
+    @Override
+	public RPackageDisplay getRPackageDisplay() throws IOException {
+	    log.entry();
+	    throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
+	}
 }

@@ -26,8 +26,8 @@ import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.user.User;
 import org.bgee.controller.utils.MailSender;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.job.JobService;
 import org.bgee.view.ViewFactory;
 import org.junit.Test;
@@ -139,19 +139,21 @@ public class CommandParentTest extends TestAncestor {
         
         RequestParameters params = new RequestParameters();
         log.info("Generated query URL: " + params.getRequestURL());
-        //no data quality parameter, should retrieve no data quality
+        //no data quality parameter, should retrieve silver quality to not display bronze calls
         FakeCommand command = new FakeCommand(response, params, BgeeProperties.getBgeeProperties(), 
                 null, null, null, null, context, null);
-        assertEquals("No data quality should have been retrieved", null, command.checkAndGetDataQuality());
+        assertEquals("No data quality should have been retrieved", SummaryQuality.SILVER,
+                command.checkAndGetSummaryQuality());
 
-        //LOW quality
+        //SILVER quality
         params = new RequestParameters();
-        params.addValue(params.getUrlParametersInstance().getParamDataQuality(), DataQuality.LOW.name().toLowerCase());
+        params.addValue(params.getUrlParametersInstance().getParamDataQuality(),
+                SummaryQuality.SILVER.name().toLowerCase());
         log.info("Generated query URL: " + params.getRequestURL());
         command = new FakeCommand(response, params, BgeeProperties.getBgeeProperties(), 
                 null, null, null, null, context, null);
-        assertEquals("Low quality should have been retrieved", DataQuality.LOW, 
-                command.checkAndGetDataQuality());
+        assertEquals("Silver quality should have been retrieved", SummaryQuality.SILVER, 
+                command.checkAndGetSummaryQuality());
         
         //ALL quality
         params = new RequestParameters();
@@ -159,17 +161,17 @@ public class CommandParentTest extends TestAncestor {
         log.info("Generated query URL: " + params.getRequestURL());
         command = new FakeCommand(response, params, BgeeProperties.getBgeeProperties(), 
                 null, null, null, null, context, null);
-        assertEquals("Low quality should have been retrieved", DataQuality.LOW, 
-                command.checkAndGetDataQuality());
+        assertEquals("Silver quality should have been retrieved", SummaryQuality.SILVER, 
+                command.checkAndGetSummaryQuality());
         
-        //HIGH quality
+        //GOLD quality
         params = new RequestParameters();
-        params.addValue(params.getUrlParametersInstance().getParamDataQuality(), DataQuality.HIGH.name().toLowerCase());
+        params.addValue(params.getUrlParametersInstance().getParamDataQuality(), SummaryQuality.GOLD.name().toLowerCase());
         log.info("Generated query URL: " + params.getRequestURL());
         command = new FakeCommand(response, params, BgeeProperties.getBgeeProperties(), 
                 null, null, null, null, context, null);
-        assertEquals("High quality should have been retrieved", DataQuality.HIGH, 
-                command.checkAndGetDataQuality());
+        assertEquals("Gold quality should have been retrieved", SummaryQuality.GOLD, 
+                command.checkAndGetSummaryQuality());
         
         //test incorrect param
         try {
@@ -178,7 +180,7 @@ public class CommandParentTest extends TestAncestor {
             log.info("Generated query URL: " + params.getRequestURL());
             command = new FakeCommand(response, params, BgeeProperties.getBgeeProperties(), 
                     null, null, null, null, context, null);
-            command.checkAndGetDataQuality();
+            command.checkAndGetSummaryQuality();
             //test failed, an exception should have been thrown
             fail("Incorrect data quality param should raise an exception.");
         } catch (InvalidFormatException|InvalidRequestException e) {

@@ -11,12 +11,13 @@ import org.bgee.model.dao.api.ontologycommon.NestedSetModelElementTO;
 
 /**
  * DAO defining queries using or retrieving {@link HierarchicalNodeTO}s.
- * XXX Is it better to create a HierarchicalGroupTo corresponding to database schema?
+ * XXX Is it better to create a HierarchicalNodeTO corresponding to database schema?
  * 
  * @author Komal Sanjeev
  * @author Frederic Bastian
  * @author Valentine Rech de Laval
- * @version Bgee 13
+ * @author Julien Wollbrett
+ * @version Bgee 14
  * @see HierarchicalNodeTO
  * @since Bgee 13
  */
@@ -24,7 +25,7 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
 
     /**
      * {@code Enum} used to define the attributes to populate in the
-     * {@code HierarchicalGroupTO}s obtained from this {@code HierarchicalGroupDAO}.
+     * {@code HierarchicalNodeTO}s obtained from this {@code HierarchicalGroupDAO}.
      * <ul>
      * <li>{@code ID}: corresponds to {@link HierarchicalNodeTO#getId()}.
      * <li>{@code OMA_GROUP_ID}: corresponds to {@link HierarchicalNodeTO#getOMAGroupId()}.
@@ -43,9 +44,9 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
 
     /**
      * Inserts the provided Hierarchical Groups into the Bgee database, represented as a
-     * {@code Collection} of {@code HierarchicalGroupTO}s.
+     * {@code Collection} of {@code HierarchicalNodeTO}s.
      * 
-     * @param groups        A {@code Collection} of {@code HierarchicalGroupTO}s to be
+     * @param groups        A {@code Collection} of {@code HierarchicalNodeTO}s to be
      *                      inserted into the database.
      * @throws IllegalArgumentException If {@code groups} is empty or null. 
      * @throws DAOException If an {@code Exception} occurred while trying to insert
@@ -53,28 +54,43 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
      *                      {@code DAOException} ({@code DAOs} do not expose these kind of
      *                      implementation details).
      */
-    public int insertHierarchicalGroups(Collection<HierarchicalNodeTO> groups)
+    public int insertHierarchicalNodes(Collection<HierarchicalNodeTO> groups)
+            throws DAOException, IllegalArgumentException;
+
+    /**
+     * Inserts the provided GroupToGene into the Bgee database, represented as a
+     * {@code Collection} of {@code HierarchicalNodeToGeneTO}s.
+     * 
+     * @param groupToGene   A {@code Collection} of {@code HierarchicalNodeToGeneTO}s to be
+     *                      inserted into the database.
+     * @throws IllegalArgumentException If {@code groupToGene} is empty or null. 
+     * @throws DAOException If an {@code Exception} occurred while trying to insert
+     *                      {@code terms}. The {@code SQLException} will be wrapped into a
+     *                      {@code DAOException} ({@code DAOs} do not expose these kind of
+     *                      implementation details).
+     */
+    public int insertHierarchicalNodeToGene(Collection<HierarchicalNodeToGeneTO> groupToGene)
             throws DAOException, IllegalArgumentException;
     
     public HierarchicalNodeTOResultSet getOMANodesFromStartingGenes(Collection<Integer> taxonIds, 
     		Integer startingSpeciesId, Set<String> startingGeneIds) 
     				throws DAOException, IllegalArgumentException;
     
-    public HierarchicalGroupToGeneTOResultSet getGenesByNodeFromNodes(Collection<Integer> omaNodesIds,
+    public HierarchicalNodeToGeneTOResultSet getGenesByNodeFromNodes(Collection<Integer> omaNodesIds,
     		Collection<Integer> speciesIds) throws DAOException, IllegalArgumentException;
     
     /**
 	 * Retrieve the mapping from genes to groups of homologous genes, 
 	 * valid for the provided taxon: genes that are homologous at the level 
 	 * of the provided taxon will have the same group ID 
-	 * (see HierarchicalGroupToGeneTO#getGroupId()). This group ID corresponds to the ID 
+	 * (see HierarchicalNodeToGeneTO#getGroupId()). This group ID corresponds to the ID 
 	 * of a Hierarchical Group (see {@link HierarchicalNodeTO}). 
 	 * <p>
 	 * Genes can be filtered further by providing a list of species: only genes belonging 
 	 * to these species will be retrieved.
 	 * <p>
 	 * Note that using the {@code setAttributes} methods (see {@link DAO}) has no effect 
-	 * on attributes retrieved in {@code HierarchicalGroupToGeneTO}s. Also, it is 
+	 * on attributes retrieved in {@code HierarchicalNodeToGeneTO}s. Also, it is 
 	 * the responsibility of the caller to close the returned {@code DAOResultSet} 
 	 * once results are retrieved.
 	 * 
@@ -83,16 +99,16 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
 	 * @param speciesIds    A {@code Set} of {@code Integer}s that are the IDs of species 
 	 *                      for which we want to retrieve genes. Can be {@code null} or empty, 
 	 *                      in order to retrieve all homologous genes for the provided taxon.
-	 * @return              A {@code HierarchicalGroupToGeneTOResultSet} allowing to retrieve 
-	 *                      the requested {@code HierarchicalGroupToGeneTO}s.
+	 * @return              A {@code HierarchicalNodeToGeneTOResultSet} allowing to retrieve 
+	 *                      the requested {@code HierarchicalNodeToGeneTO}s.
 	 * @throws IllegalArgumentException If {@code taxonId} is empty or null. 
 	 * @throws DAOException             If an error occurred when accessing the data source. 
 	 */
-	public HierarchicalGroupToGeneTOResultSet getOMANodeToGene(Integer taxonId, 
+	public HierarchicalNodeToGeneTOResultSet getOMANodeToGene(Integer taxonId, 
 			Collection<Integer> speciesIds) throws DAOException, IllegalArgumentException;
 
 	/**
-     * {@code DAOResultSet} specifics to {@code HierarchicalGroupTO}s
+     * {@code DAOResultSet} specifics to {@code HierarchicalNodeTO}s
      * 
      * @author Valentine Rech de Laval
      * @version Bgee 13
@@ -223,14 +239,14 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
     }
     
     /**
-     * {@code DAOResultSet} specifics to {@code HierarchicalGroupToGeneTO}s.
+     * {@code DAOResultSet} specifics to {@code HierarchicalNodeToGeneTO}s.
      * 
      * @author Frederic Bastian
      * @version Bgee 13 Mar. 2015
      * @since Bgee 13
      */
-    public interface HierarchicalGroupToGeneTOResultSet 
-                    extends DAOResultSet<HierarchicalGroupToGeneTO> {
+    public interface HierarchicalNodeToGeneTOResultSet 
+                    extends DAOResultSet<HierarchicalNodeToGeneTO> {
     }
     /**
      * A {@code TransferObject} allowing to map genes to groups of homologous genes. 
@@ -246,7 +262,7 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
      * @version Bgee 13 Mar. 2015
      * @since Bgee 13
      */
-    public final class HierarchicalGroupToGeneTO extends TransferObject {
+    public final class HierarchicalNodeToGeneTO extends TransferObject {
         private static final long serialVersionUID = 3165617503583438525L;
         
         /**
@@ -268,11 +284,11 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
          * Constructor providing the ID of a node of a Hierarchical Group the ID of a gene belonging to 
          * the node, and the ID of the taxon belonging to the node.
          * 
-         * @param nodeId       An {@code Integer} that is the ID of a node of a Hierarchical Group.
+         * @param nodeId        An {@code Integer} that is the ID of a node of a Hierarchical Group.
          * @param bgeeGeneId    An {@code Integer} that is the ID of a gene belonging to the node.
-         * @param taxonId    An {@code Integer} that is the ID of a taxon belonging to the node.
+         * @param taxonId       An {@code Integer} that is the ID of a taxon belonging to the node.
          */
-        public HierarchicalGroupToGeneTO (Integer nodeId, Integer bgeeGeneId, Integer taxonId) {
+        public HierarchicalNodeToGeneTO (Integer nodeId, Integer bgeeGeneId, Integer taxonId) {
             this.nodeId = nodeId;
             this.bgeeGeneId = bgeeGeneId;
             this.taxonId = taxonId;
@@ -293,17 +309,63 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
             return bgeeGeneId;
         }
         /**
-         * An {@code Integer} that is the ID of a taxon belonging to the node with ID 
+         * @return  An {@code Integer} that is the ID of a taxonomy level belonging to the group with ID 
          *          {@link #getNodeId()}.
          */
-        public Integer getTaxonId(){
-        	return taxonId;
+        public Integer getTaxonId() {
+            return taxonId;
         }
         
         @Override
         public String toString() {
-            return "HierarchicalGroupToGeneTO[nodeId="+this.nodeId+", bgeeGeneId="+this.bgeeGeneId
+            return "HierarchicalNodeToGeneTO[nodeId="+this.nodeId+", bgeeGeneId="+this.bgeeGeneId
             		+", taxonId="+this.getTaxonId()+"]";
+        }
+        
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((this.getBgeeGeneId() == null) ? 0 : this.getBgeeGeneId().hashCode());
+            result = prime * result + ((this.getNodeId() == null) ? 0 : this.getNodeId().hashCode());
+            result = prime * result + ((this.getTaxonId() == null) ? 0 : this.getTaxonId().hashCode());
+            return result;
+        }
+        
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            HierarchicalNodeToGeneTO other = (HierarchicalNodeToGeneTO) obj;
+            if (this.getBgeeGeneId() == null) {
+                if (other.getBgeeGeneId() != null) {
+                    return false;
+                }
+            } else if (!this.getBgeeGeneId().equals(other.getBgeeGeneId())) {
+                return false;
+            }
+            if (this.getNodeId() == null) {
+                if (other.getNodeId()  != null) {
+                    return false;
+                }
+            } else if (!this.getNodeId() .equals(other.getNodeId() )) {
+                return false;
+            }
+            if (this.getTaxonId() == null) {
+                if (other.getTaxonId()  != null) {
+                    return false;
+                }
+            } else if (!this.getTaxonId() .equals(other.getTaxonId() )) {
+                return false;
+            }
+            return true;
         }
     }
 }

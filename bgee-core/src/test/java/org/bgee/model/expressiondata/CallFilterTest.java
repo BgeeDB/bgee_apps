@@ -1,49 +1,50 @@
-//package org.bgee.model.expressiondata;
-//
-//import static org.junit.Assert.assertFalse;
-//import static org.junit.Assert.assertTrue;
-//import static org.junit.Assert.fail;
-//
-//import java.math.BigDecimal;
-//import java.util.AbstractMap;
-//import java.util.Arrays;
-//import java.util.Collection;
-//import java.util.Collections;
-//import java.util.EnumSet;
-//import java.util.HashMap;
-//import java.util.HashSet;
-//import java.util.Map;
-//import java.util.Set;
-//import java.util.stream.Collectors;
-//
-//import org.bgee.model.TestAncestor;
-//import org.bgee.model.expressiondata.Call.ExpressionCall;
-//import org.bgee.model.expressiondata.CallData.ExpressionCallData;
-//import org.bgee.model.expressiondata.CallFilter.DiffExpressionCallFilter;
-//import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
-//import org.bgee.model.expressiondata.baseelements.CallType;
-//import org.bgee.model.expressiondata.baseelements.PropagationState;
-//import org.bgee.model.expressiondata.baseelements.SummaryCallType;
-//import org.bgee.model.expressiondata.baseelements.DataQuality;
-//import org.bgee.model.expressiondata.baseelements.DataType;
-//import org.bgee.model.expressiondata.baseelements.ExperimentExpressionCount;
-//import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
-//import org.bgee.model.expressiondata.baseelements.SummaryQuality;
-//import org.bgee.model.gene.Gene;
-//import org.bgee.model.gene.GeneFilter;
-//import org.bgee.model.species.Species;
-//import org.junit.Test;
-//
-///**
-// * Unit tests for {@link CallFilter}.
-// * 
-// * @author  Frederic Bastian
-// * @author  Valentine Rech de Laval
-// * @version Bgee 14, Mar. 2017
-// * @since   Bgee 13, Oct. 2015
-// */
-//public class CallFilterTest extends TestAncestor {
-//
+package org.bgee.model.expressiondata;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.math.BigDecimal;
+import java.util.AbstractMap;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.bgee.model.TestAncestor;
+import org.bgee.model.expressiondata.Call.ExpressionCall;
+import org.bgee.model.expressiondata.CallData.ExpressionCallData;
+import org.bgee.model.expressiondata.CallFilter.DiffExpressionCallFilter;
+import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
+import org.bgee.model.expressiondata.baseelements.CallType;
+import org.bgee.model.expressiondata.baseelements.PropagationState;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType;
+import org.bgee.model.expressiondata.baseelements.DataQuality;
+import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.ExperimentExpressionCount;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
+import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneFilter;
+import org.bgee.model.species.Species;
+import org.junit.Test;
+
+/**
+ * Unit tests for {@link CallFilter}.
+ * 
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, Mar. 2017
+ * @since   Bgee 13, Oct. 2015
+ */
+//FIXME: to reactivate
+public class CallFilterTest extends TestAncestor {
+
 //    private static final Map<DataType, Set<ExperimentExpressionCount>> VALID_EXP_COUNTS = 
 //        //we go through all combinations of DataType, CallType.Expression,
 //        //PropagationState, and DataQuality, to identify and store the valid ones.
@@ -231,4 +232,5 @@
 //                validConditionFilters, null, null);
 //        assertFalse("Call should not pass the filter", callFilter.test(call1));
 //    }
-//}
+
+}

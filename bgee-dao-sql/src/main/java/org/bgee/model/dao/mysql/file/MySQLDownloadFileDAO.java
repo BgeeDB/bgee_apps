@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.file.DownloadFileDAO;
+import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO.ConditionParameter;
 import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
@@ -12,18 +13,21 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * The MySQL implementation of {@link MySQLDownloadFileDAO}.
  * 
- * @author Philippe Moret
- * @author Valentine Rech de Laval
- * @author Frederic Bastian
- * @version Bgee 14 Feb. 2017
- * @since Bgee 13
+ * @author  Philippe Moret
+ * @author  Valentine Rech de Laval
+ * @author  Frederic Bastian
+ * @version Bgee 14, May 2017
+ * @since   Bgee 13
  */
 public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> implements DownloadFileDAO {
 
@@ -51,6 +55,7 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
         colToAttributesMap.put("downloadFileSize", DownloadFileDAO.Attribute.FILE_SIZE);
         colToAttributesMap.put("downloadFileCategory", DownloadFileDAO.Attribute.CATEGORY);
         colToAttributesMap.put("speciesDataGroupId", DownloadFileDAO.Attribute.SPECIES_DATA_GROUP_ID);
+        colToAttributesMap.put("downloadFileConditionParameters", DownloadFileDAO.Attribute.CONDITION_PARAMETERS);
     }
 
     /**
@@ -95,6 +100,7 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
         .append(getSelectExprFromAttribute(DownloadFileDAO.Attribute.CATEGORY, colToAttributesMap)).append(", ")
         .append(getSelectExprFromAttribute(DownloadFileDAO.Attribute.SPECIES_DATA_GROUP_ID, colToAttributesMap)).append(", ")
         .append(getSelectExprFromAttribute(DownloadFileDAO.Attribute.FILE_SIZE, colToAttributesMap))
+        .append(getSelectExprFromAttribute(DownloadFileDAO.Attribute.CONDITION_PARAMETERS, colToAttributesMap))
         .append(") VALUES ");
         for (int i = 0; i < fileTOs.size(); i++) {
             if (i > 0) {
@@ -154,6 +160,7 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
                 String path = null, name = null, description = null;
                 Long size = null;
                 DownloadFileTO.CategoryEnum category = null;
+                Set<ConditionParameter> condParams = null;
 
                 for (Map.Entry<Integer, String> col : this.getColumnLabels().entrySet()) {
                     String columnName = col.getValue();
@@ -181,12 +188,20 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
                         case SPECIES_DATA_GROUP_ID:
                             speciesDataGroupId = currentResultSet.getInt(columnName);
                             break;
+                        case CONDITION_PARAMETERS:
+                            String values = currentResultSet.getString(columnName);
+                            if (values != null) {
+                                condParams = Arrays.stream(values.split(","))
+                                        .map(s -> ConditionParameter.convertToConditionParameter(s))
+                                        .collect(Collectors.toSet());
+                            }
+                            break;
                         default:
                             log.throwing(new UnrecognizedColumnException(columnName));
                     }
                 }
                 return log.exit(new DownloadFileTO(id, name, description, path, size, 
-                        category, speciesDataGroupId));
+                        category, speciesDataGroupId, condParams));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }

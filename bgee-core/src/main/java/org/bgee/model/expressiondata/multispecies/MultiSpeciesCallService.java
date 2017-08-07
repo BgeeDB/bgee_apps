@@ -368,7 +368,7 @@ public class MultiSpeciesCallService extends Service {
 
             // Build ExpressionCallFilter
             Set<ConditionFilter> conditionFilters = new HashSet<>();
-            conditionFilters.add(new ConditionFilter(anatEntityIds, devStageIds));
+            conditionFilters.add(new ConditionFilter(anatEntityIds, devStageIds, null));
             log.warn("Only expressed calls are retrieved");
             
 //            // For each species, we load propagated and reconciled calls

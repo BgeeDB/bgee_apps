@@ -37,8 +37,8 @@ import org.bgee.model.dao.api.expressiondata.DiffExpressionCallParams;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
-import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTO;
-import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTOResultSet;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalNodeToGeneTO;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalNodeToGeneTOResultSet;
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO;
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO;
 import org.bgee.model.dao.api.species.TaxonDAO;
@@ -1655,10 +1655,10 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 //        // setAttributes methods has no effect on attributes retrieved  
 //        
 //        Map<String, String> mapping = new HashMap<String, String>();
-//        try (HierarchicalGroupToGeneTOResultSet rs = dao.getGroupToGene(taxonId, speciesIds)) {
+//        try (HierarchicalNodeToGeneTOResultSet rs = dao.getGroupToGene(taxonId, speciesIds)) {
 //            boolean hasResult = false;
 //            while (rs.next()) {
-//                HierarchicalGroupToGeneTO to = rs.getTO();
+//                HierarchicalNodeToGeneTO to = rs.getTO();
 //                mapping.put(to.getGeneId(), to.getGroupId());
 //                hasResult = true;
 //            }

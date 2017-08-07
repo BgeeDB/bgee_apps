@@ -121,7 +121,7 @@ public class CallDataDAOFilter {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("CallDataDAOFilter [dAOExperimentCountFilters=").append(daoExperimentCountFilters)
+        builder.append("CallDataDAOFilter [daoExperimentCountFilters=").append(daoExperimentCountFilters)
                 .append(", dataTypes=").append(dataTypes).append("]");
         return builder.toString();
     }

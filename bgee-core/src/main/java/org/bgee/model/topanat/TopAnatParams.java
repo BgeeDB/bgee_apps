@@ -606,7 +606,7 @@ public class TopAnatParams {
         GeneFilter geneFilter = new GeneFilter(this.speciesId, this.submittedBackgroundIds);
         
         Collection<ConditionFilter> condFilters = StringUtils.isBlank(this.devStageId)? null: 
-            Collections.singleton(new ConditionFilter(null, Collections.singleton(this.devStageId)));
+            Collections.singleton(new ConditionFilter(null, Collections.singleton(this.devStageId), null));
         
         if (this.callType == ExpressionSummary.EXPRESSED) {
             Map<ExpressionSummary, SummaryQuality> callQualFilter = new HashMap<>();
@@ -622,7 +622,7 @@ public class TopAnatParams {
                     this.dataTypes,
                     //observed data filter
                     //XXX: this should be adapted if we want TopAnat to work on a graph of conditions
-                    null, true, null
+                    true, true, null
             ));
         }
         if (this.callType == DiffExpressionSummary.OVER_EXPRESSED) {

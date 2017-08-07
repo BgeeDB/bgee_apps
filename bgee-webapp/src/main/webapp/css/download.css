@@ -212,12 +212,10 @@ p.file_info a:hover {
 }
 
 #sib_body .download_link, #bgee_data_selection p.no_data {
-	padding: 5px;
-	font-size: 1.1em;
+	padding: 5px 10px;
 	margin-right: 0.4em;
 	margin-top: 0.1em;
 	height: 100%;
-    width: 100%;
 }
 
 #sib_body .download_link, #sib_body .download_link:visited {
@@ -228,17 +226,34 @@ p.file_info a:hover {
     text-decoration: none;
     white-space: nowrap;
     color: #3E3E3E;
-    font-weight: bold;
     text-align: center;
+    box-shadow: 1px 1px 0 0 #eeeeee inset, 0 0 2px 2px #aaaaaa inset;
 }
 
 #sib_body .download_link:hover {
     color: #AAA;
     text-decoration: none;
     background-color: #3E3E3E;
+    box-shadow: 0px 0px 1px 1px #aaaaaa inset, 0 1px 0 0 #eeeeee inset;
 }
 
-#bgee_data_selection .checkbox-inline, #bgee_data_selection  .radio-inline {
+/*.big is not the best name for that class but I do not have another idea*/
+#sib_body .download_link.big {
+	font-weight: bold;
+	font-size: 1.1em;
+}
+
+#bgee_data_selection .download_link span {
+    display: block;
+    font-size: 2.5em;
+    margin-top: 5px;
+}
+
+#bgee_data_selection .selection {
+    margin-left: 10px;   
+}
+
+#bgee_data_selection .checkbox-inline, #bgee_data_selection .radio-inline {
 	margin-left: 30px;
 	margin-bottom: 5px;
 }

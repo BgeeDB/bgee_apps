@@ -39,6 +39,7 @@ import org.bgee.pipeline.MySQLDAOUser;
  * @since Bgee 13
  */
 //FIXME: to remove? Rescue some methods?
+// XXX: enable constructor because we need it to generate files and we have no time to remove properly the class
 public abstract class CallUser extends MySQLDAOUser {
 //    /**
 //     * {@code Logger} of the class.
@@ -114,22 +115,22 @@ public abstract class CallUser extends MySQLDAOUser {
 //        }
 //    }
 //
-//    /**
-//     * Default constructor using default {@code MySQLDAOManager}.
-//     */
-//    public CallUser() {
-//        this(null);
-//    }
-//    /**
-//     * Constructor providing the {@code MySQLDAOManager} that will be used by 
-//     * this object to perform queries to the database.
-//     * 
-//     * @param manager   the {@code MySQLDAOManager} to use.
-//     */
-//    public CallUser(MySQLDAOManager manager) {
-//        super(manager);
+    /**
+     * Default constructor using default {@code MySQLDAOManager}.
+     */
+    public CallUser() {
+        this(null);
+    }
+    /**
+     * Constructor providing the {@code MySQLDAOManager} that will be used by 
+     * this object to perform queries to the database.
+     * 
+     * @param manager   the {@code MySQLDAOManager} to use.
+     */
+    public CallUser(MySQLDAOManager manager) {
+        super(manager);
 //        this.globalId = 1;
-//    }
+    }
 //    
 //
 //

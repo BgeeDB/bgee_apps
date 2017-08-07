@@ -119,6 +119,10 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
             throw log.throwing(new IllegalArgumentException(
                     "A condition parameter combination must be provided."));
         }
+        if (condParamCombination.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "A combination of condition parameters must be provided"));
+        }
         final Set<ConditionDAO.Attribute> condParams = EnumSet.copyOf(condParamCombination);
         if (condParams.stream().anyMatch(a -> !a.isConditionParameter())) {
             throw log.throwing(new IllegalArgumentException("The condition parameter combination "
@@ -251,8 +255,11 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
         //(for a discussion about this design, see http://stackoverflow.com/q/42781299/1768736)
         sb.append("SELECT MAX(GREATEST(affymetrixMaxRank, rnaSeqMaxRank, ")
           .append("estMaxRank, inSituMaxRank)) AS maxRank, ")
-          .append("MAX(GREATEST(affymetrixGlobalMaxRank, rnaSeqGlobalMaxRank, ")
-          .append("estGlobalMaxRank, inSituGlobalMaxRank)) AS globalMaxRank ")
+          // FIXME: Enable usage of global max ranks. Global max ranks were not generated for the bgee v14.0
+//          .append("MAX(GREATEST(affymetrixGlobalMaxRank, rnaSeqGlobalMaxRank, ")
+//          .append("estGlobalMaxRank, inSituGlobalMaxRank)) AS globalMaxRank ")
+          .append("MAX(GREATEST(affymetrixMaxRank, rnaSeqMaxRank, ")
+          .append("estMaxRank, inSituMaxRank)) AS globalMaxRank ")
           .append("FROM globalCond");
 
         try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString())) {

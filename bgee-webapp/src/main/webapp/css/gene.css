@@ -181,19 +181,19 @@ span.expandable {
     font-weight: bold;
 }
 
-.high {
+.presence {
 	background: #9efa9e; 
 	border-color: #0df20d;
 	color: #067906;
 }
 
-.low {
-	background: #fae39e;
-	border-color:  #f2b90d;
-	color:   #795c06;
-}
+/* .low { */
+/* 	background: #fae39e; */
+/* 	border-color:  #f2b90d; */
+/* 	color:   #795c06; */
+/* } */
 
-.nodata {
+.absence {
 	background: #dedede;
 	color: #b8b8b8;
 	border-color: #b8b8b8;
@@ -207,7 +207,7 @@ div.dtr-modal div.dtr-modal-display {
 	border-top: 1px dotted #920209;
 }
 .low-qual-score {
-	/* same color as class .nodata, see above */
+	/* same color as class .absence, see above */
 	color: #b8b8b8;
 	font-weight: normal !important;
 }

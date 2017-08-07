@@ -11,6 +11,7 @@ import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.controller.URLParameters;
 import org.bgee.model.file.DownloadFile;
+import org.bgee.model.file.DownloadFile.ConditionParameter;
 import org.bgee.model.job.Job;
 import org.bgee.model.topanat.TopAnatResults;
 import org.bgee.model.topanat.TopAnatResults.TopAnatResultRow;
@@ -27,7 +28,8 @@ import java.util.stream.Stream;
  *
  * @author  Philippe Moret
  * @author  Frederic Bastian
- * @version Bgee 13, Dec. 2015
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, Apr. 2017
  * @since   Bgee 13, Oct. 2015
  */
 public class JsonHelper {
@@ -251,7 +253,12 @@ public class JsonHelper {
             //write stringRepresentation of Category
             out.name("category").value(value.getCategory() == null? "": 
                 value.getCategory().getStringRepresentation());
-            
+            out.name("conditionParameters");
+            out.beginArray();
+            for (ConditionParameter condParam: value.getConditionParameters()) {
+                out.value(condParam.getStringRepresentation());
+            }
+            out.endArray();
             out.endObject();
             log.exit();
         }

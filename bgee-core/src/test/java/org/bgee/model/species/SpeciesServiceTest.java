@@ -32,7 +32,7 @@ import org.junit.Test;
  * 
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
- * @version Bgee 13, July 2016
+ * @version Bgee 13, May 2017
  * @since   Bgee 13
  */
 public class SpeciesServiceTest extends TestAncestor {
@@ -68,8 +68,8 @@ public class SpeciesServiceTest extends TestAncestor {
 		        new HashSet<>(Arrays.asList(9606, 1234)), null, null, null)).thenReturn(sToSpRS);
 
 		Set<Species> expectedSpecies = new HashSet<>(Arrays.asList(
-		        new Species(9606, "human", null, "Homo", "sapiens", "version1", 4312), 
-		        new Species(1234, "name", null, "genus", "someSpecies", "versionA", 1123)));
+		        new Species(9606, "human", null, "Homo", "sapiens", "version1", 4312, 1), 
+		        new Species(1234, "name", null, "genus", "someSpecies", "versionA", 1123, 2)));
 
 		SourceService sourceService = mock(SourceService.class);
 		when(sourceService.loadAllSources(false)).thenReturn(
@@ -139,8 +139,8 @@ public class SpeciesServiceTest extends TestAncestor {
 	    // actual use of the service
 	    SpeciesService service = new SpeciesService(serviceFactory);
 	    Set<Species> expected = new HashSet<>(Arrays.asList(
-	            new Species(9606, "human", null, "Homo", "sapiens", "version1", 4312),
-	            new Species(1234, "name", null, "genus", "someSpecies", "versionA", 1123)));
+	            new Species(9606, "human", null, "Homo", "sapiens", "version1", 4312, 1),
+	            new Species(1234, "name", null, "genus", "someSpecies", "versionA", 1123, 2)));
         assertEquals(expected, service.loadSpeciesByIds(speciesIds, false));
         
         Map<Source, Set<DataType>> forData9606 = new HashMap<>();

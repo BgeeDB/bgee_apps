@@ -164,6 +164,11 @@ public class RequestParameters {
     public static final String PAGE_DAO = "dao";
     /**
      * A {@code String} that is the value taken by the {@code page} parameter 
+     * (see {@link URLParameters#getParamPage()}) when a page related to R package queries is requested.
+     */
+    public static final String PAGE_RPACKAGE = "r_package";
+    /**
+     * A {@code String} that is the value taken by the {@code page} parameter 
      * (see {@link URLParameters#getParamPage()}) when a query is made for usage statistics gathering.
      */
     public static final String PAGE_STATS = "stats";
@@ -2372,6 +2377,18 @@ public class RequestParameters {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
             this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_DAO)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    
+    /**
+     * @return  A {@code boolean} to tell whether the request is related to BgeeDB_R package queries.
+     */
+    public boolean isARPackagePageCategory() {
+        log.entry();
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
+            this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_RPACKAGE)) {
             return log.exit(true);
         }
         return log.exit(false);

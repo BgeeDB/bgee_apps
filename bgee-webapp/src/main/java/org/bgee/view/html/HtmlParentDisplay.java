@@ -49,6 +49,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             "col-xs-12 col-xs-offset-0 col-sm-offset-1 col-sm-10";
 
     /**
+     * A {@code String} to be used in {@code class} attribute.
+     */
+    protected static final String BGEE_R_PACKAGE_URL = 
+            "https://bioconductor.org/packages/release/bioc/html/BgeeDB.html";
+
+    /**
      * Escape HTML entities in the provided {@code String}
      * @param stringToWrite A {@code String} that contains the HTML to escape
      * @return  The escaped HTML
@@ -107,7 +113,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
          if (StringUtils.isNotBlank(content)) {
              sb.append(content);
          }
-         sb.append("</").append(name).append(">");
+         if (!name.equals("img")) {
+             sb.append("</").append(name).append(">");
+         }
          return log.exit(sb.toString());
      }
 
@@ -253,7 +261,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 + "evolution, ontology, anatomy, development, evo-devo database, "
                 + "anatomical ontology, developmental ontology, gene expression "
                 + "evolution'/>");
-        this.writeln("<meta name='dcterms.rights' content='Bgee copyright 2007/2016 UNIL' />");
+        this.writeln("<meta name='dcterms.rights' content='Bgee copyright 2007/2017 UNIL' />");
         this.writeln("<link rel='shortcut icon' type='image/x-icon' href='"
                 +this.prop.getImagesRootDirectory()+"favicon.ico'/>");
         this.includeCss(); // load default css files, and css files specific of a view 
@@ -300,7 +308,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("<div class='container-fluid'>");
 
         this.writeln("<ul class='nav navbar-nav'>");
-        this.writeln("<li><a href='http://www.sib.swiss'>SIB Swiss Institute of Bioinformatics</a></li>");
+        this.writeln("<li><a href='https://www.sib.swiss'>SIB Swiss Institute of Bioinformatics</a></li>");
         this.writeln("</ul>");
         
 
@@ -389,6 +397,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<ul class='dropdown-menu'>");
         navbar.append("<li><a title='TopAnat: Enrichment analyses of expression localization' "
               + "href='" + urlTopAnat.getRequestURL() + "'>" + TOP_ANAT_PAGE_NAME + "</a></li>");
+        navbar.append("<li><a href='" + BGEE_R_PACKAGE_URL + "' target='_blank'>"
+                + "BgeeDB R package</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
 
@@ -412,6 +422,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
               + GENE_EXPR_CALLS_PAGE_NAME + "</a></li>");
         navbar.append("<li><a href='" + urlDownloadProcValueFile.getRequestURL() + "'>"
               + PROCESSED_EXPR_VALUES_PAGE_NAME + "</a></li>");
+        navbar.append("<li><a href='" + BGEE_R_PACKAGE_URL + "' target='_blank'>"
+                + "BgeeDB R package</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
 
@@ -428,6 +440,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
               urlDocExprCallFiles.getRequestURL() + "'>" + GENE_EXPR_CALLS_PAGE_NAME + "</a></li>");
 //        navbar.append("<li><a title='Processed expression value files documentation' href='" + 
 //            urlDocProcValueFiles.getRequestURL() + "'>" + PROCESSED_EXPR_VALUES_PAGE_NAME + "</a></li>");
+        navbar.append("<li><a href='https://bioconductor.org/packages/release/bioc/manuals/BgeeDB/man/BgeeDB.pdf'"
+                + " target='_blank'>BgeeDB R package</a></li>");
         navbar.append("<li><a title='Bgee blog' href='https://bgeedb.wordpress.com' target='_blank'>Bgee blog</a></li>");
         navbar.append("<li><a title='Bgee sources' href='" + urlBgeeSources.getRequestURL()
               + "'>Bgee sources</a></li>");
@@ -445,6 +459,11 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         // Right nav links
         navbar.append("<ul class='nav navbar-nav navbar-right'>");
         
+        // R package
+        navbar.append("<li><a title='See our R package' target='_blank' href='" + BGEE_R_PACKAGE_URL + "'>" + 
+                "<img class='social-img' alt='R logo' src='" + this.prop.getLogoImagesRootDirectory() + 
+                "r_logo.png'></a></li>");
+
         // Twitter
         navbar.append("<li><a title='Follow @Bgeedb on Twitter' target='_blank' href='https://twitter.com/Bgeedb'>" + 
                 "<img class='social-img' alt='Twitter logo' src='" + this.prop.getLogoImagesRootDirectory() + 
@@ -456,7 +475,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 "wordpress_logo.png'></a></li>");
         
         // SIB
-        navbar.append("<li><a id='sib_brand' href='http://www.sib.swiss' target='_blank' "
+        navbar.append("<li><a id='sib_brand' href='https://www.sib.swiss' target='_blank' "
                 + "title='Link to the SIB Swiss Institute of Bioinformatics'>"
                 + "<img src='" + this.prop.getLogoImagesRootDirectory() +
                 "sib_emblem.png' alt='SIB Swiss Institute of Bioinformatics' /></a></li>");
@@ -494,7 +513,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     //TODO move javascript in common.js
     private String getObfuscateEmail() {
-        return "<script type='text/javascript'>eval(unescape('%66%75%6E%63%74%69%6F%6E%20%73%65%62%5F%74%72%61%6E%73%70%6F%73%65%32%28%68%29%20%7B%76%61%72%20%73%3D%27%61%6D%6C%69%6F%74%42%3A%65%67%40%65%73%69%2D%62%69%73%2E%62%68%63%27%3B%76%61%72%20%72%3D%27%27%3B%66%6F%72%28%76%61%72%20%69%3D%30%3B%69%3C%73%2E%6C%65%6E%67%74%68%3B%69%2B%2B%2C%69%2B%2B%29%7B%72%3D%72%2B%73%2E%73%75%62%73%74%72%69%6E%67%28%69%2B%31%2C%69%2B%32%29%2B%73%2E%73%75%62%73%74%72%69%6E%67%28%69%2C%69%2B%31%29%7D%68%2E%68%72%65%66%3D%72%3B%7D%64%6F%63%75%6D%65%6E%74%2E%77%72%69%74%65%28%27%3C%61%20%68%72%65%66%3D%22%23%22%20%6F%6E%4D%6F%75%73%65%4F%76%65%72%3D%22%6A%61%76%61%73%63%72%69%70%74%3A%73%65%62%5F%74%72%61%6E%73%70%6F%73%65%32%28%74%68%69%73%29%22%20%6F%6E%46%6F%63%75%73%3D%22%6A%61%76%61%73%63%72%69%70%74%3A%73%65%62%5F%74%72%61%6E%73%70%6F%73%65%32%28%74%68%69%73%29%22%3E%48%65%6C%70%3C%2F%61%3E%27%29%3B'));</script>";
+        return "<script type='text/javascript'>eval(unescape('%66%75%6E%63%74%69%6F%6E%20%73%65%62%5F%74%72%61%6E%73%70%6F%73%65%32%28%68%29%20%7B%76%61%72%20%73%3D%27%61%6D%6C%69%6F%74%42%3A%65%67%40%65%69%73%2E%62%77%73%73%69%73%27%3B%76%61%72%20%72%3D%27%27%3B%66%6F%72%28%76%61%72%20%69%3D%30%3B%69%3C%73%2E%6C%65%6E%67%74%68%3B%69%2B%2B%2C%69%2B%2B%29%7B%72%3D%72%2B%73%2E%73%75%62%73%74%72%69%6E%67%28%69%2B%31%2C%69%2B%32%29%2B%73%2E%73%75%62%73%74%72%69%6E%67%28%69%2C%69%2B%31%29%7D%68%2E%68%72%65%66%3D%72%3B%7D%64%6F%63%75%6D%65%6E%74%2E%77%72%69%74%65%28%27%3C%61%20%68%72%65%66%3D%22%23%22%20%6F%6E%4D%6F%75%73%65%4F%76%65%72%3D%22%6A%61%76%61%73%63%72%69%70%74%3A%73%65%62%5F%74%72%61%6E%73%70%6F%73%65%32%28%74%68%69%73%29%22%20%6F%6E%46%6F%63%75%73%3D%22%6A%61%76%61%73%63%72%69%70%74%3A%73%65%62%5F%74%72%61%6E%73%70%6F%73%65%32%28%74%68%69%73%29%22%3E%3C%2F%61%3E%27%29%3B'));</script>";
     }
 
     /**
@@ -565,8 +584,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 "Bgee " + PROCESSED_EXPR_VALUES_PAGE_NAME.toLowerCase() + " page", 
                 PROCESSED_EXPR_VALUES_PAGE_NAME, 
                 this.prop.getLogoImagesRootDirectory() + "proc_values_logo.png", 
-                "Annotations and processed expression data (e.g., read counts, RPKM values, "
-                + "Affymetrix probeset signal intensities)."));
+                "Annotations and processed expression data (e.g., read counts, TPM and "
+                + "RPKM values, Affymetrix probeset signal intensities)."));
         
         return log.exit(logos.toString());
     }

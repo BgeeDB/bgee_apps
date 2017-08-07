@@ -29,12 +29,26 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
- * @version Bgee 14 Mar. 2017
+ * @author  Julien Wollbrett
+ * @version Bgee 14, May 2017
  * @since   Bgee 13, Nov. 2015
 */
 public class AnatEntityService extends Service {
     private final static Logger log = LogManager.getLogger(AnatEntityService.class.getName());
-
+    
+    /**
+     * {@code Enum} used to define the attributes to populate in the {@code AnatEntity}s 
+     * obtained from this {@code AnatEntityService}.
+     * <ul>
+     * <li>{@code ANAT_ENTITY_ID}: corresponds to {@link AnatEntity#getId()}.
+     * <li>{@code ANAT_ENTITY_NAME}: corresponds to {@link AnatEntity#getName()}.
+     * <li>{@code DESCRIPTION}: corresponds to {@link AnatEntity#getDescription()}.
+     * </ul>
+     */
+    public static enum Attribute implements Service.Attribute {
+    	ID, NAME, DESCRIPTION;
+    }
+    
     /**
      * @param serviceFactory            The {@code ServiceFactory} to be used to obtain {@code Service}s 
      *                                  and {@code DAOManager}.
@@ -87,20 +101,49 @@ public class AnatEntityService extends Service {
      *                          of the requested species (if {@code false} or {@code null}).
      * @param anatEntitiesIds   A {@code Collection} of {@code String}s that are IDs of anatomical
      *                          entities to retrieve. Can be {@code null} or empty.
-     * @param withDescription   A {@code boolean} defining whether the description of the {@code AnatEntity}s
-     *                          should be retrieved (higher memory usage).
+     * @param withDescription   A {@code Set} of {@code Attribute}s corresponding to attributes that
+     * 							should be retrieved.
      * @return                  A {@code Stream} of {@code AnatEntity}s retrieved for the requested parameters.
      */
     //TODO: unit test with/without description
     public Stream<AnatEntity> loadAnatEntities(Collection<Integer> speciesIds, 
             Boolean anySpecies, Collection<String> anatEntitiesIds, boolean withDescription) {
         log.entry(speciesIds, anySpecies, anatEntitiesIds, withDescription);
-        
         return log.exit(this.getDaoManager().getAnatEntityDAO().getAnatEntities(
                     speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds), 
                     anySpecies, 
                     anatEntitiesIds == null? null: new HashSet<>(anatEntitiesIds), 
                     withDescription? null: EnumSet.complementOf(EnumSet.of(AnatEntityDAO.Attribute.DESCRIPTION)))
+                .stream()
+                .map(AnatEntityService::mapFromTO));
+    }
+    
+    /**
+     * Retrieve {@code AnatEntity}s for the requested species filtering and anatomical entity IDs. 
+     * If an entity in {@code anatEntitiesIds} does not exists according to the species filtering, 
+     * it will not be returned.
+     * 
+     * @param speciesIds        A {@code Collection} of {@code Integer}s that are the IDs of species 
+     *                          to filter anatomical entities to retrieve. Can be {@code null} or empty.
+     * @param anySpecies        A {@code Boolean} defining, when {@code speciesIds} contains several IDs, 
+     *                          whether the entities retrieved should be valid in any 
+     *                          of the requested species (if {@code true}), or in all 
+     *                          of the requested species (if {@code false} or {@code null}).
+     * @param anatEntitiesIds   A {@code Collection} of {@code String}s that are IDs of anatomical
+     *                          entities to retrieve. Can be {@code null} or empty.
+     * @param attrs				A {@code Collection} of {@code Attribute}s defining the
+     *                          attributes to populate in the returned {@code AnatEntity}s.
+     * @return                  A {@code Stream} of {@code AnatEntity}s retrieved for the requested parameters.
+     */
+    //TODO: unit test with/without description
+    public Stream<AnatEntity> loadAnatEntities(Collection<Integer> speciesIds, 
+            Boolean anySpecies, Collection<String> anatEntitiesIds, Collection<Attribute> attrs) {
+        log.entry(speciesIds, anySpecies, anatEntitiesIds, attrs);
+        return log.exit(this.getDaoManager().getAnatEntityDAO().getAnatEntities(
+                    speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds), 
+                    anySpecies, 
+                    anatEntitiesIds == null? null: new HashSet<>(anatEntitiesIds), 
+                    attrs == null ? null: new HashSet<>(convertAttrsToDAOAttrs(attrs)))
                 .stream()
                 .map(AnatEntityService::mapFromTO));
     }
@@ -205,4 +248,23 @@ public class AnatEntityService extends Service {
         log.entry(relationTO);
         return log.exit(new AbstractMap.SimpleEntry<>(relationTO.getTargetId(), relationTO.getSourceId()));
     }
+    
+    private static Set<AnatEntityDAO.Attribute> convertAttrsToDAOAttrs(Collection<Attribute> attrs) {
+        log.entry(attrs);
+        return log.exit(attrs.stream()
+                .map(a -> {
+                    switch (a) {
+                        case ID:
+                            return AnatEntityDAO.Attribute.ID;
+                        case NAME: 
+                            return AnatEntityDAO.Attribute.NAME; 
+                        case DESCRIPTION: 
+                            return AnatEntityDAO.Attribute.DESCRIPTION;
+                        default: 
+                            throw log.throwing(new UnsupportedOperationException(
+                                "Condition parameter not supported: " + a));
+                    }
+                }).collect(Collectors.toSet()));
+    }
+
 }

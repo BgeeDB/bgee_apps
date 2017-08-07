@@ -85,7 +85,8 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      *                              calls from data source according to {@code attributes} and
      *                              {@code conditionParameters}.
      * @throws DAOException         If an error occurred when accessing the data source. 
-     * @throws IllegalArgumentException If one of the {@code Attribute}s in {@code conditionParameters}
+     * @throws IllegalArgumentException If {@code callFilters} is {@code null} or empty,
+     *                                  or if one of the {@code Attribute}s in {@code conditionParameters}
      *                                  is not a condition parameter attributes (see 
      *                                  {@link ConditionDAO.Attribute#isConditionParameter()}).
      */
@@ -178,8 +179,8 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
         public String toString() {
             StringBuilder builder = new StringBuilder();
             builder.append("GlobalExpressionCallTO [id=").append(getId())
-                   .append(", getBgeeGeneId()=").append(getBgeeGeneId())
-                   .append(", getConditionId()=").append(getConditionId())
+                   .append(", bgeeGeneId=").append(getBgeeGeneId())
+                   .append(", conditionId=").append(getConditionId())
                    .append(", globalMeanRank=").append(globalMeanRank)
                    .append(", callDataTOs=").append(callDataTOs)
                    .append("]");

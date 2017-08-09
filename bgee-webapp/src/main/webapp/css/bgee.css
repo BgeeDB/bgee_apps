@@ -102,7 +102,7 @@ nav img.social-img {
     border-left: 5px solid transparent;
 }
 
-@media (max-width: 910px) {
+@media (max-width: 960px) {
     .navbar-header {
         float: none;
     }

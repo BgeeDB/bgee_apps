@@ -10,7 +10,6 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.TopAnatDisplay;
-import org.bgee.view.html.HtmlDownloadDisplay.DownloadPageType;
 
 /**
  * This class generates the HTML views relative to topAnat.

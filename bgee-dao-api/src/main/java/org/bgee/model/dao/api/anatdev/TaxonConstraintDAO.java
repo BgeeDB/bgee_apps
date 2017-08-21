@@ -244,7 +244,7 @@ public interface TaxonConstraintDAO {
             if (getClass() != obj.getClass()) {
                 return false;
             }
-            TaxonConstraintTO<T> other = (TaxonConstraintTO<T>) obj;
+            TaxonConstraintTO<?> other = (TaxonConstraintTO<?>) obj;
             if (this.getEntityId() == null) {
                 if (other.getEntityId() != null) {
                     return false;

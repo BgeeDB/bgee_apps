@@ -480,7 +480,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
                  startIndex += clonedSourceFilter.size();
              }
              if (isTargetFilter) {
-                 stmt.setObjects(startIndex, clonedSourceFilter, true, cls);
+                 stmt.setObjects(startIndex, clonedTargetFilter, true, cls);
                  startIndex += clonedTargetFilter.size();
              }
              if (isRelationStatusFilter) {

@@ -1,7 +1,5 @@
 package org.bgee.model.ontology;
 
-import java.lang.invoke.SwitchPoint;
-import java.security.cert.CollectionCertStoreParameters;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -19,7 +17,6 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.TaxonConstraint;
-import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTOResultSet;

@@ -190,19 +190,15 @@ public class CorrectTaxonConstraints extends MySQLDAOUser {
 				}
 			}
 		}
-		log.info(anatEntityTaxonConstraintTOs.size() + " anatomical entities taxon constraints will be added.");
-		log.info(anatRelTaxonConstraintTOs.size() + " anatomical relations taxon constraints will be deleted.");
+		log.info("{} anatomical entities taxon constraints will be added.", anatEntityTaxonConstraintTOs.size());
+		log.info( "{} anatomical relations taxon constraints will be deleted.", anatRelTaxonConstraintTOs.size());
 		log.info("Start correction of mismatches in the RDB.");
-		// add missing AnatEntityTaxonConstraint TOs AND remove wrong
-		// AnatEntityRelationTaxonConstraints
+		// add missing AnatEntityTaxonConstraint TOs AND remove wrong AnatEntityRelationTaxonConstraints
 		try {
 			this.startTransaction();
-//			for (TaxonConstraintTO<String> aeTC : anatEntityTaxonConstraintTOs) {
-//				System.out.println("INSERT INTO anatEntityTaxonConstraint (anatEntityId,speciesId) VALUES(\'"
-//						+ aeTC.getEntityId() + "\'," + aeTC.getSpeciesId() + ");");
-//			}
 			if(anatEntityTaxonConstraintTOs.size() > 0){
-				this.getTaxonConstraintDAO().insertAnatEntityTaxonConstraints(anatEntityTaxonConstraintTOs);
+				log.info("List of missing anatEntityTaxonConstraintTOs that will be inserted : {}",anatEntityTaxonConstraintTOs);
+//				this.getTaxonConstraintDAO().insertAnatEntityTaxonConstraints(anatEntityTaxonConstraintTOs);
 			}
 			if(anatRelTaxonConstraintTOs.size() > 0){
 				log.warn(
@@ -210,7 +206,7 @@ public class CorrectTaxonConstraints extends MySQLDAOUser {
 								+ " Please delete them manually using following mysql commands.\n");
 				for (TaxonConstraintTO<Integer> aeRTC : anatRelTaxonConstraintTOs) {
 					log.warn("DELETE FROM anatEntityRelationTaxonConstraint WHERE anatEntityRelationId = "
-							+ aeRTC.getEntityId() + " AND " + "speciesId = " + aeRTC.getSpeciesId() + ";");
+							+ "{} AND speciesId = {};", aeRTC.getEntityId(), aeRTC.getSpeciesId());
 				}
 			}
 			this.commit();

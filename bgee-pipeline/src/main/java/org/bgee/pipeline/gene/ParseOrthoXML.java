@@ -453,10 +453,6 @@ public class ParseOrthoXML extends MySQLDAOUser {
                 log.debug("{} - {}",speciesTO.getGenus()+" "+speciesTO.getSpeciesName(), speciesTO.getGenomeSpeciesId());
                 if (!speciesTO.getGenomeSpeciesId().equals(NumberUtils.INTEGER_ZERO) &&
                         !speciesTO.getId().equals(speciesTO.getGenomeSpeciesId())) {
-//                    if (speciesTO.getFakeGeneIdPrefix().isEmpty()) {
-//                        throw log.throwing(new IllegalArgumentException("The fake gene ID prefix " +
-//                            "is empty while genome species ID refers to an another genome"));
-//                    }
                     int genomeSpeciesId = speciesTO.getGenomeSpeciesId();
                     if (this.speciesPrefixes.get(genomeSpeciesId) == null) {
                         this.speciesPrefixes.put(
@@ -672,12 +668,22 @@ public class ParseOrthoXML extends MySQLDAOUser {
     }
     
     /**
+<<<<<<< Updated upstream
      * Given a OMA cross-reference ID with the taxonomy id and a number of children, 
      * calculate nested set bounds and add it in the {@code Collection} of 
      * {@code HierarchicalNodeTO}s to be as a nested set model.
+=======
+     * Given a taxonId, an OMA node Id and a list of genes create a {@code Collection} of 
+     * {@code HierarchicalNodeToGeneTO}s.
+>>>>>>> Stashed changes
      * 
+     * @param taxonId               An {@code int} that is the taxonomy id of the
+     *                              {@code HierarchicalNodeTO} to create.
+     * @param genes                 A {@code List} of {@code Gene} corresponding to all orthologous
+     *                              genes of this OMA node Id
      * @param omaNodeId             An {@code int} that is the unique ID the hierarchical
      *                              group.
+<<<<<<< Updated upstream
      * @param omaXrefId             A {@code String} that is the OMA cross-reference ID.
      * @param nestedSetBoundSeed    An {@code int} that is the seed use to determine 
      *                              unique left and right bound values of the nested set 
@@ -686,14 +692,21 @@ public class ParseOrthoXML extends MySQLDAOUser {
      *                              {@code HierarchicalNodeTO} to create.
      * @param nbChild               An {@code int} that is the number of children of the
      *                              {@code HierarchicalNodeTO} to create.
+=======
+>>>>>>> Stashed changes
      */
     private void addHierarchicalNodeTOGeneTO(String taxonId, List<Gene> genes, Integer OmaNodeId) {
         log.entry(taxonId, OmaNodeId, genes);
         if(taxonId != null){
             genes.stream().forEach(g -> {
             	if(ensemblIdToBgeeIdInBgee.get(g.getGeneIdentifier()) != null){
+<<<<<<< Updated upstream
 //                	System.out.println(taxonId+" -> "+ensemblIdToBgeeIdInBgee.get(g.getGeneIdentifier())+" -> "+OmaNodeId);
             		this.hierarchicalNodeToGeneTOs.add(new HierarchicalNodeToGeneTO(
+=======
+
+            		this.hierarchicalGroupToGeneTOs.add(new HierarchicalGroupToGeneTO(
+>>>>>>> Stashed changes
             				OmaNodeId, ensemblIdToBgeeIdInBgee.get(g.getGeneIdentifier()), 
     	        			Integer.valueOf(taxonId)));
             	}

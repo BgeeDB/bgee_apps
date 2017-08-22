@@ -216,6 +216,7 @@ public class TaxonConstraints {
             
             String clsId = args[3];
             String taxId = args[4];
+            
             new TaxonConstraints(args[1], args[2]).explainAndPrintTaxonExistence(
                             Arrays.asList(clsId), 
                             Arrays.asList(Integer.parseInt(taxId)), 
@@ -941,6 +942,7 @@ public class TaxonConstraints {
                     //we do not care about the classes existing in this intermediate ontology, 
                     //but the getExistingOWLClasses method will filter the classes 
                     //from the ontology all the same... we do not request to store this ontology.
+                    log.debug("WHHYYYYYYYYYY for {}",taxClass);
                     this.getExistingOWLClasses(graph, intermediateTaxClass, null, false);
                 }
             }

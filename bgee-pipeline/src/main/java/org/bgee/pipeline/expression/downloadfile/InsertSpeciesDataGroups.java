@@ -132,7 +132,6 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
         // into Map<String, String>.
         // We could use the flatMap function, but we want to perform sanity checks.
         InsertSpeciesDataGroups insert = new InsertSpeciesDataGroups(
-                
                 //LinkedHashMap<String, Set<Integer>> groupToSpecies
                 CommandRunner.parseMapArgument(args[0]).entrySet().stream()
                 .collect(Collectors.toMap(e -> e.getKey(), e -> new HashSet<Integer>(e.getValue()

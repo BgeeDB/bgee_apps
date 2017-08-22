@@ -45,20 +45,19 @@ import org.bgee.model.species.TaxonomyFilter;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
+ * @author  Julien Wollbrett
  * @version Bgee 14, Mar. 2017
  * @since   Bgee 13, May 2016
  */
 public class MultiSpeciesCallService extends Service {
     private static final Logger log = LogManager.getLogger(MultiSpeciesCallService.class.getName());
 
-    //XXX: certainly we need different Attributes, just an example
     public static enum Attribute implements Service.Attribute {
         GENE, ANAT_ENTITY_ID, DEV_STAGE_ID, CALL_TYPE,
         DATA_QUALITY, OBSERVED_DATA, GLOBAL_MEAN_RANK,
         EXPERIMENT_COUNTS, DATA_TYPE_RANK_INFO, OMA_HOG_ID;
     }
 
-    //XXX: certainly we need different OrderingAttributes, just an example
     public static enum OrderingAttribute implements Service.OrderingAttribute {
         GENE_ID, ANAT_ENTITY_ID, DEV_STAGE_ID, GLOBAL_RANK, OMA_HOG_ID;
     }

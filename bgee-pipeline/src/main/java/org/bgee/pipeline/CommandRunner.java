@@ -247,9 +247,8 @@ public class CommandRunner {
             
         //---------- Hierarchical groups -----------
         case "ParseOrthoXML":
-            throw log.throwing(new UnsupportedOperationException("Method disabled while updated"));
-            //ParseOrthoXML.main(newArgs);
-            //break;
+            ParseOrthoXML.main(newArgs);
+            break;
 
         //---------- Call propagation -----------
         case "InsertGlobalCalls":

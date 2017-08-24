@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.management.modelmbean.XMLParseException;
 import javax.xml.stream.XMLStreamException;
@@ -124,7 +125,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
      * 
      * @see #loadGeneIdsFromDb()
      */
-    private Map<String, Integer> ensemblIdToBgeeIdInBgee;
+    private Map<String, Set<Integer>> ensemblIdToBgeeIdInBgee;
 
     /**
      * A {@code Set} of {@code String}s containing taxon IDs of the Bgee database. See 
@@ -179,7 +180,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
         this.hierarchicalNodeTOs = new HashSet<HierarchicalNodeTO>();
         this.hierarchicalNodeToGeneTOs = new HashSet<HierarchicalNodeToGeneTO>();
         this.geneTOs = new HashSet<GeneTO>();
-        this.ensemblIdToBgeeIdInBgee = new HashMap<String, Integer>();
+        this.ensemblIdToBgeeIdInBgee = new HashMap<String, Set<Integer>>();
         this.taxonIdsInBgee = new HashSet<Integer>();
         this.speciesIdsInBgee = new HashSet<Integer>();
         this.speciesPrefixes = new HashMap<Integer, Set<Integer>>();
@@ -278,9 +279,8 @@ public class ParseOrthoXML extends MySQLDAOUser {
             // correspond to taxa present in Bgee.
             this.loadTaxonIdsFromDb();
             
-            // Retrieve genomeSpeciesId from Bgee to be able to duplicate
-            // genes with the fake prefix when a species using a genome of another species.
-            this.loadFakeGenomeSpeciesFromDb();
+            // Retrieve species from Bgee that use genome of another species.
+            this.loadMappingSpeciesToGenomeSpecies();
             
             // Construct HierarchicalNodeTOs and GeneTOs
             this.generateTOsFromFile(orthoXMLFile, geneMapping);
@@ -301,7 +301,6 @@ public class ParseOrthoXML extends MySQLDAOUser {
             nbUpdatedGenes = this.getGeneDAO().updateGenes(this.geneTOs,
                     Arrays.asList(GeneDAO.Attribute.OMA_PARENT_NODE_ID));
             log.info("Done updating genes.");
-            System.out.println(this.hierarchicalNodeToGeneTOs.size());
             log.info("Start inserting gene to hierarchical group mapping...");
             nbInsertedGroupToGene = this.getHierarchicalGroupDAO()
             		.insertHierarchicalNodeToGene(this.hierarchicalNodeToGeneTOs);
@@ -391,14 +390,20 @@ public class ParseOrthoXML extends MySQLDAOUser {
         //dao.setAttributes(GeneDAO.Attribute.ID);
         try (GeneTOResultSet rsGenes = dao.getAllGenes()) {
             while (rsGenes.next()) {
+            	//if some bgee genes have same ensembl gene ID
             	if(this.ensemblIdToBgeeIdInBgee.containsKey(rsGenes.getTO().getGeneId())){
-            		log.error("Two bgeeGeneIds have the same ID :{}",rsGenes.getTO().getGeneId());
+            		log.info("Two bgeeGeneIds have the same ID :{}",rsGenes.getTO().getGeneId());
+            		this.ensemblIdToBgeeIdInBgee.get(rsGenes.getTO().getGeneId()).add(rsGenes.getTO().getId());
+            	}else{
+            	//can't use Collection.singleton because we potentially have to add other bgeeGeneIds
+	            	Set<Integer> geneIds = new HashSet<>();
+	            	geneIds.add(rsGenes.getTO().getId());
+	                this.ensemblIdToBgeeIdInBgee.put(rsGenes.getTO().getGeneId(), geneIds);
             	}
-                this.ensemblIdToBgeeIdInBgee.put(rsGenes.getTO().getGeneId(), rsGenes.getTO().getId());
             }
         }
         if (log.isInfoEnabled()) {
-            log.info("Done retrieving gene IDs, {} genes found", this.ensemblIdToBgeeIdInBgee.size());
+            log.info("Done retrieving gene IDs, {} genes found", this.ensemblIdToBgeeIdInBgee.values().stream().mapToInt(Set::size).sum()); // or (l -> l.size())
         }
 
         log.exit();
@@ -437,10 +442,10 @@ public class ParseOrthoXML extends MySQLDAOUser {
      * @throws IllegalArgumentException If there is a fake gene ID prefix is empty.
      * @see #speciesPrefixes                
      */
-    private void loadFakeGenomeSpeciesFromDb() throws DAOException, IllegalArgumentException {
+    private void loadMappingSpeciesToGenomeSpecies() throws DAOException, IllegalArgumentException {
         log.entry();
         
-        log.info("Start retrieving fake gene ID prefixes...");
+        log.info("Start retrieving genome species Ids of bgee species...");
         SpeciesDAO speciesDAO = this.getSpeciesDAO();
         //TODO manage attributs
 //        speciesDAO.setAttributes(SpeciesDAO.Attribute.ID, SpeciesDAO.Attribute.COMMON_NAME, 
@@ -461,15 +466,15 @@ public class ParseOrthoXML extends MySQLDAOUser {
                     }
                     this.speciesPrefixes.get(genomeSpeciesId).add(speciesTO.getId());
 
-                    log.debug("Use genome of species {} for species {}", speciesTO.getId()+" "+speciesTO.getSpeciesName(), 
-                            speciesTO.getId());
+                    log.debug("Use genome of species {} for species {}", speciesTO.getId(), 
+                            speciesTO.getGenomeSpeciesId());
                 }
             }
         }
-        log.debug("Association betweeen species with fake genomes and their fake " +
-                  "geneId prefix: {}", this.speciesPrefixes);
+        log.debug("Association betweeen bgee species and species used for genome information" +
+                  " : {}", this.speciesPrefixes);
         if (log.isInfoEnabled()) {
-            log.info("Done retrieving fake gene ID prefixes, {} genomes found",
+            log.info("Done retrieving genome species Ids of bgee species, {} genome(s) found",
                     this.speciesPrefixes.size());
         }
         log.exit();
@@ -582,27 +587,29 @@ public class ParseOrthoXML extends MySQLDAOUser {
                 boolean isInBgee = false ;
                 for (String omaGeneId : retrieveSplittedGeneIdentifier(groupGene)) {
                     log.debug("Examining OMA geneId {}", omaGeneId);
-                    // we need to copy the gene ID to be able to modify it 
-                    // if geneId is not in bgee, and use it for generate fake geneId 
-                    String currentGeneId = omaGeneId;
-                    if (this.addGeneTO(new GeneTO(ensemblIdToBgeeIdInBgee.get(omaGeneId),omaGeneId, null, null, null, null, 
-                            this.omaNodeId,null, null),
-                            omaXrefId)) {
-                        isInBgee = true;
-                    } else if (!geneMapping.isEmpty()) {
-                        log.debug("Trying to find a x-ref for geneId {} from mapping file", omaGeneId);
-                        if (geneMapping.containsKey(omaGeneId)) {
-                            currentGeneId = geneMapping.get(omaGeneId);
-                            log.debug("Mapping found for geneId {}: {}", omaGeneId, currentGeneId);
-                            if (this.addGeneTO(new GeneTO(ensemblIdToBgeeIdInBgee.get(currentGeneId), currentGeneId, null, null, null, null, 
-                                    this.omaNodeId, null, null), omaXrefId)) {
-                                isInBgee = true;
-                            }
-                        }
+                    if(ensemblIdToBgeeIdInBgee.containsKey(omaGeneId)){
+	                    for (Integer bgeeGeneId : ensemblIdToBgeeIdInBgee.get(omaGeneId)){
+	                    	if (this.addGeneTO(new GeneTO(bgeeGeneId,omaGeneId, null, null, null, null, 
+	                                this.omaNodeId,null, null),
+	                                omaXrefId)) {
+	                            isInBgee = true;
+	                        } else if (!geneMapping.isEmpty()) {
+	                            log.debug("Trying to find a x-ref for geneId {} from mapping file", omaGeneId);
+	                            if (geneMapping.containsKey(omaGeneId)) {
+	                            	String currentGeneId = geneMapping.get(omaGeneId);
+	                                log.debug("Mapping found for geneId {}: {}", omaGeneId, currentGeneId);
+	                                if (this.addGeneTO(new GeneTO(bgeeGeneId, currentGeneId, null, null, null, null, 
+	                                        this.omaNodeId, null, null), omaXrefId)) {
+	                                    isInBgee = true;
+	                                }
+	                            }
+	                        }
+	                    }
                     }
+                    
                 }
                 if (!isInBgee) {
-                    log.warn("No gene ID in {} found in Bgee for the node {}",
+                    log.warn("No gene ID {} found in Bgee for the node {}",
                             groupGene.getGeneIdentifier(), this.omaNodeId);
                 }
             }
@@ -668,14 +675,8 @@ public class ParseOrthoXML extends MySQLDAOUser {
     }
     
     /**
-<<<<<<< Updated upstream
-     * Given a OMA cross-reference ID with the taxonomy id and a number of children, 
-     * calculate nested set bounds and add it in the {@code Collection} of 
-     * {@code HierarchicalNodeTO}s to be as a nested set model.
-=======
      * Given a taxonId, an OMA node Id and a list of genes create a {@code Collection} of 
      * {@code HierarchicalNodeToGeneTO}s.
->>>>>>> Stashed changes
      * 
      * @param taxonId               An {@code int} that is the taxonomy id of the
      *                              {@code HierarchicalNodeTO} to create.

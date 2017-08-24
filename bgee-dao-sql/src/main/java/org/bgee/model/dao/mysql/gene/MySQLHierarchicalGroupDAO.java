@@ -226,7 +226,6 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
     			this.getManager().getConnection().prepareStatement(sql)) {
     		
     		for (HierarchicalNodeToGeneTO groupToGene: groupToGenes) {
-    			System.out.println(groupToGene.getNodeId()+" -> "+groupToGene.getBgeeGeneId()+" -> "+groupToGene.getTaxonId());
     			stmt.setInt(1, groupToGene.getNodeId());
     			stmt.setInt(2, groupToGene.getBgeeGeneId());
     			stmt.setInt(3, groupToGene.getTaxonId());

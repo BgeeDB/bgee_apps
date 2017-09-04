@@ -5,14 +5,14 @@ use warnings;
 use diagnostics;
 
 
-my $email_address       = $ARGV[0] || '';
-my $alternative_display = $ARGV[1] || '';
-my $index               = $ARGV[2] || '';
+my $email_address       = $ARGV[0]  // '';
+my $alternative_display = $ARGV[1]  // '';
+my $index               = $ARGV[2]  // '';
 #Add $index to duplicate the javascript function if several e-mails to hide per page
-die "\n\tInvalid email address as argument\n\n" if ( $email_address eq '' || $email_address !~ /^[\w\.-]+@[\w\.-]+\.[a-z]{2,5}$/i );
+die "\n\tInvalid email address as argument\n\n"  if ( $email_address eq '' || $email_address !~ /^[\w\.-]+@[\w\.-]+\.[a-z]{2,5}$/i );
 
 
-print &transpose_eMails_delayed($email_address, $alternative_display, $index), "\n";
+print transpose_eMails_delayed($email_address, $alternative_display, $index), "\n";
 exit 0;
 
 
@@ -26,7 +26,7 @@ sub transpose_eMails_delayed {
 
     $emails =~ s{@}{ [AT] }g;
     # Break e-mail addresses for noscript tag.
-    my $userCode = sprintf("%s%s%s", "<script type=\"text/javascript\">eval(unescape('", &escapeencode($code), "'));</script><noscript>$emails</noscript>");
+    my $userCode = sprintf('%s%s%s', "<script type=\"text/javascript\">eval(unescape('", &escapeencode($code), "'));</script><noscript>$emails</noscript>");
 
     return $userCode;
 }
@@ -37,7 +37,7 @@ sub escapeencode {
     my $ret = '';
     my @arr = unpack('C*', $strg);
     for my $char (@arr){
-        $ret .= sprintf("%%%X", $char);
+        $ret .= sprintf('%%%X', $char);
     }
 
     return $ret;
@@ -54,7 +54,7 @@ sub transpose {
             $ret .= substr($strg, $i, 1);
         }
         else{
-            $ret .= sprintf("%s%s", substr($strg, $i+1, 1), substr($strg, $i, 1));
+            $ret .= sprintf('%s%s', substr($strg, $i+1, 1), substr($strg, $i, 1));
         }
     }
 

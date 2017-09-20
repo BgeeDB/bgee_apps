@@ -324,7 +324,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	            + "      <li>\"Bronze\": 1 experiment with a low confidence call; these are not shown by default.</li>"
 	            + "    </ul>"
 	            + "  </li>"
-	            + "  <li>Update of download pages to make it easier to chose files to retrieve.</li>"
+	            + "  <li>Update of download pages to make it easier to chose files to retrieve; inclusion of gene ranks (as used in gene pages) in call files..</li>"
 	            + "</ul>"
 	            + "You can still access to Bgee 13 at <a title='Archive site Bgee version 13' "
 	            + "href='http://bgee.org/bgee13' target='_blank'>http://bgee.org/bgee13</a>.");

@@ -232,7 +232,7 @@
                                             e.g., to a css file, and you would need to perform
                                             a project update each time. -->
                                             <runOnIncremental>true</runOnIncremental>
-                                        </execute >
+                                        </execute>
                                     </action>
                                 </pluginExecution>
                             </pluginExecutions>

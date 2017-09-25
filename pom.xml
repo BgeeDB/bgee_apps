@@ -8,11 +8,11 @@
     <packaging>pom</packaging>
     <version>14</version>
     <name>Bgee</name>
-    <url>http://www.bgee.org/</url>
+    <url>http://bgee.org/</url>
     <description>Bgee allows to automatically compare gene expression patterns between species, by referencing expression data on anatomical ontologies, and designing homology relationships between them.</description>
     <organization>
         <name>Evolutionary Bioinformatics Group - 
-            Swiss Institute of Bioinformatics - 
+            SIB Swiss Institute of Bioinformatics - 
             Department of Ecology and Evolution - 
             University of Lausanne</name>
         <url>http://bioinfo.unil.ch/</url>
@@ -24,7 +24,7 @@
         </developer>
         <developer>
             <name>Valentine Rech de Laval</name>
-            <email>Valentine.RechdeLaval@isb-sib.ch</email>
+            <email>Valentine.RechdeLaval@unil.ch</email>
         </developer>
     </developers>
     <contributors>
@@ -35,7 +35,7 @@
     </contributors>
     <mailingLists>
         <mailingList>
-            <name>bgee@isb-sib.ch</name>
+            <name>bgee@sib.swiss</name>
         </mailingList>
     </mailingLists>
 
@@ -48,13 +48,13 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <!-- We create the property skip.surefire.tests to override the property 
-            skipTests of the surefire plugin. This is because using skipTests=true also 
-            skips integration tests, while we would like to be able to run integration 
-            tests and to skip unit tests. So, to skip unit test, we would use the property 
-            skip.surefire.tests=true. But in that case, using skipTests=true would not 
-            skip unit tests anymore. So we default skip.surefire.tests to skipTests, 
-            and everything is back to normal, we just have a new additional property 
+        <!-- We create the property skip.surefire.tests to override the property
+            skipTests of the surefire plugin. This is because using skipTests=true also
+            skips integration tests, while we would like to be able to run integration
+            tests and to skip unit tests. So, to skip unit test, we would use the property
+            skip.surefire.tests=true. But in that case, using skipTests=true would not
+            skip unit tests anymore. So we default skip.surefire.tests to skipTests,
+            and everything is back to normal, we just have a new additional property
             allowing to skip unit tests but not integration tests. See http://stackoverflow.com/a/17932772/1768736 -->
         <skip.surefire.tests>${skipTests}</skip.surefire.tests>
         <skipITs>${skipTests}</skipITs>
@@ -128,7 +128,7 @@
     <dependencyManagement>
         <dependencies>
 
-            <!-- To read/write CSV/TSV files in pipeline, 
+            <!-- To read/write CSV/TSV files in pipeline,
                  and write CSV/TSV files in webapp -->
             <dependency>
                 <groupId>net.sf.supercsv</groupId>
@@ -157,7 +157,7 @@
                 <version>${project.version}</version>
                 <scope>compile</scope>
             </dependency>
-            <!-- test classes from bgee-dao-pi, used by any module using 
+            <!-- test classes from bgee-dao-pi, used by any module using
                 DAOs -->
             <dependency>
                 <groupId>${project.groupId}</groupId>
@@ -236,7 +236,7 @@
                 <version>1.7.7</version>
                 <scope>compile</scope>
             </dependency>
-            
+
             <!-- To send Mails -->
             <dependency>
                 <groupId>com.sun.mail</groupId>
@@ -244,9 +244,9 @@
                 <version>1.5.5</version>
                 <scope>compile</scope>
             </dependency>
-            
-            <!-- Filter for topanat-dev, enabling cross-domain queries 
-                 (will make local development easier), 
+
+            <!-- Filter for topanat-dev, enabling cross-domain queries
+                 (will make local development easier),
                  see http://stackoverflow.com/a/30319456/1768736 -->
             <dependency>
                 <groupId>com.thetransactioncompany</groupId>
@@ -254,11 +254,11 @@
                 <version>2.4</version>
                 <scope>compile</scope>
             </dependency>
-            
 
-            <!-- IMPORTANT : Keep this dependency with 'provided' scope even 
-                if it is not used, as ehcache-core is replaced by ehcache-ee to use bigmemory. 
-                The reason is that it is somehow automatically included with ehcache-web 
+
+            <!-- IMPORTANT : Keep this dependency with 'provided' scope even
+                if it is not used, as ehcache-core is replaced by ehcache-ee to use bigmemory.
+                The reason is that it is somehow automatically included with ehcache-web
                 if not explicitly declared here, and conflicts with ehcache-ee when deployed. -->
             <dependency>
                 <groupId>net.sf.ehcache</groupId>
@@ -291,28 +291,28 @@
                 <version>1.8</version>
                 <scope>compile</scope>
             </dependency>
-            
+
             <dependency>
                 <groupId>com.github.jbytecode</groupId>
                 <artifactId>RCaller</artifactId>
                 <version>2.8</version>
                 <scope>compile</scope>
             </dependency>
-            
+
             <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
                 <version>2.4</version>
                 <scope>compile</scope>
             </dependency>
-            
+
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-math3</artifactId>
                 <version>3.6.1</version>
                 <scope>compile</scope>
             </dependency>
-            
+
 
             <!-- End for the core layer -->
 
@@ -337,7 +337,7 @@
             </dependency>
 
             <!-- Used for integration test using a real MySQL database. -->
-            <!-- Spring framework is used to execute the .sql files to create 
+            <!-- Spring framework is used to execute the .sql files to create
                 the database. -->
             <dependency>
                 <groupId>org.springframework</groupId>
@@ -373,41 +373,41 @@
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
-                    
-                    
-                    <!-- Code not used anymore, was necessary to compile with JDK 7, 
+
+
+                    <!-- Code not used anymore, was necessary to compile with JDK 7,
                          we moved to Java 8 -->
-                    <!-- 
+                    <!--
                     <compilerVersion>1.7</compilerVersion>
                     <fork>true</fork>
                     -->
-                    <!-- 
-                    You need to set up the path to a JDK 7 in the Maven settings.xml file, 
+                    <!--
+                    You need to set up the path to a JDK 7 in the Maven settings.xml file,
                     as explained here: https://maven.apache.org/plugins/maven-compiler-plugin/examples/compile-using-different-jdk.html
-                    For instance: 
+                    For instance:
                        <profile>
                          <id>compiler</id>
                            <properties>
                              <JAVA_1_7_HOME>/Library/Java/JavaVirtualMachines/jdk1.7.0_09.jdk/Contents/Home</JAVA_1_7_HOME>
                              <JAVA_1_7_BOOTCLASSPATH>/Library/Java/JavaVirtualMachines/jdk1.7.0_09.jdk/Contents/Home/lib/*.jar</JAVA_1_7_BOOTCLASSPATH>
                            </properties>
-                       </profile> 
+                       </profile>
                        [...]
                        <activeProfiles>
                          <activeProfile>compiler</activeProfile>
                        </activeProfiles>
                      -->
-                    <!-- 
+                    <!--
                     <executable>${JAVA_1_7_HOME}/bin/javac</executable>
                     <bootclasspath>${JAVA_1_7_BOOTCLASSPATH}</bootclasspath>
                     -->
                     <!-- End of unused code -->
-                    
-                    
+
+
                 </configuration>
             </plugin>
 
-            <!-- Install in our local maven repository libraries that are 
+            <!-- Install in our local maven repository libraries that are
                 not on Maven -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -438,9 +438,9 @@
                 <configuration>
                     <!-- Default value of enableAssertions is true, but just to make clear... -->
                     <enableAssertions>true</enableAssertions>
-                    <!-- Property createe to skip surefire tests without 
-                        skipping failsafe tests. Property value is default to skipTests so that we 
-                        can still skip unit tests by using skipTests. See the documentation of the 
+                    <!-- Property createe to skip surefire tests without
+                        skipping failsafe tests. Property value is default to skipTests so that we
+                        can still skip unit tests by using skipTests. See the documentation of the
                         property skip.surefire.tests in this file for more details. -->
                     <skipTests>${skip.surefire.tests}</skipTests>
                 </configuration>
@@ -493,22 +493,22 @@
                     <artifactId>maven-shade-plugin</artifactId>
                     <version>2.3</version>
                 </plugin>
-                
-                
+
+
                 <!-- *******Used to rename static files with version number in bgee-webapp******** -->
                 <plugin>
                     <artifactId>maven-antrun-plugin</artifactId>
                     <version>1.8</version>
                 </plugin>
-                
-                
+
+
                 <!-- *******Used to minify CSS and JS files in bgee-webapp******** -->
                 <plugin>
                     <groupId>com.samaxes.maven</groupId>
                     <artifactId>minify-maven-plugin</artifactId>
                     <version>1.7.4</version>
                 </plugin>
-                
+
 
                 <!-- ******************** Needed for integration tests in bgee-dao-sql *********************** -->
                 <plugin>
@@ -525,7 +525,7 @@
                 <!-- *******************// END integration tests in bgee-dao-sql ********************* -->
 
 
-                <!-- to get rid of the warning 'maven-enforcer-plugin (goal 
+                <!-- to get rid of the warning 'maven-enforcer-plugin (goal
                     "enforce") is ignored by m2e' in Eclipse. See http://stackoverflow.com/a/13043842/1768736 -->
                 <plugin>
                     <groupId>org.eclipse.m2e</groupId>

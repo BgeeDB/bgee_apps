@@ -148,19 +148,46 @@
         <!-- property used to activate/deactivate maven-minify-plugin -->
         <skip.minify.plugin>false</skip.minify.plugin>
 
+        <!-- FIXME log4j required in bgee.dao.properties or skip it ??? -->
+        <filter.bgee.dao.jdbc.url>jdbc:mysql://127.0.0.1:3306/bgee_v${project.version}</filter.bgee.dao.jdbc.url>
+        <filter.bgee.dao.jdbc.driver.names>com.mysql.jdbc.Driver</filter.bgee.dao.jdbc.driver.names>
+
+        <!-- FIXME Find how other attributes are set !!! -->
+
         <!-- Default the parameter to send mail to empty string.
              This parameter should be overriden in settings.xml if needed -->
-        <filter.org.bgee.webapp.mailUri></filter.org.bgee.webapp.mailUri>
+        <filter.org.bgee.webapp.mailUri>smtp://localhost/</filter.org.bgee.webapp.mailUri>
         <!-- "From" address when sending mails at TopAnat job completions -->
-        <filter.org.bgee.webapp.topAnatFromAddress></filter.org.bgee.webapp.topAnatFromAddress>
+        <filter.org.bgee.webapp.topAnatFromAddress>bgee@bgee.org</filter.org.bgee.webapp.topAnatFromAddress>
+        <!-- Following paths have to be created on host running topanat analysis, and belong to *tomcat* user -->
+        <filter.org.bgee.webapp.requestParametersStorageDirectory>/var/bgee/webapp/${project.version}/requestparameters/</filter.org.bgee.webapp.requestParametersStorageDirectory>
+        <filter.org.bgee.core.topAnatRWorkingDirectory>/var/bgee/webapp/${project.version}/topanat/results/</filter.org.bgee.core.topAnatRWorkingDirectory>
+        <filter.org.bgee.core.topAnatResultsWritingDirectory>/var/bgee/webapp/${project.version}/topanat/results/</filter.org.bgee.core.topAnatResultsWritingDirectory>
+        <!-- Force R path for Linux host because TopAnat runs on Linux servers currently -->
+        <filter.org.bgee.core.topAnatRScriptExecutable>/usr/bin/Rscript</filter.org.bgee.core.topAnatRScriptExecutable>
+
+        <!-- NOTE: org.bgee.webapp.bgeeRootDirectory has TO be linked with Apache configuration
+                   to have the right behavior
+             NOTE: Now ftp://ftp.bgee.org/bgee_v${project.version}/ points to the last version
+                   of a Bgee release -->
 
         <!-- Set the host we want to link to. For instance, we might want to link to bgee.org
              while the current host is bgee.unil.ch. This is important for generating links in emails.
              Simply set to point to the server root by default, This parameter should be overriden
              in settings.xml if needed -->
-        <filter.org.bgee.webapp.bgeeRootDirectory>/</filter.org.bgee.webapp.bgeeRootDirectory>
+        <filter.org.bgee.webapp.bgeeRootDirectory>http://bgee.org/bgee${project.version}</filter.org.bgee.webapp.bgeeRootDirectory>
         <!-- in production, should be '.bgee.org' -->
-        <filter.org.bgee.webapp.bgeeRootDomain></filter.org.bgee.webapp.bgeeRootDomain>
+        <filter.org.bgee.webapp.bgeeRootDomain>.bgee.org</filter.org.bgee.webapp.bgeeRootDomain>
+
+        <!-- Set FTP URLs with proper Bgee version -->
+        <filter.org.bgee.webapp.ftpRootDirectory>ftp://ftp.bgee.org/bgee_v${project.version}/</filter.org.bgee.webapp.ftpRootDirectory>
+        <filter.org.bgee.webapp.downloadRootDirectory>ftp://ftp.bgee.org/bgee_v${project.version}/download/</filter.org.bgee.webapp.downloadRootDirectory>
+        <filter.org.bgee.webapp.downloadExprFilesRootDirectory>ftp://ftp.bgee.org/bgee_v${project.version}/download/calls/expr_calls/</filter.org.bgee.webapp.downloadExprFilesRootDirectory>
+        <filter.org.bgee.webapp.downloadDiffExprFilesRootDirectory>ftp://ftp.bgee.org/bgee_v${project.version}/download/calls/diff_expr_calls/</filter.org.bgee.webapp.downloadDiffExprFilesRootDirectory>
+        <filter.org.bgee.webapp.downloadMultiDiffExprFilesRootDirectory>ftp://ftp.bgee.org/bgee_v${project.version}/download/calls/multi_species_diff_expr_calls/</filter.org.bgee.webapp.downloadMultiDiffExprFilesRootDirectory>
+        <filter.org.bgee.webapp.downloadOrthologFilesRootDirectory>ftp://ftp.bgee.org/bgee_v${project.version}/download/orthologs/</filter.org.bgee.webapp.downloadOrthologFilesRootDirectory>
+        <filter.org.bgee.webapp.downloadAffyProcExprValueFilesRootDirectory>ftp://ftp.bgee.org/bgee_v${project.version}/download/processed_expr_values/affymetrix/</filter.org.bgee.webapp.downloadAffyProcExprValueFilesRootDirectory>
+       <filter.org.bgee.webapp.downloadRNASeqProcExprValueFilesRootDirectory>ftp://ftp.bgee.org/bgee_v${project.version}/download/processed_expr_values/rna_seq/</filter.org.bgee.webapp.downloadRNASeqProcExprValueFilesRootDirectory>
     </properties>
 
     <!-- There is a problem when running the webapp from Eclipse: m2e-wtp acquires
@@ -599,13 +626,13 @@
                         </resource>
 
                         <resource>
-			                <filtering>true</filtering>
-			                <directory>src/main/webapp/WEB-INF</directory>
-			                <includes>
-			                    <include>web.xml</include>
-			                </includes>
-			                <targetPath>WEB-INF/</targetPath>
-			            </resource>
+                            <filtering>true</filtering>
+                            <directory>src/main/webapp/WEB-INF</directory>
+                            <includes>
+                                <include>web.xml</include>
+                            </includes>
+                            <targetPath>WEB-INF/</targetPath>
+                        </resource>
 
                         <!-- We filter bgee-webapp.properties so that css version number
                              and javacript version number are configured.

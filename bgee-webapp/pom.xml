@@ -175,7 +175,7 @@
              while the current host is bgee.unil.ch. This is important for generating links in emails.
              Simply set to point to the server root by default, This parameter should be overriden
              in settings.xml if needed -->
-        <filter.org.bgee.webapp.bgeeRootDirectory>http://bgee.org/bgee${project.version}</filter.org.bgee.webapp.bgeeRootDirectory>
+        <filter.org.bgee.webapp.bgeeRootDirectory>/bgee${project.version}</filter.org.bgee.webapp.bgeeRootDirectory>
         <!-- in production, should be '.bgee.org' -->
         <filter.org.bgee.webapp.bgeeRootDomain>.bgee.org</filter.org.bgee.webapp.bgeeRootDomain>
 

@@ -4,7 +4,7 @@
     version="2.4">
 
     <!-- Deployement descriptor for Bgee webapp -->
-    <display-name>Bgee (v${filter.version}): a dataBase for Gene Expression Evolution</display-name>
+    <display-name>Bgee (v${project.version}): a dataBase for Gene Expression Evolution</display-name>
     <description>
       Bgee is a database to compare gene expression patterns
       between animal species, by referencing expression data

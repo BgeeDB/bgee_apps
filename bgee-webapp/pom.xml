@@ -187,7 +187,7 @@
         <filter.org.bgee.webapp.downloadMultiDiffExprFilesRootDirectory>ftp://ftp.bgee.org/bgee_v${project.version}/download/calls/multi_species_diff_expr_calls/</filter.org.bgee.webapp.downloadMultiDiffExprFilesRootDirectory>
         <filter.org.bgee.webapp.downloadOrthologFilesRootDirectory>ftp://ftp.bgee.org/bgee_v${project.version}/download/orthologs/</filter.org.bgee.webapp.downloadOrthologFilesRootDirectory>
         <filter.org.bgee.webapp.downloadAffyProcExprValueFilesRootDirectory>ftp://ftp.bgee.org/bgee_v${project.version}/download/processed_expr_values/affymetrix/</filter.org.bgee.webapp.downloadAffyProcExprValueFilesRootDirectory>
-       <filter.org.bgee.webapp.downloadRNASeqProcExprValueFilesRootDirectory>ftp://ftp.bgee.org/bgee_v${project.version}/download/processed_expr_values/rna_seq/</filter.org.bgee.webapp.downloadRNASeqProcExprValueFilesRootDirectory>
+        <filter.org.bgee.webapp.downloadRNASeqProcExprValueFilesRootDirectory>ftp://ftp.bgee.org/bgee_v${project.version}/download/processed_expr_values/rna_seq/</filter.org.bgee.webapp.downloadRNASeqProcExprValueFilesRootDirectory>
     </properties>
 
     <!-- There is a problem when running the webapp from Eclipse: m2e-wtp acquires

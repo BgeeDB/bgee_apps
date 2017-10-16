@@ -126,7 +126,7 @@ under the License.
               <filter.dao.jdbc.driver.names>com.mysql.jdbc.Driver</filter.dao.jdbc.driver.names>
 
               <!-- Main Webapp properties -->
-              <filter.org.bgee.webapp.bgeeRootDirectory>/bgee${project.version}</filter.org.bgee.webapp.bgeeRootDirectory>
+              <filter.org.bgee.webapp.bgeeRootDirectory>/bgee${project.version}/</filter.org.bgee.webapp.bgeeRootDirectory>
 
               <!-- Properties for running TopAnat -->
               <filter.org.bgee.webapp.requestParametersStorageDirectory>/var/bgee/webapp/${project.version}/requestparameters/</filter.org.bgee.webapp.requestParametersStorageDirectory>

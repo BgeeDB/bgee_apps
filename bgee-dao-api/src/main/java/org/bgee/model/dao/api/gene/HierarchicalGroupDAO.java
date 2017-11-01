@@ -59,15 +59,16 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
     /**
      * Inserts the provided GroupToGene into the Bgee database, represented as a
      * {@code Collection} of {@code HierarchicalGroupToGeneTO}s.
-     * 
+     *
      * @param groupToGene   A {@code Collection} of {@code HierarchicalGroupToGeneTO}s to be
      *                      inserted into the database.
-     * @throws IllegalArgumentException If {@code groupToGene} is empty or null. 
+     * @throws IllegalArgumentException If {@code groupToGene} is empty or null.
      * @throws DAOException If an {@code Exception} occurred while trying to insert
      *                      {@code terms}. The {@code SQLException} will be wrapped into a
      *                      {@code DAOException} ({@code DAOs} do not expose these kind of
      *                      implementation details).
      */
+    //XXX: why this method did not exist before? How this insertion was handled before?
     public int insertHierarchicalGroupToGene(Collection<HierarchicalGroupToGeneTO> groupToGene)
             throws DAOException, IllegalArgumentException;
     
@@ -272,6 +273,7 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
          * An {@code Integer} that is the ID of a taxonomy level belonging to the group with ID 
          * {@link #groupId}.
          */
+        //XXX: why do we need this? Isn't it handled by the HierarchicalGroupTO already?
         private final Integer taxonId;
         
         /**
@@ -303,20 +305,22 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
         public Integer getBgeeGeneId() {
             return bgeeGeneId;
         }
-        
         /**
          * @return  An {@code Integer} that is the ID of a taxonomy level belonging to the group with ID 
          *          {@link #getNodeId()}.
          */
+        //XXX: why do we need this? Isn't it handled by the HierarchicalGroupTO already?
         public Integer getTaxonId() {
             return taxonId;
         }
-        
+
         @Override
         public String toString() {
             return "HierarchicalGroupToGeneTO[groupId="+this.nodeId+", bgeeGeneId="+this.bgeeGeneId+", taxonId="+this.taxonId+"]";
         }
-        
+
+        //XXX: I thought TOs never implement hashCode and equals
+        //(we use the TOComparator instead for tests)
         @Override
         public int hashCode() {
             final int prime = 31;
@@ -326,7 +330,6 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
             result = prime * result + ((this.getTaxonId() == null) ? 0 : this.getTaxonId().hashCode());
             return result;
         }
-        
         @Override
         public boolean equals(Object obj) {
             if (this == obj) {

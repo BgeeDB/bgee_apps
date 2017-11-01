@@ -540,7 +540,9 @@ public interface RelationDAO extends DAO<RelationDAO.Attribute> {
                     " - Relation type: " + this.getRelationType() + 
                     " - Relation status: " + this.getRelationStatus();
         }
-        
+
+        //XXX: I thought TOs never implement hashCode and equals
+        //(we use the TOComparator instead for tests)
         @Override
         public int hashCode() {
             final int prime = 31;
@@ -551,7 +553,6 @@ public interface RelationDAO extends DAO<RelationDAO.Attribute> {
             result = prime * result + ((this.getRelationStatus() == null) ? 0 : this.getRelationStatus().hashCode());
             return result;
         }
-        
         @Override
         public boolean equals(Object obj) {
             if (this == obj) {
@@ -563,7 +564,7 @@ public interface RelationDAO extends DAO<RelationDAO.Attribute> {
             if (getClass() != obj.getClass()) {
                 return false;
             }
-            RelationTO<T> other = (RelationTO<T>) obj;
+            RelationTO<?> other = (RelationTO<?>) obj;
             if (this.getSourceId() == null) {
                 if (other.getSourceId() != null) {
                     return false;

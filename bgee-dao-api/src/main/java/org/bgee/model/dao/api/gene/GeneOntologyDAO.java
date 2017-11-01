@@ -176,7 +176,9 @@ public interface GeneOntologyDAO extends DAO<GeneOntologyDAO.Attribute> {
                     " - Domain: " + this.getDomain() + 
                     ((this.getAltIds().isEmpty()) ? "" : " - AltIds: " + this.getAltIds());
         }
-        
+
+        //XXX: I thought TOs never implement hashCode and equals
+        //(we use the TOComparator instead for tests)
         @Override
         public int hashCode() {
             final int prime = 31;
@@ -187,7 +189,6 @@ public interface GeneOntologyDAO extends DAO<GeneOntologyDAO.Attribute> {
             result = prime * result + ((this.getAltIds() == null) ? 0 : this.getAltIds().hashCode());
             return result;
         }
-        
         @Override
         public boolean equals(Object obj) {
             if (this == obj) {

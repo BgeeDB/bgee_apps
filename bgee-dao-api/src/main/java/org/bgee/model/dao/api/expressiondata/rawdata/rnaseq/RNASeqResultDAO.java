@@ -58,6 +58,7 @@ public interface RNASeqResultDAO extends DAO<RNASeqResultDAO.Attribute> {
      * (non-javadoc)
      * This TO is not in it's final version. We need to known if CallSourceRawDataTO is necessary 
      * and consistent.
+     * XXX: well, CallSourceRawDataTO is deprecated, was it deprecated before or after this note?
      */
     public final class RNASeqResultTO extends CallSourceRawDataTO implements Serializable {
         private static final long serialVersionUID = 9192921864601490175L;

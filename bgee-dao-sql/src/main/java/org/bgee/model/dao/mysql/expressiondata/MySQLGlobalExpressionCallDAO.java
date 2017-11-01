@@ -45,6 +45,7 @@ import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
  * @see org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionToRawExpressionTO
  * @since   Bgee 14, Feb. 2017
  */
+//XXX: completely review git diff...
 public class MySQLGlobalExpressionCallDAO extends MySQLDAO<GlobalExpressionCallDAO.Attribute> 
 implements GlobalExpressionCallDAO {
     private final static Logger log = LogManager.getLogger(MySQLGlobalExpressionCallDAO.class.getName());
@@ -52,7 +53,9 @@ implements GlobalExpressionCallDAO {
     private final static String GLOBAL_EXPR_ID_FIELD = "globalExpressionId";
     private final static String GLOBAL_EXPR_TABLE_NAME = "globalExpression";
     private final static String GLOBAL_MEAN_RANK_FIELD = "meanRank";
+    //XXX: I think this information is already managed in another class?
     private final static int DATA_TYPE_COUNT = 4;
+    //XXX: I think this information is already managed in another class?
     private final static Set<DAOPropagationState> OBSERVED_STATES = EnumSet.of(DAOPropagationState.ALL,
             DAOPropagationState.SELF, DAOPropagationState.SELF_AND_ANCESTOR, 
             DAOPropagationState.SELF_AND_DESCENDANT);
@@ -111,12 +114,9 @@ implements GlobalExpressionCallDAO {
             case CONDITION_ID:
                 return globalExprTableName + "." + MySQLConditionDAO.GLOBAL_COND_ID_FIELD;
             case GLOBAL_MEAN_RANK:
-                
-                clonedDataTypes.stream()
-                    .map(dt -> dataTypeToNormRankSql.get(dt) + " IS NULL")
-                    .collect(Collectors.joining(" AND ", "IF (", ")"));
                 return clonedDataTypes.stream()
                         .map(dt -> dataTypeToNormRankSql.get(dt) + " IS NULL")
+                        //XXX: no part of the statement missing here? To do, like "IF xxx IS NULL(NULL, xxx)?
                         .collect(Collectors.joining(" AND ", "IF (", ", null, "))
                         + clonedDataTypes.stream()
                         .map(dataType -> {
@@ -492,9 +492,9 @@ implements GlobalExpressionCallDAO {
             boolean observedConditionFiltering, final boolean isOrderByOMANodeId) {
         log.entry(globalExprTableName, globalCondTableName, condTableName, geneTableName,
                 observedConditionFiltering, isOrderByOMANodeId);
-        
+
         StringBuilder sb = new StringBuilder();
-        
+
         //the order of the tables is important in case we use a STRAIGHT_JOIN clause
         sb.append(" FROM ");
 
@@ -518,7 +518,7 @@ implements GlobalExpressionCallDAO {
             sb.append(" ON ").append(geneTableName).append(".").append(MySQLGeneDAO.BGEE_GENE_ID)
                 .append(" = ").append(globalCondTableName).append(".").append(MySQLGeneDAO.BGEE_GENE_ID);
         }
-        
+
         sb.append(" INNER JOIN ");
         sb.append("globalExpression AS ").append(globalExprTableName);
         sb.append(" ON ").append(globalCondTableName).append(".")
@@ -575,7 +575,7 @@ implements GlobalExpressionCallDAO {
                 .map(param -> globalCondTableName + "." + param.getTOFieldName()
                     + (conditionParameters.contains(param)? " IS NOT NULL": " IS NULL"))
                 .collect(Collectors.joining(" AND ")));
-      
+
         if (!callFilters.isEmpty()) {
             for (CallDAOFilter callFilter: callFilters) {
                 if (callFilter.getGeneIds() != null && !callFilter.getGeneIds().isEmpty()) {
@@ -638,7 +638,8 @@ implements GlobalExpressionCallDAO {
                     sb.append(" AND ");
                     sb.append(generateDataFilters(callFilter.getDataFilters(), globalExprTableName));
                 }
-                
+
+                //XXX: Remind me how this is different from a ConditionFilter?
                 if (callFilter.getCallObservedData() != null && callFilter.getCallObservedData()) {
                     sb.append(" AND ").append("(")
                         .append(globalExprTableName).append(".affymetrixConditionObservedData = ? OR ")
@@ -646,13 +647,14 @@ implements GlobalExpressionCallDAO {
                         .append(globalExprTableName).append(".inSituConditionObservedData = ? OR ")
                         .append(globalExprTableName).append(".rnaSeqConditionObservedData = ?").append(")");
                 }
-                
+
+                //XXX: Remind me how this is different from a ConditionFilter?
                 if (callFilter.getObservedDataFilter() != null && !callFilter.getObservedDataFilter().isEmpty()) {
                     sb.append(callFilter.getObservedDataFilter().entrySet().stream()
                             .filter(e -> e.getValue())
                             .map(e -> {
                                 StringBuilder sb2 = new StringBuilder();
-                                sb2.append(" AND ");                            
+                                sb2.append(" AND ");
                                 sb2.append("(");
                                 ConditionDAO.Attribute attr = e.getKey();
                                 switch (attr) {
@@ -697,7 +699,8 @@ implements GlobalExpressionCallDAO {
     private static String generateDataFilters(final LinkedHashSet<CallDataDAOFilter> dataFilters,
             final String globalExprTableName) {
         log.entry(dataFilters, globalExprTableName);
-        
+
+        //XXX: here we should have a sum of the fields, right?
         return dataFilters.stream()
             .map(dataFilter -> {
                 return dataFilter.getExperimentCountFilters().stream()
@@ -738,7 +741,7 @@ implements GlobalExpressionCallDAO {
             })
            .collect(Collectors.joining(" OR ", "(", ")"));
     }
-    
+
     private static String getExpCountFilterFieldName(DAODataType dataType,
             DAOExperimentCountFilter expCountFilter) {
         log.entry(dataType, expCountFilter);
@@ -939,7 +942,7 @@ implements GlobalExpressionCallDAO {
             LinkedHashMap<GlobalExpressionCallDAO.OrderingAttribute, DAO.Direction> orderingAttrs,
             String globalExprTableName, String globalCondTableName, String geneTableName) {
         log.entry(orderingAttrs, globalExprTableName, globalCondTableName, geneTableName);
-        
+
         if (orderingAttrs.isEmpty()) {
             return log.exit("");
         }
@@ -948,37 +951,37 @@ implements GlobalExpressionCallDAO {
                 .map(entry -> {
                     String orderBy = "";
                     switch(entry.getKey()) {
-                        case GENE_ID: 
+                        case GENE_ID:
                             orderBy = globalExprTableName + ".bgeeGeneId";
                             break;
-                        case CONDITION_ID: 
+                        case CONDITION_ID:
                             orderBy = globalExprTableName + ".globalConditionId";
                             break;
-                        case ANAT_ENTITY_ID: 
+                        case ANAT_ENTITY_ID:
                             orderBy = globalCondTableName + ".anatEntityId";
                             break;
-                        case STAGE_ID: 
+                        case STAGE_ID:
                             orderBy = globalCondTableName + ".stageId";
                             break;
-                        case OMA_GROUP_ID: 
+                        case OMA_GROUP_ID:
                             orderBy = geneTableName + ".OMAParentNodeId";
                             break;
-                        case MEAN_RANK: 
+                        case MEAN_RANK:
                             orderBy = GLOBAL_MEAN_RANK_FIELD;
                             break;
-                        default: 
-                            throw log.throwing(new IllegalStateException("Unsupported OrderingAttribute: " 
+                        default:
+                            throw log.throwing(new IllegalStateException("Unsupported OrderingAttribute: "
                                     + entry.getKey()));
                     }
                     switch(entry.getValue()) {
-                        case DESC: 
+                        case DESC:
                             orderBy += " desc";
                             break;
-                        case ASC: 
+                        case ASC:
                             orderBy += " asc";
                             break;
-                        default: 
-                            throw log.throwing(new IllegalStateException("Unsupported Direction: " 
+                        default:
+                            throw log.throwing(new IllegalStateException("Unsupported Direction: "
                                     + entry.getValue()));
                     }
                     return orderBy;
@@ -1026,12 +1029,13 @@ implements GlobalExpressionCallDAO {
             throw log.throwing(new IllegalArgumentException("The condition parameter combination "
                     + "contains some Attributes that are not condition parameters: " + clonedCondParams));
         }
+        //XXX: can't we automatically add the field if requested in ordering clause?
         if (clonedOrderingAttrs.containsKey(GlobalExpressionCallDAO.OrderingAttribute.MEAN_RANK) 
                 && !clonedAttrs.contains(GlobalExpressionCallDAO.Attribute.GLOBAL_MEAN_RANK)) {
             throw log.throwing(new IllegalArgumentException("To order by " 
                     + GlobalExpressionCallDAO.OrderingAttribute.MEAN_RANK
                     + ", the attribute " + GlobalExpressionCallDAO.Attribute.GLOBAL_MEAN_RANK
-                    + " should be retireved"));
+                    + " should be retrieved"));
         }
 
 
@@ -1057,19 +1061,19 @@ implements GlobalExpressionCallDAO {
         StringBuilder sb = new StringBuilder();
         sb.append(generateSelectClause(clonedAttrs, dataTypes, globalExprTableName, globalCondTableName));
         sb.append(generateTableReferences(globalExprTableName, globalCondTableName, condTableName,
-                geneTableName, observedConditionFilter, 
+                geneTableName, observedConditionFilter,
                 clonedOrderingAttrs.containsKey(GlobalExpressionCallDAO.OrderingAttribute.OMA_GROUP_ID)));
         sb.append(generateWhereClause(clonedCallFilters, globalExprTableName, globalCondTableName,
                 condTableName, clonedCondParams));
         sb.append(generateOrderByClause(clonedOrderingAttrs, globalExprTableName, globalCondTableName, geneTableName));
 
-        //we don't use a try-with-resource, because we return a pointer to the results, 
+        //we don't use a try-with-resource, because we return a pointer to the results,
         //not the actual results, so we should not close this BgeePreparedStatement.
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());
             int offsetParamIndex = 1;
             for (CallDAOFilter callFilter: clonedCallFilters) {
-                
+
                 if (callFilter.getGeneIds() != null && !callFilter.getGeneIds().isEmpty()) {
                     stmt.setIntegers(offsetParamIndex, callFilter.getGeneIds(), true);
                     offsetParamIndex += callFilter.getGeneIds().size();
@@ -1097,7 +1101,7 @@ implements GlobalExpressionCallDAO {
                         }
                     }
                 }
-                
+
                 if (callFilter.getDataFilters() != null) {
                     for (CallDataDAOFilter dataFilter: callFilter.getDataFilters()) {
                         for (Set<DAOExperimentCountFilter> countOrFilters: dataFilter.getExperimentCountFilters()) {
@@ -1110,14 +1114,14 @@ implements GlobalExpressionCallDAO {
                         }
                     }
                 }
-                
+
                 if (callFilter.getCallObservedData() != null && callFilter.getCallObservedData()) {
                     stmt.setBooleans(offsetParamIndex,
                             Collections.nCopies(DATA_TYPE_COUNT, callFilter.getCallObservedData()),
                             true);
                     offsetParamIndex += DATA_TYPE_COUNT;
                 }
-                
+
                 if (callFilter.getObservedDataFilter() != null && !callFilter.getObservedDataFilter().isEmpty()) {
                     for (Boolean isObservedData: callFilter.getObservedDataFilter().values()) {
                         if (isObservedData) {
@@ -1125,13 +1129,13 @@ implements GlobalExpressionCallDAO {
                                 stmt.setEnumDAOFields(offsetParamIndex, OBSERVED_STATES, true);
                                 offsetParamIndex += OBSERVED_STATES.size();
                             }
-                        } 
+                        }
                     }
                 }
             }
 
             return log.exit(new MySQLGlobalExpressionCallTOResultSet(stmt));
-            
+
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -1564,10 +1568,10 @@ implements GlobalExpressionCallDAO {
                     }
                 }
             }
-            if (!infoFound || (conditionObservedData == null 
-                    && (dataPropagation.isEmpty() || dataPropagation.values().stream().allMatch(dp -> dp == null)) 
+            if (!infoFound || (conditionObservedData == null
+                    && (dataPropagation.isEmpty() || dataPropagation.values().stream().allMatch(dp -> dp == null))
                     && (experimentCounts.isEmpty() || experimentCounts.stream().allMatch(c -> c.getCount() == 0))
-                    && (propagatedCount == null || propagatedCount == 0) 
+                    && (propagatedCount == null || propagatedCount == 0)
                     && rank == null && rankNorm == null && weightForMeanRank == null)) {
                 // If all variables are null/empty/0, this means that there is no data for the current data type
                 return log.exit(null);

@@ -666,55 +666,65 @@ public class CallService extends CommonService {
             ExpressionCallFilter callFilter) {
         log.entry(callFilter);
 
-        //just to make sure SummaryQuality.BRONZE is the lowest Quality level
-        assert SummaryQuality.values()[0].equals(SummaryQuality.BRONZE);
-        //now determine whether the lowest quality level was requested
-        boolean lowestQual = callFilter.getSummaryCallTypeQualityFilter().entrySet().stream()
-                .allMatch(e -> SummaryQuality.BRONZE.equals(e.getValue()));
+        //Determine whether the lowest quality level was requested
+        final SummaryQuality lowestQual = SummaryQuality.values()[0];
+        //Just to make sure that qualities are in proper order and haven't changed
+        assert lowestQual.equals(SummaryQuality.BRONZE);
+        boolean lowestQualSelected = callFilter.getSummaryCallTypeQualityFilter().isEmpty() ||
+                callFilter.getSummaryCallTypeQualityFilter() == null ||
+                callFilter.getSummaryCallTypeQualityFilter().entrySet().stream()
+                .allMatch(e -> e.getValue() == null || lowestQual.equals(e.getValue()));
         //now determine whether all data types were requested
         boolean allDataTypesSelected = callFilter.getDataTypeFilters() == null ||
                 callFilter.getDataTypeFilters().isEmpty() ||
                 callFilter.getDataTypeFilters().equals(EnumSet.allOf(DataType.class));
-        //just to make sure we cover all ExpressionSummary cases
-        assert SummaryCallType.ExpressionSummary.values().length == 2;
         //now determine whether all CallTypes were requested
-        boolean allCallTypesSelected = callFilter.getSummaryCallTypeQualityFilter().keySet().size() == 2;
+        boolean allCallTypesSelected = callFilter.getSummaryCallTypeQualityFilter().isEmpty() ||
+                callFilter.getSummaryCallTypeQualityFilter() == null ||
+                callFilter.getSummaryCallTypeQualityFilter().keySet().equals(EnumSet.allOf(SummaryCallType.ExpressionSummary.class));
 
-        //absolutely no filtering necessary on experiment expression counts in following case
-        if (allCallTypesSelected && lowestQual && allDataTypesSelected &&
+        //absolutely no filtering necessary on experiment expression counts in following case.
+        //Note: it is not possible to request no-expression calls from EST data,
+        //but for convenience we do not consider this an error here, otherwise we could not provide
+        //one ExpressionCallFilter to simply say: "give me all calls".
+        if (allCallTypesSelected && lowestQualSelected && allDataTypesSelected &&
                 //this is true only as long as the minimum experiment count threshold is 1
                 MIN_LOW_BRONZE <= 1 && MIN_HIGH_BRONZE <= 1) {
-            assert callFilter.getSummaryCallTypeQualityFilter().containsKey(
-                    SummaryCallType.ExpressionSummary.EXPRESSED) &&
-                           callFilter.getSummaryCallTypeQualityFilter().containsKey(
-                            SummaryCallType.ExpressionSummary.NOT_EXPRESSED);
             return log.exit(null);
         }
 
         final Set<DAODataType> daoDataTypes = Collections.unmodifiableSet(
                 convertDataTypeToDAODataType(callFilter.getDataTypeFilters()));
+        final Map<ExpressionSummary, SummaryQuality> callTypeQualityFilters = 
+                callFilter.getSummaryCallTypeQualityFilter() == null ||
+                callFilter.getSummaryCallTypeQualityFilter().isEmpty()?
+                        Collections.unmodifiableMap(
+                                EnumSet.allOf(SummaryCallType.ExpressionSummary.class).stream()
+                                .map(c -> new AbstractMap.SimpleEntry<>(c, SummaryQuality.BRONZE))
+                                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()))
+                        ):
+                        callFilter.getSummaryCallTypeQualityFilter();
 
         //see org.bgee.model.dao.api.expressiondata.CallDAOFilter.getDataFilters()
         //for more details
-        Set<CallDataDAOFilter> callDataDAOFilters = null;
+        Set<CallDataDAOFilter> callDataDAOFilters = callTypeQualityFilters
+                .entrySet().stream().map(e -> {
+                    SummaryCallType.ExpressionSummary requestedCallType = e.getKey();
+                    SummaryQuality requestedQual = e.getValue();
+                    
+                    if (callFilter.getDataTypeFilters() != null && !callFilter.getDataTypeFilters().isEmpty() &&
+                            Collections.disjoint(callFilter.getDataTypeFilters(), requestedCallType.getAllowedDataTypes())) {
+                        throw log.throwing(new IllegalArgumentException(
+                                "The data types selected do not allow to produce the requested call type. "
+                                + "Call Type: " + requestedCallType + " - Data types: " + callFilter.getDataTypeFilters()));
+                    }
 
-        //filters for callTypes/quality if necessary.
-        if (!allCallTypesSelected || !lowestQual ||
-                //if not all data types were requested and it is the only filtering requested,
-                //then we don't need to create a filter for each call type requested (see 'else' clause below).
-                //But it is true only as long as the minimum experiment count threshold is 1
-                (!allDataTypesSelected && (MIN_LOW_BRONZE > 1 || MIN_HIGH_BRONZE > 1))) {
+                    //see org.bgee.model.dao.api.expressiondata.CallDataDAOFilter.getExperimentCountFilters()
+                    //for more details
+                    Set<Set<DAOExperimentCountFilter>> daoExperimentCountFilters = new HashSet<>();
 
-            callDataDAOFilters = callFilter.getSummaryCallTypeQualityFilter().entrySet().stream().map(e -> {
-                SummaryCallType.ExpressionSummary requestedCallType = e.getKey();
-                SummaryQuality requestedQual = e.getValue();
-
-                //see org.bgee.model.dao.api.expressiondata.CallDataDAOFilter.getExperimentCountFilters()
-                //for more details
-                Set<Set<DAOExperimentCountFilter>> daoExperimentCountFilters = new HashSet<>();
-  
-                final Boolean isExpression;
-                switch (requestedCallType) {
+                    final Boolean isExpression;
+                    switch (requestedCallType) {
                     case EXPRESSED:
                         isExpression = true;
                         break;
@@ -724,30 +734,30 @@ public class CallService extends CommonService {
                     default:
                         throw log.throwing(new IllegalStateException("Unsupported call type: "
                                 + requestedCallType));
-                }
-                assert isExpression != null;
+                    }
+                    assert isExpression != null;
 
-                //reject expression if no expression is requested, through "AND" filters
-                //(so, each filter in a separate Set)
-                if (!isExpression) {
-                    Set<Set<DAOExperimentCountFilter>> rejectExpressionFilters =
-                            EnumSet.allOf(DAOExperimentCount.DataQuality.class).stream()
-                            .map(dataQual -> Collections.singleton(new DAOExperimentCountFilter(
-                                    DAOExperimentCount.CallType.PRESENT, dataQual,
-                                    DAOPropagationState.ALL,
-                                    DAOExperimentCountFilter.Qualifier.EQUALS_TO, 0)))
-                            .collect(Collectors.toSet());
+                    //reject expression if no-expression is requested, through "AND" filters
+                    //(so, each filter in a separate Set)
+                    if (!isExpression) {
+                        Set<Set<DAOExperimentCountFilter>> rejectExpressionFilters =
+                                EnumSet.allOf(DAOExperimentCount.DataQuality.class).stream()
+                                .map(dataQual -> Collections.singleton(new DAOExperimentCountFilter(
+                                        DAOExperimentCount.CallType.PRESENT, dataQual,
+                                        DAOPropagationState.ALL,
+                                        DAOExperimentCountFilter.Qualifier.EQUALS_TO, 0)))
+                                .collect(Collectors.toSet());
 
-                    daoExperimentCountFilters.addAll(rejectExpressionFilters);
-                }
+                        daoExperimentCountFilters.addAll(rejectExpressionFilters);
+                    }
 
-                //requested call type "OR" filters.
-                //assert just to make sure we cover all DAOExperimentCount.CallTypes
-                assert DAOExperimentCount.CallType.values().length == 2;
-                final DAOExperimentCount.CallType daoCallType = convertSummaryCallTypeToDAOCallType(
-                        requestedCallType);
-                Set<DAOExperimentCountFilter> acceptCallTypeFilters = new HashSet<>();
-                switch (requestedQual) {
+                    //requested call type "OR" filters.
+                    //assert just to make sure we cover all DAOExperimentCount.CallTypes
+                    assert DAOExperimentCount.CallType.values().length == 2;
+                    final DAOExperimentCount.CallType daoCallType = convertSummaryCallTypeToDAOCallType(
+                            requestedCallType);
+                    Set<DAOExperimentCountFilter> acceptCallTypeFilters = new HashSet<>();
+                    switch (requestedQual) {
                     case BRONZE:
                         acceptCallTypeFilters.add(new DAOExperimentCountFilter(daoCallType,
                                 DAOExperimentCount.DataQuality.LOW,
@@ -779,51 +789,41 @@ public class CallService extends CommonService {
                     default:
                         throw log.throwing(new UnsupportedOperationException(
                                 "Unsupported SummaryQuality: " + requestedQual));
-                }
+                    }
 
-                assert !acceptCallTypeFilters.isEmpty();
-                daoExperimentCountFilters.add(acceptCallTypeFilters);
+                    assert !acceptCallTypeFilters.isEmpty();
+                    daoExperimentCountFilters.add(acceptCallTypeFilters);
 
-                Set<DAODataType> filteredDataTypes = daoDataTypes.stream()
-                    // we do not keep filters requiring EST data and absence of expression
-                    .filter(dt -> !(DAODataType.EST.equals(dt) && !isExpression))
-                    .collect(Collectors.toSet());
-                if (filteredDataTypes.isEmpty()) {
-                    throw log.throwing(new IllegalArgumentException(
-                            "Impossible to get not expressed calls for EST data only"));
-                }
-                return new CallDataDAOFilter(daoExperimentCountFilters, filteredDataTypes);
-            }).collect(Collectors.toSet());
+//                    //Bug fix: we do NOT discard improper data types to retrieve no-expression calls,
+//                    //otherwise it would mess up the rejectExpressionFilters, and we could end up
+//                    //retrieving, for instance, no-expression calls from Affymetrix data having expression calls
+//                    //from EST data (and we do not want that, if EST data were selected to retrieve the no-expression calls,
+//                    //despite being incorrect, we do not want to retrieve no-expression calls that are expressed
+//                    //according to EST).
+//                    //=> It means it is the DAO job to discard silently such improper fields
+//                    //(see method org.bgee.model.dao.mysql.expressiondata.MySQLGlobalExpressionCallDAO.generateDataFilters(LinkedHashSet, String)) ).
+//                    //Of note, if only EST data were requested for retrieving no-expression calls,
+//                    //an exception would have been thrown by this method already.
+//                    Set<DAODataType> filteredDataTypes = daoDataTypes.stream()
+//                            // we do not keep filters requiring EST data and absence of expression
+//                            .filter(dt -> !(DAODataType.EST.equals(dt) && !isExpression))
+//                            .collect(Collectors.toSet());
+//                    if (filteredDataTypes.isEmpty()) {
+//                        throw log.throwing(new IllegalArgumentException(
+//                                "Impossible to get not expressed calls for EST data only"));
+//                    }
+//                    return new CallDataDAOFilter(daoExperimentCountFilters, filteredDataTypes);
 
-        //if no filtering on call type and quality needed but not all data types requested,
-        //we need to add a filtering here.
-        //No need for a clause 'else if (!allDataTypesSelected) {',
-        //the method should have already exited if allDataTypesSelected was true
-        } else {
-            assert allCallTypesSelected && lowestQual;
-            assert !allDataTypesSelected && MIN_LOW_BRONZE <= 1 && MIN_HIGH_BRONZE <= 1;
+                    return new CallDataDAOFilter(daoExperimentCountFilters, daoDataTypes);
+                })
+                .collect(Collectors.toSet());
 
-            Set<Set<DAOExperimentCountFilter>> daoExperimentCountFilters = new HashSet<>();
-
-            daoExperimentCountFilters.add(callFilter
-                    .getSummaryCallTypeQualityFilter().entrySet().stream()
-                    .flatMap(e -> EnumSet.allOf(DAOExperimentCount.DataQuality.class)
-                            .stream()
-                            .map(dataQual -> new DAOExperimentCountFilter(
-                                    convertSummaryCallTypeToDAOCallType(e.getKey()), dataQual,
-                                    DAOPropagationState.ALL,
-                                    DAOExperimentCountFilter.Qualifier.GREATER_THAN, 0)))
-                    .collect(Collectors.toSet()));
-
-            callDataDAOFilters = Collections.singleton(
-                    new CallDataDAOFilter(daoExperimentCountFilters, daoDataTypes));
-        }
 
         //the method should have exited right away if no filtering was necessary
         assert callDataDAOFilters != null && !callDataDAOFilters.isEmpty();
         return log.exit(callDataDAOFilters);
     }
-    
+
     private static Map<ConditionDAO.Attribute, Boolean> convertCallFilterToDAOObservedDataFilter(
             ExpressionCallFilter callFilter, Set<ConditionDAO.Attribute> condParamCombination) {
         log.entry(callFilter, condParamCombination);
@@ -1132,6 +1132,7 @@ public class CallService extends CommonService {
             }
 
             return log.exit(new ExpressionCallData(dt, counts,
+                    //XXX: are you sure it shouldn't be null as the other attributes here?
                     getExperimentsCounts && cdTO.getPropagatedCount() != null?
                             cdTO.getPropagatedCount(): 0,
                     getRankInfo? cdTO.getRank(): null,

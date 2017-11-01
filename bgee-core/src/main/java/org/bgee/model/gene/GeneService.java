@@ -102,14 +102,14 @@ public class GeneService extends CommonService {
         log.entry(ensemblGeneId);
         return log.exit(this.loadGenesByEnsemblId(ensemblGeneId, false));
     }
-    
+
     /**
      * Loads {@code Gene}s from an Ensembl gene ID. Please note that in Bgee a same Ensembl gene ID
      * can correspond to several {@code Gene}s, belonging to different species. This is because
      * in Bgee, the genome of a species can be used for another closely-related species.
      * For instance, in Bgee the chimpanzee genome is used for analyzing bonobo data.
      * For unambiguous retrieval of {@code Gene}s, see {@link #loadGenes(Collection)}.
-     * 
+     *
      * @param geneIds           A {@code String} that is the Ensembl ID of genes to retrieve.
      * @param withSpeciesInfo   A {@code boolean}s defining whether data sources of the species
      *                          is retrieved or not.
@@ -131,7 +131,7 @@ public class GeneService extends CommonService {
         return log.exit(mapGeneTOStreamToGeneStream(geneTOs.stream(), speciesMap)
                 .collect(Collectors.toSet()));
     }
-    
+
     /**
      * Loads {@code Gene}s from Ensembl gene IDs. Please note that in Bgee a same Ensembl gene ID
      * can correspond to several {@code Gene}s, belonging to different species. This is because
@@ -154,7 +154,7 @@ public class GeneService extends CommonService {
      * in Bgee, the genome of a species can be used for another closely-related species.
      * For instance, in Bgee the chimpanzee genome is used for analyzing bonobo data.
      * For unambiguous retrieval of {@code Gene}s, see {@link #loadGenes(Collection)}.
-     * 
+     *
      * @param geneIds           A {@code Collection} of {@code String}s that are the Ensembl IDs
      *                          of genes to retrieve.
      * @param withSpeciesInfo   A {@code boolean}s defining whether data sources of the species
@@ -162,15 +162,15 @@ public class GeneService extends CommonService {
      * @return                  A {@code Stream} of matching {@code Gene}s.
      */
     public Stream<Gene> loadGenesByEnsemblIds(Collection<String> ensemblGeneIds, boolean withSpeciesInfo) {
-    	log.entry(ensemblGeneIds, withSpeciesInfo);
-    	if (ensemblGeneIds != null && ensemblGeneIds.stream().anyMatch(id -> StringUtils.isBlank(id))) {
-    	    throw log.throwing(new IllegalArgumentException("No gene ID can be blank."));
-    	}
+        log.entry(ensemblGeneIds, withSpeciesInfo);
+        if (ensemblGeneIds != null && ensemblGeneIds.stream().anyMatch(id -> StringUtils.isBlank(id))) {
+            throw log.throwing(new IllegalArgumentException("No gene ID can be blank."));
+        }
 
-    	//we need to get the Species genes belong to, in order to instantiate Gene objects.
-    	//we don't have access to the species ID information before getting the GeneTOs,
-    	//and we want to return a Stream without iterating the GeneTOs first,
-    	//so we load all species in database
+        //we need to get the Species genes belong to, in order to instantiate Gene objects.
+        //we don't have access to the species ID information before getting the GeneTOs,
+        //and we want to return a Stream without iterating the GeneTOs first,
+        //so we load all species in database
         Map<Integer, Species> speciesMap = getSpeciesMap(null, withSpeciesInfo);
 
         return log.exit(mapGeneTOStreamToGeneStream(

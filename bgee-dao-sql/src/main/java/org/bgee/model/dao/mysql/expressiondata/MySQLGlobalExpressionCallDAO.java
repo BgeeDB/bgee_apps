@@ -28,6 +28,7 @@ import org.bgee.model.dao.api.expressiondata.DAOExperimentCount;
 import org.bgee.model.dao.api.expressiondata.DAOExperimentCountFilter;
 import org.bgee.model.dao.api.expressiondata.DAOPropagationState;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.DAOExperimentCount.CallType;
 import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
@@ -703,10 +704,16 @@ implements GlobalExpressionCallDAO {
                     .map(countOrFilters -> {
                         return countOrFilters.stream()
                             .map(countFilter -> {
-                                return dataFilter.getDataTypes().stream().map(dataType -> {
+                                return dataFilter.getDataTypes().stream()
+
+                                //discard request of no-expression calls from EST data, there is no such field
+                                .filter(dataType ->
+                                    !CallType.ABSENT.equals(countFilter.getCallType()) || !DAODataType.EST.equals(dataType))
+
+                                .map(dataType -> {
                                     StringBuilder sb2 = new StringBuilder();
                                     sb2.append(getExpCountFilterFieldName(dataType, countFilter));
-                                    countFilter.getQualifier();
+
                                     switch (countFilter.getQualifier()) {
                                         case GREATER_THAN:
                                             sb2.append(" > ");

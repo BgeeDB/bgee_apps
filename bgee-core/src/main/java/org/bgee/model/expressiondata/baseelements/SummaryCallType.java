@@ -103,19 +103,19 @@ public interface SummaryCallType extends CallType {
             log.entry();
             return log.exit(this.name());
         }
-        
+
         /**
-         * Convert the {@code String} representation of a call type for baseline presence or 
+         * Convert the {@code String} representation of a call type for baseline presence or
          * absence of expression (for instance, retrieved from request) into a
          * {@code SummaryCallType.ExpressionSummary}.
-         * Operation performed by calling {@link BgeeEnum#convert(Class, String)} with 
+         * Operation performed by calling {@link BgeeEnum#convert(Class, String)} with
          * {@code SummaryCallType.ExpressionSummary} as the {@code Class} argument,
          * and {@code representation} as the {@code String} argument.
-         * 
+         *
          * @param representation            A {@code String} representing a data quality.
          * @return                          A {@code SummaryCallType.ExpressionSummary}
          *                                  corresponding to {@code representation}.
-         * @throws IllegalArgumentException If {@code representation} does not correspond 
+         * @throws IllegalArgumentException If {@code representation} does not correspond
          *                                  to any {@code SummaryCallType.ExpressionSummary}.
          * @see #convert(Class, String)
          */
@@ -184,25 +184,25 @@ public interface SummaryCallType extends CallType {
         public Set<DataType> getAllowedDataTypes() {
             return CallType.DiffExpression.DIFF_EXPR_DATA_TYPES;
         }
-        
+
         @Override
         public String getStringRepresentation() {
             log.entry();
             return log.exit(this.name());
         }
-        
+
         /**
          * Convert the {@code String} representation of a call type from differential expression
-         * analyses (for instance, retrieved from request) into a 
+         * analyses (for instance, retrieved from request) into a
          * {@code SummaryCallType.DiffExpressionSummary}.
-         * Operation performed by calling {@link BgeeEnum#convert(Class, String)} with 
+         * Operation performed by calling {@link BgeeEnum#convert(Class, String)} with
          * {@code SummaryCallType.DiffExpressionSummary} as the {@code Class} argument,
          * and {@code representation} as the {@code String} argument.
-         * 
+         *
          * @param representation            A {@code String} representing a data quality.
          * @return                          A {@code SummaryCallType.DiffExpressionSummary}
          *                                  corresponding to {@code representation}.
-         * @throws IllegalArgumentException If {@code representation} does not correspond 
+         * @throws IllegalArgumentException If {@code representation} does not correspond
          *                                  to any {@code SummaryCallType.DiffExpressionSummary}.
          * @see #convert(Class, String)
          */

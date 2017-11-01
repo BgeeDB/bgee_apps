@@ -363,7 +363,7 @@ public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & Summ
         this.dataTypeFilters = Collections.unmodifiableSet(
             dataTypeFilter == null? new HashSet<>(): new HashSet<>(dataTypeFilter));
         this.summaryCallTypeQualityFilter = Collections.unmodifiableMap(
-                summaryCallTypeQualityFilter == null?
+                summaryCallTypeQualityFilter == null || summaryCallTypeQualityFilter.isEmpty()?
 
                         EnumSet.allOf(callTypeCls).stream()
                         .map(c -> new AbstractMap.SimpleEntry<>(c, SummaryQuality.BRONZE))

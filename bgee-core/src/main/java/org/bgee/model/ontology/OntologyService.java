@@ -359,20 +359,21 @@ public class OntologyService extends Service {
                 rels, taxonConstraints, new HashSet<>(), EnumSet.of(RelationType.ISA_PARTOF),
                 this.getServiceFactory(), DevStage.class));
     }
-    
+
+    //XXX: why do we need this? See comment about OntologyRelation. Method not used anywhere in the project
     public Set<OntologyRelation<String>> getAnatEntityRelations(Collection<Integer> speciesIds,
         Collection<String> entityIds,  Collection<RelationType> relationTypes, 
         Collection<OntologyRelation.RelationStatus> relationStatus,
-        boolean getAncestors, boolean getDescendants){
-    	log.entry(speciesIds, entityIds, relationTypes, relationStatus, getAncestors, getDescendants);
-    	RelationTOResultSet<String> relationTOs = getDaoManager().getRelationDAO().getAnatEntityRelations(
-    			speciesIds, false, null, null,
-    			true, mapRelTypeToRelTypeTO(relationTypes), 
-    			mapRelStatusToRelStatusTO(relationStatus), null);
-    	
-    	return log.exit(convertAERelTOResSetToElementRelations(relationTOs));
+        boolean getAncestors, boolean getDescendants) {
+        log.entry(speciesIds, entityIds, relationTypes, relationStatus, getAncestors, getDescendants);
+        RelationTOResultSet<String> relationTOs = getDaoManager().getRelationDAO().getAnatEntityRelations(
+                speciesIds, false, null, null,
+                true, mapRelTypeToRelTypeTO(relationTypes), 
+                mapRelStatusToRelStatusTO(relationStatus), null);
+
+        return log.exit(convertAERelTOResSetToElementRelations(relationTOs));
     }
-    
+
     private Set<RelationTO<String>> getAnatEntityRelationTOs(Collection<Integer> speciesIds,
         Collection<String> entityIds,  Collection<RelationType> relationTypes,
         boolean getAncestors, boolean getDescendants) {
@@ -388,7 +389,7 @@ public class OntologyService extends Service {
                 null);
         return log.exit(getRelationTOs(fun, entityIds, getAncestors, getDescendants));
     }
-    
+
     private Set<RelationTO<String>> getDevStageRelationTOs(Collection<Integer> speciesIds, 
             Collection<String> entityIds, boolean getAncestors, boolean getDescendants) {
         log.entry(speciesIds, entityIds, getAncestors, getDescendants);
@@ -397,7 +398,7 @@ public class OntologyService extends Service {
                 speciesIds, true, s, t, b, r, null);
         return log.exit(getRelationTOs(fun, entityIds, getAncestors, getDescendants));
     }
-    
+
     private Set<RelationTO<Integer>> getTaxonRelationTOs(Collection<Integer> entityIds,
             boolean getAncestors, boolean getDescendants) {
         log.entry(entityIds, getAncestors, getDescendants);
@@ -405,7 +406,7 @@ public class OntologyService extends Service {
             (s, t, b, r) -> getDaoManager().getRelationDAO().getTaxonRelations(s, t, b, r, null);
         return log.exit(getRelationTOs(fun, entityIds, getAncestors, getDescendants));
     }
-    
+
     /**
      * Retrieve the {@code MultiSpeciesOntology} of all {@code Taxon}s that are either least
      * common ancestor or parent taxon of species in data source.
@@ -659,18 +660,20 @@ public class OntologyService extends Service {
         }
         return log.exit(requestedEntityIds);
     }
-    
+
+    //XXX: why do we need this?
     private Set<OntologyRelation<String>> convertAERelTOResSetToElementRelations(
     		RelationTOResultSet<String> relationTOResSet){
-    	log.entry(relationTOResSet);
-    	return log.exit(relationTOResSet.stream().map(relTO -> {
-    		return new OntologyRelation<String>(relTO.getSourceId(), relTO.getTargetId(), 
-    				mapRelTypeTOToRelType(relTO.getRelationType()),
-    				mapRelStatusTOToRelStatus(relTO.getRelationStatus()));
-    	}).collect(Collectors.toSet()));
-    	
+        log.entry(relationTOResSet);
+        return log.exit(relationTOResSet.stream().map(relTO -> {
+            return new OntologyRelation<String>(relTO.getSourceId(), relTO.getTargetId(), 
+                    mapRelTypeTOToRelType(relTO.getRelationType()),
+                    mapRelStatusTOToRelStatus(relTO.getRelationStatus()));
+        }).collect(Collectors.toSet()));
+
     }
-    
+
+    //XXX: why do we need this?
 	private static Set<RelationTO.RelationType> mapRelTypeToRelTypeTO(Collection<RelationType> relationTypes) {
 		Set<RelationTO.RelationType> relTypeTOs= new HashSet<>();
 		for(RelationType relationType : relationTypes){
@@ -690,7 +693,8 @@ public class OntologyService extends Service {
 		}
 		return relTypeTOs;
 	}
-	
+
+	//XXX: why do we need this?
 	private static RelationType mapRelTypeTOToRelType(RelationTO.RelationType relTypeTO) {
 		switch (relTypeTO) {
 			case ISA_PARTOF:
@@ -703,7 +707,8 @@ public class OntologyService extends Service {
 				throw log.throwing(new UnsupportedOperationException("relation type not supported: " + relTypeTO));
 		}
 	}
-	
+
+    //XXX: why do we need this?
 	private static OntologyRelation.RelationStatus mapRelStatusTOToRelStatus(RelationStatus relStatusTO) {
 		switch (relStatusTO) {
 			case DIRECT:
@@ -716,7 +721,8 @@ public class OntologyService extends Service {
 				throw log.throwing(new UnsupportedOperationException("relation status not supported: " + relStatusTO));
 		}
 	}
-	
+
+    //XXX: why do we need this?
 	private static Set<RelationTO.RelationStatus> mapRelStatusToRelStatusTO(Collection<OntologyRelation.RelationStatus> relationStatus) {
 		log.entry(relationStatus);
 		Set<RelationTO.RelationStatus> relStatusTOs= new HashSet<>();

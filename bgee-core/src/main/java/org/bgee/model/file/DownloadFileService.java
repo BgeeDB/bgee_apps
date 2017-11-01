@@ -8,7 +8,6 @@ import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
 import org.bgee.model.dao.api.file.DownloadFileDAO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO;
-import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO.CategoryEnum;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -63,16 +62,17 @@ public class DownloadFileService extends Service {
                 mapDAOCategoryToServiceCategory(downloadFileTO.getCategory()),
                 downloadFileTO.getSize(),
                 downloadFileTO.getSpeciesDataGroupId(),
+                //XXX: shouldn't we rather use a 'mapDAOCondParamToServiceCondParam'?
                 downloadFileTO.getConditionParameters().stream()
                     .map(p -> DownloadFile.ConditionParameter.convertToConditionParameter(
                                 p.getStringRepresentation()))
                     .collect(Collectors.toSet())));
     }
-    
+
     private static DownloadFile.CategoryEnum mapDAOCategoryToServiceCategory(
             DownloadFileTO.CategoryEnum daoEnum) {
         log.entry(daoEnum);
-        
+
         switch (daoEnum) {
             case EXPR_CALLS_COMPLETE:
                 return log.exit(DownloadFile.CategoryEnum.EXPR_CALLS_COMPLETE);
@@ -98,6 +98,6 @@ public class DownloadFileService extends Service {
                 return log.exit(DownloadFile.CategoryEnum.RNASEQ_DATA);
             default:
                 throw log.throwing(new IllegalArgumentException("Category not supported: " + daoEnum));
-        }        
+        }
     }
 }

@@ -121,6 +121,8 @@ under the License.
           </activation>
           <properties>
               <!-- ONLY FOR PROPERTIES THAT CHANGE BETWEEN MACHINES !!! -->
+              <!-- XXX OK I realize it's an alternate solution as compared to using m2/settings.xml,
+                   but do we really want these values to be public, and have a default values set? -->
               <!-- Properties for database connection -->
               <filter.dao.jdbc.url>jdbc:mysql://127.0.0.1:3306/bgee_v${project.version}</filter.dao.jdbc.url>
               <filter.dao.jdbc.driver.names>com.mysql.jdbc.Driver</filter.dao.jdbc.driver.names>

@@ -149,13 +149,18 @@
         <skip.minify.plugin>false</skip.minify.plugin>
 
         <!-- FIXME log4j required in bgee.dao.properties or skip it ??? -->
+        <!-- XXX why isn't it kept simply in bgee.dao.properties? log4j required depending on 
+             whether you want to log SQL statement or not (usually, not in prod) -->
         <filter.bgee.dao.jdbc.url>jdbc:mysql://127.0.0.1:3306/bgee_v${project.version}</filter.bgee.dao.jdbc.url>
         <filter.bgee.dao.jdbc.driver.names>com.mysql.jdbc.Driver</filter.bgee.dao.jdbc.driver.names>
 
         <!-- FIXME Find how other attributes are set !!! -->
+        <!-- XXX which ones? -->
 
         <!-- Default the parameter to send mail to empty string.
              This parameter should be overriden in settings.xml if needed -->
+        <!-- XXX why isn't it kept simply in m2/settings.xml? pom.xml file is public.
+             You don't want users of our source code to use or email address by default -->
         <filter.org.bgee.webapp.mailUri>smtp://localhost/</filter.org.bgee.webapp.mailUri>
         <!-- "From" address when sending mails at TopAnat job completions -->
         <filter.org.bgee.webapp.topAnatFromAddress>bgee@bgee.org</filter.org.bgee.webapp.topAnatFromAddress>
@@ -175,11 +180,15 @@
              while the current host is bgee.unil.ch. This is important for generating links in emails.
              Simply set to point to the server root by default, This parameter should be overriden
              in settings.xml if needed -->
+             <!-- XXX this won't work for production version where the root directory is simply '/'
+                  And it won't work for development version localhost:8080. This is why it was in
+                  our settings.xml, set depending on our environment -->
         <filter.org.bgee.webapp.bgeeRootDirectory>/bgee${project.version}/</filter.org.bgee.webapp.bgeeRootDirectory>
         <!-- in production, should be '.bgee.org' -->
         <filter.org.bgee.webapp.bgeeRootDomain>.bgee.org</filter.org.bgee.webapp.bgeeRootDomain>
 
         <!-- Set FTP URLs with proper Bgee version -->
+        <!-- XXX means that the default production address won't be ftp://ftp.bgee.org/ -->
         <filter.org.bgee.webapp.ftpRootDirectory>ftp://ftp.bgee.org/bgee_v${project.version}/</filter.org.bgee.webapp.ftpRootDirectory>
         <filter.org.bgee.webapp.downloadRootDirectory>ftp://ftp.bgee.org/bgee_v${project.version}/download/</filter.org.bgee.webapp.downloadRootDirectory>
         <filter.org.bgee.webapp.downloadExprFilesRootDirectory>ftp://ftp.bgee.org/bgee_v${project.version}/download/calls/expr_calls/</filter.org.bgee.webapp.downloadExprFilesRootDirectory>

@@ -1048,7 +1048,7 @@ public class CommandTopAnat extends CommandParent {
 
         assert cleanFgIds != null && !cleanFgIds.isEmpty();
         assert devStageIds != null && !devStageIds.isEmpty();
-        assert speciesId != null && speciesId > 1;
+        assert speciesId != null && speciesId >= 1;
         assert callTypes == null || callTypes.isEmpty();
 
         // One TopAnat analyze has one call type and one dev. stage
@@ -1181,6 +1181,7 @@ public class CommandTopAnat extends CommandParent {
          * @param geneCount             A {@code LinkedHashMap} where keys are {@code Integer}s
          *                              corresponding to species IDs, the associated value being
          *                              a {@code Long} that is the gene count on the species.
+         //XXX: why not using a List of Species directly, and retrieve the IDs from the species objects?
          * @param detectedSpecies       A {@code TreeMap} where keys are {@code Integer}s corresponding 
          *                              to IDs of detected species, the associated value being the
          *                              corresponding {@code Species} object.
@@ -1220,6 +1221,7 @@ public class CommandTopAnat extends CommandParent {
          *          to IDs of detected species, the associated value being the corresponding 
          *          {@code Species} object.
          */
+        //XXX: why not using a List of Species directly, and retrieve the IDs from the species objects?
         public TreeMap<Integer, Species> getDetectedSpecies() {
             return this.detectedSpecies;
         }

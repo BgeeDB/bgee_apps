@@ -297,11 +297,13 @@ public class CommandGene extends CommandParent {
 
         Collections.sort(orderedCalls, new ExpressionCall.RankComparator(organStageGraph));
 
+        //XXX: shouldn't it be called on organCalls rather than orderedCalls?
         final Set<ExpressionCall> redundantCalls = ExpressionCall.identifyRedundantCalls(
                 orderedCalls, organStageGraph);
         
         if (orderedCalls.isEmpty()) {
             log.debug("No calls for gene {}", gene.getEnsemblGeneId());
+            //XXX: So,organCalls is needed only to determine the organ calls with a at least silver quality?
              return log.exit(new GeneResponse(gene, orderedCalls, new HashSet<>(), true, 
                      new LinkedHashMap<>(), new HashMap<>(), new HashMap<>(), null));
         }
@@ -399,27 +401,29 @@ public class CommandGene extends CommandParent {
      */
     private List<ExpressionCall> getAnatEntitySilverExpressionCalls(Gene gene) {
         log.entry(gene);
-                    
+
         CallService service = serviceFactory.getCallService();
-        
+
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
                 new LinkedHashMap<>();
         //The ordering is not essential here, because anyway we will need to order calls 
         //with an equal rank, based on the relations between their conditions, which is difficult 
-        //to make in a query to the data source. 
+        //to make in a query to the data source.
+        //XXX: test if there is a performance difference if we don't use the order by
         serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
 
         Map<SummaryCallType.ExpressionSummary, SummaryQuality> silverExpressedCallFilter = new HashMap<>();
         silverExpressedCallFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
         final List<ExpressionCall> calls = service.loadExpressionCalls(
-                new ExpressionCallFilter(silverExpressedCallFilter, 
+                new ExpressionCallFilter(silverExpressedCallFilter,
                         Collections.singleton(new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId())),
-                        null, null, true, true, false), 
-                EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID, 
-                        CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.GLOBAL_MEAN_RANK), 
+                        null, null, true, true, false),
+                //FIXME: so this is not "anat. entity calls", but "anat. entity - dev. stage calls"
+                EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
+                        CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.GLOBAL_MEAN_RANK),
                 serviceOrdering)
             .collect(Collectors.toList());
-        
+
         return log.exit(calls);
     }
     
@@ -438,7 +442,8 @@ public class CommandGene extends CommandParent {
                     new LinkedHashMap<>();
         //The ordering is not essential here, because anyway we will need to order calls 
         //with an equal rank, based on the relations between their conditions, which is difficult 
-        //to make in a query to the data source. 
+        //to make in a query to the data source.
+        //XXX: test if there is a performance difference if we don't use the order by
         serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
             
         CallService service = serviceFactory.getCallService();
@@ -446,13 +451,15 @@ public class CommandGene extends CommandParent {
         Map<SummaryCallType.ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
         summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE);
         return log.exit(service.loadExpressionCalls(
-                new ExpressionCallFilter(summaryCallTypeQualityFilter, 
+                new ExpressionCallFilter(summaryCallTypeQualityFilter,
                         Collections.singleton(new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId())),
-                        null, null, true, true, null), 
-                EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID, 
-                        CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.CALL_TYPE, 
+                        null, null, true, true, null),
+                EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
+                        //XXX: why do we need the CALL_TYPE here, since we requested only EXPRESSED calls?
+                        CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.CALL_TYPE,
                         CallService.Attribute.DATA_QUALITY, CallService.Attribute.GLOBAL_MEAN_RANK,
-                        CallService.Attribute.EXPERIMENT_COUNTS), 
+                        //XXX: experiment counts to display them on the page? No cost in performances?
+                        CallService.Attribute.EXPERIMENT_COUNTS),
                 serviceOrdering)
             .collect(Collectors.toList()));
     }

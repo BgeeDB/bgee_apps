@@ -59,7 +59,7 @@ import org.supercsv.io.dozer.ICsvDozerBeanWriter;
  * 
  * @author  Valentine Rech de Laval
  * @version Bgee 14, May 2017
- * @since   Bgee 13, Sept. 2017
+ * @since   Bgee 13, Sept. 2016
  */
 public class GenerateExprFile2 extends GenerateDownloadFile {
 
@@ -86,6 +86,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      * @version Bgee 13
      * @since Bgee 13
      */
+    //XXX: advanced/complete discrepancy? See same remark in bgee_core
     public enum SingleSpExprFileType2 implements FileType {
         EXPR_SIMPLE(CategoryEnum.EXPR_CALLS_SIMPLE, true),
         EXPR_ADVANCED(CategoryEnum.EXPR_CALLS_COMPLETE, false);
@@ -523,6 +524,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         Collections.sort(attributeList);
 
         return log.exit(attributes.stream()
+                //XXX: why a flatMap returning a Stream rather than a map returning an element?
                 .flatMap(a -> {
                     switch (a) {
                         case ANAT_ENTITY_ID:
@@ -936,6 +938,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
 
         // We use an AtomicInteger instead of using .mapToInt(Integer::intValue).sum() on the stream 
         // to try to avoid memory problems
+        //XXX: what problem? Weird if there is no multithreading?
         AtomicInteger rowCount = new AtomicInteger();
         calls.forEach(c -> {
             for (Entry<SingleSpExprFileType2, ICsvDozerBeanWriter> writerFileType : writersUsed.entrySet()) {

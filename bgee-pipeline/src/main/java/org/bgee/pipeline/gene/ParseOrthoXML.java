@@ -53,7 +53,6 @@ import sbc.orthoxml.io.OrthoXMLReader;
  * @version Bgee 14
  * @since Bgee 13
  */
-//FIXME: reactivate after fix
 public class ParseOrthoXML extends MySQLDAOUser {
 
     private final static Logger log = LogManager.getLogger(ParseOrthoXML.class.getName());
@@ -304,7 +303,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
             System.out.println(this.hierarchicalGroupToGeneTOs.size());
             log.info("Start inserting gene to hierarchical group mapping...");
             nbInsertedGroupToGene = this.getHierarchicalGroupDAO()
-            		.insertHierarchicalGroupToGene(this.hierarchicalGroupToGeneTOs);
+                    .insertHierarchicalGroupToGene(this.hierarchicalGroupToGeneTOs);
             log.info("Done inserting gene to hierarchical group mapping.");
 
             this.commit();
@@ -391,9 +390,9 @@ public class ParseOrthoXML extends MySQLDAOUser {
         //dao.setAttributes(GeneDAO.Attribute.ID);
         try (GeneTOResultSet rsGenes = dao.getAllGenes()) {
             while (rsGenes.next()) {
-            	if(this.ensemblIdToBgeeIdInBgee.containsKey(rsGenes.getTO().getGeneId())){
-            		log.error("Two bgeeGeneIds have the same ID :{}",rsGenes.getTO().getGeneId());
-            	}
+                if(this.ensemblIdToBgeeIdInBgee.containsKey(rsGenes.getTO().getGeneId())){
+                    log.error("Two bgeeGeneIds have the same ID :{}",rsGenes.getTO().getGeneId());
+                }
                 this.ensemblIdToBgeeIdInBgee.put(rsGenes.getTO().getGeneId(), rsGenes.getTO().getId());
             }
         }
@@ -575,9 +574,9 @@ public class ParseOrthoXML extends MySQLDAOUser {
         // So, we need to remove 1 to countGroups() to subtract the current group.
         this.addHierarchicalGroupTO(this.omaNodeId, omaXrefId, this.nestedSetBoundSeed,
                 group.getProperty(TAX_ID_ATTRIBUTE), countGroups(group) - 1);
-    	this.addHierarchicalGroupToGeneTO(
-    			group.getProperty(TAX_ID_ATTRIBUTE), group.getNestedGenes(),
-    			this.omaNodeId);
+        this.addHierarchicalGroupToGeneTO(
+                group.getProperty(TAX_ID_ATTRIBUTE), group.getNestedGenes(),
+                this.omaNodeId);
         // Then, we retrieve gene data.
         if (group.getGenes() != null) {
             log.debug("Retrieving genes from group {}", group);
@@ -687,16 +686,17 @@ public class ParseOrthoXML extends MySQLDAOUser {
      * @param nbChild               An {@code int} that is the number of children of the
      *                              {@code HierarchicalGroupTO} to create.
      */
+    //XXX: could you remind me why we need this?
     private void addHierarchicalGroupToGeneTO(String taxonId, List<Gene> genes, Integer OmaNodeId) {
         log.entry(taxonId, OmaNodeId, genes);
         if(taxonId != null){
             genes.stream().forEach(g -> {
-            	if(ensemblIdToBgeeIdInBgee.get(g.getGeneIdentifier()) != null){
-//                	System.out.println(taxonId+" -> "+ensemblIdToBgeeIdInBgee.get(g.getGeneIdentifier())+" -> "+OmaNodeId);
-            		this.hierarchicalGroupToGeneTOs.add(new HierarchicalGroupToGeneTO(
-            				OmaNodeId, ensemblIdToBgeeIdInBgee.get(g.getGeneIdentifier()), 
-    	        			Integer.valueOf(taxonId)));
-            	}
+                if(ensemblIdToBgeeIdInBgee.get(g.getGeneIdentifier()) != null){
+//                    System.out.println(taxonId+" -> "+ensemblIdToBgeeIdInBgee.get(g.getGeneIdentifier())+" -> "+OmaNodeId);
+                    this.hierarchicalGroupToGeneTOs.add(new HierarchicalGroupToGeneTO(
+                            OmaNodeId, ensemblIdToBgeeIdInBgee.get(g.getGeneIdentifier()), 
+                            Integer.valueOf(taxonId)));
+                }
             });
         }
     }

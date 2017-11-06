@@ -263,8 +263,8 @@ public class CommandRunner {
         case "InsertPropagatedCalls": 
             InsertPropagatedCalls.main(newArgs);
             break;
-        case "CorrectTaxonConstraints": 
-        	CorrectTaxonConstraints.main(newArgs);
+        case "CorrectTaxonConstraints":
+            CorrectTaxonConstraints.main(newArgs);
             break;
  
         //---------- Download file generation -----------

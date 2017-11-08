@@ -96,6 +96,9 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
         super(elements, relations, relationTypes, serviceFactory, type);
         log.entry(speciesIds, elements, relations, taxonConstraints, relationTaxonConstraints, 
                 relationTypes, serviceFactory, type);
+        long startTimeInMs = System.currentTimeMillis();
+        log.debug("Start creation of MultiSpeciesOntology");
+
         this.speciesIds = Collections.unmodifiableSet(
                 speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds));
         this.relationTaxonConstraints = Collections.unmodifiableSet(
@@ -221,7 +224,8 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
                 relationsBySpeciesId.entrySet().stream()
                     .collect(Collectors.toMap(e -> e.getKey(), 
                             e -> Collections.unmodifiableSet(e.getValue()))));
-        
+
+        log.debug("MultiSpeciesOntology created in {} ms", System.currentTimeMillis() - startTimeInMs);
         log.exit();
     }
     

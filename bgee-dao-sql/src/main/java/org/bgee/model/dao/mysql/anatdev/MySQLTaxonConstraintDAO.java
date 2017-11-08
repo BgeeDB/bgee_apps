@@ -4,7 +4,9 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,7 +24,7 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
  * 
  * @author  Valentine Rech de Laval
  * @author Frederic Bastian
- * @version Bgee 14 Feb. 2017
+ * @version Bgee 14 Nov. 2017
  * @see     org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO
  * @since   Bgee 13
  */
@@ -54,7 +56,7 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
         return log.exit(this.getTaxonConstraints(
                 speciesIds, attributes, "anatEntityTaxonConstraint", "anatEntityId", String.class));
     }
-    
+
     @Override
     /*
      * (non-javadoc)
@@ -66,15 +68,29 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
             Collection<Integer> speciesIds, Collection<TaxonConstraintDAO.Attribute> attributes)
             throws DAOException {
         log.entry(speciesIds, attributes);
-        
-        boolean filterBySpeciesIDs = speciesIds != null && !speciesIds.isEmpty();
+        return log.exit(this.getAnatEntityRelationTaxonConstraints(speciesIds, null, attributes));
+    }
+    @Override
+    /*
+     * (non-javadoc)
+     * That method is not factorize with other select method because of table names,
+     * entity ID column names, and, most important of all, types of this column
+     * (int or string) are different.
+     */
+    public TaxonConstraintTOResultSet<Integer> getAnatEntityRelationTaxonConstraints(
+            Collection<Integer> speciesIds, Collection<Integer> relIds,
+            Collection<TaxonConstraintDAO.Attribute> attributes) throws DAOException {
+        log.entry(speciesIds, relIds, attributes);
+
+        Set<TaxonConstraintDAO.Attribute> clonedAttrs = attributes == null || attributes.isEmpty()?
+                EnumSet.allOf(TaxonConstraintDAO.Attribute.class): EnumSet.copyOf(attributes);
+        Set<Integer> clonedSpeciesIds = speciesIds == null? new HashSet<Integer>(): new HashSet<Integer>(speciesIds);
+        Set<Integer> clonedRelIds     = relIds == null? new HashSet<Integer>(): new HashSet<Integer>(relIds);
 
         String tableName = "anatEntityRelationTaxonConstraint";
+
         String sql = "";
-        if (attributes == null || attributes.isEmpty()) {
-            attributes = EnumSet.allOf(TaxonConstraintDAO.Attribute.class);
-        }
-        for (TaxonConstraintDAO.Attribute attribute: attributes) {
+        for (TaxonConstraintDAO.Attribute attribute: clonedAttrs) {
             if (sql.isEmpty()) {
                 sql += "SELECT DISTINCT ";
             } else {
@@ -93,17 +109,33 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
 
         sql += " FROM " + tableName;
         
-        if (filterBySpeciesIDs) {
-            sql += " WHERE (" + tableName + ".speciesId IS NULL OR " + tableName + ".speciesId IN (" + 
-                    BgeePreparedStatement.generateParameterizedQueryString(speciesIds.size()) + "))";            
+        if (!clonedSpeciesIds.isEmpty() || !clonedRelIds.isEmpty()) {
+            sql += " WHERE ";
+            if (!clonedSpeciesIds.isEmpty()) {
+                sql += "(" + tableName + ".speciesId IS NULL OR " + tableName + ".speciesId IN (" +
+                        BgeePreparedStatement.generateParameterizedQueryString(clonedSpeciesIds.size()) + ")) ";
+            }
+            if (!clonedRelIds.isEmpty()) {
+                if (!clonedSpeciesIds.isEmpty()) {
+                    sql += " AND ";
+                }
+                sql += tableName + ".anatEntityRelationId IN ("
+                    + BgeePreparedStatement.generateParameterizedQueryString(clonedRelIds.size()) + ")";
+            }
         }
 
         // we don't use a try-with-resource, because we return a pointer to the results,
         // not the actual results, so we should not close this BgeePreparedStatement.
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
-            if (filterBySpeciesIDs) {
-                stmt.setIntegers(1, speciesIds, true);
+            int i = 1;
+            if (!clonedSpeciesIds.isEmpty()) {
+                stmt.setIntegers(i, clonedSpeciesIds, true);
+                i += clonedSpeciesIds.size();
+            }
+            if (!clonedRelIds.isEmpty()) {
+                stmt.setIntegers(i, clonedRelIds, true);
+                i += clonedRelIds.size();
             }
             return log.exit(new MySQLTaxonConstraintTOResultSet<>(stmt, Integer.class));
         } catch (SQLException e) {

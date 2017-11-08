@@ -100,6 +100,10 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
     protected OntologyBase(Collection<T> elements, Collection<RelationTO<U>> relations,
             Collection<RelationType> relationTypes, ServiceFactory serviceFactory, Class<T> type) {
         log.entry(elements, relations, relationTypes, serviceFactory, type);
+
+        long startTimeInMs = System.currentTimeMillis();
+        log.debug("Start creation of OntologyBase");
+
         if (elements == null || elements.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Some elements must be considered."));
         }
@@ -157,7 +161,8 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
             relationsByTargetElement.entrySet().stream()
                 .collect(Collectors.toMap(e -> e.getKey(), 
                 e -> Collections.unmodifiableSet(e.getValue()))));
-        
+
+        log.debug("OntologyBase created in {} ms", System.currentTimeMillis() - startTimeInMs);
         log.exit();
     }
     

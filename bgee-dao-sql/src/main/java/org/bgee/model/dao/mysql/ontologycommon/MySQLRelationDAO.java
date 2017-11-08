@@ -11,7 +11,6 @@ import java.util.Set;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.mysql.MySQLDAO;
@@ -94,21 +93,25 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         String sql = null;
         EnumSet<RelationDAO.Attribute> clonedAttrs = Optional.ofNullable(attributes)
                 .map(e -> e.isEmpty()? null: EnumSet.copyOf(e)).orElse(null);
+        sql = "SELECT ";
+        //When some source or target IDs are provided, it is faster to have the join to start with
+        //the anatEntityRelation table, going to the anatEntityRelationTaxonConstraint table.
+        //The MySQL optimizer often makes the opposite choice.
+        if (isAnatEntityFilter) {
+            sql += "STRAIGHT_JOIN ";
+        }
+        sql += "DISTINCT ";
         if (clonedAttrs == null || clonedAttrs.isEmpty()) {
-            sql = "SELECT DISTINCT " + tableName + ".*";
+            sql += tableName + ".*";
         } else {
-            for (RelationDAO.Attribute attribute: clonedAttrs) {
-                if (StringUtils.isEmpty(sql)) {
-                    sql = "SELECT DISTINCT ";
-                } else {
-                    sql += ", ";
-                }
-                sql += tableName + "." + this.attributeAnatEntityRelationToString(attribute);
-            }
+            sql += clonedAttrs.stream()
+                    .map(attr -> tableName + "." + this.attributeAnatEntityRelationToString(attr))
+                    .collect(Collectors.joining(", "));
         }
         //*******************************
         // FROM CLAUSE
         //*******************************
+        //Note: the order of the table in the join is important (see previous "STRAIGHT_JOIN").
         sql += " FROM " + tableName;
 
         if (realAnySpecies) {

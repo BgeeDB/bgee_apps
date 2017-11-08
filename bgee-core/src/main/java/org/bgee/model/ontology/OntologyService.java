@@ -11,6 +11,7 @@ import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.CommonService;
 import org.bgee.model.NamedEntity;
 import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
@@ -33,7 +34,7 @@ import org.bgee.model.species.Taxon;
  * @version Bgee 13, Nov. 2016
  * @since   Bgee 13, Dec. 2015
  */
-public class OntologyService extends Service {
+public class OntologyService extends CommonService {
 
     private static final Logger log = LogManager.getLogger(OntologyService.class.getName());
     
@@ -229,22 +230,43 @@ public class OntologyService extends Service {
             Collection<String> anatEntityIds, Collection<RelationType> relationTypes, 
             boolean getAncestors, boolean getDescendants) {
         log.entry(speciesIds, anatEntityIds, getAncestors, getDescendants, relationTypes);
-        
+
+        long startTimeInMs = System.currentTimeMillis();
+        log.debug("Start creation of AnatEntityOntology");
+
         Set<RelationTO<String>> rels = this.getAnatEntityRelationTOs(speciesIds, anatEntityIds,
                 relationTypes, getAncestors, getDescendants);
-        Set<TaxonConstraint<Integer>> relationTaxonConstraints = getServiceFactory().getTaxonConstraintService()
-                    .loadAnatEntityRelationTaxonConstraintBySpeciesIds(speciesIds)
-                    .collect(Collectors.toSet());
+        long startTimeInMs2 = System.currentTimeMillis();
+        Set<Integer> relIds = rels.stream().map(rel -> rel.getId()).collect(Collectors.toSet());
+        //Here, we don't want to expose the internal relation IDs as part of the Bgee API, so rather than
+        //using the TaxonConstraintService, we directly use the TaxonConstraintDAO
+        //(we provide the relation IDs to retrieve only a subset of the constraints, for improved performances)
+        Set<TaxonConstraint<Integer>> relationTaxonConstraints = getDaoManager().getTaxonConstraintDAO()
+                .getAnatEntityRelationTaxonConstraints(speciesIds, relIds, null).stream()
+                .map(CommonService::mapTaxonConstraintTOToTaxonConstraint)
+                .collect(Collectors.toSet());
+        //Previous (slow) version of the code:
+        //---
+//        Set<TaxonConstraint<Integer>> relationTaxonConstraints = getServiceFactory().getTaxonConstraintService()
+//                    .loadAnatEntityRelationTaxonConstraintBySpeciesIds(speciesIds)
+//                    .collect(Collectors.toSet());
+        //---
+        log.debug("RelationTaxonConstraints retrieved in {} ms", System.currentTimeMillis() - startTimeInMs2);
+        startTimeInMs2 = System.currentTimeMillis();
         Set<TaxonConstraint<String>> taxonConstraints = getServiceFactory().getTaxonConstraintService()
                     .loadAnatEntityTaxonConstraintBySpeciesIds(speciesIds)
                     .collect(Collectors.toSet());
-        return log.exit(new MultiSpeciesOntology<AnatEntity, String>(speciesIds, 
+        log.debug("AnatEntityTaxonConstraints retrieved in {} ms", System.currentTimeMillis() - startTimeInMs2);
+        MultiSpeciesOntology<AnatEntity, String> ont = new MultiSpeciesOntology<AnatEntity, String>(speciesIds,
                 this.getServiceFactory().getAnatEntityService()
                     .loadAnatEntities(speciesIds, true,
                             this.getRequestedEntityIds(anatEntityIds, rels), true)
                     .collect(Collectors.toSet()), 
                 rels, taxonConstraints, relationTaxonConstraints, relationTypes,
-                this.getServiceFactory(), AnatEntity.class));
+                this.getServiceFactory(), AnatEntity.class);
+
+        log.debug("AnatEntityOntology created in {} ms", System.currentTimeMillis() - startTimeInMs);
+        return log.exit(ont);
     }
     
     /**
@@ -343,7 +365,10 @@ public class OntologyService extends Service {
     public MultiSpeciesOntology<DevStage, String> getDevStageOntology(Collection<Integer> speciesIds, 
             Collection<String> devStageIds, boolean getAncestors, boolean getDescendants) {
         log.entry(speciesIds, devStageIds, getAncestors, getDescendants);
-        
+
+        long startTimeInMs = System.currentTimeMillis();
+        log.debug("Start creation of DevStageOntology");
+
         Set<RelationTO<String>> rels = this.getDevStageRelationTOs(speciesIds, devStageIds, 
                 getAncestors, getDescendants);
         Set<TaxonConstraint<String>> taxonConstraints = getServiceFactory().getTaxonConstraintService()
@@ -352,12 +377,15 @@ public class OntologyService extends Service {
         //there is no relation IDs for nested set models, so no TaxonConstraints. 
         //Relations simply exist if both the source and target of the relations 
         //exists in the targeted species.
-        return log.exit(new MultiSpeciesOntology<DevStage, String>(speciesIds, 
+        MultiSpeciesOntology<DevStage, String> ont = new MultiSpeciesOntology<DevStage, String>(speciesIds, 
                 this.getServiceFactory().getDevStageService()
                     .loadDevStages(speciesIds, true, this.getRequestedEntityIds(devStageIds, rels))
                     .collect(Collectors.toSet()), 
                 rels, taxonConstraints, new HashSet<>(), EnumSet.of(RelationType.ISA_PARTOF),
-                this.getServiceFactory(), DevStage.class));
+                this.getServiceFactory(), DevStage.class);
+
+        log.debug("DevStageOntology created in {} ms", System.currentTimeMillis() - startTimeInMs);
+        return log.exit(ont);
     }
 
     //XXX: why do we need this? See comment about OntologyRelation. Method not used anywhere in the project
@@ -385,7 +413,9 @@ public class OntologyService extends Service {
                 relationTypes.stream()
                     .map(OntologyBase::convertRelationType)
                     .collect(Collectors.toCollection(() -> EnumSet.noneOf(RelationTO.RelationType.class))), 
-                r, 
+                r,
+                //We want to retrieve the relation IDs to link to the relation taxon constraints,
+                //so we retrieve all attributes
                 null);
         return log.exit(getRelationTOs(fun, entityIds, getAncestors, getDescendants));
     }

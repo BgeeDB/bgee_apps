@@ -115,9 +115,9 @@ implements GlobalExpressionCallDAO {
                 return globalExprTableName + "." + MySQLConditionDAO.GLOBAL_COND_ID_FIELD;
             case GLOBAL_MEAN_RANK:
                 return clonedDataTypes.stream()
+                        //XXX: why is this first part of the statement needed? To avoid division by zero? Was it present in Bgee 13?
                         .map(dt -> dataTypeToNormRankSql.get(dt) + " IS NULL")
-                        //XXX: no part of the statement missing here? To do, like "IF xxx IS NULL(NULL, xxx)?
-                        .collect(Collectors.joining(" AND ", "IF (", ", null, "))
+                        .collect(Collectors.joining(" AND ", "IF (", ", NULL, "))
                         + clonedDataTypes.stream()
                         .map(dataType -> {
                             String rankSql = dataTypeToNormRankSql.get(dataType);

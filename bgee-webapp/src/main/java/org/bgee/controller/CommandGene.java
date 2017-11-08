@@ -261,52 +261,47 @@ public class CommandGene extends CommandParent {
         // sorting, and redundant calls
         //**************************************
         List<ExpressionCall> organCalls = this.getAnatEntitySilverExpressionCalls(gene);
-        
         if (organCalls.isEmpty()) {
             log.debug("No calls for gene {}", gene.getEnsemblGeneId());
              return log.exit(new GeneResponse(gene, organCalls, new HashSet<>(), true, 
                      new LinkedHashMap<>(), new HashMap<>(), new HashMap<>(), null));
         }
-        
-        ConditionGraph organGraph = new ConditionGraph(
-                organCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()), 
-                serviceFactory);
-        
-        //we need to make sure that the ExpressionCalls are ordered in exactly the same way 
-        //for the display and for the clustering, otherwise the display will be buggy, 
-        //notably for calls with equal ranks. And we need to take into account 
-        //relations between Conditions for filtering them, which would be difficult to achieve
-        //only by a query to the data source. So, we order them anyway. 
-        long startFilteringTimeInMs = System.currentTimeMillis();
-        Collections.sort(organCalls, new ExpressionCall.RankComparator(organGraph));
-        log.debug("Calls sorted in {} ms", System.currentTimeMillis() - startFilteringTimeInMs);
-        
-        final Set<String> orderedOrganIds = organCalls.stream()
+        final Set<String> organIds = organCalls.stream()
                 .map(c ->c .getCondition().getAnatEntityId())
                 .collect(Collectors.toSet());
         
         final List<ExpressionCall> organStageCalls = this.getAnatEntityDevStageBronzeExpressionCalls(gene);
-
+        //XXX: why don't we provided the organIds to perform the SQL query, instead of filtering afterwards?
         List<ExpressionCall> orderedCalls = organStageCalls.stream()
-                .filter(c -> orderedOrganIds.contains(c.getCondition().getAnatEntityId()))
+                .filter(c -> organIds.contains(c.getCondition().getAnatEntityId()))
                 .collect(Collectors.toList());
+        if (orderedCalls.isEmpty()) {
+            log.debug("No calls for gene {}", gene.getEnsemblGeneId());
+            //XXX: So, organCalls is needed only to determine the organ calls with a at least silver quality?
+             return log.exit(new GeneResponse(gene, orderedCalls, new HashSet<>(), true,
+                     new LinkedHashMap<>(), new HashMap<>(), new HashMap<>(), null));
+        }
 
+        //we need to make sure that the ExpressionCalls are ordered in exactly the same way
+        //for the display and for the clustering, otherwise the display will be buggy,
+        //notably for calls with equal ranks. And we need to take into account
+        //relations between Conditions for filtering them, which would be difficult to achieve
+        //only by a query to the data source. So, we order them anyway.
+        //ORGAN-STAGE
         ConditionGraph organStageGraph = new ConditionGraph(
                 orderedCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()), 
                 serviceFactory);
-
         Collections.sort(orderedCalls, new ExpressionCall.RankComparator(organStageGraph));
-
-        //XXX: shouldn't it be called on organCalls rather than orderedCalls?
+        //ORGAN
+        //We need the ConditionGraph for sorting the calls. Creating the AnatEntityOntology for this graph is costly,
+        //so we re-use the AnatEntityOntology already produced for the organStageGraph
+        ConditionGraph organGraph = new ConditionGraph(
+                organCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()),
+                organStageGraph.getAnatEntityOntology(), null);
+        Collections.sort(organCalls, new ExpressionCall.RankComparator(organGraph));
+        //REDUNDANT ORGAN-STAGE CALLS
         final Set<ExpressionCall> redundantCalls = ExpressionCall.identifyRedundantCalls(
                 orderedCalls, organStageGraph);
-        
-        if (orderedCalls.isEmpty()) {
-            log.debug("No calls for gene {}", gene.getEnsemblGeneId());
-            //XXX: So,organCalls is needed only to determine the organ calls with a at least silver quality?
-             return log.exit(new GeneResponse(gene, orderedCalls, new HashSet<>(), true, 
-                     new LinkedHashMap<>(), new HashMap<>(), new HashMap<>(), null));
-        }
 
         //**************************************
         // Grouping of Calls per anat. entity, 
@@ -417,10 +412,9 @@ public class CommandGene extends CommandParent {
         final List<ExpressionCall> calls = service.loadExpressionCalls(
                 new ExpressionCallFilter(silverExpressedCallFilter,
                         Collections.singleton(new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId())),
-                        null, null, true, true, false),
-                //FIXME: so this is not "anat. entity calls", but "anat. entity - dev. stage calls"
+                        null, null, true, true, null),
                 EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
-                        CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.GLOBAL_MEAN_RANK),
+                           CallService.Attribute.GLOBAL_MEAN_RANK),
                 serviceOrdering)
             .collect(Collectors.toList());
 
@@ -453,10 +447,11 @@ public class CommandGene extends CommandParent {
         return log.exit(service.loadExpressionCalls(
                 new ExpressionCallFilter(summaryCallTypeQualityFilter,
                         Collections.singleton(new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId())),
-                        null, null, true, true, null),
+                        null, null, true, true, true),
                 EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
                         //XXX: why do we need the CALL_TYPE here, since we requested only EXPRESSED calls?
                         CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.CALL_TYPE,
+                        //XXX: do we need DATA_QUALITY?
                         CallService.Attribute.DATA_QUALITY, CallService.Attribute.GLOBAL_MEAN_RANK,
                         //XXX: experiment counts to display them on the page? No cost in performances?
                         CallService.Attribute.EXPERIMENT_COUNTS),

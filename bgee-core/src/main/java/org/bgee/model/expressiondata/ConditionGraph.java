@@ -169,7 +169,9 @@ public class ConditionGraph implements Comparator<Condition> {
             ServiceFactory serviceFactory, Ontology<AnatEntity, String> anatEntityOnt,
             Ontology<DevStage, String> devStageOnt) throws IllegalArgumentException {
         log.entry(conditions, inferAncestralConds, inferDescendantConds, serviceFactory, anatEntityOnt, devStageOnt);
-        
+
+        long startTimeInMs = System.currentTimeMillis();
+        log.debug("Start creation of ConditionGraph");
         if (conditions == null || conditions.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Some conditions must be provided."));
         }
@@ -272,6 +274,9 @@ public class ConditionGraph implements Comparator<Condition> {
 
         this.checkEntityExistence(devStageIds, this.devStageOnt);
         this.checkEntityExistence(anatEntityIds, this.anatEntityOnt);
+
+        log.debug("ConditionGraph created in {} ms", System.currentTimeMillis() - startTimeInMs);
+        log.exit();
     }
     
     /**

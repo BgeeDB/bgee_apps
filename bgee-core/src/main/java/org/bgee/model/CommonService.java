@@ -4,6 +4,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
+import org.bgee.model.anatdev.TaxonConstraint;
+import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
@@ -19,7 +21,7 @@ import org.bgee.model.species.Species;
  * 
  * @author Valentine Rech de Laval
  * @author Frederic Bastian
- * @version Bgee 14 Feb. 2017
+ * @version Bgee 14 Nov. 2017
  * @since Bgee 14 Feb. 2017
  *
  */
@@ -114,6 +116,22 @@ public class CommonService extends Service {
         }
         return log.exit(new Gene(geneTO.getGeneId(), geneTO.getName(), geneTO.getDescription(),
                 species, geneTO.getGeneMappedToGeneIdCount()));
+    }
+
+    /**
+     * Map {@link TaxonConstraintTO} to a {@link TaxonConstraint}.
+     *
+     * @param taxonConstraintTO A {@code TaxonConstraintTO} that is the transfert object to be mapped.
+     * @return                  The mapped {@link TaxonConstraint}.
+     */
+    protected static <T> TaxonConstraint<T> mapTaxonConstraintTOToTaxonConstraint(TaxonConstraintTO<T> taxonConstraintTO) {
+        log.entry(taxonConstraintTO);
+        if (taxonConstraintTO == null) {
+            return log.exit(null);
+        }
+
+        return log.exit(new TaxonConstraint<T>(
+                taxonConstraintTO.getEntityId(), taxonConstraintTO.getSpeciesId()));
     }
 
     protected static DataType convertDaoDataTypeToDataType(DAODataType dt) {

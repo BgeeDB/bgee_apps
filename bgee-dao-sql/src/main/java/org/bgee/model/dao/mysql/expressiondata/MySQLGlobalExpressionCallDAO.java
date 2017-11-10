@@ -707,33 +707,29 @@ implements GlobalExpressionCallDAO {
                     .map(countOrFilters -> {
                         return countOrFilters.stream()
                             .map(countFilter -> {
+                                String suffix = null;
+                                switch (countFilter.getQualifier()) {
+                                case GREATER_THAN:
+                                    suffix = " > ";
+                                    break;
+                                case LESS_THAN:
+                                    suffix = " < ";
+                                    break;
+                                case EQUALS_TO:
+                                    suffix = " = ";
+                                    break;
+                                default:
+                                    throw new IllegalArgumentException("Unsupported qualifier: " + countFilter.getQualifier());
+                                }
+                                suffix += "?";
+
                                 return dataFilter.getDataTypes().stream()
+                                        //discard request of no-expression calls from EST data, there is no such field
+                                        .filter(dataType ->
+                                        !CallType.ABSENT.equals(countFilter.getCallType()) || !DAODataType.EST.equals(dataType))
 
-                                //discard request of no-expression calls from EST data, there is no such field
-                                .filter(dataType ->
-                                    !CallType.ABSENT.equals(countFilter.getCallType()) || !DAODataType.EST.equals(dataType))
-
-                                .map(dataType -> {
-                                    StringBuilder sb2 = new StringBuilder();
-                                    sb2.append(getExpCountFilterFieldName(dataType, countFilter));
-
-                                    switch (countFilter.getQualifier()) {
-                                        case GREATER_THAN:
-                                            sb2.append(" > ");
-                                            break;
-                                        case LESS_THAN:
-                                            sb2.append(" < ");
-                                            break;
-                                        case EQUALS_TO:
-                                            sb2.append(" = ");
-                                            break;
-                                        default:
-                                            throw new IllegalArgumentException();
-                                    }
-                                    sb2.append("?");
-                                    return sb2.toString();
-                                })
-                                .collect(Collectors.joining(" OR ", "(", ")"));
+                                        .map(dataType -> getExpCountFilterFieldName(dataType, countFilter))
+                                        .collect(Collectors.joining(" + ", "(", suffix + ")"));
                             })
                             .collect(Collectors.joining(" OR ", "(", ")"));
                     })
@@ -1106,10 +1102,8 @@ implements GlobalExpressionCallDAO {
                     for (CallDataDAOFilter dataFilter: callFilter.getDataFilters()) {
                         for (Set<DAOExperimentCountFilter> countOrFilters: dataFilter.getExperimentCountFilters()) {
                             for (DAOExperimentCountFilter countFilter : countOrFilters) {
-                                for (int i = 0 ; i < dataFilter.getDataTypes().size(); i++) {
-                                    stmt.setInt(offsetParamIndex, countFilter.getCount());
-                                    offsetParamIndex++;
-                                }
+                                stmt.setInt(offsetParamIndex, countFilter.getCount());
+                                offsetParamIndex++;
                             }
                         }
                     }

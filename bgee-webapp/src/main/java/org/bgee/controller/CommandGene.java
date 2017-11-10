@@ -417,7 +417,9 @@ public class CommandGene extends CommandParent {
                         Collections.singleton(new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId())),
                         null, null, obsDataFilter, null, null),
                 EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
-                           CallService.Attribute.GLOBAL_MEAN_RANK),
+                           //XXX: do we need DATA_QUALITY?
+                           CallService.Attribute.DATA_QUALITY, CallService.Attribute.GLOBAL_MEAN_RANK,
+                           CallService.Attribute.EXPERIMENT_COUNTS),
                 serviceOrdering)
             .collect(Collectors.toList());
 
@@ -454,7 +456,10 @@ public class CommandGene extends CommandParent {
                         Collections.singleton(new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId())),
                         null, null, obsDataFilter, null, null),
                 EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
-                        CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.GLOBAL_MEAN_RANK),
+                        CallService.Attribute.DEV_STAGE_ID,
+                        //XXX: do we need DATA_QUALITY?
+                        CallService.Attribute.DATA_QUALITY, CallService.Attribute.GLOBAL_MEAN_RANK,
+                        CallService.Attribute.EXPERIMENT_COUNTS),
                 serviceOrdering)
             .collect(Collectors.toList()));
     }

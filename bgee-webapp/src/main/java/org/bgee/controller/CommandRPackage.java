@@ -26,6 +26,7 @@ import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.ConditionFilter;
+import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
@@ -203,11 +204,17 @@ public class CommandRPackage extends CommandParent {
         GeneFilter geneFilter = new GeneFilter(speciesId, this.requestParameters.getBackgroundList());
         Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
         summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, this.checkAndGetSummaryQuality());
+        Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
+        //XXX: or only EXPRESSED observed calls?
+        obsDataFilter.put(null, onlyObservedCalls);
         ExpressionCallFilter callFilter = new ExpressionCallFilter(summaryCallTypeQualityFilter,
                 Collections.singleton(geneFilter),
                 conditionFilter, dataTypes,
                 //for now, we always include substages when stages requested, and never include substructures
-                onlyObservedCalls, true, onlyObservedStages);
+                //FIXME: actually, if we retrieve calls for a specific stage and all its substages,
+                //then the calls do not have to be observed in the condition. Provide a null value
+                //for callObservedData instead?
+                obsDataFilter, true, onlyObservedStages);
 
 
         //****************************************

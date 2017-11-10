@@ -386,8 +386,10 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 new HashMap<>();
         summaryCallTypeQualityFilter.put(SummaryCallType.ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
         summaryCallTypeQualityFilter.put(SummaryCallType.ExpressionSummary.NOT_EXPRESSED, SummaryQuality.SILVER);
+        Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
+        obsDataFilter.put(null, true);
         ExpressionCallFilter callFilter = new ExpressionCallFilter(summaryCallTypeQualityFilter,
-                Collections.singleton(new GeneFilter(speciesId)), null, null, true, null, null);
+                Collections.singleton(new GeneFilter(speciesId)), null, null, obsDataFilter, null, null);
 
         // We retrieve calls with all non-parametric attributes plus provided params.
         Set<Attribute> clnAttr = Arrays.stream(Attribute.values())

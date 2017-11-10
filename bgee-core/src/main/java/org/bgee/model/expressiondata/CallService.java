@@ -578,8 +578,14 @@ public class CallService extends CommonService {
                         .collect(Collectors.toSet()),
                     //CallDataDAOFilters
                     convertCallFilterToCallDataDAOFilters(callFilter),
-                    //observedDataFilters
-                    callFilter.getCallObservedData(),
+                    //observedDataFilters.
+                    //For callObservedData, only the value associated to a null key is considered here,
+                    //other entries for specific call types provided as keys are dealt with
+                    //in the method convertCallFilterToCallDataDAOFilters.
+                    callFilter.getCallObservedData().entrySet().stream()
+                        .filter(e -> e.getKey() == null)
+                        .map(e -> e.getValue())
+                        .findFirst().orElse(null),
                     convertCallFilterToDAOObservedDataFilter(callFilter, condParamCombination)
                 )),
                 // Condition parameters
@@ -814,6 +820,52 @@ public class CallService extends CommonService {
 //                    }
 //                    return new CallDataDAOFilter(daoExperimentCountFilters, filteredDataTypes);
 
+
+                    //Now we deal with getCallObservedData if filtering on specific call type was requested
+                    //(Observed data filter with a global null key are managed directly in the CallDAOFilter)
+                    Set<Set<DAOExperimentCountFilter>> observedDataFilters = new HashSet<>();
+                    if (callFilter.getCallObservedData() != null) {
+                        for (Entry<CallType.Expression, Boolean> obsFilter: callFilter.getCallObservedData().entrySet()) {
+                            //Observed data filter with a global null key are managed directly in the CallDAOFilter
+                            if (obsFilter.getKey() == null) {
+                                continue;
+                            }
+                            if (Boolean.TRUE.equals(obsFilter.getValue())) {
+                                //self present/absent low > 0 OR self present/absent high > 0
+                                //It thus go to the same inner Set
+                                Set<DAOExperimentCountFilter> obsDataOrFilters = new HashSet<>();
+                                for (DAOExperimentCount.DataQuality qual: DAOExperimentCount.DataQuality.values()) {
+                                    obsDataOrFilters.add(
+                                        new DAOExperimentCountFilter(
+                                                convertCallTypeToDAOCallType(obsFilter.getKey()),
+                                                qual,
+                                                DAOPropagationState.SELF,
+                                                DAOExperimentCountFilter.Qualifier.GREATER_THAN,
+                                                0));
+                                }
+                                observedDataFilters.add(obsDataOrFilters);
+                            } else {
+                                //self present/absent low = 0 AND self present/absent high = 0
+                                //It thus go to different inner Set
+                                for (DAOExperimentCount.DataQuality qual: DAOExperimentCount.DataQuality.values()) {
+                                    Set<DAOExperimentCountFilter> obsDataAndFilters = new HashSet<>();
+                                    obsDataAndFilters.add(
+                                        new DAOExperimentCountFilter(
+                                                convertCallTypeToDAOCallType(obsFilter.getKey()),
+                                                qual,
+                                                DAOPropagationState.SELF,
+                                                DAOExperimentCountFilter.Qualifier.EQUALS_TO,
+                                                0));
+                                    observedDataFilters.add(obsDataAndFilters);
+                                }
+                            }
+                        }
+                    }
+                    if (!observedDataFilters.isEmpty()) {
+                        daoExperimentCountFilters.addAll(observedDataFilters);
+                    }
+
+
                     return new CallDataDAOFilter(daoExperimentCountFilters, daoDataTypes);
                 })
                 .collect(Collectors.toSet());
@@ -848,6 +900,18 @@ public class CallService extends CommonService {
 
     private static DAOExperimentCount.CallType convertSummaryCallTypeToDAOCallType(
             SummaryCallType.ExpressionSummary callType) {
+        log.entry(callType);
+
+        switch(callType) {
+        case EXPRESSED:
+            return log.exit(DAOExperimentCount.CallType.PRESENT);
+        case NOT_EXPRESSED:
+            return log.exit(DAOExperimentCount.CallType.ABSENT);
+        default:
+            throw log.throwing(new IllegalArgumentException("Unsupported CallType: " + callType));
+        }
+    }
+    private static DAOExperimentCount.CallType convertCallTypeToDAOCallType(CallType.Expression callType) {
         log.entry(callType);
 
         switch(callType) {

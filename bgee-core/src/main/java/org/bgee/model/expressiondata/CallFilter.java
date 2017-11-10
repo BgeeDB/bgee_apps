@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
+import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
@@ -24,7 +25,7 @@ import org.bgee.model.gene.GeneFilter;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Feb. 2017
+ * @version Bgee 14, Nov. 2017
  * @since   Bgee 13, Oct. 2015
  *
  * @param T The type of {@code CallData} to be used by this {@code CallFilter}. 
@@ -66,20 +67,22 @@ public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & Summ
     public static class ExpressionCallFilter
     extends CallFilter<ExpressionCallData, SummaryCallType.ExpressionSummary> {
         
-        private final Boolean callObservedData;
+        private final Map<CallType.Expression, Boolean> callObservedData;
 
         private final Boolean anatEntityObservedData;
         private final Boolean devStageObservedData;
 
         public ExpressionCallFilter(
                 Map<SummaryCallType.ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter,
-                Set<GeneFilter> geneFilters, Collection<ConditionFilter> conditionFilters,
-                Collection<DataType> dataTypeFilter, Boolean callObservedData,
+                Set<GeneFilter> geneFilters, Collection<ConditionFilter> conditionFilters, Collection<DataType> dataTypeFilter,
+                Map<CallType.Expression, Boolean> callObservedData,
                 Boolean anatEntityObservedData, Boolean devStageObservedData)
                         throws IllegalArgumentException {
             super(summaryCallTypeQualityFilter, geneFilters, conditionFilters, dataTypeFilter,
                     SummaryCallType.ExpressionSummary.class);
-            this.callObservedData = callObservedData;
+
+            this.callObservedData = Collections.unmodifiableMap(
+                    callObservedData == null? new HashMap<>(): new HashMap<>(callObservedData));
             this.anatEntityObservedData = anatEntityObservedData;
             this.devStageObservedData = devStageObservedData;
             try {
@@ -97,13 +100,65 @@ public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & Summ
             super.checkEmptyFilters();
             log.exit();
         }
-        
-        public Boolean getCallObservedData() {
+
+        /**
+         * Provides filtering on observation of data or of specific call types in the condition.
+         * Keys in this {@code Map} defines the call type on which to apply the filtering. If a key is {@code null},
+         * the filtering applies to any call type. The associated value is a {@code Boolean} defining whether
+         * the data or the call type should have been observed in the condition itself. For instance,
+         * if you set a key to {@code EXPRESSED} {@code ExpressionSummary}, and set the associated value to {@code true},
+         * it will allow to retrieve only calls including expression in the condition itself,
+         * and not simply calls with any data observed in the condition itself (such as a reported absence of expression).
+         * If you set a key to {@code null}, and set the associated value to {@code true}, it will allow
+         * to retrieve only calls with observed data in the condition itself, (whether it is presence or absence
+         * of expression).
+         * <p>
+         * <strong>Important:</strong> data quality is not taken into account,
+         * {@code ExpressionSummary}s (if any) will be considered with any quality. <strong>But only considering
+         * the data types requested at instantiation (if any).</strong> Note: this attribute could simply be
+         * a {@code Boolean}, based on the {@code ExpressionSummary}s provided at instantiation (in the same way
+         * it is based on the data types provided at instantiation). But there is more flexibility this way,
+         * as you can request, for instance, to retrieve only {@code EXPRESSED} calls, but having any call type
+         * directly observed in the condition.
+         * <p>
+         * This is independent from {@link #getAnatEntityObservedData()} and {@link #getDevStageObservedData()},
+         * to be able to distinguish between whether data were observed in, for instance, the anatomical entity,
+         * and propagated along the dev. stage ontology. For instance, you might want to retrieve expression calls
+         * at a given dev. stage (using any propagation states), only if observed in the anatomical structure itself.
+         * The "callObservedData" filter does not permit solely to perform such a query.
+         *
+         * @return  A {@code Map} where keys are {@code ExpressionSummary} for which we want a filtering based on data propagation,
+         *          the associated value being a {@code Boolean} defining the requested observed data state.
+         *          If a key is {@code null}, the associated filtering applies to any call type.
+         * @see #getAnatEntityObservedData()
+         * @see #getDevStageObservedData()
+         */
+        public Map<CallType.Expression, Boolean> getCallObservedData() {
             return callObservedData;
         }
+        /**
+         * Provides filtering based on observation of data in the anatomical entities.
+         * <p>
+         * Note that, as opposed to {@link #getCallObservedData()}, it is not at the moment possible
+         * to add a filter for this information based on different {@code ExpressionSummary}s,
+         * because we do not distinguish source of different call types along every condition parameters,
+         * but only associated to the condition at a whole.
+         *
+         * @return  A {@code Boolean} defining whether the retrieved data should have been observed
+         *          in the anatomical entity itself. This is for any call type, whether {@code EXPRESSED} or
+         *          {@code NOT_EXPRESSED}.
+         * @see #getCallObservedData()
+         * @see #getDevStageObservedData()
+         */
         public Boolean getAnatEntityObservedData() {
             return anatEntityObservedData;
         }
+        /**
+         *
+         * @return
+         * @see #getCallObservedData()
+         * @see #getAnatEntityObservedData()
+         */
         public Boolean getDevStageObservedData() {
             return devStageObservedData;
         }
@@ -117,20 +172,23 @@ public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & Summ
             // Filter on observed data
             //XXX: actually, we can now filter calls based on this information directly in the DAO,
             //so maybe we should force to retrieve this information in the Call solely to test it.
-            if (callObservedData != null || anatEntityObservedData != null ||
+            //TODO: there is more work to do to manage callObservedData when non-null keys are provided
+            if (callObservedData != null && callObservedData.containsKey(null) || anatEntityObservedData != null ||
                     devStageObservedData != null) {
 
                 if (call.getDataPropagation() == null) {
                     throw log.throwing(new IllegalArgumentException(
                             "The provided Call does not allow to retrieve observedData information"));
                 }
-                if (callObservedData != null &&
-                        call.getDataPropagation().isIncludingObservedData() == null) {
-                    throw log.throwing(new IllegalArgumentException(
-                            "The provided Call does not allow to retrieve observedData information"));
-                }
-                if (!callObservedData.equals(call.getDataPropagation().isIncludingObservedData())) {
-                    return log.exit(false);
+                //TODO: there is more work to do to manage callObservedData when non-null keys are provided
+                if (callObservedData != null && callObservedData.containsKey(null)) {
+                    if (call.getDataPropagation().isIncludingObservedData() == null) {
+                        throw log.throwing(new IllegalArgumentException(
+                                "The provided Call does not allow to retrieve observedData information"));
+                    }
+                    if (!call.getDataPropagation().isIncludingObservedData().equals(callObservedData.get(null))) {
+                        return log.exit(false);
+                    }
                 }
 
                 if (anatEntityObservedData != null &&

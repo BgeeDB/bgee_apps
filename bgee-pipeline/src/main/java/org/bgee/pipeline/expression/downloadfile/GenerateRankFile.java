@@ -40,6 +40,7 @@ import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.ConditionGraph;
+import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
@@ -66,7 +67,7 @@ import owltools.graph.OWLGraphWrapper;
  * Allows to generate download files providing rank score information. 
  * 
  * @author Frederic Bastian
- * @version Bgee 13 July 2016
+ * @version Bgee 14 Nov. 2017
  * @since Bgee 13 July 2016
  */
 //XXX: generate a simple file providing the max rank? A bit boring as we have nothing 
@@ -731,11 +732,13 @@ public class GenerateRankFile {
         CallService service = serviceFactory.getCallService();
         Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
         summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
+        Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
+        obsDataFilter.put(null, true);
         return log.exit(service.loadExpressionCalls(
 //                speciesId, 
                 new ExpressionCallFilter(summaryCallTypeQualityFilter,
-                		Collections.singleton(new GeneFilter(speciesId)),
-                		null, Arrays.asList(dataType), true, true, true),
+                    Collections.singleton(new GeneFilter(speciesId)),
+                    null, Arrays.asList(dataType), obsDataFilter, true, true),
                 attrs, 
                 serviceOrdering));
 

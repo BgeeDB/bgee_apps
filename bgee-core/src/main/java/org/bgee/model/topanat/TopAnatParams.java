@@ -17,6 +17,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.CallFilter;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.ConditionFilter;
+import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DecorrelationType;
 import org.bgee.model.expressiondata.baseelements.StatisticTest;
@@ -611,6 +612,11 @@ public class TopAnatParams {
         if (this.callType == ExpressionSummary.EXPRESSED) {
             Map<ExpressionSummary, SummaryQuality> callQualFilter = new HashMap<>();
             callQualFilter.put(ExpressionSummary.EXPRESSED, this.summaryQuality);
+            Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
+            //FIXME: actually, if we retrieve calls for a specific stage and all its substages,
+            //then the calls do not have to be observed in the condition. Provide a null value
+            //for callObservedData instead?
+            obsDataFilter.put(null, true);
             return log.exit(new ExpressionCallFilter(
                     //call type and quality filter
                     callQualFilter,
@@ -622,7 +628,7 @@ public class TopAnatParams {
                     this.dataTypes,
                     //observed data filter
                     //XXX: this should be adapted if we want TopAnat to work on a graph of conditions
-                    true, true, null
+                    obsDataFilter, true, null
             ));
         }
         if (this.callType == DiffExpressionSummary.OVER_EXPRESSED) {

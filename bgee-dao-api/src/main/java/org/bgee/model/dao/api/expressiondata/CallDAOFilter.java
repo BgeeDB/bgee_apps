@@ -140,10 +140,13 @@ public class CallDAOFilter {
     }
     /**
      * @return  A {@code Boolean} defining a filtering on whether the call was observed in the condition,
-     *          if not {@code null}. This is independent from {@link #getObservedDataFilter()},
-     *          because even if a data aggregation have produced only SELF propagation states,
-     *          we cannot have the guarantee that data were actually observed in the condition
-     *          by looking at these independent propagation states.
+     *          if not {@code null}. This is independent from {@link #getObservedDataFilter()} to be able
+     *          to distinguish between whether data were observed in, for instance, the anatomical entity,
+     *          and propagated along the dev. stage ontology. For instance, you might want to retrieve expression calls
+     *          at a given dev. stage (using any propagation states), only if observed in the anatomical structure itself.
+     *          The "callObservedData" filter does not permit solely to perform such a query.
+     *          Note that this is simply a helper method and field as compared to using {@code DAOExperimentCountFilter}s
+     *          in {@code CallDataDAOFilter}s (see {@link #getDataFilters()})
      */
     public Boolean getCallObservedData() {
         return callObservedData;

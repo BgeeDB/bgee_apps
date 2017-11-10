@@ -26,6 +26,7 @@ import org.bgee.model.expressiondata.Call.ExpressionCall.ClusteringMethod;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.ConditionGraph;
+import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
@@ -409,10 +410,12 @@ public class CommandGene extends CommandParent {
 
         Map<SummaryCallType.ExpressionSummary, SummaryQuality> silverExpressedCallFilter = new HashMap<>();
         silverExpressedCallFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
+        Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
+        obsDataFilter.put(CallType.Expression.EXPRESSED, true);
         final List<ExpressionCall> calls = service.loadExpressionCalls(
                 new ExpressionCallFilter(silverExpressedCallFilter,
                         Collections.singleton(new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId())),
-                        null, null, true, true, null),
+                        null, null, obsDataFilter, null, null),
                 EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
                            CallService.Attribute.GLOBAL_MEAN_RANK),
                 serviceOrdering)
@@ -444,17 +447,14 @@ public class CommandGene extends CommandParent {
         
         Map<SummaryCallType.ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
         summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE);
+        Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
+        obsDataFilter.put(CallType.Expression.EXPRESSED, true);
         return log.exit(service.loadExpressionCalls(
                 new ExpressionCallFilter(summaryCallTypeQualityFilter,
                         Collections.singleton(new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId())),
-                        null, null, true, true, true),
+                        null, null, obsDataFilter, null, null),
                 EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
-                        //XXX: why do we need the CALL_TYPE here, since we requested only EXPRESSED calls?
-                        CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.CALL_TYPE,
-                        //XXX: do we need DATA_QUALITY?
-                        CallService.Attribute.DATA_QUALITY, CallService.Attribute.GLOBAL_MEAN_RANK,
-                        //XXX: experiment counts to display them on the page? No cost in performances?
-                        CallService.Attribute.EXPERIMENT_COUNTS),
+                        CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.GLOBAL_MEAN_RANK),
                 serviceOrdering)
             .collect(Collectors.toList()));
     }

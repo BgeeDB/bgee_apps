@@ -3,9 +3,7 @@ package org.bgee.model.ontology;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-//XXX: why is this class needed? We don't use this concept in the class "Ontology" directly anymore?
-//XXX: shouldn't "T" extend something more precise?
-//TODO: javadoc
+//TODO: remove this class
 public class OntologyRelation<T> {
     private final static Logger log = LogManager.getLogger(OntologyRelation.class.getName());
 

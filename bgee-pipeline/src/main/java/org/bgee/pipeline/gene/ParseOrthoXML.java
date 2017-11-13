@@ -123,6 +123,8 @@ public class ParseOrthoXML extends MySQLDAOUser {
      * 
      * @see #loadGeneIdsFromDb()
      */
+    //FIXME: maybe we need two maps here: one Map<Gene, Integer> to associate Gene to its bgeeGeneId,
+    //and one map Map<String, Set<Gene>> to associate an Ensembl ID to its relates genes
     private Map<String, Integer> ensemblIdToBgeeIdInBgee;
 
     /**
@@ -147,6 +149,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
      * 
      * @see #loadFakePrefixesFromDb()
      */
+    //FIXME: not needed anymore
     private Map<Integer, Set<Integer>> speciesPrefixes;
     
     /**
@@ -300,7 +303,6 @@ public class ParseOrthoXML extends MySQLDAOUser {
             nbUpdatedGenes = this.getGeneDAO().updateGenes(this.geneTOs,
                     Arrays.asList(GeneDAO.Attribute.OMA_PARENT_NODE_ID));
             log.info("Done updating genes.");
-            System.out.println(this.hierarchicalGroupToGeneTOs.size());
             log.info("Start inserting gene to hierarchical group mapping...");
             nbInsertedGroupToGene = this.getHierarchicalGroupDAO()
                     .insertHierarchicalGroupToGene(this.hierarchicalGroupToGeneTOs);
@@ -390,8 +392,10 @@ public class ParseOrthoXML extends MySQLDAOUser {
         //dao.setAttributes(GeneDAO.Attribute.ID);
         try (GeneTOResultSet rsGenes = dao.getAllGenes()) {
             while (rsGenes.next()) {
+                //FIXME: does not work with Ensembl IDs used in multiple species
                 if(this.ensemblIdToBgeeIdInBgee.containsKey(rsGenes.getTO().getGeneId())){
-                    log.error("Two bgeeGeneIds have the same ID :{}",rsGenes.getTO().getGeneId());
+                    throw log.throwing(new IllegalStateException(
+                            "Two bgeeGeneIds have the same ID :" + rsGenes.getTO().getGeneId()));
                 }
                 this.ensemblIdToBgeeIdInBgee.put(rsGenes.getTO().getGeneId(), rsGenes.getTO().getId());
             }
@@ -692,7 +696,6 @@ public class ParseOrthoXML extends MySQLDAOUser {
         if(taxonId != null){
             genes.stream().forEach(g -> {
                 if(ensemblIdToBgeeIdInBgee.get(g.getGeneIdentifier()) != null){
-//                    System.out.println(taxonId+" -> "+ensemblIdToBgeeIdInBgee.get(g.getGeneIdentifier())+" -> "+OmaNodeId);
                     this.hierarchicalGroupToGeneTOs.add(new HierarchicalGroupToGeneTO(
                             OmaNodeId, ensemblIdToBgeeIdInBgee.get(g.getGeneIdentifier()), 
                             Integer.valueOf(taxonId)));

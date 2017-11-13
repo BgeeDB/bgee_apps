@@ -68,7 +68,7 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
      *                      {@code DAOException} ({@code DAOs} do not expose these kind of
      *                      implementation details).
      */
-    //XXX: why this method did not exist before? How this insertion was handled before?
+    //TODO: we don't need this method, see issue#124
     public int insertHierarchicalGroupToGene(Collection<HierarchicalGroupToGeneTO> groupToGene)
             throws DAOException, IllegalArgumentException;
     
@@ -319,7 +319,7 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
             return "HierarchicalGroupToGeneTO[groupId="+this.nodeId+", bgeeGeneId="+this.bgeeGeneId+", taxonId="+this.taxonId+"]";
         }
 
-        //XXX: I thought TOs never implement hashCode and equals
+        //FIXME: I thought TOs never implement hashCode and equals
         //(we use the TOComparator instead for tests)
         @Override
         public int hashCode() {

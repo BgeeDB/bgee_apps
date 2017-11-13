@@ -177,7 +177,7 @@ public interface GeneOntologyDAO extends DAO<GeneOntologyDAO.Attribute> {
                     ((this.getAltIds().isEmpty()) ? "" : " - AltIds: " + this.getAltIds());
         }
 
-        //XXX: I thought TOs never implement hashCode and equals
+        //FIXME: I thought TOs never implement hashCode and equals
         //(we use the TOComparator instead for tests)
         @Override
         public int hashCode() {

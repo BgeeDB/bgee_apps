@@ -47,8 +47,7 @@ import org.bgee.pipeline.MySQLDAOUser;
  * @version Bgee 14, May 2017
  * @since   Bgee 13, Sept 2015
  */
-//FIXME: reactivate insertion of species data groups and species data groups to species mappings?
-//XXX: isnt't it managed through an SQL file now?
+//FIXME: use pipeline/download_files/insert_download_file_info.sql in bgee_pipeline instead
 public class InsertSpeciesDataGroups extends MySQLDAOUser {
     
     /**

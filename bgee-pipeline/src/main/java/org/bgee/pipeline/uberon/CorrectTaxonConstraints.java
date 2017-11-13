@@ -40,7 +40,7 @@ import org.supercsv.prefs.CsvPreference;
  * @version Bgee 14
  * @since Bgee 14
  */
-//XXX: to remove?
+//TODO: to remove
 public class CorrectTaxonConstraints extends MySQLDAOUser {
 
     private final static Logger log = LogManager.getLogger(CorrectTaxonConstraints.class.getName());

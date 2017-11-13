@@ -14,6 +14,7 @@ import java.util.stream.Stream;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.InvalidRequestException;
@@ -193,20 +194,21 @@ public class CommandRPackage extends CommandParent {
         // Create Call filter objects
         //****************************************
         //CallDAOFilter: for now, we only allow to define one CallDAOFilter object.
-        Boolean onlyObservedCalls = true;
-        Boolean onlyObservedStages = true;
-        if(stageIds != null){
-            onlyObservedCalls = false;
-            onlyObservedStages = false;
+
+        //TODO: verify this logic
+        //(former note: we need to decide whether we want calls with data propagated only,
+        //because they can have a higher quality thanks to data propagation.)
+        Map<CallType.Expression, Boolean> obsDataFilter = null;
+        if(stageIds == null || stageIds.isEmpty()) {
+            obsDataFilter = new HashMap<>();
+            obsDataFilter.put(null, true);
         }
+        
         Collection<ConditionFilter> conditionFilter = stageIds == null || stageIds.isEmpty()? 
                 null: Collections.singleton(new ConditionFilter(null, stageIds));
         GeneFilter geneFilter = new GeneFilter(speciesId, this.requestParameters.getBackgroundList());
         Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
         summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, this.checkAndGetSummaryQuality());
-        Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
-        //XXX: or only EXPRESSED observed calls?
-        obsDataFilter.put(null, onlyObservedCalls);
         ExpressionCallFilter callFilter = new ExpressionCallFilter(summaryCallTypeQualityFilter,
                 Collections.singleton(geneFilter),
                 conditionFilter, dataTypes,
@@ -214,7 +216,7 @@ public class CommandRPackage extends CommandParent {
                 //FIXME: actually, if we retrieve calls for a specific stage and all its substages,
                 //then the calls do not have to be observed in the condition. Provide a null value
                 //for callObservedData instead?
-                obsDataFilter, true, onlyObservedStages);
+                obsDataFilter, true, null);
 
 
         //****************************************

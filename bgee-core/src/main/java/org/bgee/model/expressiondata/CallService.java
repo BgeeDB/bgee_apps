@@ -559,7 +559,7 @@ public class CallService extends CommonService {
             throw log.throwing(new IllegalArgumentException(
                     "No species nor gene IDs retrieved for filtering results."));
         }
-        
+        //TODO: retrieve sub-structures and sub-stages depending on ConditionFilter
         Stream<GlobalExpressionCallTO> calls = this.globalExprCallDAO
             .getGlobalExpressionCalls(Arrays.asList(
                 //generate an ExpressionCallDAOFilter from callFilter 
@@ -1197,6 +1197,7 @@ public class CallService extends CommonService {
 
             return log.exit(new ExpressionCallData(dt, counts,
                     //XXX: are you sure it shouldn't be null as the other attributes here?
+                    //TODO: make experimentCount an Integer in ExpressionCallData, and provide null if appropriate
                     getExperimentsCounts && cdTO.getPropagatedCount() != null?
                             cdTO.getPropagatedCount(): 0,
                     getRankInfo? cdTO.getRank(): null,

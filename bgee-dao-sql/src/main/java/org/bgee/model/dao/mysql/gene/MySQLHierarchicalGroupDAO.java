@@ -225,10 +225,9 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
                     if (column.getValue().equals("OMANodeId")) {
                         hogId = this.getCurrentResultSet().getInt(column.getKey());
                         
-                    } else if (column.getValue().equals("geneId")) {
+                    } else if (column.getValue().equals("bgeeGeneId")) {
                         geneId = this.getCurrentResultSet().getInt(column.getKey());
 
-                    //XXX: is this column really correct? Isn't the taxon stored in the node?
                     } else if (column.getValue().equals("taxonId")) {
                         taxonId = this.getCurrentResultSet().getInt(column.getKey());
 

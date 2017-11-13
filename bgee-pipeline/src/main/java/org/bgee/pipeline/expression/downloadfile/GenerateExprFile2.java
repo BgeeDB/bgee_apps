@@ -86,7 +86,6 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      * @version Bgee 13
      * @since Bgee 13
      */
-    //XXX: advanced/complete discrepancy? See same remark in bgee_core
     public enum SingleSpExprFileType2 implements FileType {
         EXPR_SIMPLE(CategoryEnum.EXPR_CALLS_SIMPLE, true),
         EXPR_ADVANCED(CategoryEnum.EXPR_CALLS_COMPLETE, false);
@@ -526,7 +525,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         Collections.sort(attributeList);
 
         return log.exit(attributes.stream()
-                //XXX: why a flatMap returning a Stream rather than a map returning an element?
+                //we use a flatMap to be able to return an empty Stream (avoid having double '_' in file name)
                 .flatMap(a -> {
                     switch (a) {
                         case ANAT_ENTITY_ID:
@@ -940,8 +939,8 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
 
         // We use an AtomicInteger instead of using .mapToInt(Integer::intValue).sum() on the stream 
         // to try to avoid memory problems
-        //XXX: what problem? Weird if there is no multithreading?
-        AtomicInteger rowCount = new AtomicInteger();
+        //XXX: rather use a for loop and avoid atomic integer?
+        final AtomicInteger rowCount = new AtomicInteger();
         calls.forEach(c -> {
             for (Entry<SingleSpExprFileType2, ICsvDozerBeanWriter> writerFileType : writersUsed.entrySet()) {
                 String geneId = c.getGene().getEnsemblGeneId();

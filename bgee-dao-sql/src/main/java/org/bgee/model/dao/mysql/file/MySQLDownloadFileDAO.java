@@ -191,7 +191,6 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
                         case CONDITION_PARAMETERS:
                             String values = currentResultSet.getString(columnName);
                             if (values != null) {
-                                //XXX: do we absolutely need this split?
                                 condParams = Arrays.stream(values.split(","))
                                         .map(s -> ConditionParameter.convertToConditionParameter(s))
                                         .collect(Collectors.toSet());

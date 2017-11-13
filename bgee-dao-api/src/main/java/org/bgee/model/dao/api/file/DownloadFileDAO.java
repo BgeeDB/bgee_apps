@@ -83,7 +83,6 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
          */
         private final static Logger log = LogManager.getLogger(DownloadFileTO.class.getName());
 
-        //XXX: some of these enums in bgee_core are called "advanced" instead of "complete"
         /**
          * This enum contains all the different categories of files:
          * <ul>
@@ -163,8 +162,8 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
          * @since   Bgee 14, Apr. 2017
          *
          */
-        //XXX: Why not using the ConditionDAO.Attribute directly, as in other DAOs?
-        //XXX: "anatomical_entity" instead of "anatomicalEntity"?
+        //TODO: Why not using the ConditionDAO.Attribute directly, as in other DAOs?
+        //TODO: yes, but maybe need a mapping to the text value in database
         public enum ConditionParameter implements TransferObject.EnumDAOField {
             ANAT_ENTITY("anatomicalEntity"),
             STAGE("developmentalStage");
@@ -231,7 +230,7 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
          * A {@code Set} of {@code ConditionParameter}s that are the condition parameters
          * used to generate this file.
          */
-        //XXX: Use ConditionDAO.Attribute instead?
+        //TODO: Use ConditionDAO.Attribute instead?
         private final Set<ConditionParameter> conditionParams;
 
         /**

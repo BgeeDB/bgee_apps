@@ -45,7 +45,7 @@ public class DownloadFile {
         EXPR_CALLS_SIMPLE("expr_simple", false),
         EXPR_CALLS_COMPLETE("expr_advanced", false),
         DIFF_EXPR_ANAT_SIMPLE("diff_expr_anatomy_simple", true),
-        //XXX: why "advanced" in some cases and "complete" in some others?
+        //TODO: harmonize use of advanced/complete. Use "advanced" in the text name.
         DIFF_EXPR_ANAT_COMPLETE("diff_expr_anatomy_complete", true),
         DIFF_EXPR_DEV_COMPLETE("diff_expr_dev_complete", true),
         DIFF_EXPR_DEV_SIMPLE("diff_expr_dev_simple", true),
@@ -125,9 +125,8 @@ public class DownloadFile {
      * @since   Bgee 14, Apr. 2017
      */
     // TODO: should we use CallService.Attribute?
-    // TODO: yep, why not using it?
+    // TODO: Yes
     public enum ConditionParameter implements BgeeEnumField {
-        //XXX: shouldn't it be "anatomical_entity" and "developmental_stage" for consistency with other enums?
         ANAT_ENTITY("anatomicalEntity"), DEV_STAGE("developmentalStage");
 
         /** The string representation */
@@ -214,7 +213,6 @@ public class DownloadFile {
      * @param speciesDataGroupId   A {@code Integer} representing the species data group that owns this file.
      * @throws IllegalArgumentException If any of the argument is {@code null}.
      */
-    //XXX: why not a "long" for size if it can't be null?
     public DownloadFile(String path, String name, CategoryEnum category, Long size, Integer speciesDataGroupId){
         this(path, name, category, size, speciesDataGroupId, null);
     }

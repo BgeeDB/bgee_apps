@@ -59,6 +59,7 @@ implements GlobalExpressionCallDAO {
     private final static Set<DAOPropagationState> OBSERVED_STATES = EnumSet.of(DAOPropagationState.ALL,
             DAOPropagationState.SELF, DAOPropagationState.SELF_AND_ANCESTOR, 
             DAOPropagationState.SELF_AND_DESCENDANT);
+    //TODO: ADD NON_OBSERVED_STATES
 
     private static String generateSelectClause(Collection<GlobalExpressionCallDAO.Attribute> attrs,
             Collection<DAODataType> dataTypes, final String globalExprTableName, final String globalCondTableName) {
@@ -115,7 +116,7 @@ implements GlobalExpressionCallDAO {
                 return globalExprTableName + "." + MySQLConditionDAO.GLOBAL_COND_ID_FIELD;
             case GLOBAL_MEAN_RANK:
                 return clonedDataTypes.stream()
-                        //XXX: why is this first part of the statement needed? To avoid division by zero? Was it present in Bgee 13?
+                        //to avoid division by 0
                         .map(dt -> dataTypeToNormRankSql.get(dt) + " IS NULL")
                         .collect(Collectors.joining(" AND ", "IF (", ", NULL, "))
                         + clonedDataTypes.stream()
@@ -639,8 +640,9 @@ implements GlobalExpressionCallDAO {
                     sb.append(generateDataFilters(callFilter.getDataFilters(), globalExprTableName));
                 }
 
-                //XXX: Remind me how this is different from a ConditionFilter?
-                if (callFilter.getCallObservedData() != null && callFilter.getCallObservedData()) {
+                //TODO: do not hardcode data types
+                //TODO: check the use of getCallObservedData (we want NULL to say "any value")
+                if (callFilter.getCallObservedData() != null) {
                     sb.append(" AND ").append("(")
                         .append(globalExprTableName).append(".affymetrixConditionObservedData = ? OR ")
                         .append(globalExprTableName).append(".estConditionObservedData = ? OR ")
@@ -648,16 +650,17 @@ implements GlobalExpressionCallDAO {
                         .append(globalExprTableName).append(".rnaSeqConditionObservedData = ?").append(")");
                 }
 
-                //XXX: Remind me how this is different from a ConditionFilter?
                 if (callFilter.getObservedDataFilter() != null && !callFilter.getObservedDataFilter().isEmpty()) {
                     sb.append(callFilter.getObservedDataFilter().entrySet().stream()
-                            .filter(e -> e.getValue())
+                            //FIXME: manage the "non-observed states"
+                            .filter(e -> e.getValue() != null)
                             .map(e -> {
                                 StringBuilder sb2 = new StringBuilder();
                                 sb2.append(" AND ");
                                 sb2.append("(");
                                 ConditionDAO.Attribute attr = e.getKey();
                                 switch (attr) {
+                                    //TODO: do not hardcode data types (see generation for ranks)
                                     case ANAT_ENTITY_ID:
                                         sb2.append(generatePropStateQuery(globalExprTableName,
                                                 "affymetrixAnatEntityPropagationState")).append(" OR ")
@@ -690,6 +693,7 @@ implements GlobalExpressionCallDAO {
         }
         return log.exit(sb.toString());
     }
+    //FIXME: must manage non-observed states
     private static String generatePropStateQuery(String globalExprTableName, String columnName) {
         log.entry(globalExprTableName, columnName);
         return log.exit(globalExprTableName + "." + columnName + " IN (" +
@@ -700,7 +704,6 @@ implements GlobalExpressionCallDAO {
             final String globalExprTableName) {
         log.entry(dataFilters, globalExprTableName);
 
-        //XXX: here we should have a sum of the fields, right?
         return dataFilters.stream()
             .map(dataFilter -> {
                 return dataFilter.getExperimentCountFilters().stream()
@@ -1025,7 +1028,7 @@ implements GlobalExpressionCallDAO {
             throw log.throwing(new IllegalArgumentException("The condition parameter combination "
                     + "contains some Attributes that are not condition parameters: " + clonedCondParams));
         }
-        //XXX: can't we automatically add the field if requested in ordering clause?
+        //TODO: can't we automatically add the field if requested in ordering clause?
         if (clonedOrderingAttrs.containsKey(GlobalExpressionCallDAO.OrderingAttribute.MEAN_RANK) 
                 && !clonedAttrs.contains(GlobalExpressionCallDAO.Attribute.GLOBAL_MEAN_RANK)) {
             throw log.throwing(new IllegalArgumentException("To order by " 
@@ -1109,7 +1112,7 @@ implements GlobalExpressionCallDAO {
                     }
                 }
 
-                if (callFilter.getCallObservedData() != null && callFilter.getCallObservedData()) {
+                if (callFilter.getCallObservedData() != null) {
                     stmt.setBooleans(offsetParamIndex,
                             Collections.nCopies(DATA_TYPE_COUNT, callFilter.getCallObservedData()),
                             true);
@@ -1118,8 +1121,9 @@ implements GlobalExpressionCallDAO {
 
                 if (callFilter.getObservedDataFilter() != null && !callFilter.getObservedDataFilter().isEmpty()) {
                     for (Boolean isObservedData: callFilter.getObservedDataFilter().values()) {
-                        if (isObservedData) {
+                        if (isObservedData != null) {
                             for (int i = 0; i < DATA_TYPE_COUNT; i++) {
+                                //FIXME: manage non-observed states
                                 stmt.setEnumDAOFields(offsetParamIndex, OBSERVED_STATES, true);
                                 offsetParamIndex += OBSERVED_STATES.size();
                             }

@@ -541,7 +541,7 @@ public interface RelationDAO extends DAO<RelationDAO.Attribute> {
                     " - Relation status: " + this.getRelationStatus();
         }
 
-        //XXX: I thought TOs never implement hashCode and equals
+        //FIXME: I thought TOs never implement hashCode and equals
         //(we use the TOComparator instead for tests)
         @Override
         public int hashCode() {

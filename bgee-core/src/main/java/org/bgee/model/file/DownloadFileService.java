@@ -62,7 +62,7 @@ public class DownloadFileService extends Service {
                 mapDAOCategoryToServiceCategory(downloadFileTO.getCategory()),
                 downloadFileTO.getSize(),
                 downloadFileTO.getSpeciesDataGroupId(),
-                //XXX: shouldn't we rather use a 'mapDAOCondParamToServiceCondParam'?
+                //TODO: shouldn't we rather use a 'mapDAOCondParamToServiceCondParam'?
                 downloadFileTO.getConditionParameters().stream()
                     .map(p -> DownloadFile.ConditionParameter.convertToConditionParameter(
                                 p.getStringRepresentation()))

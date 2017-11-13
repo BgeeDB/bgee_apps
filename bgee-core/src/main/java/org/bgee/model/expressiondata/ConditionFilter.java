@@ -60,6 +60,8 @@ public class ConditionFilter implements Predicate<Condition> {
      * @throws IllegalArgumentException If no anatomical entity IDs nor developmental stage IDs
      *                                  nor observed status are provided. 
      */
+    //XXX: Should we add two booleans to ask for considering sub-structures and sub-stages?
+    //Because it seems it can be managed through query of data propagation in CallFilter
     public ConditionFilter(Collection<String> anatEntityIds, Collection<String> devStageIds,
             Boolean observedConditions) throws IllegalArgumentException {
         if ((anatEntityIds == null || anatEntityIds.isEmpty()) && 

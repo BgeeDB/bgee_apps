@@ -608,15 +608,19 @@ public class TopAnatParams {
         
         Collection<ConditionFilter> condFilters = StringUtils.isBlank(this.devStageId)? null: 
             Collections.singleton(new ConditionFilter(null, Collections.singleton(this.devStageId), null));
+
+        //TODO: verify this logic
+        //(former note: we need to decide whether we want calls with data propagated only,
+        //because they can have a higher quality thanks to data propagation.)
+        Map<CallType.Expression, Boolean> obsDataFilter = null;
+        if(StringUtils.isBlank(this.devStageId)) {
+            obsDataFilter = new HashMap<>();
+            obsDataFilter.put(null, true);
+        }
         
         if (this.callType == ExpressionSummary.EXPRESSED) {
             Map<ExpressionSummary, SummaryQuality> callQualFilter = new HashMap<>();
             callQualFilter.put(ExpressionSummary.EXPRESSED, this.summaryQuality);
-            Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
-            //FIXME: actually, if we retrieve calls for a specific stage and all its substages,
-            //then the calls do not have to be observed in the condition. Provide a null value
-            //for callObservedData instead?
-            obsDataFilter.put(null, true);
             return log.exit(new ExpressionCallFilter(
                     //call type and quality filter
                     callQualFilter,
@@ -628,6 +632,9 @@ public class TopAnatParams {
                     this.dataTypes,
                     //observed data filter
                     //XXX: this should be adapted if we want TopAnat to work on a graph of conditions
+                    //TODO: investigate whether results are the same if we use all data,
+                    //including redundant calls with observed data
+                    //(if we just give values null, null, null)
                     obsDataFilter, true, null
             ));
         }

@@ -691,7 +691,7 @@ public class OntologyService extends CommonService {
         return log.exit(requestedEntityIds);
     }
 
-    //XXX: why do we need this?
+    //TODO: to remove
     private Set<OntologyRelation<String>> convertAERelTOResSetToElementRelations(
     		RelationTOResultSet<String> relationTOResSet){
         log.entry(relationTOResSet);
@@ -703,7 +703,7 @@ public class OntologyService extends CommonService {
 
     }
 
-    //XXX: why do we need this?
+    //TODO: to remove
 	private static Set<RelationTO.RelationType> mapRelTypeToRelTypeTO(Collection<RelationType> relationTypes) {
 		Set<RelationTO.RelationType> relTypeTOs= new HashSet<>();
 		for(RelationType relationType : relationTypes){
@@ -724,7 +724,7 @@ public class OntologyService extends CommonService {
 		return relTypeTOs;
 	}
 
-	//XXX: why do we need this?
+	//TODO: to remove
 	private static RelationType mapRelTypeTOToRelType(RelationTO.RelationType relTypeTO) {
 		switch (relTypeTO) {
 			case ISA_PARTOF:
@@ -738,7 +738,7 @@ public class OntologyService extends CommonService {
 		}
 	}
 
-    //XXX: why do we need this?
+    //TODO: to remove
 	private static OntologyRelation.RelationStatus mapRelStatusTOToRelStatus(RelationStatus relStatusTO) {
 		switch (relStatusTO) {
 			case DIRECT:

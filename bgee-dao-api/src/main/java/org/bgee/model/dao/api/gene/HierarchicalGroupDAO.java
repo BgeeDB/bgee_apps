@@ -318,52 +318,5 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
         public String toString() {
             return "HierarchicalGroupToGeneTO[groupId="+this.nodeId+", bgeeGeneId="+this.bgeeGeneId+", taxonId="+this.taxonId+"]";
         }
-
-        //FIXME: I thought TOs never implement hashCode and equals
-        //(we use the TOComparator instead for tests)
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + ((this.getBgeeGeneId() == null) ? 0 : this.getBgeeGeneId().hashCode());
-            result = prime * result + ((this.getNodeId() == null) ? 0 : this.getNodeId().hashCode());
-            result = prime * result + ((this.getTaxonId() == null) ? 0 : this.getTaxonId().hashCode());
-            return result;
-        }
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null) {
-                return false;
-            }
-            if (getClass() != obj.getClass()) {
-                return false;
-            }
-            HierarchicalGroupToGeneTO other = (HierarchicalGroupToGeneTO) obj;
-            if (this.getBgeeGeneId() == null) {
-                if (other.getBgeeGeneId() != null) {
-                    return false;
-                }
-            } else if (!this.getBgeeGeneId().equals(other.getBgeeGeneId())) {
-                return false;
-            }
-            if (this.getNodeId() == null) {
-                if (other.getNodeId()  != null) {
-                    return false;
-                }
-            } else if (!this.getNodeId() .equals(other.getNodeId() )) {
-                return false;
-            }
-            if (this.getTaxonId() == null) {
-                if (other.getTaxonId()  != null) {
-                    return false;
-                }
-            } else if (!this.getTaxonId() .equals(other.getTaxonId() )) {
-                return false;
-            }
-            return true;
-        }
     }
 }

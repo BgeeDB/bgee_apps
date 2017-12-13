@@ -76,7 +76,8 @@ import owltools.graph.OWLGraphWrapper;
  * of the term in the HOM ontology HOM:0000000).
  * 
  * @author Frederic Bastian
- * @version Bgee 13 Apr. 2015
+ * @author Valentine Rech de Laval
+ * @version Bgee 14, Dec. 2017
  * @since Bgee 13
  */
 public class SimilarityAnnotation {
@@ -1254,35 +1255,35 @@ public class SimilarityAnnotation {
      * A {@code Set} of {@code String}s that are the IDs of the Uberon terms  
      * that were present in the similarity annotation file, but for which no taxon 
      * constraints could be found.
-     * @see #checkAnnotation(Map)
+     * @see #checkAnnotation(AnnotationBean, Set, boolean)
      */
     private final Set<String> missingUberonIds;
     /**
      * A {@code Set} of {@code Integer}s that are the IDs of the taxa   
      * that were present in the similarity annotation file, but for which no taxon 
      * constraints could be found.
-     * @see #checkAnnotation(Map)
+     * @see #checkAnnotation(AnnotationBean, Set, boolean)
      */
     private final Set<Integer> missingTaxonIds;
     /**
      * A {@code Set} of {@code String}s that are the IDs of the ECO terms that were 
      * present in the similarity annotation file, but could not be found in 
      * the ECO ontology. 
-     * @see #checkAnnotation(Map)
+     * @see #checkAnnotation(AnnotationBean, Set, boolean)
      */
     private final Set<String> missingECOIds;
     /**
      * A {@code Set} of {@code String}s that are the IDs of the HOM terms that were 
      * present in the similarity annotation file, but could not be found in 
      * the HOM ontology (ontology of homology and related concepts). 
-     * @see #checkAnnotation(Map)
+     * @see #checkAnnotation(AnnotationBean, Set, boolean)
      */
     private final Set<String> missingHOMIds;
     /**
      * A {@code Set} of {@code String}s that are the IDs of the CONF terms that were 
      * present in the similarity annotation file, but could not be found in 
      * the confidence code ontology. 
-     * @see #checkAnnotation(Map)
+     * @see #checkAnnotation(AnnotationBean, Set, boolean)
      */
     private final Set<String> missingCONFIds;
     /**
@@ -1290,21 +1291,21 @@ public class SimilarityAnnotation {
      * scoped to some taxa, in which they are not supposed to exist, according to 
      * the taxon constraints. Associated value is a {@code Set} of {@code Integer}s 
      * that are the IDs of the taxa incorrectly used.
-     * @see #checkAnnotation(Map)
+     * @see #checkAnnotation(AnnotationBean, Set, boolean)
      */
     private final Map<String, Set<Integer>> idsNotExistingInTaxa;
     
     /**
      * A {@code Collection} of {@code AnnotationBean}s representing
      * annotation lines that were duplicated.
-     * @see verifyErrors()
+     * @see #verifyErrors()
      */
     private final Set<AnnotationBean> duplicates;
     
     /**
      * A {@code Collection} of {@code AnnotationBean}s representing annotation lines 
      * that were incorrectly formatted.
-     * @see verifyErrors()
+     * @see #verifyErrors()
      */
     private final Set<AnnotationBean> incorrectFormat;
     
@@ -1496,9 +1497,8 @@ public class SimilarityAnnotation {
      * for issues that might be present on purpose, so that it does not raise an exception, 
      * but might be potential errors.
      * 
-     * @param annots            A {@code Collection} of {@code T}s, where each {@code Map} 
-     *                          represents a line of annotation. See 
-     *                          {@link #extractAnnotations(String, GeneratedFileType)} for more details.
+     * @param annots            A {@code Collection} of {@code T}s, where each {@code T} 
+     *                          represents a line of annotation.
      * @param checkWarn         A {@code boolean} defining whether potential errors should be 
      *                          checked (formal errors are always checked). 
      * @param <T>               The type of {@code AnnotationBean} to check.
@@ -1547,7 +1547,7 @@ public class SimilarityAnnotation {
             taxonIds = TaxonConstraints.extractTaxonIds(taxonConstraints);
         }
         for (T annot: annots) {
-            if (!this.checkAnnotation(annot, taxonIds)) {
+            if (!this.checkAnnotation(annot, taxonIds, true)) {
                 continue;
             }
             if (annot instanceof RawAnnotationBean) {
@@ -1746,7 +1746,9 @@ public class SimilarityAnnotation {
      * A method to check the correctness of a line of annotation. If there is 
      * a format exception in the annotation (for instance, an empty Uberon ID, 
      * or a taxon ID that is not an {@code Integer}), an {@code IllegalArgumentException} 
-     * will be thrown right away. If there is a problem of incorrect information 
+     * will be thrown right away.
+     * <p>
+     * If {@code storeErrors} is true and there is a problem of incorrect information
      * provided (for instance, a non-existing Uberon ID), this incorrect information 
      * is stored to be displayed later (possibly after reading all lines of annotations). 
      * This is to avoid correcting only one information at a time, a re-running 
@@ -1760,7 +1762,7 @@ public class SimilarityAnnotation {
      * <li>If an Uberon ID cannot be found in {@code taxonConstraints}, it will be 
      * stored in {@link #missingUberonIds}.
      * <li>If an Uberon term is annotated with a taxon it is not supposed to exist in, 
-     * the Uberon and taxon IDs will be stored in {@link #idsNotExistingTaxa}.
+     * the Uberon and taxon IDs will be stored in {@link #idsNotExistingInTaxa}.
      * <li>If a taxon ID cannot be found in {@code taxonIds}, it will be stored in 
      * {@link #missingTaxonIds}.
      * <li>If an ECO ID cannot be found in the ontology wrapped in {@code ecoOntWrapper}, 
@@ -1771,26 +1773,22 @@ public class SimilarityAnnotation {
      * it will be stored in {@link #missingCONFIds}.
      * </ul>
      * 
-     * @param annot             A {@code Map} that represents a line of annotation. 
-     *                          See {@link #extractAnnotations(String, boolean)} for details 
-     *                          about the key-value pairs in this {@code Map}.
+     * @param annot             A {@code T} that represents a line of annotation. 
      * @param taxonIds          A {@code Set} of {@code Integer}s that are the taxon IDs 
      *                          of all taxa that were used to define taxon constraints 
      *                          on Uberon terms. Provided to avoid extracting them 
      *                          for each annotation. Can be {@code null} if no taxon constraints 
      *                          were provided at instantiation (in order to skip taxon constraint 
-     *                          verfications)
-     * @param lineNumber        An {@code int} providing the line number where {@code annotation} 
-     *                          was retrieved at. Should be equal to 0 if {@code annotation} 
-     *                          was not retrieved from a file. Useful for logging purpose.
+     *                          verifications)
+     * @param storeErrors       A {@code boolean} defining whether we store incorrect information.
      * @return                  {@code false} if the line of annotation contained 
      *                          any error.
      * @throws IllegalArgumentException If {@code annotation} contains some incorrectly 
      *                                  formatted information.
      */
-    private <T extends AnnotationBean> boolean checkAnnotation(T annot, 
-            Set<Integer> taxonIds) throws IllegalArgumentException {
-        log.entry(annot, taxonIds);
+    private <T extends AnnotationBean> boolean checkAnnotation(T annot, Set<Integer> taxonIds, boolean storeErrors)
+            throws IllegalArgumentException {
+        log.entry(annot, taxonIds, storeErrors);
         
         if (!annot.getClass().equals(RawAnnotationBean.class) && 
                 !annot.getClass().equals(SummaryAnnotationBean.class) && 
@@ -1801,7 +1799,14 @@ public class SimilarityAnnotation {
         }
         
         boolean allGood = true;
-        
+        Set<String> missingUberonIds = new HashSet<>();
+        Set<Integer> missingTaxonIds = new HashSet<>();
+        Set<String> missingECOIds = new HashSet<>();
+        Set<String> missingHOMIds = new HashSet<>();
+        Set<String> missingCONFIds = new HashSet<>();
+        Set<AnnotationBean> incorrectFormat = new HashSet<>();
+        Map<String, Set<Integer>> idsNotExistingInTaxa = new HashMap<>();
+
         //*******************************************
         // Check presence of mandatory information
         //*******************************************
@@ -1809,7 +1814,7 @@ public class SimilarityAnnotation {
         //*** information mandatory for all annotation types ***
         if (annot.getNcbiTaxonId() <= 0) {
             log.error("Missing taxon ID in annotation {}", annot);
-            this.incorrectFormat.add(annot);
+            incorrectFormat.add(annot);
             allGood = false;
         }
         boolean missingUberon = false;
@@ -1826,38 +1831,38 @@ public class SimilarityAnnotation {
                     //fields in all annotations but curator annotations should have 
                     //been trimmed
                     log.error("Entity ID not trimmed in annotation {}", annot);
-                    this.incorrectFormat.add(annot);
+                    incorrectFormat.add(annot);
                     allGood = false;
                 }
             }
         }
         if (missingUberon) {
             log.error("Missing Uberon ID in annotation {}", annot);
-            this.incorrectFormat.add(annot);
+            incorrectFormat.add(annot);
             allGood = false;
         }
         if (StringUtils.isBlank(annot.getHomId())) {
             log.error("Missing HOM ID in annotation {}", annot);
-            this.incorrectFormat.add(annot);
+            incorrectFormat.add(annot);
             allGood = false;
         } else if (!(annot instanceof CuratorAnnotationBean) && 
                 !annot.getHomId().trim().equals(annot.getHomId())) {
             //fields in all annotations but curator annotations should have 
             //been trimmed
             log.error("HOM ID not trimmed in annotation {}", annot);
-            this.incorrectFormat.add(annot);
+            incorrectFormat.add(annot);
             allGood = false;
         }
         if (StringUtils.isBlank(annot.getCioId())) {
             log.error("Missing CIO ID in annotation {}", annot);
-            this.incorrectFormat.add(annot);
+            incorrectFormat.add(annot);
             allGood = false;
         } else if (!(annot instanceof CuratorAnnotationBean) && 
                 !annot.getCioId().trim().equals(annot.getCioId())) {
             //fields in all annotations but curator annotations should have 
             //been trimmed
             log.error("CIO ID not trimmed in annotation {}", annot);
-            this.incorrectFormat.add(annot);
+            incorrectFormat.add(annot);
             allGood = false;
         }
         
@@ -1869,19 +1874,19 @@ public class SimilarityAnnotation {
                 if (!orderedEntityIds.equals(annot.getEntityIds())) {
                     log.error("Entity IDs are not ordered or not trimmed in annotation {}", 
                             annot);
-                    this.incorrectFormat.add(annot);
+                    incorrectFormat.add(annot);
                     allGood = false;
                 }
             }
             if (StringUtils.isBlank(annot.getTaxonName())) {
                 log.error("Missing taxon name in annotation {}", annot);
-                this.incorrectFormat.add(annot);
+                incorrectFormat.add(annot);
                 allGood = false;
             } else if (!annot.getTaxonName().trim().equals(annot.getTaxonName())) {
                 //fields in all annotations but curator annotations should have 
                 //been trimmed
                 log.error("Taxon name not trimmed in annotation {}", annot);
-                this.incorrectFormat.add(annot);
+                incorrectFormat.add(annot);
                 allGood = false;
             }
             boolean missingUberonName = false;
@@ -1897,36 +1902,36 @@ public class SimilarityAnnotation {
                         //fields in all annotations but curator annotations should have 
                         //been trimmed
                         log.error("Uberon name not trimmed in annotation {}", annot);
-                        this.incorrectFormat.add(annot);
+                        incorrectFormat.add(annot);
                         allGood = false;
                     }
                 }
             }
             if (missingUberonName) {
                 log.error("Missing Uberon name in annotation {}", annot);
-                this.incorrectFormat.add(annot);
+                incorrectFormat.add(annot);
                 allGood = false;
             }
             if (StringUtils.isBlank(annot.getHomLabel())) {
                 log.error("Missing HOM name in annotation {}", annot);
-                this.incorrectFormat.add(annot);
+                incorrectFormat.add(annot);
                 allGood = false;
             } else if (!annot.getHomLabel().trim().equals(annot.getHomLabel())) {
                 //fields in all annotations but curator annotations should have 
                 //been trimmed
                 log.error("HOM label not trimmed in annotation {}", annot);
-                this.incorrectFormat.add(annot);
+                incorrectFormat.add(annot);
                 allGood = false;
             }
             if (StringUtils.isBlank(annot.getCioLabel())) {
                 log.error("Missing CIO name in annotation {}", annot);
-                this.incorrectFormat.add(annot);
+                incorrectFormat.add(annot);
                 allGood = false;
             } else if (!annot.getCioLabel().trim().equals(annot.getCioLabel())) {
                 //fields in all annotations but curator annotations should have 
                 //been trimmed
                 log.error("CIO label not trimmed in annotation {}", annot);
-                this.incorrectFormat.add(annot);
+                incorrectFormat.add(annot);
                 allGood = false;
             }
         } 
@@ -1936,7 +1941,7 @@ public class SimilarityAnnotation {
     
             if (StringUtils.isBlank(((RawAnnotationBean) annot).getEcoId())) {
                 log.error("Missing ECO ID in annotation {}", annot);
-                this.incorrectFormat.add(annot);
+                incorrectFormat.add(annot);
                 allGood = false;
             } else if (!(annot instanceof CuratorAnnotationBean) && 
                     !((RawAnnotationBean) annot).getEcoId().trim().equals(
@@ -1944,12 +1949,12 @@ public class SimilarityAnnotation {
                 //fields in all annotations but curator annotations should have 
                 //been trimmed
                 log.error("ECO ID not trimmed in annotation {}", annot);
-                this.incorrectFormat.add(annot);
+                incorrectFormat.add(annot);
                 allGood = false;
             }
             if (StringUtils.isBlank(((RawAnnotationBean) annot).getAssignedBy())) {
                 log.error("Missing assigned by info in annotation {}", annot);
-                this.incorrectFormat.add(annot);
+                incorrectFormat.add(annot);
                 allGood = false;
             } else if (!(annot instanceof CuratorAnnotationBean) && 
                     !((RawAnnotationBean) annot).getAssignedBy().trim().equals(
@@ -1957,7 +1962,7 @@ public class SimilarityAnnotation {
                 //fields in all annotations but curator annotations should have 
                 //been trimmed
                 log.error("Assigned by not trimmed in annotation {}", annot);
-                this.incorrectFormat.add(annot);
+                incorrectFormat.add(annot);
                 allGood = false;
             }
 
@@ -1967,12 +1972,12 @@ public class SimilarityAnnotation {
 
                 if (((RawAnnotationBean) annot).getCurationDate() == null) {
                     log.error("Missing date in annotation {}", annot);
-                    this.incorrectFormat.add(annot);
+                    incorrectFormat.add(annot);
                     allGood = false;
                 }
                 if (StringUtils.isBlank(((RawAnnotationBean) annot).getCurator())) {
                     log.error("Missing curator info in annotation {}", annot);
-                    this.incorrectFormat.add(annot);
+                    incorrectFormat.add(annot);
                     allGood = false;
                 } else if (!(annot instanceof CuratorAnnotationBean) && 
                         !((RawAnnotationBean) annot).getCurator().trim().equals(
@@ -1980,33 +1985,33 @@ public class SimilarityAnnotation {
                     //fields in all annotations but curator annotations should have 
                     //been trimmed
                     log.error("Curator not trimmed in annotation {}", annot);
-                    this.incorrectFormat.add(annot);
+                    incorrectFormat.add(annot);
                     allGood = false;
                 }
                 String refId = ((RawAnnotationBean) annot).getRefId();
                 if (StringUtils.isBlank(refId) || !refId.matches("\\S+?:\\S+")) {
                     log.error("Incorrect reference ID {} in annotation {}", refId, annot);
-                    this.incorrectFormat.add(annot);
+                    incorrectFormat.add(annot);
                     allGood = false;
                 } else if (!(annot instanceof CuratorAnnotationBean) && 
                         !(refId.trim().equals(refId))) {
                     //fields in all annotations but curator annotations should have 
                     //been trimmed
                     log.error("Ref ID not trimmed in annotation {}", annot);
-                    this.incorrectFormat.add(annot);
+                    incorrectFormat.add(annot);
                     allGood = false;
                 }
                 String refTitle = ((RawAnnotationBean) annot).getRefTitle();
                 if (StringUtils.isBlank(refTitle)) {
                     log.error("Missing reference title in annotation {}", annot);
-                    this.incorrectFormat.add(annot);
+                    incorrectFormat.add(annot);
                     allGood = false;
                 } else if (!(annot instanceof CuratorAnnotationBean) && 
                         !(refTitle.trim().equals(refTitle))) {
                     //fields in all annotations but curator annotations should have 
                     //been trimmed
                     log.error("Ref title not trimmed in annotation {}", annot);
-                    this.incorrectFormat.add(annot);
+                    incorrectFormat.add(annot);
                     allGood = false;
                 }
             }
@@ -2018,7 +2023,7 @@ public class SimilarityAnnotation {
             String ecoName = ((RawAnnotationBean) annot).getEcoLabel();
             if (StringUtils.isBlank(ecoName)) {
                 log.error("Missing ECO name in annotation {}", annot);
-                this.incorrectFormat.add(annot);
+                incorrectFormat.add(annot);
                 allGood = false;
             } else if (!(annot instanceof CuratorAnnotationBean) && 
                     !((RawAnnotationBean) annot).getEcoLabel().trim().equals(
@@ -2026,7 +2031,7 @@ public class SimilarityAnnotation {
                 //fields in all annotations but curator annotations should have 
                 //been trimmed
                 log.error("ECO label not trimmed in annotation {}", annot);
-                this.incorrectFormat.add(annot);
+                incorrectFormat.add(annot);
                 allGood = false;
             }
         }
@@ -2035,7 +2040,7 @@ public class SimilarityAnnotation {
         if (annot instanceof SummaryAnnotationBean) {
             if (((SummaryAnnotationBean) annot).getUnderlyingAnnotCount() <= 0) {
                 log.error("Missing underlying annotation count in annotation {}", annot);
-                this.incorrectFormat.add(annot);
+                incorrectFormat.add(annot);
                 allGood = false;
             }
         }
@@ -2057,12 +2062,12 @@ public class SimilarityAnnotation {
                     (cls == null || 
                             taxOntWrapper.isObsolete(cls) || taxOntWrapper.getIsObsolete(cls))) {
                 log.error("Unrecognized taxon ID {} in annotation {}", taxonId, annot);
-                this.missingTaxonIds.add(taxonId);
+                missingTaxonIds.add(taxonId);
                 allGood = false;
             } else if (StringUtils.isNotBlank(annot.getTaxonName()) && 
                     !taxOntWrapper.getLabel(cls).equals(annot.getTaxonName())) {
                 log.error("Incorrect taxon name in annotation {}", annot);
-                this.incorrectFormat.add(annot);
+                incorrectFormat.add(annot);
                 allGood = false;
             }
         }
@@ -2077,13 +2082,13 @@ public class SimilarityAnnotation {
             if (cls == null || 
                     uberonOntWrapper.isObsolete(cls) || uberonOntWrapper.getIsObsolete(cls)) {
                 log.trace("Unrecognized Uberon ID {} in annotation {}", uberonId, annot);
-                this.missingUberonIds.add(uberonId);
+                missingUberonIds.add(uberonId);
                 allGood = false;
             } else if (annot.getEntityNames() != null) {
                 //check that we have the proper Uberon name in the correct order
                 if (!uberonOntWrapper.getLabel(cls).equals(annot.getEntityNames().get(i))) {
                     log.error("Incorrect entity label or label order in annotation {}", annot);
-                    this.incorrectFormat.add(annot);
+                    incorrectFormat.add(annot);
                     allGood = false;
                 }
             }
@@ -2091,14 +2096,14 @@ public class SimilarityAnnotation {
                 Set<Integer> existsIntaxa = taxonConstraints.get(uberonId);
                 if (existsIntaxa == null) {
                     log.error("Unrecognized Uberon ID {} in annotation {}", uberonId, annot);
-                    this.missingUberonIds.add(uberonId);
+                    missingUberonIds.add(uberonId);
                     allGood = false;
                 } else if (!existsIntaxa.contains(taxonId)) {
                     log.error("Uberon ID {} does not exist in taxa {}", uberonId, taxonId);
-                    if (this.idsNotExistingInTaxa.get(uberonId) == null) {
-                        this.idsNotExistingInTaxa.put(uberonId, new HashSet<Integer>());
+                    if (idsNotExistingInTaxa.get(uberonId) == null) {
+                        idsNotExistingInTaxa.put(uberonId, new HashSet<Integer>());
                     }
-                    this.idsNotExistingInTaxa.get(uberonId).add(taxonId);
+                    idsNotExistingInTaxa.get(uberonId).add(taxonId);
                     allGood = false;
                 }
             }
@@ -2110,12 +2115,12 @@ public class SimilarityAnnotation {
             if (cls == null || 
                     homOntWrapper.isObsolete(cls) || homOntWrapper.getIsObsolete(cls)) {
                 log.trace("Unrecognized HOM ID {} in annotation {}", homId, annot);
-                this.missingHOMIds.add(homId);
+                missingHOMIds.add(homId);
                 allGood = false;
             } else if (StringUtils.isNotBlank(annot.getHomLabel()) && 
                     !homOntWrapper.getLabel(cls).equals(annot.getHomLabel())) {
                 log.error("Incorrect HOM label in annotation {}", annot);
-                this.incorrectFormat.add(annot);
+                incorrectFormat.add(annot);
                 allGood = false;
             }
         }
@@ -2126,20 +2131,20 @@ public class SimilarityAnnotation {
             if (cls == null || 
                     cioGraphWrapper.isObsolete(cls) || cioGraphWrapper.getIsObsolete(cls)) {
                 log.trace("Unrecognized CONF ID {} in annotation {}", confId, annot);
-                this.missingCONFIds.add(confId);
+                missingCONFIds.add(confId);
                 allGood = false;
             } else {
                 if (StringUtils.isNotBlank(annot.getCioLabel()) && 
                         !cioGraphWrapper.getLabel(cls).equals(annot.getCioLabel())) {
                     log.error("Incorrect CIO label in annotation {}", annot);
-                    this.incorrectFormat.add(annot);
+                    incorrectFormat.add(annot);
                     allGood = false;
                 }
                 if (!cioWrapper.isStronglyConflicting(cls) && 
                         !cioWrapper.hasLeafConfidenceLevel(cls)) {
                     log.error("The CIO term used does not provide any confidence level, nor it is a strongly conflciting statement, in annotation {}", 
                             confId, annot);
-                    this.incorrectFormat.add(annot);
+                    incorrectFormat.add(annot);
                     allGood = false;
                 }
                 if (annot instanceof CuratorAnnotationBean || annot instanceof RawAnnotationBean) {
@@ -2147,7 +2152,7 @@ public class SimilarityAnnotation {
                             cioWrapper.getEvidenceConcordance(cls))) {
                         log.error("A RAW annotation uses a confidence statement not from the single evidence branch {} in annotation {}", 
                                 confId, annot);
-                        this.incorrectFormat.add(annot);
+                        incorrectFormat.add(annot);
                         allGood = false;
                     }
                 }
@@ -2156,7 +2161,7 @@ public class SimilarityAnnotation {
                             ((SummaryAnnotationBean) annot).isTrusted()) {
                         log.error("Inconsistent trust state for CIO statement {} in annotation {}", 
                                 confId, annot);
-                        this.incorrectFormat.add(annot);
+                        incorrectFormat.add(annot);
                         allGood = false;
                     }
                 }
@@ -2164,7 +2169,7 @@ public class SimilarityAnnotation {
                         cioWrapper.isBgeeNotTrustedStatement(cls)) {
                     log.error("Only trusted annotations should be used for ancestral taxon file in annotation {}", 
                             annot);
-                    this.incorrectFormat.add(annot);
+                    incorrectFormat.add(annot);
                     allGood = false;
                 }
             }
@@ -2176,18 +2181,29 @@ public class SimilarityAnnotation {
                 if (cls == null || 
                         ecoOntWrapper.isObsolete(cls) || ecoOntWrapper.getIsObsolete(cls)) {
                     log.error("Unrecognized ECO ID {} in annotation {}", ecoId, annot);
-                    this.missingECOIds.add(ecoId);
+                    missingECOIds.add(ecoId);
                     allGood = false;
                 } else if (StringUtils.isNotBlank(((RawAnnotationBean) annot).getEcoLabel()) && 
                         !ecoOntWrapper.getLabel(cls).equals(
                                 ((RawAnnotationBean) annot).getEcoLabel())) {
                     log.error("Incorrect ECO label in annotation {}", annot);
-                    this.incorrectFormat.add(annot);
+                    incorrectFormat.add(annot);
                     allGood = false;
                 }
             }
         }
         
+        // According to storeErrors, we add errors to global variables
+        if (storeErrors) {
+            this.missingUberonIds.addAll(missingUberonIds);
+            this.missingTaxonIds.addAll(missingTaxonIds);
+            this.missingECOIds.addAll(missingECOIds);
+            this.missingHOMIds.addAll(missingHOMIds);
+            this.missingCONFIds.addAll(missingCONFIds);
+            this.incorrectFormat.addAll(incorrectFormat);
+            this.idsNotExistingInTaxa.putAll(idsNotExistingInTaxa);
+        }
+
         return log.exit(allGood);
     }
 
@@ -2473,7 +2489,7 @@ public class SimilarityAnnotation {
     }
     
     /**
-     * Reinit the errors stored following a call to {@link verifyErrors()}.
+     * Reinit the errors stored following a call to {@link #verifyErrors()}.
      */
     private void reinitErrors() {
         log.entry();
@@ -2496,7 +2512,7 @@ public class SimilarityAnnotation {
      * (see {@link #generateInferredAnnotations(Collection)}); iii) create 
      * {@code RawAnnotationBean}s with correct label information and ordered entity IDs; 
      * iv) check the validity of the {@code RawAnnotationBean}s generated; v) sort these 
-     * {@code RawAnnotationBean}s (see {@link #sortAnnotations(List)}).
+     * {@code RawAnnotationBean}s (see {@link SimilarityAnnotationUtils#ANNOTATION_BEAN_COMPARATOR}).
      * 
      * @param annots    A {@code Collection} of {@code CuratorAnnotationBean}s, representing 
      *                  annotations from curators, to use to generate derived 
@@ -2710,7 +2726,13 @@ public class SimilarityAnnotation {
                 this.inferAnnotationsFromTransformationOf(annots);
         inferredAnnots.addAll(this.inferAnnotationsFromLogicalConstraints(annots));
         
-        return log.exit(inferredAnnots);
+        // We don't want to keep incorrect inferred annotations 
+        log.info("Following ERRORs are for discarded inferred annotations");
+        Set<CuratorAnnotationBean> filteredInferredAnnots = inferredAnnots.stream()
+                .filter(a -> checkAnnotation(a, null, false))
+                .collect(Collectors.toSet());
+        log.info("End of ERRORs are for discarded inferred annotations");
+        return log.exit(filteredInferredAnnots);
     }
     
     /**
@@ -3918,7 +3940,7 @@ public class SimilarityAnnotation {
      * summary annotations. Notably, this method will: i) verify the validity of the provided 
      * annotations (see {@link #checkAnnotations(Collection, boolean)}); ii) create summary annotations;
      * iii) check the validity of the {@code SummaryAnnotationBean}s generated; iv) sort these 
-     * {@code SummaryAnnotationBean}s (see {@link #sortAnnotations(List)}).
+     * {@code SummaryAnnotationBean}s (see {@link SimilarityAnnotationUtils#ANNOTATION_BEAN_COMPARATOR}).
      * 
      * @param annots    A {@code Collection} of {@code RawAnnotationBean}s to aggregate 
      *                  to generate {@code SummaryAnnotationBean}s. 
@@ -4183,7 +4205,7 @@ public class SimilarityAnnotation {
      * annotations (see {@link #checkAnnotations(Collection, boolean)}); ii) identify ancestral taxa 
      * annotations; iii) check the validity of the {@code AncestralTaxaAnnotationBean}s 
      * generated; iv) sort these {@code AncestralTaxaAnnotationBean}s (see 
-     * {@link #sortAnnotations(List)}).
+     * {@link SimilarityAnnotationUtils#ANNOTATION_BEAN_COMPARATOR}).
      * 
      * @param annots    A {@code Collection} of {@code SummaryAnnotationBean}s to use 
      *                  to identify valid annotations to ancestral taxa. 

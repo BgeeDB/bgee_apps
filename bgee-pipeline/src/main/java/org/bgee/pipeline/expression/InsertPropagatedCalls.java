@@ -248,9 +248,11 @@ public class InsertPropagatedCalls extends CallService {
         /**
          * Default constructor.
          * 
-         * @param callTOs                   A {@code Stream} of {@code T}s that is the stream of calls.
-         * @param experimentExpTOStreams    A {@code Set} of {@code Stream}s that are are 
-         *                                     the {@code ExperimentExpressionTO}s streams.
+         * @param callTOs                       A {@code Stream} of {@code T}s that is the stream of calls.
+         * @param experimentExprTOsByDataType   A {@code Map} where keys are {@code DataType}s 
+         *                                      defining data types, the associated value being a 
+         *                                      {@code Stream} of {@code ExperimentExpressionTO}s 
+         *                                      defining experiment expression.
          */
         public CallSpliterator(Stream<RawExpressionCallTO> callTOs, 
                 Map<DataType, Stream<ExperimentExpressionTO>> experimentExprTOsByDataType) {
@@ -946,11 +948,11 @@ public class InsertPropagatedCalls extends CallService {
 
         /**
          * 
-         * @param propagatedCalls       A {@code Set} of {@code PipelineCall}s that are all the calls
-         *                              for one gene.
-         * @param insertedConditions    A {@code Set} of {@code Condition}s already inserted
-         *                              into the database.
-         * @param condDAO               A {@code ConditionDAO} to perform the insertions.
+         * @param propagatedCalls           A {@code Set} of {@code PipelineCall}s that are 
+         *                                  all the calls for one gene.
+         * @param insertedGlobalConditions  A {@code Set} of {@code Condition}s already inserted
+         *                                  into the database.
+         * @param condDAO                   A {@code ConditionDAO} to perform the insertions.
          * @return  A {@code Map} containing only newly inserted {@code Condition}s as keys, 
          *          associated to their corresponding {@code Integer} ID.
          */
@@ -1619,8 +1621,9 @@ public class InsertPropagatedCalls extends CallService {
 
     /**
      * Method rethrowing any {@code Exception} as a {@code RuntimeException} and storing
-     * it in {@link #errorOccurred} and notifying {@link #insertThread} that an error occurred.
+     * it in {@link #errorOccured} and notifying {@link #insertThread} that an error occurred.
      * @param e
+     * @param insertThread
      * @throws RuntimeException
      */
     private void exceptionOccurs(Exception e, Thread insertThread) throws RuntimeException {
@@ -2140,12 +2143,12 @@ public class InsertPropagatedCalls extends CallService {
     }
     
     /** 
-     * Reconcile a pipeline call. 
+     * Reconcile several pipeline calls into one pipeline call.
      * <p>
-     * Return the representative {@code ExpressionCall} (with reconciled quality per data types,
+     * Return the representative {@code PipelineCall} (with reconciled quality per data types,
      * observed data state, conflict status etc.
      * 
-     * @param call          A {@code PipelineCall} that is the call to be reconciled.
+     * @param calls         A {@code Set} of {@code PipelineCall}s that are the calls to be reconciled.
      * @param pipelineData  A {@code Set} of {@code PipelineCallData} that are the pipeline call data
      *                      to be used for reconciliation.
      * @return              The representative {@code ExpressionCall}.
@@ -2235,9 +2238,6 @@ public class InsertPropagatedCalls extends CallService {
      * @param dataType          A {@code DataType} that is the data type of {@code pipelineCallData}.
      * @param pipelineCallData  A {@code Set} of {@code PipelineCallData} to be used to
      *                          build the {@code ExpressionCallData}.
-     * @param selfSourceCallTO  The {@code RawExpressionCallTO} corresponding to the unpropagated call
-     *                          for the {@code PipelineCall} being merged. Allows to retrieve ranks.
-     *                          {@code null} if the {@code PipelineCall} being merged is based only 
      *                          on propagated data.
      */
     private ExpressionCallData mergePipelineCallDataIntoExpressionCallData(DataType dataType,

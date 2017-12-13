@@ -99,7 +99,7 @@ public class CallService extends CommonService {
      * <li>{@code DEV_STAGE_ID}: corresponds to {@link Condition#getDevStageId()} from {@link Call#getCondition()}.
      * <li>{@code CALL_TYPE}: corresponds to {@link Call#getSummaryCallType()}.
      * <li>{@code DATA_QUALITY}: corresponds to {@link Call#getSummaryQuality()}.
-     * <li>{@code OBSERVED_DATA}: corresponds to {@link Call#getPropagationState()}.
+     * <li>{@code OBSERVED_DATA}: corresponds to {@link Call#getDataPropagation()}.
      * <li>{@code GLOABAL_MEAN_RANK}: corresponds to {@link ExpressionCall#getGlobalMeanRank()}.
      * <li>{@code EXPERIMENT_COUNTS}: corresponds to {@link Call#getCallData()} with experiment
      * expression <strong>total</strong> and <strong>self</strong> counts populated per data type
@@ -334,12 +334,14 @@ public class CallService extends CommonService {
     //*************************************************************************
     /**
      * 
-     * @param species
-     * @param condParamCombination  A {@code Set} of {@code ConditionDAO.Attribute}s defining
+     * @param species               A {@code Collection} of {@code Species}s that are the species 
+     *                              allowing to filter the conditions to retrieve. If {@code null}
+     *                              or empty, condition for all species are retrieved.
+     * @param condParamCombination  A {@code Collection} of {@code ConditionDAO.Attribute}s defining
      *                              the combination of condition parameters that were requested
      *                              for queries, allowing to determine which condition and expression
      *                              results to target.
-     * @param conditionDAOAttrs     A {@code Set} of {@code ConditionDAO.Attribute}s defining
+     * @param conditionDAOAttrs     A {@code Collection} of {@code ConditionDAO.Attribute}s defining
      *                              the attributes to populate in the retrieved {@code ConditionTO}s,
      *                              and thus, in the returned {@code Condition}s.
      *                              If {@code null} or empty, then all attributes are retrieved.

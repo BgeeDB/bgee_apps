@@ -508,8 +508,6 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     }
 
     /**
-     * @param nbCalled  An {@code int} that is the different number every time
-     *                  this method is called per page!
      * @return          the {@code String} that is the HTML code of the Contact link.
      */
     //TODO move javascript in common.js

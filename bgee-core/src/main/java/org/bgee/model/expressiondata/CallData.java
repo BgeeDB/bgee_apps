@@ -22,7 +22,7 @@ import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DiffExpressionFactor;
 
 /**
- * A {@code CallData} represents the expression state of a {@link Gene} in a {@link Condition}
+ * A {@code CallData} represents the expression state of a {@link org.bgee.model.gene.Gene} in a {@link Condition}
  * computed from a specific {@code DataType}, as part of a {@link Call}. 
  * This class only manages the expression state part, not the spatio-temporal location, 
  * or gene definition part. It represents the expression state of a baseline present/absent call, 
@@ -141,9 +141,8 @@ public abstract class CallData<T extends Enum<T> & CallType> {
          * A {@code Map} where keys are {@code DataType}s, the associated value being
          * a {@code Set} of {@code ExperimentExpressionCount}s that are all the types
          * of {@code ExperimentExpressionCount}s that must be associated to this {@code DataType}.
-         * {@link org.bgee.model.expressiondata.baseelements.ExperimentExpressionCount#getExperimentCount() 
-         * ExperimentExpressionCount.getExperimentCount()} returns 0 for all
-         * {@code ExperimentExpressionCount}s in these {@code Set}s.
+         * {@link ExperimentExpressionCount#getCount()} ExperimentExpressionCount.getCount()}
+         * returns 0 for all {@code ExperimentExpressionCount}s in these {@code Set}s.
          */
         private static final Map<DataType, Set<ExperimentExpressionCount>> VALID_EXP_COUNTS = 
             //we go through all combinations of DataType, CallType.Expression,
@@ -167,7 +166,7 @@ public abstract class CallData<T extends Enum<T> & CallType> {
          * Computes the {@code CallType.Expression} that the {@code ExperimentExpressionCount}s
          * of this {@code CallData} allow to produce.
          * 
-         * @param counts    A {@code Set} of {@code ExperimentExpressionCount}s producing
+         * @param expCounts A {@code Set} of {@code ExperimentExpressionCount}s producing
          *                  the {@code CallType.Expression}.
          * @return          The {@code CallType.Expression} inferred.
          * @throws IllegalArgumentException If {@code expCounts} do not allow to produce

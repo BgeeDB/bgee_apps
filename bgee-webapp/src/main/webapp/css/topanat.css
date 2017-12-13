@@ -360,7 +360,7 @@ textarea {
 /* bootstrap btn class not properly working on a tag, while it should */
 a.btn {
   text-decoration: none !important;
-  color:#ffffff !important;
+  color: #333333 !important;
 }
 
 #input-submit {

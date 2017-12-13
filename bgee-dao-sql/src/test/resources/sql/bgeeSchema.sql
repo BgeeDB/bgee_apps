@@ -550,7 +550,7 @@ create table cond (
 -- 'NA', 'not annotated', 'wild-type', 'confidential_restricted_data'.
 -- This should be improved in a further release (free-text is hardly satisfiable).
     strain varchar(100) not null default 'not annotated'
-    COMMENT 'Strain information. NA: not available from source information; not annotated: information not captured by Bgee; confidential_restricted_data: information cannot be disclosed publicly. Note that all conditions used in the expression tables have "NA", "not annotated" and "confidential_restricted_data" replaced with "wild-type"',
+    COMMENT 'Strain information. NA: not available from source information; not annotated: information not captured by Bgee; confidential_restricted_data: information cannot be disclosed publicly. Note that all conditions used in the expression tables have "NA", "not annotated" and "confidential_restricted_data" replaced with "wild-type"'
 ) engine = innodb COMMENT 'This table stores the "raw" conditions used to annotate data and used in the "raw" expression table, where data are not propagated nor precomputed';
 
 create table globalCond (
@@ -1132,7 +1132,7 @@ create table deaRNASeqSummary (
 create table expression (
     expressionId int unsigned not null COMMENT 'Internal expression ID, not stable between releases.',
     bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID, not stable between releases.',
-    conditionId mediumint unsigned not null COMMENT 'ID of condition in the related condition table ("cond"), not stable between releases.',
+    conditionId mediumint unsigned not null COMMENT 'ID of condition in the related condition table ("cond"), not stable between releases.'
 ) engine = innodb
 comment = 'This table is a summary of expression calls for a given gene-condition (anatomical entity - developmental stage - sex- strain), over all the experiments and data types, with no propagation nor experiment expression summary.';
 

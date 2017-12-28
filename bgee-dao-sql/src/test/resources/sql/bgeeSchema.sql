@@ -952,7 +952,7 @@ create table rnaSeqResult (
 -- rank is not "not null" because we update this information afterwards
     rank decimal(9, 2) unsigned,
 -- for information, measure not normalized for reads or genes lengths
-    readsCount int unsigned not null,
+    readsCount decimal(16, 4) unsigned not null,
     expressionId int unsigned,
     detectionFlag enum('undefined', 'absent', 'present') default 'undefined',
 -- Warning, qualities must be ordered, the index in the enum is used in many queries.

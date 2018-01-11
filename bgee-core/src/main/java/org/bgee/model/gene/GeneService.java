@@ -99,10 +99,10 @@ public class GeneService extends Service {
     	Set<Gene> result = getDaoManager().getGeneDAO()
     			.getGenesByIds(geneIds).stream().map(GeneService::mapFromTO).collect(Collectors.toSet());
     	
-    	// there should be exactly one result here.
-    	if (result == null || result.size() != 1) {
-        	throw log.throwing(new IllegalStateException("Shoud get 1 element here" + result));
+    	if (result == null || result.isEmpty()) {
+        	return log.exit(null);
     	}
+    	assert result.size() == 1: "Requested 1 gene should get 1 gene";
     	Gene gene = result.iterator().next();
     	Set<String> speciesIds = new HashSet<>();
     	assert gene.getSpeciesId() != null;

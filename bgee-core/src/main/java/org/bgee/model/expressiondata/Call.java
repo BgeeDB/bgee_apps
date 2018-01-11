@@ -16,7 +16,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
@@ -758,22 +757,40 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             return log.exit(calls.get((size - 1)/2).getGlobalMeanRank().doubleValue());
         }
         
-        
         /**
-         * A {@code Function} accepting a {@code BigDecimal} and returning a formatted {@code String}. 
-         * It is more convenient than directly using a {@code NumberFormat}, as we might need 
-         * additional formatting operation. It is not taken into account for equals/hashCode.
+         * A {@code NumberFormat} to format rank scores less than 10.
          */
-        private static final Function<BigDecimal, String> FORMATTER = d -> {
+        private static final NumberFormat FORMAT1 = getNumberFormat(1);
+        /**
+         * A {@code NumberFormat} to format rank scores less than 100.
+         */
+        private static final NumberFormat FORMAT10 = getNumberFormat(10);
+        /**
+         * A {@code NumberFormat} to format rank scores less than 1000.
+         */
+        private static final NumberFormat FORMAT100 = getNumberFormat(100);
+        /**
+         * A {@code NumberFormat} to format rank scores greater than or equal to 1000.
+         */
+        private static final NumberFormat FORMAT1000 = getNumberFormat(1000);
+        /**
+         * @param max   An {@code int} to retrieve a {@code NumberFormat} managing values 
+         *              less than 10, or less than 100, or less than 1000, or greater than 
+         *              or equal to 10000.
+         * @return      A {@code NumberFormat} parameterized for formatting rank scores 
+         *              of the appropriate range.
+         */
+        private static final NumberFormat getNumberFormat(int max) {
+            log.entry(max);
             NumberFormat formatter = NumberFormat.getInstance(Locale.US);
             formatter.setRoundingMode(RoundingMode.HALF_UP);
-            if (d.compareTo(new BigDecimal(10)) < 0) {
+            if (max < 10) {
                 formatter.setMaximumFractionDigits(2);
                 formatter.setMinimumFractionDigits(2);
-            } else if (d.compareTo(new BigDecimal(100)) < 0) {
+            } else if (max < 100) {
                 formatter.setMaximumFractionDigits(1);
                 formatter.setMinimumFractionDigits(1);
-            } else if (d.compareTo(new BigDecimal(1000)) < 0) {
+            } else if (max < 1000) {
                 formatter.setMaximumFractionDigits(0);
                 formatter.setMinimumFractionDigits(0);
             } else if (formatter instanceof DecimalFormat) {
@@ -781,9 +798,8 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             } else {
                 throw log.throwing(new AssertionError("No formatter could be defined"));
             }
-            //1E2 to 1e2
-            return formatter.format(d).toLowerCase(Locale.ENGLISH);
-        };
+            return log.exit(formatter);
+        }
 
 
         //*******************************************
@@ -829,7 +845,19 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             if (this.globalMeanRank == null) {
                 throw log.throwing(new IllegalStateException("No rank was provided for this call."));
             }
-            return log.exit(FORMATTER.apply(this.globalMeanRank));
+            NumberFormat formatter = null;
+            //start with values over 1000, more chances to have a match
+            if (this.globalMeanRank.compareTo(new BigDecimal(1000)) >= 0) {
+                formatter = FORMAT1000;
+            } else if (this.globalMeanRank.compareTo(new BigDecimal(10)) < 0) {
+                formatter = FORMAT1;
+            } else if (this.globalMeanRank.compareTo(new BigDecimal(100)) < 0) {
+                formatter = FORMAT10;
+            } else if (this.globalMeanRank.compareTo(new BigDecimal(1000)) < 0) {
+                formatter = FORMAT100;
+            }
+            //1E2 to 1e2
+            return log.exit(formatter.format(this.globalMeanRank).toLowerCase(Locale.ENGLISH));
         }
         
         @Override

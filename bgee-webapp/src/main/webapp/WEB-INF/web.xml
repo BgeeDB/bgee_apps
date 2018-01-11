@@ -144,7 +144,7 @@
 
     <!-- Filter for topanat-dev, enabling cross-domain queries 
          (will make local development easier) -->
-    <!-- 
+    <!--
     <filter>
         <filter-name>CORS</filter-name>
         <filter-class>com.thetransactioncompany.cors.CORSFilter</filter-class>
@@ -155,4 +155,4 @@
     </filter-mapping>
     -->
 
-</web-app>  
+</web-app>

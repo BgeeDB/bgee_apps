@@ -11,7 +11,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.management.modelmbean.XMLParseException;
 import javax.xml.stream.XMLStreamException;
@@ -124,8 +123,6 @@ public class ParseOrthoXML extends MySQLDAOUser {
      * 
      * @see #loadGeneIdsFromDb()
      */
-    //FIXME: maybe we need two maps here: one Map<Gene, Integer> to associate Gene to its bgeeGeneId,
-    //and one map Map<String, Set<Gene>> to associate an Ensembl ID to its relates genes
     private Map<String, Set<GeneTO>> ensemblIdToBgeeGeneTOs;
     private Map<Integer, String> bgeeIdToEnsemblId;
 
@@ -389,8 +386,6 @@ public class ParseOrthoXML extends MySQLDAOUser {
         GeneDAO dao = this.getGeneDAO();
         try (GeneTOResultSet rsGenes = dao.getAllGenes()) {
             while (rsGenes.next()) {
-                //FIXME: does not work with Ensembl IDs used in multiple species
-                //if one ensembl gene Id is mapped to other species
                 GeneTO geneTO = rsGenes.getTO();
                 if (this.ensemblIdToBgeeGeneTOs.containsKey(geneTO.getGeneId())){
                     ensemblIdToBgeeGeneTOs.get(geneTO.getGeneId()).add(geneTO);
@@ -679,19 +674,11 @@ public class ParseOrthoXML extends MySQLDAOUser {
     //XXX: could you remind me why we need this?
     private void addHierarchicalGroupToGeneTO(String taxonId, List<Gene> genes, Integer omaNodeId) {
         log.entry(taxonId, omaNodeId, genes);
-//        log.debug("try to add new HierarchicalGroupToGeneTO");
         if(taxonId != null && genes != null && omaNodeId != null){
-//            log.debug("genes corresponding to {} taxon level and {} OMA node are : {}",taxonId, omaNodeId, genes.stream().map(g -> g.getGeneIdentifier()).collect(Collectors.toSet()));
             for(Gene groupGene : genes){
                 for (String omaGeneId : retrieveSplittedGeneIdentifier(groupGene)) {
-                    
-    //                Integer bgeeGeneId = ensemblIdToBgeeGeneTOs.get(gene.getGeneIdentifier()).stream()
-    //                    .filter(gto -> gto.getSpeciesId() == gene.getSpecies().getNcbiTaxId())
-    //                    .map(gto -> gto.getId())
-    //                    .findFirst().get();
                     if(ensemblIdToBgeeGeneTOs.containsKey(omaGeneId)){
                         for(GeneTO geneTO:ensemblIdToBgeeGeneTOs.get(omaGeneId)){
-//                            log.debug("add gene {}",geneTO.getGeneId()+" -> "+geneTO.getId());
                             this.hierarchicalGroupToGeneTOs.add(new HierarchicalGroupToGeneTO(
                                     omaNodeId, geneTO.getId(), 
                                     Integer.valueOf(taxonId)));
@@ -700,7 +687,6 @@ public class ParseOrthoXML extends MySQLDAOUser {
                 }
             }
         }
-//        log.debug("end to add new HierarchicalGroupToGeneTO");
     }
 
     /**

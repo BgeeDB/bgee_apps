@@ -48,7 +48,9 @@ import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
+import org.semanticweb.owlapi.model.parameters.ChangeApplied;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
+import org.semanticweb.owlapi.util.OWLEntityRemover;
 import org.supercsv.cellprocessor.FmtBool;
 import org.supercsv.cellprocessor.ParseBool;
 import org.supercsv.cellprocessor.constraint.NotNull;
@@ -142,14 +144,6 @@ public class TaxonConstraints {
      *   to generate the taxon constraints, corresponding to the NCBI ID (e.g., 9606 
      *   for human). The first line should be a header line, defining a column to get 
      *   IDs from, named exactly "taxon ID" (other columns are optional and will be ignored).
-     *   <li>path to a version of the Uberon ontology different to the one 
-     *   containing taxon constraints. The taxon constraints will be produced 
-     *   for the classes present in this ontology. If equal to {@link CommandRunner#EMPTY_ARG}, 
-     *   then the Uberon ontology containing taxon constraints will be used. 
-     *   <li>A {@code Map} to potentially override taxon constraints, see {@link 
-     *   org.bgee.pipeline.CommandRunner#parseMapArgumentAsInteger(String)} to see 
-     *   how to provide it. Can be empty (see {@link CommandRunner#EMPTY_LIST}). Example 
-     *   of command line argument: {@code EV:/9606,MA:/10090}.
      *   <li>a map specifying whether the ontology should first be simplified in several steps 
      *   before generating the constraints, for some taxa. Keys should be the NCBI IDs 
      *   of taxa for which constraints will be requested, values should be a list 
@@ -163,6 +157,14 @@ public class TaxonConstraints {
      *   values must be separated by {@link CommandRunner#VALUE_SEPARATOR}. 
      *   Example of command line argument: 
      *   {@code 7712/7742--89593,6040/7742--89593--33511--33213--6072}.
+     *   <li>path to a version of the Uberon ontology different to the one 
+     *   containing taxon constraints. The taxon constraints will be produced 
+     *   for the classes present in this ontology. If equal to {@link CommandRunner#EMPTY_ARG}, 
+     *   then the Uberon ontology containing taxon constraints will be used. 
+     *   <li>A {@code Map} to potentially override taxon constraints, see {@link 
+     *   org.bgee.pipeline.CommandRunner#parseMapArgumentAsInteger(String)} to see 
+     *   how to provide it. Can be empty (see {@link CommandRunner#EMPTY_LIST}). Example 
+     *   of command line argument: {@code EV:/9606,MA:/10090}.
      *   <li>path to the generated TSV file, output of the method.
      *   <li>OPTIONNAL: a path to a directory where to store the intermediate generated 
      *   ontologies. If this parameter is provided, an ontology will be generated 
@@ -287,7 +289,7 @@ public class TaxonConstraints {
      * ontology, allowing to generate or retrieve taxon constraints. 
      * If it is requested to generate constraints, a default {@code SpeciesSubsetterUtil} 
      * will be used (see 
-     * {@link #TaxonConstraints(OWLGraphWrapper, OWLGraphWrapper, SpeciesSubsetterUtil)}).
+     * {@link #TaxonConstraints(OWLGraphWrapper, OWLGraphWrapper, Function)}).
      * 
      * @param uberonFile    A {@code String} that is the path to the Uberon ontology.
      * @param taxOntFile    A {@code String} that is the path to the taxonomy ontology.
@@ -363,8 +365,9 @@ public class TaxonConstraints {
      */
     private void prepareUberon() throws OWLOntologyCreationException {
         log.entry();
+        log.info("Merging Uberon and taxonomy ontology...");
         //we need to merge the import closure, otherwise the classes in the imported ontologies 
-        //will be seen by the method #getAllOWLClasses(), but not by the reasoner.
+        //will be seen by the method #getAllRealOWLClasses(), but not by the reasoner.
         this.uberonOntWrapper.mergeImportClosure(true);
         
         //then, we remove any "is_a" relations and disjoint classes axioms between taxa 
@@ -377,6 +380,7 @@ public class TaxonConstraints {
         this.uberonOntWrapper.mergeOntology(this.taxOntWrapper.getSourceOntology());
         
         this.uberonOntWrapper.clearCachedEdges();
+        log.info("Done merging Uberon and taxonomy ontology.");
         log.exit();
     }
     
@@ -416,7 +420,22 @@ public class TaxonConstraints {
         GenerateTaxonOntology disjointAxiomGenerator = new GenerateTaxonOntology();
         Set<OWLAxiom> axiomsToRemove = new HashSet<OWLAxiom>();
         
-        for (OWLClass taxon: this.taxOntWrapper.getAllOWLClasses()) {
+        Set<OWLClass> taxClasses = this.taxOntWrapper.getAllRealOWLClasses();
+        //first, we identify any taxon present in Uberon but not in our taxonomy. 
+        //we will remove them afterwards (we cannot simply delete everything, otherwise GCI relations 
+        //would be deleted)
+        OWLClass rootTax = this.uberonOntWrapper.getOWLClassByIdentifierNoAltIds(UberonCommon.TAXONOMY_ROOT_ID);
+        Set<OWLClass> taxClassesToRemove = new HashSet<>();
+        if (rootTax != null) {
+            for (OWLClass tax: this.uberonOntWrapper.getDescendantsThroughIsA(rootTax)) {
+                if (!taxClasses.contains(tax)) {
+                    taxClassesToRemove.add(tax);
+                }
+            }
+        }
+        
+        //now, remove axioms related to the taxa in our taxonomy from Uberon
+        for (OWLClass taxon: taxClasses) {
             //check that this taxon exists in Uberon
             if (!uberonOnt.containsClassInSignature(taxon.getIRI())) {
                 continue;
@@ -454,11 +473,23 @@ public class TaxonConstraints {
             }
             
         }
-        int axiomsRemoved = uberonOnt.getOWLOntologyManager().removeAxioms(uberonOnt, 
-                axiomsToRemove).size();
+        ChangeApplied axiomsRemoved = uberonOnt.getOWLOntologyManager().removeAxioms(uberonOnt, 
+                axiomsToRemove);
         
-        log.debug("{} axioms between taxa removed from Uberon.", 
-                axiomsRemoved);
+
+        //finally we remove tax classes present in Uberon not our taxonomy
+        OWLEntityRemover remover = new OWLEntityRemover(this.uberonOntWrapper.getAllOntologies());
+        for (OWLClass uberonTax: taxClassesToRemove) {
+            log.debug("Deleting taxon absent from our taxonomy: {}", uberonTax);
+            uberonTax.accept(remover);
+        }
+        ChangeApplied status = this.uberonOntWrapper.getManager().applyChanges(remover.getChanges());
+        if (status == ChangeApplied.UNSUCCESSFULLY) {
+            throw log.throwing(new IllegalStateException("Could not delete some taxa: " 
+                    + taxClassesToRemove));
+        }
+        
+        log.debug("Axioms between taxa removed from Uberon: {}", axiomsRemoved);
         log.exit();
     }
     /**
@@ -577,11 +608,38 @@ public class TaxonConstraints {
         final Map<Integer, List<Integer>> clonedSteps = 
                 taxaSimplificationSteps == null? new LinkedHashMap<>(): 
                     new LinkedHashMap<>(taxaSimplificationSteps);
+        //Now, we expand the keys of the simplification steps to use the same steps 
+        //for all their sub-taxa
+       Map<Integer, List<Integer>> propagatedSteps = clonedSteps.entrySet().stream().flatMap(e -> {
+            int taxId = e.getKey();
+            OWLClass taxCls = taxOntWrapper.getOWLClassByIdentifier(
+                    OntologyUtils.getTaxOntologyId(taxId), true);
+            if (taxCls == null) {
+                throw log.throwing(new IllegalArgumentException("A taxon provided "
+                        + "in overriding constraints is not present in the taxonomy ontology: "
+                        + taxId));
+            }
+            Map<Integer, List<Integer>> newSteps = taxOntWrapper.getDescendantsThroughIsA(taxCls).stream()
+                    .map(c -> OntologyUtils.getTaxNcbiId(taxOntWrapper.getIdentifier(c)))
+                    //we add the simplification steps to a descendant only if not already defined
+                    .filter(id -> !clonedSteps.containsKey(id))
+                    .collect(Collectors.toMap(id -> id, id -> e.getValue()));
+            newSteps.put(taxId, e.getValue());
+            
+            return newSteps.entrySet().stream();
+        })
+        .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(), 
+                //in case we have several taxa provided on a same lineage, 
+                //we'll have duplicates; we take the longest simplification step, 
+                //although it's not optimal as we can override steps provided as argument
+                (u, v) -> u.size() > v.size()? u: v, 
+                LinkedHashMap::new)
+        );
         //Now, generate a Map associating each taxon in taxonIds to its potential simplification steps.
         //Again, use a LinkedHashMap in case the generation order must be predicatable. 
         Map<Integer, List<Integer>> taxIdsWithSteps = taxonIds.stream()
                 .collect(Collectors.toMap(Function.identity(), 
-                     e -> clonedSteps.get(e) != null? clonedSteps.get(e): new ArrayList<Integer>(), 
+                     e -> propagatedSteps.get(e) != null? propagatedSteps.get(e): new ArrayList<Integer>(), 
                      (u, v) -> {throw new IllegalStateException("Duplicate key: " + u);}, 
                      LinkedHashMap::new));
         
@@ -596,7 +654,7 @@ public class TaxonConstraints {
         if (StringUtils.isNotBlank(completeUberonFile)) {
             refWrapper = new OWLGraphWrapper(OntologyUtils.loadOntology(completeUberonFile));
         }
-        Set<String> refClassIds = refWrapper.getAllOWLClasses().stream()
+        Set<String> refClassIds = refWrapper.getAllRealOWLClasses().stream()
                 .filter(e ->!this.taxOntWrapper.getSourceOntology().containsClassInSignature(e.getIRI()))
                 .map(refWrapper::getIdentifier).collect(Collectors.toSet());
         
@@ -692,7 +750,7 @@ public class TaxonConstraints {
             String storeOntologyDir) throws IllegalArgumentException, IOException, 
             OWLOntologyCreationException, OWLOntologyStorageException {
         log.entry(taxonIds, refClassIds, idStartsToOverridingTaxonIds, storeOntologyDir);
-        log.info("Start generating taxon constraints...");
+        log.info("Start generating taxon constraints: {}", taxonIds);
         
         //if we want to store the intermediate ontologies
         if (storeOntologyDir != null) {
@@ -733,7 +791,7 @@ public class TaxonConstraints {
                 this.taxOntWrapper, idStartsToOverridingTaxonIds);
         //then we get the IDs of all OWLClasses existing in the Uberon ontology 
         //used to generate taxon constraints. 
-        Set<String> existingClassIds = this.uberonOntWrapper.getAllOWLClasses().stream()
+        Set<String> existingClassIds = this.uberonOntWrapper.getAllRealOWLClasses().stream()
                 .filter(e ->!this.taxOntWrapper.getSourceOntology().containsClassInSignature(e.getIRI()))
                 .map(this.uberonOntWrapper::getIdentifier).collect(Collectors.toSet());
         log.trace("Existing OWLClasses in source Uberon ontology: {}", existingClassIds);
@@ -974,7 +1032,7 @@ public class TaxonConstraints {
         }
 
         log.info("Done examining ontology for taxon {} - removeOtherTaxa: {}.", taxClass, removeOtherTaxa);
-        return log.exit(ontWrapper.getAllOWLClassesFromSource());
+        return log.exit(ontWrapper.getAllRealOWLClassesFromSource());
     }
     
 
@@ -1276,6 +1334,12 @@ public class TaxonConstraints {
     }
     
 
+    public OWLGraphWrapper getUberonOntWrapper() {
+        return uberonOntWrapper;
+    }
+    public OWLGraphWrapper getTaxOntWrapper() {
+        return taxOntWrapper;
+    }
     /**
      * Expand the providing overriding taxon constraints to also include all parent taxa 
      * of the taxa stored as values in {@code idStartsToOverridingTaxonIds}. This method returns 
@@ -1464,7 +1528,6 @@ public class TaxonConstraints {
         log.entry(taxonConstraintsFile);
         return log.exit(TaxonConstraints.extractTaxonConstraints(taxonConstraintsFile, null));
     }
-    
     /**
      * Extracts taxon constraints from the file {@code taxonConstraintsFile} and potentially 
      * overrides some of them. 
@@ -1502,9 +1565,60 @@ public class TaxonConstraints {
     //constraints. Or do we consider that it is still a useful feature, to be able 
     //to test different constraints without formally regenerating them all?
     public static Map<String, Set<Integer>> extractTaxonConstraints(String taxonConstraintsFile, 
-            Map<String, Set<Integer>> idStartsToOverridingTaxonIds) 
-                throws FileNotFoundException, IOException {
+            Map<String, Set<Integer>> idStartsToOverridingTaxonIds) throws FileNotFoundException, IOException {
         log.entry(taxonConstraintsFile, idStartsToOverridingTaxonIds);
+        return log.exit(extractTaxonConstraints(taxonConstraintsFile, idStartsToOverridingTaxonIds, null));
+    }
+    /**
+     * Extracts taxon constraints from the file {@code taxonConstraintsFile} and potentially 
+     * overrides some of them. 
+     * The returned {@code Map} contains the OBO-like IDs of all Uberon terms 
+     * present in the file, as keys, associated to a {@code Set} of {@code Integer}s, 
+     * that are the IDs of the taxa in which it exists, among the taxa present in the file. 
+     * If the {@code Set} is empty, then it means that the {@code OWLClass} existed 
+     * in none of the taxa. IDs of the taxa are {@code Integer}s representing 
+     * their NCBI IDs (for instance, 9606 for human).
+     * <p>
+     * When {@code idStartsToOverridingTaxonIds} is not null, it allows to override constraints 
+     * retrieved from the file: when the OBO-like ID of an Uberon term starts with 
+     * one of the key of {@code idStartsToOverridingTaxonIds}, its taxon constraints 
+     * are replaced with the associated value. If the start of the OBO-like ID matches 
+     * several keys, then the longest match will be considered. 
+     * 
+     * @param taxonConstraintsFile          A {@code String} that is the path to the 
+     *                                      taxon constraints file.
+     * @param idStartsToOverridingTaxonIds   A {@code Map} where keys are {@code String}s 
+     *                                      representing prefixes of uberon terms to match, 
+     *                                      the associated value being a {@code Set} 
+     *                                      of {@code Integer}s to replace taxon constraints 
+     *                                      of matching terms.
+     * @param allClassIds                   A {@code Set} of {@code String}s that are IDs 
+     *                                      of classes which to produce constraints for, 
+     *                                      even if absent from the taxon constraint file 
+     *                                      (but with a prefix present in 
+     *                                      {@code idStartsToOverridingTaxonIds})
+     * @return                          A {@code Map} where keys are IDs of the Uberon 
+     *                                  {@code OWLClass}es, and values are {@code Set}s 
+     *                                  of {@code Integer}s containing the IDs of taxa 
+     *                                  in which the {@code OWLClass} exists.
+     * @throws FileNotFoundException    If {@code taxonConstraintsFile} could not 
+     *                                  be found.
+     * @throws IOException              If {@code taxonConstraintsFile} could not 
+     *                                  be read.
+     */
+    //Should we keep this method, now that taxon constraints are directly produced 
+    //with overriding criteria? Maybe no other classes shoud now be allowed to override 
+    //constraints. Or do we consider that it is still a useful feature, to be able 
+    //to test different constraints without formally regenerating them all?
+    //=> Actually, yes it's usefule, because we don't want to mask the real constraints 
+    //from the taxon constraint file in some cases.
+    //TODO: unit test with non-null allClassIds
+    public static Map<String, Set<Integer>> extractTaxonConstraints(String taxonConstraintsFile, 
+            Map<String, Set<Integer>> idStartsToOverridingTaxonIds, Set<String> allClassIds) 
+                throws FileNotFoundException, IOException {
+        log.entry(taxonConstraintsFile, idStartsToOverridingTaxonIds, allClassIds);
+
+        Map<String, Set<Integer>> constraints = new HashMap<String, Set<Integer>>();
         
         try (ICsvMapReader mapReader = new CsvMapReader(new FileReader(taxonConstraintsFile), 
                 Utils.TSVCOMMENTED)) {
@@ -1521,7 +1635,6 @@ public class TaxonConstraints {
                 }
             }
 
-            Map<String, Set<Integer>> constraints = new HashMap<String, Set<Integer>>();
             Map<String, Object> lineMap;
             while( (lineMap = mapReader.read(header, processors)) != null ) {
                 
@@ -1545,7 +1658,24 @@ public class TaxonConstraints {
                     }
                 }
             }
-            return log.exit(constraints);
         }
+        
+        //now, we also add constraints for all classes that have overriding constraints 
+        //(maybe they were not present in the file)
+        if (allClassIds != null) {
+            for (String clsId: allClassIds) {
+                //constraints already defined, skip
+                if (constraints.containsKey(clsId)) {
+                    continue;
+                }
+                Set<Integer> replacementConstraints = getOverridingTaxonIds(clsId, 
+                        idStartsToOverridingTaxonIds);
+                if (replacementConstraints != null) {
+                    constraints.put(clsId, replacementConstraints);
+                }
+            }
+        }
+
+        return log.exit(constraints);
     }
 }

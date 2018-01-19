@@ -19,6 +19,9 @@ import org.bgee.model.function.PentaFunction;
 import org.bgee.model.job.Job;
 
 /**
+ * This class controls the whole topAnat process by running a {@link TopAnatAnalysis} for each
+ * provided {@link TopAnatParams} instance and returns {@link TopAnatResults} objects.
+ * 
  * @author Mathieu Seppey
  * @author Frederic Bastian
  * @version Bgee 13 Oct. 2016
@@ -28,33 +31,36 @@ import org.bgee.model.job.Job;
 //Or create another TopAnatService class?
 //This TopAnatService should receive the JobService instance at instantiation?
 public class TopAnatController {
+
     private final static Logger log = LogManager.getLogger(TopAnatController.class.getName()); 
 
     /**
-     * 
+     * A {@code ConcurrentMap} that contains the locks on files that are currently read or written
      */
     private final static ConcurrentMap<String, ReentrantReadWriteLock> readWriteLocks =
             new ConcurrentHashMap<String, ReentrantReadWriteLock>();
 
     /**
-     * 
+     * A {@code List} containing one {@code TopAnatParams} for each analysis to be conducted
      */
     private final List<TopAnatParams> topAnatParams;
 
     /**
-     * 
+     * A {@code BgeeProperties} instance to provide all properties values
      */
     private final BgeeProperties props;
 
     /**
-     * 
+     * A {@code ServiceFactory} to be injected in {@code TopAnatAnalysis} to provide
+     * various service instances
      */
     private final ServiceFactory serviceFactory;
 
     /**
      * A {@code PentaFunction} allowing to obtain new {@code TopAnatAnalysis} instances.
      */
-    private final PentaFunction<TopAnatParams, BgeeProperties, ServiceFactory, TopAnatRManager,TopAnatController, TopAnatAnalysis> 
+    private final PentaFunction<TopAnatParams, BgeeProperties, ServiceFactory, TopAnatRManager,
+    TopAnatController, TopAnatAnalysis> 
     topAnatAnalysisSupplier;
     
     /**
@@ -63,26 +69,57 @@ public class TopAnatController {
     private final Optional<Job> job;
 
     /**
+     * Constructor building a {@code TopAnatController} given a list of {@code TopAnatParams}
      * 
-     * @param topAnatParams
+     * @param topAnatParams     A {@code List} of {@code TopAnatParams} that will produce one
+     *                          {@code TopAnatAnalysis} each.
      */
     public TopAnatController(List<TopAnatParams> topAnatParams) {
         this(topAnatParams, BgeeProperties.getBgeeProperties(), new ServiceFactory());
     }
     /**
+     * Constructor building a {@code TopAnatController} given a list of {@code TopAnatParams},
+     * a {@code BgeeProperties} instance, and a {@code ServiceFactory} instance.
      * 
-     * @param topAnatParams
-     * @param props
+     * @param topAnatParams     A {@code List} of {@code TopAnatParams} that will produce one
+     *                          {@code TopAnatAnalysis} each.
+     * @param props             A {@code BgeeProperties} instance to provide all properties values
+     * @param serviceFactory    A {@code ServiceFactory} to be injected in {@code TopAnatAnalysis} 
+     *                          to provide various service instances
      */
     public TopAnatController(List<TopAnatParams> topAnatParams, BgeeProperties props, 
             ServiceFactory serviceFactory) {
         this(topAnatParams, props, serviceFactory, TopAnatAnalysis::new);
     }
+    /**
+     * Constructor building a {@code TopAnatController} given a list of {@code TopAnatParams},
+     * a {@code BgeeProperties} instance, a {@code ServiceFactory} instance, and a {@code TaskManager}.
+     * 
+     * @param topAnatParams     A {@code List} of {@code TopAnatParams} that will produce one
+     *                          {@code TopAnatAnalysis} each.
+     * @param props             A {@code BgeeProperties} instance to provide all properties values
+     * @param serviceFactory    A {@code ServiceFactory} to be injected in {@code TopAnatAnalysis} 
+     *                          to provide various service instances
+     * @param taskManager       A {@code TaskManager}
+     */
     public TopAnatController(List<TopAnatParams> topAnatParams, BgeeProperties props, 
             ServiceFactory serviceFactory, Job job) {
         this(topAnatParams, props, serviceFactory, TopAnatAnalysis::new, job);
     }
-    
+
+    /**
+     * Constructor building a {@code TopAnatController} given a list of {@code TopAnatParams},
+     * a {@code BgeeProperties} instance, a {@code ServiceFactory} instance,
+     * and a custom supplier for obtaining {@code TopAnatAnalysis}.
+     * 
+     * @param topAnatParams     A {@code List} of {@code TopAnatParams} that will produce one
+     *                          {@code TopAnatAnalysis} each.
+     * @param props             A {@code BgeeProperties} instance to provide all properties values
+     * @param serviceFactory    A {@code ServiceFactory} to be injected in {@code TopAnatAnalysis} 
+     *                          to provide various service instances
+     * @param topAnatAnalysisSupplier   A {@code PentaFunction} allowing to obtain new 
+     *                                  {@code TopAnatAnalysis} instances.
+     */   
     public TopAnatController(List<TopAnatParams> topAnatParams, BgeeProperties props, 
             ServiceFactory serviceFactory, 
             PentaFunction<TopAnatParams, BgeeProperties, ServiceFactory, TopAnatRManager, TopAnatController,
@@ -91,9 +128,19 @@ public class TopAnatController {
     }
 
     /**
+     * Constructor building a {@code TopAnatController} given a list of {@code TopAnatParams},
+     * a {@code BgeeProperties} instance, a {@code ServiceFactory} instance, a {@code TaskManager},
+     * and a custom supplier for obtaining {@code TopAnatAnalysis}.
      * 
-     * @param params
-     */
+     * @param topAnatParams     A {@code List} of {@code TopAnatParams} that will produce one
+     *                          {@code TopAnatAnalysis} each.
+     * @param props             A {@code BgeeProperties} instance to provide all properties values
+     * @param serviceFactory    A {@code ServiceFactory} to be injected in {@code TopAnatAnalysis} 
+     *                          to provide various service instances
+     * @param taskManager       A {@code TaskManager}
+     * @param topAnatAnalysisSupplier   A {@code PentaFunction} allowing to obtain new 
+     *                                  {@code TopAnatAnalysis} instances.
+     */  
     public TopAnatController(List<TopAnatParams> topAnatParams, BgeeProperties props, 
             ServiceFactory serviceFactory, 
             PentaFunction<TopAnatParams, BgeeProperties, ServiceFactory, TopAnatRManager, TopAnatController,
@@ -125,7 +172,9 @@ public class TopAnatController {
     }
 
     /**
-     * @throws IOException
+     * Proceed to the analysis and return results
+     * 
+     * @return a {@code Stream} of {@code TopAnatResults}
      */
     public Stream<TopAnatResults> proceedToTopAnatAnalyses() {
         log.entry();
@@ -153,7 +202,7 @@ public class TopAnatController {
                                 }
                             });
                         }
-                        
+
                         TopAnatResults results = analysis.proceedToAnalysis();
                         
                         //end job if last analysis
@@ -161,7 +210,7 @@ public class TopAnatController {
                                 (this.topAnatParams.size() - 1)) {
                             this.job.ifPresent(t -> t.completeWithSuccess());
                         }
-                        
+
                         return results;
                     } catch (Throwable e) {
                         //catch and throw this error in DEBUG level because we don't want 
@@ -172,7 +221,10 @@ public class TopAnatController {
                     }
                 }));
     }
-    
+
+    /**
+     * @return A {@code BgeeProperties} instance to provide all properties values
+     */
     public BgeeProperties getBgeeProperties() {
         return this.props;
     }
@@ -182,7 +234,10 @@ public class TopAnatController {
     public Optional<Job> getJob() {
         return job;
     }
-    
+
+    /**
+     * @return  A {@code List} containing one {@code TopAnatParams} for each analysis to be conducted
+     */
     public List<TopAnatParams> getTopAnatParams() {
         return this.topAnatParams;
     }
@@ -200,7 +255,9 @@ public class TopAnatController {
      * @see #acquireLock(String, boolean)
      */
     void acquireReadLock(String fileName) {
+        log.entry(fileName);
         this.acquireLock(fileName, true);
+        log.exit();
     }
 
     /**
@@ -213,7 +270,9 @@ public class TopAnatController {
      * @see #acquireLock(String, boolean)
      */
     void acquireWriteLock(String fileName) {
+        log.entry(fileName);
         this.acquireLock(fileName, false);
+        log.exit();
     }
 
     /**
@@ -226,7 +285,9 @@ public class TopAnatController {
      * @see #releaseLock(String, boolean)
      */
     void releaseWriteLock(String fileName) {
+        log.entry(fileName);
         this.releaseLock(fileName, false);
+        log.exit();
     }
 
     /**
@@ -242,6 +303,8 @@ public class TopAnatController {
      * @see #readWriteLocks
      */
     void acquireLock(String fileName, boolean readLock) {
+        log.entry(fileName,readLock);
+
         ReentrantReadWriteLock lock = this.getReadWriteLock(fileName);
 
         if (readLock) {
@@ -275,6 +338,7 @@ public class TopAnatController {
                 lock.writeLock().lock();
             }
         }
+        log.exit();
     }
 
     /**
@@ -287,7 +351,9 @@ public class TopAnatController {
      * @see #releaseLock(String, boolean)
      */
     void releaseReadLock(String fileName) {
+        log.entry(fileName);
         this.releaseLock(fileName, true);
+        log.exit();
     }
 
     /**
@@ -303,6 +369,7 @@ public class TopAnatController {
      * @see #readWriteLocks
      */
     void releaseLock(String fileName, boolean readLock) {
+        log.entry(fileName,readLock);
         ReentrantReadWriteLock lock = this.getReadWriteLock(fileName);
         this.removeLockIfPossible(fileName, readLock? 1: 0);
         if (readLock) {
@@ -310,6 +377,7 @@ public class TopAnatController {
         } else {
             lock.writeLock().unlock();
         }
+        log.exit();
     }
 
     /**
@@ -379,6 +447,8 @@ public class TopAnatController {
      * @see #readWriteLocks
      */
     ReentrantReadWriteLock getReadWriteLock(String fileName) {
+        log.entry(fileName);
+        
         // check if there is already a lock stored for this key
         ReentrantReadWriteLock readWritelock = readWriteLocks.get(fileName);
 
@@ -398,12 +468,11 @@ public class TopAnatController {
                 readWritelock = newReadWriteLock;
             }
         }
-        return readWritelock;
+        return log.exit(readWritelock);
     }
 
     /**
-     * 
-     * @return
+     * @return a {@code boolean} that tells whether all analyses are done
      */
     public boolean areAnalysesDone(){
         log.entry();
@@ -411,5 +480,16 @@ public class TopAnatController {
                 .map(params -> this.topAnatAnalysisSupplier.apply(params, this.props, 
                         this.serviceFactory, new TopAnatRManager(this.props, params), this))
                 .allMatch(a -> a.isAnalysisDone()));
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("TopAnatController [readWriteLocks=").append(readWriteLocks).append(", props=")
+        .append(props).append(", serviceFactory=").append(serviceFactory)
+        .append(", job=").append(job).append(", topAnatAnalysisSupplier=")
+        .append("").append(", topAnatParams=").append(topAnatParams)
+        .append("]");
+        return builder.toString();
     }
 }

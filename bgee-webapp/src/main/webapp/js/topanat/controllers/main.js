@@ -660,6 +660,12 @@
             if (number == undefined) {
                 number = vm.nbRows.selectedOption.id;
             }
+
+            // Issue 126
+            if (number > vm.gridOptions.data.length) {
+                number = vm.gridOptions.data.length;
+            }
+
             // +1 for the header
             var height = (number +1) * vm.row_height;
             angular.element(document.getElementsByClassName('grid')[0]).css('height', height + 'px');
@@ -1210,6 +1216,10 @@
             }
             vm.getFilteredRows(); // In order to get the total number of rows before filtering of results
             vm.jobDone = true; // in order to display the result array
+
+            // Issue 126: Change the default value of the nb of rows to show
+            // if the number of results is less than the default value
+            changeNumberOfRowsToShow(vm.nb_rows);
         }
 
         function displayResults(result) {
@@ -1437,6 +1447,7 @@
                     vm.selected_taxid = '';
                     vm.selected_species = 'None';
                     vm.isValidSpecies = false;
+                    vm.geneValidationMessage = '';
                 }
                 else {
                     vm.selected_species = mapIdtoName(data, type + "_list");
@@ -1444,8 +1455,6 @@
                     vm.isValidSpecies = true;
                     vm.geneValidationMessage = parseMessage(data.message);
                     //getNbDetectedSpecies(data, type + "_list") > 1 ? vm.geneValidationMessage = parseMessage(data.message) : vm.geneValidationMessage = '';
-
-
                 }
 
                 var stages = [];

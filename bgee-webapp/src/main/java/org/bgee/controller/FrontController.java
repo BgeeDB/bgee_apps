@@ -91,7 +91,7 @@ public class FrontController extends HttpServlet {
 
     /**
      * Default constructor. It will use default implementations for all dependencies 
-     * (see {@link #FrontController(BgeeProperties, URLParameters, Supplier, ViewFactoryProvider)}).
+     * (see {@link #FrontController(BgeeProperties, URLParameters, Supplier, ViewFactoryProvider, MailSender)}).
      */
     public FrontController() {
         this(null);
@@ -100,7 +100,7 @@ public class FrontController extends HttpServlet {
     /**
      * Constructor that takes as parameter a {@code java.util.Properties} to create 
      * a {@code BgeeProperties} instance. It will use default implementations for all dependencies 
-     * (see {@link #FrontController(BgeeProperties, URLParameters, Supplier, ViewFactoryProvider)}).
+     * (see {@link #FrontController(BgeeProperties, URLParameters, Supplier, ViewFactoryProvider, MailSender)}).
      * 
      * @param prop  A {@code java.util.Properties} that will be use to create an instance of
      *              {@code BgeeProperties}
@@ -242,8 +242,11 @@ public class FrontController extends HttpServlet {
             } else if (requestParameters.getAction() != null &&
                 		requestParameters.getAction().equals(RequestParameters.ACTION_AUTO_COMPLETE_GENE_SEARCH)) {
             		controller = new CommandSearch(response, requestParameters, prop, factory, serviceFactory);
-            } else if (requestParameters.isADAOPageCategory()) {
-                controller = new CommandDAO(response, requestParameters, this.prop, factory, 
+//            } else if (requestParameters.isADAOPageCategory()) {
+//                controller = new CommandDAO(response, requestParameters, this.prop, factory, 
+//                        serviceFactory, this.jobService, user);
+            }else if (requestParameters.isARPackagePageCategory()) {
+                controller = new CommandRPackage(response, requestParameters, this.prop, factory, 
                         serviceFactory, this.jobService, user);
             } else if (requestParameters.isAStatsPageCategory()) {
                 //no specific controllers for this for now. 

@@ -3,9 +3,9 @@
  * the user's actions, to proceed to the search and update the display.
  * It is run when the document is fully loaded by using the jQuery method ready()
  * 
- * @author Mathieu Seppey
- * @author Valentine Rech de Laval
- * @version Bgee 13, Jul 2014
+ * @author 	Mathieu Seppey
+ * @author 	Valentine Rech de Laval
+ * @version Bgee 14, May 2017
  */
 //Declaration of an object literal to contain the download page specific code.
 //XXX: Should we let this code generate URL by using RequestParameters, or should all URLs 
@@ -29,11 +29,15 @@ var download = {
         $bgeeDataSelectionTextCommon: null,
         $switchPageLink: null,
         $bgeeGroupDescription: null,
+        $bgeeExprDataFormInputs: null,
+        $bgeeExprDataFormSubmit: null,
+        $bgeeExprDataFormAnatEntityCheck: null,
+        $bgeeExprDataFormDevStageCheck: null,
+        $bgeeExprDataFormAdvancedColumnsYes: null,
+        $bgeeExprDataFormAdvancedColumnsNo: null,
         $orthologButtons: null,
         $orthologCvs: null,
         $exprSimpleData: null,
-        $exprSimpleCsv: null,
-        $exprCompleteCsv: null,
         $diffExprAnatomyData: null,
         $diffExprAnatomySimpleCsv: null,
         $diffExprAnatomyCompleteCsv: null,   
@@ -90,6 +94,8 @@ var download = {
          * loaded once the page is ready
          */
         init: function() {
+        	$("[data-toggle='popover']").popover();
+        	
             // Fetch all needed elements from the DOM
             this.$container = $( "html, body" );
             this.$species = $( "figure" );
@@ -106,13 +112,18 @@ var download = {
                 $( "#bgee_data_selection_text span.commonname" );
             this.$switchPageLink = $( "#switch_page_link" );
             this.$bgeeGroupDescription = $( "#bgee_data_selection_text p.groupdescription" );
+            // Form to download files
+            this.$bgeeExprDataFormInputs = $( "#expr_data_form input" );
+            this.$bgeeExprDataFormSubmit = $( "#download_expr_data" );
+            this.$bgeeExprDataFormAnatEntityCheck = $( "#expr_data_form input.anatEntityCheck" );
+            this.$bgeeExprDataFormDevStageCheck = $( "#expr_data_form input.anatEntityCheck" );
+            this.$bgeeExprDataFormAdvancedColumnsYes = $( "#advancedDataRadioYes" );
+            this.$bgeeExprDataFormAdvancedColumnsNo = $( "#advancedDataRadioNo" );
             // Data
             this.$orthologButtons = $( "#ortholog_file_buttons" );
             this.$orthologCvs = $( "#ortholog_csv" );
             this.$exprButtons = $( "#expr_buttons" );
             this.$exprSimpleData = $( "#expr_data" );
-            this.$exprSimpleCsv = $( "#expr_simple_csv" );
-            this.$exprCompleteCsv = $( "#expr_complete_csv" );        
             this.$diffExprAnatomyButtons = $( "#diffexpr_anatomy_buttons" );
             this.$diffExprAnatomyData = $( "#diffexpr_anatomy_data" );
             this.$diffExprAnatomySimpleCsv = $( "#diffexpr_anatomy_simple_csv" );
@@ -327,41 +338,118 @@ var download = {
             window.location.hash = "!";   
         },
 
+        /**
+         * This function update the URL of the download form button.
+         */
+        updateFormURL: function(organStageCompleteFileUrl, organStageSimpleFileUrl,
+        		organCompleteFileUrl, organSimpleFileUrl) {
+        	
+        	// Form
+            var exprDataForm = document.forms["expr_data_form"];
+            
+        	// Get actual form parameters
+        	var isAnatEntity = exprDataForm.elements["anatEntityCheck"].checked;
+        	var isDevStage = exprDataForm.elements["devStageCheck"].checked;
+        	var isAdvancedColumns = exprDataForm.elements["advancedDataRadioYes"].checked;
+
+        	var url = undefined;
+        	if (isAnatEntity && isDevStage) {
+        		if (isAdvancedColumns) {
+        			url = organStageCompleteFileUrl;
+        		} else {
+        			url= organStageSimpleFileUrl;
+        		}
+        	} else {
+        		if (isAdvancedColumns) {
+        			url = organCompleteFileUrl;
+        		} else {
+        			url= organSimpleFileUrl;
+        		}
+        	}
+        	
+        	this.$bgeeExprDataFormSubmit.attr( "href", url );
+        },
+        
 		/**
 		 * Gets the url of the file of the given category (undefined if not found)
 		 */
         getUrlForFileCategory: function(files, category) {
+        	return getUrlForFileCategory(files, category, undefined);
+        },
+
+        /**
+		 * Gets the url of the file of the given category and conditions combination
+		 * (undefined if not found)
+		 */
+        getUrlForFileCategory: function(files, category, conditionParams) {
         	for (var idx = 0; idx < files.length; idx++) {
         		var file = files[idx];
-        		if (file.category == category) {
+        		// '===' works  because if you know that the array is in the same order 
+        		if (file.category == category && (conditionParams === undefined
+        				|| download.compareArrays(conditionParams.sort(), file.conditionParameters.sort()))) {
         			return file.path;
         		}
         	}
         },
         
         /**
+		 * Defines whether two arrays are equals
+		 */
+        compareArrays: function(array1, array2) {
+            if (!array1 && !array2) {
+            	return true;
+            }
+
+            if (!array1) {
+            	return false;
+            }
+
+            if (array1.length != array2.length) {
+            	return false;
+            }
+
+            for (var i = 0, l = array1.length; i < l; i++) {
+                if (array1[i] instanceof Array && array2[i] instanceof Array) {
+                    if (!array1[i].equals(array2[i])) {
+                    	return false;
+                    }
+                } else if (array1[i] != array2[i]) {
+                    return false;
+                }
+            }
+            return true;
+        },
+        
+        /**
         * Returns the formatted size for the file of the given category (undefined if no file found)
         */
         getSizeForFileCategory: function(files, category) {
-        	for (var idx = 0; idx < files.length; idx++) {
-        		var file = files[idx];
-        		if (file.category == category) {
-        			var size = file.size;
-        			// formatting file size
-        			if (size > (1 <<30) * 0.4) {
-        				return ""+  Math.round((10*size / (1024*1024*1024)))/10.0 +" GB";
-        			}
-        			if (size > 1024 * 1024 * 0.4) {
-        				return ""+  Math.round((10*size / (1024*1024)))/10.0 +" MB";
-        			} else if (size > 1024*0.4){
-        				return "" + Math.round((10*size / (1024)))/10.0+" KB";
-        			} else {
-        				return "" + size +" B";
-        			}
-        		}
-        	}
+        	return getSizeForFileCategory(files, category, undefined);
         },
         
+        /**
+         * Returns the formatted size for the file of the given category (undefined if no file found)
+         */
+         getSizeForFileCategory: function(files, category, conditionParams) {
+         	for (var idx = 0; idx < files.length; idx++) {
+         		var file = files[idx];
+         		if (file.category == category && (conditionParams === undefined
+        				|| download.compareArrays(conditionParams.sort(), file.conditionParameters.sort()))) {
+         			var size = file.size;
+         			// formatting file size
+         			if (size > (1 << 30) * 0.4) {
+         				return ""+  Math.round((10*size / (1024*1024*1024)))/10.0 +" GB";
+         			}
+         			if (size > 1024 * 1024 * 0.4) {
+         				return ""+  Math.round((10*size / (1024*1024)))/10.0 +" MB";
+         			} else if (size > 1024*0.4){
+         				return "" + Math.round((10*size / (1024)))/10.0+" KB";
+         			} else {
+         				return "" + size +" B";
+         			}
+         		}
+         	}
+         },
 
         /**
          * This function update and display the detail box for the species or group provided
@@ -380,7 +468,7 @@ var download = {
             //like, e.g., species_id=id
             var hashToUse = "id"+id
             
-            //manage link to processed vaulues/gene expression calls
+            //manage link to processed values/gene expression calls
             var requestSwitchPage = new requestParameters();
             requestSwitchPage.setURLHash(hashToUse);
             
@@ -413,7 +501,7 @@ var download = {
             	 bgeeSpeciesName = species.genus +" " +species.speciesName;
                 
             }
-        	 var $images = $currentSpecies.find( ".species_img" );
+        	var $images = $currentSpecies.find( ".species_img" );
              
              // there are multiple images, in the case of group, but the field is not used in this case,
              // so no need to care about 
@@ -424,8 +512,10 @@ var download = {
             //var bgeeOrthologFileUrl = $currentSpecies.data( "bgeeorthologfileurl" );
             var bgeeOrthologFileUrl = getUrlForFileCategory(files, "ortholog");
             //var bgeeExprSimpleFileUrl = $currentSpecies.data( "bgeeexprsimplefileurl" );
-            var bgeeExprSimpleFileUrl = getUrlForFileCategory(files, "expr_simple");
-            var bgeeExprCompleteFileUrl = getUrlForFileCategory(files, "expr_complete");
+            var bgeeExprOrganSimpleFileUrl = getUrlForFileCategory(files, "expr_simple", [ "anatomicalEntity" ]);
+            var bgeeExprOrganCompleteFileUrl = getUrlForFileCategory(files, "expr_advanced", [ "anatomicalEntity" ]);
+            var bgeeExprOrganStageSimpleFileUrl = getUrlForFileCategory(files, "expr_simple", [ "anatomicalEntity", "developmentalStage" ]);
+            var bgeeExprOrganStageCompleteFileUrl = getUrlForFileCategory(files, "expr_advanced", [ "anatomicalEntity", "developmentalStage" ]);
             var bgeeDiffExprAnatomySimpleFileUrl = getUrlForFileCategory(files, "diff_expr_anatomy_simple");
             var bgeeDiffExprAnatomyCompleteFileUrl = getUrlForFileCategory(files, "diff_expr_anatomy_complete");
             var bgeeDiffExprDevelopmentSimpleFileUrl = getUrlForFileCategory(files, "diff_expr_dev_simple");
@@ -433,8 +523,10 @@ var download = {
 
              // get file sizes
             var bgeeOrthologFileSize = getSizeForFileCategory(files, "ortholog");
-            var bgeeExprSimpleFileSize = getSizeForFileCategory(files, "expr_simple");
-            var bgeeExprCompleteFileSize = getSizeForFileCategory(files, "expr_complete");
+            var bgeeExprOrganSimpleFileSize = getSizeForFileCategory(files, "expr_simple", [ "anatomicalEntity" ]);
+            var bgeeExprOrganCompleteFileSize = getSizeForFileCategory(files, "expr_advanced", [ "anatomicalEntity" ]);
+            var bgeeExprOrganStageSimpleFileSize = getSizeForFileCategory(files, "expr_simple", [ "anatomicalEntity", "developmentalStage" ]);
+            var bgeeExprOrganStageCompleteFileSize = getSizeForFileCategory(files, "expr_advanced", [ "anatomicalEntity", "developmentalStage" ]);
             var bgeeDiffExprAnatomySimpleFileSize =	getSizeForFileCategory(files, "diff_expr_anatomy_simple");
             var bgeeDiffExprAnatomyCompleteFileSize = getSizeForFileCategory(files, "diff_expr_anatomy_complete");
             var bgeeDiffExprDevelopmentSimpleFileSize = getSizeForFileCategory(files, "diff_expr_dev_simple");
@@ -448,7 +540,7 @@ var download = {
             var bgeeRnaSeqAnnotFileSize = getSizeForFileCategory(files, "rnaseq_annot");
 
             // Affymetrix processed expression values
-            var bgeeAffyDataFileUrl =getUrlForFileCategory(files, "affy_data");
+            var bgeeAffyDataFileUrl = getUrlForFileCategory(files, "affy_data");
             var bgeeAffyAnnotFileUrl = getUrlForFileCategory(files, "affy_annot");
             var bgeeAffyDataRootURL = getUrlForFileCategory(files, "affy_root");
             var bgeeAffyDataFileSize = getSizeForFileCategory(files, "affy_data");
@@ -512,7 +604,6 @@ var download = {
                 	
                 	urlDoc.setURLHash(urlDoc.HASH_DOC_CALL_OMA());
                 	this.$orthologsHelp.attr( "href", urlDoc.getRequestURL());
-                	
                 } 
             } else {
             	this.$switchPageLink.show();
@@ -520,7 +611,9 @@ var download = {
                 //we display the group name as subtitle rather than the species common name, 
                 //because we used to have incorrect common names at some point, 
                 //and because this allows more flexibility (e.g. "human including GTEx data")
-                this.$bgeeDataSelectionTextCommon.text( "("+ bgeeGroupName +")" );
+                if (bgeeGroupName) {
+                	this.$bgeeDataSelectionTextCommon.text( "("+ bgeeGroupName +")" );
+                }
                 this.$bgeeGroupDescription.text( "" );
                 this.$showMultiSimpleDiffexprAnatomyHeaders.hide();
                 this.$showMultiCompleteDiffexprAnatomyHeaders.hide();
@@ -528,18 +621,23 @@ var download = {
                 this.$showSingleCompleteDiffexprAnatomyHeaders.show();
                 if ( this.$exprCalls.length > 0 ) {
                 	var urlDoc = new requestParameters("", true, "&");
-                    urlDoc.addValue(urlParameters.getParamPage(), 
-                    		urlDoc.PAGE_DOCUMENTATION());
-                    urlDoc.addValue(urlParameters.getParamAction(), 
-                    		urlDoc.ACTION_DOC_CALL_DOWLOAD_FILES());
+                    urlDoc.addValue(urlParameters.getParamPage(), urlDoc.PAGE_DOCUMENTATION());
+                    urlDoc.addValue(urlParameters.getParamAction(), urlDoc.ACTION_DOC_CALL_DOWLOAD_FILES());
                     
                     urlDoc.setURLHash(urlDoc.HASH_DOC_CALL_SINGLE_EXPR());
                 	this.$exprHelp.attr( "href", urlDoc.getRequestURL());
                 	urlDoc.setURLHash(urlDoc.HASH_DOC_CALL_SINGLE_DIFF());
                 	this.$diffDevHelp.attr( "href", urlDoc.getRequestURL());
                 	this.$diffAnatHelp.attr( "href", urlDoc.getRequestURL());
+                    this.updateFormURL( bgeeExprOrganStageCompleteFileUrl, bgeeExprOrganStageSimpleFileUrl,
+                    		bgeeExprOrganCompleteFileUrl, bgeeExprOrganSimpleFileUrl );
                 }
             }
+            
+            this.$bgeeExprDataFormInputs.click(function() {
+                download.updateFormURL( bgeeExprOrganStageCompleteFileUrl, bgeeExprOrganStageSimpleFileUrl,
+                		bgeeExprOrganCompleteFileUrl, bgeeExprOrganSimpleFileUrl );
+            });
             
             // Hide all header table to hide tables already opened in another detail box (banner)
             $( ".header_table" ).each(function() {
@@ -562,7 +660,7 @@ var download = {
             }
 
             // Expression files
-            if (bgeeExprSimpleFileUrl === undefined) {
+            if (bgeeExprOrganSimpleFileUrl === undefined) {
             	this.$exprSimpleData.hide();
             	//TODO remove when multi-species expression files are computed
             	if( bgeeIsGroup ){
@@ -576,10 +674,6 @@ var download = {
         		this.$exprButtons.show();
             	this.$exprSimpleData.show();
         		this.$exprHelp.show();
-            	this.$exprSimpleCsv.attr( "href", bgeeExprSimpleFileUrl );
-            	this.$exprSimpleCsv.text( "Download simple file (" + bgeeExprSimpleFileSize + ")" );
-            	this.$exprCompleteCsv.attr( "href", bgeeExprCompleteFileUrl );
-            	this.$exprCompleteCsv.text( "Download complete file (" + bgeeExprCompleteFileSize + ")" );
             	this.$exprNoData.hide();
             }
 
@@ -632,7 +726,7 @@ var download = {
             	this.$rnaSeqDataCsv.attr( "href", bgeeRnaSeqDataFileUrl );
             	this.$rnaSeqAnnotCsv.attr( "href", bgeeRnaSeqAnnotFileUrl );
             	this.$rnaSeqAnnotCsv.text( "Download experiments/libraries info (" + bgeeRnaSeqAnnotFileSize + ")" );
-            	this.$rnaSeqDataCsv.text( "Download read counts and RPKMs (" + bgeeRnaSeqDataFileSize + ")" );
+            	this.$rnaSeqDataCsv.text( "Download read counts, TPMs, and FPKMs (" + bgeeRnaSeqDataFileSize + ")" );
             	this.$rnaSeqDataRoot.attr("href", rnaSeqExprValuesDirs[id]);
             }
 

@@ -48,7 +48,20 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
         
         this.startDisplay("Bgee TopAnat page");
         
+        RequestParameters urlGenerator = this.getNewRequestParameters();
+        urlGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlGenerator.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
+
+        this.writeln("<h1>TopAnat - Gene Expression Enrichment</h1>");
         
+//        this.writeln("<div id='bgee_introduction'>");
+//        this.writeln("<p>GO-like enrichment of anatomical terms, mapped to genes by expression patterns</p>");
+//        this.writeln("<p class='alert alert-danger'>While we are solving issues with TopAnat in Bgee 14, we invite you to use TopAnat in "
+//                + "<a title='TopAnat page of Bgee 13' href='http://bgee.org/bgee13/?page=top_anat' target='_blank'>"
+//                + "Bgee 13</a>.</p>");
+//        this.writeln("</div>");
+        
+        // FIXME enable when TopAnat will work on Bgee 14. We do it here, to avoid the waiting page
         //AngularJS module container
         this.writeln("<div ng-app='app'>");
 

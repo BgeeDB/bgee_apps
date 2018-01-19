@@ -8,13 +8,13 @@ import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -35,16 +35,18 @@ import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
+import org.bgee.model.expressiondata.Call.ExpressionCall;
+import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
-import org.bgee.model.expressiondata.ConditionUtils;
-import org.bgee.model.expressiondata.Call.ExpressionCall;
-import org.bgee.model.expressiondata.CallData.ExpressionCallData;
-import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
+import org.bgee.model.expressiondata.ConditionGraph;
+import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
-import org.bgee.model.expressiondata.baseelements.CallType.Expression;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.ontology.Ontology;
 import org.bgee.model.species.Species;
 import org.bgee.pipeline.CommandRunner;
@@ -53,7 +55,6 @@ import org.bgee.pipeline.uberon.Uberon;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.supercsv.cellprocessor.FmtBool;
 import org.supercsv.cellprocessor.Optional;
 import org.supercsv.cellprocessor.constraint.StrNotNullOrEmpty;
 import org.supercsv.cellprocessor.ift.CellProcessor;
@@ -66,21 +67,22 @@ import owltools.graph.OWLGraphWrapper;
  * Allows to generate download files providing rank score information. 
  * 
  * @author Frederic Bastian
- * @version Bgee 13 July 2016
+ * @version Bgee 14 Nov. 2017
  * @since Bgee 13 July 2016
  */
 //XXX: generate a simple file providing the max rank? A bit boring as we have nothing 
 //in bgee-core to do it for now.
+//FIXME: reactivate?
 public class GenerateRankFile {
     private final static Logger log = LogManager.getLogger(GenerateRankFile.class.getName());
     
     /**
-     * Functional interface created to be able to inject ConditionUtils by providing a supplier.
+     * Functional interface created to be able to inject ConditionGraph by providing a supplier.
      * TODO: to remove once we'll have created an UtilsFactory in bgee-core 
      */
     @FunctionalInterface
-    protected static interface QuadriFunction<T, U, V, W, R> {
-        public R apply(T t, U u, V v, W w);
+    protected static interface TriFunction<T, U, V, R> {
+        public R apply(T t, U u, V v);
     }
     
     /**
@@ -168,7 +170,7 @@ public class GenerateRankFile {
      * additional formatting operation. 
      */
     private static final Function<BigDecimal, String> FORMATTER = d -> {
-        NumberFormat formatter = NumberFormat.getInstance();
+        NumberFormat formatter = NumberFormat.getInstance(Locale.US);
         formatter.setMaximumFractionDigits(2);
         formatter.setMinimumFractionDigits(2);
         formatter.setGroupingUsed(false);
@@ -196,7 +198,7 @@ public class GenerateRankFile {
             String outputDir, boolean tmpFile) {
         log.entry(species, anatEntityOnly, dataType, outputDir, tmpFile);
         
-        String fileName = species.getId();
+        String fileName = species.getId().toString();
         if (anatEntityOnly) {
             fileName += "_anat_entity";
         } else {
@@ -375,8 +377,8 @@ public class GenerateRankFile {
      * Following elements in {@code args} must then be: 
      *   <ol>
      *   <li>A list of NCBI species IDs (e.g., {@code 9606}) to generate files for, separated by 
-     *   {@link org.bgee.pipeline.CommandRunner.LIST_SEPARATOR}. To select all species, provide 
-     *   an empty list by using {@link org.bgee.pipeline.CommandRunner.EMPTY_LIST}.
+     *   {@link org.bgee.pipeline.CommandRunner#LIST_SEPARATOR}. To select all species, provide 
+     *   an empty list by using {@link org.bgee.pipeline.CommandRunner#EMPTY_LIST}.
      *   <li>path to the Uberon ontology file to extract XRefs to BTO from.
      *   TODO: when Uberon xrefs will have been inserted into the database, use them, 
      *   rather than needing to provide an ontology. 
@@ -409,7 +411,7 @@ public class GenerateRankFile {
                         + args.length + " provided."));
             }
             
-            Set<String> speciesIds = new HashSet<>(CommandRunner.parseListArgument(args[1]));
+            Set<Integer> speciesIds = new HashSet<>(CommandRunner.parseListArgumentAsInt(args[1]));
             String pathToUberon = args[2];
             boolean anatEntityOnly = Boolean.parseBoolean(args[3]);
             String outputDir = args[4];
@@ -453,24 +455,24 @@ public class GenerateRankFile {
     private final Uberon uberonOnt;
     
     /**
-     * A {@code QuadriFunction} matching the constructor of {@code ConditionUtils}, 
+     * A {@code QuadriFunction} matching the constructor of {@code ConditionGraph}, 
      * for injection purposes. 
      * TODO: to remove once we'll have created an UtilsFactory in bgee-core 
      */
-    private final QuadriFunction<String, Collection<Condition>, Ontology<AnatEntity>, Ontology<DevStage>, 
-    ConditionUtils> condUtilsSupplier;
+    private final TriFunction<Collection<Condition>, Ontology<AnatEntity, String>, 
+    Ontology<DevStage, String>, ConditionGraph> condGraphSupplier;
     /**
      * A {@code Function} matching the constructor of {@code ExpressionCall.RankComparator}, 
      * for injection purposes. 
      * TODO: to remove once we'll have created an UtilsFactory in bgee-core 
      */
-    private final Function<ConditionUtils, ExpressionCall.RankComparator> rankComparatorSupplier;
+    private final Function<ConditionGraph, ExpressionCall.RankComparator> rankComparatorSupplier;
     /**
      * A {@code Function} matching the signature of the method of {@code ExpressionCall::identifyRedundantCalls}, 
      * for injection purposes. 
      * TODO: to remove once we'll have created an UtilsFactory in bgee-core 
      */
-    private final BiFunction<List<ExpressionCall>, ConditionUtils, Set<ExpressionCall>> 
+    private final BiFunction<List<ExpressionCall>, ConditionGraph, Set<ExpressionCall>> 
             redundantCallsFuncSupplier;
     
     
@@ -491,26 +493,26 @@ public class GenerateRankFile {
      * @param uberonOnt                 An {@code Uberon} utiliy to extract XRefs to BTO from.
      */
     public GenerateRankFile(Supplier<ServiceFactory> serviceFactorySupplier, Uberon uberonOnt) {
-        this(serviceFactorySupplier, uberonOnt, ConditionUtils::new, ExpressionCall.RankComparator::new, 
+        this(serviceFactorySupplier, uberonOnt, ConditionGraph::new, ExpressionCall.RankComparator::new, 
                 ExpressionCall::identifyRedundantCalls);
     }
     /**
      * @param serviceFactorySupplier        A {@code Supplier} of {@code ServiceFactory}s 
      *                                      to be able to provide one to each thread.
      * @param uberonOnt                     An {@code Uberon} utiliy to extract XRefs to BTO from.
-     * @param condUtilsSupplier             To inject {@code ConditionUtils} instances.
+     * @param condGraphSupplier             To inject {@code ConditionGraph} instances.
      * @param rankComparatorSupplier        To inject {@code ExpressionCall.RankComparator} instances.
      * @param redundantCallsFuncSupplier    To inject the method {@code ExpressionCall::identifyRedundantCalls}.
      */
     //TODO: stop using these functional interfaces once we'll have created an UtilsFactory in bgee-core
     protected GenerateRankFile(Supplier<ServiceFactory> serviceFactorySupplier, Uberon uberonOnt, 
-            QuadriFunction<String, Collection<Condition>, Ontology<AnatEntity>, Ontology<DevStage>, 
-            ConditionUtils> condUtilsSupplier, 
-            Function<ConditionUtils, ExpressionCall.RankComparator> rankComparatorSupplier, 
-            BiFunction<List<ExpressionCall>, ConditionUtils, Set<ExpressionCall>> redundantCallsFuncSupplier) {
+            TriFunction<Collection<Condition>, Ontology<AnatEntity, String>, Ontology<DevStage, String>, 
+            ConditionGraph> condGraphSupplier, 
+            Function<ConditionGraph, ExpressionCall.RankComparator> rankComparatorSupplier, 
+            BiFunction<List<ExpressionCall>, ConditionGraph, Set<ExpressionCall>> redundantCallsFuncSupplier) {
         this.serviceFactorySupplier = serviceFactorySupplier;
         this.uberonOnt = uberonOnt;
-        this.condUtilsSupplier = condUtilsSupplier;
+        this.condGraphSupplier = condGraphSupplier;
         this.rankComparatorSupplier = rankComparatorSupplier;
         this.redundantCallsFuncSupplier = redundantCallsFuncSupplier;
     }
@@ -538,7 +540,7 @@ public class GenerateRankFile {
      * @throws RuntimeException         If an error occurs while generating the files. 
      *                                  It is not a checked exception because we use parallel {@code Stream}s.
      */
-    public void generateRankFiles(Set<String> speciesIds, boolean anatEntityOnly, Set<DataType> dataTypes, 
+    public void generateRankFiles(Set<Integer> speciesIds, boolean anatEntityOnly, Set<DataType> dataTypes, 
             String outputDir) throws IllegalArgumentException {
         log.entry(speciesIds, anatEntityOnly, dataTypes, outputDir);
         
@@ -548,12 +550,12 @@ public class GenerateRankFile {
         
         ServiceFactory serviceFactory = this.serviceFactorySupplier.get();
         //Retrieve requested species, or all species if none were requested
-        Set<String> retrievedSpeciesIds = serviceFactory.getSpeciesService().loadSpeciesByIds(
+        Set<Integer> retrievedSpeciesIds = serviceFactory.getSpeciesService().loadSpeciesByIds(
                 speciesIds, false).stream().map(s -> s.getId()).collect(Collectors.toSet());
         if (speciesIds != null && !speciesIds.isEmpty() && !retrievedSpeciesIds.containsAll(speciesIds)) {
             throw log.throwing(new IllegalArgumentException("Some species IDs were not recognized: "
                     + speciesIds.stream().filter(id -> !retrievedSpeciesIds.contains(id))
-                    .collect(Collectors.joining(", "))));
+                    .collect(Collectors.toSet()).toString()));
         }
         
         //generation of files are independent, so we can safely go multi-threading
@@ -585,7 +587,7 @@ public class GenerateRankFile {
      * @throws IllegalArgumentException If the species ID is not recognized. 
      * @throws IOException             If an error occurs while writing the file. 
      */
-    public void generateSpeciesRankFile(String speciesId, boolean anatEntityOnly, DataType dataType, 
+    public void generateSpeciesRankFile(Integer speciesId, boolean anatEntityOnly, DataType dataType, 
             String outputDir) throws IllegalArgumentException, IOException {
         log.entry(speciesId, anatEntityOnly, dataType, outputDir);
 
@@ -604,18 +606,17 @@ public class GenerateRankFile {
         assert species != null;
         
         //Retrieve the genes of the species, mapped to their gene IDs, notably to display their names
+        GeneFilter geneFilter = new GeneFilter(speciesId);
         Map<String, Gene> genes = serviceFactory.getGeneService()
-                .loadGenesByIdsAndSpeciesIds(null, Arrays.asList(speciesId)).stream()
-                .collect(Collectors.toMap(g -> g.getId(), g -> g));
+                .loadGenes(geneFilter)
+                .collect(Collectors.toMap(g -> g.getEnsemblGeneId(), g -> g));
         
         //Load ontologies with all data for the requested species, will avoid to make one query 
         //for each gene
-        Ontology<AnatEntity> anatEntityOnt = serviceFactory.getOntologyService()
-                .getAnatEntityOntology(Arrays.asList(speciesId), null, 
-                        serviceFactory.getAnatEntityService());
-        Ontology<DevStage> devStageOnt = serviceFactory.getOntologyService()
-                .getDevStageOntology(Arrays.asList(speciesId), null, 
-                        serviceFactory.getDevStageService());
+        Ontology<AnatEntity, String> anatEntityOnt = serviceFactory.getOntologyService()
+                .getAnatEntityOntology(speciesId, null);
+        Ontology<DevStage, String> devStageOnt = serviceFactory.getOntologyService()
+                .getDevStageOntology(speciesId, null);
         
         //Query expression data for the species. 
         Iterator<ExpressionCall> callIt = this.getExpressionCalls(speciesId, anatEntityOnly, 
@@ -648,7 +649,7 @@ public class GenerateRankFile {
             while (callIt.hasNext()) {
                 rowWritten = true;
                 ExpressionCall call = callIt.next();
-                geneId = call.getGeneId();
+                geneId = call.getGene().getEnsemblGeneId();
                 
                 if (previousGeneId != null && !geneId.equals(previousGeneId)) {
                     assert previousGeneId.compareTo(geneId) < 0: 
@@ -697,7 +698,7 @@ public class GenerateRankFile {
      * @param serviceFactory    A {@code ServiceFactory} to retrieve Bgee services from.
      * @return                  A {@code Stream} of the {@code ExpressionCall}s retrieved. 
      */
-    private Stream<ExpressionCall> getExpressionCalls(String speciesId, boolean anatEntityOnly, 
+    private Stream<ExpressionCall> getExpressionCalls(Integer speciesId, boolean anatEntityOnly, 
             DataType dataType, ServiceFactory serviceFactory) {
         log.entry(speciesId, anatEntityOnly, dataType, serviceFactory);
         
@@ -717,8 +718,8 @@ public class GenerateRankFile {
         }
         
         Set<CallService.Attribute> attrs = EnumSet.of(
-                CallService.Attribute.GENE_ID, CallService.Attribute.ANAT_ENTITY_ID, 
-                CallService.Attribute.GLOBAL_RANK);
+                CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID, 
+                CallService.Attribute.GLOBAL_MEAN_RANK);
         if (!anatEntityOnly) {
             attrs.add(CallService.Attribute.DEV_STAGE_ID);
         }
@@ -729,11 +730,18 @@ public class GenerateRankFile {
 //        }
         
         CallService service = serviceFactory.getCallService();
+        Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
+        summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
+        Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
+        obsDataFilter.put(null, true);
         return log.exit(service.loadExpressionCalls(
-                speciesId, 
-                new ExpressionCallFilter(new ExpressionCallData(Expression.EXPRESSED, dataType)), 
+//                speciesId, 
+                new ExpressionCallFilter(summaryCallTypeQualityFilter,
+                    Collections.singleton(new GeneFilter(speciesId)),
+                    null, Arrays.asList(dataType), obsDataFilter, true, true),
                 attrs, 
                 serviceOrdering));
+
     }
     
     /**
@@ -743,9 +751,9 @@ public class GenerateRankFile {
      *                              Note that it will be reordered. 
      * @param gene                  The {@code Gene} the {@code ExpressionCall}s are related to.
      * @param anatEntityOnt         An {@code Ontology} containing all the {@code AnatEntity}s 
-     *                              of the related species. Will be used to obtain {@code ConditionUtils}s. 
+     *                              of the related species. Will be used to obtain {@code ConditionGraph}s. 
      * @param devStageOnt           An {@code Ontology} containing all the {@code DevStage}s 
-     *                              of the related species. Will be used to obtain {@code ConditionUtils}s.
+     *                              of the related species. Will be used to obtain {@code ConditionGraph}s.
      * @param beanWriter            An {@code ICsvBeanWriter} used to write {@code ExpressionCallBean}s 
      *                              into a TSV file.
      * @param colToAttribute        An {@code Array} of {@code String}s providing the names 
@@ -759,7 +767,7 @@ public class GenerateRankFile {
      *                                  It is not a checked exception because we use {@code Stream}s.
      */
     private void processAndWriteToFile(List<ExpressionCall> singleGeneExprCalls, 
-            Gene gene, Ontology<AnatEntity> anatEntityOnt, Ontology<DevStage> devStageOnt, 
+            Gene gene, Ontology<AnatEntity, String> anatEntityOnt, Ontology<DevStage, String> devStageOnt, 
             ICsvBeanWriter beanWriter, String[] colToAttribute, CellProcessor[] processors) 
                     throws RuntimeException {
         log.entry(singleGeneExprCalls, gene, anatEntityOnt, devStageOnt, 
@@ -784,51 +792,51 @@ public class GenerateRankFile {
      *                              Note that it will be reordered. 
      * @param gene                  The {@code Gene} the {@code ExpressionCall}s are related to.
      * @param anatEntityOnt         An {@code Ontology} containing all the {@code AnatEntity}s 
-     *                              of the related species. Will be used to obtain {@code ConditionUtils}s. 
+     *                              of the related species. Will be used to obtain {@code ConditionGraph}s. 
      * @param devStageOnt           An {@code Ontology} containing all the {@code DevStage}s 
-     *                              of the related species. Will be used to obtain {@code ConditionUtils}s.
+     *                              of the related species. Will be used to obtain {@code ConditionGraph}s.
      * @return                      A {@code Stream} of {@code ExpressionCallBean}s. The {@code Stream} 
      *                              is sorted, it is important, and the sort might be different 
      *                              than the input list of {@code ExpressionCall}s.
      */
     private Stream<ExpressionCallBean> mapCallsToBeans(List<ExpressionCall> singleGeneExprCalls, 
-            Gene gene, Ontology<AnatEntity> anatEntityOnt, Ontology<DevStage> devStageOnt) {
+            Gene gene, Ontology<AnatEntity, String> anatEntityOnt, Ontology<DevStage, String> devStageOnt) {
         log.entry(singleGeneExprCalls, gene, anatEntityOnt, devStageOnt);
         
-        //Instantiate a ConditionUtils for computations and for display purpose
-        ConditionUtils conditionUtils = this.condUtilsSupplier.apply(gene.getSpeciesId(), 
+        //Instantiate a ConditionGraph for computations and for display purpose
+        ConditionGraph conditionGraph = this.condGraphSupplier.apply( 
                 singleGeneExprCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()), 
                 anatEntityOnt, devStageOnt);
 
         //XXX: deactivate because too slow
 //        //first, we rank the calls with the ExpressionCall.RankComparator, it is mandatory 
 //        //for correct detection of redundant calls and consistency with the display. 
-//        Collections.sort(singleGeneExprCalls, this.rankComparatorSupplier.apply(conditionUtils));
+//        Collections.sort(singleGeneExprCalls, this.rankComparatorSupplier.apply(conditionGraph));
 //        //identify redundant calls
 //        Set<ExpressionCall> redundantCalls = this.redundantCallsFuncSupplier.apply(
-//                singleGeneExprCalls, conditionUtils);
+//                singleGeneExprCalls, conditionGraph);
         
         //map ExpressionCalls to ExpressionCallBean to be written in output file
         return log.exit(singleGeneExprCalls.stream().map(c -> {
-            if (!gene.getId().equals(c.getGeneId())) {
+            if (!gene.getEnsemblGeneId().equals(c.getGene().getEnsemblGeneId())) {
                 throw log.throwing(new IllegalArgumentException("The provided gene does not correspond to "
                         + "the expression calls."));
             }
             
             Condition cond = c.getCondition();
-            AnatEntity anatEntity = conditionUtils.getAnatEntity(cond);
-            DevStage devStage = conditionUtils.getDevStage(cond);
+            AnatEntity anatEntity = conditionGraph.getAnatEntityOntology().getElement(cond.getAnatEntityId());
+            DevStage devStage = conditionGraph.getDevStageOntology().getElement(cond.getDevStageId());
             //generate a Map DataType -> presence/absence of data
             Map<DataType, Boolean> dataTypeToStatus = Arrays.stream(DataType.values())
                     .collect(Collectors.toMap(
                             type -> type, 
                             type -> c.getCallData().stream().anyMatch(
                                     callData -> type.equals(callData.getDataType()) && 
-                                    callData.getDataQuality() != null && 
-                                    !DataQuality.NODATA.equals(callData.getDataQuality()))));
+                                    c.getSummaryQuality() != null && 
+                                    !DataQuality.NODATA.equals(c.getSummaryQuality()))));
             
             return new ExpressionCallBean(
-                c.getGeneId(), gene.getName(), 
+                c.getGene().getEnsemblGeneId(), gene.getName(), 
                 cond.getAnatEntityId(), anatEntity == null? null: anatEntity.getName(), 
                 cond.getDevStageId(), devStage == null? null: devStage.getName(), 
                 FORMATTER.apply(c.getGlobalMeanRank()), 

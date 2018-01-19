@@ -6,7 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
-import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.NamedEntityTO;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 
@@ -25,10 +25,13 @@ public interface CIOStatementDAO extends DAO<CIOStatementDAO.Attribute> {
      * {@code Enum} used to define the attributes to populate in the {@code CIOStatementTO}s 
      * obtained from this {@code CIOStatementDAO}.
      * <ul>
-     * <li>{@code ID}: corresponds to {@link CIOStatementDAO#getId()}.
-     * <li>{@code NAME}: corresponds to {@link CIOStatementDAO#getName()}.
-     * <li>{@code DESCRIPTION}: corresponds to {@link CIOStatementDAO#getDescription()}.
-     * <li>{@code TRUSTED}: corresponds to {@link CIOStatementDAO#isTrusted()}.
+     * <li>{@code ID}: corresponds to {@link CIOStatementTO#getId()}.
+     * <li>{@code NAME}: corresponds to {@link CIOStatementTO#getName()}.
+     * <li>{@code DESCRIPTION}: corresponds to {@link CIOStatementTO#getDescription()}.
+     * <li>{@code TRUSTED}: corresponds to {@link CIOStatementTO#isTrusted()}.
+     * <li>{@code CONFIDENCE_LEVEL}: corresponds to {@link CIOStatementTO#getConfidenceLevel()}.
+     * <li>{@code EVIDENCE_CONCORDANCE}: corresponds to {@link CIOStatementTO#getEvidenceConcordance()}.
+     * <li>{@code EVIDENCE_TYPE_CONCORDANCE}: corresponds to {@link CIOStatementTO#getEvidenceTypeConcordance()}.
      * </ul>
      * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
      * @see org.bgee.model.dao.api.DAO#setAttributes(Enum[])
@@ -85,7 +88,7 @@ public interface CIOStatementDAO extends DAO<CIOStatementDAO.Attribute> {
      * @version Bgee 13
      * @since Bgee 13
      */
-    public final class CIOStatementTO extends EntityTO {
+    public final class CIOStatementTO extends NamedEntityTO<String> {
 
         private static final long serialVersionUID = 7509933615802695073L;
 
@@ -121,7 +124,7 @@ public interface CIOStatementDAO extends DAO<CIOStatementDAO.Attribute> {
              * @param representation            A {@code String} representing a confidence level.
              * @return                          A {@code ConfidenceLevel} corresponding to 
              *                                  {@code representation}.
-             * @throw IllegalArgumentException  If {@code representation} does not correspond 
+             *@throws IllegalArgumentException  If {@code representation} does not correspond 
              *                                  to any {@code ConfidenceLevel}.
              */
             public static final ConfidenceLevel convertToConfidenceLevel(String representation) {
@@ -191,7 +194,7 @@ public interface CIOStatementDAO extends DAO<CIOStatementDAO.Attribute> {
              * @param representation            A {@code String} representing a evidence concordance.
              * @return                          An {@code EvidenceConcordance} corresponding to 
              *                                  {@code representation}.
-             * @throw IllegalArgumentException  If {@code representation} does not correspond 
+             * @throws IllegalArgumentException If {@code representation} does not correspond 
              *                                  to any {@code EvidenceConcordance}.
              */
             public static final EvidenceConcordance convertToEvidenceConcordance(
@@ -257,7 +260,7 @@ public interface CIOStatementDAO extends DAO<CIOStatementDAO.Attribute> {
              *                                  concordance.
              * @return                          An {@code EvidenceTypeConcordance} corresponding to 
              *                                  {@code representation}.
-             * @throw IllegalArgumentException  If {@code representation} does not correspond 
+             *@throws IllegalArgumentException  If {@code representation} does not correspond 
              *                                  to any {@code EvidenceTypeConcordance}.
              */
             public static final EvidenceTypeConcordance convertToEvidenceTypeConcordance(

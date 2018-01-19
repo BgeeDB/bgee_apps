@@ -18,6 +18,7 @@ import org.bgee.view.GeneralDisplay;
 import org.bgee.view.JobDisplay;
 import org.bgee.view.TopAnatDisplay;
 import org.bgee.view.JsonHelper;
+import org.bgee.view.RPackageDisplay;
 import org.bgee.view.SearchDisplay;
 import org.bgee.view.SourceDisplay;
 import org.bgee.view.SpeciesDisplay;
@@ -152,4 +153,9 @@ public class HtmlFactory extends ViewFactory {
         log.entry();
         return log.exit(new HtmlJobDisplay(this.response, this.requestParameters, this.prop, this));
     }
+    @Override
+	public RPackageDisplay getRPackageDisplay() throws IOException {
+	    log.entry();
+	    throw log.throwing(new UnsupportedOperationException("Not available for HTML display"));
+	}
 }

@@ -116,3 +116,11 @@ is_a: ID:0000000 ! life cycle stage
 relationship: BFO:0000050 ID:0000003 ! immature stage
 relationship: RO:0002087 SPE2:0000009
 comment: left: 27 - right: 28 - level: 3 
+
+[Term]
+id: NCBITaxon:1
+name: tax1
+
+[Term]
+id: NCBITaxon:2
+name: tax2

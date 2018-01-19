@@ -7,11 +7,12 @@ import java.util.EnumSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeEnum;
 import org.bgee.model.BgeeEnum.BgeeEnumField;
-import org.bgee.model.expressiondata.baseelements.DataPropagation.PropagationState;
+import org.bgee.model.expressiondata.baseelements.PropagationState;
 
 /**
  * An interface representing types of expression calls from any types of analysis: 
@@ -24,8 +25,8 @@ import org.bgee.model.expressiondata.baseelements.DataPropagation.PropagationSta
  * @version Bgee 13
  * @since Bgee 13
  */
+//TODO: unit tests
 public interface CallType {
-    
     
     //**************** INNER CallType CLASSES ****************
     /**
@@ -45,9 +46,6 @@ public interface CallType {
         EXPRESSED(Collections.unmodifiableSet(EnumSet.allOf(DataType.class))), 
         NOT_EXPRESSED(Collections.unmodifiableSet(
                 EnumSet.of(DataType.AFFYMETRIX, DataType.IN_SITU, DataType.RNA_SEQ)));
-        /**
-         * {@code Logger} of the class. 
-         */
         private final static Logger log = LogManager.getLogger(Expression.class.getName());
         
         /**
@@ -63,41 +61,35 @@ public interface CallType {
             return this.allowedDataTypes;
         }
         @Override
-        public void checkDataPropagation(DataPropagation propagation) {
-            log.entry(propagation);
-            PropagationState anatPropagation = propagation.getAnatEntityPropagationState();
-            PropagationState devStagePropagation = propagation.getDevStagePropagationState();
+        public void checkPropagationState(PropagationState propState) throws IllegalArgumentException {
+            log.entry(propState);
+
             boolean incorrectPropagation = false;
-            
-            if (this.equals(EXPRESSED)) {
+
+            switch (this) {
+            case EXPRESSED:
                 //no propagation from parents allowed for expression calls, 
                 //all other propagations allowed. 
-                if (anatPropagation == PropagationState.ANCESTOR || 
-                        anatPropagation == PropagationState.SELF_AND_ANCESTOR || 
-                        anatPropagation == PropagationState.SELF_OR_ANCESTOR || 
-                        devStagePropagation == PropagationState.ANCESTOR || 
-                        devStagePropagation == PropagationState.SELF_AND_ANCESTOR || 
-                        devStagePropagation == PropagationState.SELF_OR_ANCESTOR) {
+                if (PropagationState.ANCESTOR.equals(propState)) {
                     incorrectPropagation = true;
                 }
-            } else if (this.equals(NOT_EXPRESSED)) {
-                //for no-expression calls, propagation from parents for anat. entities allowed, 
-                //no propagation for dev. stage allowed. 
-                if (anatPropagation == PropagationState.DESCENDANT || 
-                        anatPropagation == PropagationState.SELF_AND_DESCENDANT || 
-                        anatPropagation == PropagationState.SELF_OR_DESCENDANT || 
-                        devStagePropagation != PropagationState.SELF) {
+                break;
+            case NOT_EXPRESSED:
+                //for no-expression calls, propagation from parent anat. entities.
+                if (PropagationState.DESCENDANT.equals(propState)) {
                     incorrectPropagation = true;
                 }
-            } else {
+                break;
+            default:
                 throw log.throwing(new IllegalStateException("CallType not supported: " 
-                        + this.toString()));
+                        + this));
             }
             
             if (incorrectPropagation) {
-                throw log.throwing(new IllegalArgumentException("The following propagation "
-                        + "is incorrect for the CallType " + this
-                        + ": " + propagation));
+                //log in TRACE level, since this method can simply be used to check validity
+                //of a propagation state
+                throw log.throwing(Level.TRACE, new IllegalArgumentException("The following propagation "
+                        + "is incorrect for the CallType " + this + ": " + propState));
             }
             log.exit();
         }
@@ -119,7 +111,7 @@ public interface CallType {
          * @param representation            A {@code String} representing a data quality.
          * @return                          A {@code CallType.Expression} corresponding 
          *                                  to {@code representation}.
-         * @throw IllegalArgumentException  If {@code representation} does not correspond 
+         * @throws IllegalArgumentException If {@code representation} does not correspond 
          *                                  to any {@code CallType.Expression}.
          * @see #convert(Class, String)
          */
@@ -163,7 +155,7 @@ public interface CallType {
          * Allowed {@code DataType}s are the same for all {@code DiffExpression} {@code CallType}s.
          * @see #getAllowedDataTypes()
          */
-        private static final Set<DataType> DIFF_EXPR_DATA_TYPES = 
+        static final Set<DataType> DIFF_EXPR_DATA_TYPES = 
                 Collections.unmodifiableSet(EnumSet.of(DataType.AFFYMETRIX, DataType.RNA_SEQ));
         
         @Override
@@ -171,14 +163,14 @@ public interface CallType {
             return DIFF_EXPR_DATA_TYPES;
         }
         @Override
-        public void checkDataPropagation(DataPropagation propagation) {
-            log.entry(propagation);
-            //no propagation allowed for any diff. expression call type
-            if (propagation.getAnatEntityPropagationState() != PropagationState.SELF || 
-                    propagation.getDevStagePropagationState() != PropagationState.SELF) {
-                throw log.throwing(new IllegalArgumentException("The following propagation "
-                        + "is incorrect for the CallType " + this
-                        + ": " + propagation));
+        public void checkPropagationState(PropagationState propState) throws IllegalArgumentException {
+            log.entry(propState);
+            //no propagation allowed for any diff. expression call type.
+            //log in TRACE level, since this method can simply be used to check validity
+            //of a propagation state
+            if (!PropagationState.SELF.equals(propState)) {
+                throw log.throwing(Level.TRACE, new IllegalArgumentException("The following propagation "
+                        + "is incorrect for the CallType " + this + ": " + propState));
             }
             log.exit();
         }
@@ -197,7 +189,7 @@ public interface CallType {
          * @param representation            A {@code String} representing a data quality.
          * @return                          A {@code CallType.DiffExpression} corresponding 
          *                                  to {@code representation}.
-         * @throw IllegalArgumentException  If {@code representation} does not correspond 
+         * @throws IllegalArgumentException If {@code representation} does not correspond 
          *                                  to any {@code CallType.DiffExpression}.
          * @see #convert(Class, String)
          */
@@ -212,15 +204,34 @@ public interface CallType {
      * Check if {@code dataType} is compatible with this {@code CallType} 
      * (see {@link CallType#getAllowedDataTypes()}). 
      * An {@code IllegalArgumentException} is thrown if an incompatibility 
-     * is detected,
+     * is detected.
      * 
      * @param dataType      A {@code DataType} to check against 
      *                      this {@code CallType}.
+     * @see #isValidDataType(DataType)
      * @throws IllegalArgumentException     If an incompatibility is detected.
      */
     default void checkDataType(DataType dataType) 
             throws IllegalArgumentException {
         checkCallTypeDataTypes(Arrays.asList(dataType));
+    }
+    /**
+     * Check if {@code dataType} is compatible with this {@code CallType} 
+     * (see {@link CallType#getAllowedDataTypes()}).
+     * 
+     * @param dataType      A {@code DataType} to check against 
+     *                      this {@code CallType}.
+     * @return              {@code true} if {@code dataType} is compatible with this {@code CallType},
+     *                      {@code false} otherwise.
+     * @see #checkDataType(DataType)
+     */
+    default boolean isValidDataType(DataType dataType) {
+        try {
+            this.checkDataType(dataType);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
     /**
      * Check if all {@code DataType}s in {@code dataTypes} are compatible 
@@ -250,29 +261,42 @@ public interface CallType {
         }
     }
 
-    
-    //**************** INTERFACE CallType METHODS ****************
     /**
      * Determines whether this {@code CallType} can be propagated according to 
-     * the provided {@code DataPropagation}. An {@code IllegalArgumentException} is thrown 
+     * the provided {@code PropagationState}. An {@code IllegalArgumentException} is thrown 
      * if the propagation is not possible for this {@code CallType}.
      * <p>
      * <ul>
-     * <li>{@link Expression.EXPRESSED}: can be propagated from child anatomical entities 
-     * and child developmental stages. 
-     * <li>{@link Expression.NOT_EXPRESSED}: can be propagated from parent anatomical entities, 
-     * cannot be propagated along developmental stages.
-     * <li>{@link DiffExpression}: none of the diff. expression call types can be propagated, 
-     * neither along anatomical entities nor developmental stages.
+     * <li>{@link Expression#EXPRESSED}: can be propagated from descendant conditions. 
+     * <li>{@link Expression#NOT_EXPRESSED}: can be propagated from some parent conditions
+     * (along anatomical relations only).
+     * <li>{@link DiffExpression}: none of the diff. expression call types can be propagated.
      * </ul>
      * 
-     * @param propagation   The {@code DataPropagation} to be checked for validity 
+     * @param propagation   The {@code PropagationState} to be checked for validity 
      *                      when use for this {@code CallType}.
-     * @throws IllegalArgumentException If {@code propagation} is not valid 
-     *                                  for this {@code CallType.}
-     * @see DataPropagation
+     * @see #isValidPropagationState(DataType)
+     * @throws IllegalArgumentException If {@code propState} is not valid for this {@code CallType}.
      */
-    public void checkDataPropagation(DataPropagation propagation) throws IllegalArgumentException;
+    public void checkPropagationState(PropagationState propState) throws IllegalArgumentException;
+    /**
+     * Check if {@code propState} is compatible with this {@code CallType} 
+     * (see {@link #checkPropagationState(PropagationState)}).
+     * 
+     * @param propagation   The {@code PropagationState} to be checked for validity 
+     *                      when use for this {@code CallType}.
+     * @return              {@code true} if {@code propState} is compatible with this {@code CallType},
+     *                      {@code false} otherwise.
+     * @see #checkPropagationState(DataType)
+     */
+    default boolean isValidPropagationState(PropagationState propState) {
+        try {
+            this.checkPropagationState(propState);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
     
     /**
      * Returns the {@code DataType}s capable of producing this {@code CallType}. 

@@ -7,6 +7,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
@@ -19,12 +20,12 @@ import org.bgee.view.html.HtmlDownloadDisplay.DownloadPageType;
 /**
  * HTML View for the general category display
  * 
- * @author Mathieu Seppey
- * @author Frederic Bastian
- * @author Valentine Rech de Laval
- * @author Philippe Moret
- * @version Bgee 13, Mar. 2016
- * @since Bgee 13
+ * @author  Mathieu Seppey
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @author  Philippe Moret
+ * @version Bgee 14, Mar. 2017
+ * @since   Bgee 13
  */
 public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisplay {
 
@@ -96,7 +97,8 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	    groups.stream().filter(sdg -> sdg.isSingleSpecies()).forEach(sdg -> {
 	        Species species = sdg.getMembers().get(0);
 	        Map<String,String> attrs = new HashMap<>();
-	        attrs.put("src", this.prop.getSpeciesImagesRootDirectory() + htmlEntities(species.getId())+"_light.jpg");
+	        attrs.put("src", this.prop.getSpeciesImagesRootDirectory() 
+	                            + String.valueOf(species.getId()) + "_light.jpg");
 	        attrs.put("alt", htmlEntities(species.getShortName()));
 	        attrs.put("class", "species_img");
 	        homePageSpeciesSection.append(getHTMLTag("img", attrs));
@@ -118,12 +120,20 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 		log.entry();
 			
 	    this.writeln("<div id='bgee_hero' class='row'>");
-	    
-	    //TODO: manage the version either from database, or from bgee-webapp.properties file.
-	    this.writeln("<span id='bgee_version'>version 13.2</span>");
+
+	    String version = null;
+	    if (StringUtils.isNotBlank(this.prop.getMajorVersion())) {
+	        version = this.prop.getMajorVersion();
+	        if (StringUtils.isNotBlank(this.prop.getMinorVersion())) {
+	            version += "." + this.prop.getMinorVersion();
+	        }
+	    }
+	    if (version != null) {
+	        this.writeln("<span id='bgee_version'>version " + htmlEntities(version) + "</span>");
+	    }
 
 	    this.writeln("<div id='bgee_hp_logo'><img src='" + this.prop.getLogoImagesRootDirectory() 
-	            + "bgee13_hp_logo.png' alt='Bgee logo'></div>");
+	            + "bgee14beta_hp_logo.png' alt='Bgee logo'></div>");
 	
 	    this.writeln("<div class='mini_text'>Gene expression data in animals</div>");
 
@@ -305,6 +315,29 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	    
 	    this.writeln("<div class='panel-body'>");
 	    
+	    this.writeOneNews("2017-05-16", "Release of Bgee version 14-beta:"
+	            + "<ul>"
+	            + "  <li>12 new species, bringing the total to 29:"
+	            + "    <ul>"
+	            + "      <li>new mammal species: horse, rabbit, dog, cat, guinea pig, hedgehog;</li>"
+	            + "      <li>new Drosophila species: D. ananassae, D. mojavensis, D. pseudoobscura, D. simulans, D. virilis, D. yakuba.</li>"
+	            + "    </ul>"
+	            + "  </li>"
+	            + "  <li>All species now have RNA-Seq data.</li>"
+	            + "  <li>Addition of curated human RNA-Seq data from GTEx, removing unhealthy samples; see "
+                + "      <a href='" + urlDownloadCalls.getRequestURL() + "#id1'>human data</a>.</li>"
+	            + "  <li>Improved quality annotation of calls: replacement of \"low quality\" / \"high quality\" by:"
+	            + "    <ul>"
+	            + "      <li>\"Gold\": ≥2 experiments with a high confidence calls;</li>"
+	            + "      <li>\"Silver\": 1 experiment with a high confidence call, or ≥2 experiments with low confidence calls;</li>"
+	            + "      <li>\"Bronze\": 1 experiment with a low confidence call; these are not shown by default.</li>"
+	            + "    </ul>"
+	            + "  </li>"
+	            + "  <li>Update of download pages to make it easier to chose files to retrieve; inclusion of gene ranks (as used in gene pages) in call files..</li>"
+	            + "</ul>"
+	            + "You can still access to Bgee 13 at <a title='Archive site Bgee version 13' "
+	            + "href='http://bgee.org/bgee13' target='_blank'>http://bgee.org/bgee13</a>.");
+
 	    this.writeOneNews("2016-07-06", "Release of Bgee version 13.2: "
                 + "<ul>"
                 + "<li>Major update of our gene page and ranking algorithm: "
@@ -324,36 +357,43 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 + "and new information added to the gene pages.</li>"
                 + "</ul>");
         
+	    this.writeOneNews("2016-05-09", "Release of our new "
+                + "<a href='https://github.com/BgeeDB/BgeeDB_R' class='external_link' target='_blank'>"
+                + "BgeeDB R package</a>, a package for the annotation and gene expression "
+                + "data download from Bgee database into R, and TopAnat analysis (see also "
+                + "<a href='https://bioconductor.org/packages/release/bioc/html/BgeeDB.html' "
+                + "class='external_link' target='_blank'>Bioconductor website</a>).");
+
         this.writeOneNews("2016-03-22", "Various improvements of our new interface.");
         
         this.writeOneNews("2016-03-09", "Release of our new <a href='" + urlGenePage.getRequestURL()
                           + "'>gene page</a>, allowing to discover the most relevant conditions where a gene is expressed. "
                           + "This update also includes an important revamping of our interfaces.");
 	    
-	    this.writeOneNews("2015-12-24", "major update of <a href='" + urlTopAnat.getRequestURL()
+	    this.writeOneNews("2015-12-24", "Major update of <a href='" + urlTopAnat.getRequestURL()
 	                      + "' title='Perform gene expression enrichment tests with TopAnat'>TopAnat</a>. "
 	                      + "Happy Christmas!");
 	    
-	    this.writeOneNews("2015-11-24", "we are happy to release of our new exclusive tool "
+	    this.writeOneNews("2015-11-24", "We are happy to release of our new exclusive tool "
 	                      + "for gene expression enrichment analyses: <a href='" + urlTopAnat.getRequestURL()
 	                      + "' title='Perform gene expression enrichment tests with TopAnat'>TopAnat</a>. "
 	                      + "This is a tool with absolutely no equivalent, developped in collaboration with "
 	                      + "the Web-Team  of the SIB Swiss Institute of Bioinformatics. Check it out!");
-	    this.writeOneNews("2015-08-26", "update of the home page.");
+	    this.writeOneNews("2015-08-26", "Update of the home page.");
 	    
-	    this.writeOneNews("2015-06-08", "release of Bgee version 13.1: "
+	    this.writeOneNews("2015-06-08", "Release of Bgee version 13.1: "
 	                      + "<ul>"
 	                      + "<li>Update of the website interfaces.</li>"
 	                      + "<li><a href='" + urlDownloadProcValues.getRequestURL()
 	                      + "'>New download page</a> providing processed expression values.</li>"
 	                      + "<li>Addition of mouse <i>in situ</i> data from MGI, see "
-	                      + "<a href='" + urlDownloadCalls.getRequestURL() + "#id10090"
+	                      + "<a href='" + urlDownloadCalls.getRequestURL() + "#id2"
 	                      + "'>mouse data</a>.</li>"
 	                      + "<li>Differential expression data have been added for "
-	                      + "<a href='" + urlDownloadCalls.getRequestURL() + "#id7955"
-	                      + "'>zebrafish</a>, <a href='" + urlDownloadCalls.getRequestURL() + "#id9598"
-	                      + "'>chimpanzee</a>, <a href='" + urlDownloadCalls.getRequestURL() + "#id9593"
-	                      + "'>gorilla</a>, and <a href='" + urlDownloadCalls.getRequestURL() + "#id13616"
+	                      + "<a href='" + urlDownloadCalls.getRequestURL() + "#id3"
+	                      + "'>zebrafish</a>, <a href='" + urlDownloadCalls.getRequestURL() + "#id6"
+	                      + "'>chimpanzee</a>, <a href='" + urlDownloadCalls.getRequestURL() + "#id8"
+	                      + "'>gorilla</a>, and <a href='" + urlDownloadCalls.getRequestURL() + "#id19"
 	                      + "'>opossum</a>.</li>"
 	                      + "<li>Addition of new multi-species differential expression data, see "
 	                      + "for instance <a href='" + urlDownloadCalls.getRequestURL() + "#id9598_9544"
@@ -362,21 +402,21 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	                      + "see for instance <a href='" + urlCallDoc.getRequestURL() + "#oma_hog"
 	                      + "'>OMA Hierarchical orthologous groups documentation</a>.</li>"
 	                      + "<li>Removal of data incorrectly considered as normal in <i>C. elegans</i>, "
-	                      + "see <a href='" + urlDownloadCalls.getRequestURL() + "#id6239"
+	                      + "see <a href='" + urlDownloadCalls.getRequestURL() + "#id5"
 	                      + "'>worm data</a>.</li>"
 	                      + "<li>Improved filtering of propagated no-expression calls. As a result, "
 	                      + "complete expression calls files do not contain invalid conditions anymore.</li>"
 	                      + "<li>Filtering of invalid developmental stages for differential expression analyses.</li>"
 	                      + "</ul>");
-	    this.writeOneNews("2015-04-16", "release of the multi-species " +
+	    this.writeOneNews("2015-04-16", "Release of the multi-species " +
 	                      "differential expression data (across anatomy) for 6 groups, see <a href='" +
 	                      urlDownload.getRequestURL() + "' " + "title='Bgee download page'>" +
 	                      "download page</a>.");
-	    this.writeOneNews("2015-03-03", "release of the single-species " +
+	    this.writeOneNews("2015-03-03", "Release of the single-species " +
 	                      "differential expression data for 11 species, see <a href='" +
 	                      urlDownload.getRequestURL() + "' " + "title='Bgee download page'>" +
 	                      "download page</a>.");
-	    this.writeOneNews("2014-12-19", "release of the single-species " +
+	    this.writeOneNews("2014-12-19", "Release of the single-species " +
 	                      "expression data for 17 species, see <a href='" +
 	                      urlDownload.getRequestURL() + "' " + "title='Bgee download page'>" +
 	                      "download page</a>.");
@@ -388,7 +428,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	}
 
 	/**
-     * Display more information (for instance, image sources or 'view archive site' link).
+     * Display more information (for instance, image sources or 'view x site' link).
      */
     private void displayMoreInfo() {
     	log.entry();
@@ -399,9 +439,12 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         this.writeln(getImageSources());
         this.writeln("</div>");
 
-        this.writeln("<div class='col-xs-12 col-md-2'>");
-        this.writeln("<a id ='archive_site' title='Archive site' href='http://bgee.org/bgee/bgee' target='_blank'>"
-	    		+ "View archive site</a>");
+        this.writeln("<div class='col-xs-12 col-md-3 archive_site'>");
+        this.writeln("View archive sites:");
+        this.writeln("<a title='Archive site Bgee version 12' href='http://bgee.org/bgee12' target='_blank'>"
+                + "version 12</a>");
+        this.writeln("<a title='Archive site Bgee version 13' href='http://bgee.org/bgee13' target='_blank'>"
+                + "version 13</a>");
         this.writeln("</div>");
         
         this.writeln("</div>"); // close bgee_more_info row

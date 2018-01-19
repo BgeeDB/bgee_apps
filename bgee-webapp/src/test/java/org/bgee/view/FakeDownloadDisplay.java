@@ -15,9 +15,9 @@ import org.bgee.model.file.SpeciesDataGroup;
  * This is a fake display used for tests. It should be called when the parameter 'page' provided
  * in the URL is 'download'.
  * 
- * @author Mathieu Seppey
- * @author Valentine Rech de Laval
- * @version Bgee 13 May 2015
+ * @author  Mathieu Seppey
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, Mar. 2017
  * @since   Bgee 13
  */
 public class FakeDownloadDisplay extends FakeParentDisplay implements DownloadDisplay {
@@ -39,13 +39,13 @@ public class FakeDownloadDisplay extends FakeParentDisplay implements DownloadDi
 
     @Override
     public void displayProcessedExpressionValuesDownloadPage(List<SpeciesDataGroup> groups
-    		, Map<String, Set<String>> keywords) {
+    		, Map<Integer, Set<String>> keywords) {
         this.out.println("TestB");
     }
 
     @Override
     public void displayGeneExpressionCallDownloadPage(List<SpeciesDataGroup> groups
-    		, Map<String, Set<String>> keywords) {
+    		, Map<Integer, Set<String>> keywords) {
         this.out.println("TestC");
     }
 }

@@ -4,7 +4,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -16,7 +15,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -102,72 +100,7 @@ public class SimilarityAnnotationUtils {
 //            return log.exit(next.execute(converted, context));
 //        }
 //    }
-    /**
-     * A {@code CellProcessorAdaptor} capable of parsing cells allowing to optionally 
-     * contain multiple values, separated by one of the separator in 
-     * {@link org.bgee.pipeline.Utils#VALUE_SEPARATORS VALUE_SEPARATORS}. 
-     * This {@code CellProcessorAdaptor} will return the values as a {@code List} 
-     * of {@code String}s, in the same order as in the cell read.
-     * 
-     * @author Frederic Bastian
-     * @version Bgee 13 Mar. 2015
-     * @since Bgee 13
-     */
-    protected static class ParseMultipleStringValues extends CellProcessorAdaptor {
-        /**
-         * A {@code String} that is the pattern to use to split values in a cell 
-         * potentially containing multiple values.
-         */
-        private final static String SPLIT_VALUE_PATTERN = generateSplitValuePattern();
-        /**
-         * Generate the pattern to split multiple values, based on {@link Utils#VALUE_SEPARATORS}.
-         * @return  A {@code String} that is the pattern to use to split values in a cell 
-         *          potentially containing multiple values.
-         */
-        private final static String generateSplitValuePattern() {
-            log.entry();
-            String splitPattern = "";
-            for (String separator: Utils.VALUE_SEPARATORS) {
-                if (!splitPattern.equals("")) {
-                    splitPattern += "|";
-                }
-                splitPattern += Pattern.quote(separator);
-            }
-            return log.exit(splitPattern);
-        }
-        
-        /**
-         * Default constructor, no other {@code CellProcessor} in the chain.
-         */
-        protected ParseMultipleStringValues() {
-                super();
-        }
-        /**
-         * Constructor allowing other processors to be chained 
-         * after {@code ParseMultipleStringValues}.
-         * @param next  A {@code CellProcessor} that is the next to be called. 
-         */
-        protected ParseMultipleStringValues(CellProcessor next) {
-            super(next);
-        }
-        
-        @Override
-        public Object execute(Object value, CsvContext context) 
-                throws SuperCsvCellProcessorException {
-            log.entry(value, context); 
-            //throws an Exception if the input is null, as all CellProcessors usually do.
-            validateInputNotNull(value, context);  
-            
-            List<String> values = new ArrayList<String>(
-                    Arrays.asList(((String) value).split(SPLIT_VALUE_PATTERN)));
-            if (values.isEmpty()) {
-                throw log.throwing(new SuperCsvCellProcessorException("Cell cannot be empty", 
-                        context, this));
-            }
-            //passes result to next processor in the chain
-            return log.exit(next.execute(values, context));
-        }
-    }
+    
     /**
      * A {@code CellProcessorAdaptor} to parse the qualifier column (see 
      * {@link #QUALIFIER_COL_NAME}), in order to convert it into a {@code Boolean}. 
@@ -194,7 +127,7 @@ public class SimilarityAnnotationUtils {
                 super(next);
         }
         @Override
-        public Object execute(Object value, CsvContext context) {
+        public <T extends Object> T execute(Object value, CsvContext context) {
             log.entry(value, context); 
             //this processor accepts null value
             if (value!= null && !(value instanceof String)) {
@@ -306,7 +239,7 @@ public class SimilarityAnnotationUtils {
         /**
          * @return  A {@code String} that is the ID of a term from the HOM ontology, 
          *          providing the evolutionary concept captured by this annotation.
-         * @see #getHOMLabel()
+         * @see #getHomLabel()
          */
         public String getHomId() {
             return homId;
@@ -329,7 +262,7 @@ public class SimilarityAnnotationUtils {
         }
         /**
          * @param homLabel  A {@code String} that is the name of a term from the HOM ontology.
-         * @see #getHOMLabel()
+         * @see #getHomLabel()
          */
         public void setHomLabel(String homLabel) {
             this.homLabel = homLabel;
@@ -339,7 +272,7 @@ public class SimilarityAnnotationUtils {
          * @return  A {@code List} of {@code String}s that are the IDs of the anatomical entities 
          *          targeted by this annotation. There is most of the time only one entity 
          *          targeted. When several are targeted, they are provided in alphabetical order.
-         * @see #getEntityLabels()
+         * @see #getEntityNames()
          */
         public List<String> getEntityIds() {
             return entityIds;
@@ -375,7 +308,7 @@ public class SimilarityAnnotationUtils {
     
         /**
          * @return  An {@code int} that is the NCBI ID of the taxon targeted by this annotation.
-         * @see getTaxonName()
+         * @see #getTaxonName()
          */
         public int getNcbiTaxonId() {
             return ncbiTaxonId;
@@ -1847,7 +1780,7 @@ public class SimilarityAnnotationUtils {
      * 
      * @param similarityFile    A {@code String} that is the path to an ANCESTRAL TAXA 
      *                          annotation file. 
-     * @return                  A {@code List} of {@code SummaryAnnotationBean}s where each 
+     * @return                  A {@code List} of {@code AncestralTaxaAnnotationBean}s where each 
      *                          element represents a row in the file, ordered as 
      *                          they were read from the file.
      * @throws FileNotFoundException    If {@code similarityFile} could not be found.
@@ -2097,7 +2030,7 @@ public class SimilarityAnnotationUtils {
             // *** CellProcessors common to all AnnotationBean types ***
                 case ENTITY_COL_NAME: 
                 case ENTITY_NAME_COL_NAME: 
-                    processors[i] = new ParseMultipleStringValues();
+                    processors[i] = new AnnotationCommon.ParseMultipleStringValues();
                     break;
                 case TAXON_COL_NAME: 
                     processors[i] = new ParseInt();

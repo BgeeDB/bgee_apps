@@ -27,6 +27,8 @@ import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.model.RemoveAxiom;
+import org.semanticweb.owlapi.model.parameters.ChangeApplied;
+import org.semanticweb.owlapi.search.EntitySearcher;
 
 import owltools.graph.OWLGraphManipulator;
 import owltools.graph.OWLGraphWrapper;
@@ -285,7 +287,7 @@ public class GenerateTaxonOntology {
         List<RemoveAxiom> rmLabels = new ArrayList<RemoveAxiom>();
         List<AddAxiom> addLabels = new ArrayList<AddAxiom>();
         
-        for (OWLClass cls: wrapper.getAllOWLClasses()) {
+        for (OWLClass cls: wrapper.getAllRealOWLClasses()) {
             //at this point, taxa that had a non-unique name within the ontology 
             //were added a [NCBITaxon:...] at the end of their name. We remove that part.
             String nonUniquePart = "[" + wrapper.getIdentifier(cls) + "]";
@@ -301,16 +303,16 @@ public class GenerateTaxonOntology {
                 log.trace("New label {} will be added for class {}", newAnnot, cls);
                 
                 //and remove any already existing label
-                for (OWLAnnotation annotation : cls.getAnnotations(ont, labelProp)) {
+                for (OWLAnnotation annotation : EntitySearcher.getAnnotations(cls, ont, labelProp)) {
                     rmLabels.add(new RemoveAxiom(ont, 
                         factory.getOWLAnnotationAssertionAxiom(cls.getIRI(), annotation)));
                     log.trace("Existing label {} will be removed for class {}", annotation, cls);
                 }
             }
         }
-        int labelsRemoved = manager.applyChanges(rmLabels).size();
-        int labelsAdded   = manager.applyChanges(addLabels).size();
-        if (labelsRemoved != rmLabels.size() || labelsAdded != addLabels.size()) {
+        ChangeApplied labelsRemoved = manager.applyChanges(rmLabels);
+        ChangeApplied labelsAdded   = manager.applyChanges(addLabels);
+        if (labelsRemoved == ChangeApplied.UNSUCCESSFULLY || labelsAdded == ChangeApplied.UNSUCCESSFULLY) {
             throw log.throwing(new IllegalStateException(
                     "Some labels could not be modified, expecting " + rmLabels.size() + 
                     " labels removed, but was " + labelsRemoved + " - expecting " + 
@@ -371,8 +373,8 @@ public class GenerateTaxonOntology {
                     Set<OWLDisjointClassesAxiom> disjointAxioms = 
                             this.getCompactDisjoints(siblings, f);
                     
-                    int changeMade = m.addAxioms(ont, disjointAxioms).size();
-                    if (changeMade != disjointAxioms.size()) {
+                    ChangeApplied changeMade = m.addAxioms(ont, disjointAxioms);
+                    if (changeMade == ChangeApplied.UNSUCCESSFULLY) {
                         throw log.throwing(new IllegalStateException("Some disjoint axioms " +
                         		"could not be added among: " + disjointAxioms));
                     }

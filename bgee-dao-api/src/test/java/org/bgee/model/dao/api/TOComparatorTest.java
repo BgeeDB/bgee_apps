@@ -8,7 +8,9 @@ import java.time.Month;
 import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,15 +18,21 @@ import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTO;
 import org.bgee.model.dao.api.anatdev.StageDAO.StageTO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
+import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.ComparisonFactor;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.DiffExprCallType;
+import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO;
+import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO.CallDirection;
+import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO.CallQuality;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.GlobalExpressionToExpressionTO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.GlobalNoExpressionToNoExpressionTO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO.CategoryEnum;
+import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO.ConditionParameter;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesToDataGroupTO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesDataGroupTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
@@ -40,7 +48,6 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType
 import org.bgee.model.dao.api.source.SourceDAO.SourceTO;
 import org.bgee.model.dao.api.source.SourceDAO.SourceTO.SourceCategory;
 import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO;
-import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO.DataType;
 import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO.InfoType;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
@@ -51,8 +58,8 @@ import org.junit.Test;
  *  
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, June 2016
- * @since   Bgee 13
+ * @version Bgee 14, Feb. 2017
+ * @since   Bgee 13, Sep. 2014
  */
 public class TOComparatorTest extends TestAncestor {
     /**
@@ -72,25 +79,30 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreSpeciesTOEqual() {
-        SpeciesTO to1 = new SpeciesTO("ID:1", "name1", "genus1", "species1", 
-                "parentTaxon1", "path1", "version1", "genSpeId1", "fakePrefix1");
-        SpeciesTO to2 = new SpeciesTO("ID:1", "name1", "genus1", "species1", 
-                "parentTaxon1", "path1", "version1", "genSpeId1", "fakePrefix1");
+        SpeciesTO to1 = new SpeciesTO(1, "name1", "genus1", "species1", 1,
+                1, "path1", "version1", 2, 1);
+        SpeciesTO to2 = new SpeciesTO(1, "name1", "genus1", "species1", 1,
+                1, "path1", "version1", 2, 1);
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
 
-        to2 = new SpeciesTO("ID:2", "name1", "genus1", "species1", 
-                "parentTaxon1", "path1", "version1", "genSpeId1", "fakePrefix2");
+        to2 = new SpeciesTO(2, "name1", "genus1", "species1", 1,
+                1, "path1", "version1", 2, 1);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
 
-        to2 = new SpeciesTO("ID:1", "name1", "genus1", "species1", 
-                "parentTaxon1", "path1", "version1", "genSpeId1", "fakePrefix2");
+        to2 = new SpeciesTO(2, "name1", "genus1", "species1", 1,
+                1, "path1", "version1", 2, 1);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         
-        to2 = new SpeciesTO("ID:2", "name1", "genus1", "species1", 
-                "parentTaxon1", "path1", "version1", "genSpeId1", "fakePrefix1");
+        to2 = new SpeciesTO(2, "name1", "genus1", "species1", 1,
+                1, "path1", "version1", 2, 1);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+        
+        to2 = new SpeciesTO(1, "name1", "genus1", "species1", 2, 
+                1, "path1", "version1", 2, 1);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        assertFalse(TOComparator.areTOsEqual(to1, to2, false));
     }
     
     /**
@@ -99,15 +111,15 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreTaxonTOEqual() {
-        TaxonTO to1 = new TaxonTO("id1", "name1", "sciName1", 1, 3, 1, true);
-        TaxonTO to2 = new TaxonTO("id1", "name1", "sciName1", 1, 3, 1, true);
+        TaxonTO to1 = new TaxonTO(1, "name1", "sciName1", 1, 3, 1, true);
+        TaxonTO to2 = new TaxonTO(1, "name1", "sciName1", 1, 3, 1, true);
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
 
-        to2 = new TaxonTO("id1", "name1", "sciName1", 1, 3, 1, false);
+        to2 = new TaxonTO(1, "name1", "sciName1", 1, 3, 1, false);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         
-        to2 = new TaxonTO("id2", "name1", "sciName1", 1, 3, 1, true);
+        to2 = new TaxonTO(2, "name1", "sciName1", 1, 3, 1, true);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
     }
@@ -137,17 +149,20 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreGeneTOEqual() {
-        GeneTO to1 = new GeneTO("ID1", "name1", "desc1", 1, 2, 3, true);
-        GeneTO to2 = new GeneTO("ID1", "name1", "desc1", 1, 2, 3, true);
+        GeneTO to1 = new GeneTO(1, "ID1", "name1", "desc1", 1, 2, 3, true, 1);
+        GeneTO to2 = new GeneTO(1, "ID1", "name1", "desc1", 1, 2, 3, true, 1);
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
-        to2 = new GeneTO("ID1", "name1", "desc1", 1, 2, 3, false);
+        to2 = new GeneTO(1, "ID1", "name1", "desc1", 1, 2, 3, false, 1);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         
-        to2 = new GeneTO("ID2", "name1", "desc1", 1, 2, 3, true);
+        to2 = new GeneTO(2, "ID1", "name1", "desc1", 1, 2, 3, true, 1);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+        
+        to2 = new GeneTO(1, "ID1", "name1", "desc1", 1, 2, 3, true, 2);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
     }
     
     /**
@@ -156,15 +171,15 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreHierarchicalGroupTOEqual() {
-        HierarchicalGroupTO to1 = new HierarchicalGroupTO("1", "ID1", 1, 2, 10);
-        HierarchicalGroupTO to2 = new HierarchicalGroupTO("1", "ID1", 1, 2, 10);
+        HierarchicalGroupTO to1 = new HierarchicalGroupTO(1, "ID1", 1, 2, 10);
+        HierarchicalGroupTO to2 = new HierarchicalGroupTO(1, "ID1", 1, 2, 10);
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
-        to2 = new HierarchicalGroupTO("1", "ID1", 1, 2, 5);
+        to2 = new HierarchicalGroupTO(1, "ID1", 1, 2, 5);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
         
-        to2 = new HierarchicalGroupTO("2", "ID1", 1, 2, 10);
+        to2 = new HierarchicalGroupTO(2, "ID1", 1, 2, 10);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
     }
@@ -175,14 +190,14 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreHierarchicalGroupToGeneTOEqual() {
-        HierarchicalGroupToGeneTO to1 = new HierarchicalGroupToGeneTO("1", "ID1");
-        HierarchicalGroupToGeneTO to2 = new HierarchicalGroupToGeneTO("1", "ID1");
+        HierarchicalGroupToGeneTO to1 = new HierarchicalGroupToGeneTO(1, 1, 1);
+        HierarchicalGroupToGeneTO to2 = new HierarchicalGroupToGeneTO(1, 1, 1);
         assertTrue(TOComparator.areTOsEqual(to1, to2));
         
-        to2 = new HierarchicalGroupToGeneTO("1", "ID2");
+        to2 = new HierarchicalGroupToGeneTO(1, 2, 1);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
         
-        to1 = new HierarchicalGroupToGeneTO("2", "ID2");
+        to1 = new HierarchicalGroupToGeneTO(2, 2, 2);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
     }
     
@@ -215,35 +230,48 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreDownloadFileTOsEqual() {
-        DownloadFileTO to1 = new DownloadFileTO("ID1", "name1", "desc1", 
-                "path/", 10L, CategoryEnum.EXPR_CALLS_COMPLETE, "");
-        DownloadFileTO to2 = new DownloadFileTO("ID1", "name1", "desc1", 
-                "path/", 10L, CategoryEnum.EXPR_CALLS_COMPLETE, "");
+        DownloadFileTO to1 = new DownloadFileTO(1, "name1", "desc1", 
+                "path/", 10L, CategoryEnum.EXPR_CALLS_COMPLETE, 1,
+                Collections.singleton(ConditionParameter.ANAT_ENTITY));
+        DownloadFileTO to2 = new DownloadFileTO(1, "name1", "desc1", 
+                "path/", 10L, CategoryEnum.EXPR_CALLS_COMPLETE, 1,
+                Collections.singleton(ConditionParameter.ANAT_ENTITY));
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
-        to2 = new DownloadFileTO("ID1", "name1", "desc1", 
-                "path/", 10L, CategoryEnum.DIFF_EXPR_ANAT_COMPLETE, "");
+        to2 = new DownloadFileTO(1, "name1", "desc1", 
+                "path/", 10L, CategoryEnum.DIFF_EXPR_ANAT_COMPLETE, 1,
+                Collections.singleton(ConditionParameter.ANAT_ENTITY));
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         
-        to2 = new DownloadFileTO("ID2", "name1", "desc1", 
-                "path/", 10L, CategoryEnum.EXPR_CALLS_COMPLETE, "");
+        to2 = new DownloadFileTO(2, "name1", "desc1", 
+                "path/", 10L, CategoryEnum.EXPR_CALLS_COMPLETE, 1,
+                Collections.singleton(ConditionParameter.ANAT_ENTITY));
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
         //regression test when using Long size value > 127, 
         //see http://stackoverflow.com/a/20542511/1768736
-        to1 = new DownloadFileTO("ID1", "name1", "desc1", 
-                "path/", 3000L, CategoryEnum.EXPR_CALLS_COMPLETE, "");
-        to2 = new DownloadFileTO("ID1", "name1", "desc1", 
-                "path/", 3000L, CategoryEnum.EXPR_CALLS_COMPLETE, "");
+        to1 = new DownloadFileTO(1, "name1", "desc1", 
+                "path/", 3000L, CategoryEnum.EXPR_CALLS_COMPLETE, 1,
+                Collections.singleton(ConditionParameter.ANAT_ENTITY));
+        to2 = new DownloadFileTO(1, "name1", "desc1", 
+                "path/", 3000L, CategoryEnum.EXPR_CALLS_COMPLETE, 1,
+                Collections.singleton(ConditionParameter.ANAT_ENTITY));
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
-        to1 = new DownloadFileTO("ID1", "name1", "desc1", 
-                "path/", null, CategoryEnum.EXPR_CALLS_COMPLETE, "");
-        to2 = new DownloadFileTO("ID1", "name1", "desc1", 
-                "path/", null, CategoryEnum.EXPR_CALLS_COMPLETE, "");
+        to1 = new DownloadFileTO(1, "name1", "desc1", 
+                "path/", null, CategoryEnum.EXPR_CALLS_COMPLETE, 1,
+                Collections.singleton(ConditionParameter.ANAT_ENTITY));
+        to2 = new DownloadFileTO(1, "name1", "desc1", 
+                "path/", null, CategoryEnum.EXPR_CALLS_COMPLETE, 1,
+                Collections.singleton(ConditionParameter.ANAT_ENTITY));
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
+        
+        to2 = new DownloadFileTO(1, "name1", "desc1", 
+                "path/", null, CategoryEnum.EXPR_CALLS_COMPLETE, 1,
+                new HashSet<>(Arrays.asList(ConditionParameter.ANAT_ENTITY, ConditionParameter.STAGE)));
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
     }
 
     /**
@@ -252,22 +280,22 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreSpeciesDataGroupTOsEqual() {
-        SpeciesDataGroupTO to1 = new SpeciesDataGroupTO("ID1", "name1", "desc1", 1);
+        SpeciesDataGroupTO to1 = new SpeciesDataGroupTO(1, "name1", "desc1", 1);
 
-        SpeciesDataGroupTO to2 = new SpeciesDataGroupTO("ID1", "name1", "desc1", 1);
+        SpeciesDataGroupTO to2 = new SpeciesDataGroupTO(1, "name1", "desc1", 1);
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
-        to2 = new SpeciesDataGroupTO("ID1", "name1", "desc2", 1);
+        to2 = new SpeciesDataGroupTO(1, "name1", "desc2", 1);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         
-        to2 = new SpeciesDataGroupTO("ID2", "name1", "desc1", 1);
+        to2 = new SpeciesDataGroupTO(2, "name1", "desc1", 1);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
-        to1 = new SpeciesDataGroupTO("ID1", "name1", "desc1", null);
-        to2 = new SpeciesDataGroupTO("ID1", "name1", "desc1", 1);
+        to1 = new SpeciesDataGroupTO(1, "name1", "desc1", null);
+        to2 = new SpeciesDataGroupTO(1, "name1", "desc1", 1);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertFalse(TOComparator.areTOsEqual(to1, to2, false));
     }
@@ -278,15 +306,15 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreSpeciesToDataGroupTOsEqual() {
-        SpeciesToDataGroupTO to1 = new SpeciesToDataGroupTO("1", "11");
+        SpeciesToDataGroupTO to1 = new SpeciesToDataGroupTO(1, 11);
 
-        SpeciesToDataGroupTO to2 = new SpeciesToDataGroupTO("1", "11");
+        SpeciesToDataGroupTO to2 = new SpeciesToDataGroupTO(1, 11);
         assertTrue(TOComparator.areTOsEqual(to1, to2));
         
-        to2 = new SpeciesToDataGroupTO("1", "12");
+        to2 = new SpeciesToDataGroupTO(1, 12);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
         
-        to2 = new SpeciesToDataGroupTO("2", "11");
+        to2 = new SpeciesToDataGroupTO(2, 11);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
     }
 
@@ -315,12 +343,12 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreTaxonConstraintTOsEqual() {
-        TaxonConstraintTO to1 = new TaxonConstraintTO("ID1", "ID2");
-        TaxonConstraintTO to2 = new TaxonConstraintTO("ID1", "ID2");
+        TaxonConstraintTO<String> to1 = new TaxonConstraintTO<>("ID1", 2);
+        TaxonConstraintTO<String> to2 = new TaxonConstraintTO<>("ID1", 2);
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
-        to2 = new TaxonConstraintTO("ID1", "ID3");
+        to2 = new TaxonConstraintTO<>("ID1", 3);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
     }
     
@@ -329,24 +357,47 @@ public class TOComparatorTest extends TestAncestor {
      * using {@code RelationTO}s.
      */
     @Test
+    // TODO: test with Integers
     public void testAreRelationTOsEqual() {
-        RelationTO to1 = new RelationTO("1", "ID1", "ID2", RelationType.ISA_PARTOF, 
+        RelationTO<String> to1 = new RelationTO<>(1, "ID1", "ID2", RelationType.ISA_PARTOF, 
                 RelationStatus.DIRECT);
-        RelationTO to2 = new RelationTO("1", "ID1", "ID2", RelationType.ISA_PARTOF, 
+        RelationTO<String> to2 = new RelationTO<>(1, "ID1", "ID2", RelationType.ISA_PARTOF, 
                 RelationStatus.DIRECT);
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
-        to2 = new RelationTO("1", "ID1", "ID2", RelationType.DEVELOPSFROM, 
+        to2 = new RelationTO<>(1, "ID1", "ID2", RelationType.DEVELOPSFROM, 
                 RelationStatus.DIRECT);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         
-        to2 = new RelationTO("1", "ID1", "ID2", RelationType.ISA_PARTOF, 
+        to2 = new RelationTO<>(1, "ID1", "ID2", RelationType.ISA_PARTOF, 
                 RelationStatus.INDIRECT);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         
-        to2 = new RelationTO("2", "ID1", "ID2", RelationType.ISA_PARTOF, 
+        to2 = new RelationTO<>(2, "ID1", "ID2", RelationType.ISA_PARTOF, 
                 RelationStatus.DIRECT);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+    }
+    
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * using {@code ConditionTO}s.
+     */
+    @Test
+    public void testAreConditionTOsEqual() {
+        ConditionTO to1 = new ConditionTO(1, 2, "anatEntityId1", "stageId1", 99);
+        ConditionTO to2 = new ConditionTO(1, 2, "anatEntityId1", "stageId1", 99);
+        assertTrue(TOComparator.areTOsEqual(to1, to2, true));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+        
+        to2 = new ConditionTO(1, 2, "anatEntityId1", "stageId1", 8);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        
+        to2 = new ConditionTO(1, 2, "anatEntityId2", "stageId1", 99);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        
+        to2 = new ConditionTO(86, 2, "anatEntityId1", "stageId1", 99);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
     }
@@ -357,67 +408,67 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreExpressionCallTOEqual() {
-        ExpressionCallTO to1 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", null, 
+        ExpressionCallTO to1 = new ExpressionCallTO(1, 1, 1, null, 
                 DataState.HIGHQUALITY, null, DataState.LOWQUALITY, null, DataState.HIGHQUALITY, null, 
                 DataState.LOWQUALITY, null, false, false, 
                 ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF, true);
-        ExpressionCallTO to2 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", null, 
+        ExpressionCallTO to2 = new ExpressionCallTO(1, 1, 1, null, 
                 DataState.HIGHQUALITY, null, DataState.LOWQUALITY, null, DataState.HIGHQUALITY, null, 
                 DataState.LOWQUALITY, null, false, false, 
                 ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF, true);
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
-        to2 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", null, 
+        to2 = new ExpressionCallTO(1, 1, 1, null, 
                 DataState.HIGHQUALITY, null, DataState.LOWQUALITY, null, DataState.HIGHQUALITY, null, 
                 DataState.LOWQUALITY, null, false, false, 
                 ExpressionCallTO.OriginOfLine.DESCENT, ExpressionCallTO.OriginOfLine.SELF, true);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         
-        to2 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", null, 
+        to2 = new ExpressionCallTO(1, 1, 1, null, 
                 DataState.HIGHQUALITY, null, DataState.LOWQUALITY, null, DataState.HIGHQUALITY, null, 
                 DataState.LOWQUALITY, null, false, false, 
                 ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.BOTH, true);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         
-        to2 = new ExpressionCallTO("2", "ID1", "Anat_id1", "Stage_id6", null, 
+        to2 = new ExpressionCallTO(2, 1, 1, null, 
                 DataState.HIGHQUALITY, null, DataState.LOWQUALITY, null, DataState.HIGHQUALITY, null, 
                 DataState.LOWQUALITY, null, false, false, 
                 ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF, true);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
-        to2 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", null, 
+        to2 = new ExpressionCallTO(1, 1, 1, null, 
                 DataState.HIGHQUALITY, null, DataState.LOWQUALITY, null, DataState.HIGHQUALITY, null, 
                 DataState.LOWQUALITY, null, false, false, 
                 ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF, false);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         
-        to1 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", new BigDecimal("1.5"), 
+        to1 = new ExpressionCallTO(1, 1, 1, new BigDecimal("1.5"), 
                 DataState.HIGHQUALITY, new BigDecimal("2.5"), DataState.LOWQUALITY, new BigDecimal("3.5"), 
                 DataState.HIGHQUALITY, new BigDecimal("4.5"),  
                 DataState.LOWQUALITY, new BigDecimal("5.5"), false, false, 
                 ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF, true);
-        to2 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", new BigDecimal("1.5"), 
+        to2 = new ExpressionCallTO(1, 1, 1, new BigDecimal("1.5"), 
                 DataState.HIGHQUALITY, new BigDecimal("2.5"), DataState.LOWQUALITY, new BigDecimal("3.5"), 
                 DataState.HIGHQUALITY, new BigDecimal("4.5"),  
                 DataState.LOWQUALITY, new BigDecimal("5.5"), false, false, 
                 ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF, true);
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
 
-        to2 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", new BigDecimal("2.5"), 
+        to2 = new ExpressionCallTO(1, 1, 1, new BigDecimal("2.5"), 
                 DataState.HIGHQUALITY, new BigDecimal("2.5"), DataState.LOWQUALITY, new BigDecimal("3.5"), 
                 DataState.HIGHQUALITY, new BigDecimal("4.5"),  
                 DataState.LOWQUALITY, new BigDecimal("5.5"), false, false, 
                 ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF, true);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
-        to2 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", null, 
+        to2 = new ExpressionCallTO(1, 1, 1, null, 
                 DataState.HIGHQUALITY, new BigDecimal("2.5"), DataState.LOWQUALITY, new BigDecimal("3.5"), 
                 DataState.HIGHQUALITY, new BigDecimal("4.5"),  
                 DataState.LOWQUALITY, new BigDecimal("5.5"), false, false, 
                 ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF, true);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
-        to2 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", new BigDecimal("1.5"), 
+        to2 = new ExpressionCallTO(1, 1, 1, new BigDecimal("1.5"), 
                 DataState.HIGHQUALITY, new BigDecimal("200.5"), DataState.LOWQUALITY, new BigDecimal("3.5"), 
                 DataState.HIGHQUALITY, new BigDecimal("4.5"),  
                 DataState.LOWQUALITY, new BigDecimal("5.5"), false, false, 
@@ -431,21 +482,21 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreNoExpressionCallTOEqual() {
-        NoExpressionCallTO to1 = new NoExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", 
+        NoExpressionCallTO to1 = new NoExpressionCallTO(1, 1, 1, 
                 DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
                 DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF);
-        NoExpressionCallTO to2 = new NoExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", 
+        NoExpressionCallTO to2 = new NoExpressionCallTO(1, 1, 1, 
                 DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
                 DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF);
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
-        to2 = new NoExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", 
+        to2 = new NoExpressionCallTO(1, 1, 1, 
                 DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
                 DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.PARENT);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
         
-        to2 = new NoExpressionCallTO("2", "ID1", "Anat_id1", "Stage_id6", 
+        to2 = new NoExpressionCallTO(2, 1, 1, 
                 DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
                 DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
@@ -454,16 +505,34 @@ public class TOComparatorTest extends TestAncestor {
 
     /**
      * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * using {@code ExperimentExpressionTO}s.
+     */
+    @Test
+    public void testAreExperimentExpressionTOEqual() {
+        ExperimentExpressionTO to1 = new ExperimentExpressionTO(1, "1", 2, 3, 4, 5,
+            CallQuality.HIGH, CallDirection.ABSENT);
+        ExperimentExpressionTO to2 = new ExperimentExpressionTO(1, "1", 2, 3, 4, 5,
+            CallQuality.HIGH, CallDirection.ABSENT);
+        assertTrue(TOComparator.areTOsEqual(to1, to2, true));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+        
+        to2 = new ExperimentExpressionTO(1, "1", 2, 3, 4, 999, CallQuality.HIGH, CallDirection.ABSENT);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        assertFalse(TOComparator.areTOsEqual(to1, to2, false));
+    }
+
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
      * using {@code GlobalExpressionToExpressionTO}s.
      */
     @Test
     public void testAreGlobalExpressionToExpressionTOEqual() {
-        GlobalExpressionToExpressionTO to1 = new GlobalExpressionToExpressionTO("1", "10");
-        GlobalExpressionToExpressionTO to2 = new GlobalExpressionToExpressionTO("1", "10");
+        GlobalExpressionToExpressionTO to1 = new GlobalExpressionToExpressionTO(1, 10);
+        GlobalExpressionToExpressionTO to2 = new GlobalExpressionToExpressionTO(1, 10);
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
-        to2 = new GlobalExpressionToExpressionTO("1", "20");
+        to2 = new GlobalExpressionToExpressionTO(1, 20);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
     }
     
@@ -473,13 +542,13 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreGlobalNoExpressionToNoExpressionTOEqual() {
-        GlobalNoExpressionToNoExpressionTO to1 = new GlobalNoExpressionToNoExpressionTO("1", "10");
-        GlobalNoExpressionToNoExpressionTO to2 = new GlobalNoExpressionToNoExpressionTO("1", "10");
+        GlobalNoExpressionToNoExpressionTO to1 = new GlobalNoExpressionToNoExpressionTO(1, 10);
+        GlobalNoExpressionToNoExpressionTO to2 = new GlobalNoExpressionToNoExpressionTO(1, 10);
         assertTrue(TOComparator.areTOsEqual(to1, to2));
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
-        to2 = new GlobalNoExpressionToNoExpressionTO("1", "20");
+        to2 = new GlobalNoExpressionToNoExpressionTO(1, 20);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
     }
 
@@ -539,11 +608,11 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreDiffExpressionCallTOEqual() {
-        DiffExpressionCallTO to1 = new DiffExpressionCallTO("321", "ID1", "Anat_id1", "Stage_id1", 
+        DiffExpressionCallTO to1 = new DiffExpressionCallTO(1, 1, 1, 
                 ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                 DataState.HIGHQUALITY, 0.02f, 2, 0, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                 DataState.LOWQUALITY, 0.05f, 1, 0);
-        DiffExpressionCallTO to2 = new DiffExpressionCallTO("321", "ID1", "Anat_id1", "Stage_id1", 
+        DiffExpressionCallTO to2 = new DiffExpressionCallTO(1, 1, 1, 
                 ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                 DataState.HIGHQUALITY, 0.02f, 2, 0, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                 DataState.LOWQUALITY, 0.05f, 1, 0);
@@ -551,7 +620,7 @@ public class TOComparatorTest extends TestAncestor {
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
         //Different diffExprCallTypeRNASeq
-        to2 = new DiffExpressionCallTO("321", "ID1", "Anat_id1", "Stage_id1", 
+        to2 = new DiffExpressionCallTO(1, 1, 1, 
                 ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                 DataState.HIGHQUALITY, 0.02f, 2, 0, DiffExprCallType.UNDER_EXPRESSED, 
                 DataState.LOWQUALITY, 0.05f, 1, 0);
@@ -559,7 +628,7 @@ public class TOComparatorTest extends TestAncestor {
         assertFalse(TOComparator.areTOsEqual(to1, to2, false));
         
         //Different id
-        to2 = new DiffExpressionCallTO("322", "ID1", "Anat_id1", "Stage_id1", 
+        to2 = new DiffExpressionCallTO(2, 1, 1, 
                 ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                 DataState.HIGHQUALITY, 0.02f, 2, 0, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                 DataState.LOWQUALITY, 0.05f, 1, 0);
@@ -567,22 +636,22 @@ public class TOComparatorTest extends TestAncestor {
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
 
         //both best p-value are null
-        to1 = new DiffExpressionCallTO("321", "ID1", "Anat_id1", "Stage_id1", 
+        to1 = new DiffExpressionCallTO(1, 1, 1, 
                 ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                 DataState.HIGHQUALITY, null, 2, 0, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                 DataState.LOWQUALITY, 0.05f, 1, 0);
-        to2 = new DiffExpressionCallTO("321", "ID1", "Anat_id1", "Stage_id1", 
+        to2 = new DiffExpressionCallTO(1, 1, 1, 
                 ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                 DataState.HIGHQUALITY, null, 2, 0, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                 DataState.LOWQUALITY, 0.05f, 1, 0);
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
 
         //best p-value for Affymetrix is null
-        to1 = new DiffExpressionCallTO("321", "ID1", "Anat_id1", "Stage_id1", 
+        to1 = new DiffExpressionCallTO(1, 1, 1, 
                 ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                 DataState.HIGHQUALITY, null, 2, 0, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                 DataState.LOWQUALITY, 0.05f, 1, 0);
-        to2 = new DiffExpressionCallTO("321", "ID1", "Anat_id1", "Stage_id1", 
+        to2 = new DiffExpressionCallTO(1, 1, 1, 
                 ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                 DataState.HIGHQUALITY, 0.05f, 2, 0, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                 DataState.LOWQUALITY, 0.05f, 1, 0);
@@ -595,18 +664,18 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreKeywordTOEqual() {
-        KeywordTO to1 = new KeywordTO("ID:1", "name1");
-        KeywordTO to2 = new KeywordTO("ID:1", "name1");
+        KeywordTO to1 = new KeywordTO(1, "name1");
+        KeywordTO to2 = new KeywordTO(1, "name1");
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
 
-        to2 = new KeywordTO("ID:2", "name1");
+        to2 = new KeywordTO(2, "name1");
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
 
-        to2 = new KeywordTO("ID:1", "name2");
+        to2 = new KeywordTO(1, "name2");
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         
-        to2 = new KeywordTO("ID:2", "name1");
+        to2 = new KeywordTO(2, "name1");
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
     }
@@ -617,14 +686,14 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreEntityToKeywordTOEqual() {
-        EntityToKeywordTO to1 = new EntityToKeywordTO("ID:1", "SP:1");
-        EntityToKeywordTO to2 = new EntityToKeywordTO("ID:1", "SP:1");
+        EntityToKeywordTO<Integer> to1 = new EntityToKeywordTO<>(1, 1);
+        EntityToKeywordTO<Integer> to2 = new EntityToKeywordTO<>(1, 1);
         assertTrue(TOComparator.areTOsEqual(to1, to2));
 
-        to2 = new EntityToKeywordTO("ID:2", "SP:1");
+        to2 = new EntityToKeywordTO<>(2, 1);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
 
-        to2 = new EntityToKeywordTO("ID:1", "SP:2");
+        to2 = new EntityToKeywordTO<>(1, 2);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
     }
 
@@ -640,30 +709,30 @@ public class TOComparatorTest extends TestAncestor {
                 .atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
         Integer displayOrder = 1;
         Integer displayOrder2 = 1;
-        SourceTO to1 = new SourceTO("1", "First DataSource", "My custom data source", "XRefUrl", 
+        SourceTO to1 = new SourceTO(1, "First DataSource", "My custom data source", "XRefUrl", 
                 "experimentUrl", "evidenceUrl", "baseUrl", date, "1.0", false, 
                 SourceCategory.GENOMICS, displayOrder);
-        SourceTO to2 = new SourceTO("1", "First DataSource", "My custom data source", "XRefUrl", 
+        SourceTO to2 = new SourceTO(1, "First DataSource", "My custom data source", "XRefUrl", 
                 "experimentUrl", "evidenceUrl", "baseUrl", date, "1.0", false, 
                 SourceCategory.GENOMICS, displayOrder);
         assertTrue(TOComparator.areTOsEqual(to1, to2));
 
-        to2 = new SourceTO("1", "Second DataSource", "My custom data source", "XRefUrl", 
+        to2 = new SourceTO(1, "Second DataSource", "My custom data source", "XRefUrl", 
                 "experimentUrl", "evidenceUrl", "baseUrl", date, "1.0", false, 
                 SourceCategory.GENOMICS, displayOrder);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
 
-        to2 = new SourceTO("1", "First DataSource", "My custom data source", "XRefUrl", 
+        to2 = new SourceTO(1, "First DataSource", "My custom data source", "XRefUrl", 
                 "experimentUrl", "evidenceUrl", "baseUrl", date2, "1.0", true, 
                 SourceCategory.GENOMICS, displayOrder);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
         
-        to2 = new SourceTO("1", "First DataSource", "My custom data source", "XRefUrl", 
+        to2 = new SourceTO(1, "First DataSource", "My custom data source", "XRefUrl", 
                 "experimentUrl", "evidenceUrl", "baseUrl", date, "1.0", false, 
                 SourceCategory.GENOMICS, displayOrder2);
         assertTrue(TOComparator.areTOsEqual(to1, to2));
 
-        to2 = new SourceTO("2", "First DataSource", "My custom data source", "XRefUrl", 
+        to2 = new SourceTO(2, "First DataSource", "My custom data source", "XRefUrl", 
                 "experimentUrl", "evidenceUrl", "baseUrl", date, "1.0", false, 
                 SourceCategory.GENOMICS, displayOrder);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
@@ -676,20 +745,20 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreSourceToSpeciesTOEqual() {
-        SourceToSpeciesTO to1 = new SourceToSpeciesTO("1", "11", DataType.EST, InfoType.DATA);
-        SourceToSpeciesTO to2 = new SourceToSpeciesTO("1", "11", DataType.EST, InfoType.DATA);
+        SourceToSpeciesTO to1 = new SourceToSpeciesTO(1, 11, DAODataType.EST, InfoType.DATA);
+        SourceToSpeciesTO to2 = new SourceToSpeciesTO(1, 11, DAODataType.EST, InfoType.DATA);
         assertTrue(TOComparator.areTOsEqual(to1, to2));
 
-        to2 = new SourceToSpeciesTO("1", "11", DataType.AFFYMETRIX, InfoType.DATA);
+        to2 = new SourceToSpeciesTO(1, 11, DAODataType.AFFYMETRIX, InfoType.DATA);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
 
-        to2 = new SourceToSpeciesTO("1", "11", DataType.EST, InfoType.ANNOTATION);
+        to2 = new SourceToSpeciesTO(1, 11, DAODataType.EST, InfoType.ANNOTATION);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
         
-        to2 = new SourceToSpeciesTO("1", "21", DataType.EST, InfoType.DATA);
+        to2 = new SourceToSpeciesTO(1, 21, DAODataType.EST, InfoType.DATA);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
 
-        to2 = new SourceToSpeciesTO("2", "11", DataType.EST, InfoType.DATA);
+        to2 = new SourceToSpeciesTO(2, 11, DAODataType.EST, InfoType.DATA);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertFalse(TOComparator.areTOsEqual(to1, to2, false));
     }

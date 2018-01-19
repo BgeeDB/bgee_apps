@@ -357,6 +357,12 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
                 "Download the complete dump of the MySQL Bgee database, that contains "
                 + "all the data used to generate the information displayed on this website."));
 
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(BGEE_R_PACKAGE_URL, 
+                true, "BgeeDB R package", "R package", 
+                this.prop.getLogoImagesRootDirectory() + "r_logo_color.png", 
+                "A package for the annotation and gene expression data download from Bgee database, "
+                + "and TopAnat analysis."));
+
         this.writeln("</div>");
         
         this.endDisplay();

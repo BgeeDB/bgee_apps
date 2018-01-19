@@ -2,7 +2,6 @@ package org.bgee.controller;
 
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -19,7 +18,7 @@ import org.bgee.view.ViewFactory;
  * Controller handling requests relative to species.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, July 2015
+ * @version Bgee 14, Mar. 2017
  * @since   Bgee 13 Nov 2015
  */
 public class CommandSpecies extends CommandParent {
@@ -54,7 +53,7 @@ public class CommandSpecies extends CommandParent {
         SpeciesDisplay display = this.viewFactory.getSpeciesDisplay();
         
         // Get submitted species IDs
-        Collection<String> submittedSpeciesIds = this.requestParameters.getValues(
+        Collection<Integer> submittedSpeciesIds = this.requestParameters.getValues(
                 this.requestParameters.getUrlParametersInstance().getParamSpeciesList());
 
         // Load detected species
@@ -71,7 +70,7 @@ public class CommandSpecies extends CommandParent {
                 .filter(s -> !s.getDataTypesByDataSourcesForData().isEmpty())
                 //order species by ID for consistent rendering
                 //XXX: should we add ordering attributes to SpeciesService?
-                .sorted(Comparator.comparing(s -> Integer.parseInt(s.getId())))
+                .sorted(Comparator.comparing(s -> s.getId()))
                 .collect(Collectors.toList())
         );
 

@@ -46,7 +46,7 @@ public class Utils {
      * A {@code CellProcessorAdaptor} converting a {@code List} of {@code String}s 
      * into a {@code String} where elements in the {@code List} are separated 
      * by a separator. The separator used is the first element in 
-     * {@link #VALUE_SEPARATOR}. If you want to convert 
+     * {@link #VALUE_SEPARATORS}. If you want to convert 
      * a separated-values {@code String} into a {@code List} of {@code String}s, 
      * see {@link org.bgee.pipeline.annotations.SimilarityAnnotationUtils.ParseMultipleStringValues 
      * ParseMultipleStringValues}.

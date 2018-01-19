@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
+import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.TransferObject;
 
 /**
@@ -47,7 +48,7 @@ public interface CallDAO<T extends Enum<T> & CallDAO.Attribute> extends DAO<T> {
      * <li>{@code OMA_GROUP_ID}: order results by the OMA group genes belong to. 
      * If this {@code OrderingAttribute} is used in a query not specifying any targeted taxon 
      * for gene orthology, then the {@code OMAParentNodeId} of the gene is used (see 
-     * {@link org.bgee.model.dao.api.gene.GeneDAO.GeneTO.getOMAParentNodeId()}); otherwise, 
+     * {@link org.bgee.model.dao.api.gene.GeneDAO.GeneTO#getOMAParentNodeId()}); otherwise, 
      * the OMA group the gene belongs to at the level of the targeted taxon is used. 
      * <li>{@code MEAN_RANK}: order results by mean rank of the gene in the corresponding condition. 
      * Only the mean ranks computed from the data types requested in the query are considered. 
@@ -76,7 +77,7 @@ public interface CallDAO<T extends Enum<T> & CallDAO.Attribute> extends DAO<T> {
      * 
      * @param T The type of {@code Attribute} associated to this {@code CallTO}.
      */
-    public static abstract class CallTO<T extends Enum<T> & CallDAO.Attribute> extends TransferObject {
+    public static abstract class CallTO<T extends Enum<T> & CallDAO.Attribute> extends EntityTO<Integer> {
         // TODO modify the class to be immutable. Use a Builder pattern?
         private static final long serialVersionUID = 2157139618099008406L;
         /**
@@ -116,7 +117,7 @@ public interface CallDAO<T extends Enum<T> & CallDAO.Attribute> extends DAO<T> {
              * 
              * @param representation    A {@code String} representing a data state.
              * @return  A {@code DataState} corresponding to {@code representation}.
-             * @throw IllegalArgumentException  If {@code representation} does not correspond 
+             * @throws IllegalArgumentException If {@code representation} does not correspond 
              *                                  to any {@code DataState}.
              */
             public static final DataState convertToDataState(String representation) {
@@ -152,25 +153,14 @@ public interface CallDAO<T extends Enum<T> & CallDAO.Attribute> extends DAO<T> {
         //**************************************
         // ATTRIBUTES
         //**************************************
-        //-----------core attributes: id/gene/anat entity/dev stage---------------
-        /**
-         * A {@code String} representing the ID of this call.
-         */
-        private String id;
         /**
          * A {@code String} representing the ID of the gene associated to this call.
          */
-        private String geneId;
+        private Integer bgeeGeneId;
         /**
-         * A {@code String} representing the ID of the developmental stage associated to 
-         * this call.
+         * An {@code Integer} representing the ID of the condition associated to this call.
          */
-        private String stageId;
-        /**
-         * A {@code String} representing the ID of the anatomical entity associated to 
-         * this call.
-         */
-        private String anatEntityId;
+        private Integer conditionId;
         
         //-----------DataState for each data type---------------
         /**
@@ -207,7 +197,7 @@ public interface CallDAO<T extends Enum<T> & CallDAO.Attribute> extends DAO<T> {
          * Default constructor.
          */
         protected CallTO() {
-            this(null, null, null, null, DataState.NODATA, DataState.NODATA, 
+            this(null, null, null, DataState.NODATA, DataState.NODATA, 
                     DataState.NODATA, DataState.NODATA, DataState.NODATA);
         }
         
@@ -218,12 +208,10 @@ public interface CallDAO<T extends Enum<T> & CallDAO.Attribute> extends DAO<T> {
          * <p>
          * All of these parameters are optional, so they can be {@code null} when not used.
          * 
-         * @param id                   A {@code String} that is the ID of this call.
-         * @param geneId               A {@code String} that is the ID of the gene associated to 
+         * @param id                   An {@code Integer} that is the ID of this call.
+         * @param bgeeGeneId           An {@code Integer} that is the ID of the gene associated to 
          *                             this call.
-         * @param anatEntityId         A {@code String} that is the ID of the anatomical entity
-         *                             associated to this call. 
-         * @param stageId              A {@code String} that is the ID of the developmental stage 
+         * @param conditionId          An {@code Integer} that is the ID of the condition
          *                             associated to this call. 
          * @param affymetrixData       A {@code DataSate} that is the contribution of Affymetrix  
          *                             data to the generation of this call.
@@ -236,14 +224,12 @@ public interface CallDAO<T extends Enum<T> & CallDAO.Attribute> extends DAO<T> {
          * @param rnaSeqData           A {@code DataSate} that is the contribution of RNA-Seq data
          *                             to the generation of this call.
          */
-        protected CallTO(String id, String geneId, String anatEntityId, String stageId, 
+        protected CallTO(Integer id, Integer bgeeGeneId, Integer conditionId, 
                 DataState affymetrixData, DataState estData, DataState inSituData, 
                 DataState relaxedInSituData, DataState rnaSeqData) {
-            super();
-            this.id = id;
-            this.geneId = geneId;
-            this.anatEntityId = anatEntityId;
-            this.stageId = stageId;
+            super(id);
+            this.bgeeGeneId = bgeeGeneId;
+            this.conditionId = conditionId;
             this.affymetrixData = affymetrixData;
             this.estData = estData;
             this.inSituData = inSituData;
@@ -325,68 +311,19 @@ public interface CallDAO<T extends Enum<T> & CallDAO.Attribute> extends DAO<T> {
         //**************************************
         // GETTERS/SETTERS
         //**************************************
-        //-----------core attributes: id/gene/anat entity/dev stage---------------
-        /**
-         * @return the {@code String} representing the ID of this call.
-         */
-        public String getId() {
-            return id;
-        }
-        /**
-         * @param id    the {@code String} representing the ID of this call.
-         */
-        //deprecated because all TOs should now be immutable. 
-        @Deprecated
-        void setId(String id) {
-            this.id = id;
-        }
 
         /**
-         * @return the {@code String} representing the ID of the gene associated to this call.
+         * @return the {@code Integer} representing the ID of the gene associated to this call.
          */
-        public String getGeneId() {
-            return geneId;
+        public Integer getBgeeGeneId() {
+            return bgeeGeneId;
         }
         /**
-         * @param geneId    the {@code String} representing the ID of the gene associated to 
-         *                  this call.
-         */
-        //deprecated because all TOs should now be immutable. 
-        @Deprecated
-        void setGeneId(String geneId) {
-            this.geneId = geneId;
-        }
-        /**
-         * @return  the {@code String} representing the ID of the developmental stage 
+         * @return  the {@code Integer} representing the ID of the condition 
          *          associated to this call.
          */
-        public String getStageId() {
-            return stageId;
-        }
-        /**
-         * @param stageId    the {@code String} representing the ID of the 
-         *                      developmental stage associated to this call.
-         */
-        //deprecated because all TOs should now be immutable. 
-        @Deprecated
-        void setStageId(String stageId) {
-            this.stageId = stageId;
-        }
-        /**
-         * @return  the {@code String} representing the ID of the anatomical entity 
-         *          associated to this call.
-         */
-        public String getAnatEntityId() {
-            return anatEntityId;
-        }
-        /**
-         * @param anatEntityId  the {@code String} representing the ID of the 
-         *                      anatomical entity associated to this call.
-         */
-        //deprecated because all TOs should now be immutable. 
-        @Deprecated
-        void setAnatEntityId(String anatEntityId) {
-            this.anatEntityId = anatEntityId;
+        public Integer getConditionId() {
+            return conditionId;
         }
         
         //-----------DataState for each data type---------------
@@ -481,160 +418,17 @@ public interface CallDAO<T extends Enum<T> & CallDAO.Attribute> extends DAO<T> {
         void setRNASeqData(DataState rnaSeqData) {
             this.rnaSeqData = rnaSeqData;
         }
-        
-        
-        //**************************************
-        // Object methods overridden
-        //**************************************
-        
+
+
         @Override
         public String toString() {
-            return "ID: " + this.getId() + " - Gene ID: " + this.getGeneId() + 
-                " - Stage ID: " + this.getStageId() +
-                " - Anatomical entity ID: " + this.getAnatEntityId() +
+            return "ID: " + this.getId() + " - Bgee Gene ID: " + this.getBgeeGeneId() + 
+                " - Condition ID: " + this.getConditionId() +
                 " - Affymetrix data: " + this.getAffymetrixData() +
                 " - EST data: " + this.getESTData() +
                 " - in situ data: " + this.getInSituData() +
                 " - relaxed in situ data: " + this.getRelaxedInSituData() +
                 " - RNA-Seq data: " + this.getRNASeqData();
-        }
-
-        /**
-         * Implementation of hashCode specific to {@code CallTO}s: 
-         * <ul>
-         * <li>if {@link #getId()} returned a non-null value, the hashCode 
-         * will be based solely on it. 
-         * <li>Otherwise, if the attributes used as a unique key are all non-null 
-         * ({@link #getGeneId()}, {@link #getAnatEntityId()}, {@link #getStageId()}), 
-         * the hashCode will be base solely on them. This is because these fields 
-         * allow to uniquely identified a call. This is useful when aggregating 
-         * data from different types, to determine all {@link DataState}s for a given 
-         * call (a gene, with data in an organ, during a developmental stage)
-         * <li>Otherwise, hashCode will be based on all attributes of this class.
-         * </ul>
-         */
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            
-            //if id is not null, we will base the hashCode solely on it.
-            //Otherwise, if geneId, stageId, anatEntityId are all not null, 
-            //we will base the hashCode solely on them.
-            //Otherwise, all fields will be considered to generate the hashCode.
-            
-            if (id != null || this.useOtherAttributesForHashCodeEquals()) {
-                result = prime * result + ((id == null) ? 0 : id.hashCode());
-            } 
-            if (id == null) {
-                result = prime * result + ((geneId == null) ? 0 : geneId.hashCode());
-                result = prime * result + ((stageId == null) ? 0 : stageId.hashCode());
-                result = prime * result + ((anatEntityId == null) ? 0 : anatEntityId.hashCode());
-                
-                if (this.useOtherAttributesForHashCodeEquals()) {
-                    result = prime * result + 
-                            ((affymetrixData == null) ? 0 : affymetrixData.hashCode());
-                    result = prime * result
-                            + ((estData == null) ? 0 : estData.hashCode());
-                    result = prime * result
-                            + ((inSituData == null) ? 0 : inSituData.hashCode());
-                    result = prime * result
-                            + ((relaxedInSituData == null) ? 0 : relaxedInSituData.hashCode());
-                    result = prime * result
-                            + ((rnaSeqData == null) ? 0 : rnaSeqData.hashCode());
-                }
-            }
-            return result;
-        }
-
-        /**
-         * Implementation of equals specific to {@code CallTO}s and consistent with 
-         * the {@link #hashCode()} implementation. See {@link #hashCode()} for more details.
-         * @see #hashCode()
-         */
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null) {
-                return false;
-            }
-            if (!(obj instanceof CallTO)) {
-                return false;
-            }
-            CallTO<?> other = (CallTO<?>) obj;
-            
-            if (id == null) {
-                if (other.id != null) {
-                    return false;
-                }
-            } else {
-                //if id is not null, we will base the equals solely on it
-                return id.equals(other.id);
-            }
-            
-            if (geneId == null) {
-                if (other.geneId != null) {
-                    return false;
-                }
-            } else if (!geneId.equals(other.geneId)) {
-                return false;
-            }
-            if (anatEntityId == null) {
-                if (other.anatEntityId != null) {
-                    return false;
-                }
-            } else if (!anatEntityId.equals(other.anatEntityId)) {
-                return false;
-            }
-            if (stageId == null) {
-                if (other.stageId != null) {
-                    return false;
-                }
-            } else if (!stageId.equals(other.stageId)) {
-                return false;
-            }
-            //if geneId, stageId, anatEntityId are all not null, 
-            //we will base the equals solely on them.
-            if (!this.useOtherAttributesForHashCodeEquals()) {
-                return true;
-            }
-            
-            //otherwise, we will base the equals on all attributes.
-            if (affymetrixData != other.affymetrixData) {
-                return false;
-            }
-            if (estData != other.estData) {
-                return false;
-            }
-            if (inSituData != other.inSituData) {
-                return false;
-            }
-            if (relaxedInSituData != other.relaxedInSituData) {
-                return false;
-            }
-            if (rnaSeqData != other.rnaSeqData) {
-                return false;
-            }
-            
-            return true;
-        }
-        
-        /**
-         * Determines whether all attributes should be used in {@code hashCode} and 
-         * {@code equals}  methods, see {@link #hashCode()} for details. 
-         * @return  {@code true} if all attributes should be used in {@code hashCode} and 
-         *          {@code equals} method, false otherwise.
-         */
-        protected boolean useOtherAttributesForHashCodeEquals() {
-            if (id != null) {
-                return false;
-            }
-            if (geneId != null && anatEntityId != null && stageId != null) {
-                return false;
-            }
-            return true;
         }
     }
 }

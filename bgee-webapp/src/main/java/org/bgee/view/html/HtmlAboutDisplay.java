@@ -55,7 +55,7 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
         RequestParameters urlDocumentationGenerator = this.getNewRequestParameters();
         urlDocumentationGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
         
-        this.startDisplay("Bgee release 13 about page");
+        this.startDisplay("Bgee about page");
 
         this.writeln("<h1>About</h1>");
 
@@ -87,7 +87,7 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
         this.writeln("<p>Bgee is developed by the " +
                 "<a href='http://bioinfo.unil.ch' title='External link to the Robinson-Rechavi " +
                 "group webpage' target='_blank'>Evolutionary Bioinformatics group</a>, part of " +
-                "the <a href='http://www.sib.swiss/' title='External link to SIB' target='_blank'>" +
+                "the <a href='https://www.sib.swiss/' title='External link to SIB' target='_blank'>" +
                 "SIB Swiss Institute of Bioinformatics</a>, at the "
                 + "<a href='http://www.unil.ch/central/en/home.html' title='External link to UNIL' "
                 + "target='_blank'>University of Lausanne</a>.</p>" +
@@ -103,23 +103,32 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
         this.writeln("<h2>How to cite us?</h2>");
 
         this.writeln("<ul>");
-        this.writeln("<li>For the use of Bgee: Bastian F., Parmentier G., Roux J., Moretti S., " +
-                "Laudet V., Robinson-Rechavi M. (2008)<br>Bgee: Integrating and Comparing " +
-                "Heterogeneous Transcriptome Data Among Species." +
-                "<br><em>in</em> DILS: Data Integration in Life Sciences. " +
-                "<strong>Lecture Notes in Computer Science.</strong> " +
-                "5109:124-131. [<a href='http://www.springerlink.com/content/92q428161616w8r5/' " +
-                "title='Bgee paper in LNCS' target='_blank'>url</a>] " +
-                "<a href='ftp://ftp.bgee.org/general/citation01.ris'>" +
-                "RIS</a></li>");
-        this.writeln("<li>For the use of the HOG or vHOG ontologies: Niknejad A., Comte A., " +
-                "Parmentier G., Roux J., Bastian F.B. and Robinson-Rechavi M. (2012)" +
-                "<br>vHOG, a multi-species vertebrate ontology of homologous organs groups<br>" +
-                "<em>in</em> Bioinformatics (2012) 28(7): 1017-1020.[<a target='_blank' " +
-                "href='http://bioinformatics.oxfordjournals.org/content/28/7/1017.full' " +
-                "title='External link to: &quot;vHOG, a multi-species vertebrate ontology of " +
-                "homologous organs groups&quot;'>url</a>] <a href='" +
-                "ftp://ftp.bgee.org/general/citation03.ris'>RIS</a></li>");
+        this.writeln("<li>For the use of Bgee: "
+                + "<br>Bastian FB, Parmentier G, Roux J, Moretti S, Laudet V, Robinson-Rechavi M."
+                + "<br>Bgee: Integrating and Comparing Heterogeneous Transcriptome Data Among Species."
+                + "<br><em>in</em> DILS: Data Integration in Life Sciences. "
+                + "<strong>Lecture Notes in Computer Science</strong>. "
+                + "5109:124-131. [<a href='http://www.springerlink.com/content/92q428161616w8r5/' "
+                + "title='Bgee paper in LNCS' target='_blank'>url</a>] "
+                + "<a href='ftp://ftp.bgee.org/general/citation01.ris'>RIS</a></li>");
+        this.writeln("<li>For UBERON: "
+                + "<br>Haendel MA, Balhoff JP, Bastian FB, Blackburn DC, Blake JA, Bradford Y, "
+                + "Comte A, Dahdul WM, Dececchi TA, Druzinsky RE, Hayamizu TF, Ibrahim N, Lewis SE, "
+                + "Mabee PM, Niknejad A, Robinson-Rechavi M, Sereno PC, Mungall CJ."
+                + "<br>Unification of multi-species vertebrate anatomy ontologies for comparative biology in Uberon."
+                + "<br><em>in</em> J Biomed Semantics (2014): 5:21."
+                + "[<a target='_blank' href='https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4089931/' " 
+                + "title='Unification of multi-species vertebrate anatomy ontologies for comparative biology in Uberon'>url</a>] "
+                + "<a href='ftp://ftp.bgee.org/general/citation04.ris'>RIS</a></li>");
+        this.writeln("<li>For the use of the BgeeDB R package: "
+                + "<br>Komljenovic A, Roux J, Robinson-Rechavi M and Bastian F."
+                + "<br>BgeeDB, an R package for retrieval of curated expression datasets and "
+                + "for gene list enrichment tests."
+                + "<br><em>in</em> F1000Research. ."
+                + "[<a target='_blank' href='https://f1000research.com/articles/5-2748/v1' " 
+                + "title='BgeeDB, an R package for retrieval of curated expression datasets and "
+                + "for gene list enrichment tests'>url</a>] "
+                + "<a href='ftp://ftp.bgee.org/general/citation05.ris'>RIS</a></li>");
         this.writeln("</ul>");
 
         this.writeln("<h2>More</h2>");

@@ -2,6 +2,10 @@ package org.bgee.model.dao.mysql.species;
 
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.Map.Entry;
 
@@ -112,10 +116,41 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
     }
 
     @Override
+    public TaxonTOResultSet getAllLeastCommonAncestorAndParentTaxa(Collection<TaxonDAO.Attribute> attrs) 
+            throws DAOException {
+        log.entry(attrs);
+
+        //argument fitering/preparation
+        Set<TaxonDAO.Attribute> filteredAttrs = Optional.ofNullable(attrs)
+                .map(e -> EnumSet.copyOf(e)).orElse(EnumSet.allOf(TaxonDAO.Attribute.class));
+        
+        //Construct sql query
+        String sql = this.generateSelectClause(filteredAttrs, "taxon");
+        sql += "FROM taxon WHERE ";
+        //keep taxa that are either a LCA of species in Bgee
+        sql += "bgeeSpeciesLCA = 1 ";
+        //or that are a parent taxon of a species in Bgee
+        sql += "OR EXISTS (SELECT 1 FROM species WHERE species.taxonId = taxon.taxonId) ";
+    
+        //we don't use a try-with-resource, because we return a pointer to the results, 
+        //not the actual results, so we should not close this BgeePreparedStatement.
+        BgeePreparedStatement stmt = null;
+        try {
+            stmt = this.getManager().getConnection().prepareStatement(sql);
+            return log.exit(new MySQLTaxonTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+
+    @Override
     //TODO: integration test - test also a case where species are member of a same taxon leaf
-    public TaxonTOResultSet getLeastCommonAncestor(Set<String> speciesIds, 
+    public TaxonTOResultSet getLeastCommonAncestor(Collection<Integer> speciesIds, 
             boolean includeAncestors) throws DAOException, IllegalArgumentException {
         log.entry(speciesIds, includeAncestors);
+        
+        final Set<Integer> clonedSpeIds = Collections.unmodifiableSet(
+                speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds));
         
         String sql = this.generateSelectClause(this.getAttributes(), "t1");
         sql += "FROM taxon AS t1 INNER JOIN ";
@@ -127,10 +162,10 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
                 + "MAX(taxonRightBound) AS maxRightBound FROM taxon "
                 + "INNER JOIN species on taxon.taxonId = species.taxonId ";
         //no species requested: find the LCA of all species in Bgee. Otherwise, parameterize. 
-        if (speciesIds != null && !speciesIds.isEmpty()) {
+        if (!clonedSpeIds.isEmpty()) {
             sql += "WHERE speciesId IN (" + 
                     BgeePreparedStatement.generateParameterizedQueryString(
-                            speciesIds.size()) + ")";
+                            clonedSpeIds.size()) + ")";
         }
         //it is important to compare using greater/lower than *or equal to*, 
         //otherwise we would miss the LCA if species are all member of a same taxon leaf.
@@ -146,8 +181,8 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
         //not the actual results, so we should not close this BgeePreparedStatement.
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
-            if (speciesIds != null && !speciesIds.isEmpty()) {
-                stmt.setStringsToIntegers(1, speciesIds, true);
+            if (!clonedSpeIds.isEmpty()) {
+                stmt.setIntegers(1, clonedSpeIds, true);
             }
             
             return log.exit(new MySQLTaxonTOResultSet(stmt));
@@ -186,7 +221,7 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
                 this.getManager().getConnection().prepareStatement(sql)) {
             int paramIndex = 1;
             for (TaxonTO taxonTO: taxa) {
-                stmt.setInt(paramIndex, Integer.parseInt(taxonTO.getId()));
+                stmt.setInt(paramIndex, taxonTO.getId());
                 paramIndex++;
                 stmt.setString(paramIndex, taxonTO.getScientificName());
                 paramIndex++;
@@ -231,14 +266,14 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
         @Override
         protected TaxonTO getNewTO() {
             log.entry();
-            String taxonId = null, taxonName = null, taxonScientificName = null;
-            Integer taxonLeftBound = null, taxonRightBound = null, taxonLevel = null;
+            String taxonName = null, taxonScientificName = null;
+            Integer taxonId = null, taxonLeftBound = null, taxonRightBound = null, taxonLevel = null;
             Boolean bgeeSpeciesLCA = null;
             // Get results
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
                     if (column.getValue().equals("taxonId")) {
-                        taxonId = this.getCurrentResultSet().getString(column.getKey());
+                        taxonId = this.getCurrentResultSet().getInt(column.getKey());
 
                     } else if (column.getValue().equals("taxonCommonName")) {
                         taxonName = this.getCurrentResultSet().getString(column.getKey());

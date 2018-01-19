@@ -138,7 +138,7 @@ public class InsertGO extends MySQLDAOUser {
             //get the GOTermTOs 
             Set<GOTermTO> goTermTOs = this.getGOTermTOs(goWrapper);
             //get the RelationTOs
-            Set<RelationTO> relTOs = this.getRelationTOs(goWrapper);
+            Set<RelationTO<String>> relTOs = this.getRelationTOs(goWrapper);
                         
             //now we start a transaction to insert GOTermTOs in the Bgee data source.
             //note that we do not need to call rollback if an error occurs, calling 
@@ -181,7 +181,7 @@ public class InsertGO extends MySQLDAOUser {
         log.info("Retrieving terms...");
         
         Set<GOTermTO> goTermTOs = new HashSet<GOTermTO>();
-        for (OWLClass goTerm: goWrapper.getAllOWLClasses()) {
+        for (OWLClass goTerm: goWrapper.getAllRealOWLClasses()) {
             goTermTOs.add(new GOTermTO(
                     goWrapper.getIdentifier(goTerm), 
                     goWrapper.getLabel(goTerm), 
@@ -211,10 +211,10 @@ public class InsertGO extends MySQLDAOUser {
      *                  the simplified relations between terms, retrieved from 
      *                  {@code goWrapper}.
      */
-    private Set<RelationTO> getRelationTOs(OWLGraphWrapper goWrapper) {
+    private Set<RelationTO<String>> getRelationTOs(OWLGraphWrapper goWrapper) {
         log.entry(goWrapper);
         log.info("Retrieving relations between terms...");
-        Set<RelationTO> rels = new HashSet<RelationTO>();
+        Set<RelationTO<String>> rels = new HashSet<>();
         
         //modify the GO to reduce the relations, to map sub-relations of part_of 
         //to part_of, and to keep only is_a and part_of relations in the ontology. 
@@ -233,7 +233,7 @@ public class InsertGO extends MySQLDAOUser {
                 goWrapper.getOWLObjectPropertyByIdentifier(OntologyUtils.PART_OF_ID);
         
         //now we get each term relations.
-        for (OWLClass goTerm: goWrapper.getAllOWLClasses()) {
+        for (OWLClass goTerm: goWrapper.getAllRealOWLClasses()) {
             Set<OWLGraphEdge> edges = goWrapper.getOutgoingEdgesNamedClosureOverSupProps(goTerm);
             //generate the RelationTOs from the OWLGraphEdges. For the GO, we do not 
             //care about the exact type of the relation, and whether the relations 
@@ -252,7 +252,7 @@ public class InsertGO extends MySQLDAOUser {
                   edge.getSingleQuantifiedProperty().getQuantifier() == Quantifier.SUBCLASS_OF) || 
                   edge.getSingleQuantifiedProperty().getProperty().equals(partOf)) {
                     
-                    RelationTO rel = new RelationTO(goWrapper.getIdentifier(edge.getSource()), 
+                    RelationTO<String> rel = new RelationTO<>(goWrapper.getIdentifier(edge.getSource()), 
                             goWrapper.getIdentifier(edge.getTarget()));
                     rels.add(rel);
                     log.debug("Adding relation: {}", rel);

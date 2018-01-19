@@ -129,7 +129,7 @@ public class InsertCIO extends MySQLDAOUser {
         
         Set<CIOStatementTO> cioTOs = new HashSet<CIOStatementTO>();
         
-        for (OWLClass cls: cioWrapper.getOWLGraphWrapper().getAllOWLClasses()) {
+        for (OWLClass cls: cioWrapper.getOWLGraphWrapper().getAllRealOWLClasses()) {
             log.trace("Examining class {}", cls);
             //we only insert CIO statements, and only CIO statements that either have 
             //a confidence level, or that are the strongly conflicting statements, 

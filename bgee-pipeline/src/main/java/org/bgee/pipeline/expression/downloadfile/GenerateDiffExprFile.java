@@ -283,7 +283,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         }
         
         GenerateDiffExprFile generator = new GenerateDiffExprFile(
-                    CommandRunner.parseListArgument(args[0]), 
+                    CommandRunner.parseListArgumentAsInt(args[0]), 
                     GenerateDownloadFile.convertToFileTypes(
                             CommandRunner.parseListArgument(args[1]), SingleSpDiffExprFileType.class), 
                     args[2]);
@@ -310,7 +310,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
      * @param directory     A {@code String} that is the directory where to store files.
      * @throws IllegalArgumentException If {@code directory} is {@code null} or blank.
      */
-    public GenerateDiffExprFile(List<String> speciesIds, Set<SingleSpDiffExprFileType> fileTypes, 
+    public GenerateDiffExprFile(List<Integer> speciesIds, Set<SingleSpDiffExprFileType> fileTypes, 
             String directory) throws IllegalArgumentException {
         this(null, speciesIds, fileTypes, directory);
     }
@@ -328,7 +328,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
      * @param directory     A {@code String} that is the directory where to store files.
      * @throws IllegalArgumentException If {@code directory} is {@code null} or blank.
      */
-    public GenerateDiffExprFile(MySQLDAOManager manager, List<String> speciesIds, 
+    public GenerateDiffExprFile(MySQLDAOManager manager, List<Integer> speciesIds, 
             Set<SingleSpDiffExprFileType> fileTypes, String directory) 
                     throws IllegalArgumentException {
         super(manager, speciesIds, fileTypes, directory);     
@@ -344,15 +344,16 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
     public void generateDiffExprFiles() throws IOException { 
         log.entry(this.speciesIds, this.fileTypes, this.directory);
     
-        Set<String> setSpecies = new HashSet<String>();
+        Set<Integer> setSpecies = new HashSet<>();
         if (this.speciesIds != null) {
-            setSpecies = new HashSet<String>(this.speciesIds);
+            setSpecies = new HashSet<>(this.speciesIds);
         }
 
         // Check user input, retrieve info for generating file names
         // Retrieve species names and IDs (all species names if speciesIds is null or empty)
-        Map<String, String> speciesNamesForFilesByIds = 
-                checkAndGetLatinNamesBySpeciesIds(setSpecies);
+        // FIXME give a service to checkAndGetLatinNamesBySpeciesIds
+        Map<Integer, String> speciesNamesForFilesByIds = 
+                checkAndGetLatinNamesBySpeciesIds(setSpecies, null);
         assert speciesNamesForFilesByIds.size() >= setSpecies.size();
     
         // If no file types are given by user, we set all file types
@@ -361,7 +362,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         } 
         
         // Retrieve gene names, stage names, anat. entity names, once for all species
-        Map<String, String> geneNamesByIds = 
+        Map<Integer, String> geneNamesByIds = 
                 BgeeDBUtils.getGeneNamesByIds(setSpecies, this.getGeneDAO());
         Map<String, String> stageNamesByIds = 
                 BgeeDBUtils.getStageNamesByIds(setSpecies, this.getStageDAO());
@@ -383,7 +384,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         }
 
         // Generate differential expression files, species by species. 
-        for (String speciesId: speciesNamesForFilesByIds.keySet()) {
+        for (int speciesId: speciesNamesForFilesByIds.keySet()) {
             log.info("Start generating of differential expresion files for the species {}...", 
                     speciesId);
             
@@ -439,8 +440,8 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
      * @throws IllegalArgumentException If incorrect {@code DiffExprFileType}s provided.
      */
     private void generateDiffExprFiles(String fileNamePrefix, 
-            Set<SingleSpDiffExprFileType> fileTypes, String speciesId, 
-            Map<String, String> geneNamesByIds, Map<String, String> stageNamesByIds, 
+            Set<SingleSpDiffExprFileType> fileTypes, int speciesId, 
+            Map<Integer, String> geneNamesByIds, Map<String, String> stageNamesByIds, 
             Map<String, String> anatEntityNamesByIds) throws IOException, IllegalArgumentException {
         log.entry(this.directory, fileNamePrefix, fileTypes, speciesId, 
                 geneNamesByIds, stageNamesByIds, anatEntityNamesByIds);
@@ -475,7 +476,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         //********************************
         // RETRIEVE DATA FROM DATA SOURCE
         //********************************
-        Set<String> speciesFilter = new HashSet<String>();
+        Set<Integer> speciesFilter = new HashSet<>();
         speciesFilter.add(speciesId);
     
         //Load differential expression calls.
@@ -589,7 +590,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
      *                              all differential expression calls for the requested species. 
      * @throws DAOException If an error occurred while getting the data from the Bgee data source.
      */
-    private List<DiffExpressionCallTO> loadDiffExprCalls(Set<String> speciesIds, 
+    private List<DiffExpressionCallTO> loadDiffExprCalls(Set<Integer> speciesIds, 
             ComparisonFactor factor, boolean generateAdvancedFile) throws DAOException {
         log.entry(speciesIds, factor, generateAdvancedFile);
         
@@ -660,8 +661,8 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
             switch (header[i]) {
             // *** CellProcessors common to all file types ***
                 case GENE_ID_COLUMN_NAME:
-                case ANATENTITY_ID_COLUMN_NAME:
-                case ANATENTITY_NAME_COLUMN_NAME:
+                case ANAT_ENTITY_ID_COLUMN_NAME:
+                case ANAT_ENTITY_NAME_COLUMN_NAME:
                 case STAGE_ID_COLUMN_NAME:
                 case STAGE_NAME_COLUMN_NAME:
                     processors[i] = new StrNotNullOrEmpty();
@@ -737,8 +738,8 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         // *** Headers common to all file types ***
         headers[0] = GENE_ID_COLUMN_NAME;
         headers[1] = GENE_NAME_COLUMN_NAME;
-        headers[2] = ANATENTITY_ID_COLUMN_NAME;
-        headers[3] = ANATENTITY_NAME_COLUMN_NAME;
+        headers[2] = ANAT_ENTITY_ID_COLUMN_NAME;
+        headers[3] = ANAT_ENTITY_NAME_COLUMN_NAME;
         headers[4] = STAGE_ID_COLUMN_NAME;
         headers[5] = STAGE_NAME_COLUMN_NAME;
         headers[6] = DIFFEXPRESSION_COLUMN_NAME;
@@ -777,7 +778,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         for (int i = 0; i < headers.length; i++) {
             switch (headers[i]) {
                 case GENE_ID_COLUMN_NAME:
-                case ANATENTITY_ID_COLUMN_NAME:
+                case ANAT_ENTITY_ID_COLUMN_NAME:
                 case STAGE_ID_COLUMN_NAME:
                 case DIFFEXPRESSION_COLUMN_NAME:
                 case QUALITY_COLUMN_NAME:
@@ -794,7 +795,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
                     quoteMode[i] = false; 
                     break;
                 case GENE_NAME_COLUMN_NAME:
-                case ANATENTITY_NAME_COLUMN_NAME:
+                case ANAT_ENTITY_NAME_COLUMN_NAME:
                 case STAGE_NAME_COLUMN_NAME:
                     quoteMode[i] = true; 
                     break;
@@ -842,7 +843,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
      *                              re-ordered.
      * @throws IOException  If an error occurred while trying to write the {@code outputFile}.
      */
-    private void writeDiffExprRows(Map<String, String> geneNamesByIds, 
+    private void writeDiffExprRows(Map<Integer, String> geneNamesByIds, 
             Map<String, String> stageNamesByIds, Map<String, String> anatEntityNamesByIds, 
             Map<SingleSpDiffExprFileType, ICsvMapWriter> writersUsed, 
             Map<SingleSpDiffExprFileType, CellProcessor[]> processors, 
@@ -871,7 +872,8 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
             } else {
                 throw log.throwing(new AssertionError("Unsupported ComparisonFactor."));
             }
-            Collections.sort(allCallTOs, new CallTOComparator(orderByAnatomy));
+            //FIXME: to reactivate
+            //Collections.sort(allCallTOs, new CallTOComparator(orderByAnatomy));
             
             Map<String, String> row = null;
             try {
@@ -911,7 +913,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
      * <li>information that will be generated in any case: entries with keys equal to 
      * {@link #GENE_ID_COLUMN_NAME}, {@link #GENE_NAME_COLUMN_NAME}, 
      * {@link #STAGE_ID_COLUMN_NAME}, {@link #STAGE_NAME_COLUMN_NAME}, 
-     * {@link #ANATENTITY_ID_COLUMN_NAME}, {@link #ANATENTITY_NAME_COLUMN_NAME}, 
+     * {@link #ANAT_ENTITY_ID_COLUMN_NAME}, {@link #ANAT_ENTITY_NAME_COLUMN_NAME}, 
      * {@link #DIFFEXPRESSION_COLUMN_NAME}, {@link #QUALITY_COLUMN_NAME}.
      * <li>information generated for files of the type 
      * {@link SingleSpDiffExprFileType DIFF_EXPR_ANATOMY_COMPLETE} or 
@@ -943,7 +945,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
      * @throws IllegalArgumentException If the {@code DiffExpressionCallTO} provided 
      *                                  provides inconsistent data.
      */
-    private Map<String, String> generateDiffExprRow(Map<String, String> geneNamesByIds, 
+    private Map<String, String> generateDiffExprRow(Map<Integer, String> geneNamesByIds, 
             Map<String, String> stageNamesByIds, Map<String, String> anatEntityNamesByIds, 
             DiffExpressionCallTO to, SingleSpDiffExprFileType fileType) 
                     throws IllegalArgumentException {
@@ -954,9 +956,10 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         // ********************************
         // Set IDs and names
         // ********************************    
-        this.addIdsAndNames(row, to.getGeneId(), geneNamesByIds.get(to.getGeneId()), 
-                to.getAnatEntityId(), anatEntityNamesByIds.get(to.getAnatEntityId()),
-                to.getStageId(), stageNamesByIds.get(to.getStageId()));
+        //FIXME: to reactivate
+//        this.addIdsAndNames(row, to.getBgeeGeneId(), geneNamesByIds.get(to.getBgeeGeneId()), 
+//                to.getAnatEntityId(), anatEntityNamesByIds.get(to.getAnatEntityId()),
+//                to.getStageId(), stageNamesByIds.get(to.getStageId()));
     
         // ********************************
         // Set simple file columns

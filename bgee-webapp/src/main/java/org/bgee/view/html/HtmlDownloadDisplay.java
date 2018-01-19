@@ -28,7 +28,7 @@ import org.bgee.view.JsonHelper;
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
- * @version Bgee 13, Mar. 2016
+ * @version Bgee 14, Apr. 2017
  * @since   Bgee 13
  */
 public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDisplay {
@@ -87,7 +87,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     
     @Override
     public void displayGeneExpressionCallDownloadPage(List<SpeciesDataGroup> groups, 
-            Map<String, Set<String>> keywords) {
+            Map<Integer, Set<String>> keywords) {
         log.entry(groups, keywords);
         
         this.startDisplay("Bgee gene expression call download page");
@@ -131,7 +131,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
     @Override
     public void displayProcessedExpressionValuesDownloadPage(List<SpeciesDataGroup> groups,
-    		                                                 Map<String, Set<String>> keywords) {
+    		                                                 Map<Integer, Set<String>> keywords) {
         log.entry(groups, keywords);
         
         this.startDisplay("Bgee " + PROCESSED_EXPR_VALUES_PAGE_NAME.toLowerCase() + " download page");
@@ -236,14 +236,18 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         	intro.append("<p>This page provides annotations and experiment information "
                     + "(e.g., annotations to anatomy and development, quality scores used in QCs, "
                     + "chip or library information), and processed expression values "
-                    + "(e.g., read counts, RPKM values, log values of Affymetrix "
+                    + "(e.g., read counts, TPM and FPKM values, log values of Affymetrix "
                     + "probeset normalized signal intensities). Click on a species "
                     + "to browse files available for download.");
         } else {
             //pre-condition check in private method, use of assert allowed
             assert false: "Unknown DownloadPageType";
         }
-        intro.append("See also ");
+        intro.append(" It is possible to download these data directly into "
+                    + "R using our <a href='https://github.com/BgeeDB/BgeeDB_R' "
+                    + "class='external_link' target='_blank'>R package</a>.");
+
+        intro.append(" See also ");
         if (pageType == DownloadPageType.EXPR_CALLS) {
             RequestParameters urlGenerator = this.getNewRequestParameters();
             urlGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
@@ -257,10 +261,11 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             intro.append("<a href='" + urlGenerator.getRequestURL() 
                     + "' title='See Bgee gene expression calls'>gene expression calls</a>");
         }
-
-        intro.append(", and <a href='" + this.prop.getFTPRootDirectory() 
-                + "statistics.tsv' title='Database statistics TSV file'>"
-                + "database statistics</a>.</p>");
+        intro.append(".</p>");
+        // FIXME enable link to statistics TSV file
+//        intro.append(", and <a href='" + this.prop.getFTPRootDirectory() 
+//                + "statistics.tsv' title='Database statistics TSV file'>"
+//                + "database statistics</a>.</p>");
         return log.exit(intro.toString());
     }
     
@@ -321,7 +326,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     	for (SpeciesDataGroup sdg: groups) {
     		if (sdg.isMultipleSpecies()) {
     			Map<String, String> attr = new HashMap<>();
-    			attr.put("id", htmlEntities(sdg.getId()));
+    			attr.put("id", String.valueOf(sdg.getId()));
     			attr.put("name", htmlEntities(sdg.getName()));
     			sb.append(getHTMLTag("figure", attr, getHTMLTag("div", 
     			        getSpeciesImages(sdg.getMembers(), pageType) + getCaption(sdg))));
@@ -352,7 +357,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         s.append("</div>"); // close panel-heading
 	    
         s.append("<div class='panel-body'>");
-        s.append(getMultiSpeciesFigures(pageType, groups));
+        // TODO: uncomment multi-species section when files are available
+//        s.append(getMultiSpeciesFigures(pageType, groups));
+        s.append("<p>These files will be available in a future release.</p>");
         s.append("</div>"); // close panel-body
         
         s.append("</div>"); // close panel
@@ -377,7 +384,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         
         // Cross to close the banner
         banner.append("<div id='bgee_data_selection_cross'>");
-        banner.append("<a id='switch_page_link' href=''></a>");
+        banner.append("<a id='switch_page_link' class= 'banner_link' href=''></a>");
         banner.append("<img class='closing_cross' src='" + this.prop.getImagesRootDirectory() + "cross.png' " +
                 "title='Close banner' alt='Cross' />");
         banner.append("</div>");
@@ -457,7 +464,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 		
 		banner.append("</div>"); // end of Affy data
 		
-		//TODO uncomment when files are generated
+		//TODO uncomment in-situ and EST data in processed values section when files are available
 //		// In situ data
 //		banner.append("<div class='col-xs-12 bgee_download_file_buttons'>");
 //		banner.append("<h2><em>In situ</em> data</h2>");
@@ -504,56 +511,100 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 		banner.append("<h2>Presence/Absence of expression</h2>");
 		banner.append(this.getHelpLink("expr_help"));
 		banner.append("<p id='expr_no_data' class='no_data'>Not enough data</p>");
-		banner.append("<div id='expr_data'>" +
-		        "<a id='expr_simple_csv' class='download_link' href='' download></a>" +
-		        this.getShowHeaderLink("show_single_simple_expr_headers") +
-		        "<a id='expr_complete_csv' class='download_link' href='' download></a>" +
-		        this.getShowHeaderLink("show_single_complete_expr_headers") + "</div>");
+		banner.append("<div id='expr_data'>");
+        banner.append("<form id='expr_data_form' name='expr_data_form' class='row row-eq-height'>");
+        banner.append("    <div class='col-md-offset-1'>");
+        banner.append("        <a id='download_expr_data' href='' class='download_link big'>Download");
+        banner.append("        <span class='glyphicon glyphicon-download-alt'></span>");
+        banner.append("        </a>");
+        banner.append("    </div>");
+
+        banner.append("    <div class='selection'>");
+        banner.append("        <div class='item_category'>Choose condition parameters");
+        banner.append("            <span class='glyphicon glyphicon-question-sign' data-placement='right' " +
+                                        "data-toggle='popover' data-trigger='hover' " +
+                                        "data-content='Only anatomy, or combinations anatomy-development'></span>");
+        banner.append("        </div>");
+        banner.append("        <label class='checkbox-inline'>");
+        banner.append("            <input type='hidden' name='downloadParam' value='anatEntity'>" );
+        banner.append("            <input disabled id='anatEntityCheck' type='checkbox' " + 
+                                        "name='param' value='anatEntity' checked='checked'>");
+        banner.append("            Anatomical entity");
+        banner.append("        </label>");
+        banner.append("        <label class='checkbox-inline'>");
+        banner.append("            <input id='devStageCheck' type='checkbox' " + 
+                                        "name='downloadParam' value='devStage' checked='checked'>");
+        banner.append("            Developmental stage");
+        banner.append("        </label>");
+        banner.append("        <div class='item_category' >Get advanced columns ");
+        banner.append("            <span class='glyphicon glyphicon-question-sign' data-placement='right' " +
+                                        "data-toggle='popover' data-trigger='hover' " +
+                                        "data-content='Including information by data types'></span>");
+        banner.append("        </div>");
+        banner.append("        <label class='radio-inline'>");
+        banner.append("            <input type='radio' name='downloadParam' id='advancedDataRadioYes'"
+                                        + " value='yes' checked='checked'>yes");
+        banner.append("        </label>");
+        banner.append("        <label class='radio-inline'>");
+        banner.append("            <input type='radio' name='downloadParam' id='advancedDataRadioNo'"
+                                        + " value='no' checked='checked'>no");
+        banner.append("        </label>");
+        banner.append("    </div>");
+        banner.append("</form>");
+        banner.append("</div>");
 		banner.append("<div id='single_simple_expr_headers' class='header_table'>" +
 		        HtmlDocumentationCallFile.getSingleSpeciesSimpleExprFileHeaderDesc() + "</div>");
 		banner.append("<div id='single_complete_expr_headers' class='header_table'>" + 
 		        HtmlDocumentationCallFile.getSingleSpeciesCompleteExprFileHeaderDesc() + "</div>");
 		banner.append("</div>");
 		
-		// Differential expression files across anatomy
-		banner.append("<div id='diffexpr_anatomy_buttons' class='col-xs-12 bgee_download_file_buttons'>");
-		banner.append("<h2>Over-/Under-expression across anatomy</h2>");
-		banner.append(this.getHelpLink("diffexpr_anatomy_help"));
-		banner.append("<p id='diffexpr_anatomy_no_data' class='no_data'>Not enough data</p>");
-		banner.append("<div id='diffexpr_anatomy_data'>" + 
-		        "<a id='diffexpr_anatomy_simple_csv' class='download_link' href='' download></a>" +
-		        this.getShowHeaderLink("show_single_simple_diffexpr_anatomy_headers") +
-		        this.getShowHeaderLink("show_multi_simple_diffexpr_anatomy_headers") +
-		        "<a id='diffexpr_anatomy_complete_csv' class='download_link' href='' download></a>" +
-		        this.getShowHeaderLink("show_single_complete_diffexpr_anatomy_headers") +
-		        this.getShowHeaderLink("show_multi_complete_diffexpr_anatomy_headers") +
-		        "</div>");
-		banner.append("<div id='single_simple_diffexpr_anatomy_headers' class='header_table'>" + 
-		        HtmlDocumentationCallFile.getSingleSpeciesSimpleDiffExprFileHeaderDesc() + "</div>");
-		banner.append("<div id='single_complete_diffexpr_anatomy_headers' class='header_table'>" + 
-		        HtmlDocumentationCallFile.getSingleSpeciesCompleteDiffExprFileHeaderDesc() + "</div>");
-		banner.append("<div id='multi_simple_diffexpr_anatomy_headers' class='header_table'>" + 
-		        HtmlDocumentationCallFile.getMultiSpeciesSimpleDiffExprFileHeaderDesc() + "</div>");
-		banner.append("<div id='multi_complete_diffexpr_anatomy_headers' class='header_table'>" + 
-		        HtmlDocumentationCallFile.getMultiSpeciesCompleteDiffExprFileHeaderDesc() + "</div>");
-		banner.append("</div>");
-		
-		// Differential expression files across life stages
-		banner.append("<div id='diffexpr_stage_buttons' class='col-xs-12 bgee_download_file_buttons'>");
-		banner.append("<h2>Over-/Under-expression across life stages</h2>");
-		banner.append(this.getHelpLink("diffexpr_development_help"));
-		banner.append("<p id='diffexpr_development_no_data' class='no_data'>Not enough data</p>");
-		banner.append("<div id='diffexpr_development_data'>" + 
-		        "<a id='diffexpr_development_simple_csv' class='download_link' href='' download></a>" +
-		        this.getShowHeaderLink("show_single_simple_diffexpr_development_headers") +
-		        "<a id='diffexpr_development_complete_csv' class='download_link' href='' download></a>" +
-		        this.getShowHeaderLink("show_single_complete_diffexpr_development_headers") +
-		        "</div>");
-		banner.append("<div id='single_simple_diffexpr_development_headers' class='header_table'>" + 
-		        HtmlDocumentationCallFile.getSingleSpeciesSimpleDiffExprFileHeaderDesc() + "</div>");
-		banner.append("<div id='single_complete_diffexpr_development_headers' class='header_table'>" + 
-		        HtmlDocumentationCallFile.getSingleSpeciesCompleteDiffExprFileHeaderDesc() + "</div>");
-		banner.append("</div>");
+	      // Differential expression files
+        banner.append("<div id='diffexpr_anatomy_buttons' class='col-xs-12 bgee_download_file_buttons'>");
+        banner.append("<h2>Over-/Under-expression</h2>");
+        banner.append(this.getHelpLink("diffexpr_anatomy_help"));
+        banner.append("<p id='diffexpr_anatomy_no_data' class='file_info'>Improvement of these files is in progress</p>");
+        banner.append("</div>");
+
+        // TODO: uncomment differential expression sections when files are available
+//		// Differential expression files across anatomy
+//		banner.append("<div id='diffexpr_anatomy_buttons' class='col-xs-12 bgee_download_file_buttons'>");
+//		banner.append("<h2>Over-/Under-expression across anatomy</h2>");
+//		banner.append(this.getHelpLink("diffexpr_anatomy_help"));
+//		banner.append("<p id='diffexpr_anatomy_no_data' class='no_data'>Not enough data</p>");
+//		banner.append("<div id='diffexpr_anatomy_data'>" + 
+//		        "<a id='diffexpr_anatomy_simple_csv' class='download_link' href='' download></a>" +
+//		        this.getShowHeaderLink("show_single_simple_diffexpr_anatomy_headers") +
+//		        this.getShowHeaderLink("show_multi_simple_diffexpr_anatomy_headers") +
+//		        "<a id='diffexpr_anatomy_complete_csv' class='download_link' href='' download></a>" +
+//		        this.getShowHeaderLink("show_single_complete_diffexpr_anatomy_headers") +
+//		        this.getShowHeaderLink("show_multi_complete_diffexpr_anatomy_headers") +
+//		        "</div>");
+//		banner.append("<div id='single_simple_diffexpr_anatomy_headers' class='header_table'>" + 
+//		        HtmlDocumentationCallFile.getSingleSpeciesSimpleDiffExprFileHeaderDesc() + "</div>");
+//		banner.append("<div id='single_complete_diffexpr_anatomy_headers' class='header_table'>" + 
+//		        HtmlDocumentationCallFile.getSingleSpeciesCompleteDiffExprFileHeaderDesc() + "</div>");
+//		banner.append("<div id='multi_simple_diffexpr_anatomy_headers' class='header_table'>" + 
+//		        HtmlDocumentationCallFile.getMultiSpeciesSimpleDiffExprFileHeaderDesc() + "</div>");
+//		banner.append("<div id='multi_complete_diffexpr_anatomy_headers' class='header_table'>" + 
+//		        HtmlDocumentationCallFile.getMultiSpeciesCompleteDiffExprFileHeaderDesc() + "</div>");
+//		banner.append("</div>");
+//		
+//		// Differential expression files across life stages
+//		banner.append("<div id='diffexpr_stage_buttons' class='col-xs-12 bgee_download_file_buttons'>");
+//		banner.append("<h2>Over-/Under-expression across life stages</h2>");
+//		banner.append(this.getHelpLink("diffexpr_development_help"));
+//		banner.append("<p id='diffexpr_development_no_data' class='no_data'>Not enough data</p>");
+//		banner.append("<div id='diffexpr_development_data'>" + 
+//		        "<a id='diffexpr_development_simple_csv' class='download_link' href='' download></a>" +
+//		        this.getShowHeaderLink("show_single_simple_diffexpr_development_headers") +
+//		        "<a id='diffexpr_development_complete_csv' class='download_link' href='' download></a>" +
+//		        this.getShowHeaderLink("show_single_complete_diffexpr_development_headers") +
+//		        "</div>");
+//		banner.append("<div id='single_simple_diffexpr_development_headers' class='header_table'>" + 
+//		        HtmlDocumentationCallFile.getSingleSpeciesSimpleDiffExprFileHeaderDesc() + "</div>");
+//		banner.append("<div id='single_complete_diffexpr_development_headers' class='header_table'>" + 
+//		        HtmlDocumentationCallFile.getSingleSpeciesCompleteDiffExprFileHeaderDesc() + "</div>");
+//		banner.append("</div>");
 	}
 
     /**
@@ -565,9 +616,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     private String getHelpLink(String id) {
         log.entry(id);
 
-        return log.exit("<a id='" + id + "' class='specific-help' href=''>"+
-                        "<img class='details' src='" + this.prop.getImagesRootDirectory() +
-                        "help.png' title='Help' alt='Help' /></a>");
+        return log.exit("<a id='" + id + "' class='doc_link' data-placement='right' data-toggle='popover' "
+                + "data-trigger='hover' data-content='See documentation page' href=''>"
+                + "<span class='glyphicon glyphicon-info-sign'></span></a>");
     }
 
     /**
@@ -598,7 +649,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         StringBuilder images = new StringBuilder();
         for (Species spe : species) {
             Map<String,String> attrs = new HashMap<>();
-            attrs.put("src", this.prop.getSpeciesImagesRootDirectory() + htmlEntities(spe.getId())+"_light.jpg");
+            attrs.put("src", this.prop.getSpeciesImagesRootDirectory() 
+                            + String.valueOf(spe.getId()) + "_light.jpg");
             attrs.put("alt", htmlEntities(spe.getShortName()));
             attrs.put("class", "species_img");
             images.append(getHTMLTag("img", attrs));
@@ -690,7 +742,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         groups.stream().filter(sdg -> sdg.isSingleSpecies()).forEach(sdg -> {
             Species species = sdg.getMembers().get(0);
             Map<String, String> attr = new HashMap<>();
-            attr.put("id", htmlEntities(sdg.getId()));
+            attr.put("id", String.valueOf(sdg.getId()));
             sb.append(getHTMLTag("figure", attr, getHTMLTag("div", 
                     getSpeciesImages(sdg.getMembers(), pageType)) + getCaption(species, sdg)));
         });
@@ -705,6 +757,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      */
     private String getDataGroupScriptTag(List<SpeciesDataGroup> dataGroups) {
         log.entry(dataGroups);
+        
         StringBuilder sb = new StringBuilder("<script>");
         sb.append("var speciesData = ");
         sb.append(this.getJsonHelper().toJson(dataGroups.stream()
@@ -723,7 +776,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      * @throws IllegalArgumentException If {@code keywords} is missing a mapping 
      *                                  for a {@code Species} member of a {@code SpeciesDataGroup}.
      */
-    private String getKeywordScriptTag(Map<String, Set<String>> keywords, 
+    private String getKeywordScriptTag(Map<Integer, Set<String>> keywords, 
             List<SpeciesDataGroup> groups, DownloadPageType pageType) throws IllegalArgumentException {
         log.entry(keywords, groups, pageType);
 
@@ -736,7 +789,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         }
         
         //Map group ID -> associated search terms
-        Map<String, Set<String>> groupIdsToTerms = groups.stream()
+        Map<Integer, Set<String>> groupIdsToTerms = groups.stream()
                 //skip multi-species groups for processed expression values pages, 
                 //to avoid proposing completion for multi-species group names (e.g., "macaque/chimpanzee")
                 .filter(e -> pageType == DownloadPageType.EXPR_CALLS || e.isSingleSpecies())

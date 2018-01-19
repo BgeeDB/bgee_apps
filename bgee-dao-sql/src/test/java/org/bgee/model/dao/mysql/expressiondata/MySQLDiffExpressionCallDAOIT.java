@@ -62,24 +62,24 @@ public class MySQLDiffExpressionCallDAOIT extends MySQLITAncestor {
         MySQLDiffExpressionCallDAO dao = new MySQLDiffExpressionCallDAO(this.getMySQLDAOManager());
 
         // Without speciesIds
-        Set<String> speciesIds = new HashSet<String>();
+        Set<Integer> speciesIds = new HashSet<>();
         DiffExpressionCallParams params = new DiffExpressionCallParams();
         params.addAllSpeciesIds(speciesIds);
         // Generate manually expected result
         List<DiffExpressionCallTO> expectedDiffExprCalls = Arrays.asList(
-                new DiffExpressionCallTO ("321", "ID1", "Anat_id1", "Stage_id1", 
+                new DiffExpressionCallTO (321, 1, 1, 
                         ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                         DataState.HIGHQUALITY, 0.02f, 2, 0, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                         DataState.LOWQUALITY, 0.05f, 1, 0),
-                new DiffExpressionCallTO("322", "ID2", "Anat_id9", "Stage_id3", 
+                new DiffExpressionCallTO(322, 2, 2, 
                         ComparisonFactor.DEVELOPMENT, DiffExprCallType.UNDER_EXPRESSED, 
                         DataState.LOWQUALITY, 0.06f, 3, 1, DiffExprCallType.NOT_EXPRESSED, 
                         DataState.NODATA, 1f, 0, 0),
-                new DiffExpressionCallTO("323", "ID1", "Anat_id2", "Stage_id1", 
+                new DiffExpressionCallTO(323, 1, 3, 
                         ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                         DataState.LOWQUALITY, 0.01f, 3, 1, DiffExprCallType.OVER_EXPRESSED,
                         DataState.HIGHQUALITY, 0.001f, 4, 0),
-                new DiffExpressionCallTO("324", "ID2", "Anat_id1", "Stage_id1",
+                new DiffExpressionCallTO(324, 2, 1,
                         ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED,
                         DataState.LOWQUALITY, 0.03f, 3, 2, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                         DataState.HIGHQUALITY, 0.06f, 1, 0));
@@ -92,19 +92,19 @@ public class MySQLDiffExpressionCallDAOIT extends MySQLITAncestor {
         dao.setOrderingAttributes(DiffExpressionCallDAO.OrderingAttribute.OMA_GROUP);
         // Generate manually expected result
         expectedDiffExprCalls = Arrays.asList(
-                new DiffExpressionCallTO("322", "ID2", "Anat_id9", "Stage_id3", 
+                new DiffExpressionCallTO(322, 2, 2, 
                         ComparisonFactor.DEVELOPMENT, DiffExprCallType.UNDER_EXPRESSED, 
                         DataState.LOWQUALITY, 0.06f, 3, 1, DiffExprCallType.NOT_EXPRESSED, 
                         DataState.NODATA, 1f, 0, 0),
-                new DiffExpressionCallTO("324", "ID2", "Anat_id1", "Stage_id1",
+                new DiffExpressionCallTO(324, 2, 1,
                         ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED,
                         DataState.LOWQUALITY, 0.03f, 3, 2, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                         DataState.HIGHQUALITY, 0.06f, 1, 0),
-                new DiffExpressionCallTO ("321", "ID1", "Anat_id1", "Stage_id1", 
+                new DiffExpressionCallTO (321, 1, 1, 
                         ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                         DataState.HIGHQUALITY, 0.02f, 2, 0, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                         DataState.LOWQUALITY, 0.05f, 1, 0),
-                new DiffExpressionCallTO("323", "ID1", "Anat_id2", "Stage_id1", 
+                new DiffExpressionCallTO(323, 1, 3, 
                         ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                         DataState.LOWQUALITY, 0.01f, 3, 1, DiffExprCallType.OVER_EXPRESSED,
                         DataState.HIGHQUALITY, 0.001f, 4, 0));
@@ -116,24 +116,24 @@ public class MySQLDiffExpressionCallDAOIT extends MySQLITAncestor {
         // so we check the DiffExpressionCallTO IDs. We do that because TOComparator 
         // does not take into account order of elements
         assertTrue("DiffExpressionCallTOs retrieved in the wrong order",
-                Arrays.asList("322", "324").contains(actualDiffExprCalls.get(0).getId()));
+                Arrays.asList(322, 324).contains(actualDiffExprCalls.get(0).getId()));
         assertTrue("DiffExpressionCallTOs retrieved in the wrong order",
-                Arrays.asList("322", "324").contains(actualDiffExprCalls.get(1).getId()));
+                Arrays.asList(322, 324).contains(actualDiffExprCalls.get(1).getId()));
         assertTrue("DiffExpressionCallTOs retrieved in the wrong order", 
-                Arrays.asList("321", "323").contains(actualDiffExprCalls.get(2).getId()));
+                Arrays.asList(321, 323).contains(actualDiffExprCalls.get(2).getId()));
         assertTrue("DiffExpressionCallTOs retrieved in the wrong order", 
-                Arrays.asList("321", "323").contains(actualDiffExprCalls.get(3).getId()));
+                Arrays.asList(321, 323).contains(actualDiffExprCalls.get(3).getId()));
 
         // With speciesIds
         dao.clearOrderingAttributes();
-        params.addAllSpeciesIds(Arrays.asList("21", "41"));
+        params.addAllSpeciesIds(Arrays.asList(21, 41));
         // Generate manually expected result
         expectedDiffExprCalls = Arrays.asList(
-                new DiffExpressionCallTO("322", "ID2", "Anat_id9", "Stage_id3", 
+                new DiffExpressionCallTO(322, 2, 2, 
                         ComparisonFactor.DEVELOPMENT, DiffExprCallType.UNDER_EXPRESSED, 
                         DataState.LOWQUALITY, 0.06f, 3, 1, DiffExprCallType.NOT_EXPRESSED, 
                         DataState.NODATA, 1f, 0, 0),
-                new DiffExpressionCallTO("324", "ID2", "Anat_id1", "Stage_id1",
+                new DiffExpressionCallTO(324, 2, 1,
                         ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED,
                         DataState.LOWQUALITY, 0.03f, 3, 2, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                         DataState.HIGHQUALITY, 0.06f, 1, 0));
@@ -147,9 +147,9 @@ public class MySQLDiffExpressionCallDAOIT extends MySQLITAncestor {
         dao.setAttributes(Arrays.asList(DiffExpressionCallDAO.Attribute.COMPARISON_FACTOR));
         // Generate manually expected result
         expectedDiffExprCalls = Arrays.asList(
-                new DiffExpressionCallTO(null, null, null, null, ComparisonFactor.ANATOMY, 
+                new DiffExpressionCallTO(null, null, null, ComparisonFactor.ANATOMY, 
                         null, null, null, null, null, null, null, null, null, null),
-                new DiffExpressionCallTO(null, null, null, null, ComparisonFactor.DEVELOPMENT,
+                new DiffExpressionCallTO(null, null, null, ComparisonFactor.DEVELOPMENT,
                         null, null, null, null, null, null, null, null, null, null));
         // Compare
         assertTrue("DiffExpressionCallTOs incorrectly retrieved", 
@@ -161,7 +161,7 @@ public class MySQLDiffExpressionCallDAOIT extends MySQLITAncestor {
         dao.setAttributes(Arrays.asList(DiffExpressionCallDAO.Attribute.ID));
         // Generate manually expected result
         expectedDiffExprCalls = Arrays.asList(
-                new DiffExpressionCallTO("322", null, null, null, null, null, 
+                new DiffExpressionCallTO(322, null, null, null, null, 
                         null, null, null, null, null, null, null, null, null));
         // Compare
         assertTrue("DiffExpressionCallTOs incorrectly retrieved", 
@@ -175,15 +175,15 @@ public class MySQLDiffExpressionCallDAOIT extends MySQLITAncestor {
         dao.clearAttributes();
         // Generate manually expected result
         expectedDiffExprCalls = Arrays.asList(
-                new DiffExpressionCallTO ("321", "ID1", "Anat_id1", "Stage_id1", 
+                new DiffExpressionCallTO (321, 1, 1, 
                         ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                         DataState.HIGHQUALITY, 0.02f, 2, 0, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                         DataState.LOWQUALITY, 0.05f, 1, 0),
-                new DiffExpressionCallTO("323", "ID1", "Anat_id2", "Stage_id1", 
+                new DiffExpressionCallTO(323, 1, 3, 
                         ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                         DataState.LOWQUALITY, 0.01f, 3, 1, DiffExprCallType.OVER_EXPRESSED,
                         DataState.HIGHQUALITY, 0.001f, 4, 0),
-                new DiffExpressionCallTO("324", "ID2", "Anat_id1", "Stage_id1",
+                new DiffExpressionCallTO(324, 2, 1,
                         ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED,
                         DataState.LOWQUALITY, 0.03f, 3, 2, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                         DataState.HIGHQUALITY, 0.06f, 1, 0));
@@ -199,15 +199,15 @@ public class MySQLDiffExpressionCallDAOIT extends MySQLITAncestor {
         dao.clearAttributes();
         // Generate manually expected result
         expectedDiffExprCalls = Arrays.asList(
-                new DiffExpressionCallTO ("321", "ID1", "Anat_id1", "Stage_id1", 
+                new DiffExpressionCallTO (321, 1, 1, 
                         ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                         DataState.HIGHQUALITY, 0.02f, 2, 0, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                         DataState.LOWQUALITY, 0.05f, 1, 0),
-                new DiffExpressionCallTO("322", "ID2", "Anat_id9", "Stage_id3", 
+                new DiffExpressionCallTO(322, 2, 2, 
                         ComparisonFactor.DEVELOPMENT, DiffExprCallType.UNDER_EXPRESSED, 
                         DataState.LOWQUALITY, 0.06f, 3, 1, DiffExprCallType.NOT_EXPRESSED, 
                         DataState.NODATA, 1f, 0, 0),
-                new DiffExpressionCallTO("324", "ID2", "Anat_id1", "Stage_id1",
+                new DiffExpressionCallTO(324, 2, 1,
                         ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED,
                         DataState.LOWQUALITY, 0.03f, 3, 2, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                         DataState.HIGHQUALITY, 0.06f, 1, 0));
@@ -225,11 +225,11 @@ public class MySQLDiffExpressionCallDAOIT extends MySQLITAncestor {
         dao.clearAttributes();
         // Generate manually expected result
         expectedDiffExprCalls = Arrays.asList(
-                new DiffExpressionCallTO ("321", "ID1", "Anat_id1", "Stage_id1", 
+                new DiffExpressionCallTO (321, 1, 1, 
                         ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                         DataState.HIGHQUALITY, 0.02f, 2, 0, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                         DataState.LOWQUALITY, 0.05f, 1, 0),
-                new DiffExpressionCallTO("324", "ID2", "Anat_id1", "Stage_id1",
+                new DiffExpressionCallTO(324, 2, 1,
                         ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED,
                         DataState.LOWQUALITY, 0.03f, 3, 2, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                         DataState.HIGHQUALITY, 0.06f, 1, 0));
@@ -243,15 +243,15 @@ public class MySQLDiffExpressionCallDAOIT extends MySQLITAncestor {
         dao.clearAttributes();
         // Generate manually expected result
         expectedDiffExprCalls = Arrays.asList(
-                new DiffExpressionCallTO ("321", "ID1", "Anat_id1", "Stage_id1", 
+                new DiffExpressionCallTO (321, 1, 1, 
                         ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                         DataState.HIGHQUALITY, 0.02f, 2, 0, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                         DataState.LOWQUALITY, 0.05f, 1, 0),
-                new DiffExpressionCallTO("323", "ID1", "Anat_id2", "Stage_id1", 
+                new DiffExpressionCallTO(323, 1, 3, 
                         ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                         DataState.LOWQUALITY, 0.01f, 3, 1, DiffExprCallType.OVER_EXPRESSED,
                         DataState.HIGHQUALITY, 0.001f, 4, 0),
-                new DiffExpressionCallTO("324", "ID2", "Anat_id1", "Stage_id1",
+                new DiffExpressionCallTO(324, 2, 1,
                         ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED,
                         DataState.LOWQUALITY, 0.03f, 3, 2, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                         DataState.HIGHQUALITY, 0.06f, 1, 0));
@@ -261,7 +261,7 @@ public class MySQLDiffExpressionCallDAOIT extends MySQLITAncestor {
                         dao.getDiffExpressionCalls(params).getAllTOs()));
         
         // Test all filters in same time
-        params.addAllSpeciesIds(Arrays.asList("11"));
+        params.addAllSpeciesIds(Arrays.asList(11));
         params.setComparisonFactor(ComparisonFactor.ANATOMY);
         params.clearAffymetrixDiffExprCallTypes();
         params.addAffymetrixDiffExprCallType(DiffExprCallType.NOT_DIFF_EXPRESSED);
@@ -272,7 +272,7 @@ public class MySQLDiffExpressionCallDAOIT extends MySQLITAncestor {
         params.setSatisfyAllCallTypeConditions(true);
         // Generate manually expected result
         expectedDiffExprCalls = Arrays.asList(
-                new DiffExpressionCallTO("323", "ID1", "Anat_id2", "Stage_id1", 
+                new DiffExpressionCallTO(323, 1, 3, 
                         ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                         DataState.LOWQUALITY, 0.01f, 3, 1, DiffExprCallType.OVER_EXPRESSED,
                         DataState.HIGHQUALITY, 0.001f, 4, 0));
@@ -299,18 +299,18 @@ public class MySQLDiffExpressionCallDAOIT extends MySQLITAncestor {
 
         // We filter on species and taxon ID retrieving no results
         DiffExpressionCallParams params = new DiffExpressionCallParams();
-        params.addAllSpeciesIds(Arrays.asList("21", "41"));
+        params.addAllSpeciesIds(Arrays.asList(21, 41));
         // Compare
         assertTrue("No DiffExpressionCallTO should be retrieved", 
                 dao.getHomologousGenesDiffExpressionCalls("311", params).getAllTOs().isEmpty());
 
         // We filter on species and taxon ID retrieving some results
         List<DiffExpressionCallTO> expectedDiffExprCalls = Arrays.asList(
-                new DiffExpressionCallTO("322", "ID2", "Anat_id9", "Stage_id3", 
+                new DiffExpressionCallTO(322, 2, 2, 
                        ComparisonFactor.DEVELOPMENT, DiffExprCallType.UNDER_EXPRESSED, 
                        DataState.LOWQUALITY, 0.06f, 3, 1, DiffExprCallType.NOT_EXPRESSED, 
                        DataState.NODATA, 1f, 0, 0),
-                new DiffExpressionCallTO("324", "ID2", "Anat_id1", "Stage_id1",
+                new DiffExpressionCallTO(324, 2, 1,
                         ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED,
                         DataState.LOWQUALITY, 0.03f, 3, 2, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                         DataState.HIGHQUALITY, 0.06f, 1, 0));
@@ -326,19 +326,19 @@ public class MySQLDiffExpressionCallDAOIT extends MySQLITAncestor {
         dao.setOrderingAttributes(entry);
         params.clearSpeciesIds();
         expectedDiffExprCalls = Arrays.asList(
-                new DiffExpressionCallTO ("321", "ID1", "Anat_id1", "Stage_id1", 
+                new DiffExpressionCallTO (321, 1, 1, 
                         ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                         DataState.HIGHQUALITY, 0.02f, 2, 0, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                         DataState.LOWQUALITY, 0.05f, 1, 0),
-                new DiffExpressionCallTO("323", "ID1", "Anat_id2", "Stage_id1", 
+                new DiffExpressionCallTO(323, 1, 3, 
                         ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                         DataState.LOWQUALITY, 0.01f, 3, 1, DiffExprCallType.OVER_EXPRESSED,
                         DataState.HIGHQUALITY, 0.001f, 4, 0),
-                new DiffExpressionCallTO("322", "ID2", "Anat_id9", "Stage_id3", 
+                new DiffExpressionCallTO(322, 2, 2, 
                        ComparisonFactor.DEVELOPMENT, DiffExprCallType.UNDER_EXPRESSED, 
                        DataState.LOWQUALITY, 0.06f, 3, 1, DiffExprCallType.NOT_EXPRESSED, 
                        DataState.NODATA, 1f, 0, 0),
-                new DiffExpressionCallTO("324", "ID2", "Anat_id1", "Stage_id1",
+                new DiffExpressionCallTO(324, 2, 1,
                         ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED,
                         DataState.LOWQUALITY, 0.03f, 3, 2, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                         DataState.HIGHQUALITY, 0.06f, 1, 0));
@@ -351,12 +351,12 @@ public class MySQLDiffExpressionCallDAOIT extends MySQLITAncestor {
         // so we check the DiffExpressionCallTO IDs. We do that because TOComparator 
         // does not take into account order of elements
         assertTrue("DiffExpressionCallTOs retrieved in the wrong order",
-                Arrays.asList("321", "323").contains(actualDiffExprCalls.get(0).getId()));
+                Arrays.asList(321, 323).contains(actualDiffExprCalls.get(0).getId()));
         assertTrue("DiffExpressionCallTOs retrieved in the wrong order",
-                Arrays.asList("321", "323").contains(actualDiffExprCalls.get(1).getId()));
+                Arrays.asList(321, 323).contains(actualDiffExprCalls.get(1).getId()));
         assertTrue("DiffExpressionCallTOs retrieved in the wrong order", 
-                Arrays.asList("322", "324").contains(actualDiffExprCalls.get(2).getId()));
+                Arrays.asList(322, 324).contains(actualDiffExprCalls.get(2).getId()));
         assertTrue("DiffExpressionCallTOs retrieved in the wrong order", 
-                Arrays.asList("322", "324").contains(actualDiffExprCalls.get(3).getId()));
+                Arrays.asList(322, 324).contains(actualDiffExprCalls.get(3).getId()));
     }
 }

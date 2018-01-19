@@ -26,7 +26,7 @@ import org.bgee.view.ViewFactory;
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
- * @version Bgee 13 Aug 2014
+ * @version Bgee 14, Mar. 2017
  * @since   Bgee 13
  */
 public class CommandDownload extends CommandParent {
@@ -68,7 +68,7 @@ public class CommandDownload extends CommandParent {
                 RequestParameters.ACTION_DOWLOAD_CALL_FILES)) {
 
             List<SpeciesDataGroup> groups = getAllSpeciesDataGroup();
-            Map<String, Set<String>> speciesIdsToTerms = getSpeciesRelatedTerms(groups);
+            Map<Integer, Set<String>> speciesIdsToTerms = getSpeciesRelatedTerms(groups);
             if (this.requestParameters.getAction().equals(
                     RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES)) {
                 display.displayProcessedExpressionValuesDownloadPage(groups, speciesIdsToTerms);
@@ -109,25 +109,25 @@ public class CommandDownload extends CommandParent {
      * 
      * @param species   A {@code Set} of {@code Species} to retrieve information from. 
      *                  They should be all {@code Species} used in {@code SpeciesDataGroup}s.
-     * @return          A {@code Map} where keys are {@code String}s that are species IDs, 
+     * @return          A {@code Map} where keys are {@code Integer}s that are species IDs, 
      *                  the associated values being a {@code Set} of {@code String}s that are 
      *                  related terms.
      */
-    private Map<String, Set<String>> getSpeciesRelatedTerms(Collection<SpeciesDataGroup> groups) {
+    private Map<Integer, Set<String>> getSpeciesRelatedTerms(Collection<SpeciesDataGroup> groups) {
         log.entry(groups);
 
         //first, associate species IDs to their corresponding name variations and to their ID itself.
-        Map<String, Set<String>> speciesToNames = groups.stream()
+        Map<Integer, Set<String>> speciesToNames = groups.stream()
                 .flatMap(e -> e.getMembers().stream()) //get a Stream of Species
                 .distinct()                            //keep only distinct Species objects
-                .collect(Collectors.toMap(e -> e.getId(), e -> new HashSet<String>(Arrays.asList(
-                        e.getId(), e.getName(), e.getScientificName(), e.getShortName()))));
+                .collect(Collectors.toMap(e -> e.getId(), e -> new HashSet<>(Arrays.asList(
+                        String.valueOf(e.getId()), e.getName(), e.getScientificName(), e.getShortName()))));
 
         //now, we retrieve keywords associated to species (they correspond to alternative names), 
         //and add them to the mapping
-        final Map<String, Set<String>> speciesToKeywords = serviceFactory.getKeywordService()
+        final Map<Integer, Set<String>> speciesToKeywords = serviceFactory.getKeywordService()
                 .getKeywordForAllSpecies();
-        Map<String, Set<String>> speciesToTerms = speciesToNames.entrySet().stream()
+        Map<Integer, Set<String>> speciesToTerms = speciesToNames.entrySet().stream()
                 .collect(Collectors.toMap(e -> e.getKey(), e -> {
                     Set<String> newVals = new HashSet<>(e.getValue()); 
                     newVals.addAll(speciesToKeywords.getOrDefault(e.getKey(), new HashSet<String>()));

@@ -3,30 +3,53 @@ package org.bgee.pipeline.expression.downloadfile;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SimAnnotToAnatEntityTO;
+import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
+import org.bgee.model.expressiondata.Call.ExpressionCall;
+import org.bgee.model.expressiondata.CallData.ExpressionCallData;
+import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.multispecies.MultiSpeciesCall;
 import org.bgee.model.file.DownloadFile.CategoryEnum;
 import org.bgee.pipeline.BgeeDBUtils;
 import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.Utils;
+import org.bgee.pipeline.expression.downloadfile.GenerateDownloadFile.ObservedData;
+import org.bgee.pipeline.expression.downloadfile.GenerateExprFile2.SingleSpExprFileType2;
+import org.bgee.pipeline.expression.downloadfile.GenerateExprFile2.SingleSpeciesCompleteExprFileBean;
+import org.bgee.pipeline.expression.downloadfile.GenerateExprFile2.SingleSpeciesSimpleExprFileBean;
+import org.bgee.pipeline.expression.downloadfile.GenerateMultiSpeciesDiffExprFile.MultiSpeciesSimpleDiffExprFileBean;
+import org.bgee.pipeline.expression.downloadfile.GenerateMultiSpeciesDiffExprFile.SpeciesDiffExprCounts;
+import org.bgee.pipeline.expression.downloadfile.GenerateMultiSpeciesDownloadFile.MultiSpeciesCompleteFileBean;
+import org.bgee.pipeline.expression.downloadfile.GenerateMultiSpeciesDownloadFile.MultiSpeciesFileBean;
 import org.supercsv.cellprocessor.constraint.IsElementOf;
 import org.supercsv.cellprocessor.constraint.NotNull;
 import org.supercsv.cellprocessor.constraint.StrNotNullOrEmpty;
 import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.io.CsvMapWriter;
 import org.supercsv.io.ICsvMapWriter;
+import org.supercsv.io.dozer.CsvDozerBeanWriter;
+import org.supercsv.io.dozer.ICsvDozerBeanWriter;
 
 
 /**
@@ -34,7 +57,7 @@ import org.supercsv.io.ICsvMapWriter;
  * from the Bgee database.
  *
  * @author 	Valentine Rech de Laval
- * @version Bgee 13
+ * @version Bgee 14, Mar. 2017
  * @since 	Bgee 13
  */
 public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile 
@@ -95,53 +118,307 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
      */
     public final static String EXPRESSION_COLUMN_NAME = "Expression";
 
+//    /**
+//     * Main method to trigger the generate multi-species expression TSV download files
+//     * (simple and advanced files) from Bgee database. Parameters that must be provided
+//     * in order in {@code args} are:
+//     * <ol>
+//     * <li>a list of NCBI species IDs (for instance, {@code 9606} for human) that will be used to
+//     * generate download files, separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}.
+//     * If an empty list is provided (see {@link CommandRunner#EMPTY_LIST}), TODO to be decided.
+//     * <li>a taxon ID (for instance, {@code 40674} for Mammalia) that will be used t
+//     * generate download files. If an empty list is provided (see {@link CommandRunner#EMPTY_LIST}),
+//     * TODO To be decided.
+//     * <li>a list of files types that will be generated ('multi-expr-simple' for
+//     * {@link MultiSpExprFileType MULTI_EXPR_SIMPLE}, and 'multi-expr-complete' for
+//     * {@link MultiSpExprFileType MULTI_EXPR_COMPLETE}), separated by the {@code String}
+//     * {@link CommandRunner#LIST_SEPARATOR}. If an empty list is provided
+//     * (see {@link CommandRunner#EMPTY_LIST}), all possible file types will be generated.
+//     * <li>the directory path that will be used to generate download files.
+//     * <li>the prefix that will be used to generate multi-species file names. If {@code null} or
+//     * empty, TODO to be decided.
+//     * </ol>
+//     * 
+//     * @param args  An {@code Array} of {@code String}s containing the requested parameters.
+//     * @throws IllegalArgumentException If incorrect parameters were provided.
+//     * @throws IOException              If an error occurred while trying to write generated files.
+//     */
+//    public static void main(String[] args) throws IllegalArgumentException, IOException {
+//        log.entry((Object[]) args);
+//    
+//        int expectedArgLength = 5;
+//        if (args.length != expectedArgLength) {
+//            throw log.throwing(new IllegalArgumentException(
+//                    "Incorrect number of arguments provided, expected " +
+//                    expectedArgLength + " arguments, " + args.length + " provided."));
+//        }
+//    
+//        GenerateMultiSpeciesExprFile generator = new GenerateMultiSpeciesExprFile(
+//            CommandRunner.parseListArgumentAsInt(args[0]),
+//            args[0],
+//            GenerateDownloadFile.convertToFileTypes(
+//                CommandRunner.parseListArgument(args[1]), MultiSpExprFileType.class),
+//            args[2],
+//            args[3]);
+//        generator.generateMultiSpeciesExprFiles();
+//    
+//        log.exit();
+//    }
+
     /**
-     * Main method to trigger the generate multi-species expression TSV download files
-     * (simple and advanced files) from Bgee database. Parameters that must be provided
-     * in order in {@code args} are:
-     * <ol>
-     * <li>a list of NCBI species IDs (for instance, {@code 9606} for human) that will be used to
-     * generate download files, separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}.
-     * If an empty list is provided (see {@link CommandRunner#EMPTY_LIST}), TODO to be decided.
-     * <li>a taxon ID (for instance, {@code 40674} for Mammalia) that will be used t
-     * generate download files. If an empty list is provided (see {@link CommandRunner#EMPTY_LIST}),
-     * TODO To be decided.
-     * <li>a list of files types that will be generated ('multi-expr-simple' for
-     * {@link MultiSpExprFileType MULTI_EXPR_SIMPLE}, and 'multi-expr-complete' for
-     * {@link MultiSpExprFileType MULTI_EXPR_COMPLETE}), separated by the {@code String}
-     * {@link CommandRunner#LIST_SEPARATOR}. If an empty list is provided
-     * (see {@link CommandRunner#EMPTY_LIST}), all possible file types will be generated.
-     * <li>the directory path that will be used to generate download files.
-     * <li>the prefix that will be used to generate multi-species file names. If {@code null} or
-     * empty, TODO to be decided.
-     * </ol>
+     * A bean representing a row of a simple multi-species expression file. 
+     * Getter and setter names must follow standard bean definitions.
      * 
-     * @param args  An {@code Array} of {@code String}s containing the requested parameters.
-     * @throws IllegalArgumentException If incorrect parameters were provided.
-     * @throws IOException              If an error occurred while trying to write generated files.
+     * @author  Valentine Rech de Laval
+     * @version Bgee 14, Mar. 2017
+     * @since   Bgee 14, Mar. 2017
      */
-    public static void main(String[] args) throws IllegalArgumentException, IOException {
-        log.entry((Object[]) args);
-    
-        int expectedArgLength = 5;
-        if (args.length != expectedArgLength) {
-            throw log.throwing(new IllegalArgumentException(
-                    "Incorrect number of arguments provided, expected " +
-                    expectedArgLength + " arguments, " + args.length + " provided."));
+    public static class MultiSpeciesSimpleExprFileBean extends MultiSpeciesFileBean {
+        
+        /**
+         * See {@link #getGeneIds()}
+         */
+        private List<String> geneIds;
+        /**
+         * See {@link #getGeneNames()}
+         */
+        private List<String> geneNames;
+        /**
+         * See {@link #getSpWithExprCount()}
+         */
+        private Long spWithExprCount;
+        /**
+         * See {@link #getSpWithNoExprCount()}
+         */
+        private Long spWithNoExprCount;
+        /**
+         * See {@link #getSpWithoutExpr()}
+         */
+        private Long spWithoutExpr;
+        /**
+         * See {@link #getConservationScore()}
+         */
+        private Long conservationScore;
+        
+        /**
+         * 0-argument constructor of the bean.
+         */
+        public MultiSpeciesSimpleExprFileBean() {
         }
     
-        GenerateMultiSpeciesExprFile generator = new GenerateMultiSpeciesExprFile(
-            CommandRunner.parseListArgument(args[0]),
-            args[0],
-            GenerateDownloadFile.convertToFileTypes(
-                CommandRunner.parseListArgument(args[1]), MultiSpExprFileType.class),
-            args[2],
-            args[3]);
-        generator.generateMultiSpeciesExprFiles();
+        /**
+         * Constructor providing all arguments of the class.
+         *
+         * @param omaId                 See {@link #getOmaId()}.
+         * @param geneIds               See {@link #getGeneIds()}.
+         * @param geneNames             See {@link #getGeneNames()}.
+         * @param entityIds             See {@link #getEntityIds()}.
+         * @param entityNames           See {@link #getEntityNames()}.
+         * @param stageIds              See {@link #getStageIds()}.
+         * @param stageNames            See {@link #getStageNames()}.
+         * @param spWithExprCount       See {@link #getSpWithExprCount()}.
+         * @param spWithNoExprCount     See {@link #getSpWithNoExprCount()}.
+         * @param spWithoutExpr         See {@link #getSpWithoutExpr()}.
+         * @param conservationScore     See {@link #getConservationScore()}.
+         */
+        public MultiSpeciesSimpleExprFileBean(String omaId, List<String> geneIds, 
+                List<String> geneNames, List<String> entityIds, List<String> entityNames, 
+                List<String> stageIds, List<String> stageNames, Long spWithExprCount,
+                Long spWithNoExprCount, Long spWithoutExpr, Long conservationScore) {
+            super(omaId, entityIds, entityNames, stageIds, stageNames);
+            this.geneIds = geneIds;
+            this.geneNames = geneNames;
+            this.spWithExprCount = spWithExprCount;
+            this.spWithNoExprCount = spWithNoExprCount;
+            this.spWithoutExpr = spWithoutExpr;
+            this.conservationScore = conservationScore;
+        }
     
-        log.exit();
-    }
+        /**
+         * @return  the {@code List} of {@code String}s that are the IDs of the genes.
+         *          When there is several genes, they are provided in alphabetical order.
+         */
+        public List<String> getGeneIds() {
+            return geneIds;
+        }
+        /** 
+         * @param geneIds   A {@code List} of {@code String}s that are the IDs of the genes.
+         * @see #getGeneIds()
+         */
+        public void setGeneIds(List<String> geneIds) {
+            this.geneIds = geneIds;
+        }
 
+        /**
+         * @return  the {@code List} of {@code String}s that are the names of the genes.
+         *          When there is several genes, they are provided in same order as their 
+         *          corresponding ID, as returned by {@link #getGeneIds()}.
+         */
+        public List<String> getGeneNames() {
+            return geneNames;
+        }
+        /**
+         * @param geneNames A {@code List} of {@code String}s that are the names of genes.
+         * @see #getGeneNames()
+         */
+        public void setGeneNames(List<String> geneNames) {
+            this.geneNames = geneNames;
+        }
+
+        /**
+         * @return  the {@code Long} that is the number of species with expression.
+         */
+        public Long getSpWithExprCount() {
+            return spWithExprCount;
+        }
+        /**
+         * @param spWithExprCount   A {@code Long} that is the number of species with expression.
+         * @see #getSpWithExprCount()
+         */
+        public void setSpWithExprCount(Long spWithExprCount) {
+            this.spWithExprCount = spWithExprCount;
+        }
+
+        /**
+         * @return  the {@code Long} that is the number of species with no-expression.
+         */
+        public Long getSpWithNoExprCount() {
+            return spWithNoExprCount;
+        }
+        /**
+         * @param spWithNoExprCount   A {@code Long} that is the number of species with no-expression.
+         * @see #getSpWithNoExprCount()
+         */
+        public void setSpWithNoExprCount(Long spWithNoExprCount) {
+            this.spWithNoExprCount = spWithNoExprCount;
+        }
+
+        /**
+         * @return  the {@code Long} that is the number of species without expression.
+         */
+        public Long getSpWithoutExpr() {
+            return spWithoutExpr;
+        }
+        /**
+         * @param spWithoutExpr   A {@code Long} that is the number of species without expression.
+         * @see #getSpWithoutExpr()
+         */
+        public void setSpWithoutExpr(Long spWithoutExpr) {
+            this.spWithoutExpr = spWithoutExpr;
+        }
+
+        /**
+         * @return  the {@code Long} that is the conservation score.
+         */
+        public Long getConservationScore() {
+            return conservationScore;
+        }
+        /**
+         * @param conservationScore   A {@code Long} that is the conservation score.
+         * @see #getConservationScore()
+         */
+        public void setConservationScore(Long conservationScore) {
+            this.conservationScore = conservationScore;
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = super.hashCode();
+            result = prime * result + ((geneIds == null) ? 0 : geneIds.hashCode());
+            result = prime * result + ((geneNames == null) ? 0 : geneNames.hashCode());
+            result = prime * result + ((spWithExprCount == null) ? 0 : spWithExprCount.hashCode());
+            result = prime * result + ((spWithNoExprCount == null) ? 0 : spWithNoExprCount.hashCode());
+            result = prime * result + ((spWithoutExpr == null) ? 0 : spWithoutExpr.hashCode());
+            result = prime * result + ((conservationScore == null) ? 0 : conservationScore.hashCode());
+            return result;
+        }
+    
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (!super.equals(obj))
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            MultiSpeciesSimpleExprFileBean other = (MultiSpeciesSimpleExprFileBean) obj;
+            if (geneIds == null) {
+                if (other.geneIds != null)
+                    return false;
+            } else if (!geneIds.equals(other.geneIds))
+                return false;
+            if (geneNames == null) {
+                if (other.geneNames != null)
+                    return false;
+            } else if (!geneNames.equals(other.geneNames))
+                return false;
+            if (spWithExprCount == null) {
+                if (other.spWithExprCount != null)
+                    return false;
+            } else if (!spWithExprCount.equals(other.spWithExprCount))
+                return false;
+            if (spWithNoExprCount == null) {
+                if (other.spWithNoExprCount != null)
+                    return false;
+            } else if (!spWithNoExprCount.equals(other.spWithNoExprCount))
+                return false;
+            if (spWithoutExpr == null) {
+                if (other.spWithoutExpr != null)
+                    return false;
+            } else if (!spWithoutExpr.equals(other.spWithoutExpr))
+                return false;
+            if (conservationScore == null) {
+                if (other.conservationScore != null)
+                    return false;
+            } else if (!conservationScore.equals(other.conservationScore))
+                return false;
+            return true;
+        }
+        
+        
+        @Override
+        public String toString() {
+            
+            StringBuilder builder = new StringBuilder();
+            builder.append("MultiSpeciesSimpleExprFileBean [geneIds=").append(geneIds)
+                .append(", geneNames=").append(geneNames).append(", spWithExprCount=").append(spWithExprCount)
+                .append(", spWithNoExprCount=").append(spWithNoExprCount)
+                .append(", spWithoutExpr=").append(spWithoutExpr)
+                .append(", conservationScore=").append(conservationScore).append("]");
+            return builder.toString();
+        }
+    }
+    
+    /**
+     * A bean representing a row of a complete multi-species expression file. 
+     * Getter and setter names must follow standard bean definitions.
+     * 
+     * @author  Valentine Rech de Laval
+     * @version Bgee 14, Mar. 2017
+     * @since   Bgee 14, Mar. 2017
+     */
+    public static class MultiSpeciesCompleteExprFileBean extends MultiSpeciesCompleteFileBean {
+//        Expression  1   present
+//        Call quality    1   high quality
+//        Including observed data 1   yes
+//        Affymetrix data 1   expressed
+//        Affymetrix counts?      
+//        Including Affymetrix observed data  1   yes
+//        Affymetrix data 1   present
+//        Affymetrix counts?      
+//        Including Affymetrix observed data  1   yes
+//        EST data    1   present
+//        EST counts?     
+//        Including EST observed data 1   yes
+//        In situ data    1   present
+//        In situ counts?     
+//        Including in situ observed data 1   yes
+//        RNA-Seq data    1   no data
+//        RNA-Seq counts?     NA
+//        Including RNA-Seq observed data 1   no
+    }
+    
     /**
      * An {@code Enum} used to define, for each data type (Affymetrix, RNA-Seq, ...),
      * as well as for the summary column, the data state of the call.
@@ -149,24 +426,14 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
      * <li>{@code NO_DATA}:         no data from the associated data type allowed to produce the call.
      * <li>{@code EXPRESSION}:      expression was detected from the associated data type.
      * <li>{@code NO_EXPRESSION}:   no-expression was detected from the associated data type.
-     * <li>{@code WEAK_AMBIGUITY}:  different data types are not coherent with an inferred
-     *                              no-expression call (for instance, Affymetrix data reveals an 
-     *                              expression while <em>in situ</em> data reveals an inferred
-     *                              no-expression).
-     * <li>{@code HIGH_AMBIGUITY}:  different data types are not coherent without at least
-     *                              an inferred no-expression call (for instance, Affymetrix data 
-     *                              reveals expression while <em>in situ</em> data reveals a 
-     *                              no-expression without been inferred).
      * </ul>
      * 
-     * @author Valentine Rech de Laval
-     * @version Bgee 13
-     * @since Bgee 13
+     * @author  Valentine Rech de Laval
+     * @version Bgee 14, Mar. 2017
+     * @since   Bgee 13
      */
     public enum ExpressionData {
-        NO_DATA("no data"), NO_EXPRESSION("absent"), EXPRESSION("expression"),
-        WEAK_AMBIGUITY(GenerateDownloadFile.WEAK_AMBIGUITY), 
-        HIGH_AMBIGUITY(GenerateDownloadFile.STRONG_AMBIGUITY);
+        NO_DATA("no data"), NO_EXPRESSION("absent"), EXPRESSION("expression");
 
         private final String stringRepresentation;
 
@@ -176,42 +443,6 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
          * @param stringRepresentation A {@code String} corresponding to this {@code ExpressionData}.
          */
         private ExpressionData(String stringRepresentation) {
-            this.stringRepresentation = stringRepresentation;
-        }
-
-        public String getStringRepresentation() {
-            return this.stringRepresentation;
-        }
-
-        @Override
-        public String toString() {
-            return this.getStringRepresentation();
-        }
-    }
-
-    /**
-     * An {@code Enum} used to define whether the call has been observed. This is to distinguish
-     * from propagated data only, that should provide a lower confidence in the call.
-     * <ul>
-     * <li>{@code OBSERVED}:    the call has been observed at least once.
-     * <li>{@code NOTOBSERVED}: the call has never been observed.
-     * </ul>
-     * 
-     * @author Valentine Rech de Laval
-     * @version Bgee 13
-     * @since Bgee 13
-     */
-    public enum ObservedData {
-        OBSERVED("yes"), NOT_OBSERVED("no");
-
-        private final String stringRepresentation;
-
-        /**
-         * Constructor providing the {@code String} representation of this {@code ObservedData}.
-         * 
-         * @param stringRepresentation A {@code String} corresponding to this {@code ObservedData}.
-         */
-        private ObservedData(String stringRepresentation) {
             this.stringRepresentation = stringRepresentation;
         }
 
@@ -283,16 +514,16 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
     }
 
     /**
-     * A {@code String} that is the IDs of the common ancestor taxon we want to into account.
-     * If {@code null} or empty, TODO  to be decided.
+     * An {@code Integer} that is the IDs of the common ancestor taxon we want to into account.
+     * Cannot be {@code null} or empty.
      */
-    private String taxonId;
+    final private Integer taxonId;
 
     /**
      * A {@code String} that is the prefix that will be used to generate multi-species file names.
-     * If {@code null} or empty, TODO  to be decided.
+     * Cannot be {@code null} or empty.
      */
-    private String groupPrefix;
+    final private String groupPrefix;
 
     /**
      * Default constructor. 
@@ -304,12 +535,17 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
     }
 
     /**
+     * A {@code Supplier} of {@code ServiceFactory}s to be able to provide one to each thread.
+     */
+    private final Supplier<ServiceFactory> serviceFactorySupplier;
+
+    /**
      * Constructor providing parameters to generate files, using the default {@code DAOManager}.
      * 
-     * @param speciesIds    A {@code List} of {@code String}s that are the IDs of species 
+     * @param speciesIds    A {@code List} of {@code Integer}s that are the IDs of species 
      *                      we want to generate data for. If {@code null} or empty, all species 
      *                      are used.
-     * @param taxonId       A {@code String} that is the ID of the common ancestor taxon
+     * @param taxonId       An {@code Integer} that is the ID of the common ancestor taxon
      *                      we want to into account. If {@code null} or empty, TODO to be decided
      * @param fileTypes     A {@code Set} of {@code MultiSpeciesExprFileType}s that are the types
      *                      of files we want to generate. If {@code null} or empty, 
@@ -319,10 +555,10 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
      *                      for files names. If {@code null} or empty, TODO  to be decided.
      * @throws IllegalArgumentException If {@code directory} is {@code null} or blank.
      */
-    public GenerateMultiSpeciesExprFile(List<String> speciesIds, String taxonId, 
+    public GenerateMultiSpeciesExprFile(List<Integer> speciesIds, Integer taxonId, 
             Set<MultiSpExprFileType> fileTypes, String directory, String groupPrefix) 
                     throws IllegalArgumentException {
-        this(null, speciesIds, taxonId, fileTypes, directory, groupPrefix);
+        this(null, speciesIds, taxonId, fileTypes, directory, groupPrefix, ServiceFactory::new);
     }
 
     /**
@@ -330,25 +566,28 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
      * be used by this object to perform queries to the database. This is useful for unit testing.
      * 
      * @param manager       the {@code MySQLDAOManager} to use.
-     * @param speciesIds    A {@code List} of {@code String}s that are the IDs of species 
+     * @param speciesIds    A {@code List} of {@code Integer}s that are the IDs of species 
      *                      we want to generate data for. If {@code null} or empty, all species 
      *                      are used.
-     * @param taxonId       A {@code String} that is the ID of the common ancestor taxon
-     *                      we want to into account. If {@code null} or empty, TODO to be decided.
+     * @param taxonId       An {@code Integer} that is the ID of the common ancestor taxon
+     *                      we want to into account. Cannot be {@code null} or empty.
      * @param fileTypes     A {@code Set} of {@code MultiSpeciesExprFileType}s that are the types
      *                      of files we want to generate. If {@code null} or empty, 
      *                      all {@code MultiSpeciesExprFileType}s are generated.
      * @param directory     A {@code String} that is the directory where to store files.
      * @param groupPrefix   A {@code String} that is the prefix the group we want to use 
      *                      for files names. If {@code null} or empty, TODO  to be decided.
+     * @param serviceFactorySupplier    A {@code Supplier} of {@code ServiceFactory}s 
+     *                                  to be able to provide one to each thread.
      * @throws IllegalArgumentException If {@code directory} is {@code null} or blank.
      */
-    public GenerateMultiSpeciesExprFile(MySQLDAOManager manager, List<String> speciesIds, 
-            String taxonId, Set<MultiSpExprFileType> fileTypes, String directory, 
-            String groupPrefix) throws IllegalArgumentException {
+    public GenerateMultiSpeciesExprFile(MySQLDAOManager manager, List<Integer> speciesIds, 
+            Integer taxonId, Set<MultiSpExprFileType> fileTypes, String directory, 
+            String groupPrefix, Supplier<ServiceFactory> serviceFactorySupplier) throws IllegalArgumentException {
         super(manager, speciesIds, fileTypes, directory);
         this.taxonId = taxonId;
         this.groupPrefix = groupPrefix;
+        this.serviceFactorySupplier = serviceFactorySupplier;
     }
     
     /**
@@ -363,9 +602,9 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
     public void generateMultiSpeciesExprFiles() throws IOException {
         log.entry(this.speciesIds, this.taxonId, this.fileTypes, this.directory, this.groupPrefix);
 
-        Set<String> setSpecies = new HashSet<String>();
+        Set<Integer> setSpecies = new HashSet<>();
         if (this.speciesIds != null && !this.speciesIds.isEmpty()) {
-            setSpecies = new HashSet<String>(this.speciesIds);
+            setSpecies = new HashSet<>(this.speciesIds);
         } else {
             throw log.throwing(new IllegalArgumentException("No species ID is provided"));
         }
@@ -381,8 +620,9 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
 
         // Retrieve species names, gene names, stage names, anat. entity names, for all species
         // XXX: retrieve only for speciesIds? 
-        Map<String, String> speciesNamesByIds = this.checkAndGetLatinNamesBySpeciesIds(setSpecies);
-        Map<String, String> geneNamesByIds = 
+        Map<Integer, String> speciesNamesByIds = this.checkAndGetLatinNamesBySpeciesIds(setSpecies,
+                serviceFactorySupplier.get().getSpeciesService());
+        Map<Integer, String> geneNamesByIds = 
                 BgeeDBUtils.getGeneNamesByIds(setSpecies, this.getGeneDAO());
         Map<String, String> stageNamesByIds = 
                 BgeeDBUtils.getStageNamesByIds(setSpecies, this.getStageDAO());
@@ -415,8 +655,8 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
      * @throws IOException 
      *
      */
-    private void generateMultiSpeciesExprFiles(Map<String, String> speciesNamesByIds, 
-            Map<String, String> geneNamesByIds, Map<String, String> stageNamesByIds, 
+    private void generateMultiSpeciesExprFiles(Map<Integer, String> speciesNamesByIds, 
+            Map<Integer, String> geneNamesByIds, Map<String, String> stageNamesByIds, 
             Map<String, String> anatEntityNamesByIds,  Map<String, String> cioNamesByIds) 
                     throws IOException {
         log.entry(this.directory, this.groupPrefix, this.fileTypes, this.taxonId, speciesNamesByIds,
@@ -428,23 +668,17 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
         //********************************
         // RETRIEVE DATA FROM DATA SOURCE
         //********************************
-        Set<String> speciesFilter = new HashSet<String>();
-        speciesFilter.addAll(this.speciesIds);
+        final Set<Integer> speciesFilter =  new HashSet<>(this.speciesIds);
 
         log.trace("Start retrieving data...");
         
-        // We load homologous genes 
-//        List<GeneTO> homologousGenes = BgeeDBUtils.getHomologousGenes(speciesFilter,
-//                this.getManager().getGeneDAO(), taxonId);
-        
-        // We load homologous organs 
-//        List<SimAnnotToAnatEntityTO> homologousAnatEntities = 
-//                BgeeDBUtils.getHomologousAnatEntities(speciesFilter, this.taxonId, 
-//                        this.getManager().getSummarySimilarityAnnotationDAO());
-        
-        // Load expression and no-expression calls order by OMA node ID
-        // TODO to be implemented
+        ServiceFactory serviceFactory = this.serviceFactorySupplier.get();
 
+        // Load expression and no-expression calls
+        // FIXME use new signature
+        Stream<MultiSpeciesCall<ExpressionCall>> calls = null;
+//                serviceFactory.getAnalysisService().loadMultiSpeciesExpressionCalls(null, speciesFilter);
+        
         log.trace("Done retrieving data.");
         
         //****************************
@@ -466,34 +700,35 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
         // In order to close all writers in a finally clause.
         // We use ICsvMapWriter because the number of columns depends on the number of species for 
         // the simple file (3 columns by species)
-        Map<FileType, ICsvMapWriter> writersUsed = new HashMap<FileType, ICsvMapWriter>();
+        Map<MultiSpExprFileType, ICsvDozerBeanWriter> writersUsed = new HashMap<>();
+        int numberOfRows = 0;
         try {
             //**************************
             // OPEN FILES, CREATE WRITERS, WRITE HEADERS
             //**************************
-            Map<FileType, CellProcessor[]> processors = new HashMap<FileType, CellProcessor[]>();
-            Map<FileType, String[]> headers = new HashMap<FileType, String[]>();
+            Map<MultiSpExprFileType, CellProcessor[]> processors = new HashMap<>();
+            Map<MultiSpExprFileType, String[]> headers = new HashMap<>();
 
             // Get ordered species names
-            List<String> orderedSpeciesNames = this.getSpeciesNameAsList(
-                    this.speciesIds, speciesNamesByIds);
+//            List<String> orderedSpeciesNames = this.getSpeciesNameAsList(
+//                    this.speciesIds, speciesNamesByIds);
             
             for (FileType fileType : this.fileTypes) {
+                MultiSpExprFileType currentFileType = (MultiSpExprFileType) fileType;
+
                 CellProcessor[] fileTypeProcessors = null;
                 String[] fileTypeHeaders = null;
 
-                fileTypeProcessors = this.generateCellProcessors(
-                        (MultiSpExprFileType) fileType, this.speciesIds.size());
-                processors.put(fileType, fileTypeProcessors);
+                fileTypeProcessors = this.generateCellProcessors(currentFileType);
+                processors.put(currentFileType, fileTypeProcessors);
                 
-                fileTypeHeaders = this.generateHeader(
-                        (MultiSpExprFileType) fileType, orderedSpeciesNames);
-                headers.put(fileType, fileTypeHeaders);
+                fileTypeHeaders = this.generateHeader(currentFileType);
+                headers.put(currentFileType, fileTypeHeaders);
 
                 // Create file name
                 String fileName = this.groupPrefix + "_" +
-                        fileType.getStringRepresentation() + EXTENSION;
-                generatedFileNames.put(fileType, fileName);
+                        currentFileType.getStringRepresentation() + EXTENSION;
+                generatedFileNames.put(currentFileType, fileName);
 
                 // write in temp file
                 File file = new File(this.directory, fileName + tmpExtension);
@@ -503,88 +738,217 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
                 }
 
                 // create writer and write header
-                ICsvMapWriter mapWriter = 
-                        new CsvMapWriter(new FileWriter(file), Utils.TSVCOMMENTED);
-                mapWriter.writeHeader(fileTypeHeaders);
-                writersUsed.put(fileType, mapWriter);
+                ICsvDozerBeanWriter beanWriter = new CsvDozerBeanWriter(new FileWriter(file),
+                        Utils.getCsvPreferenceWithQuote(this.generateQuoteMode(fileTypeHeaders)));
+                // configure the mapping from the fields to the CSV columns
+                if (currentFileType.isSimpleFileType()) {
+                    beanWriter.configureBeanMapping(MultiSpeciesSimpleExprFileBean.class, 
+                            this.generateFieldMapping(currentFileType, fileTypeHeaders));
+                } else {
+                    beanWriter.configureBeanMapping(MultiSpeciesCompleteExprFileBean.class, 
+                            this.generateFieldMapping(currentFileType, fileTypeHeaders));
+                }
+
+                beanWriter.writeHeader(fileTypeHeaders);
+                writersUsed.put(currentFileType, beanWriter);
+
             }
 
             // ****************************
             // WRITE ROWS
             // ****************************
-            // TODO to be implemented
-            
-//          CallTOResultSet rs = null;
-//          Set<CallTO> groupedCallTOs = new HashSet<CallTO>();
-//          
-//          CallTO previousTO = null;
-//          while (rs.next()) {
-//              CallTO currentTO = rs.getTO();
-//              if (previousTO != null && currentTO.getOMANodeId() != previousTO.getOMANodeId()) {
-//                  // We propagate expression and no-expression calls and order them
-//                        - when there is no data in a condition, but the no-expression in  
-//                          a sub-stage => no expression low quality 
-//                        - propagation on high-level stages
-//                  // We compute and write the rows in all files
-//                        - we filter families with only no-expression low quality            
-//                        - we filter families with only no diff expression
-//                        - do system to keep only the 'Observed' in single file
-//                          but for the first generation we do not active.
-//                        - filter untrusted homology annotations in simple file
-//                  // We clear the set containing TO of an unique OMA Node ID
-//                  groupedCallTOs.clear();
-//              }
-//              groupedCallTOs.add(to);
-//              previousTO = to;
-//          }
-
+            numberOfRows = this.writeRows(geneNamesByIds, stageNamesByIds, anatEntityNamesByIds,
+                    writersUsed, processors, headers, calls);
         } catch (Exception e) {
             this.deleteTempFiles(generatedFileNames, tmpExtension);
             throw e;
         } finally {
-            for (ICsvMapWriter writer : writersUsed.values()) {
+            for (ICsvDozerBeanWriter writer : writersUsed.values()) {
                 writer.close();
             }
         }
 
-        // Now, if everything went fine, we rename the temporary files
-        this.renameTempFiles(generatedFileNames, tmpExtension);
+        // now, if everything went fine, we rename or delete the temporary files
+        if (numberOfRows > 0) {
+            this.renameTempFiles(generatedFileNames, tmpExtension);            
+        } else {
+            this.deleteTempFiles(generatedFileNames, tmpExtension);
+        }
 
         log.exit();
     }
 
     /**
-     * TODO Javadoc
-     *
-     * @param speciesIds
-     * @param speciesNamesByIds
-     * @return
+     * Generate rows to be written and write them in a file. This methods will notably use
+     * {@code callTOs} to produce information, that is different depending on {@code fileType}.
+     * <p>
+     * {@code callTOs} must all have the same values returned by {@link CallTO#getGeneId()}, 
+     * {@link CallTO#getAnatEntityId()}, {@link CallTO#getStageId()}, and they must be respectively 
+     * equal to {@code geneId}, {@code anatEntityId}, {@code stageId}.
+     * <p>
+     * Information that will be generated is provided in the given {@code processors}.
+     * 
+     * @param geneNamesByIds        A {@code Map} where keys are {@code Integer}s corresponding to 
+     *                              gene IDs, the associated values being {@code String}s 
+     *                              corresponding to gene names. 
+     * @param stageNamesByIds       A {@code Map} where keys are {@code String}s corresponding to 
+     *                              stage IDs, the associated values being {@code String}s 
+     *                              corresponding to stage names. 
+     * @param anatEntityNamesByIds  A {@code Map} where keys are {@code String}s corresponding to 
+     *                              anatomical entity IDs, the associated values being 
+     *                              {@code String}s corresponding to anatomical entity names. 
+     * @param writersUsed           A {@code Map} where keys are {@code MultiSpExprFileType}s
+     *                              corresponding to which type of file should be generated, the 
+     *                              associated values being {@code ICsvDozerBeanWriter}s
+     *                              corresponding to the writers.
+     * @param processors            A {@code Map} where keys are {@code MultiSpExprFileType}s 
+     *                              corresponding to which type of file should be generated, the 
+     *                              associated values being an {@code Array} of 
+     *                              {@code CellProcessor}s used to process a file.
+     * @param headers               A {@code Map} where keys are {@code MultiSpExprFileType}s 
+     *                              corresponding to which type of file should be generated, the 
+     *                              associated values being an {@code Array} of {@code String}s used 
+     *                              to produce the header.
+     * @param calls                 A {@code Stream} of {@code ExpressionCall}s that are propagated
+     *                              and reconciled expression calls.
+     * @throws UncheckedIOException If an error occurred while trying to write the {@code outputFile}.
      */
-    //TODO: DRY
-    private List<String> getSpeciesNameAsList(
-            List<String> speciesIds, Map<String, String> speciesNamesByIds) {
-        log.entry();
-        
-        List<String> names = new ArrayList<String>();
-        for (String id : speciesIds) {
-            names.add(speciesNamesByIds.get(id));
-        }
-        assert names.size() == speciesIds.size();
+    private int writeRows(Map<Integer, String> geneNamesByIds, 
+            Map<String, String> stageNamesByIds, Map<String, String> anatEntityNamesByIds, 
+            Map<MultiSpExprFileType, ICsvDozerBeanWriter> writersUsed, 
+            Map<MultiSpExprFileType, CellProcessor[]> processors, 
+            Map<MultiSpExprFileType, String[]> headers,
+            Stream<MultiSpeciesCall<ExpressionCall>> calls) throws UncheckedIOException {
+        log.entry(geneNamesByIds, stageNamesByIds, anatEntityNamesByIds, writersUsed, 
+                processors, headers, calls);
 
-        return log.exit(names);
+        return log.exit(calls.map(c -> {
+            int i = 0;
+            for (Entry<MultiSpExprFileType, ICsvDozerBeanWriter> writerFileType : writersUsed.entrySet()) {
+                Integer omaNodeId = c.getOMANodeId();
+//                String geneName = geneNamesByIds.containsKey(geneId)? geneNamesByIds.get(geneId) : "";
+//                String anatEntityId = c.getCondition().getAnatEntityId();
+//                String anatEntityName = anatEntityNamesByIds.get(anatEntityId);
+//                String devStageId = c.getCondition().getDevStageId();
+//                String devStageName = stageNamesByIds.get(c.getCondition().getDevStageId());
+//                String summaryCallType = convertExpressionSummaryToString(c.getSummaryCallType()); 
+//                String summaryQuality = convertSummaryQualityToString(c.getSummaryQuality());
+//                String expressionRank = c.getFormattedGlobalMeanRank();
+//                String expressionScore = null; // FIXME use c.getGlobalScore();
+//                Boolean includingObservedData = c.getIsObservedData();
+//
+//                if (writerFileType.getKey().isSimpleFileType() && Boolean.TRUE.equals(includingObservedData)) {
+//                    SingleSpeciesSimpleExprFileBean bean = new SingleSpeciesSimpleExprFileBean(
+//                        geneId, geneName, anatEntityId, anatEntityName, devStageId, devStageName,
+//                        summaryCallType, summaryQuality, expressionRank, expressionScore);
+//                    try {
+//                        writerFileType.getValue().write(bean, processors.get(writerFileType.getKey()));
+//                        i++;
+//                    } catch (IOException e) {
+//                        throw new UncheckedIOException(e);
+//                    }
+//                } else if (!writerFileType.getKey().isSimpleFileType()) {
+//                    String affymetrixData = NO_DATA_VALUE, estData = NO_DATA_VALUE, 
+//                            inSituData = NO_DATA_VALUE, rnaSeqData = NO_DATA_VALUE,
+//                            includingAffymetrixObservedData = ObservedData.NOT_OBSERVED.getStringRepresentation(),
+//                            includingEstObservedData = ObservedData.NOT_OBSERVED.getStringRepresentation(),
+//                            includingInSituObservedData =  ObservedData.NOT_OBSERVED.getStringRepresentation(),
+//                            includingRnaSeqObservedData = ObservedData.NOT_OBSERVED.getStringRepresentation();
+//                    Set<ExpressionCallData> callData = c.getCallData();
+//
+//                    Set<ExpressionCallData> affyCallData = callData.stream()
+//                            .filter(d -> DataType.AFFYMETRIX.equals(d.getDataType())).collect(Collectors.toSet());
+//                    if (affyCallData.size() > 0) {
+//                        affymetrixData = resumeCallType(affyCallData);
+//                        includingAffymetrixObservedData = resumeIncludingObservedData(affyCallData);
+//                    }
+//                    
+//                    Set<ExpressionCallData> estCallData = callData.stream()
+//                            .filter(d -> DataType.EST.equals(d.getDataType())).collect(Collectors.toSet());
+//                    if (estCallData.size() > 0) {
+//                        estData = resumeCallType(estCallData);
+//                        includingEstObservedData = resumeIncludingObservedData(estCallData);
+//                    }
+//                    
+//                    Set<ExpressionCallData> inSituCallData = callData.stream()
+//                            .filter(d -> DataType.IN_SITU.equals(d.getDataType())).collect(Collectors.toSet());
+//                    if (inSituCallData.size() > 0) {
+//                        inSituData = resumeCallType(inSituCallData);
+//                        includingInSituObservedData = resumeIncludingObservedData(inSituCallData);
+//                    }
+//                    
+//                    Set<ExpressionCallData> rnaSeqCallData = callData.stream()
+//                            .filter(d -> DataType.RNA_SEQ.equals(d.getDataType())).collect(Collectors.toSet());
+//                    if (rnaSeqCallData.size() > 0) {
+//                        rnaSeqData = resumeCallType(rnaSeqCallData);
+//                        includingRnaSeqObservedData = resumeIncludingObservedData(rnaSeqCallData);
+//                    }
+//
+//                    SingleSpeciesCompleteExprFileBean bean = new SingleSpeciesCompleteExprFileBean(
+//                            geneId, geneName, anatEntityId, anatEntityName, devStageId, devStageName,
+//                            summaryCallType, summaryQuality, expressionRank, expressionScore,
+//                            convertObservedDataToString(c.getIsObservedData()),
+//                            affymetrixData, includingAffymetrixObservedData,
+//                            estData, includingEstObservedData,
+//                            inSituData, includingInSituObservedData,
+//                            rnaSeqData, includingRnaSeqObservedData);
+//                    try {
+//                        writerFileType.getValue().write(bean, processors.get(writerFileType.getKey()) );
+//                        i++;
+//                    } catch (IOException e) {
+//                        throw new UncheckedIOException(e);
+//                    }
+//                }
+            }
+            return i;
+        }).mapToInt(Integer::intValue).sum());
+    }
+
+    /**
+     * Generates an {@code Array} of {@code String}s used to generate the header of a multi-species
+     * expression TSV file of type {@code fileType}.
+     * 
+     * @param fileType  The {@code MultiSpeciesExprFileType} of the file to be generated.
+     * @param nbSpecies A {@code List} of {@code String}s that are the names of species 
+     *                  we want to generate data for.
+     * @return          An {@code Array} of {@code String}s used to produce the header.
+     * @throw IllegalArgumentException If {@code fileType} is not managed by this method.
+     */
+    private String[] generateHeader(MultiSpExprFileType fileType)
+        throws IllegalArgumentException {
+        log.entry(fileType);
+    
+        if (fileType.isSimpleFileType()) {
+            return log.exit(new String[] {
+                    OMA_ID_COLUMN_NAME, GENE_ID_LIST_COLUMN_NAME ,GENE_NAME_LIST_COLUMN_NAME,
+                    ANAT_ENTITY_ID_LIST_COLUMN_NAME, ANAT_ENTITY_NAME_LIST_COLUMN_NAME,
+                    STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME, SPECIES_WITH_EXPRESSION_COUNT_COLUMN_NAME,
+                    SPECIES_WITH_NO_EXPRESSION_COUNT_COLUMN_NAME, SPECIES_WITHOUT_CALLS_COUNT_COLUMN_NAME,
+                    CONSERVATION_SCORE_COLUMN_NAME});
+        }
+    
+        return log.exit(new String[] { 
+                OMA_ID_COLUMN_NAME, GENE_ID_COLUMN_NAME, GENE_NAME_COLUMN_NAME,
+                ANAT_ENTITY_ID_LIST_COLUMN_NAME, ANAT_ENTITY_NAME_LIST_COLUMN_NAME,
+                STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME, SPECIES_LATIN_NAME_COLUMN_NAME,
+                CIO_ID_COLUMN_NAME, CIO_NAME_ID_COLUMN_NAME, EXPRESSION_COLUMN_NAME,
+                QUALITY_COLUMN_NAME, INCLUDING_OBSERVED_DATA_COLUMN_NAME,
+                AFFYMETRIX_DATA_COLUMN_NAME, AFFYMETRIX_CALL_QUALITY_COLUMN_NAME,
+                EST_DATA_COLUMN_NAME, EST_CALL_QUALITY_COLUMN_NAME,
+                INSITU_DATA_COLUMN_NAME, INSITU_CALL_QUALITY_COLUMN_NAME,
+                RNASEQ_DATA_COLUMN_NAME, RNASEQ_CALL_QUALITY_COLUMN_NAME});
     }
 
     /**
      * Generates an {@code Array} of {@code CellProcessor}s used to process a multi-species 
      * expression TSV file of type {@code fileType}.
      * 
-     * @param fileType  The {@code ExprFileType} of the file to be generated.
-     * @param nbSpecies An {@code int} that is the number of species in the file.
+     * @param fileType  A {@code MultiSpExprFileType} that is the type of the file to be generated.
      * @return          An {@code Array} of {@code CellProcessor}s used to process 
      *                  a multi-species expression file.
      * @throw IllegalArgumentException If {@code fileType} is not managed by this method.
      */
-    private CellProcessor[] generateCellProcessors(MultiSpExprFileType fileType, int nbSpecies) 
+    private CellProcessor[] generateCellProcessors(MultiSpExprFileType fileType) 
             throws IllegalArgumentException {
         log.entry(fileType);
 
@@ -611,28 +975,21 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
         
         //Second, we build the CellProcessor
         if (fileType.isSimpleFileType()) {
-            int nbColumns = 7 + 3 * nbSpecies;
-            CellProcessor[] processors = new CellProcessor[nbColumns];
-            processors[0] = new StrNotNullOrEmpty(); // oma id
-            processors[1] = new StrNotNullOrEmpty(); // gene ID list
-            processors[2] = new NotNull();              // gene name list
-            processors[3] = new StrNotNullOrEmpty();    // anatomical entity ID list
-            processors[4] = new StrNotNullOrEmpty();    // anatomical entity name list
-            processors[5] = new StrNotNullOrEmpty();    // developmental stage ID
-            processors[6] = new StrNotNullOrEmpty();    // developmental stage name
-            // the number of columns depends on the number of species
-            for (int i = 0; i < nbSpecies; i++) {
-                int columnIndex = 7 + 3 * i;
-                // we use StrNotNullOrEmpty() ant not LMinMax() condition because 
-                // there is N/A when homologous organ is lost in a species
-                processors[columnIndex] = new StrNotNullOrEmpty();   // nb expressed genes
-                processors[columnIndex+1] = new StrNotNullOrEmpty(); // nb not expressed genes
-                processors[columnIndex+2] = new StrNotNullOrEmpty(); // nb N/A genes
-            }
-            return log.exit(processors);
+            return log.exit(new CellProcessor[] {
+                    new StrNotNullOrEmpty(),    // OMA ID
+                    new StrNotNullOrEmpty(),    // gene ID list
+                    new NotNull(),              // gene name list
+                    new StrNotNullOrEmpty(),    // anatomical entity ID list
+                    new StrNotNullOrEmpty(),    // anatomical entity name list
+                    new StrNotNullOrEmpty(),    // developmental stage ID
+                    new StrNotNullOrEmpty(),    // developmental stage name
+                    new StrNotNullOrEmpty(),    // species with expressed genes count
+                    new StrNotNullOrEmpty(),    // species with not expressed genes count
+                    new StrNotNullOrEmpty(),    // species without expressed genes count
+                    new StrNotNullOrEmpty()});  // conservation score
         }
         return log.exit(new CellProcessor[] {
-                new StrNotNullOrEmpty(),    // oma id
+                new StrNotNullOrEmpty(),    // OMA ID
                 new StrNotNullOrEmpty(),    // gene ID
                 new NotNull(),              // gene name
                 new StrNotNullOrEmpty(),    // anatomical entity ID list
@@ -640,71 +997,186 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
                 new StrNotNullOrEmpty(),    // developmental stage ID
                 new StrNotNullOrEmpty(),    // developmental stage name
                 new StrNotNullOrEmpty(),    // species latin name
-                new StrNotNullOrEmpty(),    // cio id
-                new StrNotNullOrEmpty(),    // cio name
+                new StrNotNullOrEmpty(),    // CIO ID
+                new StrNotNullOrEmpty(),    // CIO name
                 new IsElementOf(expressionValues),      // Expression
                 new IsElementOf(resumeQualities),       // Call quality
                 new IsElementOf(originValues),          // Including observed data
                 new IsElementOf(expressionValues),      // Affymetrix data
-                new IsElementOf(specificTypeQualities), // Affymetrix quality
                 new IsElementOf(expressionValues),      // EST data
-                new IsElementOf(specificTypeQualities), // EST quality
                 new IsElementOf(expressionValues),      // In Situ data
-                new IsElementOf(specificTypeQualities), // In Situ quality
-                // TODO: when relaxed in situ will be in the database, uncomment following line
-                // new IsElementOf(dataElements),       // Relaxed in Situ data
-                // new IsElementOf(qualityValues),      // Relaxed in Situ quality
-                new IsElementOf(expressionValues),      // RNA-seq data
-                new IsElementOf(specificTypeQualities)});// RNA-seq quality
+                new IsElementOf(expressionValues)});    // RNA-seq data
     }
 
     /**
-     * Generates an {@code Array} of {@code String}s used to generate the header of a multi-species
+     * Generate {@code Array} of {@code booleans} (one per CSV column) indicating 
+     * whether each column should be quoted or not.
+     *
+     * @param headers   An {@code Array} of {@code String}s representing the names of the columns.
+     * @return          the {@code Array } of {@code booleans} (one per CSV column) indicating 
+     *                  whether each column should be quoted or not.
+     */
+    private boolean[] generateQuoteMode(String[] headers) {
+        log.entry((Object[]) headers);
+        
+        boolean[] quoteMode = new boolean[headers.length];
+        for (int i = 0; i < headers.length; i++) {
+            switch (headers[i]) {
+                case OMA_ID_COLUMN_NAME:
+                case GENE_ID_LIST_COLUMN_NAME:
+                case ANAT_ENTITY_ID_LIST_COLUMN_NAME:
+                case ANAT_ENTITY_NAME_LIST_COLUMN_NAME:
+                case STAGE_ID_COLUMN_NAME:
+                case SPECIES_WITH_EXPRESSION_COUNT_COLUMN_NAME:
+                case SPECIES_WITH_NO_EXPRESSION_COUNT_COLUMN_NAME:
+                case SPECIES_WITHOUT_CALLS_COUNT_COLUMN_NAME:
+                case CONSERVATION_SCORE_COLUMN_NAME:
+                case GENE_ID_COLUMN_NAME:
+                case SPECIES_LATIN_NAME_COLUMN_NAME:
+                case CIO_ID_COLUMN_NAME:
+                case CIO_NAME_ID_COLUMN_NAME:
+                case EXPRESSION_COLUMN_NAME:
+                case QUALITY_COLUMN_NAME:
+                case INCLUDING_OBSERVED_DATA_COLUMN_NAME:
+                case AFFYMETRIX_DATA_COLUMN_NAME:
+                case AFFYMETRIX_CALL_QUALITY_COLUMN_NAME:
+                case EST_DATA_COLUMN_NAME:
+                case EST_CALL_QUALITY_COLUMN_NAME:
+                case INSITU_DATA_COLUMN_NAME:
+                case INSITU_CALL_QUALITY_COLUMN_NAME:
+                case RNASEQ_DATA_COLUMN_NAME:
+                case RNASEQ_CALL_QUALITY_COLUMN_NAME:
+                    quoteMode[i] = false; 
+                    break;
+                case GENE_NAME_COLUMN_NAME:
+                case GENE_NAME_LIST_COLUMN_NAME:
+                case ANAT_ENTITY_NAME_COLUMN_NAME:
+                case STAGE_NAME_COLUMN_NAME:
+                    quoteMode[i] = true; 
+                    break;
+                default:
+                    throw log.throwing(new IllegalArgumentException(
+                            "Unrecognized header: " + headers[i] + " for OMA TSV file."));
+            }
+        }
+        return log.exit(quoteMode);
+    }
+
+    /**
+     * Generate the field mapping for each column of the header of a multi-species
      * expression TSV file of type {@code fileType}.
      * 
-     * @param fileType  The {@code MultiSpeciesExprFileType} of the file to be generated.
-     * @param nbSpecies A {@code List} of {@code String}s that are the names of species 
-     *                  we want to generate data for.
-     * @return          An {@code Array} of {@code String}s used to produce the header.
-     * @throw IllegalArgumentException If {@code fileType} is not managed by this method.
+     * @param fileType  A {@code MultiSpExprFileType} defining the type of file 
+     *                  that will be written.
+     * @param header    An {@code Array} of {@code String}s representing the names 
+     *                  of the columns of a multi-species expression file.
+     * @return          The {@code Array} of {@code String}s that is the field mapping, 
+     *                  put in the {@code Array} at the same index as the column they 
+     *                  are supposed to process.
+     * @throws IllegalArgumentException If a {@code String} in {@code header} is not recognized.
      */
-    private String[] generateHeader(MultiSpExprFileType fileType, List<String> speciesNames)
-        throws IllegalArgumentException {
-        log.entry(fileType);
+    private String[] generateFieldMapping(MultiSpExprFileType fileType, String[] header) {
+        log.entry(fileType, header);
+        
+        String[] mapping = new String[header.length];
+        for (int i = 0; i < header.length; i++) {
+            switch (header[i]) {
+                // *** attributes common to all file types ***
+                case OMA_ID_COLUMN_NAME: 
+                    mapping[i] = "omaId";
+                    break;
+                case ANAT_ENTITY_ID_LIST_COLUMN_NAME: 
+                    mapping[i] = "entityIds";
+                    break;
+                case ANAT_ENTITY_NAME_LIST_COLUMN_NAME: 
+                    mapping[i] = "entityNames";
+                    break;
+                case STAGE_ID_COLUMN_NAME: 
+                    mapping[i] = "stageIds";
+                    break;
+                case STAGE_NAME_COLUMN_NAME: 
+                    mapping[i] = "stageNames";
+                    break;
+            }
+            
+            //if it was one of the column common to all beans, 
+            //iterate next column name
+            if (mapping[i] != null) {
+                continue;
+            }
 
-        return null;
-//        if (fileType.isSimpleFileType()) {
-//            int nbColumns = 7 + 3 * speciesNames.size();
-//            String[] headers = new String[nbColumns];
-//            headers[0] = OMA_ID_COLUMN_NAME;
-//            headers[1] = GENE_ID_LIST_ID_COLUMN_NAME;
-//            headers[2] = GENE_NAME_LIST_ID_COLUMN_NAME;
-//            headers[3] = ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME;
-//            headers[4] = ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME;
-//            headers[5] = STAGE_ID_COLUMN_NAME;
-//            headers[6] = STAGE_NAME_COLUMN_NAME;
-//            // the number of columns depends on the number of species
-//            for (int i = 0; i < speciesNames.size(); i++) {
-//                int columnIndex = 7 + 3 * i;
-//                String endHeader = " for " + speciesNames.get(i);
-//                headers[columnIndex] = NB_EXPR_GENE_COLUMN_NAME + endHeader;
-//                headers[columnIndex+1] = NB_NO_EXPR_GENES_COLUMN_NAME + endHeader;
-//                headers[columnIndex+2] = NB_NA_GENES_COLUMN_NAME + endHeader;
-//            }
-//            return log.exit(headers);
-//        }
-//
-//        return log.exit(new String[] { 
-//                OMA_ID_COLUMN_NAME, GENE_ID_COLUMN_NAME, GENE_NAME_COLUMN_NAME,
-//                ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME, ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME,
-//                STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME, SPECIES_LATIN_NAME_COLUMN_NAME,
-//                CIO_ID_ID_COLUMN_NAME, CIO_NAME_ID_COLUMN_NAME, EXPRESSION_COLUMN_NAME,
-//                QUALITY_COLUMN_NAME, INCLUDING_OBSERVED_DATA_COLUMN_NAME,
-//                AFFYMETRIX_DATA_COLUMN_NAME, AFFYMETRIX_CALL_QUALITY_COLUMN_NAME,
-//                EST_DATA_COLUMN_NAME, EST_CALL_QUALITY_COLUMN_NAME,
-//                INSITU_DATA_COLUMN_NAME, INSITU_CALL_QUALITY_COLUMN_NAME,
-//                // TODO: when relaxed in situ will be in the database, uncomment following line
-//                // RELAXED_INSITU_DATA_COLUMN_NAME, RELAXED_INSITU_DATA_COLUMN_NAME,
-//                RNASEQ_DATA_COLUMN_NAME, RNASEQ_CALL_QUALITY_COLUMN_NAME});
+            if (fileType.isSimpleFileType()) {
+                // *** Attributes specific to simple file ***
+                switch (header[i]) {
+                    case GENE_ID_LIST_COLUMN_NAME: 
+                        mapping[i] = "geneIds";
+                        break;
+                    case GENE_NAME_LIST_COLUMN_NAME: 
+                        mapping[i] = "geneNames";
+                        break;
+                    case SPECIES_WITH_EXPRESSION_COUNT_COLUMN_NAME: 
+                        mapping[i] = "spWithExprCount";
+                        break;
+                    case SPECIES_WITH_NO_EXPRESSION_COUNT_COLUMN_NAME: 
+                        mapping[i] = "spWithNoExprCount";
+                        break;
+                    case SPECIES_WITHOUT_CALLS_COUNT_COLUMN_NAME: 
+                        mapping[i] = "spWithoutExpr";
+                        break;
+                    case CONSERVATION_SCORE_COLUMN_NAME: 
+                        mapping[i] = "conservationScore";
+                        break;
+                }
+            } else {
+                // *** Attributes specific to complete file ***
+                switch (header[i]) {
+
+                case INCLUDING_OBSERVED_DATA_COLUMN_NAME: 
+                    mapping[i] = "includingObservedData";
+                    break;
+                case AFFYMETRIX_DATA_COLUMN_NAME: 
+                    mapping[i] = "affymetrixData";
+                    break;
+                case AFFYMETRIX_CALL_QUALITY_COLUMN_NAME: 
+                    mapping[i] = "affymetrixCallQuality";
+                    break;
+                case AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME: 
+                    mapping[i] = "includingAffymetrixObservedData";
+                    break;
+                case EST_DATA_COLUMN_NAME: 
+                    mapping[i] = "estData";
+                    break;
+                case EST_CALL_QUALITY_COLUMN_NAME: 
+                    mapping[i] = "estCallQuality";
+                    break;
+                case EST_OBSERVED_DATA_COLUMN_NAME: 
+                    mapping[i] = "includingEstObservedData";
+                    break;
+                case INSITU_DATA_COLUMN_NAME: 
+                    mapping[i] = "inSituData";
+                    break;
+                case INSITU_CALL_QUALITY_COLUMN_NAME: 
+                    mapping[i] = "inSituCallQuality";
+                    break;
+                case IN_SITU_OBSERVED_DATA_COLUMN_NAME: 
+                    mapping[i] = "includingInSituObservedData";
+                    break;
+                case RNASEQ_DATA_COLUMN_NAME: 
+                    mapping[i] = "rnaSeqData";
+                    break;
+                case RNASEQ_CALL_QUALITY_COLUMN_NAME: 
+                    mapping[i] = "rnaSeqCallQuality";
+                    break;
+                case RNASEQ_OBSERVED_DATA_COLUMN_NAME: 
+                    mapping[i] = "includingRnaSeqObservedData";
+                    break;
+                }
+            }
+            if (mapping[i] == null) {
+                throw log.throwing(new IllegalArgumentException("Unrecognized header: " 
+                        + header[i] + " for file type: " + fileType.getStringRepresentation()));
+            }
+        }
+        return log.exit(mapping);
     }
 }

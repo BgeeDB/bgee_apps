@@ -2753,8 +2753,8 @@ public class SimilarityAnnotationTest extends TestAncestor {
             this.getClass().getResource("/similarity_annotations/fake_uberon.obo").getFile()))) {
         
             Set<OWLClass> expectedClasses = new HashSet<OWLClass>(
-                    Arrays.asList(fakeOntology.getOWLClassByIdentifier("ID:1"), 
-                            fakeOntology.getOWLClassByIdentifier("ID:4")));
+                    Arrays.asList(fakeOntology.getOWLClassByIdentifierNoAltIds("ID:1"), 
+                            fakeOntology.getOWLClassByIdentifierNoAltIds("ID:4")));
             
             assertEquals(
                 "Incorrect anatomical entities with no transformation_of relations identified", 

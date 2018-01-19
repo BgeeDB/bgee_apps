@@ -17,7 +17,7 @@ import org.bgee.view.SearchDisplay;
  * XML view for the search category display
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Feb. 2016
+ * @version Bgee 14, Mar. 2017
  * @since   Bgee 13, Feb. 2016
  */
 //TODO javadoc
@@ -46,9 +46,9 @@ public class XmlSearchDisplay extends XmlParentDisplay implements SearchDisplay 
             	//match name
         		label = gene.getGene().getName();
         		labelSource = "name";
-        	} else if (gene.getGene().getId().toLowerCase().indexOf(searchTerm.toLowerCase()) != -1) {
+        	} else if (gene.getGene().getEnsemblGeneId().toLowerCase().indexOf(searchTerm.toLowerCase()) != -1) {
             	//match ID
-        		label = gene.getGene().getId();
+        		label = gene.getGene().getEnsemblGeneId();
         		labelSource = "id";
         	} else {
         		//find the matching synonym 
@@ -56,11 +56,11 @@ public class XmlSearchDisplay extends XmlParentDisplay implements SearchDisplay 
         		labelSource = "synonym";
         	}
         	
-        	this.writeln("<gene id='" + XmlParentDisplay.xmlEntities(gene.getGene().getId()) + "' " +
+        	this.writeln("<gene id='" + XmlParentDisplay.xmlEntities(gene.getGene().getEnsemblGeneId()) + "' " +
         			"name='" + XmlParentDisplay.xmlEntities(gene.getGene().getName()) + "' " +
         			"label='" + XmlParentDisplay.xmlEntities(label) + "' " +
         			"label_source='" + labelSource + "' " +
-        			"species_id='" + XmlParentDisplay.xmlEntities(gene.getGene().getSpeciesId()) + "' " +
+        			"species_id='" + String.valueOf(gene.getGene().getSpecies().getId()) + "' " +
         			"species_name='" + XmlParentDisplay.xmlEntities(
         			        StringUtils.isNotBlank(gene.getGene().getSpecies().getName())? 
         			                gene.getGene().getSpecies().getName(): 

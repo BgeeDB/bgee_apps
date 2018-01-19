@@ -55,7 +55,7 @@ public class MySQLStageGroupingDAOIT extends MySQLITAncestor {
                 new GroupToStageTO("Stage_id8", "Stage_id8"));
         assertTrue("AnatEntityTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(
-                        dao.getGroupToStage("", null).getAllTOs(), expectedTOs));
+                        dao.getGroupToStage(null, null).getAllTOs(), expectedTOs));
         //as of Bgee 13, there is no mapping between stages, so we basically 
         //simply retrieve grouping stages existing in all the provided species, 
         //we don't use the ancestralTaxonId.
@@ -66,7 +66,7 @@ public class MySQLStageGroupingDAOIT extends MySQLITAncestor {
                 new GroupToStageTO("Stage_id8", "Stage_id8"));
         assertTrue("AnatEntityTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(
-                        dao.getGroupToStage("", new HashSet<String>(Arrays.asList("11"))).getAllTOs(),
+                        dao.getGroupToStage(null, new HashSet<>(Arrays.asList(11))).getAllTOs(),
                         expectedTOs));
     }
 }

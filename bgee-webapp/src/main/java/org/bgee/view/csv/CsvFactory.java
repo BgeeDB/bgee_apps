@@ -16,6 +16,7 @@ import org.bgee.view.ErrorDisplay;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.GeneralDisplay;
 import org.bgee.view.JobDisplay;
+import org.bgee.view.RPackageDisplay;
 import org.bgee.view.SearchDisplay;
 import org.bgee.view.SourceDisplay;
 import org.bgee.view.SpeciesDisplay;
@@ -111,6 +112,13 @@ public class CsvFactory extends ViewFactory {
     public JobDisplay getJobDisplay() throws IOException {
         log.entry();
         return log.exit(new CsvJobDisplay(this.response, this.requestParameters, this.prop, this, 
+                this.delimiter));
+    }
+    
+    @Override
+    public RPackageDisplay getRPackageDisplay() throws IOException {
+        log.entry();
+        return log.exit(new CsvRPackageDisplay(this.response, this.requestParameters, this.prop, this, 
                 this.delimiter));
     }
 }

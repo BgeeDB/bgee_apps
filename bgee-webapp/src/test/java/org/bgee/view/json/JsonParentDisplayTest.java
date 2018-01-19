@@ -26,9 +26,10 @@ import org.junit.Test;
 /**
  * Unit tests for {@link JsonParentDisplay}.
  * 
- * @author Frederic Bastian
- * @version Bgee 13 Nov. 2015
- * @since Bgee 13 Nov.2015
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, Mar. 2017
+ * @since   Bgee 13, Nov.2015
  *
  */
 public class JsonParentDisplayTest extends TestAncestor {
@@ -73,8 +74,8 @@ public class JsonParentDisplayTest extends TestAncestor {
         //build data response
         LinkedHashMap<String, Object> data = new LinkedHashMap<>();
         data.put("speciesList", Arrays.asList(
-                new Species("12", "SpeciesName", "A string description of that species"), 
-                new Species("13", "SpeciesName", "A string description of that species")));
+                new Species(12, "SpeciesName", "A string description of that species"), 
+                new Species(13, "SpeciesName", "A string description of that species")));
         
         //trigger response
         display.sendResponse("My msg.", data);
@@ -153,8 +154,8 @@ public class JsonParentDisplayTest extends TestAncestor {
         //build data response
         LinkedHashMap<String, Object> data = new LinkedHashMap<>();
         data.put("speciesList", Arrays.asList(
-                new Species("12", "SpeciesName", "A string description of that species"), 
-                new Species("13", "SpeciesName", "A string description of that species")));
+                new Species(12, "SpeciesName", "A string description of that species"), 
+                new Species(13, "SpeciesName", "A string description of that species")));
         
         //trigger response
         display.sendResponse(HttpServletResponse.SC_NOT_FOUND, "My msg.", data);

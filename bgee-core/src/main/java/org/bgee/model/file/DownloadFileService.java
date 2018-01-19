@@ -3,10 +3,11 @@ package org.bgee.model.file;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
-import org.bgee.model.dao.api.DAOManager;
+import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
 import org.bgee.model.dao.api.file.DownloadFileDAO;
+import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,22 +23,12 @@ public class DownloadFileService extends Service {
     private static final Logger log = LogManager.getLogger(DownloadFileService.class.getName());
 
     /**
-    * 0-arg constructor that will cause this {@code DownloadFileService} to use
-    * the default {@code DAOManager} returned by {@link DAOManager#getDAOManager()}.
-    *
-    * @see #DownloadFileService(DAOManager)
-    */
-    public DownloadFileService() {
-        this(DAOManager.getDAOManager());
-    }
-
-    /**
-     * @param daoManager    The {@code DAOManager} to be used by this {@code DownloadFileService}
-     *                      to obtain {@code DAO}s.
-     * @throws IllegalArgumentException If {@code daoManager} is {@code null}.
+     * @param serviceFactory            The {@code ServiceFactory} to be used to obtain {@code Service}s 
+     *                                  and {@code DAOManager}.
+     * @throws IllegalArgumentException If {@code serviceFactory} is {@code null}.
      */
-    public DownloadFileService(DAOManager daoManager){
-        super(daoManager);
+    public DownloadFileService(ServiceFactory serviceFactory) {
+        super(serviceFactory);
     }
 
     /**
@@ -68,13 +59,45 @@ public class DownloadFileService extends Service {
         }
         return log.exit(new DownloadFile(downloadFileTO.getPath(),
                 downloadFileTO.getName(),
-                //currently, the IDs of DownloadFile.CategoryEnum correspond exactly to
-                //the DownloadFileTO.CategoryEnum#getStringRepresentation(), 
-                //this might change in the future.
-                DownloadFile.CategoryEnum.getById(downloadFileTO.getCategory().getStringRepresentation()),
+                mapDAOCategoryToServiceCategory(downloadFileTO.getCategory()),
                 downloadFileTO.getSize(),
-                downloadFileTO.getSpeciesDataGroupId()));
+                downloadFileTO.getSpeciesDataGroupId(),
+                //TODO: shouldn't we rather use a 'mapDAOCondParamToServiceCondParam'?
+                downloadFileTO.getConditionParameters().stream()
+                    .map(p -> DownloadFile.ConditionParameter.convertToConditionParameter(
+                                p.getStringRepresentation()))
+                    .collect(Collectors.toSet())));
     }
 
+    private static DownloadFile.CategoryEnum mapDAOCategoryToServiceCategory(
+            DownloadFileTO.CategoryEnum daoEnum) {
+        log.entry(daoEnum);
 
+        switch (daoEnum) {
+            case EXPR_CALLS_COMPLETE:
+                return log.exit(DownloadFile.CategoryEnum.EXPR_CALLS_COMPLETE);
+            case EXPR_CALLS_SIMPLE:
+                return log.exit(DownloadFile.CategoryEnum.EXPR_CALLS_SIMPLE);
+            case DIFF_EXPR_ANAT_SIMPLE:
+                return log.exit(DownloadFile.CategoryEnum.DIFF_EXPR_ANAT_SIMPLE);
+            case DIFF_EXPR_ANAT_COMPLETE:
+                return log.exit(DownloadFile.CategoryEnum.DIFF_EXPR_ANAT_COMPLETE);
+            case DIFF_EXPR_DEV_COMPLETE:
+                return log.exit(DownloadFile.CategoryEnum.DIFF_EXPR_DEV_COMPLETE);
+            case DIFF_EXPR_DEV_SIMPLE:
+                return log.exit(DownloadFile.CategoryEnum.DIFF_EXPR_DEV_SIMPLE);
+            case ORTHOLOG:
+                return log.exit(DownloadFile.CategoryEnum.ORTHOLOG);
+            case AFFY_ANNOT:
+                return log.exit(DownloadFile.CategoryEnum.AFFY_ANNOT);
+            case AFFY_DATA:
+                return log.exit(DownloadFile.CategoryEnum.AFFY_DATA);
+            case RNASEQ_ANNOT:
+                return log.exit(DownloadFile.CategoryEnum.RNASEQ_ANNOT);
+            case RNASEQ_DATA:
+                return log.exit(DownloadFile.CategoryEnum.RNASEQ_DATA);
+            default:
+                throw log.throwing(new IllegalArgumentException("Category not supported: " + daoEnum));
+        }
+    }
 }

@@ -4,29 +4,31 @@ import java.util.Collection;
 import java.util.Set;
 
 import org.bgee.model.NamedEntity;
-import org.bgee.model.ontology.Ontology.RelationType;
 
 /**
- * Parent interface of all elements that can be used to define an {@code Ontology}. 
+ * Parent interface of all elements that can be used in ontologies. 
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Déc. 2015
+ * @version Bgee 14, Feb. 2017
  * @since   Bgee 13, Déc. 2015
- * @param <T>
+ * @see Ontology
+ * @see MultiSpeciesOntology
+ * @param <T>   The type of this {@code OntologyElement}.
+ * @param <U>   The type of ID of this {@code OntologyElement}.
  */
-public interface OntologyElement<T extends NamedEntity & OntologyElement<T>> {
+public interface OntologyElement<T extends NamedEntity<U> & OntologyElement<T, U>, U> {
 
     /**
      * Get ancestors of the given {@code element} in the given {@code ontology}.
      * 
-     * @param ontology      An {@code Ontology} that is the ontology in which
+     * @param ontology      An {@code OntologyBase} that is the ontology in which
      *                      the ancestors are retrieved. 
      * @param relationTypes A {@code Collection} of {@code RelationType}s that are the relation 
      *                      types allowing to filter the relations to retrieve.
      * @return              The {@code Set} of {@code T}s thats are the ancestors of
      *                      {@code element} in {@code ontology}.
      */
-    default public Set<T> getAncestors(Ontology<T> ontology, Collection<RelationType> relationTypes) {
+    default public Set<T> getAncestors(OntologyBase<T, U> ontology, Collection<RelationType> relationTypes) {
         //XXX: we need to ensure that the type of this OntologyElement is indeed T 
         //(i.e., to guarantee that we never have DevStage implements OntologyElement<AnatEntity>). 
         //leaving the warning for now.
@@ -36,14 +38,14 @@ public interface OntologyElement<T extends NamedEntity & OntologyElement<T>> {
     /**
      * Get descendants of the given {@code element} in the given {@code ontology}.
      * 
-     * @param ontology      An {@code Ontology} that is the ontology in which
+     * @param ontology      An {@code OntologyBase} that is the ontology in which
      *                      the descendants are retrieved. 
      * @param relationTypes A {@code Set} of {@code RelationType}s that are the relation 
      *                      types allowing to filter the relations to retrieve.
      * @return              The {@code Set} of {@code T}s thats are the descendants of
      *                      {@code element} in {@code ontology}.
      */
-    default public Set<T> getDescendants(Ontology<T> ontology, Set<RelationType> relationTypes) {
+    default public Set<T> getDescendants(OntologyBase<T, U> ontology, Set<RelationType> relationTypes) {
         //XXX: we need to ensure that the type of this OntologyElement is indeed T 
         //(i.e., to guarantee that we never have DevStage implements OntologyElement<AnatEntity>). 
         //leaving the warning for now.

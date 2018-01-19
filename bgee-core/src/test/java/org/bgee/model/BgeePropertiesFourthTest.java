@@ -29,6 +29,8 @@ public class BgeePropertiesFourthTest extends BgeePropertiesParentTest {
     @Test
     public void testLoadDefaultProperties(){
         // First clear the system properties that would be used if present.
+        System.clearProperty(BgeeProperties.MAJOR_VERSION_KEY);
+        System.clearProperty(BgeeProperties.MINOR_VERSION_KEY);
         System.clearProperty(BgeeProperties.TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY);
         System.clearProperty(BgeeProperties.TOP_ANAT_R_WORKING_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.TOP_ANAT_FUNCTION_FILE_KEY);
@@ -42,6 +44,12 @@ public class BgeePropertiesFourthTest extends BgeePropertiesParentTest {
 
         // get the instance of bgeeproperties and check the values
         this.bgeeProp = BgeeProperties.getBgeeProperties();
+        assertEquals("Wrong property value retrieved",
+                BgeeProperties.MAJOR_VERSION_DEFAULT,
+                bgeeProp.getMajorVersion());
+        assertEquals("Wrong property value retrieved",
+                BgeeProperties.MINOR_VERSION_DEFAULT,
+                bgeeProp.getMinorVersion());
         assertEquals("Wrong property value retrieved",
                 BgeeProperties.TOP_ANAT_R_SCRIPT_EXECUTABLE_DEFAULT,
                 bgeeProp.getTopAnatRScriptExecutable());

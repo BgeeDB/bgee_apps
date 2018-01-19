@@ -9,15 +9,15 @@ package org.bgee.model.gene;
  *
  */
 public class GeneMatch {
+    
+    private final Gene gene;
+    
+    private final String synonym;
 
 	public GeneMatch(Gene gene, String synonym) {
 		this.gene = gene;
 		this.synonym = synonym;
 	}
-	
-	private final Gene gene;
-	
-	private final String synonym;
 	
 	/**
 	 * @return A {boolean}, true if the match was on a synonym of the gene, false otherwise.

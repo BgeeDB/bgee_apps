@@ -9,9 +9,13 @@ import org.bgee.model.dao.api.anatdev.mapping.RawSimilarityAnnotationDAO;
 import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixProbesetDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultDAO;
@@ -39,8 +43,8 @@ import static org.mockito.Mockito.mock;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, June 2016
- * @since   Bgee 13
+ * @version Bgee 14, Feb. 2017
+ * @since   Bgee 13, July 2013
  */
 public class MockDAOManager extends DAOManager {
 	
@@ -129,12 +133,28 @@ public class MockDAOManager extends DAOManager {
         return this.instanceMockManager.getNewRelationDAO();
     }
     @Override
+    protected ConditionDAO getNewConditionDAO() {
+        return this.instanceMockManager.getNewConditionDAO();
+    }
+    @Override
     protected ExpressionCallDAO getNewExpressionCallDAO() {
         return this.instanceMockManager.getNewExpressionCallDAO();
     }
     @Override
     protected NoExpressionCallDAO getNewNoExpressionCallDAO() {
         return this.instanceMockManager.getNewNoExpressionCallDAO();
+    }
+    @Override
+    protected RawExpressionCallDAO getNewRawExpressionCallDAO() {
+        return this.instanceMockManager.getNewRawExpressionCallDAO();
+    }
+    @Override
+    protected GlobalExpressionCallDAO getNewGlobalExpressionCallDAO() {
+        return this.instanceMockManager.getNewGlobalExpressionCallDAO();
+    }
+    @Override
+    protected ExperimentExpressionDAO getNewExperimentExpressionDAO() {
+        return this.instanceMockManager.getNewExperimentExpressionDAO();
     }
     @Override
     protected DiffExpressionCallDAO getNewDiffExpressionCallDAO() {

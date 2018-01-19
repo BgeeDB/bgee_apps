@@ -58,6 +58,7 @@ public interface RNASeqResultDAO extends DAO<RNASeqResultDAO.Attribute> {
      * (non-javadoc)
      * This TO is not in it's final version. We need to known if CallSourceRawDataTO is necessary 
      * and consistent.
+     * XXX: well, CallSourceRawDataTO is deprecated, was it deprecated before or after this note?
      */
     public final class RNASeqResultTO extends CallSourceRawDataTO implements Serializable {
         private static final long serialVersionUID = 9192921864601490175L;
@@ -76,12 +77,13 @@ public interface RNASeqResultDAO extends DAO<RNASeqResultDAO.Attribute> {
          * An Integer representing the number of reads aligned to this gene 
          * in this library. 
          */
+        // FIXME change this for double or float as it's estimated counts
         public Integer readsCount;
         /**
          * A {@code String} representing the expression call for this gene 
          * in this library ('undefined', 'present', 'absent').
-         * @TODO change this for an Enum.
          */
+        // TODO change this for an Enum.
         public String detectionFlag;
 
         /**

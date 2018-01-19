@@ -13,8 +13,9 @@ import org.apache.logging.log4j.Logger;
  * This class provides convenient methods for Bgee {@code Enum}s.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Nov 2015
- * @since   Bgee 13, Nov 2015
+ * @author  Frederic Bastian
+ * @version Bgee 13, Aug. 2016
+ * @since   Bgee 13, Nov. 2015
  */
 public abstract class BgeeEnum {
     
@@ -39,7 +40,7 @@ public abstract class BgeeEnum {
     }
     
     /**
-     * Convert the {@code String} representation corresponding to an {@link BgeeEnumField} 
+     * Convert the {@code String} representation corresponding to an {@code BgeeEnumField} 
      * (for instance, retrieved from request) into the proper {@code Enum} element.
      * <p>
      * This method compares {@code representation} to the value returned by 
@@ -54,7 +55,7 @@ public abstract class BgeeEnum {
      * @return                          An element of the {@code Enum} class {@code enumField}, 
      *                                  corresponding to {@code representation}. Can be {@code null}
      *                                  if {@code representation} is {@code null}.
-     * @throw IllegalArgumentException  If {@code representation} does not correspond 
+     * @throws IllegalArgumentException If {@code representation} does not correspond 
      *                                  to any element of {@code enumField}.
      */
     public static final <T extends Enum<T> & BgeeEnumField> T convert(
@@ -76,7 +77,7 @@ public abstract class BgeeEnum {
     
     /**
      * Convert a {@code Collection} of {@code String}s into a {@code Set} of {@code BgeeEnumField}s, 
-     * using the method {@link BgeeEnum#convert()}.
+     * using the method {@link BgeeEnum#convert(Class, String)}.
      * 
      * @param enumClass         The {@code Class} that is the {@code Enum} class 
      *                          implementing {@code BgeeEnumField}, for which we want 
@@ -87,7 +88,7 @@ public abstract class BgeeEnum {
      *                          {@code enums}. Can be {@code null} if {@code representations} is
      *                          {@code null}. An element can be {@code null} if 
      *                          {@code representations} has an element {@code null}.
-     * @param T The type of {@code BgeeEnumField}
+     * @param <T> The type of {@code BgeeEnumField}
      */
     public static final <T extends Enum<T> & BgeeEnumField> Set<T> 
         convertStringSetToEnumSet(Class<T> enumClass, Collection<String> representations) {
@@ -117,7 +118,7 @@ public abstract class BgeeEnum {
      *              the {@code BgeeEnumField}s contained in {@code enums}. Can be {@code null} if 
      *              {@code enums} is {@code null}. An element can be {@code null} if
      *              {@code enums} has an element {@code null}.
-     * @param T The type of {@code BgeeEnumField}
+     * @param <T>   The type of {@code BgeeEnumField}
      */
     public static final <T extends Enum<T> & BgeeEnumField> Set<String> 
         convertEnumSetToStringSet(Set<T> enums) {
@@ -137,9 +138,13 @@ public abstract class BgeeEnum {
     }
     
     /**
-     * @param enumClass
-     * @param representation
-     * @return
+     * Defining whether {@code representation} is a representation of 
+     * an element of the {@code enumClass}.
+     * 
+     * @param enumClass         A {@code Class<T>} that is the type of {@code BgeeEnumField}.
+     * @param representation    A {@code String} that is the representation to be checked.
+     * @return                  The {@code boolean} defining whether {@code representation} is a 
+     *                          representation of an element of the {@code enumClass}.
      */
     public static final <T extends Enum<T> & BgeeEnumField> boolean isInEnum(
             Class<T> enumClass, String representation) {
@@ -155,10 +160,16 @@ public abstract class BgeeEnum {
     }
     
     /**
-     * @param enumClass
-     * @param representations
-     * @return
-     * @param T The type of {@code BgeeEnumField}
+     * Defining whether each element of {@code representations} are a representation of 
+     * an element of the {@code enumClass}.
+     * 
+     * @param enumClass         A {@code Class<T>} that is the type of {@code BgeeEnumField}.
+     * @param representations   A {@code Collection} of {@code String}s that
+     *                          are representations to be checked.
+     * @return                  The {@code boolean} defining whether each element of 
+     *                          {@code representations} are a representation of 
+     *                          an element of the {@code enumClass}.
+     * @param <T> The type of {@code BgeeEnumField}
      */
     public static final <T extends Enum<T> & BgeeEnumField> boolean areAllInEnum(
             Class<T> enumClass, Collection<String> representations) {

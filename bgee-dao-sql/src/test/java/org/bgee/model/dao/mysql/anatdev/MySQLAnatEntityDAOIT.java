@@ -88,15 +88,15 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
         // Test recovery of several attributes with filter on species IDs
         dao.clearAttributes();
         dao.setAttributes(this.getAttributesForDataTest());
-        Set<String> speciesIds = this.getSpeciesFilterForDataTest();
+        Set<Integer> speciesIds = this.getSpeciesFilterForDataTest();
         expectedAnatEntities = this.getAnatEntityTOsFilterdBySpeciesIds();
         assertTrue("AnatEntityTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(
                         dao.getAnatEntitiesBySpeciesIds(speciesIds).getAllTOs(), expectedAnatEntities));
 
         dao.clearAttributes();
-        speciesIds = new HashSet<String>();
-        speciesIds.addAll(Arrays.asList("11", "21", "31", "44", "51"));
+        speciesIds = new HashSet<>();
+        speciesIds.addAll(Arrays.asList(11, 21, 31, 44, 51));
         expectedAnatEntities = this.getAllAnatEntityTOs();
         assertTrue("AnatEntityTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(
@@ -175,7 +175,7 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
         // Test recovery of several attributes with filter on species IDs
         dao.clearAttributes();
         dao.setAttributes(this.getAttributesForDataTest());
-        Set<String> speciesIds = this.getSpeciesFilterForDataTest();
+        Set<Integer> speciesIds = this.getSpeciesFilterForDataTest();
         expectedAnatEntities = this.getAnatEntityTOsFilterdBySpeciesIds();
         assertTrue("AnatEntityTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(
@@ -212,7 +212,7 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
         // Test recovery of several attributes with filter on species IDs
         dao.clearAttributes();
         dao.setAttributes(this.getAttributesForDataTest());
-        Collection<String> speciesIds = Arrays.asList("11", "21");
+        Collection<Integer> speciesIds = Arrays.asList(11, 21);
         
         // Test recovery of all attributes with filter on species and anat. entities IDs.
         Collection<AnatEntityTO> expectedAnatEntities = this.getAnatEntityTOsFilterdBySpeciesIds().stream()
@@ -301,10 +301,10 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
      * @return  The {@code Set} of {@code String}s that are species IDs used as filter.
      * @see #getAnatEntityTOsFilterdBySpeciesIds()
      */
-    private Set<String> getSpeciesFilterForDataTest() {
-        Set<String> speciesIds = new HashSet<String>();
-        speciesIds.add("11");
-        speciesIds.add("44");
+    private Set<Integer> getSpeciesFilterForDataTest() {
+        Set<Integer> speciesIds = new HashSet<>();
+        speciesIds.add(11);
+        speciesIds.add(44);
         return speciesIds;
     }
     
@@ -353,8 +353,8 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
                         expectedAnatEntities));
 
         // Test recovery of all attributes with filter on species IDs
-        Set<String> speciesIds = new HashSet<String>();
-        speciesIds.addAll(Arrays.asList("11","44"));
+        Set<Integer> speciesIds = new HashSet<>();
+        speciesIds.addAll(Arrays.asList(11, 44));
         expectedAnatEntities = Arrays.asList(
                 new AnatEntityTO("Anat_id13", "anat13", "unused anatE 13", 
                         "Stage_id9", "Stage_id10", true));
@@ -366,7 +366,7 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
         // Test recovery of anatomical entity names with filter on species IDs
         dao.setAttributes(AnatEntityDAO.Attribute.NAME);
         speciesIds.clear();
-        speciesIds.addAll(Arrays.asList("31"));
+        speciesIds.addAll(Arrays.asList(31));
         expectedAnatEntities = Arrays.asList(
                 new AnatEntityTO(null, "hindbrain", null, null, null, null), 
                 new AnatEntityTO(null, "anat13", null, null, null, null));

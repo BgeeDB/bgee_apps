@@ -83,7 +83,7 @@ public class CloseAllTest extends TestAncestor {
 					this.exchanger.exchange(null);
 				}
 			}
-		};
+		}
 		
 		//get a DAOManager in the main thread
 		DAOManager manager = DAOManager.getDAOManager();

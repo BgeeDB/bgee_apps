@@ -164,24 +164,22 @@ public class UberonDevStage extends UberonCommon {
     private Collection<String> childrenOfToRemove;
     /**
      * A {@code Map} associating a nested set model (as values), to the least common ancestor 
-     * it was computed for (as keys). This will allow to avoid recomputing a nested set model 
-     * for each query.
+     * it was computed for, in a given species (as keys). This will allow to avoid recomputing a nested set model 
+     * for each query. The key is simply a {@code String} that is the concatenation of 
+     * the least common ancestor IRI and of the NCBI taxon ID.
      * @see #generateStageNestedSetModel(OWLClass)
      */
     //TODO: create a NestedSetModel class, rather than this ugly 
     //Map<OWLClass, Map<String, Integer>>
-    private final Map<OWLClass, Map<OWLClass, Map<String, Integer>>> nestedSetModels;
+    private final Map<String, Map<OWLClass, Map<String, Integer>>> nestedSetModels;
     
     /**
      * A {@code Set} of {@code OWLPropertyExpression} that can be conveniently used 
      * to query for relations and/or relatives only over part_of relations,
      */
-    //suppress warning because the getAncestors method of owltools uses unparameterized 
-    //generic OWLPropertyExpression, so we need to do the same. 
-    @SuppressWarnings("rawtypes")
     private final Set<OWLPropertyExpression> overPartOf;
     
-    
+
     /**
      * Constructor providing the path to the Uberon ontology to used to perform operations.
      * 
@@ -193,6 +191,42 @@ public class UberonDevStage extends UberonCommon {
     public UberonDevStage(String pathToUberon) throws OWLOntologyCreationException, 
     OBOFormatParserException, IOException {
         this(new OntologyUtils(pathToUberon));
+    }
+    /**
+     * Constructor providing the {@code OntologyUtils} used to perform operations, 
+     * wrapping the Uberon ontology that will be used. 
+     * 
+     * @param uberonOntUtils  the {@code OntologyUtils} that will be used for Uberon. 
+     * @throws OWLOntologyCreationException If an error occurred while merging 
+     *                                      the import closure of the ontology.
+     */
+    public UberonDevStage(OntologyUtils uberonOntUtils) throws OWLOntologyCreationException {
+        this(uberonOntUtils, (OntologyUtils) null);
+    }
+    /**
+     * Constructor providing the path to the Uberon ontology to used to perform operations.
+     * 
+     * @param pathToUberon  A {@code String} that is the path to the Uberon ontology. 
+     * @param pathToUberon  A {@code String} that is the path to the taxonomy ontology. 
+     * @throws OWLOntologyCreationException If an error occurred while loading the ontology.
+     * @throws OBOFormatParserException     If the ontology is malformed.
+     * @throws IOException                  If the file could not be read. 
+     */
+    public UberonDevStage(String pathToUberon, String pathToTaxOnt) throws OWLOntologyCreationException, 
+    OBOFormatParserException, IOException {
+        this(new OntologyUtils(pathToUberon), new OntologyUtils(pathToTaxOnt));
+    }
+    /**
+     * Constructor providing the {@code OntologyUtils} used to perform operations, 
+     * wrapping the Uberon ontology that will be used. 
+     * 
+     * @param uberonOntUtils  the {@code OntologyUtils} that will be used for Uberon. 
+     * @param taxOntUtils     the {@code OntologyUtils} that will be used for taxonomy ontology. 
+     * @throws OWLOntologyCreationException If an error occurred while merging 
+     *                                      the import closure of the ontology.
+     */
+    public UberonDevStage(OntologyUtils uberonOntUtils, OntologyUtils taxOntUtils) throws OWLOntologyCreationException {
+        this(uberonOntUtils, taxOntUtils, null);
     }
     /**
      * Constructor providing the path to the Uberon ontology to used to perform operations, 
@@ -214,23 +248,45 @@ public class UberonDevStage extends UberonCommon {
      * @throws OBOFormatParserException     If the ontology is malformed.
      * @throws IOException                  If the file could not be read. 
      */
-    public UberonDevStage(String pathToUberon, String pathToTaxonConstraints, 
+    public UberonDevStage(OntologyUtils uberonOntUtils, String pathToTaxonConstraints, 
             Map<String, Set<Integer>> idStartsToOverridenTaxonIds) 
             throws OWLOntologyCreationException, OBOFormatParserException, IOException {
-        this(new OntologyUtils(pathToUberon), 
-                TaxonConstraints.extractTaxonConstraints(pathToTaxonConstraints, 
-                        idStartsToOverridenTaxonIds));
+        this(uberonOntUtils, TaxonConstraints.extractTaxonConstraints(
+                pathToTaxonConstraints, idStartsToOverridenTaxonIds, 
+                uberonOntUtils.getWrapper().getAllRealOWLClasses()
+                        .stream().map(c -> uberonOntUtils.getWrapper().getIdentifier(c))
+                        .collect(Collectors.toSet())));
     }
     /**
-     * Constructor providing the {@code OntologyUtils} used to perform operations, 
-     * wrapping the Uberon ontology that will be used. 
+     * Constructor providing the path to the Uberon ontology to used to perform operations, 
+     * the path the a file containing taxon constraints, as parsable by 
+     * {@link TaxonConstraints#extractTaxonConstraints(String)}, and 
+     * {@code idStartsToOverridenTaxonIds}, allowing to override constraints 
+     * retrieved from the file (see {@link TaxonConstraints#extractTaxonConstraints(String, Map)}). 
+     * This argument can be {@code null}, but as usage of the developmental stage ontology 
+     * requires precise taxon constraints, this is unlikely. 
      * 
-     * @param ontUtils  the {@code OntologyUtils} that will be used. 
-     * @throws OWLOntologyCreationException If an error occurred while merging 
-     *                                      the import closure of the ontology.
+     * @param pathToUberon              A {@code String} that is the path to the Uberon ontology. 
+     * @param pathToTaxOnt              A {@code String} that is the path to the taxonomy ontology. 
+     * @param pathToTaxonConstraints    A {@code String} that is the path to the taxon constraints. 
+     * @param idStartsToOverridenTaxonIds   A {@code Map} where keys are {@code String}s 
+     *                                      representing prefixes of uberon terms to match, 
+     *                                      the associated value being a {@code Set} 
+     *                                      of {@code Integer}s to replace taxon constraints 
+     *                                      of matching terms.
+     * @throws OWLOntologyCreationException If an error occurred while loading the ontology.
+     * @throws OBOFormatParserException     If the ontology is malformed.
+     * @throws IOException                  If the file could not be read. 
      */
-    public UberonDevStage(OntologyUtils ontUtils) throws OWLOntologyCreationException {
-        this(ontUtils, null);
+    public UberonDevStage(OntologyUtils uberonOntUtils, OntologyUtils taxOntUtils, String pathToTaxonConstraints, 
+            Map<String, Set<Integer>> idStartsToOverridenTaxonIds) 
+            throws OWLOntologyCreationException, OBOFormatParserException, IOException {
+        this(uberonOntUtils, taxOntUtils, 
+                TaxonConstraints.extractTaxonConstraints(
+                        pathToTaxonConstraints, idStartsToOverridenTaxonIds, 
+                        uberonOntUtils.getWrapper().getAllRealOWLClasses()
+                                .stream().map(c -> uberonOntUtils.getWrapper().getIdentifier(c))
+                                .collect(Collectors.toSet())));
     }
     /**
      * Constructor providing the {@code OntologyUtils} used to perform operations, 
@@ -238,7 +294,7 @@ public class UberonDevStage extends UberonCommon {
      * that will be used to identify to which species stages belong. It is not necessary 
      * to provide taxon constraints if the ontology contains only one species.  
      * 
-     * @param ontUtils          the {@code OntologyUtils} that will be used. 
+     * @param uberonOntUtils    the {@code OntologyUtils} that will be used for Uberon. 
      * @param taxonConstraints  A {@code Map} where keys are IDs of the Uberon 
      *                          {@code OWLClass}es, and values are {@code Set}s 
      *                          of {@code Integer}s containing the IDs of taxa 
@@ -246,13 +302,42 @@ public class UberonDevStage extends UberonCommon {
      * @throws OWLOntologyCreationException If an error occurred while merging 
      *                                      the import closure of the ontology.
      */
-    //suppress warning because OWLGraphWrapper uses non-parameterized generic types, 
-    //so we need to do the same.
-    @SuppressWarnings("rawtypes")
-    public UberonDevStage(OntologyUtils ontUtils, Map<String, Set<Integer>> taxonConstraints) 
-            throws OWLOntologyCreationException {
-        super(ontUtils);
-        this.nestedSetModels = new HashMap<OWLClass, Map<OWLClass, Map<String, Integer>>>();
+    public UberonDevStage(OntologyUtils uberonOntUtils, 
+            Map<String, Set<Integer>> taxonConstraints) throws OWLOntologyCreationException {
+        this(uberonOntUtils, (OntologyUtils) null, taxonConstraints);
+    }
+    /**
+     * Constructor providing the {@code OntologyUtils} used to perform operations, 
+     * wrapping the Uberon ontology that will be used, and the taxon constraints 
+     * that will be used to identify to which species stages belong. It is not necessary 
+     * to provide taxon constraints if the ontology contains only one species.  
+     * 
+     * @param uberonOntUtils    the {@code OntologyUtils} that will be used for Uberon. 
+     * @param taxOntUtils       the {@code OntologyUtils} that will be used for taxonomy ontology. 
+     *                          Can be null if the taxonomy is retrieve directly from 
+     *                          {@code uberonOntUtils}.
+     * @param taxonConstraints  A {@code Map} where keys are IDs of the Uberon 
+     *                          {@code OWLClass}es, and values are {@code Set}s 
+     *                          of {@code Integer}s containing the IDs of taxa 
+     *                          in which the {@code OWLClass} exists.
+     * @throws OWLOntologyCreationException If an error occurred while merging 
+     *                                      the import closure of the ontology.
+     */
+    public UberonDevStage(OntologyUtils uberonOntUtils, OntologyUtils taxOntUtils, 
+            Map<String, Set<Integer>> taxonConstraints) throws OWLOntologyCreationException {
+        super(uberonOntUtils);
+        if (taxOntUtils != null) {
+            //We cheat and use TaxonConstraints to merge Uberon and taxonomy ontology.
+            //Creating the TaxonConstraints should update the Uberon ontology we use.
+            TaxonConstraints constraints = new TaxonConstraints(uberonOntUtils.getWrapper(), 
+                    taxOntUtils.getWrapper());
+            if (!this.getOntologyUtils().getWrapper().getSourceOntology().equals(
+                    constraints.getUberonOntWrapper().getSourceOntology())) {
+                throw log.throwing(new IllegalStateException("TaxonConstraints should modified "
+                        + "the referenced ontology, not cloning/updating a new one."));
+            }
+        }
+        this.nestedSetModels = new HashMap<>();
         this.overPartOf = Collections.unmodifiableSet(new HashSet<OWLPropertyExpression>(
                 Arrays.asList(this.getOntologyUtils().getWrapper().
                         getOWLObjectPropertyByIdentifier(OntologyUtils.PART_OF_ID))));
@@ -268,7 +353,7 @@ public class UberonDevStage extends UberonCommon {
      * {@link #setPathToUberonOnt(String)} to make a deelopmental stage ontology, and saves it 
      * in OWL and OBO format in the path provided through {@link #setModifiedOntPath(String)}. 
      * <p>
-     * This method calls {@link #generateStageOntology(OWLOntology)}, by loading the 
+     * This method calls {@link #generateStageOntology()}, by loading the 
      * {@code OWLOntology} provided, and using attributes set before calling this method. 
      * Attributes that are used can be set prior to calling this method through the methods: 
      * {@link #setClassIdsToRemove(Collection)}, {@link #setToRemoveSubgraphRootIds(Collection)}, 
@@ -308,9 +393,8 @@ public class UberonDevStage extends UberonCommon {
     /**
      * Generates a developmental stage ontology extracted from {@code uberonOnt}, then 
      * removes the {@code OWLAnnotationAssertionAxiom}s that are problematic to convert 
-     * the ontology in OBO (using 
-     * {@link org.bgee.pipeline.OntologyUtils#removeOBOProblematicAxioms()}). 
-     * This method is very similar to {@link #simplifyUberon(OWLOntology)}, 
+     * the ontology in OBO (using {@link OntologyUtils#removeOBOProblematicAxioms()}). 
+     * This method is very similar to {@link org.bgee.pipeline.uberon.Uberon#simplifyUberon()}, 
      * but the simplification process for the developmental stages is much simpler and faster. 
      * <p>
      * Note that the {@code OWLOntology} passed as argument will be modified as a result 
@@ -334,7 +418,7 @@ public class UberonDevStage extends UberonCommon {
      * {@link #getToFilterSubgraphRootIds()}.
      * <li>{@code OWLGraphManipulator#reducePartOfIsARelations()} and 
      * {@code OWLGraphManipulator#reduceRelations()}
-     * <li>{@link org.bgee.pipeline.OntologyUtils#removeOBOProblematicAxioms()}
+     * <li>{@link OntologyUtils#removeOBOProblematicAxioms()}
      */
     public void generateStageOntology() {
         //we provide to the entry methods all class attributes that will be used 
@@ -490,7 +574,36 @@ public class UberonDevStage extends UberonCommon {
         
         log.exit();
     }
-    
+
+    /**
+     * Compute a nested set model from a developmental stage ontology. The stage ontology 
+     * should have been provided at instantiation. {@code root} will be considered 
+     * as the root which to start nested set model computations from (as if it was 
+     * the actual root of the ontology). {@code OWLClass}es will be ordered 
+     * according to their immediately_preceded_by and preceded_by relations, and 
+     * the nested set model computed using the method
+     * {@link OntologyUtils#computeNestedSetModelParams(OWLClass, List, Set)}.
+     * <p>
+     * As the developmental stage ontology can include several species, 
+     * {@link #getTaxonConstraints()} will be used so that stages from different species 
+     * are not tried to be ordered relative to each others (they will not have any precedence 
+     * relations between them). If {@link #getTaxonConstraints()} returns {@code null}, 
+     * then it should be possible to order all stages relative to each others. 
+     * <p>
+     * The generated nested set models will be stored, associated to {@code root}, 
+     * to avoid recomputing them for each query. 
+     * 
+     * @param root              An {@code OWLClass} that will be considered as the root 
+     *                          of the ontology to start the conputations from.
+     * @return      See {@link OntologyUtils#computeNestedSetModelParams(OWLClass, List, Set)} 
+     *              for details about values returned. 
+     * @see OntologyUtils#computeNestedSetModelParams(OWLClass, List, Set)
+     */
+    public Map<OWLClass, Map<String, Integer>> generateStageNestedSetModel(OWLClass root) 
+            throws IllegalStateException {
+        log.entry(root, this.getTaxonConstraints());
+        return log.exit(this.generateStageNestedSetModel(root, null));
+    }
     /**
      * Compute a nested set model from a developmental stage ontology. The stage ontology 
      * should have been provided at instantiation. {@code root} will be considered 
@@ -511,28 +624,39 @@ public class UberonDevStage extends UberonCommon {
      * 
      * @param root              An {@code OWLClass} that will be considered as the root 
      *                          of the ontology to start the conputations from.
+     * @param speciesId         An {@code Integer} that is the NCBI ID of a taxon for which 
+     *                          we want to build the nested set model for. In that case, 
+     *                          a taxonomy ontology needs to have been provided at instantiation.
+     *                          Can be {@code null} if the nested set model should be built 
+     *                          for all species together.
      * @return      See {@link org.bgee.pipeline.OntologyUtils#computeNestedSetModelParams(List)} 
      *              for details about values returned. 
      * @see org.bgee.pipeline.OntologyUtils#computeNestedSetModelParams(List)
      */
-    public Map<OWLClass, Map<String, Integer>> generateStageNestedSetModel(OWLClass root) {
-        log.entry(root, this.getTaxonConstraints());
+    public Map<OWLClass, Map<String, Integer>> generateStageNestedSetModel(OWLClass root, Integer speciesId) 
+            throws IllegalStateException {
+        log.entry(root, speciesId, this.getTaxonConstraints());
         
+        String nestedSetModelKey = root.toStringID() + "-" + (speciesId == null? 0: speciesId);
         //check if we have a nested set model in cache for this root
-        Map<OWLClass, Map<String, Integer>> nestedSetModel = this.nestedSetModels.get(root);
+        Map<OWLClass, Map<String, Integer>> nestedSetModel = this.nestedSetModels.get(nestedSetModelKey);
         if (nestedSetModel != null) {
             log.trace("Retrieving nested set model from cache of class {}", root);
             return log.exit(nestedSetModel);
         }
         //then check if we have a nested set model in cache for one of its ancestor
-        Set<OWLNamedObject> ancestors = 
-                this.getOntologyUtils().getWrapper().getNamedAncestorsWithGCI(root, this.overPartOf);
-        ancestors.retainAll(this.nestedSetModels.keySet());
-        if (!ancestors.isEmpty()) {
-            //select any ancestor with a nested set model in cache
-            OWLObject ancestor = ancestors.iterator().next();
-            log.trace("Retrieving nested set model from cache of class {}", ancestor);
-            return log.exit(this.nestedSetModels.get(ancestor));
+        for (OWLObject ancestor: this.getOntologyUtils().getWrapper().getNamedAncestorsWithGCI(
+                root, this.overPartOf)) {
+            if (!(ancestor instanceof OWLClass)) {
+                continue;
+            }
+            String ancNestedSetModelKey = ((OWLClass) ancestor).toStringID() + "-"
+                    + (speciesId == null? 0: speciesId);
+            Map<OWLClass, Map<String, Integer>> cache = this.nestedSetModels.get(ancNestedSetModelKey);
+            if (cache != null) {
+                log.trace("Retrieving nested set model from cache of class {}", ancestor);
+                return log.exit(cache);
+            }
         }
         
         //otherwise, let's compute the nested set model for this root.
@@ -545,7 +669,7 @@ public class UberonDevStage extends UberonCommon {
         walker.add(root);
         //we don't care of the ordering of non-sibling taxa, 
         //as long as sibling taxa are ordered. 
-        List<OWLClass> globalOrdering = new ArrayList<OWLClass>();
+        List<List<OWLClass>> allOrderedSameSpeciesChildren = new ArrayList<>();
         OWLClass classWalked = null;
         while ((classWalked = walker.pollFirst()) != null) {
             //order the direct children of a same species, or multi-species children together.
@@ -578,48 +702,86 @@ public class UberonDevStage extends UberonCommon {
                             log.debug("Discarding stage {} because no taxon constraints defined, or does not exist in any taxon", 
                                     child);
                         } else {
-                            for (int speciesId: speciesIds) {
-                                log.trace("Child {} assigned to species key {}", child, speciesId);
-                                if (!children.containsKey(speciesId)) {
-                                    children.put(speciesId, new HashSet<OWLClass>());
+                            for (int speId: speciesIds) {
+                                if (speciesId != null && speciesId.intValue() != 0 && 
+                                        speciesId.intValue() != speId) {
+                                    log.trace("Discarding species {} because not requested", speId);
+                                    continue;
                                 }
-                                children.get(speciesId).add(child);
+                                log.trace("Child {} assigned to species key {}", child, speId);
+                                if (!children.containsKey(speId)) {
+                                    children.put(speId, new HashSet<OWLClass>());
+                                }
+                                children.get(speId).add(child);
                             }
                             walker.offerLast(child);
                         }
                     } else {
-                        int speciesId = 0;
-                        log.trace("Child {} assigned to species key {}", child, speciesId);
-                        if (!children.containsKey(speciesId)) {
-                            children.put(speciesId, new HashSet<OWLClass>());
+                        int speId = 0;
+                        log.trace("Child {} assigned to species key {}", child, speId);
+                        if (!children.containsKey(speId)) {
+                            children.put(speId, new HashSet<OWLClass>());
                         }
-                        children.get(speciesId).add(child);
+                        children.get(speId).add(child);
                         walker.offerLast(child);
                     }
                     
                 }
             }
             if (!children.isEmpty()) {
-                //filtering identical Sets associated to different species
-                Map<Integer, Set<OWLClass>> filteredChildren = new HashMap<Integer, Set<OWLClass>>();
                 for (Entry<Integer, Set<OWLClass>> sameSpeciesChildren: children.entrySet()) {
-                    if (!filteredChildren.values().contains(sameSpeciesChildren.getValue())) {
-                        filteredChildren.put(sameSpeciesChildren.getKey(), 
-                                sameSpeciesChildren.getValue());
+                    try {
+                        log.debug("Ordering same species children for species with ID: {} - requested species {}", 
+                                sameSpeciesChildren.getKey(), speciesId);
+                        if (sameSpeciesChildren.getKey() != null && sameSpeciesChildren.getKey().intValue() != 0 && 
+                                speciesId != null && speciesId.intValue() != 0 && 
+                                sameSpeciesChildren.getKey().intValue() != speciesId.intValue()) {
+                            log.debug("Discarding species {} because not requested, requested species was {}", 
+                                    sameSpeciesChildren.getKey(), speciesId);
+                            continue;
+                        }
+                        
+                        Set<OWLClass> taxAndAncestors = null;
+                        //if no taxId specified, then all taxa are valid. 
+                        //Also, if a species was requested, then we retrieve its ancestors
+                        if (sameSpeciesChildren.getKey() != null && sameSpeciesChildren.getKey().intValue() != 0 || 
+                                speciesId != null && speciesId.intValue() != 0) {
+                            //Get the taxon and all its ancestors
+                            int selectedTaxId = speciesId != null && speciesId.intValue() != 0? 
+                                    speciesId: sameSpeciesChildren.getKey();
+                            OWLClass tax = this.getOntologyUtils().getWrapper().getOWLClassByIdentifierNoAltIds(
+                                    OntologyUtils.getTaxOntologyId(selectedTaxId));
+                            if (tax == null) {
+                                throw log.throwing(new IllegalStateException("Unrecognized taxon ID: " 
+                                        + sameSpeciesChildren.getKey()));
+                            }
+                            taxAndAncestors = new HashSet<>();
+                            taxAndAncestors.add(tax);
+                            taxAndAncestors.addAll(this.getOntologyUtils().getWrapper()
+                                    .getAncestorsThroughIsA(tax));
+                            log.trace("Taxon and ancestors: {}", taxAndAncestors);
+                        }
+                        
+                        allOrderedSameSpeciesChildren.add(this.orderByPrecededBy(
+                                sameSpeciesChildren.getValue(), taxAndAncestors));
+                    } catch (IllegalStateException|IllegalArgumentException e) {
+                        log.error("Exception was thrown in species with ID: {}", 
+                                sameSpeciesChildren.getKey());
+                        throw log.throwing(e);
                     }
-                }
-                for (Set<OWLClass> sameSpeciesChildren: filteredChildren.values()) {
-                    List<OWLClass> orderedSameSpeciesChildren = 
-                            this.orderByPrecededBy(sameSpeciesChildren);
-                    globalOrdering = OntologyUtils.mergeLists(globalOrdering, 
-                            orderedSameSpeciesChildren);
                 }
             }
         }
+        Set<OWLClass> allClasses = allOrderedSameSpeciesChildren.stream().flatMap(l -> l.stream())
+                .collect(Collectors.toSet());
+        List<OWLClass> globalOrdering = new ArrayList<OWLClass>(allClasses);
+        log.trace("All classes to order: {}", globalOrdering);
+        OntologyUtils.ListMerger.sort(globalOrdering, 
+                new OntologyUtils.ListMerger<OWLClass>(allOrderedSameSpeciesChildren));
         
         nestedSetModel = this.getOntologyUtils().computeNestedSetModelParams(root, 
                 globalOrdering, this.overPartOf);
-        this.nestedSetModels.put(root, nestedSetModel);
+        this.nestedSetModels.put(nestedSetModelKey, nestedSetModel);
         
         return log.exit(nestedSetModel);
     }
@@ -679,7 +841,7 @@ public class UberonDevStage extends UberonCommon {
      * @param providedNestedModel   A {@code Map} associating {@code OWLClass}es 
      *                              of the ontology to a {@code Map} containing 
      *                              their left bound, right bound, and level, see 
-     *                              {@link org.bgee.pipeline.OntologyUtils#computeNestedSetModelParams(
+     *                              {@link OntologyUtils#computeNestedSetModelParams(
      *                              OWLClass, List, Set)} 
      *                              for more details.
      * @param speciesId     An {@code int} that is the NCBI ID of the species for which 
@@ -741,9 +903,17 @@ public class UberonDevStage extends UberonCommon {
                 }
                 OWLClass lca = lcas.iterator().next();
                 
-                nestedModel = this.generateStageNestedSetModel(lca);
+                nestedModel = this.generateStageNestedSetModel(lca, speciesId);
             }
             //get the parameters related to startStage and endStage
+            if (nestedModel.get(startStage) == null) {
+                throw log.throwing(new IllegalStateException("The provided parameters did not "
+                        + "allow to compute relations for start stage " + startStage));
+            }
+            if (nestedModel.get(endStage) == null) {
+                throw log.throwing(new IllegalStateException("The provided parameters did not "
+                        + "allow to compute relations for end stage " + endStage));
+            }
             int startLeftBound = nestedModel.get(startStage).get(OntologyUtils.LEFT_BOUND_KEY);
             int startRightBound = nestedModel.get(startStage).get(OntologyUtils.RIGHT_BOUND_KEY);
             int startLevel = nestedModel.get(startStage).get(OntologyUtils.LEVEL_KEY);
@@ -773,7 +943,8 @@ public class UberonDevStage extends UberonCommon {
             } else if (startLeftBound > endLeftBound) {
                 //illogical
                 throw log.throwing(new IllegalStateException("The start stage provided " +
-                		"is actually a successor of the end stage provided"));
+                		"is actually a successor of the end stage provided. Start stage: "
+                        + startStage + " - end stage: " + endStage));
             } else {
                 //retrieve actual stage range
                 for (Entry<OWLClass, Map<String, Integer>> entry: nestedModel.entrySet()) {
@@ -831,12 +1002,15 @@ public class UberonDevStage extends UberonCommon {
      * 
      * @param classesToOrder    A {@code Set} of {@code OWLClass}es to order according to 
      *                          their immediately_preceded_by or preceded_by relations.
+     * @param taxAndAncestors   A {@code Set} of {@code OWLClass}es containing the taxon for which 
+     *                          to perform the ordering, and all its ancestors.
      * @return                  A {@code List} where {@code OWLClass}es are ordered, with 
      *                          first occurring {@code OWLClass} at first position, last 
      *                          occurring {@code OWLClass} at last position.
      */
-    public List<OWLClass> orderByPrecededBy(Set<OWLClass> classesToOrder) {
-        log.entry(classesToOrder);
+    public List<OWLClass> orderByPrecededBy(Set<OWLClass> classesToOrder, Set<OWLClass> taxAndAncestors) 
+            throws IllegalStateException {
+        log.entry(classesToOrder, taxAndAncestors);
         
         OWLGraphWrapper wrapper = this.getOntologyUtils().getWrapper();
         List<OWLClass> orderedClasses = new ArrayList<OWLClass>();
@@ -846,7 +1020,7 @@ public class UberonDevStage extends UberonCommon {
         //first, we look for the last class, the only one with no preceded_by  
         //or immediately_preceded_by relations incoming from other OWLClass in classesToOrder. 
         //getLastClassByPrecededBy never returns null, it throws and exception otherwise.
-        OWLClass lastClass = this.getLastClassByPrecededBy(classesToOrder);
+        OWLClass lastClass = this.getLastClassByPrecededBy(classesToOrder, taxAndAncestors);
         
         //now, we walk from lastClass, following the preceded_by relations
         OWLClass precedingClass = lastClass;
@@ -892,7 +1066,8 @@ public class UberonDevStage extends UberonCommon {
                 //check first the immediately_preceded_by relations, there should be only one 
                 //leading to sibling OWLClasses
                 for (OWLGraphEdge outgoingEdge: outgoingEdges) {
-                    if (this.getOntologyUtils().isImmediatelyPrecededByRelation(outgoingEdge)) {
+                    if (this.getOntologyUtils().isImmediatelyPrecededByRelation(
+                            outgoingEdge, taxAndAncestors)) {
                         
                         Set<OWLClass> classesMatching = this.getEqualOrParentsBelongingTo(
                                 outgoingEdge.getTarget(), classesToOrder);
@@ -901,11 +1076,15 @@ public class UberonDevStage extends UberonCommon {
                         }
                         boolean problem = false;
                         if (classesMatching.size() > 1) {
+                            log.error("Several matching classes for {}: {}", precedingClass, 
+                                    classesMatching);
                             problem = true;
                         } else {
                             OWLClass clsMatching = classesMatching.iterator().next();
                             if (potentialPrecedingClass != null && 
                                     !potentialPrecedingClass.equals(clsMatching)) {
+                                log.error("Different preceding classes for {}: {} and {}", 
+                                        precedingClass, potentialPrecedingClass, clsMatching);
                                 problem = true;
                             }
                             potentialPrecedingClass = clsMatching;
@@ -936,7 +1115,7 @@ public class UberonDevStage extends UberonCommon {
                     //iterate once again the outgoing edges
                     for (OWLGraphEdge outgoingEdge: outgoingEdges) {
                         //but check also for simple preceded_by relations 
-                        if (this.getOntologyUtils().isPrecededByRelation(outgoingEdge)) {
+                        if (this.getOntologyUtils().isPrecededByRelation(outgoingEdge, taxAndAncestors)) {
                             
                             Set<OWLClass> classesMatching = this.getEqualOrParentsBelongingTo(
                                     outgoingEdge.getTarget(), classesToOrder);
@@ -953,7 +1132,8 @@ public class UberonDevStage extends UberonCommon {
                         log.debug("Several potential preceding classes, try to find the last one.");
                         //we can have preceded_by relations to several terms. In that case, we need 
                         //to know what is the last of these stages. 
-                        potentialPrecedingClass = this.getLastClassByPrecededBy(allPrecededBy);
+                        potentialPrecedingClass = 
+                                this.getLastClassByPrecededBy(allPrecededBy, taxAndAncestors);
                     }
                     if (potentialPrecedingClass != null) {
                         log.debug("Preceding class found by preceded_by (through indirect edges?: {}): {}", 
@@ -1011,12 +1191,14 @@ public class UberonDevStage extends UberonCommon {
      * @param classesToOrder    A {@code Set} of {@code OWLClass}es for which we want 
      *                          to identify the last one according to 
      *                          their immediately_preceded_by or preceded_by relations.
+     * @param taxAndAncestors   A {@code Set} of {@code OWLClass}es containing the taxon for which 
+     *                          to perform the ordering, and all its ancestors.
      * @return                  The {@code OWLClass} that is the last occurring one 
      *                          among {@code classesToOrder}. This returned value 
      *                          is never {@code null} (an exception would be thrown otherwise).  
      */
-    public OWLClass getLastClassByPrecededBy(Set<OWLClass> classesToOrder) {
-        log.entry(classesToOrder);
+    public OWLClass getLastClassByPrecededBy(Set<OWLClass> classesToOrder, Set<OWLClass> taxAndAncestors) {
+        log.entry(classesToOrder, taxAndAncestors);
         
         OWLGraphWrapper wrapper = this.getOntologyUtils().getWrapper();
         
@@ -1042,7 +1224,7 @@ public class UberonDevStage extends UberonCommon {
                 for (OWLGraphEdge outgoingEdge: outgoingEdges) {
                     log.trace("Testing if edge is valid preceded_by relation: {}", 
                             outgoingEdge);
-                    if (this.getOntologyUtils().isPrecededByRelation(outgoingEdge)) {
+                    if (this.getOntologyUtils().isPrecededByRelation(outgoingEdge, taxAndAncestors)) {
                         Set<OWLClass> predecessors = this.getEqualOrParentsBelongingTo(
                                 outgoingEdge.getTarget(), classesToOrder);
                         if (!predecessors.isEmpty()) {

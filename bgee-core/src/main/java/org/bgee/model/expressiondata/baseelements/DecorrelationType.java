@@ -38,7 +38,7 @@ public enum DecorrelationType implements BgeeEnumField {
      * @param representation            A {@code String} representing a decorrelation type.
      * @return                          A {@code DecorrelationType} corresponding 
      *                                  to {@code representation}.
-     * @throw IllegalArgumentException  If {@code representation} does not correspond 
+     * @throws IllegalArgumentException If {@code representation} does not correspond 
      *                                  to any {@code DecorrelationType}.
      * @see #convert(Class, String)
      */

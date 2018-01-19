@@ -14,7 +14,7 @@ public abstract class URLParameterException extends RuntimeException implements 
     private static final long serialVersionUID = 7822967418537921742L;
     
     /**
-     * @see #getParameter()
+     * @see #getURLParameter()
      */
     private final URLParameters.Parameter<?> urlParameter;
 

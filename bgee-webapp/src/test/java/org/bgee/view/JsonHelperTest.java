@@ -21,6 +21,7 @@ import org.bgee.controller.exception.RequestParametersNotFoundException;
 import org.bgee.controller.exception.InvalidFormatException;
 import org.bgee.controller.servletutils.BgeeHttpServletRequest;
 import org.bgee.model.expressiondata.baseelements.CallType;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.file.DownloadFile;
 import org.bgee.model.file.SpeciesDataGroup;
 import org.bgee.model.file.DownloadFile.CategoryEnum;
@@ -34,8 +35,11 @@ import org.junit.Test;
 /**
  * Unit tests for {@link JsonHelper}.
  * 
- * @author Philippe Moret
- * @author Frederic Bastian
+ * @author  Philippe Moret
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, Mar. 2017
+ * @since   Bgee 13, Oct. 2015
  */
 public class JsonHelperTest extends TestAncestor {
     
@@ -52,12 +56,12 @@ public class JsonHelperTest extends TestAncestor {
      */
     @Test
     public void testSpeciesToJson() {
-        Species species = new Species("12", "SpeciesName", "A string description of that species");
+        Species species = new Species(12, "SpeciesName", "A string description of that species");
 
         String json = new JsonHelper().toJson(species);
         String expected = "{\n  \"name\": \"SpeciesName\",\n  " +
                 "\"description\": \"A string description of that species\",\n  " +
-                "\"id\": \"12\"\n}";
+                "\"id\": 12\n}";
         assertEquals(expected, json);
     }
     
@@ -66,11 +70,11 @@ public class JsonHelperTest extends TestAncestor {
      */
     @Test
     public void testSpeciesDataGroupToJson() {
-        SpeciesDataGroup group = new SpeciesDataGroup("singleSpeG1", "single spe g1", null, 
-                Arrays.asList(new Species("9606", "human", null, "Homo", "sapiens", "hsap1")), 
+        SpeciesDataGroup group = new SpeciesDataGroup(1, "single spe g1", null, 
+                Arrays.asList(new Species(9606, "human", null, "Homo", "sapiens", "hsap1", null)), 
                 new HashSet<>(Arrays.asList(
                         new DownloadFile("my/path/fileg1_1.tsv.zip", "fileg1_1.tsv.zip", 
-                        CategoryEnum.EXPR_CALLS_SIMPLE, 5000L, "singleSpeG1"))));
+                        CategoryEnum.EXPR_CALLS_SIMPLE, 5000L, 1))));
         
         BgeeProperties props = mock(BgeeProperties.class);
         when(props.getDownloadRootDirectory()).thenReturn("/myrootpath/");
@@ -79,12 +83,13 @@ public class JsonHelperTest extends TestAncestor {
         String expected = "{\n  \"members\": [\n    {\n      \"genus\": \"Homo\",\n      "
                 + "\"speciesName\": \"sapiens\",\n      "
                 + "\"genomeVersion\": \"hsap1\",\n      \"name\": \"human\",\n      "
-                + "\"id\": \"9606\"\n    }\n  ],\n  \"downloadFiles\": [\n    {\n      "
+                + "\"id\": 9606\n    }\n  ],\n  \"downloadFiles\": [\n    {\n      "
                 + "\"name\": \"fileg1_1.tsv.zip\",\n      \"size\": 5000,\n      "
-                + "\"speciesDataGroupId\": \"singleSpeG1\",\n      "
+                + "\"speciesDataGroupId\": 1,\n      "
                 + "\"path\": \"/myrootpath/my/path/fileg1_1.tsv.zip\",\n      "
-                + "\"category\": \"expr_simple\"\n    }\n  ],\n  \"name\": \"single spe g1\","
-                + "\n  \"id\": \"singleSpeG1\"\n}";
+                + "\"category\": \"expr_simple\",\n      "
+                + "\"conditionParameters\": []\n    }\n  ],\n  \"name\": \"single spe g1\","
+                + "\n  \"id\": 1\n}";
 
         assertEquals("Incorrect JSON generated from SpeciesDataGroup", expected, json);
     }
@@ -109,8 +114,8 @@ public class JsonHelperTest extends TestAncestor {
                             params.getParamForegroundList().getSeparators().get(0), 
                         "UTF-8")
                     + "ID:3&"
-                + params.getParamSpeciesList().getName() + "=abc&" 
-                + params.getParamSpeciesList().getName() + "=abc2&" 
+                + params.getParamSpeciesList().getName() + "=123&" 
+                + params.getParamSpeciesList().getName() + "=456&" 
                 + params.getParamBackgroundList().getName()  + "=ID1.1" 
                     + java.net.URLEncoder.encode(
                             params.getParamForegroundList().getSeparators().get(0), 
@@ -132,8 +137,8 @@ public class JsonHelperTest extends TestAncestor {
         JsonHelper helper = new JsonHelper();
         String json = helper.toJson(rqParams);
         String expected = "{\n  \"" + params.getParamPage().getName() + "\": \"my_page\",\n  "
-                + "\"" + params.getParamSpeciesList().getName() + "\": [\n    \"abc\",\n    "
-                + "\"abc2\"\n  ],\n  \"" + params.getParamForegroundList().getName() 
+                + "\"" + params.getParamSpeciesList().getName() + "\": [\n    \"123\",\n    "
+                + "\"456\"\n  ],\n  \"" + params.getParamForegroundList().getName() 
                 + "\": [\n    \"ID:1\",\n    \"ID:2\",\n    \"ID:3\"\n  ],\n  "
                 + "\"" + params.getParamBackgroundList().getName() + "\": [\n    "
                 + "\"ID1.1\",\n    \"ID2.2\",\n    \"ID3.3\"\n  ],\n  "
@@ -155,8 +160,8 @@ public class JsonHelperTest extends TestAncestor {
         
         LinkedHashMap<String, Object> data = new LinkedHashMap<>();
         data.put("speciesList", Arrays.asList(
-                new Species("12", "SpeciesName", "A string description of that species"), 
-                new Species("13", "SpeciesName", "A string description of that species")));
+                new Species(12, "SpeciesName", "A string description of that species"), 
+                new Species(13, "SpeciesName", "A string description of that species")));
         
         LinkedHashMap<String, Object> response = new LinkedHashMap<>();
         response.put("code", 200);
@@ -170,10 +175,10 @@ public class JsonHelperTest extends TestAncestor {
                 "{\n  \"code\": 200,\n  \"status\": \"success\",\n  \"message\": \"my msg\",\n"
                 + "  \"data\": {\n    \"speciesList\": [\n      {\n        "
                 + "\"name\": \"SpeciesName\",\n        \"description\": "
-                + "\"A string description of that species\",\n        \"id\": \"12\"\n"
+                + "\"A string description of that species\",\n        \"id\": 12\n"
                 + "      },\n      {\n        \"name\": \"SpeciesName\",\n        "
                 + "\"description\": \"A string description of that species\",\n"
-                + "        \"id\": \"13\"\n      }\n    ]\n  }\n}",  
+                + "        \"id\": 13\n      }\n    ]\n  }\n}",  
                 out.toString());
     }
     
@@ -228,7 +233,7 @@ public class JsonHelperTest extends TestAncestor {
         
         TopAnatParams params = mock(TopAnatParams.class);
         when(params.getDevStageId()).thenReturn("stageId1");
-        when(params.getCallType()).thenReturn(CallType.Expression.EXPRESSED);
+        when(params.getCallType()).thenReturn(SummaryCallType.ExpressionSummary.EXPRESSED);
         when(params.getKey()).thenReturn("mykey");
         BgeeProperties props = mock(BgeeProperties.class);
         when(props.getTopAnatResultsUrlDirectory()).thenReturn("top_anat/results/");

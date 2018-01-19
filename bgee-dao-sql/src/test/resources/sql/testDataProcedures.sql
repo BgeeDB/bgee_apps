@@ -17,17 +17,18 @@ BEGIN
         
         INSERT INTO dataSource (dataSourceId,dataSourceName,XRefUrl,experimentUrl,evidenceUrl,baseUrl,releaseDate,releaseVersion,dataSourceDescription,toDisplay,category,displayOrder)
         VALUES (1,'First DataSource','XRefUrl','experimentUrl','evidenceUrl','baseUrl','2012-10-19','1.0','My custom data source',0,'Genomics database',1),
-               (2,'NCBI Taxonomy','','','','http://www.ncbi.nlm.nih.gov/taxonomy','2012-10-20','v13','Source taxonomy used in Bgee',1,'',3),
+               (2,'NCBI Taxonomy','','','','https://www.ncbi.nlm.nih.gov/taxonomy','2012-10-20','v13','Source taxonomy used in Bgee',1,'',3),
                (3,'Ensembl','http://Oct2012.archive.ensembl.org/[species_ensembl_link]/Gene/Summary?g=[gene_id];gene_summary=das:http://bgee.unil.ch/das/bgee=label','','','http://May2012.archive.ensembl.org/','2014-02-18','v1','Ensembl desc',1,'',255),
-               (4,'ZFIN','http://zfin.org/cgi-bin/ZFIN_jump?record=[xref_id]','http://zfin.org/cgi-bin/ZFIN_jump?record=[experiment_id]','http://zfin.org/cgi-bin/ZFIN_jump?record=[evidence_id]','http://zfin.org/',null,'rv:2','ZFIN desc',1,'In situ data source',2);
+               (4,'ZFIN','https://zfin.org/[xref_id]','https://zfin.org/[experiment_id]','https://zfin.org/[evidence_id]','https://zfin.org/',null,'rv:2','ZFIN desc',1,'In situ data source',2);
 
         INSERT INTO taxon (taxonId,taxonScientificName,taxonCommonName,taxonLeftBound,taxonRightBound,taxonLevel,bgeeSpeciesLCA) 
-        VALUES (111,'taxSName111','taxCName111',1,12,1,1),
+        VALUES (111,'taxSName111','taxCName111',1,14,1,1),
                (211,'taxSName211','taxCName211',2,3,2,0),
                (311,'taxSName311','taxCName311',4,11,2,0),
-               (411,'taxSName411','taxCName411',5,6,1,1),
-               (511,'taxSName511','taxCName511',7,10,1,1),
-               (611,'taxSName611','taxCName611',8,9,1,1);
+               (411,'taxSName411','taxCName411',5,6,3,1),
+               (511,'taxSName511','taxCName511',7,10,3,1),
+               (611,'taxSName611','taxCName611',8,9,4,1),
+               (711,'taxSName711','taxCName711',12,13,2,0);
 
         INSERT INTO OMAHierarchicalGroup (OMANodeId,OMAGroupId,OMANodeLeftBound,OMANodeRightBound,taxonId) 
         VALUES (1,'HOG:NAILDQY',1,8,111),
@@ -38,13 +39,13 @@ BEGIN
                (6,'HOG:VALEWID',10,13,311),
                (7,'HOG:VALEWID',11,12,511);
 
-        INSERT INTO species (speciesId,genus,species,speciesCommonName, speciesDisplayOrder, taxonId, genomeFilePath, genomeSpeciesId, fakeGeneIdPrefix) 
-        VALUES (11,'gen11','sp11','spCName11', 4, 111,'gen11_sp11/gen11_sp11.genome11', 0, ''),
-               (21,'gen21','sp21','spCName21', 3, 211,'gen51_sp51/gen51_sp51.genome51', 51,'PREFIX51'),
-               (31,'gen31','sp31','spCName31', 1, 311,'gen31_sp31/gen31_sp31.genome31', 0,''),
-               (41,'gen41','sp41','spCName41', 2, 411,'gen41_sp41/gen41_sp41.genome41', 0,''),
-               (42,'gen41','sp42','spCName42', 5, 411,'gen41_sp41/gen41_sp41.genome41', 41,'PREFIX41'),
-               (51,'gen51','sp51','spCName51', 6, 511,'gen51_sp51/gen51_sp51.genome51', 0,'');
+        INSERT INTO species (speciesId,genus,species,speciesCommonName, speciesDisplayOrder, taxonId, genomeFilePath, genomeVersion, dataSourceId, genomeSpeciesId, fakeGeneIdPrefix) 
+        VALUES (11,'gen11','sp11','spCName11', 4, 111,'gen11_sp11/gen11_sp11.genome11', 'genome11', 1, 0, ''),
+               (21,'gen21','sp21','spCName21', 3, 211,'gen51_sp51/gen51_sp51.genome51', 'genome51', 1, 51,'PREFIX51'),
+               (31,'gen31','sp31','spCName31', 1, 311,'gen31_sp31/gen31_sp31.genome31', 'genome31', 1, 0,''),
+               (41,'gen41','sp41','spCName41', 2, 411,'gen41_sp41/gen41_sp41.genome41', 'genome41', 1, 0,''),
+               (42,'gen41','sp42','spCName42', 5, 411,'gen41_sp41/gen41_sp41.genome41', 'genome41', 1, 41,'PREFIX41'),
+               (51,'gen51','sp51','spCName51', 6, 511,'gen51_sp51/gen51_sp51.genome51', 'genome51', 1, 0,'');
 
         INSERT INTO dataSourceToSpecies (dataSourceId, speciesId, dataType, infoType)
         VALUES (1, 11, 'affymetrix','data'),
@@ -71,6 +72,15 @@ BEGIN
                ('ID2','synonym2'),
                ('ID3','syno3');
                
+        -- load existing groups in the new table
+        INSERT INTO geneToOma SELECT DISTINCT t3.geneId, t1.OMANodeId, t1.taxonId 
+          FROM OMAHierarchicalGroup AS t1         
+            INNER JOIN OMAHierarchicalGroup AS t2     
+                  ON t2.OMANodeLeftBound >= t1.OMANodeLeftBound AND       
+                     t2.OMANodeRightBound <= t1.OMANodeRightBound        
+                        INNER JOIN gene AS t3 ON t2.OMANodeId = t3.OMAParentNodeId
+        WHERE t1.taxonId IS NOT NULL;
+        
 --               --1 Stage_id1 36 ----------------------------------------------------------------------------------------------------
 --              /            |                                                         \                                              \
 -- 2 Stage_id2 7             8 Stage_id5 17--------------                            18 Stage_id10 25-------------                    26 Stage_id14 35-----------
@@ -122,6 +132,20 @@ BEGIN
                ('Stage_id16', 11), 
                ('Stage_id17', 31), 
                ('Stage_id18', 11);
+
+--               Anat_id1 ----------------
+--                   |                    \
+--           --- Anat_id2 ----         Anat_id6
+--          /        |        \            |
+--         /         |         \       Anat_id7
+--        /          |          \          |   \
+--       /           |           \         |    Anat_id8
+--      /            |            \        |   /
+--  Anat_id3     Anat_id4          --- Anat_id5 -------
+--                                         |           \
+--                                     Anat_id9     Anat_id10
+--                                                      |
+--                                                  Anat_id11
 
         INSERT INTO anatEntity(anatEntityId,anatEntityName,anatEntityDescription,startStageId,endStageId,nonInformative)
         VALUES ('Anat_id1','anatStruct','anatStruct desc','Stage_id1','Stage_id2',true),
@@ -626,6 +650,7 @@ DELETE FROM evidenceOntology;
 -- TAXONOMY
 DELETE FROM species;
 DELETE FROM speciesToKeyword;
+DELETE FROM dataSourceToSpecies;
 DELETE FROM taxon;
 
 -- GENERAL

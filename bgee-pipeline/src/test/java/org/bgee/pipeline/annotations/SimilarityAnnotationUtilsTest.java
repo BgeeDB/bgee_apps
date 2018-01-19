@@ -13,14 +13,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.pipeline.Utils;
 import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.AnnotationBean;
 import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.RawAnnotationBean;
 import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.SummaryAnnotationBean;
@@ -49,57 +47,6 @@ public class SimilarityAnnotationUtilsTest {
      * Default Constructor. 
      */
     public SimilarityAnnotationUtilsTest() {
-    }
-    
-    /**
-     * Test {@link SimilarityAnnotationUtils.ParseMultipleStringValues#execute(Object, CsvContext)}
-     */
-    @Test
-    public void shouldExecuteParseMultipleStringValues() {
-        CsvContext context = new CsvContext(0, 0, 0);  
-        //to test that next processor in the chain is called
-        CellProcessor next = mock(CellProcessor.class);
-        
-        List<String> expectedValue = Arrays.asList(" abcd  123  ", " dfgd2", "qwe rty");
-        //The next processor will simply pass the value it received.
-        //Note that if the test fails, the assertEquals will not be able to display 
-        //the "actual" result, because the next CellProcessor would have returned null.
-        when(next.execute(expectedValue, context)).thenReturn(expectedValue);
-        assertEquals("Incorrect List generated from separated-value string.", 
-               expectedValue, 
-               new SimilarityAnnotationUtils.ParseMultipleStringValues(next).execute(
-                       " abcd  123  " + Utils.VALUE_SEPARATORS.get(1) + " dfgd2" 
-                       + Utils.VALUE_SEPARATORS.get(0) + "qwe rty", context));
-        //verification a bit useless, if the test succeeded this processor has 
-        //to have returned a value
-        verify(next).execute(expectedValue, context);
-        
-        next = mock(CellProcessor.class);
-        expectedValue = Arrays.asList(" abcd  123  ");
-        //The next processor will simply pass the value it received.
-        //Note that if the test fails, the assertEquals will not be able to display 
-        //the "actual" result, because the next CellProcessor would have returned null.
-        when(next.execute(expectedValue, context)).thenReturn(expectedValue);
-        assertEquals("Incorrect List generated from separated-value string.", 
-               expectedValue, 
-               new SimilarityAnnotationUtils.ParseMultipleStringValues(next).execute(
-                       " abcd  123  ", context));
-        //verification a bit useless, if the test succeeded this processor has 
-        //to have returned a value
-        
-        next = mock(CellProcessor.class);
-        expectedValue = Arrays.asList("");
-        //The next processor will simply pass the value it received.
-        //Note that if the test fails, the assertEquals will not be able to display 
-        //the "actual" result, because the next CellProcessor would have returned null.
-        when(next.execute(expectedValue, context)).thenReturn(expectedValue);
-        assertEquals("Incorrect List generated from separated-value string.", 
-               expectedValue, 
-               new SimilarityAnnotationUtils.ParseMultipleStringValues(next).execute(
-                       "", context));
-        //verification a bit useless, if the test succeeded this processor has 
-        //to have returned a value
-        verify(next).execute(expectedValue, context);
     }
     
     /**

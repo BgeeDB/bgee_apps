@@ -30,7 +30,7 @@ import org.apache.logging.log4j.Logger;
  * After calling {@link #releaseAll()}, it is not possible to acquire a {@code BgeeProperties} object 
  * by calling {@link #getBgeeProperties()} anymore (throws an exception).
  * <p>
- * You should always call {@link BgeeProperties().release()} at the end of the execution of a thread, 
+ * You should always call {@link BgeeProperties#release()} at the end of the execution of a thread, 
  * or {@link #releaseAll()} in multi-threads context (for instance, in a webapp context 
  * when the webapp is shutdown). 
  * <p>
@@ -45,6 +45,36 @@ import org.apache.logging.log4j.Logger;
  */
 public class BgeeProperties {
     private final static Logger log = LogManager.getLogger(BgeeProperties.class.getName());
+
+
+    /**
+     * A {@code String} that is the key to access to the System property that contains
+     * the major version number of Bgee (if the release is Bgee {@code v14.2},
+     * the major version number is {@code 14}).
+     *
+     * @see #MAJOR_VERSION_DEFAULT
+     */
+    public final static String MAJOR_VERSION_KEY = "org.bgee.core.version.major";
+    /**
+     * A {@code String} that is the default value of the major version number of Bgee.
+     *
+     * @see #MAJOR_VERSION_KEY
+     */
+    public final static String MAJOR_VERSION_DEFAULT = null;
+    /**
+     * A {@code String} that is the key to access to the System property that contains
+     * the minor version number of Bgee (if the release is Bgee {@code v14.2},
+     * the minor version number is {@code 2}).
+     *
+     * @see #MINOR_VERSION_DEFAULT
+     */
+    public final static String MINOR_VERSION_KEY = "org.bgee.core.version.minor";
+    /**
+     * A {@code String} that is the default value of the minor version number of Bgee.
+     *
+     * @see #MINOR_VERSION_KEY
+     */
+    public final static String MINOR_VERSION_DEFAULT = null;
 
     /**
      * A {@code String} that is the key to access to the System property that contains the name
@@ -221,18 +251,19 @@ public class BgeeProperties {
     /**
      * Try to retrieve the property corresponding to {@code key}, 
      * first from the injected {@code Properties} ({@code prop}), then from the System properties 
-     * ({@code SYS_PROPS}), then, if undefined or empty, from properties retrieved from the 
-     * Bgee property file ({@code FILE_PROPS}). If the property is still undefined or empty 
+     * ({@code sysProps}), then, if undefined or empty, from properties retrieved from the 
+     * Bgee property file ({@code fileProps}). If the property is still undefined or empty 
      * return {@code defaultValue}.
      *
      * @param prop          A {@code java.util.Properties} instance that contains the system 
      *                      properties to look for {@code key} first
-     * @param SYS_PROPS      {@code java.util.Properties} retrieved from System properties, 
+     * @param sysProps      A {@code java.util.Properties} retrieved from System properties, 
      *                      where {@code key} is searched in second
-     * @param FILE_PROPS     {@code java.util.Properties} retrieved from the Bgee properties file, 
+     * @param fileProps     A {@code java.util.Properties} retrieved from the Bgee properties file, 
      *                      where {@code key} is searched in if {@code prop} and {@code SYS_PROPS}
      *                      were undefined or empty for {@code key}. 
      *                      Can be {@code null} if no properties file was found.
+     * @param key           A {@code String} that is the key for which to return the property.
      * @param defaultValue  default value that will be returned if the property 
      *                      is undefined or empty in all {@code Properties}.
      *
@@ -337,13 +368,14 @@ public class BgeeProperties {
      *
      * @param prop          A {@code java.util.Properties} instance that contains the system 
      *                      properties to look for {@code key} first
-     * @param SYS_PROPS      {@code java.util.Properties} retrieved from System properties, 
+     * @param sysProps      A {@code java.util.Properties} retrieved from System properties, 
      *                      where {@code key} is searched in second
-     * @param FILE_PROPS     {@code java.util.Properties} retrieved 
+     * @param fileProps     A {@code java.util.Properties} retrieved 
      *                      from the Bgee properties file, 
      *                      where {@code key} is searched in if {@code prop} and {@code SYS_PROPS}
      *                      were undefined or empty for {@code key}. 
      *                      Can be {@code null} if no properties file was found.
+     * @param key           A {@code String} that is the key for which to return the property.
      * @param defaultValue  default value that will be returned if the property 
      *                      is undefined or empty in all {@code Properties}.
      *
@@ -376,13 +408,14 @@ public class BgeeProperties {
      *
      * @param prop          A {@code java.util.Properties} instance that contains the system 
      *                      properties to look for {@code key} first
-     * @param SYS_PROPS      {@code java.util.Properties} retrieved from System properties, 
+     * @param sysProps      A {@code java.util.Properties} retrieved from System properties, 
      *                      where {@code key} is searched in second
-     * @param FILE_PROPS     {@code java.util.Properties} retrieved 
+     * @param fileProps     A {@code java.util.Properties} retrieved 
      *                      from the Bgee properties file, 
      *                      where {@code key} is searched in if {@code prop} and {@code SYS_PROPS}
      *                      were undefined or empty for {@code key}. 
      *                      Can be {@code null} if no properties file was found.
+     * @param key           A {@code String} that is the key for which to return the property.
      * @param defaultValue  default value that will be returned if the property 
      *                      is undefined or empty in all {@code Properties}.
      *
@@ -415,13 +448,14 @@ public class BgeeProperties {
      *
      * @param prop          A {@code java.util.Properties} instance that contains the system 
      *                      properties to look for {@code key} first
-     * @param SYS_PROPS     {@code java.util.Properties} retrieved from System properties, 
+     * @param sysProps      A {@code java.util.Properties} retrieved from System properties, 
      *                      where {@code key} is searched in second
-     * @param FILE_PROPS    {@code java.util.Properties} retrieved 
+     * @param fileProps     A {@code java.util.Properties} retrieved 
      *                      from the Bgee properties file, 
      *                      where {@code key} is searched in if {@code prop} and {@code SYS_PROPS}
      *                      were undefined or empty for {@code key}. 
      *                      Can be {@code null} if no properties file was found.
+     * @param key           A {@code String} that is the key for which to return the property.
      * @param defaultValue  default value that will be returned if the property 
      *                      is undefined or empty in all {@code Properties}.
      *
@@ -612,6 +646,12 @@ public class BgeeProperties {
         // Initialize all properties using the injected prop first, alternatively the System
         // properties and then the file. The default value provided will be use if none of the
         // previous solutions contain the property
+        majorVersion = getStringOption(prop, SYS_PROPS, FILE_PROPS,
+                MAJOR_VERSION_KEY,
+                MAJOR_VERSION_DEFAULT);
+        minorVersion = getStringOption(prop, SYS_PROPS, FILE_PROPS,
+                MINOR_VERSION_KEY,
+                MINOR_VERSION_DEFAULT);
         topAnatRScriptExecutable = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY,  
                 TOP_ANAT_R_SCRIPT_EXECUTABLE_DEFAULT);
@@ -630,6 +670,18 @@ public class BgeeProperties {
         log.debug("Initialization done.");
         log.exit();
     }
+
+
+    /**
+     * A {@code String} that is the major version number of Bgee
+     * (if the release is Bgee {@code v14.2}, the major version number is {@code 14}).
+     */
+    private final String majorVersion;
+    /**
+     * A {@code String} that is the minor version number of Bgee
+     * (if the release is Bgee {@code v14.2}, the minor version number is {@code 2}).
+     */
+    private final String minorVersion;
 
     /**
      * A {@code String} that is the path of RScript Executable file 
@@ -712,6 +764,21 @@ public class BgeeProperties {
     //**************************
     // PROPERTY GETTERS
     //**************************
+    /**
+     * @return  A {@code String} that is the major version number of Bgee
+     *          (if the release is Bgee {@code v14.2}, the major version number is {@code 14}).
+     */
+    public String getMajorVersion() {
+        return majorVersion;
+    }
+    /**
+     * @return  A {@code String} that is the minor version number of Bgee
+     *          (if the release is Bgee {@code v14.2}, the minor version number is {@code 2}).
+     */
+    public String getMinorVersion() {
+        return minorVersion;
+    }
+
     //TopAnat
     /**
      * @return A {@code String} that is the path of RScript Executable file which is used 
@@ -749,5 +816,16 @@ public class BgeeProperties {
      */
     public int getMaxJobCountPerUser() {
         return maxJobCountPerUser;
+    }
+    
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("BgeeProperties [topAnatRScriptExecutable=").append(topAnatRScriptExecutable)
+                .append(", topAnatRWorkingDirectory=").append(topAnatRWorkingDirectory)
+                .append(", topAnatFunctionFile=").append(topAnatFunctionFile)
+                .append(", topAnatResultsWritingDirectory=").append(topAnatResultsWritingDirectory)
+                .append("]");
+        return builder.toString();
     }
 }

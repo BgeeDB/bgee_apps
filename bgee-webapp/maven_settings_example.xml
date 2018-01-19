@@ -1,0 +1,110 @@
+<settings>
+<mirrors>
+    <mirror>
+      <id>main</id>
+      <name>new maven repository</name>
+      <url>http://repo.maven.apache.org/maven2/</url>
+      <mirrorOf>central</mirrorOf>
+    </mirror>
+</mirrors>
+
+<!-- If you need to push releases to Maven -->
+<servers>
+  <server>
+       <id>sonatype-nexus-snapshots</id>
+       <username>username</username>
+       <password>password</password>
+  </server>
+  <server>
+       <id>sonatype-nexus-staging</id>
+       <username>username</username>
+       <password>password</password>
+  </server>
+</servers>
+
+<profiles>
+  <!-- Profile used to configure bgee-webapp, that is activated when m2e is used, 
+       so, when the webapp is launched from within Eclipse for tests -->
+  <profile>
+    <id>bgee-webapp-test</id>
+    <activation>
+        <property>
+            <name>m2e.version</name>
+        </property>
+    </activation>
+    <properties>
+      <!-- Properties for database connection -->
+      <filter.dao.jdbc.driver.names>com.mysql.jdbc.Driver,net.sf.log4jdbc.sql.jdbcapi.DriverSpy</filter.dao.jdbc.driver.names>
+      <filter.dao.jdbc.url>jdbc:log4jdbc:mysql://url:port/database</filter.dao.jdbc.url>
+      <filter.dao.jdbc.username>username</filter.dao.jdbc.username>
+      <filter.dao.jdbc.password>password</filter.dao.jdbc.password>
+      <!-- Properties for running TopAnat -->
+      <filter.org.bgee.core.topAnatRWorkingDirectory>/workingDir/</filter.org.bgee.core.topAnatRWorkingDirectory>
+      <filter.org.bgee.core.topAnatResultsWritingDirectory>/resultDir/</filter.org.bgee.core.topAnatResultsWritingDirectory>
+      <filter.org.bgee.core.topAnatRScriptExecutable>/RscriptLocation</filter.org.bgee.core.topAnatRScriptExecutable>
+      <!-- Directory to store serialized RequestParameters, default to tmp dir -->
+      <filter.org.bgee.webapp.requestParametersStorageDirectory>/parameterStorageDir/</filter.org.bgee.webapp.requestParametersStorageDirectory>
+      <!-- URI providing the parameters to send mails -->
+      <filter.org.bgee.webapp.mailUri>smtp://personalSMTP:465?username=username&amp;password=password&amp;mail.smtp.auth=true&amp;mail.smtp.ssl.enable=true&amp;mail.smtp.starttls.enable=true</filter.org.bgee.webapp.mailUri>
+      <!-- "From" address when sending mails at TopAnat job completions -->
+      <filter.org.bgee.webapp.topAnatFromAddress>personal@email.com</filter.org.bgee.webapp.topAnatFromAddress>
+    </properties>
+  </profile>
+  <!-- Profile used to configure bgee-webapp, defining the properties to be used for a normal build of the WAR file, 
+       for a release on the server, 
+       activated when m2e is NOT used, so, when the webapp is not launched from within eclipse. -->
+  <profile>
+    <id>bgee-webapp-main</id>
+    <activation>
+        <property>
+            <name>!m2e.version</name>
+        </property>
+    </activation>
+    <properties>
+      <!-- Properties for database connection -->
+      <filter.dao.jdbc.driver.names>com.mysql.jdbc.Driver</filter.dao.jdbc.driver.names>
+      <filter.dao.jdbc.url>jdbc:mysql://url:port/database</filter.dao.jdbc.url>
+      <filter.dao.jdbc.username>username</filter.dao.jdbc.username>
+      <filter.dao.jdbc.password>password</filter.dao.jdbc.password>
+      <!-- Properties for running TopAnat -->
+      <filter.org.bgee.core.topAnatRWorkingDirectory>/workingDir/</filter.org.bgee.core.topAnatRWorkingDirectory>
+      <filter.org.bgee.core.topAnatResultsWritingDirectory>/resultDir/</filter.org.bgee.core.topAnatResultsWritingDirectory>
+      <filter.org.bgee.core.topAnatRScriptExecutable>/RscriptLocation</filter.org.bgee.core.topAnatRScriptExecutable>
+      <!-- Directory to store serialized RequestParameters, default to tmp dir -->
+      <filter.org.bgee.webapp.requestParametersStorageDirectory>/parameterStorageDir/</filter.org.bgee.webapp.requestParametersStorageDirectory>
+      <!-- URI providing the parameters to send mails -->
+      <filter.org.bgee.webapp.mailUri>smtp://prodSMTP/</filter.org.bgee.webapp.mailUri>
+      <!-- "From" address when sending mails at TopAnat job completions -->
+      <filter.org.bgee.webapp.topAnatFromAddress>official@production.com</filter.org.bgee.webapp.topAnatFromAddress>
+      <!-- Root of the server to use. Important to generate correct links in emails -->
+      <filter.org.bgee.webapp.bgeeRootDirectory>http://production.com/</filter.org.bgee.webapp.bgeeRootDirectory>
+      <filter.org.bgee.webapp.bgeeRootDomain>.production.com</filter.org.bgee.webapp.bgeeRootDomain>
+    </properties>
+  </profile>
+  <!-- Profile used for Bgee integration tests-->
+  <profile>
+    <id>bgee-integration-test</id>
+    <properties>
+      <bgee.database.root.username>username</bgee.database.root.username>
+      <bgee.database.root.password>password</bgee.database.root.password>
+      <it.org.bgee.core.topAnatRScriptExecutable>/RscriptLocation</it.org.bgee.core.topAnatRScriptExecutable>
+    </properties>
+  </profile>
+  <profile>
+    <id>compiler</id>
+    <properties>
+      <JAVA_1_5_HOME>/System/Library/Frameworks/JavaVM.framework/Versions/1.5.0_30/Home</JAVA_1_5_HOME>
+      <JAVA_1_5_BOOTCLASSPATH>/System/Library/Frameworks/JavaVM.framework/Versions/1.5.0_30/Classes/classes.jar</JAVA_1_5_BOOTCLASSPATH>
+      <JAVA_1_6_HOME>/System/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Home</JAVA_1_6_HOME>
+      <JAVA_1_6_BOOTCLASSPATH>/System/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Classes/classes.jar</JAVA_1_6_BOOTCLASSPATH>
+      <JAVA_1_7_HOME>/Library/Java/JavaVirtualMachines/jdk1.7.0_71.jdk/Contents/Home</JAVA_1_7_HOME>
+      <JAVA_1_7_BOOTCLASSPATH>/Library/Java/JavaVirtualMachines/jdk1.7.0_71.jdk/Contents/Home/lib/*.jar</JAVA_1_7_BOOTCLASSPATH>
+    </properties>
+  </profile>
+</profiles>
+
+<activeProfiles> 
+  <activeProfile>bgee-integration-test</activeProfile>
+  <activeProfile>compiler</activeProfile>
+</activeProfiles>
+</settings>

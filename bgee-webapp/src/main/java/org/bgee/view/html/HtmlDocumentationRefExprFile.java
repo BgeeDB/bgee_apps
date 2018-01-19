@@ -64,8 +64,8 @@ public class HtmlDocumentationRefExprFile extends HtmlDocumentationDownloadFile 
      *                          current request.
      * @param prop              A {@code BgeeProperties} instance that contains the properties
      *                          to use.
-     * @param factory           The {@code HtmlFactory} that instantiated the {@link HtmlDocumentation} 
-     *                          object using this object.
+     * @param factory           The {@code HtmlFactory} that instantiated the
+     *                          {@link HtmlDocumentationDisplay} object using this object.
      * @throws IllegalArgumentException If {@code factory} is {@code null}.
      * @throws IOException              If there is an issue when trying to get or to use the
      *                                  {@code PrintWriter} 
@@ -164,9 +164,9 @@ public class HtmlDocumentationRefExprFile extends HtmlDocumentationDownloadFile 
         this.writeln("<div class='doc_content'>"
                 + "<p>Affymetrix data used in Bgee are retrieved from <a target='_blank' "
                 + "title='External link to ArrayExpress' "
-                + "href='http://www.ebi.ac.uk/arrayexpress/'>ArrayExpress</a> and "
+                + "href='https://www.ebi.ac.uk/arrayexpress/'>ArrayExpress</a> and "
                 + "<a target='_blank' title='External link to GEO' "
-                + "href='http://www.ncbi.nlm.nih.gov/geo/'>GEO</a>. They are annotated "
+                + "href='https://www.ncbi.nlm.nih.gov/geo/'>GEO</a>. They are annotated "
                 + "to anatomical and developmental stage ontologies, filtered by quality controls "
                 + "and analyzed to produce expression data. Only \"normal\" "
                 + "expression data are integrated in Bgee (i.e., no treatment, no disease, "

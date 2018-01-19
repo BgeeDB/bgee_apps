@@ -880,4 +880,21 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
         return this.filterDuplicates;
     }
     
+    /**
+     * Retrieves the value of the designated column as an {@code Integer}, in the current row 
+     * of the {@code ResultSet} object returned by {@link #getCurrentResultSet()}. If the field 
+     * was null in the database, returns actually {@code null}, and not 0 as the default implementation does.
+     * 
+     * @param columnLabel
+     * @return
+     * @throws SQLException
+     */
+    protected Integer getInteger(String columnLabel) throws SQLException {
+        log.entry(columnLabel);
+        int value = this.getCurrentResultSet().getInt(columnLabel);
+        if (value == 0 && this.getCurrentResultSet().wasNull()) {
+            return log.exit(null);
+        }
+        return log.exit(value);
+    }
 }

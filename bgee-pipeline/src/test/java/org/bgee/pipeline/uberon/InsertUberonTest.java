@@ -122,10 +122,10 @@ public class InsertUberonTest extends TestAncestor {
         expectedTaxonConstraintTOs.add(new TaxonConstraintTO("UBERON:1", null));
         expectedTaxonConstraintTOs.add(new TaxonConstraintTO("UBERON:2", null));
         expectedTaxonConstraintTOs.add(new TaxonConstraintTO("UBERON:3", null));
-        expectedTaxonConstraintTOs.add(new TaxonConstraintTO("ID:4", "1"));
-        expectedTaxonConstraintTOs.add(new TaxonConstraintTO("ID:4", "3"));
-        expectedTaxonConstraintTOs.add(new TaxonConstraintTO("ID:5", "2"));
-        expectedTaxonConstraintTOs.add(new TaxonConstraintTO("ID:5", "3"));
+        expectedTaxonConstraintTOs.add(new TaxonConstraintTO("ID:4", 1));
+        expectedTaxonConstraintTOs.add(new TaxonConstraintTO("ID:4", 3));
+        expectedTaxonConstraintTOs.add(new TaxonConstraintTO("ID:5", 2));
+        expectedTaxonConstraintTOs.add(new TaxonConstraintTO("ID:5", 3));
         ArgumentCaptor<Set> taxonConstraintTOsArg = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockTaxonConstraintDAO).insertStageTaxonConstraints(
                 taxonConstraintTOsArg.capture());
@@ -241,7 +241,7 @@ public class InsertUberonTest extends TestAncestor {
         expectedTaxonConstraintTOs.add(new TaxonConstraintTO("ID:17", null));
         expectedTaxonConstraintTOs.add(new TaxonConstraintTO("ID:18", null));
 
-        expectedTaxonConstraintTOs.add(new TaxonConstraintTO("ID:8", "9606"));
+        expectedTaxonConstraintTOs.add(new TaxonConstraintTO("ID:8", 9606));
         
         ArgumentCaptor<Set> taxonConstraintTOsArg = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockTaxonConstraintDAO).insertAnatEntityTaxonConstraints(
@@ -403,7 +403,7 @@ public class InsertUberonTest extends TestAncestor {
             if (insertedRelTO.getRelationStatus() == RelationTO.RelationStatus.REFLEXIVE) {
                 if (insertedRelTO.getSourceId().equals("ID:8")) {
                     expectedRelTaxonConstraintTOs.add(
-                            new TaxonConstraintTO(insertedRelTO.getId(), "9606"));
+                            new TaxonConstraintTO(insertedRelTO.getId(), 9606));
                     restrainedReflexiveTaxonConstraints++;
                 } else {
                     allSpeciesReflexiveTaxonConstraints++;
@@ -451,7 +451,7 @@ public class InsertUberonTest extends TestAncestor {
 
                 restrainedOtherTaxonConstraints++;
                 expectedRelTaxonConstraintTOs.add(
-                        new TaxonConstraintTO(insertedRelTO.getId(), "9606"));
+                        new TaxonConstraintTO(insertedRelTO.getId(), 9606));
             } else {
                 allSpeciesOtherTaxonConstraints++;
                 expectedRelTaxonConstraintTOs.add(

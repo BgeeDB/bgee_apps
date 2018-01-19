@@ -59,8 +59,8 @@ public class MySQLHierarchicalGroupDAOIT extends MySQLITAncestor {
 
         MySQLHierarchicalGroupDAO dao = new MySQLHierarchicalGroupDAO(this.getMySQLDAOManager());
         dao.setAttributes(Arrays.asList(HierarchicalGroupDAO.Attribute.values()));
-        String taxonId = null;
-        Set<String> speciesIds = new HashSet<String>();
+        int taxonId = -1;
+        Set<Integer> speciesIds = new HashSet<>();
         
         // No taxon ID
         try {
@@ -71,11 +71,11 @@ public class MySQLHierarchicalGroupDAOIT extends MySQLITAncestor {
         }
         
         // Taxon ID without species ID (taxonId = 111)
-        taxonId = "111";
+        taxonId = 111;
         List<HierarchicalGroupToGeneTO> expectedGroupToGene = Arrays.asList(
-                new HierarchicalGroupToGeneTO("1", "ID2"),
-                new HierarchicalGroupToGeneTO("1", "ID3"), 
-                new HierarchicalGroupToGeneTO("5", "ID1"));
+                new HierarchicalGroupToGeneTO(1, 2, 1),
+                new HierarchicalGroupToGeneTO(1, 3, 1), 
+                new HierarchicalGroupToGeneTO(5, 1, 1));
         List<HierarchicalGroupToGeneTO> actualGroupToGene = 
                 dao.getGroupToGene(taxonId, speciesIds).getAllTOs();
         assertTrue("HierarchicalGroupToGeneTOs incorrectly retrieved: actualGroupToGene=" +
@@ -83,25 +83,25 @@ public class MySQLHierarchicalGroupDAOIT extends MySQLITAncestor {
                 TOComparator.areTOCollectionsEqual(actualGroupToGene, expectedGroupToGene));
 
         // Taxon ID without species ID (taxonId = 211)
-        taxonId = "211";
-        expectedGroupToGene = Arrays.asList(new HierarchicalGroupToGeneTO("2", "ID2"));
+        taxonId = 211;
+        expectedGroupToGene = Arrays.asList(new HierarchicalGroupToGeneTO(2, 2, 1));
         actualGroupToGene = dao.getGroupToGene(taxonId, speciesIds).getAllTOs();
         assertTrue("HierarchicalGroupToGeneTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(actualGroupToGene, expectedGroupToGene));
         
         // Taxon ID with one species ID (taxonId = 111 & species ID = 31)
-        taxonId = "111";
-        speciesIds.add("31");
-        expectedGroupToGene = Arrays.asList(new HierarchicalGroupToGeneTO("1", "ID3"));
+        taxonId = 111;
+        speciesIds.add(31);
+        expectedGroupToGene = Arrays.asList(new HierarchicalGroupToGeneTO(1, 3, 1));
         actualGroupToGene = dao.getGroupToGene(taxonId, speciesIds).getAllTOs();
         assertTrue("HierarchicalGroupToGeneTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(actualGroupToGene, expectedGroupToGene));
         
         // Taxon ID with two species IDs (taxonId = 111 & species ID = 31 + 11)
-        speciesIds.add("11");
+        speciesIds.add(11);
         expectedGroupToGene = Arrays.asList(
-                new HierarchicalGroupToGeneTO("1", "ID3"), 
-                new HierarchicalGroupToGeneTO("5", "ID1"));        
+                new HierarchicalGroupToGeneTO(1, 3, 1), 
+                new HierarchicalGroupToGeneTO(5, 1, 1));        
         actualGroupToGene = dao.getGroupToGene(taxonId, speciesIds).getAllTOs();
         assertTrue("HierarchicalGroupToGeneTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(actualGroupToGene, expectedGroupToGene));
@@ -116,9 +116,9 @@ public class MySQLHierarchicalGroupDAOIT extends MySQLITAncestor {
         //create a Collection of HierarchicalGroupTOs to be inserted
         Collection<HierarchicalGroupTO> hgTOs = new ArrayList<HierarchicalGroupTO>();
 
-        hgTOs.add(new HierarchicalGroupTO("1", "HOG:TOTO1", 1, 6, 10));
-        hgTOs.add(new HierarchicalGroupTO("2", "HOG:TOTO2", 2, 3, 10));
-        hgTOs.add(new HierarchicalGroupTO("3", "HOG:TOTO3", 4, 5, 0));
+        hgTOs.add(new HierarchicalGroupTO(1, "HOG:TOTO1", 1, 6, 10));
+        hgTOs.add(new HierarchicalGroupTO(2, "HOG:TOTO2", 2, 3, 10));
+        hgTOs.add(new HierarchicalGroupTO(3, "HOG:TOTO3", 4, 5, 0));
         try {
             MySQLHierarchicalGroupDAO dao = new MySQLHierarchicalGroupDAO(this.getMySQLDAOManager());
             assertEquals("Incorrect number of rows inserted", 3, 

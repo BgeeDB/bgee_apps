@@ -76,7 +76,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
      * @throws DAOException             If a {@code SQLException} occurred while trying to get 
      *                                  no-expression calls.   
      */
-    private NoExpressionCallTOResultSet getNoExpressionCalls(Set<String> speciesIds,
+    private NoExpressionCallTOResultSet getNoExpressionCalls(Set<Integer> speciesIds,
             boolean isIncludeParentStructures) throws DAOException {
         log.entry(speciesIds, isIncludeParentStructures);        
 
@@ -123,8 +123,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
                     //no duplicated results?
                     if (!attributes.contains(NoExpressionCallDAO.Attribute.ID) &&  
                             (!attributes.contains(NoExpressionCallDAO.Attribute.GENE_ID) || 
-                                !attributes.contains(NoExpressionCallDAO.Attribute.ANAT_ENTITY_ID) || 
-                                !attributes.contains(NoExpressionCallDAO.Attribute.STAGE_ID))) {
+                                !attributes.contains(NoExpressionCallDAO.Attribute.CONDITION_ID))) {
                         sql += "DISTINCT ";
                     }
                 } else {
@@ -160,7 +159,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
             //TODO: this order might not be optimal if other filtering options are added 
             //in the future (not based only on speciesIds)
             sql += " FROM gene STRAIGHT_JOIN " + tableName + 
-                    " ON (gene.geneId = " + tableName + ".geneId) " +
+                    " ON (gene.bgeeGeneId = " + tableName + ".bgeeGeneId) " +
                     
                     " WHERE gene.speciesId IN (" +
                     BgeePreparedStatement.generateParameterizedQueryString(
@@ -175,7 +174,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         try {
             stmt = this.getManager().getConnection().prepareStatement(sql.toString());
             if (speciesIds != null && speciesIds.size() > 0) {
-                stmt.setStringsToIntegers(1, speciesIds, true);
+                stmt.setIntegers(1, speciesIds, true);
             }             
             return log.exit(new MySQLNoExpressionCallTOResultSet(stmt));
         } catch (SQLException e) {
@@ -202,8 +201,8 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         try (MySQLNoExpressionCallTOResultSet resultSet = new MySQLNoExpressionCallTOResultSet(
                 this.getManager().getConnection().prepareStatement(sql))) {
             
-            if (resultSet.next() && StringUtils.isNotBlank(resultSet.getTO().getId())) {
-                return log.exit(Integer.valueOf(resultSet.getTO().getId()));
+            if (resultSet.next() && resultSet.getTO().getId() != null) {
+                return log.exit(resultSet.getTO().getId());
             }
             // There is no call in the table 
             return log.exit(0); 
@@ -238,11 +237,9 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
                 label = "noExpressionId";
             }
         } else if (attribute.equals(NoExpressionCallDAO.Attribute.GENE_ID)) {
-            label = "geneId";
-        } else if (attribute.equals(NoExpressionCallDAO.Attribute.STAGE_ID)) {
-            label = "stageId";
-        } else if (attribute.equals(NoExpressionCallDAO.Attribute.ANAT_ENTITY_ID)) {
-            label = "anatEntityId";
+            label = "bgeeGeneId";
+        } else if (attribute.equals(NoExpressionCallDAO.Attribute.CONDITION_ID)) {
+            label = "conditionId";
         } else if (attribute.equals(NoExpressionCallDAO.Attribute.AFFYMETRIX_DATA)) {
             label = "noExpressionAffymetrixData";
         } else if (attribute.equals(NoExpressionCallDAO.Attribute.IN_SITU_DATA)) {
@@ -291,19 +288,18 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
 
         // And we need to build two different queries. 
         String sqlNoExpression = "INSERT INTO noExpression " +
-                "(noExpressionId, geneId, anatEntityId, stageId, "+
+                "(noExpressionId, bgeeGeneId, conditionId, "+
                 "noExpressionAffymetrixData, noExpressionInSituData, noExpressionRnaSeqData) " +
-                "values (?, ?, ?, ?, ?, ?, ?)";
+                "values (?, ?, ?, ?, ?, ?)";
         
         // To not overload MySQL with an error com.mysql.jdbc.PacketTooBigException, 
         // and because of laziness, we insert no-expression calls one at a time
         try (BgeePreparedStatement stmt = 
                 this.getManager().getConnection().prepareStatement(sqlNoExpression)) {
             for (NoExpressionCallTO call: toInsertInNoExpression) {
-                stmt.setInt(1, Integer.parseInt(call.getId()));
-                stmt.setString(2, call.getGeneId());
-                stmt.setString(3, call.getAnatEntityId());
-                stmt.setString(4, call.getStageId());
+                stmt.setInt(1, call.getId());
+                stmt.setInt(2, call.getBgeeGeneId());
+                stmt.setInt(3, call.getConditionId());
                 stmt.setString(5, call.getAffymetrixData().getStringRepresentation());
                 stmt.setString(6, call.getInSituData().getStringRepresentation());
                 stmt.setString(7, call.getRNASeqData().getStringRepresentation());
@@ -319,16 +315,15 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         }
 
         String sqlGlobalNoExpression = "INSERT INTO globalNoExpression " +
-                "(globalNoExpressionId, geneId, anatEntityId, stageId, "+
+                "(globalNoExpressionId, bgeeGeneId, conditionId, "+
                 "noExpressionAffymetrixData, noExpressionInSituData, noExpressionRnaSeqData, "+
-                "noExpressionOriginOfLine) values (?, ?, ?, ?, ?, ?, ?, ?)";
+                "noExpressionOriginOfLine) values (?, ?, ?, ?, ?, ?, ?)";
         try (BgeePreparedStatement stmt = 
                 this.getManager().getConnection().prepareStatement(sqlGlobalNoExpression)) {
             for (NoExpressionCallTO call: toInsertInGlobalNoExpression) {
-                stmt.setInt(1, Integer.parseInt(call.getId()));
-                stmt.setString(2, call.getGeneId());
-                stmt.setString(3, call.getAnatEntityId());
-                stmt.setString(4, call.getStageId());
+                stmt.setInt(1, call.getId());
+                stmt.setInt(2, call.getBgeeGeneId());
+                stmt.setInt(3, call.getConditionId());
                 stmt.setString(5, call.getAffymetrixData().getStringRepresentation());
                 stmt.setString(6, call.getInSituData().getStringRepresentation());
                 stmt.setString(7, call.getRNASeqData().getStringRepresentation());
@@ -370,8 +365,8 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         try (BgeePreparedStatement stmt = 
                 this.getManager().getConnection().prepareStatement(sqlExpression)) {
             for (GlobalNoExpressionToNoExpressionTO call: globalNoExpressionToNoExpression) {
-                stmt.setString(1, call.getGlobalNoExpressionId());
-                stmt.setString(2, call.getNoExpressionId());
+                stmt.setInt(1, call.getGlobalNoExpressionId());
+                stmt.setInt(2, call.getNoExpressionId());
                 rowInsertedCount += stmt.executeUpdate();
                 stmt.clearParameters();
                 if (log.isDebugEnabled() && rowInsertedCount % 100000 == 0) {
@@ -471,7 +466,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
                 noExpressionToUpdate.size(), globalnoExpressionToUpdate.size());
 
         // Construct sql query for basic no-expression calls
-        String sqlNoExpr = "UPDATE noExpression SET geneId = ?, anatEntityId = ?, stageId = ?, " +
+        String sqlNoExpr = "UPDATE noExpression SET bgeeGeneId = ?, conditionId = ?, " +
                 "noExpressionAffymetrixData = ?, noExpressionInSituData = ?, " +
                 "noExpressionRelaxedInSituData = ?, noExpressionRnaSeqData = ? " +
                 "WHERE noExpressionId = ?";
@@ -481,14 +476,13 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         try (BgeePreparedStatement stmt = 
                 this.getManager().getConnection().prepareStatement(sqlNoExpr)) {
             for (NoExpressionCallTO noExpr: noExpressionToUpdate) {
-                stmt.setString(1, noExpr.getGeneId());
-                stmt.setString(2, noExpr.getAnatEntityId());
-                stmt.setString(3, noExpr.getStageId());
+                stmt.setInt(1, noExpr.getBgeeGeneId());
+                stmt.setInt(2, noExpr.getConditionId());
                 stmt.setString(4, noExpr.getAffymetrixData().getStringRepresentation());
                 stmt.setString(5, noExpr.getInSituData().getStringRepresentation());
                 stmt.setString(6, noExpr.getRelaxedInSituData().getStringRepresentation());
                 stmt.setString(7, noExpr.getRNASeqData().getStringRepresentation());
-                stmt.setInt(8, Integer.parseInt(noExpr.getId()));
+                stmt.setInt(8, noExpr.getId());
                 noExprUpdatedCount += stmt.executeUpdate();
                 stmt.clearParameters();
             }
@@ -497,8 +491,8 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         }
 
         // Construct sql query for global no-expression calls
-        String sqlGlobalNoExpr = "UPDATE globalNoExpression SET geneId = ?, anatEntityId = ?, " +
-                "stageId = ?, noExpressionAffymetrixData = ?, noExpressionInSituData = ?, " +
+        String sqlGlobalNoExpr = "UPDATE globalNoExpression SET bgeeGeneId = ?, conditionId = ?, " +
+                "noExpressionAffymetrixData = ?, noExpressionInSituData = ?, " +
                 "noExpressionRelaxedInSituData = ?, noExpressionRnaSeqData = ?, " +
                 "noExpressionOriginOfLine = ? WHERE globalNoExpressionId = ?";
         
@@ -507,15 +501,14 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         try (BgeePreparedStatement stmt = 
                 this.getManager().getConnection().prepareStatement(sqlGlobalNoExpr)) {
             for (NoExpressionCallTO globalNoExpr: globalnoExpressionToUpdate) {
-                stmt.setString(1, globalNoExpr.getGeneId());
-                stmt.setString(2, globalNoExpr.getAnatEntityId());
-                stmt.setString(3, globalNoExpr.getStageId());
+                stmt.setInt(1, globalNoExpr.getBgeeGeneId());
+                stmt.setInt(2, globalNoExpr.getConditionId());
                 stmt.setString(4, globalNoExpr.getAffymetrixData().getStringRepresentation());
                 stmt.setString(5, globalNoExpr.getInSituData().getStringRepresentation());
                 stmt.setString(6, globalNoExpr.getRelaxedInSituData().getStringRepresentation());
                 stmt.setString(7, globalNoExpr.getRNASeqData().getStringRepresentation());
                 stmt.setString(8, globalNoExpr.getOriginOfLine().getStringRepresentation());
-                stmt.setString(9, globalNoExpr.getId());
+                stmt.setInt(9, globalNoExpr.getId());
                 globalNoExprUpdatedCount += stmt.executeUpdate();
                 stmt.clearParameters();
             }
@@ -553,7 +546,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         protected NoExpressionCallTO getNewTO() throws DAOException {
             log.entry();
 
-            String id = null, geneId = null, anatEntityId = null, stageId = null;
+            Integer id = null, geneId = null, conditionId = null;
             DataState noExprAffymetrixData = null, noExprInSituData = null, 
                     noExprRelaxedInSituData = null, noExprRnaSeqData = null;
             Boolean includeParentStructures = null;
@@ -562,19 +555,16 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
                     if (column.getValue().equals("noExpressionId")) {
-                        id = this.getCurrentResultSet().getString(column.getKey());
+                        id = this.getCurrentResultSet().getInt(column.getKey());
                         
                     } else if (column.getValue().equals("globalNoExpressionId")) {
-                        id = this.getCurrentResultSet().getString(column.getKey());
+                        id = this.getCurrentResultSet().getInt(column.getKey());
 
-                    } else if (column.getValue().equals("geneId")) {
-                        geneId = this.getCurrentResultSet().getString(column.getKey());
+                    } else if (column.getValue().equals("bgeeGeneId")) {
+                        geneId = this.getCurrentResultSet().getInt(column.getKey());
 
-                    } else if (column.getValue().equals("anatEntityId")) {
-                        anatEntityId = this.getCurrentResultSet().getString(column.getKey());
-
-                    } else if (column.getValue().equals("stageId")) {
-                        stageId = this.getCurrentResultSet().getString(column.getKey());
+                    } else if (column.getValue().equals("conditionId")) {
+                        conditionId = this.getCurrentResultSet().getInt(column.getKey());
 
                     } else if (column.getValue().equals("noExpressionAffymetrixData")) {
                         noExprAffymetrixData = DataState.convertToDataState(
@@ -608,8 +598,8 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
                 }
             }
 
-            return log.exit(new NoExpressionCallTO(id, geneId, anatEntityId,
-                    stageId, noExprAffymetrixData, noExprInSituData, noExprRelaxedInSituData,
+            return log.exit(new NoExpressionCallTO(id, geneId, conditionId, 
+                    noExprAffymetrixData, noExprInSituData, noExprRelaxedInSituData,
                     noExprRnaSeqData, includeParentStructures, noExpressionOriginOfLine));
         }
     }
@@ -637,15 +627,15 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         @Override
         protected GlobalNoExpressionToNoExpressionTO getNewTO() throws DAOException {
             log.entry();
-            String globalNoExpressionId = null, noExpressionId = null;
+            Integer globalNoExpressionId = null, noExpressionId = null;
 
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
                     if (column.getValue().equals("globalNoExpressionId")) {
-                        globalNoExpressionId = this.getCurrentResultSet().getString(column.getKey());
+                        globalNoExpressionId = this.getCurrentResultSet().getInt(column.getKey());
 
                     } else if (column.getValue().equals("noExpressionId")) {
-                        noExpressionId = this.getCurrentResultSet().getString(column.getKey());
+                        noExpressionId = this.getCurrentResultSet().getInt(column.getKey());
 
                     } else {
                         throw log.throwing(new UnrecognizedColumnException(column.getValue()));

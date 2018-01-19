@@ -137,10 +137,10 @@ public class MySQLGeneOntologyDAOIT extends MySQLITAncestor {
     public void shouldInsertRelations() throws SQLException {
         this.useEmptyDB();
         //create a Collection of RelationTOs to be inserted
-        Collection<RelationTO> relTOs = new ArrayList<RelationTO>();
-        relTOs.add(new RelationTO("GO:1", "GO:2"));
-        relTOs.add(new RelationTO("GO:1", "GO:3"));
-        relTOs.add(new RelationTO("GO:2", "GO:3"));
+        Collection<RelationTO<String>> relTOs = new ArrayList<>();
+        relTOs.add(new RelationTO<>("GO:1", "GO:2"));
+        relTOs.add(new RelationTO<>("GO:1", "GO:3"));
+        relTOs.add(new RelationTO<>("GO:2", "GO:3"));
         try {
             MySQLRelationDAO dao = new MySQLRelationDAO(this.getMySQLDAOManager());
             assertEquals("Incorrect number of rows inserted", 3, 

@@ -46,6 +46,36 @@ import org.apache.logging.log4j.Logger;
 public class BgeeProperties {
     private final static Logger log = LogManager.getLogger(BgeeProperties.class.getName());
 
+
+    /**
+     * A {@code String} that is the key to access to the System property that contains
+     * the major version number of Bgee (if the release is Bgee {@code v14.2},
+     * the major version number is {@code 14}).
+     *
+     * @see #MAJOR_VERSION_DEFAULT
+     */
+    public final static String MAJOR_VERSION_KEY = "org.bgee.core.version.major";
+    /**
+     * A {@code String} that is the default value of the major version number of Bgee.
+     *
+     * @see #MAJOR_VERSION_KEY
+     */
+    public final static String MAJOR_VERSION_DEFAULT = null;
+    /**
+     * A {@code String} that is the key to access to the System property that contains
+     * the minor version number of Bgee (if the release is Bgee {@code v14.2},
+     * the minor version number is {@code 2}).
+     *
+     * @see #MINOR_VERSION_DEFAULT
+     */
+    public final static String MINOR_VERSION_KEY = "org.bgee.core.version.minor";
+    /**
+     * A {@code String} that is the default value of the minor version number of Bgee.
+     *
+     * @see #MINOR_VERSION_KEY
+     */
+    public final static String MINOR_VERSION_DEFAULT = null;
+
     /**
      * A {@code String} that is the key to access to the System property that contains the name
      * of the file in the classpath that is read at the initialization 
@@ -612,6 +642,12 @@ public class BgeeProperties {
         // Initialize all properties using the injected prop first, alternatively the System
         // properties and then the file. The default value provided will be use if none of the
         // previous solutions contain the property
+        majorVersion = getStringOption(prop, SYS_PROPS, FILE_PROPS,
+                MAJOR_VERSION_KEY,
+                MAJOR_VERSION_DEFAULT);
+        minorVersion = getStringOption(prop, SYS_PROPS, FILE_PROPS,
+                MINOR_VERSION_KEY,
+                MINOR_VERSION_DEFAULT);
         topAnatRScriptExecutable = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY,  
                 TOP_ANAT_R_SCRIPT_EXECUTABLE_DEFAULT);
@@ -630,6 +666,18 @@ public class BgeeProperties {
         log.debug("Initialization done.");
         log.exit();
     }
+
+
+    /**
+     * A {@code String} that is the major version number of Bgee
+     * (if the release is Bgee {@code v14.2}, the major version number is {@code 14}).
+     */
+    private final String majorVersion;
+    /**
+     * A {@code String} that is the minor version number of Bgee
+     * (if the release is Bgee {@code v14.2}, the minor version number is {@code 2}).
+     */
+    private final String minorVersion;
 
     /**
      * A {@code String} that is the path of RScript Executable file 
@@ -712,6 +760,21 @@ public class BgeeProperties {
     //**************************
     // PROPERTY GETTERS
     //**************************
+    /**
+     * @return  A {@code String} that is the major version number of Bgee
+     *          (if the release is Bgee {@code v14.2}, the major version number is {@code 14}).
+     */
+    public String getMajorVersion() {
+        return majorVersion;
+    }
+    /**
+     * @return  A {@code String} that is the minor version number of Bgee
+     *          (if the release is Bgee {@code v14.2}, the minor version number is {@code 2}).
+     */
+    public String getMinorVersion() {
+        return minorVersion;
+    }
+
     //TopAnat
     /**
      * @return A {@code String} that is the path of RScript Executable file which is used 

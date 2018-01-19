@@ -1,17 +1,27 @@
 package org.bgee.model.expressiondata.baseelements;
 
+import java.util.Set;
+
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.bgee.model.BgeeEnum;
+import org.bgee.model.BgeeEnum.BgeeEnumField;
+import org.bgee.model.expressiondata.baseelements.PropagationState;
+
 /**
  * This interface is used to type the summary call types associated to 
  * {@link org.bgee.model.expressiondata.Call Call}s. They represent an overall summary 
  * of the {@link CallType}s from individual data types, associated to a same {@code Call}.
  * 
- * @author Frederic Bastian
- * @version Bgee 13 Nov. 2015
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, Apr. 2017
  * @see CallType
  * @see org.bgee.model.expressiondata.Call Call
  * @since Bgee 13 Sept. 2015
  */
-public interface SummaryCallType {
+public interface SummaryCallType extends CallType {
     /**
      * {@link SummaryCallType} associated to {@link org.bgee.model.expressiondata.Call.ExpressionCall 
      * ExpressionCall}s. They represent an overall summary of the {@link CallType.Expression Expression}
@@ -24,13 +34,13 @@ public interface SummaryCallType {
      * are always discarded if there exists a contradicting call of expression, 
      * from the same data type and for the same gene, in the same anatomical entity 
      * and developmental stage, or in a child entity or child developmental stage.
-     * <li>{@code LOW_AMBIGUITY}: there exists a call of expression generated from a data type, 
+     * <li>{@code WEAK_AMBIGUITY}: there exists a call of expression generated from a data type, 
      * but there exists a call of absence of expression generated from another data type 
      * for the same gene in a parent anatomical entity at the same developmental stage. 
      * For instance, gene A is reported to be expressed in the midbrain at young adult stage 
      * from Affymetrix data, but is reported to be not expressed in the brain at young adult stage 
      * from RNA-Seq data.
-     * <li>{@code HIGH_AMBIGUITY}: there exists a call of expression generated from a data type, 
+     * <li>{@code STRONG_AMBIGUITY}: there exists a call of expression generated from a data type, 
      * but there exists a call of absence of expression generated from another data type 
      * for the same gene, anatomical entity and developmental stage. For instance, gene A 
      * is reported to be expressed in the midbrain at young adult stage from Affymetrix data, 
@@ -38,13 +48,80 @@ public interface SummaryCallType {
      * </ul>
      * 
      * @author Frederic Bastian
-     * @version Bgee 13 Nov. 2015
+     * @version Bgee 14 Mar. 2017
      * @see CallType.Expression 
      * @see org.bgee.model.expressiondata.Call.ExpressionCall ExpressionCall
      * @since Bgee 13 Sept. 2015
      */
-    public static enum ExpressionSummary implements SummaryCallType {
-        EXPRESSED, NOT_EXPRESSED, WEAK_AMBIGUITY, STRONG_AMBIGUITY;
+    //XXX: although there is no more "ambiguity" status starting from Bgee 14,
+    //maybe the distinction between ExpressionSummary and Expression is still useful?
+    public static enum ExpressionSummary implements SummaryCallType, BgeeEnumField {
+        EXPRESSED, NOT_EXPRESSED;
+        private final static Logger log = LogManager.getLogger(ExpressionSummary.class.getName());
+
+        @Override
+        public void checkPropagationState(PropagationState propState) throws IllegalArgumentException {
+            log.entry(propState);
+            
+            try {
+                switch (this) {
+                case EXPRESSED:
+                    CallType.Expression.EXPRESSED.checkPropagationState(propState);
+                    break;
+                case NOT_EXPRESSED:
+                    CallType.Expression.NOT_EXPRESSED.checkPropagationState(propState);
+                    break;
+                default:
+                    throw log.throwing(new IllegalStateException("CallType not supported: " 
+                            + this));
+                }
+            } catch (IllegalArgumentException e) {
+                //log in TRACE level, since this method can simply be used to check validity
+                //of a propagation state
+                throw log.throwing(Level.TRACE, new IllegalArgumentException("The following propagation "
+                        + "is incorrect for the CallType " + this + ": " + propState));
+            }
+            log.exit();
+        }
+
+        @Override
+        public Set<DataType> getAllowedDataTypes() {
+            log.entry();
+            switch (this) {
+            case EXPRESSED:
+                return log.exit(CallType.Expression.EXPRESSED.getAllowedDataTypes());
+            case NOT_EXPRESSED:
+                return log.exit(CallType.Expression.NOT_EXPRESSED.getAllowedDataTypes());
+            default:
+                throw log.throwing(new IllegalStateException("CallType not supported: " 
+                        + this));
+            }
+        }
+
+        @Override
+        public String getStringRepresentation() {
+            log.entry();
+            return log.exit(this.name());
+        }
+        
+        /**
+         * Convert the {@code String} representation of a call type for baseline presence or 
+         * absence of expression (for instance, retrieved from request) into a
+         * {@code SummaryCallType.ExpressionSummary}.
+         * Operation performed by calling {@link BgeeEnum#convert(Class, String)} with 
+         * {@code SummaryCallType.ExpressionSummary} as the {@code Class} argument,
+         * and {@code representation} as the {@code String} argument.
+         * 
+         * @param representation            A {@code String} representing a data quality.
+         * @return                          A {@code SummaryCallType.ExpressionSummary}
+         *                                  corresponding to {@code representation}.
+         * @throws IllegalArgumentException If {@code representation} does not correspond 
+         *                                  to any {@code SummaryCallType.ExpressionSummary}.
+         * @see #convert(Class, String)
+         */
+        public static final ExpressionSummary convertToExpression(String representation) {
+            return BgeeEnum.convert(SummaryCallType.ExpressionSummary.class, representation);
+        }
     }
     /**
      * {@link SummaryCallType} associated to {@link org.bgee.model.expressiondata.Call.DiffExpressionCall 
@@ -82,13 +159,55 @@ public interface SummaryCallType {
      * </ul>
      * 
      * @author Frederic Bastian
-     * @version Bgee 13 Nov. 2015
+     * @version Bgee 14 Mar. 2017
      * @see CallType.DiffExpression 
      * @see org.bgee.model.expressiondata.Call.DiffExpressionCall DiffExpressionCall
      * @since Bgee 13 Sept. 2015
      */
-    public static enum DiffExpressionSummary implements SummaryCallType {
+    public static enum DiffExpressionSummary implements SummaryCallType, BgeeEnumField {
         DIFF_EXPRESSED, OVER_EXPRESSED, UNDER_EXPRESSED, NOT_DIFF_EXPRESSED, 
         WEAK_AMBIGUITY_OVER, WEAK_AMBIGUITY_UNDER, WEAK_AMBIGUITY_NOT_DIFF, STRONG_AMBIGUITY;
+        private final static Logger log = LogManager.getLogger(DiffExpressionSummary.class.getName());
+
+        @Override
+        public void checkPropagationState(PropagationState propState) throws IllegalArgumentException {
+            log.entry(propState);
+            //no propagation allowed for any diff. expression call type
+            if (!PropagationState.SELF.equals(propState)) {
+                throw log.throwing(new IllegalArgumentException("The following propagation "
+                        + "is incorrect for the CallType " + this + ": " + propState));
+            }
+            log.exit();
+        }
+
+        @Override
+        public Set<DataType> getAllowedDataTypes() {
+            return CallType.DiffExpression.DIFF_EXPR_DATA_TYPES;
+        }
+        
+        @Override
+        public String getStringRepresentation() {
+            log.entry();
+            return log.exit(this.name());
+        }
+        
+        /**
+         * Convert the {@code String} representation of a call type from differential expression
+         * analyses (for instance, retrieved from request) into a 
+         * {@code SummaryCallType.DiffExpressionSummary}.
+         * Operation performed by calling {@link BgeeEnum#convert(Class, String)} with 
+         * {@code SummaryCallType.DiffExpressionSummary} as the {@code Class} argument,
+         * and {@code representation} as the {@code String} argument.
+         * 
+         * @param representation            A {@code String} representing a data quality.
+         * @return                          A {@code SummaryCallType.DiffExpressionSummary}
+         *                                  corresponding to {@code representation}.
+         * @throws IllegalArgumentException If {@code representation} does not correspond 
+         *                                  to any {@code SummaryCallType.DiffExpressionSummary}.
+         * @see #convert(Class, String)
+         */
+        public static final DiffExpressionSummary convertToDiffExpression(String representation) {
+            return BgeeEnum.convert(SummaryCallType.DiffExpressionSummary.class, representation);
+        }
     }
 }

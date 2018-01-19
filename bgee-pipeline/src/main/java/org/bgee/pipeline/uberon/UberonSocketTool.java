@@ -16,6 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.CommandRunner;
+import org.bgee.pipeline.ontologycommon.OntologyUtils;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
@@ -47,6 +48,7 @@ public class UberonSocketTool {
      * Following elements in {@code args} must then be: 
      *   <ol>
      *   <li>path to the file storing the Uberon developmental ontology.
+     *   <li>path to the file storing the taxonomy ontology.
      *   <li>path to the taxon constraints file
      *   <li>A {@code Map} where keys are {@code String}s corresponding to OBO-like IDs 
      *   of {@code OWLClass}es, the associated value being a {@code Set} of {Integer}s 
@@ -57,7 +59,7 @@ public class UberonSocketTool {
      *   </ol>
      * <li>If the first element in {@code args} is "idMapping", the action 
      * will be to launch a {@code ServerSocket} to perform ID mapping queries, 
-     * see {@link UberonSocketTool#UberonSocketTool(OntologyUtils, ServerSocket)}.
+     * see {@link UberonSocketTool#UberonSocketTool(UberonCommon, ServerSocket)}.
      * Following elements in {@code args} must then be: 
      *   <ol>
      *   <li>path to the file storing the Uberon ontology.
@@ -74,11 +76,12 @@ public class UberonSocketTool {
         log.entry((Object[]) args);
         
         if (args[0].equalsIgnoreCase("stageRange")) {
-            UberonSocketTool tool = new UberonSocketTool(new UberonDevStage(args[1], args[2], 
-                    CommandRunner.parseMapArgumentAsInteger(args[3]).entrySet().stream()
+            UberonSocketTool tool = new UberonSocketTool(new UberonDevStage(
+                    new OntologyUtils(args[1]), new OntologyUtils(args[2]), args[3], 
+                    CommandRunner.parseMapArgumentAsInteger(args[4]).entrySet().stream()
                     .collect(Collectors.toMap(Entry::getKey, e -> new HashSet<Integer>(e.getValue())))), 
-                    Integer.parseInt(args[4]), 
-                    new ServerSocket(Integer.parseInt(args[5])));
+                    Integer.parseInt(args[5]), 
+                    new ServerSocket(Integer.parseInt(args[6])));
             tool.startListening();
         } else if (args[0].equalsIgnoreCase("idMapping")) {
             UberonSocketTool tool = new UberonSocketTool(new Uberon(args[1]), 
@@ -121,12 +124,12 @@ public class UberonSocketTool {
     
     /**
      * Constructor to use a {@code ServerSocket} to perform stage range queries, as with 
-     * the method {@link UberonDevStage#getStageIdsBetween(String, String, int)}. 
+     * the method {@link org.bgee.pipeline.uberon.UberonDevStage#getStageIdsBetween(String, String, int)}. 
      * This method is written so that external applications can query for stage ranges, 
      * without needing to reload the ontology for each query. Using sockets, 
      * the ontology can be kept loaded, answering several stage range queries. 
      * The method used to obtain stage ranges is 
-     * {@link org.bgee.pipeline.uberon.Uberon#getStageIdsBetween(String, String)}.
+     * {@link org.bgee.pipeline.uberon.UberonDevStage#getStageIdsBetween(String, String)}.
      * 
      * @param uberon        An {@code UberonDevStage} used to perform stage range queries, 
      *                      see {@link UberonDevStage#getStageIdsBetween(String, String, int)}.
@@ -142,12 +145,14 @@ public class UberonSocketTool {
     }
     /**
      * Constructor to use a {@code ServerSocket} to perform ID mapping queries, as with 
-     * the method {@link UberonCommon#getOWLClass(String)}. 
+     * the method {@link org.bgee.pipeline.uberon.UberonCommon#getOWLClass(String)}. 
      * This method is written so that external applications can query for mappings, 
      * without needing to reload the ontology for each query. Using sockets, 
      * the ontology can be kept loaded, answering several queries. 
-     * The method used to obtain mappings is {@link OntologyUtils#getOWLClass(String)}.
-     * @param UberonCommon  The {@code UberonCommon} used to perform ID mappings.
+     * The method used to obtain mappings is 
+     * {@link org.bgee.pipeline.uberon.UberonCommon#getOWLClass(String)}.
+     * 
+     * @param uberon        The {@code UberonCommon} used to perform ID mappings.
      * @param serverSocket  The {@code ServerSocket} to use to communicate.
      * @throws OWLOntologyCreationException If an error occurred while merging 
      *                                      the import closure of the ontology.

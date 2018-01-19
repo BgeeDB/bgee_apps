@@ -1,6 +1,9 @@
 package org.bgee.pipeline.annotations;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -23,8 +26,10 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.io.CsvMapReader;
 import org.supercsv.io.ICsvMapReader;
+import org.supercsv.util.CsvContext;
 
 /**
  * Unit tests for {@link AnnotationCommon}.
@@ -93,6 +98,57 @@ public class AnnotationCommonTest extends TestAncestor {
                 AnnotationCommon.parseMultipleEntitiesColumn("ID:2,ID:3,ID:1"));
         assertEquals(Arrays.asList("ID:1"), 
                 AnnotationCommon.parseMultipleEntitiesColumn(" ID:1 "));
+    }
+    
+    /**
+     * Test {@link SimilarityAnnotationUtils.ParseMultipleStringValues#execute(Object, CsvContext)}
+     */
+    @Test
+    public void shouldExecuteParseMultipleStringValues() {
+        CsvContext context = new CsvContext(0, 0, 0); 
+        //to test that next processor in the chain is called
+        CellProcessor next = mock(CellProcessor.class);
+        
+        List<String> expectedValue = Arrays.asList(" abcd  123  ", " dfgd2", "qwe rty");
+        //The next processor will simply pass the value it received.
+        //Note that if the test fails, the assertEquals will not be able to display 
+        //the "actual" result, because the next CellProcessor would have returned null.
+        when(next.execute(expectedValue, context)).thenReturn(expectedValue);
+        assertEquals("Incorrect List generated from separated-value string.", 
+               expectedValue, 
+               new AnnotationCommon.ParseMultipleStringValues(next).execute(
+                       " abcd  123  " + Utils.VALUE_SEPARATORS.get(1) + " dfgd2" 
+                       + Utils.VALUE_SEPARATORS.get(0) + "qwe rty", context));
+        //verification a bit useless, if the test succeeded this processor has 
+        //to have returned a value
+        verify(next).execute(expectedValue, context);
+        
+        next = mock(CellProcessor.class);
+        expectedValue = Arrays.asList(" abcd  123  ");
+        //The next processor will simply pass the value it received.
+        //Note that if the test fails, the assertEquals will not be able to display 
+        //the "actual" result, because the next CellProcessor would have returned null.
+        when(next.execute(expectedValue, context)).thenReturn(expectedValue);
+        assertEquals("Incorrect List generated from separated-value string.", 
+               expectedValue, 
+               new AnnotationCommon.ParseMultipleStringValues(next).execute(
+                       " abcd  123  ", context));
+        //verification a bit useless, if the test succeeded this processor has 
+        //to have returned a value
+        
+        next = mock(CellProcessor.class);
+        expectedValue = Arrays.asList("");
+        //The next processor will simply pass the value it received.
+        //Note that if the test fails, the assertEquals will not be able to display 
+        //the "actual" result, because the next CellProcessor would have returned null.
+        when(next.execute(expectedValue, context)).thenReturn(expectedValue);
+        assertEquals("Incorrect List generated from separated-value string.", 
+               expectedValue, 
+               new AnnotationCommon.ParseMultipleStringValues(next).execute(
+                       "", context));
+        //verification a bit useless, if the test succeeded this processor has 
+        //to have returned a value
+        verify(next).execute(expectedValue, context);
     }
     
     /**

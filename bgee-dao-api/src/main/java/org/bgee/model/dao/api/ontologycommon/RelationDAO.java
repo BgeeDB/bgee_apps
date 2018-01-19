@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
+import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
@@ -15,12 +16,13 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType
 /**
  * DAO defining queries using or retrieving {@link RelationTO}s. 
  * 
- * @author Valentine Rech de Laval
- * @version Bgee 13, Dec. 2015
- * @since Bgee 13
+ * @author  Valentine Rech de Laval
+ * @author  Frederic Bastian
+ * @version Bgee 14, Feb. 2017
+ * @since   Bgee 13
  * @see RelationTO
  */
-public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
+public interface RelationDAO extends DAO<RelationDAO.Attribute> {
     /**
      * {@code Enum} used to define the attributes to populate in the {@code RelationTO}s 
      * obtained from this {@code RelationDAO}.
@@ -63,7 +65,7 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
      * The relations are retrieved and returned as a {@code RelationTOResultSet}. It is the 
      * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesIds        A {@code Set} of {@code String}s that are the IDs of species 
+     * @param speciesIds        A {@code Set} of {@code Integer}s that are the IDs of species 
      *                          to retrieve relations for.
      * @param relationTypes     A {@code Set} of {@code RelationType}s that are the relation 
      *                          types allowing to filter the relations to retrieve.
@@ -73,7 +75,7 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
      *                          entity relations from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public RelationTOResultSet getAnatEntityRelationsBySpeciesIds(Set<String> speciesIds,
+    public RelationTOResultSet<String> getAnatEntityRelationsBySpeciesIds(Set<Integer> speciesIds,
             Set<RelationType> relationTypes, Set<RelationStatus> relationStatus) throws DAOException;
 
     /**
@@ -84,7 +86,7 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
      * The relations are retrieved and returned as a {@code RelationTOResultSet}. It is the 
      * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesIds            A {@code Collection} of {@code String}s that are the IDs of species 
+     * @param speciesIds            A {@code Collection} of {@code Integer}s that are the IDs of species 
      *                              to retrieve relations for. Can be {@code null} or empty.
      * @param anySpecies            A {@code Boolean} defining, when {@code speciesIds} contains several IDs, 
      *                              whether the relations retrieved should be valid in any 
@@ -117,7 +119,7 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
      *                              entity relations from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public RelationTOResultSet getAnatEntityRelations(Collection<String> speciesIds, Boolean anySpecies, 
+    public RelationTOResultSet<String> getAnatEntityRelations(Collection<Integer> speciesIds, Boolean anySpecies, 
             Collection<String> sourceAnatEntityIds, Collection<String> targetAnatEntityIds, Boolean sourceOrTarget, 
             Collection<RelationType> relationTypes, Collection<RelationStatus> relationStatus, 
             Collection<RelationDAO.Attribute> attributes) throws DAOException;
@@ -130,7 +132,7 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
      * The relations are retrieved and returned as a {@code RelationTOResultSet}. It is the 
      * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesIds        A {@code Set} of {@code String}s that are the IDs of species 
+     * @param speciesIds        A {@code Set} of {@code Integer}s that are the IDs of species 
      *                          to retrieve relations for.
      * @param relationStatus    A {@code Set} of {@code RelationStatus} that are the status
      *                          allowing to filter the relations to retrieve.
@@ -138,7 +140,7 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
      *                      from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public RelationTOResultSet getStageRelationsBySpeciesIds(Set<String> speciesIds, 
+    public RelationTOResultSet<String> getStageRelationsBySpeciesIds(Set<Integer> speciesIds, 
             Set<RelationStatus> relationStatus) throws DAOException;
 
     /**
@@ -148,7 +150,7 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
      * The relations are retrieved and returned as a {@code RelationTOResultSet}. It is the 
      * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesIds            A {@code Collection} of {@code String}s that are the IDs of species 
+     * @param speciesIds            A {@code Collection} of {@code Integer}s that are the IDs of species 
      *                              to retrieve relations for. Can be {@code null} or empty.
      * @param anySpecies            A {@code Boolean} defining, when {@code speciesIds} contains several IDs, 
      *                              whether the relations retrieved should be valid in any 
@@ -174,14 +176,50 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
      *                              defining the attributes to populate in the returned 
      *                              {@code RelationTO}s. If {@code null} or empty, 
      *                              all attributes are populated. 
-     * @return                      A {@code RelationTOResultSet} allowing to retrieve anatomical 
-     *                              entity relations from data source.
+     * @return                      A {@code RelationTOResultSet} allowing to retrieve 
+     *                              stage relations from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public RelationTOResultSet getStageRelations(Collection<String> speciesIds, Boolean anySpecies, 
+    public RelationTOResultSet<String> getStageRelations(Collection<Integer> speciesIds, Boolean anySpecies, 
             Collection<String> sourceDevStageIds, Collection<String> targetDevStageIds, Boolean sourceOrTarget, 
             Collection<RelationStatus> relationStatus, 
             Collection<RelationDAO.Attribute> attributes) throws DAOException;
+    
+    /**
+     * Retrieve relations between taxa from data source. The relations can be filtered  
+     * by source and/or target taxon IDs, and {@code RelationStatus}.
+     * <p>
+     * The relations are retrieved and returned as a {@code RelationTOResultSet}. It is the 
+     * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
+     * 
+     * @param sourceTaxIds          A {@code Collection} of {@code Integer}s that are the IDs of taxa
+     *                              that should be the sources of the retrieved relations. 
+     *                              Can be {@code null} or empty.
+     * @param targetTaxIds          A {@code Collection} of {@code Integer}s that are the IDs of taxa
+     *                              that should be the targets of the retrieved relations. 
+     *                              Can be {@code null} or empty.
+     * @param sourceOrTarget        A {@code Boolean} defining, when both {@code sourceTaxIds} 
+     *                              and {@code targetTaxIds} are not empty, 
+     *                              whether the relations retrieved should have one of {@code sourceTaxIds} 
+     *                              as source <strong>and/or</strong> one of {@code targetTaxIds} as target 
+     *                              (if {@code true}), or, one of {@code sourceTaxIds} 
+     *                              as source <strong>and</strong> one of {@code targetTaxIds} as target 
+     *                              (if {@code false} or {@code null}).
+     * @param relationStatus        A {@code Collection} of {@code RelationStatus} that are the status
+     *                              allowing to filter the relations to retrieve.
+     *                              Can be {@code null} or empty.
+     * @param attributes            A {@code Collection} of {@code RelationDAO.Attribute}s 
+     *                              defining the attributes to populate in the returned 
+     *                              {@code RelationTO}s. If {@code null} or empty, 
+     *                              all attributes are populated. 
+     * @return                      A {@code RelationTOResultSet} allowing to retrieve 
+     *                              taxon relations from data source.
+     * @throws DAOException If an error occurred when accessing the data source. 
+     */
+    public RelationTOResultSet<Integer> getTaxonRelations(Collection<Integer> sourceTaxIds, 
+        Collection<Integer> targetTaxIds, Boolean sourceOrTarget, Collection<RelationStatus> relationStatus, 
+        Collection<RelationDAO.Attribute> attributes);
+    
 
     /**
      * Inserts the provided anatomical entity relations into the Bgee database, represented as a 
@@ -191,13 +229,10 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
      *                      entity relations into the database.
      * @return              An {@code int} that is the number of inserted anatomical entity 
      *                      relations.
-     * @throws IllegalArgumentException If {@code relationTOs} is empty or null. 
-     * @throws DAOException If a {@code SQLException} occurred while trying to insert anatomical 
-     *                      entity relations. The {@code SQLException} will be wrapped into a 
-     *                      {@code DAOException} ({@code DAOs} do not expose these kind of 
-     *                      implementation details).
+     * @throws IllegalArgumentException If {@code relationTOs} is empty or null.
+     * @throws DAOException If an {@code Exception} occurred while trying to insert relations.
      */
-    public int insertAnatEntityRelations(Collection<RelationTO> relationTOs) 
+    public int insertAnatEntityRelations(Collection<RelationTO<String>> relationTOs) 
             throws DAOException, IllegalArgumentException;
 
     /**
@@ -207,13 +242,10 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
      * @param relationTOs   A {@code Collection} of {@code RelationTO}s to be inserted 
      *                      into the database.
      * @return              An {@code int} that is the number of inserted relations.
-     * @throws IllegalArgumentException If {@code relationTOs} is empty or null. 
-     * @throws DAOException If a {@code SQLException} occurred while trying to insert relations 
-     *                      between Gene Ontology terms. The {@code SQLException} will be wrapped 
-     *                      into a {@code DAOException} ({@code DAOs} do not expose these kind of 
-     *                      implementation details).
+     * @throws IllegalArgumentException If {@code relationTOs} is empty or null.
+     * @throws DAOException If an {@code Exception} occurred while trying to insert relations.
      */
-    public int insertGeneOntologyRelations(Collection<RelationTO> relationTOs) 
+    public int insertGeneOntologyRelations(Collection<RelationTO<String>> relationTOs) 
             throws DAOException, IllegalArgumentException;
 
     /**
@@ -222,8 +254,10 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
      * @author Valentine Rech de Laval
      * @version Bgee 13
      * @since Bgee 13
+     * 
+     * @param <T> the type of target and source IDs in related {@code RelationTO}s.
      */
-    public interface RelationTOResultSet extends DAOResultSet<RelationTO> {
+    public interface RelationTOResultSet<T> extends DAOResultSet<RelationTO<T>> {
 
     }
 
@@ -243,8 +277,10 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
      * @author Valentine Rech de Laval
      * @version Bgee 13
      * @since Bgee 13
+     * 
+     * @param <T> the type of target and source IDs
      */
-    public class RelationTO extends TransferObject {
+    public class RelationTO<T> extends EntityTO<Integer> {
 
         private static final long serialVersionUID = 6320202680108735124L;
 
@@ -280,8 +316,8 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
              * returned by {@link Enum#name()}, for each {@code RelationType}.
              * 
              * @param representation    A {@code String} representing a relation type.
-             * @return  A {@code RelationType} corresponding to {@code representation}.
-             * @throw IllegalArgumentException  If {@code representation} does not correspond 
+             * @return                  A {@code RelationType} corresponding to {@code representation}.
+             * @throws IllegalArgumentException If {@code representation} does not correspond 
              *                                  to any {@code RelationType}.
              */
             public static final RelationType convertToRelationType(String representation) {
@@ -344,8 +380,8 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
              * returned by {@link Enum#name()}, for each {@code RelationStatus}.
              * 
              * @param representation    A {@code String} representing a relation status.
-             * @return  A {@code RelationStatus} corresponding to {@code representation}.
-             * @throw IllegalArgumentException  If {@code representation} does not correspond 
+             * @return                  A {@code RelationStatus} corresponding to {@code representation}.
+             * @throws IllegalArgumentException If {@code representation} does not correspond 
              *                                  to any {@code RelationStatus}.
              */
             public static final RelationStatus convertToRelationStatus(String representation) {
@@ -382,29 +418,24 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
                 return this.getStringRepresentation();
             }
         }
-
-        /**
-         * A {@code String} representing the ID of this relation.
-         */
-        private final String id;
         
         /**
-         * A {@code String} that is the OBO-like ID of the parent term of this relation.
+         * A {@code T} that is the OBO-like ID of the parent term of this relation.
          * For instance, if {@code GO:0000080 "mitotic G1 phase" part_of 
          * GO:0051329 "mitotic interphase"}, then this {@code targetId} is 
          * {@code GO:0051329}.
          * @see #sourceId
          */
-        private final String targetId;
+        private final T targetId;
         
         /**
-         * A {@code String} that is the OBO-like ID of the parent term of this relation.
+         * A {@code T} that is the OBO-like ID of the parent term of this relation.
          * For instance, if {@code GO:0000080 "mitotic G1 phase" part_of 
          * GO:0051329 "mitotic interphase"}, then this {@code sourceId} is 
          * {@code GO:0000080}.
          * @see #targetId
          */
-        private final String sourceId;
+        private final T sourceId;
         
         /**
          * A {@link RelationType} that is the type of this relation in the Bgee database. 
@@ -431,11 +462,11 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
          * <p>
          * The relation ID, the relation type, and the relation status are set to {@code null}.
          * 
-         * @param sourceId         A {@code String} that is the ID of the descent term.
-         * @param targetId          A {@code String} that is the ID of the parent term.
+         * @param sourceId         A {@code T} that is the ID of the descent term.
+         * @param targetId          A {@code T} that is the ID of the parent term.
          * @see RelationTO#RelationTO(String, String, String, RelationType, RelationStatus)
          */
-        public RelationTO(String sourceId, String targetId) {
+        public RelationTO(T sourceId, T targetId) {
             this(null, sourceId, targetId, null, null);
         }
         /**
@@ -447,17 +478,17 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
          * <p>
          * All of these parameters are optional, so they can be {@code null} when not used.
          * 
-         * @param relationId        A {@code String} that is the ID of this relation.
-         * @param sourceId          A {@code String} that is the ID of the descent term.
-         * @param targetId          A {@code String} that is the ID of the parent term.
+         * @param relationId        An {@code Integer} that is the ID of this relation.
+         * @param sourceId          A {@code T} that is the ID of the descent term.
+         * @param targetId          A {@code T} that is the ID of the parent term.
          * @param relType           A {@code RelationType} defining the type of the relation.
          * @param relationStatus    A {@code RelationStatus} defining whether the relation
          *                          is direct, indirect, or reflexive.
-         * @see RelationTO#RelationTO(String, String)
+         * @see RelationTO#RelationTO(Object, Object)
          */
-        public RelationTO(String relationId, String sourceId, String targetId, 
+        public RelationTO(Integer relationId, T sourceId, T targetId, 
                 RelationType relType, RelationStatus relationStatus) {
-            this.id = relationId;
+            super(relationId);
             this.sourceId = sourceId;
             this.targetId = targetId;
             this.relationType = relType;
@@ -465,29 +496,23 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
         }
 
         /**
-         * @return the {@code String} representing the ID of this relation.
-         */
-        public String getId() {
-            return this.id;
-        }
-        /**
-         * @return  A {@code String} that is the OBO-like ID of the parent term of this relation.
+         * @return  A {@code T} that is the OBO-like ID of the parent term of this relation.
          *          For instance, if {@code GO:0000080 "mitotic G1 phase" part_of 
          *          GO:0051329 "mitotic interphase"}, then this {@code targetId} is 
          *          {@code GO:0051329}.
          * @see #getSourceId()
          */
-        public String getTargetId() {
+        public T getTargetId() {
             return this.targetId;
         }
         /**
-         * @return  A {@code String} that is the OBO-like ID of the child term of this relation.
+         * @return  A {@code T} that is the OBO-like ID of the child term of this relation.
          *          For instance, if {@code GO:0000080 "mitotic G1 phase" part_of 
          *          GO:0051329 "mitotic interphase"}, then this {@code sourceId} is 
          *          {@code GO:0000080}.
          * @see #getTargetId()
          */
-        public String getSourceId() {
+        public T getSourceId() {
             return this.sourceId;
         }
         /**
@@ -515,78 +540,6 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
                     " - Relation type: " + this.getRelationType() + 
                     " - Relation status: " + this.getRelationStatus();
         }
-        
-        /**
-         * Implementation of hashCode specific to {@code RelationTO}s: 
-         * <ul>
-         * <li>if {@link #getId()} returned a non-null value, the hashCode 
-         * will be based solely on it. 
-         * <li>Otherwise, hashCode will be based on all attributes of this class.
-         * </ul>
-         */
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + ((id == null) ? 0 : id.hashCode());
-            if (id == null) {
-                result = prime * result + ((relationStatus == null) ? 0 : 
-                    relationStatus.hashCode());
-                result = prime * result + ((relationType == null) ? 0 : 
-                    relationType.hashCode());
-                result = prime * result + ((sourceId == null) ? 0 : sourceId.hashCode());
-                result = prime * result + ((targetId == null) ? 0 : targetId.hashCode());
-            }
-            return result;
-        }
-        
-        /**
-         * Implementation of equals specific to {@code ResultTO}s and consistent with 
-         * the {@link #hashCode()} implementation. See {@link #hashCode()} for more details.
-         * @see #hashCode()
-         */
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null) {
-                return false;
-            }
-            if (getClass() != obj.getClass()) {
-                return false;
-            }
-            RelationTO other = (RelationTO) obj;
-            if (id == null) {
-                if (other.id != null) {
-                    return false;
-                }
-            } else {
-                //if id is not null, we will base the equals solely on it
-                return id.equals(other.id);
-            }
-            
-            if (relationStatus != other.relationStatus) {
-                return false;
-            }
-            if (relationType != other.relationType) {
-                return false;
-            }
-            if (sourceId == null) {
-                if (other.sourceId != null) {
-                    return false;
-                }
-            } else if (!sourceId.equals(other.sourceId)) {
-                return false;
-            }
-            if (targetId == null) {
-                if (other.targetId != null) {
-                    return false;
-                }
-            } else if (!targetId.equals(other.targetId)) {
-                return false;
-            }
-            return true;
-        }
     }
+
 }

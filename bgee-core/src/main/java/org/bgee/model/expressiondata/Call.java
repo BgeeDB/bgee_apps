@@ -32,8 +32,21 @@ import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DiffExpressionFactor;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
-import org.bgee.model.expressiondata.baseelements.SummaryCallType.*;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.DiffExpressionSummary;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
+import org.bgee.model.gene.Gene;
 
+/**
+ * This class describes the calls related to gene baseline expression and differential expression.
+ * 
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, Feb. 2017
+ * @since   Bgee 13, Sept. 2015
+ * @param <T> The type of {@code SummaryCallType}.
+ * @param <U> The type of {@code CallData}.
+ */
 //XXX: and what if it was a multi-species query? Should we use something like a MultiSpeciesCondition?
 //TODO: move inner classes to different files
 public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallData<?>> {
@@ -166,9 +179,9 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          * <ol>
          * <li>comparison based on {@link ExpressionCall#getGlobalMeanRank()}
          * <li>in case of equality, comparison based on {@link ExpressionCall#getGeneId()}
-         * <li>in case of equality, and if a {@code ConditionUtils} was provided at instantiation, 
+         * <li>in case of equality, and if a {@code ConditionGraph} was provided at instantiation, 
          * comparison based on the relations between {@code Condition}s (see 
-         * {@link ExpressionCall#getCondition()} and {@link ConditionUtils#compare(Condition, Condition)})
+         * {@link ExpressionCall#getCondition()} and {@link ConditionGraph#compare(Condition, Condition)})
          * <li>in case of equality, comparison based on the attributes of {@code Condition}s 
          * (see {@link ExpressionCall#getCondition()} and {@link Condition#compareTo(Condition)}.
          * </ol>
@@ -184,46 +197,49 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
              */
             private final Comparator<ExpressionCall> rankComparator;
             /**
-             * The {@code ConditionUtils} used by the {@link #rankComparator}. Can be {@code null}.
+             * The {@code ConditionGraph} used by the {@link #rankComparator}. Can be {@code null}.
              */
-            private final ConditionUtils conditionUtils;
+            private final ConditionGraph conditionGraph;
             
             /**
-             * Instantiate a {@code RankComparator} not using any {@code ConditionUtils}.
+             * Instantiate a {@code RankComparator} not using any {@code ConditionGraph}.
              */
             public RankComparator() {
                 this(null);
             }
             /**
              * Instantiate a {@code RankComparator} that can take into account 
-             * relations between {@code Condition}s, thanks to a {@code ConditionUtils}.
+             * relations between {@code Condition}s, thanks to a {@code ConditionGraph}.
              * 
-             * @param condUtils A {@code ConditionUtils} used to sort {@code Condition}s based on 
+             * @param condGraph A {@code ConditionGraph} used to sort {@code Condition}s based on 
              *                  their relations between each other, in case of equal ranks 
              *                  and equal gene IDs. Can be {@code null} if it is not needed 
              *                  to do such a sorting based on relations.
              */
-            public RankComparator(ConditionUtils condUtils) {
+            public RankComparator(ConditionGraph condGraph) {
                 Comparator<ExpressionCall> tmpComparator = Comparator
                         //Order first by global mean rank
                         .comparing(ExpressionCall::getGlobalMeanRank, 
                                 Comparator.nullsLast(Comparator.naturalOrder()))
                         //important in case of score equality: 
                         //Order by genes
-                        .thenComparing(ExpressionCall::getGeneId, 
-                                Comparator.nullsLast(Comparator.naturalOrder()));
-                if (condUtils != null) {
+                        .thenComparing(c -> c.getGene() == null? null : c.getGene().getEnsemblGeneId(), 
+                                Comparator.nullsLast(Comparator.naturalOrder()))
+                        //Order by species as, in bgee 14, gene IDs are not unique
+                        .thenComparing(c -> c.getGene() == null? null : c.getGene().getSpecies().getId(), 
+                    Comparator.nullsLast(Comparator.naturalOrder()));
+                if (condGraph != null) {
                     tmpComparator = tmpComparator
                             //Then, we want the most precise conditions first (for the method 
                             //identifyRedundantCalls, and also for better display)
                             .thenComparing(ExpressionCall::getCondition, 
-                                    Comparator.nullsLast(condUtils::compare));
+                                    Comparator.nullsLast(condGraph::compare));
                 }
                 this.rankComparator = tmpComparator
                         //If everything else fails, simply order by the attributes of the Condition
                         .thenComparing(ExpressionCall::getCondition, 
                                 Comparator.nullsLast(Comparator.naturalOrder()));
-                this.conditionUtils = condUtils;
+                this.conditionGraph = condGraph;
             }
             @Override
             public int compare(ExpressionCall call1, ExpressionCall call2) {
@@ -231,11 +247,11 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                 return log.exit(this.rankComparator.compare(call1, call2));
             }
             /**
-             * @return  The {@code ConditionUtils} used by this {@code Comparator}. Can be {@code null} 
+             * @return  The {@code ConditionGraph} used by this {@code Comparator}. Can be {@code null} 
              *          if none was used. 
              */
-            public ConditionUtils getConditionUtils() {
-                return conditionUtils;
+            public ConditionGraph getConditionGraphs() {
+                return conditionGraph;
             }
         }
         
@@ -257,14 +273,16 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          * @see #generateMeanRankScoreClustering(Collection, ClusteringMethod, double)
          */
         public static final double DEFAULT_DISTANCE_THRESHOLD = 1.9;
-        
+
+        public static final int MAX_EXPRESSION_SCORE = 1000;
+
         /**
          * Remove equal calls from the {@code Collection} and order them using 
          * {@link ExpressionCall.RankComparator}.
          * 
          * @param calls     A {@code Collection} of {@code ExpressionCall}s to filter 
          *                  for redundant calls and to order based on their global mean rank.
-         * @param condUtils A {@code ConditionUtils} used to sort {@code Condition}s based on 
+         * @param condGraph A {@code ConditionGraph} used to sort {@code Condition}s based on 
          *                  their relations between each other, in case of equal ranks 
          *                  and equal gene IDs. Can be {@code null} if it is not needed 
          *                  to do such a sorting based on relations.
@@ -273,14 +291,14 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          * @see ExpressionCall.RankComparator
          */
         private static List<ExpressionCall> filterAndOrderByGlobalMeanRank(
-                Collection<ExpressionCall> calls, ConditionUtils conditionUtils) {
-            log.entry(calls, conditionUtils);
+                Collection<ExpressionCall> calls, ConditionGraph conditionGraph) {
+            log.entry(calls, conditionGraph);
             if (calls == null) {
                 return log.exit(null);
             }
             List<ExpressionCall> sortedCalls = new ArrayList<>(new HashSet<ExpressionCall>(calls));
             long startFilteringTimeInMs = System.currentTimeMillis();
-            Collections.sort(sortedCalls, new RankComparator(conditionUtils));
+            Collections.sort(sortedCalls, new RankComparator(conditionGraph));
             log.debug("Calls sorted in {} ms", System.currentTimeMillis() - startFilteringTimeInMs);
             return log.exit(sortedCalls);
         }
@@ -295,56 +313,56 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          * @param calls            A {@code Collection} of {@code ExpressionCall}s to filter. 
          *                         If the information of global mean rank or of Condition is missing, 
          *                         an {@code IllegalArgumentException} is thrown. 
-         * @param conditionUtils   A {@code ConditionUtils}, containing all the {@code Condition}s 
+         * @param conditionGraph   A {@code ConditionGraph}, containing all the {@code Condition}s 
          *                         related to {@code calls}. Otherwise, an {@code IllegalArgumentException} 
          *                         is thrown. 
          * @return                 A {@code Set} containing the {@code ExpressionCall}s that are redundant.
          * @throws IllegalArgumentException If the {@code Condition} of a provided {@code ExpressionCall} 
-         *                                  could not be found in the provided {@code ConditionUtils}, 
+         *                                  could not be found in the provided {@code ConditionGraph}, 
          *                                  or if an information of global mean rank or of Condition 
          *                                  was missing in an {@code ExpressionCall}.
-         * @see #identifyRedundantCalls(List, ConditionUtils)
-         * @see ConditionUtils#isConditionMorePrecise(Condition, Condition)
-         * @see ConditionUtils#getDescendantConditions(Condition)
+         * @see #identifyRedundantCalls(List, ConditionGraph)
+         * @see ConditionGraph#isConditionMorePrecise(Condition, Condition)
+         * @see ConditionGraph#getDescendantConditions(Condition)
          */
         public static Set<ExpressionCall> identifyRedundantCalls(Collection<ExpressionCall> calls, 
-                ConditionUtils conditionUtils) throws IllegalArgumentException {
-            log.entry(calls, conditionUtils);
+                ConditionGraph conditionGraph) throws IllegalArgumentException {
+            log.entry(calls, conditionGraph);
             
             //for the computations, we absolutely need to order the calls using RankComparator
-            return log.exit(identifyRedundantCalls(filterAndOrderByGlobalMeanRank(calls, conditionUtils), 
-                    conditionUtils));
+            return log.exit(identifyRedundantCalls(filterAndOrderByGlobalMeanRank(calls, conditionGraph), 
+                    conditionGraph));
             
         }
         
         /**
          * Identifies redundant {@code ExpressionCall}s using an already sorted {@code List}. 
          * This method performs exactly the same operation as {@link #identifyRedundantCalls(
-         * Collection, ConditionUtils)}, but is provided for performance issue: several methods, 
+         * Collection, ConditionGraph)}, but is provided for performance issue: several methods, 
          * in this class and outside, absolutely need to use a {@code List} of {@code ExpressionCall}s 
-         * sorted by the {@code RankComparator} using a {@code ConditionUtils}, which can be costly 
+         * sorted by the {@code RankComparator} using a {@code ConditionGraph}, which can be costly 
          * for considering relations between {@code Condition}s; it is then possible 
          * to sort a {@code List} of {@code ExpressionCall}s outside of this method, to reuse it 
          * for different method calls.
          * 
          * @param calls            A {@code List} of {@code ExpressionCall}s to filter, sorted using 
          *                         the {@code RankComparator}. 
-         * @param conditionUtils   A {@code ConditionUtils}, containing all the {@code Condition}s 
+         * @param conditionGraph   A {@code ConditionGraph}, containing all the {@code Condition}s 
          *                         related to {@code calls}. Otherwise, an {@code IllegalArgumentException} 
          *                         is thrown. 
          * @return                 A {@code Set} containing the {@code ExpressionCall}s that are redundant.
          * @throws IllegalArgumentException If the {@code Condition} of a provided {@code ExpressionCall} 
-         *                                  could not be found in the provided {@code ConditionUtils}, 
+         *                                  could not be found in the provided {@code ConditionGraph}, 
          *                                  or if an information of global mean rank or of Condition 
          *                                  was missing in an {@code ExpressionCall}, or if the list 
          *                                  was not sorted at least based on ranks.
          * @see ExpressionCall.RankComparator
-         * @see ConditionUtils#isConditionMorePrecise(Condition, Condition)
-         * @see ConditionUtils#getDescendantConditions(Condition)
+         * @see ConditionGraph#isConditionMorePrecise(Condition, Condition)
+         * @see ConditionGraph#getDescendantConditions(Condition)
          */
         public static Set<ExpressionCall> identifyRedundantCalls(List<ExpressionCall> calls, 
-                ConditionUtils conditionUtils) throws IllegalArgumentException {
-            log.entry(calls, conditionUtils);
+                ConditionGraph conditionGraph) throws IllegalArgumentException {
+            log.entry(calls, conditionGraph);
         
             long startFilteringTimeInMs = System.currentTimeMillis();
             
@@ -353,7 +371,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             ExpressionCall previousCall = null;
             for (ExpressionCall call: calls) {
                 //We cannot make sure that the List was ordered using a RankComparator 
-                //with a ConditionUtils, it would be too costly, but we perform a minimal check 
+                //with a ConditionGraph, it would be too costly, but we perform a minimal check 
                 //on ranks and conditions
                 if (call.getGlobalMeanRank() == null) {
                     throw log.throwing(new IllegalArgumentException("Missing rank for call: "
@@ -369,14 +387,20 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                 }
                 
                 //Retrieve the validated conditions for the currently iterated gene
-                Set<Condition> validatedConditions = validatedCalls.stream()
-                        .filter(c -> Objects.equals(c.getGeneId(), call.getGeneId()))
+                Set<Condition> validatedCondition = validatedCalls.stream()
+                        .filter(c -> Objects.equals(
+                            c.getGene() == null ? null: c.getGene().getEnsemblGeneId(),
+                            call.getGene() == null ? null: call.getGene().getEnsemblGeneId()))
+                        //Filter by species as, in bgee 14, gene IDs are not unique
+                        .filter(c -> Objects.equals(
+                            c.getGene() == null ? null: c.getGene().getSpecies().getId(),
+                            call.getGene() == null ? null: call.getGene().getSpecies().getId()))
                         .map(ExpressionCall::getCondition)
                         .collect(Collectors.toSet());
                 //check whether any of the validated Condition is a descendant 
                 //of the Condition of the iterated call
-                if (validatedConditions.isEmpty() || Collections.disjoint(validatedConditions, 
-                        conditionUtils.getDescendantConditions(call.getCondition()))) {
+                if (validatedCondition.isEmpty() || Collections.disjoint(validatedCondition, 
+                        conditionGraph.getDescendantConditions(call.getCondition()))) {
                     
                     log.trace("Valid call: {}", call);
                     validatedCalls.add(call);
@@ -458,7 +482,9 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                         throw log.throwing(new IllegalArgumentException(
                                 "Provided List incorrectly sorted"));
                     }
-                    if (!Objects.equals(previousCall.getGeneId(), call.getGeneId())) {
+                    if (!Objects.equals(
+                            previousCall.getGene() == null ? null: previousCall.getGene().getEnsemblGeneId(),
+                            call.getGene() == null ? null: call.getGene().getEnsemblGeneId())) {
                         throw log.throwing(new IllegalArgumentException(
                                 "A clustering can only be performed one gene at a time"));
                     }
@@ -793,35 +819,65 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             } else if (max < 1000) {
                 formatter.setMaximumFractionDigits(0);
                 formatter.setMinimumFractionDigits(0);
+            //FIXME: the javadoc for DecimalFormat explicitly states that NumberFormat.getInstance
+            //may return subclasses of NumberFormat other than DecimalFormat, this means this code
+            //is potentially broken on some machines. (Note FB: otherwise, why do you think I bothered
+            //using this NumberFormat mechanism, seriously? :p)
             } else if (formatter instanceof DecimalFormat) {
                 ((DecimalFormat) formatter).applyPattern("0.00E0");
             } else {
-                throw log.throwing(new AssertionError("No formatter could be defined"));
+                throw log.throwing(new IllegalStateException("No formatter could be defined"));
             }
             return log.exit(formatter);
         }
-
 
         //*******************************************
         // INSTANCE ATTRIBUTES AND METHODS
         //*******************************************
         /**
          * @see #getGlobalMeanRank()
+         * ATTRIBUTE NOT TAKEN INTO ACCOUNT IN HASHCODE/EQUALS METHODS.
          */
         //TODO: Maybe create a new RankScore class, storing the rank, 
         //plus an information of confidence about it.
         private final BigDecimal globalMeanRank;
-        public ExpressionCall(String geneId, Condition condition, DataPropagation dataPropagation, 
-                ExpressionSummary summaryCallType, DataQuality summaryQual, 
-                Collection<ExpressionCallData> callData, BigDecimal globalMeanRank) {
-            super(geneId, condition, dataPropagation, summaryCallType, summaryQual, callData);
+        /**
+         * A {@code BigDecimal} that is the max rank over all conditions and data types
+         * for the combination of condition parameters used to produce this {@code ExpressionCall}.
+         * Stores for convenience to be able to compute a global expression score.
+         * ATTRIBUTE NOT TAKEN INTO ACCOUNT IN HASHCODE/EQUALS METHODS.
+         */
+        private final BigDecimal maxRank;
+
+        public ExpressionCall(Gene gene, Condition condition, DataPropagation dataPropagation, 
+                ExpressionSummary summaryCallType, SummaryQuality summaryQual, 
+                Collection<ExpressionCallData> callData,
+                BigDecimal globalMeanRank, BigDecimal maxRank) {
+            this(gene, condition, dataPropagation, summaryCallType, summaryQual, callData,
+                    globalMeanRank, maxRank, null);
+        }
+        public ExpressionCall(Gene gene, Condition condition, DataPropagation dataPropagation, 
+                ExpressionSummary summaryCallType, SummaryQuality summaryQual, 
+                Collection<ExpressionCallData> callData,
+                BigDecimal globalMeanRank, BigDecimal maxRank,
+                Collection<ExpressionCall> sourceCalls) {
+            super(gene, condition, dataPropagation, summaryCallType, summaryQual, callData,
+                sourceCalls == null ? new HashSet<>() : sourceCalls.stream()
+                    .map(c -> (Call<ExpressionSummary, ExpressionCallData>) c)
+                    .collect(Collectors.toSet()));
             
-            if (globalMeanRank != null && globalMeanRank.compareTo(new BigDecimal(0)) <= 0) {
+            if (globalMeanRank != null && globalMeanRank.compareTo(new BigDecimal(0)) <= 0 ||
+                    maxRank != null && maxRank.compareTo(new BigDecimal(0)) <= 0) {
                 throw log.throwing(new IllegalArgumentException(
                         "A rank cannot be less than or equal to 0."));
             }
-            //BigDecimal are immutable, no need to copy it
+            if (globalMeanRank != null && maxRank == null) {
+                throw log.throwing(new IllegalArgumentException(
+                        "The max rank must be provided when a rank is provided."));
+            }
+            //BigDecimal are immutable, no need to copy them
             this.globalMeanRank = globalMeanRank;
+            this.maxRank = maxRank;
         }
         
         /**
@@ -829,10 +885,12 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          *          this {@code ExpressionCall}.
          *          
          * @see #getFormattedGlobalMeanRank()
-         * @see #getFormattedGlobalMeanRank(NumberFormat)
          */
         public BigDecimal getGlobalMeanRank() {
             return this.globalMeanRank;
+        }
+        public Integer getExpressionScore() {
+            throw new UnsupportedOperationException("Not implemented");
         }
         /**
          * @return  A {@code String} corresponding to the rank score of this call, formatted 
@@ -862,9 +920,8 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         
         @Override
         public int hashCode() {
-            final int prime = 31;
             int result = super.hashCode();
-            result = prime * result + ((globalMeanRank == null) ? 0 : globalMeanRank.hashCode());
+            //we don't take into account rank information for hashCode/equals methods
             return result;
         }
         @Override
@@ -878,27 +935,25 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             if (getClass() != obj.getClass()) {
                 return false;
             }
-            ExpressionCall other = (ExpressionCall) obj;
-            if (globalMeanRank == null) {
-                if (other.globalMeanRank != null) {
-                    return false;
-                }
-            } else if (!globalMeanRank.equals(other.globalMeanRank)) {
-                return false;
-            }
+            //we don't take into account rank information for hashCode/equals methods
             return true;
         }
 
         @Override
         public String toString() {
             StringBuilder builder = new StringBuilder();
-            builder.append("ExpressionCall [getGlobalMeanRank()=").append(getGlobalMeanRank())
-                   .append(", super Call=").append(super.toString())
+            builder.append("ExpressionCall [gene=").append(getGene())
+                   .append(", condition=").append(getCondition())
+                   .append(", dataPropagation=").append(getDataPropagation())
+                   .append(", summaryCallType=").append(getSummaryCallType())
+                   .append(", summaryQuality=").append(getSummaryQuality())
+                   .append(", callData=").append(getCallData())
+                   .append(", sourceCalls()=").append(getSourceCalls())
+                   .append(", globalMeanRank=").append(globalMeanRank)
+                   .append(", maxRank=").append(maxRank)
                    .append("]");
             return builder.toString();
         }
-        
-        
     }
     
     //TODO: check that all DiffExpressionCallData 
@@ -909,10 +964,20 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          */
         private final DiffExpressionFactor diffExpressionFactor;
         
-        public DiffExpressionCall(DiffExpressionFactor factor, String geneId, 
+        public DiffExpressionCall(DiffExpressionFactor factor, Gene gene, 
                 Condition condition, DiffExpressionSummary summaryCallType, 
-                DataQuality summaryQual, Collection<DiffExpressionCallData> callData) {
-            super(geneId, condition, new DataPropagation(), summaryCallType, summaryQual, callData);
+                SummaryQuality summaryQual, Collection<DiffExpressionCallData> callData) {
+            this(factor, gene, condition, summaryCallType, summaryQual, callData, null);
+        }
+        
+        public DiffExpressionCall(DiffExpressionFactor factor, Gene gene, 
+            Condition condition, DiffExpressionSummary summaryCallType, 
+            SummaryQuality summaryQual, Collection<DiffExpressionCallData> callData,
+            Collection<DiffExpressionCall> sourceCalls) {
+            super(gene, condition, null, summaryCallType, summaryQual, callData, 
+                sourceCalls == null ? new HashSet<>() : sourceCalls.stream()
+                .map(c -> (Call<DiffExpressionSummary, DiffExpressionCallData>) c)
+                .collect(Collectors.toSet()));
             this.diffExpressionFactor = factor;
         }
 
@@ -951,6 +1016,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
 
         @Override
         public String toString() {
+            
             StringBuilder builder = new StringBuilder();
             builder.append("DiffExpressionCall [diffExpressionFactor()=").append(getDiffExpressionFactor())
                    .append(", super Call=").append(super.toString())
@@ -958,72 +1024,90 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             return builder.toString();
         }
     }
-  //**********************************************
+    
+    //**********************************************
     //   INSTANCE ATTRIBUTES AND METHODS
     //**********************************************
     
-    private final String geneId;
+    private final Gene gene;
     
     private final Condition condition;
-    
+
+    //XXX:to move to ExpressionCall? (also in CallData, to be moved to ExpressionCallData?)
     private final DataPropagation dataPropagation;
     
     private final T summaryCallType;
     
-    private final DataQuality summaryQuality;
+    private final SummaryQuality summaryQuality;
     
     private final Set<U> callData;
 
-    //Note: we cannot always know the DataPropagation status per data type, 
-    //so we need to be able to provide a global DataPropagation status over all data types.
-    protected Call(String geneId, Condition condition, DataPropagation dataPropagation, 
-            T summaryCallType, DataQuality summaryQual, Collection<U> callData) {
-        //TODO: sanity checks
-        if (DataQuality.NODATA.equals(summaryQual)) {
+    //XXX: to remove? Seems useless now
+    private final Set<Call<T, U>> sourceCalls;
+
+    private Call(Gene gene, Condition condition, DataPropagation dataPropagation,
+        T summaryCallType, SummaryQuality summaryQuality, Collection<U> callData, 
+        Set<Call<T, U>> sourceCalls) {
+        if (DataQuality.NODATA.equals(summaryQuality)) {
             throw log.throwing(new IllegalArgumentException("An actual DataQuality must be provided."));
         }
-        this.geneId = geneId;
+//        if ((callData == null || callData.isEmpty()) && (isObservedData == null || summaryCallType == null || summaryQuality == null)) {
+//            throw log.throwing(new IllegalArgumentException(
+//                "Call data must be provided to infer isObservedData, summaryCallType and summaryQuality."));
+//        }
+        this.gene = gene;
         this.condition = condition;
-        this.dataPropagation = dataPropagation;
-        this.summaryCallType = summaryCallType;
-        this.summaryQuality = summaryQual;
         this.callData = Collections.unmodifiableSet(
-                callData == null? new HashSet<>(): new HashSet<>(callData));
-    }
-
-    public String getGeneId() {
-        return geneId;
+            callData == null? new HashSet<>(): new HashSet<>(callData));
+//        if (callData != null && !callData.isEmpty()) {
+//            this.isObservedData = isObservedData != null? isObservedData : inferIsObservedData(this.callData);
+//            this.summaryCallType = summaryCallType != null? summaryCallType : inferSummaryCallType(this.callData);
+//            this.summaryQuality = summaryQuality != null? summaryQuality : inferSummaryQuality(this.callData);            
+//        } else {
+            this.dataPropagation = dataPropagation;
+            this.summaryCallType = summaryCallType;
+            this.summaryQuality = summaryQuality;            
+//        }
+        this.sourceCalls = Collections.unmodifiableSet(
+            sourceCalls == null? new HashSet<>(): new HashSet<>(sourceCalls));
     }
     
+    public Gene getGene() {
+        return gene;
+    }
     public Condition getCondition() {
         return condition;
     }
     public DataPropagation getDataPropagation() {
         return dataPropagation;
     }
-
     public T getSummaryCallType() {
         return summaryCallType;
     }
-    public DataQuality getSummaryQuality() {
+    public SummaryQuality getSummaryQuality() {
         return summaryQuality;
     }
     public Set<U> getCallData() {
         return callData;
     }
-
+    public Set<Call<T, U>> getSourceCalls() {
+        return sourceCalls;
+    }
+    
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((callData == null) ? 0 : callData.hashCode());
+        result = prime * result + ((gene == null) ? 0 : gene.hashCode());
         result = prime * result + ((condition == null) ? 0 : condition.hashCode());
         result = prime * result + ((dataPropagation == null) ? 0 : dataPropagation.hashCode());
-        result = prime * result + ((geneId == null) ? 0 : geneId.hashCode());
         result = prime * result + ((summaryCallType == null) ? 0 : summaryCallType.hashCode());
         result = prime * result + ((summaryQuality == null) ? 0 : summaryQuality.hashCode());
+        result = prime * result + ((callData == null) ? 0 : callData.hashCode());
+        result = prime * result + ((sourceCalls == null) ? 0 : sourceCalls.hashCode());
         return result;
     }
+    
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -1036,11 +1120,11 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             return false;
         }
         Call<?, ?> other = (Call<?, ?>) obj;
-        if (callData == null) {
-            if (other.callData != null) {
+        if (gene == null) {
+            if (other.gene != null) {
                 return false;
             }
-        } else if (!callData.equals(other.callData)) {
+        } else if (!gene.equals(other.gene)) {
             return false;
         }
         if (condition == null) {
@@ -1051,19 +1135,10 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             return false;
         }
         if (dataPropagation == null) {
-            if (other.dataPropagation != null) {
+            if (other.dataPropagation != null)
                 return false;
-            }
-        } else if (!dataPropagation.equals(other.dataPropagation)) {
+        } else if (!dataPropagation.equals(other.dataPropagation))
             return false;
-        }
-        if (geneId == null) {
-            if (other.geneId != null) {
-                return false;
-            }
-        } else if (!geneId.equals(other.geneId)) {
-            return false;
-        }
         if (summaryCallType == null) {
             if (other.summaryCallType != null) {
                 return false;
@@ -1074,16 +1149,34 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         if (summaryQuality != other.summaryQuality) {
             return false;
         }
+        if (callData == null) {
+            if (other.callData != null) {
+                return false;
+            }
+        } else if (!callData.equals(other.callData)) {
+            return false;
+        }
+        if (sourceCalls == null) {
+            if (other.sourceCalls != null) {
+                return false;
+            }
+        } else if (!sourceCalls.equals(other.sourceCalls)) {
+            return false;
+        }
         return true;
     }
 
     @Override
     public String toString() {
-        return    ", geneId=" + geneId 
-                + ", condition=" + condition 
-                + ", dataPropagation=" + dataPropagation
-                + ", summaryCallType=" + summaryCallType 
-                + ", summaryQuality=" + summaryQuality 
-                + ", callData=" + callData;
+        StringBuilder builder = new StringBuilder();
+        builder.append("Call [gene=").append(gene)
+               .append(", condition=").append(condition)
+               .append(", dataPropagation=").append(dataPropagation)
+               .append(", summaryCallType=").append(summaryCallType)
+               .append(", summaryQuality=").append(summaryQuality)
+               .append(", callData=").append(callData)
+               .append(", sourceCalls=").append(sourceCalls)
+               .append("]");
+        return builder.toString();
     }
 }

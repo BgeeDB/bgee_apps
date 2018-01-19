@@ -78,20 +78,20 @@ public class GenerateTaxonOntologyTest extends TestAncestor {
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         
         assertEquals("Incorrect number of classes in generated ontology", 11, 
-                wrapper.getAllOWLClasses().size());
+                wrapper.getAllRealOWLClasses().size());
         
         String prefix = "NCBITaxon:";
-        OWLClass cls1 = wrapper.getOWLClassByIdentifier(prefix + taxId1);
-        OWLClass cls2 = wrapper.getOWLClassByIdentifier(prefix + taxId2);
-        OWLClass cls3 = wrapper.getOWLClassByIdentifier(prefix + taxId3);
-        OWLClass cls4 = wrapper.getOWLClassByIdentifier(prefix + taxId4);
-        OWLClass cls5 = wrapper.getOWLClassByIdentifier(prefix + taxId5);
-        OWLClass cls6 = wrapper.getOWLClassByIdentifier(prefix + taxId6);
-        OWLClass cls7 = wrapper.getOWLClassByIdentifier(prefix + taxId7);
-        OWLClass cls8 = wrapper.getOWLClassByIdentifier(prefix + taxId8);
-        OWLClass cls11 = wrapper.getOWLClassByIdentifier(prefix + taxId11);
-        OWLClass cls9 = wrapper.getOWLClassByIdentifier(prefix + taxId9);
-        OWLClass cls10 = wrapper.getOWLClassByIdentifier(prefix + taxId10);
+        OWLClass cls1 = wrapper.getOWLClassByIdentifierNoAltIds(prefix + taxId1);
+        OWLClass cls2 = wrapper.getOWLClassByIdentifierNoAltIds(prefix + taxId2);
+        OWLClass cls3 = wrapper.getOWLClassByIdentifierNoAltIds(prefix + taxId3);
+        OWLClass cls4 = wrapper.getOWLClassByIdentifierNoAltIds(prefix + taxId4);
+        OWLClass cls5 = wrapper.getOWLClassByIdentifierNoAltIds(prefix + taxId5);
+        OWLClass cls6 = wrapper.getOWLClassByIdentifierNoAltIds(prefix + taxId6);
+        OWLClass cls7 = wrapper.getOWLClassByIdentifierNoAltIds(prefix + taxId7);
+        OWLClass cls8 = wrapper.getOWLClassByIdentifierNoAltIds(prefix + taxId8);
+        OWLClass cls11 = wrapper.getOWLClassByIdentifierNoAltIds(prefix + taxId11);
+        OWLClass cls9 = wrapper.getOWLClassByIdentifierNoAltIds(prefix + taxId9);
+        OWLClass cls10 = wrapper.getOWLClassByIdentifierNoAltIds(prefix + taxId10);
         assertNotNull("Incorrect classes in generated ontology", cls1);
         assertEquals("Incorrect generated label", "root", wrapper.getLabel(cls1));
         assertNotNull("Incorrect classes in generated ontology", cls2);

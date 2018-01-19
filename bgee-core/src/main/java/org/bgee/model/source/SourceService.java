@@ -10,9 +10,8 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.Service;
+import org.bgee.model.CommonService;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.source.SourceDAO.SourceTO;
 import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO;
 import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO.InfoType;
@@ -26,26 +25,17 @@ import org.bgee.model.expressiondata.baseelements.DataType;
  * @version Bgee 13, July 2016
  * @since   Bgee 13, Mar. 2016
  */
-public class SourceService extends Service {
+public class SourceService extends CommonService {
 
     private static final Logger log = LogManager.getLogger(SourceService.class.getName());
 
     /**
-     * 0-arg constructor that will cause this {@code SourceService} to use 
-     * the default {@code DAOManager} returned by {@link DAOManager#getDAOManager()}. 
-     * 
-     * @see #SourceService(DAOManager)
+     * @param serviceFactory            The {@code ServiceFactory} to be used to obtain {@code Service}s 
+     *                                  and {@code DAOManager}.
+     * @throws IllegalArgumentException If {@code serviceFactory} is {@code null}.
      */
-    public SourceService() {
-        this(DAOManager.getDAOManager());
-    }
-    /**
-     * @param daoManager    The {@code DAOManager} to be used by this {@code SourceService} 
-     *                      to obtain {@code DAO}s.
-     * @throws IllegalArgumentException If {@code daoManager} is {@code null}.
-     */
-    public SourceService(DAOManager daoManager) {
-        super(daoManager);
+    public SourceService(ServiceFactory serviceFactory) {
+        super(serviceFactory);
     }
     
     /**
@@ -103,9 +93,9 @@ public class SourceService extends Service {
         List<Source> completedSources = new ArrayList<>();
 
         for (Source source : sources) {
-            Map<String, Set<DataType>> forData = getDataTypesBySpecies(
+            Map<Integer, Set<DataType>> forData = getDataTypesBySpecies(
                     sourceToSpeciesTOs, source.getId(), InfoType.DATA);
-            Map<String, Set<DataType>> forAnnotation = getDataTypesBySpecies(
+            Map<Integer, Set<DataType>> forAnnotation = getDataTypesBySpecies(
                     sourceToSpeciesTOs, source.getId(), InfoType.ANNOTATION);
 
             completedSources.add(new Source(source.getId(), source.getName(), source.getDescription(),
@@ -123,19 +113,19 @@ public class SourceService extends Service {
      * 
      * @param sourceToSpeciesTOs    A {@code List} of {@code SourceToSpeciesTO}s that are sources 
      *                              to species to be grouped.
-     * @param sourceId              A {@code String} that is the source ID for which to return
+     * @param sourceId              An {@code Integer} that is the source ID for which to return
      *                              data types by species.
      * @param infoType              An {@code InfoType} that is the information type for which
      *                              to return data types by species.
-     * @return                      A {@code Map} where keys are {@code String}s corresponding to 
+     * @return                      A {@code Map} where keys are {@code Integer}s corresponding to 
      *                              species IDs, the associated values being a {@code Set} of 
      *                              {@code DataType}s corresponding to data types of {@code infoType}
      *                              data of the provided {@code sourceId}.
      */
-    private Map<String, Set<DataType>> getDataTypesBySpecies(
-            final List<SourceToSpeciesTO> sourceToSpeciesTOs, String sourceId, InfoType infoType) {
+    private Map<Integer, Set<DataType>> getDataTypesBySpecies(
+            final List<SourceToSpeciesTO> sourceToSpeciesTOs, Integer sourceId, InfoType infoType) {
         log.entry(sourceToSpeciesTOs, sourceId, infoType);
-        Map<String, Set<DataType>> map = sourceToSpeciesTOs.stream()
+        Map<Integer, Set<DataType>> map = sourceToSpeciesTOs.stream()
             .filter(to -> to.getDataSourceId().equals(sourceId))
             .filter(to -> to.getInfoType().equals(infoType))
             .collect(Collectors.toMap(to -> to.getSpeciesId(), 
@@ -188,22 +178,6 @@ public class SourceService extends Service {
                 return log.exit(SourceCategory.ONTOLOGY);
         default: 
             throw log.throwing(new IllegalStateException("Unsupported SourceTO.SourceCategory: " + cat));
-        }
-    }
-    
-    private static DataType convertDaoDataTypeToDataType(SourceToSpeciesTO.DataType dt) {
-        log.entry(dt);
-        switch(dt) {
-            case AFFYMETRIX: 
-                return log.exit(DataType.AFFYMETRIX);
-            case EST:
-                return log.exit(DataType.EST);
-            case IN_SITU: 
-                return log.exit(DataType.IN_SITU);
-            case RNA_SEQ: 
-                return log.exit(DataType.RNA_SEQ);
-        default: 
-            throw log.throwing(new IllegalStateException("Unsupported SourceToSpeciesTO.DataType: " + dt));
         }
     }
 }

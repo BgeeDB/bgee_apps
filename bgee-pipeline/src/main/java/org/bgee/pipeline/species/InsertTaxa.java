@@ -11,11 +11,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.keyword.KeywordDAO.EntityToKeywordTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
@@ -72,7 +74,7 @@ public class InsertTaxa extends MySQLDAOUser {
      * and that is also the name of the column to retrieve these IDs from the TSV file 
      * storing the species used in Bgee.
      */
-    public static final String SPECIES_ID_KEY = "taxon ID";
+    public static final String SPECIES_ID_KEY = "speciesId";
     /**
      * A {@code String} that is the key to retrieve the genus name (for instance, 
      * "homo") of the species used in Bgee from the {@code Map}s returned by 
@@ -94,6 +96,12 @@ public class InsertTaxa extends MySQLDAOUser {
      * to retrieve these common names from the TSV file storing the species used in Bgee.
      */
     public static final String SPECIES_COMMON_NAME_KEY = "speciesCommonName";
+    /**
+     * A {@code String} that is the key to retrieve the preferred display order of species, 
+     * and that is also the name of the column 
+     * to retrieve this display order from the TSV file storing the species used in Bgee.
+     */
+    public static final String SPECIES_DISPLAY_ORDER_KEY = "displayOrder";
     /**
      * A {@code String} that is the key to retrieve the path to the genome file 
      * for a species used in Bgee, from the {@code Map}s returned by 
@@ -117,6 +125,13 @@ public class InsertTaxa extends MySQLDAOUser {
      */
     public static final String SPECIES_GENOME_VERSION_KEY= "genomeVersion";
     /**
+     * A {@code String} that is the key to retrieve the ID of the data source providing 
+     * genome information for a species, from the {@code Map}s returned by {@link #getSpeciesFromFile(String)},
+     * and that is also the name of the column to retrieve these values from 
+     * the TSV file storing the species used in Bgee.
+     */
+    public static final String SPECIES_GENOME_DATA_SOURCE_ID_KEY= "dataSourceId";
+    /**
      * A {@code String} that is the key to retrieve the ID of the species whose the genome 
      * was used for a species used in Bgee, from the {@code Map}s returned by 
      * {@link #getSpeciesFromFile(String)}, and that is also the name of the column 
@@ -138,6 +153,11 @@ public class InsertTaxa extends MySQLDAOUser {
      * will be changed to 'PPAG' when used for the bonobo).
      */
     public static final String SPECIES_FAKE_GENE_PREFIX_KEY= "fakeGeneIdPrefix";
+    /**
+     * A {@code String} that is the key to retrieve keywords associated to a species, 
+     * separated by a separator {@link org.bgee.pipeline.annotations.AnnotationCommon#ENTITY_SEPARATORS}.
+     */
+    public static final String SPECIES_KEYWORDS_KEY= "keywords";
     
     /**
      * A {@code OWLGraphWrapper} wrapping the NCBI taxonomy {@code OWLOntology}.
@@ -167,7 +187,7 @@ public class InsertTaxa extends MySQLDAOUser {
      * to modify to add/remove a species. The first line should be a header line, 
      * defining 7 columns, named exactly as: {@link #SPECIES_ID_KEY}, 
      * {@link #SPECIES_GENUS_KEY}, {@link #SPECIES_NAME_KEY}, {@link #SPECIES_COMMON_NAME_KEY}, 
-     * {@link #SPECIES_GENOME_FILE_KEY}, {@link SPECIES_GENOME_VERSION_KEY},
+     * {@link #SPECIES_GENOME_FILE_KEY}, {@link #SPECIES_GENOME_VERSION_KEY},
      * {@link #SPECIES_GENOME_ID_KEY}, {@link #SPECIES_FAKE_GENE_PREFIX_KEY} (in whatever order).
      * the IDs should correspond to the NCBI taxonomy ID (e.g., 9606 for human).
      * <li>path to the tsv files containing the IDs of the taxa to be inserted in Bgee, 
@@ -219,7 +239,7 @@ public class InsertTaxa extends MySQLDAOUser {
      * to modify to add/remove a species. The first line should be a header line, 
      * defining 7 columns, named exactly as: {@link #SPECIES_ID_KEY}, 
      * {@link #SPECIES_GENUS_KEY}, {@link #SPECIES_NAME_KEY}, {@link #SPECIES_COMMON_NAME_KEY}, 
-     * {@link #SPECIES_GENOME_FILE_KEY}, {@link SPECIES_GENOME_VERSION_KEY},
+     * {@link #SPECIES_GENOME_FILE_KEY}, {@link #SPECIES_GENOME_VERSION_KEY},
      * {@link #SPECIES_GENOME_ID_KEY}, {@link #SPECIES_FAKE_GENE_PREFIX_KEY} (in whatever order).
      * the IDs should correspond to the NCBI taxonomy ID (e.g., 9606 for human).
      * <li>the path to a TSV file containing the NCBI taxonomy IDs of additional taxa 
@@ -270,8 +290,10 @@ public class InsertTaxa extends MySQLDAOUser {
      * TSV file. The first line of this file should be a header line, 
      * defining 7 columns, named exactly as: {@link #SPECIES_ID_KEY}, 
      * {@link #SPECIES_GENUS_KEY}, {@link #SPECIES_NAME_KEY}, {@link #SPECIES_COMMON_NAME_KEY}, 
-     * {@link #SPECIES_GENOME_FILE_KEY}, {@link SPECIES_GENOME_VERSION_KEY},
-     * {@link #SPECIES_GENOME_ID_KEY}, {@link #SPECIES_FAKE_GENE_PREFIX_KEY} (in whatever order). 
+     * {@link #SPECIES_GENOME_FILE_KEY}, {@link SPECIES_GENOME_VERSION_KEY}, 
+     * {@link #SPECIES_GENOME_DATA_SOURCE_ID_KEY}, 
+     * {@link #SPECIES_GENOME_ID_KEY}, {@link #SPECIES_FAKE_GENE_PREFIX_KEY}, 
+     * {@link #SPECIES_KEYWORDS_KEY} (in whatever order). 
      * This method returns a {@code Collection} where each 
      * species is represented by a {@code Map}, containing information mapped 
      * to the keys listed above. In these {@code Map}s, the value associated to 
@@ -283,8 +305,13 @@ public class InsertTaxa extends MySQLDAOUser {
      * @return              A {@code Collection} of {@code Map}s where each {@code Map} 
      *                      represents a species, with information about it mapped to 
      *                      the keys {@link #SPECIES_ID_KEY}, {@link #SPECIES_GENUS_KEY}, 
-     *                      {@link #SPECIES_NAME_KEY}, {@link #SPECIES_COMMON_NAME_KEY}.
-     *                      The value associated to {@link #SPECIES_ID_KEY} is 
+     *                      {@link #SPECIES_NAME_KEY}, {@link #SPECIES_COMMON_NAME_KEY}, 
+     *                      {@link #SPECIES_GENOME_FILE_KEY}, {@link #SPECIES_GENOME_VERSION_KEY}, 
+     *                      {@link #SPECIES_GENOME_DATA_SOURCE_ID_KEY}, 
+     *                      {@link #SPECIES_GENOME_ID_KEY}, {@link #SPECIES_FAKE_GENE_PREFIX_KEY}, 
+     *                      {@link #SPECIES_KEYWORDS_KEY}.
+     *                      The values associated to {@link #SPECIES_ID_KEY} and 
+     *                      {@link #SPECIES_GENOME_DATA_SOURCE_ID_KEY} are 
      *                      an {@code Integer}, other values are {@code String}s.
      * @throws FileNotFoundException        If the file could not be found.
      * @throws IOException                  If the file could not be read.
@@ -300,7 +327,7 @@ public class InsertTaxa extends MySQLDAOUser {
             String unexpectedFormat = "The provided TSV species file is not " +
             		"in the expected format";
             String[] header = mapReader.getHeader(true);
-            if (header.length != 8) {
+            if (header.length != 11) {
                 throw log.throwing(new IllegalArgumentException(unexpectedFormat));
             }
             
@@ -313,17 +340,24 @@ public class InsertTaxa extends MySQLDAOUser {
                 } else if (header[i].equalsIgnoreCase(SPECIES_NAME_KEY)) {
                     processors[i] = new NotNull();
                 } else if (header[i].equalsIgnoreCase(SPECIES_COMMON_NAME_KEY)) {
-                    processors[i] = new UniqueHashCode(new NotNull());
+                    processors[i] = new Optional(new UniqueHashCode());
+                } else if (header[i].equalsIgnoreCase(SPECIES_DISPLAY_ORDER_KEY)) {
+                    processors[i] = new UniqueHashCode(new NotNull(new ParseInt()));
                 } else if (header[i].equalsIgnoreCase(SPECIES_GENOME_FILE_KEY)) {
                     processors[i] = new NotNull();
                 } else if (header[i].equalsIgnoreCase(SPECIES_GENOME_VERSION_KEY)) {
                     processors[i] = new NotNull();
+                } else if (header[i].equalsIgnoreCase(SPECIES_GENOME_DATA_SOURCE_ID_KEY)) {
+                    processors[i] = new NotNull(new ParseInt());
                 } else if (header[i].equalsIgnoreCase(SPECIES_GENOME_ID_KEY)) {
                     processors[i] = new Optional(new ParseInt());
                 } else if (header[i].equalsIgnoreCase(SPECIES_FAKE_GENE_PREFIX_KEY)) {
                     processors[i] = new Optional();
+                } else if (header[i].equalsIgnoreCase(SPECIES_KEYWORDS_KEY)) {
+                    processors[i] = new Optional(new AnnotationCommon.ParseMultipleStringValues());
                 } else {
-                    throw log.throwing(new IllegalArgumentException(unexpectedFormat));
+                    throw log.throwing(new IllegalArgumentException(unexpectedFormat 
+                            + " - unrecognized column: " + header[i]));
                 }
             }
             
@@ -387,6 +421,20 @@ public class InsertTaxa extends MySQLDAOUser {
             //get the SpeciesTOs to insert their information into the database
             Set<SpeciesTO> speciesTOs = this.getSpeciesTOs(allSpecies);
             
+            //retrieve keywords associated to species
+            //Suppress warning because SPECIES_KEYWORDS_KEY field is processed by ParseMultipleStringValues, 
+            //which return a List<String>
+            @SuppressWarnings("unchecked")
+            Map<Integer, Set<String>> speciesIdToKeywords = allSpecies.stream()
+                    .filter(spe -> spe.get(SPECIES_KEYWORDS_KEY) != null)
+                    .collect(Collectors.toMap(
+                            spe -> (Integer) spe.get(SPECIES_ID_KEY), 
+                            spe -> new HashSet<>((List<String>) spe.get(SPECIES_KEYWORDS_KEY))));
+            Set<String> allKeywords = speciesIdToKeywords.values().stream()
+                    .filter(set -> set != null)
+                    .flatMap(set -> set.stream())
+                    .collect(Collectors.toSet());
+            
             //now get the TaxonTOs to insert their information into the database.
             //note that using this method will modify the taxonomy ontology, 
             //by removing the Bgee species from it, and removing all taxa not related 
@@ -406,8 +454,23 @@ public class InsertTaxa extends MySQLDAOUser {
                 //need to insert the taxa first, because species have a reference 
                 //to their parent taxon
                 this.getTaxonDAO().insertTaxa(taxonTOs);
+                
                 //insert species
                 this.getSpeciesDAO().insertSpecies(speciesTOs);
+                
+                //insert keywords
+                this.getKeywordDAO().insertKeywords(allKeywords);
+                //now we retrieve the keywords to find their IDs
+                final Map<String, Integer> keywordToId = this.getKeywordDAO().getKeywords(allKeywords).stream()
+                        .collect(Collectors.toMap(keywordTO -> keywordTO.getName(), 
+                                                  keywordTO -> keywordTO.getId()));
+                //and we insert relations to species IDs
+                this.getKeywordDAO().insertKeywordToSpecies(speciesIdToKeywords.entrySet().stream()
+                        .filter(entry -> entry.getValue() != null && !entry.getValue().isEmpty())
+                        .flatMap(entry -> entry.getValue().stream().map(keyword -> 
+                            new EntityToKeywordTO<>(entry.getKey(), keywordToId.get(keyword))))
+                        .collect(Collectors.toSet()));
+                
                 this.commit();
             } finally {
                 this.closeDAO();
@@ -469,18 +532,29 @@ public class InsertTaxa extends MySQLDAOUser {
             //we retrieve the Integer value of the ID used on the NCBI website, 
             //because this is how we store this ID in the database. But we convert it 
             //to a String because the Bgee classes only accept IDs as Strings.
-            String parentTaxonId = String.valueOf(OntologyUtils.getTaxNcbiId(
-                    this.taxOntWrapper.getIdentifier(parents.iterator().next())));
+            Integer parentTaxonId = OntologyUtils.getTaxNcbiId(
+                    this.taxOntWrapper.getIdentifier(parents.iterator().next()));
             
-            String commonName  = (String) species.get(SPECIES_COMMON_NAME_KEY);
             String genus       = (String) species.get(SPECIES_GENUS_KEY);
             String speciesName = (String) species.get(SPECIES_NAME_KEY);
-            if (StringUtils.isBlank(commonName) || StringUtils.isBlank(genus) || 
-                    StringUtils.isBlank(speciesName)) {
+            if (StringUtils.isBlank(genus) || StringUtils.isBlank(speciesName)) {
                 throw log.throwing(new IllegalArgumentException("The provided species " +
-                        "contain incorrect information: " + commonName + " - " + 
+                        "contain incorrect information: " + 
                         genus + " - " + speciesName));
             }
+            //commonName not mandatory
+            String commonName  = (String) species.get(SPECIES_COMMON_NAME_KEY);
+            if (commonName == null) {
+                commonName = "";
+            }
+
+            //preferred display order
+            int displayOrder = (Integer) species.get(SPECIES_DISPLAY_ORDER_KEY);
+            if (displayOrder <= 0) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Incorrect display order: " + displayOrder));
+            }
+            
             String genomeFilePath = (String) species.get(SPECIES_GENOME_FILE_KEY);
             if (StringUtils.isBlank(genomeFilePath)) {
                 throw log.throwing(new IllegalArgumentException(
@@ -491,13 +565,12 @@ public class InsertTaxa extends MySQLDAOUser {
                 throw log.throwing(new IllegalArgumentException(
                         "Missing path to genome version for species: " + commonName));
             }
-            Integer genomeSpeciesId = (Integer) species.get(SPECIES_GENOME_ID_KEY);
-            String fakeGeneIdPrefix = (String) species.get(SPECIES_FAKE_GENE_PREFIX_KEY);
+            Integer dataSourceId = (Integer) species.get(SPECIES_GENOME_DATA_SOURCE_ID_KEY);
             
-            speciesTOs.add(new SpeciesTO(String.valueOf(speciesId), commonName, genus, 
-                    speciesName, parentTaxonId, genomeFilePath, genomeVersion,
-                    (genomeSpeciesId == null ? null: String.valueOf(genomeSpeciesId)), 
-                    fakeGeneIdPrefix));
+            Integer genomeSpeciesId = (Integer) species.get(SPECIES_GENOME_ID_KEY);
+            
+            speciesTOs.add(new SpeciesTO(speciesId, commonName, genus, speciesName, displayOrder,
+                    parentTaxonId, genomeFilePath, genomeVersion, dataSourceId, genomeSpeciesId));
         }
         if (speciesTOs.size() != allSpecies.size()) {
             throw log.throwing(new IllegalStateException("The taxonomy ontology " +
@@ -577,7 +650,7 @@ public class InsertTaxa extends MySQLDAOUser {
         };
         //now we create a List with OWLClass order based on the comparator
         List<OWLClass> classOrder = 
-                new ArrayList<OWLClass>(this.taxOntWrapper.getAllOWLClasses());
+                new ArrayList<OWLClass>(this.taxOntWrapper.getAllRealOWLClasses());
         Collections.sort(classOrder, comparator);
         
         //get the parameters for the nested set model
@@ -595,13 +668,12 @@ public class InsertTaxa extends MySQLDAOUser {
         
         //OK, now we have everything to instantiate the TaxonTOs
         Set<TaxonTO> taxonTOs = new HashSet<TaxonTO>();
-        for (OWLClass taxon: this.taxOntWrapper.getAllOWLClasses()) {
+        for (OWLClass taxon: this.taxOntWrapper.getAllRealOWLClasses()) {
             //get the NCBI ID of this taxon.
             //we retrieve the Integer value of the ID used on the NCBI website, 
             //because this is how we store this ID in the database. But we convert it 
             //to a String because the Bgee classes only accept IDs as Strings.
-            String taxonId = String.valueOf(OntologyUtils.getTaxNcbiId(
-                    this.taxOntWrapper.getIdentifier(taxon)));
+            Integer taxonId = OntologyUtils.getTaxNcbiId(this.taxOntWrapper.getIdentifier(taxon));
             String commonName = this.getCommonNameSynonym(taxon);
             String scientificName = this.taxOntWrapper.getLabel(taxon);
             Map<String, Integer> taxonParams = nestedSetModelParams.get(taxon);

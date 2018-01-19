@@ -9,9 +9,10 @@ import org.bgee.controller.BgeeProperties;
 
 /**
  * Class that generates a javascript equivalent of the provided {@link BgeeProperties} class.
- * The aim should be to use an instance similar to the one injected to the {@link FrontController}
- * of bgee-webapp. Note that it is only a subset of the properties that are useful to the
- * javascript. Be careful never to make available a property that should not be publicly available
+ * The aim should be to use an instance similar to the one injected to the 
+ * {@link org.bgee.controller.FrontController} of bgee-webapp.
+ * Note that it is only a subset of the properties that are useful to the javascript.
+ * Be careful never to make available a property that should not be publicly available
  * for security reasons.
  * It writes the result in the file provided to the constructor.
  *

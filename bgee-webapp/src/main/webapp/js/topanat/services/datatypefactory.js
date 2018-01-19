@@ -67,7 +67,7 @@
                 throw "A call type must be provided";
             }
 
-            var allowedTypes = CallTypes[callType].allowed;
+            var allowedTypes = SummaryCallTypes[callType].allowed;
 
             if(!allowedTypes || allowedTypes.length == 0) {
                 logger.error('No allowed datatypes for '+callType+' found!');

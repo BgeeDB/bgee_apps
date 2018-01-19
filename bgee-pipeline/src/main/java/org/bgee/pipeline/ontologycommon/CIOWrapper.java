@@ -710,19 +710,19 @@ public class CIOWrapper {
         }
         
         //load the basic components of CIO used to pre-compose other terms
-        this.confidenceStatement = this.wrapper.getOWLClassByIdentifier(
+        this.confidenceStatement = this.wrapper.getOWLClassByIdentifierNoAltIds(
                 CONFIDENCE_STATEMENT_ID);
-        this.rejectedStatement = this.wrapper.getOWLClassByIdentifier(
+        this.rejectedStatement = this.wrapper.getOWLClassByIdentifierNoAltIds(
                 REJECTED_STATEMENT_ID);
-        this.confidenceElement = this.wrapper.getOWLClassByIdentifier(
+        this.confidenceElement = this.wrapper.getOWLClassByIdentifierNoAltIds(
                 CONFIDENCE_ELEMENT_ID);
-        this.confidenceLevel = this.wrapper.getOWLClassByIdentifier(
+        this.confidenceLevel = this.wrapper.getOWLClassByIdentifierNoAltIds(
                 CONFIDENCE_LEVEL_ID);
-        this.evidenceConcordance = this.wrapper.getOWLClassByIdentifier(
+        this.evidenceConcordance = this.wrapper.getOWLClassByIdentifierNoAltIds(
                 EVIDENCE_CONCORDANCE_ID);
-        this.singleEvidenceConcordance = this.wrapper.getOWLClassByIdentifier(
+        this.singleEvidenceConcordance = this.wrapper.getOWLClassByIdentifierNoAltIds(
                 SINGLE_EVIDENCE_CONCORDANCE_ID);
-        this.evidenceTypeConcordance = this.wrapper.getOWLClassByIdentifier(
+        this.evidenceTypeConcordance = this.wrapper.getOWLClassByIdentifierNoAltIds(
                 EVIDENCE_TYPE_CONCORDANCE_ID);
         if (this.confidenceStatement == null || this.rejectedStatement == null || 
                 this.confidenceElement == null || 
@@ -748,7 +748,7 @@ public class CIOWrapper {
 //        List<OWLClass> confidenceLevels = new ArrayList<OWLClass>();
 //        Set<OWLClass> evidenceConcordances = new HashSet<OWLClass>();
 //        Set<OWLClass> evidenceTypeConcordances = new HashSet<OWLClass>();
-//        for (OWLClass cls: this.wrapper.getAllOWLClasses()) {
+//        for (OWLClass cls: this.wrapper.getAllRealOWLClasses()) {
 //            log.trace("Iterating {}", cls);
 //            Set<OWLClass> ancestors = this.wrapper.getAncestorsThroughIsA(cls);
 //            if (ancestors.contains(this.getConfidenceStatement()) || 
@@ -846,7 +846,7 @@ public class CIOWrapper {
 //        //now, we wrap and store all OWLClasses in CIOTerms
 //        Map<OWLClass, CIOTerm> classesTOCIOTerm = new HashMap<OWLClass, CIOTerm>();
 //        boolean hasStatement = false;
-//        for (OWLClass cls: this.wrapper.getAllOWLClasses()) {
+//        for (OWLClass cls: this.wrapper.getAllRealOWLClasses()) {
 //            CIOTerm cioTerm = new CIOTerm(cls, this);
 //            if (cioTerm.isConfidenceStatement()) {
 //                hasStatement = true;
@@ -862,21 +862,21 @@ public class CIOWrapper {
 //        
 //        
 //        
-//        this.singleEvidenceConf = this.wrapper.getOWLClassByIdentifier(
+//        this.singleEvidenceConf = this.wrapper.getOWLClassByIdentifierNoAltIds(
 //                SINGLE_EVIDENCE_CONF_ID);
-//        this.multipleEvidenceConf = this.wrapper.getOWLClassByIdentifier(
+//        this.multipleEvidenceConf = this.wrapper.getOWLClassByIdentifierNoAltIds(
 //                MULTIPLE_EVIDENCE_CONF_ID);
-//        this.congruentSameTypeEvidenceConf = this.wrapper.getOWLClassByIdentifier(
+//        this.congruentSameTypeEvidenceConf = this.wrapper.getOWLClassByIdentifierNoAltIds(
 //                CONGRUENT_SAME_TYPE_EVIDENCE_CONF_ID);
-//        this.congruentMultipleTypesEvidenceConf = this.wrapper.getOWLClassByIdentifier(
+//        this.congruentMultipleTypesEvidenceConf = this.wrapper.getOWLClassByIdentifierNoAltIds(
 //                CONGRUENT_MULTIPLE_TYPES_EVIDENCE_CONF_ID);
-//        this.weakConflictSameTypeEvidenceConf = this.wrapper.getOWLClassByIdentifier(
+//        this.weakConflictSameTypeEvidenceConf = this.wrapper.getOWLClassByIdentifierNoAltIds(
 //                WEAK_CONFLICT_SAME_TYPE_EVIDENCE_CONF_ID);
-//        this.weakConflictMultipleTypesEvidenceConf = this.wrapper.getOWLClassByIdentifier(
+//        this.weakConflictMultipleTypesEvidenceConf = this.wrapper.getOWLClassByIdentifierNoAltIds(
 //                WEAK_CONFLICT_MULTIPLE_TYPES_EVIDENCE_CONF_ID);
-//        this.strongConflictSameTypeEvidenceConf = this.wrapper.getOWLClassByIdentifier(
+//        this.strongConflictSameTypeEvidenceConf = this.wrapper.getOWLClassByIdentifierNoAltIds(
 //                STRONG_CONFLICT_SAME_TYPE_EVIDENCE_CONF_ID);
-//        this.strongConflictMultipleTypesEvidenceConf = this.wrapper.getOWLClassByIdentifier(
+//        this.strongConflictMultipleTypesEvidenceConf = this.wrapper.getOWLClassByIdentifierNoAltIds(
 //                STRONG_CONFLICT_MULTIPLE_TYPES_EVIDENCE_CONF_ID);
 //        if (this.singleEvidenceConf == null || this.multipleEvidenceConf == null || 
 //                this.congruentSameTypeEvidenceConf == null || 
@@ -903,10 +903,10 @@ public class CIOWrapper {
 //        }
 //        
 //        
-//        this.highConfLevel = this.wrapper.getOWLClassByIdentifier(HIGH_CONF_LEVEL_ID);
-//        this.mediumConfLevel = this.wrapper.getOWLClassByIdentifier(MEDIUM_CONF_LEVEL_ID);
-//        this.lowConfLevel = this.wrapper.getOWLClassByIdentifier(LOW_CONF_LEVEL_ID);
-//        this.rejectedTerm = this.wrapper.getOWLClassByIdentifier(REJECTED_TERM_ID);
+//        this.highConfLevel = this.wrapper.getOWLClassByIdentifierNoAltIds(HIGH_CONF_LEVEL_ID);
+//        this.mediumConfLevel = this.wrapper.getOWLClassByIdentifierNoAltIds(MEDIUM_CONF_LEVEL_ID);
+//        this.lowConfLevel = this.wrapper.getOWLClassByIdentifierNoAltIds(LOW_CONF_LEVEL_ID);
+//        this.rejectedTerm = this.wrapper.getOWLClassByIdentifierNoAltIds(REJECTED_TERM_ID);
 //        if (this.highConfLevel == null || this.mediumConfLevel == null || 
 //                this.lowConfLevel == null || this.rejectedTerm == null) {
 //            throw log.throwing(new IllegalArgumentException("The ontology used does not allow "
@@ -915,11 +915,11 @@ public class CIOWrapper {
 //                    " - Low conf: " + this.lowConfLevel + " - Rejected: " + this.rejectedTerm));
 //        }
 //        
-//        this.congruentConcordance = this.wrapper.getOWLClassByIdentifier(
+//        this.congruentConcordance = this.wrapper.getOWLClassByIdentifierNoAltIds(
 //                CONGRUENT_CONCORDANCE_ID);
-//        this.weaklyConflictingConcordance = this.wrapper.getOWLClassByIdentifier(
+//        this.weaklyConflictingConcordance = this.wrapper.getOWLClassByIdentifierNoAltIds(
 //                WEAKLY_CONFLICTING_CONCORDANCE_ID);
-//        this.stronglyConflictingConcordance = this.wrapper.getOWLClassByIdentifier(
+//        this.stronglyConflictingConcordance = this.wrapper.getOWLClassByIdentifierNoAltIds(
 //                STRONGLY_CONFLICTING_CONCORDANCE_ID);
 //        if (this.congruentConcordance == null || this.weaklyConflictingConcordance == null || 
 //                this.stronglyConflictingConcordance == null) {
@@ -930,9 +930,9 @@ public class CIOWrapper {
 //                " - Strongly conflicting concordance: " + this.stronglyConflictingConcordance));
 //        }
 //        
-//        this.sameTypeEvidenceConcordance = this.wrapper.getOWLClassByIdentifier(
+//        this.sameTypeEvidenceConcordance = this.wrapper.getOWLClassByIdentifierNoAltIds(
 //                SAME_TYPE_EVIDENCE_CONCORDANCE_ID);
-//        this.differentTypesEvidenceConcordance = this.wrapper.getOWLClassByIdentifier(
+//        this.differentTypesEvidenceConcordance = this.wrapper.getOWLClassByIdentifierNoAltIds(
 //                DIFFERENT_TYPES_EVIDENCE_CONCORDANCE_ID);
 //        if (this.sameTypeEvidenceConcordance == null || 
 //                this.differentTypesEvidenceConcordance == null) {
@@ -960,7 +960,7 @@ public class CIOWrapper {
 //        log.entry(ancestors);
 //        
 //        Set<OWLClass> intersectingClasses = new HashSet<OWLClass>();
-//        for (OWLClass cls: this.wrapper.getAllOWLClasses()) {
+//        for (OWLClass cls: this.wrapper.getAllRealOWLClasses()) {
 //            Set<OWLClass> relatedClasses = new HashSet<OWLClass>();
 //            relatedClasses.add(cls);
 //            relatedClasses.addAll(this.wrapper.getAncestorsThroughIsA(cls));
@@ -1556,7 +1556,7 @@ public class CIOWrapper {
         //we do not retrieve all classes to check for errors, we stop iteration 
         //as soon as a class is found, it is too slow to iterate all classes each time
         Set<OWLClass> identifiedClasses = new HashSet<OWLClass>();
-        for (OWLClass cls: this.wrapper.getAllOWLClasses()) {
+        for (OWLClass cls: this.wrapper.getAllRealOWLClasses()) {
             if (!this.isConfidenceStatement(cls)) {
                 continue;
             }

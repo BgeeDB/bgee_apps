@@ -81,8 +81,8 @@ implements SpeciesDataGroupDAO {
     /**
      * A {@code String} that is the ID of the species that the ordering 
      * of the {@code SpeciesToDatGroupTO}s will be based on, 
-     * when {@link SpeciesToGroupOrderingAttribute DISTANCE_TO_SPECIES} is used.
-     * @see SpeciesToGroupOrderingAttribute DISTANCE_TO_SPECIES
+     * when {@link SpeciesToGroupOrderingAttribute#DISTANCE_TO_SPECIES} is used.
+     * @see SpeciesToGroupOrderingAttribute#DISTANCE_TO_SPECIES
      */
     private final String speciesId;
     
@@ -103,16 +103,16 @@ implements SpeciesDataGroupDAO {
     /**
      * Constructor providing the {@code MySQLDAOManager} to use and the ID of the species 
      * to target, when ordering of {@code SpeciesToDataGroupTO}s is requested, using 
-     * {@link SpeciesToGroupOrderingAttribute DISTANCE_TO_SPECIES}.
+     * {@link SpeciesToGroupOrderingAttribute#DISTANCE_TO_SPECIES}.
      *
      * @param manager   The {@code MySQLDAOManager} to use.
      * @param speciesId A {@code String} that is the ID of the species that the ordering
      *                  of the {@code SpeciesToDataGroupTO}s will be based on, 
-     *                  when {@link SpeciesToGroupOrderingAttribute DISTANCE_TO_SPECIES} 
+     *                  when {@link SpeciesToGroupOrderingAttribute#DISTANCE_TO_SPECIES} 
      *                  is used. 
      * @throws IllegalArgumentException If {@code manager} is {@code null}, or {@code speciesId} 
      *                                  is blank.
-     * @see SpeciesToGroupOrderingAttribute DISTANCE_TO_SPECIES
+     * @see SpeciesToGroupOrderingAttribute#DISTANCE_TO_SPECIES
      */
     public MySQLSpeciesDataGroupDAO(MySQLDAOManager manager, String speciesId) throws IllegalArgumentException {
         super(manager);
@@ -194,7 +194,7 @@ implements SpeciesDataGroupDAO {
                 this.getManager().getConnection().prepareStatement(sql.toString())) {
             int paramIndex = 1;
             for (SpeciesDataGroupTO groupTO: groupTOs) {
-                stmt.setString(paramIndex, groupTO.getId());
+                stmt.setInt(paramIndex, groupTO.getId());
                 paramIndex++;
                 stmt.setString(paramIndex, groupTO.getName());
                 paramIndex++;
@@ -228,13 +228,13 @@ implements SpeciesDataGroupDAO {
             log.entry();
             final ResultSet currentResultSet = this.getCurrentResultSet();
             try {
-                String id = null, name = null, description = null;
-                Integer preferredOrder = null;
+                String name = null, description = null;
+                Integer id = null, preferredOrder = null;
                 for (String colName : getColumnLabels().values()) {
                     SpeciesDataGroupDAO.Attribute attr = getAttributeByColumnName(colName);
                     switch (attr) {
                         case ID:
-                            id = currentResultSet.getString(colName);
+                            id = currentResultSet.getInt(colName);
                             break;
                         case DESCRIPTION:
                             description = currentResultSet.getString(colName);
@@ -279,11 +279,11 @@ implements SpeciesDataGroupDAO {
             log.entry();
             try {
                 final ResultSet currentResultSet = this.getCurrentResultSet();
-                String speciesId = null, groupId = null;
+                Integer speciesId = null, groupId = null;
 
                 for (Map.Entry<Integer, String> col : this.getColumnLabels().entrySet()) {
                     String columnName = col.getValue();
-                    String currentValue = currentResultSet.getString(columnName);
+                    Integer currentValue = currentResultSet.getInt(columnName);
                     switch (columnName) {
                         case "speciesId":
                             speciesId = currentValue;
@@ -405,9 +405,9 @@ implements SpeciesDataGroupDAO {
                 this.getManager().getConnection().prepareStatement(sql.toString())) {
             int paramIndex = 1;
             for (SpeciesToDataGroupTO mappingTO: mappingTOs) {
-                stmt.setString(paramIndex, mappingTO.getGroupId());
+                stmt.setInt(paramIndex, mappingTO.getGroupId());
                 paramIndex++;
-                stmt.setString(paramIndex, mappingTO.getSpeciesId());
+                stmt.setInt(paramIndex, mappingTO.getSpeciesId());
                 paramIndex++;
             }
             

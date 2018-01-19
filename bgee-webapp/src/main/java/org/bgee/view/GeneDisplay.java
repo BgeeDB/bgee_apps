@@ -1,13 +1,16 @@
 package org.bgee.view;
 
+import java.util.Set;
+
 import org.bgee.controller.CommandGene.GeneResponse;
+import org.bgee.model.gene.Gene;
 
 /**
  * Interface defining methods to be implemented by views related to {@code Gene}s.
  * 
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Feb. 2016
+ * @version Bgee 13, Mar. 2017
  * @since   Bgee 13, Nov. 2015
  */
 public interface GeneDisplay {
@@ -27,4 +30,11 @@ public interface GeneDisplay {
 	//redundant calls, then this method should simply accept two GeneResponses; CommandGene was built 
 	//to easily handle this need. 
 	void displayGene(GeneResponse geneResponse);
+
+    /**
+     * Displays a {@code Set} of {@code Gene}s.
+     * 
+     * @param genes     A {@code Set} of {@code Gene}s to be displayed.
+     */
+    void displayGeneChoice(Set<Gene> genes);
 }

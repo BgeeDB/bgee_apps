@@ -509,6 +509,7 @@ div.bgee_download_section figcaption p {
     font-size: 0.75em;
     margin: 0;
     text-align: center;
+    height: 15px;
 }
 
 div.bgee_download_section figure {

@@ -11,6 +11,15 @@ import org.bgee.model.BgeeProperties;
 import com.github.rcaller.rStuff.RCaller;
 import com.github.rcaller.rStuff.RCode;
 
+/**
+ * TODO comment me.
+ * 
+ * @author Mathieu Seppey
+ * @author Frederic Bastian
+ * 
+ * @version Bgee 13, March 2016
+ * @since Bgee 13
+ */
 public class TopAnatRManager {
 
     private final static Logger log = LogManager.getLogger(TopAnatRManager.class.getName());
@@ -177,7 +186,7 @@ public class TopAnatRManager {
         code.addRCode("      rownames(organNames)<-organNames[,1]");
 
         //get the number of terms with p-value below 0.01
-        code.addRCode("      resultCount <- sum(as.numeric(tableOver[, 7]) <= "+ params.getPvalueThreashold() +")");
+        code.addRCode("      resultCount <- sum(as.numeric(tableOver[, 7]) <= "+ params.getPvalueThreshold() +")");
         //set the number of terms to be displayed (terms below p-value, but max 10)
         code.addRCode("      resultCount <- min(c(resultCount , "+ params.getNumberOfSignificantNodes() +"))");
         code.addRCode("      cat(paste('Number of nodes to display: ', resultCount, '\n'))");
@@ -202,7 +211,7 @@ public class TopAnatRManager {
         return log.exit(code.toString());
 
     }
-    protected void performRFunction(String consoleFileName) throws FileNotFoundException{
+    protected void performRFunction(String consoleFileName) throws FileNotFoundException {
 
         log.info("Running statistical tests in R...");
         if(this.code.toString().equals(new RCode().toString())){

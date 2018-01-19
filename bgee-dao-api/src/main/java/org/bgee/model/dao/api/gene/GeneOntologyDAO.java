@@ -7,7 +7,7 @@ import java.util.Set;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
-import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.NamedEntityTO;
 import org.bgee.model.dao.api.exception.DAOException;
 
 /**
@@ -69,7 +69,7 @@ public interface GeneOntologyDAO extends DAO<GeneOntologyDAO.Attribute> {
      * @version Bgee 13
      * @since Bgee 13
      */
-    public class GOTermTO extends EntityTO {
+    public class GOTermTO extends NamedEntityTO<String> {
     	private static final long serialVersionUID = 5833418034550328328L;
 
     	/**

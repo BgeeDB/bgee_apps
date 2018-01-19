@@ -30,7 +30,9 @@ import org.semanticweb.owlapi.model.OWLObjectIntersectionOf;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.supercsv.cellprocessor.Optional;
+import org.supercsv.cellprocessor.ParseBool;
 import org.supercsv.cellprocessor.constraint.NotNull;
+import org.supercsv.cellprocessor.constraint.Unique;
 import org.supercsv.cellprocessor.constraint.UniqueHashCode;
 import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.io.CsvMapReader;
@@ -237,6 +239,67 @@ public class UberonTest extends TestAncestor {
     }
     
     /**
+     * Test the method {@link Uberon#extractSexInfoToFile(String)}.
+     */
+    @Test
+    public void shouldExtractSexInfo() throws OBOFormatParserException, OWLOntologyCreationException, IOException {
+        String tempFile = testFolder.newFile("sexInfo.tsv").getPath();
+        
+        new Uberon(UberonTest.class.getResource("/uberon/sexInfoTest.obo").getFile())
+        .extractSexInfoToFile(tempFile);
+        
+        //now, read the generated TSV file
+        int i = 0;
+        try (ICsvMapReader mapReader = new CsvMapReader(
+                new FileReader(tempFile), Utils.TSVCOMMENTED)) {
+            String[] headers = mapReader.getHeader(true); 
+            final CellProcessor[] processors = new CellProcessor[] {
+                new NotNull(new Unique()), 
+                new NotNull(), 
+                new NotNull(new ParseBool("T", "F")), 
+                new NotNull(new ParseBool("T", "F")), 
+                new NotNull(new ParseBool("T", "F"))
+            };
+
+            Map<String, Object> xRefMap;
+            while( (xRefMap = mapReader.read(headers, processors)) != null ) {
+                log.trace("Row: {}", xRefMap);
+                String uberonId = (String) xRefMap.get(headers[0]);
+                String uberonName = (String) xRefMap.get(headers[1]);
+                Boolean female = (Boolean) xRefMap.get(headers[2]);
+                Boolean male = (Boolean) xRefMap.get(headers[3]);
+                Boolean hermaphrodite = (Boolean) xRefMap.get(headers[4]);
+                log.trace("Retrieved info from line: {} - {} - {} - {} - {}", 
+                        uberonId, uberonName, female, male, hermaphrodite); 
+                
+                if (!(uberonId.equals("U:1") && uberonName.equals("test") && female.equals(false) && 
+                          male.equals(false) && hermaphrodite.equals(false) && i == 0 || 
+                      uberonId.equals("U:2") && uberonName.equals("test2") && female.equals(false) && 
+                          male.equals(false) && hermaphrodite.equals(true) && i == 1 || 
+                      uberonId.equals("U:3") && uberonName.equals("test3") && female.equals(false) && 
+                          male.equals(false) && hermaphrodite.equals(true) && i == 2 ||  
+                      uberonId.equals("U:4") && uberonName.equals("test4") && female.equals(false) && 
+                          male.equals(true) && hermaphrodite.equals(false) && i == 3 || 
+                      uberonId.equals("U:5") && uberonName.equals("test5") && female.equals(true) && 
+                          male.equals(true) && hermaphrodite.equals(true) && i == 4 || 
+                      uberonId.equals("UBERON:0000468") && uberonName.equals("multi-cellular organism") && 
+                          female.equals(false) && male.equals(false) && hermaphrodite.equals(false) && i == 5 ||  
+                      uberonId.equals("UBERON:0003100") && uberonName.equals("female organism") && 
+                          female.equals(true) && male.equals(false) && hermaphrodite.equals(false) && i == 6 || 
+                      uberonId.equals("UBERON:0003101") && uberonName.equals("male organism") && 
+                          female.equals(false) && male.equals(true) && hermaphrodite.equals(false) && i == 7 ||  
+                      uberonId.equals("UBERON:0007197") && uberonName.equals("hermaphroditic organism") && 
+                          female.equals(false) && male.equals(false) && hermaphrodite.equals(true) && i == 8)) {
+                    throw new AssertionError("Incorrect line: " + mapReader.getUntokenizedRow());
+                }
+                i++;
+                
+            }
+        }
+        assertEquals("Incorrect number of lines in TSV output", 9, i);
+    }
+    
+    /**
      * Test the method {@link Uberon#isNonInformativeSubsetMember(OWLObject)}.
      */
     @Test
@@ -249,13 +312,13 @@ public class UberonTest extends TestAncestor {
         Uberon ub = new Uberon(utils);
         
         assertTrue(ub.isNonInformativeSubsetMember(
-                wrapper.getOWLClassByIdentifier("UBERON:0000001")));
+                wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000001")));
         assertFalse(ub.isNonInformativeSubsetMember(
-                wrapper.getOWLClassByIdentifier("UBERON:0000002")));
+                wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000002")));
         assertFalse(ub.isNonInformativeSubsetMember(
-                wrapper.getOWLClassByIdentifier("UBERON:0000003")));
+                wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000003")));
         assertFalse(ub.isNonInformativeSubsetMember(
-                wrapper.getOWLClassByIdentifier("UBERON:0000004")));
+                wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000004")));
     }
 
     @Ignore
@@ -265,7 +328,7 @@ public class UberonTest extends TestAncestor {
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         
         String toWrite = "";
-        for (OWLClass cls: wrapper.getAllOWLClasses()) {
+        for (OWLClass cls: wrapper.getAllRealOWLClasses()) {
             if (!Collections.disjoint(
                     Arrays.asList("efo_slim", "uberon_slim", "organ_slim", 
                             "anatomical_site_slim", "cell_slim", "vertebrate_core"), 

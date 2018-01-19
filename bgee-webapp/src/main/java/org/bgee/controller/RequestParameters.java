@@ -81,11 +81,11 @@ import org.bgee.controller.servletutils.BgeeHttpServletRequest;
  * This class has a js counterpart called {@code requestparameters.js} that should be kept 
  * consistent as much as possible if the class evolves.
  * 
- * @author Mathieu Seppey
- * @author Frederic Bastian
- * @author Valentine Rech de Laval
- * @version Bgee 13, Feb. 2016
- * @since Bgee 1
+ * @author  Mathieu Seppey
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, Mar. 2017
+ * @since   Bgee 1
  */
 public class RequestParameters {
 
@@ -162,6 +162,11 @@ public class RequestParameters {
      * (see {@link URLParameters#getParamPage()}) when a page related to DAO queries is requested.
      */
     public static final String PAGE_DAO = "dao";
+    /**
+     * A {@code String} that is the value taken by the {@code page} parameter 
+     * (see {@link URLParameters#getParamPage()}) when a page related to R package queries is requested.
+     */
+    public static final String PAGE_RPACKAGE = "r_package";
     /**
      * A {@code String} that is the value taken by the {@code page} parameter 
      * (see {@link URLParameters#getParamPage()}) when a query is made for usage statistics gathering.
@@ -398,7 +403,7 @@ public class RequestParameters {
      * indexed by google (it should then be changed to '#!').
      * <p>
      * Note that this attribute is not use as hash separator when the hash is actually used 
-     * to link to an element with corresponding ID on the page (see {@link setURLHash(String)}).
+     * to link to an element with corresponding ID on the page (see {@link #setURLHash(String)}).
      */
     public static final String JS_HASH_SEPARATOR = "#";
     
@@ -1892,7 +1897,7 @@ public class RequestParameters {
     /**
      * Convenient method to retrieve value of the parameter returned by 
      * {@link URLParameters#getParamPage()}. Equivalent to calling 
-     * {@link #getFirstValue(Parameter)} for this parameter.
+     * {@link #getFirstValue(URLParameters.Parameter)} for this parameter.
      * 
      * @return  A {@code String} that is the value of the {@code page} URL parameter. 
      *          Can be {@code null}. 
@@ -1903,10 +1908,9 @@ public class RequestParameters {
     /**
      * Convenient method to set value of the parameter returned by 
      * {@link URLParameters#getParamPage()}. Equivalent to calling 
-     * {@link #addValue(Parameter, Object)} for this parameter.
+     * {@link #addValue(URLParameters.Parameter, Object)} for this parameter.
      * 
-     * @param action    A {@code String} that is the value of the {@code page} URL parameter 
-     *                  to set.
+     * @param page  A {@code String} that is the value of the {@code page} URL parameter to set.
      */
     public void setPage(String page) {
         this.resetValues(this.getUrlParametersInstance().getParamPage());
@@ -1915,7 +1919,7 @@ public class RequestParameters {
     /**
      * Convenient method to retrieve value of the parameter returned by 
      * {@link URLParameters#getParamAction()}. Equivalent to calling 
-     * {@link #getFirstValue(Parameter)} for this parameter.
+     * {@link #getFirstValue(URLParameters.Parameter)} for this parameter.
      * 
      * @return  A {@code String} that is the value of the {@code action} URL parameter. 
      *          Can be {@code null}. 
@@ -1926,7 +1930,7 @@ public class RequestParameters {
     /**
      * Convenient method to set value of the parameter returned by 
      * {@link URLParameters#getParamAction()}. Equivalent to calling 
-     * {@link #addValue(Parameter, Object)} for this parameter.
+     * {@link #addValue(URLParameters.Parameter, Object)} for this parameter.
      * 
      * @param action    A {@code String} that is the value of the {@code action} URL parameter 
      *                  to set.
@@ -1938,7 +1942,7 @@ public class RequestParameters {
     /**
      * Convenient method to retrieve value of the parameter returned by 
      * {@link URLParameters#getParamData()}. Equivalent to calling 
-     * {@link #getFirstValue(Parameter)} for this parameter.
+     * {@link #getFirstValue(URLParameters.Parameter)} for this parameter.
      * 
      * @return  A {@code String} that is the value of the {@code data} URL parameter. 
      *          Can be {@code null}. 
@@ -1956,14 +1960,33 @@ public class RequestParameters {
     /**
      * Convenient method to set value of the parameter returned by 
      * {@link URLParameters#getParamGeneId()}. Equivalent to calling 
-     * {@link #addValue(Parameter, Object)} for this parameter.
+     * {@link #addValue(URLParameters.Parameter, Object)} for this parameter.
      * 
-     * @param action    A {@code String} that is the value of the {@code gene_id} URL parameter 
+     * @param geneId    A {@code String} that is the value of the {@code gene_id} URL parameter 
      *                  to set.
      */
     public void setGeneId(String geneId) {
         this.resetValues(this.getUrlParametersInstance().getParamGeneId());
         this.addValue(this.getUrlParametersInstance().getParamGeneId(), geneId);
+    }
+
+    /**
+     * @return the species_id parameter
+     */
+    public Integer getSpeciesId() {
+        return this.getFirstValue(this.getUrlParametersInstance().getParamSpeciesId());
+    }
+    /**
+     * Convenient method to set value of the parameter returned by 
+     * {@link URLParameters#getParamSpeciesId()}. Equivalent to calling 
+     * {@link #addValue(URLParameters.Parameter, Object)} for this parameter.
+     * 
+     * @param speciesId     An {@code Integer} that is the value of the {@code species_id}
+     *                      URL parameter to set.
+     */
+    public void setSpeciesId(Integer speciesId) {
+        this.resetValues(this.getUrlParametersInstance().getParamSpeciesId());
+        this.addValue(this.getUrlParametersInstance().getParamSpeciesId(), speciesId);
     }
 
     /**
@@ -1988,7 +2011,7 @@ public class RequestParameters {
      * with the corresponding ID in a page. It should not be used to use the hash 
      * to store data parameters (for instance, to link to pages where the hash part 
      * is used by javascript to read/write data parameters). For this latter use, 
-     * see {@link #getRequestURL(Set, boolean)} and {@link #getRequestURL(String, Set, boolean)}.
+     * see {@link #getRequestURL(Collection, boolean)} and {@link #getRequestURL(String, Collection, boolean)}.
      * <p>
      * Note that {@code urlHash} must not include the hash separator ('#').
      * 
@@ -2002,10 +2025,10 @@ public class RequestParameters {
     /**
      * Convenient method to set value of the parameter returned by 
      * {@link URLParameters#getParamDisplayType()}. Equivalent to calling 
-     * {@link #addValue(Parameter, Object)} for this parameter.
+     * {@link #addValue(URLParameters.Parameter, Object)} for this parameter.
      * 
-     * @param action    A {@code String} that is the value of the {@code display_type} URL parameter 
-     *                  to set.
+     * @param displayType   A {@code String} that is the value of the {@code display_type}
+     *                      URL parameter to set.
      */
     public void setDisplayType(String displayType) {
         this.resetValues(this.getUrlParametersInstance().getParamDisplayType());
@@ -2015,18 +2038,18 @@ public class RequestParameters {
     /**
      * Convenient method to retrieve values of the parameter returned by 
      * {@link URLParameters#getParamSpeciesList()}. Equivalent to calling 
-     * {@link #getValues(Parameter)} for this parameter.
+     * {@link #getValues(URLParameters.Parameter)} for this parameter.
      * 
      * @return  A {@code List} of {@code String}s that are the values of 
      *          the {@code species_list} URL parameter. Can be {@code null}. 
      */
-    public List<String> getSpeciesList(){
+    public List<Integer> getSpeciesList(){
         return this.getValues(this.getUrlParametersInstance().getParamSpeciesList());
     }
     /**
      * Convenient method to retrieve values of the parameter returned by 
      * {@link URLParameters#getParamForegroundList()}. Equivalent to calling 
-     * {@link #getValues(Parameter)} for this parameter.
+     * {@link #getValues(URLParameters.Parameter)} for this parameter.
      * 
      * @return  A {@code List} of {@code String}s that are the values of 
      *          the {@code fg_list} URL parameter. Can be {@code null}. 
@@ -2037,7 +2060,7 @@ public class RequestParameters {
     /**
      * Convenient method to retrieve values of the parameter returned by 
      * {@link URLParameters#getParamForegroundFile()}. Equivalent to calling 
-     * {@link #getFirstValue(Parameter)} for this parameter.
+     * {@link #getFirstValue(URLParameters.Parameter)} for this parameter.
      * 
      * @return  A {@code String} that is the value of the {@code fg_file} URL parameter.
      *          Can be {@code null}. 
@@ -2048,7 +2071,7 @@ public class RequestParameters {
     /**
      * Convenient method to retrieve values of the parameter returned by 
      * {@link URLParameters#getParamBackgroundList()}. Equivalent to calling 
-     * {@link #getValues(Parameter)} for this parameter.
+     * {@link #getValues(URLParameters.Parameter)} for this parameter.
      * 
      * @return  A {@code List} of {@code String}s that are the values of 
      *          the {@code bg_list} URL parameter. Can be {@code null}. 
@@ -2059,7 +2082,7 @@ public class RequestParameters {
     /**
      * Convenient method to retrieve values of the parameter returned by 
      * {@link URLParameters#getParamBackgroundFile()}. Equivalent to calling 
-     * {@link #getFirstValue(Parameter)} for this parameter.
+     * {@link #getFirstValue(URLParameters.Parameter)} for this parameter.
      * 
      * @return  A {@code String} that is the value of the {@code bg_file} URL parameter.
      *          Can be {@code null}. 
@@ -2070,7 +2093,7 @@ public class RequestParameters {
     /**
      * Convenient method to retrieve values of the parameter returned by 
      * {@link URLParameters#getParamExprType()}. Equivalent to calling 
-     * {@link #getValues(Parameter)} for this parameter.
+     * {@link #getValues(URLParameters.Parameter)} for this parameter.
      * 
      * @return  A {@code List} of {@code String}s that are the values of 
      *          the {@code expr_type} URL parameter. Can be {@code null}. 
@@ -2081,7 +2104,7 @@ public class RequestParameters {
     /**
      * Convenient method to retrieve values of the parameter returned by 
      * {@link URLParameters#getParamDataQuality()}. Equivalent to calling 
-     * {@link #getFirstValue(Parameter)} for this parameter.
+     * {@link #getFirstValue(URLParameters.Parameter)} for this parameter.
      * 
      * @return  A {@code String} that is the value of the {@code data_qual} URL parameter.
      *          Can be {@code null}. 
@@ -2092,7 +2115,7 @@ public class RequestParameters {
     /**
      * Convenient method to retrieve values of the parameter returned by 
      * {@link URLParameters#getParamDataType()}. Equivalent to calling 
-     * {@link #getValues(Parameter)} for this parameter.
+     * {@link #getValues(URLParameters.Parameter)} for this parameter.
      * 
      * @return  A {@code List} of {@code String}s that are the values of 
      *          the {@code data_type} URL parameter. Can be {@code null}. 
@@ -2103,7 +2126,7 @@ public class RequestParameters {
     /**
      * Convenient method to retrieve values of the parameter returned by 
      * {@link URLParameters#getParamDevStage()}. Equivalent to calling 
-     * {@link #getValues(Parameter)} for this parameter.
+     * {@link #getValues(URLParameters.Parameter)} for this parameter.
      * 
      * @return  A {@code List} of {@code String}s that are the values of 
      *          the {@code dev_stage} URL parameter. Can be {@code null}. 
@@ -2114,7 +2137,7 @@ public class RequestParameters {
     /**
      * Convenient method to retrieve value of the parameter returned by 
      * {@link URLParameters#getParamDecorrelationType()}. Equivalent to calling 
-     * {@link #getFirstValue(Parameter)} for this parameter.
+     * {@link #getFirstValue(URLParameters.Parameter)} for this parameter.
      * 
      * @return  A {@code String} that is the value of the {@code decorr_type} URL parameter.
      *          Can be {@code null}. 
@@ -2125,7 +2148,7 @@ public class RequestParameters {
     /**
      * Convenient method to retrieve value of the parameter returned by 
      * {@link URLParameters#getParamNodeSize()}. Equivalent to calling 
-     * {@link #getFirstValue(Parameter)} for this parameter.
+     * {@link #getFirstValue(URLParameters.Parameter)} for this parameter.
      * 
      * @return  An {@code Integer} that is the value of the {@code node_size} URL parameter.
      *          Can be {@code null}. 
@@ -2136,7 +2159,7 @@ public class RequestParameters {
     /**
      * Convenient method to retrieve value of the parameter returned by 
      * {@link URLParameters#getParamNbNode()}. Equivalent to calling 
-     * {@link #getFirstValue(Parameter)} for this parameter.
+     * {@link #getFirstValue(URLParameters.Parameter)} for this parameter.
      * 
      * @return  An {@code Integer} that is the value of the {@code nb_node} URL parameter.
      *          Can be {@code null}. 
@@ -2147,7 +2170,7 @@ public class RequestParameters {
     /**
      * Convenient method to retrieve value of the parameter returned by 
      * {@link URLParameters#getParamFdrThreshold()}. Equivalent to calling 
-     * {@link #getFirstValue(Parameter)} for this parameter.
+     * {@link #getFirstValue(URLParameters.Parameter)} for this parameter.
      * 
      * @return  An {@code Double} that is the value of the {@code fdr_thr} URL parameter.
      *          Can be {@code null}. 
@@ -2158,7 +2181,7 @@ public class RequestParameters {
     /**
      * Convenient method to retrieve value of the parameter returned by 
      * {@link URLParameters#getParamPValueThreshold()}. Equivalent to calling 
-     * {@link #getFirstValue(Parameter)} for this parameter.
+     * {@link #getFirstValue(URLParameters.Parameter)} for this parameter.
      * 
      * @return  An {@code Double} that is the value of the {@code p_value_thr} URL parameter.
      *          Can be {@code null}. 
@@ -2169,7 +2192,7 @@ public class RequestParameters {
     /**
      * Convenient method to retrieve value of the parameter returned by 
      * {@link URLParameters#getParamJobId()}. Equivalent to calling 
-     * {@link #getFirstValue(Parameter)} for this parameter.
+     * {@link #getFirstValue(URLParameters.Parameter)} for this parameter.
      * 
      * @return  An {@code Integer} that is the value of the {@code job_id} URL parameter.
      *          Can be {@code null}. 
@@ -2180,7 +2203,7 @@ public class RequestParameters {
     /**
      * Convenient method to retrieve value of the parameter returned by 
      * {@link URLParameters#getParamGeneInfo()}. Equivalent to calling 
-     * {@link #getFirstValue(Parameter)} for this parameter.
+     * {@link #getFirstValue(URLParameters.Parameter)} for this parameter.
      * 
      * @return  A {@code Boolean} that is the value of the {@code gene_info} URL parameter.
      *          Can be {@code null}. 
@@ -2354,6 +2377,18 @@ public class RequestParameters {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
             this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_DAO)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    
+    /**
+     * @return  A {@code boolean} to tell whether the request is related to BgeeDB_R package queries.
+     */
+    public boolean isARPackagePageCategory() {
+        log.entry();
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
+            this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_RPACKAGE)) {
             return log.exit(true);
         }
         return log.exit(false);

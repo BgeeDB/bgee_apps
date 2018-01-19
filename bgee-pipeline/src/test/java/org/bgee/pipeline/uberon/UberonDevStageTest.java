@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -63,21 +64,24 @@ public class UberonDevStageTest extends TestAncestor {
         OntologyUtils utils = new OntologyUtils(wrapper);
         UberonDevStage uberon = new UberonDevStage(utils);
 
-        OWLClass cls0 = wrapper.getOWLClassByIdentifier("MmulDv:0000002");
-        OWLClass cls1 = wrapper.getOWLClassByIdentifier("MmulDv:0000007");
-        OWLClass cls2 = wrapper.getOWLClassByIdentifier("MmulDv:0000008");
-        OWLClass cls3 = wrapper.getOWLClassByIdentifier("MmulDv:0000009");
-        OWLClass cls4 = wrapper.getOWLClassByIdentifier("MmulDv:0000010");
+        OWLClass cls0 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000002");
+        OWLClass cls1 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000007");
+        OWLClass cls2 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000008");
+        OWLClass cls3 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000009");
+        OWLClass cls4 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000010");
+        //quick fix for testing orderByPrecededBy assuming there is no GCI relation.
+        //TODO: properly add a taxonomy and test with GCI relations
+        Set<OWLClass> fakeTaxAndAncestors = Collections.singleton(cls4);
         
         List<OWLClass> expectedOrderedClasses = Arrays.asList(cls1, cls2, cls3, cls4);
         assertEquals("Incorrect ordering of sibling OWLClasses", expectedOrderedClasses, 
                 uberon.orderByPrecededBy(
-                        new HashSet<OWLClass>(Arrays.asList(cls3, cls2, cls1, cls4))));
+                        new HashSet<OWLClass>(Arrays.asList(cls3, cls2, cls1, cls4)), fakeTaxAndAncestors));
         
         expectedOrderedClasses = Arrays.asList(cls0, cls2, cls3, cls4);
         assertEquals("Incorrect ordering of sibling OWLClasses", expectedOrderedClasses, 
                 uberon.orderByPrecededBy(
-                        new HashSet<OWLClass>(Arrays.asList(cls3, cls2, cls0, cls4))));
+                        new HashSet<OWLClass>(Arrays.asList(cls3, cls2, cls0, cls4)), fakeTaxAndAncestors));
     }
     
     /**
@@ -92,32 +96,35 @@ public class UberonDevStageTest extends TestAncestor {
         OntologyUtils utils = new OntologyUtils(wrapper);
         UberonDevStage uberon = new UberonDevStage(utils);
 
-        OWLClass cls0 = wrapper.getOWLClassByIdentifier("MmulDv:0000000");
-        OWLClass cls1 = wrapper.getOWLClassByIdentifier("MmulDv:0000007");
-        OWLClass cls2 = wrapper.getOWLClassByIdentifier("MmulDv:0000008");
-        OWLClass cls3 = wrapper.getOWLClassByIdentifier("MmulDv:0000009");
-        OWLClass cls4 = wrapper.getOWLClassByIdentifier("MmulDv:0000010");
+        OWLClass cls0 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000000");
+        OWLClass cls1 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000007");
+        OWLClass cls2 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000008");
+        OWLClass cls3 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000009");
+        OWLClass cls4 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000010");
+        //quick fix for testing orderByPrecededBy assuming there is no GCI relation.
+        //TODO: properly add a taxonomy and test with GCI relations
+        Set<OWLClass> fakeTaxAndAncestors = Collections.singleton(cls4);
         
         assertEquals("Incorrect last class returned", cls4, 
                 uberon.getLastClassByPrecededBy(
-                        new HashSet<OWLClass>(Arrays.asList(cls3, cls2, cls1, cls4))));
+                        new HashSet<OWLClass>(Arrays.asList(cls3, cls2, cls1, cls4)), fakeTaxAndAncestors));
         assertEquals("Incorrect last class returned", cls4, 
                 uberon.getLastClassByPrecededBy(
-                        new HashSet<OWLClass>(Arrays.asList(cls3, cls2, cls0, cls4))));
+                        new HashSet<OWLClass>(Arrays.asList(cls3, cls2, cls0, cls4)), fakeTaxAndAncestors));
         assertEquals("Incorrect last class returned", cls3, 
                 uberon.getLastClassByPrecededBy(
-                        new HashSet<OWLClass>(Arrays.asList(cls3, cls2, cls1))));
+                        new HashSet<OWLClass>(Arrays.asList(cls3, cls2, cls1)), fakeTaxAndAncestors));
         assertEquals("Incorrect last class returned", cls2, 
                 uberon.getLastClassByPrecededBy(
-                        new HashSet<OWLClass>(Arrays.asList(cls2, cls1))));
+                        new HashSet<OWLClass>(Arrays.asList(cls2, cls1)), fakeTaxAndAncestors));
         
         //test via indirect edges
         assertEquals("Incorrect last class returned", cls4, 
                 uberon.getLastClassByPrecededBy(
-                        new HashSet<OWLClass>(Arrays.asList(cls2, cls1, cls4))));
+                        new HashSet<OWLClass>(Arrays.asList(cls2, cls1, cls4)), fakeTaxAndAncestors));
         assertEquals("Incorrect last class returned", cls4, 
                 uberon.getLastClassByPrecededBy(
-                        new HashSet<OWLClass>(Arrays.asList(cls2, cls0, cls4))));
+                        new HashSet<OWLClass>(Arrays.asList(cls2, cls0, cls4)), fakeTaxAndAncestors));
     }
     
     /**
@@ -133,10 +140,10 @@ public class UberonDevStageTest extends TestAncestor {
         UberonDevStage uberon = new UberonDevStage(utils);
         
         uberon.generatePrecededByFromComments(new HashSet<OWLClass>(Arrays.asList(
-                wrapper.getOWLClassByIdentifier("FBdv:00000000"), 
-                wrapper.getOWLClassByIdentifier("FBdv:00000001"), 
-                wrapper.getOWLClassByIdentifier("FBdv:00000002"), 
-                wrapper.getOWLClassByIdentifier("FBdv:00000003"))));
+                wrapper.getOWLClassByIdentifierNoAltIds("FBdv:00000000"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("FBdv:00000001"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("FBdv:00000002"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("FBdv:00000003"))));
         
         //check that the desired edges were created. 
         OWLDataFactory factory = ont.getOWLOntologyManager().getOWLDataFactory();
@@ -147,26 +154,26 @@ public class UberonDevStageTest extends TestAncestor {
         
         assertTrue("missing preceded_by relations generated from comments", 
                 ont.containsAxiom(factory.getOWLSubClassOfAxiom(
-                    wrapper.getOWLClassByIdentifier("FBdv:00000003"), 
+                    wrapper.getOWLClassByIdentifierNoAltIds("FBdv:00000003"), 
                     factory.getOWLObjectSomeValuesFrom(precededBy, 
-                        wrapper.getOWLClassByIdentifier("FBdv:00000002")))));
+                        wrapper.getOWLClassByIdentifierNoAltIds("FBdv:00000002")))));
         assertTrue("missing preceded_by relations generated from comments", 
                 ont.containsAxiom(factory.getOWLSubClassOfAxiom(
-                    wrapper.getOWLClassByIdentifier("FBdv:00000002"), 
+                    wrapper.getOWLClassByIdentifierNoAltIds("FBdv:00000002"), 
                     factory.getOWLObjectSomeValuesFrom(precededBy, 
-                        wrapper.getOWLClassByIdentifier("FBdv:00000001")))));
+                        wrapper.getOWLClassByIdentifierNoAltIds("FBdv:00000001")))));
         assertTrue("missing preceded_by relations generated from comments", 
                 ont.containsAxiom(factory.getOWLSubClassOfAxiom(
-                    wrapper.getOWLClassByIdentifier("FBdv:00000001"), 
+                    wrapper.getOWLClassByIdentifierNoAltIds("FBdv:00000001"), 
                     factory.getOWLObjectSomeValuesFrom(precededBy, 
-                        wrapper.getOWLClassByIdentifier("FBdv:00000000")))));
+                        wrapper.getOWLClassByIdentifierNoAltIds("FBdv:00000000")))));
         
         //check that the already existing immediately_preceded_by relation was not removed
         assertTrue("An existing relation was incorrectly removed", 
                 ont.containsAxiom(factory.getOWLSubClassOfAxiom(
-                    wrapper.getOWLClassByIdentifier("FBdv:00000002"), 
+                    wrapper.getOWLClassByIdentifierNoAltIds("FBdv:00000002"), 
                     factory.getOWLObjectSomeValuesFrom(immPrecededBy, 
-                        wrapper.getOWLClassByIdentifier("FBdv:00000001")))));
+                        wrapper.getOWLClassByIdentifierNoAltIds("FBdv:00000001")))));
     }
     
     /**
@@ -181,23 +188,23 @@ public class UberonDevStageTest extends TestAncestor {
         OntologyUtils utils = new OntologyUtils(wrapper);
         UberonDevStage uberon = new UberonDevStage(utils);
 
-        OWLClass lifeCycle = wrapper.getOWLClassByIdentifier("MmulDv:0000001");
-        OWLClass prenatal = wrapper.getOWLClassByIdentifier("MmulDv:0000002");
-        OWLClass immature = wrapper.getOWLClassByIdentifier("MmulDv:0000003");
-        OWLClass prenatal1 = wrapper.getOWLClassByIdentifier("MmulDv:0000004");
-        OWLClass prenatal2 = wrapper.getOWLClassByIdentifier("MmulDv:0000005");
-        OWLClass prenatal3 = wrapper.getOWLClassByIdentifier("MmulDv:0000006");
-        OWLClass immature1 = wrapper.getOWLClassByIdentifier("MmulDv:0000007");
-        OWLClass immature2 = wrapper.getOWLClassByIdentifier("MmulDv:0000008");
-        OWLClass immature3 = wrapper.getOWLClassByIdentifier("MmulDv:0000009");
-        OWLClass immature4 = wrapper.getOWLClassByIdentifier("MmulDv:0000010");
-        OWLClass prenatal1_1 = wrapper.getOWLClassByIdentifier("MmulDv:0000011");
-        OWLClass prenatal1_2 = wrapper.getOWLClassByIdentifier("MmulDv:0000012");
-        OWLClass prenatal2_1 = wrapper.getOWLClassByIdentifier("MmulDv:0000013");
-        OWLClass prenatal2_2 = wrapper.getOWLClassByIdentifier("MmulDv:0000014");
-        OWLClass immature1_1 = wrapper.getOWLClassByIdentifier("MmulDv:0000015");
-        OWLClass immature1_2 = wrapper.getOWLClassByIdentifier("MmulDv:0000016");
-        OWLClass immature1_3 = wrapper.getOWLClassByIdentifier("MmulDv:0000017");
+        OWLClass lifeCycle = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000001");
+        OWLClass prenatal = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000002");
+        OWLClass immature = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000003");
+        OWLClass prenatal1 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000004");
+        OWLClass prenatal2 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000005");
+        OWLClass prenatal3 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000006");
+        OWLClass immature1 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000007");
+        OWLClass immature2 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000008");
+        OWLClass immature3 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000009");
+        OWLClass immature4 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000010");
+        OWLClass prenatal1_1 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000011");
+        OWLClass prenatal1_2 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000012");
+        OWLClass prenatal2_1 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000013");
+        OWLClass prenatal2_2 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000014");
+        OWLClass immature1_1 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000015");
+        OWLClass immature1_2 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000016");
+        OWLClass immature1_3 = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000017");
         
         Map<OWLClass, Map<String, Integer>> expectedModel = 
                 new HashMap<OWLClass, Map<String, Integer>>();
@@ -403,21 +410,21 @@ public class UberonDevStageTest extends TestAncestor {
         
         UberonDevStage uberon = new UberonDevStage(utils, taxonConstraints);
         
-        OWLClass id1 = wrapper.getOWLClassByIdentifier("ID:0000001");
-        OWLClass id2 = wrapper.getOWLClassByIdentifier("ID:0000002");
-        OWLClass id3 = wrapper.getOWLClassByIdentifier("ID:0000003");
-        OWLClass spe1_4 = wrapper.getOWLClassByIdentifier("SPE1:0000004");
-        OWLClass spe1_11 = wrapper.getOWLClassByIdentifier("SPE1:0000011");
-        OWLClass spe1_12 = wrapper.getOWLClassByIdentifier("SPE1:0000012");
-        OWLClass spe1_5 = wrapper.getOWLClassByIdentifier("SPE1:0000005");
-        OWLClass spe1_13 = wrapper.getOWLClassByIdentifier("SPE1:0000013");
-        OWLClass spe1_14 = wrapper.getOWLClassByIdentifier("SPE1:0000014");
-        OWLClass spe1_7 = wrapper.getOWLClassByIdentifier("SPE1:0000007");
-        OWLClass spe1_8 = wrapper.getOWLClassByIdentifier("SPE1:0000008");
-        OWLClass spe2_6 = wrapper.getOWLClassByIdentifier("SPE2:0000006");
-        OWLClass spe2_106 = wrapper.getOWLClassByIdentifier("SPE2:0000106");
-        OWLClass spe2_9 = wrapper.getOWLClassByIdentifier("SPE2:0000009");
-        OWLClass spe2_10 = wrapper.getOWLClassByIdentifier("SPE2:0000010");
+        OWLClass id1 = wrapper.getOWLClassByIdentifierNoAltIds("ID:0000001");
+        OWLClass id2 = wrapper.getOWLClassByIdentifierNoAltIds("ID:0000002");
+        OWLClass id3 = wrapper.getOWLClassByIdentifierNoAltIds("ID:0000003");
+        OWLClass spe1_4 = wrapper.getOWLClassByIdentifierNoAltIds("SPE1:0000004");
+        OWLClass spe1_11 = wrapper.getOWLClassByIdentifierNoAltIds("SPE1:0000011");
+        OWLClass spe1_12 = wrapper.getOWLClassByIdentifierNoAltIds("SPE1:0000012");
+        OWLClass spe1_5 = wrapper.getOWLClassByIdentifierNoAltIds("SPE1:0000005");
+        OWLClass spe1_13 = wrapper.getOWLClassByIdentifierNoAltIds("SPE1:0000013");
+        OWLClass spe1_14 = wrapper.getOWLClassByIdentifierNoAltIds("SPE1:0000014");
+        OWLClass spe1_7 = wrapper.getOWLClassByIdentifierNoAltIds("SPE1:0000007");
+        OWLClass spe1_8 = wrapper.getOWLClassByIdentifierNoAltIds("SPE1:0000008");
+        OWLClass spe2_6 = wrapper.getOWLClassByIdentifierNoAltIds("SPE2:0000006");
+        OWLClass spe2_106 = wrapper.getOWLClassByIdentifierNoAltIds("SPE2:0000106");
+        OWLClass spe2_9 = wrapper.getOWLClassByIdentifierNoAltIds("SPE2:0000009");
+        OWLClass spe2_10 = wrapper.getOWLClassByIdentifierNoAltIds("SPE2:0000010");
         
         Map<OWLClass, Map<String, Integer>> expectedModel = 
                 new HashMap<OWLClass, Map<String, Integer>>();
@@ -550,7 +557,7 @@ public class UberonDevStageTest extends TestAncestor {
                 new HashSet<Integer>(Arrays.asList(7227)));
         //no mapping to neurula and organogenesis in FBdv and zfs
         overridenTaxonConstraints.put("UBERON:0000111", 
-                new HashSet<Integer>(Arrays.asList(9606, 10090, 8364, 9031, 
+                new HashSet<Integer>(Arrays.asList(9606, 10090, 7955, 8364, 9031, 
                         9593, 9544, 13616, 9258, 9598, 9597, 9600, 9913, 28377, 99883, 
                         9823, 6239, 10116)));
         //no mapping to neurula and organogenesis in FBdv
@@ -580,10 +587,10 @@ public class UberonDevStageTest extends TestAncestor {
                 new HashSet<Integer>(Arrays.asList(7227)));
         //UBERON:0007234 4-8 cell stage is used only in ZFS and XAO
         overridenTaxonConstraints.put("UBERON:0007234", 
-                new HashSet<Integer>(7955, 8364));
+                new HashSet<Integer>(Arrays.asList(7955, 8364)));
         //UBERON:0007232 2 cell stage used only in ZFS and XAO
         overridenTaxonConstraints.put("UBERON:0007232", 
-                new HashSet<Integer>(7955, 8364));
+                new HashSet<Integer>(Arrays.asList(10116, 6239, 7955, 8364)));
         //there is no definition of sexual maturity in FBdv, 
         //so no UBERON:0000112 sexually immature stage nor UBERON:0000113 post-juvenile adult stage, 
         //all adult stages are part_of UBERON:0000066 ! fully formed stage
@@ -623,7 +630,14 @@ public class UberonDevStageTest extends TestAncestor {
                 new HashSet<Integer>(Arrays.asList(10090, 7955, 8364, 7227, 
                         9593, 9544, 9258, 9598, 9597, 9600, 99883, 
                         9823, 6239, 10116)));
-        
+
+        overridenTaxonConstraints.put("UBERON:0007236", 
+                new HashSet<Integer>(Arrays.asList(7955, 8364, 6239)));
+        overridenTaxonConstraints.put("UBERON:0007233", 
+                new HashSet<Integer>(Arrays.asList(10116, 7955, 8364, 6239)));
+        overridenTaxonConstraints.put("UBERON:0018241", 
+                new HashSet<Integer>(Arrays.asList(9593, 9544, 9598, 9597, 9600, 9913, 9258, 8364, 9031, 
+                        10116, 7955, 8364, 6239)));
         
         
         //medaka needed?
@@ -639,9 +653,8 @@ public class UberonDevStageTest extends TestAncestor {
         //FBdv:00005289: embryonic stage
         //FBdv:00007026: mature adult stage
         assertEquals("Incorrect stage range returned", 
-                Arrays.asList("UBERON:0000068", "UBERON:0004730", "FBdv:00005343", "FBdv:00005344", 
-                        "FBdv:00005345", "FBdv:00005346", "FBdv:00005350", 
-                        "FBdv:00005353", "FBdv:00005354", "FBdv:00006011", "FBdv:00007075", "FBdv:00007026"), 
+                Arrays.asList("UBERON:0000068", "UBERON:0000069", "FBdv:00005342", 
+                        "UBERON:0000070", "FBdv:00006011", "UBERON:0000066"), 
                 uberon.getStageIdsBetween("FBdv:00005289", "FBdv:00007026", 7227));
         
         assertEquals("Incorrect stage range returned", 
@@ -650,9 +663,20 @@ public class UberonDevStageTest extends TestAncestor {
                         "FBdv:00005335"), 
                 uberon.getStageIdsBetween("FBdv:00005324", "FBdv:00005335", 7227));
         
+        log.info("Computing nested set model for zebrafish");
         assertEquals("Incorrect stage range returned", 
                 Arrays.asList("ZFS:0000027", "ZFS:0000028", "ZFS:0000029"), 
                 uberon.getStageIdsBetween("ZFS:0000027", "ZFS:0000029", 7955));
+        
+        //Important regression test, which justifies all the investment in the new sorting algorithm :p
+        //TODO: actually, we should also update all the taxon constraint in file (use the Bgee 14 file) 
+        //and in this method, for the new sorting algorithm to be necessary for correct result...
+        //currently, it works also with a classical sorting algorithm :(
+        log.info("Computing nested set model for Xenopus");
+        assertEquals("Incorrect stage range returned", 
+                Arrays.asList("XAO:1000028", "UBERON:0007232", "UBERON:0007233", "UBERON:0007236", 
+                        "XAO:1000015", "XAO:1000016", "XAO:1000029"), 
+                uberon.getStageIdsBetween("XAO:1000028", "XAO:1000029", 8364));
     /*    
         //reinit uberon to recompute the nested set model
         uberon = new UberonDevStage(utils, taxonConstraints);

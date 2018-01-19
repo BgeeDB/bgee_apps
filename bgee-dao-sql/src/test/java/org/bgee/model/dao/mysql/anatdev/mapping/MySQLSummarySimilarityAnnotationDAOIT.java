@@ -62,13 +62,13 @@ public class MySQLSummarySimilarityAnnotationDAOIT extends MySQLITAncestor {
 
         // Generate manually expected result
         List<SummarySimilarityAnnotationTO> expectedResults = Arrays.asList(
-                new SummarySimilarityAnnotationTO("527", "111", false, "CIO:3"),
-                new SummarySimilarityAnnotationTO("528", "411", false, "CIO:6"),
-                new SummarySimilarityAnnotationTO("529", "511", false, "CIO:5"),
-                new SummarySimilarityAnnotationTO("530", "311", true, "CIO:6"),
-                new SummarySimilarityAnnotationTO("421", "611", false, "CIO:5"),
-                new SummarySimilarityAnnotationTO("422", "511", false, "CIO:1"),
-                new SummarySimilarityAnnotationTO("1870", "511", false, "CIO:5"));
+                new SummarySimilarityAnnotationTO("527", 111, false, "CIO:3"),
+                new SummarySimilarityAnnotationTO("528", 411, false, "CIO:6"),
+                new SummarySimilarityAnnotationTO("529", 511, false, "CIO:5"),
+                new SummarySimilarityAnnotationTO("530", 311, true, "CIO:6"),
+                new SummarySimilarityAnnotationTO("421", 611, false, "CIO:5"),
+                new SummarySimilarityAnnotationTO("422", 511, false, "CIO:1"),
+                new SummarySimilarityAnnotationTO("1870", 511, false, "CIO:5"));
         // Compare
         assertTrue("SummarySimilarityAnnotationTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(actualResults, expectedResults));
@@ -99,26 +99,26 @@ public class MySQLSummarySimilarityAnnotationDAOIT extends MySQLITAncestor {
                 new MySQLSummarySimilarityAnnotationDAO(this.getMySQLDAOManager());
         dao.setAttributes(Arrays.asList(SummarySimilarityAnnotationDAO.Attribute.values()));
         List<SummarySimilarityAnnotationTO> actualResults = 
-                dao.getSummarySimilarityAnnotations("511").getAllTOs();
+                dao.getSummarySimilarityAnnotations(511).getAllTOs();
 
         // Generate manually expected result
         List<SummarySimilarityAnnotationTO> expectedResults = Arrays.asList(
-                new SummarySimilarityAnnotationTO("527", "111", false, "CIO:3"),
-                new SummarySimilarityAnnotationTO("529", "511", false, "CIO:5"),
-                new SummarySimilarityAnnotationTO("530", "311", true, "CIO:6"),
-                new SummarySimilarityAnnotationTO("422", "511", false, "CIO:1"),
-                new SummarySimilarityAnnotationTO("1870", "511", false, "CIO:5"));
+                new SummarySimilarityAnnotationTO("527", 111, false, "CIO:3"),
+                new SummarySimilarityAnnotationTO("529", 511, false, "CIO:5"),
+                new SummarySimilarityAnnotationTO("530", 311, true, "CIO:6"),
+                new SummarySimilarityAnnotationTO("422", 511, false, "CIO:1"),
+                new SummarySimilarityAnnotationTO("1870", 511, false, "CIO:5"));
         // Compare
         assertTrue("SummarySimilarityAnnotationTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(actualResults, expectedResults));
 
         dao.setAttributes(Arrays.asList(SummarySimilarityAnnotationDAO.Attribute.TAXON_ID));
-        actualResults = dao.getSummarySimilarityAnnotations("411").getAllTOs();        
+        actualResults = dao.getSummarySimilarityAnnotations(411).getAllTOs();        
         // Generate manually expected result
         expectedResults = Arrays.asList(
-                new SummarySimilarityAnnotationTO(null, "111", null, null),
-                new SummarySimilarityAnnotationTO(null, "411", null, null),
-                new SummarySimilarityAnnotationTO(null, "311", null, null));
+                new SummarySimilarityAnnotationTO(null, 111, null, null),
+                new SummarySimilarityAnnotationTO(null, 411, null, null),
+                new SummarySimilarityAnnotationTO(null, 311, null, null));
         assertTrue("SummarySimilarityAnnotationTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(actualResults, expectedResults));
     }
@@ -136,7 +136,7 @@ public class MySQLSummarySimilarityAnnotationDAOIT extends MySQLITAncestor {
                 new MySQLSummarySimilarityAnnotationDAO(this.getMySQLDAOManager());
         dao.setAttributes(Arrays.asList(SummarySimilarityAnnotationDAO.Attribute.values()));
         List<SimAnnotToAnatEntityTO> actualResults = 
-                dao.getSimAnnotToAnatEntity("511", null).getAllTOs();
+                dao.getSimAnnotToAnatEntity(511, null).getAllTOs();
 
         // Generate manually expected result
         List<SimAnnotToAnatEntityTO> expectedResults = Arrays.asList(
@@ -157,9 +157,9 @@ public class MySQLSummarySimilarityAnnotationDAOIT extends MySQLITAncestor {
         assertTrue("SimAnnotToAnatEntityTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(actualResults, expectedResults));
 
-        Set<String> speciesIDs = new HashSet<String>(Arrays.asList("41"));
+        Set<Integer> speciesIDs = new HashSet<>(Arrays.asList(41));
         dao.setAttributes(Arrays.asList(SummarySimilarityAnnotationDAO.Attribute.TAXON_ID));
-        actualResults = dao.getSimAnnotToAnatEntity("511", speciesIDs).getAllTOs();        
+        actualResults = dao.getSimAnnotToAnatEntity(511, speciesIDs).getAllTOs();        
         // Generate manually expected result
         expectedResults = Arrays.asList(
                  new SimAnnotToAnatEntityTO("422", "UBERON:0011606"),
@@ -177,7 +177,7 @@ public class MySQLSummarySimilarityAnnotationDAOIT extends MySQLITAncestor {
     public void shouldGetSimAnnotToLostAnatEntity() throws SQLException {
         this.useSelectDB();
         
-        Set<String> speciesIDs = new HashSet<String>();
+        Set<Integer> speciesIDs = new HashSet<>();
         
         // Generate result with the method
         MySQLSummarySimilarityAnnotationDAO dao = 
@@ -185,17 +185,17 @@ public class MySQLSummarySimilarityAnnotationDAOIT extends MySQLITAncestor {
         dao.setAttributes(Arrays.asList(SummarySimilarityAnnotationDAO.Attribute.values()));
 
         try {
-            dao.getSimAnnotToLostAnatEntity("511", null).getAllTOs();
+            dao.getSimAnnotToLostAnatEntity(511, null).getAllTOs();
             // Test failed
             fail("No IllegalArgumentException was thrown while speciesIDs is null"); 
         } catch (IllegalArgumentException e) {
             // Test passed
         }
 
-        speciesIDs.addAll(Arrays.asList("41"));
+        speciesIDs.addAll(Arrays.asList(41));
         dao.setAttributes(Arrays.asList(SummarySimilarityAnnotationDAO.Attribute.TAXON_ID));
         List<SimAnnotToAnatEntityTO> actualResults = 
-                dao.getSimAnnotToLostAnatEntity("511", speciesIDs).getAllTOs();        
+                dao.getSimAnnotToLostAnatEntity(511, speciesIDs).getAllTOs();        
         // Generate manually expected result
         List<SimAnnotToAnatEntityTO> expectedResults = Arrays.asList(
                 new SimAnnotToAnatEntityTO("422", "UBERON:0001687"));
@@ -216,9 +216,9 @@ public class MySQLSummarySimilarityAnnotationDAOIT extends MySQLITAncestor {
         // Create a Collection of SummarySimilarityAnnotationTO to be inserted,
         // no attribute could be null according database schema.
         Collection<SummarySimilarityAnnotationTO> summaryTOs = Arrays.asList(
-                new SummarySimilarityAnnotationTO("1", "11", true, "cioId1"),
-                new SummarySimilarityAnnotationTO("2", "22", false, "cioId2"),
-                new SummarySimilarityAnnotationTO("3", "33", true, "cioId3"));
+                new SummarySimilarityAnnotationTO("1", 11, true, "cioId1"),
+                new SummarySimilarityAnnotationTO("2", 22, false, "cioId2"),
+                new SummarySimilarityAnnotationTO("3", 33, true, "cioId3"));
 
         try {
             MySQLSummarySimilarityAnnotationDAO dao = 

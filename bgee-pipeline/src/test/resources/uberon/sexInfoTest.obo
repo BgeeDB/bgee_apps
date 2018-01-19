@@ -1,0 +1,54 @@
+format-version: 1.2
+ontology: sexInfoTest
+
+[Term]
+id: UBERON:0000468
+name: multi-cellular organism
+
+[Term]
+id: U:1
+name: test
+relationship: part_of UBERON:0000468 ! multi-cellular organism
+
+[Term]
+id: UBERON:0007197
+name: hermaphroditic organism
+is_a: UBERON:0000468 ! multi-cellular organism
+
+[Term]
+id: UBERON:0003100
+name: female organism
+is_a: UBERON:0000468 ! multi-cellular organism
+
+[Term]
+id: UBERON:0003101
+name: male organism
+is_a: UBERON:0000468 ! multi-cellular organism
+
+[Term]
+id: U:2
+name: test2
+relationship: part_of UBERON:0007197 ! hermaphroditic organism
+
+[Term]
+id: U:3
+name: test3
+is_a: U:2 ! test2
+
+[Term]
+id: U:4
+name: test4
+is_a: UBERON:0003101 ! male organism
+
+[Term]
+id: U:5
+name: test5
+relationship: part_of UBERON:0003100 ! female organism
+is_a:  U:3 ! test 3
+relationship: part_of UBERON:0003101 ! male organism
+
+[Typedef]
+id: part_of
+name: part_of
+xref: BFO:0000050
+is_transitive: true

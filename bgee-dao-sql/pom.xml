@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.bgee</groupId>
     <artifactId>bgee-applications</artifactId>
-    <version>13</version>
+    <version>14</version>
   </parent>
   
   <artifactId>bgee-dao-sql</artifactId>
@@ -334,6 +334,7 @@
                            <autocommit>true</autocommit>
                            <srcFiles>
                                <srcFile>${bgee.database.file.schema}</srcFile>
+                               <srcFile>${bgee.database.file.constraint}</srcFile>
                            </srcFiles>
                        </configuration>
                    </execution>

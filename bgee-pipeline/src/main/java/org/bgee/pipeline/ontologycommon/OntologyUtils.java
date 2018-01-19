@@ -2,6 +2,7 @@ package org.bgee.pipeline.ontologycommon;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.AbstractMap;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,11 +15,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import owltools.graph.OWLGraphManipulator;
@@ -26,7 +30,7 @@ import org.obolibrary.obo2owl.Owl2Obo;
 import org.obolibrary.oboformat.model.OBODoc;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.obolibrary.oboformat.writer.OBOFormatWriter;
-import org.semanticweb.owlapi.io.RDFXMLOntologyFormat;
+import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
@@ -187,22 +191,25 @@ public class OntologyUtils {
     /**
      * A {@code String} representing the key to obtain left bound value 
      * of a taxon, in the {@code Map} storing parameters of the nested set model.
-     * @see #computeNestedSetModelParams()
-     * @see #computeNestedSetModelParams(List)
+     * @see #computeNestedSetModelParams(OWLClass)
+     * @see #computeNestedSetModelParams(OWLClass, List)
+     * @see #computeNestedSetModelParams(OWLClass, List, Set)
      */
     public static final String LEFT_BOUND_KEY = "left";
     /**
      * A {@code String} representing the key to obtain right bound value 
      * of a taxon, in the {@code Map} storing parameters of the nested set model.
-     * @see #computeNestedSetModelParams()
-     * @see #computeNestedSetModelParams(List)
+     * @see #computeNestedSetModelParams(OWLClass)
+     * @see #computeNestedSetModelParams(OWLClass, List)
+     * @see #computeNestedSetModelParams(OWLClass, List, Set)
      */
     public static final String RIGHT_BOUND_KEY = "right";
     /**
      * A {@code String} representing the key to obtain level value 
      * of a taxon, in the {@code Map} storing parameters of the nested set model.
-     * @see #computeNestedSetModelParams()
-     * @see #computeNestedSetModelParams(List)
+     * @see #computeNestedSetModelParams(OWLClass)
+     * @see #computeNestedSetModelParams(OWLClass, List)
+     * @see #computeNestedSetModelParams(OWLClass, List, Set)
      */
     public static final String LEVEL_KEY = "level";
     
@@ -222,13 +229,8 @@ public class OntologyUtils {
             
             Matcher m1 = ID_PATTERN.matcher(id1);
             Matcher m2 = ID_PATTERN.matcher(id2);
-            if (!m1.matches()) {
-                throw log.throwing(new IllegalArgumentException("Malformed ID in ontology, " +
-                        "could not be parsed: " + id1));
-            }
-            if (!m2.matches()) {
-                throw log.throwing(new IllegalArgumentException("Malformed ID in ontology, " +
-                        "could not be parsed: " + id2));
+            if (!m1.matches() || !m2.matches()) {
+                return id1.compareTo(id2);
             }
             
             String prefix1 = m1.group(1);
@@ -517,7 +519,7 @@ public class OntologyUtils {
      * 
      * @param root  An {@code OWLClass} that will be considered as the root of the ontology 
      *              to start the computations from.
-     * @return  See {@link #computeNestedSetModelParams(OWLClass, List)} 
+     * @return  See {@link #computeNestedSetModelParams(OWLClass, List, Set)} 
      * @throws IllegalStateException    If the {@code OWLOntology} provided at instantiation 
      *                                  is not a simple tree.
      * @throws UnknownOWLOntologyException      If an {@code OWLGraphWrapper} was not 
@@ -526,7 +528,7 @@ public class OntologyUtils {
      * @throws OWLOntologyCreationException     If an {@code OWLGraphWrapper} was not 
      *                                          provided at instantiation, and an error 
      *                                          occurred while loading it.
-     * @see #computeNestedSetModelParams(OWLClass, List)
+     * @see #computeNestedSetModelParams(OWLClass, List, Set)
      */
     //TODO adapt as in org.bgee.pipeline.hierarchicalGroups.ParseOrthoXML.buildNestedSet(Node)
     public Map<OWLClass, Map<String, Integer>> computeNestedSetModelParams(OWLClass root) 
@@ -591,8 +593,7 @@ public class OntologyUtils {
     //suppress warning because the getAncestors method of owltools uses unparameterized 
     //generic OWLPropertyExpression, so we need to do the same. 
     public Map<OWLClass, Map<String, Integer>> computeNestedSetModelParams(OWLClass root, 
-            List<OWLClass> classOrder, 
-            @SuppressWarnings("rawtypes") Set<OWLPropertyExpression> overProps) 
+            List<OWLClass> classOrder, Set<OWLPropertyExpression> overProps) 
                     throws UnknownOWLOntologyException {
         log.entry(root, classOrder, overProps);
         
@@ -620,8 +621,8 @@ public class OntologyUtils {
     /**
      * A recursive method use to walk the {@code OWLOntology} wrapped into 
      * {@link #wrapper}, to compute the parameters allowing to represent the ontology 
-     * as a nested set model. This method is first called by {@link 
-     * #computeNestedSetModelParams(List)} by providing the {@code OWLClass} 
+     * as a nested set model. This method is first called by 
+     * {@link #computeNestedSetModelParams(List)} by providing the {@code OWLClass} 
      * root of the ontology, an initialized {@code Map} to store the parameters, 
      * and possibly a {@code List} to order {@code OWLClass}es. Following 
      * this first call, all the ontology will be recursively walked, and {@code params} 
@@ -629,9 +630,8 @@ public class OntologyUtils {
      * 
      * @param params            The {@code Map} allowing to store computed parameters, 
      *                          that will be populated along the recursive calls. 
-     *                          See returned value of {@link 
-     *                          #computeNestedSetModelParams(List)} for 
-     *                          a description.
+     *                          See returned value of {@link #computeNestedSetModelParams(List)} 
+     *                          for a description.
      * @param classInspected    Current {@code OWLClass} walked, for which children 
      *                          will be iterated. 
      * @param classOrder        A {@code List} allowing to order children 
@@ -655,7 +655,7 @@ public class OntologyUtils {
     private void recursiveNestedSetModelParams(
             final Map<OWLClass, Map<String, Integer>> params, 
             final OWLClass classInspected,  final List<OWLClass> classOrder, 
-            @SuppressWarnings("rawtypes") Set<OWLPropertyExpression> overProps) 
+            Set<OWLPropertyExpression> overProps) 
         throws IllegalStateException, UnknownOWLOntologyException {
         log.entry(params, classInspected, classOrder, overProps);
         
@@ -713,7 +713,7 @@ public class OntologyUtils {
             if (params.containsKey(child)) {
                 throw log.throwing(new IllegalStateException("The OWLOntology is not " +
                         "a simple tree that can be represented as a nested set model. " +
-                        "Class already seen: " + child));
+                        "Class already seen: " + child + ". Class inspected: " + classInspected));
             }
             
             //storing parameters for the current child;
@@ -758,6 +758,435 @@ public class OntologyUtils {
         params.put(LEVEL_KEY, level);
         return params;
     }
+    
+    public static class ListMerger<T> implements Comparator<T> {
+
+        private final List<List<T>> allLists;
+        private final Set<List<T>> inferredLists;
+        
+        public ListMerger(List<List<T>> allLists) {
+            log.entry(allLists);
+            allLists.stream().forEach(l -> {
+                Set<T> set1 = new HashSet<T>(l);
+                if (set1.size() != l.size()) {
+                    throw log.throwing(new IllegalArgumentException("The following list contains " +
+                            "non-unique elements: " + l));
+                }
+            });
+            this.inferredLists = new HashSet<>();
+            
+            if (allLists.size() <= 2) {
+                //if only two lists provided, we don't merge them: 
+                //the comparator will find common elements in common between them, 
+                //or will simply juxtapose them;
+                //it is to avoid an endless loop: merging lists uses this comparator 
+                //which uses merging lists method... So we don't merge if only two lists provided.
+                this.allLists = allLists;
+            } else {
+                //we try to merge all lists with elements in common, 
+                //and to iteratively expand these merges, 
+                //for cases where we have [A, B], [B, C], [C, D] 
+                //=> we want a merged list [A, B, C, D]
+                //But we want to create merged list for only elements that could formally be ordered, 
+                //and could not have been without merge, so:
+                //    - X A - - D
+                //    Y X - B C - 
+                // => Y - A - - D
+                // [A, B], [B, C], [C, D] will generate the following new lists: 
+                // [A, C], [B, D], [A, D]
+                // This is because if we don't only order disjoint elements formally ordered, 
+                // inconsistent merges will occur.
+                log.debug("Start merging list iteratively...");
+                Deque<List<T>> walker = new ArrayDeque<>(allLists);
+                List<List<T>> finalLists = new ArrayList<>();
+                List<T> currentList = null;
+                //much much faster computations by avoiding computing info for lists already tested
+                Set<Entry<List<T>, List<T>>> alreadyVisited = new HashSet<>();
+                while ((currentList = walker.pollFirst()) != null) {
+                    log.trace("Walker at beginning: {}", walker);
+                    List<List<T>> listsToAdd = new ArrayList<>();
+                    for (List<T> otherList: walker) {
+                        if (!Collections.disjoint(currentList, otherList) && 
+                                !(alreadyVisited.contains(
+                                        new AbstractMap.SimpleEntry<>(currentList, otherList)) || 
+                                  alreadyVisited.contains(
+                                        new AbstractMap.SimpleEntry<>(otherList, currentList)))) {
+                            
+                            //we use a ListMerger but it's OK, when it is provided 
+                            //with only two lists, it doesn't enter this code block 
+                            //and does not produce an endless loop
+                            ListMerger<T> internalMerger = 
+                                    new ListMerger<>(Arrays.asList(currentList, otherList));
+                            
+                            //retrieve all elements to be ordered
+                            Set<T> allElements = new HashSet<>(currentList);
+                            allElements.addAll(otherList);
+                            //now we iterate the elements present in currentList and not otherList, 
+                            //and vice versa, and keep only elements that can be formally ordered 
+                            //in *all* comparisons tried (very important, fixed a bug). 
+                            //if any comparison fails, then we'll simply create list of pairs of elements 
+                            //that could be ordered.
+                            boolean orderOnlyPairs = false;
+                            Set<List<T>> orderedByPair = new HashSet<>();
+                            for (T e1: allElements) {
+                                //not an element unique to one list, we don't care
+                                if (currentList.contains(e1) && otherList.contains(e1)) {
+                                    continue;
+                                }
+                                for (T e2: allElements) {
+                                    if (e1.equals(e2) || 
+                                            //not an element unique to one list, we don't care
+                                            currentList.contains(e2) && otherList.contains(e2) || 
+                                            //if o1 and o2 are members of a same list.
+                                            //we check over all lists to maximize the "rescue" 
+                                            //of potential merges
+                                            currentList.contains(e1) && currentList.contains(e2) || 
+                                            walker.stream().anyMatch(l -> l.contains(e1) && l.contains(e2))) {
+                                        continue;
+                                    }
+                                    try {
+                                        internalMerger.compare(e1, e2, true, false);
+                                        //Arrays.asList returns an immutable List, we need a mutable one
+                                        orderedByPair.add(new ArrayList<>(Arrays.asList(e1, e2)));
+                                    } catch (IllegalArgumentException e) {
+                                        log.catching(Level.TRACE, e);
+                                        orderOnlyPairs = true;
+                                    }
+                                }
+                            }
+                            //Did we generate new information from the merge? Then store the merged list 
+                            //and try to merge it further
+                            Set<List<T>> toOrders = orderedByPair;
+                            if (!orderOnlyPairs) {
+                                toOrders = new HashSet<>();
+                                //Did we get any ordering at all?
+                                if (!orderedByPair.isEmpty()) {
+                                    toOrders.add(new ArrayList<>(orderedByPair.stream()
+                                            .flatMap(l -> l.stream())
+                                            .collect(Collectors.toSet())));
+                                }
+                            }
+                            for (List<T> toOrder: toOrders) {
+                                log.trace("Merged list to order: {}", toOrder);
+                                Collections.sort(toOrder, internalMerger);
+                                log.trace("Merged list: {}", toOrder);
+                                if (!listsToAdd.contains(toOrder)) {
+                                    listsToAdd.add(toOrder);
+                                    log.trace("Merged list added");
+                                } else {
+                                    log.trace("Merged list already existing");
+                                }
+                            }
+                            alreadyVisited.add(new AbstractMap.SimpleEntry<>(otherList, currentList));
+                        }
+                        
+                        //we need to store all lists anyway for proper ordering of lists
+                        listsToAdd.add(otherList);
+                    }
+                    
+                    //Did we create non already-existing merges?
+                    Set<List<T>> allListsToUse = new HashSet<>(finalLists);
+                    allListsToUse.add(currentList);
+                    allListsToUse.addAll(walker);
+                    if (!allListsToUse.containsAll(listsToAdd)) {
+                        //Add merged lists to the Queue for further merging.
+                        
+                        //avoid duplicating Lists
+                        listsToAdd.removeAll(finalLists);
+                        listsToAdd.remove(currentList);
+                        Set<List<T>> newInferredLists = new HashSet<>(listsToAdd);
+                        newInferredLists.removeAll(allListsToUse);
+                        this.inferredLists.addAll(newInferredLists);
+                        log.trace("New lists added: {}. Current list: {}. Walker: {}", 
+                                newInferredLists, currentList, walker);
+                        
+                        walker = new ArrayDeque<>(listsToAdd);
+                        //also, we'll try again to expand the merge even for currentList
+                        walker.offerFirst(currentList);
+                        log.trace("New resulting walker: {}", walker);
+                        
+                    } else if (!finalLists.contains(currentList)) {
+                        finalLists.add(currentList);
+                    }
+                }
+                log.debug("Done merging lists, number of resulting lists: {} - resulting lists: {}", 
+                        finalLists.size(), finalLists);
+                this.allLists = finalLists;
+            }
+            
+            
+            log.exit();
+        }
+
+        @Override
+        public int compare(T o1, T o2) {
+            log.entry(o1, o2);
+            return log.exit(this.compare(o1, o2, false, false));
+        }
+        private int compare(T o1, T o2, boolean strict, boolean undeterminedZero) {
+            log.entry(o1, o2, strict, undeterminedZero);
+            if (Objects.equals(o1, o2)) {
+                return log.exit(0);
+            }
+
+            boolean before = false;
+            boolean after = false;
+            //*************************
+            //First, we check whether there exist some lists containing both elements
+            for (List<T> list: allLists) {
+                int o1Index = list.indexOf(o1);
+                int o2Index = list.indexOf(o2);
+                if (o1Index == -1 || o2Index == -1) {
+                    continue;
+                }
+                log.trace("Elements found in list: {}", list);
+                if (o1Index < o2Index) {
+                    before = true;
+                } else {
+                    after = true;
+                }
+            }
+            if (before && after) {
+                throw log.throwing(new IllegalStateException("The provided lists have conficting ordering of " 
+                        + o1 + " and " + o2 + ". Provided lists: " + allLists));
+            }
+            if (!before && !after) {
+                log.trace("Elements never found together in a list: {} and {}", o1, o2);
+            } else {
+                log.trace("Classification based on lists containing both elements, before: {}, after: {}", 
+                    before, after);
+            }
+
+            //*************************
+            //Now, if no ordering could be determined, or even if it could be  
+            //(for sanity check purposes), we check lists containing each one of the elements, 
+            //and overlapping. check only cases where list1 contains o1 and list2 contains o2
+            for (List<T> list1: allLists) {
+                for (List<T> list2: allLists) {
+                    if (list1.equals(list2) || 
+                            //if one of the list contains both elements, skip, already examined
+                            list1.contains(o1) && list1.contains(o2) || 
+                            list2.contains(o1) && list2.contains(o2) || 
+                            //if we don't have o1 in list1 and o2 in list2, skip
+                            !(list1.contains(o1) && list2.contains(o2))) {
+                        continue;
+                    }
+                    //Check if elements in common
+                    Set<T> commonClasses = new HashSet<>(list1);
+                    commonClasses.retainAll(list2);
+                    if (commonClasses.isEmpty()) {
+                        log.trace("No elements in common");
+                        continue;
+                    }
+                    //now, we check whether some of the common classes allow to order o1 and o2
+                    int o1Index = list1.indexOf(o1);
+                    int o2Index = list2.indexOf(o2);
+                    for (T commonCls: commonClasses) {
+                        int compare1 = list1.indexOf(commonCls) - o1Index;
+                        int compare2 = list2.indexOf(commonCls) - o2Index;
+                        //order: o1 - commonCls - o2
+                        if (compare1 > 0 && compare2 < 0) {
+                            log.trace("Common class {} allows to classify {} before {}", commonCls, o1, o2);
+                            before = true;
+                        }
+                        //order: o2 - commonCls - o1
+                        else if (compare2 > 0 && compare1 < 0) {
+                            log.trace("Common class {} allows to classify {} after {}", commonCls, o1, o2);
+                            after = true;
+                        }
+                    }
+
+                    if (before && after) {
+                        throw log.throwing(new IllegalStateException("The provided lists have conficting ordering of " 
+                                + o1 + " and " + o2 + ". Provided lists: " + allLists));
+                    }
+                }
+            }
+            if (before && after) {
+                throw log.throwing(new IllegalStateException("The provided lists have conficting ordering of " 
+                        + o1 + " and " + o2 + ". Provided lists: " + allLists));
+            }
+            if (!before && !after) {
+                log.trace("Elements never found in overlapping lists: {} and {}", o1, o2);
+            } else {
+                log.trace("Classification based on overlapping lists, before: {}, after: {}", 
+                    before, after);
+            }
+            
+            if (before) {
+                return log.exit(-1);
+            } else if (after) {
+                return log.exit(1);
+            } else if (strict) {
+                throw log.throwing(Level.TRACE, new IllegalArgumentException(
+                        "Elements could not be ordered from unique list or overlapping lists: " 
+                        + o1 + " - " + o2));
+            }
+            
+            //*************************
+            //we could not formally order the elements, but provided lists are also ordered 
+            //between them, for instance, providing 2 lists of non-overlapping elements 
+            //with elements of the second list simply following elements of the first list. 
+            //So we retrieve the indexes of the lists the elements are present in.
+            Set<Integer> o1ListIndexes = new HashSet<>();
+            Set<Integer> o2ListIndexes = new HashSet<>();
+            //Also, if a list containing one of the elements contains only a single element, 
+            //then it means that this term was the only child of its parent, so that we don't care 
+            //about it's ordering, and can always order it last
+            int o1ListMinSize = 0;
+            int o2ListMinSize = 0;
+            //Otherwise, we should use the index if the largest list for each element, 
+            //this is the one most likely to provide a correct ordering of other elements
+            int o1MaxSize = 0;
+            int o1MaxListIndex = 0;
+            int o2MaxSize = 0;
+            int o2MaxListIndex = 0;
+            for (int i = 0; i < this.allLists.size(); i++) {
+                List<T> list = this.allLists.get(i);
+                //use only original lists
+                if (this.inferredLists.contains(list)) {
+                    continue;
+                }
+                if (list.contains(o1)) {
+                    o1ListIndexes.add(i);
+                    if (o1ListMinSize == 0 || o1ListMinSize > list.size()) {
+                        o1ListMinSize = list.size();
+                    }
+                    if (list.size() > o1MaxSize) {
+                        o1MaxSize = list.size();
+                        o1MaxListIndex = i;
+                    }
+                    log.trace("List where {} is present with index {}: {}", o1, i, list);
+                } else if (list.contains(o2)) {
+                    o2ListIndexes.add(i);
+                    if (o2ListMinSize == 0 || o2ListMinSize > list.size()) {
+                        o2ListMinSize = list.size();
+                    }
+                    if (list.size() > o2MaxSize) {
+                        o2MaxSize = list.size();
+                        o2MaxListIndex = i;
+                    }
+                    log.trace("List where {} is present with index {}: {}", o2, i, list);
+                }
+            }
+            //Check that all indexes are consistent
+            for (int o1ListIndex: o1ListIndexes) {
+                for (int o2ListIndex: o2ListIndexes) {
+                    if (o1ListIndex < o2ListIndex) {
+                        before = true;
+                    } else if (o1ListIndex > o2ListIndex) {
+                        after = true;
+                    }
+                }
+            }
+
+            assert before || after: "An ordering should be defined at this point, even conflicting";
+            if (before && !after) {
+                return log.exit(-1);
+            } else if (after && !before) {
+                return log.exit(1);
+            }
+            
+            if (undeterminedZero) {
+                return log.exit(0);
+            }
+            log.warn("Elements are conflictingly sorted from list orders: " + o1 + " - " + o2);
+            
+            //if the min size of the lists of one of the elements is 1, but not the other, 
+            //then we don't care about the ordering of the former and put it after
+            if (o1ListMinSize == 1 && o2ListMinSize > 1) {
+                log.debug("Resolved by list of size 1");
+                return log.exit(1);
+            } else if (o2ListMinSize == 1 && o1ListMinSize > 1) {
+                log.debug("Resolved by list of size 1");
+                return log.exit(-1);
+            }
+
+            log.debug("Resolved by index of largest list");
+            //we consider the index of the largest list for each element
+            return log.exit(o1MaxListIndex - o2MaxListIndex);
+        }
+        
+        /**
+         * Performs a sort by comparing **all** elements of the provided list, 
+         * and not by using an algorithm such as merged sort, which doesn't compare 
+         * all possible pairs of terms, and incorrectly sorts the Bgee developmental stages.
+         *  
+         * @param toSort        A {@code List} to order. It must be both modifiable *and* resizable.
+         * @param comparator    A {@code Comparator} to compare {@code T} elements of {@code toSort}.
+         */
+        public static <T> void sort(List<T> toSort, ListMerger<T> comparator) {
+            log.entry(toSort, comparator);
+            
+            log.debug("Start sorting...");
+            long startTime = System.currentTimeMillis();
+            
+//            //Bubble sort algorithm: we have to adapt it, because when the comparator returns 0, 
+//            //it doesn't mean elements are equal, just that they could not be ordered
+//            int j;
+//            boolean flag = true;   // set flag to true to begin first pass
+//            while (flag) {
+//                flag = false;    //set flag to false awaiting a possible swap
+//                for (j = 0; j < toSort.size() - 1; j++) {
+//                    if (comparator.compare(toSort.get(j), toSort.get(j + 1)) > 0) { 
+//                        Collections.swap(toSort, j, j + 1);
+//                        flag = true;
+//                    }
+//                }
+//            } 
+            
+//            //Selection Sort : doesn't work because of the inconsistency of our comparator
+//            for (int i = 0; i < toSort.size() - 1; i++) {
+//                int minElemIndex = i;
+//                T e1 = toSort.get(i);
+//                for (int j = i + 1; j < toSort.size(); j++) {
+//                    T e2 = toSort.get(j);
+//                    if (comparator.compare(e2, e1) < 0) {
+//                        minElemIndex = j;
+//                    }
+//                }
+//                Collections.swap(toSort, i, minElemIndex);
+//            }
+        
+            int i = 0;
+            int indexStart = 0;
+            while (i < toSort.size()) {
+                T e1 = toSort.get(i);
+                T lowerFarestElement = null;
+                //find the index farest away of a lower element
+                int lowerFarestElementIndex = i;
+                boolean findLower = false;
+                for (int j = toSort.size() - 1; j > i; j--) {
+                    T e2 = toSort.get(j);
+                    if (comparator.compare(e1, e2, false, true) > 0) {
+                        lowerFarestElementIndex = j;
+                        lowerFarestElement = e2;
+                        findLower = true;
+                        break;
+                    }
+                }
+                if (!findLower) {
+                    i++;
+                    indexStart = i;
+                } else {
+                    log.debug("Element {} at index {} greater than element {} at index {}", 
+                            e1, i, lowerFarestElement, lowerFarestElementIndex);
+                    //will shift further indexes by -1, so we'll insert at index greaterFarestIndex, 
+                    //rather than greaterFarestIndex + 1.
+                    toSort.remove(e1);
+                    if (lowerFarestElementIndex >= toSort.size()) {
+                        toSort.add(e1);
+                    } else {
+                        toSort.add(lowerFarestElementIndex, e1);
+                    }
+                    //restart iterations all over again since the last element that coudn't be moved
+                    i = indexStart;
+                } 
+            }
+            log.debug("End sorting, took {} ms.", System.currentTimeMillis() - startTime);
+            log.exit();
+        }
+    }
 
     /**
      * Merge {@code list1} and {@code list2} by identifying common {@code OWLClass}es 
@@ -766,61 +1195,28 @@ public class OntologyUtils {
      * if {@code list1} contains {@code cls4}, {@code cls2}, and {@code cls5}, 
      * then the resulted mergeds list would be: {@code cls1}, {@code cls4}, 
      * {@code cls2}, {@code cls3}, {@code cls5}.
+     * <p>
+     * Order of the arguments is important: if it is not possible to order some elements 
+     * based on common classes, these elements in {@code list1} will always be ordered before 
+     * these elements in {@code list2}.
      * 
      * @param list1 A first {@code List} of {@code OWLClass}es to be merged. 
      * @param list2 A second {@code List} of {@code OWLClass}es to be merged. 
      * @return      The resulting merged {@code List} of {@code OWLClass}es properly 
      *              ordered. 
-     * @throw IllegalArgumentException  If some of the {@code List}s contains several 
+     * @throws IllegalArgumentException If some of the {@code List}s contains several 
      *                                  equal elements. 
      */
     public static <T> List<T> mergeLists(List<T> list1, List<T> list2) 
         throws IllegalArgumentException {
         log.entry(list1, list2);
         
-        List<T> mergedList = new ArrayList<T>();
-        
-        //we need to identify at least one common element, other common element will be considered 
-        //during recursive iterations.
-        Set<T> set1 = new HashSet<T>(list1);
-        if (set1.size() != list1.size()) {
-            throw log.throwing(new IllegalArgumentException("The following list contains " +
-            		"non-unique elements: " + list1));
-        }
-        Set<T> set2 = new HashSet<T>(list2);
-        if (set2.size() != list2.size()) {
-            throw log.throwing(new IllegalArgumentException("The following list contains " +
-                    "non-unique elements: " + list2));
-        }
-        set1.retainAll(set2);
-        
-        //now, reorder the elements that are before and after the common elements
-        if (!set1.isEmpty()) {
-            log.trace("Elements in common.");
-            //get any common element
-            T commonElement = set1.iterator().next();
-            log.trace("Element in common used as anchor: {}", commonElement);
-            
-            int commonClassIndex1 = list1.indexOf(commonElement);
-            List<T> firstPartList1 = list1.subList(0, commonClassIndex1);
-            List<T> secondPartList1 = list1.subList(commonClassIndex1 + 1, list1.size());
-            int commonClassIndex2 = list2.indexOf(commonElement);
-            List<T> firstPartList2 = list2.subList(0, commonClassIndex2);
-            List<T> secondPartList2 = list2.subList(commonClassIndex2 + 1, list2.size());
-            log.trace("First part list 1: {} - first part list 2: {} --- second part list1 {} - second part list2: {}", 
-                    firstPartList1, firstPartList2, secondPartList1, secondPartList2);
-            
-            //merge the first parts and the seconds parts, add the common element in between
-            List<T> firstPart = OntologyUtils.mergeLists(firstPartList1, firstPartList2);
-            List<T> secondPart = OntologyUtils.mergeLists(secondPartList1, secondPartList2);
-            mergedList.addAll(firstPart);
-            mergedList.add(commonElement);
-            mergedList.addAll(secondPart);
-        } else {
-            log.trace("No elements in common, simply adding the two lists.");
-            mergedList.addAll(list1);
-            mergedList.addAll(list2);
-        }
+        Set<T> mergedSet = new HashSet<T>(list1);
+        mergedSet.addAll(list2);
+        List<T> mergedList = new ArrayList<>(mergedSet);
+        OntologyUtils.ListMerger.sort(mergedList, new ListMerger<T>(
+                //order of the lists is critical
+                Arrays.asList(list1, list2)));
         
         return log.exit(mergedList);
     }
@@ -898,12 +1294,11 @@ public class OntologyUtils {
         
         File rdfFile = new File(outputFile); 
         OWLOntologyManager manager = this.ontology.getOWLOntologyManager();
-        RDFXMLOntologyFormat owlRdfFormat = new RDFXMLOntologyFormat();
+        RDFXMLDocumentFormat owlRdfFormat = new RDFXMLDocumentFormat();
         if (owlRdfFormat.isPrefixOWLOntologyFormat()) {
             owlRdfFormat.copyPrefixesFrom(owlRdfFormat.asPrefixOWLOntologyFormat());
         } 
-        manager.saveOntology(this.ontology, 
-                owlRdfFormat, IRI.create(rdfFile.toURI()));
+        manager.saveOntology(this.ontology, owlRdfFormat, IRI.create(rdfFile.toURI()));
         
         log.exit();
     }
@@ -967,18 +1362,18 @@ public class OntologyUtils {
             //first, we obtained the mappings, then we will make them unmodifiable
             Map<String, Set<String>> modifiableXRefMappings = 
                     new HashMap<String, Set<String>>();
-            for (OWLOntology ont: this.getWrapper().getAllOntologies()) {
-                for (OWLClass cls: ont.getClassesInSignature()) {
-
-                    String clsId = this.getWrapper().getIdentifier(cls);
-                    for (String xref: this.getWrapper().getXref(cls)) {
-                        Set<String> associatedClassIds = modifiableXRefMappings.get(xref);
-                        if (associatedClassIds == null) {
-                            associatedClassIds = new HashSet<String>();
-                            modifiableXRefMappings.put(xref, associatedClassIds);
-                        }
-                        associatedClassIds.add(clsId);
+            for (OWLClass cls: this.getWrapper().getAllOWLClasses()) {
+                if (this.getWrapper().isOboAltId(cls)) {
+                    continue;
+                }
+                String clsId = this.getWrapper().getIdentifier(cls);
+                for (String xref: this.getWrapper().getXref(cls)) {
+                    Set<String> associatedClassIds = modifiableXRefMappings.get(xref);
+                    if (associatedClassIds == null) {
+                        associatedClassIds = new HashSet<String>();
+                        modifiableXRefMappings.put(xref, associatedClassIds);
                     }
+                    associatedClassIds.add(clsId);
                 }
             }
             log.trace("Original XRef mapping: {}", modifiableXRefMappings);
@@ -1270,26 +1665,27 @@ public class OntologyUtils {
         this.replacedByMappings = new HashMap<String, Set<String>>();
         this.considerMappings = new HashMap<String, Set<String>>();
         
-        for (OWLOntology ont: this.getWrapper().getAllOntologies()) {
-            for (OWLClass cls: ont.getClassesInSignature()) {
-                
-                //consider only obsolete OWLClasses
-                if (!this.getWrapper().isObsolete(cls) && 
-                        !this.getWrapper().getIsObsolete(cls)) {
-                    continue;
-                }
-                
-                String clsId = this.getWrapper().getIdentifier(cls);
-                List<String> replacedBy = this.getWrapper().getReplacedBy(cls);
-                if (!replacedBy.isEmpty()) {
-                    this.replacedByMappings.put(clsId, Collections.unmodifiableSet(
-                            new HashSet<String>(replacedBy)));
-                }
-                List<String> consider = this.getWrapper().getConsider(cls);
-                if (!consider.isEmpty()) {
-                    this.considerMappings.put(clsId, Collections.unmodifiableSet(
-                            new HashSet<String>(consider)));
-                }
+        for (OWLClass cls: this.getWrapper().getAllOWLClasses()) {
+
+            if (this.getWrapper().isOboAltId(cls)) {
+                continue;
+            }
+            //consider only obsolete OWLClasses
+            if (!this.getWrapper().isObsolete(cls) && 
+                    !this.getWrapper().getIsObsolete(cls)) {
+                continue;
+            }
+            
+            String clsId = this.getWrapper().getIdentifier(cls);
+            List<String> replacedBy = this.getWrapper().getReplacedBy(cls);
+            if (!replacedBy.isEmpty()) {
+                this.replacedByMappings.put(clsId, Collections.unmodifiableSet(
+                        new HashSet<String>(replacedBy)));
+            }
+            List<String> consider = this.getWrapper().getConsider(cls);
+            if (!consider.isEmpty()) {
+                this.considerMappings.put(clsId, Collections.unmodifiableSet(
+                        new HashSet<String>(consider)));
             }
         }
         this.replacedByMappings = Collections.unmodifiableMap(this.replacedByMappings);
@@ -1355,7 +1751,7 @@ public class OntologyUtils {
         Set<OWLClass> subgraphMembers = new HashSet<OWLClass>();
         if (subgraphRootIds != null) {
             for (String subgraphRootId: new HashSet<String>(subgraphRootIds)) {
-                OWLClass subgraphRoot = this.getWrapper().getOWLClassByIdentifier(
+                OWLClass subgraphRoot = this.getWrapper().getOWLClassByIdentifierNoAltIds(
                         subgraphRootId);
                 
                 if (subgraphRoot != null) {
@@ -1395,7 +1791,6 @@ public class OntologyUtils {
      * @return  A {@code Set} of {@code OWLPropertyExpression}s containing the "part_of" 
      *          {@code OWLObjectPropertyExpression}, and all its children.
      */
-    @SuppressWarnings("rawtypes")
     //TODO: add unit test
     public Set<OWLPropertyExpression> getGenericPartOfProps() {
         log.entry();
@@ -1471,12 +1866,25 @@ public class OntologyUtils {
      * Determines whether {@code edge} is a immediately_preceded_by relation (see 
      * {@link #IMMEDIATELY_PRECEDED_BY_ID}).
      * 
-     * @param edge  The {@code OWLGraphEdge} to test for being a immediately_preceded_by relation.
+     * @param edge          The {@code OWLGraphEdge} to test for being a immediately_preceded_by relation.
      * @return      {@code true} if {@code edge} is a immediately_preceded_by-related relation.
      */
     public boolean isImmediatelyPrecededByRelation(OWLGraphEdge edge) {
         log.entry(edge);
-        
+        return log.exit(this.isImmediatelyPrecededByRelation(edge, null));
+    }
+    /**
+     * Determines whether {@code edge} is a immediately_preceded_by relation (see 
+     * {@link #IMMEDIATELY_PRECEDED_BY_ID}) valid in the requested taxa.
+     * 
+     * @param edge          The {@code OWLGraphEdge} to test for being a immediately_preceded_by relation.
+     * @param validFillers  A {@code Set} of {@code OWLClass}es that are valid GCI filler for {@code edge}.
+     *                      Can be {@code null} if no filtering on GCI filler is requested.
+     * @return      {@code true} if {@code edge} is a immediately_preceded_by-related relation.
+     */
+    //TODO: unit test
+    public boolean isImmediatelyPrecededByRelation(OWLGraphEdge edge, Set<OWLClass> validFillers) {
+        log.entry(edge, validFillers);
         return log.exit(edge.getQuantifiedPropertyList().size() == 1 && 
 
                 edge.getSingleQuantifiedProperty().getProperty() != null &&
@@ -1484,7 +1892,10 @@ public class OntologyUtils {
                 IMMEDIATELY_PRECEDED_BY_ID).equals(
                         edge.getSingleQuantifiedProperty().getProperty()) &&
                         
-                    edge.getSingleQuantifiedProperty().isSomeValuesFrom());
+                edge.getSingleQuantifiedProperty().isSomeValuesFrom() && 
+                
+                (edge.getGCIFiller() == null || validFillers == null || 
+                        validFillers.contains(edge.getGCIFiller())));
     }
     
     /**
@@ -1492,11 +1903,32 @@ public class OntologyUtils {
      * having a {@code OWLObjectProperty} corresponding to "preceded_by" (see 
      * {@link #PRECEDED_BY_ID}) or any of its {@code OWLObjectProperty} children.
      * 
-     * @param edge  The {@code OWLGraphEdge} to test for being a preceded_by-related relation.
+     * @param edge          The {@code OWLGraphEdge} to test for being a preceded_by-related relation.
      * @return      {@code true} if {@code edge} is a preceded_by-related relation.
      */
     public boolean isPrecededByRelation(OWLGraphEdge edge) {
         log.entry(edge);
+        return log.exit(this.isPrecededByRelation(edge, null));
+    }
+    
+    /**
+     * Determines whether {@code edge} is a preceded_by-related relation, meaning, 
+     * having a {@code OWLObjectProperty} corresponding to "preceded_by" (see 
+     * {@link #PRECEDED_BY_ID}) or any of its {@code OWLObjectProperty} children, and valid 
+     * in the requested taxa.
+     * 
+     * @param edge          The {@code OWLGraphEdge} to test for being a preceded_by-related relation.
+     * @param validFillers  A {@code Set} of {@code OWLClass}es that are valid GCI filler for {@code edge}.
+     *                      Can be {@code null} if no filtering on GCI filler is requested.
+     * @return      {@code true} if {@code edge} is a preceded_by-related relation.
+     */
+    //TODO: unit test
+    public boolean isPrecededByRelation(OWLGraphEdge edge, Set<OWLClass> validFillers) {
+        log.entry(edge, validFillers);
+        
+        if (edge.getGCIFiller() != null && validFillers != null && !validFillers.contains(edge.getGCIFiller())) {
+            return log.exit(false);
+        }
         
         if (edge.getQuantifiedPropertyList().size() == 1) {
             return log.exit(
@@ -1611,8 +2043,7 @@ public class OntologyUtils {
      */
     //suppress warning because the getAncestors method of owltools uses unparameterized 
     //generic OWLPropertyExpression, so we need to do the same. 
-    public int getMinDistance(OWLClass source, OWLClass target, 
-            @SuppressWarnings("rawtypes") Set<OWLPropertyExpression> overProps) {
+    public int getMinDistance(OWLClass source, OWLClass target, Set<OWLPropertyExpression> overProps) {
         log.entry(source, target, overProps);
         
         //identity
@@ -1685,7 +2116,7 @@ public class OntologyUtils {
     //suppress warning because the getAncestors method of owltools uses unparameterized 
     //generic OWLPropertyExpression, so we need to do the same. 
     public Set<OWLClass> getLeastCommonAncestors(OWLClass cls1, OWLClass cls2, 
-            @SuppressWarnings("rawtypes") Set<OWLPropertyExpression> overProps) {
+            Set<OWLPropertyExpression> overProps) {
         log.entry(cls1, cls2, overProps);
         
         //in case one of the class is the ancestor of the other
@@ -1729,8 +2160,7 @@ public class OntologyUtils {
      */
     //suppress warning because the getAncestors method of owltools uses unparameterized 
     //generic OWLPropertyExpression, so we need to do the same. 
-    public void retainLeafClasses(Set<OWLClass> classes,  
-            @SuppressWarnings("rawtypes") Set<OWLPropertyExpression> overProps) {
+    public void retainLeafClasses(Set<OWLClass> classes, Set<OWLPropertyExpression> overProps) {
         log.entry(classes, overProps);
         this.retainRelativeClasses(classes, overProps, true);
         log.exit();
@@ -1750,8 +2180,7 @@ public class OntologyUtils {
      */
     //suppress warning because the getAncestors method of owltools uses unparameterized 
     //generic OWLPropertyExpression, so we need to do the same. 
-    public void retainParentClasses(Set<OWLClass> classes,  
-            @SuppressWarnings("rawtypes") Set<OWLPropertyExpression> overProps) {
+    public void retainParentClasses(Set<OWLClass> classes, Set<OWLPropertyExpression> overProps) {
         log.entry(classes, overProps);
         this.retainRelativeClasses(classes, overProps, false);
         log.exit();
@@ -1775,8 +2204,7 @@ public class OntologyUtils {
      */
     //suppress warning because the getAncestors method of owltools uses unparameterized 
     //generic OWLPropertyExpression, so we need to do the same. 
-    private void retainRelativeClasses(Set<OWLClass> classes,  
-            @SuppressWarnings("rawtypes") Set<OWLPropertyExpression> overProps, 
+    private void retainRelativeClasses(Set<OWLClass> classes, Set<OWLPropertyExpression> overProps, 
             boolean retainLeaves) {
         log.entry(classes, overProps, retainLeaves);
         

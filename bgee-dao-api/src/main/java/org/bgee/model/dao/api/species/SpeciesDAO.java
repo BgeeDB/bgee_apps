@@ -4,7 +4,7 @@ import java.util.Set;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
-import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.NamedEntityTO;
 import org.bgee.model.dao.api.exception.DAOException;
 
 /**
@@ -28,19 +28,21 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
      * <li>{@code PARENT_TAXON_ID}: corresponds to {@link SpeciesTO#getParentTaxonId()}.
      * <li>{@code GENOME_FILE_PATH}: corresponds to {@link SpeciesTO#getGenomeFilePath()}.
      * <li>{@code GENOME_VERSION}: corresponds to {@link SpeciesTO#getGenomeVersion()}.
+     * <li>{@code DATA_SOURCE_ID}: corresponds to {@link SpeciesTO#getDataSourceId()}.
      * <li>{@code GENOME_SPECIES_ID}: corresponds to {@link SpeciesTO#getGenomeSpeciesId()}.
      * <li>{@code FAKE_GENE_ID_PREFIX}: corresponds to {@link SpeciesTO#getFakeGeneIdPrefix()}.
+     * <li>{@code DISPLAY_ORDER}: corresponds to {@link SpeciesTO#getDisplayOrder()}.
      * </ul>
      * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
      * @see org.bgee.model.dao.api.DAO#setAttributes(Enum[])
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        ID("id"), COMMON_NAME("name"), GENUS("genus"), SPECIES_NAME("speciesName"), 
-        PARENT_TAXON_ID("parentTaxonId"), GENOME_FILE_PATH("genomeFilePath"), 
-        GENOME_SPECIES_ID("genomeSpeciesId"), FAKE_GENE_ID_PREFIX("fakeGeneIdPrefix"), 
-        // TODO currently this info is not present in the table
-        GENOME_VERSION("genomeVersion");
+        ID("id"), COMMON_NAME("name"), GENUS("genus"), SPECIES_NAME("speciesName"),
+        PARENT_TAXON_ID("parentTaxonId"), GENOME_FILE_PATH("genomeFilePath"),
+        GENOME_VERSION("genomeVersion"), DATA_SOURCE_ID("dataSourceId"),
+        GENOME_SPECIES_ID("genomeSpeciesId"), FAKE_GENE_ID_PREFIX("fakeGeneIdPrefix"),
+        DISPLAY_ORDER("speciesDisplayOrder");
 
         /**
          * A {@code String} that is the corresponding field name in {@code RelationTO} class.
@@ -79,12 +81,12 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
      * It is the responsibility of the caller to close this {@code DAOResultSet} once 
      * results are retrieved.
      * 
-     * @param speciesIds    A {@code Set} of {@code String}s that are the NCBI IDs 
+     * @param speciesIds    A {@code Set} of {@code Integer}s that are the NCBI IDs 
      *                      of the requested species (for instance, {@code 9606} for human).
      * @return A {@code SpeciesTOResultSet} containing all species from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public SpeciesTOResultSet getSpeciesByIds(Set<String> speciesIds) throws DAOException;
+    public SpeciesTOResultSet getSpeciesByIds(Set<Integer> speciesIds) throws DAOException;
 
     /**
      * Retrieve all the species that are part of any data group.
@@ -111,7 +113,7 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
      * @version Bgee 13
      * @since Bgee 01
      */
-    public final class SpeciesTO extends EntityTO {
+    public final class SpeciesTO extends NamedEntityTO<Integer> {
 
     	private static final long serialVersionUID = 341628321446710146L;
     	/**
@@ -126,12 +128,16 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
          */
         private final String speciesName;
         /**
-         * A {@code String} that is the ID of the parent taxon of this species (for instance, 
+         * An {@code Integer} allowing to sort species in preferred display order.
+         */
+        private final Integer displayOrder;
+        /**
+         * An {@code Integer} that is the ID of the parent taxon of this species (for instance,
          * {@code 9605} for <i>homo</i>, if this species was "human"). 
          * Corresponds to the DAO {@code Attribute} {@link SpeciesDAO.Attribute 
          * PARENT_TAXON_ID}.
          */
-        private final String parentTaxonId;
+        private final Integer parentTaxonId;
         
         /**
          * A {@code String} that is the path to retrieve the genome file we use 
@@ -150,22 +156,19 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
          * For instance, for human, this attribute would contain: {@code Homo_sapiens.GRCh37}.
          */
         private final String genomeVersion;
+        
+        /**
+         * @see #getDataSourceId()
+         */
+        private final Integer dataSourceId;
 
         /**
-         * A {@code String} that is the ID of the species whose the genome was used 
+         * A {@code Integer} that is the ID of the species whose the genome was used 
          * for this species. This is used when a genome is not in Ensembl, but genome 
          * of a close species is. For instance, for bonobo (ID 9597), we use the chimp genome 
          * (ID 9598), because bonobo is not in Ensembl.
          */
-        private final String genomeSpeciesId;
-        
-        /**
-         * A {@code String} that is the prefix of gene IDs for this species, if its genome 
-         * was not in Ensembl. This is because when another genome was used for a species 
-         * in Bgee, we change the gene ID prefix (for instance, the chimp gene IDs, 
-         * starting with 'ENSPTRG', will be changed to 'PPAG' when used for the bonobo).
-         */
-        private final String fakeGeneIdPrefix;
+        private final Integer genomeSpeciesId;
         
         /**
          * Constructor providing the ID, the common name, the genus, the species, and the ID 
@@ -176,36 +179,37 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
          * are not meant to be instantiated by clients, but only by the application, 
          * so we do not really care about having non-friendly constructors.
          * 
-         * @param id                A {@code String} that is the ID.
+         * @param id                An {@code Integer} that is the ID.
          * @param commonName        A {@code String} that is the common name. 
          * @param genus             A {@code String} that is the genus of the species 
          *                          (for instance, <i>homo</i>).
          * @param speciesName       A {@code String} that is the species name of the species 
          *                          (for instance, <i>sapiens</i>).
-         * @param parentTaxonId     A {@code String} that is the NCBI ID of the parent taxon 
+         * @param displayOrder      An {@code Integer} allowing to sort species in preferred display order.
+         * @param parentTaxonId     An {@code Integer} that is the NCBI ID of the parent taxon 
          *                          of this species (for instance, {@code 9605} for <i>homo</i>, 
          *                          the parent taxon of human).
          * @param genomeFilePath    A {@code String} that is the path to retrieve the genome file 
          *                          we use for this species.
          * @param genomeVersion     A {@code String} that is the genome version 
          *                          we use for this species.
-         * @param genomeSpeciesId   A {@code String} that is the ID of the species whose 
+         * @param dataSourceId      An {@code Integer} that is the ID of the data source of the genome.
+         * @param genomeSpeciesId   An {@code Integer} that is the ID of the species whose 
          *                          the genome was used for this species.
-         * @param fakeGeneIdPrefix  A {@code String} that is the prefix of gene IDs for this
-         *                          species, if its genome was not in Ensembl.
          */
-        public SpeciesTO(String id, String commonName, String genus, String speciesName, 
-                String parentTaxonId, String genomeFilePath, String genomeVersion, 
-                String genomeSpeciesId, String fakeGeneIdPrefix) {
+        public SpeciesTO(Integer id, String commonName, String genus, String speciesName, 
+                Integer displayOrder, Integer parentTaxonId, String genomeFilePath, String genomeVersion, 
+                Integer dataSourceId, Integer genomeSpeciesId) {
             super(id, commonName);
             
             this.genus = genus;
             this.speciesName = speciesName;
+            this.displayOrder = displayOrder;
             this.parentTaxonId = parentTaxonId;
             this.genomeFilePath = genomeFilePath;
             this.genomeVersion = genomeVersion;
+            this.dataSourceId = dataSourceId;
             this.genomeSpeciesId = genomeSpeciesId;
-            this.fakeGeneIdPrefix = fakeGeneIdPrefix;
         }
         
         /**
@@ -237,12 +241,18 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
             return speciesName;
         }
         /**
-         * @return  the {@code String} that is the ID of the parent taxon of this species 
+         * @return  An {@code Integer} allowing to sort species in preferred display order.
+         */
+        public Integer getDisplayOrder() {
+            return displayOrder;
+        }
+        /**
+         * @return  the {@code Integer} that is the ID of the parent taxon of this species
          *          (for instance, {@code 9605} for <i>homo</i>, if this species was "human").
          *          Corresponds to the DAO {@code Attribute} {@link SpeciesDAO.Attribute 
          *          PARENT_TAXON_ID}. Returns {@code null} if value not set.
          */
-        public String getParentTaxonId() {
+        public Integer getParentTaxonId() {
             return parentTaxonId;
         }
         
@@ -261,25 +271,22 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
         public String getGenomeVersion() {
             return genomeVersion;
         }
-
+        
         /**
-         * @return  A {@code String} that is the ID of the species whose the genome was used 
-         *          for this species. This is used when a genome is not in Ensembl, 
-         *          but genome of a close species is. 
+         * @return  An {@code Integer} that is the ID in the Bgee database of the data source 
+         *          for genome information.
          */
-        public String getGenomeSpeciesId() {
-            return genomeSpeciesId;
+        public Integer getDataSourceId() {
+            return dataSourceId;
         }
 
         /**
-         * @return  A {@code String} that is the prefix of gene IDs for this species, 
-         *          if its genome was not in Ensembl. This is because when another genome 
-         *          was used for a species in Bgee, we change the gene ID prefix 
-         *          (for instance, the chimp gene IDs, starting with 'ENSPTRG', will be 
-         *          changed to 'PPAG' when used for the bonobo).
+         * @return  An {@code Integer} that is the ID of the species whose the genome was used 
+         *          for this species. This is used when a genome is not in Ensembl, 
+         *          but genome of a close species is. 
          */
-        public String getFakeGeneIdPrefix() {
-            return fakeGeneIdPrefix;
+        public Integer getGenomeSpeciesId() {
+            return genomeSpeciesId;
         }
 
         @Override
@@ -287,10 +294,10 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
             return "ID: " + this.getId() + " - Common name: " + this.getName() + 
                     " - Genus: " + this.getGenus() + " - Species name: " + this.getSpeciesName() + 
                     " - Parent taxon ID: " + this.getParentTaxonId() + " - Description: " + 
-                    this.getDescription() + " - Genome file path: " + this.getGenomeFilePath() + 
-                    " - Genome version: " + this.getGenomeFilePath() + " - Genome species ID: " + 
-                    this.getGenomeSpeciesId() + " - Fake gene ID prefix: " + 
-                    this.getFakeGeneIdPrefix();
+                    this.getDescription() + " - Genome file path: " + this.getGenomeFilePath() +
+                    " - Genome version: " + this.getGenomeFilePath() + 
+                    " - Data source ID: " + this.getDataSourceId() + " - Genome species ID: " + 
+                    this.getGenomeSpeciesId();
         }
     }
 }

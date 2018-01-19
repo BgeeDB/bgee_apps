@@ -33,7 +33,6 @@ import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.Utils;
 import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.AncestralTaxaAnnotationBean;
 import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.AnnotationBean;
-import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.ParseMultipleStringValues;
 import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.ParseQualifier;
 import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.RawAnnotationBean;
 import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.SummaryAnnotationBean;
@@ -50,6 +49,7 @@ import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLPropertyExpression;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
+import org.semanticweb.owlapi.search.EntitySearcher;
 import org.supercsv.cellprocessor.FmtBool;
 import org.supercsv.cellprocessor.FmtDate;
 import org.supercsv.cellprocessor.Optional;
@@ -407,8 +407,8 @@ public class SimilarityAnnotation {
     private final static int REF_TITLE_PATTERN_GROUP = 2;
     
     /**
-     * A {@code String} that is the value to fill the column {@link #ASSIGN_COL_NAME} 
-     * when annotation was produced by the Bgee team.
+     * A {@code String} that is the value to fill the column 
+     * {@link SimilarityAnnotationUtils#ASSIGN_COL_NAME} when annotation was produced by the Bgee team.
      */
     public final static String BGEE_ASSIGNMENT = "Bgee";
     /**
@@ -422,8 +422,8 @@ public class SimilarityAnnotation {
      */
     public final static String AUTOMATIC_ASSERTION_ECO = "ECO:0000501";
     /**
-     * A {@code String} that is the value to use in the column {@link #ASSIGN_COL_NAME} 
-     * for non-reviewed annotations.
+     * A {@code String} that is the value to use in the column 
+     * {@link SimilarityAnnotationUtils#ASSIGN_COL_NAME} for non-reviewed annotations.
      */
     public final static String AUTOMATIC_ASSIGNED_BY = "bgee";
     /**
@@ -458,16 +458,16 @@ public class SimilarityAnnotation {
      * <li>If the first element in {@code args} is "generateReleaseFile", the action 
      * will be to generate proper annotations from the curator annotation file, and 
      * to write them into different release files, see 
-     * {@link #generateReleaseFile(String, String, String, String)}.
+     * {@link #generateReleaseFiles(String, String, String, String)}.
      * Following elements in {@code args} must then be: 
      *   <ol>
-     *   <li>the path to the file containing taxon constraints. See {@link 
-     *   org.bgee.pipeline.uberon.TaxonConstraints}. Can be empty (see 
+     *   <li>the path to the file containing taxon constraints. See 
+     *   {@link org.bgee.pipeline.uberon.TaxonConstraints}. Can be empty (see 
      *   {@link org.bgee.pipeline.CommandRunner#parseArgument(String)}).
      *   <li>A {@code Map<String, Set<Integer>>} to potentially override taxon constraints, 
      *   see {@link org.bgee.pipeline.CommandRunner#parseMapArgumentAsInteger(String)} to see 
-     *   how to provide it in command line. See constructor {@link SimilarityAnnotation#
-     *   SimilarityAnnotation(String, Map, String, String, String, String, String)} 
+     *   how to provide it in command line. See constructor 
+     *   {@link SimilarityAnnotation#SimilarityAnnotation(String, Map, String, String, String, String, String)} 
      *   for more details about overriding taxon constraints. Can be empty (see 
      *   {@link org.bgee.pipeline.CommandRunner#EMPTY_LIST}).
      *   <li>the path to the Uberon ontology.
@@ -635,7 +635,7 @@ public class SimilarityAnnotation {
             switch (header[i]) {
             // *** CellProcessors common to all AnnotationBean types ***
                 case SimilarityAnnotationUtils.ENTITY_COL_NAME: 
-                    processors[i] = new ParseMultipleStringValues();
+                    processors[i] = new AnnotationCommon.ParseMultipleStringValues();
                     break;
                 case SimilarityAnnotationUtils.TAXON_COL_NAME: 
                     processors[i] = new ParseInt();
@@ -1348,9 +1348,8 @@ public class SimilarityAnnotation {
      *                                      of {@code Integer}s to replace taxon constraints 
      *                                      of matching terms, if {@code taxonConstraintsFile} 
      *                                      is not {@code null}. See 
-     *                                      {@link org.bgee.pipeline.uberon.TaxonConstraints#
-     *                                      extractTaxonConstraints(String, Map)} for example 
-     *                                      of use. Can be {@code null}.
+     *                                      {@link org.bgee.pipeline.uberon.TaxonConstraints#extractTaxonConstraints(String, Map)}
+     *                                      for example of use. Can be {@code null}.
      * @param uberonOntFile                 A {@code String} that is the path to the Uberon 
      *                                      ontology.
      * @param taxOntFile                    A {@code String} that is the path to the taxonomy 
@@ -1373,6 +1372,7 @@ public class SimilarityAnnotation {
                     OWLOntologyCreationException, IOException {
         this((taxonConstraintsFile == null? 
                 null: 
+                //FIXME: should provde all class IDs in Uberon to method
                 TaxonConstraints.extractTaxonConstraints(taxonConstraintsFile, 
                         idStartsToOverridenTaxonIds)), 
                 new OWLGraphWrapper(OntologyUtils.loadOntology(uberonOntFile)), 
@@ -1497,8 +1497,8 @@ public class SimilarityAnnotation {
      * but might be potential errors.
      * 
      * @param annots            A {@code Collection} of {@code T}s, where each {@code Map} 
-     *                          represents a line of annotation. See {@link 
-     *                          #extractAnnotations(String, GeneratedFileType)} for more details.
+     *                          represents a line of annotation. See 
+     *                          {@link #extractAnnotations(String, GeneratedFileType)} for more details.
      * @param checkWarn         A {@code boolean} defining whether potential errors should be 
      *                          checked (formal errors are always checked). 
      * @param <T>               The type of {@code AnnotationBean} to check.
@@ -2492,7 +2492,7 @@ public class SimilarityAnnotation {
      * Generate {@code RawAnnotationBean}s from the provided {@code CuratorAnnotationBean}s. 
      * This method takes annotations from curators, and transform them into clean RAW 
      * annotations. Notably, this method will: i) verify the validity of the provided 
-     * annotations (see {@link #checkAnnotations(Collection)}); ii) infer new annotations 
+     * annotations (see {@link #checkAnnotations(Collection, boolean)}); ii) infer new annotations 
      * (see {@link #generateInferredAnnotations(Collection)}); iii) create 
      * {@code RawAnnotationBean}s with correct label information and ordered entity IDs; 
      * iv) check the validity of the {@code RawAnnotationBean}s generated; v) sort these 
@@ -2853,7 +2853,7 @@ public class SimilarityAnnotation {
                 throw log.throwing(new IllegalArgumentException("All provided annotations "
                         + "must have a CIO ID defined. Offending annotation: " + annot));
             }
-            OWLClass cls = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
+            OWLClass cls = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifierNoAltIds(
                     annot.getCioId().trim());
             if (cls == null) {
                 throw log.throwing(new IllegalArgumentException("Unrecognized CIO ID "
@@ -3504,7 +3504,7 @@ public class SimilarityAnnotation {
                             relatedAnnot);
                     continue;
                 }
-                intersectTaxCls.add(taxOntWrapper.getOWLClassByIdentifier(
+                intersectTaxCls.add(taxOntWrapper.getOWLClassByIdentifierNoAltIds(
                         OntologyUtils.getTaxOntologyId(relatedAnnot.getNcbiTaxonId())));
             }
 
@@ -3646,7 +3646,7 @@ public class SimilarityAnnotation {
                 Set<Integer> selfAndAncestorsIds = new HashSet<Integer>();
                 selfAndAncestorsIds.add(annot.getNcbiTaxonId());
                 for (OWLClass ancestor: taxOntWrapper.getAncestorsThroughIsA(
-                        taxOntWrapper.getOWLClassByIdentifier(
+                        taxOntWrapper.getOWLClassByIdentifierNoAltIds(
                                 OntologyUtils.getTaxOntologyId(annot.getNcbiTaxonId())))) {
                     selfAndAncestorsIds.add(OntologyUtils.getTaxNcbiId(
                             taxOntWrapper.getIdentifier(ancestor)));
@@ -3680,7 +3680,7 @@ public class SimilarityAnnotation {
         log.debug("Searching for IntersectionOf expressions composed of annotated classes...");
         
         Map<String, Set<String>> intersectMapping = new HashMap<String, Set<String>>();
-        for (OWLClass cls: uberonOntWrapper.getAllOWLClasses()) {
+        for (OWLClass cls: uberonOntWrapper.getAllRealOWLClasses()) {
             log.trace("Examining {}", cls);
             String clsId = uberonOntWrapper.getIdentifier(cls);
             if (entityIdToAnnots.containsKey(clsId)) {
@@ -3688,7 +3688,7 @@ public class SimilarityAnnotation {
                 continue;
             }
             for (OWLClassExpression clsExpr: 
-                cls.getEquivalentClasses(uberonOntWrapper.getAllOntologies())) {
+                EntitySearcher.getEquivalentClasses(cls, uberonOntWrapper.getAllOntologies())) {
                 if (clsExpr instanceof OWLObjectIntersectionOf) {
                     log.trace("Examining IntersectionOf expression: {}", clsExpr);
                     boolean allClassesAnnotated = true;
@@ -3769,7 +3769,7 @@ public class SimilarityAnnotation {
                     Set<OWLClass> confs = new HashSet<OWLClass>();
                     for (CuratorAnnotationBean annot: relatedAnnots) {
                         if (!annot.isNegated()) {
-                            confs.add(cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
+                            confs.add(cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifierNoAltIds(
                                     annot.getCioId().trim()));
                             annotationsUsed.add(annot);
                         }
@@ -3811,7 +3811,7 @@ public class SimilarityAnnotation {
                             
                             //we consider only confidence of negative annotations 
                             //to compute the confidence level of the inferred annotation
-                            confs.add(cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
+                            confs.add(cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifierNoAltIds(
                                     annot.getCioId().trim()));
                             negAnnots.add(annot);
                         } else {
@@ -3916,7 +3916,7 @@ public class SimilarityAnnotation {
      * Generate {@code SummaryAnnotationBean}s from the provided {@code RawAnnotationBean}s. 
      * This method takes single-evidende annotations, and transform them into aggregated 
      * summary annotations. Notably, this method will: i) verify the validity of the provided 
-     * annotations (see {@link #checkAnnotations(Collection)}); ii) create summary annotations;
+     * annotations (see {@link #checkAnnotations(Collection, boolean)}); ii) create summary annotations;
      * iii) check the validity of the {@code SummaryAnnotationBean}s generated; iv) sort these 
      * {@code SummaryAnnotationBean}s (see {@link #sortAnnotations(List)}).
      * 
@@ -4013,7 +4013,7 @@ public class SimilarityAnnotation {
             } else {
                 //otherwise, if only one evidence, we use the original confidence statement
                 RawAnnotationBean annot = relatedAnnotsEntry.getValue().iterator().next();
-                summaryConf = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
+                summaryConf = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifierNoAltIds(
                         annot.getCioId());
                 newAnnot.setCioId(annot.getCioId());
                 newAnnot.setCioLabel(annot.getCioLabel());
@@ -4105,7 +4105,7 @@ public class SimilarityAnnotation {
         //positive annotations on one hand, or negative annotations on the other hand, 
         //have same or multiple evidence types). Otherwise, we check that over all evidence lines. 
         //XXX: should we really consider ECOs 'author statement' as a 'different type'?
-        OWLClass evidenceTypeConcordance = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
+        OWLClass evidenceTypeConcordance = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifierNoAltIds(
                 CIOWrapper.SAME_TYPE_EVIDENCE_CONCORDANCE_ID);
         if ((positiveAnnotCount > 0 && negativeAnnotCount > 0 && 
                 ecoUtils.containsUnrelatedClassesByIsAPartOf(positiveECOs, negativeECOs)) || 
@@ -4113,12 +4113,12 @@ public class SimilarityAnnotation {
                         ecoUtils.containsUnrelatedClassesByIsAPartOf(positiveECOs)) || 
                 (negativeAnnotCount > 0 && 
                         ecoUtils.containsUnrelatedClassesByIsAPartOf(negativeECOs))) {
-                evidenceTypeConcordance = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
+                evidenceTypeConcordance = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifierNoAltIds(
                         CIOWrapper.DIFFERENT_TYPES_EVIDENCE_CONCORDANCE_ID);
         } 
         //Determine the best confidence level, and if we have conflicting evidence lines, 
         //determine the conflict level (weak or strong). 
-        OWLClass evidenceConcordance = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
+        OWLClass evidenceConcordance = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifierNoAltIds(
                 CIOWrapper.CONGRUENT_CONCORDANCE_ID);
         OWLClass confidenceLevel = null;
         if (positiveAnnotCount > 0 && negativeAnnotCount > 0) {
@@ -4135,12 +4135,12 @@ public class SimilarityAnnotation {
                                     bestNegativeTerm))) || 
                 negativeAnnotCount > positiveAnnotCount) {
                 
-                evidenceConcordance = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
+                evidenceConcordance = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifierNoAltIds(
                         CIOWrapper.STRONGLY_CONFLICTING_CONCORDANCE_ID);
                 //for strongly conflicting evidence lines, there is no confidence level associated.
                 //confidenceLevel = null;
             } else {
-                evidenceConcordance = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
+                evidenceConcordance = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifierNoAltIds(
                         CIOWrapper.WEAKLY_CONFLICTING_CONCORDANCE_ID);
                 //for weakly conflicting evidence lines, we take the confidence level 
                 //from the best supporting evidence
@@ -4180,7 +4180,7 @@ public class SimilarityAnnotation {
      * {@link #HISTORICAL_HOMOLOGY_ID}).
      * <p>
      * This method will: i) verify the validity of the provided 
-     * annotations (see {@link #checkAnnotations(Collection)}); ii) identify ancestral taxa 
+     * annotations (see {@link #checkAnnotations(Collection, boolean)}); ii) identify ancestral taxa 
      * annotations; iii) check the validity of the {@code AncestralTaxaAnnotationBean}s 
      * generated; iv) sort these {@code AncestralTaxaAnnotationBean}s (see 
      * {@link #sortAnnotations(List)}).
@@ -4255,7 +4255,7 @@ public class SimilarityAnnotation {
                 if (!relatedAnnot.isTrusted()) {
                     continue;
                 }
-                taxClasses.add(taxOntWrapper.getOWLClassByIdentifier(
+                taxClasses.add(taxOntWrapper.getOWLClassByIdentifierNoAltIds(
                         OntologyUtils.getTaxOntologyId(relatedAnnot.getNcbiTaxonId())));
             }
             if (taxClasses.isEmpty()) {

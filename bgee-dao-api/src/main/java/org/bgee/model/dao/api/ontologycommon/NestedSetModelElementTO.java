@@ -1,15 +1,17 @@
 package org.bgee.model.dao.api.ontologycommon;
 
-import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.NamedEntityTO;
 
 /**
  * Represents an {@code EntityTO} used as part of a nested set model.
  * 
  * @author Frederic Bastian
- * @version Bgee 13
+ * @version Bgee 14 Feb. 2017
  * @since Bgee 01
+ * 
+ * @param <T> The type of ID of this {@code NamedEntityTO}.
  */
-public class NestedSetModelElementTO extends EntityTO {
+public class NestedSetModelElementTO<T> extends NamedEntityTO<T> {
     private static final long serialVersionUID = 3717417541660503259L;
     /**
      * An {@code Integer} that is the left bound of this element in its nested set model.
@@ -31,7 +33,7 @@ public class NestedSetModelElementTO extends EntityTO {
      * All of these parameters are optional except {@code id}, so they can be {@code null} 
      * when not used. If an {@code Integer} is not {@code null} it should be positive.
      * 
-     * @param id                A {@code String} that is the ID.
+     * @param id                A {@code T} that is the ID.
      * @param leftBound         An {@code Integer} that is the left bound of this element 
      *                          in its nested set model.
      * @param rightBound        An {@code Integer} that is the right bound of this element 
@@ -41,7 +43,7 @@ public class NestedSetModelElementTO extends EntityTO {
      * @throws IllegalArgumentException If any of {code leftBound} or {code rightBound} or 
      *                                  {code level} is not {@code null} and less than 0.
      */
-    public NestedSetModelElementTO(String id, Integer leftBound, Integer rightBound, Integer level) 
+    public NestedSetModelElementTO(T id, Integer leftBound, Integer rightBound, Integer level) 
             throws IllegalArgumentException {
         this(id, null, null, leftBound, rightBound, level);
     }
@@ -54,7 +56,7 @@ public class NestedSetModelElementTO extends EntityTO {
      * If {code leftBound} or {code rightBound} or {code level} is not {@code null},
      * it should be positive.
      * 
-     * @param id                A {@code String} that is the ID.
+     * @param id                A {@code T} that is the ID.
      * @param name              A {@code String} that is the common name of this element.
      * @param description       A {@code String} that is the description for this element.
      * @param leftBound         An {@code Integer} that is the left bound of this element 
@@ -66,7 +68,7 @@ public class NestedSetModelElementTO extends EntityTO {
      * @throws IllegalArgumentException If any of {code leftBound} or {code rightBound} or 
      *                                  {code level} is not {@code null} and less than 0.
      */
-    public NestedSetModelElementTO(String id, String name, String description, 
+    public NestedSetModelElementTO(T id, String name, String description, 
             Integer leftBound, Integer rightBound, Integer level) throws IllegalArgumentException {
         super(id, name, description);
         if ((leftBound !=null && leftBound < 0) || 

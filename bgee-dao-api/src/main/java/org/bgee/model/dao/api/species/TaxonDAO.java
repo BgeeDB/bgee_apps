@@ -1,7 +1,6 @@
 package org.bgee.model.dao.api.species;
 
 import java.util.Collection;
-import java.util.Set;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
@@ -44,6 +43,63 @@ public interface TaxonDAO extends DAO<TaxonDAO.Attribute> {
     }
     
     /**
+     * Retrieve all taxa from data source.
+     * <p>
+     * The taxa are retrieved and returned as a {@code TaxonTOResultSet}. 
+     * It is the responsibility of the caller to close this {@code DAOResultSet} once 
+     * results are retrieved.
+     * 
+     * @return A {@code TaxonTOResultSet} containing all taxa from data source.
+     * @throws DAOException If an error occurred when accessing the data source. 
+     */
+    public TaxonTOResultSet getAllTaxa() throws DAOException;
+    /**
+     * Retrieve taxa that are either least common ancestor or parent taxon of species in Bgee.
+     * For instance, "31414 Euarchontoglires" is the least common ancestor of human and mouse, 
+     * and "9605 Homo" the parent taxon of human. 
+     * <p>
+     * The taxa are retrieved and returned as a {@code TaxonTOResultSet}. 
+     * It is the responsibility of the caller to close this {@code DAOResultSet} once 
+     * results are retrieved.
+     * 
+     * @apiNote         This method does not accept species IDs as argument, to avoid to misinterpret it: 
+     *                  it would not return the least common ancestors of the requested species, 
+     *                  as {@link #getLeastCommonAncestor(Set, boolean)} does. 
+     *                  And because there are many ways to handle species IDs arguments: 
+     *                  do we want only taxa that are LCAs of at least 2 requested species? 
+     *                  do we want only the closest LCAs of pairs of requested species? 
+     *                  (complicated to handle in SQL). Etc. 
+     * @param attrs     A {@code Collection} of {@code TaxonDAO.Attribute}s defining the attributes 
+     *                  to populate in the returned {@code TaxonTO}s. If {@code null} or empty, 
+     *                  all attributes are populated. 
+     * @return          A {@code TaxonTOResultSet} containing least common ancestors and parent taxa 
+     *                  from data source.
+     * @throws DAOException If an error occurred when accessing the data source. 
+     */
+    public TaxonTOResultSet getAllLeastCommonAncestorAndParentTaxa(Collection<Attribute> attrs) 
+            throws DAOException;
+    
+    /**
+     * Retrieve the LCA of the provided species. If {@code includeAncestors} is {@code true}, 
+     * all ancestors of the LCA will also be retrieved.
+     * <p>
+     * The {@code TaxonTOResultSet} returned is guaranteed to return at least 
+     * one {@code TaxonTO} (in the most extreme case: the LCA of all species in Bgee). 
+     * If {@code includeAncestors} is {@code false}, the {@code TaxonTOResultSet} returned 
+     * is guaranteed to return one and only one {@code TaxonTO}.
+     * 
+     * @param speciesIds        A {@code Collection} of {@code Integer}s that are the IDs of 
+     *                          the species for which we want to retrieve the LCA.
+     * @param includeAncestors  A {@code boolean} defining whether the ancestors of the LCA 
+     *                          should also be retrieved; if {@code true}, there are retrieved.
+     * @return                  A {@code TaxonTOResultSet} allowing to obtain the requested 
+     *                          {@code TaxonTO}s.
+     * @throws DAOException     If an error occurred when accessing the data source. 
+     */
+    public TaxonTOResultSet getLeastCommonAncestor(Collection<Integer> speciesIds, 
+            boolean includeAncestors) throws DAOException, IllegalArgumentException;
+
+    /**
      * Inserts the provided taxa into the Bgee database, represented as 
      * a {@code Collection} of {@code TaxonTO}s.
      * 
@@ -56,38 +112,6 @@ public interface TaxonDAO extends DAO<TaxonDAO.Attribute> {
      *                          do not expose these kind of implementation details).
      */
     public int insertTaxa(Collection<TaxonTO> taxa) throws DAOException, IllegalArgumentException ;
-
-    /**
-     * Retrieve all taxa from data source.
-     * <p>
-     * The taxa are retrieved and returned as a {@code TaxonTOResultSet}. 
-     * It is the responsibility of the caller to close this {@code DAOResultSet} once 
-     * results are retrieved.
-     * 
-     * @return A {@code TaxonTOResultSet} containing all taxa from data source.
-     * @throws DAOException If an error occurred when accessing the data source. 
-     */
-    public TaxonTOResultSet getAllTaxa() throws DAOException;
-    
-    /**
-     * Retrieve the LCA of the provided species. If {@code includeAncestors} is {@code true}, 
-     * all ancestors of the LCA will also be retrieved.
-     * <p>
-     * The {@code TaxonTOResultSet} returned is guaranteed to return at least 
-     * one {@code TaxonTO} (in the most extreme case: the LCA of all species in Bgee). 
-     * If {@code includeAncestors} is {@code false}, the {@code TaxonTOResultSet} returned 
-     * is guaranteed to return one and only one {@code TaxonTO}.
-     * 
-     * @param speciesIds        A {@code Set} of {@code String}s that are the IDs of the species 
-     *                          for which we want to retrieve the LCA.
-     * @param includeAncestors  A {@code boolean} defining whether the ancestors of the LCA 
-     *                          should also be retrieved; if {@code true}, there are retrieved.
-     * @return                  A {@code TaxonTOResultSet} allowing to obtain the requested 
-     *                          {@code TaxonTO}s.
-     * @throws DAOException     If an error occurred when accessing the data source. 
-     */
-    public TaxonTOResultSet getLeastCommonAncestor(Set<String> speciesIds, 
-            boolean includeAncestors) throws DAOException, IllegalArgumentException;
 
     /**
      * {@code DAOResultSet} specifics to {@code TaxonTO}s
@@ -107,7 +131,7 @@ public interface TaxonDAO extends DAO<TaxonDAO.Attribute> {
      * @version Bgee 13
      * @since Bgee 13
      */
-    public final class TaxonTO extends NestedSetModelElementTO {
+    public final class TaxonTO extends NestedSetModelElementTO<Integer> {
     	private static final long serialVersionUID = 704571970140502441L;
     	/**
          * A {@code String} that is the scientific name of this taxon (for instance, 
@@ -130,7 +154,7 @@ public interface TaxonDAO extends DAO<TaxonDAO.Attribute> {
          * <p>
          * All of these parameters are optional, so they can be {@code null} when not used.
          * 
-         * @param id                A {@code String} that is the ID.
+         * @param id                An {@code Integer} that is the ID.
          * @param commonName        A {@code String} that is the common name of this taxon.
          * @param scientificName    A {@code String} that is the scientific name of this taxon.
          * @param leftBound         An {@code Integer} that is the left bound of this taxon 
@@ -145,7 +169,7 @@ public interface TaxonDAO extends DAO<TaxonDAO.Attribute> {
          *                                  {code leftBound} or {code rightBound} or {code level} 
          *                                  is not {@code null} and less than 0.
          */
-        public TaxonTO(String id, String commonName, String scientificName, 
+        public TaxonTO(Integer id, String commonName, String scientificName, 
                 Integer leftBound, Integer rightBound, Integer level, Boolean lca) 
             throws IllegalArgumentException {
             super(id, commonName, null, leftBound, rightBound, level);

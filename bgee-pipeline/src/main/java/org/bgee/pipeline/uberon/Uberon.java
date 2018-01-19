@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -39,8 +40,11 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
+import org.semanticweb.owlapi.search.EntitySearcher;
+import org.supercsv.cellprocessor.FmtBool;
 import org.supercsv.cellprocessor.Optional;
 import org.supercsv.cellprocessor.constraint.NotNull;
+import org.supercsv.cellprocessor.constraint.Unique;
 import org.supercsv.cellprocessor.constraint.UniqueHashCode;
 import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.io.CsvMapWriter;
@@ -71,8 +75,7 @@ public class Uberon extends UberonCommon {
      * @see #INFORMATIVE_SUBSETS
      */
     public final static Set<String> NON_INFORMATIVE_SUBSETS = Collections.unmodifiableSet(
-            new HashSet<String>(Arrays.asList("grouping_class", "non_informative", 
-                    "ubprop:upper_level", "upper_level")));
+            new HashSet<String>(Arrays.asList("non_informative", "upper_level")));
     /**
      * An unmodifiable {@code Set} of {@code String}s that are the names 
      * of informative subsets in Uberon (terms belonging to these subsets should never 
@@ -82,6 +85,19 @@ public class Uberon extends UberonCommon {
     public final static Set<String> INFORMATIVE_SUBSETS = Collections.unmodifiableSet(
             new HashSet<String>(Arrays.asList("efo_slim", "uberon_slim", "organ_slim", 
                     "anatomical_site_slim", "cell_slim", "vertebrate_core")));
+
+    /**
+     * A {@code String} that is the OBO-like ID of the term "hermaphroditic organism".
+     */
+    public final static String HERMAPHRODITE_ORGANISM_ID = "UBERON:0007197";
+    /**
+     * A {@code String} that is the OBO-like ID of the term "female organism".
+     */
+    public final static String FEMALE_ORGANISM_ID = "UBERON:0003100";
+    /**
+     * A {@code String} that is the OBO-like ID of the term "male organism".
+     */
+    public final static String MALE_ORGANISM_ID = "UBERON:0003101";
 
     /**
      * Several actions can be launched from this main method, depending on the first 
@@ -96,6 +112,14 @@ public class Uberon extends UberonCommon {
      *   <ol>
      *   <li>path to the Uberon ontology (a version making use of such restrictions...).
      *   <li>path to the output file where to write taxon IDs into, one per line.
+     *   </ol>
+     * <li>If the first element in {@code args} is "extractSexInfo", the action 
+     * will be to extract from the Uberon ontology sex-related information about anatomical terms, 
+     * and to write them in a file (see {@link #extractSexInfoToFile(String)}).
+     * Following elements in {@code args} must then be: 
+     *   <ol>
+     *   <li>path to the Uberon ontology.
+     *   <li>path to the output file where to write sex-related info.
      *   </ol>
      * <li>If the first element in {@code args} is "simplifyUberon", the action 
      * will be to simplify the Uberon ontology and to save it to files in OBO and OWL formats, 
@@ -115,6 +139,12 @@ public class Uberon extends UberonCommon {
      *   <li>A list of OBO-like IDs or {@code IRI}s of relations to be filtered 
      *   and mapped to parent relations. These IDs must be separated by the {@code String} 
      *   {@link CommandRunner#LIST_SEPARATOR}. See {@link #setRelIds(Collection)}.
+     *   <li>a map specifying specific relations to remove between pairs of {@code OWLClass}es. 
+     *   In a key-value pair, the key should be the OBO-like ID of the source of relations 
+     *   to remove, the value being the target of the relations to remove. Key-value pairs 
+     *   must be separated by {@link CommandRunner#LIST_SEPARATOR}, keys must be  
+     *   separated from their associated value by {@link CommandRunner#KEY_VALUE_SEPARATOR}. 
+     *   A key can be associated to several values. See {@link #setRelsBetweenToRemove(Map)}.
      *   <li>A list of OBO-like IDs of the {@code OWLClass}es that are the roots 
      *   of the subgraphs to be removed from the ontology. These IDs must be 
      *   separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}. 
@@ -130,12 +160,6 @@ public class Uberon extends UberonCommon {
      *   <li>A list of OBO-like IDs of {@code OWLClass}es whose incoming edges 
      *   should not be removed, even if member of a subset listed in the previous argument. 
      *   See {@link #setClassIdsExcludedFromSubsetRemoval(Collection)}.
-     *   <li>a map specifying specific relations to remove between pairs of {@code OWLClass}es. 
-     *   In a key-value pair, the key should be the OBO-like ID of the source of relations 
-     *   to remove, the value being the target of the relations to remove. Key-value pairs 
-     *   must be separated by {@link CommandRunner#LIST_SEPARATOR}, keys must be  
-     *   separated from their associated value by {@link CommandRunner#KEY_VALUE_SEPARATOR}. 
-     *   A key can be associated to several values. See {@link #setRelsBetweenToRemove(Map)}.
      *   </ol>
      *   Example of command line usage for this task: {@code java -Xmx2g -jar myJar 
      *   Uberon simplifyUberon composite-metazoan.owl custom_composite simplification_composite.tsv 
@@ -149,7 +173,7 @@ public class Uberon extends UberonCommon {
      *   
      * <li>If the first element in {@code args} is "extractXRefMappings", the action will be 
      * to retrieve mappings from XRef IDs to Uberon IDs from Uberon, and to save them 
-     * to a TSV file, see {@link #saveXRefMappingsToFile(String, String)} for details.
+     * to a TSV file, see {@link #saveXRefMappingsToFile(String)} for details.
      * Following elements in {@code args} must then be: 
      *   <ol>
      *   <li>path to the Uberon ontology.
@@ -216,6 +240,13 @@ public class Uberon extends UberonCommon {
             new Uberon(args[1]).saveXRefMappingsToFile(args[2]);
 //        } else if (args[0].equalsIgnoreCase("test")) {
 //            Uberon.test();
+        } else if (args[0].equalsIgnoreCase("extractSexInfo")) {
+            if (args.length != 3) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Incorrect number of arguments provided, expected " + 
+                        "3 arguments, " + args.length + " provided."));
+            }
+            new Uberon(args[1]).extractSexInfoToFile(args[2]);
         } else {
             throw log.throwing(new UnsupportedOperationException("The following action " +
                     "is not recognized: " + args[0]));
@@ -308,7 +339,7 @@ public class Uberon extends UberonCommon {
 ////        }
 ////        manipulator.filterSubgraphs(toFilterSubgraphRootIds);
 ////        for (String classIdToRemove: nonHumanAnatEntityIds) {
-////            if (manipulator.getOwlGraphWrapper().getOWLClassByIdentifier(classIdToRemove) != null) {
+////            if (manipulator.getOwlGraphWrapper().getOWLClassByIdentifierNoAltIds(classIdToRemove) != null) {
 ////                manipulator.removeClassAndPropagateEdges(classIdToRemove);
 ////            }
 ////        }
@@ -334,7 +365,7 @@ public class Uberon extends UberonCommon {
 ////        }
 ////        manipulator.filterSubgraphs(toFilterSubgraphRootIds);
 ////        for (String classIdToRemove: noHumanExpressionAnatEntityIds) {
-////            if (manipulator.getOwlGraphWrapper().getOWLClassByIdentifier(classIdToRemove) != null) {
+////            if (manipulator.getOwlGraphWrapper().getOWLClassByIdentifierNoAltIds(classIdToRemove) != null) {
 ////                manipulator.removeClassAndPropagateEdges(classIdToRemove);
 ////            }
 ////        }
@@ -348,14 +379,14 @@ public class Uberon extends UberonCommon {
 //        
 //        manipulator.removeUnrelatedRelations(relIds);
 //        for (String classIdToRemove: nonHumanAnatEntityIds) {
-//            if (manipulator.getOwlGraphWrapper().getOWLClassByIdentifier(classIdToRemove) != null) {
+//            if (manipulator.getOwlGraphWrapper().getOWLClassByIdentifierNoAltIds(classIdToRemove) != null) {
 //                manipulator.removeClassAndPropagateEdges(classIdToRemove);
 //            }
 //        }
 //        for (Entry<String, Set<String>> relsToRemove: relsBetweenToRemove.entrySet()) {
 //            for (String targetId: relsToRemove.getValue()) {
-//                if (manipulator.getOwlGraphWrapper().getOWLClassByIdentifier(relsToRemove.getKey()) != null && 
-//                        manipulator.getOwlGraphWrapper().getOWLClassByIdentifier(targetId) != null) {
+//                if (manipulator.getOwlGraphWrapper().getOWLClassByIdentifierNoAltIds(relsToRemove.getKey()) != null && 
+//                        manipulator.getOwlGraphWrapper().getOWLClassByIdentifierNoAltIds(targetId) != null) {
 //                    manipulator.removeDirectEdgesBetween(relsToRemove.getKey(), targetId);
 //                }
 //            }
@@ -379,14 +410,14 @@ public class Uberon extends UberonCommon {
 //        
 //        manipulator.removeUnrelatedRelations(relIds);
 //        for (String classIdToRemove: noHumanExpressionAnatEntityIds) {
-//            if (manipulator.getOwlGraphWrapper().getOWLClassByIdentifier(classIdToRemove) != null) {
+//            if (manipulator.getOwlGraphWrapper().getOWLClassByIdentifierNoAltIds(classIdToRemove) != null) {
 //                manipulator.removeClassAndPropagateEdges(classIdToRemove);
 //            }
 //        }
 //        for (Entry<String, Set<String>> relsToRemove: relsBetweenToRemove.entrySet()) {
 //            for (String targetId: relsToRemove.getValue()) {
-//                if (manipulator.getOwlGraphWrapper().getOWLClassByIdentifier(relsToRemove.getKey()) != null && 
-//                        manipulator.getOwlGraphWrapper().getOWLClassByIdentifier(targetId) != null) {
+//                if (manipulator.getOwlGraphWrapper().getOWLClassByIdentifierNoAltIds(relsToRemove.getKey()) != null && 
+//                        manipulator.getOwlGraphWrapper().getOWLClassByIdentifierNoAltIds(targetId) != null) {
 //                    manipulator.removeDirectEdgesBetween(relsToRemove.getKey(), targetId);
 //                }
 //            }
@@ -458,7 +489,7 @@ public class Uberon extends UberonCommon {
      * This argument can be {@code null}, but as usage of the ontology 
      * requires precise taxon constraints, this is unlikely. 
      * 
-     * @param pathToUberon              A {@code String} that is the path to the Uberon ontology. 
+     * @param ontUtils                  An {@code OntologyUtils} containing the Uberon ontology. 
      * @param pathToTaxonConstraints    A {@code String} that is the path to the taxon constraints. 
      * @param idStartsToOverridenTaxonIds   A {@code Map} where keys are {@code String}s 
      *                                      representing prefixes of uberon terms to match, 
@@ -469,12 +500,14 @@ public class Uberon extends UberonCommon {
      * @throws OBOFormatParserException     If the ontology is malformed.
      * @throws IOException                  If the file could not be read. 
      */
-    public Uberon(String pathToUberon, String pathToTaxonConstraints, 
+    public Uberon(OntologyUtils ontUtils, String pathToTaxonConstraints, 
             Map<String, Set<Integer>> idStartsToOverridenTaxonIds) 
             throws OWLOntologyCreationException, OBOFormatParserException, IOException {
-        this(new OntologyUtils(pathToUberon), 
-                TaxonConstraints.extractTaxonConstraints(pathToTaxonConstraints, 
-                        idStartsToOverridenTaxonIds));
+        this(ontUtils, TaxonConstraints.extractTaxonConstraints(
+                pathToTaxonConstraints, idStartsToOverridenTaxonIds, 
+                ontUtils.getWrapper().getAllRealOWLClasses()
+                        .stream().map(c -> ontUtils.getWrapper().getIdentifier(c))
+                        .collect(Collectors.toSet())));
     }
     /**
      * Constructor providing the {@code OntologyUtils} used to perform operations, 
@@ -503,7 +536,7 @@ public class Uberon extends UberonCommon {
      * {@code #saveSimplificationInfo} method). This attribute can be left {@code null} 
      * or blank if this information does not need to be stored. 
      * <p>
-     * This method calls {@link #simplifyUberon(OWLOntology)}, by loading the {@code OWLOntology} 
+     * This method calls {@link #simplifyUberon()}, by loading the {@code OWLOntology} 
      * provided, and using attributes set before calling this method. Attributes that are used 
      * can be set prior to calling this method through the methods: 
      * {@link #setClassIdsToRemove(Collection)}, {@link #setToRemoveSubgraphRootIds(Collection)}, 
@@ -525,7 +558,7 @@ public class Uberon extends UberonCommon {
      *                                          the ontology to modify it.
      * @throws OWLOntologyStorageException      If an error occurred while saving the resulting 
      *                                          ontology in OWL.
-     * @see #simplifyUberon(OWLOntology)
+     * @see #simplifyUberon()
      */
     public void simplifyUberonAndSaveToFile() throws UnknownOWLOntologyException, 
             OWLOntologyCreationException, OBOFormatParserException, IOException, 
@@ -563,7 +596,7 @@ public class Uberon extends UberonCommon {
      * calls various methods of {@code owltools.graph.OWLGraphManipulator} using the attributes 
      * set before calling this method, then removes the {@code OWLAnnotationAssertionAxiom}s 
      * that are problematic to convert the ontology in OBO, using 
-     * {@link org.bgee.pipeline.OntologyUtils#removeOBOProblematicAxioms()}.
+     * {@link org.bgee.pipeline.ontologycommon.OntologyUtils#removeOBOProblematicAxioms()}.
      * <p>
      * Note that the {@code OWLOntology} passed as argument will be modified as a result 
      * of the call to this method. Information about the simplification process 
@@ -592,10 +625,9 @@ public class Uberon extends UberonCommon {
      * <li>{@code OWLGraphManipulator#removeRelsToSubsets(Collection, Collection)} using 
      * value returned by {@link #getSubsetNames()} as first argument, returned by 
      * {@link #getClassIdsExcludedFromSubsetRemoval()} as second argument.
-     * <li>{@link org.bgee.pipeline.OntologyUtils#removeOBOProblematicAxioms()}
+     * <li>{@link org.bgee.pipeline.ontologycommon.OntologyUtils#removeOBOProblematicAxioms()}
      * </ul>
      *  
-     * @param uberonOnt                         The {@code OWLOntology} to simplify.
      * @throws UnknownOWLOntologyException      If an error occurred while wrapping 
      *                                          the {@code uberonOnt} into an 
      *                                          {@code OWLGraphManipulator}.
@@ -877,6 +909,9 @@ public class Uberon extends UberonCommon {
             Set<OWLAnnotationProperty> annotProps = this.getTaxonAnnotationProperties(wrapper);
             
             for (OWLClass cls: ont.getClassesInSignature()) {
+                if (wrapper.isOboAltId(cls)) {
+                    continue;
+                }
                 //try to get taxa from any object properties that can lead to a taxon.
                 //this is will also capture taxon used in equivalence axioms to owl:nothing 
                 //(formal way of representing never_in_taxon in owl)
@@ -892,7 +927,7 @@ public class Uberon extends UberonCommon {
                     }
                 }
                 //and from any annotation properties that can lead to a taxon
-                for (OWLAnnotation annot: cls.getAnnotations(ont)) {
+                for (OWLAnnotation annot: EntitySearcher.getAnnotations(cls, ont)) {
                     if (annotProps.contains(annot.getProperty()) && 
                             annot.getValue() instanceof IRI) {
                         log.trace("Taxon {} captured through annotation property in annotation {}", 
@@ -936,20 +971,15 @@ public class Uberon extends UberonCommon {
      * to {@code outputFile}. {@code outputFile} will be a TSV file with a header, 
      * and two columns, that are in order: {@link #XREF_ID_COL} and 
      * {@link #UBERON_ENTITY_ID_COL}. The XRef mappings are obtained using the method 
-     * {@link org.bgee.pipeline.OntologyUtils#getXRefMappings()}.
+     * {@link org.bgee.pipeline.ontologycommon.OntologyUtils#getXRefMappings()}.
      * 
      * @param outputFile        A {@code String} that is the path to the generated output file.
      * @throws IOException      If an error occurred while writing in the output file, 
      *                          or when reading the ontology file.
-     * @throws OBOFormatParserException     If {@code pathToUberonOnt} was in OBO and could not 
-     *                                      be parsed.
-     * @throws OWLOntologyCreationException If {@code pathToUberonOnt} was in OWL and could not 
-     *                                      be parsed.
      * 
-     * @see org.bgee.pipeline.OntologyUtils#getXRefMappings()
+     * @see org.bgee.pipeline.ontologycommon.OntologyUtils#getXRefMappings()
      */
-    public void saveXRefMappingsToFile(String outputFile) 
-            throws IOException {
+    public void saveXRefMappingsToFile(String outputFile) throws IOException {
         log.entry(outputFile);
         
         //create the header of the file, and the conditions on the columns
@@ -974,6 +1004,86 @@ public class Uberon extends UberonCommon {
                     mapWriter.write(row, header, processors);
                 }
             }
+        }
+        
+        log.exit();
+    }
+    
+    /**
+     * Extract sex information about anatomical terms to a TSV file. 
+     * Retrieves all descendants of the terms with OBO-like IDs {@link #HERMAPHRODITE_ORGANISM_ID}, 
+     * {@link #FEMALE_ORGANISM_ID}, {@link #MALE_ORGANISM_ID}, then write a TSV file 
+     * containing all classes, and for each class, 3 columns indicating whether the class 
+     * is a descendant of the hermaphrodite, male, female terms.
+     * 
+     * @param outputFile    A {@code String} that is the path the the output TSV file.
+     * @throws IOException  If an error occurred while writing in the output file.
+     */
+    public void extractSexInfoToFile(String outputFile) throws IOException {
+        log.entry(outputFile);
+        
+        final OWLGraphWrapper wrapper = this.getOntologyUtils().getWrapper();
+        
+        //Retrieve root classes of sex-related terms
+        OWLClass hermaphroditeCls = wrapper.getOWLClassByIdentifierNoAltIds(HERMAPHRODITE_ORGANISM_ID);
+        OWLClass femaleCls = wrapper.getOWLClassByIdentifierNoAltIds(FEMALE_ORGANISM_ID);
+        OWLClass maleCls = wrapper.getOWLClassByIdentifierNoAltIds(MALE_ORGANISM_ID);
+        if (hermaphroditeCls == null || femaleCls == null || maleCls == null) {
+            throw log.throwing(new IllegalStateException("Could not find some sex-related terms"));
+        }
+        
+        //Retrieve descendants of sex-related terms
+        Set<OWLClass> hermaphroditeClasses = wrapper.getOWLClassDescendantsWithGCI(hermaphroditeCls, 
+                this.getOntologyUtils().getGenericPartOfProps());
+        Set<OWLClass> femaleClasses = wrapper.getOWLClassDescendantsWithGCI(femaleCls, 
+                this.getOntologyUtils().getGenericPartOfProps());
+        Set<OWLClass> maleClasses = wrapper.getOWLClassDescendantsWithGCI(maleCls, 
+                this.getOntologyUtils().getGenericPartOfProps());
+        if (hermaphroditeClasses.isEmpty() || femaleClasses.isEmpty() || maleClasses.isEmpty()) {
+            throw log.throwing(new IllegalStateException("No descendants for some sex-related terms"));
+        }
+        hermaphroditeClasses.add(hermaphroditeCls);
+        femaleClasses.add(femaleCls);
+        maleClasses.add(maleCls);
+        
+        //Retrieve all OWLClasses and order them by ID for consistent diffs between releases
+        List<OWLClass> allClasses = wrapper.getAllRealOWLClasses().stream()
+                .sorted(Comparator.comparing(c -> wrapper.getIdentifier(c), OntologyUtils.ID_COMPARATOR))
+                .collect(Collectors.toList());
+        
+        //generate output file containing all classes
+        //create the header of the file, and the conditions on the columns
+        String[] header = new String[5];
+        header[0] = UBERON_ENTITY_ID_COL;
+        header[1] = ANAT_ENTITY_NAME_COL;
+        header[2] = "female";
+        header[3] = "male";
+        header[4] = "hermaphrodite";
+        CellProcessor[] processors = new CellProcessor[5];
+        processors[0] = new NotNull(new Unique());
+        processors[1] = null;
+        processors[2] = new NotNull(new FmtBool("T", "F"));
+        processors[3] = new NotNull(new FmtBool("T", "F"));
+        processors[4] = new NotNull(new FmtBool("T", "F"));
+        
+        //write output file
+        try (ICsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(outputFile),
+                Utils.TSVCOMMENTED)) {
+            
+            mapWriter.writeHeader(header);
+            
+            for (OWLClass cls: allClasses) {
+                Map<String, Object> row = new HashMap<String, Object>();
+                row.put(header[0], wrapper.getIdentifier(cls));
+                row.put(header[1], wrapper.getLabel(cls));
+                row.put(header[2], femaleClasses.contains(cls));
+                row.put(header[3], maleClasses.contains(cls));
+                row.put(header[4], hermaphroditeClasses.contains(cls));
+                
+                mapWriter.write(row, header, processors);
+            }
+            
+            mapWriter.flush();
         }
         
         log.exit();
@@ -1164,7 +1274,7 @@ public class Uberon extends UberonCommon {
 //        Set<OWLObjectPropertyExpression> props = wrapper.getSubPropertyReflexiveClosureOf(relProp);
 //        Set<OWLGraphEdge> edges = new HashSet<OWLGraphEdge>();
 //        
-//        for (OWLClass iterateClass: wrapper.getAllOWLClasses()) {
+//        for (OWLClass iterateClass: wrapper.getAllRealOWLClasses()) {
 //            for (OWLGraphEdge edge: wrapper.getOutgoingEdges(iterateClass)) {
 //                if (edge.getSingleQuantifiedProperty() != null && 
 //                        props.contains(edge.getSingleQuantifiedProperty().getProperty())) {

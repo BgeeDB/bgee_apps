@@ -15,9 +15,9 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.baseelements.CallType;
-import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DecorrelationType;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 
 /**
  * This class is designed to declare and provide all {@code Parameter<T>} that
@@ -45,11 +45,11 @@ import org.bgee.model.expressiondata.baseelements.DecorrelationType;
  * in their order of importance that will define their order in the URL. 
  * The list is accessible through the method {@link #getList()}.
  *
- * @author Mathieu Seppey
- * @author Valentine Rech de Laval
- * @author Frederic Bastian
- * @version Bgee 13, Feb. 2016
- * @since Bgee 13 Nov. 2014
+ * @author  Mathieu Seppey
+ * @author  Valentine Rech de Laval
+ * @author  Frederic Bastian
+ * @version Bgee 14, Mar. 2017
+ * @since   Bgee 13 Nov. 2014
  * @see URLParameters.Parameter
  * @see	RequestParameters
  */
@@ -73,7 +73,7 @@ public class URLParameters {
     /**
      * A {@code List} of {@code String}s that are the default values to use to separate values
      * of one parameter. Contains: "\r\n", "\r", "\n", ",".
-     * ({@see URLParameters.Parameter#allowsSeparatedValues}).
+     * @see URLParameters.Parameter#allowsSeparatedValues().
      */
     protected static final List<String> DEFAULT_SEPARATORS = Arrays.asList("\r\n", "\r", "\n", ",");
 
@@ -182,6 +182,15 @@ public class URLParameters {
     		new Parameter<String>("gene_id", false,false, null, false, false, 50, DEFAULT_FORMAT, String.class);
     
     /**
+     * A {@code Parameter<Integer>} representing a species id, typically for the gene page.
+     * Category of the parameter: controller parameter.
+     * Corresponds to the URL parameter "species_id".
+     */
+    private static final Parameter<Integer> SPECIES_ID = 
+            new Parameter<Integer>("species_id", false,false, null, false, false, 10,
+                    DEFAULT_FORMAT, Integer.class);
+    
+    /**
      * A {@code Parameter<String>} representing a search, typically for the gene page.
      * Category of the parameter: controller parameter.
      * Corresponds to the URL parameter "search".
@@ -198,9 +207,9 @@ public class URLParameters {
     //XXX: Do we really need this parameter. Maybe we could simply allow species_id 
     //to provide multiple values. And we could keep the word "list" for textarea upload, 
     //where multiple values are separated by a specific separator in a same parameter value.
-    private static final Parameter<String> SPECIES_LIST = new Parameter<String>("species_list",
+    private static final Parameter<Integer> SPECIES_LIST = new Parameter<Integer>("species_list",
             true, false, null, true, DEFAULT_IS_SECURE, 
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Integer.class);
 
     /**
      * A {@code Parameter<Boolean>} defining whether to display the {@code GeneListResponse} 
@@ -258,16 +267,16 @@ public class URLParameters {
                     .collect(Collectors.joining("|")) + ")", 
              String.class);
     /**
-     * A {@code Parameter<String>} that contains the data quality to be used 
+     * A {@code Parameter<String>} that contains the summary quality to be used 
      * for TopAnat analysis.
      * Corresponds to the URL parameter "data_qual".
      */
-    private static final Parameter<String> DATA_QUALITY = new Parameter<String>("data_qual",
+    private static final Parameter<String> SUMMARY_QUALITY = new Parameter<String>("data_qual",
             false, false, null, true, DEFAULT_IS_SECURE, 
-            Math.max(RequestParameters.ALL_VALUE.length(), EnumSet.allOf(DataQuality.class).stream()
+            Math.max(RequestParameters.ALL_VALUE.length(), EnumSet.allOf(SummaryQuality.class).stream()
                     .map(e -> e.getStringRepresentation().length())
                     .max(Comparator.naturalOrder()).get()), 
-            "(?i:" + RequestParameters.ALL_VALUE + "|" + EnumSet.allOf(DataQuality.class).stream()
+            "(?i:" + RequestParameters.ALL_VALUE + "|" + EnumSet.allOf(SummaryQuality.class).stream()
                 .map(e -> e.getStringRepresentation())
                 .collect(Collectors.joining("|")) + ")", 
             String.class);
@@ -452,12 +461,13 @@ public class URLParameters {
             PAGE,
             ACTION,
             GENE_ID,
+            SPECIES_ID,
             SEARCH,
             // Species request
             SPECIES_LIST,
             // TopAnat analyze params
             FOREGROUND_LIST, FOREGROUND_FILE, BACKGROUND_LIST, BACKGROUND_FILE,
-            EXPRESSION_TYPE, DATA_QUALITY, DATA_TYPE, DEV_STAGE, DECORRELATION_TYPE,
+            EXPRESSION_TYPE, SUMMARY_QUALITY, DATA_TYPE, DEV_STAGE, DECORRELATION_TYPE,
             NODE_SIZE, FDR_THRESHOLD, P_VALUE_THRESHOLD, NB_NODE, 
             GENE_INFO, 
             //ID to identify a specific analysis
@@ -583,7 +593,14 @@ public class URLParameters {
     public Parameter<String> getParamGeneId() {
     	return GENE_ID;
     }
-    
+   
+    /**
+     * @return  A {@code Parameter<Integer>} that contains the species id.
+     */
+     public Parameter<Integer> getParamSpeciesId() {
+         return SPECIES_ID;
+     }
+     
     /**
      * @return  A {@code Parameter<String>} that contains the search text.
      */
@@ -608,10 +625,10 @@ public class URLParameters {
     }
     
     /**
-     * @return  A {@code Parameter<String>} defining a species ID list.
+     * @return  A {@code Parameter<Integer>} defining a species ID list.
      *          Corresponds to the URL parameter "species_list".
      */
-    public Parameter<String> getParamSpeciesList(){
+    public Parameter<Integer> getParamSpeciesList(){
         return SPECIES_LIST;
     }
     /**
@@ -654,7 +671,7 @@ public class URLParameters {
      *          Corresponds to the URL parameter "data_qual".
      */
     public Parameter<String> getParamDataQuality() {
-        return DATA_QUALITY;
+        return SUMMARY_QUALITY;
     }
     /**
      * @return  A {@code Parameter<String>} defining a data type.

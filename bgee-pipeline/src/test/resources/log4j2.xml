@@ -3,13 +3,56 @@
   <appenders>
     <Console name="Console" target="SYSTEM_OUT">
       <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %level %class{36} %L %M - %m%ex%n"/>
+<!--
+      <Filters>
+        <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
+      </Filters>
+-->
     </Console>
+<!--
+    <File name="MyFile" fileName="propagate.log">
+      <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %level %class{36} %L %M - %m%ex%n"/>
+      <Filters>
+        <ThresholdFilter level="DEBUG" onMatch="ACCEPT" onMismatch="NEUTRAL"/>
+        <MarkerFilter marker="BLOCKING_QUEUE_MARKER" onMatch="ACCEPT" onMismatch="NEUTRAL"/>
+        <MarkerFilter marker="INSERTION_MARKER" onMatch="ACCEPT" onMismatch="NEUTRAL"/>
+        <MarkerFilter marker="COMPUTE_MARKER" onMatch="ACCEPT" onMismatch="NEUTRAL"/>
+        <ThresholdFilter level="TRACE" onMatch="DENY" onMismatch="NEUTRAL"/>
+      </Filters>
+    </File>
+-->
   </appenders>
   <loggers>
     <root level="off">
       <appender-ref ref="Console"/>
     </root>  
     <logger name="org.bgee" level="debug" additivity="false">
+      <appender-ref ref="Console"/>
+      <!-- <appender-ref ref="MyFile"/> -->
+    </logger>
+<!--
+    <logger name="org.bgee.pipeline.expression.InsertPropagatedCalls" level="trace" additivity="false">
+      <appender-ref ref="Console"/>
+      <appender-ref ref="MyFile"/>
+    </logger>
+-->
+<!--
+    <logger name="org.bgee.model.expressiondata.ConditionUtils" level="trace" additivity="false">
+      <MarkerFilter marker="FLOW" onMatch="DENY" onMismatch="NEUTRAL"/>
+      <appender-ref ref="Console"/>
+    </logger>
+-->
+<!--
+    <logger name="org.bgee.model.ontology.OntologyBase" level="trace" additivity="false">
+      <Filters>
+        <MarkerFilter marker="FLOW" onMatch="DENY" onMismatch="NEUTRAL"/>
+        <RegexFilter regex="Filtered relations: .+" useRawMsg="true" onMatch="DENY" onMismatch="NEUTRAL"/>
+      </Filters>
+      <appender-ref ref="Console"/>
+    </logger>
+-->
+    <logger name="log4jdbc.log4j2" level="warn" additivity="false">
+      <MarkerFilter marker="LOG4JDBC_OTHER" onMatch="DENY" onMismatch="NEUTRAL"/>
       <appender-ref ref="Console"/>
     </logger>
   </loggers>

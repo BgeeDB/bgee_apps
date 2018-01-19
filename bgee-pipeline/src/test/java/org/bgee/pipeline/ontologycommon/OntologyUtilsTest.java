@@ -127,12 +127,12 @@ public class OntologyUtilsTest extends TestAncestor {
         OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
                 getResource("/utils/nestedSetModelTest.obo").getFile());
         wrapper = new OWLGraphWrapper(ont);
-        classRoot = wrapper.getOWLClassByIdentifier("FOO:0001");
-        classA = wrapper.getOWLClassByIdentifier("FOO:0002");
-        classB = wrapper.getOWLClassByIdentifier("FOO:0003");
-        classC = wrapper.getOWLClassByIdentifier("FOO:0004");
-        classD = wrapper.getOWLClassByIdentifier("FOO:0005");
-        classE = wrapper.getOWLClassByIdentifier("FOO:0006");
+        classRoot = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0001");
+        classA = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0002");
+        classB = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0003");
+        classC = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0004");
+        classD = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0005");
+        classE = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0006");
         log.debug("Done wrapping test ontology into OWLGraphWrapper.");
     }
     
@@ -396,10 +396,10 @@ public class OntologyUtilsTest extends TestAncestor {
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         OntologyUtils utils = new OntologyUtils(wrapper);
         
-        OWLClass root = wrapper.getOWLClassByIdentifier("FOO:0001");
-        OWLClass clsA = wrapper.getOWLClassByIdentifier("FOO:0002");
-        OWLClass clsB = wrapper.getOWLClassByIdentifier("FOO:0003");
-        OWLClass clsC = wrapper.getOWLClassByIdentifier("FOO:0004");
+        OWLClass root = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0001");
+        OWLClass clsA = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0002");
+        OWLClass clsB = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0003");
+        OWLClass clsC = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0004");
         OWLObjectProperty partOf = wrapper.getOWLObjectPropertyByIdentifier(
                 OntologyUtils.PART_OF_ID);
         OWLObjectProperty inDeepPartOf = wrapper.getOWLObjectPropertyByIdentifier(
@@ -433,8 +433,8 @@ public class OntologyUtilsTest extends TestAncestor {
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         OntologyUtils utils = new OntologyUtils(wrapper);
         
-        OWLClass clsA = wrapper.getOWLClassByIdentifier("MmulDv:0000000");
-        OWLClass clsB = wrapper.getOWLClassByIdentifier("MmulDv:0000001");
+        OWLClass clsA = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000000");
+        OWLClass clsB = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000001");
         
         OWLGraphEdge edge = new OWLGraphEdge(clsB, clsA, 
                 wrapper.getOWLObjectPropertyByIdentifier(OntologyUtils.PRECEDED_BY_ID), 
@@ -487,8 +487,8 @@ public class OntologyUtilsTest extends TestAncestor {
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         OntologyUtils utils = new OntologyUtils(wrapper);
         
-        OWLClass clsA = wrapper.getOWLClassByIdentifier("MmulDv:0000000");
-        OWLClass clsB = wrapper.getOWLClassByIdentifier("MmulDv:0000001");
+        OWLClass clsA = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000000");
+        OWLClass clsB = wrapper.getOWLClassByIdentifierNoAltIds("MmulDv:0000001");
         
         OWLGraphEdge edge = new OWLGraphEdge(clsB, clsA, 
                 wrapper.getOWLObjectPropertyByIdentifier(OntologyUtils.PRECEDED_BY_ID), 
@@ -514,8 +514,8 @@ public class OntologyUtilsTest extends TestAncestor {
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         OntologyUtils utils = new OntologyUtils(wrapper);
         
-        OWLClass clsA = wrapper.getOWLClassByIdentifier("FOO:0001");
-        OWLClass clsB = wrapper.getOWLClassByIdentifier("FOO:0002");
+        OWLClass clsA = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0001");
+        OWLClass clsB = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0002");
         
         OWLGraphEdge edge = new OWLGraphEdge(clsB, clsA, 
                 wrapper.getOWLObjectPropertyByIdentifier(OntologyUtils.PART_OF_ID), 
@@ -544,8 +544,8 @@ public class OntologyUtilsTest extends TestAncestor {
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         OntologyUtils utils = new OntologyUtils(wrapper);
         
-        OWLClass clsA = wrapper.getOWLClassByIdentifier("FOO:0001");
-        OWLClass clsB = wrapper.getOWLClassByIdentifier("FOO:0002");
+        OWLClass clsA = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0001");
+        OWLClass clsB = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0002");
         
         OWLGraphEdge edge = new OWLGraphEdge(clsB, clsA, 
                 wrapper.getOWLObjectPropertyByIdentifier(OntologyUtils.TRANSFORMATION_OF_ID), 
@@ -576,8 +576,8 @@ public class OntologyUtilsTest extends TestAncestor {
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         OntologyUtils utils = new OntologyUtils(wrapper);
         
-        OWLClass clsA = wrapper.getOWLClassByIdentifier("FOO:0001");
-        OWLClass clsB = wrapper.getOWLClassByIdentifier("FOO:0002");
+        OWLClass clsA = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0001");
+        OWLClass clsB = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0002");
         
         OWLGraphEdge edge = new OWLGraphEdge(clsB, clsA, 
                 wrapper.getOWLObjectPropertyByIdentifier(OntologyUtils.DEVELOPS_FROM_ID), 
@@ -613,31 +613,31 @@ public class OntologyUtilsTest extends TestAncestor {
         OntologyUtils utils = new OntologyUtils(wrapper);
         
         Set<OWLClass> expectedClasses = new HashSet<OWLClass>(Arrays.asList(
-                wrapper.getOWLClassByIdentifier("UBERON:0000104"), 
-                wrapper.getOWLClassByIdentifier("UBERON:0000105")));
+                wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000104"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000105")));
         assertEquals(expectedClasses, utils.getECAIntersectionOfTargets(
-                wrapper.getOWLClassByIdentifier("HsapDv:0000001"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("HsapDv:0000001"), 
                 wrapper.getOWLObjectPropertyByIdentifier("BFO:0000050"), 
-                wrapper.getOWLClassByIdentifier("NCBITaxon:1")));
+                wrapper.getOWLClassByIdentifierNoAltIds("NCBITaxon:1")));
         
         assertEquals(expectedClasses, utils.getECAIntersectionOfTargets(
-                wrapper.getOWLClassByIdentifier("HsapDv:0000001"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("HsapDv:0000001"), 
                 wrapper.getOWLObjectPropertyByIdentifier("BFO:0000050"), 
-                wrapper.getOWLClassByIdentifier("NCBITaxon:9605")));
-        
-        expectedClasses = new HashSet<OWLClass>(Arrays.asList(
-                wrapper.getOWLClassByIdentifier("UBERON:0000104")));
-        assertEquals(expectedClasses, utils.getECAIntersectionOfTargets(
-                wrapper.getOWLClassByIdentifier("HsapDv:0000001"), 
-                wrapper.getOWLObjectPropertyByIdentifier("BFO:0000050"), 
-                wrapper.getOWLClassByIdentifier("NCBITaxon:9606")));
+                wrapper.getOWLClassByIdentifierNoAltIds("NCBITaxon:9605")));
         
         expectedClasses = new HashSet<OWLClass>(Arrays.asList(
-                wrapper.getOWLClassByIdentifier("UBERON:0000106")));
+                wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000104")));
         assertEquals(expectedClasses, utils.getECAIntersectionOfTargets(
-                wrapper.getOWLClassByIdentifier("HsapDv:0000001"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("HsapDv:0000001"), 
+                wrapper.getOWLObjectPropertyByIdentifier("BFO:0000050"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("NCBITaxon:9606")));
+        
+        expectedClasses = new HashSet<OWLClass>(Arrays.asList(
+                wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000106")));
+        assertEquals(expectedClasses, utils.getECAIntersectionOfTargets(
+                wrapper.getOWLClassByIdentifierNoAltIds("HsapDv:0000001"), 
                 wrapper.getOWLObjectPropertyByIdentifier("RO:0002160"), 
-                wrapper.getOWLClassByIdentifier("NCBITaxon:1")));
+                wrapper.getOWLClassByIdentifierNoAltIds("NCBITaxon:1")));
     }
     
     /**
@@ -660,36 +660,36 @@ public class OntologyUtilsTest extends TestAncestor {
         
         Set<OWLEquivalentClassesAxiom> expectedAxioms = new HashSet<OWLEquivalentClassesAxiom>();
         expectedAxioms.add(fac.getOWLEquivalentClassesAxiom(
-                wrapper.getOWLClassByIdentifier("HsapDv:0000001"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("HsapDv:0000001"), 
                 fac.getOWLObjectIntersectionOf(
-                        wrapper.getOWLClassByIdentifier("UBERON:0000104"), 
+                        wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000104"), 
                         fac.getOWLObjectSomeValuesFrom(
-                                partOf, wrapper.getOWLClassByIdentifier("NCBITaxon:9606")))));
+                                partOf, wrapper.getOWLClassByIdentifierNoAltIds("NCBITaxon:9606")))));
         expectedAxioms.add(fac.getOWLEquivalentClassesAxiom(
-                wrapper.getOWLClassByIdentifier("HsapDv:0000001"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("HsapDv:0000001"), 
                 fac.getOWLObjectIntersectionOf(
-                        wrapper.getOWLClassByIdentifier("UBERON:0000105"), 
+                        wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000105"), 
                         fac.getOWLObjectSomeValuesFrom(
-                                partOf, wrapper.getOWLClassByIdentifier("NCBITaxon:9605")))));
+                                partOf, wrapper.getOWLClassByIdentifierNoAltIds("NCBITaxon:9605")))));
         
         assertEquals(expectedAxioms, utils.getECAIntersectionOf(
-                wrapper.getOWLClassByIdentifier("HsapDv:0000001"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("HsapDv:0000001"), 
                 wrapper.getOWLObjectPropertyByIdentifier("BFO:0000050"), 
-                wrapper.getOWLClassByIdentifier("NCBITaxon:1")));
+                wrapper.getOWLClassByIdentifierNoAltIds("NCBITaxon:1")));
         
 
         expectedAxioms = new HashSet<OWLEquivalentClassesAxiom>();
         expectedAxioms.add(fac.getOWLEquivalentClassesAxiom(
-                wrapper.getOWLClassByIdentifier("HsapDv:0000001"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("HsapDv:0000001"), 
                 fac.getOWLObjectIntersectionOf(
-                        wrapper.getOWLClassByIdentifier("UBERON:0000106"), 
+                        wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000106"), 
                         fac.getOWLObjectSomeValuesFrom(
                                 wrapper.getOWLObjectPropertyByIdentifier("RO:0002160"), 
-                                wrapper.getOWLClassByIdentifier("NCBITaxon:9606")))));
+                                wrapper.getOWLClassByIdentifierNoAltIds("NCBITaxon:9606")))));
         assertEquals(expectedAxioms, utils.getECAIntersectionOf(
-                wrapper.getOWLClassByIdentifier("HsapDv:0000001"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("HsapDv:0000001"), 
                 wrapper.getOWLObjectPropertyByIdentifier("RO:0002160"), 
-                wrapper.getOWLClassByIdentifier("NCBITaxon:9606")));
+                wrapper.getOWLClassByIdentifierNoAltIds("NCBITaxon:9606")));
     }
     
     /**
@@ -709,18 +709,18 @@ public class OntologyUtilsTest extends TestAncestor {
         OWLDataFactory fac = wrapper.getDataFactory();
         
         OWLEquivalentClassesAxiom eca = fac.getOWLEquivalentClassesAxiom(
-                wrapper.getOWLClassByIdentifier("HsapDv:0000001"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("HsapDv:0000001"), 
                 fac.getOWLObjectIntersectionOf(
-                        wrapper.getOWLClassByIdentifier("UBERON:0000104"), 
+                        wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000104"), 
                         fac.getOWLObjectSomeValuesFrom(
                                 wrapper.getOWLObjectPropertyByIdentifier("BFO:0000050"), 
-                                wrapper.getOWLClassByIdentifier("NCBITaxon:9606"))));
+                                wrapper.getOWLClassByIdentifierNoAltIds("NCBITaxon:9606"))));
         OWLGraphEdge expectedEdge = new OWLGraphEdge(
-                wrapper.getOWLClassByIdentifier("HsapDv:0000001"), 
-                wrapper.getOWLClassByIdentifier("UBERON:0000104"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("HsapDv:0000001"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000104"), 
                 null, Quantifier.IDENTITY, 
                 ont, eca, 
-                wrapper.getOWLClassByIdentifier("NCBITaxon:9606"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("NCBITaxon:9606"), 
                 wrapper.getOWLObjectPropertyByIdentifier("BFO:0000050"));
         
         assertEquals("Incorrect edge generated from ECA", expectedEdge, 
@@ -733,12 +733,11 @@ public class OntologyUtilsTest extends TestAncestor {
     @Test
     public void testIdComparator() {
         List<String> idsUnsorted = Arrays.asList("ID:11", "ID:2", "ID:12", "ID_10", 
-                "ID:1", "ID1:1", "ID:13f");
+                "ID:1", "ID1:1", "ID:13f", "ID:A");
         List<String> expectedSortdIds = Arrays.asList("ID1:1", "ID:1", "ID:2", "ID:11", "ID:12", 
-                "ID:13f", "ID_10");
+                "ID:13f", "ID:A", "ID_10");
         Collections.sort(idsUnsorted, OntologyUtils.ID_COMPARATOR);
-        assertEquals("IDs were not sorted according to their natural ordering", 
-                expectedSortdIds, idsUnsorted);
+        assertEquals("IDs were not sorted correctly", expectedSortdIds, idsUnsorted);
     }
     
     /**
@@ -753,8 +752,8 @@ public class OntologyUtilsTest extends TestAncestor {
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         OntologyUtils utils = new OntologyUtils(wrapper);
         
-        OWLClass target = wrapper.getOWLClassByIdentifier("FOO:0002");
-        OWLClass source = wrapper.getOWLClassByIdentifier("FOO:0006");
+        OWLClass target = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0002");
+        OWLClass source = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0006");
         
         assertEquals("Incorrect min distance asserted over any relation", 3, 
                 utils.getMinDistance(source, target, null));
@@ -776,15 +775,15 @@ public class OntologyUtilsTest extends TestAncestor {
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         OntologyUtils utils = new OntologyUtils(wrapper);
         
-        OWLClass cls1 = wrapper.getOWLClassByIdentifier("FOO:0003");
-        OWLClass cls2 = wrapper.getOWLClassByIdentifier("FOO:0006");
+        OWLClass cls1 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0003");
+        OWLClass cls2 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0006");
         @SuppressWarnings("rawtypes")
         Set<OWLPropertyExpression> overProps = new HashSet<OWLPropertyExpression>(
                 Arrays.asList(wrapper.getOWLObjectPropertyByIdentifier(
                         OntologyUtils.PART_OF_ID), wrapper.getOWLObjectPropertyByIdentifier(
                                     "in_deep_part_of")));
         Set<OWLClass> expectedLcas = new HashSet<OWLClass>(Arrays.asList(
-                wrapper.getOWLClassByIdentifier("FOO:0002")));
+                wrapper.getOWLClassByIdentifierNoAltIds("FOO:0002")));
         
         assertEquals("Incorrect least common ancestor", 
                 expectedLcas, 
@@ -796,15 +795,15 @@ public class OntologyUtilsTest extends TestAncestor {
         
         assertEquals("Incorrect least common ancestor", 
                 new HashSet<OWLClass>(Arrays.asList(
-                        wrapper.getOWLClassByIdentifier("FOO:0002"))), 
-                utils.getLeastCommonAncestors(wrapper.getOWLClassByIdentifier("FOO:0002"), 
-                        wrapper.getOWLClassByIdentifier("FOO:0005"), overProps));
+                        wrapper.getOWLClassByIdentifierNoAltIds("FOO:0002"))), 
+                utils.getLeastCommonAncestors(wrapper.getOWLClassByIdentifierNoAltIds("FOO:0002"), 
+                        wrapper.getOWLClassByIdentifierNoAltIds("FOO:0005"), overProps));
         
         assertEquals("Incorrect least common ancestor", 
                 new HashSet<OWLClass>(Arrays.asList(
-                        wrapper.getOWLClassByIdentifier("FOO:0004"))), 
-                utils.getLeastCommonAncestors(wrapper.getOWLClassByIdentifier("FOO:0004"), 
-                        wrapper.getOWLClassByIdentifier("FOO:0005"), overProps));
+                        wrapper.getOWLClassByIdentifierNoAltIds("FOO:0004"))), 
+                utils.getLeastCommonAncestors(wrapper.getOWLClassByIdentifierNoAltIds("FOO:0004"), 
+                        wrapper.getOWLClassByIdentifierNoAltIds("FOO:0005"), overProps));
     }
     
     /**
@@ -818,14 +817,14 @@ public class OntologyUtilsTest extends TestAncestor {
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         OntologyUtils utils = new OntologyUtils(wrapper);
         
-        OWLClass cls1 = wrapper.getOWLClassByIdentifier("FOO:0001");
-        OWLClass cls2 = wrapper.getOWLClassByIdentifier("FOO:0002");
-        OWLClass cls3 = wrapper.getOWLClassByIdentifier("FOO:0003");
-        OWLClass cls4 = wrapper.getOWLClassByIdentifier("FOO:0004");
+        OWLClass cls1 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0001");
+        OWLClass cls2 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0002");
+        OWLClass cls3 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0003");
+        OWLClass cls4 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0004");
 
-        OWLClass cls7 = wrapper.getOWLClassByIdentifier("FOO:0007");
-        OWLClass cls8 = wrapper.getOWLClassByIdentifier("FOO:0008");
-        OWLClass cls9 = wrapper.getOWLClassByIdentifier("FOO:0009");
+        OWLClass cls7 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0007");
+        OWLClass cls8 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0008");
+        OWLClass cls9 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0009");
         @SuppressWarnings("rawtypes")
         Set<OWLPropertyExpression> overProps = new HashSet<OWLPropertyExpression>(
                 Arrays.asList(wrapper.getOWLObjectPropertyByIdentifier(
@@ -883,15 +882,15 @@ public class OntologyUtilsTest extends TestAncestor {
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         OntologyUtils utils = new OntologyUtils(wrapper);
         
-        OWLClass cls1 = wrapper.getOWLClassByIdentifier("FOO:0001");
-        OWLClass cls2 = wrapper.getOWLClassByIdentifier("FOO:0002");
-        OWLClass cls3 = wrapper.getOWLClassByIdentifier("FOO:0003");
-        OWLClass cls4 = wrapper.getOWLClassByIdentifier("FOO:0004");
-        OWLClass cls5 = wrapper.getOWLClassByIdentifier("FOO:0005");
+        OWLClass cls1 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0001");
+        OWLClass cls2 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0002");
+        OWLClass cls3 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0003");
+        OWLClass cls4 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0004");
+        OWLClass cls5 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0005");
 
-        OWLClass cls7 = wrapper.getOWLClassByIdentifier("FOO:0007");
-        OWLClass cls8 = wrapper.getOWLClassByIdentifier("FOO:0008");
-        OWLClass cls9 = wrapper.getOWLClassByIdentifier("FOO:0009");
+        OWLClass cls7 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0007");
+        OWLClass cls8 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0008");
+        OWLClass cls9 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0009");
         @SuppressWarnings("rawtypes")
         Set<OWLPropertyExpression> overProps = new HashSet<OWLPropertyExpression>(
                 Arrays.asList(wrapper.getOWLObjectPropertyByIdentifier(
@@ -949,11 +948,11 @@ public class OntologyUtilsTest extends TestAncestor {
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         OntologyUtils utils = new OntologyUtils(wrapper);
         
-        OWLClass cls1 = wrapper.getOWLClassByIdentifier("FOO:0001");
-        OWLClass cls2 = wrapper.getOWLClassByIdentifier("FOO:0002");
-        OWLClass cls5 = wrapper.getOWLClassByIdentifier("FOO:0005");
-        OWLClass cls6 = wrapper.getOWLClassByIdentifier("FOO:0006");
-        OWLClass cls7 = wrapper.getOWLClassByIdentifier("FOO:0007");
+        OWLClass cls1 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0001");
+        OWLClass cls2 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0002");
+        OWLClass cls5 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0005");
+        OWLClass cls6 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0006");
+        OWLClass cls7 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0007");
         
         Collection<OWLClass> classes1 = Arrays.asList(cls1, cls2, cls5);
         assertTrue("Collection should contain unrelated OWLClasses", 
@@ -1005,11 +1004,11 @@ public class OntologyUtilsTest extends TestAncestor {
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         OntologyUtils utils = new OntologyUtils(wrapper);
         
-        OWLClass cls1 = wrapper.getOWLClassByIdentifier("FOO:0001");
-        OWLClass cls2 = wrapper.getOWLClassByIdentifier("FOO:0002");
-        OWLClass cls3 = wrapper.getOWLClassByIdentifier("FOO:0003");
-        OWLClass cls4 = wrapper.getOWLClassByIdentifier("FOO:0004");
-        OWLClass cls5 = wrapper.getOWLClassByIdentifier("FOO:0005");
+        OWLClass cls1 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0001");
+        OWLClass cls2 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0002");
+        OWLClass cls3 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0003");
+        OWLClass cls4 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0004");
+        OWLClass cls5 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0005");
         
         Collection<OWLClass> classes1 = Arrays.asList(cls1, cls2, cls5);
         Collection<OWLClass> classes2 = Arrays.asList(cls3, cls4, cls5);
@@ -1075,18 +1074,18 @@ public class OntologyUtilsTest extends TestAncestor {
                 getResource("/ontologies/mergeListTest.obo").getFile());
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         
-        OWLClass cls1 = wrapper.getOWLClassByIdentifier("FOO:0001");
-        OWLClass cls2 = wrapper.getOWLClassByIdentifier("FOO:0002");
-        OWLClass cls3 = wrapper.getOWLClassByIdentifier("FOO:0003");
-        OWLClass cls4 = wrapper.getOWLClassByIdentifier("FOO:0004");
-        OWLClass cls5 = wrapper.getOWLClassByIdentifier("FOO:0005");
-        OWLClass cls6 = wrapper.getOWLClassByIdentifier("FOO:0006");
-        OWLClass cls7 = wrapper.getOWLClassByIdentifier("FOO:0007");
+        OWLClass cls1 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0001");
+        OWLClass cls2 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0002");
+        OWLClass cls3 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0003");
+        OWLClass cls4 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0004");
+        OWLClass cls5 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0005");
+        OWLClass cls6 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0006");
+        OWLClass cls7 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0007");
         
         assertEquals("Incorrect merge of List of OWLClasses", 
-                Arrays.asList(cls1, cls5, cls2, cls4, cls3, cls6, cls7), 
+                Arrays.asList(cls1, cls2, cls4, cls3, cls6, cls7), 
                 OntologyUtils.mergeLists(Arrays.asList(cls1, cls2, cls3, cls6), 
-                        Arrays.asList(cls5, cls2, cls4, cls3, cls6, cls7)));
+                        Arrays.asList(cls2, cls4, cls3, cls6, cls7)));
     }
     
     /**
@@ -1100,11 +1099,11 @@ public class OntologyUtilsTest extends TestAncestor {
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         OntologyUtils utils = new OntologyUtils(wrapper);
         
-        OWLClass cls1 = wrapper.getOWLClassByIdentifier("FOO:0001");
-        OWLClass cls2 = wrapper.getOWLClassByIdentifier("FOO:0002");
-        OWLClass cls3 = wrapper.getOWLClassByIdentifier("FOO:0003");
-        OWLClass cls4 = wrapper.getOWLClassByIdentifier("FOO:0004");
-        OWLClass cls5 = wrapper.getOWLClassByIdentifier("FOO:0005");
+        OWLClass cls1 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0001");
+        OWLClass cls2 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0002");
+        OWLClass cls3 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0003");
+        OWLClass cls4 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0004");
+        OWLClass cls5 = wrapper.getOWLClassByIdentifierNoAltIds("FOO:0005");
         
         Set<OWLClass> expectedMembers = new HashSet<OWLClass>(
                 Arrays.asList(cls1, cls2, cls3, cls4, cls5));

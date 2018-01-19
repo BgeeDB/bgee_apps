@@ -30,7 +30,7 @@ import org.apache.logging.log4j.Logger;
  * After calling {@link #releaseAll()}, it is not possible to acquire a {@code BgeeProperties} object 
  * by calling {@link #getBgeeProperties()} anymore (throws an exception).
  * <p>
- * You should always call {@link BgeeProperties().release()} at the end of the execution of a thread, 
+ * You should always call {@link BgeeProperties#release()} at the end of the execution of a thread, 
  * or {@link #releaseAll()} in multi-threads context (for instance, in a webapp context 
  * when the webapp is shutdown). 
  * <p>
@@ -221,18 +221,19 @@ public class BgeeProperties {
     /**
      * Try to retrieve the property corresponding to {@code key}, 
      * first from the injected {@code Properties} ({@code prop}), then from the System properties 
-     * ({@code SYS_PROPS}), then, if undefined or empty, from properties retrieved from the 
-     * Bgee property file ({@code FILE_PROPS}). If the property is still undefined or empty 
+     * ({@code sysProps}), then, if undefined or empty, from properties retrieved from the 
+     * Bgee property file ({@code fileProps}). If the property is still undefined or empty 
      * return {@code defaultValue}.
      *
      * @param prop          A {@code java.util.Properties} instance that contains the system 
      *                      properties to look for {@code key} first
-     * @param SYS_PROPS      {@code java.util.Properties} retrieved from System properties, 
+     * @param sysProps      A {@code java.util.Properties} retrieved from System properties, 
      *                      where {@code key} is searched in second
-     * @param FILE_PROPS     {@code java.util.Properties} retrieved from the Bgee properties file, 
+     * @param fileProps     A {@code java.util.Properties} retrieved from the Bgee properties file, 
      *                      where {@code key} is searched in if {@code prop} and {@code SYS_PROPS}
      *                      were undefined or empty for {@code key}. 
      *                      Can be {@code null} if no properties file was found.
+     * @param key           A {@code String} that is the key for which to return the property.
      * @param defaultValue  default value that will be returned if the property 
      *                      is undefined or empty in all {@code Properties}.
      *
@@ -337,13 +338,14 @@ public class BgeeProperties {
      *
      * @param prop          A {@code java.util.Properties} instance that contains the system 
      *                      properties to look for {@code key} first
-     * @param SYS_PROPS      {@code java.util.Properties} retrieved from System properties, 
+     * @param sysProps      A {@code java.util.Properties} retrieved from System properties, 
      *                      where {@code key} is searched in second
-     * @param FILE_PROPS     {@code java.util.Properties} retrieved 
+     * @param fileProps     A {@code java.util.Properties} retrieved 
      *                      from the Bgee properties file, 
      *                      where {@code key} is searched in if {@code prop} and {@code SYS_PROPS}
      *                      were undefined or empty for {@code key}. 
      *                      Can be {@code null} if no properties file was found.
+     * @param key           A {@code String} that is the key for which to return the property.
      * @param defaultValue  default value that will be returned if the property 
      *                      is undefined or empty in all {@code Properties}.
      *
@@ -376,13 +378,14 @@ public class BgeeProperties {
      *
      * @param prop          A {@code java.util.Properties} instance that contains the system 
      *                      properties to look for {@code key} first
-     * @param SYS_PROPS      {@code java.util.Properties} retrieved from System properties, 
+     * @param sysProps      A {@code java.util.Properties} retrieved from System properties, 
      *                      where {@code key} is searched in second
-     * @param FILE_PROPS     {@code java.util.Properties} retrieved 
+     * @param fileProps     A {@code java.util.Properties} retrieved 
      *                      from the Bgee properties file, 
      *                      where {@code key} is searched in if {@code prop} and {@code SYS_PROPS}
      *                      were undefined or empty for {@code key}. 
      *                      Can be {@code null} if no properties file was found.
+     * @param key           A {@code String} that is the key for which to return the property.
      * @param defaultValue  default value that will be returned if the property 
      *                      is undefined or empty in all {@code Properties}.
      *
@@ -415,13 +418,14 @@ public class BgeeProperties {
      *
      * @param prop          A {@code java.util.Properties} instance that contains the system 
      *                      properties to look for {@code key} first
-     * @param SYS_PROPS     {@code java.util.Properties} retrieved from System properties, 
+     * @param sysProps      A {@code java.util.Properties} retrieved from System properties, 
      *                      where {@code key} is searched in second
-     * @param FILE_PROPS    {@code java.util.Properties} retrieved 
+     * @param fileProps     A {@code java.util.Properties} retrieved 
      *                      from the Bgee properties file, 
      *                      where {@code key} is searched in if {@code prop} and {@code SYS_PROPS}
      *                      were undefined or empty for {@code key}. 
      *                      Can be {@code null} if no properties file was found.
+     * @param key           A {@code String} that is the key for which to return the property.
      * @param defaultValue  default value that will be returned if the property 
      *                      is undefined or empty in all {@code Properties}.
      *
@@ -749,5 +753,16 @@ public class BgeeProperties {
      */
     public int getMaxJobCountPerUser() {
         return maxJobCountPerUser;
+    }
+    
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("BgeeProperties [topAnatRScriptExecutable=").append(topAnatRScriptExecutable)
+                .append(", topAnatRWorkingDirectory=").append(topAnatRWorkingDirectory)
+                .append(", topAnatFunctionFile=").append(topAnatFunctionFile)
+                .append(", topAnatResultsWritingDirectory=").append(topAnatResultsWritingDirectory)
+                .append("]");
+        return builder.toString();
     }
 }

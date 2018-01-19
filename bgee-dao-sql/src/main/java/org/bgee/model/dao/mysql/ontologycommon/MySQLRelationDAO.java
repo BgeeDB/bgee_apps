@@ -52,7 +52,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
     }
 
     @Override
-    public RelationTOResultSet getAnatEntityRelations(Collection<String> speciesIds, Boolean anySpecies, 
+    public RelationTOResultSet<String> getAnatEntityRelations(Collection<Integer> speciesIds, Boolean anySpecies, 
             Collection<String> sourceAnatEntityIds, Collection<String> targetAnatEntityIds, Boolean sourceOrTarget, 
             Collection<RelationType> relationTypes, Collection<RelationStatus> relationStatus, 
             Collection<RelationDAO.Attribute> attributes) {
@@ -65,8 +65,8 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         // FILTER ARGUMENTS
         //*******************************
         //Species
-        Set<String> clonedSpeIds = Optional.ofNullable(speciesIds)
-                .map(c -> new HashSet<String>(c)).orElse(null);
+        Set<Integer> clonedSpeIds = Optional.ofNullable(speciesIds)
+                .map(c -> new HashSet<>(c)).orElse(null);
         boolean isSpeciesFilter = clonedSpeIds != null && !clonedSpeIds.isEmpty();
         boolean realAnySpecies = isSpeciesFilter && 
                 (Boolean.TRUE.equals(anySpecies) || clonedSpeIds.size() == 1);
@@ -190,7 +190,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             int startIndex = 1;
             if (isSpeciesFilter) {
-                stmt.setStringsToIntegers(startIndex, clonedSpeIds, true);
+                stmt.setIntegers(startIndex, clonedSpeIds, true);
                 startIndex += clonedSpeIds.size();
             }
             if (isSourceAnatEntityFilter) {
@@ -209,51 +209,136 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
                 stmt.setEnumDAOFields(startIndex, clonedRelStatus, true);
                 startIndex += clonedRelStatus.size();
             }
-            return log.exit(new MySQLRelationTOResultSet(stmt));
+            return log.exit(new MySQLRelationTOResultSet<String>(stmt, String.class));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
     }
     
     @Override
-    public RelationTOResultSet getAnatEntityRelationsBySpeciesIds(Set<String> speciesIds, 
+    public RelationTOResultSet<String> getAnatEntityRelationsBySpeciesIds(Set<Integer> speciesIds, 
             Set<RelationType> relationTypes, Set<RelationStatus> relationStatus) {
         log.entry(speciesIds, relationTypes, relationStatus);    
 
         return log.exit(this.getAnatEntityRelations(speciesIds, true, null, null, true, 
                 relationTypes, relationStatus, this.getAttributes()));
     }
-     
+    
     @Override
-    public RelationTOResultSet getStageRelations(Collection<String> speciesIds, Boolean anySpecies, 
+    public RelationTOResultSet<Integer> getTaxonRelations(Collection<Integer> sourceTaxIds, 
+            Collection<Integer> targetTaxIds, Boolean sourceOrTarget,
+            Collection<RelationStatus> relationStatus, Collection<RelationDAO.Attribute> attributes) {
+        log.entry(sourceTaxIds, targetTaxIds, sourceOrTarget, relationStatus, attributes);
+        return log.exit(this.getNestedSetModelFakeRelations(null, null, 
+                sourceTaxIds, targetTaxIds, sourceOrTarget, relationStatus, attributes, 
+                "taxon", null, "taxonId", "taxonLeftBound", "taxonRightBound", "taxonLevel", 
+                Integer.class));
+    }
+
+    @Override
+    public RelationTOResultSet<String> getStageRelationsBySpeciesIds(Set<Integer> speciesIds, 
+            Set<RelationStatus> relationStatus) {
+        log.entry(speciesIds, relationStatus);
+        return log.exit(this.getStageRelations(speciesIds, true, null, null, true, relationStatus, 
+                this.getAttributes()));        
+    }
+
+    @Override
+    public RelationTOResultSet<String> getStageRelations(Collection<Integer> speciesIds, Boolean anySpecies, 
             Collection<String> sourceDevStageIds, Collection<String> targetDevStageIds, Boolean sourceOrTarget, 
             Collection<RelationStatus> relationStatus, 
             Collection<RelationDAO.Attribute> attributes) {
-        //NOTE: there is no relation table for stages, as they are represented 
-        //as a nested set model. So, this method will emulate the existence of such a table, 
-        //so that retrieval of relations between stages will be consistent with retrieval 
+        log.entry(speciesIds, anySpecies, sourceDevStageIds, targetDevStageIds, sourceOrTarget,
+                relationStatus, attributes);
+        return log.exit(this.getNestedSetModelFakeRelations(speciesIds, anySpecies, 
+                sourceDevStageIds, targetDevStageIds, sourceOrTarget, relationStatus, attributes, 
+                "stage", "stageTaxonConstraint", "stageId", "stageLeftBound", "stageRightBound", "stageLevel", 
+                String.class));
+    }
+    
+    /**
+     * Retrieve {@code RelationTO}s for any nested set model stored in the database.
+     *  
+     * @param speciesIds            A {@code Collection} of {@code Integer}s that are the IDs of species 
+     *                              to retrieve relations for. Can be {@code null} or empty. 
+     *                              Only applicable for multiple-species ontologies.
+     * @param anySpecies            A {@code Boolean} defining, when {@code speciesIds} contains several IDs, 
+     *                              whether the relations retrieved should be valid in any 
+     *                              of the requested species (if {@code true}), or in all 
+     *                              of the requested species (if {@code false} or {@code null}). 
+     *                              Only applicable for multiple-species ontologies.
+     * @param sourceIds             A {@code Collection} of {@code T}s that are the IDs of entities
+     *                              that should be the sources of the retrieved relations. 
+     *                              Can be {@code null} or empty.
+     * @param targetIds             A {@code Collection} of {@code T}s that are the IDs of entities
+     *                              that should be the targets of the retrieved relations. 
+     *                              Can be {@code null} or empty.
+     * @param sourceOrTarget        A {@code Boolean} defining, when both {@code sourceIds} 
+     *                              and {@code targetIds} are not empty, 
+     *                              whether the relations retrieved should have one of {@code sourceIds} 
+     *                              as source <strong>and/or</strong> one of {@code targetIds} as target 
+     *                              (if {@code true}), or, one of {@code sourceIds} 
+     *                              as source <strong>and</strong> one of {@code targetIds} as target 
+     *                              (if {@code false} or {@code null}).
+     * @param relationStatus        A {@code Collection} of {@code RelationStatus} that are the status
+     *                              allowing to filter the relations to retrieve.
+     *                              Can be {@code null} or empty.
+     * @param attributes            A {@code Collection} of {@code RelationDAO.Attribute}s 
+     *                              defining the attributes to populate in the returned 
+     *                              {@code RelationTO}s. If {@code null} or empty, 
+     *                              all attributes are populated. 
+     * @param tableName             A {@code String} that is the name of the main table 
+     *                              storing the entities, with their ID, left and right bounds. 
+     *                              Example: "stage".
+     * @param taxonConstTableName   A {@code String} that is the name of the table containing 
+     *                              taxon constraints. Only applicable for multiple-species ontologies.
+     *                              Example: "stageTaxonConstraint".
+     * @param idFieldName           A {@code String} that is the name of the ID field in main table.
+     *                              Example: "stageId".
+     * @param leftBoundFieldName    A {@code String} that is the name of the left bound field in main table.
+     *                              Example: "stageLeftBound".
+     * @param rightBoundFieldName   A {@code String} that is the name of the right bound field in main table.
+     *                              Example: "stageRightBound".
+     * @param levelFieldName        A {@code String} that is the name of the level field in main table.
+     *                              Example: "stageLevel".
+     * @param cls                   The {@code Class} corresponding to the generic type {@code <T>}
+     * @param <T>                   The type of IDs of source and target in {@code RelationTO}s.
+     * @return                      A {@code RelationTOResultSet} allowing to retrieve 
+     *                              nested set model relations from data source.
+     * @throws DAOException If an error occurred when accessing the data source. 
+     */
+    private <T> RelationTOResultSet<T> getNestedSetModelFakeRelations(Collection<Integer> speciesIds, 
+            Boolean anySpecies, Collection<T> sourceIds, Collection<T> targetIds, 
+            Boolean sourceOrTarget, Collection<RelationStatus> relationStatus, 
+            Collection<RelationDAO.Attribute> attributes, String tableName, String taxonConstTableName, 
+            String idFieldName, String leftBoundFieldName, String rightBoundFieldName, String levelFieldName, 
+            Class<T> cls) {
+        log.entry(speciesIds, anySpecies, sourceIds, targetIds, sourceOrTarget, 
+                relationStatus, attributes, tableName, taxonConstTableName, idFieldName, 
+                leftBoundFieldName, rightBoundFieldName, levelFieldName, cls);
+        //NOTE: for nested set models there is no relation table, as for, e.g., anatomical entities. 
+        //So, this method will emulate the existence of such a table, 
+        //so that retrieval of relations in nested set models is consistent with retrieval 
         //of relations between anatomical entities.
-        log.entry(speciesIds, anySpecies, sourceDevStageIds, targetDevStageIds, sourceOrTarget, 
-                relationStatus, attributes);    
-
         //*******************************
         // FILTER ARGUMENTS
         //*******************************
         //Species
-        Set<String> clonedSpeIds = Optional.ofNullable(speciesIds)
-                .map(c -> new HashSet<String>(c)).orElse(null);
+        Set<Integer> clonedSpeIds = Optional.ofNullable(speciesIds)
+                .map(c -> new HashSet<>(c)).orElse(null);
         boolean isSpeciesFilter = clonedSpeIds != null && !clonedSpeIds.isEmpty();
+        assert !isSpeciesFilter || taxonConstTableName != null; 
         boolean realAnySpecies = isSpeciesFilter && 
                 (Boolean.TRUE.equals(anySpecies) || clonedSpeIds.size() == 1);
         
         //Sources and targets
-        Set<String> clonedSourceFilter = Optional.ofNullable(sourceDevStageIds)
-                .map(c -> new HashSet<String>(c)).orElse(null);
+        Set<T> clonedSourceFilter = Optional.ofNullable(sourceIds)
+                .map(c -> new HashSet<>(c)).orElse(null);
         boolean isSourceFilter = clonedSourceFilter != null && !clonedSourceFilter.isEmpty();
-        Set<String> clonedTargetFilter = Optional.ofNullable(targetDevStageIds)
-                .map(c -> new HashSet<String>(c)).orElse(null);
+        Set<T> clonedTargetFilter = Optional.ofNullable(targetIds)
+                .map(c -> new HashSet<>(c)).orElse(null);
         boolean isTargetFilter = clonedTargetFilter != null && !clonedTargetFilter.isEmpty();
-        boolean isStageFilter = isSourceFilter || isTargetFilter;
+        boolean isEntityFilter = isSourceFilter || isTargetFilter;
         
         //Relation status
         Set<RelationStatus> clonedRelStatus = Optional.ofNullable(relationStatus)
@@ -275,7 +360,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
                 } else {
                     sql += ", ";
                 }
-                sql += this.attributeStageRelationToString(attribute);
+                sql += this.attributeNestedSetModelRelationToString(attribute);
             }
         }
         
@@ -288,33 +373,35 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         //the retrieval of relations between anatomical entities.
         sql += 
             // no relationId, provide 0 for all
-            "(SELECT DISTINCT 0 AS stageRelationId, " +
-            "t3.stageId AS stageSourceId, " +
-            "t1.stageId AS stageTargetId, " +
-            //no other parenthood relations between stages other than is_a
+            "(SELECT DISTINCT 0 AS relationId, " +
+            "t3." + idFieldName + " AS sourceId, " +
+            "t1." + idFieldName + " AS targetId, " +
+            //no other parenthood relations in nested set models other than is_a
             "'" + RelationType.ISA_PARTOF.getStringRepresentation() + "' AS relationType, " +
             //emulate RelationStatus
-            "IF (t1.stageId = t3.stageId, " + 
+            "IF (t1." + idFieldName + " = t3." + idFieldName + ", " + 
                 "'" + RelationStatus.REFLEXIVE.getStringRepresentation() + "', " +
-                "IF (t3.stageLevel = t1.stageLevel + 1, " + 
+                "IF (t3." + levelFieldName + " = t1." + levelFieldName + " + 1, " + 
                 "'" + RelationStatus.DIRECT.getStringRepresentation() + "', " +
                 "'" + RelationStatus.INDIRECT.getStringRepresentation() + "')) AS relationStatus " +
-            "FROM stage AS t1 " +
-            "INNER JOIN stageTaxonConstraint AS t2 " +
-                "ON t1.stageId = t2.stageId " +
-            "INNER JOIN stage AS t3 " +
-                "ON t3.stageLeftBound >= t1.stageLeftBound " +
-                "AND t3.stageRightBound <= t1.stageRightBound " +
-            "INNER JOIN stageTaxonConstraint AS t4 " +
-                "ON t3.stageId = t4.stageId AND " +
-                "(t2.speciesId IS NULL OR t4.speciesId IS NULL OR t4.speciesId = t2.speciesId) ";
+            "FROM " + tableName + " AS t1 " + 
+            "INNER JOIN " + tableName + " AS t3 " +
+            "ON t3." + leftBoundFieldName + " >= t1." + leftBoundFieldName + 
+           " AND t3." + rightBoundFieldName + " <= t1." + rightBoundFieldName;
+        if (taxonConstTableName != null) {
+            sql += " INNER JOIN " + taxonConstTableName + " AS t2 " +
+                    "ON t1." + idFieldName + " = t2." + idFieldName + 
+                   " INNER JOIN " + taxonConstTableName + " AS t4 " +
+                    "ON t3." + idFieldName + " = t4." + idFieldName + " AND " +
+                    "(t2.speciesId IS NULL OR t4.speciesId IS NULL OR t4.speciesId = t2.speciesId) ";
+        }
         if (isSpeciesFilter) {
             sql += "WHERE ";
             if  (realAnySpecies) {
                 //a case is not covered in this where clause: for instance, if we query relations 
-                //for species 1 or species 2, while stage 1 exists in species 1, and stqge2 
+                //for species 1 or species 2, while entity 1 exists in species 1, and entity 2 
                 //in species 2. With only this where clause, we could retrieve 
-                //an incorrect relation between stage 1 an stage 2. But this is not possible 
+                //an incorrect relation between entity 1 and entity 2. But this is not possible 
                 //thanks to the join clause above between t4 and t2. 
                 sql += "(t2.speciesId IS NULL OR t2.speciesId IN (" +
                             BgeePreparedStatement.generateParameterizedQueryString(
@@ -323,11 +410,11 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
                              BgeePreparedStatement.generateParameterizedQueryString(
                                 clonedSpeIds.size()) + ")) ";
             } else {
-                String existsPart = "SELECT 1 FROM stageTaxonConstraint AS tc WHERE "
-                        + "tc.stageId = t1.stageId AND tc.speciesId ";
+                String existsPart = "SELECT 1 FROM " + taxonConstTableName + " AS tc WHERE "
+                        + "tc." + idFieldName + " = t1." + idFieldName + " AND tc.speciesId ";
                 sql += getAllSpeciesExistsClause(existsPart, clonedSpeIds.size());
-                existsPart = "SELECT 1 FROM stageTaxonConstraint AS tc WHERE "
-                        + "tc.stageId = t3.stageId AND tc.speciesId ";
+                existsPart = "SELECT 1 FROM " + taxonConstTableName + " AS tc WHERE "
+                        + "tc." + idFieldName + " = t3." + idFieldName + " AND tc.speciesId ";
                 sql += "AND " + getAllSpeciesExistsClause(existsPart, clonedSpeIds.size());
             }
         }
@@ -336,14 +423,14 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         //*******************************
         // WHERE CLAUSE (species already filtered in FROM clause subquery)
         //*******************************
-        if (isStageFilter || isRelationStatusFilter) {
+        if (isEntityFilter || isRelationStatusFilter) {
             sql += " WHERE "; 
         }
-        if (isStageFilter) {
+        if (isEntityFilter) {
             
             sql += "(";
             if (isSourceFilter) {
-                sql += "stageSourceId IN (" 
+                sql += "sourceId IN (" 
                        + BgeePreparedStatement.generateParameterizedQueryString(clonedSourceFilter.size()) 
                        + ")";
             }
@@ -355,7 +442,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
                         sql += " AND ";
                     }
                 }
-                sql += "stageTargetId IN (" 
+                sql += "targetId IN (" 
                         + BgeePreparedStatement.generateParameterizedQueryString(clonedTargetFilter.size()) 
                         + ")";
             }
@@ -363,7 +450,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         }
         
         if (isRelationStatusFilter) {
-            if (isStageFilter) {
+            if (isEntityFilter) {
                 sql += " AND ";
             }
             sql += "relationStatus IN (" + 
@@ -379,41 +466,31 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
              BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
              int startIndex = 1;
              if (isSpeciesFilter) {
-                 List<Integer> orderedSpeciesIds = clonedSpeIds.stream()
-                         .map(e -> e == null? null: Integer.parseInt(e))
-                         .collect(Collectors.toList());
+                 List<Integer> orderedSpeciesIds = clonedSpeIds.stream().collect(Collectors.toList());
                  Collections.sort(orderedSpeciesIds);
                  stmt.setIntegers(startIndex, orderedSpeciesIds, false);
                  startIndex += orderedSpeciesIds.size();
-                 //we set the species IDs twice, once for the parent stages, 
-                 //once for the child stages
+                 //we set the species IDs twice, once for the parents, 
+                 //once for the children
                  stmt.setIntegers(startIndex, orderedSpeciesIds, false);
                  startIndex += orderedSpeciesIds.size();
              }
              if (isSourceFilter) {
-                 stmt.setStrings(startIndex, clonedSourceFilter, true);
+                 stmt.setObjects(startIndex, clonedSourceFilter, true, cls);
                  startIndex += clonedSourceFilter.size();
              }
              if (isTargetFilter) {
-                 stmt.setStrings(startIndex, clonedTargetFilter, true);
+                 stmt.setObjects(startIndex, clonedSourceFilter, true, cls);
                  startIndex += clonedTargetFilter.size();
              }
              if (isRelationStatusFilter) {
                  stmt.setEnumDAOFields(startIndex, clonedRelStatus, true);
                  startIndex += clonedRelStatus.size();
              }
-             return log.exit(new MySQLRelationTOResultSet(stmt));
+             return log.exit(new MySQLRelationTOResultSet<T>(stmt, cls));
          } catch (SQLException e) {
              throw log.throwing(new DAOException(e));
          }
-    }
-
-    @Override
-    public RelationTOResultSet getStageRelationsBySpeciesIds(Set<String> speciesIds, 
-            Set<RelationStatus> relationStatus) {
-        log.entry(speciesIds, relationStatus);
-        return log.exit(this.getStageRelations(speciesIds, true, null, null, true, relationStatus, 
-                this.getAttributes()));        
     }
 
     /** 
@@ -450,7 +527,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
     }
     /** 
      * Returns a {@code String} that correspond to the given {@code RelationDAO.Attribute}, 
-     * for retrieval of relations between stages. Note that this does not correspond 
+     * for retrieval of relations between entities in a nested set model. Note that this does not correspond 
      * to attributes of an actual table, but an emulated temporary table to use 
      * queries consistent with retrieval of relations between anatomical entities. 
      * 
@@ -460,17 +537,17 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
      *                    {@code RelationDAO.Attribute}
      * @throws IllegalArgumentException If the {@code attribute} is unknown.
      */
-    private String attributeStageRelationToString(RelationDAO.Attribute attribute) 
+    private String attributeNestedSetModelRelationToString(RelationDAO.Attribute attribute) 
             throws IllegalArgumentException {
         log.entry(attribute);
         
         String label = null;
         if (attribute.equals(RelationDAO.Attribute.RELATION_ID)) {
-                label = "stageRelationId";
+                label = "relationId";
         } else if (attribute.equals(RelationDAO.Attribute.SOURCE_ID)) {
-            label = "stageSourceId";
+            label = "sourceId";
         } else if (attribute.equals(RelationDAO.Attribute.TARGET_ID)) {
-            label = "stageTargetId";
+            label = "targetId";
         } else if (attribute.equals(RelationDAO.Attribute.RELATION_TYPE)) {
             label = "relationType";
         } else if (attribute.equals(RelationDAO.Attribute.RELATION_STATUS)) {
@@ -484,7 +561,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
     }
 
     @Override
-    public int insertAnatEntityRelations(Collection<RelationTO> relations) 
+    public int insertAnatEntityRelations(Collection<RelationTO<String>> relations) 
             throws DAOException, IllegalArgumentException {
 
         log.entry(relations);
@@ -505,8 +582,8 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         int relationInsertedCount = 0;
         try (BgeePreparedStatement stmt = 
                 this.getManager().getConnection().prepareStatement(sqlExpression)) {
-            for (RelationTO relation: relations) {
-                stmt.setInt(1, Integer.parseInt(relation.getId()));
+            for (RelationTO<String> relation: relations) {
+                stmt.setInt(1, relation.getId());
                 stmt.setString(2, relation.getSourceId());
                 stmt.setString(3, relation.getTargetId());
                 stmt.setString(4, relation.getRelationType().getStringRepresentation());
@@ -522,7 +599,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
     }
 
     @Override
-    public int insertGeneOntologyRelations(Collection<RelationTO> relations) 
+    public int insertGeneOntologyRelations(Collection<RelationTO<String>> relations) 
             throws DAOException, IllegalArgumentException {
         log.entry(relations);
         
@@ -540,7 +617,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         try (BgeePreparedStatement stmt = 
                 this.getManager().getConnection().prepareStatement(sql)) {
             
-            for (RelationTO rel: relations) {
+            for (RelationTO<String> rel: relations) {
                 stmt.setString(1, rel.getTargetId());
                 stmt.setString(2, rel.getSourceId());
                 relInsertedCount += stmt.executeUpdate();
@@ -560,43 +637,53 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
      * @author Valentine Rech de Laval
      * @version Bgee 13
      * @since Bgee 13
+     * 
+     * @param <T> the type of target and source IDs in related {@code RelationTO}s.
      */
-    public class MySQLRelationTOResultSet extends MySQLDAOResultSet<RelationTO> 
-                                          implements RelationTOResultSet {
+    public class MySQLRelationTOResultSet<T> extends MySQLDAOResultSet<RelationTO<T>> 
+                                          implements RelationTOResultSet<T> {
+        
+        /**
+         * The {@code Class} corresponding to the generic type {@code <T>}.
+         */
+        private final Class<T> cls;
         /**
          * Delegates to {@link MySQLDAOResultSet#MySQLDAOResultSet(BgeePreparedStatement)}
          * super constructor.
          * 
-         * @param statement The first {@code BgeePreparedStatement} to execute a query on.
+         * @param   statement The first {@code BgeePreparedStatement} to execute a query on.
+         * @param cls     The {@code Class} corresponding to the generic type {@code <T>}.
          */
-        private MySQLRelationTOResultSet(BgeePreparedStatement statement) {
+        private MySQLRelationTOResultSet(BgeePreparedStatement statement, Class<T> cls) {
             super(statement);
+            this.cls = cls;
         }
 
         @Override
-        protected RelationTO getNewTO() throws DAOException {
+        protected RelationTO<T> getNewTO() throws DAOException {
             log.entry();
-            String relationId = null, sourceId = null, targetId =null;
+            Integer relationId = null;
+            T sourceId = null, targetId =null;
             RelationType relationType = null;
             RelationStatus relationStatus = null;
             
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
                     if (column.getValue().equals("anatEntityRelationId")) {
-                        relationId = this.getCurrentResultSet().getString(column.getKey());
-                    } else if (column.getValue().equals("stageRelationId")) {
-                        //XXX: for now, we don't generate any stageRelationId (always set to 0), 
-                        //so we don't retrieve it. If we needed stageRelationId to be set, 
+                        relationId = this.getCurrentResultSet().getInt(column.getKey());
+                    } else if (column.getValue().equals("relationId")) {
+                        //XXX: for now, we don't generate any relationId for nested set model (always set to 0), 
+                        //so we don't retrieve it. If we needed relationId to be set, 
                         //we would need to edit the query.
-                        //relationId = this.getCurrentResultSet().getString(column.getKey());
+                        //relationId = this.getCurrentResultSet().getInt(column.getKey());
                     } else if (column.getValue().equals("anatEntitySourceId") || 
                             column.getValue().equals("goAllSourceId") || 
-                            column.getValue().equals("stageSourceId")) {
-                        sourceId = this.getCurrentResultSet().getString(column.getKey());
+                            column.getValue().equals("sourceId")) {
+                        sourceId = this.getCurrentResultSet().getObject(column.getKey(), this.cls);
                     } else if (column.getValue().equals("anatEntityTargetId") || 
                             column.getValue().equals("goAllTargetId") || 
-                            column.getValue().equals("stageTargetId") ) {
-                        targetId = this.getCurrentResultSet().getString(column.getKey());
+                            column.getValue().equals("targetId") ) {
+                        targetId = this.getCurrentResultSet().getObject(column.getKey(), this.cls);
                     } else if (column.getValue().equals("relationStatus")) {
                         relationStatus = RelationStatus.convertToRelationStatus(
                                 this.getCurrentResultSet().getString(column.getKey()));
@@ -610,7 +697,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
                     throw log.throwing(new DAOException(e));
                 }
             }
-            return log.exit(new RelationTO(relationId, sourceId, targetId, 
+            return log.exit(new RelationTO<T>(relationId, sourceId, targetId, 
                     relationType, relationStatus));
         }
     }

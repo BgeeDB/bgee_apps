@@ -26,6 +26,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO;
+import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO;
 import org.bgee.model.dao.api.file.DownloadFileDAO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
 import org.bgee.model.dao.api.gene.GeneNameSynonymDAO;
@@ -37,9 +39,13 @@ import org.bgee.model.dao.mysql.anatdev.MySQLTaxonConstraintDAO;
 import org.bgee.model.dao.mysql.anatdev.mapping.MySQLRawSimilarityAnnotationDAO;
 import org.bgee.model.dao.mysql.anatdev.mapping.MySQLStageGroupingDAO;
 import org.bgee.model.dao.mysql.anatdev.mapping.MySQLSummarySimilarityAnnotationDAO;
+import org.bgee.model.dao.mysql.expressiondata.MySQLConditionDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLDiffExpressionCallDAO;
+import org.bgee.model.dao.mysql.expressiondata.MySQLExperimentExpressionDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO;
+import org.bgee.model.dao.mysql.expressiondata.MySQLGlobalExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLNoExpressionCallDAO;
+import org.bgee.model.dao.mysql.expressiondata.MySQLRawExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.affymetrix.MySQLAffymetrixProbesetDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituSpotDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqResultDAO;
@@ -1028,6 +1034,21 @@ public class MySQLDAOManager extends DAOManager {
         return log.exit(new MySQLNoExpressionCallDAO(this));
     }
     @Override
+    protected MySQLRawExpressionCallDAO getNewRawExpressionCallDAO() {
+        log.entry();
+        return log.exit(new MySQLRawExpressionCallDAO(this));
+    }
+    @Override
+    protected MySQLGlobalExpressionCallDAO getNewGlobalExpressionCallDAO() {
+        log.entry();
+        return log.exit(new MySQLGlobalExpressionCallDAO(this));
+    }
+    @Override
+    protected ExperimentExpressionDAO getNewExperimentExpressionDAO() {
+        log.entry();
+        return log.exit(new MySQLExperimentExpressionDAO(this));
+    }
+    @Override
     protected MySQLDiffExpressionCallDAO getNewDiffExpressionCallDAO() {
         log.entry();
         return log.exit(new MySQLDiffExpressionCallDAO(this));
@@ -1036,6 +1057,11 @@ public class MySQLDAOManager extends DAOManager {
     protected MySQLAnatEntityDAO getNewAnatEntityDAO() {
         log.entry();
         return log.exit(new MySQLAnatEntityDAO(this));
+    }
+    @Override
+    protected ConditionDAO getNewConditionDAO() {
+        log.entry();
+        return log.exit(new MySQLConditionDAO(this));
     }
     @Override
     protected MySQLAffymetrixProbesetDAO getNewAffymetrixProbesetDAO() {

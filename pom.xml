@@ -6,7 +6,7 @@
     <groupId>org.bgee</groupId>
     <artifactId>bgee-applications</artifactId>
     <packaging>pom</packaging>
-    <version>13</version>
+    <version>14</version>
     <name>Bgee</name>
     <url>http://www.bgee.org/</url>
     <description>Bgee allows to automatically compare gene expression patterns between species, by referencing expression data on anatomical ontologies, and designing homology relationships between them.</description>
@@ -180,14 +180,14 @@
             <dependency>
                 <groupId>org.bbop</groupId>
                 <artifactId>OWLTools-all</artifactId>
-                <version>0.2.1-SNAPSHOT</version>
+                <version>0.3.0-SNAPSHOT</version>
                 <scope>compile</scope>
             </dependency>
             <!-- Used to generate our custom NCBI taxonomy ontology -->
             <dependency>
                 <groupId>org.bbop</groupId>
                 <artifactId>OWLTools-ncbi</artifactId>
-                <version>0.2.1-SNAPSHOT</version>
+                <version>0.3.0-SNAPSHOT</version>
                 <scope>compile</scope>
             </dependency>
 

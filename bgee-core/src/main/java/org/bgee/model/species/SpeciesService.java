@@ -10,9 +10,8 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.Service;
+import org.bgee.model.CommonService;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
 import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO;
@@ -20,7 +19,6 @@ import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO.InfoTy
 import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.source.Source;
-import org.bgee.model.source.SourceService;
 
 /**
  * A {@link Service} to obtain {@link Species} objects. 
@@ -29,45 +27,20 @@ import org.bgee.model.source.SourceService;
  * @author  Philippe Moret
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, July 2016
+ * @version Bgee 14, Mar. 2017
  * @since   Bgee 13, Sept. 2015
  */
-public class SpeciesService extends Service {
+public class SpeciesService extends CommonService {
     
     private static final Logger log = LogManager.getLogger(SpeciesService.class.getName());
-    
-    /**
-     * The {@code SourceService} to obtain {@code Source} objects.
-     */
-    private final SourceService sourceService;
 
     /**
-     * 0-arg constructor that will cause this {@code SpeciesService} to use 
-     * the default {@code DAOManager} returned by {@link DAOManager#getDAOManager()}. 
-     * 
-     * @see #SpeciesService(DAOManager)
+     * @param serviceFactory            The {@code ServiceFactory} to be used to obtain {@code Service}s 
+     *                                  and {@code DAOManager}.
+     * @throws IllegalArgumentException If {@code serviceFactory} is {@code null}.
      */
-    public SpeciesService() {
-        this(DAOManager.getDAOManager());
-    }
-    /**
-     * @param daoManager    The {@code DAOManager} to be used by this {@code SpeciesService} 
-     *                      to obtain {@code DAO}s.
-     * @throws IllegalArgumentException If {@code daoManager} is {@code null}.
-     */
-    public SpeciesService(DAOManager daoManager) {
-        this(daoManager, null);
-    }
-    
-    /**
-     * @param daoManager    The {@code DAOManager} to be used by this {@code SpeciesService} 
-     *                      to obtain {@code DAO}s.
-     * @param sourceService The {@code SourceService} to obtain {@code Source} objects.
-     * @throws IllegalArgumentException If {@code daoManager} is {@code null}.
-     */
-    public SpeciesService(DAOManager daoManager, SourceService sourceService) {
-        super(daoManager);
-        this.sourceService = sourceService;
+    public SpeciesService(ServiceFactory serviceFactory) {
+        super(serviceFactory);
     }
 
     /**
@@ -97,7 +70,7 @@ public class SpeciesService extends Service {
     /**
      * Loads species for a given set of species IDs .
      * 
-     * @param speciesIds        A {@code Set} of {@code String}s that are IDs of species 
+     * @param speciesIds        A {@code Collection} of {@code Integer}s that are IDs of species 
      *                          for which to return the {@code Species}s.
      * @param withSpeciesInfo   A {@code boolean}s defining whether data sources of the species
      *                          is retrieved or not.
@@ -106,10 +79,10 @@ public class SpeciesService extends Service {
      * @throws DAOException                 If an error occurred while accessing a {@code DAO}.
      * @throws QueryInterruptedException    If a query to a {@code DAO} was intentionally interrupted.
      */
-    public Set<Species> loadSpeciesByIds(Collection<String> speciesIds, boolean withSpeciesInfo)
+    public Set<Species> loadSpeciesByIds(Collection<Integer> speciesIds, boolean withSpeciesInfo)
             throws DAOException, QueryInterruptedException {
         log.entry(speciesIds, withSpeciesInfo);
-        Set<String> filteredSpecieIds = speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds);
+        Set<Integer> filteredSpecieIds = speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds);
         Set<Species> species = this.getDaoManager().getSpeciesDAO().getSpeciesByIds(filteredSpecieIds).stream()
                 .map(SpeciesService::mapFromTO)
                 .collect(Collectors.toSet());
@@ -134,7 +107,7 @@ public class SpeciesService extends Service {
                         null, null, null).stream()
                 .collect(Collectors.toList());
         
-        List<Source> sources = sourceService.loadAllSources(false);
+        List<Source> sources = this.getServiceFactory().getSourceService().loadAllSources(false);
         
         Set<Species> completedSpecies = new HashSet<>();
         for (Species species : allSpecies) {
@@ -165,10 +138,10 @@ public class SpeciesService extends Service {
      */
     private Map<Source, Set<DataType>> getDataTypesByDataSource(
             final List<SourceToSpeciesTO> sourceToSpeciesTOs, List<Source> sources, 
-            String speciesId, InfoType infoType) {
+            Integer speciesId, InfoType infoType) {
         log.entry(sourceToSpeciesTOs, sources, speciesId, infoType);
         
-        final Map<String, Source> sourcesByIds = sources.stream()
+        final Map<Integer, Source> sourcesByIds = sources.stream()
                 .collect(Collectors.toMap(
                         s -> s.getId(),
                         s -> s, 
@@ -197,25 +170,8 @@ public class SpeciesService extends Service {
      */
     private static Species mapFromTO(SpeciesDAO.SpeciesTO speciesTO) {
         log.entry(speciesTO);
-        return log.exit(new Species(speciesTO.getId(), speciesTO.getName(), 
+        return log.exit(new Species(Integer.valueOf(speciesTO.getId()), speciesTO.getName(), 
                 speciesTO.getDescription(), speciesTO.getGenus(), speciesTO.getSpeciesName(), 
-                speciesTO.getGenomeVersion()));
-    }
-    
-    //FIXME: DRY see SourceService
-    private static DataType convertDaoDataTypeToDataType(SourceToSpeciesTO.DataType dt) {
-        log.entry(dt);
-        switch(dt) {
-            case AFFYMETRIX: 
-                return log.exit(DataType.AFFYMETRIX);
-            case EST:
-                return log.exit(DataType.EST);
-            case IN_SITU: 
-                return log.exit(DataType.IN_SITU);
-            case RNA_SEQ: 
-                return log.exit(DataType.RNA_SEQ);
-        default: 
-            throw log.throwing(new IllegalStateException("Unsupported SourceToSpeciesTO.DataType: " + dt));
-        }
+                speciesTO.getGenomeVersion(), speciesTO.getParentTaxonId(), speciesTO.getDisplayOrder()));
     }
 }

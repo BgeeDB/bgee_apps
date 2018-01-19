@@ -66,15 +66,15 @@ public class UberonCommonTest extends TestAncestor {
         UberonDevStage uberon = new UberonDevStage(utils, taxonConstraints);
         
         assertEquals("Incorrect taxon IDs returned", new HashSet<Integer>(Arrays.asList(1, 2)), 
-                uberon.existsInSpecies(wrapper.getOWLClassByIdentifier("ID:1"), 
+                uberon.existsInSpecies(wrapper.getOWLClassByIdentifierNoAltIds("ID:1"), 
                         Arrays.asList(1, 2, 4)));
 
         assertEquals("Incorrect taxon IDs returned", new HashSet<Integer>(Arrays.asList(1)), 
-                uberon.existsInSpecies(wrapper.getOWLClassByIdentifier("ID:2"), 
+                uberon.existsInSpecies(wrapper.getOWLClassByIdentifierNoAltIds("ID:2"), 
                         Arrays.asList(1, 2, 4)));
 
         assertEquals("Incorrect taxon IDs returned", new HashSet<Integer>(), 
-                uberon.existsInSpecies(wrapper.getOWLClassByIdentifier("ID:4"), 
+                uberon.existsInSpecies(wrapper.getOWLClassByIdentifierNoAltIds("ID:4"), 
                         Arrays.asList(1, 2, 4)));
     }
     
@@ -100,22 +100,22 @@ public class UberonCommonTest extends TestAncestor {
         OntologyUtils utils = new OntologyUtils(wrapper);
         UberonDevStage uberon = new UberonDevStage(utils, taxonConstraints);
         
-        OWLClass cls = wrapper.getOWLClassByIdentifier("ID:1");
+        OWLClass cls = wrapper.getOWLClassByIdentifierNoAltIds("ID:1");
         assertTrue(uberon.existsInSpecies(cls, 1));
         assertTrue(uberon.existsInSpecies(cls, 2));
         assertFalse(uberon.existsInSpecies(cls, 3));
         
-        cls = wrapper.getOWLClassByIdentifier("ID:2");
+        cls = wrapper.getOWLClassByIdentifierNoAltIds("ID:2");
         assertTrue(uberon.existsInSpecies(cls, 1));
         assertFalse(uberon.existsInSpecies(cls, 2));
         assertFalse(uberon.existsInSpecies(cls, 3));
         
-        cls = wrapper.getOWLClassByIdentifier("ID:3");
+        cls = wrapper.getOWLClassByIdentifierNoAltIds("ID:3");
         assertFalse(uberon.existsInSpecies(cls, 1));
         assertTrue(uberon.existsInSpecies(cls, 2));
         assertFalse(uberon.existsInSpecies(cls, 3));
         
-        cls = wrapper.getOWLClassByIdentifier("ID:4");
+        cls = wrapper.getOWLClassByIdentifierNoAltIds("ID:4");
         assertFalse(uberon.existsInSpecies(cls, 1));
         assertFalse(uberon.existsInSpecies(cls, 2));
         assertFalse(uberon.existsInSpecies(cls, 3));
@@ -143,13 +143,13 @@ public class UberonCommonTest extends TestAncestor {
         OntologyUtils utils = new OntologyUtils(wrapper);
         UberonDevStage uberon = new UberonDevStage(utils, taxonConstraints);
         
-        OWLClass cls = wrapper.getOWLClassByIdentifier("ID:1");
+        OWLClass cls = wrapper.getOWLClassByIdentifierNoAltIds("ID:1");
         assertTrue(uberon.existsInAtLeastOneSpecies(cls, Arrays.asList(2, 3)));
         assertTrue(uberon.existsInAtLeastOneSpecies(cls, Arrays.asList(1, 2, 3)));
         assertTrue(uberon.existsInAtLeastOneSpecies(cls, Arrays.asList(1, 2)));
         assertFalse(uberon.existsInAtLeastOneSpecies(cls, Arrays.asList(3)));
         
-        cls = wrapper.getOWLClassByIdentifier("ID:4");
+        cls = wrapper.getOWLClassByIdentifierNoAltIds("ID:4");
         assertFalse(uberon.existsInAtLeastOneSpecies(cls, Arrays.asList(1, 2, 3)));
     }
     
@@ -175,29 +175,29 @@ public class UberonCommonTest extends TestAncestor {
         OntologyUtils utils = new OntologyUtils(wrapper);
         UberonDevStage uberon = new UberonDevStage(utils, taxonConstraints);
         
-        assertTrue(uberon.existsInAllSpecies(wrapper.getOWLClassByIdentifier("ID:1"), 
+        assertTrue(uberon.existsInAllSpecies(wrapper.getOWLClassByIdentifierNoAltIds("ID:1"), 
                 Arrays.asList(1, 2, 3)));
-        assertTrue(uberon.existsInAllSpecies(wrapper.getOWLClassByIdentifier("ID:2"), 
+        assertTrue(uberon.existsInAllSpecies(wrapper.getOWLClassByIdentifierNoAltIds("ID:2"), 
                 Arrays.asList(1, 2)));
-        assertTrue(uberon.existsInAllSpecies(wrapper.getOWLClassByIdentifier("ID:3"), 
+        assertTrue(uberon.existsInAllSpecies(wrapper.getOWLClassByIdentifierNoAltIds("ID:3"), 
                 Arrays.asList(2)));
         
-        assertTrue(uberon.existsInAllSpecies(wrapper.getOWLClassByIdentifier("ID:1"), 
+        assertTrue(uberon.existsInAllSpecies(wrapper.getOWLClassByIdentifierNoAltIds("ID:1"), 
                 Arrays.asList(1, 3)));
-        assertTrue(uberon.existsInAllSpecies(wrapper.getOWLClassByIdentifier("ID:2"), 
+        assertTrue(uberon.existsInAllSpecies(wrapper.getOWLClassByIdentifierNoAltIds("ID:2"), 
                 Arrays.asList(2)));
         
-        assertFalse(uberon.existsInAllSpecies(wrapper.getOWLClassByIdentifier("ID:1"), 
+        assertFalse(uberon.existsInAllSpecies(wrapper.getOWLClassByIdentifierNoAltIds("ID:1"), 
                 Arrays.asList(1, 2, 3, 4)));
-        assertFalse(uberon.existsInAllSpecies(wrapper.getOWLClassByIdentifier("ID:2"), 
+        assertFalse(uberon.existsInAllSpecies(wrapper.getOWLClassByIdentifierNoAltIds("ID:2"), 
                 Arrays.asList(1, 2, 3)));
-        assertFalse(uberon.existsInAllSpecies(wrapper.getOWLClassByIdentifier("ID:3"), 
+        assertFalse(uberon.existsInAllSpecies(wrapper.getOWLClassByIdentifierNoAltIds("ID:3"), 
                 Arrays.asList(1)));
-        assertFalse(uberon.existsInAllSpecies(wrapper.getOWLClassByIdentifier("ID:4"), 
+        assertFalse(uberon.existsInAllSpecies(wrapper.getOWLClassByIdentifierNoAltIds("ID:4"), 
                 Arrays.asList(1, 2, 3)));
-        assertFalse(uberon.existsInAllSpecies(wrapper.getOWLClassByIdentifier("ID:4"), 
+        assertFalse(uberon.existsInAllSpecies(wrapper.getOWLClassByIdentifierNoAltIds("ID:4"), 
                 Arrays.asList(1, 2)));
-        assertFalse(uberon.existsInAllSpecies(wrapper.getOWLClassByIdentifier("ID:4"), 
+        assertFalse(uberon.existsInAllSpecies(wrapper.getOWLClassByIdentifierNoAltIds("ID:4"), 
                 Arrays.asList(4)));
     }
     
@@ -218,7 +218,7 @@ public class UberonCommonTest extends TestAncestor {
         OntologyUtils utils = new OntologyUtils(wrapper);
         Uberon uberon = new Uberon(utils);
         
-        OWLClass expectedClass = wrapper.getOWLClassByIdentifier("ID:1");
+        OWLClass expectedClass = wrapper.getOWLClassByIdentifierNoAltIds("ID:1");
         
         //Test OBO-like ID
         assertEquals(expectedClass, uberon.getOWLClass("ID:1"));
@@ -254,31 +254,31 @@ public class UberonCommonTest extends TestAncestor {
         Uberon uberon = new Uberon(utils);
         
         Set<OWLClass> expectedClasses = new HashSet<OWLClass>(Arrays.asList(
-                wrapper.getOWLClassByIdentifier("ID:1"), 
-                wrapper.getOWLClassByIdentifier("ID:2")));
+                wrapper.getOWLClassByIdentifierNoAltIds("ID:1"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("ID:2")));
         assertEquals(expectedClasses, uberon.getOWLClasses("ALT_ID:2", false));
         
         expectedClasses = new HashSet<OWLClass>(Arrays.asList(
-                wrapper.getOWLClassByIdentifier("ID_REPLACED:4"), 
-                wrapper.getOWLClassByIdentifier("ID_REPLACED_BIS_XREF:4")));
+                wrapper.getOWLClassByIdentifierNoAltIds("ID_REPLACED:4"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("ID_REPLACED_BIS_XREF:4")));
         assertEquals(expectedClasses, uberon.getOWLClasses("ID:4", false));
         
         expectedClasses = new HashSet<OWLClass>(Arrays.asList(
-                wrapper.getOWLClassByIdentifier("ID:1")));
+                wrapper.getOWLClassByIdentifierNoAltIds("ID:1")));
         assertEquals(expectedClasses, uberon.getOWLClasses("ID_XREF_OBSOLETE:5", false));
         
         expectedClasses = new HashSet<OWLClass>(Arrays.asList(
-                wrapper.getOWLClassByIdentifier("ID:1")));
+                wrapper.getOWLClassByIdentifierNoAltIds("ID:1")));
         assertEquals(expectedClasses, uberon.getOWLClasses("ID_XREF_OBSOLETE:1", false));
         
         expectedClasses = new HashSet<OWLClass>(Arrays.asList(
-                wrapper.getOWLClassByIdentifier("ID_REPLACED:4"), 
-                wrapper.getOWLClassByIdentifier("ID_REPLACED_BIS_XREF:4"),
-                wrapper.getOWLClassByIdentifier("ID:1")));
+                wrapper.getOWLClassByIdentifierNoAltIds("ID_REPLACED:4"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("ID_REPLACED_BIS_XREF:4"),
+                wrapper.getOWLClassByIdentifierNoAltIds("ID:1")));
         assertEquals(expectedClasses, uberon.getOWLClasses("ID_XREF_OBSOLETE:6", false));
         
         expectedClasses = new HashSet<OWLClass>(Arrays.asList(
-                wrapper.getOWLClassByIdentifier("ID:1")));
+                wrapper.getOWLClassByIdentifierNoAltIds("ID:1")));
         assertEquals(expectedClasses, uberon.getOWLClasses("ID:0001", false));
         
         expectedClasses = new HashSet<OWLClass>();
@@ -306,15 +306,15 @@ public class UberonCommonTest extends TestAncestor {
         Uberon uberon = new Uberon(utils);
         
         Set<OWLClass> expectedClasses = new HashSet<OWLClass>(Arrays.asList(
-                wrapper.getOWLClassByIdentifier("UBERON:0000104"), 
-                wrapper.getOWLClassByIdentifier("UBERON:0000105")));
+                wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000104"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000105")));
         assertEquals(expectedClasses, uberon.getOWLClasses("HsapDv:0000001", false));
         
         expectedClasses = new HashSet<OWLClass>();
         assertEquals(expectedClasses, uberon.getOWLClasses("HsapDv:0000001", true));
         
         expectedClasses = new HashSet<OWLClass>(Arrays.asList(
-                wrapper.getOWLClassByIdentifier("UBERON:0000104")));
+                wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000104")));
         assertEquals(expectedClasses, uberon.getOWLClasses("UBERON:0000104", false));
     }
     
@@ -338,104 +338,104 @@ public class UberonCommonTest extends TestAncestor {
         
         //check that class with equivalence was removed
         assertNull("Class with equivalence was not removed", 
-                wrapper.getOWLClassByIdentifier(classIdWithEquivalence));
+                wrapper.getOWLClassByIdentifierNoAltIds(classIdWithEquivalence));
         //and that an xref was added to equivalent classes
         assertTrue("Xref not added", wrapper.getXref(
-                wrapper.getOWLClassByIdentifier("UBERON:0000104")).contains(
+                wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000104")).contains(
                         classIdWithEquivalence));
         assertTrue("Xref not added", wrapper.getXref(
-                wrapper.getOWLClassByIdentifier("UBERON:0000105")).contains(
+                wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000105")).contains(
                         classIdWithEquivalence));
         
         //check that relations were propagated
         
         //incoming edges to UBERON:0000104
         Set<OWLGraphEdge> expectedEdges = new HashSet<OWLGraphEdge>();
-        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifier("HsapDv:0000003"), 
-                wrapper.getOWLClassByIdentifier("UBERON:0000104"), 
+        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifierNoAltIds("HsapDv:0000003"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000104"), 
                 developsFrom, Quantifier.SOME, ont, null, 
-                wrapper.getOWLClassByIdentifier("NCBITaxon:1"), partOf));
-        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifier("HsapDv:0000003"), 
-                wrapper.getOWLClassByIdentifier("UBERON:0000104"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("NCBITaxon:1"), partOf));
+        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifierNoAltIds("HsapDv:0000003"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000104"), 
                 developsFrom, Quantifier.SOME, ont, null, 
-                wrapper.getOWLClassByIdentifier("NCBITaxon:9606"), partOf));
-        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifier("UBERON:0000106"), 
-                wrapper.getOWLClassByIdentifier("UBERON:0000104"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("NCBITaxon:9606"), partOf));
+        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000106"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000104"), 
                 developsFrom, Quantifier.SOME, ont, null, 
                 null, null));
-        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifier("UBERON:0000105"), 
-                wrapper.getOWLClassByIdentifier("UBERON:0000104"), 
+        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000105"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000104"), 
                 developsFrom, Quantifier.SOME, ont, null, 
-                wrapper.getOWLClassByIdentifier("NCBITaxon:9606"), partOf));
+                wrapper.getOWLClassByIdentifierNoAltIds("NCBITaxon:9606"), partOf));
         assertEquals("Incorrect incoming edges to equivalent class", expectedEdges, 
                 wrapper.getIncomingEdgesWithGCI(
-                        wrapper.getOWLClassByIdentifier("UBERON:0000104")));
+                        wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000104")));
         
         //outgoing edges from UBERON:0000104
         expectedEdges = new HashSet<OWLGraphEdge>();
-        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifier("UBERON:0000104"), 
-                wrapper.getOWLClassByIdentifier("UBERON:0000105"), 
+        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000104"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000105"), 
                 partOf, Quantifier.SOME, ont, null, 
-                wrapper.getOWLClassByIdentifier("NCBITaxon:1"), partOf));
-        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifier("UBERON:0000104"), 
-                wrapper.getOWLClassByIdentifier("NCBITaxon:9606"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("NCBITaxon:1"), partOf));
+        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000104"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("NCBITaxon:9606"), 
                 onlyInTaxon, Quantifier.SOME, ont, null, 
-                wrapper.getOWLClassByIdentifier("NCBITaxon:9606"), partOf));
-        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifier("UBERON:0000104"), 
-                wrapper.getOWLClassByIdentifier("UBERON:0000106"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("NCBITaxon:9606"), partOf));
+        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000104"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000106"), 
                 partOf, Quantifier.SOME, ont, null, 
-                wrapper.getOWLClassByIdentifier("NCBITaxon:9606"), partOf));
-        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifier("UBERON:0000104"), 
-                wrapper.getOWLClassByIdentifier("UBERON:0000105"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("NCBITaxon:9606"), partOf));
+        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000104"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000105"), 
                 partOf, Quantifier.SOME, ont, null, 
-                wrapper.getOWLClassByIdentifier("NCBITaxon:9606"), partOf));
+                wrapper.getOWLClassByIdentifierNoAltIds("NCBITaxon:9606"), partOf));
         assertEquals("Incorrect outgoing edges from equivalent class", expectedEdges, 
                 wrapper.getOutgoingEdgesWithGCI(
-                        wrapper.getOWLClassByIdentifier("UBERON:0000104")));
+                        wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000104")));
         
         //incoming edges to UBERON:0000105
         expectedEdges = new HashSet<OWLGraphEdge>();
-        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifier("HsapDv:0000003"), 
-                wrapper.getOWLClassByIdentifier("UBERON:0000105"), 
+        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifierNoAltIds("HsapDv:0000003"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000105"), 
                 developsFrom, Quantifier.SOME, ont, null, 
-                wrapper.getOWLClassByIdentifier("NCBITaxon:9605"), partOf));
-        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifier("HsapDv:0000003"), 
-                wrapper.getOWLClassByIdentifier("UBERON:0000105"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("NCBITaxon:9605"), partOf));
+        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifierNoAltIds("HsapDv:0000003"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000105"), 
                 developsFrom, Quantifier.SOME, ont, null, 
-                wrapper.getOWLClassByIdentifier("NCBITaxon:1"), partOf));
-        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifier("UBERON:0000106"), 
-                wrapper.getOWLClassByIdentifier("UBERON:0000105"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("NCBITaxon:1"), partOf));
+        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000106"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000105"), 
                 developsFrom, Quantifier.SOME, ont, null, 
-                wrapper.getOWLClassByIdentifier("NCBITaxon:9605"), partOf));
-        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifier("UBERON:0000104"), 
-                wrapper.getOWLClassByIdentifier("UBERON:0000105"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("NCBITaxon:9605"), partOf));
+        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000104"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000105"), 
                 partOf, Quantifier.SOME, ont, null, 
-                wrapper.getOWLClassByIdentifier("NCBITaxon:9606"), partOf));
-        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifier("UBERON:0000104"), 
-                wrapper.getOWLClassByIdentifier("UBERON:0000105"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("NCBITaxon:9606"), partOf));
+        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000104"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000105"), 
                 partOf, Quantifier.SOME, ont, null, 
-                wrapper.getOWLClassByIdentifier("NCBITaxon:1"), partOf));
+                wrapper.getOWLClassByIdentifierNoAltIds("NCBITaxon:1"), partOf));
         assertEquals("Incorrect incoming edges to equivalent class", expectedEdges, 
                 wrapper.getIncomingEdgesWithGCI(
-                        wrapper.getOWLClassByIdentifier("UBERON:0000105")));
+                        wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000105")));
 
         //outgoing edges from UBERON:0000105
         expectedEdges = new HashSet<OWLGraphEdge>();
-        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifier("UBERON:0000105"), 
-                wrapper.getOWLClassByIdentifier("NCBITaxon:9606"), 
+        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000105"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("NCBITaxon:9606"), 
                 onlyInTaxon, Quantifier.SOME, ont, null, 
-                wrapper.getOWLClassByIdentifier("NCBITaxon:9605"), partOf));
-        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifier("UBERON:0000105"), 
-                wrapper.getOWLClassByIdentifier("UBERON:0000106"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("NCBITaxon:9605"), partOf));
+        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000105"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000106"), 
                 partOf, Quantifier.SOME, ont, null, 
                 null, null));
-        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifier("UBERON:0000105"), 
-                wrapper.getOWLClassByIdentifier("UBERON:0000104"), 
+        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000105"), 
+                wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000104"), 
                 developsFrom, Quantifier.SOME, ont, null, 
-                wrapper.getOWLClassByIdentifier("NCBITaxon:9606"), partOf));
+                wrapper.getOWLClassByIdentifierNoAltIds("NCBITaxon:9606"), partOf));
         assertEquals("Incorrect outgoing edges from equivalent class", expectedEdges, 
                 wrapper.getOutgoingEdgesWithGCI(
-                        wrapper.getOWLClassByIdentifier("UBERON:0000105")));
+                        wrapper.getOWLClassByIdentifierNoAltIds("UBERON:0000105")));
         
     }
 }

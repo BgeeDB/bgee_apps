@@ -4,13 +4,18 @@
     version="2.4">
 
     <!-- Deployement descriptor for Bgee webapp -->
-    <display-name>Bgee (v${project.version}): a dataBase for Gene Expression Evolution</display-name>
+    <display-name>Bgee: a dataBase for Gene Expression Evolution</display-name>
     <description>
-      Bgee is a database to compare gene expression patterns
-      between animal species, by referencing expression data
-      from different types on anatomical and developmental
-      ontologies, and designing homology links across these
-      ontologies to allow species comparison.
+      Bgee is a database to retrieve and compare gene expression patterns
+      in multiple animal species, produced from multiple data types
+      (RNA-Seq, Affymetrix, in situ hybridization, and EST data).
+      Bgee is based exclusively on curated "normal", healthy, expression data
+      (e.g., no gene knock-out, no treatment, no disease), to provide a comparable reference
+      of normal gene expression.
+      Bgee produces calls of presence/absence of expression, and of differential
+      over-/under-expression, integrated along with information of gene orthology,
+      and of homology between organs. This allows comparisons of expression patterns
+      between species.
     </description>
 
     <!-- Main servlet -->

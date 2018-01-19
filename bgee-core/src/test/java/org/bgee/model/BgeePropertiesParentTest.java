@@ -57,9 +57,12 @@ public abstract class BgeePropertiesParentTest {
      * Clear the common properties to be cleared before and after tests.
      */
     private void clearCommonProperties() {
+        System.clearProperty(BgeeProperties.MAJOR_VERSION_KEY);
+        System.clearProperty(BgeeProperties.MINOR_VERSION_KEY);
         System.clearProperty(BgeeProperties.TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY);
         System.clearProperty(BgeeProperties.TOP_ANAT_R_WORKING_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.TOP_ANAT_FUNCTION_FILE_KEY);
         System.clearProperty(BgeeProperties.TOP_ANAT_RESULTS_WRITING_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.MAX_JOB_COUNT_PER_USER_KEY);
     }
 }

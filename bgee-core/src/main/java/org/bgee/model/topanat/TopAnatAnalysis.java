@@ -25,6 +25,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.commons.io.input.ReversedLinesFileReader;
+import org.apache.commons.lang3.StringUtils;
 import org.bgee.model.BgeeProperties;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
@@ -628,13 +629,27 @@ public class TopAnatAnalysis {
      * @throws IOException
      */
     private void writeToTopAnatParamsFile(String topAnatParamsFileName) throws IOException {
-        log.entry();
+        log.entry(topAnatParamsFileName);
+
+        String nameValueSeparator = ":\t";
+        //OS independent line return, in order to serve a file generated on our server
+        //but readable on any OS.
+        String lineSeparator = "\r\n";
 
         try (PrintWriter out = new PrintWriter(new BufferedWriter(
                 new FileWriter(topAnatParamsFileName)))) {
-            out.println("# Warning, this file contains the initial values of the parameters for your information only.");
-            out.println("# Changing a value in this file won't affect the R script.");
-            out.println(this.params.toString(":\t", "\r\n", true));
+            out.print("#" + lineSeparator);
+            out.print("# Warning, this file contains the initial values of the parameters, "
+                    + "for your information only." + lineSeparator);
+            out.print("# Changing a value in this file won't affect the R script." + lineSeparator);
+            out.print("#" + lineSeparator);
+            out.print(lineSeparator);
+
+            if (StringUtils.isNotBlank(this.props.getMajorVersion())) {
+                out.print("Bgee version" + nameValueSeparator + this.props.getMajorVersion()
+                    + lineSeparator);
+            }
+            out.print(this.params.toString(nameValueSeparator, lineSeparator, true) + lineSeparator);
         }
 
         log.exit();

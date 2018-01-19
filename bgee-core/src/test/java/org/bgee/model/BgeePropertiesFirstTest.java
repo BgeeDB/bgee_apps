@@ -38,6 +38,8 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
     public void testInjectedProperties(){
         // set the properties to inject
         Properties prop = new Properties();
+        prop.put(BgeeProperties.MAJOR_VERSION_KEY, "1");
+        prop.put(BgeeProperties.MINOR_VERSION_KEY, "0");
         prop.put(BgeeProperties.TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY, "/injectedrexec");
         prop.put(BgeeProperties.TOP_ANAT_R_WORKING_DIRECTORY_KEY, "/injectedrwd");
         prop.put(BgeeProperties.TOP_ANAT_FUNCTION_FILE_KEY, "/injectedfunctionfile");
@@ -46,6 +48,10 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
 
         // get the instance of bgeeproperties and check the values
         this.bgeeProp = BgeeProperties.getBgeeProperties(prop);
+        assertEquals("Wrong property value retrieved","1",
+                bgeeProp.getMajorVersion());
+        assertEquals("Wrong property value retrieved","0",
+                bgeeProp.getMinorVersion());
         assertEquals("Wrong property value retrieved","/injectedrexec",
                 bgeeProp.getTopAnatRScriptExecutable());
         assertEquals("Wrong property value retrieved","/injectedrwd",

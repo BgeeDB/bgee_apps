@@ -34,6 +34,10 @@ public class BgeePropertiesSecondTest extends BgeePropertiesParentTest {
 
         // get the instance of bgeeproperties and check the values
         this.bgeeProp = BgeeProperties.getBgeeProperties();
+        assertEquals("Wrong property value retrieved","10",
+                bgeeProp.getMajorVersion());
+        assertEquals("Wrong property value retrieved","2",
+                bgeeProp.getMinorVersion());
         assertEquals("Wrong property value retrieved","/filerexec",
                 bgeeProp.getTopAnatRScriptExecutable());
         assertEquals("Wrong property value retrieved","/filecallerwd",

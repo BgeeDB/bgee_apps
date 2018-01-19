@@ -7,6 +7,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
@@ -119,9 +120,17 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 		log.entry();
 			
 	    this.writeln("<div id='bgee_hero' class='row'>");
-	    
-	    //TODO: manage the version either from database, or from bgee-webapp.properties file.
-	    this.writeln("<span id='bgee_version'>version 14-beta</span>");
+
+	    String version = null;
+	    if (StringUtils.isNotBlank(this.prop.getMajorVersion())) {
+	        version = this.prop.getMajorVersion();
+	        if (StringUtils.isNotBlank(this.prop.getMinorVersion())) {
+	            version += "." + this.prop.getMinorVersion();
+	        }
+	    }
+	    if (version != null) {
+	        this.writeln("<span id='bgee_version'>version " + htmlEntities(version) + "</span>");
+	    }
 
 	    this.writeln("<div id='bgee_hp_logo'><img src='" + this.prop.getLogoImagesRootDirectory() 
 	            + "bgee14beta_hp_logo.png' alt='Bgee logo'></div>");

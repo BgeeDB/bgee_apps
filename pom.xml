@@ -8,7 +8,7 @@
     <packaging>pom</packaging>
     <version>14</version>
     <name>Bgee</name>
-    <url>http://bgee.org/</url>
+    <url>https://bgee.org/</url>
     <description>Bgee allows to automatically compare gene expression patterns between species, by referencing expression data on anatomical ontologies, and designing homology relationships between them.</description>
     <organization>
         <name>Evolutionary Bioinformatics Group -

@@ -53,6 +53,8 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
         log.entry(speciesIds);
         
         String sql = this.generateSelectClause(this.getAttributes(), "species");
+        //Quick fix for issue#173
+        sql += ", speciesDisplayOrder ";
         sql += "FROM species ";
         
         if (speciesIds != null && speciesIds.size() > 0) {

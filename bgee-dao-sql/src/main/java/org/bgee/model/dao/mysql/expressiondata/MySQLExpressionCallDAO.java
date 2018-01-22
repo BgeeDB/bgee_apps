@@ -529,8 +529,32 @@ implements ExpressionCallDAO {
                 (updatedAttrs.contains(ExpressionCallDAO.Attribute.GENE_ID) && 
                  updatedAttrs.contains(ExpressionCallDAO.Attribute.ANAT_ENTITY_ID) && 
                  updatedAttrs.contains(ExpressionCallDAO.Attribute.STAGE_ID)))));
+
+        //Fix for issue #173
+        Set<ExpressionCallDAO.Attribute> attrsWithOrderGroupBy = updatedAttrs;
+        if (updatedAttrs != null && !updatedAttrs.isEmpty()) {
+            attrsWithOrderGroupBy = EnumSet.copyOf(updatedAttrs);
+            if (groupByAttrs != null) {
+                attrsWithOrderGroupBy.addAll(groupByAttrs);
+            }
+            if (orderingAttrs != null) {
+                if (orderingAttrs.containsKey(ExpressionCallDAO.OrderingAttribute.MEAN_RANK)) {
+                    attrsWithOrderGroupBy.add(ExpressionCallDAO.Attribute.GLOBAL_MEAN_RANK);
+                }
+                if (orderingAttrs.containsKey(ExpressionCallDAO.OrderingAttribute.GENE_ID)) {
+                    attrsWithOrderGroupBy.add(ExpressionCallDAO.Attribute.GENE_ID);
+                }
+                if (orderingAttrs.containsKey(ExpressionCallDAO.OrderingAttribute.ANAT_ENTITY_ID)) {
+                    attrsWithOrderGroupBy.add(ExpressionCallDAO.Attribute.ANAT_ENTITY_ID);
+                }
+                if (orderingAttrs.containsKey(ExpressionCallDAO.OrderingAttribute.STAGE_ID)) {
+                    attrsWithOrderGroupBy.add(ExpressionCallDAO.Attribute.STAGE_ID);
+                }
+            }
+        }
+
         String sql = this.generateSelectClause(
-                updatedAttrs, 
+                attrsWithOrderGroupBy,
                 //Attributes corresponding to data types used for filtering the results
                 callTOFilters.stream()
                     .flatMap(callTO -> callTO.extractFilteringDataTypes().keySet().stream())
@@ -662,6 +686,10 @@ implements ExpressionCallDAO {
                 }).collect(Collectors.joining(", ", " GROUP BY ", ""));
             
             if (havingClauseNeeded && !callTOFilterClause.isEmpty()) {
+                //XXX: Note related to issue#173
+                //This part of the code is such a mess, it is hard to know if a fix is needed.
+                //I think all attributes used in the HAVING clause might be already present in the SELECT clause.
+                //To test. Note that we do not use this code after Bgee 13.
                 sql += " HAVING " + callTOFilterClause;
             }
         }
@@ -830,6 +858,12 @@ implements ExpressionCallDAO {
                 true, isIncludeSubStages, 
                 isIncludeSubstructures, isIncludeSubStages, 
                 exprTableName, propagatedStageTableName);
+
+        //quick fix for issue #173
+        if (isIncludeSubStages) {
+            sql += ", " + exprTableName + ".geneId, " +
+                   exprTableName + ".anatEntityId, " + propagatedStageTableName + ".stageId";
+        }
         
         sql += " FROM " + exprTableName;
 

@@ -397,6 +397,7 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
 //				+ " 	AND  t3.hierarchicalGroupLeftBound < t2.hierarchicalGroupLeftBound "
 //				+ " 	AND  t3.hierarchicalGroupRightBound > t2.hierarchicalGroupRightBound "
 //				+ " 	WHERE t1.geneId = 'ENSXETG00000028037' AND t3.ncbiTaxonomyId='null'  "
+//              //TODO: if code reactivated, think of fix for issue #173
 //				+ " 	ORDER BY t3.hierarchicalGroupLeftBound DESC LIMIT 1 "
 //				+ " )AND t5.orthologousGroupId=t4.orthologousGroupId "
 //				+ " AND  t5.hierarchicalGroupLeftBound > t4.hierarchicalGroupLeftBound "
@@ -466,6 +467,7 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
 //				+ " 	AND  t3.hierarchicalGroupLeftBound < t2.hierarchicalGroupLeftBound "
 //				+ " 	AND  t3.hierarchicalGroupRightBound > t2.hierarchicalGroupRightBound "
 //				+ " 	WHERE t1.geneId = ? AND t3.ncbiTaxonomyId!='null' "
+//              //TODO: if code reactivated, think of fix for issue #173
 //				+ " 	ORDER BY t3.hierarchicalGroupLeftBound DESC LIMIT 1 "
 //				+ " )AND t5.orthologousGroupId=t4.orthologousGroupId "
 //				+ " AND  t5.hierarchicalGroupLeftBound > t4.hierarchicalGroupLeftBound "

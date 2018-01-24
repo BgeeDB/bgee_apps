@@ -61,7 +61,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
      * <p>
      * A {@code null} key means: entities valid in any species.
      */
-    private final Map<Integer, Set<T>> entitiesBySpeciesId;
+    private final Map<Integer, Set<T>> speciesIdToElements;
 
     /**
      * @see #getSpeciesIds()
@@ -126,11 +126,11 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
                         (v1, v2) -> {v1.addAll(v2); return v1;}
                  ));
         }
-        this.entitiesBySpeciesId = Collections.unmodifiableMap(
+        this.speciesIdToElements = Collections.unmodifiableMap(
                 entitiesBySpeciesId.entrySet().stream()
                     .collect(Collectors.toMap(e -> e.getKey(), 
                             e -> Collections.unmodifiableSet((e.getValue())))));
-        log.trace("Entities by speciesId: {}", this.entitiesBySpeciesId);
+        log.trace("Entities by speciesId: {}", this.speciesIdToElements);
         
         Map<Integer, Set<RelationTO<U>>> relationsBySpeciesId = null;
         if (this.relationTaxonConstraints.isEmpty()) {
@@ -141,33 +141,30 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
             //We generate a Map to easily retrieve all species an entity is valid in from its ID.
             //we use entitiesBySpeciesId because we already made modifications above using it.
             //Sadly, Collectors.groupingBy methods do not accept null keys,
-            //and Collectors.toMap does not support null values (see http://stackoverflow.com/a/24634007/1768736)
-            final Map<U, Set<Integer>> speIdsByEntityId =  this.entitiesBySpeciesId.entrySet().stream()
+            //and Collectors.toMap does not support null values (see http://stackoverflow.com/a/24634007/1768736).
+            //null value = element exists in all species; empty Set value = element exists in no species
+            final Map<U, Set<Integer>> entityIdToSpeciesIds =  this.speciesIdToElements.entrySet().stream()
                     .flatMap(e -> e.getValue().stream()
                               .map(entity -> new AbstractMap.SimpleEntry<>(entity.getId(), e.getKey())))
-                    .collect(HashMap::new, 
-                            (m, e2) -> m.put(e2.getKey(), new HashSet<>(Arrays.asList(e2.getValue()))),
+                    .collect(HashMap::new,
+                            (m, e2) -> m.merge(e2.getKey(), new HashSet<>(Arrays.asList(e2.getValue())),
+                                    (v1, v2) ->  {v1.addAll(v2); return v1;}),
                             (m1, m2) -> {
                                 for (Entry<U, Set<Integer>> e2: m2.entrySet()) {
-                                    Set<Integer> m1Value = m1.get(e2.getKey());
-                                    if (m1Value != null) {
-                                        m1Value.addAll(e2.getValue());
-                                    } else {
-                                        m1.put(e2.getKey(), e2.getValue());
-                                    }
+                                    m1.merge(e2.getKey(), e2.getValue(), (v1, v2) -> {v1.addAll(v2); return v1;});
                                 }
                             });
-            log.trace("Species IDs by entity ID: {}", speIdsByEntityId);
+            log.trace("Species IDs by entity ID: {}", entityIdToSpeciesIds);
             
             //Sadly, Collectors.groupingBy methods do not accept null keys, so we use toMap
             relationsBySpeciesId = this.getRelations().stream()
             .flatMap(rel -> {
-                final Set<Integer> speIdsSource = speIdsByEntityId.get(rel.getSourceId());
+                final Set<Integer> speIdsSource = entityIdToSpeciesIds.get(rel.getSourceId());
                 if (speIdsSource == null) {
                     throw log.throwing(new IllegalArgumentException(
                             "Missing taxon constraints for source of relation " + rel));
                 }
-                final Set<Integer> speIdsTarget = speIdsByEntityId.get(rel.getTargetId());
+                final Set<Integer> speIdsTarget = entityIdToSpeciesIds.get(rel.getTargetId());
                 if (speIdsTarget == null) {
                     throw log.throwing(new IllegalArgumentException(
                             "Missing taxon constraints for target of relation " + rel));
@@ -257,7 +254,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
         
         Set<T> retrievedElements = speciesIds.stream()
                 .flatMap(id -> {
-                    Set<T> speElements = this.entitiesBySpeciesId.get(id);
+                    Set<T> speElements = this.speciesIdToElements.get(id);
                     if (speElements == null) {
                         return Stream.empty();
                     }
@@ -266,7 +263,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
                 .collect(Collectors.toSet());
 
         //finally, add elements valid in all species (mapped to key null)
-        Set<T> allSpeElements = this.entitiesBySpeciesId.get(null);
+        Set<T> allSpeElements = this.speciesIdToElements.get(null);
         if (allSpeElements != null) {
             retrievedElements.addAll(allSpeElements);
         }

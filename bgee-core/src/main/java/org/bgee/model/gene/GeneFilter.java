@@ -101,7 +101,10 @@ public class GeneFilter implements Predicate<Gene> {
     @Override
     public boolean test(Gene gene) {
         log.entry();
-        return log.exit(gene == null || speciesId.equals(gene.getSpecies().getId()) &&
+        if (gene == null) {
+            throw log.throwing(new IllegalArgumentException("Cannot test null"));
+        }
+        return log.exit(speciesId.equals(gene.getSpecies().getId()) &&
                 (geneIds == null || geneIds.isEmpty() || geneIds.contains(gene.getEnsemblGeneId())));
     }
 

@@ -130,6 +130,21 @@ public class CallService extends CommonService {
         public boolean isConditionParameter() {
             return this.conditionParameter;
         }
+        
+        public String getCondParamName() {
+            log.entry();
+            if (!this.isConditionParameter()) {
+                return log.exit(null);
+            }
+            switch(this) {
+            case ANAT_ENTITY_ID:
+                return log.exit("anatomicalEntity");
+            case DEV_STAGE_ID:
+                return log.exit("developmentalStage");
+            default:
+                throw log.throwing(new IllegalStateException("Cond param not supported"));
+            }
+        }
     }
 
     public static enum OrderingAttribute implements Service.OrderingAttribute {
@@ -292,8 +307,7 @@ public class CallService extends CommonService {
                 callFilter.getGeneFilters().stream().map(f -> f.getSpeciesId())
                 .collect(Collectors.toSet()));
         final Map<Integer, Species> speciesMap = Collections.unmodifiableMap(
-                this.getServiceFactory().getSpeciesService().loadSpeciesByIds(clnSpeIds, false)
-                .stream().collect(Collectors.toMap(s -> s.getId(), s -> s)));
+                this.getServiceFactory().getSpeciesService().loadSpeciesMap(clnSpeIds, false));
         if (speciesMap.size() != clnSpeIds.size()) {
             throw new IllegalArgumentException("Some provided species not found in data source");
         }

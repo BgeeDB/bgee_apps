@@ -167,6 +167,10 @@ public class CallService extends CommonService {
      * An {@code int} that is the minimum count showing expression with a high quality
      * for {@code SummaryQuality.BRONZE).
      */
+    //Note: we currently never have a bronze quality produced if we have one experiment
+    //showing expression with high quality, but it is there in case we change the threshold
+    //in the future.
+    //XXX: either we should have also a MIN_LOW_GOLD, or we shouldn't have this MIN_HIGH_BRONZE
     private final static int MIN_HIGH_BRONZE = 1;
     /**
      * An {@code int} that is the minimum count showing expression with a low quality
@@ -313,12 +317,7 @@ public class CallService extends CommonService {
         Stream<ExpressionCall> calls = this.performsGlobalExprCallQuery(geneMap, callFilter,
                 condParamCombination, clonedAttrs, clonedOrderingAttrs)
             .map(to -> mapGlobalCallTOToExpressionCall(to, geneMap, condMap, callFilter, this.getMaxRank(),
-                    clonedAttrs))
-//            // Job of the DAO to filter retrieved calls now.
-//            .filter(c -> callFilter == null || callFilter.test(c))
-//            // job of the DAO to do the ordering now.
-//            .sorted(CallService.convertServiceOrdering(clonedOrderingAttrs))
-            ;
+                    clonedAttrs));
 
         return log.exit(calls);
     }
@@ -550,6 +549,8 @@ public class CallService extends CommonService {
 
             //Identify the species IDs for which no gene IDs were specifically requested,
             //maybe no specific ID was requested for some species.
+            //Since the Bgee gene IDs we provide to the DAO are unique for a given species,
+            //It is needed to provide the species ID only if no Bgee gene IDs are requested for that species.
             speciesIds = callFilter.getGeneFilters().stream()
                     .filter(gf -> gf.getEnsemblGeneIds().isEmpty())
                     .map(gf -> gf.getSpeciesId())
@@ -678,8 +679,8 @@ public class CallService extends CommonService {
         final SummaryQuality lowestQual = SummaryQuality.values()[0];
         //Just to make sure that qualities are in proper order and haven't changed
         assert lowestQual.equals(SummaryQuality.BRONZE);
-        boolean lowestQualSelected = callFilter.getSummaryCallTypeQualityFilter().isEmpty() ||
-                callFilter.getSummaryCallTypeQualityFilter() == null ||
+        boolean lowestQualSelected = callFilter.getSummaryCallTypeQualityFilter() == null ||
+                callFilter.getSummaryCallTypeQualityFilter().isEmpty() ||
                 callFilter.getSummaryCallTypeQualityFilter().entrySet().stream()
                 .allMatch(e -> e.getValue() == null || lowestQual.equals(e.getValue()));
         //now determine whether all data types were requested
@@ -687,8 +688,8 @@ public class CallService extends CommonService {
                 callFilter.getDataTypeFilters().isEmpty() ||
                 callFilter.getDataTypeFilters().equals(EnumSet.allOf(DataType.class));
         //now determine whether all CallTypes were requested
-        boolean allCallTypesSelected = callFilter.getSummaryCallTypeQualityFilter().isEmpty() ||
-                callFilter.getSummaryCallTypeQualityFilter() == null ||
+        boolean allCallTypesSelected = callFilter.getSummaryCallTypeQualityFilter() == null ||
+                callFilter.getSummaryCallTypeQualityFilter().isEmpty() ||
                 callFilter.getSummaryCallTypeQualityFilter().keySet().equals(EnumSet.allOf(SummaryCallType.ExpressionSummary.class));
 
         //absolutely no filtering necessary on experiment expression counts in following case.
@@ -1028,70 +1029,6 @@ public class CallService extends CommonService {
                 () -> new LinkedHashMap<GlobalExpressionCallDAO.OrderingAttribute, DAO.Direction>())));
     }
 
-//    /** 
-//     * Return the {@code Comparator} of {@code ExpressionCall}s, performing the comparisons
-//     * in order provided by {@code orderingAttributes}.
-//     * 
-//     * @param orderingAttributes    A {@code LinkedHashMap} where keys are 
-//     *                              {@code CallService.OrderingAttribute}s defining the attributes
-//     *                              used to order the returned {@code ExpressionCall}s, 
-//     *                              the associated value being a {@code Service.Direction} defining 
-//     *                              whether the ordering should be ascendant or descendant.
-//     * @return                      The {@code Comparator} of {@code ExpressionCall}s.
-//     */
-//    private static Comparator<ExpressionCall> convertServiceOrdering(
-//            LinkedHashMap<CallService.OrderingAttribute, Service.Direction> orderingAttributes) {
-//        log.entry(orderingAttributes);
-//        
-//        Comparator<ExpressionCall> comparator = null;
-//        for (Entry<CallService.OrderingAttribute, Service.Direction> entry: orderingAttributes.entrySet()) {
-//            Comparator<String> compStr = null;
-//            Comparator<BigDecimal> compBigD = null;
-//            switch (entry.getValue()) {
-//                case ASC:
-//                    compStr = Comparator.nullsLast(Comparator.naturalOrder());
-//                    compBigD = Comparator.nullsLast(Comparator.naturalOrder());
-//                    break;
-//                case DESC:
-//                    compStr = Comparator.nullsLast(Comparator.reverseOrder());
-//                    compBigD = Comparator.nullsLast(Comparator.reverseOrder());
-//                    break;
-//                default: 
-//                    throw log.throwing(new IllegalStateException("Unsupported Service.Direction: " +
-//                        entry.getValue()));
-//            }
-//    
-//            Comparator<ExpressionCall> tmpComp = null;
-//            switch (entry.getKey()) {
-//                case GENE_ID:
-//                    tmpComp = Comparator.comparing(c -> c.getGene() == null?
-//                        null: c.getGene().getEnsemblGeneId(), compStr);
-//                    break;
-//                case ANAT_ENTITY_ID:
-//                    tmpComp = Comparator.comparing(c -> c.getCondition() == null? 
-//                        null : c.getCondition().getAnatEntityId(), compStr);
-//                    break;
-//                case DEV_STAGE_ID:
-//                    tmpComp = Comparator.comparing(c -> c.getCondition() == null? 
-//                        null : c.getCondition().getDevStageId(), compStr);
-//                    break;
-//                case GLOBAL_RANK:
-//                    tmpComp = Comparator.comparing(c -> c.getGlobalMeanRank(), compBigD);
-//                    break;
-//                default: 
-//                    throw log.throwing(new IllegalStateException("Unsupported OrderingAttribute: " + 
-//                        entry.getKey()));
-//            }
-//            
-//            if (comparator == null) {
-//                comparator = tmpComp;
-//            } else {
-//                comparator = comparator.thenComparing(tmpComp);
-//            }
-//        }
-//        return log.exit(comparator);
-//    }
-
     protected static Set<DAODataType> convertDataTypeToDAODataType(Set<DataType> dts) 
             throws IllegalStateException{
         log.entry(dts);
@@ -1198,10 +1135,7 @@ public class CallService extends CommonService {
             }
 
             return log.exit(new ExpressionCallData(dt, counts,
-                    //XXX: are you sure it shouldn't be null as the other attributes here?
-                    //TODO: make experimentCount an Integer in ExpressionCallData, and provide null if appropriate
-                    getExperimentsCounts && cdTO.getPropagatedCount() != null?
-                            cdTO.getPropagatedCount(): 0,
+                    getExperimentsCounts? cdTO.getPropagatedCount(): null,
                     getRankInfo? cdTO.getRank(): null,
                     getRankInfo? cdTO.getRankNorm(): null,
                     getRankInfo? cdTO.getWeightForMeanRank(): null,
@@ -1307,50 +1241,6 @@ public class CallService extends CommonService {
                     + propState));
         }
     }
-//    private static Set<ExpressionCallDAO.Attribute> convertServiceAttrsToExprDAOAttrs(
-//            Set<Attribute> attributes, Set<DataType> dataTypesRequested) {
-//        log.entry(attributes, dataTypesRequested);
-//        
-//        //revert the existing map ExpressionCallDAO.Attribute -> DataType
-//        Map<DataType, ExpressionCallDAO.Attribute> typeToDAOAttr = EXPR_ATTR_TO_DATA_TYPE.entrySet().stream()
-//                .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
-//        
-//        return log.exit(attributes.stream().flatMap(attr -> {
-//            switch (attr) {
-//            case GENE_ID: 
-//                return Stream.of(ExpressionCallDAO.Attribute.GENE_ID);
-//            case ANAT_ENTITY_ID: 
-//                return Stream.of(ExpressionCallDAO.Attribute.CONDITION_ID);
-//            case DEV_STAGE_ID: 
-//                return Stream.of(ExpressionCallDAO.Attribute.CONDITION_ID);
-//            //Whether we need to get a global quality level over all requested data types, 
-//            //or the detailed quality level per data type, it's the same DAO attributes that we need. 
-//            case GLOBAL_DATA_QUALITY:
-//            case CALL_DATA: 
-//                return dataTypesRequested.stream().map(type -> Optional.ofNullable(typeToDAOAttr.get(type))
-//                        //bug of javac for type inference, we need to type the exception 
-//                        //explicitly to RuntimeException,
-//                        //see http://stackoverflow.com/questions/25523375/java8-lambdas-and-exceptions
-//                        .<RuntimeException>orElseThrow(() -> log.throwing(new IllegalStateException(
-//                                "Unsupported DataType: " + type))));
-//            case GLOBAL_ANAT_PROPAGATION: 
-//                return Stream.of(ExpressionCallDAO.Attribute.ANAT_ORIGIN_OF_LINE);
-//            case GLOBAL_STAGE_PROPAGATION: 
-//                return Stream.of(ExpressionCallDAO.Attribute.STAGE_ORIGIN_OF_LINE);
-//            case GLOBAL_OBSERVED_DATA: 
-//                return Stream.of(ExpressionCallDAO.Attribute.OBSERVED_DATA);
-//            case CALL_DATA_OBSERVED_DATA: 
-//                //nothing here, the only way to get this information is by performing 2 queries, 
-//                //one including substructures/sub-stages, another one without substructures/sub-stages.
-//                return Stream.empty();
-//            case GLOBAL_RANK: 
-//                return Stream.of(ExpressionCallDAO.Attribute.GLOBAL_MEAN_RANK);
-//            default: 
-//                throw log.throwing(new IllegalStateException("Unsupported Attributes from CallService: "
-//                        + attr));
-//            }
-//        }).collect(Collectors.toCollection(() -> EnumSet.noneOf(ExpressionCallDAO.Attribute.class))));
-//    }
 
     //*************************************************************************
     // HELPER METHODS FOR INFERENCES
@@ -1442,7 +1332,7 @@ public class CallService extends CommonService {
             //if one of the DataPropagation isIncludingObservedData is null, and none is True,
             //then we cannot know for sure whether there are observed data,
             //so retrievedObservedData will stay null. In practice this should never happen
-            throw log.throwing(new IllegalArgumentException("Inconconsistent DataPropagations: "
+            throw log.throwing(new IllegalArgumentException("Inconsistent DataPropagations: "
                     + dataProp1 + " - " + dataProp2));
         }
 
@@ -1603,13 +1493,13 @@ public class CallService extends CommonService {
         int expPresentHigh = 0, expPresentLow = 0, expAbsentHigh = 0, expAbsentLow = 0;
 
         for (ExpressionCallData cd: callData) {
-            expPresentHigh += getCountSum(cd, CallType.Expression.EXPRESSED, DataQuality.HIGH,
+            expPresentHigh += retrieveExperimentCount(cd, CallType.Expression.EXPRESSED, DataQuality.HIGH,
                 PropagationState.ALL);
-            expPresentLow  += getCountSum(cd, CallType.Expression.EXPRESSED, DataQuality.LOW,
+            expPresentLow  += retrieveExperimentCount(cd, CallType.Expression.EXPRESSED, DataQuality.LOW,
                 PropagationState.ALL);
-            expAbsentHigh  += getCountSum(cd, CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH,
+            expAbsentHigh  += retrieveExperimentCount(cd, CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH,
                 PropagationState.ALL);
-            expAbsentLow   += getCountSum(cd, CallType.Expression.NOT_EXPRESSED, DataQuality.LOW,
+            expAbsentLow   += retrieveExperimentCount(cd, CallType.Expression.NOT_EXPRESSED, DataQuality.LOW,
                 PropagationState.ALL);
         }
         
@@ -1620,6 +1510,9 @@ public class CallService extends CommonService {
             return log.exit(SummaryQuality.SILVER);
         }
         if (expPresentHigh >= MIN_HIGH_BRONZE || expPresentLow >= MIN_LOW_BRONZE) {
+            //*Currently* we don't have bronze quality if we have some present high.
+            //Could change in the future if we change the thresholds.
+            assert expPresentHigh == 0;
             return log.exit(SummaryQuality.BRONZE);
         }
         
@@ -1637,27 +1530,27 @@ public class CallService extends CommonService {
     }
 
     /**
-     * Calculate the sum of counts of an {@code ExpressionCallData} filtered by an {@code Expression},
-     * a {@code DataQuality} and a {@code PropagationState}.
+     * Retrieve the count from the {@code ExperimentExpressionCount} in an {@code ExpressionCallData}
+     * matching the requested {@code Expression}, {@code DataQuality} and {@code PropagationState}.
      * 
      * @param cd        An {@code ExpressionCallData} that is the call data
-     *                  for which filtered counts should be sum.
+     *                  for which count should be retrieved.
      * @param expr      An {@code Expression} that is the call type allowing to filter counts.
      * @param qual      A {@code DataQuality} that is the quality allowing to filter counts.
      * @param state     A {@code PropagationState} that is the propagation state allowing to filter counts.
-     * @return          The {@code int} that is the sum of filtered counts. 
+     * @return          The {@code int} that is the corresponding count. 
      */
-    private static int getCountSum(ExpressionCallData cd, Expression expr, DataQuality qual,
+    private static int retrieveExperimentCount(ExpressionCallData cd, Expression expr, DataQuality qual,
             PropagationState state) {
         log.entry(cd, expr, qual, state);
         if (cd.getExperimentCounts() == null) {
             return log.exit(0);
         }
-        return log.exit(cd.getExperimentCounts().stream()
+        Set<ExperimentExpressionCount> counts = cd.getExperimentCounts().stream()
             .filter(c -> expr.equals(c.getCallType()) && qual.equals(c.getDataQuality())
                         && state.equals(c.getPropagationState()))
-            .map(c -> c.getCount())
-            .mapToInt(Integer::intValue)
-            .sum());
+            .collect(Collectors.toSet());
+        assert counts.size() == 1: "Only one ExperimentExpressionCount can match the requested parameters";
+        return log.exit(counts.iterator().next().getCount());
     }
 }

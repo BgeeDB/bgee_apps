@@ -148,7 +148,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
 		//page title
 		this.writeln("<h1 class='gene_title col-sm-9 col-lg-7'><img src='" 
-		        + this.prop.getSpeciesImagesRootDirectory() + urlEncode(gene.getSpeciesId())
+		        + this.prop.getBgeeRootDirectory() + this.prop.getSpeciesImagesRootDirectory() + urlEncode(gene.getSpeciesId())
 		        + "_light.jpg' alt='" + htmlEntities(gene.getSpecies().getShortName()) 
 		        + "' />" + htmlEntities(titleStart) 
 				+ " - <em>" + htmlEntities(gene.getSpecies().getScientificName()) + "</em> ("

@@ -118,6 +118,10 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
         log.entry(speciesIds, includeAncestors);
         
         String sql = this.generateSelectClause(this.getAttributes(), "t1");
+        //Quick fix for issue #173
+        if (!includeAncestors) {
+            sql += ", t1.taxonLeftBound ";
+        }
         sql += "FROM taxon AS t1 INNER JOIN ";
         //find the min left bound and max right bound of the taxa which the requested species 
         //belong to; the LCA is the lowest node with a leftBound < min left bound && 

@@ -133,7 +133,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	    }
 
 	    this.writeln("<div id='bgee_hp_logo'><img src='" + this.prop.getLogoImagesRootDirectory() 
-	            + "bgee14beta_hp_logo.png' alt='Bgee logo'></div>");
+	            + "bgee13_hp_logo.png' alt='Bgee logo'></div>");
 	
 	    this.writeln("<div class='mini_text'>Gene expression data in animals</div>");
 

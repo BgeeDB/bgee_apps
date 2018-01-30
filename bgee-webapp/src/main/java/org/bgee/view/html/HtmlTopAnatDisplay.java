@@ -52,8 +52,6 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
         urlGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlGenerator.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
 
-        this.writeln("<h1>TopAnat - Gene Expression Enrichment</h1>");
-        
 //        this.writeln("<div id='bgee_introduction'>");
 //        this.writeln("<p>GO-like enrichment of anatomical terms, mapped to genes by expression patterns</p>");
 //        this.writeln("<p class='alert alert-danger'>While we are solving issues with TopAnat in Bgee 14, we invite you to use TopAnat in "

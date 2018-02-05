@@ -66,7 +66,7 @@ public class BgeePropertiesJsConverter extends JSConverter {
         this.writeln("                 *          generate URL to download files");
         this.writeln("                 */");
         this.writeln("                getDownloadRootDirectory: function() {");
-        this.writeln("                    return '"+this.prop.getDownloadRootDirectory()+"';");
+        this.writeln("                    return '"+this.prop.getBgeeRootDirectory()+this.prop.getDownloadRootDirectory()+"';");
         this.writeln("                },");
         this.writeln("                ");
 //        this.writeln("                /**");
@@ -75,7 +75,7 @@ public class BgeePropertiesJsConverter extends JSConverter {
 //        this.writeln("                 *          javascript files.");
 //        this.writeln("                 */");
 //        this.writeln("               getJavascriptFilesRootDirectory: function() {");
-//        this.writeln("                    return '"+this.prop.getJavascriptFilesRootDirectory()+"';");
+//        this.writeln("                    return '"+this.prop.getBgeeRootDirectory()+this.prop.getJavascriptFilesRootDirectory()+"';");
 //        this.writeln("                },");
 //        this.writeln("                ");
         this.writeln("                /**");
@@ -83,7 +83,7 @@ public class BgeePropertiesJsConverter extends JSConverter {
         this.writeln("                 *          to be added to the {@code bgeeRootDirectory} to generate URL to obtain css files.");
         this.writeln("                 */");
         this.writeln("                getCssFilesRootDirectory: function() {");
-        this.writeln("                    return '"+this.prop.getCssFilesRootDirectory()+"';");
+        this.writeln("                    return '"+this.prop.getBgeeRootDirectory()+this.prop.getCssFilesRootDirectory()+"';");
         this.writeln("                },");
         this.writeln("                ");
         this.writeln("                /**");
@@ -91,7 +91,7 @@ public class BgeePropertiesJsConverter extends JSConverter {
         this.writeln("                 *          to be added to the {@code bgeeRootDirectory} to generate URL to obtain images.");
         this.writeln("                 */");
         this.writeln("                getImagesRootDirectory: function() {");
-        this.writeln("                    return '"+this.prop.getImagesRootDirectory()+"';");
+        this.writeln("                    return '"+this.prop.getBgeeRootDirectory()+this.prop.getImagesRootDirectory()+"';");
         this.writeln("                },");
         this.writeln("                ");
 //        this.writeln("                /**");
@@ -99,7 +99,7 @@ public class BgeePropertiesJsConverter extends JSConverter {
 //        this.writeln("                 *          to be added to the {@code bgeeRootDirectory} to generate URL to obtain result files.");
 //        this.writeln("                */");
 //        this.writeln("               getTopOBOResultsUrlRootDirectory: function() {");
-//        this.writeln("                   return '"+this.prop.getTopOBOResultsUrlRootDirectory()+"';");
+//        this.writeln("                   return '"+this.prop.getBgeeRootDirectory()+this.prop.getTopOBOResultsUrlRootDirectory()+"';");
 //        this.writeln("                },");
 //        this.writeln("                ");
         this.writeln("                /**");

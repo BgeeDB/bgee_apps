@@ -218,8 +218,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         //page title
         this.writeln("<h1 class='gene_title col-sm-9 col-lg-7'>");
         this.writeln("<img src='"
-                + this.prop.getSpeciesImagesRootDirectory() + String.valueOf(gene.getSpecies().getId())
-                + "_light.jpg' alt='" + htmlEntities(gene.getSpecies().getShortName())
+                + this.prop.getBgeeRootDirectory() + this.prop.getSpeciesImagesRootDirectory()
+                + String.valueOf(gene.getSpecies().getId()) + "_light.jpg' alt='" + htmlEntities(gene.getSpecies().getShortName())
                 + "' />");
         this.writeln(htmlEntities(titleStart));
         this.writeln(" - <em>" + htmlEntities(gene.getSpecies().getScientificName()) + "</em>");
@@ -232,7 +232,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         this.writeln("<h2>Gene Information</h2>");
         this.writeln("<div class='gene'>" + getGeneInfo(gene) + "</div>");
 
-        
+
         //Expression data
         this.writeln("<h2>Expression</h2>");
         

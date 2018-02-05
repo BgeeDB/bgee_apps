@@ -240,24 +240,24 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
 
         logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlHowToAccessGenerator.getRequestURL(), 
                 false, "How to access to Bgee data", "Access to Bgee data", 
-                this.prop.getLogoImagesRootDirectory() + "bgee_access_logo.png", null));
+                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "bgee_access_logo.png", null));
 
         //TODO update image when top anat logo is created
         logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlTopAnatGenerator.getRequestURL(), 
                 false, "TopAnat documentation page", "TopAnat documentation", 
-                this.prop.getLogoImagesRootDirectory() + "bgee_access_logo.png", null));
+                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "bgee_access_logo.png", null));
 
         logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlCallFilesGenerator.getRequestURL(), 
                 false, "Download file documentation page", "Download file documentation", 
-                this.prop.getLogoImagesRootDirectory() + "download_logo.png", null));
+                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "download_logo.png", null));
 
         logos.append(HtmlParentDisplay.getSingleFeatureLogo("https://bgeedb.wordpress.com", 
                 true, "Bgee blog", "Bgee blog", 
-                this.prop.getLogoImagesRootDirectory() + "bgee_access_logo.png", null));
+                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "bgee_access_logo.png", null));
 
         logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlSourcesGenerator.getRequestURL(), 
                 false, "Data sources of Bgee", "Bgee data sources", 
-                this.prop.getLogoImagesRootDirectory() + "bgee_access_logo.png", null));
+                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "bgee_access_logo.png", null));
 
         return log.exit(logos.toString());
     }
@@ -346,14 +346,14 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
 
         this.writeln(HtmlParentDisplay.getSingleFeatureLogo("https://github.com/BgeeDB", 
                 true, "GitHub of the Bgee project", "GitHub", 
-                this.prop.getLogoImagesRootDirectory() + "github_logo.png", 
+                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "github_logo.png", 
                 "Retrieve our annotations of homology between anatomical structures, "
                 + "as well as the Confidence Information Ontology (CIO) "
                 + "and the Homology Ontology (HOM), from our GitHub repository."));
 
         this.writeln(HtmlParentDisplay.getSingleFeatureLogo(this.prop.getFTPRootDirectory() + 
                 "sql_dump.tar.gz", false, "Download dump the MySQL Bgee database", "MySQL dump", 
-                this.prop.getLogoImagesRootDirectory() + "mysql_logo.png", 
+                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "mysql_logo.png", 
                 "Download the complete dump of the MySQL Bgee database, that contains "
                 + "all the data used to generate the information displayed on this website."));
 

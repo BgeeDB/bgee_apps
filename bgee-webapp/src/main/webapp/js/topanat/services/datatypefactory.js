@@ -15,8 +15,8 @@
             { id: "EST", name: 'EST' }
         ];
 
-        var CallTypes = {};
-        CallTypes = {
+        var SummaryCallTypes = {};
+        SummaryCallTypes = {
             ALL: {allowed : ['AFFYMETRIX', 'EST', 'IN_SITU', 'RNA_SEQ'] },
             //any type of baseline present/absent expression calls
             EXPRESSION: {allowed : ['AFFYMETRIX', 'EST', 'IN_SITU', 'RNA_SEQ'] },

@@ -48,6 +48,9 @@
       <filter.org.bgee.webapp.mailUri>smtp://personalSMTP:465?username=username&amp;password=password&amp;mail.smtp.auth=true&amp;mail.smtp.ssl.enable=true&amp;mail.smtp.starttls.enable=true</filter.org.bgee.webapp.mailUri>
       <!-- "From" address when sending mails at TopAnat job completions -->
       <filter.org.bgee.webapp.topAnatFromAddress>personal@email.com</filter.org.bgee.webapp.topAnatFromAddress>
+      <!-- Root of the server to use. Important to generate correct links in emails -->
+      <filter.org.bgee.webapp.bgeeRootDirectory>http://test.com/</filter.org.bgee.webapp.bgeeRootDirectory>
+      <filter.org.bgee.webapp.bgeeRootDomain>.test.com</filter.org.bgee.webapp.bgeeRootDomain>
     </properties>
   </profile>
   <!-- Profile used to configure bgee-webapp, defining the properties to be used for a normal build of the WAR file, 

@@ -110,7 +110,10 @@ public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionD
         String tableName = "microarrayExperimentExpression";
         
         StringBuilder sb = new StringBuilder("SELECT ")
-            .append(tableName).append(".").append(
+            //This field is retrieved solely to fix #173, we do not need it.
+            .append(MySQLRawExpressionCallDAO.EXPR_TABLE_NAME).append(".").append(MySQLGeneDAO.BGEE_GENE_ID)
+
+            .append(", ").append(tableName).append(".").append(
                     getSelectExprFromAttribute(ExperimentExpressionDAO.Attribute.EXPRESSION_ID,
                             colToAttrMap))
             .append(", microarrayExperimentId AS ").append(
@@ -163,7 +166,10 @@ public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionD
         //Note: EST libraries are only used to generate present expression calls, 
         //so the table fields are slightly different
         StringBuilder sb = new StringBuilder("SELECT ")
-            .append(tableName).append(".").append(
+            //This field is retrieved solely to fix #173, we do not need it.
+            .append(MySQLRawExpressionCallDAO.EXPR_TABLE_NAME).append(".").append(MySQLGeneDAO.BGEE_GENE_ID)
+
+            .append(", ").append(tableName).append(".").append(
                     getSelectExprFromAttribute(ExperimentExpressionDAO.Attribute.EXPRESSION_ID,
                             colToAttrMap))
             .append(", estLibraryId AS ").append(
@@ -217,7 +223,10 @@ public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionD
         String tableName = "inSituExperimentExpression";
         
         StringBuilder sb = new StringBuilder("SELECT ")
-            .append(tableName).append(".").append(
+            //This field is retrieved solely to fix #173, we do not need it.
+            .append(MySQLRawExpressionCallDAO.EXPR_TABLE_NAME).append(".").append(MySQLGeneDAO.BGEE_GENE_ID)
+
+            .append(", ").append(tableName).append(".").append(
                     getSelectExprFromAttribute(ExperimentExpressionDAO.Attribute.EXPRESSION_ID,
                             colToAttrMap))
             .append(", inSituExperimentId AS ").append(
@@ -268,7 +277,10 @@ public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionD
         String tableName = "rnaSeqExperimentExpression";
         
         StringBuilder sb = new StringBuilder("SELECT ")
-            .append(tableName).append(".").append(
+            //This field is retrieved solely to fix #173, we do not need it.
+            .append(MySQLRawExpressionCallDAO.EXPR_TABLE_NAME).append(".").append(MySQLGeneDAO.BGEE_GENE_ID)
+
+            .append(", ").append(tableName).append(".").append(
                     getSelectExprFromAttribute(ExperimentExpressionDAO.Attribute.EXPRESSION_ID,
                             colToAttrMap))
             .append(", rnaSeqExperimentId AS ").append(
@@ -339,6 +351,10 @@ public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionD
 
                 for (Map.Entry<Integer, String> col : this.getColumnLabels().entrySet()) {
                     String columnName = col.getValue();
+                    if (MySQLGeneDAO.BGEE_GENE_ID.equals(columnName)) {
+                        //this column is retrieved solely to fix #173, we do not need it
+                        continue;
+                    }
                     ExperimentExpressionDAO.Attribute attr = getAttributeFromColName(columnName, colToAttrMap);
                     switch (attr) {
                         case EXPRESSION_ID:

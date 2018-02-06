@@ -35,7 +35,7 @@
     <properties>
       <!-- Properties for database connection -->
       <filter.dao.jdbc.driver.names>com.mysql.jdbc.Driver,net.sf.log4jdbc.sql.jdbcapi.DriverSpy</filter.dao.jdbc.driver.names>
-      <filter.dao.jdbc.url>jdbc:log4jdbc:mysql://url:port/database</filter.dao.jdbc.url>
+      <filter.dao.jdbc.url>jdbc:log4jdbc:mysql://url:port/bgee_v${project.version}</filter.dao.jdbc.url>
       <filter.dao.jdbc.username>username</filter.dao.jdbc.username>
       <filter.dao.jdbc.password>password</filter.dao.jdbc.password>
       <!-- Properties for running TopAnat -->
@@ -66,7 +66,7 @@
     <properties>
       <!-- Properties for database connection -->
       <filter.dao.jdbc.driver.names>com.mysql.jdbc.Driver</filter.dao.jdbc.driver.names>
-      <filter.dao.jdbc.url>jdbc:mysql://url:port/database</filter.dao.jdbc.url>
+      <filter.dao.jdbc.url>jdbc:mysql://127.0.0.1:3306/bgee_v${project.version}</filter.dao.jdbc.url>
       <filter.dao.jdbc.username>username</filter.dao.jdbc.username>
       <filter.dao.jdbc.password>password</filter.dao.jdbc.password>
       <!-- Properties for running TopAnat -->

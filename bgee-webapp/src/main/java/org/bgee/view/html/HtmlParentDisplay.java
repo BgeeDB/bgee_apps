@@ -1,6 +1,8 @@
 package org.bgee.view.html;
 
 import java.io.IOException;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
@@ -253,9 +255,11 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 + "evolution, ontology, anatomy, development, evo-devo database, "
                 + "anatomical ontology, developmental ontology, gene expression "
                 + "evolution'/>");
-        this.writeln("<meta name='dcterms.rights' content='Bgee copyright 2007/2016 UNIL' />");
+        this.writeln("<meta name='dcterms.rights' content='Bgee copyright 2007/"
+                + ZonedDateTime.now(ZoneId.of("Europe/Zurich")).getYear()
+                + " UNIL' />");
         this.writeln("<link rel='shortcut icon' type='image/x-icon' href='"
-                +this.prop.getImagesRootDirectory()+"favicon.ico'/>");
+                + this.prop.getBgeeRootDirectory() + this.prop.getImagesRootDirectory() + "favicon.ico'/>");
         this.includeCss(); // load default css files, and css files specific of a view 
                            // (views must override this method if needed)
         this.includeJs();  // load default js files, and css files specific of a view 
@@ -373,7 +377,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("</button>");
         navbar.append("<a class='navbar-brand' href='" + this.getNewRequestParameters().getRequestURL() 
                 + "' title='Go to Bgee home page'><img id='bgee_logo' src='" 
-                + this.prop.getLogoImagesRootDirectory() + "bgee13_hp_logo.png' alt='Bgee logo'></a>");
+                + this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "bgee13_hp_logo.png' alt='Bgee logo'></a>");
         navbar.append("</div>"); //close navbar-header
 
         // Nav links
@@ -447,18 +451,18 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         
         // Twitter
         navbar.append("<li><a title='Follow @Bgeedb on Twitter' target='_blank' href='https://twitter.com/Bgeedb'>" + 
-                "<img class='social-img' alt='Twitter logo' src='" + this.prop.getLogoImagesRootDirectory() + 
+                "<img class='social-img' alt='Twitter logo' src='" + this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + 
                 "twitter_logo.png'></a></li>");
 
         // Blog
         navbar.append("<li><a title='See our blog' target='_blank' href='https://bgeedb.wordpress.com'>" + 
-                "<img class='social-img' alt='Wordpress logo' src='" + this.prop.getLogoImagesRootDirectory() + 
+                "<img class='social-img' alt='Wordpress logo' src='" + this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + 
                 "wordpress_logo.png'></a></li>");
         
         // SIB
         navbar.append("<li><a id='sib_brand' href='http://www.sib.swiss' target='_blank' "
                 + "title='Link to the SIB Swiss Institute of Bioinformatics'>"
-                + "<img src='" + this.prop.getLogoImagesRootDirectory() +
+                + "<img src='" + this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() +
                 "sib_emblem.png' alt='SIB Swiss Institute of Bioinformatics' /></a></li>");
 
         navbar.append("</ul>");  // close right nav links
@@ -512,7 +516,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         return log.exit(HtmlParentDisplay.getSingleFeatureLogo(
                 urlDocumentationGenerator.getRequestURL(), false, 
                 "Bgee documentation page", "Documentation", 
-                this.prop.getLogoImagesRootDirectory() + "doc_logo.png", null));
+                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "doc_logo.png", null));
     }
 
 //    /**
@@ -556,7 +560,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         logos.append(HtmlParentDisplay.getSingleFeatureLogo(
                 urlDownloadCallsGenerator.getRequestURL(), false, 
                 "Bgee " + GENE_EXPR_CALLS_PAGE_NAME.toLowerCase() + " page", GENE_EXPR_CALLS_PAGE_NAME, 
-                this.prop.getLogoImagesRootDirectory() + "expr_calls_logo.png", 
+                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "expr_calls_logo.png", 
                 "Calls of baseline presence/absence of expression, "
                 + "and of differential over-/under-expression, in single or multiple species."));
 
@@ -564,7 +568,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 urlDownloadRefExprGenerator.getRequestURL(), false, 
                 "Bgee " + PROCESSED_EXPR_VALUES_PAGE_NAME.toLowerCase() + " page", 
                 PROCESSED_EXPR_VALUES_PAGE_NAME, 
-                this.prop.getLogoImagesRootDirectory() + "proc_values_logo.png", 
+                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "proc_values_logo.png", 
                 "Annotations and processed expression data (e.g., read counts, RPKM values, "
                 + "Affymetrix probeset signal intensities)."));
         
@@ -638,7 +642,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     protected void includeJs(String fileName) {
         log.entry(fileName);
         this.writeln("<script type='text/javascript' src='" +
-                this.prop.getJavascriptFilesRootDirectory() + 
+                this.prop.getBgeeRootDirectory() + this.prop.getJavascriptFilesRootDirectory() + 
                 this.getVersionedJsFileName(fileName) + "'></script>");
         log.exit();
     }
@@ -724,7 +728,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     protected void includeCss(String fileName) {
         log.entry(fileName);
         this.writeln("<link rel='stylesheet' type='text/css' href='"
-                + this.prop.getCssFilesRootDirectory() 
+                + this.prop.getBgeeRootDirectory() + this.prop.getCssFilesRootDirectory() 
                 + this.getVersionedCssFileName(fileName) + "'/>");
         log.exit();
     }

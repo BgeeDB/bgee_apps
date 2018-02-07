@@ -389,7 +389,7 @@ public class TaxonConstraints {
      * @throws OWLOntologyStorageException 
      */
     public void saveUberonToFile(String fileNamePrefix) throws IllegalArgumentException, IOException, 
-    OWLOntologyStorageException {
+    OWLOntologyCreationException, OWLOntologyStorageException {
         log.entry(fileNamePrefix);
         
         OntologyUtils utils = new OntologyUtils(this.uberonOntWrapper);

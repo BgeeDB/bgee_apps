@@ -289,7 +289,7 @@ public class UberonDevStage extends UberonCommon {
      *                                          ontology in OWL.
      */
     public void generateStageOntologyAndSaveToFile() throws IOException, 
-    IllegalArgumentException, OWLOntologyStorageException {
+    IllegalArgumentException, OWLOntologyCreationException, OWLOntologyStorageException {
         //we provide to the entry methods all class attributes that will be used 
         //(use to be arguments of this method)
         log.entry(this.getPathToUberonOnt(), this.getModifiedOntPath(), 

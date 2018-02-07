@@ -1,6 +1,8 @@
 package org.bgee.view.html;
 
 import java.io.IOException;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
@@ -262,7 +264,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 + "evolution, ontology, anatomy, development, evo-devo database, "
                 + "anatomical ontology, developmental ontology, gene expression "
                 + "evolution'/>");
-        this.writeln("<meta name='dcterms.rights' content='Bgee copyright 2007/2018 UNIL' />");
+        this.writeln("<meta name='dcterms.rights' content='Bgee copyright 2007/"
+                + ZonedDateTime.now(ZoneId.of("Europe/Zurich")).getYear()
+                + " UNIL' />");
         this.writeln("<link rel='shortcut icon' type='image/x-icon' href='"
                 + this.prop.getBgeeRootDirectory() + this.prop.getImagesRootDirectory() + "favicon.ico'/>");
         this.includeCss(); // load default css files, and css files specific of a view 

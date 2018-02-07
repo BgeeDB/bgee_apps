@@ -915,7 +915,7 @@
 
         /*
          jobProgressStart: 'Processing job, waiting for a job id. Please do not close this window.',
-         jobProgress: 'Job has been submitted as jobid: ',
+         jobProgress: 'Job is running - Job ID: ',
          jobProgressBookmark: 'After bookmarking this page it\'s safe to close this window.'
          */
 
@@ -997,7 +997,7 @@
 
                         vm.jobStatus = data.data.data.jobResponse.jobStatus;
                         logger.success('TopAnat request successful', 'TopAnat ok');
-                        vm.message = lang.jobProgressBookmark+"<br/>"+lang.jobProgress+vm.jobId+'. ('+vm.jobStatus+') ';
+                        vm.message = lang.jobProgressBookmark+"<br/>"+lang.jobProgress+vm.jobId;
                         vm.jobDone = false;
 
                         console.log("calling checkJobStatus");
@@ -1084,7 +1084,7 @@
 
                             statuscounter = statuscounter + 1;
                             vm.jobStatus = data.status;
-                            vm.message = lang.jobProgressBookmark+"<br/>"+lang.jobProgress+vm.jobId+'. ('+vm.jobStatus+') ';
+                            vm.message = lang.jobProgressBookmark+"<br/>"+lang.jobProgress+vm.jobId;
                             
                             //scroll to result container with information about job, 
                             //otherwise it is possible to miss it.

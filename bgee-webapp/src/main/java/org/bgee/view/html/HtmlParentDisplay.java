@@ -20,11 +20,11 @@ import org.bgee.view.ViewFactory;
 /**
  * Parent of all display for the HTML view.
  * 
- * @author Mathieu Seppey
- * @author Frederic Bastian
- * @author Valentine Rech de Laval
- * @author Philippe Moret
- * @version Bgee 13, Feb. 2016
+ * @author  Mathieu Seppey
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @author  Philippe Moret
+ * @version Bgee 14, Feb. 2018
  * @since   Bgee 13, Jul. 2014
  */
 public class HtmlParentDisplay extends ConcreteDisplayParent {
@@ -285,6 +285,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("<div id='sib_container' class='container-fluid'>");
         //FIXME: I noticed that this header disappear in printed version
         this.displayBgeeHeader();
+        this.displayArchiveMessage();
         this.displayWarningMessage();
         this.writeln("<div id='sib_body'>");
 
@@ -364,7 +365,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         // Navigation bar
         StringBuilder navbar = new StringBuilder();
 
-        navbar.append("<nav id='bgee-menu' class='navbar navbar-default'>");
+        String navbarClass = this.prop.isArchive()? "navbar-archive": "navbar-default";
+        
+        navbar.append("<nav id='bgee-menu' class='navbar ").append(navbarClass).append("'>");
 
         // Brand and toggle get grouped for better mobile display
         navbar.append("<div class='navbar-header'>");
@@ -375,9 +378,11 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<span class='icon-bar'></span>");
         navbar.append("<span class='icon-bar'></span>");
         navbar.append("</button>");
-        navbar.append("<a class='navbar-brand' href='" + this.getNewRequestParameters().getRequestURL() 
-                + "' title='Go to Bgee home page'><img id='bgee_logo' src='" 
-                + this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "bgee13_hp_logo.png' alt='Bgee logo'></a>");
+        navbar.append("<a class='navbar-brand' href='").append(this.getNewRequestParameters().getRequestURL())
+                .append("' title='Go to Bgee home page'><img id='bgee_logo' src='")
+                .append(this.prop.getBgeeRootDirectory()).append(this.prop.getLogoImagesRootDirectory())
+                .append("bgee13_hp_logo.png' alt='Bgee logo'></a>");
+
         navbar.append("</div>"); //close navbar-header
 
         // Nav links
@@ -492,8 +497,27 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     }
 
     /**
-     * @param nbCalled  An {@code int} that is the different number every time 
-     *                  this method is called per page!
+     * Display a archive message on all pages if {@link BgeeProperties#isArchive()}
+     * returns {@code true} (see {@link #prop}).
+     */
+    private void displayArchiveMessage() {
+        log.entry();
+
+        if (this.prop.isArchive()) {
+            this.writeln("<div class='alert alert-danger'> This is an old version of Bgee ");
+            
+            if (StringUtils.isNotBlank(this.prop.getBgeeCurrentUrl())) {
+                this.writeln("<a href=' "+this.prop.getBgeeCurrentUrl()+"' class='alert-link'" +
+                        " title='Access last version of Bgee'>Access last version of Bgee</a>");
+            }
+            
+            this.writeln("</div>");
+        }
+
+        log.exit();
+    }
+
+    /**
      * @return          the {@code String} that is the HTML code of the Contact link.
      */
     //TODO move javascript in common.js
@@ -636,7 +660,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * <strong>It should be called only within a {@link #includeJs()} method, whether overridden 
      * or not.</strong>.
      * 
-     * @param filename  The original name of the javascript file to include.
+     * @param fileName  The original name of the javascript file to include.
      * @see #getVersionedJsFileName(String)
      */
     protected void includeJs(String fileName) {

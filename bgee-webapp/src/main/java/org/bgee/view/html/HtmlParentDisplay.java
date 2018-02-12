@@ -504,10 +504,15 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         log.entry();
 
         if (this.prop.isArchive()) {
-            this.writeln("<div class='alert alert-danger'> This is an old version of Bgee ");
-            
+            this.write("<div class='alert alert-danger'> This is an old version of Bgee ");
+
+            String version = this.getWebAppVersion();
+            if (version != null) {
+                this.write("(version " + version + ") ");
+            }
+
             if (StringUtils.isNotBlank(this.prop.getBgeeCurrentUrl())) {
-                this.writeln("<a href=' "+this.prop.getBgeeCurrentUrl()+"' class='alert-link'" +
+                this.write("<a href=' "+this.prop.getBgeeCurrentUrl()+"' class='alert-link'" +
                         " title='Access last version of Bgee'>Access last version of Bgee</a>");
             }
             
@@ -867,5 +872,21 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         sources.append("</div>");
     
         return log.exit(sources.toString());
+    }
+
+    /**
+     * @return  A {@code String} that is the formatted version number of the webapp.
+     *          {@code null} if this information is not available.
+     */
+    protected String getWebAppVersion() {
+        log.entry();
+        String version = null;
+        if (StringUtils.isNotBlank(this.prop.getMajorVersion())) {
+            version = this.prop.getMajorVersion();
+            if (StringUtils.isNotBlank(this.prop.getMinorVersion())) {
+                version += "." + this.prop.getMinorVersion();
+            }
+        }
+        return log.exit(version);
     }
 }

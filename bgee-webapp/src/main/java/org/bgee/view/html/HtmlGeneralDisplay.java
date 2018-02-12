@@ -122,13 +122,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
 		this.writeln("<div id='bgee_hero' class='row " + archiveClass + "'>");
 
-	    String version = null;
-	    if (StringUtils.isNotBlank(this.prop.getMajorVersion())) {
-	        version = this.prop.getMajorVersion();
-	        if (StringUtils.isNotBlank(this.prop.getMinorVersion())) {
-	            version += "." + this.prop.getMinorVersion();
-	        }
-	    }
+	    String version = this.getWebAppVersion();
 	    if (version != null) {
 	        this.writeln("<span id='bgee_version'>version " + htmlEntities(version) + "</span>");
 	    }

@@ -114,6 +114,7 @@ public class JsonErrorDisplay extends JsonParentDisplay implements ErrorDisplay 
         
         LinkedHashMap<String, Object> data = new LinkedHashMap<>();
         data.put(EXCEPTION_TYPE_KEY, e.getClass().getSimpleName());
+        data.putAll(e.getAdditionalData());
         this.sendResponse(HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), 
                 data);
         

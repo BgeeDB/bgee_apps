@@ -157,7 +157,7 @@ public class JsonParentDisplay extends ConcreteDisplayParent {
         if (StringUtils.isNotBlank(msg)) {
             jsonResponse.put("message", msg);
         }
-        if (new Boolean(true).equals(this.getRequestParameters().getFirstValue(
+        if (Boolean.TRUE.equals(this.getRequestParameters().getFirstValue(
                 this.getRequestParameters().getUrlParametersInstance().getParamDisplayRequestParams()))) {
             jsonResponse.put("requestParameters", this.getRequestParameters());
         }

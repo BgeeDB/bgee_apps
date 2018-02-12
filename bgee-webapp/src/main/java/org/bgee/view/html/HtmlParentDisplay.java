@@ -20,11 +20,11 @@ import org.bgee.view.ViewFactory;
 /**
  * Parent of all display for the HTML view.
  * 
- * @author Mathieu Seppey
- * @author Frederic Bastian
- * @author Valentine Rech de Laval
- * @author Philippe Moret
- * @version Bgee 13, Feb. 2016
+ * @author  Mathieu Seppey
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @author  Philippe Moret
+ * @version Bgee 14, Feb. 2018
  * @since   Bgee 13, Jul. 2014
  */
 public class HtmlParentDisplay extends ConcreteDisplayParent {
@@ -285,6 +285,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("<div id='sib_container' class='container-fluid'>");
         //FIXME: I noticed that this header disappear in printed version
         this.displayBgeeHeader();
+        this.displayArchiveMessage();
         this.displayWarningMessage();
         this.writeln("<div id='sib_body'>");
 
@@ -364,7 +365,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         // Navigation bar
         StringBuilder navbar = new StringBuilder();
 
-        navbar.append("<nav id='bgee-menu' class='navbar navbar-default'>");
+        String navbarClass = this.prop.isArchive()? "navbar-archive": "navbar-default";
+        
+        navbar.append("<nav id='bgee-menu' class='navbar ").append(navbarClass).append("'>");
 
         // Brand and toggle get grouped for better mobile display
         navbar.append("<div class='navbar-header'>");
@@ -375,9 +378,11 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<span class='icon-bar'></span>");
         navbar.append("<span class='icon-bar'></span>");
         navbar.append("</button>");
-        navbar.append("<a class='navbar-brand' href='" + this.getNewRequestParameters().getRequestURL() 
-                + "' title='Go to Bgee home page'><img id='bgee_logo' src='" 
-                + this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "bgee13_hp_logo.png' alt='Bgee logo'></a>");
+        navbar.append("<a class='navbar-brand' href='").append(this.getNewRequestParameters().getRequestURL())
+                .append("' title='Go to Bgee home page'><img id='bgee_logo' src='")
+                .append(this.prop.getBgeeRootDirectory()).append(this.prop.getLogoImagesRootDirectory())
+                .append("bgee13_hp_logo.png' alt='Bgee logo'></a>");
+
         navbar.append("</div>"); //close navbar-header
 
         // Nav links
@@ -460,7 +465,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 "wordpress_logo.png'></a></li>");
         
         // SIB
-        navbar.append("<li><a id='sib_brand' href='http://www.sib.swiss' target='_blank' "
+        navbar.append("<li><a id='sib_brand' href='https://www.sib.swiss' target='_blank' "
                 + "title='Link to the SIB Swiss Institute of Bioinformatics'>"
                 + "<img src='" + this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() +
                 "sib_emblem.png' alt='SIB Swiss Institute of Bioinformatics' /></a></li>");
@@ -492,13 +497,49 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     }
 
     /**
-     * @param nbCalled  An {@code int} that is the different number every time 
-     *                  this method is called per page!
+     * Display a archive message on all pages if {@link BgeeProperties#isArchive()}
+     * returns {@code true} (see {@link #prop}).
+     */
+    private void displayArchiveMessage() {
+        log.entry();
+
+        if (this.prop.isArchive()) {
+            this.write("<div class='alert alert-danger'> This is an old version of Bgee ");
+
+            String version = this.getWebAppVersion();
+            if (version != null) {
+                this.write("(version " + version + ") ");
+            }
+
+            if (StringUtils.isNotBlank(this.prop.getBgeeCurrentUrl())) {
+                this.write("<a href=' "+this.prop.getBgeeCurrentUrl()+"' class='alert-link'" +
+                        " title='Access last version of Bgee'>Access last version of Bgee</a>");
+            }
+            
+            this.writeln("</div>");
+        }
+
+        log.exit();
+    }
+
+    /**
      * @return          the {@code String} that is the HTML code of the Contact link.
      */
     //TODO move javascript in common.js
     private String getObfuscateEmail() {
-        return "<script type='text/javascript'>eval(unescape('%66%75%6E%63%74%69%6F%6E%20%73%65%62%5F%74%72%61%6E%73%70%6F%73%65%32%28%68%29%20%7B%76%61%72%20%73%3D%27%61%6D%6C%69%6F%74%42%3A%65%67%40%65%73%69%2D%62%69%73%2E%62%68%63%27%3B%76%61%72%20%72%3D%27%27%3B%66%6F%72%28%76%61%72%20%69%3D%30%3B%69%3C%73%2E%6C%65%6E%67%74%68%3B%69%2B%2B%2C%69%2B%2B%29%7B%72%3D%72%2B%73%2E%73%75%62%73%74%72%69%6E%67%28%69%2B%31%2C%69%2B%32%29%2B%73%2E%73%75%62%73%74%72%69%6E%67%28%69%2C%69%2B%31%29%7D%68%2E%68%72%65%66%3D%72%3B%7D%64%6F%63%75%6D%65%6E%74%2E%77%72%69%74%65%28%27%3C%61%20%68%72%65%66%3D%22%23%22%20%6F%6E%4D%6F%75%73%65%4F%76%65%72%3D%22%6A%61%76%61%73%63%72%69%70%74%3A%73%65%62%5F%74%72%61%6E%73%70%6F%73%65%32%28%74%68%69%73%29%22%20%6F%6E%46%6F%63%75%73%3D%22%6A%61%76%61%73%63%72%69%70%74%3A%73%65%62%5F%74%72%61%6E%73%70%6F%73%65%32%28%74%68%69%73%29%22%3E%48%65%6C%70%3C%2F%61%3E%27%29%3B'));</script>";
+        return "<script type='text/javascript'>eval(unescape("
+                + "'%66%75%6E%63%74%69%6F%6E%20%70%67%72%65%67%67%5F%74%72%61%6E%73%70%6F%73%65"
+                + "%31%28%68%29%20%7B%76%61%72%20%73%3D%27%61%6D%6C%69%6F%74%42%3A%65%67%40%65"
+                + "%69%73%2E%62%77%73%73%69%73%27%3B%76%61%72%20%72%3D%27%27%3B%66%6F%72%28%76"
+                + "%61%72%20%69%3D%30%3B%69%3C%73%2E%6C%65%6E%67%74%68%3B%69%2B%2B%2C%69%2B%2B"
+                + "%29%7B%72%3D%72%2B%73%2E%73%75%62%73%74%72%69%6E%67%28%69%2B%31%2C%69%2B%32"
+                + "%29%2B%73%2E%73%75%62%73%74%72%69%6E%67%28%69%2C%69%2B%31%29%7D%68%2E%68%72"
+                + "%65%66%3D%72%3B%7D%64%6F%63%75%6D%65%6E%74%2E%77%72%69%74%65%28%27%3C%61%20"
+                + "%68%72%65%66%3D%22%23%22%20%6F%6E%4D%6F%75%73%65%4F%76%65%72%3D%22%6A%61%76"
+                + "%61%73%63%72%69%70%74%3A%70%67%72%65%67%67%5F%74%72%61%6E%73%70%6F%73%65%31"
+                + "%28%74%68%69%73%29%22%20%6F%6E%46%6F%63%75%73%3D%22%6A%61%76%61%73%63%72%69"
+                + "%70%74%3A%70%67%72%65%67%67%5F%74%72%61%6E%73%70%6F%73%65%31%28%74%68%69%73"
+                + "%29%22%3E%48%65%6C%70%3C%2F%61%3E%27%29%3B'));</script>";
     }
 
     /**
@@ -636,7 +677,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * <strong>It should be called only within a {@link #includeJs()} method, whether overridden 
      * or not.</strong>.
      * 
-     * @param filename  The original name of the javascript file to include.
+     * @param fileName  The original name of the javascript file to include.
      * @see #getVersionedJsFileName(String)
      */
     protected void includeJs(String fileName) {
@@ -843,5 +884,21 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         sources.append("</div>");
     
         return log.exit(sources.toString());
+    }
+
+    /**
+     * @return  A {@code String} that is the formatted version number of the webapp.
+     *          {@code null} if this information is not available.
+     */
+    protected String getWebAppVersion() {
+        log.entry();
+        String version = null;
+        if (StringUtils.isNotBlank(this.prop.getMajorVersion())) {
+            version = this.prop.getMajorVersion();
+            if (StringUtils.isNotBlank(this.prop.getMinorVersion())) {
+                version += "." + this.prop.getMinorVersion();
+            }
+        }
+        return log.exit(version);
     }
 }

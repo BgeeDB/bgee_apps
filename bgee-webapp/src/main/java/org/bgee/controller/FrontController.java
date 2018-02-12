@@ -195,6 +195,9 @@ public class FrontController extends HttpServlet {
         
         //default display type in case of error before we can do anything.
         DisplayType displayType = DisplayType.HTML;
+        //default RequestParameters in case of errors
+        RequestParameters requestParameters = new RequestParameters(this.urlParameters,
+                this.prop, true, "&");
 
         try (ServiceFactory serviceFactory = this.serviceFactoryProvider.get()) {
             //First, to handle errors, we "manually" determine the display type, 
@@ -204,7 +207,7 @@ public class FrontController extends HttpServlet {
 
             //Now, try to load and analyze the request parameters
             request.setCharacterEncoding(RequestParameters.CHAR_ENCODING); 
-            RequestParameters requestParameters = new RequestParameters(request, this.urlParameters, 
+            requestParameters = new RequestParameters(request, this.urlParameters,
                     this.prop, true, "&");
             log.debug("Analyzed URL: {} - POST data? {}", requestParameters.getRequestURL(), postData);
             
@@ -294,10 +297,7 @@ public class FrontController extends HttpServlet {
             //this is also why we don't use multiple try-catch clauses.
             ErrorDisplay errorDisplay = null;
             try {
-                //default request parameters
-                RequestParameters rp = new RequestParameters(this.urlParameters, 
-                        this.prop, true, "&");
-                errorDisplay = this.viewFactoryProvider.getFactory(response, displayType, rp)
+                errorDisplay = this.viewFactoryProvider.getFactory(response, displayType, requestParameters)
                         .getErrorDisplay();
             } catch (IOException e1) {
                 e1.initCause(realException);

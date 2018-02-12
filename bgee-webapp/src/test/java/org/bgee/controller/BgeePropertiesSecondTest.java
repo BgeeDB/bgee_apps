@@ -10,11 +10,11 @@ import org.junit.Test;
  * These tests are split in several test classes to avoid conflicts between tests due to
  * the per-thread singleton behavior.
  * 
- * @author Mathieu Seppey
- * @author Valentine Rech de Laval
- * @author Frederic Bastian
- * @version Bgee 13, June 2015
- * @since Bgee 13
+ * @author  Mathieu Seppey
+ * @author  Valentine Rech de Laval
+ * @author  Frederic Bastian
+ * @version Bgee 14, Feb. 2018
+ * @since   Bgee 13
  * @see BgeePropertiesParentTest
  * @see BgeePropertiesFirstTest
  * @see BgeePropertiesSecondTest
@@ -35,6 +35,8 @@ public class BgeePropertiesSecondTest extends BgeePropertiesParentTest {
         this.bgeeProp = BgeeProperties.getBgeeProperties();
         assertEquals("Wrong property value retrieved", true, bgeeProp.isMinify());
         assertEquals("Wrong property value retrieved", "testwarning", bgeeProp.getWarningMessage());
+        assertEquals("Wrong property value retrieved", true, bgeeProp.isArchive());
+        assertEquals("Wrong property value retrieved", "testcurrenturl", bgeeProp.getBgeeCurrentUrl());
         assertEquals("Wrong property value retrieved", "/file", bgeeProp.getBgeeRootDirectory());
         assertEquals("Wrong property value retrieved", 20, bgeeProp.getUrlMaxLength());
         assertEquals("Wrong property value retrieved",

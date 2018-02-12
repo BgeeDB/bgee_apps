@@ -64,8 +64,6 @@
                 }
 
             );
-
-            return defer.promise;
         }
         
 
@@ -100,8 +98,6 @@
                     return defer.reject("Error, no cancel job data available");
                 }
             );
-
-            return defer.promise;
         }
 
         function getJobResult(hash){
@@ -112,33 +108,34 @@
                 // TODO return real error object. Return null in the mean time,
                 // avoid to log an error server side
                 console.log("Problem, no data hash provided.");
-                return $defer.reject("Error, no data hash provided.");
-            }
+                $defer.reject("Error, no data hash provided.");
+            } else {
 
-            $http.get("?page=top_anat&gene_info=1&display_rp=1&ajax=1&action=get_results&display_type=json&data="+hash)
+              $http.get("?page=top_anat&gene_info=1&display_rp=1&ajax=1&action=get_results&display_type=json&data="+hash)
                 //.then(getJobData);
                 .then(function(response){
                     console.log("thenresponse");
                     console.log(response.data);
-                    return defer.resolve(response.data);
+                    defer.resolve(response.data);
 
                 },
                 function(response){
                     console.log("error, server did not find result");
                     console.log(response);
-
                     // try to fill missing job's parameters
-                    if(typeof response.data.requestParameters !== 'undefined' && response.data.code == 400 && response.data.requestParameters !== null) {
+                    if (typeof response.data.requestParameters !== 'undefined' && response.data.requestParameters !== null &&
+                    		response.data.code == 400) {
                         console.debug(response.data.requestParameters);
-                        return response.data;
+                        defer.resolve(response.data);
                     }
 
-                    console.log("error, no valid response");
                     // TODO handle this better. Is it serious enough to create a label in the UI, or is toast enough?
                     logger.error("Job does not exist or it has expired");
-                    return defer.reject(response);
+                    defer.reject(response);
 
-                });
+                }
+              );
+            }
 
             return defer.promise;
         }

@@ -10,11 +10,11 @@ import org.junit.Test;
  * These tests are split in several test classes to avoid conflicts between tests due to
  * the per-thread singleton behavior.
  * 
- * @author Mathieu Seppey
- * @author Valentine Rech de Laval
- * @author Frederic Bastian
- * @version Bgee 13, June 2015
- * @since Bgee 13
+ * @author  Mathieu Seppey
+ * @author  Valentine Rech de Laval
+ * @author  Frederic Bastian
+ * @version Bgee 14, Feb. 2018
+ * @since   Bgee 13
  * @see BgeePropertiesParentTest
  * @see BgeePropertiesFirstTest
  * @see BgeePropertiesSecondTest
@@ -31,6 +31,8 @@ public class BgeePropertiesThirdTest extends BgeePropertiesParentTest {
     public void testLoadSystemProperties(){
         System.setProperty(BgeeProperties.MINIFY_KEY, "true");
         System.setProperty(BgeeProperties.WARNING_MESSAGE_KEY, "/test.warning");
+        System.setProperty(BgeeProperties.ARCHIVE_KEY, "true");
+        System.setProperty(BgeeProperties.BGEE_CURRENT_URL_KEY, "/test.currenturl");
         System.setProperty(BgeeProperties.PROPERTIES_FILE_NAME_KEY, "/test.properties");
         //BGEE_ROOT_DIRECTORY_KEY is not set in System properties, it should be retrieve 
         //from the file. 
@@ -69,6 +71,8 @@ public class BgeePropertiesThirdTest extends BgeePropertiesParentTest {
         this.bgeeProp = BgeeProperties.getBgeeProperties();
         assertEquals("Wrong property value retrieved", true, bgeeProp.isMinify());
         assertEquals("Wrong property value retrieved", "/test.warning", bgeeProp.getWarningMessage());
+        assertEquals("Wrong property value retrieved", true, bgeeProp.isArchive());
+        assertEquals("Wrong property value retrieved", "/test.currenturl", bgeeProp.getBgeeCurrentUrl());
         assertEquals("Wrong property value retrieved", "/file", bgeeProp.getBgeeRootDirectory());
         assertEquals("Wrong property value retrieved", 30, bgeeProp.getUrlMaxLength());
         assertEquals("Wrong property value retrieved",

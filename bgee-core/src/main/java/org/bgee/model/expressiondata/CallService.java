@@ -1564,7 +1564,13 @@ public class CallService extends CommonService {
             .filter(c -> expr.equals(c.getCallType()) && qual.equals(c.getDataQuality())
                         && state.equals(c.getPropagationState()))
             .collect(Collectors.toSet());
-        assert counts.size() == 1: "Only one ExperimentExpressionCount can match the requested parameters";
+        assert counts.size() <= 1: "Only one ExperimentExpressionCount at most can match the requested parameters";
+        log.trace("ExpressionCallData: {}, Expression {}, DataQuality: {}, PropagationState: {}, counts: {}",
+                cd, expr, qual, state, counts);
+        if (counts.isEmpty()) {
+            //For instance, if we request no-expression from EST data, no corresponding counts
+            return log.exit(0);
+        }
         return log.exit(counts.iterator().next().getCount());
     }
 }

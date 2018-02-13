@@ -40,8 +40,8 @@ public class AnatEntityService extends Service {
      * {@code Enum} used to define the attributes to populate in the {@code AnatEntity}s
      * obtained from this {@code AnatEntityService}.
      * <ul>
-     * <li>{@code ANAT_ENTITY_ID}: corresponds to {@link AnatEntity#getId()}.
-     * <li>{@code ANAT_ENTITY_NAME}: corresponds to {@link AnatEntity#getName()}.
+     * <li>{@code ID}: corresponds to {@link AnatEntity#getId()}.
+     * <li>{@code NAME}: corresponds to {@link AnatEntity#getName()}.
      * <li>{@code DESCRIPTION}: corresponds to {@link AnatEntity#getDescription()}.
      * </ul>
      */
@@ -109,13 +109,8 @@ public class AnatEntityService extends Service {
     public Stream<AnatEntity> loadAnatEntities(Collection<Integer> speciesIds,
             Boolean anySpecies, Collection<String> anatEntitiesIds, boolean withDescription) {
         log.entry(speciesIds, anySpecies, anatEntitiesIds, withDescription);
-        return log.exit(this.getDaoManager().getAnatEntityDAO().getAnatEntities(
-                    speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds),
-                    anySpecies,
-                    anatEntitiesIds == null? null: new HashSet<>(anatEntitiesIds),
-                    withDescription? null: convertAttrsToDAOAttrs(EnumSet.complementOf(EnumSet.of(Attribute.DESCRIPTION))))
-                .stream()
-                .map(AnatEntityService::mapFromTO));
+        return log.exit(this.loadAnatEntities(speciesIds, anySpecies, anatEntitiesIds,
+                withDescription? null: EnumSet.complementOf(EnumSet.of(Attribute.DESCRIPTION))));
     }
 
     /**
@@ -140,10 +135,10 @@ public class AnatEntityService extends Service {
             Boolean anySpecies, Collection<String> anatEntitiesIds, Collection<Attribute> attrs) {
         log.entry(speciesIds, anySpecies, anatEntitiesIds, attrs);
         return log.exit(this.getDaoManager().getAnatEntityDAO().getAnatEntities(
-                    speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds), 
+                    speciesIds, 
                     anySpecies, 
-                    anatEntitiesIds == null? null: new HashSet<>(anatEntitiesIds), 
-                    attrs == null ? null: new HashSet<>(convertAttrsToDAOAttrs(attrs)))
+                    anatEntitiesIds,
+                    attrs == null? null: convertAttrsToDAOAttrs(attrs))
                 .stream()
                 .map(AnatEntityService::mapFromTO));
     }

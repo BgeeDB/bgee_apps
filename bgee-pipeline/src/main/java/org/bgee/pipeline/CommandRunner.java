@@ -11,17 +11,10 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.annotations.AnnotationCommon;
 import org.bgee.pipeline.annotations.InsertSimilarityAnnotation;
 import org.bgee.pipeline.annotations.SimilarityAnnotation;
-import org.bgee.pipeline.expression.FilterNoExprCalls;
-import org.bgee.pipeline.expression.InsertGlobalCalls;
 import org.bgee.pipeline.expression.InsertPropagatedCalls;
-import org.bgee.pipeline.expression.downloadfile.GenerateExprFile;
 import org.bgee.pipeline.expression.downloadfile.GenerateExprFile2;
 import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile;
-import org.bgee.pipeline.expression.downloadfile.GenerateMultiSpeciesDiffExprFile;
-import org.bgee.pipeline.expression.downloadfile.GenerateRankFile;
-import org.bgee.pipeline.expression.downloadfile.InsertSpeciesDataGroups;
 import org.bgee.pipeline.gene.InsertGO;
-import org.bgee.pipeline.gene.ParseOrthoXML;
 import org.bgee.pipeline.ontologycommon.InsertCIO;
 import org.bgee.pipeline.ontologycommon.InsertECO;
 import org.bgee.pipeline.ontologycommon.OntologyTools;
@@ -278,9 +271,9 @@ public class CommandRunner {
             throw log.throwing(new UnsupportedOperationException("Method disabled while updated"));
 //            GenerateMultiSpeciesDiffExprFile.main(newArgs);
 //            break;
-        case "InsertSpeciesDataGroups":
-            InsertSpeciesDataGroups.main(newArgs);
-            break;
+//        case "InsertSpeciesDataGroups":
+//            InsertSpeciesDataGroups.main(newArgs);
+//            break;
         //Rank download files
         case "GenerateRankFile": 
             throw log.throwing(new UnsupportedOperationException("Method disabled while updated"));

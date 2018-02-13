@@ -86,6 +86,7 @@ public class DataPropagation {
      * @throws IllegalArgumentException     If {@code anatEntityPropagationState} or 
      *                                      {@code devStagePropagationState} is {@code null}.
      */
+    //Note: it is allowed to provide only null arguments here, because see CallService.DATA_PROPAGATION_IDENTITY
     public DataPropagation(PropagationState anatEntityPropagationState, 
             PropagationState devStagePropagationState, Boolean includingObservedData) 
                     throws IllegalArgumentException {

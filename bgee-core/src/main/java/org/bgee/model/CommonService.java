@@ -84,6 +84,18 @@ public class CommonService extends Service {
                     "Incorrect species ID in ConditionTO, expected " + species.getId() + " but was "
                     + condTO.getSpeciesId()));
         }
+        if (condTO.getAnatEntityId() != null && anatEntity != null &&
+                !condTO.getAnatEntityId().equals(anatEntity.getId())) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Incorrect anat. entity ID in ConditionTO, expected " + anatEntity.getId() + " but was "
+                    + condTO.getAnatEntityId()));
+        }
+        if (condTO.getStageId() != null && devStage != null &&
+                !condTO.getStageId().equals(devStage.getId())) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Incorrect dev. stage ID in ConditionTO, expected " + devStage.getId() + " but was "
+                    + condTO.getStageId()));
+        }
         return log.exit(new Condition(anatEntity, devStage, species));
     }
     protected static ConditionTO mapConditionToConditionTO(int condId, Integer exprMappedCondId,
@@ -91,7 +103,7 @@ public class CommonService extends Service {
         log.entry(condId, exprMappedCondId, cond);
                 
         return log.exit(new ConditionTO(condId, exprMappedCondId, 
-                cond.getAnatEntityId(), cond.getDevStageId(), cond.getSpecies().getId()));
+                cond.getAnatEntityId(), cond.getDevStageId(), cond.getSpeciesId()));
     }
     
     /**

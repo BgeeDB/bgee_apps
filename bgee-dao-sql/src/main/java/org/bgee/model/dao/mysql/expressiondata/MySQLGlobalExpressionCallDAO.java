@@ -633,6 +633,13 @@ implements GlobalExpressionCallDAO {
         if (!callFilters.isEmpty()) {
             for (CallDAOFilter callFilter: callFilters) {
                 if (callFilter.getGeneIds() != null && !callFilter.getGeneIds().isEmpty()) {
+                    //For now, we don't support using both gene IDs and species IDs in a same CallDAOFilter.
+                    //If needed, we should either create a "geneSpeciesFilter" in CallDAOFilter,
+                    //or use one CallDAOFilter for the gene IDs and another one for the species IDs.
+                    if (callFilter.getSpeciesIds() != null && !callFilter.getSpeciesIds().isEmpty()) {
+                        throw log.throwing(new UnsupportedOperationException(
+                                "Currently not supported to provide both gene and species IDs in a same CallDAOFilter"));
+                    }
                     sb.append(" AND ");
                     sb.append(globalExprTableName).append(".").append(MySQLGeneDAO.BGEE_GENE_ID)
                     .append(" IN (")

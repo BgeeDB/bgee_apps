@@ -13,6 +13,7 @@ import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.NamedEntityTO;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 
 /**
  * The DAO interface for DownloadFile objects.
@@ -152,60 +153,6 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
         }
 
         /**
-         * This enum contains all the different condition parameters of files:
-         * <ul>
-         *   <li>{@code ANAT_ENTITY} corresponds to the anatomical entity parameter</li>
-         *   <li>{@code DEV_STAGE} corresponds to the developmental stage parameter</li>
-         * </ul>
-         * @author  Valentine Rech de Laval
-         * @version Bgee 14, Apr. 2017
-         * @since   Bgee 14, Apr. 2017
-         *
-         */
-        //TODO: Why not using the ConditionDAO.Attribute directly, as in other DAOs?
-        //TODO: yes, but maybe need a mapping to the text value in database
-        public enum ConditionParameter implements TransferObject.EnumDAOField {
-            ANAT_ENTITY("anatomicalEntity"),
-            STAGE("developmentalStage");
-
-            /**
-             * The {@code String} representation of the enum.
-             */
-            private final String stringRepresentation;
-
-            /**
-             * Constructor
-             * 
-             * @param stringRepresentation  A {@code String} corresponding to
-             *                              this {@code ConditionParameter}.
-             */
-            ConditionParameter(String stringRepresentation) {
-                this.stringRepresentation = stringRepresentation;
-            }
-
-            @Override
-            public String getStringRepresentation() {
-                return stringRepresentation;
-            }
-
-            /**
-             * Return the mapped {@link DownloadFileDAO.DownloadFileTO.ConditionParameter} from a string representation.
-             * @param stringRepresentation A string representation
-             * @return The corresponding {@link DownloadFileDAO.DownloadFileTO.ConditionParameter}
-             * @see org.bgee.model.dao.api.TransferObject.EnumDAOField#convert(Class, String)
-             */
-            public static ConditionParameter convertToConditionParameter(String stringRepresentation){
-                log.entry(stringRepresentation);
-                return log.exit(EntityTO.convert(ConditionParameter.class, stringRepresentation));
-            }
-
-            @Override
-            public String toString() {
-                return getStringRepresentation();
-            }
-        }
-
-        /**
          * A {@code String} that is the path of the download file.
          */
         private final String path;
@@ -230,8 +177,7 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
          * A {@code Set} of {@code ConditionParameter}s that are the condition parameters
          * used to generate this file.
          */
-        //TODO: Use ConditionDAO.Attribute instead?
-        private final Set<ConditionParameter> conditionParams;
+        private final Set<ConditionDAO.Attribute> conditionParams;
 
         /**
          * The constructor providing all fields
@@ -243,12 +189,12 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
          * @param size                  A {@code Long} that is the size of this file.
          * @param category              A {@code CategoryEnum} that is the category of this file.
          * @param speciesDataGroupId    An {@code Integer} that is the ID of this file's species data group.
-         * @param conditionParams       A {@code Collection} of {@code ConditionParameter}s that are
+         * @param conditionParams       A {@code Collection} of {@code ConditionDAO.Attribute}s that are
          *                              the condition parameters used to generate this file.
          */
         public DownloadFileTO(Integer id, String name, String description, String path, Long size,
                               CategoryEnum category, Integer speciesDataGroupId,
-                              Collection<ConditionParameter> conditionParams){
+                              Collection<ConditionDAO.Attribute> conditionParams){
             super(id, name, description);
             this.category = category;
             this.size = size;
@@ -297,10 +243,10 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
         /**
          * Get the condition parameters used to generate this file.
          *
-         * @return  The {@code Collection} of {@code ConditionParameter}s that are
+         * @return  The {@code Collection} of {@code ConditionDAO.Attribute}s that are
          *          the condition parameters used to generate this file.
          */
-        public Set<ConditionParameter> getConditionParameters() {
+        public Set<ConditionDAO.Attribute> getConditionParameters() {
             return conditionParams;
         }
 

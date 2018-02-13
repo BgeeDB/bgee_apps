@@ -11,11 +11,11 @@ import org.junit.Before;
  * This abstract class is extended by all other test classes and define the common part of the
  * {@link BgeeProperties} tests.
  * 
- * @author Mathieu Seppey
- * @author Valentine Rech de Laval
- * @author Frederic Bastian
- * @version Bgee 13, June 2015
- * @since Bgee 13
+ * @author  Mathieu Seppey
+ * @author  Valentine Rech de Laval
+ * @author  Frederic Bastian
+ * @version Bgee 14, Feb. 2018
+ * @since   Bgee 13
  * @see BgeePropertiesParentTest
  * @see BgeePropertiesFirstTest
  * @see BgeePropertiesSecondTest
@@ -56,6 +56,8 @@ public abstract class BgeePropertiesParentTest {
     private void clearCommonProperties() {
         System.clearProperty(BgeeProperties.MINIFY_KEY);
         System.clearProperty(BgeeProperties.WARNING_MESSAGE_KEY);
+        System.clearProperty(BgeeProperties.ARCHIVE_KEY);
+        System.clearProperty(BgeeProperties.BGEE_CURRENT_URL_KEY);
         System.clearProperty(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.URL_MAX_LENGTH_KEY);
         System.clearProperty(BgeeProperties.REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY);

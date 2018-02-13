@@ -24,7 +24,7 @@ import org.bgee.view.html.HtmlDownloadDisplay.DownloadPageType;
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
- * @version Bgee 14, Mar. 2017
+ * @version Bgee 14, Feb. 2018
  * @since   Bgee 13
  */
 public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisplay {
@@ -118,16 +118,12 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	 */
 	private void displayHeroUnit() {
 		log.entry();
-			
-	    this.writeln("<div id='bgee_hero' class='row'>");
+		
+		String archiveClass = this.prop.isArchive()? "archive": "";
 
-	    String version = null;
-	    if (StringUtils.isNotBlank(this.prop.getMajorVersion())) {
-	        version = this.prop.getMajorVersion();
-	        if (StringUtils.isNotBlank(this.prop.getMinorVersion())) {
-	            version += "." + this.prop.getMinorVersion();
-	        }
-	    }
+		this.writeln("<div id='bgee_hero' class='row " + archiveClass + "'>");
+
+	    String version = this.getWebAppVersion();
 	    if (version != null) {
 	        this.writeln("<span id='bgee_version'>version " + htmlEntities(version) + "</span>");
 	    }

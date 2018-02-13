@@ -249,7 +249,7 @@ public class JsonHelper {
             out.name("speciesDataGroupId").value(value.getSpeciesDataGroupId());
             //values with modifications
             //rewrite path to point to root directory of download files
-            out.name("path").value(this.props.getBgeeRootDirectory() + this.props.getDownloadRootDirectory() + value.getPath());
+            out.name("path").value(this.props.getDownloadRootDirectory() + value.getPath());
             //write stringRepresentation of Category
             out.name("category").value(value.getCategory() == null? "": 
                 value.getCategory().getStringRepresentation());

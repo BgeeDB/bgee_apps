@@ -20,11 +20,11 @@ import org.junit.Test;
  * These tests are split in several test classes to avoid conflicts between tests due to
  * the per-thread singleton behavior.
  * 
- * @author Mathieu Seppey
- * @author Valentine Rech de Laval
- * @author Frederic Bastian
- * @version Bgee 13, June 2015
- * @since Bgee 13
+ * @author  Mathieu Seppey
+ * @author  Valentine Rech de Laval
+ * @author  Frederic Bastian
+ * @version Bgee 14, Feb. 2018
+ * @since   Bgee 13
  * @see BgeePropertiesParentTest
  * @see BgeePropertiesFirstTest
  * @see BgeePropertiesSecondTest
@@ -42,6 +42,8 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
         Properties prop = new Properties();
         prop.put(BgeeProperties.MINIFY_KEY, "true");
         prop.put(BgeeProperties.WARNING_MESSAGE_KEY, "/injectedwarning");
+        prop.put(BgeeProperties.ARCHIVE_KEY, "true");
+        prop.put(BgeeProperties.BGEE_CURRENT_URL_KEY, "/injectedcurrenturl");
         prop.put(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY, "/injectedroot");
         prop.put(BgeeProperties.URL_MAX_LENGTH_KEY, "10");
         prop.put(BgeeProperties.CSS_FILES_ROOT_DIRECTORY_KEY, "/injectedcss");
@@ -72,6 +74,8 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
         this.bgeeProp = BgeeProperties.getBgeeProperties(prop);
         assertEquals("Wrong property value retrieved", true, bgeeProp.isMinify());
         assertEquals("Wrong property value retrieved", "/injectedwarning", bgeeProp.getWarningMessage());
+        assertEquals("Wrong property value retrieved", true, bgeeProp.isArchive());
+        assertEquals("Wrong property value retrieved", "/injectedcurrenturl", bgeeProp.getBgeeCurrentUrl());
         assertEquals("Wrong property value retrieved","/injectedroot",bgeeProp.getBgeeRootDirectory());
         assertEquals("Wrong property value retrieved",10,bgeeProp.getUrlMaxLength());
         assertEquals("Wrong property value retrieved", 

@@ -26,11 +26,11 @@ import org.bgee.model.expressiondata.Call.ExpressionCall;
  * This class has been inspired from {@code net.sf.log4jdbc.DriverSpy} 
  * developed by Arthur Blake.
  * 
- * @author Frederic Bastian
- * @author Mathieu Seppey
- * @author Valentine Rech de Laval
- * @version Bgee 13, August 2015
- * @since Bgee 13
+ * @author  Frederic Bastian
+ * @author  Mathieu Seppey
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, Feb. 2018
+ * @since   Bgee 13
  */
 public class BgeeProperties extends org.bgee.model.BgeeProperties
 {
@@ -73,6 +73,39 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * @see #getWarningMessage()
      */
     public final static String WARNING_MESSAGE_DEFAULT = "";
+
+    /**
+     * A {@code String} that is the key to access to the property that is read at the 
+     * initialization of {@code BgeeProperties} to determine whether web app is an archive or not.
+     *
+     * @see #ARCHIVE_DEFAULT
+     * @see #isArchive()
+     */
+    public final static String ARCHIVE_KEY = "org.bgee.webapp.archive";
+    /**
+     * A {@code boolean} that is the default value of the property to determine 
+     * whether web app is an archive or not.
+     *
+     * @see #ARCHIVE_KEY
+     * @see #isArchive()
+     */
+    public final static boolean ARCHIVE_DEFAULT = false;
+
+    /**
+     * A {@code String} that is the key to access to the System property that is read at the 
+     * initialization of {@code BgeeProperties} to set the bgee current url (e.g., 'https://bgee.org').
+     *
+     * @see #BGEE_CURRENT_URL_DEFAULT
+     * @see #getBgeeCurrentUrl()
+     */
+    public final static String BGEE_CURRENT_URL_KEY = "org.bgee.webapp.bgeeCurrentUrl";
+    /**
+     * A {@code String} that is the default value of the bgee current url.
+     *
+     * @see #BGEE_CURRENT_URL_KEY
+     * @see #getBgeeCurrentUrl()
+     */
+    public final static String BGEE_CURRENT_URL_DEFAULT = null;
 
     /**
      * A {@code String} that is the key to access to the System property that is read at the 
@@ -600,6 +633,16 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
     private final String warningMessage;
 
     /**
+     * {@code boolean} defining whether web app is an archive. 
+     */
+    private final boolean archive;
+
+    /**
+     * @see #getBgeeCurrentUrl()
+     */
+    private final String bgeeCurrentUrl;
+
+    /**
      * {@code String} that defines the directory where query strings holding storable parameters  
      * from previous large queries are stored. 
      */
@@ -798,6 +841,9 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
         minify = getBooleanOption(prop, SYS_PROPS, FILE_PROPS, MINIFY_KEY, MINIFY_DEFAULT);
         warningMessage = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 WARNING_MESSAGE_KEY, WARNING_MESSAGE_DEFAULT);
+        archive = getBooleanOption(prop, SYS_PROPS, FILE_PROPS, ARCHIVE_KEY, ARCHIVE_DEFAULT);
+        bgeeCurrentUrl = getStringOption(prop, SYS_PROPS, FILE_PROPS,
+                BGEE_CURRENT_URL_KEY, BGEE_CURRENT_URL_DEFAULT);
         requestParametersStorageDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY,  
                 REQUEST_PARAMETERS_STORAGE_DIRECTORY_DEFAULT);
@@ -879,6 +925,25 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      */
     public String getWarningMessage() {
         return warningMessage;
+    }
+
+    /**
+     * @return  A {@code boolean} defining whether web app is an archive.
+     * @see #ARCHIVE_KEY
+     * @see #ARCHIVE_DEFAULT
+     */
+    public boolean isArchive() {
+        return archive;
+    }
+
+    /**
+     * @return  A {@code String} that is the default value of the bgee current url.
+     *
+     * @see #BGEE_CURRENT_URL_KEY
+     * @see #BGEE_CURRENT_URL_DEFAULT
+     */
+    public String getBgeeCurrentUrl() {
+        return bgeeCurrentUrl;
     }
 
     /**

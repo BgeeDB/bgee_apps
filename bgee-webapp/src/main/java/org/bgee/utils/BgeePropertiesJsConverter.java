@@ -66,7 +66,7 @@ public class BgeePropertiesJsConverter extends JSConverter {
         this.writeln("                 *          generate URL to download files");
         this.writeln("                 */");
         this.writeln("                getDownloadRootDirectory: function() {");
-        this.writeln("                    return '"+this.prop.getBgeeRootDirectory()+this.prop.getDownloadRootDirectory()+"';");
+        this.writeln("                    return '"+this.prop.getDownloadRootDirectory()+"';");
         this.writeln("                },");
         this.writeln("                ");
 //        this.writeln("                /**");

@@ -310,7 +310,23 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	    this.writeln("</div>"); // close panel-heading
 	    
 	    this.writeln("<div class='panel-body'>");
-	    
+
+        this.writeOneNews("2018-02-14", "Release of Bgee version 14.0:"
+                + "<ul>"
+                + "  <li>Release of the production version of Bgee release 14:"
+                + "    <ul>"
+                + "      <li><a href='" + urlTopAnat.getRequestURL()
+                +            "' title='Perform gene expression enrichment tests with TopAnat'>"
+                +            "TopAnat</a> can now be used based on Bgee 14 data.</li>"
+                + "      <li><a href='" + urlGenePage.getRequestURL()
+                +            "' title='Search expression call for a gene'>Gene expression calls</a> "
+                +            "should now be properly retrieved for all genes.</li>"
+                + "    </ul>"
+                + "  </li>"
+                + "</ul>"
+                + "You can still access to Bgee 13 at <a title='Archive site Bgee version 13' "
+                + "href='https://bgee.org/bgee13' target='_blank'>https://bgee.org/bgee13</a>.");
+
 	    this.writeOneNews("2017-05-16", "Release of Bgee version 14-beta:"
 	            + "<ul>"
 	            + "  <li>12 new species, bringing the total to 29:"
@@ -332,7 +348,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	            + "  <li>Update of download pages to make it easier to chose files to retrieve; inclusion of gene ranks (as used in gene pages) in call files..</li>"
 	            + "</ul>"
 	            + "You can still access to Bgee 13 at <a title='Archive site Bgee version 13' "
-	            + "href='http://bgee.org/bgee13' target='_blank'>http://bgee.org/bgee13</a>.");
+	            + "href='https://bgee.org/bgee13' target='_blank'>https://bgee.org/bgee13</a>.");
 
 	    this.writeOneNews("2016-07-06", "Release of Bgee version 13.2: "
                 + "<ul>"
@@ -437,9 +453,9 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
         this.writeln("<div class='col-xs-12 col-md-3 archive_site'>");
         this.writeln("View archive sites:");
-        this.writeln("<a title='Archive site Bgee version 12' href='http://bgee.org/bgee12' target='_blank'>"
+        this.writeln("<a title='Archive site Bgee version 12' href='https://bgee.org/bgee12' target='_blank'>"
                 + "version 12</a>");
-        this.writeln("<a title='Archive site Bgee version 13' href='http://bgee.org/bgee13' target='_blank'>"
+        this.writeln("<a title='Archive site Bgee version 13' href='https://bgee.org/bgee13' target='_blank'>"
                 + "version 13</a>");
         this.writeln("</div>");
         

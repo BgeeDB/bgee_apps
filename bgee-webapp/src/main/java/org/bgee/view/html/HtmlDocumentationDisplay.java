@@ -197,9 +197,9 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
     public void displayDocumentationHomePage() {
         log.entry();
         
-        this.startDisplay("Bgee release 13 documentation home page");
+        this.startDisplay("Bgee documentation home page");
 
-        this.writeln("<h1>Bgee release 13 documentation</h1>");
+        this.writeln("<h1>Bgee documentation</h1>");
 
         this.writeln("<div class='feature_list'>");
 

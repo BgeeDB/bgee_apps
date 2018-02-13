@@ -462,7 +462,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<li><a title='About page' href='" + urlAbout.getRequestURL() + "'>About</a></li>");
         
         // Help
-        navbar.append("<li>" + this.getObfuscateEmail() + "</li>");
+        navbar.append("<li>" + this.getObfuscateEmailInHelp() + "</li>");
 
         navbar.append("</ul>"); // close left nav links
 
@@ -546,7 +546,16 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @return          the {@code String} that is the HTML code of the Contact link.
      */
     //TODO move javascript in common.js
-    private String getObfuscateEmail() {
+    private String getObfuscateEmailInHelp() {
+        return getObfuscateEmailLink("%48%65%6C%70");
+    }
+    
+    protected String getObfuscateEmailInText() {
+        return getObfuscateEmailLink("%62%67%65%65%20%65%6D%61%69%6C");
+        
+    }
+    
+    private String getObfuscateEmailLink(String encodedLinkText) {
         return "<script type='text/javascript'>eval(unescape("
                 + "'%66%75%6E%63%74%69%6F%6E%20%70%67%72%65%67%67%5F%74%72%61%6E%73%70%6F%73%65"
                 + "%31%28%68%29%20%7B%76%61%72%20%73%3D%27%61%6D%6C%69%6F%74%42%3A%65%67%40%65"
@@ -559,7 +568,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 + "%61%73%63%72%69%70%74%3A%70%67%72%65%67%67%5F%74%72%61%6E%73%70%6F%73%65%31"
                 + "%28%74%68%69%73%29%22%20%6F%6E%46%6F%63%75%73%3D%22%6A%61%76%61%73%63%72%69"
                 + "%70%74%3A%70%67%72%65%67%67%5F%74%72%61%6E%73%70%6F%73%65%31%28%74%68%69%73"
-                + "%29%22%3E%48%65%6C%70%3C%2F%61%3E%27%29%3B'));</script>";
+                + "%29%22%3E" + encodedLinkText + "%3C%2F%61%3E%27%29%3B'));</script>";
     }
 
     /**

@@ -196,10 +196,17 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
     @Override
     public void displayDocumentationHomePage() {
         log.entry();
-        
-        this.startDisplay("Bgee documentation home page");
 
-        this.writeln("<h1>Bgee documentation</h1>");
+        String version = this.getWebAppVersion();
+        String releaseDoc = "Bgee ";
+        if (version != null) {
+            releaseDoc += "release " + version + " ";
+        }
+        releaseDoc += "documentation";
+
+        this.startDisplay(releaseDoc + " home page");
+
+        this.writeln("<h1>" + releaseDoc + "</h1>");
 
         this.writeln("<div class='feature_list'>");
 

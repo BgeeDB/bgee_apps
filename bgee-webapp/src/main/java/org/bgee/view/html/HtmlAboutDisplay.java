@@ -55,7 +55,13 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
         RequestParameters urlDocumentationGenerator = this.getNewRequestParameters();
         urlDocumentationGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
         
-        this.startDisplay("Bgee release 13 about page");
+        String version = this.getWebAppVersion();
+        String title = "Bgee ";
+        if (version != null) {
+            title += "release " + version + " ";
+        }
+        title += "about page";
+        this.startDisplay(title);
 
         this.writeln("<h1>About</h1>");
 

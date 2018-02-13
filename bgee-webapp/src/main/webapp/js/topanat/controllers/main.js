@@ -1577,7 +1577,8 @@
         console.log("shouldOpenAdvancedOptions");
         console.log(configuration);
         console.log(vm);
-        if(vm.data_qual != configuration.data_qual ||
+        if((vm.data_qual !== undefined && vm.data_qual !== null &&
+        		vm.data_qual.toUpperCase() !== configuration.data_qual.toUpperCase()) ||
             vm.decorr_type != configuration.decorr_type ||
             vm.node_size != configuration.node_size ||
             vm.nb_node != configuration.nb_node ||

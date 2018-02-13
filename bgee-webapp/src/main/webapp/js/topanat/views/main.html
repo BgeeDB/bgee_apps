@@ -331,7 +331,9 @@
             <div style="margin-top: 5px;" ng-show="vm.isAdvancedOptionsChecked" ng-hide="!vm.isAdvancedOptionsChecked" class="vert-offset form-inline">
                 <div class="row">
                     <div class="col-sm-6 col-md-3 col-lg-3 form-group">
-                        <label class="control-group" ng-class="{'highlighted': vm.data_qual != vm.data_qualDefault}">
+                        <label class="control-group" 
+                            ng-class="{'highlighted': vm.data_qual !== undefined && vm.data_qual !== null && 
+                                vm.data_qual.toUpperCase() !== vm.data_qualDefault.toUpperCase()}">
                             Data quality:&nbsp;
                             <span class="glyphicon glyphicon-question-sign" uib-popover="{{vm.help}}" popover-trigger="mouseenter" popover-placement="top" popover-append-to-body="true" popover-title="Data quality" ng-mouseover="vm.getOnlineHelpForItem('Data quality')"></span>
                         </label>
@@ -339,7 +341,14 @@
                         <span class="btn-group btn-group-sm">
 
                             <button ng-repeat="data_quality in vm.data_qualities"
-                                    ng-class="{'btn-info': data_quality.id === vm.data_qual}"
+                                    ng-class="{'btn-info': 
+                                        ((vm.data_qual === undefined || vm.data_qual === null) &&
+                                        data_quality.id.toUpperCase() === vm.data_qualDefault.toUpperCase()) ||
+                                        data_quality.id.toUpperCase() === vm.data_qual.toUpperCase(),
+                                        'active': 
+                                        ((vm.data_qual === undefined || vm.data_qual === null) &&
+                                        data_quality.id.toUpperCase() === vm.data_qualDefault.toUpperCase()) ||
+                                        data_quality.id.toUpperCase() === vm.data_qual.toUpperCase()}"
                                     type="button"
                                     class="btn btn-default"
                                     ng-model="vm.data_qual"

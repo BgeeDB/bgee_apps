@@ -1512,7 +1512,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "We apologize for any inconvenience. In the meantime, please do not hesitate to "
                 + "contact us if you have any questions, using " + getObfuscateEmailInText() + " or "
                 + "<a title='Follow @Bgeedb on Twitter' target='_blank' "
-                + "   href='https://twitter.com/Bgeedb'>@Bgeedb</a>."
+                + "   href='https://twitter.com/Bgeedb'>@Bgeedb on Twitter</a>."
                 + "</div>");
         
         RequestParameters urlDownloadGenerator = this.getNewRequestParameters();

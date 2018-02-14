@@ -521,6 +521,12 @@ public class CommandTopAnat extends CommandParent {
         } else if (this.requestParameters.isATopAnatGetResult()) {
             
             TopAnatController controller = this.loadTopAnatController();
+
+            LinkedHashMap<String, Object> data = new LinkedHashMap<>();
+            if (this.requestParameters.getGeneInfo() != null && this.requestParameters.getGeneInfo()) {
+                data.putAll(this.getGeneResponses());
+            }
+
             if (!controller.areAnalysesDone()) {
                 //Maybe the results are not present simply because the job was canceled by the user, 
                 //not because of an error. One way of being sure would be to store the Job 
@@ -528,21 +534,19 @@ public class CommandTopAnat extends CommandParent {
                 //In the meantime, we don't consider this an error. 
                 throw log.throwing(Level.DEBUG, new JobResultNotFoundException(
                         "No results available for the provided parameters. Did you cancel your job? "
-                        + "Otherwise it means there was an error during the analysis."));
+                        + "Otherwise it means there was an error during the analysis.",
+                        data));
             }
-            Stream<TopAnatResults> topAnatResults = controller.proceedToTopAnatAnalyses();
 
-            LinkedHashMap<String, Object> data = new LinkedHashMap<>();
-            if (this.requestParameters.getGeneInfo() != null && this.requestParameters.getGeneInfo()) {
-                data.putAll(this.getGeneResponses());
-            }
+            Stream<TopAnatResults> topAnatResults = controller.proceedToTopAnatAnalyses();
 
             //FIXME: I don't know why, but I don't manage to make the Stream to be printed.
             //Collecting the results while waiting for a fix.
             data.put("topAnatResults", topAnatResults.collect(Collectors.toSet()));
+
             display.sendResultResponse(data, "");
 
-            
+
          // Download result zip file
         } else if (this.requestParameters.isATopAnatDownloadFile()) {
             
@@ -1048,7 +1052,7 @@ public class CommandTopAnat extends CommandParent {
 
         assert cleanFgIds != null && !cleanFgIds.isEmpty();
         assert devStageIds != null && !devStageIds.isEmpty();
-        assert speciesId != null && speciesId > 1;
+        assert speciesId != null && speciesId >= 1;
         assert callTypes == null || callTypes.isEmpty();
 
         // One TopAnat analyze has one call type and one dev. stage
@@ -1181,6 +1185,7 @@ public class CommandTopAnat extends CommandParent {
          * @param geneCount             A {@code LinkedHashMap} where keys are {@code Integer}s
          *                              corresponding to species IDs, the associated value being
          *                              a {@code Long} that is the gene count on the species.
+         //XXX: why not using a List of Species directly, and retrieve the IDs from the species objects?
          * @param detectedSpecies       A {@code TreeMap} where keys are {@code Integer}s corresponding 
          *                              to IDs of detected species, the associated value being the
          *                              corresponding {@code Species} object.
@@ -1220,6 +1225,7 @@ public class CommandTopAnat extends CommandParent {
          *          to IDs of detected species, the associated value being the corresponding 
          *          {@code Species} object.
          */
+        //XXX: why not using a List of Species directly, and retrieve the IDs from the species objects?
         public TreeMap<Integer, Species> getDetectedSpecies() {
             return this.detectedSpecies;
         }

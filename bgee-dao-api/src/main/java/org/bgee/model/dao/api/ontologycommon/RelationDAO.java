@@ -540,6 +540,61 @@ public interface RelationDAO extends DAO<RelationDAO.Attribute> {
                     " - Relation type: " + this.getRelationType() + 
                     " - Relation status: " + this.getRelationStatus();
         }
+
+        //FIXME: I thought TOs never implement hashCode and equals
+        //(we use the TOComparator instead for tests)
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((this.getSourceId() == null) ? 0 : this.getSourceId().hashCode());
+            result = prime * result + ((this.getTargetId() == null) ? 0 : this.getTargetId().hashCode());
+            result = prime * result + ((this.getRelationType() == null) ? 0 : this.getRelationType().hashCode());
+            result = prime * result + ((this.getRelationStatus() == null) ? 0 : this.getRelationStatus().hashCode());
+            return result;
+        }
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            RelationTO<?> other = (RelationTO<?>) obj;
+            if (this.getSourceId() == null) {
+                if (other.getSourceId() != null) {
+                    return false;
+                }
+            } else if (!this.getSourceId().equals(other.getSourceId())) {
+                return false;
+            }
+            if (this.getTargetId() == null) {
+                if (other.getTargetId() != null) {
+                    return false;
+                }
+            } else if (!this.getTargetId().equals(other.getTargetId())) {
+                return false;
+            }
+            if (this.getRelationType() == null) {
+                if (other.getRelationType() != null) {
+                    return false;
+                }
+            } else if (!this.getRelationType().equals(other.getRelationType())) {
+                return false;
+            }
+            if (this.getRelationStatus() == null) {
+                if (other.getRelationStatus() != null) {
+                    return false;
+                }
+            } else if (!this.getRelationStatus().equals(other.getRelationStatus())) {
+                return false;
+            }
+            return true;
+        }
     }
 
 }

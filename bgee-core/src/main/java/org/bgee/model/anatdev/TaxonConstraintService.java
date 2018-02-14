@@ -5,9 +5,9 @@ import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.CommonService;
 import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
 
 /**
  * A {@link Service} to obtain {@link TaxonConstraint} objects. 
@@ -15,10 +15,10 @@ import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14 Feb. 2017
+ * @version Bgee 14 Nov. 2017
  * @since   Bgee 13, May 2016
  */
-public class TaxonConstraintService extends Service {
+public class TaxonConstraintService extends CommonService {
     
     private static final Logger log = LogManager.getLogger(TaxonConstraintService.class.getName());
 
@@ -44,7 +44,7 @@ public class TaxonConstraintService extends Service {
         
         return log.exit(getDaoManager().getTaxonConstraintDAO()
                     .getAnatEntityTaxonConstraints(speciesIds, null).stream()
-                    .map(TaxonConstraintService::mapFromTO));
+                    .map(CommonService::mapTaxonConstraintTOToTaxonConstraint));
     }
     
     /**
@@ -61,7 +61,7 @@ public class TaxonConstraintService extends Service {
         
         return log.exit(getDaoManager().getTaxonConstraintDAO()
                     .getAnatEntityRelationTaxonConstraints(speciesIds, null).stream()
-                    .map(TaxonConstraintService::mapFromTO));
+                    .map(CommonService::mapTaxonConstraintTOToTaxonConstraint));
     }
 
     /**
@@ -77,22 +77,6 @@ public class TaxonConstraintService extends Service {
         
         return log.exit(getDaoManager().getTaxonConstraintDAO()
                     .getStageTaxonConstraints(speciesIds, null).stream()
-                    .map(TaxonConstraintService::mapFromTO));
-    }
-    
-    /**
-     * Map {@link TaxonConstraintTO} to a {@link TaxonConstraint}.
-     * 
-     * @param taxonConstraintTO A {@code TaxonConstraintTO} that is the transfert object to be mapped.
-     * @return                  The mapped {@link TaxonConstraint}.
-     */
-    private static <T> TaxonConstraint<T> mapFromTO(TaxonConstraintTO<T> taxonConstraintTO) {
-        log.entry(taxonConstraintTO);
-        if (taxonConstraintTO == null) {
-            return log.exit(null);
-        }
-
-        return log.exit(new TaxonConstraint<T>(
-                taxonConstraintTO.getEntityId(), taxonConstraintTO.getSpeciesId()));
+                    .map(CommonService::mapTaxonConstraintTOToTaxonConstraint));
     }
 }

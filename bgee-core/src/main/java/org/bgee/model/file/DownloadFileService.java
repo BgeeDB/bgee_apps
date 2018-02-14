@@ -6,9 +6,10 @@ import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.file.DownloadFileDAO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO;
-import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO.CategoryEnum;
+import org.bgee.model.expressiondata.CallService;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -64,15 +65,14 @@ public class DownloadFileService extends Service {
                 downloadFileTO.getSize(),
                 downloadFileTO.getSpeciesDataGroupId(),
                 downloadFileTO.getConditionParameters().stream()
-                    .map(p -> DownloadFile.ConditionParameter.convertToConditionParameter(
-                                p.getStringRepresentation()))
+                    .map(p -> mapDAOCondParamToServiceCondParam(p))
                     .collect(Collectors.toSet())));
     }
-    
+
     private static DownloadFile.CategoryEnum mapDAOCategoryToServiceCategory(
             DownloadFileTO.CategoryEnum daoEnum) {
         log.entry(daoEnum);
-        
+
         switch (daoEnum) {
             case EXPR_CALLS_COMPLETE:
                 return log.exit(DownloadFile.CategoryEnum.EXPR_CALLS_COMPLETE);
@@ -98,6 +98,20 @@ public class DownloadFileService extends Service {
                 return log.exit(DownloadFile.CategoryEnum.RNASEQ_DATA);
             default:
                 throw log.throwing(new IllegalArgumentException("Category not supported: " + daoEnum));
-        }        
+        }
+    }
+
+    private static CallService.Attribute mapDAOCondParamToServiceCondParam(
+            ConditionDAO.Attribute daoEnum) {
+        log.entry(daoEnum);
+
+        switch (daoEnum) {
+            case ANAT_ENTITY_ID:
+                return log.exit(CallService.Attribute.ANAT_ENTITY_ID);
+            case STAGE_ID:
+                return log.exit(CallService.Attribute.DEV_STAGE_ID);
+            default:
+                throw log.throwing(new IllegalArgumentException("Condition parameter not supported: " + daoEnum));
+        }
     }
 }

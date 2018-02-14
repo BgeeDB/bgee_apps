@@ -10,8 +10,8 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.controller.URLParameters;
+import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.file.DownloadFile;
-import org.bgee.model.file.DownloadFile.ConditionParameter;
 import org.bgee.model.job.Job;
 import org.bgee.model.topanat.TopAnatResults;
 import org.bgee.model.topanat.TopAnatResults.TopAnatResultRow;
@@ -255,8 +255,8 @@ public class JsonHelper {
                 value.getCategory().getStringRepresentation());
             out.name("conditionParameters");
             out.beginArray();
-            for (ConditionParameter condParam: value.getConditionParameters()) {
-                out.value(condParam.getStringRepresentation());
+            for (CallService.Attribute condParam: value.getConditionParameters()) {
+                out.value(condParam.getCondParamName());
             }
             out.endArray();
             out.endObject();

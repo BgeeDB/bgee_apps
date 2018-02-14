@@ -98,7 +98,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("<div id='expr_calls'>");
 
         this.writeln("<h1>");
-        this.writeln("<img src='" + this.prop.getLogoImagesRootDirectory() + "expr_calls_logo.png' " + 
+        this.writeln("<img src='" + this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "expr_calls_logo.png' " + 
                 "alt='" + GENE_EXPR_CALLS_PAGE_NAME + " logo'/>" + GENE_EXPR_CALLS_PAGE_NAME);
         this.writeln("</h1>");
         
@@ -144,7 +144,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("<div id='proc_values'>");
     
         this.writeln("<h1>");
-        this.writeln("<img src='" + this.prop.getLogoImagesRootDirectory() + "proc_values_logo.png'" + 
+        this.writeln("<img src='" + this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "proc_values_logo.png'" + 
                 "' alt='" + PROCESSED_EXPR_VALUES_PAGE_NAME + " logo'/>" + 
                 PROCESSED_EXPR_VALUES_PAGE_NAME);
         this.writeln("</h1>");
@@ -244,7 +244,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             assert false: "Unknown DownloadPageType";
         }
         intro.append(" It is possible to download these data directly into "
-                    + "R using our <a href='https://github.com/BgeeDB/BgeeDB_R' "
+                    + "R using our <a href='https://bioconductor.org/packages/release/bioc/html/BgeeDB.html' "
                     + "class='external_link' target='_blank'>R package</a>.");
 
         intro.append(" See also ");
@@ -385,7 +385,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         // Cross to close the banner
         banner.append("<div id='bgee_data_selection_cross'>");
         banner.append("<a id='switch_page_link' class= 'banner_link' href=''></a>");
-        banner.append("<img class='closing_cross' src='" + this.prop.getImagesRootDirectory() + "cross.png' " +
+        banner.append("<img class='closing_cross' src='" + this.prop.getBgeeRootDirectory() + this.prop.getImagesRootDirectory() + "cross.png' " +
                 "title='Close banner' alt='Cross' />");
         banner.append("</div>");
         
@@ -629,7 +629,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     private String getShowHeaderLink(String id) {
         log.entry(id);
         return log.exit("<a id='" + id + "' class='show-header'>" + 
-                "<img class='details' src='" + this.prop.getImagesRootDirectory() +
+                "<img class='details' src='" + this.prop.getBgeeRootDirectory() + this.prop.getImagesRootDirectory() +
                 "plus.png' title='Show headers' alt='Plus'/></a>");
     }
     
@@ -649,7 +649,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         StringBuilder images = new StringBuilder();
         for (Species spe : species) {
             Map<String,String> attrs = new HashMap<>();
-            attrs.put("src", this.prop.getSpeciesImagesRootDirectory() 
+            attrs.put("src", this.prop.getBgeeRootDirectory() + this.prop.getSpeciesImagesRootDirectory() 
                             + String.valueOf(spe.getId()) + "_light.jpg");
             attrs.put("alt", htmlEntities(spe.getShortName()));
             attrs.put("class", "species_img");
@@ -657,7 +657,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         }
         if (pageType == DownloadPageType.PROC_EXPR_VALUES) {
             Map<String,String> attrs = new HashMap<>();
-            attrs.put("src", this.prop.getLogoImagesRootDirectory() + "proc_values_zoom_logo.png");
+            attrs.put("src", this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "proc_values_zoom_logo.png");
             attrs.put("alt", htmlEntities(PROCESSED_EXPR_VALUES_PAGE_NAME));
             attrs.put("class", "page_img");
             images.append(getHTMLTag("img", attrs));

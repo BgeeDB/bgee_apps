@@ -30,6 +30,10 @@ public class BgeePropertiesThirdTest extends BgeePropertiesParentTest {
     @Test
     public void testLoadSystemProperties() {
         System.setProperty(BgeeProperties.PROPERTIES_FILE_NAME_KEY, "/test.properties");
+
+        System.setProperty(BgeeProperties.MAJOR_VERSION_KEY, "100");
+        System.setProperty(BgeeProperties.MINOR_VERSION_KEY, "20");
+
         //BGEE_ROOT_DIRECTORY_KEY is not set in System properties, it should be retrieve 
         //from the file. 
         //System.setProperty(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY, "/system");
@@ -44,6 +48,10 @@ public class BgeePropertiesThirdTest extends BgeePropertiesParentTest {
         
         // get the instance of bgeeproperties and check the values
         this.bgeeProp = BgeeProperties.getBgeeProperties();
+        assertEquals("Wrong property value retrieved","100",
+                bgeeProp.getMajorVersion());
+        assertEquals("Wrong property value retrieved","20",
+                bgeeProp.getMinorVersion());
         assertEquals("Wrong property value retrieved","/sysrexec",
                 bgeeProp.getTopAnatRScriptExecutable());
         assertEquals("Wrong property value retrieved","/sysrwd",

@@ -124,7 +124,7 @@ create table species (
 -- This field is needed because we use for some species the genome of another species
 -- (for instance, chimp genome for bonobo species).
     genomeFilePath varchar(100) not null COMMENT 'GTF annotation path used to map this species in Ensembl FTP',
-    genomeVersion varchar(50) not null, 
+    genomeVersion varchar(50) not null,
     dataSourceId smallInt unsigned not null COMMENT 'source for genome information',
 -- ID of the species whose the genome was used for this species. This is used
 -- when a genome is not in Ensembl. For instance, for bonobo (ID 9597), we use the chimp
@@ -468,7 +468,7 @@ create table geneBioType (
 
 create table gene (
 -- warning, maybe this bgeeGeneId will need to be changed to an 'int' when we reach around 200 species
-    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Numeric internal gene ID used for improving performances',
+    bgeeGeneId mediumint unsigned not null COMMENT 'Numeric internal gene ID used for improving performances',
     geneId varchar(20) not null COMMENT 'Real gene id',
     geneName varchar(255) not null default '' COMMENT 'Gene name',
     geneDescription TEXT COMMENT 'Gene description',
@@ -484,26 +484,26 @@ create table gene (
     geneMappedToGeneIdCount tinyint unsigned not null default 1 COMMENT 'number of genes in the Bgee database with the same Ensembl gene ID. In Bgee, for some species with no genome available, we use the genome of a closely-related species, such as chimpanzee genome for analyzing bonobo data. For this reason, a same Ensembl gene ID can be mapped to several species in Bgee. The value returned here is equal to 1 when the Ensembl gene ID is uniquely used in the Bgee database.'
 ) engine = innodb;
 
-create table geneToOma ( 
-    bgeeGeneId MEDIUMINT unsigned not null,
+create table geneToOma (
+    bgeeGeneId mediumint unsigned not null,
     OMANodeId int unsigned not null COMMENT 'OMA Hierarchical Orthologous node id',
     taxonId mediumint unsigned not null
 ) engine = innodb;
 
 create table geneNameSynonym (
-    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
+    bgeeGeneId mediumint unsigned not null COMMENT 'Internal gene ID',
     geneNameSynonym varchar(255) not null COMMENT 'Gene name synonym'
 ) engine = innodb;
 
 create table geneXRef (
-    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
+    bgeeGeneId mediumint unsigned not null COMMENT 'Internal gene ID',
     XRefId varchar(20) not null COMMENT 'Cross-reference id',
     XRefName varchar(255) not null default '' COMMENT 'Cross-reference name',
     dataSourceId smallInt unsigned not null COMMENT 'Data Source id the cross-reference comes from'
 ) engine = innodb;
 
 create table geneToTerm (
-    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
+    bgeeGeneId mediumint unsigned not null COMMENT 'Internal gene ID',
     term varchar(255) not null COMMENT '???Gene alias name'
 ) engine = innodb;
 
@@ -513,18 +513,18 @@ create table geneToTerm (
 -- for the application inserting data in this table to retrieve the mapping between
 -- ECO IDs and Evidence Codes from the Evidence Ontology.
 create table geneToGeneOntologyTerm (
-    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
+    bgeeGeneId mediumint unsigned not null COMMENT 'Internal gene ID',
     goId char(10) not null COMMENT 'Gene Ontology id',
     goEvidenceCode varchar(20) not null default '' COMMENT 'Gene Ontology Evidence Code'
 ) engine = innodb;
 
 create table transcript (
     bgeeTranscriptId int unsigned not null COMMENT 'Numeric internal transcript ID used for improving performances',
-    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID this transcript is mapped to',
+    bgeeGeneId mediumint unsigned not null COMMENT 'Internal gene ID this transcript is mapped to',
     transcriptId varchar(40) not null COMMENT 'Real transcript ID',
     transcriptName varchar(255) not null default '',
     transcriptDescription TEXT,
-    transcriptLength mediumint unsigned not null, 
+    transcriptLength mediumint unsigned not null,
     effectiveTranscriptLength mediumint unsigned not null
 ) engine = innodb;
 
@@ -542,7 +542,7 @@ create table cond (
 -- NA: not available from source information
 -- not annotated: information not captured by Bgee
 -- If an ENUM column is declared NOT NULL, its default value is the first element of the list
-    sex enum('not annotated', 'hermaphrodite', 'female', 'male', 'mixed', 'NA') not null 
+    sex enum('not annotated', 'hermaphrodite', 'female', 'male', 'mixed', 'NA') not null
     COMMENT 'Sex information. NA: not available from source information; not annotated: information not captured by Bgee. Note that all conditions used in the expression tables have "NA" replaced with "not annotated".',
     sexInferred boolean not null default 0
     COMMENT 'Whether sex information was retrieved from annotation (false), or inferred from information in Uberon (true). Note that all conditions used in the expression tables use a "0" value.',
@@ -550,7 +550,7 @@ create table cond (
 -- 'NA', 'not annotated', 'wild-type', 'confidential_restricted_data'.
 -- This should be improved in a further release (free-text is hardly satisfiable).
     strain varchar(100) not null default 'not annotated'
-    COMMENT 'Strain information. NA: not available from source information; not annotated: information not captured by Bgee; confidential_restricted_data: information cannot be disclosed publicly. Note that all conditions used in the expression tables have "NA", "not annotated" and "confidential_restricted_data" replaced with "wild-type"',
+    COMMENT 'Strain information. NA: not available from source information; not annotated: information not captured by Bgee; confidential_restricted_data: information cannot be disclosed publicly. Note that all conditions used in the expression tables have "NA", "not annotated" and "confidential_restricted_data" replaced with "wild-type"'
 ) engine = innodb COMMENT 'This table stores the "raw" conditions used to annotate data and used in the "raw" expression table, where data are not propagated nor precomputed';
 
 create table globalCond (
@@ -620,7 +620,7 @@ create table expressedSequenceTag (
 -- ESTs have two IDs in Unigene
     estId2 varchar(50) not null default '',
     estLibraryId varchar(50) not null,
-    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
+    bgeeGeneId mediumint unsigned not null COMMENT 'Internal gene ID',
     UniGeneClusterId varchar(70) not null default '',
     expressionId int unsigned,
 -- Warning, qualities must be ordered, the index in the enum is used in many queries
@@ -678,14 +678,14 @@ create table chipType (
 -- create table affymetrixProbesetMapping(
 -- chipTypeId varchar(70) not null,
 -- affymetrixProbesetId varchar(70) not null,
--- bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID'
+-- bgeeGeneId mediumint unsigned not null COMMENT 'Internal gene ID'
 -- ) engine = innodb;
 
 create table affymetrixChip (
 -- affymetrixChipId are not unique (couple affymetrixChipId - microarrayExperimentId is)
 -- then we need an internal ID to link to affymetrixProbeset
 -- warning, SMALLINT UNSIGNED only allows for 65535 chips to be inserted (we have 12,996 as of Bgee 14)
-    bgeeAffymetrixChipId SMALLINT unsigned not null,
+    bgeeAffymetrixChipId smallint unsigned not null,
     affymetrixChipId varchar(255) not null,
     microarrayExperimentId varchar(70) not null,
 -- define only if CEL file available, normalization gcRMA, detection schuster
@@ -707,7 +707,7 @@ create table affymetrixChip (
 -- were also normalizd using MAS5.
 -- * Schuster: Wilcoxon test on the signal of probesets
 -- against a subset of weakly expressed probesets, to generate expression calls
--- (see http://www.ncbi.nlm.nih.gov/pubmed/17594492). Such calls usually implies
+-- (see https://www.ncbi.nlm.nih.gov/pubmed/17594492). Such calls usually implies
 -- that raw data were available, and were normalized using gcRMA.
     detectionType enum('MAS5', 'Schuster') not null,
     conditionId mediumint unsigned not null,
@@ -727,8 +727,8 @@ create table affymetrixChip (
 
 create table affymetrixProbeset (
     affymetrixProbesetId varchar(70) not null,
-    bgeeAffymetrixChipId SMALLINT unsigned not null,
-    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
+    bgeeAffymetrixChipId smallint unsigned not null,
+    bgeeGeneId mediumint unsigned not null COMMENT 'Internal gene ID',
     normalizedSignalIntensity decimal(13,5) unsigned not null default 0,
 -- Warning, flags must be ordered, the index in the enum is used in many queries
     detectionFlag enum('undefined', 'absent', 'marginal', 'present') not null default 'undefined',
@@ -743,41 +743,41 @@ create table affymetrixProbeset (
 -- Reasons are:
 -- * pre filtering: Probesets always seen as "absent" or "marginal" over the whole dataset are removed
 -- * noExpression conflict: a "noExpression" result has been removed because of expression in a sub-condition.
--- Note: as of Bgee 14, we haven't remove this reason for exclusion, but we don't use it for now, 
--- as we might want to take into account noExpression in parent conditions for generating 
--- a global expression calls, where there is expression in a sub-condition. 
--- Maybe we'll discard them again, but I don't think so, it'll allow to present absolutely 
+-- Note: as of Bgee 14, we haven't remove this reason for exclusion, but we don't use it for now,
+-- as we might want to take into account noExpression in parent conditions for generating
+-- a global expression calls, where there is expression in a sub-condition.
+-- Maybe we'll discard them again, but I don't think so, it'll allow to present absolutely
 -- all data available about a call to users.
 -- * undefined: only 'undefined' calls have been seen
--- 
+--
 -- Note that, as of Bgee 14, 2 reasons for exclusion were removed: 'bronze quality' and 'absent low quality'.
--- 'bronze quality' exclusion was removed, because now we always propagate expression evidence, 
--- so a 'bronze quality' call can provide additional evidence to a parent structure. 
+-- 'bronze quality' exclusion was removed, because now we always propagate expression evidence,
+-- so a 'bronze quality' call can provide additional evidence to a parent structure.
 -- 'bronze quality' used to be: for a gene/condition, no "present high" and mix of "present low" and "absent".
--- 'absent low quality' was removed, because we now use a same consistent mechanism for present/absent calls, 
+-- 'absent low quality' was removed, because we now use a same consistent mechanism for present/absent calls,
 -- taking also into account 'absent low quality' evidence.
--- 'absent low quality' used to be: probesets always "absent" for this gene/condition, 
+-- 'absent low quality' used to be: probesets always "absent" for this gene/condition,
 -- but only seen by MAS5 (that we do not trust = "low quality" - "noExpression" should always be "high quality").
     reasonForExclusion enum('not excluded', 'pre-filtering',
         'noExpression conflict', 'undefined') not null default 'not excluded'
 ) engine = innodb;
 
 create table microarrayExperimentExpression (
-    expressionId int unsigned not null, 
-    microarrayExperimentId varchar(70) not null, 
+    expressionId int unsigned not null,
+    microarrayExperimentId varchar(70) not null,
     presentHighMicroarrayChipCount smallint unsigned not null default 0
-        comment 'number of chips in this experiment that produced this call as present high quality', 
+        comment 'number of chips in this experiment that produced this call as present high quality',
     presentLowMicroarrayChipCount  smallint unsigned not null default 0
-        comment 'number of chips in this experiment that produced this call as present low quality', 
+        comment 'number of chips in this experiment that produced this call as present low quality',
     absentHighMicroarrayChipCount  smallint unsigned not null default 0
-        comment 'number of chips in this experiment that produced this call as absent high quality', 
+        comment 'number of chips in this experiment that produced this call as absent high quality',
     absentLowMicroarrayChipCount   smallint unsigned not null default 0
-        comment 'number of chips in this experiment that produced this call as absent low quality', 
+        comment 'number of chips in this experiment that produced this call as absent low quality',
     microarrayExperimentCallDirection enum('present', 'absent') not null
-        comment 'Inferred direction for this call based on this experiment ("present" chips always win over "absent" chips)', 
+        comment 'Inferred direction for this call based on this experiment ("present" chips always win over "absent" chips)',
     microarrayExperimentCallQuality enum('poor quality', 'high quality') not null
         comment 'Inferred quality for this call based on this experiment (from all chips, "present high" > "present low" > "absent high" > "absent low"). Value "poor quality" instead of "low quality" for historical reasons.'
-) engine = innodb 
+) engine = innodb
 comment = 'This table stores information about expression calls produced from microarray experiments, that is then used in Bgee to compute global summary expression calls and qualities.';
 
 -- ****************************************************
@@ -817,7 +817,7 @@ create table inSituSpot (
     -- for control purpose only (used in other databases)
     inSituExpressionPatternId varchar(70) not null,
     conditionId mediumint unsigned not null,
-    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
+    bgeeGeneId mediumint unsigned not null COMMENT 'Internal gene ID',
 -- Warning, tags must be ordered, the index in the enum is used in many queries
     detectionFlag enum('undefined', 'absent', 'present') default 'undefined',
     expressionId int unsigned,
@@ -827,41 +827,41 @@ create table inSituSpot (
 -- Reasons are:
 -- * pre filtering: Probesets always seen as "absent" or "marginal" over the whole dataset are removed
 -- * noExpression conflict: a "noExpression" result has been removed because of expression in a sub-condition.
--- Note: as of Bgee 14, we haven't remove this reason for exclusion, but we don't use it for now, 
--- as we might want to take into account noExpression in parent conditions for generating 
--- a global expression calls, where there is expression in a sub-condition. 
--- Maybe we'll discard them again, but I don't think so, it'll allow to present absolutely 
+-- Note: as of Bgee 14, we haven't remove this reason for exclusion, but we don't use it for now,
+-- as we might want to take into account noExpression in parent conditions for generating
+-- a global expression calls, where there is expression in a sub-condition.
+-- Maybe we'll discard them again, but I don't think so, it'll allow to present absolutely
 -- all data available about a call to users.
 -- * undefined: only 'undefined' calls have been seen
--- 
+--
 -- Note that, as of Bgee 14, 2 reasons for exclusion were removed: 'bronze quality' and 'absent low quality'.
--- 'bronze quality' exclusion was removed, because now we always propagate expression evidence, 
--- so a 'bronze quality' call can provide additional evidence to a parent structure. 
+-- 'bronze quality' exclusion was removed, because now we always propagate expression evidence,
+-- so a 'bronze quality' call can provide additional evidence to a parent structure.
 -- 'bronze quality' used to be: for a gene/condition, no "present high" and mix of "present low" and "absent".
--- 'absent low quality' was removed, because we now use a same consistent mechanism for present/absent calls, 
+-- 'absent low quality' was removed, because we now use a same consistent mechanism for present/absent calls,
 -- taking also into account 'absent low quality' evidence.
--- 'absent low quality' used to be: probesets always "absent" for this gene/condition, 
+-- 'absent low quality' used to be: probesets always "absent" for this gene/condition,
 -- but only seen by MAS5 (that we do not trust = "low quality" - "noExpression" should always be "high quality").
     reasonForExclusion enum('not excluded', 'pre-filtering',
         'noExpression conflict', 'undefined') not null default 'not excluded'
 ) engine = innodb;
 
 create table inSituExperimentExpression (
-    expressionId int unsigned not null, 
-    inSituExperimentId varchar(70) not null, 
+    expressionId int unsigned not null,
+    inSituExperimentId varchar(70) not null,
     presentHighInSituSpotCount smallint unsigned not null default 0
-        comment 'number of spots in this experiment that produced this call as present high quality', 
+        comment 'number of spots in this experiment that produced this call as present high quality',
     presentLowInSituSpotCount  smallint unsigned not null default 0
-        comment 'number of spots in this experiment that produced this call as present low quality', 
+        comment 'number of spots in this experiment that produced this call as present low quality',
     absentHighInSituSpotCount  smallint unsigned not null default 0
-        comment 'number of spots in this experiment that produced this call as absent high quality', 
+        comment 'number of spots in this experiment that produced this call as absent high quality',
     absentLowInSituSpotCount   smallint unsigned not null default 0
-        comment 'number of spots in this experiment that produced this call as absent low quality', 
+        comment 'number of spots in this experiment that produced this call as absent low quality',
     inSituExperimentCallDirection enum('present', 'absent') not null
-        comment 'Inferred direction for this call based on this experiment ("present" spots always win over "absent" spots)', 
+        comment 'Inferred direction for this call based on this experiment ("present" spots always win over "absent" spots)',
     inSituExperimentCallQuality enum('poor quality', 'high quality') not null
         comment 'Inferred quality for this call based on this experiment (from all spots, "present high" > "present low" > "absent high" > "absent low"). Value "poor quality" instead of "low quality" for historical reasons.'
-) engine = innodb 
+) engine = innodb
 comment = 'This table stores information about expression calls produced from in situ hybridization experiments, that is then used in Bgee to compute global summary expression calls and qualities.';
 
 -- ****************************************************
@@ -903,7 +903,7 @@ create table rnaSeqLibrary (
     proteinCodingGenesPercentPresent decimal(5, 2) unsigned not null default 0,
     intergenicRegionsPercentPresent decimal(5, 2) unsigned not null default 0,
     thresholdRatioIntergenicCodingPercent decimal(5, 2) unsigned not null default 0
-            COMMENT 'Proportion intergenic/coding region used to define the threshold to consider a gene as expressed (should always be 5%, but some libraries do not allow to reach this value)', 
+            COMMENT 'Proportion intergenic/coding region used to define the threshold to consider a gene as expressed (should always be 5%, but some libraries do not allow to reach this value)',
 -- total number of reads in library, including those not mapped.
 -- In case of paired-end libraries, it's the number of pairs of reads;
 -- In case of single read, it's the total number of reads
@@ -911,7 +911,7 @@ create table rnaSeqLibrary (
 -- total number of reads in library that were mapped to anything.
 -- if it is not a paired-end library, this number is equal to leftMappedReadsCount
     mappedReadsCount int unsigned not null default 0,
--- a library is an assembly of different runs, and the runs can have different read lengths, 
+-- a library is an assembly of different runs, and the runs can have different read lengths,
 -- so we store the min and max read lengths
     minReadLength int unsigned not null default 0,
     maxReadLength int unsigned not null default 0,
@@ -936,7 +936,7 @@ create table rnaSeqRun (
 
 -- We sometimes discard some runs associated to a library, because of low mappability.
 -- We keep track of these discarded runs in this table.
--- UPDATE Bgee 14: for pseudo-mapping using Kallisto, runs are pooled, so we can only exclude libraries, 
+-- UPDATE Bgee 14: for pseudo-mapping using Kallisto, runs are pooled, so we can only exclude libraries,
 -- not specific runs.
 create table rnaSeqLibraryDiscarded (
     rnaSeqLibraryId varchar(70) not null
@@ -946,13 +946,13 @@ create table rnaSeqLibraryDiscarded (
 -- and link them to an expressionId
 create table rnaSeqResult (
     rnaSeqLibraryId varchar(70) not null,
-    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
+    bgeeGeneId mediumint unsigned not null COMMENT 'Internal gene ID',
     fpkm decimal(16, 6) not null,
     tpm decimal(16, 6) not null,
 -- rank is not "not null" because we update this information afterwards
     rank decimal(9, 2) unsigned,
 -- for information, measure not normalized for reads or genes lengths
-    readsCount int unsigned not null,
+    readsCount decimal(16, 6) unsigned not null,
     expressionId int unsigned,
     detectionFlag enum('undefined', 'absent', 'present') default 'undefined',
 -- Warning, qualities must be ordered, the index in the enum is used in many queries.
@@ -962,20 +962,20 @@ create table rnaSeqResult (
 -- Reasons are:
 -- * pre filtering: Probesets always seen as "absent" or "marginal" over the whole dataset are removed
 -- * noExpression conflict: a "noExpression" result has been removed because of expression in a sub-condition.
--- Note: as of Bgee 14, we haven't remove this reason for exclusion, but we don't use it for now, 
--- as we might want to take into account noExpression in parent conditions for generating 
--- a global expression calls, where there is expression in a sub-condition. 
--- Maybe we'll discard them again, but I don't think so, it'll allow to present absolutely 
+-- Note: as of Bgee 14, we haven't remove this reason for exclusion, but we don't use it for now,
+-- as we might want to take into account noExpression in parent conditions for generating
+-- a global expression calls, where there is expression in a sub-condition.
+-- Maybe we'll discard them again, but I don't think so, it'll allow to present absolutely
 -- all data available about a call to users.
 -- * undefined: only 'undefined' calls have been seen
--- 
+--
 -- Note that, as of Bgee 14, 2 reasons for exclusion were removed: 'bronze quality' and 'absent low quality'.
--- 'bronze quality' exclusion was removed, because now we always propagate expression evidence, 
--- so a 'bronze quality' call can provide additional evidence to a parent structure. 
+-- 'bronze quality' exclusion was removed, because now we always propagate expression evidence,
+-- so a 'bronze quality' call can provide additional evidence to a parent structure.
 -- 'bronze quality' used to be: for a gene/condition, no "present high" and mix of "present low" and "absent".
--- 'absent low quality' was removed, because we now use a same consistent mechanism for present/absent calls, 
+-- 'absent low quality' was removed, because we now use a same consistent mechanism for present/absent calls,
 -- taking also into account 'absent low quality' evidence.
--- 'absent low quality' used to be: probesets always "absent" for this gene/condition, 
+-- 'absent low quality' used to be: probesets always "absent" for this gene/condition,
 -- but only seen by MAS5 (that we do not trust = "low quality" - "noExpression" should always be "high quality").
     reasonForExclusion enum('not excluded', 'pre-filtering',
         'noExpression conflict', 'undefined') not null default 'not excluded'
@@ -1018,7 +1018,7 @@ comment = 'This table stores information about expression calls produced from RN
 -- several differential expression analyses can be performed
 -- on the same experiment
 create table differentialExpressionAnalysis (
-    deaId SMALLINT unsigned not null,
+    deaId smallint unsigned not null,
     detectionType enum('Limma - MCM'),
 -- defines whether different organs at a same (broad) developmental stage
 -- were compared ('anatomy'), or a same organ at different developmental stages
@@ -1054,8 +1054,8 @@ create table differentialExpressionAnalysis (
 -- the fields microarrayExperimentId and rnaSeqExperimentId, to determine whether
 -- the DEA was using Affymetrix, or RNA-Seq.
 create table deaSampleGroup (
-    deaSampleGroupId MEDIUMINT unsigned not null,
-    deaId SMALLINT unsigned not null,
+    deaSampleGroupId mediumint unsigned not null,
+    deaId smallint unsigned not null,
     conditionId mediumint unsigned not null
 ) engine = innodb;
 
@@ -1064,8 +1064,8 @@ create table deaSampleGroup (
 -- with different comparisonFactors. But all the affymetrixChips inside a deaSampleGroup
 -- are unique
 create table deaSampleGroupToAffymetrixChip (
-    deaSampleGroupId MEDIUMINT unsigned not null,
-    bgeeAffymetrixChipId SMALLINT unsigned not null
+    deaSampleGroupId mediumint unsigned not null,
+    bgeeAffymetrixChipId smallint unsigned not null
 ) engine = innodb;
 
 -- An association table to link a rnaSeqLibrary to the deaSampleGroup it belongs to.
@@ -1073,7 +1073,7 @@ create table deaSampleGroupToAffymetrixChip (
 -- with different comparisonFactors. But all the rnaSeqLibraries inside a deaSampleGroup
 -- are unique
 create table deaSampleGroupToRnaSeqLibrary (
-    deaSampleGroupId MEDIUMINT unsigned not null,
+    deaSampleGroupId mediumint unsigned not null,
     rnaSeqLibraryId varchar(70) not null
 ) engine = innodb;
 
@@ -1086,8 +1086,8 @@ create table deaAffymetrixProbesetSummary (
 -- (all of them have the same of course). These probesets belong to the affymetrix chips, retrieved using the field `deaChipsGroupId`
 -- and the table `deaChipsGroupToAffymetrixChip`
     deaAffymetrixProbesetSummaryId varchar(70) not null,
-    deaSampleGroupId MEDIUMINT unsigned not null,
-    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
+    deaSampleGroupId mediumint unsigned not null,
+    bgeeGeneId mediumint unsigned not null COMMENT 'Internal gene ID',
     foldChange decimal(7,2) not null default 0,
     differentialExpressionId int unsigned,
 -- Warning, qualities must be ordered, the index in the enum is used in many queries
@@ -1106,8 +1106,8 @@ create table deaAffymetrixProbesetSummary (
 -- a line in this table is a summary of a set of RNA-Seq results, used for the
 -- differential expression analysis, belonging to different runs, corresponding to one group of runs
 create table deaRNASeqSummary (
-    geneSummaryId MEDIUMINT unsigned not null,
-    deaSampleGroupId MEDIUMINT unsigned not null,
+    geneSummaryId mediumint unsigned not null,
+    deaSampleGroupId mediumint unsigned not null,
     foldChange decimal(7,2) not null default 0,
     differentialExpressionId int unsigned,
 -- Warning, qualities must be ordered, the index in the enum is used in many queries
@@ -1131,8 +1131,8 @@ create table deaRNASeqSummary (
 -- for all data types with no propagation nor experiment expression summary.
 create table expression (
     expressionId int unsigned not null COMMENT 'Internal expression ID, not stable between releases.',
-    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID, not stable between releases.',
-    conditionId mediumint unsigned not null COMMENT 'ID of condition in the related condition table ("cond"), not stable between releases.',
+    bgeeGeneId mediumint unsigned not null COMMENT 'Internal gene ID, not stable between releases.',
+    conditionId mediumint unsigned not null COMMENT 'ID of condition in the related condition table ("cond"), not stable between releases.'
 ) engine = innodb
 comment = 'This table is a summary of expression calls for a given gene-condition (anatomical entity - developmental stage - sex- strain), over all the experiments and data types, with no propagation nor experiment expression summary.';
 
@@ -1143,7 +1143,7 @@ comment = 'This table is a summary of expression calls for a given gene-conditio
 -- see http://stackoverflow.com/q/42781299/1768736
 create table globalExpression (
     globalExpressionId int unsigned not null COMMENT 'Internal expression ID, not stable between releases.',
-    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID, not stable between releases.',
+    bgeeGeneId mediumint unsigned not null COMMENT 'Internal gene ID, not stable between releases.',
     globalConditionId mediumint unsigned not null COMMENT 'ID of condition in the related condition table ("cond"), not stable between releases.',
 
 -- ** OBSERVED DATA STATES ** --
@@ -1180,54 +1180,54 @@ create table globalExpression (
 
 -- ** EXPRESSION SUMMARIES **
 -- Note: EST data are not used to produce no-expression calls
-    estLibPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of EST libraries showing expression of this gene in this condition (not taking into account sub-conditions) with a high quality.', 
-    estLibPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of EST libraries showing expression of this gene in this condition (not taking into account sub-conditions) with a low quality.', 
-    estLibPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of EST libraries showing expression of this gene, solely in the sub-conditions of this condition, with a high quality.', 
-    estLibPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of EST libraries showing expression of this gene, solely in the sub-conditions of this condition, with a low quality.', 
-    estLibPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of EST libraries showing expression of this gene in this condition or in sub-conditions with a high quality.', 
+    estLibPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of EST libraries showing expression of this gene in this condition (not taking into account sub-conditions) with a high quality.',
+    estLibPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of EST libraries showing expression of this gene in this condition (not taking into account sub-conditions) with a low quality.',
+    estLibPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of EST libraries showing expression of this gene, solely in the sub-conditions of this condition, with a high quality.',
+    estLibPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of EST libraries showing expression of this gene, solely in the sub-conditions of this condition, with a low quality.',
+    estLibPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of EST libraries showing expression of this gene in this condition or in sub-conditions with a high quality.',
     estLibPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of EST libraries showing expression of this gene in this condition or in sub-conditions with a low quality.',
-    estLibPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of EST libraries used to show presence of expression (low or high) in sub-conditions of this condition.', 
+    estLibPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of EST libraries used to show presence of expression (low or high) in sub-conditions of this condition.',
 
-    affymetrixExpPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments showing expression of this gene in this condition (not taking into account sub-conditions) with a high quality.', 
-    affymetrixExpPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments showing expression of this gene in this condition (not taking into account sub-conditions) with a low quality.', 
-    affymetrixExpAbsentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments showing absence of expression of this gene in this condition (not taking into account parent conditions) with a high quality.', 
+    affymetrixExpPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments showing expression of this gene in this condition (not taking into account sub-conditions) with a high quality.',
+    affymetrixExpPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments showing expression of this gene in this condition (not taking into account sub-conditions) with a low quality.',
+    affymetrixExpAbsentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments showing absence of expression of this gene in this condition (not taking into account parent conditions) with a high quality.',
     affymetrixExpAbsentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments showing absence of expression of this gene in this condition (not taking into account parent conditions) with a low quality.',
-    affymetrixExpPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments showing expression of this gene, solely in the sub-conditions of this condition, with a high quality.', 
-    affymetrixExpPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments showing expression of this gene, solely in the sub-conditions of this condition, with a low quality.', 
-    affymetrixExpAbsentHighParentCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments showing absence of expression of this gene, solely in the valid parent conditions of this condition, with a high quality.', 
+    affymetrixExpPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments showing expression of this gene, solely in the sub-conditions of this condition, with a high quality.',
+    affymetrixExpPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments showing expression of this gene, solely in the sub-conditions of this condition, with a low quality.',
+    affymetrixExpAbsentHighParentCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments showing absence of expression of this gene, solely in the valid parent conditions of this condition, with a high quality.',
     affymetrixExpAbsentLowParentCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments showing absence of expression of this gene, solely in the valid parent conditions of this condition, with a low quality.',
-    affymetrixExpPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments showing expression of this gene in this condition or in sub-conditions with a high quality.', 
-    affymetrixExpPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments showing expression of this gene in this condition or in sub-conditions with a low quality.', 
-    affymetrixExpAbsentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments showing absence of expression of this gene in this condition or valid parent conditions with a high quality.', 
+    affymetrixExpPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments showing expression of this gene in this condition or in sub-conditions with a high quality.',
+    affymetrixExpPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments showing expression of this gene in this condition or in sub-conditions with a low quality.',
+    affymetrixExpAbsentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments showing absence of expression of this gene in this condition or valid parent conditions with a high quality.',
     affymetrixExpAbsentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments showing absence of expression of this gene in this condition or valid parent conditions with a low quality.',
     affymetrixExpPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of Affymetrix experiments used either to show presence of expression (low or high) in sub-conditions of this condition, or absence of expression (low or high) in parent conditions of this condition.',
 
-    inSituExpPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing expression of this gene in this condition (not taking into account sub-conditions) with a high quality.', 
-    inSituExpPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing expression of this gene in this condition (not taking into account sub-conditions) with a low quality.', 
-    inSituExpAbsentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing absence of expression of this gene in this condition (not taking into account parent conditions) with a high quality.', 
+    inSituExpPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing expression of this gene in this condition (not taking into account sub-conditions) with a high quality.',
+    inSituExpPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing expression of this gene in this condition (not taking into account sub-conditions) with a low quality.',
+    inSituExpAbsentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing absence of expression of this gene in this condition (not taking into account parent conditions) with a high quality.',
     inSituExpAbsentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing absence of expression of this gene in this condition (not taking into account parent conditions) with a low quality.',
-    inSituExpPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing expression of this gene, solely in the sub-conditions of this condition, with a high quality.', 
-    inSituExpPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing expression of this gene, solely in the sub-conditions of this condition, with a low quality.', 
-    inSituExpAbsentHighParentCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing absence of expression of this gene, solely in the valid parent conditions of this condition, with a high quality.', 
-    inSituExpAbsentLowParentCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing absence of expression of this gene, solely in the valid parent conditions of this condition, with a low quality.',  
-    inSituExpPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing expression of this gene in this condition or in sub-conditions with a high quality.', 
-    inSituExpPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing expression of this gene in this condition or in sub-conditions with a low quality.', 
-    inSituExpAbsentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing absence of expression of this gene in this condition or valid parent conditions with a high quality.', 
-    inSituExpAbsentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing absence of expression of this gene in this condition or valid parent conditions with a low quality.', 
+    inSituExpPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing expression of this gene, solely in the sub-conditions of this condition, with a high quality.',
+    inSituExpPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing expression of this gene, solely in the sub-conditions of this condition, with a low quality.',
+    inSituExpAbsentHighParentCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing absence of expression of this gene, solely in the valid parent conditions of this condition, with a high quality.',
+    inSituExpAbsentLowParentCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing absence of expression of this gene, solely in the valid parent conditions of this condition, with a low quality.',
+    inSituExpPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing expression of this gene in this condition or in sub-conditions with a high quality.',
+    inSituExpPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing expression of this gene in this condition or in sub-conditions with a low quality.',
+    inSituExpAbsentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing absence of expression of this gene in this condition or valid parent conditions with a high quality.',
+    inSituExpAbsentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments showing absence of expression of this gene in this condition or valid parent conditions with a low quality.',
     inSituExpPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of in situ hybridization experiments used either to show presence of expression (low or high) in sub-conditions of this condition, or absence of expression (low or high) in parent conditions of this condition.',
 
-    rnaSeqExpPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing expression of this gene in this condition (not taking into account sub-conditions) with a high quality.', 
-    rnaSeqExpPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing expression of this gene in this condition (not taking into account sub-conditions) with a low quality.', 
-    rnaSeqExpAbsentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing absence of expression of this gene in this condition (not taking into account parent conditions) with a high quality.', 
+    rnaSeqExpPresentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing expression of this gene in this condition (not taking into account sub-conditions) with a high quality.',
+    rnaSeqExpPresentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing expression of this gene in this condition (not taking into account sub-conditions) with a low quality.',
+    rnaSeqExpAbsentHighSelfCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing absence of expression of this gene in this condition (not taking into account parent conditions) with a high quality.',
     rnaSeqExpAbsentLowSelfCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing absence of expression of this gene in this condition (not taking into account parent conditions) with a low quality.',
-    rnaSeqExpPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing expression of this gene, solely in the sub-conditions of this condition, with a high quality.', 
-    rnaSeqExpPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing expression of this gene, solely in the sub-conditions of this condition, with a low quality.', 
-    rnaSeqExpAbsentHighParentCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing absence of expression of this gene, solely in the valid parent conditions of this condition, with a high quality.', 
-    rnaSeqExpAbsentLowParentCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing absence of expression of this gene, solely in the valid parent conditions of this condition, with a low quality.',  
-    rnaSeqExpPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing expression of this gene in this condition or in sub-conditions with a high quality.', 
-    rnaSeqExpPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing expression of this gene in this condition or in sub-conditions with a low quality.', 
-    rnaSeqExpAbsentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing absence of expression of this gene in this condition or valid parent conditions with a high quality.', 
-    rnaSeqExpAbsentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing absence of expression of this gene in this condition or valid parent conditions with a low quality.', 
+    rnaSeqExpPresentHighDescendantCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing expression of this gene, solely in the sub-conditions of this condition, with a high quality.',
+    rnaSeqExpPresentLowDescendantCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing expression of this gene, solely in the sub-conditions of this condition, with a low quality.',
+    rnaSeqExpAbsentHighParentCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing absence of expression of this gene, solely in the valid parent conditions of this condition, with a high quality.',
+    rnaSeqExpAbsentLowParentCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing absence of expression of this gene, solely in the valid parent conditions of this condition, with a low quality.',
+    rnaSeqExpPresentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing expression of this gene in this condition or in sub-conditions with a high quality.',
+    rnaSeqExpPresentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing expression of this gene in this condition or in sub-conditions with a low quality.',
+    rnaSeqExpAbsentHighTotalCount SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing absence of expression of this gene in this condition or valid parent conditions with a high quality.',
+    rnaSeqExpAbsentLowTotalCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments showing absence of expression of this gene in this condition or valid parent conditions with a low quality.',
     rnaSeqExpPropagatedCount  SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Count of RNA-Seq experiments used either to show presence of expression (low or high) in sub-conditions of this condition, or absence of expression (low or high) in parent conditions of this condition.',
 
 -- ** RANKS **
@@ -1277,7 +1277,7 @@ create table globalExpression (
 -- For EST and in situ data, this is irrelevant as we pool all data for a same condition together,
 -- and use dense ranking instead of fractional ranking. As a result, the max rank in each condition
 -- is used for weighted mean computation between data types.
-    rnaSeqDistinctRankSum int unsigned COMMENT 'Factor used to weight the RNA-Seq normalized mean rank (rnaSeqMeanRankNorm), to compute a global weighted mean rank between all data types. Corresponds to the sum of distinct ranks in each library mapped to this condition. Note that for EST and in situ data, the max rank found in the related condition table is instead used to compute the weighted mean between data types.', 
+    rnaSeqDistinctRankSum int unsigned COMMENT 'Factor used to weight the RNA-Seq normalized mean rank (rnaSeqMeanRankNorm), to compute a global weighted mean rank between all data types. Corresponds to the sum of distinct ranks in each library mapped to this condition. Note that for EST and in situ data, the max rank found in the related condition table is instead used to compute the weighted mean between data types.',
     affymetrixDistinctRankSum int unsigned COMMENT 'Factor used to weight the Affymetrix normalized mean rank (affymetrixMeanRankNorm), to compute a global weighted mean rank between all data types. Corresponds to the sum of distinct ranks in each chip mapped to this condition. Note that for EST and in situ data, the max rank found in the related condition table is instead used to compute the weighted mean between data types.',
 
 -- Same fields, but dedicated to "global" ranks, computed by taking into account
@@ -1292,7 +1292,7 @@ create table globalExpression (
     estGlobalRankNorm decimal(9, 2) unsigned COMMENT 'EST normalized rank for this gene in this condition and all its descendant conditions, after normalization over all data types, conditions and species, computed from the field estRank, and estMaxRank in the related condition table.',
     inSituGlobalRankNorm decimal(9, 2) unsigned COMMENT 'In situ hybridization normalized rank for this gene in this condition and all its descendant conditions, after normalization over all data types, conditions and species, computed from the field inSituRank, and inSituMaxRank in the related condition table.',
 
-    rnaSeqGlobalDistinctRankSum int unsigned COMMENT 'Factor used to weight the RNA-Seq normalized global mean rank (rnaSeqGlobalMeanRankNorm), to compute a global weighted mean rank between all data types. Corresponds to the sum of distinct ranks in each library mapped to this condition and all its descendant conditions. Note that for EST and in situ data, the global max rank found in the related condition table is instead used to compute the weighted mean between data types.', 
+    rnaSeqGlobalDistinctRankSum int unsigned COMMENT 'Factor used to weight the RNA-Seq normalized global mean rank (rnaSeqGlobalMeanRankNorm), to compute a global weighted mean rank between all data types. Corresponds to the sum of distinct ranks in each library mapped to this condition and all its descendant conditions. Note that for EST and in situ data, the global max rank found in the related condition table is instead used to compute the weighted mean between data types.',
     affymetrixGlobalDistinctRankSum int unsigned COMMENT 'Factor used to weight the Affymetrix normalized global mean rank (affymetrixGlobalMeanRankNorm), to compute a global weighted mean rank between all data types. Corresponds to the sum of distinct ranks in each chip mapped to this condition and all its descendant conditions. Note that for EST and in situ data, the global max rank found in the related condition table is instead used to compute the weighted mean between data types.'
 ) engine = innodb
 comment = 'This table is a summary of expression calls for a given gene-condition (anatomical entity - developmental stage - sex- strain), over all the experiments and data types, with all data propagated and reconciled, and with experiment expression summaries computed.';
@@ -1303,7 +1303,7 @@ comment = 'This table is a summary of expression calls for a given gene-conditio
 
 create table differentialExpression (
     differentialExpressionId int unsigned not null,
-    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
+    bgeeGeneId mediumint unsigned not null COMMENT 'Internal gene ID',
     conditionId mediumint unsigned not null,
 -- defines whether different organs at a same (broad) developmental stage
 -- were compared ('anatomy'), or a same organ at different developmental stages
@@ -1344,7 +1344,7 @@ create table differentialExpression (
 -- this version of the diff expression table is not considered as of Bgee 13
 /*create table differentialExpression (
     differentialExpressionId int unsigned not null,
-    bgeeGeneId MEDIUMINT unsigned not null COMMENT 'Internal gene ID',
+    bgeeGeneId mediumint unsigned not null COMMENT 'Internal gene ID',
     conditionId mediumint unsigned not null,
 -- defines whether different organs at a same (broad) developmental stage
 -- were compared ('anatomy'), or a same organ at different developmental stages
@@ -1411,7 +1411,7 @@ create table differentialExpression (
 -- ******************************************
 -- AVAILABLE FILES FOR DOWNLOAD
 -- ******************************************
--- see (https://gitlab.isb-sib.ch/Bgee/bgee_apps/issues/31)
+-- see (https://gitlab.sib.swiss/Bgee/bgee_apps/issues/31)
 create table downloadFile (
   downloadFileId mediumint unsigned not null,
 -- path relative to the root of the download file directory, including file name

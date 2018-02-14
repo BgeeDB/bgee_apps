@@ -36,6 +36,7 @@ import org.bgee.controller.exception.RequestSizeExceededException;
 import org.bgee.controller.exception.ValueSizeExceededException;
 import org.bgee.controller.exception.InvalidFormatException;
 import org.bgee.controller.servletutils.BgeeHttpServletRequest;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 
 /**
  * This class is intended to hold parameters of a query to the server, 
@@ -797,7 +798,25 @@ public class RequestParameters {
             // If it is a param that has the desired isStorable status, proceed...
             if (loadStorable || !parameter.isStorable()){
                 // Fetch the string values from the URL
-                String[] valuesFromUrl = paramValues.get(parameter.getName());
+                String[] originalValuesFromUrl = paramValues.get(parameter.getName());
+                // For backward compatibility with Bgee 13, for the parameter SUMMARY_QUALITY,
+                // replace "low" with "silver" and "high" with "gold".
+                String[] valuesFromUrl = originalValuesFromUrl;
+                if (URLParameters.SUMMARY_QUALITY_PARAM_NAME.equals(parameter.getName()) &&
+                        originalValuesFromUrl != null) {
+                    valuesFromUrl = Arrays.stream(originalValuesFromUrl)
+                            .map(v -> {
+                                if ("low".equalsIgnoreCase(v)) {
+                                    return SummaryQuality.SILVER.getStringRepresentation();
+                                }
+                                if ("high".equalsIgnoreCase(v)) {
+                                    return SummaryQuality.GOLD.getStringRepresentation();
+                                }
+                                return v;
+                            })
+                            .toArray(String[]::new);
+                }
+
                 if (log.isTraceEnabled()) {
                     log.trace("Values retrieved: {}", Arrays.deepToString(
                             Optional.ofNullable(valuesFromUrl).orElse(new String[0])));

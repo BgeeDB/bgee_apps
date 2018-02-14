@@ -51,6 +51,8 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      * Only the mean ranks computed from the data types requested in the query are considered. 
      * </ul>
      */
+    //TODO: make consistent BGEE_GENE_ID in Attribute and GENE_ID in OrderingAttribute,
+    //GLOBAL_MEAN_RANK and MEAN_RANK
     enum OrderingAttribute implements DAO.OrderingAttribute {
         GENE_ID, CONDITION_ID, ANAT_ENTITY_ID, STAGE_ID, OMA_GROUP_ID, MEAN_RANK;
     }

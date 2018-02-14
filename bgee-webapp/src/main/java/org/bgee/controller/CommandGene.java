@@ -26,6 +26,7 @@ import org.bgee.model.expressiondata.Call.ExpressionCall.ClusteringMethod;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.ConditionGraph;
+import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
@@ -261,50 +262,47 @@ public class CommandGene extends CommandParent {
         // sorting, and redundant calls
         //**************************************
         List<ExpressionCall> organCalls = this.getAnatEntitySilverExpressionCalls(gene);
-        
         if (organCalls.isEmpty()) {
             log.debug("No calls for gene {}", gene.getEnsemblGeneId());
              return log.exit(new GeneResponse(gene, organCalls, new HashSet<>(), true, 
                      new LinkedHashMap<>(), new HashMap<>(), new HashMap<>(), null));
         }
-        
-        ConditionGraph organGraph = new ConditionGraph(
-                organCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()), 
-                serviceFactory);
-        
-        //we need to make sure that the ExpressionCalls are ordered in exactly the same way 
-        //for the display and for the clustering, otherwise the display will be buggy, 
-        //notably for calls with equal ranks. And we need to take into account 
-        //relations between Conditions for filtering them, which would be difficult to achieve
-        //only by a query to the data source. So, we order them anyway. 
-        long startFilteringTimeInMs = System.currentTimeMillis();
-        Collections.sort(organCalls, new ExpressionCall.RankComparator(organGraph));
-        log.debug("Calls sorted in {} ms", System.currentTimeMillis() - startFilteringTimeInMs);
-        
-        final Set<String> orderedOrganIds = organCalls.stream()
+        final Set<String> organIds = organCalls.stream()
                 .map(c ->c .getCondition().getAnatEntityId())
                 .collect(Collectors.toSet());
         
         final List<ExpressionCall> organStageCalls = this.getAnatEntityDevStageBronzeExpressionCalls(gene);
-
+        //XXX: why don't we provided the organIds to perform the SQL query, instead of filtering afterwards?
         List<ExpressionCall> orderedCalls = organStageCalls.stream()
-                .filter(c -> orderedOrganIds.contains(c.getCondition().getAnatEntityId()))
+                .filter(c -> organIds.contains(c.getCondition().getAnatEntityId()))
                 .collect(Collectors.toList());
+        if (orderedCalls.isEmpty()) {
+            log.debug("No calls for gene {}", gene.getEnsemblGeneId());
+            //XXX: So, organCalls is needed only to determine the organ calls with a at least silver quality?
+             return log.exit(new GeneResponse(gene, orderedCalls, new HashSet<>(), true,
+                     new LinkedHashMap<>(), new HashMap<>(), new HashMap<>(), null));
+        }
 
+        //we need to make sure that the ExpressionCalls are ordered in exactly the same way
+        //for the display and for the clustering, otherwise the display will be buggy,
+        //notably for calls with equal ranks. And we need to take into account
+        //relations between Conditions for filtering them, which would be difficult to achieve
+        //only by a query to the data source. So, we order them anyway.
+        //ORGAN-STAGE
         ConditionGraph organStageGraph = new ConditionGraph(
                 orderedCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()), 
                 serviceFactory);
-
         Collections.sort(orderedCalls, new ExpressionCall.RankComparator(organStageGraph));
-
+        //ORGAN
+        //We need the ConditionGraph for sorting the calls. Creating the AnatEntityOntology for this graph is costly,
+        //so we re-use the AnatEntityOntology already produced for the organStageGraph
+        ConditionGraph organGraph = new ConditionGraph(
+                organCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()),
+                organStageGraph.getAnatEntityOntology(), null);
+        Collections.sort(organCalls, new ExpressionCall.RankComparator(organGraph));
+        //REDUNDANT ORGAN-STAGE CALLS
         final Set<ExpressionCall> redundantCalls = ExpressionCall.identifyRedundantCalls(
                 orderedCalls, organStageGraph);
-        
-        if (orderedCalls.isEmpty()) {
-            log.debug("No calls for gene {}", gene.getEnsemblGeneId());
-             return log.exit(new GeneResponse(gene, orderedCalls, new HashSet<>(), true, 
-                     new LinkedHashMap<>(), new HashMap<>(), new HashMap<>(), null));
-        }
 
         //**************************************
         // Grouping of Calls per anat. entity, 
@@ -399,27 +397,32 @@ public class CommandGene extends CommandParent {
      */
     private List<ExpressionCall> getAnatEntitySilverExpressionCalls(Gene gene) {
         log.entry(gene);
-                    
+
         CallService service = serviceFactory.getCallService();
-        
+
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
                 new LinkedHashMap<>();
         //The ordering is not essential here, because anyway we will need to order calls 
         //with an equal rank, based on the relations between their conditions, which is difficult 
-        //to make in a query to the data source. 
+        //to make in a query to the data source.
+        //XXX: test if there is a performance difference if we don't use the order by
         serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
 
         Map<SummaryCallType.ExpressionSummary, SummaryQuality> silverExpressedCallFilter = new HashMap<>();
         silverExpressedCallFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
+        Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
+        obsDataFilter.put(CallType.Expression.EXPRESSED, true);
         final List<ExpressionCall> calls = service.loadExpressionCalls(
-                new ExpressionCallFilter(silverExpressedCallFilter, 
+                new ExpressionCallFilter(silverExpressedCallFilter,
                         Collections.singleton(new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId())),
-                        null, null, true, true, false), 
-                EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID, 
-                        CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.GLOBAL_MEAN_RANK), 
+                        null, null, obsDataFilter, null, null),
+                EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
+                           //XXX: do we need DATA_QUALITY?
+                           CallService.Attribute.DATA_QUALITY, CallService.Attribute.GLOBAL_MEAN_RANK,
+                           CallService.Attribute.EXPERIMENT_COUNTS),
                 serviceOrdering)
             .collect(Collectors.toList());
-        
+
         return log.exit(calls);
     }
     
@@ -438,21 +441,25 @@ public class CommandGene extends CommandParent {
                     new LinkedHashMap<>();
         //The ordering is not essential here, because anyway we will need to order calls 
         //with an equal rank, based on the relations between their conditions, which is difficult 
-        //to make in a query to the data source. 
+        //to make in a query to the data source.
+        //XXX: test if there is a performance difference if we don't use the order by
         serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
             
         CallService service = serviceFactory.getCallService();
         
         Map<SummaryCallType.ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
         summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE);
+        Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
+        obsDataFilter.put(CallType.Expression.EXPRESSED, true);
         return log.exit(service.loadExpressionCalls(
-                new ExpressionCallFilter(summaryCallTypeQualityFilter, 
+                new ExpressionCallFilter(summaryCallTypeQualityFilter,
                         Collections.singleton(new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId())),
-                        null, null, true, true, null), 
-                EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID, 
-                        CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.CALL_TYPE, 
+                        null, null, obsDataFilter, null, null),
+                EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
+                        CallService.Attribute.DEV_STAGE_ID,
+                        //XXX: do we need DATA_QUALITY?
                         CallService.Attribute.DATA_QUALITY, CallService.Attribute.GLOBAL_MEAN_RANK,
-                        CallService.Attribute.EXPERIMENT_COUNTS), 
+                        CallService.Attribute.EXPERIMENT_COUNTS),
                 serviceOrdering)
             .collect(Collectors.toList()));
     }

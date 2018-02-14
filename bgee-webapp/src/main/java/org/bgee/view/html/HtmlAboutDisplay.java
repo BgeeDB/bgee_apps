@@ -54,8 +54,14 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
         urlTopAnatGenerator.setPage(RequestParameters.PAGE_TOP_ANAT);
         RequestParameters urlDocumentationGenerator = this.getNewRequestParameters();
         urlDocumentationGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
-        
-        this.startDisplay("Bgee about page");
+
+        String version = this.getWebAppVersion();
+        String title = "Bgee ";
+        if (version != null) {
+            title += "release " + version + " ";
+        }
+        title += "about page";
+        this.startDisplay(title);
 
         this.writeln("<h1>About</h1>");
 

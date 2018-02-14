@@ -187,6 +187,9 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
 
     /**
      * {@code EntityTO} representing a condition in the Bgee database.
+     * It can represent either a "raw" condition or a "global" condition (see
+     * {@link #getRawConditionsBySpeciesIds(Collection, Collection)} and
+     * {@link #getGlobalConditionsBySpeciesIds(Collection, Collection, Collection)}.
      * 
      * @author  Valentine Rech de Laval
      * @author Frederic Bastian

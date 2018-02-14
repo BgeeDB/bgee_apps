@@ -13,7 +13,7 @@ import org.bgee.model.dao.api.exception.DAOException;
  *
  * @author  Valentine Rech de Laval
  * @author Frederic Bastian
- * @version Bgee 14 Feb. 2017
+ * @version Bgee 14 Nov. 2017
  * @see     TaxonConstraintTO
  * @since   Bgee 13
  */
@@ -64,17 +64,39 @@ public interface TaxonConstraintDAO {
      * once results are retrieved.
      * 
      * @param speciesIds    A {@code Collection} of {@code Integer}s that are the IDs of species 
-     *                      to retrieve taxon constrains for.
-     * @param attributes    A {@code Collection} of {@code TaxonConstraintDAO.Attribute}s defining  
+     *                      to retrieve taxon constraints for.
+     * @param attributes    A {@code Collection} of {@code TaxonConstraintDAO.Attribute}s defining
      *                      the attributes to populate in the returned {@code TaxonConstraintTO}s.
-     *                      If {@code null} or empty, all attributes are populated. 
-     * @return              A {@code TaxonConstraintTOResultSet} allowing to retrieve 
+     *                      If {@code null} or empty, all attributes are populated.
+     * @return              A {@code TaxonConstraintTOResultSet} allowing to retrieve
      *                      anatomical entity taxon constrains from data source.
-     * @throws DAOException If an error occurred when accessing the data source. 
+     * @throws DAOException If an error occurred when accessing the data source.
      */
     public TaxonConstraintTOResultSet<Integer> getAnatEntityRelationTaxonConstraints(
             Collection<Integer> speciesIds, Collection<TaxonConstraintDAO.Attribute> attributes)
             throws DAOException;
+    /**
+     * Retrieve anatomical entity relation taxon constrains from data source.
+     * The constrains can be filtered by species IDs and/or internal relation IDs.
+     * <p>
+     * The taxon constrains are retrieved and returned as a {@code TaxonConstraintTOResultSet}.
+     * It is the responsibility of the caller to close this {@code DAOResultSet}
+     * once results are retrieved.
+     *
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that are the IDs of species
+     *                      to retrieve taxon constraints for.
+     * @param relIds        A {@code Collection} of {@code Integer}s that are IDs of relations
+     *                      to retrieve taxon constraints for.
+     * @param attributes    A {@code Collection} of {@code TaxonConstraintDAO.Attribute}s defining
+     *                      the attributes to populate in the returned {@code TaxonConstraintTO}s.
+     *                      If {@code null} or empty, all attributes are populated.
+     * @return              A {@code TaxonConstraintTOResultSet} allowing to retrieve
+     *                      anatomical entity taxon constrains from data source.
+     * @throws DAOException If an error occurred when accessing the data source.
+     */
+    public TaxonConstraintTOResultSet<Integer> getAnatEntityRelationTaxonConstraints(
+            Collection<Integer> speciesIds, Collection<Integer> relIds,
+            Collection<TaxonConstraintDAO.Attribute> attributes) throws DAOException;
 
     /**
      * Retrieve developmental stage taxon constrains from data source.
@@ -222,6 +244,46 @@ public interface TaxonConstraintDAO {
         @Override
         public String toString() {
             return "Entity ID: " + this.getEntityId() + " - Species ID: " + this.getSpeciesId();
+        }
+
+        //FIXME: I thought TOs never implement hashCode and equals
+        //(we use the TOComparator instead for tests)
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((this.getEntityId() == null) ? 0 : this.getEntityId().hashCode());
+            result = prime * result + ((this.getSpeciesId() == null) ? 0 : this.getSpeciesId().hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            TaxonConstraintTO<?> other = (TaxonConstraintTO<?>) obj;
+            if (this.getEntityId() == null) {
+                if (other.getEntityId() != null) {
+                    return false;
+                }
+            } else if (!this.getEntityId().equals(other.getEntityId())) {
+                return false;
+            }
+            if (this.getSpeciesId() == null) {
+                if (other.getSpeciesId() != null) {
+                    return false;
+                }
+            } else if (!this.getSpeciesId().equals(other.getSpeciesId())) {
+                return false;
+            }
+            return true;
         }
     }
 }

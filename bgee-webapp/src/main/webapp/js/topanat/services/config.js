@@ -1,13 +1,7 @@
 angular.module('services.config', [])
     .constant('configuration', {
-    	//XXX: mockupUrl has stopped being used in all URLs, but actually, this was maybe a bad idea, 
-    	//as it would be nice to be ale to run the computations on a different server?
-    	//If we want to resurrect this, we would need to go through all URLs used 
-    	//to query the server. But maybe this should be part of a bigger update, 
-    	//making use of the Bgee JS objects to generate URLs, or maybe by using URLs 
-    	//provided by the server in the responses...
-    	//TODO we should find a solution to manage several bgee version on the same server. 
-        mockupUrl: '/',
+    	    //XXX: maybe we should stop using this mockUrl everywhere it is used
+        mockupUrl: GLOBAL_PROPS.getWebAppURLStart(),
         expr_type: 'EXPRESSED',
         data_type: ['RNA-Seq', 'Affymetrix data', 'In situ hybridization', 'EST'],
         selectedDataTypes: ['RNA-Seq', 'Affymetrix data', 'In situ hybridization', 'EST'],

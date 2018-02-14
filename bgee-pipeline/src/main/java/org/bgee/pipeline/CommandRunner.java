@@ -11,22 +11,16 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.annotations.AnnotationCommon;
 import org.bgee.pipeline.annotations.InsertSimilarityAnnotation;
 import org.bgee.pipeline.annotations.SimilarityAnnotation;
-import org.bgee.pipeline.expression.FilterNoExprCalls;
-import org.bgee.pipeline.expression.InsertGlobalCalls;
 import org.bgee.pipeline.expression.InsertPropagatedCalls;
-import org.bgee.pipeline.expression.downloadfile.GenerateExprFile;
 import org.bgee.pipeline.expression.downloadfile.GenerateExprFile2;
 import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile;
-import org.bgee.pipeline.expression.downloadfile.GenerateMultiSpeciesDiffExprFile;
-import org.bgee.pipeline.expression.downloadfile.GenerateRankFile;
-import org.bgee.pipeline.expression.downloadfile.InsertSpeciesDataGroups;
 import org.bgee.pipeline.gene.InsertGO;
-import org.bgee.pipeline.gene.ParseOrthoXML;
 import org.bgee.pipeline.ontologycommon.InsertCIO;
 import org.bgee.pipeline.ontologycommon.InsertECO;
 import org.bgee.pipeline.ontologycommon.OntologyTools;
 import org.bgee.pipeline.species.GenerateTaxonOntology;
 import org.bgee.pipeline.species.InsertTaxa;
+import org.bgee.pipeline.uberon.CorrectTaxonConstraints;
 import org.bgee.pipeline.uberon.InsertUberon;
 import org.bgee.pipeline.uberon.TaxonConstraints;
 import org.bgee.pipeline.uberon.Uberon;
@@ -262,6 +256,9 @@ public class CommandRunner {
         case "InsertPropagatedCalls": 
             InsertPropagatedCalls.main(newArgs);
             break;
+        case "CorrectTaxonConstraints":
+            CorrectTaxonConstraints.main(newArgs);
+            break;
  
         //---------- Download file generation -----------
         case "GenerateDiffExprFile":
@@ -274,9 +271,9 @@ public class CommandRunner {
             throw log.throwing(new UnsupportedOperationException("Method disabled while updated"));
 //            GenerateMultiSpeciesDiffExprFile.main(newArgs);
 //            break;
-        case "InsertSpeciesDataGroups":
-            InsertSpeciesDataGroups.main(newArgs);
-            break;
+//        case "InsertSpeciesDataGroups":
+//            InsertSpeciesDataGroups.main(newArgs);
+//            break;
         //Rank download files
         case "GenerateRankFile": 
             throw log.throwing(new UnsupportedOperationException("Method disabled while updated"));

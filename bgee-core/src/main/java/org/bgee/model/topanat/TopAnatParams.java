@@ -17,6 +17,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.CallFilter;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.ConditionFilter;
+import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DecorrelationType;
 import org.bgee.model.expressiondata.baseelements.StatisticTest;
@@ -607,6 +608,15 @@ public class TopAnatParams {
         
         Collection<ConditionFilter> condFilters = StringUtils.isBlank(this.devStageId)? null: 
             Collections.singleton(new ConditionFilter(null, Collections.singleton(this.devStageId), null));
+
+        //TODO: verify this logic
+        //(former note: we need to decide whether we want calls with data propagated only,
+        //because they can have a higher quality thanks to data propagation.)
+        Map<CallType.Expression, Boolean> obsDataFilter = null;
+        if(StringUtils.isBlank(this.devStageId)) {
+            obsDataFilter = new HashMap<>();
+            obsDataFilter.put(null, true);
+        }
         
         if (this.callType == ExpressionSummary.EXPRESSED) {
             Map<ExpressionSummary, SummaryQuality> callQualFilter = new HashMap<>();
@@ -622,7 +632,10 @@ public class TopAnatParams {
                     this.dataTypes,
                     //observed data filter
                     //XXX: this should be adapted if we want TopAnat to work on a graph of conditions
-                    true, true, null
+                    //TODO: investigate whether results are the same if we use all data,
+                    //including redundant calls with observed data
+                    //(if we just give values null, null, null)
+                    obsDataFilter, true, null
             ));
         }
         if (this.callType == DiffExpressionSummary.OVER_EXPRESSED) {

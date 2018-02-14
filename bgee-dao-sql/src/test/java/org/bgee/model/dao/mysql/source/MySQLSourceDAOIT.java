@@ -74,7 +74,7 @@ public class MySQLSourceDAOIT extends MySQLITAncestor {
                 new SourceTO(null, "First DataSource", null, null, null, "evidenceUrl", null, null, null, null, null, null),
                 new SourceTO(null, "NCBI Taxonomy", null, null, null, "", null, null, null, null, null, null),
                 new SourceTO(null, "Ensembl", null, null, null, "", null, null, null, null, null, null), 
-                new SourceTO(null, "ZFIN", null, null, null, "http://zfin.org/cgi-bin/ZFIN_jump?record=[evidence_id]",
+                new SourceTO(null, "ZFIN", null, null, null, "https://zfin.org/[evidence_id]",
                         null, null, null, null, null, null)); 
         //Compare
         assertTrue("SourceTOs incorrectly retrieved: expectedSources= " + expectedSources + 
@@ -191,16 +191,16 @@ public class MySQLSourceDAOIT extends MySQLITAncestor {
                         "experimentUrl", "evidenceUrl", "baseUrl", asDate(2012, Month.OCTOBER, 19),
                         "1.0", false, SourceCategory.GENOMICS, 1),
                 new SourceTO(2, "NCBI Taxonomy", "Source taxonomy used in Bgee", "", "", "",
-                        "http://www.ncbi.nlm.nih.gov/taxonomy", 
+                        "https://www.ncbi.nlm.nih.gov/taxonomy",
                         asDate(2012, Month.OCTOBER, 20), "v13", true, SourceCategory.NONE, 3), 
                 new SourceTO(3, "Ensembl", "Ensembl desc",
                         "http://Oct2012.archive.ensembl.org/[species_ensembl_link]/Gene/Summary?g=[gene_id];gene_summary=das:http://bgee.unil.ch/das/bgee=label", 
                         "", "", "http://May2012.archive.ensembl.org/", 
                         asDate(2014, Month.FEBRUARY, 18), "v1", true, SourceCategory.NONE, 255), 
                 new SourceTO(4, "ZFIN", "ZFIN desc", 
-                        "http://zfin.org/cgi-bin/ZFIN_jump?record=[xref_id]",
-                        "http://zfin.org/cgi-bin/ZFIN_jump?record=[experiment_id]", 
-                        "http://zfin.org/cgi-bin/ZFIN_jump?record=[evidence_id]", 
-                        "http://zfin.org/", null, "rv:2", true, SourceCategory.IN_SITU, 2));
+                        "https://zfin.org/[xref_id]",
+                        "https://zfin.org/[experiment_id]", 
+                        "https://zfin.org/[evidence_id]", 
+                        "https://zfin.org/", null, "rv:2", true, SourceCategory.IN_SITU, 2));
     }
 }

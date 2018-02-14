@@ -73,9 +73,9 @@ public class MySQLHierarchicalGroupDAOIT extends MySQLITAncestor {
         // Taxon ID without species ID (taxonId = 111)
         taxonId = 111;
         List<HierarchicalGroupToGeneTO> expectedGroupToGene = Arrays.asList(
-                new HierarchicalGroupToGeneTO(1, 2),
-                new HierarchicalGroupToGeneTO(1, 3), 
-                new HierarchicalGroupToGeneTO(5, 1));
+                new HierarchicalGroupToGeneTO(1, 2, 1),
+                new HierarchicalGroupToGeneTO(1, 3, 1), 
+                new HierarchicalGroupToGeneTO(5, 1, 1));
         List<HierarchicalGroupToGeneTO> actualGroupToGene = 
                 dao.getGroupToGene(taxonId, speciesIds).getAllTOs();
         assertTrue("HierarchicalGroupToGeneTOs incorrectly retrieved: actualGroupToGene=" +
@@ -84,7 +84,7 @@ public class MySQLHierarchicalGroupDAOIT extends MySQLITAncestor {
 
         // Taxon ID without species ID (taxonId = 211)
         taxonId = 211;
-        expectedGroupToGene = Arrays.asList(new HierarchicalGroupToGeneTO(2, 2));
+        expectedGroupToGene = Arrays.asList(new HierarchicalGroupToGeneTO(2, 2, 1));
         actualGroupToGene = dao.getGroupToGene(taxonId, speciesIds).getAllTOs();
         assertTrue("HierarchicalGroupToGeneTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(actualGroupToGene, expectedGroupToGene));
@@ -92,7 +92,7 @@ public class MySQLHierarchicalGroupDAOIT extends MySQLITAncestor {
         // Taxon ID with one species ID (taxonId = 111 & species ID = 31)
         taxonId = 111;
         speciesIds.add(31);
-        expectedGroupToGene = Arrays.asList(new HierarchicalGroupToGeneTO(1, 3));
+        expectedGroupToGene = Arrays.asList(new HierarchicalGroupToGeneTO(1, 3, 1));
         actualGroupToGene = dao.getGroupToGene(taxonId, speciesIds).getAllTOs();
         assertTrue("HierarchicalGroupToGeneTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(actualGroupToGene, expectedGroupToGene));
@@ -100,8 +100,8 @@ public class MySQLHierarchicalGroupDAOIT extends MySQLITAncestor {
         // Taxon ID with two species IDs (taxonId = 111 & species ID = 31 + 11)
         speciesIds.add(11);
         expectedGroupToGene = Arrays.asList(
-                new HierarchicalGroupToGeneTO(1, 3), 
-                new HierarchicalGroupToGeneTO(5, 1));        
+                new HierarchicalGroupToGeneTO(1, 3, 1), 
+                new HierarchicalGroupToGeneTO(5, 1, 1));        
         actualGroupToGene = dao.getGroupToGene(taxonId, speciesIds).getAllTOs();
         assertTrue("HierarchicalGroupToGeneTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(actualGroupToGene, expectedGroupToGene));

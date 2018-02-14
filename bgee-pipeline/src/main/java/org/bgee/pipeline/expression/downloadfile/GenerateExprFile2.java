@@ -59,7 +59,7 @@ import org.supercsv.io.dozer.ICsvDozerBeanWriter;
  * 
  * @author  Valentine Rech de Laval
  * @version Bgee 14, May 2017
- * @since   Bgee 13, Sept. 2017
+ * @since   Bgee 13, Sept. 2016
  */
 public class GenerateExprFile2 extends GenerateDownloadFile {
 
@@ -385,8 +385,10 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 new HashMap<>();
         summaryCallTypeQualityFilter.put(SummaryCallType.ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
         summaryCallTypeQualityFilter.put(SummaryCallType.ExpressionSummary.NOT_EXPRESSED, SummaryQuality.SILVER);
+        Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
+        obsDataFilter.put(null, true);
         ExpressionCallFilter callFilter = new ExpressionCallFilter(summaryCallTypeQualityFilter,
-                Collections.singleton(new GeneFilter(speciesId)), null, null, true, null, null);
+                Collections.singleton(new GeneFilter(speciesId)), null, null, obsDataFilter, null, null);
 
         // We retrieve calls with all non-parametric attributes plus provided params.
         Set<Attribute> clnAttr = Arrays.stream(Attribute.values())
@@ -523,6 +525,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         Collections.sort(attributeList);
 
         return log.exit(attributes.stream()
+                //we use a flatMap to be able to return an empty Stream (avoid having double '_' in file name)
                 .flatMap(a -> {
                     switch (a) {
                         case ANAT_ENTITY_ID:
@@ -936,7 +939,8 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
 
         // We use an AtomicInteger instead of using .mapToInt(Integer::intValue).sum() on the stream 
         // to try to avoid memory problems
-        AtomicInteger rowCount = new AtomicInteger();
+        //XXX: rather use a for loop and avoid atomic integer?
+        final AtomicInteger rowCount = new AtomicInteger();
         calls.forEach(c -> {
             for (Entry<SingleSpExprFileType2, ICsvDozerBeanWriter> writerFileType : writersUsed.entrySet()) {
                 String geneId = c.getGene().getEnsemblGeneId();

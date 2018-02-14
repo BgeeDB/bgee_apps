@@ -101,10 +101,7 @@ public class DevStageService extends Service {
             Collection<String> stageIds, boolean withDescription) {
         log.entry(speciesIds, anySpecies, stageIds, withDescription);
         return log.exit(getDaoManager().getStageDAO().getStages(
-                    speciesIds == null? null: new HashSet<>(speciesIds), 
-                    anySpecies, 
-                    stageIds == null? null: new HashSet<>(stageIds), 
-                    null, null,
+                    speciesIds, anySpecies, stageIds, null, null,
                     withDescription? null: EnumSet.complementOf(EnumSet.of(StageDAO.Attribute.DESCRIPTION)))
                 .stream()
                 .map(DevStageService::mapFromTO));

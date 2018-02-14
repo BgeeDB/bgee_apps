@@ -123,12 +123,24 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
                  !this.getAttributes().contains(DiffExpressionCallDAO.Attribute.CONDITION_ID))) {
             distinct = true;
         }
-        String sql = this.generateSelectClause(this.getAttributes(), diffExprTableName, distinct);
-
         boolean hasSpecies  = speciesIds != null && !speciesIds.isEmpty();
         boolean hasOMATaxon = StringUtils.isNotBlank(omaTaxonId);
         boolean orderTOsByOmaGroup = this.getOrderingAttributes().containsKey(
                 DiffExpressionCallDAO.OrderingAttribute.OMA_GROUP);
+
+        String sql = this.generateSelectClause(this.getAttributes(), diffExprTableName, distinct);
+        //A fix for issue #173
+        //TODO: this should use formal DAOAttributes, but the fields OMAParentNodeId and OMANodeId
+        //currently do not have any corresponding DAOAttribute.
+        String geneInfoTable = "geneTableOrTmp";
+        if (orderTOsByOmaGroup) {
+            if (!hasOMATaxon) {
+                sql += ", " + geneInfoTable + ".OMAParentNodeId ";
+            } else {
+                sql += ", " + geneInfoTable + ".OMANodeId ";
+            }
+        }
+
         
         // For the moment, it's not possible to order by OrderingAttributes other than OMA_GROUP
         // because there is no other OrderingAttributes. But if we add an OrderingAttributes and 
@@ -140,8 +152,6 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
                     ". Provided set contains: " + this.getOrderingAttributes().keySet()));
         }
         
-        String geneInfoTable = null;
-        
         //either because we want to limit the results retrieved to some species, 
         //or because we want to order results by groups of homologous genes, 
         //we need to join additional tables. 
@@ -151,7 +161,6 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
             if (hasOMATaxon) {
                 //we want to retrieve calls for homologous genes, so we recover 
                 //the correct OMA node IDs for the requested taxon
-                geneInfoTable = "tempGene";
                 // If taxon ID is not provided, we retrieve the OMAParentNodeId of the gene,
                 // else we retrieve all OMA node IDs above each gene.
                 sql += "(SELECT DISTINCT t10.OMANodeId, t30.bgeeGeneId "
@@ -169,8 +178,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
                 sql += ") AS " + geneInfoTable;
             } else {
                 //filter species considered by using info in the gene table
-                geneInfoTable = "gene";
-                sql += geneInfoTable;
+                sql += "gene AS " + geneInfoTable;
             }
             
             //the MySQL optimizer sucks and do the join in the wrong order, 
@@ -250,8 +258,6 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
         }
         
         if (orderTOsByOmaGroup) {
-            // If we don't have the taxon id, the geneInfoTable is gene else 
-            // it is the temporary table tempGene
             if (!hasOMATaxon) {
                 sql += " ORDER BY " + geneInfoTable + ".OMAParentNodeId ";
             } else {
@@ -492,6 +498,8 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
                     } else if (column.getValue().equals("inconsistentDEACountRNASeq")) {
                         inconsistentDEACountRNASeq = this.getCurrentResultSet().getInt(
                                 column.getKey());
+                    } else if (column.getValue().equals("OMAParentNodeId") || column.getValue().equals("OMANodeId")) {
+                        //nothing here, these columns are retrieved solely to fix issue#173
                     } else {
                         throw log.throwing(new UnrecognizedColumnException(column.getValue()));
                     }

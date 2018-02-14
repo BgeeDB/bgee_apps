@@ -20,9 +20,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -139,10 +141,12 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
         when(anatEntityService.loadNonInformativeAnatEntitiesBySpeciesIds(Collections.singleton(22)))
         .thenReturn(Arrays.asList(new AnatEntity("NonInfoAnatEnt2")).stream());
 
+        Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
+        obsDataFilter.put(null, true);
         ExpressionCallFilter callFilterSp11 = new ExpressionCallFilter(null,
-                Collections.singleton(new GeneFilter(11)), null, null, true, false, false);
+                Collections.singleton(new GeneFilter(11)), null, null, obsDataFilter, false, false);
         ExpressionCallFilter callFilterSp22 = new ExpressionCallFilter(null,
-                Collections.singleton(new GeneFilter(22)), null, null, true, false, false);
+                Collections.singleton(new GeneFilter(22)), null, null, obsDataFilter, false, false);
 
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
                 new LinkedHashMap<>();

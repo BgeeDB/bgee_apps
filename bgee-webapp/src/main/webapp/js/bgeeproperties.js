@@ -83,7 +83,7 @@ function bgeeProperties() {
      * 			For definitions of URL parts, see http://bl.ocks.org/abernier/3070589.
      */
     this.getWebAppURLStart = function() {
-        return 'http://' + this.getBgeeHost() + this.getWebAppPath();
+        return location.protocol + '//' + this.getBgeeHost() + this.getWebAppPath();
     };
     
     /**

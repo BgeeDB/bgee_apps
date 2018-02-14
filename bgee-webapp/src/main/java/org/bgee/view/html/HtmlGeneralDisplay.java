@@ -7,6 +7,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
@@ -23,7 +24,7 @@ import org.bgee.view.html.HtmlDownloadDisplay.DownloadPageType;
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
- * @version Bgee 14, Mar. 2017
+ * @version Bgee 14, Feb. 2018
  * @since   Bgee 13
  */
 public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisplay {
@@ -96,7 +97,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	    groups.stream().filter(sdg -> sdg.isSingleSpecies()).forEach(sdg -> {
 	        Species species = sdg.getMembers().get(0);
 	        Map<String,String> attrs = new HashMap<>();
-	        attrs.put("src", this.prop.getSpeciesImagesRootDirectory() 
+	        attrs.put("src", this.prop.getBgeeRootDirectory() + this.prop.getSpeciesImagesRootDirectory() 
 	                            + String.valueOf(species.getId()) + "_light.jpg");
 	        attrs.put("alt", htmlEntities(species.getShortName()));
 	        attrs.put("class", "species_img");
@@ -117,14 +118,18 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	 */
 	private void displayHeroUnit() {
 		log.entry();
-			
-	    this.writeln("<div id='bgee_hero' class='row'>");
-	    
-	    //TODO: manage the version either from database, or from bgee-webapp.properties file.
-	    this.writeln("<span id='bgee_version'>version 14-beta</span>");
+		
+		String archiveClass = this.prop.isArchive()? "archive": "";
 
-	    this.writeln("<div id='bgee_hp_logo'><img src='" + this.prop.getLogoImagesRootDirectory() 
-	            + "bgee14beta_hp_logo.png' alt='Bgee logo'></div>");
+		this.writeln("<div id='bgee_hero' class='row " + archiveClass + "'>");
+
+	    String version = this.getWebAppVersion();
+	    if (version != null) {
+	        this.writeln("<span id='bgee_version'>version " + htmlEntities(version) + "</span>");
+	    }
+
+	    this.writeln("<div id='bgee_hp_logo'><img src='" + this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() 
+	            + "bgee13_hp_logo.png' alt='Bgee logo'></div>");
 	
 	    this.writeln("<div class='mini_text'>Gene expression data in animals</div>");
 
@@ -237,7 +242,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     	banner.append("<div id='bgee_data_selection' class='row'>");
     	// Cross to close the banner
         banner.append("<div id='bgee_data_selection_cross'>");
-    	banner.append("<img class='closing_cross' src='" + this.prop.getImagesRootDirectory() + "cross.png' " +
+    	banner.append("<img class='closing_cross' src='" + this.prop.getBgeeRootDirectory() + this.prop.getImagesRootDirectory() + "cross.png' " +
     			"title='Close banner' alt='Cross' />");
         banner.append("</div>");
 
@@ -253,11 +258,11 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     	urlGeneExprCalls.setPage(RequestParameters.PAGE_DOWNLOAD);
     	urlGeneExprCalls.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
     	banner.append("<ul class='col-xs-12 col-md-8 row'>");
-    	banner.append("<li class='col-xs-12 col-sm-6'><img class='bullet_point' src='" + this.prop.getImagesRootDirectory() + "arrow.png' alt='Arrow' />" +
+    	banner.append("<li class='col-xs-12 col-sm-6'><img class='bullet_point' src='" + this.prop.getBgeeRootDirectory() + this.prop.getImagesRootDirectory() + "arrow.png' alt='Arrow' />" +
     			"<a id='processed_expression_values_link' class='data_page_link' href='" +
     			urlProcExprValues.getRequestURL() + "' title='Bgee processed expression values'>" +
     			"See RNA-Seq and Affymetrix data</a></li>");
-    	banner.append("<li class='col-xs-12 col-sm-6'><img class='bullet_point' src='" + this.prop.getImagesRootDirectory() + "arrow.png' alt='Arrow' />" +
+    	banner.append("<li class='col-xs-12 col-sm-6'><img class='bullet_point' src='" + this.prop.getBgeeRootDirectory() + this.prop.getImagesRootDirectory() + "arrow.png' alt='Arrow' />" +
     			"<a id='gene_expression_calls_link' class='data_page_link' href='" +
     			urlGeneExprCalls.getRequestURL() +
     			"' title='Bgee gene expression calls'>See gene expression calls</a></li>");
@@ -305,7 +310,23 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	    this.writeln("</div>"); // close panel-heading
 	    
 	    this.writeln("<div class='panel-body'>");
-	    
+
+        this.writeOneNews("2018-02-14", "Release of Bgee version 14.0:"
+                + "<ul>"
+                + "  <li>Release of the production version of Bgee release 14:"
+                + "    <ul>"
+                + "      <li><a href='" + urlTopAnat.getRequestURL()
+                +            "' title='Perform gene expression enrichment tests with TopAnat'>"
+                +            "TopAnat</a> can now be used based on Bgee 14 data.</li>"
+                + "      <li><a href='" + urlGenePage.getRequestURL()
+                +            "' title='Search expression call for a gene'>Gene expression calls</a> "
+                +            "should now be properly retrieved for all genes.</li>"
+                + "    </ul>"
+                + "  </li>"
+                + "</ul>"
+                + "You can still access to Bgee 13 at <a title='Archive site Bgee version 13' "
+                + "href='https://bgee.org/bgee13' target='_blank'>https://bgee.org/bgee13</a>.");
+
 	    this.writeOneNews("2017-05-16", "Release of Bgee version 14-beta:"
 	            + "<ul>"
 	            + "  <li>12 new species, bringing the total to 29:"
@@ -324,10 +345,10 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	            + "      <li>\"Bronze\": 1 experiment with a low confidence call; these are not shown by default.</li>"
 	            + "    </ul>"
 	            + "  </li>"
-	            + "  <li>Update of download pages to make it easier to chose files to retrieve.</li>"
+	            + "  <li>Update of download pages to make it easier to chose files to retrieve; inclusion of gene ranks (as used in gene pages) in call files..</li>"
 	            + "</ul>"
 	            + "You can still access to Bgee 13 at <a title='Archive site Bgee version 13' "
-	            + "href='http://bgee.org/bgee13' target='_blank'>http://bgee.org/bgee13</a>.");
+	            + "href='https://bgee.org/bgee13' target='_blank'>https://bgee.org/bgee13</a>.");
 
 	    this.writeOneNews("2016-07-06", "Release of Bgee version 13.2: "
                 + "<ul>"
@@ -349,10 +370,10 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 + "</ul>");
         
 	    this.writeOneNews("2016-05-09", "Release of our new "
-                + "<a href='https://github.com/BgeeDB/BgeeDB_R' class='external_link' target='_blank'>"
+                + "<a href='https://bioconductor.org/packages/release/bioc/html/BgeeDB.html' class='external_link' target='_blank'>"
                 + "BgeeDB R package</a>, a package for the annotation and gene expression "
                 + "data download from Bgee database into R, and TopAnat analysis (see also "
-                + "<a href='https://bioconductor.org/packages/release/bioc/html/BgeeDB.html'"
+                + "<a href='https://bioconductor.org/packages/release/bioc/html/BgeeDB.html' "
                 + "class='external_link' target='_blank'>Bioconductor website</a>).");
 
         this.writeOneNews("2016-03-22", "Various improvements of our new interface.");
@@ -432,9 +453,9 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
         this.writeln("<div class='col-xs-12 col-md-3 archive_site'>");
         this.writeln("View archive sites:");
-        this.writeln("<a title='Archive site Bgee version 12' href='http://bgee.org/bgee12' target='_blank'>"
+        this.writeln("<a title='Archive site Bgee version 12' href='https://bgee.org/bgee12' target='_blank'>"
                 + "version 12</a>");
-        this.writeln("<a title='Archive site Bgee version 13' href='http://bgee.org/bgee13' target='_blank'>"
+        this.writeln("<a title='Archive site Bgee version 13' href='https://bgee.org/bgee13' target='_blank'>"
                 + "version 13</a>");
         this.writeln("</div>");
         

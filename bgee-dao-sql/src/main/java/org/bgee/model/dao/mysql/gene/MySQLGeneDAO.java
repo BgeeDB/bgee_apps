@@ -90,8 +90,18 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
             int limitStart, int resultPerPage) {
         log.entry(searchTerm, speciesIds, limitStart, resultPerPage);
 
-        String sql = "select distinct t1.* " + 
-                "from gene as t1 "
+        String sql = "select distinct t1.*";
+
+        //fix issue#173
+        sql += ", IF (t1.geneId LIKE ?,"
+                    + "CHAR_LENGTH(t1.geneId), "
+                    + "IF (t1.geneName LIKE ?, CHAR_LENGTH(t1.geneName), CHAR_LENGTH(t2.geneNameSynonym))) "
+                + "AS matchLength"
+                + ", IF (t1.geneId LIKE ?, t1.geneId, IF (t1.geneName LIKE ?, t1.geneName, t2.geneNameSynonym)) "
+                + "AS termMatch"
+                + ", species.speciesDisplayOrder";
+
+        sql += " from gene as t1 "
                 + "INNER JOIN species ON t1.speciesId = species.speciesId "
                 + "left outer join "
                     + "(SELECT * FROM geneNameSynonym WHERE geneNameSynonym like ?) as t2 "
@@ -111,10 +121,9 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
             sql += ") ";
         }
 
-        sql += "order by if (t1.geneId like ?, CHAR_LENGTH(t1.geneId), "
-                + "if (t1.geneName like ?, CHAR_LENGTH(t1.geneName), CHAR_LENGTH(t2.geneNameSynonym))), "
+        sql += "order by matchLength, "
                 + "species.speciesDisplayOrder, "
-                + "if (t1.geneId like ?, t1.geneId, if (t1.geneName like ?, t1.geneName, t2.geneNameSynonym))";
+                + "termMatch ";
 
         if (resultPerPage != 0) {
             sql += "limit ?, ?";
@@ -122,11 +131,15 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 
         try {
             BgeePreparedStatement preparedStatement = this.getManager().getConnection().prepareStatement(sql);
-            preparedStatement.setString(1, "%" + searchTerm + "%");
-            preparedStatement.setString(2, searchTerm + "%");
-            preparedStatement.setString(3, "%" + searchTerm + "%");
+            preparedStatement.setString(1, searchTerm + "%");
+            preparedStatement.setString(2, "%" + searchTerm + "%");
+            preparedStatement.setString(3, searchTerm + "%");
             preparedStatement.setString(4, "%" + searchTerm + "%");
-            int i = 5;
+            preparedStatement.setString(5, "%" + searchTerm + "%");
+            preparedStatement.setString(6, searchTerm + "%");
+            preparedStatement.setString(7, "%" + searchTerm + "%");
+            preparedStatement.setString(8, "%" + searchTerm + "%");
+            int i = 9;
 
             if (speciesIds != null && !speciesIds.isEmpty()) {
                 Iterator<Integer> speciesIdIterator = speciesIds.iterator();
@@ -135,14 +148,6 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
                     i++;
                 }
             }
-            preparedStatement.setString(i, searchTerm + "%");
-            i++;
-            preparedStatement.setString(i, "%" + searchTerm + "%");
-            i++;
-            preparedStatement.setString(i, searchTerm + "%");
-            i++;
-            preparedStatement.setString(i, "%" + searchTerm + "%");
-            i++;
             if (resultPerPage != 0) {
                 preparedStatement.setInt(i, ((limitStart - 1) * resultPerPage));
                 i++;
@@ -513,6 +518,9 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
                     } else if (column.getValue().equals("geneMappedToGeneIdCount")) {
                         geneMappedToGeneIdCount = this.getCurrentResultSet().getInt(column.getKey());
 
+                    } else if (column.getValue().equals("matchLength") || column.getValue().equals("termMatch") ||
+                            column.getValue().equals("speciesDisplayOrder")) {
+                        //nothing here, these columns are retrieved solely to fix issue#173
                     } else {
                         throw log.throwing(new UnrecognizedColumnException(column.getValue()));
                     }

@@ -1,0 +1,48 @@
+E-mail address obfuscation is useful to protect e-mail against spam.
+
+E-mail address obfuscation comes from this web site:
+http://www.pgregg.com/projects/encode/htmlemail.php
+http://www.pgregg.com/projects/encode/htmlemail2.php
+
+
+With the author, we have improve this (the delayed method and allow to add
+several obfuscated e-mail addresses per page).
+
+
+
+Basically, the method will swap characters, then encode them.
+As a result, the e-mail address is visible only when the mouse is over the
+link, or when we click on it.
+
+The main problem is that, for a maximal obfuscation, you must not write the
+real e-mail address between <a> tags, but another sentence or use an image
+by example.
+=> This does not allow you to copy e-mail address from screen.
+=> And you need to enable javascript in your browser !
+
+
+
+For static pages, and when e-mail addresses don't change often, the
+"obfuscate_email.pl" perl script can generate the code to paste in the HTML.
+
+For dynamic pages, the PHP code is available from the links above.
+I have transposed this code in:
+- Perl (EMailObfuscation.pm module or obfuscate_email.pl script)
+- Java (EMailObfuscation.java)
+
+
+
+Obfuscation used in the index.html page was generated with this command line:
+(<a class=\"sib_mail\" href=\"#\" ...
+was used line 23, to apply SIB CSS, instead of
+<a href=\"#\")
+./obfuscate_email.pl Firstname.Lastname@mail.example.org "Firstname.Lastname [AT] mail.example.org" 0
+
+./obfuscate_email.pl e-mail_addresses [[text_to_print] [index_number]]
+    e-mail_addresses:   One or several e-mail addresses comma separated.
+    text_to_print:      Text which will be displayed on screen.
+                        It can be a simple text or
+                        an image (<img src='...' alt='...'>)
+    index_number        Use different index number when there are several
+                        obfuscations in the same page.
+

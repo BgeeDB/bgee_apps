@@ -55,7 +55,6 @@ public class ExperimentExpressionCount {
      * Only {@code PropagationState.SELF}, {@code PropagationState.ANCESTOR},
      * {@code PropagationState.DESCENDANT} and {@code PropagationState.ALL} are allowed.
      */
-    //XXX: should we keep only the PropagationStates accepted here in the class PropagationState?
     //Use CallType.Expression for now, this could be changed in the future to CallType
     public ExperimentExpressionCount(CallType.Expression callType, DataQuality dataQuality, 
             PropagationState propagationState, int experimentCount) {

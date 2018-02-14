@@ -1,6 +1,8 @@
 package org.bgee.view.html;
 
 import java.io.IOException;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
@@ -17,12 +19,13 @@ import org.bgee.view.ViewFactory;
 
 /**
  * Parent of all display for the HTML view.
- * 
- * @author Mathieu Seppey
- * @author Frederic Bastian
- * @author Valentine Rech de Laval
- * @author Philippe Moret
- * @version Bgee 13, Feb. 2016
+ *
+ * @author  Mathieu Seppey
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @author  Philippe Moret
+ * @author  Sebastien Moretti
+ * @version Bgee 14, Feb. 2018
  * @since   Bgee 13, Jul. 2014
  */
 public class HtmlParentDisplay extends ConcreteDisplayParent {
@@ -113,7 +116,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
          if (StringUtils.isNotBlank(content)) {
              sb.append(content);
          }
-         sb.append("</").append(name).append(">");
+         if (!name.equals("img")) {
+             sb.append("</").append(name).append(">");
+         }
          return log.exit(sb.toString());
      }
 
@@ -259,9 +264,11 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 + "evolution, ontology, anatomy, development, evo-devo database, "
                 + "anatomical ontology, developmental ontology, gene expression "
                 + "evolution'/>");
-        this.writeln("<meta name='dcterms.rights' content='Bgee copyright 2007/2017 UNIL' />");
+        this.writeln("<meta name='dcterms.rights' content='Bgee copyright 2007/"
+                + ZonedDateTime.now(ZoneId.of("Europe/Zurich")).getYear()
+                + " UNIL' />");
         this.writeln("<link rel='shortcut icon' type='image/x-icon' href='"
-                +this.prop.getImagesRootDirectory()+"favicon.ico'/>");
+                + this.prop.getBgeeRootDirectory() + this.prop.getImagesRootDirectory() + "favicon.ico'/>");
         this.includeCss(); // load default css files, and css files specific of a view 
                            // (views must override this method if needed)
         this.includeJs();  // load default js files, and css files specific of a view 
@@ -287,6 +294,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("<div id='sib_container' class='container-fluid'>");
         //FIXME: I noticed that this header disappear in printed version
         this.displayBgeeHeader();
+        this.displayArchiveMessage();
         this.displayWarningMessage();
         this.writeln("<div id='sib_body'>");
 
@@ -366,7 +374,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         // Navigation bar
         StringBuilder navbar = new StringBuilder();
 
-        navbar.append("<nav id='bgee-menu' class='navbar navbar-default'>");
+        String navbarClass = this.prop.isArchive()? "navbar-archive": "navbar-default";
+        
+        navbar.append("<nav id='bgee-menu' class='navbar ").append(navbarClass).append("'>");
 
         // Brand and toggle get grouped for better mobile display
         navbar.append("<div class='navbar-header'>");
@@ -377,9 +387,11 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<span class='icon-bar'></span>");
         navbar.append("<span class='icon-bar'></span>");
         navbar.append("</button>");
-        navbar.append("<a class='navbar-brand' href='" + this.getNewRequestParameters().getRequestURL() 
-                + "' title='Go to Bgee home page'><img id='bgee_logo' src='" 
-                + this.prop.getLogoImagesRootDirectory() + "bgee13_hp_logo.png' alt='Bgee logo'></a>");
+        navbar.append("<a class='navbar-brand' href='").append(this.getNewRequestParameters().getRequestURL())
+                .append("' title='Go to Bgee home page'><img id='bgee_logo' src='")
+                .append(this.prop.getBgeeRootDirectory()).append(this.prop.getLogoImagesRootDirectory())
+                .append("bgee13_hp_logo.png' alt='Bgee logo'></a>");
+
         navbar.append("</div>"); //close navbar-header
 
         // Nav links
@@ -450,7 +462,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<li><a title='About page' href='" + urlAbout.getRequestURL() + "'>About</a></li>");
         
         // Help
-        navbar.append("<li>" + this.getObfuscateEmail() + "</li>");
+        navbar.append("<li>" + this.getObfuscateEmailInHelp() + "</li>");
 
         navbar.append("</ul>"); // close left nav links
 
@@ -464,18 +476,18 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 
         // Twitter
         navbar.append("<li><a title='Follow @Bgeedb on Twitter' target='_blank' href='https://twitter.com/Bgeedb'>" + 
-                "<img class='social-img' alt='Twitter logo' src='" + this.prop.getLogoImagesRootDirectory() + 
+                "<img class='social-img' alt='Twitter logo' src='" + this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + 
                 "twitter_logo.png'></a></li>");
 
         // Blog
         navbar.append("<li><a title='See our blog' target='_blank' href='https://bgeedb.wordpress.com'>" + 
-                "<img class='social-img' alt='Wordpress logo' src='" + this.prop.getLogoImagesRootDirectory() + 
+                "<img class='social-img' alt='Wordpress logo' src='" + this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + 
                 "wordpress_logo.png'></a></li>");
         
         // SIB
         navbar.append("<li><a id='sib_brand' href='https://www.sib.swiss' target='_blank' "
                 + "title='Link to the SIB Swiss Institute of Bioinformatics'>"
-                + "<img src='" + this.prop.getLogoImagesRootDirectory() +
+                + "<img src='" + this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() +
                 "sib_emblem.png' alt='SIB Swiss Institute of Bioinformatics' /></a></li>");
 
         navbar.append("</ul>");  // close right nav links
@@ -505,13 +517,58 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     }
 
     /**
-     * @param nbCalled  An {@code int} that is the different number every time 
-     *                  this method is called per page!
+     * Display a archive message on all pages if {@link BgeeProperties#isArchive()}
+     * returns {@code true} (see {@link #prop}).
+     */
+    private void displayArchiveMessage() {
+        log.entry();
+
+        if (this.prop.isArchive()) {
+            this.write("<div class='alert alert-danger'> This is an old version of Bgee ");
+
+            String version = this.getWebAppVersion();
+            if (version != null) {
+                this.write("(version " + version + ") ");
+            }
+
+            if (StringUtils.isNotBlank(this.prop.getBgeeCurrentUrl())) {
+                this.write("<a href=' "+this.prop.getBgeeCurrentUrl()+"' class='alert-link'" +
+                        " title='Access last version of Bgee'>Access last version of Bgee</a>");
+            }
+            
+            this.writeln("</div>");
+        }
+
+        log.exit();
+    }
+
+    /**
      * @return          the {@code String} that is the HTML code of the Contact link.
      */
     //TODO move javascript in common.js
-    private String getObfuscateEmail() {
-        return "<script type='text/javascript'>eval(unescape('%66%75%6E%63%74%69%6F%6E%20%73%65%62%5F%74%72%61%6E%73%70%6F%73%65%32%28%68%29%20%7B%76%61%72%20%73%3D%27%61%6D%6C%69%6F%74%42%3A%65%67%40%65%73%69%2D%62%69%73%2E%62%68%63%27%3B%76%61%72%20%72%3D%27%27%3B%66%6F%72%28%76%61%72%20%69%3D%30%3B%69%3C%73%2E%6C%65%6E%67%74%68%3B%69%2B%2B%2C%69%2B%2B%29%7B%72%3D%72%2B%73%2E%73%75%62%73%74%72%69%6E%67%28%69%2B%31%2C%69%2B%32%29%2B%73%2E%73%75%62%73%74%72%69%6E%67%28%69%2C%69%2B%31%29%7D%68%2E%68%72%65%66%3D%72%3B%7D%64%6F%63%75%6D%65%6E%74%2E%77%72%69%74%65%28%27%3C%61%20%68%72%65%66%3D%22%23%22%20%6F%6E%4D%6F%75%73%65%4F%76%65%72%3D%22%6A%61%76%61%73%63%72%69%70%74%3A%73%65%62%5F%74%72%61%6E%73%70%6F%73%65%32%28%74%68%69%73%29%22%20%6F%6E%46%6F%63%75%73%3D%22%6A%61%76%61%73%63%72%69%70%74%3A%73%65%62%5F%74%72%61%6E%73%70%6F%73%65%32%28%74%68%69%73%29%22%3E%48%65%6C%70%3C%2F%61%3E%27%29%3B'));</script>";
+    private String getObfuscateEmailInHelp() {
+        return getObfuscateEmailLink("%48%65%6C%70");
+    }
+    
+    protected String getObfuscateEmailInText() {
+        return getObfuscateEmailLink("%62%67%65%65%20%65%6D%61%69%6C");
+        
+    }
+    
+    private String getObfuscateEmailLink(String encodedLinkText) {
+        return "<script type='text/javascript'>eval(unescape("
+                + "'%66%75%6E%63%74%69%6F%6E%20%70%67%72%65%67%67%5F%74%72%61%6E%73%70%6F%73%65"
+                + "%31%28%68%29%20%7B%76%61%72%20%73%3D%27%61%6D%6C%69%6F%74%42%3A%65%67%40%65"
+                + "%69%73%2E%62%77%73%73%69%73%27%3B%76%61%72%20%72%3D%27%27%3B%66%6F%72%28%76"
+                + "%61%72%20%69%3D%30%3B%69%3C%73%2E%6C%65%6E%67%74%68%3B%69%2B%2B%2C%69%2B%2B"
+                + "%29%7B%72%3D%72%2B%73%2E%73%75%62%73%74%72%69%6E%67%28%69%2B%31%2C%69%2B%32"
+                + "%29%2B%73%2E%73%75%62%73%74%72%69%6E%67%28%69%2C%69%2B%31%29%7D%68%2E%68%72"
+                + "%65%66%3D%72%3B%7D%64%6F%63%75%6D%65%6E%74%2E%77%72%69%74%65%28%27%3C%61%20"
+                + "%68%72%65%66%3D%22%23%22%20%6F%6E%4D%6F%75%73%65%4F%76%65%72%3D%22%6A%61%76"
+                + "%61%73%63%72%69%70%74%3A%70%67%72%65%67%67%5F%74%72%61%6E%73%70%6F%73%65%31"
+                + "%28%74%68%69%73%29%22%20%6F%6E%46%6F%63%75%73%3D%22%6A%61%76%61%73%63%72%69"
+                + "%70%74%3A%70%67%72%65%67%67%5F%74%72%61%6E%73%70%6F%73%65%31%28%74%68%69%73"
+                + "%29%22%3E" + encodedLinkText + "%3C%2F%61%3E%27%29%3B'));</script>";
     }
 
     /**
@@ -529,7 +586,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         return log.exit(HtmlParentDisplay.getSingleFeatureLogo(
                 urlDocumentationGenerator.getRequestURL(), false, 
                 "Bgee documentation page", "Documentation", 
-                this.prop.getLogoImagesRootDirectory() + "doc_logo.png", null));
+                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "doc_logo.png", null));
     }
 
 //    /**
@@ -573,15 +630,15 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         logos.append(HtmlParentDisplay.getSingleFeatureLogo(
                 urlDownloadCallsGenerator.getRequestURL(), false, 
                 "Bgee " + GENE_EXPR_CALLS_PAGE_NAME.toLowerCase() + " page", GENE_EXPR_CALLS_PAGE_NAME, 
-                this.prop.getLogoImagesRootDirectory() + "expr_calls_logo.png", 
+                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "expr_calls_logo.png", 
                 "Calls of baseline presence/absence of expression, "
                 + "and of differential over-/under-expression, in single or multiple species."));
 
         logos.append(HtmlParentDisplay.getSingleFeatureLogo(
                 urlDownloadRefExprGenerator.getRequestURL(), false, 
                 "Bgee " + PROCESSED_EXPR_VALUES_PAGE_NAME.toLowerCase() + " page", 
-                PROCESSED_EXPR_VALUES_PAGE_NAME, 
-                this.prop.getLogoImagesRootDirectory() + "proc_values_logo.png", 
+                PROCESSED_EXPR_VALUES_PAGE_NAME,
+                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "proc_values_logo.png", 
                 "Annotations and processed expression data (e.g., read counts, TPM and "
                 + "RPKM values, Affymetrix probeset signal intensities)."));
         
@@ -655,7 +712,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     protected void includeJs(String fileName) {
         log.entry(fileName);
         this.writeln("<script type='text/javascript' src='" +
-                this.prop.getJavascriptFilesRootDirectory() + 
+                this.prop.getBgeeRootDirectory() + this.prop.getJavascriptFilesRootDirectory() + 
                 this.getVersionedJsFileName(fileName) + "'></script>");
         log.exit();
     }
@@ -741,7 +798,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     protected void includeCss(String fileName) {
         log.entry(fileName);
         this.writeln("<link rel='stylesheet' type='text/css' href='"
-                + this.prop.getCssFilesRootDirectory() 
+                + this.prop.getBgeeRootDirectory() + this.prop.getCssFilesRootDirectory() 
                 + this.getVersionedCssFileName(fileName) + "'/>");
         log.exit();
     }
@@ -868,5 +925,21 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         sources.append("</div>");
     
         return log.exit(sources.toString());
+    }
+
+    /**
+     * @return  A {@code String} that is the formatted version number of the webapp.
+     *          {@code null} if this information is not available.
+     */
+    protected String getWebAppVersion() {
+        log.entry();
+        String version = null;
+        if (StringUtils.isNotBlank(this.prop.getMajorVersion())) {
+            version = this.prop.getMajorVersion();
+            if (StringUtils.isNotBlank(this.prop.getMinorVersion())) {
+                version += "." + this.prop.getMinorVersion();
+            }
+        }
+        return log.exit(version);
     }
 }

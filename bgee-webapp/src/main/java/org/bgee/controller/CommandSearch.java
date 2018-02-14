@@ -1,7 +1,6 @@
 package org.bgee.controller;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
@@ -10,7 +9,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneMatch;
 import org.bgee.view.SearchDisplay;
 import org.bgee.view.ViewFactory;

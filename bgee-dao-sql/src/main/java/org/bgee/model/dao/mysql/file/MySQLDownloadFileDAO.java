@@ -3,8 +3,8 @@ package org.bgee.model.dao.mysql.file;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.file.DownloadFileDAO;
-import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO.ConditionParameter;
 import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
@@ -56,6 +56,17 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
         colToAttributesMap.put("downloadFileCategory", DownloadFileDAO.Attribute.CATEGORY);
         colToAttributesMap.put("speciesDataGroupId", DownloadFileDAO.Attribute.SPECIES_DATA_GROUP_ID);
         colToAttributesMap.put("downloadFileConditionParameters", DownloadFileDAO.Attribute.CONDITION_PARAMETERS);
+    }
+
+    private static ConditionDAO.Attribute convertToConditionParameter(String value) {
+        log.entry(value);
+        if ("anatomicalEntity".equals(value)) {
+            return log.exit(ConditionDAO.Attribute.ANAT_ENTITY_ID);
+        } else if ("developmentalStage".equals(value)) {
+            return log.exit(ConditionDAO.Attribute.STAGE_ID);
+        } else {
+            throw log.throwing(new IllegalArgumentException("Unrecognized value"));
+        }
     }
 
     /**
@@ -160,7 +171,7 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
                 String path = null, name = null, description = null;
                 Long size = null;
                 DownloadFileTO.CategoryEnum category = null;
-                Set<ConditionParameter> condParams = null;
+                Set<ConditionDAO.Attribute> condParams = null;
 
                 for (Map.Entry<Integer, String> col : this.getColumnLabels().entrySet()) {
                     String columnName = col.getValue();
@@ -192,7 +203,7 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
                             String values = currentResultSet.getString(columnName);
                             if (values != null) {
                                 condParams = Arrays.stream(values.split(","))
-                                        .map(s -> ConditionParameter.convertToConditionParameter(s))
+                                        .map(s -> convertToConditionParameter(s))
                                         .collect(Collectors.toSet());
                             }
                             break;

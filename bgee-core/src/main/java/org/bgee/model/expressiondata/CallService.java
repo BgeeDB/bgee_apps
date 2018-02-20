@@ -481,14 +481,14 @@ public class CallService extends CommonService {
                     Set<String> retrievedGeneIds = retrievedSpeToGeneIdsMap.get(e.getKey());
                     if (e.getValue().isEmpty()) {
                         //if no genes for the requested species, the whole species is offending
-                        if (retrievedGeneIds == null) {
+                        if (retrievedGeneIds == null || retrievedGeneIds.isEmpty()) {
                             return e;
                         }
                         //otherwise, it's OK, we found some genes for that species
                         return null;
                     }
                     //Now, if some specific IDs were requested, check we got all of them
-                    if (e.getValue().size() == retrievedGeneIds.size()) {
+                    if (e.getValue().equals(retrievedGeneIds)) {
                         return null;
                     }
                     Set<String> offendingGeneIds = e.getValue().stream()
@@ -509,6 +509,10 @@ public class CallService extends CommonService {
      * Perform query to retrieve expressed calls without the post-processing of 
      * the results returned by {@code DAO}s.
      *
+     * @param geneMap               A {@code Map} where keys are {@code Integer}s representing Bgee gene IDs,
+     *                              the associated value being the corresponding {@code Gene}. Note that this {@code Map}
+     *                              must be consistent with the {@code GeneFilter}s provided in {@code callFilter}
+     *                              (by using, for instance, the method {@link #loadGeneMap(CallFilter, Map)}).
      * @param callFilter            An {@code ExpressionCallFilter} allowing 
      *                              to configure retrieving of data throw {@code DAO}s.
      *                              Cannot be {@code null} or empty (check by calling methods).
@@ -534,35 +538,11 @@ public class CallService extends CommonService {
         Set<Integer> geneIdFilter = null;
         Set<Integer> speciesIds = null;
         if (callFilter != null) {
-            //generate a Map Species ID -> (Map Ensembl ID -> Bgee gene ID)
-            final Map<Integer, Map<String, Integer>> speToEnsemblToBgeeIds = geneMap.entrySet().stream()
-                    //return one Entry<Integer, Map<String, Integer>> for each gene retrieved
-                    .map(e -> {
-                        Map<String, Integer> ensemblToBgeeIds = new HashMap<>();
-                        ensemblToBgeeIds.put(e.getValue().getEnsemblGeneId(), e.getKey());
-                        return new AbstractMap.SimpleEntry<>(e.getValue().getSpecies().getId(),
-                                ensemblToBgeeIds);
-                    })
-                    //merge the Map<String, Integer> in values for a same speciesId in key
-                    .collect(Collectors.toMap(
-                            e -> e.getKey(),
-                            e -> e.getValue(),
-                            (v1, v2) -> {v1.putAll(v2); return v1;}));
-
             //Now retrieve the Bgee gene IDs of the requested genes in GeneFilter.
-            geneIdFilter = callFilter.getGeneFilters().stream()
-                    .filter(gf -> speToEnsemblToBgeeIds.containsKey(gf.getSpeciesId()))
-                    .flatMap(gf -> gf.getEnsemblGeneIds().stream()
-                            .map(ensemblId -> speToEnsemblToBgeeIds.get(gf.getSpeciesId())
-                                    .get(ensemblId))
-                    )
-                    .collect(Collectors.toSet());
-            //the method retrieving the requested genes (loadGeneMap) should have made sure
-            //that all requested genes were found
-            assert !geneIdFilter.contains(null);
+            geneIdFilter = geneMap.keySet();
 
             //Identify the species IDs for which no gene IDs were specifically requested,
-            //maybe no specific ID was requested for some species.
+            //maybe no specific gene ID was requested for some species.
             //Since the Bgee gene IDs we provide to the DAO are unique for a given species,
             //It is needed to provide the species ID only if no Bgee gene IDs are requested for that species.
             speciesIds = callFilter.getGeneFilters().stream()
@@ -685,14 +665,21 @@ public class CallService extends CommonService {
 
         return log.exit(Collections.unmodifiableSet(daoCondParamComb));
     }
+    /**
+     * Note that this method manages the "observed data" state filters per call type,
+     * but not the "observed data" state filters for any call type (see method
+     * {@link #performsGlobalExprCallQuery(Map, ExpressionCallFilter, Set, Set, LinkedHashMap)}).
+     * @param callFilter
+     * @return
+     */
     private static Set<CallDataDAOFilter> convertCallFilterToCallDataDAOFilters(
             ExpressionCallFilter callFilter) {
         log.entry(callFilter);
 
         //Determine whether the lowest quality level was requested
-        final SummaryQuality lowestQual = SummaryQuality.values()[0];
+        final SummaryQuality lowestQual = SummaryQuality.BRONZE;
         //Just to make sure that qualities are in proper order and haven't changed
-        assert lowestQual.equals(SummaryQuality.BRONZE);
+        assert SummaryQuality.values()[0].equals(SummaryQuality.BRONZE);
         boolean lowestQualSelected = callFilter.getSummaryCallTypeQualityFilter() == null ||
                 callFilter.getSummaryCallTypeQualityFilter().isEmpty() ||
                 callFilter.getSummaryCallTypeQualityFilter().entrySet().stream()
@@ -893,6 +880,14 @@ public class CallService extends CommonService {
         return log.exit(callDataDAOFilters);
     }
 
+    /**
+     * This method manages only the "observed data" states per anatomical entity and/or dev. stages,
+     * it does not manage the condition "observed data" states (see method
+     * {@link #performsGlobalExprCallQuery(Map, ExpressionCallFilter, Set, Set, LinkedHashMap)}).
+     * @param callFilter
+     * @param condParamCombination
+     * @return
+     */
     private static Map<ConditionDAO.Attribute, Boolean> convertCallFilterToDAOObservedDataFilter(
             ExpressionCallFilter callFilter, Set<ConditionDAO.Attribute> condParamCombination) {
         log.entry(callFilter, condParamCombination);
@@ -1073,7 +1068,7 @@ public class CallService extends CommonService {
     private static ExpressionCall mapGlobalCallTOToExpressionCall(GlobalExpressionCallTO globalCallTO, 
             Map<Integer, Gene> geneMap, Map<Integer, Condition> condMap,
             ExpressionCallFilter callFilter, BigDecimal maxRank, Set<CallService.Attribute> attrs) {
-        log.entry(globalCallTO, geneMap, condMap, attrs);
+        log.entry(globalCallTO, geneMap, condMap, callFilter, maxRank, attrs);
         
         Set<ExpressionCallData> callData = mapGlobalCallTOToExpressionCallData(globalCallTO,
                 attrs, callFilter.getDataTypeFilters());
@@ -1148,12 +1143,12 @@ public class CallService extends CommonService {
                         .collect(Collectors.toSet());
             }
 
-            return log.exit(new ExpressionCallData(dt, counts,
+            return new ExpressionCallData(dt, counts,
                     getExperimentsCounts? cdTO.getPropagatedCount(): null,
                     getRankInfo? cdTO.getRank(): null,
                     getRankInfo? cdTO.getRankNorm(): null,
                     getRankInfo? cdTO.getWeightForMeanRank(): null,
-                    getDataProp? mapDAOCallDataTOToDataPropagation(cdTO): null));
+                    getDataProp? mapDAOCallDataTOToDataPropagation(cdTO): null);
         }).collect(Collectors.toSet()));
     }
 
@@ -1195,7 +1190,7 @@ public class CallService extends CommonService {
         }
     }
     private static Set<DataType> mapDAODataTypeToDataType(Set<DAODataType> dts,
-            Set<DataType> requestedDataTypes) throws IllegalStateException{
+            Set<DataType> requestedDataTypes) throws IllegalArgumentException, IllegalStateException {
         log.entry(dts, requestedDataTypes);
 
         Set<DataType> mappedDataTypes = null;
@@ -1260,8 +1255,7 @@ public class CallService extends CommonService {
     // HELPER METHODS FOR INFERENCES
     //*************************************************************************
 
-    private static <T extends CallData<?>> DataPropagation inferDataPropagation(
-            Set<ExpressionCallData> callData) {
+    private static DataPropagation inferDataPropagation(Set<ExpressionCallData> callData) {
         log.entry(callData);
 
         if (callData == null || callData.isEmpty() || callData.stream()
@@ -1317,6 +1311,9 @@ public class CallService extends CommonService {
             DataPropagation dataProp2) {
         log.entry(dataProp1, dataProp2);
 
+        if (dataProp1 == null && dataProp2 == null) {
+            return log.exit(DATA_PROPAGATION_IDENTITY);
+        }
         if (dataProp1 == null || dataProp1.equals(DATA_PROPAGATION_IDENTITY)) {
             return log.exit(dataProp2);
         }
@@ -1368,13 +1365,13 @@ public class CallService extends CommonService {
         if (state1 == null && state2 == null) {
             return log.exit(null);
         }
-        if (state1 == null && state2 != null) {
+        if (state1 == null) {
             return log.exit(state2);
         }
-        if (state1 != null && state2 == null) {
+        if (state2 == null) {
             return log.exit(state1);
         }
-        assert state1 != null && state2 != null;
+
         if (state1.equals(state2)) {
             return log.exit(state1);
         }
@@ -1398,9 +1395,7 @@ public class CallService extends CommonService {
                 throw log.throwing(new AssertionError("Case not covered, " + propStates));
             }
         } else if (propStates.contains(PropagationState.ANCESTOR)) {
-            if (propStates.contains(PropagationState.SELF)) {
-                return log.exit(PropagationState.SELF_AND_ANCESTOR);
-            } else if (propStates.contains(PropagationState.DESCENDANT)) {
+            if (propStates.contains(PropagationState.DESCENDANT)) {
                 return log.exit(PropagationState.ANCESTOR_AND_DESCENDANT);
             } else if (propStates.contains(PropagationState.SELF_AND_ANCESTOR)) {
                 return log.exit(PropagationState.SELF_AND_ANCESTOR);
@@ -1412,11 +1407,7 @@ public class CallService extends CommonService {
                 throw log.throwing(new AssertionError("Case not covered, " + propStates));
             }
         } else if (propStates.contains(PropagationState.DESCENDANT)) {
-            if (propStates.contains(PropagationState.SELF)) {
-                return log.exit(PropagationState.SELF_AND_DESCENDANT);
-            } else if (propStates.contains(PropagationState.ANCESTOR)) {
-                return log.exit(PropagationState.ANCESTOR_AND_DESCENDANT);
-            } else if (propStates.contains(PropagationState.SELF_AND_ANCESTOR)) {
+            if (propStates.contains(PropagationState.SELF_AND_ANCESTOR)) {
                 return log.exit(PropagationState.ALL);
             } else if (propStates.contains(PropagationState.SELF_AND_DESCENDANT)) {
                 return log.exit(PropagationState.SELF_AND_DESCENDANT);
@@ -1426,13 +1417,7 @@ public class CallService extends CommonService {
                 throw log.throwing(new AssertionError("Case not covered, " + propStates));
             }
         } else if (propStates.contains(PropagationState.SELF_AND_ANCESTOR)) {
-            if (propStates.contains(PropagationState.SELF)) {
-                return log.exit(PropagationState.SELF_AND_ANCESTOR);
-            } else if (propStates.contains(PropagationState.ANCESTOR)) {
-                return log.exit(PropagationState.SELF_AND_ANCESTOR);
-            } else if (propStates.contains(PropagationState.DESCENDANT)) {
-                return log.exit(PropagationState.ALL);
-            } else if (propStates.contains(PropagationState.SELF_AND_DESCENDANT)) {
+            if (propStates.contains(PropagationState.SELF_AND_DESCENDANT)) {
                 return log.exit(PropagationState.ALL);
             } else if (propStates.contains(PropagationState.ANCESTOR_AND_DESCENDANT)) {
                 return log.exit(PropagationState.ALL);
@@ -1440,33 +1425,13 @@ public class CallService extends CommonService {
                 throw log.throwing(new AssertionError("Case not covered, " + propStates));
             }
         } else if (propStates.contains(PropagationState.SELF_AND_DESCENDANT)) {
-            if (propStates.contains(PropagationState.SELF)) {
-                return log.exit(PropagationState.SELF_AND_DESCENDANT);
-            } else if (propStates.contains(PropagationState.ANCESTOR)) {
+            if (propStates.contains(PropagationState.ANCESTOR_AND_DESCENDANT)) {
                 return log.exit(PropagationState.ALL);
-            } else if (propStates.contains(PropagationState.DESCENDANT)) {
-                return log.exit(PropagationState.SELF_AND_DESCENDANT);
-            } else if (propStates.contains(PropagationState.SELF_AND_ANCESTOR)) {
-                return log.exit(PropagationState.ALL);
-            } else if (propStates.contains(PropagationState.ANCESTOR_AND_DESCENDANT)) {
-                return log.exit(PropagationState.ALL);
-            } else {
-                throw log.throwing(new AssertionError("Case not covered, " + propStates));
             }
+            throw log.throwing(new AssertionError("Case not covered, " + propStates));
         } else if (propStates.contains(PropagationState.ANCESTOR_AND_DESCENDANT)) {
-            if (propStates.contains(PropagationState.SELF)) {
-                return log.exit(PropagationState.ALL);
-            } else if (propStates.contains(PropagationState.ANCESTOR)) {
-                return log.exit(PropagationState.ANCESTOR_AND_DESCENDANT);
-            } else if (propStates.contains(PropagationState.DESCENDANT)) {
-                return log.exit(PropagationState.ANCESTOR_AND_DESCENDANT);
-            } else if (propStates.contains(PropagationState.SELF_AND_ANCESTOR)) {
-                return log.exit(PropagationState.ALL);
-            } else if (propStates.contains(PropagationState.SELF_AND_DESCENDANT)) {
-                return log.exit(PropagationState.ALL);
-            } else {
-                throw log.throwing(new AssertionError("Case not covered, " + propStates));
-            }
+            //all cases already covered in previous if/else
+            throw log.throwing(new AssertionError("Case not covered, " + propStates));
         } else {
             throw log.throwing(new AssertionError("Case not covered, " + propStates));
         }
@@ -1479,7 +1444,7 @@ public class CallService extends CommonService {
      */
     private static ExpressionSummary inferSummaryCallType(Set<ExpressionCallData> callData) {
         log.entry(callData);
-        
+
         if (callData.stream().anyMatch(cd -> Expression.EXPRESSED.equals(cd.getCallType()))) {
             return log.exit(ExpressionSummary.EXPRESSED);
         }

@@ -176,7 +176,7 @@ public class CommandTopAnatTest extends TestAncestor {
      * Test {@link CommandTopAnat#processRequest()} for a job tracking.
      * @throws Exception 
      */
-//    @Test
+    @Test
     //TODO activate this test. It's not activate because I need to continue
     public void shouldProcessRequestJobTracking() throws Exception {
 
@@ -223,10 +223,18 @@ public class CommandTopAnatTest extends TestAncestor {
                 null, mailSender);
         controller.processRequest();
 
-        JobResponse response1 = new JobResponse(jobId, "DONE", keyParam);
+        JobResponse response = new JobResponse(jobId, "UNDEFINED", keyParam);
         LinkedHashMap<String, Object> data = new LinkedHashMap<>();
-        data.put("job_response", response1);
+        data.put("jobResponse", response);
         
-        verify(display).sendTrackingJobResponse(data, "message");
+        verify(display).sendTrackingJobResponse(data, "Job is UNDEFINED");
+
+        when(job.isTerminated()).thenReturn(false);
+        controller.processRequest();
+        response = new JobResponse(jobId, "RUNNING", keyParam);
+        data = new LinkedHashMap<>();
+        data.put("jobResponse", response);
+        
+        verify(display).sendTrackingJobResponse(data, "Job is RUNNING");
     }
 }

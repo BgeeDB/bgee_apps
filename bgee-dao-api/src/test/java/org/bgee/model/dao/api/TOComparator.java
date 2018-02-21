@@ -58,7 +58,7 @@ import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, Feb. 2017
+ * @version Bgee 14, Feb. 2018
  * @since   Bgee 13, July 2014
  */
 public class TOComparator {
@@ -103,6 +103,14 @@ public class TOComparator {
     //to properly be sure that there is a getId() method
     public static <T extends TransferObject> boolean areTOsEqual(T to1, T to2, boolean compareId) {
         log.entry(to1, to2);
+
+        if (to1 == to2) {
+            return log.exit(true);
+        }
+        if(to1== null || to2 == null) {
+            return log.exit(false);
+        }
+
         //Warning: we should have used a visitor pattern here, but this would represent 
         //too much changes to the TransferObject classes, only for test purposes.
         //So we dispatch to the appropriate areTOsEqual method "manually", 

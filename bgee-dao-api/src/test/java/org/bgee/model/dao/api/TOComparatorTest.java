@@ -17,6 +17,8 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTO;
 import org.bgee.model.dao.api.anatdev.StageDAO.StageTO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
+import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SimAnnotToAnatEntityTO;
+import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
@@ -58,7 +60,7 @@ import org.junit.Test;
  *  
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Feb. 2017
+ * @version Bgee 14, Feb. 2018
  * @since   Bgee 13, Sep. 2014
  */
 public class TOComparatorTest extends TestAncestor {
@@ -772,7 +774,6 @@ public class TOComparatorTest extends TestAncestor {
         BigDecimal ten1 = BigDecimal.valueOf(10);
         BigDecimal tenPlus = BigDecimal.valueOf(10.001);
 
-
         assertTrue("Null are the same", TOComparator.areBigDecimalEquals(null, null));
         assertFalse("Null is different", TOComparator.areBigDecimalEquals(null, ten1));
         assertFalse("Null is different", TOComparator.areBigDecimalEquals(ten0, null));
@@ -780,6 +781,57 @@ public class TOComparatorTest extends TestAncestor {
 
         assertTrue("Should be equals: " + ten0 + " " + ten1, TOComparator.areBigDecimalEquals(ten0, ten1));
         assertTrue("Should be equals: " + ten0 + " " + ten0, TOComparator.areBigDecimalEquals(ten0, ten0));
+    }
 
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(TransferObject, TransferObject)}
+     * using {@code SummarySimilarityAnnotationTO}s.
+     */
+    @Test
+    public void testSummarySimilarityAnnotationComparator() {
+        SummarySimilarityAnnotationTO a1 = new SummarySimilarityAnnotationTO("id", 9606, true, "cioId");
+        SummarySimilarityAnnotationTO a2 = new SummarySimilarityAnnotationTO("id", 9606, true, "cioId");
+        
+        assertTrue("Null are the same", TOComparator.areTOsEqual(null, null));
+        assertFalse("Null is different", TOComparator.areTOsEqual(a1, null));
+        assertFalse("Null is different", TOComparator.areTOsEqual(null, a2));
+
+        assertTrue("Should be equals: " + a1 + " " + a2, TOComparator.areTOsEqual(a1, a2));
+        assertTrue("Should be equals: " + a1 + " " + a1, TOComparator.areTOsEqual(a1, a1));
+
+        SummarySimilarityAnnotationTO a3 = new SummarySimilarityAnnotationTO("XX", 9606, true, "cioId");
+        assertFalse("Should not be equals: " + a1 + " " + a3, TOComparator.areTOsEqual(a1, a3));
+
+        a3 = new SummarySimilarityAnnotationTO("id", 0, true, "cioId");
+        assertFalse("Should not be equals: " + a1 + " " + a3, TOComparator.areTOsEqual(a1, a3));
+
+        a3 = new SummarySimilarityAnnotationTO("id", 9606, false, "cioId");
+        assertFalse("Should not be equals: " + a1 + " " + a3, TOComparator.areTOsEqual(a1, a3));
+
+        a3 = new SummarySimilarityAnnotationTO("id", 9606, true, "XXX");
+        assertFalse("Should not be equals: " + a1 + " " + a3, TOComparator.areTOsEqual(a1, a3));
+    }
+
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(TransferObject, TransferObject)}
+     * using {@code SimAnnotToAnatEntityTO}s.
+     */
+    @Test
+    public void testSimAnnotToAnatEntityComparator() {
+        SimAnnotToAnatEntityTO a1 = new SimAnnotToAnatEntityTO("id1", "cioId1");
+        SimAnnotToAnatEntityTO a2 = new SimAnnotToAnatEntityTO("id1", "cioId1");
+
+        assertTrue("Null are the same", TOComparator.areTOsEqual(null, null));
+        assertFalse("Null is different", TOComparator.areTOsEqual(a1, null));
+        assertFalse("Null is different", TOComparator.areTOsEqual(null, a2));
+
+        assertTrue("Should be equals: " + a1 + " " + a2, TOComparator.areTOsEqual(a1, a2));
+        assertTrue("Should be equals: " + a1 + " " + a1, TOComparator.areTOsEqual(a1, a1));
+
+        SimAnnotToAnatEntityTO a3 = new SimAnnotToAnatEntityTO("XX", "cioId1");
+        assertFalse("Should not be equals: " + a1 + " " + a3, TOComparator.areTOsEqual(a1, a3));
+
+        a3 = new SimAnnotToAnatEntityTO("id1", "XX");
+        assertFalse("Should not be equals: " + a1 + " " + a3, TOComparator.areTOsEqual(a1, a3));
     }
 }

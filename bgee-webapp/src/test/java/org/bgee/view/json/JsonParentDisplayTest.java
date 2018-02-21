@@ -87,9 +87,9 @@ public class JsonParentDisplayTest extends TestAncestor {
                 + "\": \"myaction\"\n  },\n  \"data\": {\n    \"speciesList\": [\n"
                 + "      {\n        \"name\": \"SpeciesName\",\n        "
                 + "\"description\": \"A string description of that species\",\n        "
-                + "\"id\": \"12\"\n      },\n      {\n        \"name\": \"SpeciesName\",\n"
+                + "\"id\": 12\n      },\n      {\n        \"name\": \"SpeciesName\",\n"
                 + "        \"description\": \"A string description of that species\",\n"
-                + "        \"id\": \"13\"\n      }\n    ]\n  }\n}",  
+                + "        \"id\": 13\n      }\n    ]\n  }\n}",  
                 sw.toString());
         verify(response).setStatus(HttpServletResponse.SC_OK);
 
@@ -113,15 +113,15 @@ public class JsonParentDisplayTest extends TestAncestor {
                 + "  \"data\": {\n    \"speciesList\": [\n"
                 + "      {\n        \"name\": \"SpeciesName\",\n        "
                 + "\"description\": \"A string description of that species\",\n        "
-                + "\"id\": \"12\"\n      },\n      {\n        \"name\": \"SpeciesName\",\n"
+                + "\"id\": 12\n      },\n      {\n        \"name\": \"SpeciesName\",\n"
                 + "        \"description\": \"A string description of that species\",\n"
-                + "        \"id\": \"13\"\n      }\n    ]\n  }\n}",  
+                + "        \"id\": 13\n      }\n    ]\n  }\n}",  
                 sw.toString());
         verify(response).setStatus(HttpServletResponse.SC_OK);
     }
     
     /**
-     * Test {@link JsonParentDisplay#sendResponse(int, String, LinkedHashMap, true)} 
+     * Test {@link JsonParentDisplay#sendResponse(int, String, LinkedHashMap)} 
      * when sending error codes.
      */
     @Test
@@ -168,9 +168,9 @@ public class JsonParentDisplayTest extends TestAncestor {
                 + "\": \"myaction\"\n  },\n  \"data\": {\n    \"speciesList\": [\n"
                 + "      {\n        \"name\": \"SpeciesName\",\n        "
                 + "\"description\": \"A string description of that species\",\n        "
-                + "\"id\": \"12\"\n      },\n      {\n        \"name\": \"SpeciesName\",\n"
+                + "\"id\": 12\n      },\n      {\n        \"name\": \"SpeciesName\",\n"
                 + "        \"description\": \"A string description of that species\",\n"
-                + "        \"id\": \"13\"\n      }\n    ]\n  }\n}",  
+                + "        \"id\": 13\n      }\n    ]\n  }\n}",  
                 sw.toString());
         verify(response).setStatus(HttpServletResponse.SC_NOT_FOUND);
 
@@ -195,9 +195,9 @@ public class JsonParentDisplayTest extends TestAncestor {
                 + "  \"data\": {\n    \"speciesList\": [\n"
                 + "      {\n        \"name\": \"SpeciesName\",\n        "
                 + "\"description\": \"A string description of that species\",\n        "
-                + "\"id\": \"12\"\n      },\n      {\n        \"name\": \"SpeciesName\",\n"
+                + "\"id\": 12\n      },\n      {\n        \"name\": \"SpeciesName\",\n"
                 + "        \"description\": \"A string description of that species\",\n"
-                + "        \"id\": \"13\"\n      }\n    ]\n  }\n}",  
+                + "        \"id\": 13\n      }\n    ]\n  }\n}",  
                 sw.toString());
         verify(response).setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }

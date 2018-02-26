@@ -87,19 +87,21 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         //now, filter with conditions, data types, gene IDs, species IDs, etc
         //First, without substructures
         Collection<CallDAOFilter> filters = Arrays.asList(
-                new CallDAOFilter(Arrays.asList("ID1", "ID2", "ID3"), 
-                        Arrays.asList("11", "31"), 
+                new CallDAOFilter(Arrays.asList(1, 2, 3), 
+                        Arrays.asList(11, 31), 
                         Arrays.asList(new DAOConditionFilter(
                                 Arrays.asList("Anat_id1", "Anat_id3"), 
-                                Arrays.asList("Stage_id1")), 
-                                new DAOConditionFilter(Arrays.asList("Anat_id6"), null))
+                                Arrays.asList("Stage_id1"), null), 
+                                new DAOConditionFilter(Arrays.asList("Anat_id6"), null, null)),
+                        null, null, null
                         ), 
-                new CallDAOFilter(Arrays.asList("ID2"), 
+                new CallDAOFilter(Arrays.asList(2), 
                         null, 
                         Arrays.asList(new DAOConditionFilter(
                                 Arrays.asList("Anat_id11", "Anat_id1"), 
-                                Arrays.asList("Stage_id12", "Stage_id13", "Stage_id9", "Stage_id2")), 
-                                new DAOConditionFilter(null, Arrays.asList("Stage_id18")))
+                                Arrays.asList("Stage_id12", "Stage_id13", "Stage_id9", "Stage_id2"), null), 
+                                new DAOConditionFilter(null, Arrays.asList("Stage_id18"), null)),
+                        null, null, null
                         ));
         
         Collection<ExpressionCallTO> callTOFilters = Arrays.asList(
@@ -115,44 +117,51 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
             );
         List<ExpressionCallTO> orderedExpectedExprCalls = Arrays.asList(
                 //calls retrieved thanks to first filter
-                new ExpressionCallTO("1", "ID3", "Anat_id1", "Stage_id1", BigDecimal.valueOf(2232.28742515),
+                //In bgee 13: "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(1, 3, 1, BigDecimal.valueOf(2232.28742515),
                         DataState.LOWQUALITY, BigDecimal.valueOf(937.32),
                         DataState.NODATA, null,
                         DataState.HIGHQUALITY, BigDecimal.valueOf(24640.00),
                         DataState.HIGHQUALITY, BigDecimal.valueOf(2500.01),
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("2", "ID1", "Anat_id6", "Stage_id6", BigDecimal.valueOf(9300.59800664),
+                //In bgee 13: "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(2, 1, 2, BigDecimal.valueOf(9300.59800664),
                         DataState.LOWQUALITY,  BigDecimal.valueOf(25108.40),
                         DataState.HIGHQUALITY, null,
                         DataState.HIGHQUALITY, BigDecimal.valueOf(40000.0),
                         DataState.LOWQUALITY, BigDecimal.valueOf(1243.2),
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("3", "ID1", "Anat_id6", "Stage_id7", BigDecimal.valueOf(5.0),
+                //In bgee 13: "Anat_id6", "Stage_id7"
+                new ExpressionCallTO(3, 1, 3, BigDecimal.valueOf(5.0),
                         DataState.NODATA, null,
                         DataState.NODATA, null,
                         DataState.NODATA, null, 
                         DataState.LOWQUALITY, BigDecimal.valueOf(5.0),
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
                 //retrieved thanks to second filter
-                new ExpressionCallTO("4", "ID2", "Anat_id2", "Stage_id18", BigDecimal.valueOf(1802.74501109),
+                //In bgee 13: "Anat_id2", "Stage_id18"
+                new ExpressionCallTO(4, 2, 4, BigDecimal.valueOf(1802.74501109),
                         DataState.HIGHQUALITY, BigDecimal.valueOf(469.00),
                         DataState.HIGHQUALITY,  null,
                         DataState.HIGHQUALITY, BigDecimal.valueOf(24113),
                         DataState.HIGHQUALITY,  BigDecimal.valueOf(4321.5),
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("6", "ID2", "Anat_id11", "Stage_id12", BigDecimal.valueOf(5784.93333333),
+                //In bgee 13: "Anat_id11", "Stage_id12"
+                new ExpressionCallTO(6, 2, 5, BigDecimal.valueOf(5784.93333333),
                         DataState.HIGHQUALITY,  BigDecimal.valueOf(8650.00),
                         DataState.LOWQUALITY, null,
                         DataState.NODATA,  null,
                         DataState.HIGHQUALITY,  BigDecimal.valueOf(4352.4),
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("9", "ID2", "Anat_id1", "Stage_id9", BigDecimal.valueOf(243.26666667),
+                //In bgee 13: "Anat_id1", "Stage_id9"
+                new ExpressionCallTO(9, 2, 6, BigDecimal.valueOf(243.26666667),
                         DataState.HIGHQUALITY, BigDecimal.valueOf(483.00),
                         DataState.LOWQUALITY, null,
                         DataState.NODATA, null, 
                         DataState.HIGHQUALITY, BigDecimal.valueOf(123.4),
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("10", "ID1", "Anat_id6", "Stage_id8", BigDecimal.valueOf(2445.00000000), 
+                //In bgee 13: "Anat_id6", "Stage_id8"
+                new ExpressionCallTO(10, 1, 7, BigDecimal.valueOf(2445.00000000), 
                         DataState.HIGHQUALITY, BigDecimal.valueOf(2445.00),
                         DataState.HIGHQUALITY, null,
                         DataState.NODATA, null,
@@ -188,47 +197,61 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         OriginOfLine.SELF, OriginOfLine.SELF, true));
         orderedExpectedExprCalls = Arrays.asList(
                 //first filter
-                new ExpressionCallTO("1", "ID3", "Anat_id1", "Stage_id1", 
+                //in Bgee 13: "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(1, 3, 1, 
                         DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("9", "ID3", "Anat_id3", "Stage_id1", 
+                //in Bgee 13: "Anat_id3", "Stage_id1"
+                new ExpressionCallTO(9, 3, 2, 
                         DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("12", "ID3", "Anat_id6", "Stage_id1", 
+                //in Bgee 13: "Anat_id6", "Stage_id1"
+                new ExpressionCallTO(12, 3, 3, 
                         DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("2", "ID1", "Anat_id6", "Stage_id6", 
+                //in Bgee 13: "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(2, 1, 4, 
                         DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("3", "ID1", "Anat_id6", "Stage_id7", 
+                //in Bgee 13: "Anat_id6", "Stage_id7"
+                new ExpressionCallTO(3, 1, 5, 
                         DataState.NODATA, DataState.NODATA, DataState.NODATA, 
                         DataState.LOWQUALITY, true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
+                //in Bgee 13: "Anat_id2", "Stage_id18"
                 //second filter
-                new ExpressionCallTO("4", "ID2", "Anat_id2", "Stage_id18",
+                new ExpressionCallTO(4, 2, 6,
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("6", "ID2", "Anat_id11", "Stage_id12",
+                //in Bgee 13: "Anat_id11", "Stage_id12"
+                new ExpressionCallTO(6, 2, 7,
                         DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("16", "ID2", "Anat_id3", "Stage_id18", 
+                //in Bgee 13: "Anat_id3", "Stage_id18"
+                new ExpressionCallTO(16, 2, 8, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("17", "ID2", "Anat_id4", "Stage_id18", 
+                //in Bgee 13: "Anat_id4", "Stage_id18"
+                new ExpressionCallTO(17, 2, 9, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("18", "ID2", "Anat_id5", "Stage_id18", 
+                //in Bgee 13: "Anat_id5", "Stage_id18"
+                new ExpressionCallTO(18, 2, 10, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("19", "ID2", "Anat_id9", "Stage_id18", 
+                //in Bgee 13: "Anat_id9", "Stage_id18"
+                new ExpressionCallTO(19, 2, 11, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("20", "ID2", "Anat_id10", "Stage_id18", 
+                //in Bgee 13: "Anat_id10", "Stage_id18"
+                new ExpressionCallTO(20, 2, 12, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("21", "ID2", "Anat_id11", "Stage_id18", 
+                //in Bgee 13: "Anat_id11", "Stage_id18"
+                new ExpressionCallTO(21, 2, 13, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("22", "ID1", "Anat_id6", "Stage_id8", 
+                //in Bgee 13: "Anat_id6", "Stage_id8"
+                new ExpressionCallTO(22, 1, 14, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
                         DataState.NODATA, true, false, OriginOfLine.SELF, OriginOfLine.SELF, true));
         //No ordering requested, put in a Set
@@ -266,83 +289,120 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         
             //First, retrieve everything for species 11 and 21
             CallDAOFilter filter = new CallDAOFilter(null, 
-                    Arrays.asList("11", "21", "41"), // 41 = species Id that does not exist
-                    null);
+                    Arrays.asList(11, 21, 41), // 41 = species Id that does not exist
+                    null, null, null, null);
             // Generate manually expected result
             List<ExpressionCallTO> orderedExpectedExprCalls = Arrays.asList(
-                    new ExpressionCallTO("ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6", 
+                    //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                    new ExpressionCallTO(1, 1, 1, 
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID1__Anat_id6__Stage_id5", "ID1", "Anat_id6", "Stage_id5", 
+                    //in Bgee 13: "ID1__Anat_id6__Stage_id5", "ID1", "Anat_id6", "Stage_id5"
+                    new ExpressionCallTO(2, 1, 2, 
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID1__Anat_id6__Stage_id1", "ID1", "Anat_id6", "Stage_id1", 
+                    //in Bgee 13: "ID1__Anat_id6__Stage_id1", "ID1", "Anat_id6", "Stage_id1"
+                    new ExpressionCallTO(3, 1, 3, 
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID1__Anat_id6__Stage_id7", "ID1", "Anat_id6", "Stage_id7", 
+                    //in Bgee 13: "ID1__Anat_id6__Stage_id7", "ID1", "Anat_id6", "Stage_id7"
+                    new ExpressionCallTO(4, 1, 4, 
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID1__Anat_id6__Stage_id8", "ID1", "Anat_id6", "Stage_id8", 
+                    //in Bgee 13: "ID1__Anat_id6__Stage_id8", "ID1", "Anat_id6", "Stage_id8"
+                    new ExpressionCallTO(5, 1, 5, 
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID1__Anat_id1__Stage_id8", "ID1", "Anat_id1", "Stage_id8", 
+                    //in Bgee 13: "ID1__Anat_id1__Stage_id8", "ID1", "Anat_id1", "Stage_id8"
+                    new ExpressionCallTO(6, 1, 6, 
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID1__Anat_id1__Stage_id7", "ID1", "Anat_id1", "Stage_id7", 
+                    //in Bgee 13: "ID1__Anat_id1__Stage_id7", "ID1", "Anat_id1", "Stage_id7"
+                    new ExpressionCallTO(7, 1, 7, 
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID1__Anat_id1__Stage_id5", "ID1", "Anat_id1", "Stage_id5", 
+                    //in Bgee 13: "ID1__Anat_id1__Stage_id5", "ID1", "Anat_id1", "Stage_id5"
+                    new ExpressionCallTO(8, 1, 8, 
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID1__Anat_id1__Stage_id1", "ID1", "Anat_id1", "Stage_id1", 
+                    //in Bgee 13: "ID1__Anat_id1__Stage_id1", "ID1", "Anat_id1", "Stage_id1"
+                    new ExpressionCallTO(9, 1, 9, 
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID1__Anat_id7__Stage_id10", "ID1", "Anat_id7", "Stage_id10", 
+                    //in Bgee 13: "ID1__Anat_id7__Stage_id10", "ID1", "Anat_id7", "Stage_id10"
+                    new ExpressionCallTO(10, 1, 10, 
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID1__Anat_id7__Stage_id1", "ID1", "Anat_id7", "Stage_id1", 
+                    //in Bgee 13: "ID1__Anat_id7__Stage_id1", "ID1", "Anat_id7", "Stage_id1"
+                    new ExpressionCallTO(11, 1, 11, 
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID2__Anat_id1__Stage_id1", "ID2", "Anat_id1", "Stage_id1", 
-                            null, null, null, null, true, true, null, null, null), 
-                    new ExpressionCallTO("ID2__Anat_id1__Stage_id2", "ID2", "Anat_id1", "Stage_id2",
+                    //in Bgee 13: "ID2__Anat_id1__Stage_id1", "ID2", "Anat_id1", "Stage_id1"
+                    new ExpressionCallTO(12, 2, 12, 
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID2__Anat_id11__Stage_id1", "ID2", "Anat_id11", "Stage_id1", 
-                            null, null, null, null, true, true, null, null, null), 
-                    new ExpressionCallTO("ID2__Anat_id11__Stage_id10", "ID2", "Anat_id11", "Stage_id10", 
+                    //in Bgee 13: "ID2__Anat_id1__Stage_id2", "ID2", "Anat_id1", "Stage_id2"
+                    new ExpressionCallTO(13, 2, 13,
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID2__Anat_id11__Stage_id12", "ID2", "Anat_id11", "Stage_id12",
+                    //in Bgee 13: "ID2__Anat_id11__Stage_id1", "ID2", "Anat_id11", "Stage_id1"
+                    new ExpressionCallTO(14, 2, 14, 
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID2__Anat_id11__Stage_id13", "ID2", "Anat_id11", "Stage_id13", 
+                    //in Bgee 13: "ID2__Anat_id11__Stage_id10", "ID2", "Anat_id11", "Stage_id10"
+                    new ExpressionCallTO(15, 2, 15, 
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID2__Anat_id11__Stage_id14", "ID2", "Anat_id11", "Stage_id14", 
-                            null, null, null, null, true, true, null, null, null), 
-                    new ExpressionCallTO("ID2__Anat_id11__Stage_id18", "ID2", "Anat_id11", "Stage_id18",
-                            null, null, null, null, true, true, null, null, null), 
-                    new ExpressionCallTO("ID2__Anat_id2__Stage_id1", "ID2", "Anat_id2", "Stage_id1", 
+                    //in Bgee 13: "ID2__Anat_id11__Stage_id12", "ID2", "Anat_id11", "Stage_id12"
+                    new ExpressionCallTO(16, 2, 16,
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID2__Anat_id2__Stage_id14", "ID2", "Anat_id2", "Stage_id14", 
+                    //in Bgee 13: "ID2__Anat_id11__Stage_id13", "ID2", "Anat_id11", "Stage_id13"
+                    new ExpressionCallTO(17, 2, 17, 
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID2__Anat_id2__Stage_id18", "ID2", "Anat_id2", "Stage_id18", 
+                    //in Bgee 13: "ID2__Anat_id11__Stage_id14", "ID2", "Anat_id11", "Stage_id14"
+                    new ExpressionCallTO(18, 2, 18, 
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID2__Anat_id3__Stage_id18", "ID2", "Anat_id3", "Stage_id18", 
+                    //in Bgee 13: "ID2__Anat_id11__Stage_id18", "ID2", "Anat_id11", "Stage_id18"
+                    new ExpressionCallTO(19, 2, 19,
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID2__Anat_id3__Stage_id14", "ID2", "Anat_id3", "Stage_id14", 
+                    //in Bgee 13: "ID2__Anat_id2__Stage_id1", "ID2", "Anat_id2", "Stage_id1"
+                    new ExpressionCallTO(20, 2, 20, 
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID2__Anat_id3__Stage_id1", "ID2", "Anat_id3", "Stage_id1", 
+                    //in Bgee 13: "ID2__Anat_id2__Stage_id14", "ID2", "Anat_id2", "Stage_id14"
+                    new ExpressionCallTO(21, 2, 21, 
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID2__Anat_id4__Stage_id18", "ID2", "Anat_id4", "Stage_id18", 
+                    //in Bgee 13: "ID2__Anat_id2__Stage_id18", "ID2", "Anat_id2", "Stage_id18"
+                    new ExpressionCallTO(22, 2, 22, 
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID2__Anat_id4__Stage_id14", "ID2", "Anat_id4", "Stage_id14", 
+                    //in Bgee 13: "ID2__Anat_id3__Stage_id18", "ID2", "Anat_id3", "Stage_id18"
+                    new ExpressionCallTO(23, 2, 23, 
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID2__Anat_id4__Stage_id1", "ID2", "Anat_id4", "Stage_id1", 
+                    //in Bgee 13: "ID2__Anat_id3__Stage_id14", "ID2", "Anat_id3", "Stage_id14"
+                    new ExpressionCallTO(24, 2, 24, 
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID2__Anat_id5__Stage_id18", "ID2", "Anat_id5", "Stage_id18", 
+                    //in Bgee 13: "ID2__Anat_id3__Stage_id1", "ID2", "Anat_id3", "Stage_id1"
+                    new ExpressionCallTO(25, 2, 25, 
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID2__Anat_id5__Stage_id14", "ID2", "Anat_id5", "Stage_id14", 
+                    //in Bgee 13: "ID2__Anat_id4__Stage_id18", "ID2", "Anat_id4", "Stage_id18"
+                    new ExpressionCallTO(26, 2, 26, 
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID2__Anat_id5__Stage_id1", "ID2", "Anat_id5", "Stage_id1", 
+                    //in Bgee 13: "ID2__Anat_id4__Stage_id14", "ID2", "Anat_id4", "Stage_id14"
+                    new ExpressionCallTO(27, 2, 27, 
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID2__Anat_id9__Stage_id18", "ID2", "Anat_id9", "Stage_id18", 
+                    //in Bgee 13: "ID2__Anat_id4__Stage_id1", "ID2", "Anat_id4", "Stage_id1"
+                    new ExpressionCallTO(28, 2, 28, 
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID2__Anat_id9__Stage_id14", "ID2", "Anat_id9", "Stage_id14", 
+                    //in Bgee 13: "ID2__Anat_id5__Stage_id18", "ID2", "Anat_id5", "Stage_id18"
+                    new ExpressionCallTO(29, 2, 29, 
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID2__Anat_id9__Stage_id1", "ID2", "Anat_id9", "Stage_id1", 
+                    //in Bgee 13: "ID2__Anat_id5__Stage_id14", "ID2", "Anat_id5", "Stage_id14"
+                    new ExpressionCallTO(30, 2, 30, 
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID2__Anat_id10__Stage_id18", "ID2", "Anat_id10", "Stage_id18", 
+                    //in Bgee 13: "ID2__Anat_id5__Stage_id1", "ID2", "Anat_id5", "Stage_id1"
+                    new ExpressionCallTO(31, 2, 31, 
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID2__Anat_id10__Stage_id14", "ID2", "Anat_id10", "Stage_id14", 
+                    //in Bgee 13: "ID2__Anat_id9__Stage_id18", "ID2", "Anat_id9", "Stage_id18"
+                    new ExpressionCallTO(32, 2, 32, 
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID2__Anat_id10__Stage_id1", "ID2", "Anat_id10", "Stage_id1", 
+                    //in Bgee 13: "ID2__Anat_id9__Stage_id14", "ID2", "Anat_id9", "Stage_id14"
+                    new ExpressionCallTO(33, 2, 33, 
+                            null, null, null, null, true, true, null, null, null),
+                    //in Bgee 13: "ID2__Anat_id9__Stage_id1", "ID2", "Anat_id9", "Stage_id1"
+                    new ExpressionCallTO(34, 2, 34, 
+                            null, null, null, null, true, true, null, null, null),
+                    //in Bgee 13: "ID2__Anat_id10__Stage_id18", "ID2", "Anat_id10", "Stage_id18"
+                    new ExpressionCallTO(35, 2, 35, 
+                            null, null, null, null, true, true, null, null, null),
+                    //in Bgee 13: "ID2__Anat_id10__Stage_id14", "ID2", "Anat_id10", "Stage_id14"
+                    new ExpressionCallTO(36, 2, 36, 
+                            null, null, null, null, true, true, null, null, null),
+                    //in Bgee 13: "ID2__Anat_id10__Stage_id1", "ID2", "Anat_id10", "Stage_id1"
+                    new ExpressionCallTO(37, 2, 37, 
                             null, null, null, null, true, true, null, null, null));
             //No ordering requested, put in a Set
             Set<ExpressionCallTO> unorderedExpectedExprCalls = new HashSet<>(orderedExpectedExprCalls);
@@ -351,7 +411,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                     (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), 
                             null, true, true, null, null, 
                             Arrays.asList(ExpressionCallDAO.Attribute.ID, ExpressionCallDAO.Attribute.GENE_ID, 
-                                    ExpressionCallDAO.Attribute.ANAT_ENTITY_ID, ExpressionCallDAO.Attribute.STAGE_ID, 
+                                    ExpressionCallDAO.Attribute.CONDITION_ID, 
                                     ExpressionCallDAO.Attribute.INCLUDE_SUBSTRUCTURES, 
                                     ExpressionCallDAO.Attribute.INCLUDE_SUBSTAGES), 
                             null);
@@ -368,18 +428,22 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
             
             //now, filter with conditions, data types, gene IDs, species IDs, etc
             Collection<CallDAOFilter> filters = Arrays.asList(
-                    new CallDAOFilter(Arrays.asList("ID1", "ID100"), //ID100 does not exist
-                            Arrays.asList("11", "21", "41"), // 41 = species Id that does not exist
+                    new CallDAOFilter(Arrays.asList(1, 100), //ID100 does not exist
+                            Arrays.asList(11, 21, 41), // 41 = species Id that does not exist
                             Arrays.asList(new DAOConditionFilter(
                                     Arrays.asList("Anat_id6", "Anat_id1"), 
-                                    Arrays.asList("Stage_id6", "Stage_id7")), 
+                                    Arrays.asList("Stage_id6", "Stage_id7"),
+                                    null), 
                                     //This filter should select no call
                                     new DAOConditionFilter(
                                             Arrays.asList("Anat_id600", "Anat_id100"), 
-                                            Arrays.asList("Stage_id600", "Stage_id700")))), 
-                    new CallDAOFilter(Arrays.asList("ID2"), 
-                            Arrays.asList("21"), 
-                            Arrays.asList(new DAOConditionFilter(Arrays.asList("Anat_id11"), null))));
+                                            Arrays.asList("Stage_id600", "Stage_id700"),
+                                            null)),
+                            null, null, null), 
+                    new CallDAOFilter(Arrays.asList(2), 
+                            Arrays.asList(21), 
+                            Arrays.asList(new DAOConditionFilter(Arrays.asList("Anat_id11"), null, null)),
+                            null, null, null));
             Collection<ExpressionCallTO> callTOFilters = Arrays.asList(
                     new ExpressionCallTO(null, null, DataState.HIGHQUALITY, null), 
                     new ExpressionCallTO(null, null, null, DataState.HIGHQUALITY), 
@@ -387,24 +451,32 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                     new ExpressionCallTO(null, null, DataState.HIGHQUALITY, null)
                 );
             orderedExpectedExprCalls = Arrays.asList(
-                    //first CallFilter should retrieve those: 
-                    new ExpressionCallTO("ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6", 
+                    //first CallFilter should retrieve those:
+                    //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                    new ExpressionCallTO(1, 1, 1, 
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID1__Anat_id6__Stage_id7", "ID1", "Anat_id6", "Stage_id7", 
+                    //in Bgee 13: "ID1__Anat_id6__Stage_id7", "ID1", "Anat_id6", "Stage_id7"
+                    new ExpressionCallTO(2, 1, 2, 
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID1__Anat_id1__Stage_id7", "ID1", "Anat_id1", "Stage_id7", 
+                    //in Bgee 13: "ID1__Anat_id1__Stage_id7", "ID1", "Anat_id1", "Stage_id7"
+                    new ExpressionCallTO(3, 1, 3, 
                             null, null, null, null, true, true, null, null, null),
                     
                     //second CallFilter should retrieve those: 
-                    new ExpressionCallTO("ID2__Anat_id11__Stage_id1", "ID2", "Anat_id11", "Stage_id1", 
-                            null, null, null, null, true, true, null, null, null), 
-                    new ExpressionCallTO("ID2__Anat_id11__Stage_id10", "ID2", "Anat_id11", "Stage_id10",  
+                    //in Bgee 13: "ID2__Anat_id11__Stage_id1", "ID2", "Anat_id11", "Stage_id1"
+                    new ExpressionCallTO(1, 2, 1, 
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID2__Anat_id11__Stage_id12", "ID2", "Anat_id11", "Stage_id12", 
+                    //in Bgee 13: "ID2__Anat_id11__Stage_id10", "ID2", "Anat_id11", "Stage_id10"
+                    new ExpressionCallTO(2, 2, 2,  
                             null, null, null, null, true, true, null, null, null),
-                    new ExpressionCallTO("ID2__Anat_id11__Stage_id14", "ID2", "Anat_id11", "Stage_id14",  
-                            null, null, null, null, true, true, null, null, null), 
-                    new ExpressionCallTO("ID2__Anat_id11__Stage_id18", "ID2", "Anat_id11", "Stage_id18", 
+                    //in Bgee 13: "ID2__Anat_id11__Stage_id12", "ID2", "Anat_id11", "Stage_id12"
+                    new ExpressionCallTO(3, 2, 3, 
+                            null, null, null, null, true, true, null, null, null),
+                    //in Bgee 13: "ID2__Anat_id11__Stage_id14", "ID2", "Anat_id11", "Stage_id14"
+                    new ExpressionCallTO(4, 2, 4,  
+                            null, null, null, null, true, true, null, null, null),
+                    //in Bgee 13: "ID2__Anat_id11__Stage_id18", "ID2", "Anat_id11", "Stage_id18"
+                    new ExpressionCallTO(5, 2, 5, 
                             null, null, null, null, true, true, null, null, null));
             //No ordering requested, put in a Set
             unorderedExpectedExprCalls = new HashSet<>(orderedExpectedExprCalls);
@@ -412,7 +484,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
             rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(filters, callTOFilters, 
                     true, true, null, null, 
                     Arrays.asList(ExpressionCallDAO.Attribute.ID, ExpressionCallDAO.Attribute.GENE_ID, 
-                            ExpressionCallDAO.Attribute.ANAT_ENTITY_ID, ExpressionCallDAO.Attribute.STAGE_ID, 
+                            ExpressionCallDAO.Attribute.CONDITION_ID, 
                             ExpressionCallDAO.Attribute.INCLUDE_SUBSTRUCTURES, 
                             ExpressionCallDAO.Attribute.INCLUDE_SUBSTAGES), 
                     null);
@@ -445,144 +517,181 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         
         //First, retrieve everything for species 11 and 21, including substructures
         CallDAOFilter filter = new CallDAOFilter(null, 
-                Arrays.asList("11", "21", "41"), // 41 = species Id that does not exist
-                null);
+                Arrays.asList(11, 21, 41), // 41 = species Id that does not exist
+                null, null, null, null);
         // Generate manually expected result
         List<ExpressionCallTO> orderedExpectedExprCalls = Arrays.asList(
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, true, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id5", "ID1", "Anat_id6", "Stage_id5", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(2, 1, 2, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, true, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id1", "ID1", "Anat_id6", "Stage_id1", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(3, 1, 3, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, true, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id7", "ID1", "Anat_id6", "Stage_id7", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(4, 1, 4, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, 
                         true, true, OriginOfLine.SELF, OriginOfLine.BOTH, true),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id8", "ID1", "Anat_id6", "Stage_id8", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(5, 1, 5, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         true, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id8", "ID1", "Anat_id1", "Stage_id8", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(6, 1, 6, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         true, true, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id7", "ID1", "Anat_id1", "Stage_id7", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(7, 1, 7, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         true, true, OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id5", "ID1", "Anat_id1", "Stage_id5", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(8, 1, 8, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         true, true, OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id1", "ID1", "Anat_id1", "Stage_id1", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(9, 1, 9, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
                         true, true, OriginOfLine.BOTH, OriginOfLine.BOTH, true),
-                new ExpressionCallTO("ID1__Anat_id7__Stage_id10", "ID1", "Anat_id7", "Stage_id10", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(10, 1, 10, 
                         DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
                         DataState.LOWQUALITY, true, true, OriginOfLine.BOTH, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID1__Anat_id7__Stage_id1", "ID1", "Anat_id7", "Stage_id1", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(11, 1, 11, 
                         DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
                         DataState.LOWQUALITY, true, true, OriginOfLine.BOTH, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id1__Stage_id1", "ID2", "Anat_id1", "Stage_id1", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.HIGHQUALITY, true, true,
-                        OriginOfLine.BOTH, OriginOfLine.BOTH, false), 
-                new ExpressionCallTO("ID2__Anat_id1__Stage_id2", "ID2", "Anat_id1", "Stage_id2",
+                        OriginOfLine.BOTH, OriginOfLine.BOTH, false),
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(2, 2, 2,
                         DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.NODATA, true, true, 
                         OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id1", "ID2", "Anat_id11", "Stage_id1", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(3, 2, 3, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
-                        OriginOfLine.BOTH, OriginOfLine.DESCENT, false), 
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id10", "ID2", "Anat_id11", "Stage_id10", 
+                        OriginOfLine.BOTH, OriginOfLine.DESCENT, false),
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(4, 2, 4, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id12", "ID2", "Anat_id11", "Stage_id12",
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(5, 2, 5,
                         DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id13", "ID2", "Anat_id11", "Stage_id13", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(6, 2, 6, 
                         DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.NODATA, true, true, 
                         OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id14", "ID2", "Anat_id11", "Stage_id14", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(7, 2, 7, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
-                        OriginOfLine.DESCENT, OriginOfLine.DESCENT, false), 
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id18", "ID2", "Anat_id11", "Stage_id18",
+                        OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(8, 2, 8,
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
-                        OriginOfLine.DESCENT, OriginOfLine.SELF, false), 
-                new ExpressionCallTO("ID2__Anat_id2__Stage_id1", "ID2", "Anat_id2", "Stage_id1", 
+                        OriginOfLine.DESCENT, OriginOfLine.SELF, false),
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(9, 2, 9, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id2__Stage_id14", "ID2", "Anat_id2", "Stage_id14", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(10, 2, 10, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id2__Stage_id18", "ID2", "Anat_id2", "Stage_id18", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(11, 2, 11, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID2__Anat_id3__Stage_id18", "ID2", "Anat_id3", "Stage_id18", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(12, 2, 12, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("ID2__Anat_id3__Stage_id14", "ID2", "Anat_id3", "Stage_id14", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(13, 2, 13, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true,
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id3__Stage_id1", "ID2", "Anat_id3", "Stage_id1", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(14, 2, 14, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id4__Stage_id18", "ID2", "Anat_id4", "Stage_id18", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(15, 2, 15, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("ID2__Anat_id4__Stage_id14", "ID2", "Anat_id4", "Stage_id14", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(16, 2, 16, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id4__Stage_id1", "ID2", "Anat_id4", "Stage_id1", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(17, 2, 17, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true,
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id5__Stage_id18", "ID2", "Anat_id5", "Stage_id18", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(18, 2, 18, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("ID2__Anat_id5__Stage_id14", "ID2", "Anat_id5", "Stage_id14", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(19, 2, 19, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id5__Stage_id1", "ID2", "Anat_id5", "Stage_id1", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(20, 2, 20, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id9__Stage_id18", "ID2", "Anat_id9", "Stage_id18", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(21, 2, 21, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("ID2__Anat_id9__Stage_id14", "ID2", "Anat_id9", "Stage_id14", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(22, 2, 22, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id9__Stage_id1", "ID2", "Anat_id9", "Stage_id1", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(23, 2, 23, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id10__Stage_id18", "ID2", "Anat_id10", "Stage_id18", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(24, 2, 24, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("ID2__Anat_id10__Stage_id14", "ID2", "Anat_id10", "Stage_id14", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(25, 2, 25, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id10__Stage_id1", "ID2", "Anat_id10", "Stage_id1", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(26, 2, 26, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false));
@@ -592,7 +701,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         // the use of the LIMIT feature
         MySQLExpressionCallTOResultSet rs = 
                 (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), 
-                        null, true, true, Arrays.asList("ID1", "ID2", "ID100"), null, null, null);
+                        null, true, true, Arrays.asList(1, 2, 100), null, null, null);
         //no ordering requested, put results in a Set
         Set<ExpressionCallTO> unorderedExpressions = new HashSet<>(rs.getAllTOs());
         assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + unorderedExpectedExprCalls 
@@ -605,33 +714,43 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         
         //now Request only anatEntityId and Affy data
         orderedExpectedExprCalls = Arrays.asList(
-                new ExpressionCallTO(null, null, "Anat_id6", null,  
+                //in Bgee 13: "Anat_id6"
+                new ExpressionCallTO(null, null, 1,  
                         DataState.HIGHQUALITY, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO(null, null, "Anat_id1", null,  
+                //in Bgee 13: "Anat_id1"
+                new ExpressionCallTO(null, null, 2,  
                         DataState.HIGHQUALITY, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO(null, null, "Anat_id7", null,  
-                        DataState.LOWQUALITY, null, null, null, null, null, null, null, null), 
-                new ExpressionCallTO(null, null, "Anat_id11", null,  
-                        DataState.HIGHQUALITY, null, null, null, null, null, null, null, null), 
-                new ExpressionCallTO(null, null, "Anat_id2", null,  
-                        DataState.HIGHQUALITY, null, null, null, null, null, null, null, null), 
-                new ExpressionCallTO(null, null, "Anat_id3", null,  
-                        DataState.HIGHQUALITY, null, null, null, null, null, null, null, null), 
-                new ExpressionCallTO(null, null, "Anat_id4", null,  
-                        DataState.HIGHQUALITY, null, null, null, null, null, null, null, null), 
-                new ExpressionCallTO(null, null, "Anat_id5", null,  
-                        DataState.HIGHQUALITY, null, null, null, null, null, null, null, null), 
-                new ExpressionCallTO(null, null, "Anat_id9", null,  
-                        DataState.HIGHQUALITY, null, null, null, null, null, null, null, null), 
-                new ExpressionCallTO(null, null, "Anat_id10", null,  
+                //in Bgee 13: "Anat_id7"
+                new ExpressionCallTO(null, null, 3,  
+                        DataState.LOWQUALITY, null, null, null, null, null, null, null, null),
+                //in Bgee 13: "Anat_id11"
+                new ExpressionCallTO(null, null, 4,  
+                        DataState.HIGHQUALITY, null, null, null, null, null, null, null, null),
+                //in Bgee 13: "Anat_id2"
+                new ExpressionCallTO(null, null, 5,  
+                        DataState.HIGHQUALITY, null, null, null, null, null, null, null, null),
+                //in Bgee 13: "Anat_id3"
+                new ExpressionCallTO(null, null, 6,  
+                        DataState.HIGHQUALITY, null, null, null, null, null, null, null, null),
+                //in Bgee 13: "Anat_id4"
+                new ExpressionCallTO(null, null, 7,  
+                        DataState.HIGHQUALITY, null, null, null, null, null, null, null, null),
+                //in Bgee 13: "Anat_id5"
+                new ExpressionCallTO(null, null, 8,  
+                        DataState.HIGHQUALITY, null, null, null, null, null, null, null, null),
+                //in Bgee 13: "Anat_id9"
+                new ExpressionCallTO(null, null, 9,  
+                        DataState.HIGHQUALITY, null, null, null, null, null, null, null, null),
+                //in Bgee 13: "Anat_id10"
+                new ExpressionCallTO(null, null, 10,  
                         DataState.HIGHQUALITY, null, null, null, null, null, null, null, null));
         //No ordering requested, put in a Set
         unorderedExpectedExprCalls = new HashSet<>(orderedExpectedExprCalls);
         // Compare. Provide a global gene ID filtering to avoid to trigger 
         // the use of the LIMIT feature
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), 
-                null, true, true, Arrays.asList("ID1", "ID2", "ID100"), null, Arrays.asList(
-                        ExpressionCallDAO.Attribute.ANAT_ENTITY_ID, 
+                null, true, true, Arrays.asList(1, 2, 100), null, Arrays.asList(
+                        ExpressionCallDAO.Attribute.CONDITION_ID, 
                         ExpressionCallDAO.Attribute.AFFYMETRIX_DATA), 
                 null);
         //no ordering requested, put results in a Set
@@ -646,21 +765,24 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         
         //Now, a GROUP BY needed because of the attributes requested, not because of includeSubStages.
         orderedExpectedExprCalls = Arrays.asList(
-                new ExpressionCallTO(null, "ID1", "Anat_id6", null, 
+                //in Bgee 13: "ID1", "Anat_id6"
+                new ExpressionCallTO(null, 1, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                
-                new ExpressionCallTO(null, "ID2", "Anat_id1", null, 
+
+                //in Bgee 13: "ID2", "Anat_id1"
+                new ExpressionCallTO(null, 2, 2, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.HIGHQUALITY, true, false,
                         OriginOfLine.BOTH, OriginOfLine.SELF, true));
         
         //now, filter with conditions, data types, gene IDs, species IDs, etc
         Collection<CallDAOFilter> filters = Arrays.asList(
-                new CallDAOFilter(Arrays.asList("ID1", "ID2"), //ID100 does not exist
-                        Arrays.asList("11", "21", "41"), // 41 = species Id that does not exist
+                new CallDAOFilter(Arrays.asList(1, 2), //ID100 does not exist
+                        Arrays.asList(11, 21, 41), // 41 = species Id that does not exist
                         Arrays.asList(new DAOConditionFilter(
-                                Arrays.asList("Anat_id1", "Anat_id6"), null))
+                                Arrays.asList("Anat_id1", "Anat_id6"), null, null)),
+                        null, null, null
             ));
         Collection<ExpressionCallTO> callTOFilters = Arrays.asList(
                 new ExpressionCallTO(DataState.HIGHQUALITY, null, null, 
@@ -675,10 +797,10 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         // Compare. Provide a global gene ID filtering to avoid to trigger 
         // the use of the LIMIT feature
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(filters, callTOFilters, 
-                true, false, Arrays.asList("ID1", "ID2", "ID100"), null, 
+                true, false, Arrays.asList(1, 2, 100), null, 
                 EnumSet.allOf(ExpressionCallDAO.Attribute.class).stream()
                     .filter(attr -> !attr.equals(ExpressionCallDAO.Attribute.ID) && 
-                            !attr.equals(ExpressionCallDAO.Attribute.STAGE_ID) &&
+                            !attr.equals(ExpressionCallDAO.Attribute.CONDITION_ID) &&
                             !attr.isRankAttribute())
                     .collect(Collectors.toCollection(() -> EnumSet.noneOf(ExpressionCallDAO.Attribute.class))), 
                 null);
@@ -692,19 +814,23 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         
         
         filters = Arrays.asList(
-                new CallDAOFilter(Arrays.asList("ID1", "ID100"), //ID100 does not exist
-                          Arrays.asList("11", "21", "41"), // 41 = species Id that does not exist
+                new CallDAOFilter(Arrays.asList(1, 100), //ID100 does not exist
+                          Arrays.asList(11, 21, 41), // 41 = species Id that does not exist
                           Arrays.asList(new DAOConditionFilter(
                                  Arrays.asList("Anat_id6", "Anat_id1"), 
-                                 Arrays.asList("Stage_id6", "Stage_id7")), 
+                                 Arrays.asList("Stage_id6", "Stage_id7"),
+                                 null), 
                                  //This filter should select no call
                                  new DAOConditionFilter(
                                          Arrays.asList("Anat_id600", "Anat_id100"), 
-                                         Arrays.asList("Stage_id600", "Stage_id700")))
+                                         Arrays.asList("Stage_id600", "Stage_id700"),
+                                         null)),
+                          null, null, null
                          ), 
-                 new CallDAOFilter(Arrays.asList("ID2"), 
-                         Arrays.asList("21"), 
-                         Arrays.asList(new DAOConditionFilter(null, Arrays.asList("Stage_id1")))
+                 new CallDAOFilter(Arrays.asList(2), 
+                         Arrays.asList(21), 
+                         Arrays.asList(new DAOConditionFilter(null, Arrays.asList("Stage_id1"), null)),
+                         null, null, null
                          ));
         callTOFilters = Arrays.asList(
                 new ExpressionCallTO(DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
@@ -731,43 +857,53 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
             );
         orderedExpectedExprCalls = Arrays.asList(
                 //first CallFilter should retrieve those: 
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, true, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id7", "ID1", "Anat_id6", "Stage_id7", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(2, 1, 2, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, 
                         true, true, OriginOfLine.SELF, OriginOfLine.BOTH, true),
                 
-                //second CallFilter should retrieve those: 
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id1", "ID2", "Anat_id11", "Stage_id1", 
+                //second CallFilter should retrieve those:
+                //in Bgee 13: "ID2__Anat_id11__Stage_id1", "ID2", "Anat_id11", "Stage_id1"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
-                        OriginOfLine.BOTH, OriginOfLine.DESCENT, false), 
-                new ExpressionCallTO("ID2__Anat_id3__Stage_id1", "ID2", "Anat_id3", "Stage_id1", 
+                        OriginOfLine.BOTH, OriginOfLine.DESCENT, false),
+                //in Bgee 13: "ID2__Anat_id3__Stage_id1", "ID2", "Anat_id3", "Stage_id1"
+                new ExpressionCallTO(2, 2, 2, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id4__Stage_id1", "ID2", "Anat_id4", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id4__Stage_id1", "ID2", "Anat_id4", "Stage_id1"
+                new ExpressionCallTO(3, 2, 3, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true,
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id5__Stage_id1", "ID2", "Anat_id5", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id5__Stage_id1", "ID2", "Anat_id5", "Stage_id1"
+                new ExpressionCallTO(4, 2, 4, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id9__Stage_id1", "ID2", "Anat_id9", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id9__Stage_id1", "ID2", "Anat_id9", "Stage_id1"
+                new ExpressionCallTO(5, 2, 5, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id10__Stage_id1", "ID2", "Anat_id10", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id10__Stage_id1", "ID2", "Anat_id10", "Stage_id1"
+                new ExpressionCallTO(6, 2, 6, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id1__Stage_id1", "ID2", "Anat_id1", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id1__Stage_id1", "ID2", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(7, 2, 7, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.BOTH, OriginOfLine.BOTH, false),
-                new ExpressionCallTO("ID2__Anat_id2__Stage_id1", "ID2", "Anat_id2", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id2__Stage_id1", "ID2", "Anat_id2", "Stage_id1"
+                new ExpressionCallTO(8, 2, 8, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.SELF, OriginOfLine.DESCENT, false));
@@ -776,7 +912,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         // Compare. Provide a global gene ID filtering to avoid to trigger 
         // the use of the LIMIT feature
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(filters, callTOFilters, 
-                true, true, Arrays.asList("ID1", "ID2", "ID100"), null, null, null);
+                true, true, Arrays.asList(1, 2, 100), null, null, null);
         //no ordering requested, put results in a Set
         unorderedExpressions = new HashSet<>(rs.getAllTOs());
         assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + unorderedExpectedExprCalls 
@@ -810,144 +946,181 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
 
             //First, retrieve everything for species 11 and 21
             CallDAOFilter filter = new CallDAOFilter(null, 
-                    Arrays.asList("11", "21", "41"), // 41 = species Id that does not exist
-                    null);
+                    Arrays.asList(11, 21, 41), // 41 = species Id that does not exist
+                    null, null, null, null);
             // Generate manually expected result
             List<ExpressionCallTO> orderedExpectedExprCalls = Arrays.asList(
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6", 
+                    //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, true, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id5", "ID1", "Anat_id6", "Stage_id5", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id5", "ID1", "Anat_id6", "Stage_id5"
+                new ExpressionCallTO(2, 1, 2, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, true, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id1", "ID1", "Anat_id6", "Stage_id1", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id1", "ID1", "Anat_id6", "Stage_id1"
+                new ExpressionCallTO(3, 1, 3, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, true, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id7", "ID1", "Anat_id6", "Stage_id7", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id7", "ID1", "Anat_id6", "Stage_id7"
+                new ExpressionCallTO(4, 1, 4, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, 
                         true, true, OriginOfLine.SELF, OriginOfLine.BOTH, true),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id8", "ID1", "Anat_id6", "Stage_id8", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id8", "ID1", "Anat_id6", "Stage_id8"
+                new ExpressionCallTO(5, 1, 5, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         true, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id8", "ID1", "Anat_id1", "Stage_id8", 
+                //in Bgee 13: "ID1__Anat_id1__Stage_id8", "ID1", "Anat_id1", "Stage_id8"
+                new ExpressionCallTO(6, 1, 6, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         true, true, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id7", "ID1", "Anat_id1", "Stage_id7", 
+                //in Bgee 13: "ID1__Anat_id1__Stage_id7", "ID1", "Anat_id1", "Stage_id7"
+                new ExpressionCallTO(7, 1, 7, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         true, true, OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id5", "ID1", "Anat_id1", "Stage_id5", 
+                //in Bgee 13: "ID1__Anat_id1__Stage_id5", "ID1", "Anat_id1", "Stage_id5"
+                new ExpressionCallTO(8, 1, 8, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         true, true, OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id1", "ID1", "Anat_id1", "Stage_id1", 
+                //in Bgee 13: "ID1__Anat_id1__Stage_id1", "ID1", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(9, 1, 9, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
                         true, true, OriginOfLine.BOTH, OriginOfLine.BOTH, true),
-                new ExpressionCallTO("ID1__Anat_id7__Stage_id10", "ID1", "Anat_id7", "Stage_id10", 
+                //in Bgee 13: "ID1__Anat_id7__Stage_id10", "ID1", "Anat_id7", "Stage_id10"
+                new ExpressionCallTO(10, 1, 10, 
                         DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
                         DataState.LOWQUALITY, true, true, OriginOfLine.BOTH, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID1__Anat_id7__Stage_id1", "ID1", "Anat_id7", "Stage_id1", 
+                //in Bgee 13: "ID1__Anat_id7__Stage_id1", "ID1", "Anat_id7", "Stage_id1"
+                new ExpressionCallTO(11, 1, 11, 
                         DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
                         DataState.LOWQUALITY, true, true, OriginOfLine.BOTH, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id1__Stage_id1", "ID2", "Anat_id1", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id1__Stage_id1", "ID2", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.HIGHQUALITY, true, true,
                         OriginOfLine.BOTH, OriginOfLine.BOTH, false), 
-                new ExpressionCallTO("ID2__Anat_id1__Stage_id2", "ID2", "Anat_id1", "Stage_id2",
+                //in Bgee 13: "ID2__Anat_id1__Stage_id2", "ID2", "Anat_id1", "Stage_id2"
+                new ExpressionCallTO(2, 2, 2,
                         DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.NODATA, true, true, 
                         OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id1", "ID2", "Anat_id11", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id11__Stage_id1", "ID2", "Anat_id11", "Stage_id1"
+                new ExpressionCallTO(3, 2, 3, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
-                        OriginOfLine.BOTH, OriginOfLine.DESCENT, false), 
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id10", "ID2", "Anat_id11", "Stage_id10", 
+                        OriginOfLine.BOTH, OriginOfLine.DESCENT, false),
+                //in Bgee 13: "ID2__Anat_id11__Stage_id10", "ID2", "Anat_id11", "Stage_id10"
+                new ExpressionCallTO(4, 2, 4, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id12", "ID2", "Anat_id11", "Stage_id12",
+                //in Bgee 13: "ID2__Anat_id11__Stage_id12", "ID2", "Anat_id11", "Stage_id12"
+                new ExpressionCallTO(5, 2, 5,
                         DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id13", "ID2", "Anat_id11", "Stage_id13", 
+                //in Bgee 13: "ID2__Anat_id11__Stage_id13", "ID2", "Anat_id11", "Stage_id13"
+                new ExpressionCallTO(6, 2, 6, 
                         DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.NODATA, true, true, 
                         OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id14", "ID2", "Anat_id11", "Stage_id14", 
+                //in Bgee 13: "ID2__Anat_id11__Stage_id14", "ID2", "Anat_id11", "Stage_id14"
+                new ExpressionCallTO(7, 2, 7, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
-                        OriginOfLine.DESCENT, OriginOfLine.DESCENT, false), 
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id18", "ID2", "Anat_id11", "Stage_id18",
+                        OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
+                //in Bgee 13: "ID2__Anat_id11__Stage_id18", "ID2", "Anat_id11", "Stage_id18"
+                new ExpressionCallTO(8, 2, 8,
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
-                        OriginOfLine.DESCENT, OriginOfLine.SELF, false), 
-                new ExpressionCallTO("ID2__Anat_id2__Stage_id1", "ID2", "Anat_id2", "Stage_id1", 
+                        OriginOfLine.DESCENT, OriginOfLine.SELF, false),
+                //in Bgee 13: "ID2__Anat_id2__Stage_id1", "ID2", "Anat_id2", "Stage_id1"
+                new ExpressionCallTO(9, 2, 9, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id2__Stage_id14", "ID2", "Anat_id2", "Stage_id14", 
+                //in Bgee 13: "ID2__Anat_id2__Stage_id14", "ID2", "Anat_id2", "Stage_id14"
+                new ExpressionCallTO(10, 2, 10, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id2__Stage_id18", "ID2", "Anat_id2", "Stage_id18", 
+                //in Bgee 13: "ID2__Anat_id2__Stage_id18", "ID2", "Anat_id2", "Stage_id18"
+                new ExpressionCallTO(11, 2, 11, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID2__Anat_id3__Stage_id18", "ID2", "Anat_id3", "Stage_id18", 
+                //in Bgee 13: "ID2__Anat_id3__Stage_id18", "ID2", "Anat_id3", "Stage_id18"
+                new ExpressionCallTO(12, 2, 12, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("ID2__Anat_id3__Stage_id14", "ID2", "Anat_id3", "Stage_id14", 
+                //in Bgee 13: "ID2__Anat_id3__Stage_id14", "ID2", "Anat_id3", "Stage_id14"
+                new ExpressionCallTO(13, 2, 13, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true,
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id3__Stage_id1", "ID2", "Anat_id3", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id3__Stage_id1", "ID2", "Anat_id3", "Stage_id1"
+                new ExpressionCallTO(14, 2, 14, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id4__Stage_id18", "ID2", "Anat_id4", "Stage_id18", 
+                //in Bgee 13: "ID2__Anat_id4__Stage_id18", "ID2", "Anat_id4", "Stage_id18"
+                new ExpressionCallTO(15, 2, 15, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("ID2__Anat_id4__Stage_id14", "ID2", "Anat_id4", "Stage_id14", 
+                //in Bgee 13: "ID2__Anat_id4__Stage_id14", "ID2", "Anat_id4", "Stage_id14"
+                new ExpressionCallTO(16, 2, 16, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id4__Stage_id1", "ID2", "Anat_id4", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id4__Stage_id1", "ID2", "Anat_id4", "Stage_id1"
+                new ExpressionCallTO(17, 2, 17, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true,
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id5__Stage_id18", "ID2", "Anat_id5", "Stage_id18", 
+                //in Bgee 13: "ID2__Anat_id5__Stage_id18", "ID2", "Anat_id5", "Stage_id18"
+                new ExpressionCallTO(18, 2, 18, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("ID2__Anat_id5__Stage_id14", "ID2", "Anat_id5", "Stage_id14", 
+                //in Bgee 13: "ID2__Anat_id5__Stage_id14", "ID2", "Anat_id5", "Stage_id14"
+                new ExpressionCallTO(19, 2, 19, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id5__Stage_id1", "ID2", "Anat_id5", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id5__Stage_id1", "ID2", "Anat_id5", "Stage_id1"
+                new ExpressionCallTO(20, 2, 20, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id9__Stage_id18", "ID2", "Anat_id9", "Stage_id18", 
+                //in Bgee 13: "ID2__Anat_id9__Stage_id18", "ID2", "Anat_id9", "Stage_id18"
+                new ExpressionCallTO(21, 2, 21, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("ID2__Anat_id9__Stage_id14", "ID2", "Anat_id9", "Stage_id14", 
+                //in Bgee 13: "ID2__Anat_id9__Stage_id14", "ID2", "Anat_id9", "Stage_id14"
+                new ExpressionCallTO(22, 2, 22, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id9__Stage_id1", "ID2", "Anat_id9", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id9__Stage_id1", "ID2", "Anat_id9", "Stage_id1"
+                new ExpressionCallTO(23, 2, 23, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id10__Stage_id18", "ID2", "Anat_id10", "Stage_id18", 
+                //in Bgee 13: "ID2__Anat_id10__Stage_id18", "ID2", "Anat_id10", "Stage_id18"
+                new ExpressionCallTO(24, 2, 24, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("ID2__Anat_id10__Stage_id14", "ID2", "Anat_id10", "Stage_id14", 
+                //in Bgee 13: "ID2__Anat_id10__Stage_id14", "ID2", "Anat_id10", "Stage_id14"
+                new ExpressionCallTO(25, 2, 25, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id10__Stage_id1", "ID2", "Anat_id10", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id10__Stage_id1", "ID2", "Anat_id10", "Stage_id1"
+                new ExpressionCallTO(26, 2, 26, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false));
@@ -969,32 +1142,42 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
             
             //now with some filtering of duplicates. Request only anatEntityId and Affy data
             orderedExpectedExprCalls = Arrays.asList(
-                new ExpressionCallTO(null, null, "Anat_id6", null,  
+                //in Bgee 13: "Anat_id6"
+                new ExpressionCallTO(null, null, 1,  
                         DataState.HIGHQUALITY, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO(null, null, "Anat_id1", null,  
+                //in Bgee 13: "Anat_id1"
+                new ExpressionCallTO(null, null, 2,  
                         DataState.HIGHQUALITY, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO(null, null, "Anat_id7", null,  
-                        DataState.LOWQUALITY, null, null, null, null, null, null, null, null), 
-                new ExpressionCallTO(null, null, "Anat_id11", null,  
-                        DataState.HIGHQUALITY, null, null, null, null, null, null, null, null), 
-                new ExpressionCallTO(null, null, "Anat_id2", null,  
-                        DataState.HIGHQUALITY, null, null, null, null, null, null, null, null), 
-                new ExpressionCallTO(null, null, "Anat_id3", null,  
-                        DataState.HIGHQUALITY, null, null, null, null, null, null, null, null), 
-                new ExpressionCallTO(null, null, "Anat_id4", null,  
-                        DataState.HIGHQUALITY, null, null, null, null, null, null, null, null), 
-                new ExpressionCallTO(null, null, "Anat_id5", null,  
-                        DataState.HIGHQUALITY, null, null, null, null, null, null, null, null), 
-                new ExpressionCallTO(null, null, "Anat_id9", null,  
-                        DataState.HIGHQUALITY, null, null, null, null, null, null, null, null), 
-                new ExpressionCallTO(null, null, "Anat_id10", null,  
+                //in Bgee 13: "Anat_id7"
+                new ExpressionCallTO(null, null, 3,  
+                        DataState.LOWQUALITY, null, null, null, null, null, null, null, null),
+                //in Bgee 13: "Anat_id11"
+                new ExpressionCallTO(null, null, 4,  
+                        DataState.HIGHQUALITY, null, null, null, null, null, null, null, null),
+                //in Bgee 13: "Anat_id2"
+                new ExpressionCallTO(null, null, 5,  
+                        DataState.HIGHQUALITY, null, null, null, null, null, null, null, null),
+                //in Bgee 13: "Anat_id3"
+                new ExpressionCallTO(null, null, 6,  
+                        DataState.HIGHQUALITY, null, null, null, null, null, null, null, null),
+                //in Bgee 13: "Anat_id4"
+                new ExpressionCallTO(null, null, 7,  
+                        DataState.HIGHQUALITY, null, null, null, null, null, null, null, null),
+                //in Bgee 13: "Anat_id5"
+                new ExpressionCallTO(null, null, 8,  
+                        DataState.HIGHQUALITY, null, null, null, null, null, null, null, null),
+                //in Bgee 13: "Anat_id9"
+                new ExpressionCallTO(null, null, 9,  
+                        DataState.HIGHQUALITY, null, null, null, null, null, null, null, null),
+                //in Bgee 13: "Anat_id10"
+                new ExpressionCallTO(null, null, 10,  
                         DataState.HIGHQUALITY, null, null, null, null, null, null, null, null));
             //No ordering requested, put in a Set
             unorderedExpectedExprCalls = new HashSet<>(orderedExpectedExprCalls);
             // Compare
             rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), 
                             null, true, true, null, null, Arrays.asList(
-                                    ExpressionCallDAO.Attribute.ANAT_ENTITY_ID, 
+                                    ExpressionCallDAO.Attribute.CONDITION_ID, 
                                     ExpressionCallDAO.Attribute.AFFYMETRIX_DATA), 
                             null);
             //no ordering requested, put results in a Set
@@ -1009,21 +1192,24 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
             
             //Now, a GROUP BY needed because of the attributes requested, not because of includeSubStages.
             orderedExpectedExprCalls = Arrays.asList(
-                    new ExpressionCallTO(null, "ID1", "Anat_id6", null, 
+                    //in Bgee 13: "ID1", "Anat_id6"
+                    new ExpressionCallTO(null, 1, 1, 
                             DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                             DataState.LOWQUALITY, true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                    
-                    new ExpressionCallTO(null, "ID2", "Anat_id1", null, 
+
+                    //in Bgee 13: "ID2", "Anat_id1"
+                    new ExpressionCallTO(null, 2, 2, 
                             DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                             DataState.HIGHQUALITY, true, false,
                             OriginOfLine.BOTH, OriginOfLine.SELF, true));
             
             //now, filter with conditions, data types, gene IDs, species IDs, etc
             Collection<CallDAOFilter> filters = Arrays.asList(
-                    new CallDAOFilter(Arrays.asList("ID1", "ID2", "ID:100"), //ID100 does not exist
-                            Arrays.asList("11", "21", "41"), // 41 = species Id that does not exist
+                    new CallDAOFilter(Arrays.asList(1, 2, 100), //ID100 does not exist
+                            Arrays.asList(11, 21, 41), // 41 = species Id that does not exist
                             Arrays.asList(new DAOConditionFilter(
-                                    Arrays.asList("Anat_id1", "Anat_id6"), null))
+                                    Arrays.asList("Anat_id1", "Anat_id6"), null, null)),
+                            null, null, null
                 ));
             Collection<ExpressionCallTO> callTOFilters = Arrays.asList(
                     new ExpressionCallTO(DataState.HIGHQUALITY, null, null, 
@@ -1041,7 +1227,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                     true, false, null, null, 
                     EnumSet.allOf(ExpressionCallDAO.Attribute.class).stream()
                         .filter(attr -> !attr.equals(ExpressionCallDAO.Attribute.ID) && 
-                                !attr.equals(ExpressionCallDAO.Attribute.STAGE_ID) && !attr.isRankAttribute())
+                                !attr.equals(ExpressionCallDAO.Attribute.CONDITION_ID) && !attr.isRankAttribute())
                         .collect(Collectors.toCollection(() -> EnumSet.noneOf(ExpressionCallDAO.Attribute.class))), 
                     null);
             //no ordering requested, put results in a Set
@@ -1057,19 +1243,23 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
             
             //now, filter with conditions, data types, gene IDs, species IDs, etc
             filters = Arrays.asList(
-                    new CallDAOFilter(Arrays.asList("ID1", "ID100"), //ID100 does not exist
-                            Arrays.asList("11", "21", "41"), // 41 = species Id that does not exist
+                    new CallDAOFilter(Arrays.asList(1, 100), //ID100 does not exist
+                            Arrays.asList(11, 21, 41), // 41 = species Id that does not exist
                             Arrays.asList(new DAOConditionFilter(
                                     Arrays.asList("Anat_id6", "Anat_id1"), 
-                                    Arrays.asList("Stage_id6", "Stage_id7")), 
+                                    Arrays.asList("Stage_id6", "Stage_id7"),
+                                    null), 
                                     //This filter should select no call
                                     new DAOConditionFilter(
                                             Arrays.asList("Anat_id600", "Anat_id100"), 
-                                            Arrays.asList("Stage_id600", "Stage_id700")))
+                                            Arrays.asList("Stage_id600", "Stage_id700"),
+                                            null)),
+                            null, null, null
                             ), 
-                    new CallDAOFilter(Arrays.asList("ID2"), 
-                            Arrays.asList("21"), 
-                            Arrays.asList(new DAOConditionFilter(null, Arrays.asList("Stage_id1")))
+                    new CallDAOFilter(Arrays.asList(2), 
+                            Arrays.asList(21), 
+                            Arrays.asList(new DAOConditionFilter(null, Arrays.asList("Stage_id1"), null)),
+                            null, null, null
                             ));
             callTOFilters = Arrays.asList(
                     new ExpressionCallTO(DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
@@ -1095,44 +1285,54 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                     new ExpressionCallTO(null, null, null, DataState.HIGHQUALITY)
                 );
             orderedExpectedExprCalls = Arrays.asList(
-                    //first CallFilter should retrieve those: 
-                    new ExpressionCallTO("ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6", 
+                    //first CallFilter should retrieve those:
+                    //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                    new ExpressionCallTO(1, 1, 1, 
                             DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                             DataState.LOWQUALITY, true, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                    new ExpressionCallTO("ID1__Anat_id6__Stage_id7", "ID1", "Anat_id6", "Stage_id7", 
+                    //in Bgee 13: "ID1__Anat_id6__Stage_id7", "ID1", "Anat_id6", "Stage_id7"
+                    new ExpressionCallTO(2, 1, 2, 
                             DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, 
                             true, true, OriginOfLine.SELF, OriginOfLine.BOTH, true),
                     
-                    //second CallFilter should retrieve those: 
-                    new ExpressionCallTO("ID2__Anat_id11__Stage_id1", "ID2", "Anat_id11", "Stage_id1", 
+                    //second CallFilter should retrieve those:
+                    //in Bgee 13: "ID2__Anat_id11__Stage_id1", "ID2", "Anat_id11", "Stage_id1"
+                    new ExpressionCallTO(1, 2, 1, 
                             DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                             DataState.HIGHQUALITY, true, true, 
-                            OriginOfLine.BOTH, OriginOfLine.DESCENT, false), 
-                    new ExpressionCallTO("ID2__Anat_id3__Stage_id1", "ID2", "Anat_id3", "Stage_id1", 
+                            OriginOfLine.BOTH, OriginOfLine.DESCENT, false),
+                    //in Bgee 13: "ID2__Anat_id3__Stage_id1", "ID2", "Anat_id3", "Stage_id1"
+                    new ExpressionCallTO(2, 2, 2, 
                             DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                             DataState.HIGHQUALITY, true, true, 
                             OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                    new ExpressionCallTO("ID2__Anat_id4__Stage_id1", "ID2", "Anat_id4", "Stage_id1", 
+                    //in Bgee 13: "ID2__Anat_id4__Stage_id1", "ID2", "Anat_id4", "Stage_id1"
+                    new ExpressionCallTO(3, 2, 3, 
                             DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                             DataState.HIGHQUALITY, true, true,
                             OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                    new ExpressionCallTO("ID2__Anat_id5__Stage_id1", "ID2", "Anat_id5", "Stage_id1", 
+                    //in Bgee 13: "ID2__Anat_id5__Stage_id1", "ID2", "Anat_id5", "Stage_id1"
+                    new ExpressionCallTO(4, 2, 4, 
                             DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                             DataState.HIGHQUALITY, true, true, 
                             OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                    new ExpressionCallTO("ID2__Anat_id9__Stage_id1", "ID2", "Anat_id9", "Stage_id1", 
+                    //in Bgee 13: "ID2__Anat_id9__Stage_id1", "ID2", "Anat_id9", "Stage_id1"
+                    new ExpressionCallTO(5, 2, 5, 
                             DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                             DataState.HIGHQUALITY, true, true, 
                             OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                    new ExpressionCallTO("ID2__Anat_id10__Stage_id1", "ID2", "Anat_id10", "Stage_id1", 
+                    //in Bgee 13: "ID2__Anat_id10__Stage_id1", "ID2", "Anat_id10", "Stage_id1"
+                    new ExpressionCallTO(6, 2, 6, 
                             DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                             DataState.HIGHQUALITY, true, true, 
-                            OriginOfLine.DESCENT, OriginOfLine.DESCENT, false), 
-                    new ExpressionCallTO("ID2__Anat_id1__Stage_id1", "ID2", "Anat_id1", "Stage_id1", 
+                            OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
+                    //in Bgee 13: "ID2__Anat_id1__Stage_id1", "ID2", "Anat_id1", "Stage_id1"
+                    new ExpressionCallTO(7, 2, 7, 
                             DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                             DataState.HIGHQUALITY, true, true, 
-                            OriginOfLine.BOTH, OriginOfLine.BOTH, false), 
-                    new ExpressionCallTO("ID2__Anat_id2__Stage_id1", "ID2", "Anat_id2", "Stage_id1", 
+                            OriginOfLine.BOTH, OriginOfLine.BOTH, false),
+                    //in Bgee 13: "ID2__Anat_id2__Stage_id1", "ID2", "Anat_id2", "Stage_id1"
+                    new ExpressionCallTO(8, 2, 8, 
                             DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                             DataState.HIGHQUALITY, true, true, 
                             OriginOfLine.SELF, OriginOfLine.DESCENT, false));
@@ -1181,17 +1381,20 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
             
             //First, retrieve everything for species 11 and 21
             CallDAOFilter filter = new CallDAOFilter(
-                    Arrays.asList("ID1", "ID100"), //ID100 is a fake gene ID meant to trigger 
+                    Arrays.asList(1, 100), //ID100 is a fake gene ID meant to trigger 
                                                    //the use of the LIMIT feature
-                    Arrays.asList("11", "21", "41"), // 41 = species Id that does not exist
+                    Arrays.asList(11, 21, 41), // 41 = species Id that does not exist
                     Arrays.asList(new DAOConditionFilter(
-                            Arrays.asList("Anat_id6", "Anat_id1"), Arrays.asList("Stage_id8"))));
+                            Arrays.asList("Anat_id6", "Anat_id1"), Arrays.asList("Stage_id8"), null)),
+                    null, null, null);
             // Generate manually expected result
             List<ExpressionCallTO> orderedExpectedExprCalls = Arrays.asList(
-                new ExpressionCallTO(null, null, "Anat_id6", "Stage_id8", 
+                //in Bgee 13: "Anat_id6", "Stage_id8"
+                new ExpressionCallTO(null, null, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         true, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO(null, null, "Anat_id1", "Stage_id8", 
+                //in Bgee 13: "Anat_id1", "Stage_id8"
+                new ExpressionCallTO(null, null, 2, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         true, true, OriginOfLine.DESCENT, OriginOfLine.SELF, false));
             //No ordering requested, put in a Set
@@ -1221,21 +1424,24 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
             
             
             orderedExpectedExprCalls = Arrays.asList(
-                    new ExpressionCallTO(null, null, "Anat_id6", null, 
+                    //in Bgee 13: "Anat_id6"
+                    new ExpressionCallTO(null, null, 1, 
                             DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                             DataState.LOWQUALITY, true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                    
-                    new ExpressionCallTO(null, null, "Anat_id1", null, 
+
+                    //in Bgee 13: "Anat_id1"
+                    new ExpressionCallTO(null, null, 2, 
                             DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                             DataState.HIGHQUALITY, true, false,
                             OriginOfLine.BOTH, OriginOfLine.SELF, true));
             
             //now, filter with conditions, data types, gene IDs, species IDs, etc
             Collection<CallDAOFilter> filters = Arrays.asList(
-                    new CallDAOFilter(Arrays.asList("ID1", "ID2", "ID:100"), //ID100 does not exist
-                            Arrays.asList("11", "21", "41"), // 41 = species Id that does not exist
+                    new CallDAOFilter(Arrays.asList(1, 2, 100), //ID100 does not exist
+                            Arrays.asList(11, 21, 41), // 41 = species Id that does not exist
                             Arrays.asList(new DAOConditionFilter(
-                                    Arrays.asList("Anat_id1", "Anat_id6"), null))
+                                    Arrays.asList("Anat_id1", "Anat_id6"), null, null)),
+                            null, null, null
                             ));
             Collection<ExpressionCallTO> callTOFilters = Arrays.asList(
                     new ExpressionCallTO(DataState.HIGHQUALITY, null, null, 
@@ -1253,7 +1459,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                     EnumSet.allOf(ExpressionCallDAO.Attribute.class).stream()
                     .filter(attr -> !attr.equals(ExpressionCallDAO.Attribute.ID) && 
                             !attr.equals(ExpressionCallDAO.Attribute.GENE_ID) &&
-                            !attr.equals(ExpressionCallDAO.Attribute.STAGE_ID) &&
+                            !attr.equals(ExpressionCallDAO.Attribute.CONDITION_ID) &&
                             !attr.isRankAttribute())
                     .collect(Collectors.toCollection(() -> EnumSet.noneOf(ExpressionCallDAO.Attribute.class))), 
                     null);
@@ -1291,40 +1497,52 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         // No filtering, no ordering
         // Generate manually expected result
         Set<ExpressionCallTO> expectedExprCalls = new HashSet<>(Arrays.asList(
-                new ExpressionCallTO("1", "ID3", "Anat_id1", "Stage_id1", DataState.LOWQUALITY, 
+                //in Bgee 13: "1", "ID3", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(1, 3, 1, DataState.LOWQUALITY, 
                         DataState.NODATA, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("2", "ID1", "Anat_id6", "Stage_id6", DataState.LOWQUALITY,
+                //in Bgee 13: "2", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(2, 1, 2, DataState.LOWQUALITY,
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY,
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("3", "ID1", "Anat_id6", "Stage_id7", DataState.NODATA, 
+                //in Bgee 13: "3", "ID1", "Anat_id6", "Stage_id7"
+                new ExpressionCallTO(3, 1, 3, DataState.NODATA, 
                         DataState.NODATA, DataState.NODATA, DataState.LOWQUALITY,
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("4", "ID2", "Anat_id2", "Stage_id18", DataState.HIGHQUALITY, 
+                //in Bgee 13: "4", "ID2", "Anat_id2", "Stage_id18"
+                new ExpressionCallTO(4, 2, 4, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("5", "ID1", "Anat_id7", "Stage_id10", DataState.LOWQUALITY, 
+                //in Bgee 13: "5", "ID1", "Anat_id7", "Stage_id10"
+                new ExpressionCallTO(5, 1, 5, DataState.LOWQUALITY, 
                         DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("6", "ID2", "Anat_id11", "Stage_id12", DataState.HIGHQUALITY, 
+                //in Bgee 13: "6", "ID2", "Anat_id11", "Stage_id12"
+                new ExpressionCallTO(6, 2, 6, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("7", "ID2", "Anat_id11", "Stage_id13", DataState.NODATA, 
+                //in Bgee 13: "7", "ID2", "Anat_id11", "Stage_id13"
+                new ExpressionCallTO(7, 2, 7, DataState.NODATA, 
                         DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("8", "ID3", "Anat_id3", "Stage_id1", DataState.NODATA, 
+                //in Bgee 13: "8", "ID3", "Anat_id3", "Stage_id1"
+                new ExpressionCallTO(8, 3, 8, DataState.NODATA, 
                         DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA,
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("9", "ID2", "Anat_id1", "Stage_id9", DataState.HIGHQUALITY, 
+                //in Bgee 13: "9", "ID2", "Anat_id1", "Stage_id9"
+                new ExpressionCallTO(9, 2, 9, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("10", "ID1", "Anat_id6", "Stage_id8", DataState.HIGHQUALITY, 
+                //in Bgee 13: "10", "ID1", "Anat_id6", "Stage_id8"
+                new ExpressionCallTO(10, 1, 10, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("11", "ID2", "Anat_id1", "Stage_id2", DataState.NODATA, 
+                //in Bgee 13: "11", "ID2", "Anat_id1", "Stage_id2"
+                new ExpressionCallTO(11, 2, 11, DataState.NODATA, 
                         DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("12", "ID1", "Anat_id1", "Stage_id1", DataState.NODATA, 
+                //in Bgee 13: "12", "ID1", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(12, 1, 12, DataState.NODATA, 
                         DataState.NODATA, DataState.LOWQUALITY, DataState.NODATA, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true)));
 
@@ -1343,11 +1561,11 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         // Same test but with only two attributes
         // Generate manually expected result
         expectedExprCalls = new HashSet<>(Arrays.asList(
-                new ExpressionCallTO(null, "ID1", null, null, null, null, null, null, null, null, 
+                new ExpressionCallTO(null, 1, null, null, null, null, null, null, null, 
                         null, null, true),
-                new ExpressionCallTO(null, "ID2", null, null, null, null, null, null, null, null, 
+                new ExpressionCallTO(null, 2, null, null, null, null, null, null, null, 
                         null, null, true),
-                new ExpressionCallTO(null, "ID3", null, null, null, null, null, null, null, null, 
+                new ExpressionCallTO(null, 3, null, null, null, null, null, null, null, 
                         null, null, true)));
 
         // Compare
@@ -1366,23 +1584,28 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         // With speciesIds but not include substructures 
         // Generate parameters
         CallDAOFilter filter = new CallDAOFilter(null, 
-                Arrays.asList("11", "41"), // 41 = species Id that does not exist)
-                null);
+                Arrays.asList(11, 41), // 41 = species Id that does not exist)
+                null, null, null, null);
         // Generate manually expected result
         expectedExprCalls = new HashSet<>(Arrays.asList(
-                new ExpressionCallTO("2","ID1", "Anat_id6", "Stage_id6", DataState.LOWQUALITY, 
+                //in Bgee 13: "2","ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(2, 1, 1, DataState.LOWQUALITY, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("3","ID1", "Anat_id6", "Stage_id7", DataState.NODATA, 
+                //in Bgee 13: "3","ID1", "Anat_id6", "Stage_id7"
+                new ExpressionCallTO(3, 1, 2, DataState.NODATA, 
                         DataState.NODATA, DataState.NODATA, DataState.LOWQUALITY, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("5","ID1", "Anat_id7", "Stage_id10", DataState.LOWQUALITY, 
+                //in Bgee 13: "5","ID1", "Anat_id7", "Stage_id10"
+                new ExpressionCallTO(5, 1, 3, DataState.LOWQUALITY, 
                         DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("10", "ID1", "Anat_id6", "Stage_id8", DataState.HIGHQUALITY, 
+                //in Bgee 13: "10", "ID1", "Anat_id6", "Stage_id8"
+                new ExpressionCallTO(10, 1, 4, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("12", "ID1", "Anat_id1", "Stage_id1", DataState.NODATA, 
+                //in Bgee 13: "12", "ID1", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(12, 1, 5, DataState.NODATA, 
                         DataState.NODATA, DataState.LOWQUALITY, DataState.NODATA, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true)));
         // Compare
@@ -1400,26 +1623,32 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         // With speciesIds (11 and 41) and include substructures 
         // Generate parameters
         filter = new CallDAOFilter(null, 
-                Arrays.asList("11", "41"), // 41 = species Id that does not exist)
-                null);
+                Arrays.asList(11, 41), // 41 = species Id that does not exist)
+                null, null, null, null);
         // Generate manually expected result
         expectedExprCalls = new HashSet<>(Arrays.asList(
-                new ExpressionCallTO("2", "ID1", "Anat_id6", "Stage_id6", DataState.LOWQUALITY, 
+                //in Bgee 13: "2", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(2, 1, 1, DataState.LOWQUALITY, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("3", "ID1", "Anat_id6", "Stage_id7", DataState.NODATA, 
+                //in Bgee 13: "3", "ID1", "Anat_id6", "Stage_id7"
+                new ExpressionCallTO(3, 1, 2, DataState.NODATA, 
                         DataState.NODATA, DataState.NODATA, DataState.LOWQUALITY, 
                         true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("5", "ID1", "Anat_id7", "Stage_id10", DataState.LOWQUALITY, 
+                //in Bgee 13: "5", "ID1", "Anat_id7", "Stage_id10"
+                new ExpressionCallTO(5, 1, 3, DataState.LOWQUALITY, 
                         DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
                         true, false, OriginOfLine.BOTH, OriginOfLine.SELF, true),
-                new ExpressionCallTO("22", "ID1", "Anat_id6", "Stage_id8", DataState.HIGHQUALITY, 
+                //in Bgee 13: "22", "ID1", "Anat_id6", "Stage_id8"
+                new ExpressionCallTO(22, 1, 4, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("24", "ID1", "Anat_id1", "Stage_id8", DataState.HIGHQUALITY, 
+                //in Bgee 13: "24", "ID1", "Anat_id1", "Stage_id8"
+                new ExpressionCallTO(24, 1, 5, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("26", "ID1", "Anat_id1", "Stage_id1", DataState.NODATA, 
+                //in Bgee 13: "26", "ID1", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(26, 1, 6, DataState.NODATA, 
                         DataState.NODATA, DataState.LOWQUALITY, DataState.NODATA, 
                         true, false, OriginOfLine.SELF, OriginOfLine.SELF, true)));
         // Compare
@@ -1436,11 +1665,11 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         // Same test but with only two attributes
         // Generate parameters
         filter = new CallDAOFilter(null, 
-                Arrays.asList("11", "41"), // 41 = species Id that does not exist)
-                null);
+                Arrays.asList(11, 41), // 41 = species Id that does not exist)
+                null, null, null, null);
         // Generate manually expected result
         expectedExprCalls = new HashSet<>(Arrays.asList(
-                new ExpressionCallTO(null, "ID1", null, null, null, null, null, null, 
+                new ExpressionCallTO(null, 1, null, null, null, null, null, 
                         null, null, null, null, true)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), null, 
@@ -1458,85 +1687,111 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         
         // Without species filter but include substructures, all attributes
         // Generate parameters
-        filter = new CallDAOFilter(null, null, null);
+        filter = new CallDAOFilter(null, null, null, null, null, null);
         //Generate manually expected result
         expectedExprCalls = new HashSet<>(Arrays.asList(
-                new ExpressionCallTO("1", "ID3", "Anat_id1", "Stage_id1", 
+                //in Bgee 13: "1", "ID3", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(1, 3, 1, 
                         DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("2", "ID1", "Anat_id6", "Stage_id6", 
+                //in Bgee 13: "2", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(2, 1, 2, 
                         DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("3", "ID1", "Anat_id6", "Stage_id7", 
+                //in Bgee 13: "3", "ID1", "Anat_id6", "Stage_id7"
+                new ExpressionCallTO(3, 1, 3, 
                         DataState.NODATA, DataState.NODATA, DataState.NODATA, 
                         DataState.LOWQUALITY, true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("4", "ID2", "Anat_id2", "Stage_id18",
+                //in Bgee 13: "4", "ID2", "Anat_id2", "Stage_id18"
+                new ExpressionCallTO(4, 2, 4,
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("5", "ID1", "Anat_id7", "Stage_id10", 
+                //in Bgee 13: "5", "ID1", "Anat_id7", "Stage_id10"
+                new ExpressionCallTO(5, 1, 5, 
                         DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
                         DataState.LOWQUALITY, true, false, OriginOfLine.BOTH, OriginOfLine.SELF, true),
-                new ExpressionCallTO("6", "ID2", "Anat_id11", "Stage_id12",
+                //in Bgee 13: "6", "ID2", "Anat_id11", "Stage_id12"
+                new ExpressionCallTO(6, 2, 6,
                         DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("7", "ID2", "Anat_id11", "Stage_id13",
+                //in Bgee 13: "7", "ID2", "Anat_id11", "Stage_id13"
+                new ExpressionCallTO(7, 2, 7,
                         DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.NODATA, true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("8", "ID3", "Anat_id2", "Stage_id1", 
+                //in Bgee 13: "8", "ID3", "Anat_id2", "Stage_id1"
+                new ExpressionCallTO(8, 3, 8, 
                         DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("9", "ID3", "Anat_id3", "Stage_id1", 
+                //in Bgee 13: "9", "ID3", "Anat_id3", "Stage_id1"
+                new ExpressionCallTO(9, 3, 9, 
                         DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("10", "ID3", "Anat_id4", "Stage_id1", 
+                //in Bgee 13: "10", "ID3", "Anat_id4", "Stage_id1"
+                new ExpressionCallTO(10, 3, 10, 
                         DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("11", "ID3", "Anat_id5", "Stage_id1", 
+                //in Bgee 13: "11", "ID3", "Anat_id5", "Stage_id1"
+                new ExpressionCallTO(11, 3, 11, 
                         DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("12", "ID3", "Anat_id6", "Stage_id1", 
+                //in Bgee 13: "12", "ID3", "Anat_id6", "Stage_id1"
+                new ExpressionCallTO(12, 3, 12, 
                         DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("13", "ID3", "Anat_id9", "Stage_id1", 
+                //in Bgee 13: "13", "ID3", "Anat_id9", "Stage_id1"
+                new ExpressionCallTO(13, 3, 13, 
                         DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("14", "ID3", "Anat_id10", "Stage_id1", 
+                //in Bgee 13: "14", "ID3", "Anat_id10", "Stage_id1"
+                new ExpressionCallTO(14, 3, 14, 
                         DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("15", "ID3", "Anat_id11", "Stage_id1", 
+                //in Bgee 13: "15", "ID3", "Anat_id11", "Stage_id1"
+                new ExpressionCallTO(15, 3, 15, 
                         DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("16", "ID2", "Anat_id3", "Stage_id18", 
+                //in Bgee 13: "16", "ID2", "Anat_id3", "Stage_id18"
+                new ExpressionCallTO(16, 2, 16, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("17", "ID2", "Anat_id4", "Stage_id18", 
+                //in Bgee 13: "17", "ID2", "Anat_id4", "Stage_id18"
+                new ExpressionCallTO(17, 2, 17, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("18", "ID2", "Anat_id5", "Stage_id18", 
+                //in Bgee 13: "18", "ID2", "Anat_id5", "Stage_id18"
+                new ExpressionCallTO(18, 2, 18, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("19", "ID2", "Anat_id9", "Stage_id18", 
+                //in Bgee 13: "19", "ID2", "Anat_id9", "Stage_id18"
+                new ExpressionCallTO(19, 2, 19, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("20", "ID2", "Anat_id10", "Stage_id18", 
+                //in Bgee 13: "20", "ID2", "Anat_id10", "Stage_id18"
+                new ExpressionCallTO(20, 2, 20, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("21", "ID2", "Anat_id11", "Stage_id18", 
+                //in Bgee 13: "21", "ID2", "Anat_id11", "Stage_id18"
+                new ExpressionCallTO(21, 2, 21, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("22", "ID1", "Anat_id6", "Stage_id8", 
+                //in Bgee 13: "22", "ID1", "Anat_id6", "Stage_id8"
+                new ExpressionCallTO(22, 1, 22, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
                         DataState.NODATA, true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("23", "ID2", "Anat_id1", "Stage_id1", 
+                //in Bgee 13: "23", "ID2", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(23, 2, 23, 
                         DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("24", "ID1", "Anat_id1", "Stage_id8", 
+                //in Bgee 13: "24", "ID1", "Anat_id1", "Stage_id8"
+                new ExpressionCallTO(24, 1, 24, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
                         DataState.NODATA, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("25", "ID2", "Anat_id1", "Stage_id2", 
+                //in Bgee 13: "25", "ID2", "Anat_id1", "Stage_id2"
+                new ExpressionCallTO(25, 2, 25, 
                         DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.NODATA, true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("26", "ID1", "Anat_id1", "Stage_id1", DataState.NODATA, 
+                //in Bgee 13: "26", "ID1", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(26, 1, 26, DataState.NODATA, 
                         DataState.NODATA, DataState.LOWQUALITY, DataState.NODATA, 
                         true, false, OriginOfLine.SELF, OriginOfLine.SELF, true)));
         // Compare
@@ -1551,11 +1806,11 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         assertFalse("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature()); 
         
         // Test get only GENE_ID without species filter and without including substructures
-        filter = new CallDAOFilter(null, null, null);
+        filter = new CallDAOFilter(null, null, null, null, null, null);
         expectedExprCalls = new HashSet<>(Arrays.asList(
-                new ExpressionCallTO(null, "ID1", null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO(null, "ID2", null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO(null, "ID3", null, null, null, null, null, null, null, null, null, null, null)));
+                new ExpressionCallTO(null, 1, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(null, 2, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(null, 3, null, null, null, null, null, null, null, null, null, null)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), null, 
                 true, false, null, null, Arrays.asList(ExpressionCallDAO.Attribute.GENE_ID), null);
@@ -1568,9 +1823,9 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         assertFalse("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature()); 
 
         // Test get only INCLUDE_SUBSTRUCTURES without species filter and without including substructures
-        filter = new CallDAOFilter(null, null, null);
+        filter = new CallDAOFilter(null, null, null, null, null, null);
         expectedExprCalls = new HashSet<>(Arrays.asList(
-                new ExpressionCallTO(null, null, null, null, null, null, null, null, false, null, 
+                new ExpressionCallTO(null, null, null, null, null, null, null, false, null, 
                         null, null, null)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), null, 
@@ -1584,34 +1839,34 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         assertFalse("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature()); 
 
         // Test get only ID without species filter and including substructures
-        filter = new CallDAOFilter(null, null, null);
+        filter = new CallDAOFilter(null, null, null, null, null, null);
         expectedExprCalls = new HashSet<>(Arrays.asList(
-                new ExpressionCallTO("1", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("2", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("3", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("4", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("5", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("6", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("7", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("8", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("9", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("10", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("11", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("12", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("13", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("14", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("15", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("16", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("17", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("18", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("19", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("20", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("21", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("22", null, null, null, null, null, null, null, null, null, null, null, null), 
-                new ExpressionCallTO("23", null, null, null, null, null, null, null, null, null, null, null, null), 
-                new ExpressionCallTO("24", null, null, null, null, null, null, null, null, null, null, null, null), 
-                new ExpressionCallTO("25", null, null, null, null, null, null, null, null, null, null, null, null), 
-                new ExpressionCallTO("26", null, null, null, null, null, null, null, null, null, null, null, null)));
+                new ExpressionCallTO(1, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(2, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(3, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(4, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(5, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(6, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(7, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(8, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(9, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(10, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(11, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(12, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(13, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(14, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(15, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(16, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(17, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(18, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(19, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(20, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(21, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(22, null, null, null, null, null, null, null, null, null, null, null), 
+                new ExpressionCallTO(23, null, null, null, null, null, null, null, null, null, null, null), 
+                new ExpressionCallTO(24, null, null, null, null, null, null, null, null, null, null, null), 
+                new ExpressionCallTO(25, null, null, null, null, null, null, null, null, null, null, null), 
+                new ExpressionCallTO(26, null, null, null, null, null, null, null, null, null, null, null)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), null, 
                 true, false, null, null, Arrays.asList(ExpressionCallDAO.Attribute.ID), null);
@@ -1624,29 +1879,38 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         assertFalse("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature()); 
         
         // Test get INCLUDE_SUBSTRUCTURES (and STAGE_ID) without OriginOfLine including substructures
-        filter = new CallDAOFilter(null, null, null);
+        filter = new CallDAOFilter(null, null, null, null, null, null);
         expectedExprCalls = new HashSet<>(Arrays.asList(
-                new ExpressionCallTO(null, null, null, "Stage_id1", 
+                //in Bgee 13: "Stage_id1"
+                new ExpressionCallTO(null, null, 1, 
                         null, null, null, null, true, null, null, null, null),
-                new ExpressionCallTO(null, null, null, "Stage_id2", 
+                //in Bgee 13: "Stage_id2"
+                new ExpressionCallTO(null, null, 2, 
                         null, null, null, null, true, null, null, null, null),
-                new ExpressionCallTO(null, null, null, "Stage_id6", 
+                //in Bgee 13: "Stage_id6"
+                new ExpressionCallTO(null, null, 3, 
                         null, null, null, null, true, null, null, null, null),
-                new ExpressionCallTO(null, null, null, "Stage_id7", 
+                //in Bgee 13: "Stage_id7"
+                new ExpressionCallTO(null, null, 4, 
                         null, null, null, null, true, null, null, null, null),
-                new ExpressionCallTO(null, null, null, "Stage_id8", 
+                //in Bgee 13: "Stage_id8"
+                new ExpressionCallTO(null, null, 5, 
                         null, null, null, null, true, null, null, null, null),
-                new ExpressionCallTO(null, null, null, "Stage_id18",
+                //in Bgee 13: "Stage_id18"
+                new ExpressionCallTO(null, null, 6,
                         null, null, null, null, true, null, null, null, null),
-                new ExpressionCallTO(null, null, null, "Stage_id10", 
+                //in Bgee 13: "Stage_id10"
+                new ExpressionCallTO(null, null, 7, 
                         null, null, null, null, true, null, null, null, null),
-                new ExpressionCallTO(null, null, null, "Stage_id12",
+                //in Bgee 13: "Stage_id12"
+                new ExpressionCallTO(null, null, 8,
                         null, null, null, null, true, null, null, null, null),
-                new ExpressionCallTO(null, null, null, "Stage_id13",
+                //in Bgee 13: "Stage_id13"
+                new ExpressionCallTO(null, null, 9,
                         null, null, null, null, true, null, null, null, null)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), null, 
-                true, false, null, null, Arrays.asList(ExpressionCallDAO.Attribute.STAGE_ID, 
+                true, false, null, null, Arrays.asList(ExpressionCallDAO.Attribute.CONDITION_ID, 
                         ExpressionCallDAO.Attribute.INCLUDE_SUBSTRUCTURES), null);
         //no ordering requested, put results in a Set
         expressions = new HashSet<>(rs.getAllTOs());
@@ -1676,59 +1940,81 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         
         MySQLExpressionCallDAO dao = new MySQLExpressionCallDAO(manager);
         
-        Set<String> allGeneIds = new HashSet<>(Arrays.asList("ID1", "ID2", "ID3", "ID4"));
+        Set<Integer> allGeneIds = new HashSet<>(Arrays.asList(1, 2, 3, 4));
         
 
 
         // First, we test with no GROUP BY needed (we only request attributes not needing a GROUP BY)
         // Without speciesIds and not include organ substructures
         // Generate parameters
-        CallDAOFilter filter = new CallDAOFilter(null, null, null);
+        CallDAOFilter filter = new CallDAOFilter(null, null, null, null, null, null);
         // Generate manually expected result. No ordering requested, put in a Set
         Set<ExpressionCallTO> expectedExprCalls = new HashSet<>(Arrays.asList(
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id1", "ID1", "Anat_id1", "Stage_id1",
+                //in Bgee 13: "ID1__Anat_id1__Stage_id1", "ID1", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(1, 1, 1,
                         null, null, null, null, false, true, OriginOfLine.SELF, null, null),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id1", "ID1", "Anat_id6", "Stage_id1",
+                //in Bgee 13: "ID1__Anat_id6__Stage_id1", "ID1", "Anat_id6", "Stage_id1"
+                new ExpressionCallTO(2, 1, 2,
                         null, null, null, null, false, true, OriginOfLine.SELF, null, null),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id5", "ID1", "Anat_id6", "Stage_id5", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id5", "ID1", "Anat_id6", "Stage_id5"
+                new ExpressionCallTO(3, 1, 3, 
                         null, null, null, null, false, true, OriginOfLine.SELF, null, null),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(4, 1, 4, 
                         null, null, null, null, false, true, OriginOfLine.SELF, null, null),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id7", "ID1", "Anat_id6", "Stage_id7", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id7", "ID1", "Anat_id6", "Stage_id7"
+                new ExpressionCallTO(5, 1, 5, 
                         null, null, null, null, false, true, OriginOfLine.SELF, null, null),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id8", "ID1", "Anat_id6", "Stage_id8", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id8", "ID1", "Anat_id6", "Stage_id8"
+                new ExpressionCallTO(6, 1, 6, 
                         null, null, null, null, false, true, OriginOfLine.SELF, null, null),
-                new ExpressionCallTO("ID1__Anat_id7__Stage_id1", "ID1", "Anat_id7", "Stage_id1", 
+                //in Bgee 13: "ID1__Anat_id7__Stage_id1", "ID1", "Anat_id7", "Stage_id1"
+                new ExpressionCallTO(7, 1, 7, 
                         null, null, null, null, false, true, OriginOfLine.SELF, null, null),
-                new ExpressionCallTO("ID1__Anat_id7__Stage_id10", "ID1", "Anat_id7", "Stage_id10", 
+                //in Bgee 13: "ID1__Anat_id7__Stage_id10", "ID1", "Anat_id7", "Stage_id10"
+                new ExpressionCallTO(8, 1, 8, 
                         null, null, null, null, false, true, OriginOfLine.SELF, null, null),
-                new ExpressionCallTO("ID2__Anat_id1__Stage_id1", "ID2", "Anat_id1", "Stage_id1", 
-                        null, null, null, null, false, true, OriginOfLine.SELF, null, null), 
-                new ExpressionCallTO("ID2__Anat_id1__Stage_id2", "ID2", "Anat_id1", "Stage_id2", 
-                        null, null, null, null, false, true, OriginOfLine.SELF, null, null), 
-                new ExpressionCallTO("ID2__Anat_id1__Stage_id5", "ID2", "Anat_id1", "Stage_id5", 
-                        null, null, null, null, false, true, OriginOfLine.SELF, null, null), 
-                new ExpressionCallTO("ID2__Anat_id1__Stage_id7", "ID2", "Anat_id1", "Stage_id7", 
-                        null, null, null, null, false, true, OriginOfLine.SELF, null, null), 
-                new ExpressionCallTO("ID2__Anat_id1__Stage_id9", "ID2", "Anat_id1", "Stage_id9", 
-                        null, null, null, null, false, true, OriginOfLine.SELF, null, null), 
-                new ExpressionCallTO("ID2__Anat_id2__Stage_id1", "ID2", "Anat_id2", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id1__Stage_id1", "ID2", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(9, 2, 9, 
                         null, null, null, null, false, true, OriginOfLine.SELF, null, null),
-                new ExpressionCallTO("ID2__Anat_id2__Stage_id14", "ID2", "Anat_id2", "Stage_id14", 
+                //in Bgee 13: "ID2__Anat_id1__Stage_id2", "ID2", "Anat_id1", "Stage_id2"
+                new ExpressionCallTO(10, 2, 10, 
                         null, null, null, null, false, true, OriginOfLine.SELF, null, null),
-                new ExpressionCallTO("ID2__Anat_id2__Stage_id18", "ID2", "Anat_id2", "Stage_id18", 
+                //in Bgee 13: "ID2__Anat_id1__Stage_id5", "ID2", "Anat_id1", "Stage_id5"
+                new ExpressionCallTO(11, 2, 11, 
                         null, null, null, null, false, true, OriginOfLine.SELF, null, null),
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id1", "ID2", "Anat_id11", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id1__Stage_id7", "ID2", "Anat_id1", "Stage_id7"
+                new ExpressionCallTO(12, 2, 12, 
                         null, null, null, null, false, true, OriginOfLine.SELF, null, null),
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id10", "ID2", "Anat_id11", "Stage_id10", 
+                //in Bgee 13: "ID2__Anat_id1__Stage_id9", "ID2", "Anat_id1", "Stage_id9"
+                new ExpressionCallTO(13, 2, 13, 
                         null, null, null, null, false, true, OriginOfLine.SELF, null, null),
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id12", "ID2", "Anat_id11", "Stage_id12", 
+                //in Bgee 13: "ID2__Anat_id2__Stage_id1", "ID2", "Anat_id2", "Stage_id1"
+                new ExpressionCallTO(14, 2, 14, 
                         null, null, null, null, false, true, OriginOfLine.SELF, null, null),
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id13", "ID2", "Anat_id11", "Stage_id13", 
+                //in Bgee 13: "ID2__Anat_id2__Stage_id14", "ID2", "Anat_id2", "Stage_id14"
+                new ExpressionCallTO(15, 2, 15, 
                         null, null, null, null, false, true, OriginOfLine.SELF, null, null),
-                new ExpressionCallTO("ID3__Anat_id1__Stage_id1", "ID3", "Anat_id1", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id2__Stage_id18", "ID2", "Anat_id2", "Stage_id18"
+                new ExpressionCallTO(16, 2, 16, 
                         null, null, null, null, false, true, OriginOfLine.SELF, null, null),
-                new ExpressionCallTO("ID3__Anat_id3__Stage_id1", "ID3", "Anat_id3", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id11__Stage_id1", "ID2", "Anat_id11", "Stage_id1"
+                new ExpressionCallTO(17, 2, 17, 
+                        null, null, null, null, false, true, OriginOfLine.SELF, null, null),
+                //in Bgee 13: "ID2__Anat_id11__Stage_id10", "ID2", "Anat_id11", "Stage_id10"
+                new ExpressionCallTO(18, 2, 18, 
+                        null, null, null, null, false, true, OriginOfLine.SELF, null, null),
+                //in Bgee 13: "ID2__Anat_id11__Stage_id12", "ID2", "Anat_id11", "Stage_id12"
+                new ExpressionCallTO(19, 2, 19, 
+                        null, null, null, null, false, true, OriginOfLine.SELF, null, null),
+                //in Bgee 13: "ID2__Anat_id11__Stage_id13", "ID2", "Anat_id11", "Stage_id13"
+                new ExpressionCallTO(20, 2, 20, 
+                        null, null, null, null, false, true, OriginOfLine.SELF, null, null),
+                //in Bgee 13: "ID3__Anat_id1__Stage_id1", "ID3", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(21, 3, 21, 
+                        null, null, null, null, false, true, OriginOfLine.SELF, null, null),
+                //in Bgee 13: "ID3__Anat_id3__Stage_id1", "ID3", "Anat_id3", "Stage_id1"
+                new ExpressionCallTO(22, 3, 22, 
                         null, null, null, null, false, true, OriginOfLine.SELF, null, null)));
         // Compare
         MySQLExpressionCallTOResultSet rs = 
@@ -1736,8 +2022,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         null, false, true, null, null, 
                         Arrays.asList(ExpressionCallDAO.Attribute.ID, 
                                 ExpressionCallDAO.Attribute.GENE_ID, 
-                                ExpressionCallDAO.Attribute.STAGE_ID, 
-                                ExpressionCallDAO.Attribute.ANAT_ENTITY_ID, 
+                                ExpressionCallDAO.Attribute.CONDITION_ID, 
                                 ExpressionCallDAO.Attribute.INCLUDE_SUBSTRUCTURES, 
                                 ExpressionCallDAO.Attribute.INCLUDE_SUBSTAGES, 
                                 ExpressionCallDAO.Attribute.ANAT_ORIGIN_OF_LINE), 
@@ -1754,73 +2039,95 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         // GROUP BY needed but no LIMIT clause
         dao = new MySQLExpressionCallDAO(this.getMySQLDAOManager(DAOManager.getDefaultProperties()));
         //need to restrict the gene IDs to use to get no LIMIT clause
-        filter = new CallDAOFilter(allGeneIds, null, null);
+        filter = new CallDAOFilter(allGeneIds, null, null, null, null, null);
         // Generate manually expected result. No ordering requested, put in a Set
         expectedExprCalls = new HashSet<>(Arrays.asList(
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id1", "ID1", "Anat_id1", "Stage_id1",
+                //in Bgee 13: "ID1__Anat_id1__Stage_id1", "ID1", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(1, 1, 1,
                         DataState.NODATA, DataState.NODATA, DataState.LOWQUALITY, 
                         DataState.NODATA, false, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id1", "ID1", "Anat_id6", "Stage_id1",
+                //in Bgee 13: "ID1__Anat_id6__Stage_id1", "ID1", "Anat_id6", "Stage_id1"
+                new ExpressionCallTO(2, 1, 2,
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id5", "ID1", "Anat_id6", "Stage_id5", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id5", "ID1", "Anat_id6", "Stage_id5"
+                new ExpressionCallTO(3, 1, 3, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(4, 1, 4, 
                         DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id7", "ID1", "Anat_id6", "Stage_id7", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id7", "ID1", "Anat_id6", "Stage_id7"
+                new ExpressionCallTO(5, 1, 5, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
                         DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.BOTH, true),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id8", "ID1", "Anat_id6", "Stage_id8", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id8", "ID1", "Anat_id6", "Stage_id8"
+                new ExpressionCallTO(6, 1, 6, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
                         DataState.NODATA, false, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID1__Anat_id7__Stage_id1", "ID1", "Anat_id7", "Stage_id1", 
+                //in Bgee 13: "ID1__Anat_id7__Stage_id1", "ID1", "Anat_id7", "Stage_id1"
+                new ExpressionCallTO(7, 1, 7, 
                         DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
                         DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID1__Anat_id7__Stage_id10", "ID1", "Anat_id7", "Stage_id10", 
+                //in Bgee 13: "ID1__Anat_id7__Stage_id10", "ID1", "Anat_id7", "Stage_id10"
+                new ExpressionCallTO(8, 1, 8, 
                         DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
                         DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID2__Anat_id1__Stage_id1", "ID2", "Anat_id1", "Stage_id1", 
-                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
-                        DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false), 
-                new ExpressionCallTO("ID2__Anat_id1__Stage_id2", "ID2", "Anat_id1", "Stage_id2", 
-                        DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
-                        DataState.NODATA, false, true, OriginOfLine.SELF, OriginOfLine.SELF, true), 
-                new ExpressionCallTO("ID2__Anat_id1__Stage_id5", "ID2", "Anat_id1", "Stage_id5", 
-                        DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
-                        DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false), 
-                new ExpressionCallTO("ID2__Anat_id1__Stage_id7", "ID2", "Anat_id1", "Stage_id7", 
-                        DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
-                        DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false), 
-                new ExpressionCallTO("ID2__Anat_id1__Stage_id9", "ID2", "Anat_id1", "Stage_id9", 
-                        DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
-                        DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.SELF, true), 
-                new ExpressionCallTO("ID2__Anat_id2__Stage_id1", "ID2", "Anat_id2", "Stage_id1", 
-                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
-                        DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id2__Stage_id14", "ID2", "Anat_id2", "Stage_id14", 
-                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
-                        DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id2__Stage_id18", "ID2", "Anat_id2", "Stage_id18", 
-                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
-                        DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id1", "ID2", "Anat_id11", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id1__Stage_id1", "ID2", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(9, 2, 9, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id10", "ID2", "Anat_id11", "Stage_id10", 
-                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
-                        DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id12", "ID2", "Anat_id11", "Stage_id12", 
-                        DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
-                        DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id13", "ID2", "Anat_id11", "Stage_id13", 
+                //in Bgee 13: "ID2__Anat_id1__Stage_id2", "ID2", "Anat_id1", "Stage_id2"
+                new ExpressionCallTO(10, 2, 10, 
                         DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.NODATA, false, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID3__Anat_id1__Stage_id1", "ID3", "Anat_id1", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id1__Stage_id5", "ID2", "Anat_id1", "Stage_id5"
+                new ExpressionCallTO(11, 2, 11, 
+                        DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
+                        DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false),
+                //in Bgee 13: "ID2__Anat_id1__Stage_id7", "ID2", "Anat_id1", "Stage_id7"
+                new ExpressionCallTO(12, 2, 12, 
+                        DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
+                        DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false),
+                //in Bgee 13: "ID2__Anat_id1__Stage_id9", "ID2", "Anat_id1", "Stage_id9"
+                new ExpressionCallTO(13, 2, 13, 
+                        DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
+                        DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
+                //in Bgee 13: "ID2__Anat_id2__Stage_id1", "ID2", "Anat_id2", "Stage_id1"
+                new ExpressionCallTO(14, 2, 14, 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                        DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false),
+                //in Bgee 13: "ID2__Anat_id2__Stage_id14", "ID2", "Anat_id2", "Stage_id14"
+                new ExpressionCallTO(15, 2, 15, 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                        DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false),
+                //in Bgee 13: "ID2__Anat_id2__Stage_id18", "ID2", "Anat_id2", "Stage_id18"
+                new ExpressionCallTO(16, 2, 16, 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                        DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
+                //in Bgee 13: "ID2__Anat_id11__Stage_id1", "ID2", "Anat_id11", "Stage_id1"
+                new ExpressionCallTO(17, 2, 17, 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+                        DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false),
+                //in Bgee 13: "ID2__Anat_id11__Stage_id10", "ID2", "Anat_id11", "Stage_id10"
+                new ExpressionCallTO(18, 2, 18, 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+                        DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false),
+                //in Bgee 13: "ID2__Anat_id11__Stage_id12", "ID2", "Anat_id11", "Stage_id12"
+                new ExpressionCallTO(19, 2, 19, 
+                        DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
+                        DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
+                //in Bgee 13: "ID2__Anat_id11__Stage_id13", "ID2", "Anat_id11", "Stage_id13"
+                new ExpressionCallTO(20, 2, 20, 
+                        DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+                        DataState.NODATA, false, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
+                //in Bgee 13: "ID3__Anat_id1__Stage_id1", "ID3", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(21, 3, 21, 
                         DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID3__Anat_id3__Stage_id1", "ID3", "Anat_id3", "Stage_id1", 
+                //in Bgee 13: "ID3__Anat_id3__Stage_id1", "ID3", "Anat_id3", "Stage_id1"
+                new ExpressionCallTO(22, 3, 22, 
                         DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.NODATA, false, true, OriginOfLine.SELF, OriginOfLine.SELF, true)));
         // Compare
@@ -1837,7 +2144,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         
         // GROUP BY needed, and LIMIT clause
         dao = new MySQLExpressionCallDAO(this.getMySQLDAOManager(newProps));
-        filter = new CallDAOFilter(null, null, null);
+        filter = new CallDAOFilter(null, null, null, null, null, null);
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), null, 
                         false, true, null, null, getNonRankingAttributes(), null);
@@ -1854,33 +2161,40 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         // With speciesIds but not include substructures, first, with no GROUP BY needed
         // Generate parameters
         filter = new CallDAOFilter(null, 
-                Arrays.asList("11", "41"), // 41 = species Id that does not exist
-                null);
+                Arrays.asList(11, 41), // 41 = species Id that does not exist
+                null, null, null, null);
         // Generate manually expected result
         expectedExprCalls = new HashSet<>(Arrays.asList(
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id1", "ID1", "Anat_id1", "Stage_id1",
+                //in Bgee 13: "ID1__Anat_id1__Stage_id1", "ID1", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(1, 1, 1,
                         null, null, null, null, false, true, OriginOfLine.SELF, null, null),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id6","ID1", "Anat_id6", "Stage_id6", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(1, 1, 1, 
                         null, null, null, null, false, true, OriginOfLine.SELF, null, null),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id5","ID1", "Anat_id6", "Stage_id5", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id5", "ID1", "Anat_id6", "Stage_id5"
+                new ExpressionCallTO(1, 1, 1, 
                         null, null, null, null, false, true, OriginOfLine.SELF, null, null),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id1","ID1", "Anat_id6", "Stage_id1", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id1", "ID1", "Anat_id6", "Stage_id1"
+                new ExpressionCallTO(1, 1, 1, 
                         null, null, null, null, false, true, OriginOfLine.SELF, null, null),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id7","ID1", "Anat_id6", "Stage_id7", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id7", "ID1", "Anat_id6", "Stage_id7"
+                new ExpressionCallTO(1, 1, 1, 
                         null, null, null, null, false, true, OriginOfLine.SELF, null, null),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id8","ID1", "Anat_id6", "Stage_id8", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id8", "ID1", "Anat_id6", "Stage_id8"
+                new ExpressionCallTO(1, 1, 1, 
                         null, null, null, null, false, true, OriginOfLine.SELF, null, null),
-                new ExpressionCallTO("ID1__Anat_id7__Stage_id10","ID1", "Anat_id7", "Stage_id10", 
+                //in Bgee 13: "ID1__Anat_id7__Stage_id10", "ID1", "Anat_id7", "Stage_id10"
+                new ExpressionCallTO(1, 1, 1, 
                         null, null, null, null, false, true, OriginOfLine.SELF, null, null),
-                new ExpressionCallTO("ID1__Anat_id7__Stage_id1","ID1", "Anat_id7", "Stage_id1", 
+                //in Bgee 13: "ID1__Anat_id7__Stage_id1", "ID1", "Anat_id7", "Stage_id1"
+                new ExpressionCallTO(1, 1, 1, 
                         null, null, null, null, false, true, OriginOfLine.SELF, null, null)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), null, 
                 false, true, null, null, 
                 Arrays.asList(ExpressionCallDAO.Attribute.ID, 
                         ExpressionCallDAO.Attribute.GENE_ID, 
-                        ExpressionCallDAO.Attribute.STAGE_ID, 
-                        ExpressionCallDAO.Attribute.ANAT_ENTITY_ID, 
+                        ExpressionCallDAO.Attribute.CONDITION_ID, 
                         ExpressionCallDAO.Attribute.INCLUDE_SUBSTRUCTURES, 
                         ExpressionCallDAO.Attribute.INCLUDE_SUBSTAGES, 
                         ExpressionCallDAO.Attribute.ANAT_ORIGIN_OF_LINE), 
@@ -1898,32 +2212,40 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         dao = new MySQLExpressionCallDAO(this.getMySQLDAOManager(DAOManager.getDefaultProperties()));
         //need to restrict the gene IDs to get no LIMIT clause
         filter = new CallDAOFilter(allGeneIds, 
-                Arrays.asList("11", "41"), // 41 = species Id that does not exist
-                null);
+                Arrays.asList(11, 41), // 41 = species Id that does not exist
+                null, null, null, null);
         // Generate manually expected result
         expectedExprCalls = new HashSet<>(Arrays.asList(
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id1", "ID1", "Anat_id1", "Stage_id1",
+                //in Bgee 13: "ID1__Anat_id1__Stage_id1", "ID1", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(1, 1, 1,
                         DataState.NODATA, DataState.NODATA, DataState.LOWQUALITY, 
                         DataState.NODATA, false, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id6","ID1", "Anat_id6", "Stage_id6", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id5","ID1", "Anat_id6", "Stage_id5", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id5", "ID1", "Anat_id6", "Stage_id5"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id1","ID1", "Anat_id6", "Stage_id1", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id1", "ID1", "Anat_id6", "Stage_id1"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id7","ID1", "Anat_id6", "Stage_id7", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id7", "ID1", "Anat_id6", "Stage_id7"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, 
                         false, true, OriginOfLine.SELF, OriginOfLine.BOTH, true),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id8","ID1", "Anat_id6", "Stage_id8", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id8", "ID1", "Anat_id6", "Stage_id8"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         false, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID1__Anat_id7__Stage_id10","ID1", "Anat_id7", "Stage_id10", 
+                //in Bgee 13: "ID1__Anat_id7__Stage_id10", "ID1", "Anat_id7", "Stage_id10"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
                         DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID1__Anat_id7__Stage_id1","ID1", "Anat_id7", "Stage_id1", 
+                //in Bgee 13: "ID1__Anat_id7__Stage_id1", "ID1", "Anat_id7", "Stage_id1"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
                         DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false)));
         // Compare
@@ -1941,8 +2263,8 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         // GROUP BY needed, and LIMIT clause
         dao = new MySQLExpressionCallDAO(this.getMySQLDAOManager(newProps));
         filter = new CallDAOFilter(null, 
-                Arrays.asList("11", "41"), // 41 = species Id that does not exist
-                null);
+                Arrays.asList(11, 41), // 41 = species Id that does not exist
+                null, null, null, null);
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), null, 
                         false, true, null, null, getNonRankingAttributes(), null);
@@ -1962,91 +2284,127 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         dao = new MySQLExpressionCallDAO(this.getMySQLDAOManager(DAOManager.getDefaultProperties()));
         //need to restrict the gene IDs to get no LIMIT clause
         filter = new CallDAOFilter(allGeneIds, 
-                Arrays.asList("11", "21", "41"), // 41 = species Id that does not exist
-                null);
+                Arrays.asList(11, 21, 41), // 41 = species Id that does not exist
+                null, null, null, null);
         // Generate manually expected result
         expectedExprCalls = new HashSet<>(Arrays.asList(
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(1, 1, 1, 
                         null, null, null, null, true, true, null, null, null),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id5", "ID1", "Anat_id6", "Stage_id5", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id5", "ID1", "Anat_id6", "Stage_id5"
+                new ExpressionCallTO(1, 1, 1, 
                         null, null, null, null, true, true, null, null, null),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id1", "ID1", "Anat_id6", "Stage_id1", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id1", "ID1", "Anat_id6", "Stage_id1"
+                new ExpressionCallTO(1, 1, 1, 
                         null, null, null, null, true, true, null, null, null),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id7", "ID1", "Anat_id6", "Stage_id7", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id7", "ID1", "Anat_id6", "Stage_id7"
+                new ExpressionCallTO(1, 1, 1, 
                         null, null, null, null, true, true, null, null, null),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id8", "ID1", "Anat_id6", "Stage_id8", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id8", "ID1", "Anat_id6", "Stage_id8"
+                new ExpressionCallTO(1, 1, 1, 
                         null, null, null, null, true, true, null, null, null),
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id8", "ID1", "Anat_id1", "Stage_id8", 
+                //in Bgee 13: "ID1__Anat_id1__Stage_id8", "ID1", "Anat_id1", "Stage_id8"
+                new ExpressionCallTO(1, 1, 1, 
                         null, null, null, null, true, true, null, null, null),
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id7", "ID1", "Anat_id1", "Stage_id7", 
+                //in Bgee 13: "ID1__Anat_id1__Stage_id7", "ID1", "Anat_id1", "Stage_id7"
+                new ExpressionCallTO(1, 1, 1, 
                         null, null, null, null, true, true, null, null, null),
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id5", "ID1", "Anat_id1", "Stage_id5", 
+                //in Bgee 13: "ID1__Anat_id1__Stage_id5", "ID1", "Anat_id1", "Stage_id5"
+                new ExpressionCallTO(1, 1, 1, 
                         null, null, null, null, true, true, null, null, null),
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id1", "ID1", "Anat_id1", "Stage_id1", 
+                //in Bgee 13: "ID1__Anat_id1__Stage_id1", "ID1", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(1, 1, 1, 
                         null, null, null, null, true, true, null, null, null),
-                new ExpressionCallTO("ID1__Anat_id7__Stage_id10", "ID1", "Anat_id7", "Stage_id10", 
+                //in Bgee 13: "ID1__Anat_id7__Stage_id10", "ID1", "Anat_id7", "Stage_id10"
+                new ExpressionCallTO(1, 1, 1, 
                         null, null, null, null, true, true, null, null, null),
-                new ExpressionCallTO("ID1__Anat_id7__Stage_id1", "ID1", "Anat_id7", "Stage_id1", 
+                //in Bgee 13: "ID1__Anat_id7__Stage_id1", "ID1", "Anat_id7", "Stage_id1"
+                new ExpressionCallTO(1, 1, 1, 
                         null, null, null, null, true, true, null, null, null),
-                new ExpressionCallTO("ID2__Anat_id1__Stage_id1", "ID2", "Anat_id1", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id1__Stage_id1", "ID2", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(1, 2, 1, 
                         null, null, null, null, true, true, null, null, null), 
-                new ExpressionCallTO("ID2__Anat_id1__Stage_id2", "ID2", "Anat_id1", "Stage_id2",
+                //in Bgee 13: "ID2__Anat_id1__Stage_id2", "ID2", "Anat_id1", "Stage_id2"
+                new ExpressionCallTO(1, 2, 1,
                         null, null, null, null, true, true, null, null, null),
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id1", "ID2", "Anat_id11", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id11__Stage_id1", "ID2", "Anat_id11", "Stage_id1"
+                new ExpressionCallTO(1, 2, 1, 
                         null, null, null, null, true, true, null, null, null), 
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id10", "ID2", "Anat_id11", "Stage_id10", 
+                //in Bgee 13: "ID2__Anat_id11__Stage_id10", "ID2", "Anat_id11", "Stage_id10"
+                new ExpressionCallTO(1, 2, 1, 
                         null, null, null, null, true, true, null, null, null),
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id12", "ID2", "Anat_id11", "Stage_id12",
+                //in Bgee 13: "ID2__Anat_id11__Stage_id12", "ID2", "Anat_id11", "Stage_id12"
+                new ExpressionCallTO(1, 2, 1,
                         null, null, null, null, true, true, null, null, null),
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id13", "ID2", "Anat_id11", "Stage_id13", 
+                //in Bgee 13: "ID2__Anat_id11__Stage_id13", "ID2", "Anat_id11", "Stage_id13"
+                new ExpressionCallTO(1, 2, 1, 
                         null, null, null, null, true, true, null, null, null),
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id14", "ID2", "Anat_id11", "Stage_id14", 
+                //in Bgee 13: "ID2__Anat_id11__Stage_id14", "ID2", "Anat_id11", "Stage_id14"
+                new ExpressionCallTO(1, 2, 1, 
                         null, null, null, null, true, true, null, null, null), 
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id18", "ID2", "Anat_id11", "Stage_id18",
+                //in Bgee 13: "ID2__Anat_id11__Stage_id18", "ID2", "Anat_id11", "Stage_id18"
+                new ExpressionCallTO(1, 2, 1,
                         null, null, null, null, true, true, null, null, null), 
-                new ExpressionCallTO("ID2__Anat_id2__Stage_id1", "ID2", "Anat_id2", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id2__Stage_id1", "ID2", "Anat_id2", "Stage_id1"
+                new ExpressionCallTO(1, 2, 1, 
                         null, null, null, null, true, true, null, null, null),
-                new ExpressionCallTO("ID2__Anat_id2__Stage_id14", "ID2", "Anat_id2", "Stage_id14", 
+                //in Bgee 13: "ID2__Anat_id2__Stage_id14", "ID2", "Anat_id2", "Stage_id14"
+                new ExpressionCallTO(1, 2, 1, 
                         null, null, null, null, true, true, null, null, null),
-                new ExpressionCallTO("ID2__Anat_id2__Stage_id18", "ID2", "Anat_id2", "Stage_id18", 
+                //in Bgee 13: "ID2__Anat_id2__Stage_id18", "ID2", "Anat_id2", "Stage_id18"
+                new ExpressionCallTO(1, 2, 1, 
                         null, null, null, null, true, true, null, null, null),
-                new ExpressionCallTO("ID2__Anat_id3__Stage_id18", "ID2", "Anat_id3", "Stage_id18", 
+                //in Bgee 13: "ID2__Anat_id3__Stage_id18", "ID2", "Anat_id3", "Stage_id18"
+                new ExpressionCallTO(1, 2, 1, 
                         null, null, null, null, true, true, null, null, null),
-                new ExpressionCallTO("ID2__Anat_id3__Stage_id14", "ID2", "Anat_id3", "Stage_id14", 
+                //in Bgee 13: "ID2__Anat_id3__Stage_id14", "ID2", "Anat_id3", "Stage_id14"
+                new ExpressionCallTO(1, 2, 1, 
                         null, null, null, null, true, true, null, null, null),
-                new ExpressionCallTO("ID2__Anat_id3__Stage_id1", "ID2", "Anat_id3", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id3__Stage_id1", "ID2", "Anat_id3", "Stage_id1"
+                new ExpressionCallTO(1, 2, 1, 
                         null, null, null, null, true, true, null, null, null),
-                new ExpressionCallTO("ID2__Anat_id4__Stage_id18", "ID2", "Anat_id4", "Stage_id18", 
+                //in Bgee 13: "ID2__Anat_id4__Stage_id18", "ID2", "Anat_id4", "Stage_id18"
+                new ExpressionCallTO(1, 2, 1, 
                         null, null, null, null, true, true, null, null, null),
-                new ExpressionCallTO("ID2__Anat_id4__Stage_id14", "ID2", "Anat_id4", "Stage_id14", 
+                //in Bgee 13: "ID2__Anat_id4__Stage_id14", "ID2", "Anat_id4", "Stage_id14"
+                new ExpressionCallTO(1, 2, 1, 
                         null, null, null, null, true, true, null, null, null),
-                new ExpressionCallTO("ID2__Anat_id4__Stage_id1", "ID2", "Anat_id4", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id4__Stage_id1", "ID2", "Anat_id4", "Stage_id1"
+                new ExpressionCallTO(1, 2, 1, 
                         null, null, null, null, true, true, null, null, null),
-                new ExpressionCallTO("ID2__Anat_id5__Stage_id18", "ID2", "Anat_id5", "Stage_id18", 
+                //in Bgee 13: "ID2__Anat_id5__Stage_id18", "ID2", "Anat_id5", "Stage_id18"
+                new ExpressionCallTO(1, 2, 1, 
                         null, null, null, null, true, true, null, null, null),
-                new ExpressionCallTO("ID2__Anat_id5__Stage_id14", "ID2", "Anat_id5", "Stage_id14", 
+                //in Bgee 13: "ID2__Anat_id5__Stage_id14", "ID2", "Anat_id5", "Stage_id14"
+                new ExpressionCallTO(1, 2, 1, 
                         null, null, null, null, true, true, null, null, null),
-                new ExpressionCallTO("ID2__Anat_id5__Stage_id1", "ID2", "Anat_id5", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id5__Stage_id1", "ID2", "Anat_id5", "Stage_id1"
+                new ExpressionCallTO(1, 2, 1, 
                         null, null, null, null, true, true, null, null, null),
-                new ExpressionCallTO("ID2__Anat_id9__Stage_id18", "ID2", "Anat_id9", "Stage_id18", 
+                //in Bgee 13: "ID2__Anat_id9__Stage_id18", "ID2", "Anat_id9", "Stage_id18"
+                new ExpressionCallTO(1, 2, 1, 
                         null, null, null, null, true, true, null, null, null),
-                new ExpressionCallTO("ID2__Anat_id9__Stage_id14", "ID2", "Anat_id9", "Stage_id14", 
+                //in Bgee 13: "ID2__Anat_id9__Stage_id14", "ID2", "Anat_id9", "Stage_id14"
+                new ExpressionCallTO(1, 2, 1, 
                         null, null, null, null, true, true, null, null, null),
-                new ExpressionCallTO("ID2__Anat_id9__Stage_id1", "ID2", "Anat_id9", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id9__Stage_id1", "ID2", "Anat_id9", "Stage_id1"
+                new ExpressionCallTO(1, 2, 1, 
                         null, null, null, null, true, true, null, null, null),
-                new ExpressionCallTO("ID2__Anat_id10__Stage_id18", "ID2", "Anat_id10", "Stage_id18", 
+                //in Bgee 13: "ID2__Anat_id10__Stage_id18", "ID2", "Anat_id10", "Stage_id18"
+                new ExpressionCallTO(1, 2, 1, 
                         null, null, null, null, true, true, null, null, null),
-                new ExpressionCallTO("ID2__Anat_id10__Stage_id14", "ID2", "Anat_id10", "Stage_id14", 
+                //in Bgee 13: "ID2__Anat_id10__Stage_id14", "ID2", "Anat_id10", "Stage_id14"
+                new ExpressionCallTO(1, 2, 1, 
                         null, null, null, null, true, true, null, null, null),
-                new ExpressionCallTO("ID2__Anat_id10__Stage_id1", "ID2", "Anat_id10", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id10__Stage_id1", "ID2", "Anat_id10", "Stage_id1"
+                new ExpressionCallTO(1, 2, 1, 
                         null, null, null, null, true, true, null, null, null)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), null, 
                         true, true, null, null, 
                         Arrays.asList(ExpressionCallDAO.Attribute.ID, 
                                 ExpressionCallDAO.Attribute.GENE_ID, 
-                                ExpressionCallDAO.Attribute.STAGE_ID, 
-                                ExpressionCallDAO.Attribute.ANAT_ENTITY_ID, 
+                                ExpressionCallDAO.Attribute.CONDITION_ID, 
                                 ExpressionCallDAO.Attribute.INCLUDE_SUBSTRUCTURES, 
                                 ExpressionCallDAO.Attribute.INCLUDE_SUBSTAGES), 
                         null);
@@ -2063,144 +2421,181 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         dao = new MySQLExpressionCallDAO(this.getMySQLDAOManager(DAOManager.getDefaultProperties()));
         //need to restrict the gene IDs to get no LIMIT clause
         filter = new CallDAOFilter(allGeneIds, 
-                Arrays.asList("11", "21", "41"), // 41 = species Id that does not exist
-                null);
+                Arrays.asList(11, 21, 41), // 41 = species Id that does not exist
+                null, null, null, null);
         // Generate manually expected result
         expectedExprCalls = new HashSet<>(Arrays.asList(
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, true, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id5", "ID1", "Anat_id6", "Stage_id5", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id5", "ID1", "Anat_id6", "Stage_id5"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, true, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id1", "ID1", "Anat_id6", "Stage_id1", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id1", "ID1", "Anat_id6", "Stage_id1"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, true, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id7", "ID1", "Anat_id6", "Stage_id7", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id7", "ID1", "Anat_id6", "Stage_id7"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, 
                         true, true, OriginOfLine.SELF, OriginOfLine.BOTH, true),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id8", "ID1", "Anat_id6", "Stage_id8", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id8", "ID1", "Anat_id6", "Stage_id8"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         true, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id8", "ID1", "Anat_id1", "Stage_id8", 
+                //in Bgee 13: "ID1__Anat_id1__Stage_id8", "ID1", "Anat_id1", "Stage_id8"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         true, true, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id7", "ID1", "Anat_id1", "Stage_id7", 
+                //in Bgee 13: "ID1__Anat_id1__Stage_id7", "ID1", "Anat_id1", "Stage_id7"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         true, true, OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id5", "ID1", "Anat_id1", "Stage_id5", 
+                //in Bgee 13: "ID1__Anat_id1__Stage_id5", "ID1", "Anat_id1", "Stage_id5"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         true, true, OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id1", "ID1", "Anat_id1", "Stage_id1", 
+                //in Bgee 13: "ID1__Anat_id1__Stage_id1", "ID1", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
                         true, true, OriginOfLine.BOTH, OriginOfLine.BOTH, true),
-                new ExpressionCallTO("ID1__Anat_id7__Stage_id10", "ID1", "Anat_id7", "Stage_id10", 
+                //in Bgee 13: "ID1__Anat_id7__Stage_id10", "ID1", "Anat_id7", "Stage_id10"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
                         DataState.LOWQUALITY, true, true, OriginOfLine.BOTH, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID1__Anat_id7__Stage_id1", "ID1", "Anat_id7", "Stage_id1", 
+                //in Bgee 13: "ID1__Anat_id7__Stage_id1", "ID1", "Anat_id7", "Stage_id1"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
                         DataState.LOWQUALITY, true, true, OriginOfLine.BOTH, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id1__Stage_id1", "ID2", "Anat_id1", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id1__Stage_id1", "ID2", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.HIGHQUALITY, true, true,
                         OriginOfLine.BOTH, OriginOfLine.BOTH, false), 
-                new ExpressionCallTO("ID2__Anat_id1__Stage_id2", "ID2", "Anat_id1", "Stage_id2",
+                //in Bgee 13: "ID2__Anat_id1__Stage_id2", "ID2", "Anat_id1", "Stage_id2"
+                new ExpressionCallTO(1, 2, 1,
                         DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.NODATA, true, true, 
                         OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id1", "ID2", "Anat_id11", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id11__Stage_id1", "ID2", "Anat_id11", "Stage_id1"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.BOTH, OriginOfLine.DESCENT, false), 
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id10", "ID2", "Anat_id11", "Stage_id10", 
+                //in Bgee 13: "ID2__Anat_id11__Stage_id10", "ID2", "Anat_id11", "Stage_id10"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id12", "ID2", "Anat_id11", "Stage_id12",
+                //in Bgee 13: "ID2__Anat_id11__Stage_id12", "ID2", "Anat_id11", "Stage_id12"
+                new ExpressionCallTO(1, 2, 1,
                         DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id13", "ID2", "Anat_id11", "Stage_id13", 
+                //in Bgee 13: "ID2__Anat_id11__Stage_id13", "ID2", "Anat_id11", "Stage_id13"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.NODATA, true, true, 
                         OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id14", "ID2", "Anat_id11", "Stage_id14", 
+                //in Bgee 13: "ID2__Anat_id11__Stage_id14", "ID2", "Anat_id11", "Stage_id14"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false), 
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id18", "ID2", "Anat_id11", "Stage_id18",
+                //in Bgee 13: "ID2__Anat_id11__Stage_id18", "ID2", "Anat_id11", "Stage_id18"
+                new ExpressionCallTO(1, 2, 1,
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.SELF, false), 
-                new ExpressionCallTO("ID2__Anat_id2__Stage_id1", "ID2", "Anat_id2", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id2__Stage_id1", "ID2", "Anat_id2", "Stage_id1"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id2__Stage_id14", "ID2", "Anat_id2", "Stage_id14", 
+                //in Bgee 13: "ID2__Anat_id2__Stage_id14", "ID2", "Anat_id2", "Stage_id14"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id2__Stage_id18", "ID2", "Anat_id2", "Stage_id18", 
+                //in Bgee 13: "ID2__Anat_id2__Stage_id18", "ID2", "Anat_id2", "Stage_id18"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID2__Anat_id3__Stage_id18", "ID2", "Anat_id3", "Stage_id18", 
+                //in Bgee 13: "ID2__Anat_id3__Stage_id18", "ID2", "Anat_id3", "Stage_id18"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("ID2__Anat_id3__Stage_id14", "ID2", "Anat_id3", "Stage_id14", 
+                //in Bgee 13: "ID2__Anat_id3__Stage_id14", "ID2", "Anat_id3", "Stage_id14"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true,
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id3__Stage_id1", "ID2", "Anat_id3", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id3__Stage_id1", "ID2", "Anat_id3", "Stage_id1"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id4__Stage_id18", "ID2", "Anat_id4", "Stage_id18", 
+                //in Bgee 13: "ID2__Anat_id4__Stage_id18", "ID2", "Anat_id4", "Stage_id18"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("ID2__Anat_id4__Stage_id14", "ID2", "Anat_id4", "Stage_id14", 
+                //in Bgee 13: "ID2__Anat_id4__Stage_id14", "ID2", "Anat_id4", "Stage_id14"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id4__Stage_id1", "ID2", "Anat_id4", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id4__Stage_id1", "ID2", "Anat_id4", "Stage_id1"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true,
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id5__Stage_id18", "ID2", "Anat_id5", "Stage_id18", 
+                //in Bgee 13: "ID2__Anat_id5__Stage_id18", "ID2", "Anat_id5", "Stage_id18"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("ID2__Anat_id5__Stage_id14", "ID2", "Anat_id5", "Stage_id14", 
+                //in Bgee 13: "ID2__Anat_id5__Stage_id14", "ID2", "Anat_id5", "Stage_id14"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id5__Stage_id1", "ID2", "Anat_id5", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id5__Stage_id1", "ID2", "Anat_id5", "Stage_id1"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id9__Stage_id18", "ID2", "Anat_id9", "Stage_id18", 
+                //in Bgee 13: "ID2__Anat_id9__Stage_id18", "ID2", "Anat_id9", "Stage_id18"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("ID2__Anat_id9__Stage_id14", "ID2", "Anat_id9", "Stage_id14", 
+                //in Bgee 13: "ID2__Anat_id9__Stage_id14", "ID2", "Anat_id9", "Stage_id14"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id9__Stage_id1", "ID2", "Anat_id9", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id9__Stage_id1", "ID2", "Anat_id9", "Stage_id1"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id10__Stage_id18", "ID2", "Anat_id10", "Stage_id18", 
+                //in Bgee 13: "ID2__Anat_id10__Stage_id18", "ID2", "Anat_id10", "Stage_id18"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("ID2__Anat_id10__Stage_id14", "ID2", "Anat_id10", "Stage_id14", 
+                //in Bgee 13: "ID2__Anat_id10__Stage_id14", "ID2", "Anat_id10", "Stage_id14"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id10__Stage_id1", "ID2", "Anat_id10", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id10__Stage_id1", "ID2", "Anat_id10", "Stage_id1"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false)));
@@ -2219,8 +2614,8 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         // With speciesIds and include substructures. GROUP BY needed, and LIMIT clause
         dao = new MySQLExpressionCallDAO(this.getMySQLDAOManager(newProps));
         filter = new CallDAOFilter(null, 
-                Arrays.asList("11", "21", "41"), // 41 = species Id that does not exist
-                null);
+                Arrays.asList(11, 21, 41), // 41 = species Id that does not exist
+                null, null, null, null);
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), null, 
                         true, true, null, null, getNonRankingAttributes(), null);
@@ -2234,11 +2629,11 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         
         // Test get only GENE_ID without species filter and without including substructures, 
         // but with including sub-stages
-        filter = new CallDAOFilter(null, null, null);
+        filter = new CallDAOFilter(null, null, null, null, null, null);
         expectedExprCalls = new HashSet<>(Arrays.asList(
-                new ExpressionCallTO(null, "ID1", null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO(null, "ID2", null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO(null, "ID3", null, null, null, null, null, null, null, null, null, null, null)));
+                new ExpressionCallTO(null, 1, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(null, 2, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(null, 3, null, null, null, null, null, null, null, null, null, null)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), null, 
                         false, true, null, null, Arrays.asList(ExpressionCallDAO.Attribute.GENE_ID), null);
@@ -2253,7 +2648,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         // Test get only INCLUDE_SUBSTRUCTURES without species filter and without including substructures, 
         // but with including sub-stages
         expectedExprCalls = new HashSet<>(Arrays.asList(
-                new ExpressionCallTO(null, null, null, null, null, null, null, null, false, null, null, null, null)));
+                new ExpressionCallTO(null, null, null, null, null, null, null, false, null, null, null, null)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), null, 
                         false, true, null, null, Arrays.asList(ExpressionCallDAO.Attribute.INCLUDE_SUBSTRUCTURES), null);
@@ -2267,30 +2662,41 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
 
         // Test get only ID with species filter and including substructures and sub-stages
         filter = new CallDAOFilter(null, 
-                Arrays.asList("11", "41"), // 41 = species Id that does not exist
-                null);
+                Arrays.asList(11, 41), // 41 = species Id that does not exist
+                null, null, null, null);
         expectedExprCalls = new HashSet<>(Arrays.asList(
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id1", null, null, null, null, null, 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id1"
+                new ExpressionCallTO(1, null, null, null, null, 
                         null, null, null, null, null, null, null),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id5", null, null, null, null, null, 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id5"
+                new ExpressionCallTO(1, null, null, null, null, 
                         null, null, null, null, null, null, null),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id6", null, null, null, null, null, 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6"
+                new ExpressionCallTO(1, null, null, null, null, 
                         null, null, null, null, null, null, null),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id7", null, null, null, null, null, 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id7"
+                new ExpressionCallTO(1, null, null, null, null, 
                         null, null, null, null, null, null, null),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id8", null, null, null, null, null, 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id8"
+                new ExpressionCallTO(1, null, null, null, null, 
                         null, null, null, null, null, null, null),
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id1", null, null, null, null, null, 
+                //in Bgee 13: "ID1__Anat_id1__Stage_id1"
+                new ExpressionCallTO(1, null, null, null, null, 
                         null, null, null, null, null, null, null),
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id5", null, null, null, null, null, 
+                //in Bgee 13: "ID1__Anat_id1__Stage_id5"
+                new ExpressionCallTO(1, null, null, null, null, 
                         null, null, null, null, null, null, null),
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id7", null, null, null, null, null, 
+                //in Bgee 13: "ID1__Anat_id1__Stage_id7"
+                new ExpressionCallTO(1, null, null, null, null, 
                         null, null, null, null, null, null, null),
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id8", null, null, null, null, null, 
+                //in Bgee 13: "ID1__Anat_id1__Stage_id8"
+                new ExpressionCallTO(1, null, null, null, null, 
                         null, null, null, null, null, null, null),
-                new ExpressionCallTO("ID1__Anat_id7__Stage_id1", null, null, null, null, null, 
+                //in Bgee 13: "ID1__Anat_id7__Stage_id1"
+                new ExpressionCallTO(1, null, null, null, null, 
                         null, null, null, null, null, null, null),
-                new ExpressionCallTO("ID1__Anat_id7__Stage_id10", null, null, null, null, null, 
+                //in Bgee 13: "ID1__Anat_id7__Stage_id10"
+                new ExpressionCallTO(1, null, null, null, null, 
                         null, null, null, null, null, null, null)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), null, 
@@ -2306,25 +2712,31 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         // Test get INCLUDE_SUBSTAGES (and STAGE_ID) without OriginOfLine including sub-stages 
         // and sub-structures and species filter
         filter = new CallDAOFilter(null, 
-                Arrays.asList("11", "41"), // 41 = species Id that does not exist
-                null);
+                Arrays.asList(11, 41), // 41 = species Id that does not exist
+                null, null, null, null);
         expectedExprCalls = new HashSet<>(Arrays.asList(
-                new ExpressionCallTO(null, null, null, "Stage_id1", 
+                //in Bgee 13: "Stage_id1"
+                new ExpressionCallTO(null, null, 1, 
                 null, null, null, null, null, true, null, null, null),
-                new ExpressionCallTO(null, null, null, "Stage_id5", 
+                //in Bgee 13: "Stage_id5"
+                new ExpressionCallTO(null, null, 2, 
                         null, null, null, null, null, true, null, null, null),
-                new ExpressionCallTO(null, null, null, "Stage_id6", 
+                //in Bgee 13: "Stage_id6"
+                new ExpressionCallTO(null, null, 3, 
                         null, null, null, null, null, true, null, null, null),
-                new ExpressionCallTO(null, null, null, "Stage_id7", 
+                //in Bgee 13: "Stage_id7"
+                new ExpressionCallTO(null, null, 4, 
                         null, null, null, null, null, true, null, null, null),
-                new ExpressionCallTO(null, null, null, "Stage_id8",
+                //in Bgee 13: "Stage_id8"
+                new ExpressionCallTO(null, null, 5,
                         null, null, null, null, null, true, null, null, null),
-                new ExpressionCallTO(null, null, null, "Stage_id10", 
+                //in Bgee 13: "Stage_id10"
+                new ExpressionCallTO(null, null, 6, 
                         null, null, null, null, null, true, null, null, null)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), null, 
                         true, true, null, null, 
-                        Arrays.asList(ExpressionCallDAO.Attribute.STAGE_ID, 
+                        Arrays.asList(ExpressionCallDAO.Attribute.CONDITION_ID, 
                                 ExpressionCallDAO.Attribute.INCLUDE_SUBSTAGES), 
                         null);
         //no ordering requested, put results in a Set
@@ -2354,46 +2766,58 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
 
         // Without speciesIds and not include substructures
         // Generate parameters
-        Set<String> speciesIds = new HashSet<String>();
+        Set<Integer> speciesIds = new HashSet<>();
         ExpressionCallParams params = new ExpressionCallParams();
         params.addAllSpeciesIds(speciesIds);
         params.setIncludeSubstructures(false);
         // Generate manually expected result
         List<ExpressionCallTO> expectedExprCalls = Arrays.asList(
-                new ExpressionCallTO("1", "ID3", "Anat_id1", "Stage_id1", DataState.LOWQUALITY, 
+                //in Bgee 13: "1", "ID3", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(1, 3, 1, DataState.LOWQUALITY, 
                         DataState.NODATA, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("2", "ID1", "Anat_id6", "Stage_id6", DataState.LOWQUALITY,
+                //in Bgee 13: "2", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(2, 1, 2, DataState.LOWQUALITY,
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY,
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("3", "ID1", "Anat_id6", "Stage_id7", DataState.NODATA, 
+                //in Bgee 13: "3", "ID1", "Anat_id6", "Stage_id7"
+                new ExpressionCallTO(3, 1, 3, DataState.NODATA, 
                         DataState.NODATA, DataState.NODATA, DataState.LOWQUALITY,
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("4", "ID2", "Anat_id2", "Stage_id18", DataState.HIGHQUALITY, 
+                //in Bgee 13: "4", "ID2", "Anat_id2", "Stage_id18"
+                new ExpressionCallTO(4, 2, 4, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("5", "ID1", "Anat_id7", "Stage_id10", DataState.LOWQUALITY, 
+                //in Bgee 13: "5", "ID1", "Anat_id7", "Stage_id10"
+                new ExpressionCallTO(5, 1, 5, DataState.LOWQUALITY, 
                         DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("6", "ID2", "Anat_id11", "Stage_id12", DataState.HIGHQUALITY, 
+                //in Bgee 13: "6", "ID2", "Anat_id11", "Stage_id12"
+                new ExpressionCallTO(6, 2, 6, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("7", "ID2", "Anat_id11", "Stage_id13", DataState.NODATA, 
+                //in Bgee 13: "7", "ID2", "Anat_id11", "Stage_id13"
+                new ExpressionCallTO(7, 2, 7, DataState.NODATA, 
                         DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("8", "ID3", "Anat_id3", "Stage_id1", DataState.NODATA, 
+                //in Bgee 13: "8", "ID3", "Anat_id3", "Stage_id1"
+                new ExpressionCallTO(8, 3, 8, DataState.NODATA, 
                         DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA,
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("9", "ID2", "Anat_id1", "Stage_id9", DataState.HIGHQUALITY, 
+                //in Bgee 13: "9", "ID2", "Anat_id1", "Stage_id9"
+                new ExpressionCallTO(9, 2, 9, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("10", "ID1", "Anat_id6", "Stage_id8", DataState.HIGHQUALITY, 
+                //in Bgee 13: "10", "ID1", "Anat_id6", "Stage_id8"
+                new ExpressionCallTO(10, 1, 10, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("11", "ID2", "Anat_id1", "Stage_id2", DataState.NODATA, 
+                //in Bgee 13: "11", "ID2", "Anat_id1", "Stage_id2"
+                new ExpressionCallTO(11, 2, 11, DataState.NODATA, 
                         DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("12", "ID1", "Anat_id1", "Stage_id1", DataState.NODATA, 
+                //in Bgee 13: "12", "ID1", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(12, 1, 12, DataState.NODATA, 
                         DataState.NODATA, DataState.LOWQUALITY, DataState.NODATA, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true));
 
@@ -2412,11 +2836,11 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 ExpressionCallDAO.Attribute.GENE_ID, ExpressionCallDAO.Attribute.OBSERVED_DATA);
         // Generate manually expected result
         expectedExprCalls = Arrays.asList(
-                new ExpressionCallTO(null, "ID1", null, null, null, null, null, null, null, null, 
+                new ExpressionCallTO(null, 1, null, null, null, null, null, null, null, 
                         null, null, true),
-                new ExpressionCallTO(null, "ID2", null, null, null, null, null, null, null, null, 
+                new ExpressionCallTO(null, 2, null, null, null, null, null, null, null, 
                         null, null, true),
-                new ExpressionCallTO(null, "ID3", null, null, null, null, null, null, null, null, 
+                new ExpressionCallTO(null, 3, null, null, null, null, null, null, null, 
                         null, null, true));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(params);
@@ -2429,22 +2853,27 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         // With speciesIds but not include substructures 
         dao.clearAttributes();
         // Generate parameters
-        params.addAllSpeciesIds(Arrays.asList("11", "41")); // 41 = species Id that does not exist
+        params.addAllSpeciesIds(Arrays.asList(11, 41)); // 41 = species Id that does not exist
         // Generate manually expected result
         expectedExprCalls = Arrays.asList(
-                new ExpressionCallTO("2","ID1", "Anat_id6", "Stage_id6", DataState.LOWQUALITY, 
+                //in Bgee 13: "2", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(2, 1, 2, DataState.LOWQUALITY, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("3","ID1", "Anat_id6", "Stage_id7", DataState.NODATA, 
+                //in Bgee 13: "3", "ID1", "Anat_id6", "Stage_id7"
+                new ExpressionCallTO(3, 1, 3, DataState.NODATA, 
                         DataState.NODATA, DataState.NODATA, DataState.LOWQUALITY, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("5","ID1", "Anat_id7", "Stage_id10", DataState.LOWQUALITY, 
+                //in Bgee 13: "5", "ID1", "Anat_id7", "Stage_id10"
+                new ExpressionCallTO(5, 1, 5, DataState.LOWQUALITY, 
                         DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("10", "ID1", "Anat_id6", "Stage_id8", DataState.HIGHQUALITY, 
+                //in Bgee 13: "10", "ID1", "Anat_id6", "Stage_id8"
+                new ExpressionCallTO(10, 1, 10, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("12", "ID1", "Anat_id1", "Stage_id1", DataState.NODATA, 
+                //in Bgee 13: "12", "ID1", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(12, 1, 12, DataState.NODATA, 
                         DataState.NODATA, DataState.LOWQUALITY, DataState.NODATA, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true));
         // Compare
@@ -2461,22 +2890,28 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         params.setIncludeSubstructures(true);
         // Generate manually expected result
         expectedExprCalls = Arrays.asList(
-                new ExpressionCallTO("2", "ID1", "Anat_id6", "Stage_id6", DataState.LOWQUALITY, 
+                //in Bgee 13: "2", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(2, 1, 2, DataState.LOWQUALITY, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("3", "ID1", "Anat_id6", "Stage_id7", DataState.NODATA, 
+                //in Bgee 13: "3", "ID1", "Anat_id6", "Stage_id7"
+                new ExpressionCallTO(3, 1, 3, DataState.NODATA, 
                         DataState.NODATA, DataState.NODATA, DataState.LOWQUALITY, 
                         true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("5", "ID1", "Anat_id7", "Stage_id10", DataState.LOWQUALITY, 
+                //in Bgee 13: "5", "ID1", "Anat_id7", "Stage_id10"
+                new ExpressionCallTO(5, 1, 5, DataState.LOWQUALITY, 
                         DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
                         true, false, OriginOfLine.BOTH, OriginOfLine.SELF, true),
-                new ExpressionCallTO("22", "ID1", "Anat_id6", "Stage_id8", DataState.HIGHQUALITY, 
+                //in Bgee 13: "22", "ID1", "Anat_id6", "Stage_id8"
+                new ExpressionCallTO(22, 1, 22, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("24", "ID1", "Anat_id1", "Stage_id8", DataState.HIGHQUALITY, 
+                //in Bgee 13: "24", "ID1", "Anat_id1", "Stage_id8"
+                new ExpressionCallTO(24, 1, 24, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("26", "ID1", "Anat_id1", "Stage_id1", DataState.NODATA, 
+                //in Bgee 13: "26", "ID1", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(26, 1, 26, DataState.NODATA, 
                         DataState.NODATA, DataState.LOWQUALITY, DataState.NODATA, 
                         true, false, OriginOfLine.SELF, OriginOfLine.SELF, true));
 
@@ -2495,9 +2930,9 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 ExpressionCallDAO.Attribute.GENE_ID, ExpressionCallDAO.Attribute.OBSERVED_DATA);
         // Generate manually expected result
         expectedExprCalls = Arrays.asList(
-                new ExpressionCallTO(null, "ID1", null, null, null, null, null, null, 
+                new ExpressionCallTO(null, 1, null, null, null, null, null, 
                         null, null, null, null, true),
-                new ExpressionCallTO(null, "ID1", null, null, null, null, null, null, 
+                new ExpressionCallTO(null, 1, null, null, null, null, null, 
                         null, null, null, null, false));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(params);
@@ -2513,82 +2948,108 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         params.clearSpeciesIds();
         //Generate manually expected result
         expectedExprCalls = Arrays.asList(
-                new ExpressionCallTO("1", "ID3", "Anat_id1", "Stage_id1", 
+                //in Bgee 13: "1", "ID3", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(1, 3, 1, 
                         DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("2", "ID1", "Anat_id6", "Stage_id6", 
+                //in Bgee 13: "2", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(2, 1, 2, 
                         DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("3", "ID1", "Anat_id6", "Stage_id7", 
+                //in Bgee 13: "3", "ID1", "Anat_id6", "Stage_id7"
+                new ExpressionCallTO(3, 1, 3, 
                         DataState.NODATA, DataState.NODATA, DataState.NODATA, 
                         DataState.LOWQUALITY, true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("4", "ID2", "Anat_id2", "Stage_id18",
+                //in Bgee 13: "4", "ID2", "Anat_id2", "Stage_id18"
+                new ExpressionCallTO(4, 2, 4,
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("5", "ID1", "Anat_id7", "Stage_id10", 
+                //in Bgee 13: "5", "ID1", "Anat_id7", "Stage_id10"
+                new ExpressionCallTO(5, 1, 5, 
                         DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
                         DataState.LOWQUALITY, true, false, OriginOfLine.BOTH, OriginOfLine.SELF, true),
-                new ExpressionCallTO("6", "ID2", "Anat_id11", "Stage_id12",
+                //in Bgee 13: "6", "ID2", "Anat_id11", "Stage_id12"
+                new ExpressionCallTO(6, 2, 6,
                         DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("7", "ID2", "Anat_id11", "Stage_id13",
+                //in Bgee 13: "7", "ID2", "Anat_id11", "Stage_id13"
+                new ExpressionCallTO(7, 2, 7,
                         DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.NODATA, true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("8", "ID3", "Anat_id2", "Stage_id1", 
+                //in Bgee 13: "8", "ID3", "Anat_id2", "Stage_id1"
+                new ExpressionCallTO(8, 3, 8, 
                         DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("9", "ID3", "Anat_id3", "Stage_id1", 
+                //in Bgee 13: "9", "ID3", "Anat_id3", "Stage_id1"
+                new ExpressionCallTO(9, 3, 9, 
                         DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("10", "ID3", "Anat_id4", "Stage_id1", 
+                //in Bgee 13: "10", "ID3", "Anat_id4", "Stage_id1"
+                new ExpressionCallTO(10, 3, 10, 
                         DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("11", "ID3", "Anat_id5", "Stage_id1", 
+                //in Bgee 13: "11", "ID3", "Anat_id5", "Stage_id1"
+                new ExpressionCallTO(11, 3, 11, 
                         DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("12", "ID3", "Anat_id6", "Stage_id1", 
+                //in Bgee 13: "12", "ID3", "Anat_id6", "Stage_id1"
+                new ExpressionCallTO(12, 3, 12, 
                         DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("13", "ID3", "Anat_id9", "Stage_id1", 
+                //in Bgee 13: "13", "ID3", "Anat_id9", "Stage_id1"
+                new ExpressionCallTO(13, 3, 13, 
                         DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("14", "ID3", "Anat_id10", "Stage_id1", 
+                //in Bgee 13: "14", "ID3", "Anat_id10", "Stage_id1"
+                new ExpressionCallTO(14, 3, 14, 
                         DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("15", "ID3", "Anat_id11", "Stage_id1", 
+                //in Bgee 13: "15", "ID3", "Anat_id11", "Stage_id1"
+                new ExpressionCallTO(15, 3, 15, 
                         DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("16", "ID2", "Anat_id3", "Stage_id18", 
+                //in Bgee 13: "16", "ID2", "Anat_id3", "Stage_id18"
+                new ExpressionCallTO(16, 2, 16, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("17", "ID2", "Anat_id4", "Stage_id18", 
+                //in Bgee 13: "17", "ID2", "Anat_id4", "Stage_id18"
+                new ExpressionCallTO(17, 2, 17, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("18", "ID2", "Anat_id5", "Stage_id18", 
+                //in Bgee 13: "18", "ID2", "Anat_id5", "Stage_id18"
+                new ExpressionCallTO(18, 2, 18, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("19", "ID2", "Anat_id9", "Stage_id18", 
+                //in Bgee 13: "19", "ID2", "Anat_id9", "Stage_id18"
+                new ExpressionCallTO(19, 2, 19, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("20", "ID2", "Anat_id10", "Stage_id18", 
+                //in Bgee 13: "20", "ID2", "Anat_id10", "Stage_id18"
+                new ExpressionCallTO(20, 2, 20, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("21", "ID2", "Anat_id11", "Stage_id18", 
+                //in Bgee 13: "21", "ID2", "Anat_id11", "Stage_id18"
+                new ExpressionCallTO(21, 2, 21, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("22", "ID1", "Anat_id6", "Stage_id8", 
+                //in Bgee 13: "22", "ID1", "Anat_id6", "Stage_id8"
+                new ExpressionCallTO(22, 1, 22, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
                         DataState.NODATA, true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("23", "ID2", "Anat_id1", "Stage_id1", 
+                //in Bgee 13: "23", "ID2", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(23, 2, 23, 
                         DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("24", "ID1", "Anat_id1", "Stage_id8", 
+                //in Bgee 13: "24", "ID1", "Anat_id1", "Stage_id8"
+                new ExpressionCallTO(24, 1, 24, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
                         DataState.NODATA, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("25", "ID2", "Anat_id1", "Stage_id2", 
+                //in Bgee 13: "25", "ID2", "Anat_id1", "Stage_id2"
+                new ExpressionCallTO(25, 2, 25, 
                         DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.NODATA, true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("26", "ID1", "Anat_id1", "Stage_id1", DataState.NODATA, 
+                //in Bgee 13: "26", "ID1", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(26, 1, 26, DataState.NODATA, 
                         DataState.NODATA, DataState.LOWQUALITY, DataState.NODATA, 
                         true, false, OriginOfLine.SELF, OriginOfLine.SELF, true));
         // Compare
@@ -2605,9 +3066,9 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         params.clearSpeciesIds();
         params.setIncludeSubstructures(false);
         expectedExprCalls = Arrays.asList(
-                new ExpressionCallTO(null, "ID1", null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO(null, "ID2", null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO(null, "ID3", null, null, null, null, null, null, null, null, null, null, null));
+                new ExpressionCallTO(null, 1, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(null, 2, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(null, 3, null, null, null, null, null, null, null, null, null, null));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(params);
         expressions = rs.getAllTOs();
@@ -2620,7 +3081,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         dao.clearAttributes();
         dao.setAttributes(Arrays.asList(ExpressionCallDAO.Attribute.INCLUDE_SUBSTRUCTURES));
         expectedExprCalls = Arrays.asList(
-                new ExpressionCallTO(null, null, null, null, null, null, null, null, false, null, null, null, null));
+                new ExpressionCallTO(null, null, null, null, null, null, null, false, null, null, null, null));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(params);
         expressions = rs.getAllTOs();
@@ -2634,32 +3095,32 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         dao.setAttributes(Arrays.asList(ExpressionCallDAO.Attribute.ID));
         params.setIncludeSubstructures(true);
         expectedExprCalls = Arrays.asList(
-                new ExpressionCallTO("1", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("2", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("3", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("4", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("5", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("6", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("7", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("8", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("9", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("10", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("11", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("12", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("13", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("14", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("15", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("16", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("17", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("18", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("19", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("20", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("21", null, null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("22", null, null, null, null, null, null, null, null, null, null, null, null), 
-                new ExpressionCallTO("23", null, null, null, null, null, null, null, null, null, null, null, null), 
-                new ExpressionCallTO("24", null, null, null, null, null, null, null, null, null, null, null, null), 
-                new ExpressionCallTO("25", null, null, null, null, null, null, null, null, null, null, null, null), 
-                new ExpressionCallTO("26", null, null, null, null, null, null, null, null, null, null, null, null));
+                new ExpressionCallTO(1, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(2, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(3, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(4, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(5, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(6, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(7, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(8, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(9, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(10, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(11, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(12, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(13, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(14, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(15, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(16, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(17, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(18, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(19, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(20, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(21, null, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(22, null, null, null, null, null, null, null, null, null, null, null), 
+                new ExpressionCallTO(23, null, null, null, null, null, null, null, null, null, null, null), 
+                new ExpressionCallTO(24, null, null, null, null, null, null, null, null, null, null, null), 
+                new ExpressionCallTO(25, null, null, null, null, null, null, null, null, null, null, null), 
+                new ExpressionCallTO(26, null, null, null, null, null, null, null, null, null, null, null));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(params);
         expressions = rs.getAllTOs();
@@ -2671,25 +3132,34 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         // Test get INCLUDE_SUBSTRUCTURES (and STAGE_ID) without OriginOfLine including substructures
         dao.clearAttributes();
         dao.setAttributes(
-                ExpressionCallDAO.Attribute.STAGE_ID, ExpressionCallDAO.Attribute.INCLUDE_SUBSTRUCTURES);
+                ExpressionCallDAO.Attribute.CONDITION_ID, ExpressionCallDAO.Attribute.INCLUDE_SUBSTRUCTURES);
         expectedExprCalls = Arrays.asList(
-                new ExpressionCallTO(null, null, null, "Stage_id1", 
+                //in Bgee 13: "Stage_id1"
+                new ExpressionCallTO(null, null, 1, 
                         null, null, null, null, true, null, null, null, null),
-                new ExpressionCallTO(null, null, null, "Stage_id2", 
+                //in Bgee 13: "Stage_id2"
+                new ExpressionCallTO(null, null, 2, 
                         null, null, null, null, true, null, null, null, null),
-                new ExpressionCallTO(null, null, null, "Stage_id6", 
+                //in Bgee 13: "Stage_id6"
+                new ExpressionCallTO(null, null, 3, 
                         null, null, null, null, true, null, null, null, null),
-                new ExpressionCallTO(null, null, null, "Stage_id7", 
+                //in Bgee 13: "Stage_id7"
+                new ExpressionCallTO(null, null, 4, 
                         null, null, null, null, true, null, null, null, null),
-                new ExpressionCallTO(null, null, null, "Stage_id8", 
+                //in Bgee 13: "Stage_id8"
+                new ExpressionCallTO(null, null, 5, 
                         null, null, null, null, true, null, null, null, null),
-                new ExpressionCallTO(null, null, null, "Stage_id18",
+                //in Bgee 13: "Stage_id18"
+                new ExpressionCallTO(null, null, 6,
                         null, null, null, null, true, null, null, null, null),
-                new ExpressionCallTO(null, null, null, "Stage_id10", 
+                //in Bgee 13: "Stage_id10"
+                new ExpressionCallTO(null, null, 7, 
                         null, null, null, null, true, null, null, null, null),
-                new ExpressionCallTO(null, null, null, "Stage_id12",
+                //in Bgee 13: "Stage_id12"
+                new ExpressionCallTO(null, null, 8,
                         null, null, null, null, true, null, null, null, null),
-                new ExpressionCallTO(null, null, null, "Stage_id13",
+                //in Bgee 13: "Stage_id13"
+                new ExpressionCallTO(null, null, 9,
                         null, null, null, null, true, null, null, null, null));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(params);
@@ -2722,77 +3192,99 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         // On expression table 
         // Without speciesIds and not include organ substructures
         // Generate parameters
-        Set<String> speciesIds = new HashSet<String>();
+        Set<Integer> speciesIds = new HashSet<>();
         ExpressionCallParams params = new ExpressionCallParams();
         params.addAllSpeciesIds(speciesIds);
         params.setIncludeSubstructures(false);
         params.setIncludeSubStages(true);
         // Generate manually expected result
         List<ExpressionCallTO> expectedExprCalls = Arrays.asList(
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id1", "ID1", "Anat_id1", "Stage_id1",
+                //in Bgee 13: "ID1__Anat_id1__Stage_id1", "ID1", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(1, 1, 1,
                         DataState.NODATA, DataState.NODATA, DataState.LOWQUALITY, 
                         DataState.NODATA, false, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id1", "ID1", "Anat_id6", "Stage_id1",
+                //in Bgee 13: "ID1__Anat_id6__Stage_id1", "ID1", "Anat_id6", "Stage_id1"
+                new ExpressionCallTO(1, 1, 1,
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id5", "ID1", "Anat_id6", "Stage_id5", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id5", "ID1", "Anat_id6", "Stage_id5"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id7", "ID1", "Anat_id6", "Stage_id7", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id7", "ID1", "Anat_id6", "Stage_id7"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
                         DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.BOTH, true),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id8", "ID1", "Anat_id6", "Stage_id8", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id8", "ID1", "Anat_id6", "Stage_id8"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
                         DataState.NODATA, false, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID1__Anat_id7__Stage_id1", "ID1", "Anat_id7", "Stage_id1", 
+                //in Bgee 13: "ID1__Anat_id7__Stage_id1", "ID1", "Anat_id7", "Stage_id1"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
                         DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID1__Anat_id7__Stage_id10", "ID1", "Anat_id7", "Stage_id10", 
+                //in Bgee 13: "ID1__Anat_id7__Stage_id10", "ID1", "Anat_id7", "Stage_id10"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
                         DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID2__Anat_id1__Stage_id1", "ID2", "Anat_id1", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id1__Stage_id1", "ID2", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false), 
-                new ExpressionCallTO("ID2__Anat_id1__Stage_id2", "ID2", "Anat_id1", "Stage_id2", 
+                //in Bgee 13: "ID2__Anat_id1__Stage_id2", "ID2", "Anat_id1", "Stage_id2"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.NODATA, false, true, OriginOfLine.SELF, OriginOfLine.SELF, true), 
-                new ExpressionCallTO("ID2__Anat_id1__Stage_id5", "ID2", "Anat_id1", "Stage_id5", 
+                //in Bgee 13: "ID2__Anat_id1__Stage_id5", "ID2", "Anat_id1", "Stage_id5"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
                         DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false), 
-                new ExpressionCallTO("ID2__Anat_id1__Stage_id7", "ID2", "Anat_id1", "Stage_id7", 
+                //in Bgee 13: "ID2__Anat_id1__Stage_id7", "ID2", "Anat_id1", "Stage_id7"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
                         DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false), 
-                new ExpressionCallTO("ID2__Anat_id1__Stage_id9", "ID2", "Anat_id1", "Stage_id9", 
+                //in Bgee 13: "ID2__Anat_id1__Stage_id9", "ID2", "Anat_id1", "Stage_id9"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
                         DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.SELF, true), 
-                new ExpressionCallTO("ID2__Anat_id2__Stage_id1", "ID2", "Anat_id2", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id2__Stage_id1", "ID2", "Anat_id2", "Stage_id1"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id2__Stage_id14", "ID2", "Anat_id2", "Stage_id14", 
+                //in Bgee 13: "ID2__Anat_id2__Stage_id14", "ID2", "Anat_id2", "Stage_id14"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id2__Stage_id18", "ID2", "Anat_id2", "Stage_id18", 
+                //in Bgee 13: "ID2__Anat_id2__Stage_id18", "ID2", "Anat_id2", "Stage_id18"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id1", "ID2", "Anat_id11", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id11__Stage_id1", "ID2", "Anat_id11", "Stage_id1"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id10", "ID2", "Anat_id11", "Stage_id10", 
+                //in Bgee 13: "ID2__Anat_id11__Stage_id10", "ID2", "Anat_id11", "Stage_id10"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id12", "ID2", "Anat_id11", "Stage_id12", 
+                //in Bgee 13: "ID2__Anat_id11__Stage_id12", "ID2", "Anat_id11", "Stage_id12"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
                         DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id13", "ID2", "Anat_id11", "Stage_id13", 
+                //in Bgee 13: "ID2__Anat_id11__Stage_id13", "ID2", "Anat_id11", "Stage_id13"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.NODATA, false, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID3__Anat_id1__Stage_id1", "ID3", "Anat_id1", "Stage_id1", 
+                //in Bgee 13: "ID3__Anat_id1__Stage_id1", "ID3", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(1, 3, 1, 
                         DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID3__Anat_id3__Stage_id1", "ID3", "Anat_id3", "Stage_id1", 
+                //in Bgee 13: "ID3__Anat_id3__Stage_id1", "ID3", "Anat_id3", "Stage_id1"
+                new ExpressionCallTO(1, 3, 1, 
                         DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.NODATA, false, true, OriginOfLine.SELF, OriginOfLine.SELF, true));
         // Compare
@@ -2808,31 +3300,39 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
 
         // With speciesIds but not include substructures 
         // Generate parameters
-        params.addAllSpeciesIds(Arrays.asList("11", "41")); // 41 = species Id that does not exist
+        params.addAllSpeciesIds(Arrays.asList(11, 41)); // 41 = species Id that does not exist
         // Generate manually expected result
         expectedExprCalls = Arrays.asList(
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id1", "ID1", "Anat_id1", "Stage_id1",
+                //in Bgee 13: "ID1__Anat_id1__Stage_id1", "ID1", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(1, 1, 1,
                         DataState.NODATA, DataState.NODATA, DataState.LOWQUALITY, 
                         DataState.NODATA, false, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id6","ID1", "Anat_id6", "Stage_id6", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id5","ID1", "Anat_id6", "Stage_id5", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id5", "ID1", "Anat_id6", "Stage_id5"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id1","ID1", "Anat_id6", "Stage_id1", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id1", "ID1", "Anat_id6", "Stage_id1"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id7","ID1", "Anat_id6", "Stage_id7", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id7", "ID1", "Anat_id6", "Stage_id7"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, 
                         false, true, OriginOfLine.SELF, OriginOfLine.BOTH, true),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id8","ID1", "Anat_id6", "Stage_id8", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id8", "ID1", "Anat_id6", "Stage_id8"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         false, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID1__Anat_id7__Stage_id10","ID1", "Anat_id7", "Stage_id10", 
+                //in Bgee 13: "ID1__Anat_id7__Stage_id10", "ID1", "Anat_id7", "Stage_id10"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
                         DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID1__Anat_id7__Stage_id1","ID1", "Anat_id7", "Stage_id1", 
+                //in Bgee 13: "ID1__Anat_id7__Stage_id1", "ID1", "Anat_id7", "Stage_id1"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
                         DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false)); 
         // Compare
@@ -2850,143 +3350,180 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         // Generate parameters
         params.setIncludeSubstructures(true);
         params.clearSpeciesIds();
-        params.addAllSpeciesIds(Arrays.asList("11", "21", "41")); // 41 = species Id that does not exist
+        params.addAllSpeciesIds(Arrays.asList(11, 21, 41)); // 41 = species Id that does not exist
         // Generate manually expected result
         expectedExprCalls = Arrays.asList(
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, true, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id5", "ID1", "Anat_id6", "Stage_id5", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id5", "ID1", "Anat_id6", "Stage_id5"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, true, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id1", "ID1", "Anat_id6", "Stage_id1", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id1", "ID1", "Anat_id6", "Stage_id1"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, true, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id7", "ID1", "Anat_id6", "Stage_id7", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id7", "ID1", "Anat_id6", "Stage_id7"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, 
                         true, true, OriginOfLine.SELF, OriginOfLine.BOTH, true),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id8", "ID1", "Anat_id6", "Stage_id8", 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id8", "ID1", "Anat_id6", "Stage_id8"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         true, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id8", "ID1", "Anat_id1", "Stage_id8", 
+                //in Bgee 13: "ID1__Anat_id1__Stage_id8", "ID1", "Anat_id1", "Stage_id8"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         true, true, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id7", "ID1", "Anat_id1", "Stage_id7", 
+                //in Bgee 13: "ID1__Anat_id1__Stage_id7", "ID1", "Anat_id1", "Stage_id7"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         true, true, OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id5", "ID1", "Anat_id1", "Stage_id5", 
+                //in Bgee 13: "ID1__Anat_id1__Stage_id5", "ID1", "Anat_id1", "Stage_id5"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         true, true, OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id1", "ID1", "Anat_id1", "Stage_id1", 
+                //in Bgee 13: "ID1__Anat_id1__Stage_id1", "ID1", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
                         true, true, OriginOfLine.BOTH, OriginOfLine.BOTH, true),
-                new ExpressionCallTO("ID1__Anat_id7__Stage_id10", "ID1", "Anat_id7", "Stage_id10", 
+                //in Bgee 13: "ID1__Anat_id7__Stage_id10", "ID1", "Anat_id7", "Stage_id10"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
                         DataState.LOWQUALITY, true, true, OriginOfLine.BOTH, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID1__Anat_id7__Stage_id1", "ID1", "Anat_id7", "Stage_id1", 
+                //in Bgee 13: "ID1__Anat_id7__Stage_id1", "ID1", "Anat_id7", "Stage_id1"
+                new ExpressionCallTO(1, 1, 1, 
                         DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
                         DataState.LOWQUALITY, true, true, OriginOfLine.BOTH, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id1__Stage_id1", "ID2", "Anat_id1", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id1__Stage_id1", "ID2", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.HIGHQUALITY, true, true,
                         OriginOfLine.BOTH, OriginOfLine.BOTH, false), 
-                new ExpressionCallTO("ID2__Anat_id1__Stage_id2", "ID2", "Anat_id1", "Stage_id2",
+                //in Bgee 13: "ID2__Anat_id1__Stage_id2", "ID2", "Anat_id1", "Stage_id2"
+                new ExpressionCallTO(1, 2, 1,
                         DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.NODATA, true, true, 
                         OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id1", "ID2", "Anat_id11", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id11__Stage_id1", "ID2", "Anat_id11", "Stage_id1"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.BOTH, OriginOfLine.DESCENT, false), 
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id10", "ID2", "Anat_id11", "Stage_id10", 
+                //in Bgee 13: "ID2__Anat_id11__Stage_id10", "ID2", "Anat_id11", "Stage_id10"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id12", "ID2", "Anat_id11", "Stage_id12",
+                //in Bgee 13: "ID2__Anat_id11__Stage_id12", "ID2", "Anat_id11", "Stage_id12"
+                new ExpressionCallTO(1, 2, 1,
                         DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id13", "ID2", "Anat_id11", "Stage_id13", 
+                //in Bgee 13: "ID2__Anat_id11__Stage_id13", "ID2", "Anat_id11", "Stage_id13"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.NODATA, true, true, 
                         OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id14", "ID2", "Anat_id11", "Stage_id14", 
+                //in Bgee 13: "ID2__Anat_id11__Stage_id14", "ID2", "Anat_id11", "Stage_id14"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false), 
-                new ExpressionCallTO("ID2__Anat_id11__Stage_id18", "ID2", "Anat_id11", "Stage_id18",
+                //in Bgee 13: "ID2__Anat_id11__Stage_id18", "ID2", "Anat_id11", "Stage_id18"
+                new ExpressionCallTO(1, 2, 1,
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.SELF, false), 
-                new ExpressionCallTO("ID2__Anat_id2__Stage_id1", "ID2", "Anat_id2", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id2__Stage_id1", "ID2", "Anat_id2", "Stage_id1"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id2__Stage_id14", "ID2", "Anat_id2", "Stage_id14", 
+                //in Bgee 13: "ID2__Anat_id2__Stage_id14", "ID2", "Anat_id2", "Stage_id14"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.SELF, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id2__Stage_id18", "ID2", "Anat_id2", "Stage_id18", 
+                //in Bgee 13: "ID2__Anat_id2__Stage_id18", "ID2", "Anat_id2", "Stage_id18"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID2__Anat_id3__Stage_id18", "ID2", "Anat_id3", "Stage_id18", 
+                //in Bgee 13: "ID2__Anat_id3__Stage_id18", "ID2", "Anat_id3", "Stage_id18"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("ID2__Anat_id3__Stage_id14", "ID2", "Anat_id3", "Stage_id14", 
+                //in Bgee 13: "ID2__Anat_id3__Stage_id14", "ID2", "Anat_id3", "Stage_id14"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true,
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id3__Stage_id1", "ID2", "Anat_id3", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id3__Stage_id1", "ID2", "Anat_id3", "Stage_id1"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id4__Stage_id18", "ID2", "Anat_id4", "Stage_id18", 
+                //in Bgee 13: "ID2__Anat_id4__Stage_id18", "ID2", "Anat_id4", "Stage_id18"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("ID2__Anat_id4__Stage_id14", "ID2", "Anat_id4", "Stage_id14", 
+                //in Bgee 13: "ID2__Anat_id4__Stage_id14", "ID2", "Anat_id4", "Stage_id14"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id4__Stage_id1", "ID2", "Anat_id4", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id4__Stage_id1", "ID2", "Anat_id4", "Stage_id1"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true,
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id5__Stage_id18", "ID2", "Anat_id5", "Stage_id18", 
+                //in Bgee 13: "ID2__Anat_id5__Stage_id18", "ID2", "Anat_id5", "Stage_id18"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("ID2__Anat_id5__Stage_id14", "ID2", "Anat_id5", "Stage_id14", 
+                //in Bgee 13: "ID2__Anat_id5__Stage_id14", "ID2", "Anat_id5", "Stage_id14"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id5__Stage_id1", "ID2", "Anat_id5", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id5__Stage_id1", "ID2", "Anat_id5", "Stage_id1"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id9__Stage_id18", "ID2", "Anat_id9", "Stage_id18", 
+                //in Bgee 13: "ID2__Anat_id9__Stage_id18", "ID2", "Anat_id9", "Stage_id18"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("ID2__Anat_id9__Stage_id14", "ID2", "Anat_id9", "Stage_id14", 
+                //in Bgee 13: "ID2__Anat_id9__Stage_id14", "ID2", "Anat_id9", "Stage_id14"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id9__Stage_id1", "ID2", "Anat_id9", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id9__Stage_id1", "ID2", "Anat_id9", "Stage_id1"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id10__Stage_id18", "ID2", "Anat_id10", "Stage_id18", 
+                //in Bgee 13: "ID2__Anat_id10__Stage_id18", "ID2", "Anat_id10", "Stage_id18"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.SELF, false),
-                new ExpressionCallTO("ID2__Anat_id10__Stage_id14", "ID2", "Anat_id10", "Stage_id14", 
+                //in Bgee 13: "ID2__Anat_id10__Stage_id14", "ID2", "Anat_id10", "Stage_id14"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false),
-                new ExpressionCallTO("ID2__Anat_id10__Stage_id1", "ID2", "Anat_id10", "Stage_id1", 
+                //in Bgee 13: "ID2__Anat_id10__Stage_id1", "ID2", "Anat_id10", "Stage_id1"
+                new ExpressionCallTO(1, 2, 1, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, true, true, 
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false));
@@ -3008,9 +3545,9 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         params.setIncludeSubstructures(false);
         params.setIncludeSubStages(true);
         expectedExprCalls = Arrays.asList(
-                new ExpressionCallTO(null, "ID1", null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO(null, "ID2", null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO(null, "ID3", null, null, null, null, null, null, null, null, null, null, null));
+                new ExpressionCallTO(null, 1, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(null, 2, null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(null, 3, null, null, null, null, null, null, null, null, null, null));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(params);
         expressions = rs.getAllTOs();
@@ -3025,7 +3562,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         dao.clearAttributes();
         dao.setAttributes(Arrays.asList(ExpressionCallDAO.Attribute.INCLUDE_SUBSTRUCTURES));
         expectedExprCalls = Arrays.asList(
-                new ExpressionCallTO(null, null, null, null, null, null, null, null, false, null, null, null, null));
+                new ExpressionCallTO(null, null, null, null, null, null, null, false, null, null, null, null));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(params);
         expressions = rs.getAllTOs();
@@ -3040,7 +3577,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         dao.clearAttributes();
         dao.setAttributes(Arrays.asList(ExpressionCallDAO.Attribute.INCLUDE_SUBSTAGES));
         expectedExprCalls = Arrays.asList(
-                new ExpressionCallTO(null, null, null, null, null, null, null, null, null, true, null, null, null));
+                new ExpressionCallTO(null, null, null, null, null, null, null, null, true, null, null, null));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(params);
         expressions = rs.getAllTOs();
@@ -3054,31 +3591,42 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         dao.clearAttributes();
         dao.setAttributes(Arrays.asList(ExpressionCallDAO.Attribute.ID));
         params = new ExpressionCallParams();
-        params.addAllSpeciesIds(Arrays.asList("11", "41")); // 41 = species Id that does not exist
+        params.addAllSpeciesIds(Arrays.asList(11, 41)); // 41 = species Id that does not exist
         params.setIncludeSubstructures(true);
         params.setIncludeSubStages(true);
         expectedExprCalls = Arrays.asList(
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id1", null, null, null, null, null, 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id1"
+                new ExpressionCallTO(1, null, null, null, null, 
                         null, null, null, null, null, null, null),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id5", null, null, null, null, null, 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id5"
+                new ExpressionCallTO(1, null, null, null, null, 
                         null, null, null, null, null, null, null),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id6", null, null, null, null, null, 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id6"
+                new ExpressionCallTO(1, null, null, null, null, 
                         null, null, null, null, null, null, null),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id7", null, null, null, null, null, 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id7"
+                new ExpressionCallTO(1, null, null, null, null, 
                         null, null, null, null, null, null, null),
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id8", null, null, null, null, null, 
+                //in Bgee 13: "ID1__Anat_id6__Stage_id8"
+                new ExpressionCallTO(1, null, null, null, null, 
                         null, null, null, null, null, null, null),
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id1", null, null, null, null, null, 
+                //in Bgee 13: "ID1__Anat_id1__Stage_id1"
+                new ExpressionCallTO(1, null, null, null, null, 
                         null, null, null, null, null, null, null),
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id5", null, null, null, null, null, 
+                //in Bgee 13: "ID1__Anat_id1__Stage_id5"
+                new ExpressionCallTO(1, null, null, null, null, 
                         null, null, null, null, null, null, null),
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id7", null, null, null, null, null, 
+                //in Bgee 13: "ID1__Anat_id1__Stage_id7"
+                new ExpressionCallTO(1, null, null, null, null, 
                         null, null, null, null, null, null, null),
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id8", null, null, null, null, null, 
+                //in Bgee 13: "ID1__Anat_id1__Stage_id8"
+                new ExpressionCallTO(1, null, null, null, null, 
                         null, null, null, null, null, null, null),
-                new ExpressionCallTO("ID1__Anat_id7__Stage_id1", null, null, null, null, null, 
+                //in Bgee 13: "ID1__Anat_id7__Stage_id1"
+                new ExpressionCallTO(1, null, null, null, null, 
                         null, null, null, null, null, null, null),
-                new ExpressionCallTO("ID1__Anat_id7__Stage_id10", null, null, null, null, null, 
+                //in Bgee 13: "ID1__Anat_id7__Stage_id10"
+                new ExpressionCallTO(1, null, null, null, null, 
                         null, null, null, null, null, null, null));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(params);
@@ -3093,19 +3641,25 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         // Test get INCLUDE_SUBSTAGES (and STAGE_ID) without OriginOfLine including sub-stages
         dao.clearAttributes();
         dao.setAttributes(
-                ExpressionCallDAO.Attribute.STAGE_ID, ExpressionCallDAO.Attribute.INCLUDE_SUBSTAGES);
+                ExpressionCallDAO.Attribute.CONDITION_ID, ExpressionCallDAO.Attribute.INCLUDE_SUBSTAGES);
         expectedExprCalls = Arrays.asList(
-                new ExpressionCallTO(null, null, null, "Stage_id1", 
+                //in Bgee 13: "Stage_id1"
+                new ExpressionCallTO(null, null, 1, 
                 null, null, null, null, null, true, null, null, null),
-                new ExpressionCallTO(null, null, null, "Stage_id5", 
+                //in Bgee 13: "Stage_id5"
+                new ExpressionCallTO(null, null, 2, 
                         null, null, null, null, null, true, null, null, null),
-                new ExpressionCallTO(null, null, null, "Stage_id6", 
+                //in Bgee 13: "Stage_id6"
+                new ExpressionCallTO(null, null, 3, 
                         null, null, null, null, null, true, null, null, null),
-                new ExpressionCallTO(null, null, null, "Stage_id7", 
+                //in Bgee 13: "Stage_id7"
+                new ExpressionCallTO(null, null, 4, 
                         null, null, null, null, null, true, null, null, null),
-                new ExpressionCallTO(null, null, null, "Stage_id8",
+                //in Bgee 13: "Stage_id8"
+                new ExpressionCallTO(null, null, 5,
                         null, null, null, null, null, true, null, null, null),
-                new ExpressionCallTO(null, null, null, "Stage_id10", 
+                //in Bgee 13: "Stage_id10"
+                new ExpressionCallTO(null, null, 6, 
                         null, null, null, null, null, true, null, null, null));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(params);
@@ -3165,22 +3719,28 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         this.useEmptyDB();
         //create a Collection of ExpressionCallTO to be inserted
         Collection<ExpressionCallTO> exprCallTOs = Arrays.asList(
-                new ExpressionCallTO("1", "ID3", "Anat_id1", "Stage_id1", DataState.LOWQUALITY,
+                //in Bgee 13: "1", "ID3", "Anat_id1", "Stage_id1"
+                new ExpressionCallTO(1, 3, 1, DataState.LOWQUALITY,
                         DataState.NODATA, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("7", "ID2", "Anat_id11", "Stage_id13", DataState.NODATA,
+                //in Bgee 13: "7", "ID2", "Anat_id11", "Stage_id13"
+                new ExpressionCallTO(7, 2, 7, DataState.NODATA,
                         DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("16", "ID2", "Anat_id3", "Stage_id18", DataState.HIGHQUALITY,
+                //in Bgee 13: "16", "ID2", "Anat_id3", "Stage_id18"
+                new ExpressionCallTO(16, 2, 16, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("19", "ID2", "Anat_id10", "Stage_id18", DataState.HIGHQUALITY,
+                //in Bgee 13: "19", "ID2", "Anat_id10", "Stage_id18"
+                new ExpressionCallTO(19, 2, 19, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("20", "ID2", "Anat_id8", "Stage_id18", DataState.NODATA, 
+                //in Bgee 13: "20", "ID2", "Anat_id8", "Stage_id18"
+                new ExpressionCallTO(20, 2, 20, DataState.NODATA, 
                         DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         true, false, OriginOfLine.BOTH, OriginOfLine.SELF, false),
-                new ExpressionCallTO("21", "ID2", "Anat_id11", "Stage_id18", DataState.LOWQUALITY, 
+                //in Bgee 13: "21", "ID2", "Anat_id11", "Stage_id18"
+                new ExpressionCallTO(21, 2, 21, DataState.LOWQUALITY, 
                         DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false));
 
@@ -3289,9 +3849,9 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
 
         //create a Collection of ExpressionCallTO to be inserted
         Collection<GlobalExpressionToExpressionTO> globalExprToExprTOs = Arrays.asList(
-                new GlobalExpressionToExpressionTO("1","10"),
-                new GlobalExpressionToExpressionTO("1","1"),
-                new GlobalExpressionToExpressionTO("2","14"));
+                new GlobalExpressionToExpressionTO(1, 10),
+                new GlobalExpressionToExpressionTO(1, 1),
+                new GlobalExpressionToExpressionTO(2, 14));
 
         try {
             MySQLExpressionCallDAO dao = new MySQLExpressionCallDAO(this.getMySQLDAOManager());

@@ -263,15 +263,15 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
           .append("FROM globalCond");
 
         try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString())) {
-            BigDecimal maxRank = null, globalMaxRank = null;
-            ResultSet rs = stmt.getRealPreparedStatement().executeQuery();
-            if (rs.next()) {
-                maxRank = rs.getBigDecimal("maxRank");
-                globalMaxRank = rs.getBigDecimal("globalMaxRank");
+            try (ResultSet rs = stmt.getRealPreparedStatement().executeQuery()) {
+                BigDecimal maxRank = null, globalMaxRank = null;
+                if (rs.next()) {
+                    maxRank = rs.getBigDecimal("maxRank");
+                    globalMaxRank = rs.getBigDecimal("globalMaxRank");
+                }
+                GlobalConditionMaxRankTO rankTO = new GlobalConditionMaxRankTO(maxRank, globalMaxRank);
+                return log.exit(rankTO);
             }
-            GlobalConditionMaxRankTO rankTO = new GlobalConditionMaxRankTO(maxRank, globalMaxRank);
-            rs.close();
-            return log.exit(rankTO);
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }

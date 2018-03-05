@@ -140,8 +140,10 @@ public class InsertSimilarityAnnotationTest extends TestAncestor {
                 ArgumentCaptor.forClass(Collection.class);
         verify(mockManager.mockSummarySimilarityAnnotationDAO).
             insertSimilarityAnnotationsToAnatEntityIds(annotToAnatEntityTOsArg.capture());
-        assertEquals("Incorrect annotation ID to entitiy IDs inserted", 
-                expectedSimAnnotToAnatEntityTOs, annotToAnatEntityTOsArg.getValue());
+        if (!TOComparator.areTOCollectionsEqual(expectedSimAnnotToAnatEntityTOs, annotToAnatEntityTOsArg.getValue())){
+            throw new AssertionError("Incorrect annotation ID to entitiy IDs inserted, " +
+                    "expected " + expectedSimAnnotToAnatEntityTOs + ", but was " + annotToAnatEntityTOsArg.getValue());
+        }
         
         ArgumentCaptor<Collection> rawTOsArg = ArgumentCaptor.forClass(Collection.class);
         verify(mockManager.mockRawSimilarityAnnotationDAO).

@@ -820,29 +820,31 @@ public class CommandTopAnat extends CommandParent {
         //Transform speciesToGeneCount into a Map species ID -> gene count, and add
         //the invalid gene count, associated to a specific key, and make it a LinkedHashMap,
         //for sorted and predictable responses
-        LinkedHashMap<Integer, Long> responseSpeciesIdToGeneCount = Optional.of(speciesToGeneCount)
-                .map(map -> {
-                    //create a map species ID -> gene count
-                    Map<Integer, Long> newMap = map.entrySet().stream()
-                            .collect(Collectors.toMap(e -> e.getKey().getId(), e -> e.getValue()));
-                    //add an entry for undetermined genes
-                    if (!undeterminedGeneIds.isEmpty()) {
-                        newMap.put(UNDETERMINED_SPECIES_LABEL, Long.valueOf(undeterminedGeneIds.size()));
-                    }
-                    return newMap;
-                })
-                .get().entrySet().stream()
-                //sort in descending order of gene count (and in case of equality,
-                //by ascending order of key, for predictable message generation)
-                .sorted((e1, e2) -> {
-                    if (e1.getValue().equals(e2.getValue())) {
-                        return e1.getKey().compareTo(e2.getKey());
-                    }
-                    return e2.getValue().compareTo(e1.getValue());
-                }).collect(Collectors.toMap(Entry::getKey, Entry::getValue,
-                    (v1, v2) -> {throw log.throwing(new IllegalStateException("no key collision possible"));},
-                    LinkedHashMap::new));
+        LinkedHashMap<Integer, Long> responseSpeciesIdToGeneCount = null;
+        if (!speciesToGeneCount.isEmpty()) {
 
+            //create a map species ID -> gene count
+            Map<Integer, Long> newMap = speciesToGeneCount.entrySet().stream()
+                    .collect(Collectors.toMap(e -> e.getKey().getId(), Entry::getValue));
+            //add an entry for undetermined genes
+            if (!undeterminedGeneIds.isEmpty()) {
+                newMap.put(UNDETERMINED_SPECIES_LABEL, Long.valueOf(undeterminedGeneIds.size()));
+            }
+
+            responseSpeciesIdToGeneCount = newMap.entrySet().stream()
+                    //sort in descending order of gene count (and in case of equality,
+                    //by ascending order of key, for predictable message generation)
+                    .sorted((e1, e2) -> {
+                        if (e1.getValue().equals(e2.getValue())) {
+                            return e1.getKey().compareTo(e2.getKey());
+                        }
+                        return e2.getValue().compareTo(e1.getValue());
+                    }).collect(Collectors.toMap(Entry::getKey, Entry::getValue,
+                            (v1, v2) -> {throw log.throwing(new IllegalStateException("no key collision possible"));},
+                            LinkedHashMap::new));
+
+
+        }
         return log.exit(new GeneListResponse(
                 responseSpeciesIdToGeneCount,
                 //provide a TreeMap species ID -> species

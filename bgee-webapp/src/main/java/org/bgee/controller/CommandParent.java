@@ -221,34 +221,33 @@ abstract class CommandParent {
         log.entry(filePath, downloadFileName);
         
         File downloadFile = new File(filePath);
-        FileInputStream inStream = new FileInputStream(downloadFile);
+        try (FileInputStream inStream = new FileInputStream(downloadFile)) {
 
-        // gets MIME type of the file
-        String mimeType = context.getMimeType(filePath);
-        if (mimeType == null) {        
-            // set to binary type if MIME mapping not found
-            mimeType = "application/octet-stream";
+            // gets MIME type of the file
+            String mimeType = context.getMimeType(filePath);
+            if (mimeType == null) {
+                // set to binary type if MIME mapping not found
+                mimeType = "application/octet-stream";
+            }
+            log.debug("MIME type of download file: {}", mimeType);
+
+            // modifies response
+            response.setContentType(mimeType);
+            response.setContentLength((int) downloadFile.length());
+            response.setHeader("Content-Disposition", "attachment; filename=\""
+                    + URLEncoder.encode(downloadFileName, "UTF-8") + '"');
+
+            // obtains response's output stream
+            try (OutputStream outStream = response.getOutputStream()) {
+
+                byte[] buffer = new byte[4096];
+                int bytesRead = -1;
+
+                while ((bytesRead = inStream.read(buffer)) != -1) {
+                    outStream.write(buffer, 0, bytesRead);
+                }
+            }
         }
-        log.debug("MIME type of download file: {}", mimeType);
-        
-        // modifies response
-        response.setContentType(mimeType);
-        response.setContentLength((int) downloadFile.length());
-        response.setHeader("Content-Disposition", "attachment; filename=\"" 
-            + URLEncoder.encode(downloadFileName, "UTF-8") + '"');
-        
-        // obtains response's output stream
-        OutputStream outStream = response.getOutputStream();
-         
-        byte[] buffer = new byte[4096];
-        int bytesRead = -1;
-         
-        while ((bytesRead = inStream.read(buffer)) != -1) {
-            outStream.write(buffer, 0, bytesRead);
-        }
-         
-        inStream.close();
-        outStream.close();
         
         log.exit();
     }

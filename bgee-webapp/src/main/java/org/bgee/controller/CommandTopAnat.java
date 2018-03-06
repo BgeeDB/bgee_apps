@@ -691,23 +691,20 @@ public class CommandTopAnat extends CommandParent {
 
         // create byte buffer
         byte[] buffer = new byte[1024];
-        ZipOutputStream zos = new ZipOutputStream(this.response.getOutputStream());
-
-        for (TopAnatResults result: topAnatResults) {
-            File srcFile = generateFilePath.apply(result).toFile();
-            FileInputStream fis = new FileInputStream(srcFile);
-            // begin writing a new ZIP entry, positions the stream to the start of the entry data
-            zos.putNextEntry(new ZipEntry(URLEncoder.encode(generateFileName.apply(result), "UTF-8")));
-            int length;
-            while ((length = fis.read(buffer)) > 0) {
-                zos.write(buffer, 0, length);
+        try (ZipOutputStream zos = new ZipOutputStream(this.response.getOutputStream())) {
+            for (TopAnatResults result : topAnatResults) {
+                File srcFile = generateFilePath.apply(result).toFile();
+                try (FileInputStream fis = new FileInputStream(srcFile)) {
+                    // begin writing a new ZIP entry, positions the stream to the start of the entry data
+                    zos.putNextEntry(new ZipEntry(URLEncoder.encode(generateFileName.apply(result), "UTF-8")));
+                    int length;
+                    while ((length = fis.read(buffer)) > 0) {
+                        zos.write(buffer, 0, length);
+                    }
+                    zos.closeEntry();
+                }
             }
-            zos.closeEntry();
-            // close the InputStream
-            fis.close();
         }
-        // close the ZipOutputStream
-        zos.close();
         
         log.exit();
     }

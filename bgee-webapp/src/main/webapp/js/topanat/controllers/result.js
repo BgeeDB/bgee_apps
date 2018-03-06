@@ -97,8 +97,8 @@
         };
 
         vm.isSuccessfulMessage = function(message) {
-            var matcher = new RegExp('Found [0-9]+ records');
-            if (typeof message !== undefined) {
+            if (message !== undefined) {
+                var matcher = new RegExp('Found [0-9]+ records');
                 if (message.match(matcher)) {
                     return true;
                 }

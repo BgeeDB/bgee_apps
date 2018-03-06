@@ -52,6 +52,9 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
         urlGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlGenerator.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
 
+        // Note: This is the code to activate we want to disable TopAnat. In this case,
+        // we should also disable the lines that follow. It should be done here, not in 
+        // /bgee-webapp/src/main/webapp/js/topanat/views/main.html, to avoid the waiting page.
 //        this.writeln("<div id='bgee_introduction'>");
 //        this.writeln("<p>GO-like enrichment of anatomical terms, mapped to genes by expression patterns</p>");
 //        this.writeln("<p class='alert alert-danger'>While we are solving issues with TopAnat in Bgee 14, we invite you to use TopAnat in "
@@ -59,7 +62,6 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
 //                + "Bgee 13</a>.</p>");
 //        this.writeln("</div>");
         
-        // FIXME enable when TopAnat will work on Bgee 14. We do it here, to avoid the waiting page
         //AngularJS module container
         this.writeln("<div ng-app='app'>");
 

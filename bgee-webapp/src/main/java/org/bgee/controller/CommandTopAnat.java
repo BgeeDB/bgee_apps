@@ -453,6 +453,12 @@ public class CommandTopAnat extends CommandParent {
             display = this.viewFactory.getTopAnatDisplay();
         }
         
+        if (display == null) {
+            throw log.throwing(new PageNotFoundException("Incorrect "
+                    + this.requestParameters.getUrlParametersInstance().getParamAction()
+                    + " parameter value."));
+        }
+        
         // Gene list validation 
         if (this.requestParameters.isATopAnatGeneUpload()) {
             

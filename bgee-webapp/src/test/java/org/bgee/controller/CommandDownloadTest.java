@@ -1,5 +1,6 @@
 package org.bgee.controller;
 
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -89,6 +90,17 @@ public class CommandDownloadTest extends TestAncestor {
                 mock(BgeeProperties.class), viewFac, serviceFac);
         controller.processRequest();
         verify(display).displayProcessedExpressionValuesDownloadPage(groups, speToTerms);
+
+        params = new RequestParameters();
+        params.setAction("fake action");
+        controller = new CommandDownload(mock(HttpServletResponse.class), params,
+                mock(BgeeProperties.class), viewFac, serviceFac);
+        try {
+            controller.processRequest();
+            fail("A PageNotFoundException should be thrown");
+        } catch (PageNotFoundException e) {
+            // test passed
+        }
     }
     
     /**

@@ -107,8 +107,7 @@ public class CommandDownload extends CommandParent {
      * and short names (for instance, "M. musculus"), as well as alternative names (e.g., "mice") 
      * retrieved from a {@code KeywordService}. 
      * 
-     * @param species   A {@code Set} of {@code Species} to retrieve information from. 
-     *                  They should be all {@code Species} used in {@code SpeciesDataGroup}s.
+     * @param groups    A {@code Set} of {@code SpeciesDataGroup} to retrieve information from. 
      * @return          A {@code Map} where keys are {@code Integer}s that are species IDs, 
      *                  the associated values being a {@code Set} of {@code String}s that are 
      *                  related terms.

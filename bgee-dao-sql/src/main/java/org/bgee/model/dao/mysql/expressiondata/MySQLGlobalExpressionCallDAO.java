@@ -74,14 +74,14 @@ implements GlobalExpressionCallDAO {
         //fix for #173, see also the end of this method
         for (GlobalExpressionCallDAO.OrderingAttribute a: orderingAttrs) {
             switch (a) {
-            case GENE_ID:
+            case BGEE_GENE_ID:
                 clonedAttrs.add(GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID);
                 break;
             case CONDITION_ID:
                 clonedAttrs.add(GlobalExpressionCallDAO.Attribute.CONDITION_ID);
                 break;
             case MEAN_RANK:
-                clonedAttrs.add(GlobalExpressionCallDAO.Attribute.GLOBAL_MEAN_RANK);
+                clonedAttrs.add(GlobalExpressionCallDAO.Attribute.MEAN_RANK);
                 break;
             default:
                 //other ordering attributes do not have a corresponding select attribute
@@ -134,7 +134,7 @@ implements GlobalExpressionCallDAO {
                 return globalExprTableName + "." + MySQLGeneDAO.BGEE_GENE_ID;
             case CONDITION_ID:
                 return globalExprTableName + "." + MySQLConditionDAO.GLOBAL_COND_ID_FIELD;
-            case GLOBAL_MEAN_RANK:
+            case MEAN_RANK:
                 return clonedDataTypes.stream()
                         //to avoid division by 0
                         .map(dt -> dataTypeToNormRankSql.get(dt) + " IS NULL")
@@ -510,7 +510,7 @@ implements GlobalExpressionCallDAO {
         String selectOrderBy = orderingAttrs.stream()
         .filter(a -> {
             switch(a) {
-                case GENE_ID:
+                case BGEE_GENE_ID:
                 case CONDITION_ID:
                 case MEAN_RANK:
                     //These ordering attributes have a correspondence in the select Attributes
@@ -1010,7 +1010,7 @@ implements GlobalExpressionCallDAO {
                 .map(entry -> {
                     String orderBy = "";
                     switch(entry.getKey()) {
-                        case GENE_ID:
+                        case BGEE_GENE_ID:
                             orderBy = globalExprTableName + "." + MySQLGeneDAO.BGEE_GENE_ID;
                             break;
                         case CONDITION_ID:
@@ -1090,10 +1090,10 @@ implements GlobalExpressionCallDAO {
         }
         //TODO: can't we automatically add the field if requested in ordering clause?
         if (clonedOrderingAttrs.containsKey(GlobalExpressionCallDAO.OrderingAttribute.MEAN_RANK) 
-                && !clonedAttrs.contains(GlobalExpressionCallDAO.Attribute.GLOBAL_MEAN_RANK)) {
+                && !clonedAttrs.contains(GlobalExpressionCallDAO.Attribute.MEAN_RANK)) {
             throw log.throwing(new IllegalArgumentException("To order by " 
                     + GlobalExpressionCallDAO.OrderingAttribute.MEAN_RANK
-                    + ", the attribute " + GlobalExpressionCallDAO.Attribute.GLOBAL_MEAN_RANK
+                    + ", the attribute " + GlobalExpressionCallDAO.Attribute.MEAN_RANK
                     + " should be retrieved"));
         }
 

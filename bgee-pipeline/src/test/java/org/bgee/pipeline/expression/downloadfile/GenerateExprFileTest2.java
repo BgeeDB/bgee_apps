@@ -244,7 +244,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
         Set<Attribute> attr = new HashSet<>(Arrays.asList(Attribute.ANAT_ENTITY_ID,
                 Attribute.DATA_QUALITY, Attribute.DATA_TYPE_RANK_INFO, Attribute.OBSERVED_DATA, 
                 Attribute.GENE, Attribute.DEV_STAGE_ID, Attribute.CALL_TYPE, Attribute.EXPERIMENT_COUNTS,
-                Attribute.GLOBAL_MEAN_RANK));
+                Attribute.MEAN_RANK));
         
         when(callService.loadExpressionCalls(callFilterSp11, attr, serviceOrdering))
         .thenReturn(calls.stream().filter(c -> c.getCondition().getSpeciesId() == 1));

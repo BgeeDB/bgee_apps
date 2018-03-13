@@ -66,6 +66,8 @@ public class DAOExperimentCountFilter {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((expCount == null) ? 0 : expCount.hashCode());
+        //manage count value of DAOExperimentCount directly here
+        result = prime * result + ((expCount == null) ? 0 : expCount.getCount());
         result = prime * result + ((qualifier == null) ? 0 : qualifier.hashCode());
         return result;
     }
@@ -87,6 +89,10 @@ public class DAOExperimentCountFilter {
                 return false;
             }
         } else if (!expCount.equals(other.expCount)) {
+            return false;
+        }
+        //manage count value of DAOExperimentCount directly here
+        if (expCount != null && expCount.getCount() != other.getCount()) {
             return false;
         }
         if (qualifier != other.qualifier) {

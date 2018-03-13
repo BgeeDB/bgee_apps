@@ -719,7 +719,7 @@ public class GenerateRankFile {
         
         Set<CallService.Attribute> attrs = EnumSet.of(
                 CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID, 
-                CallService.Attribute.GLOBAL_MEAN_RANK);
+                CallService.Attribute.MEAN_RANK);
         if (!anatEntityOnly) {
             attrs.add(CallService.Attribute.DEV_STAGE_ID);
         }
@@ -839,7 +839,7 @@ public class GenerateRankFile {
                 c.getGene().getEnsemblGeneId(), gene.getName(), 
                 cond.getAnatEntityId(), anatEntity == null? null: anatEntity.getName(), 
                 cond.getDevStageId(), devStage == null? null: devStage.getName(), 
-                FORMATTER.apply(c.getGlobalMeanRank()), 
+                FORMATTER.apply(c.getMeanRank()), 
                 dataTypeToStatus.get(DataType.AFFYMETRIX), 
                 dataTypeToStatus.get(DataType.EST), 
                 dataTypeToStatus.get(DataType.IN_SITU), 

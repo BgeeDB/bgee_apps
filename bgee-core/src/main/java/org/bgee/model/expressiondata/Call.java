@@ -177,7 +177,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          * A {@code Comparator} of {@code ExpressionCall}s, performing the following comparisons 
          * in order: 
          * <ol>
-         * <li>comparison based on {@link ExpressionCall#getGlobalMeanRank()}
+         * <li>comparison based on {@link ExpressionCall#getMeanRank()}
          * <li>in case of equality, comparison based on {@link ExpressionCall#getGeneId()}
          * <li>in case of equality, and if a {@code ConditionGraph} was provided at instantiation, 
          * comparison based on the relations between {@code Condition}s (see 
@@ -219,7 +219,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             public RankComparator(ConditionGraph condGraph) {
                 Comparator<ExpressionCall> tmpComparator = Comparator
                         //Order first by global mean rank
-                        .comparing(ExpressionCall::getGlobalMeanRank, 
+                        .comparing(ExpressionCall::getMeanRank, 
                                 Comparator.nullsLast(Comparator.naturalOrder()))
                         //important in case of score equality: 
                         //Order by genes
@@ -307,7 +307,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          * Identifies redundant {@code ExpressionCall}s from the provided {@code Collection}. 
          * This method returns {@code ExpressionCall}s for which there exists a more precise call 
          * (i.e., with a more precise condition), at a better or equal rank (see 
-         * {@link #getGlobalMeanRank()}). {@code calls} can contain {@code ExpressionCall}s 
+         * {@link #getMeanRank()}). {@code calls} can contain {@code ExpressionCall}s 
          * for different genes. 
          * 
          * @param calls            A {@code Collection} of {@code ExpressionCall}s to filter. 
@@ -373,7 +373,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                 //We cannot make sure that the List was ordered using a RankComparator 
                 //with a ConditionGraph, it would be too costly, but we perform a minimal check 
                 //on ranks and conditions
-                if (call.getGlobalMeanRank() == null) {
+                if (call.getMeanRank() == null) {
                     throw log.throwing(new IllegalArgumentException("Missing rank for call: "
                             + call));
                 }
@@ -382,7 +382,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                             + call));
                 }
                 if (previousCall != null && 
-                        previousCall.getGlobalMeanRank().compareTo(call.getGlobalMeanRank()) > 0) {
+                        previousCall.getMeanRank().compareTo(call.getMeanRank()) > 0) {
                     throw log.throwing(new IllegalArgumentException("Provided List incorrectly sorted"));
                 }
                 
@@ -417,7 +417,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         
         /**
          * Generate a clustering of {@code ExpressionCall}s based on their global mean rank 
-         * (see {@link #getGlobalMeanRank()}). The {@code ExpressionCall}s of only one gene 
+         * (see {@link #getMeanRank()}). The {@code ExpressionCall}s of only one gene 
          * can be clustered at a time, otherwise an {@code IllegalArgumentException} is thrown.
          * 
          * @param calls             A {@code Collection} of {@code ExpressionCall}s of one gene 
@@ -478,7 +478,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             ExpressionCall previousCall = null;
             for (ExpressionCall call: calls) {
                 if (previousCall != null) { 
-                    if (previousCall.getGlobalMeanRank().compareTo(call.getGlobalMeanRank()) > 0) {
+                    if (previousCall.getMeanRank().compareTo(call.getMeanRank()) > 0) {
                         throw log.throwing(new IllegalArgumentException(
                                 "Provided List incorrectly sorted"));
                     }
@@ -530,7 +530,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         }
         /**
          * Generate a clustering of {@code ExpressionCall}s based on their global mean rank 
-         * using DBScan (see {@link #getGlobalMeanRank()} and <a href='https://commons.apache.org/proper/commons-math/apidocs/org/apache/commons/math3/ml/clustering/DBSCANClusterer.html'>
+         * using DBScan (see {@link #getMeanRank()} and <a href='https://commons.apache.org/proper/commons-math/apidocs/org/apache/commons/math3/ml/clustering/DBSCANClusterer.html'>
          * org.apache.commons.math3.ml.clustering.DBSCANClusterer</a>).
          * 
          * @param calls     A {@code List} of {@code ExpressionCall}s ordered by their global mean rank. 
@@ -559,7 +559,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                 }
                 @Override
                 public double[] getPoint() {
-                    return new double[]{this.refCall.getGlobalMeanRank().doubleValue()};
+                    return new double[]{this.refCall.getMeanRank().doubleValue()};
                 }
                 public ExpressionCall getRefExpressionCall() {
                     return refCall;
@@ -644,16 +644,16 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                     boolean compareToMin = false;
                     switch (ref) {
                     case MIN: 
-                        refScore[0] = groupMember.get(0).getGlobalMeanRank().doubleValue();
+                        refScore[0] = groupMember.get(0).getMeanRank().doubleValue();
                         break;
                     case MAX: 
-                        refScore[0] = groupMember.get(groupMember.size() - 1).getGlobalMeanRank()
+                        refScore[0] = groupMember.get(groupMember.size() - 1).getMeanRank()
                                        .doubleValue();
                         break;
                     case MEAN: 
                         refScore[0] = (groupMember.stream()
-                                            .mapToDouble(c -> c.getGlobalMeanRank().doubleValue()).sum() 
-                                        + call.getGlobalMeanRank().doubleValue())
+                                            .mapToDouble(c -> c.getMeanRank().doubleValue()).sum() 
+                                        + call.getMeanRank().doubleValue())
                                         /(groupMember.size() + 1);
                         compareToMin = true;
                         break;
@@ -669,16 +669,16 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                     assert refScore[0] != 0;
                     
                     double distance = measure.compute(refScore, 
-                            new double[]{call.getGlobalMeanRank().doubleValue()});
+                            new double[]{call.getMeanRank().doubleValue()});
                     if (log.isTraceEnabled()) {
                         log.trace("Reference score: {} - current score: {} - Distance: {} - "
                                 + "Distance threshold: {} - Compare to min: {} - "
                                 + "Rank of first member: {}, Distance to ref: {}", 
-                              refScore[0], call.getGlobalMeanRank().doubleValue(), 
+                              refScore[0], call.getMeanRank().doubleValue(), 
                               distance, distanceThreshold, compareToMin, 
-                              groupMember.get(0).getGlobalMeanRank().doubleValue(), 
+                              groupMember.get(0).getMeanRank().doubleValue(), 
                               measure.compute(refScore, 
-                                  new double[]{groupMember.get(0).getGlobalMeanRank().doubleValue()}));
+                                  new double[]{groupMember.get(0).getMeanRank().doubleValue()}));
                     }
                     
                         //if the distance between the ref score 
@@ -688,7 +688,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                         //iterated score to the group, the distance between the ref. score 
                         //and the minimum score of the group will be over the threshold.
                         (compareToMin && measure.compute(refScore, 
-                                    new double[]{groupMember.get(0).getGlobalMeanRank().doubleValue()}) 
+                                    new double[]{groupMember.get(0).getMeanRank().doubleValue()}) 
                             > distanceThreshold)) {
                         createGroup = true;
                     }
@@ -728,7 +728,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             double groupAllowedScoreDiff = 0;
             double previousScore = 0;
             for (ExpressionCall call: calls) {
-                double currentScore = call.getGlobalMeanRank().doubleValue();
+                double currentScore = call.getMeanRank().doubleValue();
 
                 // create a new group if first iteration, 
                 // or if current score over the allowed score diff. 
@@ -763,7 +763,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          * Get the median mean rank from {@code ExpressionCall}s ordered based on their rank. 
          * 
          * @param calls A {@code List} of {@code ExpressionCall}s ordered by their global mean rank 
-         *              (see {@link #getGlobalMeanRank()}).
+         *              (see {@link #getMeanRank()}).
          * @return      A {@code double} that is the median mean rank. 
          */
         private static double getMedianMeanRankScore(List<ExpressionCall> calls) {
@@ -773,14 +773,14 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                 throw log.throwing(new IllegalArgumentException("Can't compute mediam of empty list"));
             }
             if (size == 1) {
-                return log.exit(calls.get(0).getGlobalMeanRank().doubleValue());
+                return log.exit(calls.get(0).getMeanRank().doubleValue());
             }
             if (size % 2 == 0) {
-                return log.exit((calls.get(size/2).getGlobalMeanRank().doubleValue() 
-                           + calls.get(size/2 - 1).getGlobalMeanRank().doubleValue())
+                return log.exit((calls.get(size/2).getMeanRank().doubleValue() 
+                           + calls.get(size/2 - 1).getMeanRank().doubleValue())
                            /2);
             } 
-            return log.exit(calls.get((size - 1)/2).getGlobalMeanRank().doubleValue());
+            return log.exit(calls.get((size - 1)/2).getMeanRank().doubleValue());
         }
         
         /**
@@ -837,12 +837,12 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
 
         private final DataPropagation dataPropagation;
         /**
-         * @see #getGlobalMeanRank()
+         * @see #getMeanRank()
          * ATTRIBUTE NOT TAKEN INTO ACCOUNT IN HASHCODE/EQUALS METHODS.
          */
         //TODO: Maybe create a new RankScore class, storing the rank, 
         //plus an information of confidence about it.
-        private final BigDecimal globalMeanRank;
+        private final BigDecimal meanRank;
         /**
          * A {@code BigDecimal} that is the max rank over all conditions and data types
          * for the combination of condition parameters used to produce this {@code ExpressionCall}.
@@ -878,7 +878,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                         "The max rank must be provided when a rank is provided."));
             }
             //BigDecimal are immutable, no need to copy them
-            this.globalMeanRank = globalMeanRank;
+            this.meanRank = globalMeanRank;
             this.maxRank = maxRank;
             this.dataPropagation = dataPropagation;
         }
@@ -890,10 +890,10 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          * @return  The {@code BigDecimal} corresponding to the score allowing to rank 
          *          this {@code ExpressionCall}.
          *          
-         * @see #getFormattedGlobalMeanRank()
+         * @see #getFormattedMeanRank()
          */
-        public BigDecimal getGlobalMeanRank() {
-            return this.globalMeanRank;
+        public BigDecimal getMeanRank() {
+            return this.meanRank;
         }
         public Integer getExpressionScore() {
             throw new UnsupportedOperationException("Not implemented");
@@ -902,26 +902,26 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          * @return  A {@code String} corresponding to the rank score of this call, formatted 
          *          with always 3 digits displayed, e.g.: 1.23, 12.3, 123, 1.23e3, ... 
          *          
-         * @see #getGlobalMeanRank()
+         * @see #getMeanRank()
          */
-        public String getFormattedGlobalMeanRank() {
+        public String getFormattedMeanRank() {
             log.entry();
-            if (this.globalMeanRank == null) {
+            if (this.meanRank == null) {
                 throw log.throwing(new IllegalStateException("No rank was provided for this call."));
             }
             NumberFormat formatter = null;
             //start with values over 1000, more chances to have a match
-            if (this.globalMeanRank.compareTo(new BigDecimal(1000)) >= 0) {
+            if (this.meanRank.compareTo(new BigDecimal(1000)) >= 0) {
                 formatter = FORMAT1000;
-            } else if (this.globalMeanRank.compareTo(new BigDecimal(10)) < 0) {
+            } else if (this.meanRank.compareTo(new BigDecimal(10)) < 0) {
                 formatter = FORMAT1;
-            } else if (this.globalMeanRank.compareTo(new BigDecimal(100)) < 0) {
+            } else if (this.meanRank.compareTo(new BigDecimal(100)) < 0) {
                 formatter = FORMAT10;
-            } else if (this.globalMeanRank.compareTo(new BigDecimal(1000)) < 0) {
+            } else if (this.meanRank.compareTo(new BigDecimal(1000)) < 0) {
                 formatter = FORMAT100;
             }
             //1E2 to 1e2
-            return log.exit(formatter.format(this.globalMeanRank).toLowerCase(Locale.ENGLISH));
+            return log.exit(formatter.format(this.meanRank).toLowerCase(Locale.ENGLISH));
         }
         
         @Override
@@ -963,7 +963,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                    .append(", summaryQuality=").append(getSummaryQuality())
                    .append(", callData=").append(getCallData())
                    .append(", sourceCalls()=").append(getSourceCalls())
-                   .append(", globalMeanRank=").append(globalMeanRank)
+                   .append(", globalMeanRank=").append(meanRank)
                    .append(", maxRank=").append(maxRank)
                    .append("]");
             return builder.toString();

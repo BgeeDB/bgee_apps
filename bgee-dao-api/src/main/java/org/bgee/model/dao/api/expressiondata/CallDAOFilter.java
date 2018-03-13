@@ -124,7 +124,7 @@ public class CallDAOFilter {
      *          in queries.
      */
     public LinkedHashSet<DAOConditionFilter> getConditionFilters() {
-        //defensive copying
+        //defensive copying, no unmodifiable LinkedHashSet
         return new LinkedHashSet<>(conditionFilters);
     }
     /**
@@ -135,7 +135,7 @@ public class CallDAOFilter {
      *          in queries.
      */
     public LinkedHashSet<CallDataDAOFilter> getDataFilters() {
-        //defensive copying
+        //defensive copying, no unmodifiable LinkedHashSet
         return new LinkedHashSet<>(dataFilters);
     }
     /**
@@ -160,7 +160,7 @@ public class CallDAOFilter {
      *          in queries.
      */
     public LinkedHashMap<ConditionDAO.Attribute, Boolean> getObservedDataFilter() {
-        //defensive copying
+        //defensive copying, no unmodifiable LinkedHashMap
         return new LinkedHashMap<>(observedDataFilter);
     }
 

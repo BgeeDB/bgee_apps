@@ -100,7 +100,7 @@ public class CallService extends CommonService {
      * <li>{@code CALL_TYPE}: corresponds to {@link Call#getSummaryCallType()}.
      * <li>{@code DATA_QUALITY}: corresponds to {@link Call#getSummaryQuality()}.
      * <li>{@code OBSERVED_DATA}: corresponds to {@link Call#getDataPropagation()}.
-     * <li>{@code GLOABAL_MEAN_RANK}: corresponds to {@link ExpressionCall#getGlobalMeanRank()}.
+     * <li>{@code GLOABAL_MEAN_RANK}: corresponds to {@link ExpressionCall#getMeanRank()}.
      * <li>{@code EXPERIMENT_COUNTS}: corresponds to {@link Call#getCallData()} with experiment
      * expression <strong>total</strong> and <strong>self</strong> counts populated per data type
      * for the requested data types.
@@ -110,7 +110,7 @@ public class CallService extends CommonService {
      */
     public static enum Attribute implements Service.Attribute {
         GENE(false), ANAT_ENTITY_ID(true), DEV_STAGE_ID(true), CALL_TYPE(false),
-        DATA_QUALITY(false), OBSERVED_DATA(false), GLOBAL_MEAN_RANK(false),
+        DATA_QUALITY(false), OBSERVED_DATA(false), MEAN_RANK(false),
         EXPERIMENT_COUNTS(false), DATA_TYPE_RANK_INFO(false);
         
         /**
@@ -991,8 +991,8 @@ public class CallService extends CommonService {
                             GlobalExpressionCallDAO.Attribute.DATA_TYPE_EXPERIMENT_PROPAGATED_COUNTS);
                 case OBSERVED_DATA:
                     return Stream.of(GlobalExpressionCallDAO.Attribute.DATA_TYPE_OBSERVED_DATA);
-                case GLOBAL_MEAN_RANK:
-                    return Stream.of(GlobalExpressionCallDAO.Attribute.GLOBAL_MEAN_RANK);
+                case MEAN_RANK:
+                    return Stream.of(GlobalExpressionCallDAO.Attribute.MEAN_RANK);
                 case DATA_TYPE_RANK_INFO:
                     return Stream.of(GlobalExpressionCallDAO.Attribute.DATA_TYPE_RANK_INFO);
                 default: 
@@ -1011,7 +1011,7 @@ public class CallService extends CommonService {
                 e -> {
                     switch (e.getKey()) {
                         case GENE_ID: 
-                            return GlobalExpressionCallDAO.OrderingAttribute.GENE_ID;
+                            return GlobalExpressionCallDAO.OrderingAttribute.BGEE_GENE_ID;
                         case ANAT_ENTITY_ID:
                             return GlobalExpressionCallDAO.OrderingAttribute.ANAT_ENTITY_ID;
                         case DEV_STAGE_ID: 
@@ -1087,9 +1087,9 @@ public class CallService extends CommonService {
             attrs == null || attrs.isEmpty() || attrs.contains(Attribute.EXPERIMENT_COUNTS) ||
                     attrs.contains(Attribute.DATA_TYPE_RANK_INFO)?
                             callData: null,
-            attrs == null || attrs.isEmpty() || attrs.contains(Attribute.GLOBAL_MEAN_RANK)?
-                    globalCallTO.getGlobalMeanRank(): null,
-            attrs == null || attrs.isEmpty() || attrs.contains(Attribute.GLOBAL_MEAN_RANK)?
+            attrs == null || attrs.isEmpty() || attrs.contains(Attribute.MEAN_RANK)?
+                    globalCallTO.getMeanRank(): null,
+            attrs == null || attrs.isEmpty() || attrs.contains(Attribute.MEAN_RANK)?
                     maxRank: null));
     }
     

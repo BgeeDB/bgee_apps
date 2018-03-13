@@ -664,11 +664,11 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         //Maybe create in bgee-core a new RankScore class, storing the rank and the confidence.
         Set<DataType> dataTypes = call.getCallData().stream().map(ExpressionCallData::getDataType)
                 .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)));
-        String rankScore = htmlEntities(call.getFormattedGlobalMeanRank());
+        String rankScore = htmlEntities(call.getFormattedMeanRank());
         if (!SummaryQuality.BRONZE.equals(call.getSummaryQuality()) && 
                 (dataTypes.contains(DataType.AFFYMETRIX) || 
                 dataTypes.contains(DataType.RNA_SEQ) || 
-                call.getGlobalMeanRank().compareTo(BigDecimal.valueOf(20000)) < 0)) {
+                call.getMeanRank().compareTo(BigDecimal.valueOf(20000)) < 0)) {
             return log.exit(rankScore);
         }
         StringBuilder sb = new StringBuilder();

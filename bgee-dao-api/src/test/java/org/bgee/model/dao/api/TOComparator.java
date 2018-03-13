@@ -785,7 +785,7 @@ public class TOComparator {
             boolean compareId) {
         log.entry(to1, to2, compareId);
         if (areTOsEqual((RawExpressionCallTO) to1, (RawExpressionCallTO) to2, compareId) &&
-                areBigDecimalEquals(to1.getGlobalMeanRank(), to2.getGlobalMeanRank()) &&
+                areBigDecimalEquals(to1.getMeanRank(), to2.getMeanRank()) &&
 
                 //GlobalExpressionCallDataTOs do not implement hashCode/equals
                 (to1.getCallDataTOs() == null && to2.getCallDataTOs() == null || 

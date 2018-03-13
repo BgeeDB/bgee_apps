@@ -44,59 +44,6 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
     public final static String RAW_COND_ID_FIELD = "conditionId";
     public final static String GLOBAL_COND_ID_FIELD = "globalConditionId";
     private final static String COND_REL_ORIGIN_FIELD = "conditionRelationOrigin";
-    
-//    /**
-//     * Create the "ON" part of a JOIN clause to link the original condition table containing 
-//     * raw conditions using all parameters to a specific condition table, 
-//     * for the provided parameter combination, using the appropriate fields for the join.
-//     * 
-//     * @param originalCondTable A {@code String} that is the name used in the query 
-//     *                          of the original raw condition table.
-//     * @param specificCondTable A {@code String} that is the name used in the query 
-//     *                          of the targeted specific condition table.
-//     * @param comb              The {@code CondParamCombination} allowing to target the appropriate fields.
-//     * @return                  A {@code String} that is the "ON" part of the JOIN clause.
-//     */
-//    public static String getJoinOnBetweenCondTables(final String originalCondTable, 
-//            final String specificCondTable, final CondParamCombination comb) {
-//        log.entry(originalCondTable, specificCondTable, comb);
-//        
-//        if (comb.isAllParamCombination()) {
-//            throw log.throwing(new IllegalArgumentException(
-//                    "No join needed for condition parameter combination using all parameters."));
-//        }
-//
-//        //retrieve the column names of condition parameters and species ID. 
-//        //we use the method getColToAttributesMap(CondParamCombination) for convenience,
-//        //these column names do not vary depending on the condition parameters used.
-//        final Map<ConditionDAO.Attribute, String> condParamToColName = getColToAttributesMap(comb)
-//                .entrySet().stream()
-//                .collect(Collectors.toMap(e -> e.getValue(), e -> e.getKey()));
-//
-//        StringBuilder sb = new StringBuilder();
-//        //always use the speciesId field for the join
-//        String speIdField = condParamToColName.get(ConditionDAO.Attribute.SPECIES_ID);
-//        if (speIdField == null) {
-//            throw log.throwing(new IllegalStateException("No column name corresponding to "
-//                    + ConditionDAO.Attribute.SPECIES_ID));
-//        }
-//        sb.append(originalCondTable).append(".").append(speIdField)
-//          .append(" = ").append(specificCondTable).append(".").append(speIdField);
-//        //now, join using the condition parameters used in this combination
-//        sb.append(comb.getParameters().stream().map(p -> {
-//            StringBuilder sb2 = new StringBuilder();
-//            String colName = condParamToColName.get(p);
-//            if (colName == null) {
-//                throw log.throwing(new IllegalStateException("No column name corresponding to "
-//                        + p));
-//            }
-//            sb2.append(" AND ").append(originalCondTable).append(".").append(colName)
-//              .append(" = ").append(specificCondTable).append(".").append(colName);
-//            return sb2.toString();
-//        }).collect(Collectors.joining()));
-//        
-//        return log.exit(sb.toString());
-//    }
 
     /**
      * @param tableName             A {@code String} that is the name of the global condition table
@@ -112,16 +59,12 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
      *                                  is not a condition parameter attributes (see 
      *                                  {@link ConditionDAO.Attribute#isConditionParameter()}). 
      */
-    public static String getCondParamCombinationWhereClause(final String tableName,
+    private static String getCondParamCombinationWhereClause(final String tableName,
             Collection<ConditionDAO.Attribute> condParamCombination) throws IllegalArgumentException {
         log.entry(tableName, condParamCombination);
         if (condParamCombination == null || condParamCombination.isEmpty()) {
             throw log.throwing(new IllegalArgumentException(
                     "A condition parameter combination must be provided."));
-        }
-        if (condParamCombination.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException(
-                    "A combination of condition parameters must be provided"));
         }
         final Set<ConditionDAO.Attribute> condParams = EnumSet.copyOf(condParamCombination);
         if (condParams.stream().anyMatch(a -> !a.isConditionParameter())) {
@@ -158,7 +101,9 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
         colToAttributesMap.put("stageId", ConditionDAO.Attribute.STAGE_ID);
         colToAttributesMap.put(SPECIES_ID, ConditionDAO.Attribute.SPECIES_ID);
 //        colToAttributesMap.put("sex", ConditionDAO.Attribute.SEX);
-//        colToAttributesMap.put("sexInferred", ConditionDAO.Attribute.SEX_INFERRED);
+//        if (!global) {
+//            colToAttributesMap.put("sexInferred", ConditionDAO.Attribute.SEX_INFERRED);
+//        }
 //        colToAttributesMap.put("strain", ConditionDAO.Attribute.STRAIN);
         
         return log.exit(colToAttributesMap);

@@ -441,7 +441,7 @@ public class CommandTopAnat extends CommandParent {
     }
 
     @Override
-    public void processRequest() throws IOException, JobResultNotFoundException, PageNotFoundException, 
+    public void processRequest() throws IOException, PageNotFoundException, 
     InvalidRequestException, MissingParameterException, TooManyJobsException {
         log.entry();
         

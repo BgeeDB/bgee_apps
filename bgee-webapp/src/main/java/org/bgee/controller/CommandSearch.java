@@ -54,14 +54,6 @@ public class CommandSearch extends CommandParent {
         		this.requestParameters.getAction().equals(RequestParameters.ACTION_AUTO_COMPLETE_GENE_SEARCH)) {
         	String searchTerm = this.requestParameters.getSearch();
         	
-        	//TODO use service instead of fake GeneMatch
-        	/*Gene gene1 = new Gene("ID1","spID1", "name1");
-        	GeneMatch geneMatch1 = new GeneMatch(gene1, "syn1");
-        	Gene gene2 = new Gene("ID2","spID2", "name2");
-        	GeneMatch geneMatch2 = new GeneMatch(gene2, "syn2");
-
-            List<GeneMatch> geneMatches = Arrays.asList(geneMatch1, geneMatch2);
-//            		serviceFactory.getGeneService().searchByTerm(this.requestParameters.getSearch());*/
             List<GeneMatch> geneMatches = serviceFactory.getGeneService().searchByTerm(searchTerm);
             
             display.displayGeneCompletionByGeneList(geneMatches, this.requestParameters.getSearch());
@@ -73,5 +65,4 @@ public class CommandSearch extends CommandParent {
         
         log.exit();
     }
-
 }

@@ -21,12 +21,8 @@ import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.GlobalConditionMaxRankTO;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO;
-import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
-import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.GlobalExpressionToExpressionTO;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallDataTO;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallTO;
-import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.GlobalNoExpressionToNoExpressionTO;
-import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO.RawExpressionCallTO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesDataGroupTO;
@@ -136,9 +132,6 @@ public class TOComparator {
             return log.exit(areTOsEqual((ConditionTO) to1, (ConditionTO) to2, compareId));
         } else if (to1 instanceof GlobalConditionMaxRankTO) {
             return log.exit(areTOsEqual((GlobalConditionMaxRankTO) to1, (GlobalConditionMaxRankTO) to2));
-        } else if (to1 instanceof ExpressionCallTO) {
-            return log.exit(areTOsEqual((ExpressionCallTO) to1, (ExpressionCallTO) to2, 
-                    compareId));
         } else if (to1 instanceof RawExpressionCallTO) {
             return log.exit(areTOsEqual((RawExpressionCallTO) to1, (RawExpressionCallTO) to2, 
                     compareId));
@@ -147,18 +140,8 @@ public class TOComparator {
                     compareId));
         } else if (to1 instanceof GlobalExpressionCallDataTO) {
             return log.exit(areTOsEqual((GlobalExpressionCallDataTO) to1, (GlobalExpressionCallDataTO) to2));
-        } else if (to1 instanceof NoExpressionCallTO) {
-            return log.exit(areTOsEqual((NoExpressionCallTO) to1, (NoExpressionCallTO) to2, 
-                    compareId));
         } else if (to1 instanceof ExperimentExpressionTO) {
             return log.exit(areTOsEqual((ExperimentExpressionTO) to1, (ExperimentExpressionTO) to2));
-        } else if (to1 instanceof GlobalExpressionToExpressionTO) {
-            return log.exit(areTOsEqual((
-                    GlobalExpressionToExpressionTO) to1, (GlobalExpressionToExpressionTO) to2));
-        } else if (to1 instanceof GlobalNoExpressionToNoExpressionTO) {
-            return log.exit(areTOsEqual((
-                    GlobalNoExpressionToNoExpressionTO) to1, 
-                    (GlobalNoExpressionToNoExpressionTO) to2));
         } else if (to1 instanceof DiffExpressionCallTO) {
             return log.exit(areTOsEqual((DiffExpressionCallTO) to1, (DiffExpressionCallTO) to2, 
                     compareId));
@@ -824,64 +807,6 @@ public class TOComparator {
     }
 
     /**
-     * Method to compare two {@code ExpressionCallTO}s, to check for complete equality of each
-     * attribute. 
-     * <p>
-     * If {@code compareId} is {@code false}, the value returned by the method {@code getId} 
-     * will not be used for comparison.
-     * 
-     * @param to1   An {@code ExpressionCallTO} to be compared to {@code to2}.
-     * @param to2   An {@code ExpressionCallTO} to be compared to {@code to1}.
-     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
-     *                  used for comparisons. 
-     * @return      {@code true} if {@code to1} and {@code to2} have all 
-     *              attributes equal.
-     */
-    private static boolean areTOsEqual(ExpressionCallTO to1, ExpressionCallTO to2, 
-            boolean compareId) {
-        log.entry(to1, to2, compareId);
-        if (TOComparator.areCallTOsEqual(to1, to2, compareId) && 
-                Objects.equals(to1.isIncludeSubstructures(), to2.isIncludeSubstructures()) && 
-                Objects.equals(to1.isIncludeSubStages(), to2.isIncludeSubStages()) &&
-                Objects.equals(to1.getAnatOriginOfLine(), to2.getAnatOriginOfLine()) &&
-                Objects.equals(to1.getStageOriginOfLine(), to2.getStageOriginOfLine()) &&
-                Objects.equals(to1.isObservedData(), to2.isObservedData()) &&
-                areBigDecimalEquals(to1.getGlobalMeanRank(), to2.getGlobalMeanRank()) &&
-                areBigDecimalEquals(to1.getAffymetrixMeanRank(), to2.getAffymetrixMeanRank()) &&
-                areBigDecimalEquals(to1.getESTMeanRank(), to2.getESTMeanRank()) &&
-                areBigDecimalEquals(to1.getInSituMeanRank(), to2.getInSituMeanRank()) &&
-                areBigDecimalEquals(to1.getRNASeqMeanRank(), to2.getRNASeqMeanRank())) {
-            return log.exit(true);
-        }
-        return log.exit(false);
-    }
-    
-    /**
-     * Method to compare two {@code NoExpressionCallTO}s, to check for complete equality of each
-     * attribute. 
-     * <p>
-     * If {@code compareId} is {@code false}, the value returned by the method {@code getId} 
-     * will not be used for comparison.
-     * 
-     * @param to1   An {@code NoExpressionCallTO} to be compared to {@code to2}.
-     * @param to2   An {@code NoExpressionCallTO} to be compared to {@code to1}.
-     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
-     *                  used for comparisons. 
-     * @return      {@code true} if {@code to1} and {@code to2} have all 
-     *              attributes equal.
-     */
-    private static boolean areTOsEqual(NoExpressionCallTO to1, NoExpressionCallTO to2, 
-            boolean compareId) {
-        log.entry(to1, to2);
-        if (TOComparator.areCallTOsEqual(to1, to2, compareId) && 
-                Objects.equals(to1.isIncludeParentStructures(), to2.isIncludeParentStructures()) && 
-                Objects.equals(to1.getOriginOfLine(), to2.getOriginOfLine())) {
-            return log.exit(true);
-        }
-        return log.exit(false);
-    }
-
-    /**
      * Method to compare two {@code ExperimentExpressionTO}s, to check for complete equality of each
      * attribute. 
      * <p>
@@ -904,44 +829,6 @@ public class TOComparator {
                 Objects.equals(to1.getAbsentLowCount(), to2.getAbsentLowCount()) &&
                 Objects.equals(to1.getCallDirection(), to2.getCallDirection()) &&
                 Objects.equals(to1.getCallQuality(), to2.getCallQuality())) {
-            return log.exit(true);
-        }
-        return log.exit(false);
-    }
-
-    /**
-     * Method to compare two {@code GlobalExpressionToExpressionTO}s, to check for complete 
-     * equality of each attribute. 
-     * 
-     * @param to1   A {@code GlobalExpressionToExpressionTO} to be compared to {@code to2}.
-     * @param to2   A {@code GlobalExpressionToExpressionTO} to be compared to {@code to1}.
-     * @return      {@code true} if {@code to1} and {@code to2} have all 
-     *              attributes equal.
-     */
-    private static boolean areTOsEqual(GlobalExpressionToExpressionTO to1, 
-            GlobalExpressionToExpressionTO to2) {
-        log.entry(to1, to2);
-        if (Objects.equals(to1.getExpressionId(), to2.getExpressionId()) && 
-                Objects.equals(to1.getGlobalExpressionId(), to2.getGlobalExpressionId())) {
-            return log.exit(true);
-        }
-        return log.exit(false);
-    }
-
-    /**
-     * Method to compare two {@code GlobalNoExpressionToNoExpressionTO}s, to check for complete 
-     * equality of each attribute. 
-     * 
-     * @param to1   A {@code GlobalNoExpressionToNoExpressionTO} to be compared to {@code to2}.
-     * @param to2   A {@code GlobalNoExpressionToNoExpressionTO} to be compared to {@code to1}.
-     * @return      {@code true} if {@code to1} and {@code to2} have all 
-     *              attributes equal.
-     */
-    private static boolean areTOsEqual(GlobalNoExpressionToNoExpressionTO to1, 
-            GlobalNoExpressionToNoExpressionTO to2) {
-        log.entry(to1, to2);
-        if (Objects.equals(to1.getNoExpressionId(), to2.getNoExpressionId()) && 
-                Objects.equals(to1.getGlobalNoExpressionId(), to2.getGlobalNoExpressionId())) {
             return log.exit(true);
         }
         return log.exit(false);

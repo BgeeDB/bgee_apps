@@ -28,9 +28,7 @@ import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO;
-import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
-import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixProbesetDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
@@ -1002,32 +1000,6 @@ public abstract class DAOManager implements AutoCloseable
         return log.exit(this.getNewConditionDAO());
     }
     /**
-     * Get a new {@link org.bgee.model.dao.api.expressiondata.ExpressionCallDAO ExpressionCallDAO}, 
-     * unless this {@code DAOManager} is already closed. 
-     * 
-     * @return  a new {@code ExpressionCallDAO}.
-     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
-     * @see org.bgee.model.dao.api.expressiondata.ExpressionCallDAO ExpressionCallDAO
-     */
-    public ExpressionCallDAO getExpressionCallDAO() {
-        log.entry();
-        this.checkClosed();
-        return log.exit(this.getNewExpressionCallDAO());
-    }
-    /**
-     * Get a new {@link org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO 
-     * NoExpressionCallDAO}, unless this {@code DAOManager} is already closed. 
-     * 
-     * @return  a new {@code NoExpressionCallDAO}.
-     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
-     * @see org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO NoExpressionCallDAO
-     */
-    public NoExpressionCallDAO getNoExpressionCallDAO() {
-        log.entry();
-        this.checkClosed();
-        return log.exit(this.getNewNoExpressionCallDAO());
-    }
-    /**
      * Get a new {@link org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO RawExpressionCallDAO}, 
      * unless this {@code DAOManager} is already closed. 
      * 
@@ -1463,22 +1435,6 @@ public abstract class DAOManager implements AutoCloseable
      * @return  A new {@code ConditionDAO}
      */
     protected abstract ConditionDAO getNewConditionDAO();
-    /**
-     * Service provider must return a new 
-     * {@link org.bgee.model.dao.api.expressiondata.ExpressionCallDAO ExpressionCallDAO} instance 
-     * when this method is called. 
-     * 
-     * @return  A new {@code ExpressionCallDAO}
-     */
-    protected abstract ExpressionCallDAO getNewExpressionCallDAO();
-    /**
-     * Service provider must return a new 
-     * {@link org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO NoExpressionCallDAO} 
-     * instance when this method is called. 
-     * 
-     * @return  A new {@code NoExpressionCallDAO}
-     */
-    protected abstract NoExpressionCallDAO getNewNoExpressionCallDAO();
     /**
      * Service provider must return a new 
      * {@link org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO RawExpressionCallDAO} 

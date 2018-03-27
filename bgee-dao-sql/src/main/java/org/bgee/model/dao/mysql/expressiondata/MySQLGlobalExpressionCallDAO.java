@@ -65,13 +65,13 @@ implements GlobalExpressionCallDAO {
     private static String generateSelectClause(Collection<GlobalExpressionCallDAO.Attribute> attrs,
             Collection<GlobalExpressionCallDAO.OrderingAttribute> orderingAttrs,
             Collection<DAODataType> dataTypes, final String globalExprTableName, final String globalCondTableName,
-            String geneTableName) {
-        log.entry(attrs, orderingAttrs, dataTypes, globalExprTableName, globalCondTableName, geneTableName);
+            String geneTableName, boolean observedConditionFiltering) {
+        log.entry(attrs, orderingAttrs, dataTypes, globalExprTableName, globalCondTableName, geneTableName, observedConditionFiltering);
         
         Set<GlobalExpressionCallDAO.Attribute> clonedAttrs = attrs == null || attrs.isEmpty()?
                 EnumSet.allOf(GlobalExpressionCallDAO.Attribute.class):
                     EnumSet.copyOf(attrs);
-        //fix for #173, see also the end of this method
+        //fix for #173, see also the end of this method for columns having no corresponding attributes
         for (GlobalExpressionCallDAO.OrderingAttribute a: orderingAttrs) {
             switch (a) {
             case BGEE_GENE_ID:
@@ -119,11 +119,13 @@ implements GlobalExpressionCallDAO {
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT ");
 
-        if (!clonedAttrs.contains(GlobalExpressionCallDAO.Attribute.ID) &&
+        if (observedConditionFiltering ||
+                (!clonedAttrs.contains(GlobalExpressionCallDAO.Attribute.ID) &&
                 (!clonedAttrs.contains(GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID) ||
-                        !clonedAttrs.contains(GlobalExpressionCallDAO.Attribute.CONDITION_ID))) {
+                        !clonedAttrs.contains(GlobalExpressionCallDAO.Attribute.CONDITION_ID)))) {
             sb.append("DISTINCT ");
         }
+        //XXX: check whether with the last mysql version the optimizer does a better job at choosing the join order
         sb.append("STRAIGHT_JOIN ");
 
         sb.append(clonedAttrs.stream().map(a -> {
@@ -137,8 +139,16 @@ implements GlobalExpressionCallDAO {
             case MEAN_RANK:
                 return clonedDataTypes.stream()
                         //to avoid division by 0
+                        //generate, e.g.:
+                        //IF (globalExpression.estRankNorm IS NULL AND globalExpression.affymetrixMeanRankNorm IS NULL, NULL, 
                         .map(dt -> dataTypeToNormRankSql.get(dt) + " IS NULL")
                         .collect(Collectors.joining(" AND ", "IF (", ", NULL, "))
+                        //generate, e.g.:
+                        //((
+                        //IF (globalExpression.estRankNorm IS NULL, 0, globalExpression.estRankNorm * globalExpression.estMaxRank)
+                        // + IF (globalExpression.affymetrixMeanRankNorm IS NULL, 0, 
+                        //globalExpression.affymetrixMeanRankNorm * globalExpression.affymetrixDistinctRankSum)
+                        //)
                         + clonedDataTypes.stream()
                         .map(dataType -> {
                             String rankSql = dataTypeToNormRankSql.get(dataType);
@@ -147,10 +157,14 @@ implements GlobalExpressionCallDAO {
                                 throw log.throwing(new IllegalStateException(
                                         "No rank clause associated to data type: " + dataType));
                             }
-                            return "IF(" + rankSql + " IS NULL, 0, " + rankSql + " * " + weightSql + ")";
+                            return "IF (" + rankSql + " IS NULL, 0, " + rankSql + " * " + weightSql + ")";
                         })
                         .collect(Collectors.joining(" + ", "((", ")"))
-                        
+                        //generate, e.g.:
+                        // / (
+                        //IF(globalExpression.estMaxRank IS NULL, 0, globalExpression.estMaxRank)
+                        // + IF(globalExpression.affymetrixDistinctRankSum IS NULL, 0, globalExpression.affymetrixDistinctRankSum)
+                        // ))) AS meanRank
                         + clonedDataTypes.stream()
                         .map(dataType -> {
                             String weightSql = dataTypeToWeightSql.get(dataType);
@@ -255,12 +269,12 @@ implements GlobalExpressionCallDAO {
                         .map(dataType -> {
                             switch (dataType) {
                             case EST:
-                                return "estRank, estRankNorm";
+                                return "estRank, estRankNorm, " + globalCondTableName + ".estMaxRank";
                             case AFFYMETRIX:
                                 return "affymetrixMeanRank, affymetrixMeanRankNorm, "
                                         + "affymetrixDistinctRankSum";
                             case IN_SITU:
-                                return "inSituRank, inSituRankNorm";
+                                return "inSituRank, inSituRankNorm, " + globalCondTableName + ".inSituMaxRank";
                             case RNA_SEQ:
                                 return "rnaSeqMeanRank, rnaSeqMeanRankNorm, "
                                         + "rnaSeqDistinctRankSum";
@@ -270,236 +284,7 @@ implements GlobalExpressionCallDAO {
                             }
                         })
                         .collect(Collectors.joining(", "));
-//            
-//                
-//            case AFFYMETRIX_EXP_PRESENT_HIGH_SELF_COUNT:
-//                stmt.setInt(paramIndex, callTO.getAffymetrixExpPresentHighSelfCount());
-//                paramIndex++;
-//                break;
-//            case AFFYMETRIX_EXP_PRESENT_LOW_SELF_COUNT:
-//                stmt.setInt(paramIndex, callTO.getAffymetrixExpPresentLowSelfCount());
-//                paramIndex++;
-//                break;
-//            case AFFYMETRIX_EXP_ABSENT_HIGH_SELF_COUNT:
-//                stmt.setInt(paramIndex, callTO.getAffymetrixExpAbsentHighSelfCount());
-//                paramIndex++;
-//                break;
-//            case AFFYMETRIX_EXP_ABSENT_LOW_SELF_COUNT:
-//                stmt.setInt(paramIndex, callTO.getAffymetrixExpAbsentLowSelfCount());
-//                paramIndex++;
-//                break;
-//            case AFFYMETRIX_EXP_PRESENT_HIGH_DESCENDANT_COUNT:
-//                stmt.setInt(paramIndex, callTO.getAffymetrixExpPresentHighDescendantCount());
-//                paramIndex++;
-//                break;
-//            case AFFYMETRIX_EXP_PRESENT_LOW_DESCENDANT_COUNT:
-//                stmt.setInt(paramIndex, callTO.getAffymetrixExpPresentLowDescendantCount());
-//                paramIndex++;
-//                break;
-//            case AFFYMETRIX_EXP_ABSENT_HIGH_PARENT_COUNT:
-//                stmt.setInt(paramIndex, callTO.getAffymetrixExpAbsentHighParentCount());
-//                paramIndex++;
-//                break;
-//            case AFFYMETRIX_EXP_ABSENT_LOW_PARENT_COUNT:
-//                stmt.setInt(paramIndex, callTO.getAffymetrixExpAbsentLowParentCount());
-//                paramIndex++;
-//                break;
-//            case AFFYMETRIX_EXP_PRESENT_HIGH_TOTAL_COUNT:
-//                stmt.setInt(paramIndex, callTO.getAffymetrixExpPresentHighTotalCount());
-//                paramIndex++;
-//                break;
-//            case AFFYMETRIX_EXP_PRESENT_LOW_TOTAL_COUNT:
-//                stmt.setInt(paramIndex, callTO.getAffymetrixExpPresentLowTotalCount());
-//                paramIndex++;
-//                break;
-//            case AFFYMETRIX_EXP_ABSENT_HIGH_TOTAL_COUNT:
-//                stmt.setInt(paramIndex, callTO.getAffymetrixExpAbsentHighTotalCount());
-//                paramIndex++;
-//                break;
-//            case AFFYMETRIX_EXP_ABSENT_LOW_TOTAL_COUNT:
-//                stmt.setInt(paramIndex, callTO.getAffymetrixExpAbsentLowTotalCount());
-//                paramIndex++;
-//                break;
-//            case AFFYMETRIX_EXP_PROPAGATED_COUNT:
-//                stmt.setInt(paramIndex, callTO.getAffymetrixExpPropagatedCount());
-//                paramIndex++;
-//                break;
-//                
-//            case RNA_SEQ_EXP_PRESENT_HIGH_SELF_COUNT:
-//                stmt.setInt(paramIndex, callTO.getRNASeqExpPresentHighSelfCount());
-//                paramIndex++;
-//                break;
-//            case RNA_SEQ_EXP_PRESENT_LOW_SELF_COUNT:
-//                stmt.setInt(paramIndex, callTO.getRNASeqExpPresentLowSelfCount());
-//                paramIndex++;
-//                break;
-//            case RNA_SEQ_EXP_ABSENT_HIGH_SELF_COUNT:
-//                stmt.setInt(paramIndex, callTO.getRNASeqExpAbsentHighSelfCount());
-//                paramIndex++;
-//                break;
-//            case RNA_SEQ_EXP_ABSENT_LOW_SELF_COUNT:
-//                stmt.setInt(paramIndex, callTO.getRNASeqExpAbsentLowSelfCount());
-//                paramIndex++;
-//                break;
-//            case RNA_SEQ_EXP_PRESENT_HIGH_DESCENDANT_COUNT:
-//                stmt.setInt(paramIndex, callTO.getRNASeqExpPresentHighDescendantCount());
-//                paramIndex++;
-//                break;
-//            case RNA_SEQ_EXP_PRESENT_LOW_DESCENDANT_COUNT:
-//                stmt.setInt(paramIndex, callTO.getRNASeqExpPresentLowDescendantCount());
-//                paramIndex++;
-//                break;
-//            case RNA_SEQ_EXP_ABSENT_HIGH_PARENT_COUNT:
-//                stmt.setInt(paramIndex, callTO.getRNASeqExpAbsentHighParentCount());
-//                paramIndex++;
-//                break;
-//            case RNA_SEQ_EXP_ABSENT_LOW_PARENT_COUNT:
-//                stmt.setInt(paramIndex, callTO.getRNASeqExpAbsentLowParentCount());
-//                paramIndex++;
-//                break;
-//            case RNA_SEQ_EXP_PRESENT_HIGH_TOTAL_COUNT:
-//                stmt.setInt(paramIndex, callTO.getRNASeqExpPresentHighTotalCount());
-//                paramIndex++;
-//                break;
-//            case RNA_SEQ_EXP_PRESENT_LOW_TOTAL_COUNT:
-//                stmt.setInt(paramIndex, callTO.getRNASeqExpPresentLowTotalCount());
-//                paramIndex++;
-//                break;
-//            case RNA_SEQ_EXP_ABSENT_HIGH_TOTAL_COUNT:
-//                stmt.setInt(paramIndex, callTO.getRNASeqExpAbsentHighTotalCount());
-//                paramIndex++;
-//                break;
-//            case RNA_SEQ_EXP_ABSENT_LOW_TOTAL_COUNT:
-//                stmt.setInt(paramIndex, callTO.getRNASeqExpAbsentLowTotalCount());
-//                paramIndex++;
-//                break;
-//            case RNA_SEQ_EXP_PROPAGATED_COUNT:
-//                stmt.setInt(paramIndex, callTO.getRNASeqExpPropagatedCount());
-//                paramIndex++;
-//                break;
-//                
-//            case EST_LIB_PRESENT_HIGH_SELF_COUNT:
-//                stmt.setInt(paramIndex, callTO.getESTLibPresentHighSelfCount());
-//                paramIndex++;
-//                break;
-//            case EST_LIB_PRESENT_LOW_SELF_COUNT:
-//                stmt.setInt(paramIndex, callTO.getESTLibPresentLowSelfCount());
-//                paramIndex++;
-//                break;
-//            case EST_LIB_PRESENT_HIGH_DESCENDANT_COUNT:
-//                stmt.setInt(paramIndex, callTO.getESTLibPresentHighDescendantCount());
-//                paramIndex++;
-//                break;
-//            case EST_LIB_PRESENT_LOW_DESCENDANT_COUNT:
-//                stmt.setInt(paramIndex, callTO.getESTLibPresentLowDescendantCount());
-//                paramIndex++;
-//                break;
-//            case EST_LIB_PRESENT_HIGH_TOTAL_COUNT:
-//                stmt.setInt(paramIndex, callTO.getESTLibPresentHighTotalCount());
-//                paramIndex++;
-//                break;
-//            case EST_LIB_PRESENT_LOW_TOTAL_COUNT:
-//                stmt.setInt(paramIndex, callTO.getESTLibPresentLowTotalCount());
-//                paramIndex++;
-//                break;
-//            case EST_LIB_PROPAGATED_COUNT:
-//                stmt.setInt(paramIndex, callTO.getESTLibPropagatedCount());
-//                paramIndex++;
-//                break;
-//                
-//            case IN_SITU_EXP_PRESENT_HIGH_SELF_COUNT:
-//                stmt.setInt(paramIndex, callTO.getInSituExpPresentHighSelfCount());
-//                paramIndex++;
-//                break;
-//            case IN_SITU_EXP_PRESENT_LOW_SELF_COUNT:
-//                stmt.setInt(paramIndex, callTO.getInSituExpPresentLowSelfCount());
-//                paramIndex++;
-//                break;
-//            case IN_SITU_EXP_ABSENT_HIGH_SELF_COUNT:
-//                stmt.setInt(paramIndex, callTO.getInSituExpAbsentHighSelfCount());
-//                paramIndex++;
-//                break;
-//            case IN_SITU_EXP_ABSENT_LOW_SELF_COUNT:
-//                stmt.setInt(paramIndex, callTO.getInSituExpAbsentLowSelfCount());
-//                paramIndex++;
-//                break;
-//            case IN_SITU_EXP_PRESENT_HIGH_DESCENDANT_COUNT:
-//                stmt.setInt(paramIndex, callTO.getInSituExpPresentHighDescendantCount());
-//                paramIndex++;
-//                break;
-//            case IN_SITU_EXP_PRESENT_LOW_DESCENDANT_COUNT:
-//                stmt.setInt(paramIndex, callTO.getInSituExpPresentLowDescendantCount());
-//                paramIndex++;
-//                break;
-//            case IN_SITU_EXP_ABSENT_HIGH_PARENT_COUNT:
-//                stmt.setInt(paramIndex, callTO.getInSituExpAbsentHighParentCount());
-//                paramIndex++;
-//                break;
-//            case IN_SITU_EXP_ABSENT_LOW_PARENT_COUNT:
-//                stmt.setInt(paramIndex, callTO.getInSituExpAbsentLowParentCount());
-//                paramIndex++;
-//                break;
-//            case IN_SITU_EXP_PRESENT_HIGH_TOTAL_COUNT:
-//                stmt.setInt(paramIndex, callTO.getInSituExpPresentHighTotalCount());
-//                paramIndex++;
-//                break;
-//            case IN_SITU_EXP_PRESENT_LOW_TOTAL_COUNT:
-//                stmt.setInt(paramIndex, callTO.getInSituExpPresentLowTotalCount());
-//                paramIndex++;
-//                break;
-//            case IN_SITU_EXP_ABSENT_HIGH_TOTAL_COUNT:
-//                stmt.setInt(paramIndex, callTO.getInSituExpAbsentHighTotalCount());
-//                paramIndex++;
-//                break;
-//            case IN_SITU_EXP_ABSENT_LOW_TOTAL_COUNT:
-//                stmt.setInt(paramIndex, callTO.getInSituExpAbsentLowTotalCount());
-//                paramIndex++;
-//                break;
-//            case IN_SITU_EXP_PROPAGATED_COUNT:
-//                stmt.setInt(paramIndex, callTO.getInSituExpPropagatedCount());
-//                paramIndex++;
-//                break;
-//                
-//            case AFFYMETRIX_MEAN_RANK:
-//                stmt.setBigDecimal(paramIndex, callTO.getAffymetrixMeanRank());
-//                paramIndex++;
-//                break;
-//            case RNA_SEQ_MEAN_RANK:
-//                stmt.setBigDecimal(paramIndex, callTO.getRNASeqMeanRank());
-//                paramIndex++;
-//                break;
-//            case EST_RANK:
-//                stmt.setBigDecimal(paramIndex, callTO.getESTRank());
-//                paramIndex++;
-//                break;
-//            case IN_SITU_RANK:
-//                stmt.setBigDecimal(paramIndex, callTO.getInSituRank());
-//                paramIndex++;
-//                break;
-//            case AFFYMETRIX_MEAN_RANK_NORM:
-//                stmt.setBigDecimal(paramIndex, callTO.getAffymetrixMeanRankNorm());
-//                paramIndex++;
-//                break;
-//            case RNA_SEQ_MEAN_RANK_NORM:
-//                stmt.setBigDecimal(paramIndex, callTO.getRNASeqMeanRankNorm());
-//                paramIndex++;
-//                break;
-//            case EST_RANK_NORM:
-//                stmt.setBigDecimal(paramIndex, callTO.getESTRankNorm());
-//                paramIndex++;
-//                break;
-//            case IN_SITU_RANK_NORM:
-//                stmt.setBigDecimal(paramIndex, callTO.getInSituRankNorm());
-//                paramIndex++;
-//                break;
-//            case AFFYMETRIX_DISTINCT_RANK_SUM:
-//                stmt.setBigDecimal(paramIndex, callTO.getAffymetrixDistinctRankSum());
-//                paramIndex++;
-//                break;
-//            case RNA_SEQ_DISTINCT_RANK_SUM:
-//                stmt.setBigDecimal(paramIndex, callTO.getRNASeqDistinctRankSum());
-//                paramIndex++;
-//                break;
+
             default:
                 throw log.throwing(new IllegalStateException("Unsupported attribute: " + a));
             }
@@ -560,24 +345,25 @@ implements GlobalExpressionCallDAO {
         //if we need both to use the gene table and the globalCond table,
         //so we link them using the speciesId field, to make one common join
         //to the globalExpression table afterwards.
-        // XXX: I remove usage of gene table when it is not needed because in reality,
+        // We filter genes based on the bgeeGeneId rather than the Ensembl geneId,
+        // to avoid joins to gene table when it is not needed because in reality,
         // at the time of writing, queries take much more time. For instance,
         // to retrieve calls of the zebrafish, using gene table it took 22 minutes 
         // while without gene table it took 3 minutes.
         sb.append("globalCond AS ").append(globalCondTableName);
-
-        if (isOrderByOMANodeId)  {
-            sb.append(" INNER JOIN ");
-            sb.append("gene AS ").append(geneTableName);
-            sb.append(" ON ").append(geneTableName).append(".").append(MySQLGeneDAO.BGEE_GENE_ID)
-                .append(" = ").append(globalCondTableName).append(".").append(MySQLGeneDAO.BGEE_GENE_ID);
-        }
 
         sb.append(" INNER JOIN ");
         sb.append("globalExpression AS ").append(globalExprTableName);
         sb.append(" ON ").append(globalCondTableName).append(".")
                   .append(MySQLConditionDAO.GLOBAL_COND_ID_FIELD).append(" = ")
                   .append(globalExprTableName).append(".").append(MySQLConditionDAO.GLOBAL_COND_ID_FIELD);
+
+        if (isOrderByOMANodeId)  {
+            sb.append(" INNER JOIN ");
+            sb.append("gene AS ").append(geneTableName);
+            sb.append(" ON ").append(geneTableName).append(".").append(MySQLGeneDAO.BGEE_GENE_ID)
+                .append(" = ").append(globalExprTableName).append(".").append(MySQLGeneDAO.BGEE_GENE_ID);
+        }
 
         if (observedConditionFiltering) {
             //we want to filter for observed organs/stages without considering the species,
@@ -1119,7 +905,7 @@ implements GlobalExpressionCallDAO {
 
         StringBuilder sb = new StringBuilder();
         sb.append(generateSelectClause(clonedAttrs, clonedOrderingAttrs.keySet(), dataTypes,
-                globalExprTableName, globalCondTableName, geneTableName));
+                globalExprTableName, globalCondTableName, geneTableName, observedConditionFilter));
         sb.append(generateTableReferences(globalExprTableName, globalCondTableName, condTableName,
                 geneTableName, observedConditionFilter,
                 clonedOrderingAttrs.containsKey(GlobalExpressionCallDAO.OrderingAttribute.OMA_GROUP_ID)));
@@ -1614,7 +1400,11 @@ implements GlobalExpressionCallDAO {
                 } else if ("affymetrixDistinctRankSum".equals(columnName) &&
                         DAODataType.AFFYMETRIX.equals(dataType) ||
                     "rnaSeqDistinctRankSum".equals(columnName) &&
-                        DAODataType.RNA_SEQ.equals(dataType)) {
+                        DAODataType.RNA_SEQ.equals(dataType) ||
+                    "estMaxRank".equals(columnName) &&
+                        DAODataType.EST.equals(dataType) ||
+                    "inSituMaxRank".equals(columnName) &&
+                        DAODataType.IN_SITU.equals(dataType)) {
 
                     weightForMeanRank = currentResultSet.getBigDecimal(columnName);
                     infoFound = true;

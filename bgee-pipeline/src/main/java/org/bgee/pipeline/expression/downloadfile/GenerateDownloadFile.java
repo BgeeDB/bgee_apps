@@ -23,7 +23,7 @@ import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.file.DownloadFile.CategoryEnum;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
-import org.bgee.pipeline.expression.CallUser;
+import org.bgee.pipeline.MySQLDAOUser;
 
 
 /**
@@ -35,7 +35,7 @@ import org.bgee.pipeline.expression.CallUser;
  * @version Bgee 13
  * @since Bgee 13
  */
-public abstract class GenerateDownloadFile extends CallUser {
+public abstract class GenerateDownloadFile extends MySQLDAOUser {
     
     /**
      * {@code Logger} of the class.

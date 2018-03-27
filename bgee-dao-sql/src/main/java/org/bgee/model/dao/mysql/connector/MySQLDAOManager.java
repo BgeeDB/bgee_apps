@@ -42,9 +42,7 @@ import org.bgee.model.dao.mysql.anatdev.mapping.MySQLSummarySimilarityAnnotation
 import org.bgee.model.dao.mysql.expressiondata.MySQLConditionDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLDiffExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLExperimentExpressionDAO;
-import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLGlobalExpressionCallDAO;
-import org.bgee.model.dao.mysql.expressiondata.MySQLNoExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLRawExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.affymetrix.MySQLAffymetrixProbesetDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituSpotDAO;
@@ -1022,16 +1020,6 @@ public class MySQLDAOManager extends DAOManager {
     protected MySQLRelationDAO getNewRelationDAO() {
         log.entry();
         return log.exit(new MySQLRelationDAO(this));
-    }
-    @Override
-    protected MySQLExpressionCallDAO getNewExpressionCallDAO() {
-        log.entry();
-        return log.exit(new MySQLExpressionCallDAO(this));
-    }
-    @Override
-    protected MySQLNoExpressionCallDAO getNewNoExpressionCallDAO() {
-        log.entry();
-        return log.exit(new MySQLNoExpressionCallDAO(this));
     }
     @Override
     protected MySQLRawExpressionCallDAO getNewRawExpressionCallDAO() {

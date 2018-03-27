@@ -21,7 +21,6 @@ import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.ComparisonFactor;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.DiffExprCallType;
-import org.bgee.model.dao.api.expressiondata.DiffExpressionCallParams;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.file.DownloadFile.CategoryEnum;
 import org.bgee.pipeline.BgeeDBUtils;
@@ -601,24 +600,24 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         //do not retrieve the internal diff. expression IDs
         dao.setAttributes(EnumSet.complementOf(EnumSet.of(DiffExpressionCallDAO.Attribute.ID)));
     
-        DiffExpressionCallParams params = new DiffExpressionCallParams();
-        params.addAllSpeciesIds(speciesIds);
-        params.setComparisonFactor(factor);
-        // If the advanced file won't be generated, we do not retrieve calls without at least
-        // one data type with over- or under-expression. 
-        if (!generateAdvancedFile) {
-            params.setSatisfyAllCallTypeConditions(false);
-            params.setIncludeAffymetrixTypes(true);
-            params.addAllAffymetrixDiffExprCallTypes(
-                    EnumSet.of(DiffExprCallType.OVER_EXPRESSED, DiffExprCallType.UNDER_EXPRESSED));
-            params.setIncludeRNASeqTypes(true);
-            params.addAllRNASeqDiffExprCallTypes(
-                    EnumSet.of(DiffExprCallType.OVER_EXPRESSED, DiffExprCallType.UNDER_EXPRESSED));
-        }
-        
-        List<DiffExpressionCallTO> diffExpressionCallTOs = 
-                dao.getDiffExpressionCalls(params).getAllTOs();
-
+//        DiffExpressionCallParams params = new DiffExpressionCallParams();
+//        params.addAllSpeciesIds(speciesIds);
+//        params.setComparisonFactor(factor);
+//        // If the advanced file won't be generated, we do not retrieve calls without at least
+//        // one data type with over- or under-expression. 
+//        if (!generateAdvancedFile) {
+//            params.setSatisfyAllCallTypeConditions(false);
+//            params.setIncludeAffymetrixTypes(true);
+//            params.addAllAffymetrixDiffExprCallTypes(
+//                    EnumSet.of(DiffExprCallType.OVER_EXPRESSED, DiffExprCallType.UNDER_EXPRESSED));
+//            params.setIncludeRNASeqTypes(true);
+//            params.addAllRNASeqDiffExprCallTypes(
+//                    EnumSet.of(DiffExprCallType.OVER_EXPRESSED, DiffExprCallType.UNDER_EXPRESSED));
+//        }
+//        
+//        List<DiffExpressionCallTO> diffExpressionCallTOs = 
+//                dao.getDiffExpressionCalls(params).getAllTOs();
+        List<DiffExpressionCallTO> diffExpressionCallTOs =  null;
         log.debug("Done retrieving global expression calls, {} calls found", 
                 diffExpressionCallTOs.size());
         

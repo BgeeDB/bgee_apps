@@ -47,7 +47,6 @@ import org.semanticweb.owlapi.model.OWLObjectIntersectionOf;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLPropertyExpression;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
 import org.semanticweb.owlapi.search.EntitySearcher;
 import org.supercsv.cellprocessor.FmtBool;
@@ -532,7 +531,7 @@ public class SimilarityAnnotation {
             }
             new SimilarityAnnotation(CommandRunner.parseArgument(args[1]), 
                     CommandRunner.parseMapArgumentAsInteger(args[2]).entrySet().stream()
-                    .collect(Collectors.toMap(Entry::getKey, e -> new HashSet<Integer>(e.getValue()))), 
+                    .collect(Collectors.toMap(Entry::getKey, e -> new HashSet<>(e.getValue()))), 
                     args[3], args[4], args[5], args[6], args[7]).generateReleaseFiles(
                             args[8], args[9], args[10], args[11]);
         } else {
@@ -1116,7 +1115,7 @@ public class SimilarityAnnotation {
         //now, identify all entities used in our annotations, with no transformation_of relation
         Set<String> anatEntityIds = 
                 AnnotationCommon.extractAnatEntityIdsFromFile(annotFile, false);
-        Set<OWLClass> withNoTransfOf = new HashSet<OWLClass>();
+        Set<OWLClass> withNoTransfOf = new HashSet<>();
         anatEntities: for (String anatEntityId: anatEntityIds) {
             OWLClass anatEntity = uberonOntWrapper.getOWLClassByIdentifier(
                     anatEntityId.trim(), true);
@@ -1201,7 +1200,7 @@ public class SimilarityAnnotation {
         //we load all relations related to "developmentally related to".
         OWLObjectProperty dvlptRel = 
                 uberonOntWrapper.getOWLObjectProperty(OntologyUtils.DEVELOPMENTALLY_RELATED_TO_IRI);
-        Set<OWLObjectPropertyExpression> dvlptRels = new HashSet<OWLObjectPropertyExpression>();
+        Set<OWLObjectPropertyExpression> dvlptRels = new HashSet<>();
         if (dvlptRel != null) {
             dvlptRels = uberonOntWrapper.getSubPropertyReflexiveClosureOf(dvlptRel);
         } 
@@ -1402,14 +1401,14 @@ public class SimilarityAnnotation {
             OWLGraphWrapper uberonOntWrapper, OWLGraphWrapper taxOntWrapper, 
             OWLGraphWrapper homOntWrapper, OWLGraphWrapper ecoOntWrapper, 
             OWLGraphWrapper confOntWrapper) {
-        this.missingUberonIds = new HashSet<String>();
-        this.missingTaxonIds = new HashSet<Integer>();
-        this.missingECOIds = new HashSet<String>();
-        this.missingHOMIds = new HashSet<String>();
-        this.missingCONFIds = new HashSet<String>();
-        this.duplicates = new HashSet<AnnotationBean>();
-        this.incorrectFormat = new HashSet<AnnotationBean>();
-        this.idsNotExistingInTaxa = new HashMap<String, Set<Integer>>();
+        this.missingUberonIds = new HashSet<>();
+        this.missingTaxonIds = new HashSet<>();
+        this.missingECOIds = new HashSet<>();
+        this.missingHOMIds = new HashSet<>();
+        this.missingCONFIds = new HashSet<>();
+        this.duplicates = new HashSet<>();
+        this.incorrectFormat = new HashSet<>();
+        this.idsNotExistingInTaxa = new HashMap<>();
         
         this.taxonConstraints = taxonConstraints;
         this.uberonOntWrapper = uberonOntWrapper;
@@ -1519,18 +1518,16 @@ public class SimilarityAnnotation {
         //* Also, if there is a negative annotation about a structure in a taxon, 
         //most likely there should be positive annotations for the same structure in sub-taxa.
         boolean checkPosNegAnnots = false;
-        Map<RawAnnotationBean, Set<Integer>> positiveAnnotsToTaxa = 
-                new HashMap<RawAnnotationBean, Set<Integer>>();
-        Map<RawAnnotationBean, Set<Integer>> negativeAnnotsToTaxa = 
-                new HashMap<RawAnnotationBean, Set<Integer>>();
+        Map<RawAnnotationBean, Set<Integer>> positiveAnnotsToTaxa = new HashMap<>();
+        Map<RawAnnotationBean, Set<Integer>> negativeAnnotsToTaxa = new HashMap<>();
         
         //Also, we will look for potentially duplicated annotations. We will search for 
         //exact duplicates, and potential duplicates (see below).
-        Set<RawAnnotationBean> checkExactDuplicates = new HashSet<RawAnnotationBean>();
-        Set<RawAnnotationBean> checkPotentialDuplicates = new HashSet<RawAnnotationBean>();
+        Set<RawAnnotationBean> checkExactDuplicates = new HashSet<>();
+        Set<RawAnnotationBean> checkPotentialDuplicates = new HashSet<>();
         //Also, SUMMARY and ANCESTRAL TAXA annotations should be unique over same 
         //HOM ID - Uberon IDs - taxon ID
-        Set<RawAnnotationBean> homEntityTaxDuplicates = new HashSet<RawAnnotationBean>();
+        Set<RawAnnotationBean> homEntityTaxDuplicates = new HashSet<>();
         
         //for ANCESTRAL TAXA annotations, we can have annotations with same HOM ID - entity IDs 
         //and different taxa, in case of independent evolution, but we should never have 
@@ -1538,8 +1535,7 @@ public class SimilarityAnnotation {
         //We will use a Map where keys are RawAnnotationBean 
         //storing HOM ID - entity IDs, the associated value being Set of Integers 
         //that are the taxon IDs associated.
-        Map<RawAnnotationBean, Set<Integer>> annotsToAncestralTaxa = 
-                new HashMap<RawAnnotationBean, Set<Integer>>();
+        Map<RawAnnotationBean, Set<Integer>> annotsToAncestralTaxa = new HashMap<>();
         
         //first pass, check each annotation
         Set<Integer> taxonIds = null;
@@ -1605,7 +1601,7 @@ public class SimilarityAnnotation {
             if (annot instanceof AncestralTaxaAnnotationBean) {
                 Set<Integer> ancestralTaxa = annotsToAncestralTaxa.get(annotToAncestralTaxa);
                 if (ancestralTaxa == null) {
-                    ancestralTaxa = new HashSet<Integer>();
+                    ancestralTaxa = new HashSet<>();
                     annotsToAncestralTaxa.put(annotToAncestralTaxa, ancestralTaxa);
                 }
                 ancestralTaxa.add(annot.getNcbiTaxonId());
@@ -1622,7 +1618,7 @@ public class SimilarityAnnotation {
             }
             Set<Integer> taxIds = posOrNegAnnotsToTaxa.get(keyBean);
             if (taxIds == null) {
-                taxIds = new HashSet<Integer>();
+                taxIds = new HashSet<>();
                 posOrNegAnnotsToTaxa.put(keyBean, taxIds);
             }
             taxIds.add(annot.getNcbiTaxonId());
@@ -1633,7 +1629,7 @@ public class SimilarityAnnotation {
         for (Entry<RawAnnotationBean, Set<Integer>> annotToAncestralTaxa: 
             annotsToAncestralTaxa.entrySet()) {
             //retrieve the taxa as OWLClasses
-            Set<OWLClass> ancestralTaxClasses = new HashSet<OWLClass>();
+            Set<OWLClass> ancestralTaxClasses = new HashSet<>();
             for (int taxId: annotToAncestralTaxa.getValue()) {
                 ancestralTaxClasses.add(taxOntWrapper.getOWLClassByIdentifier(
                         OntologyUtils.getTaxOntologyId(taxId), true));
@@ -1682,7 +1678,8 @@ public class SimilarityAnnotation {
                 log.warn("Potentially missing annotation(s)! There exist negative annotation(s) "
                         + "for HOM ID - Uberon ID: "
                         + missingNegativeAnnots.getKey().getHomId() + " - " 
-                        + missingNegativeAnnots.getKey().getEntityIds()
+                        + missingNegativeAnnots.getKey().getEntityIds() + " "
+                        + this.logUberonNames(missingNegativeAnnots.getKey().getEntityIds())
                         + " in taxon IDs: " 
                         + negativeAnnotsToTaxa.get(missingNegativeAnnots.getKey()) 
                         + " - There are also positive annotations in parent taxa for same "
@@ -1699,7 +1696,8 @@ public class SimilarityAnnotation {
                         + "in same taxon or in sub-taxa. Negative annotation(s) "
                         + "for HOM ID - Uberon ID: "
                         + missingNegativeAnnots.getKey().getHomId() + " - " 
-                        + missingNegativeAnnots.getKey().getEntityIds()
+                        + missingNegativeAnnots.getKey().getEntityIds() + " "
+                        + this.logUberonNames(missingNegativeAnnots.getKey().getEntityIds())
                         + " in taxon IDs: " 
                         + negativeAnnotsToTaxa.get(missingNegativeAnnots.getKey()) 
                         + " - There is no corresponding positive annotation "
@@ -1713,7 +1711,8 @@ public class SimilarityAnnotation {
                         + "(most likely, there should be several). Negative annotation(s) "
                         + "for HOM ID - Uberon ID: "
                         + missingNegativeAnnots.getKey().getHomId() + " - " 
-                        + missingNegativeAnnots.getKey().getEntityIds()
+                        + missingNegativeAnnots.getKey().getEntityIds()+ " "
+                        + this.logUberonNames(missingNegativeAnnots.getKey().getEntityIds())
                         + " in taxon IDs: " 
                         + negativeAnnotsToTaxa.get(missingNegativeAnnots.getKey()));
             }
@@ -1730,8 +1729,8 @@ public class SimilarityAnnotation {
                     check.setHomId(posAnnot.getHomId().trim());
                     check.setEntityIds(Arrays.asList(uberonId.trim()));
                     if (!positiveAnnotsToTaxa.containsKey(check)) {
-                        log.warn("An annotation uses multiple entity IDs, but there is no annotation for the individual entity: {} - annotation: {}", 
-                                uberonId, posAnnot);
+                        log.warn("An annotation uses multiple entity IDs, but there is no annotation for the individual entity: {} {} - annotation: {}", 
+                                uberonId, this.logUberonNames(Collections.singletonList(uberonId)),  posAnnot);
                     }
                 }
             }
@@ -2235,8 +2234,7 @@ public class SimilarityAnnotation {
             Map<RawAnnotationBean, Set<Integer>> negativeAnnotsToTaxa) {
         log.entry(positiveAnnotsToTaxa, negativeAnnotsToTaxa);
     
-        Map<RawAnnotationBean, Set<Integer>> missingNegativeAnnots = 
-                new HashMap<RawAnnotationBean, Set<Integer>>();
+        Map<RawAnnotationBean, Set<Integer>> missingNegativeAnnots = new HashMap<>();
         
         for (Entry<RawAnnotationBean, Set<Integer>> negativeAnnot: 
             negativeAnnotsToTaxa.entrySet()) {
@@ -2250,11 +2248,11 @@ public class SimilarityAnnotation {
                 continue;
             }
             //store in a new HashSet, as we will modify it
-            Set<Integer> positiveTaxIds = new HashSet<Integer>(positiveAnnotsToTaxa.get(key));
+            Set<Integer> positiveTaxIds = new HashSet<>(positiveAnnotsToTaxa.get(key));
             //identify the taxa used in corresponding positive annotations, that are parents 
             //of the taxa used in the negative annotation. 
             //First, we store all parents of the taxa associated to negative annotations.
-            Set<Integer> negativeParentTaxa = new HashSet<Integer>();
+            Set<Integer> negativeParentTaxa = new HashSet<>();
             for (int negativeTaxonId: negativeAnnot.getValue()) {
                 OWLClass taxCls = taxOntWrapper.getOWLClassByIdentifier(
                         OntologyUtils.getTaxOntologyId(negativeTaxonId), true);
@@ -2328,7 +2326,7 @@ public class SimilarityAnnotation {
         negAnnotsToFilteredTaxa.replaceAll((an, ta) -> {
             Set<OWLClass> taxa = ta.stream().map(t -> taxOntWrapper.getOWLClassByIdentifier(
                     OntologyUtils.getTaxOntologyId(t), true)).collect(Collectors.toSet());
-            utils.retainLeafClasses(taxa, new HashSet<OWLPropertyExpression>());
+            utils.retainLeafClasses(taxa, new HashSet<>());
             return taxa.stream().map(t -> OntologyUtils.getTaxNcbiId(
                     taxOntWrapper.getIdentifier(t))).collect(Collectors.toSet());
         });
@@ -2345,7 +2343,7 @@ public class SimilarityAnnotation {
             
             //First, we retrieve taxa associated to corresponding positive annotations.
             final Set<Integer> positiveTaxIds = positiveAnnotsToTaxa.containsKey(key)? 
-                    new HashSet<Integer>(positiveAnnotsToTaxa.get(key)): new HashSet<Integer>();
+                    new HashSet<>(positiveAnnotsToTaxa.get(key)): new HashSet<>();
             log.trace("Taxa with corresponding positive annotations: {}", positiveTaxIds);
 
             //check each taxon of the negative annot
@@ -2384,14 +2382,14 @@ public class SimilarityAnnotation {
                             .map(t -> taxOntWrapper.getOWLClassByIdentifier(
                                     OntologyUtils.getTaxOntologyId(t), true))
                             .collect(Collectors.toSet());
-                    utils.retainLeafClasses(leafTaxa, new HashSet<OWLPropertyExpression>());
+                    utils.retainLeafClasses(leafTaxa, new HashSet<>());
                     
                     toWarn = leafTaxa.size() == 1;
                 }
                 if (toWarn) {   
                     Set<Integer> storeTaxa = negAnnotsWithMissingPosAnnots.get(key);
                     if (storeTaxa == null) {
-                        storeTaxa = new HashSet<Integer>();
+                        storeTaxa = new HashSet<>();
                         negAnnotsWithMissingPosAnnots.put(key, storeTaxa);
                     }
                     
@@ -2431,7 +2429,8 @@ public class SimilarityAnnotation {
                 errorMsg += Utils.CR + "Problem detected, unknown or deprecated Uberon IDs: " + 
                         Utils.CR;
                 for (String uberonId: this.missingUberonIds) {
-                    errorMsg += uberonId + Utils.CR;
+                    errorMsg += uberonId + " " + this.logUberonNames(Collections.singletonList(uberonId))
+                            + " - " + Utils.CR;
                 }
             }
             if (!this.missingTaxonIds.isEmpty()) {
@@ -2446,7 +2445,9 @@ public class SimilarityAnnotation {
                         "there are not supposed to exist in: " + Utils.CR;
                 for (Entry<String, Set<Integer>> entry: this.idsNotExistingInTaxa.entrySet()) {
                     for (int taxonId: entry.getValue()) {
-                        errorMsg += entry.getKey() + " - " + taxonId + Utils.CR;
+                        errorMsg += entry.getKey() + " " 
+                                + this.logUberonNames(Collections.singletonList(entry.getKey())) 
+                                + " - " + taxonId + Utils.CR;
                     }
                 }
             }
@@ -2531,7 +2532,7 @@ public class SimilarityAnnotation {
 
         this.checkAnnotations(annots, false);
         //store annots in a new collection to not modify the collection passed as argument
-        Set<CuratorAnnotationBean> filteredAnnots = new HashSet<CuratorAnnotationBean>(annots);
+        Set<CuratorAnnotationBean> filteredAnnots = new HashSet<>(annots);
         //infer new annotations
         Set<CuratorAnnotationBean> inferredAnnots = 
                 this.generateInferredAnnotations(filteredAnnots);
@@ -2541,7 +2542,7 @@ public class SimilarityAnnotation {
         filteredAnnots.addAll(inferredAnnots);
         
         //Generate RAW annotations
-        Set<RawAnnotationBean> rawAnnots = new HashSet<RawAnnotationBean>();
+        Set<RawAnnotationBean> rawAnnots = new HashSet<>();
         for (CuratorAnnotationBean curatorAnnot: filteredAnnots) {
             rawAnnots.add(this.createRawAnnotWithExtraInfo(curatorAnnot));
         }
@@ -2552,7 +2553,7 @@ public class SimilarityAnnotation {
         
         //check and sort annotations generated 
         this.checkAnnotations(rawAnnots, false);
-        List<RawAnnotationBean> sortedRawAnnots = new ArrayList<RawAnnotationBean>(rawAnnots);
+        List<RawAnnotationBean> sortedRawAnnots = new ArrayList<>(rawAnnots);
         Collections.sort(sortedRawAnnots, SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR);
         
         return log.exit(sortedRawAnnots);
@@ -2621,24 +2622,8 @@ public class SimilarityAnnotation {
         //*** Add labels ***
         
         //get the corresponding names
-        List<String> uberonNames = new ArrayList<String>();
-        for (String uberonId: entityIds) {
-            //it is the responsibility of the checkAnnotation method to make sure 
-            //the Uberon IDs exist, so we accept null values, it's not our job here.
-            if (uberonId == null) {
-                continue;
-            }
-            OWLClass cls = uberonOntWrapper.getOWLClassByIdentifier(uberonId, true);
-            if (cls != null) {
-                String name = uberonOntWrapper.getLabel(cls);
-                if (name != null) {
-                    uberonNames.add(name.trim());
-                } else {
-                    //it is important to have as many names as Uberon IDs
-                    uberonNames.add("");
-                }
-            }
-        }
+        List<String> uberonNames = this.getOntNames(entityIds, uberonOntWrapper);
+        
         //store Uberon names
         rawAnnot.setEntityNames(uberonNames);
         
@@ -2689,6 +2674,32 @@ public class SimilarityAnnotation {
         }
         
         return log.exit(rawAnnot);
+    }
+
+    private String logUberonNames(List<String> entityIds) {
+        return this.getOntNames(entityIds, uberonOntWrapper).stream().collect(Collectors.joining(", ", "(", ")"));
+    }
+
+    private List<String> getOntNames(List<String> entityIds, OWLGraphWrapper ontWrapper) {
+        List<String> entityNames = new ArrayList<>();
+        for (String entityId: entityIds) {
+            //it is the responsibility of the checkAnnotation method to make sure 
+            //the IDs exist, so we accept null values, it's not our job here.
+            if (entityId == null) {
+                continue;
+            }
+            OWLClass cls = ontWrapper.getOWLClassByIdentifier(entityId, true);
+            if (cls != null) {
+                String name = ontWrapper.getLabel(cls);
+                if (name != null) {
+                    entityNames.add(name.trim());
+                } else {
+                    //it is important to have as many names as Uberon IDs
+                    entityNames.add("");
+                }
+            }
+        }
+        return entityNames;
     }
 
     /**
@@ -2799,7 +2810,7 @@ public class SimilarityAnnotation {
             for (CuratorAnnotationBean newAnnot: newAnnots) {
                 Set<CuratorAnnotationBean> sourceAnnots = inferredAnnots.get(newAnnot);
                 if (sourceAnnots == null) {
-                    sourceAnnots = new HashSet<CuratorAnnotationBean>();
+                    sourceAnnots = new HashSet<>();
                     inferredAnnots.put(newAnnot, sourceAnnots);
                 }
                 sourceAnnots.add(annot);
@@ -2812,8 +2823,8 @@ public class SimilarityAnnotation {
             log.trace("Inferred annot and source annots: {}", inferredAnnot);
             
             //retrieve from source annotations CIO statements and information about Entity IDs.
-            Set<OWLClass> cioStatements = new HashSet<OWLClass>();
-            List<String> supportingTextElements = new ArrayList<String>();
+            Set<OWLClass> cioStatements = new HashSet<>();
+            List<String> supportingTextElements = new ArrayList<>();
             for (CuratorAnnotationBean sourceAnnot: inferredAnnot.getValue()) {
                 
                 cioStatements.add(cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
@@ -2848,7 +2859,7 @@ public class SimilarityAnnotation {
         log.info("Done inferring annotations based on transformation_of relations, {} annotations inferred.", 
                 inferredAnnots.size());
         //the keyset is unmodifiable, wrap it into a new HashSet
-        return log.exit(new HashSet<CuratorAnnotationBean>(inferredAnnots.keySet()));
+        return log.exit(new HashSet<>(inferredAnnots.keySet()));
     }
     
     /**
@@ -2869,7 +2880,7 @@ public class SimilarityAnnotation {
         throws IllegalArgumentException{
         log.entry(annots);
         
-        Set<T> filteredAnnots = new HashSet<T>();
+        Set<T> filteredAnnots = new HashSet<>();
         for (T annot: annots) {
             if (annot.getCioId() == null) {
                 throw log.throwing(new IllegalArgumentException("All provided annotations "
@@ -2922,7 +2933,7 @@ public class SimilarityAnnotation {
             Set<OWLObjectPropertyExpression> transfOfRels) {
         log.entry(annot, outgoingEdges, existingAnnots, transfOfRels);
         
-        Set<CuratorAnnotationBean> inferredAnnots = new HashSet<CuratorAnnotationBean>();
+        Set<CuratorAnnotationBean> inferredAnnots = new HashSet<>();
         
         //we will walk direct transformation_of relations
         CuratorAnnotationBean annotToInfer = annot;
@@ -2933,10 +2944,10 @@ public class SimilarityAnnotation {
             //we retrieve the transformation_of targets/sources of each Uberon ID 
             //of the annotation.
             //uberon ID -> target/source IDs
-            Map<String, Set<String>> mapTransfOfEntities = new HashMap<String, Set<String>>();
+            Map<String, Set<String>> mapTransfOfEntities = new HashMap<>();
             for (String uberonId: annotToInfer.getEntityIds()) {
                 uberonId = uberonId.trim();
-                Set<String> targetOrSourceIds = new HashSet<String>();
+                Set<String> targetOrSourceIds = new HashSet<>();
                 mapTransfOfEntities.put(uberonId, targetOrSourceIds);
                 
                 OWLClass anatEntity = uberonOntWrapper.getOWLClassByIdentifier(
@@ -3044,7 +3055,7 @@ public class SimilarityAnnotation {
             Collection<CuratorAnnotationBean> annots) {
         log.entry(annots);
         
-        Set<CuratorAnnotationBean> existingAnnots = new HashSet<CuratorAnnotationBean>();
+        Set<CuratorAnnotationBean> existingAnnots = new HashSet<>();
         for (CuratorAnnotationBean annot: annots) {
             //discard annotations with rejected CIO statement
             if (annot.getCioId() != null) {
@@ -3091,7 +3102,7 @@ public class SimilarityAnnotation {
         //first, we filter the annotations.
         //XXX: this method currently uses only annotations of historical homology, 
         //this should be reconsidered if we used other HOM concepts.
-        Set<CuratorAnnotationBean> filteredAnnots = new HashSet<CuratorAnnotationBean>();
+        Set<CuratorAnnotationBean> filteredAnnots = new HashSet<>();
         for (CuratorAnnotationBean annot: annots) {
             if (HISTORICAL_HOMOLOGY_ID.equals(annot.getHomId().trim())) {
                 filteredAnnots.add(annot);
@@ -3120,14 +3131,14 @@ public class SimilarityAnnotation {
         
         
         //OK, infer annotations.
-        Set<CuratorAnnotationBean> inferredAnnots = new HashSet<CuratorAnnotationBean>();
+        Set<CuratorAnnotationBean> inferredAnnots = new HashSet<>();
         
         for (Entry<String, Set<String>> intersectEntry: intersectMapping.entrySet()) {
             log.trace("Try to infer annotations for class {} based on intersecting classes {}", 
                     intersectEntry.getKey(), intersectEntry.getValue());
             
             //first we retrieve the taxa used in the related annotations.
-            Set<Integer> taxIds = new HashSet<Integer>();
+            Set<Integer> taxIds = new HashSet<>();
             for (String intersectClsId: intersectEntry.getValue()) {
                 for (CuratorAnnotationBean relatedAnnot: entityIdToAnnots.get(intersectClsId.trim())) {
                     taxIds.add(relatedAnnot.getNcbiTaxonId());
@@ -3182,9 +3193,9 @@ public class SimilarityAnnotation {
                     this.getAllAnnotsToIntersectClasses(entityIdToAnnots, 
                             intersectEntry.getValue())) {
                     //taxon IDs used in multiple-entities positive annotations
-                    Set<Integer> multEntTaxa = new HashSet<Integer>();
+                    Set<Integer> multEntTaxa = new HashSet<>();
                     //taxon IDs used in single-entity positive annotations
-                    Set<Integer> singleEntTaxa = new HashSet<Integer>();
+                    Set<Integer> singleEntTaxa = new HashSet<>();
                     for (CuratorAnnotationBean annotFromGroup: groupedAnnots) {
                         assert annotFromGroup.getEntityIds().size() > 0;
                         if (annotFromGroup.isNegated()) {
@@ -3198,14 +3209,14 @@ public class SimilarityAnnotation {
                     }
                     //store IDs of taxon equal to taxId or to any of its ancestor, used 
                     //in single-entity positive annotations
-                    Set<Integer> singleEntToSelfOrAncestor = new HashSet<Integer>(singleEntTaxa);
+                    Set<Integer> singleEntToSelfOrAncestor = new HashSet<>(singleEntTaxa);
                     singleEntToSelfOrAncestor.retainAll(taxToSelfAndAncestors.get(taxId));
                     //store IDs of taxon equal to taxId or to any of its ancestor, used 
                     //in multiple-entity positive annotations
-                    Set<Integer> multEntToSelfOrAncestor = new HashSet<Integer>(multEntTaxa);
+                    Set<Integer> multEntToSelfOrAncestor = new HashSet<>(multEntTaxa);
                     multEntToSelfOrAncestor.retainAll(taxToSelfAndAncestors.get(taxId));
                     //store IDs of taxa children of taxId, used in single-entity positive annotations
-                    Set<Integer> singleEntToChild = new HashSet<Integer>(singleEntTaxa);
+                    Set<Integer> singleEntToChild = new HashSet<>(singleEntTaxa);
                     for (int singleEntTaxon: singleEntTaxa) {
                         if (singleEntTaxon != taxId && 
                                 taxToSelfAndAncestors.get(singleEntTaxon).contains(taxId)) {
@@ -3235,7 +3246,7 @@ public class SimilarityAnnotation {
                         new HashMap<Set<String>, Set<Set<CuratorAnnotationBean>>>();
                 //and first, we store the currently iterated entity
                 entityIdsToAnnotsPerIntersectClass.put(
-                        new HashSet<String>(Arrays.asList(intersectEntry.getKey())), 
+                        new HashSet<>(Arrays.asList(intersectEntry.getKey())), 
                         annotsPerIntersectClass);
                 //try to infer new mappings
                 this.loadEntityIdsToAnnotsPerIntersectClass(entityIdsToAnnotsPerIntersectClass, 
@@ -3305,7 +3316,7 @@ public class SimilarityAnnotation {
         log.entry(annots);
         log.trace("Filtering inferred annotations...");
         
-        Set<CuratorAnnotationBean> toRemove = new HashSet<CuratorAnnotationBean>();
+        Set<CuratorAnnotationBean> toRemove = new HashSet<>();
         annot: for (CuratorAnnotationBean annot: annots) {
             for (CuratorAnnotationBean annot2: annots) {
                 if (annot.equals(annot2) || toRemove.contains(annot2)) {
@@ -3385,7 +3396,7 @@ public class SimilarityAnnotation {
             
             //if class already examined before calling this method, skip.
             if (entityIdsToAnnotsPerIntersectClass.containsKey(
-                    new HashSet<String>(Arrays.asList(intersectEntry.getKey())))) {
+                    new HashSet<>(Arrays.asList(intersectEntry.getKey())))) {
                 log.trace("Already examined, skip.");
                 continue;
             }
@@ -3409,9 +3420,9 @@ public class SimilarityAnnotation {
                 //=> we should not generate an annotation 
                 //left lobe of thyroid gland|right lobe of thyroid gland
                 for (String alreadyMappedEntityId: existingMapping.getKey()) {
-                    Set<String> mappedIntersectIds = new HashSet<String>(
+                    Set<String> mappedIntersectIds = new HashSet<>(
                             intersectMapping.get(alreadyMappedEntityId));
-                    Set<String> newIntersectIds = new HashSet<String>(
+                    Set<String> newIntersectIds = new HashSet<>(
                             intersectEntry.getValue());
                     //check whether the entity used in the source annotation 
                     //and the entity used in the new annotation have some intersect elements 
@@ -3424,20 +3435,18 @@ public class SimilarityAnnotation {
                     }
                 }
                 
-                Set<Set<CuratorAnnotationBean>> commonAnnotsPerIntersectClass = 
-                        new HashSet<Set<CuratorAnnotationBean>>();
+                Set<Set<CuratorAnnotationBean>> commonAnnotsPerIntersectClass = new HashSet<>();
                 
                 annotGroup: for (Set<CuratorAnnotationBean> existingAnnotsGroup: 
                     existingMapping.getValue()) {
-                    Set<String> clsIdsUsed = new HashSet<String>();
+                    Set<String> clsIdsUsed = new HashSet<>();
                     for (String intersectClassId: intersectEntry.getValue()) {
                         if (clsIdsUsed.contains(intersectClassId)) {
                             continue;
                         }
                         log.trace("Test intersect class {}", intersectClassId);
                         
-                        Set<CuratorAnnotationBean> commonAnnots = 
-                                new HashSet<CuratorAnnotationBean>();
+                        Set<CuratorAnnotationBean> commonAnnots = new HashSet<>();
                         commonAnnots.addAll(existingAnnotsGroup);
                         commonAnnots.retainAll(entityIdToAnnots.get(intersectClassId));
                         if (!commonAnnots.isEmpty()) {
@@ -3455,7 +3464,7 @@ public class SimilarityAnnotation {
                 if (commonAnnotsPerIntersectClass.size() == existingMapping.getValue().size()) {
                     log.trace("New mapping found from {} to existing mapping {}", 
                             intersectEntry.getKey(), existingMapping.getKey());
-                    Set<String> entityIds = new HashSet<String>(existingMapping.getKey());
+                    Set<String> entityIds = new HashSet<>(existingMapping.getKey());
                     entityIds.add(intersectEntry.getKey());
                     newMappings.put(entityIds, commonAnnotsPerIntersectClass);
                 }
@@ -3506,8 +3515,7 @@ public class SimilarityAnnotation {
             Set<String> intersectClassIds, int taxId, Set<Integer> taxAndAncestorsIds) {
         log.entry(entityIdToAnnots, intersectClassIds, taxId, taxAndAncestorsIds);
         
-        Set<Set<CuratorAnnotationBean>> annotsPerIntersectClass = 
-                new HashSet<Set<CuratorAnnotationBean>>();
+        Set<Set<CuratorAnnotationBean>> annotsPerIntersectClass = new HashSet<>();
         OntologyUtils taxOntUtils = new OntologyUtils(taxOntWrapper);
         
         for (String intersectClsId: intersectClassIds) {
@@ -3517,7 +3525,7 @@ public class SimilarityAnnotation {
             
             //first, retrieve the taxa of annotations to the iterated taxon, 
             //or its ancestors
-            Set<OWLClass> intersectTaxCls = new HashSet<OWLClass>();
+            Set<OWLClass> intersectTaxCls = new HashSet<>();
             for (CuratorAnnotationBean relatedAnnot: 
                 entityIdToAnnots.get(intersectClsId)) {
                 log.trace("Trying to use taxon of annotation {}", relatedAnnot);
@@ -3548,7 +3556,7 @@ public class SimilarityAnnotation {
             
             //OK, now we retrieve annotations for the current intersect class, 
             //annotated to the leaf taxon retained; 
-            Set<CuratorAnnotationBean> relatedAnnots = new HashSet<CuratorAnnotationBean>();
+            Set<CuratorAnnotationBean> relatedAnnots = new HashSet<>();
             for (CuratorAnnotationBean relatedAnnot: entityIdToAnnots.get(intersectClsId)) {
                 if (relatedAnnot.getNcbiTaxonId() == leafTaxId) {
                     log.trace("Annotation considered: {}", relatedAnnot);
@@ -3589,15 +3597,14 @@ public class SimilarityAnnotation {
             Set<String> intersectClassIds) {
         log.entry(entityIdToAnnots, intersectClassIds);
         
-        Set<Set<CuratorAnnotationBean>> annotsPerIntersectClass = 
-                new HashSet<Set<CuratorAnnotationBean>>();
+        Set<Set<CuratorAnnotationBean>> annotsPerIntersectClass = new HashSet<>();
         
         for (String intersectClsId: intersectClassIds) {
             intersectClsId = intersectClsId.trim();
             log.trace("Checking annotations available from intersect class {} in all taxa", 
                     intersectClsId);
             
-            Set<CuratorAnnotationBean> relatedAnnots = new HashSet<CuratorAnnotationBean>();
+            Set<CuratorAnnotationBean> relatedAnnots = new HashSet<>();
             for (CuratorAnnotationBean relatedAnnot: entityIdToAnnots.get(intersectClsId)) {
                 log.trace("Annotation available: {}", relatedAnnot);
                 relatedAnnots.add(relatedAnnot);
@@ -3625,15 +3632,14 @@ public class SimilarityAnnotation {
     private Map<String, Set<CuratorAnnotationBean>> getEntityToAnnotsMapping(
             Collection<CuratorAnnotationBean> annots) {
         log.entry(annots);
-        Map<String, Set<CuratorAnnotationBean>> entityIdToAnnots = 
-                new HashMap<String, Set<CuratorAnnotationBean>>();
+        Map<String, Set<CuratorAnnotationBean>> entityIdToAnnots = new HashMap<>();
         for (CuratorAnnotationBean annot: annots) {
             //Uberon mapping
             for (String entityId: annot.getEntityIds()) {
                 entityId = entityId.trim();
                 Set<CuratorAnnotationBean> mappedAnnots = entityIdToAnnots.get(entityId);
                 if (mappedAnnots == null) {
-                    mappedAnnots = new HashSet<CuratorAnnotationBean>();
+                    mappedAnnots = new HashSet<>();
                     entityIdToAnnots.put(entityId, mappedAnnots);
                 }
                 mappedAnnots.add(annot);
@@ -3658,14 +3664,14 @@ public class SimilarityAnnotation {
     private <T extends AnnotationBean> Map<Integer, Set<Integer>> getTaxonToSelfAndAncestorMapping(
             Collection<T> annots) {
         log.entry(annots);
-        Map<Integer, Set<Integer>> taxToSelfAndAncestors = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> taxToSelfAndAncestors = new HashMap<>();
         for (T annot: annots) {
             log.trace("Retrieving taxon and ancestors from annotation: {}", annot);
             //taxon mapping
             if (!taxToSelfAndAncestors.containsKey(annot.getNcbiTaxonId())) {
                 log.trace("Retrieving taxon and ancestors for taxon: {}", 
                         annot.getNcbiTaxonId());
-                Set<Integer> selfAndAncestorsIds = new HashSet<Integer>();
+                Set<Integer> selfAndAncestorsIds = new HashSet<>();
                 selfAndAncestorsIds.add(annot.getNcbiTaxonId());
                 for (OWLClass ancestor: taxOntWrapper.getAncestorsThroughIsA(
                         taxOntWrapper.getOWLClassByIdentifierNoAltIds(
@@ -3701,7 +3707,7 @@ public class SimilarityAnnotation {
         log.entry(entityIdToAnnots);
         log.debug("Searching for IntersectionOf expressions composed of annotated classes...");
         
-        Map<String, Set<String>> intersectMapping = new HashMap<String, Set<String>>();
+        Map<String, Set<String>> intersectMapping = new HashMap<>();
         for (OWLClass cls: uberonOntWrapper.getAllRealOWLClasses()) {
             log.trace("Examining {}", cls);
             String clsId = uberonOntWrapper.getIdentifier(cls);
@@ -3714,7 +3720,7 @@ public class SimilarityAnnotation {
                 if (clsExpr instanceof OWLObjectIntersectionOf) {
                     log.trace("Examining IntersectionOf expression: {}", clsExpr);
                     boolean allClassesAnnotated = true;
-                    Set<String> intersectClsIds = new HashSet<String>();
+                    Set<String> intersectClsIds = new HashSet<>();
                     for (OWLClass intersectCls: clsExpr.getClassesInSignature()) {
                         String intersectClsId = uberonOntWrapper.getIdentifier(intersectCls);
                         if (!entityIdToAnnots.containsKey(intersectClsId)) {
@@ -3768,7 +3774,7 @@ public class SimilarityAnnotation {
                     throws IllegalArgumentException {
         log.entry(annotsPerIntersectClass);
         
-        Set<CuratorAnnotationBean> posAndNegAnnot = new HashSet<CuratorAnnotationBean>();
+        Set<CuratorAnnotationBean> posAndNegAnnot = new HashSet<>();
         OntologyUtils taxUtils = new OntologyUtils(taxOntWrapper);
         //To determine the confidence level: for each intersect class, 
         //we determine the best confidence level (either from positive, or from negative annots); 
@@ -3776,9 +3782,9 @@ public class SimilarityAnnotation {
         boolean negativeTested = false;
         posNegTest: while (!positiveTested || !negativeTested) {
             //to determine confidence term
-            Set<OWLClass> bestConfsPerIntersectClass = new HashSet<OWLClass>();
+            Set<OWLClass> bestConfsPerIntersectClass = new HashSet<>();
             //to determine supporting text
-            Set<CuratorAnnotationBean> annotationsUsed = new HashSet<CuratorAnnotationBean>();
+            Set<CuratorAnnotationBean> annotationsUsed = new HashSet<>();
             //to determine negation status
             boolean isPositiveTested = false;
             
@@ -3788,7 +3794,7 @@ public class SimilarityAnnotation {
                 isPositiveTested = true;
                 
                 for (Set<CuratorAnnotationBean> relatedAnnots: annotsPerIntersectClass) {
-                    Set<OWLClass> confs = new HashSet<OWLClass>();
+                    Set<OWLClass> confs = new HashSet<>();
                     for (CuratorAnnotationBean annot: relatedAnnots) {
                         if (!annot.isNegated()) {
                             confs.add(cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifierNoAltIds(
@@ -3812,14 +3818,14 @@ public class SimilarityAnnotation {
                 //to the taxon that is the leaf of the taxa used in the grouped annotations. 
                 //to iterate the interations only once, we store all taxa used in the annotations, 
                 //and all taxa used in negative annotations, to compare them afterwards.
-                Set<OWLClass> allTaxa = new HashSet<OWLClass>();
-                Set<OWLClass> negativeTaxa = new HashSet<OWLClass>();
+                Set<OWLClass> allTaxa = new HashSet<>();
+                Set<OWLClass> negativeTaxa = new HashSet<>();
                 for (Set<CuratorAnnotationBean> relatedAnnots: annotsPerIntersectClass) {
-                    Set<OWLClass> confs = new HashSet<OWLClass>();
+                    Set<OWLClass> confs = new HashSet<>();
                     //we will used positive annotations for supporting text only 
                     //if there is no negative annotation for this intersect class
-                    Set<CuratorAnnotationBean> posAnnots = new HashSet<CuratorAnnotationBean>();
-                    Set<CuratorAnnotationBean> negAnnots = new HashSet<CuratorAnnotationBean>();
+                    Set<CuratorAnnotationBean> posAnnots = new HashSet<>();
+                    Set<CuratorAnnotationBean> negAnnots = new HashSet<>();
                     for (CuratorAnnotationBean annot: relatedAnnots) {
                         OWLClass taxCls = taxOntWrapper.getOWLClassByIdentifier(
                                 OntologyUtils.getTaxOntologyId(annot.getNcbiTaxonId()), true);
@@ -3898,13 +3904,11 @@ public class SimilarityAnnotation {
                 }
                 
                 //generate supporting text from supporting annotations
-                List<CuratorAnnotationBean> sortedAnnots = 
-                        new ArrayList<CuratorAnnotationBean>(annotationsUsed);
-                Collections.sort(sortedAnnots, 
-                        SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR);
+                List<CuratorAnnotationBean> sortedAnnots = new ArrayList<>(annotationsUsed);
+                Collections.sort(sortedAnnots, SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR);
                 //just to be sure to eliminate any redundancy, and to get consistent 
                 //supporting text, we store elements used to generate it in a LinkedHashSet
-                LinkedHashSet<String> textElements = new LinkedHashSet<String>();
+                LinkedHashSet<String> textElements = new LinkedHashSet<>();
                 for (CuratorAnnotationBean annot: sortedAnnots) {
                     List<String> entityIds = SimilarityAnnotationUtils.trimAndSort(annot.getEntityIds());
                     String textElement = SimilarityAnnotationUtils.ENTITY_COL_NAME + ": " 
@@ -3966,8 +3970,7 @@ public class SimilarityAnnotation {
         //in order to identify related annotations, we will use a Map where keys 
         //are SummaryAnnotationBeans with only the entity IDs, taxon ID, and HOM ID set, 
         //and where associated values are the related RAW annotations.
-        Map<SummaryAnnotationBean, Set<RawAnnotationBean>> relatedAnnotMapper = 
-                new HashMap<SummaryAnnotationBean, Set<RawAnnotationBean>>();
+        Map<SummaryAnnotationBean, Set<RawAnnotationBean>> relatedAnnotMapper = new HashMap<>();
         //first pass, group related annotations
         for (RawAnnotationBean annot: filteredAnnots) {
             SummaryAnnotationBean keyAnnot = new SummaryAnnotationBean();
@@ -3983,7 +3986,7 @@ public class SimilarityAnnotation {
             
             Set<RawAnnotationBean> relatedAnnots = relatedAnnotMapper.get(keyAnnot);
             if (relatedAnnots == null) {
-                relatedAnnots = new HashSet<RawAnnotationBean>();
+                relatedAnnots = new HashSet<>();
                 relatedAnnotMapper.put(keyAnnot, relatedAnnots);
             }
             relatedAnnots.add(annot);
@@ -3991,7 +3994,7 @@ public class SimilarityAnnotation {
 
         
         //Generate SUMMARY annotations
-        Set<SummaryAnnotationBean> summaryAnnots = new HashSet<SummaryAnnotationBean>();
+        Set<SummaryAnnotationBean> summaryAnnots = new HashSet<>();
         
         for (Entry<SummaryAnnotationBean, Set<RawAnnotationBean>> relatedAnnotsEntry: 
             relatedAnnotMapper.entrySet()) {
@@ -4090,13 +4093,13 @@ public class SimilarityAnnotation {
         //we need to store all evidences related to positive annotations supporting 
         //the assertion, to determine whether evidences are of the same type, 
         //and whether they are of the same type as contradicting evidences. 
-        Set<OWLClass> positiveECOs = new HashSet<OWLClass>();
+        Set<OWLClass> positiveECOs = new HashSet<>();
         //same for negative assertions
-        Set<OWLClass> negativeECOs = new HashSet<OWLClass>();
+        Set<OWLClass> negativeECOs = new HashSet<>();
         //to determine the best confidence for positive annotations, we also store them all. 
-        Set<OWLClass> positiveConfs = new HashSet<OWLClass>();
+        Set<OWLClass> positiveConfs = new HashSet<>();
         //same for negative annots
-        Set<OWLClass> negativeConfs = new HashSet<OWLClass>();
+        Set<OWLClass> negativeConfs = new HashSet<>();
         
         for (RawAnnotationBean annot: annots) {
             OWLClass confStatement = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
@@ -4225,7 +4228,7 @@ public class SimilarityAnnotation {
         this.checkAnnotations(annots, false);
         //keep only positive annotations to historical homology concept 
         //(at this point we keep not-trusted annotations to properly infer supporting texts)
-        Set<SummaryAnnotationBean> filteredAnnots = new HashSet<SummaryAnnotationBean>();
+        Set<SummaryAnnotationBean> filteredAnnots = new HashSet<>();
         for (SummaryAnnotationBean annot: annots) {
             if (!annot.isNegated() && HISTORICAL_HOMOLOGY_ID.equals(annot.getHomId())) {
                 filteredAnnots.add(annot);
@@ -4237,7 +4240,7 @@ public class SimilarityAnnotation {
         //are AncestralTaxaAnnotationBeans with only the entity IDs and HOM ID set, 
         //and where associated values are the related SUMMARY annotations.
         Map<AncestralTaxaAnnotationBean, Set<SummaryAnnotationBean>> relatedAnnotMapper = 
-                new HashMap<AncestralTaxaAnnotationBean, Set<SummaryAnnotationBean>>();
+                new HashMap<>();
         //first pass, group related annotations
         for (SummaryAnnotationBean annot: filteredAnnots) {
             AncestralTaxaAnnotationBean keyAnnot = new AncestralTaxaAnnotationBean();
@@ -4251,7 +4254,7 @@ public class SimilarityAnnotation {
             
             Set<SummaryAnnotationBean> relatedAnnots = relatedAnnotMapper.get(keyAnnot);
             if (relatedAnnots == null) {
-                relatedAnnots = new HashSet<SummaryAnnotationBean>();
+                relatedAnnots = new HashSet<>();
                 relatedAnnotMapper.put(keyAnnot, relatedAnnots);
             }
             relatedAnnots.add(annot);
@@ -4263,7 +4266,7 @@ public class SimilarityAnnotation {
 
         
         //Generate ANCESTRAL TAXA annotations
-        Set<AncestralTaxaAnnotationBean> newAnnots = new HashSet<AncestralTaxaAnnotationBean>();
+        Set<AncestralTaxaAnnotationBean> newAnnots = new HashSet<>();
         OntologyUtils taxOntUtils = new OntologyUtils(taxOntWrapper);
         
         for (Entry<AncestralTaxaAnnotationBean, Set<SummaryAnnotationBean>> relatedAnnotsEntry: 
@@ -4272,7 +4275,7 @@ public class SimilarityAnnotation {
             assert relatedAnnotsEntry.getValue().size() > 0;
             
             //we retrieve all taxa to trusted annotations as OWL classes
-            Set<OWLClass> taxClasses = new HashSet<OWLClass>();
+            Set<OWLClass> taxClasses = new HashSet<>();
             for (SummaryAnnotationBean relatedAnnot: relatedAnnotsEntry.getValue()) {
                 if (!relatedAnnot.isTrusted()) {
                     continue;
@@ -4290,7 +4293,7 @@ public class SimilarityAnnotation {
             //independent evolution)
             taxOntUtils.retainParentClasses(taxClasses, null);
             assert taxClasses.size() >= 1;
-            Set<Integer> ancestralTaxIds = new HashSet<Integer>();
+            Set<Integer> ancestralTaxIds = new HashSet<>();
             for (OWLClass taxCls: taxClasses) {
                 ancestralTaxIds.add(OntologyUtils.getTaxNcbiId(taxOntWrapper.getIdentifier(
                         taxCls)));
@@ -4324,7 +4327,7 @@ public class SimilarityAnnotation {
                 //alternative not-trusted homology hypothesis for higher taxa
                 log.trace("Trying to find non-trusted alternative ancestral taxon hypotheses for new annot: {} - taxToAncestors: {}", 
                         newAnnot, taxToSelfAndAncestors.get(relatedAnnot.getNcbiTaxonId()));
-                Set<String> higherTaxonNames = new HashSet<String>();
+                Set<String> higherTaxonNames = new HashSet<>();
                 for (SummaryAnnotationBean relatedAnnot2: relatedAnnotsEntry.getValue()) {
                     log.trace("Testing annotation: {}", relatedAnnot2);
                     if (relatedAnnot2.getNcbiTaxonId() != relatedAnnot.getNcbiTaxonId() && 
@@ -4338,7 +4341,7 @@ public class SimilarityAnnotation {
                 }
                 if (!higherTaxonNames.isEmpty()) {
                     //order the names for consistent supporting text generation
-                    List<String> orderedTaxNames = new ArrayList<String>(higherTaxonNames);
+                    List<String> orderedTaxNames = new ArrayList<>(higherTaxonNames);
                     Collections.sort(orderedTaxNames);
                     String supportingText = "";
                     
@@ -4588,7 +4591,7 @@ public class SimilarityAnnotation {
 //            throw log.throwing(new IllegalArgumentException("The taxon with ID " + taxonId + 
 //                    " was not retrieved from the ontology file " + taxOntFile));
 //        }
-//        Set<Integer> allTaxIds = new HashSet<Integer>();
+//        Set<Integer> allTaxIds = new HashSet<>();
 //        for (OWLClass ancestor: wrapper.getOWLClassAncestors(taxClass)) {
 //            allTaxIds.add(OntologyUtils.getTaxNcbiId(wrapper.getIdentifier(ancestor)));
 //        }

@@ -127,10 +127,11 @@ public class GenerateUniprotXRefWithExprInfo {
     }
     
     /**
-     * Write a file formatted as asked by Uniprot. Each line contains:
+     * Write an XRef file according to Uniprot format. Each line contains:
      * - Uniprot ID
      * - Ensembl ID used in Bgee
      * - summary of the expression
+     * Ex: H9G366   DR   BGEE; ENSACAG00000000002; Expressed in 4 organs, higher expression level in brain.
      * 
      * @param file path to the output file
      * @throws IOException

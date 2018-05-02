@@ -1,18 +1,20 @@
-package org.bgee.pipeline.bgeelight;
+package org.bgee.pipeline.bgee.light;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.UncheckedIOException;
-import java.sql.Types;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -24,23 +26,22 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
 import org.bgee.model.dao.api.anatdev.StageDAO;
-import org.bgee.model.dao.api.expressiondata.CallDAOFilter;
-import org.bgee.model.dao.api.expressiondata.CallDataDAOFilter;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
-import org.bgee.model.dao.api.expressiondata.ConditionDAO.Attribute;
-import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
-import org.bgee.model.dao.api.expressiondata.DAOExperimentCount;
-import org.bgee.model.dao.api.expressiondata.DAOExperimentCount.CallType;
-import org.bgee.model.dao.api.expressiondata.DAOExperimentCount.DataQuality;
-import org.bgee.model.dao.api.expressiondata.DAOExperimentCountFilter;
-import org.bgee.model.dao.api.expressiondata.DAOExperimentCountFilter.Qualifier;
-import org.bgee.model.dao.api.expressiondata.DAOPropagationState;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
-import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallTOResultSet;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
+import org.bgee.model.expressiondata.Call.ExpressionCall;
+import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
+import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.expressiondata.baseelements.CallType;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
+import org.bgee.model.gene.GeneFilter;
+import org.bgee.model.species.Species;
 import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.MySQLDAOUser;
 import org.bgee.pipeline.Utils;
@@ -72,19 +73,9 @@ public class BgeeToBgeeLight extends MySQLDAOUser{
         DEVSTAGE_OUTPUT_FILE("dev_stages_bgee_light.tsv", "stage", "{ID=stageId, DESCRIPTION=stageDescription, "
                 + "NAME=stageName}"), 
         GLOBALCOND_OUTPUT_FILE("global_cond_bgee_light.tsv", "globalCond", "{ID=globalConditionId, SPECIES_ID=speciesId, ANAT_ENTITY_ID=anatEntityId, "
-                + "STAGE_ID=stageId}"); 
-//        GLOBALEXPRESSION_OUTPUT_FILE("global_expression_bgee_light.tsv", "globalExpression");
+                + "STAGE_ID=stageId}"),
+        GLOBALEXPRESSION_OUTPUT_FILE("global_expression_bgee_light.tsv", "globalExpression", "{BGEE_GENE_ID=bgeeGeneId, CONDITION_ID=globalConditionId, SUMMARY_QUALITY=summaryQuality}");
 
-        
-             
-                  
-                       
-               
-        
-                 
-               
-        
-             
         
         private String fileName = "";
         private String tableName = "";
@@ -113,9 +104,14 @@ public class BgeeToBgeeLight extends MySQLDAOUser{
 
     }
 
+    private static String GLOBAL_EXPRESSION_SUMMARY_QUALITY = "SUMMARY_QUALITY";
     private final static Logger log = LogManager.getLogger(BgeeToBgeeLight.class);
     protected final ServiceFactory serviceFactory = new ServiceFactory();
     private String outputDirectory;
+    private final GeneDAO geneDAO;
+    private final SpeciesDAO speciesDAO;
+    private final AnatEntityDAO anatEntityDAO;
+    private final ConditionDAO conditionDAO;
     
     /**
      * Main method to export data from the Bgee database (see {@link #extractBgeeDatabase(Collection)})
@@ -135,7 +131,7 @@ public class BgeeToBgeeLight extends MySQLDAOUser{
      * @param args           An {@code Array} of {@code String}s containing the requested parameters.
      * @throws Exception 
      */
-    public static void main(String[] args) throws Exception{
+    public static void main(String[] args){
         log.entry((Object[]) args);
         if(args[0].equals("extractFromBgee")){
             int expectedArgLength = 3;
@@ -148,7 +144,7 @@ public class BgeeToBgeeLight extends MySQLDAOUser{
             bgeeToBgeeLight.cleanOutputDir();
             bgeeToBgeeLight.extractBgeeDatabase(CommandRunner.parseListArgumentAsInt(args[2]));
         }
-        if(args[0].equals("tsvToBgeeLight")){
+        else if(args[0].equals("tsvToBgeeLight")){
             int expectedArgLength = 2;
             if (args.length != expectedArgLength) {
                 throw log.throwing(new IllegalArgumentException(
@@ -157,13 +153,33 @@ public class BgeeToBgeeLight extends MySQLDAOUser{
             }
             BgeeToBgeeLight bgeeToBgeeLight = new BgeeToBgeeLight(args[1]);
             bgeeToBgeeLight.tsvToBgeeLight();
+        }else if(args[0].equals("emptyDatabaseTables")){
+            int expectedArgLength = 2;
+            if (args.length != expectedArgLength) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Incorrect number of arguments provided, expected " + 
+                        expectedArgLength + " arguments, " + args.length + " provided."));
+            }
+            BgeeToBgeeLight bgeeToBgeeLight = new BgeeToBgeeLight();
+            bgeeToBgeeLight.emptyDatabaseTables();
         }else{
-            throw log.throwing(new IllegalArgumentException("The value of args[0] " + args[0] + " is not reconized as an action"));
+            throw log.throwing(new IllegalArgumentException(args[0] + " is not recognized as an action"));
         }
     }
     
-    public BgeeToBgeeLight(String outputDirectory) throws IllegalArgumentException{
+    public BgeeToBgeeLight(String outputDirectory){
         this.outputDirectory = outputDirectory;
+        this.geneDAO = serviceFactory.getDAOManager().getGeneDAO();
+        this.speciesDAO = serviceFactory.getDAOManager().getSpeciesDAO();
+        this.anatEntityDAO = serviceFactory.getDAOManager().getAnatEntityDAO();
+        this.conditionDAO = serviceFactory.getDAOManager().getConditionDAO();
+    }
+    
+    public BgeeToBgeeLight(){
+        this.geneDAO = serviceFactory.getDAOManager().getGeneDAO();
+        this.speciesDAO = serviceFactory.getDAOManager().getSpeciesDAO();
+        this.anatEntityDAO = serviceFactory.getDAOManager().getAnatEntityDAO();
+        this.conditionDAO = serviceFactory.getDAOManager().getConditionDAO();
     }
     
     /**
@@ -188,48 +204,51 @@ public class BgeeToBgeeLight extends MySQLDAOUser{
     private void extractBgeeDatabase(Collection <Integer> speciesIds) {
         log.entry(speciesIds);
         
-        SpeciesTOResultSet speciesTOs = serviceFactory.getDAOManager().getSpeciesDAO().getSpeciesByIds(new HashSet<Integer>(speciesIds));
-        speciesIds = extractSpeciesTable(speciesTOs);
+        SpeciesTOResultSet speciesTOs = this.speciesDAO.getSpeciesByIds(new HashSet<Integer>(speciesIds));
+        extractSpeciesTable(speciesTOs);
+        Set<Species> speciesSet = serviceFactory.getSpeciesService().loadSpeciesByIds(speciesIds, false);
         extractAnatEntityTable();
         extractStadeTable();
-        for (Integer speciesId:speciesIds){
-            Set <Integer> geneSet = extractGeneTable(speciesId);
-            extractGlobalCondTable(speciesId);
-            extractGlobalExpressionTable(geneSet, speciesId);
+        for (Species species:speciesSet){
+            log.info("start to export data for species {}",species.getId());
+            Map <String, Integer> ensemblIdToBgeeGeneId= extractGeneTable(species.getId());
+            Map<String, Integer>condUniqKeyToConditionId = extractGlobalCondTable(species.getId());
+            extractGlobalExpressionTable(ensemblIdToBgeeGeneId, condUniqKeyToConditionId, species);
         }
     }
     
-    private void extractGlobalExpressionTable(Set<Integer> geneSet, Integer speciesId){
-        log.entry(geneSet, speciesId);
-        log.debug("Start extracting global expressions for the species {}...", speciesId);
-        String [] header = new String[] { GlobalExpressionCallDAO.Attribute.ID.name(), GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID.name(),
-                GlobalExpressionCallDAO.Attribute.CONDITION_ID.name()};
-      //EXPERIMENT COUNT FILTER        
-        Set<DAOExperimentCountFilter> countFilters = new HashSet<>();
-        countFilters.add(new DAOExperimentCountFilter(new DAOExperimentCount(CallType.PRESENT, 
-                DataQuality.HIGH, DAOPropagationState.SELF, 1), Qualifier.GREATER_THAN));
-        countFilters.add(new DAOExperimentCountFilter(new DAOExperimentCount(CallType.PRESENT, 
-                DataQuality.LOW, DAOPropagationState.SELF, 3), Qualifier.GREATER_THAN));
-        Set<Set <DAOExperimentCountFilter> > allCountFilters = Collections.singleton(countFilters);
-        // CONDITION PARAMETERS
-        Set<Attribute> conditionParameters = EnumSet.of(Attribute.ANAT_ENTITY_ID, Attribute.STAGE_ID);
-        // ATTRIBUTES TO RETRIEVE
-        Set<GlobalExpressionCallDAO.Attribute> attributes = EnumSet.of(GlobalExpressionCallDAO.Attribute.ID,
-                GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID, GlobalExpressionCallDAO.Attribute.CONDITION_ID);
-        GlobalExpressionCallTOResultSet globalExpressionCallTO  = serviceFactory.getDAOManager().getGlobalExpressionCallDAO()
-                .getGlobalExpressionCalls(Collections.singleton(
-                        new CallDAOFilter(geneSet, null, Collections.singleton(
-                                new DAOConditionFilter(null, null, true)
-                                ), Collections.singleton(
-                                        new CallDataDAOFilter(allCountFilters, null)
-                                        ),
-                                true, null)), 
-                        conditionParameters, attributes, null);
+    private void extractGlobalExpressionTable(Map<String, Integer> ensemblIdToBgeeGeneId, Map<String, Integer> condUniqKeyToConditionId,
+            Species species){
+       log.entry(ensemblIdToBgeeGeneId, condUniqKeyToConditionId, species);
+       Map<Integer, Set<String>> requestedSpeToGeneIdsMap = new HashMap<>();
+       requestedSpeToGeneIdsMap.put(species.getId(), ensemblIdToBgeeGeneId.keySet());
+       log.debug("Start extracting global expressions for the species {}...", species.getId());
+        String [] header = new String[] {GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID.name(),
+                GlobalExpressionCallDAO.Attribute.CONDITION_ID.name(), GLOBAL_EXPRESSION_SUMMARY_QUALITY};
+        Map<SummaryCallType.ExpressionSummary, SummaryQuality> silverExpressedCallFilter = new HashMap<>();
+        silverExpressedCallFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
+        Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
+        obsDataFilter.put(CallType.Expression.EXPRESSED, true);
+        final List<ExpressionCall> calls = serviceFactory.getCallService().loadExpressionCalls(
+                new ExpressionCallFilter(silverExpressedCallFilter,
+                        Collections.singleton(new GeneFilter(species.getId(), ensemblIdToBgeeGeneId.keySet())),
+                        null, null, obsDataFilter, null, null),
+                EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
+                        CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.DATA_QUALITY), 
+                           //CallService.Attribute.GLOBAL_MEAN_RANK),
+                new LinkedHashMap<>())
+            .collect(Collectors.toList());
+        log.debug("Finish extracting global expressions for the species {}...", species.getId());
+        Set<List<String>> CallsInformation = calls.stream().map(c -> {
+            return Arrays.asList(ensemblIdToBgeeGeneId.get(c.getGene().getEnsemblGeneId()).toString(),
+                    condUniqKeyToConditionId.get(c.getCondition().getAnatEntityId()
+                            + "_" + c.getCondition().getDevStageId()).toString(),
+                    c.getSummaryQuality().toString()
+                    
+                    );
+        }).collect(Collectors.toSet());
+        final CellProcessor[] processors = new CellProcessor[] {new Optional(), new Optional(), new NotNull()};
         
-        Set<List<String>> CallsInformation = globalExpressionCallTO.getAllTOs().stream().map(s -> {
-                    return Arrays.asList(s.getId().toString(), s.getBgeeGeneId().toString(), s.getConditionId().toString());
-                }).collect(Collectors.toSet());
-        final CellProcessor[] processors = new CellProcessor[] { new ParseInt(), new ParseInt(), new ParseInt()};
         File file = new File(outputDirectory + TsvFile.GLOBALEXPRESSION_OUTPUT_FILE.fileName);
         try {
             this.writeOutputFile(file, CallsInformation, header, processors);
@@ -239,13 +258,13 @@ public class BgeeToBgeeLight extends MySQLDAOUser{
 
     }
     
-    private  Set<Integer> extractGeneTable(Integer speciesId){
+    private  Map<String, Integer> extractGeneTable(Integer speciesId){
         log.entry(speciesId);
         log.debug("Start extracting genes for the species {}...", speciesId);
         String [] header = new String[] { GeneDAO.Attribute.ID.name(), GeneDAO.Attribute.ENSEMBL_ID.name(),
                 GeneDAO.Attribute.NAME.name(), GeneDAO.Attribute.DESCRIPTION.name(),
                 GeneDAO.Attribute.SPECIES_ID.name()};
-        Set<List<String>> allGenesInformation = serviceFactory.getDAOManager().getGeneDAO()
+        Set<List<String>> allGenesInformation = this.geneDAO
                 .getGenesBySpeciesIds(Collections.singleton(speciesId))
                 .getAllTOs().stream().map(s -> {
                     return Arrays.asList(s.getId().toString(), s.getGeneId(), s.getName(), s.getDescription(), 
@@ -259,16 +278,15 @@ public class BgeeToBgeeLight extends MySQLDAOUser{
         } catch (IOException e) {
             throw new UncheckedIOException("Can't write file "+file, e);
         }
-        return allGenesInformation.stream().map(g -> {
-            return Integer.parseInt(g.get(0));
-        }).collect(Collectors.toSet());
+        return allGenesInformation.stream().collect(Collectors.toMap(x -> x.get(1), x -> Integer.valueOf(x.get(0))));
     }
+    
     
     private void extractAnatEntityTable(){
         log.debug("Start extracting anatomical entities...");
         String [] header = new String[] { AnatEntityDAO.Attribute.ID.name(), AnatEntityDAO.Attribute.NAME.name(),
                 AnatEntityDAO.Attribute.DESCRIPTION.name()};
-        Set<List<String>> allAnatEntitiesInformation = serviceFactory.getDAOManager().getAnatEntityDAO()
+        Set<List<String>> allAnatEntitiesInformation = anatEntityDAO
                 .getAnatEntitiesByIds(null)
                 .getAllTOs().stream().map(s -> {
                     return Arrays.asList(s.getId(), s.getName(), s.getDescription());
@@ -300,17 +318,17 @@ public class BgeeToBgeeLight extends MySQLDAOUser{
         }
     }
     
-    private void extractGlobalCondTable(Integer speciesId){
+    private Map<String, Integer> extractGlobalCondTable(Integer speciesId){
         log.entry(speciesId);
         log.debug("Start extracting global conditions for the species {}...", speciesId);
-        List<Attribute> condAttributes = Arrays.asList(ConditionDAO.Attribute.ANAT_ENTITY_ID, ConditionDAO.Attribute.STAGE_ID);
-        List<Attribute> attributes = Arrays.asList(ConditionDAO.Attribute.ID, 
+        List<ConditionDAO.Attribute> condAttributes = Arrays.asList(ConditionDAO.Attribute.ANAT_ENTITY_ID, ConditionDAO.Attribute.STAGE_ID);
+        List<ConditionDAO.Attribute> attributes = Arrays.asList(ConditionDAO.Attribute.ID, 
                 ConditionDAO.Attribute.ANAT_ENTITY_ID, ConditionDAO.Attribute.STAGE_ID, ConditionDAO.Attribute.SPECIES_ID);
         String [] header = new String[] { ConditionDAO.Attribute.ID.name(), ConditionDAO.Attribute.ANAT_ENTITY_ID.name(), 
                 ConditionDAO.Attribute.STAGE_ID.name(), ConditionDAO.Attribute.SPECIES_ID.name()};
-        Set<List<String>> allglobalCondInformation = serviceFactory.getDAOManager().getConditionDAO()
-                .getGlobalConditionsBySpeciesIds(Collections.singleton(speciesId), condAttributes, attributes)
-                .getAllTOs().stream().map(s -> {
+        List<ConditionTO> conditionTOs = this.conditionDAO.getGlobalConditionsBySpeciesIds(Collections.singleton(speciesId), 
+                condAttributes, attributes).getAllTOs();
+        Set<List<String>> allglobalCondInformation = conditionTOs.stream().map(s -> {
                     return Arrays.asList(s.getId().toString(), s.getAnatEntityId(), s.getStageId(), 
                             s.getSpeciesId().toString());
                 }).collect(Collectors.toSet());
@@ -322,11 +340,14 @@ public class BgeeToBgeeLight extends MySQLDAOUser{
         } catch (IOException e) {
             throw new UncheckedIOException("Can't write file "+file, e);
         }
+        return log.exit(conditionTOs.stream().collect(Collectors.toMap(
+                p -> p.getAnatEntityId()+"_"+p.getStageId(), p -> p.getId())));
+        
     }
     
     
     
-    private Set<Integer> extractSpeciesTable(SpeciesTOResultSet speciesTOs){
+    private void extractSpeciesTable(SpeciesTOResultSet speciesTOs){
         log.entry(speciesTOs);
         Set<Integer> speciesIds = new HashSet<>();
         String [] header = new String[] { SpeciesDAO.Attribute.ID.name(), SpeciesDAO.Attribute.GENUS.name(),
@@ -345,7 +366,6 @@ public class BgeeToBgeeLight extends MySQLDAOUser{
         } catch (IOException e) {
             throw new UncheckedIOException("Can't write file "+file, e);
         }
-        return speciesIds;
     }
 
        
@@ -377,12 +397,19 @@ public class BgeeToBgeeLight extends MySQLDAOUser{
     private void emptyDatabaseTables(){
         for(TsvFile tsvFile : TsvFile.values()){
             String sql = "DELETE FROM "+tsvFile.tableName;
-            
+            try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql.toString())) {
+                stmt.executeUpdate();
+                this.commit();
+            } catch (SQLException e) {
+                log.error("Can not connect to the database");
+                e.printStackTrace();
+            }
         }
     }
     
-    private void tsvToBgeeLight() throws Exception{
+    private void tsvToBgeeLight(){
         for(TsvFile tsvFile : TsvFile.values()){
+            log.info("start integration of data from file {}",tsvFile.fileName);
             this.startTransaction();
             ICsvMapReader mapReader = null;
             try {               
@@ -401,6 +428,7 @@ public class BgeeToBgeeLight extends MySQLDAOUser{
                 }
                 //sql.length() -2 because we remove last curl and space
                 sql = sql.substring(0, sql.length() -2) +") VALUES " + variables.substring(0, variables.length() -2) +")";
+                log.debug("SQL query : {}", sql);
                 Map<String, Object> customerMap;
                 try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql.toString())) {
                     while( (customerMap = mapReader.read(header, processors)) != null ) {
@@ -418,15 +446,31 @@ public class BgeeToBgeeLight extends MySQLDAOUser{
                                         "Each column should be an Integer or a String"));
                             }
                         }
+                        stmt.executeUpdate();
                     }
+                    
                     //commit once all lines of the file have been parsed
-                    stmt.executeUpdate();
+                    
                     this.commit();
+                } catch (SQLException e) {
+                    log.error("Can not connect to the database");
+                    e.printStackTrace();
                 }
+            }catch (FileNotFoundException e) {
+                log.error("Can not find the file " + outputDirectory + tsvFile.fileName);
+                e.printStackTrace();
+            }catch(IOException e){
+                log.error("Can not read the file " + outputDirectory + tsvFile.fileName);
+                e.printStackTrace();
             }
             finally {
                 if( mapReader != null ) {
-                    mapReader.close();
+                    try {
+                        mapReader.close();
+                    } catch (IOException e) {
+                        log.error("Can not close the file " + outputDirectory + tsvFile.fileName);
+                        e.printStackTrace();
+                    }
                 }
             }
         }

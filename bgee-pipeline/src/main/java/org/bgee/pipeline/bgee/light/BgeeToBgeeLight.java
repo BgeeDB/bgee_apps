@@ -229,7 +229,7 @@ public class BgeeToBgeeLight extends MySQLDAOUser{
         silverExpressedCallFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
         Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
         obsDataFilter.put(CallType.Expression.EXPRESSED, true);
-        final List<ExpressionCall> calls = serviceFactory.getCallService().loadExpressionCalls(
+        final Set<List<String>> CallsInformation =  serviceFactory.getCallService().loadExpressionCalls(
                 new ExpressionCallFilter(silverExpressedCallFilter,
                         Collections.singleton(new GeneFilter(species.getId(), ensemblIdToBgeeGeneId.keySet())),
                         null, null, obsDataFilter, null, null),
@@ -237,9 +237,7 @@ public class BgeeToBgeeLight extends MySQLDAOUser{
                         CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.DATA_QUALITY), 
                            //CallService.Attribute.GLOBAL_MEAN_RANK),
                 new LinkedHashMap<>())
-            .collect(Collectors.toList());
-        log.debug("Finish extracting global expressions for the species {}...", species.getId());
-        Set<List<String>> CallsInformation = calls.stream().map(c -> {
+            .map(c -> {
             return Arrays.asList(ensemblIdToBgeeGeneId.get(c.getGene().getEnsemblGeneId()).toString(),
                     condUniqKeyToConditionId.get(c.getCondition().getAnatEntityId()
                             + "_" + c.getCondition().getDevStageId()).toString(),

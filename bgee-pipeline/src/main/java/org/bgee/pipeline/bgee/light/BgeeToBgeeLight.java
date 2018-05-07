@@ -33,7 +33,6 @@ import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
-import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.baseelements.CallType;
@@ -225,17 +224,19 @@ public class BgeeToBgeeLight extends MySQLDAOUser{
        log.debug("Start extracting global expressions for the species {}...", species.getId());
         String [] header = new String[] {GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID.name(),
                 GlobalExpressionCallDAO.Attribute.CONDITION_ID.name(), GLOBAL_EXPRESSION_SUMMARY_QUALITY};
+        // init summaryCallTypeQualityFilter
         Map<SummaryCallType.ExpressionSummary, SummaryQuality> silverExpressedCallFilter = new HashMap<>();
         silverExpressedCallFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
+        //init callObeservedData
         Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
         obsDataFilter.put(CallType.Expression.EXPRESSED, true);
+        // return calls where both anatEntiy and devStage are not null AND with a SILVER quality
         final Set<List<String>> CallsInformation =  serviceFactory.getCallService().loadExpressionCalls(
                 new ExpressionCallFilter(silverExpressedCallFilter,
                         Collections.singleton(new GeneFilter(species.getId(), ensemblIdToBgeeGeneId.keySet())),
-                        null, null, obsDataFilter, null, null),
+                        null, null, obsDataFilter, null, null), 
                 EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
                         CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.DATA_QUALITY), 
-                           //CallService.Attribute.GLOBAL_MEAN_RANK),
                 new LinkedHashMap<>())
             .map(c -> {
             return Arrays.asList(ensemblIdToBgeeGeneId.get(c.getGene().getEnsemblGeneId()).toString(),
@@ -245,6 +246,22 @@ public class BgeeToBgeeLight extends MySQLDAOUser{
                     
                     );
         }).collect(Collectors.toSet());
+     // return calls with null devStage AND with a SILVER quality
+        CallsInformation.addAll(serviceFactory.getCallService().loadExpressionCalls(
+                new ExpressionCallFilter(silverExpressedCallFilter,
+                        Collections.singleton(new GeneFilter(species.getId(), ensemblIdToBgeeGeneId.keySet())),
+                        null, null, obsDataFilter, null, null), 
+                EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
+                        CallService.Attribute.DATA_QUALITY), 
+                new LinkedHashMap<>())
+            .map(c -> {
+            return Arrays.asList(ensemblIdToBgeeGeneId.get(c.getGene().getEnsemblGeneId()).toString(),
+                    condUniqKeyToConditionId.get(c.getCondition().getAnatEntityId()
+                            + "_" + c.getCondition().getDevStageId()).toString(),
+                    c.getSummaryQuality().toString()
+                    
+                    );
+        }).collect(Collectors.toSet()));
         final CellProcessor[] processors = new CellProcessor[] {new Optional(), new Optional(), new NotNull()};
         
         File file = new File(outputDirectory + TsvFile.GLOBALEXPRESSION_OUTPUT_FILE.fileName);
@@ -319,13 +336,18 @@ public class BgeeToBgeeLight extends MySQLDAOUser{
     private Map<String, Integer> extractGlobalCondTable(Integer speciesId){
         log.entry(speciesId);
         log.debug("Start extracting global conditions for the species {}...", speciesId);
-        List<ConditionDAO.Attribute> condAttributes = Arrays.asList(ConditionDAO.Attribute.ANAT_ENTITY_ID, ConditionDAO.Attribute.STAGE_ID);
+        List<ConditionDAO.Attribute> condAttributesAnatAndStage = Arrays.asList(ConditionDAO.Attribute.ANAT_ENTITY_ID, ConditionDAO.Attribute.STAGE_ID);
+        List<ConditionDAO.Attribute> condAttributesAnat = Arrays.asList(ConditionDAO.Attribute.ANAT_ENTITY_ID);
         List<ConditionDAO.Attribute> attributes = Arrays.asList(ConditionDAO.Attribute.ID, 
                 ConditionDAO.Attribute.ANAT_ENTITY_ID, ConditionDAO.Attribute.STAGE_ID, ConditionDAO.Attribute.SPECIES_ID);
         String [] header = new String[] { ConditionDAO.Attribute.ID.name(), ConditionDAO.Attribute.ANAT_ENTITY_ID.name(), 
                 ConditionDAO.Attribute.STAGE_ID.name(), ConditionDAO.Attribute.SPECIES_ID.name()};
+        // Retrieve condition with devStage = null
         List<ConditionTO> conditionTOs = this.conditionDAO.getGlobalConditionsBySpeciesIds(Collections.singleton(speciesId), 
-                condAttributes, attributes).getAllTOs();
+                condAttributesAnat, attributes).getAllTOs();
+        // add conditions where both anatEntity and devStage are not null
+        conditionTOs.addAll(this.conditionDAO.getGlobalConditionsBySpeciesIds(Collections.singleton(speciesId), 
+                condAttributesAnatAndStage, attributes).getAllTOs());
         Set<List<String>> allglobalCondInformation = conditionTOs.stream().map(s -> {
                     return Arrays.asList(s.getId().toString(), s.getAnatEntityId(), s.getStageId(), 
                             s.getSpeciesId().toString());

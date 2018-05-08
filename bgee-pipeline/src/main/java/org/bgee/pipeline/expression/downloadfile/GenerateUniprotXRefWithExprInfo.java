@@ -10,9 +10,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -22,6 +24,7 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.expressiondata.ConditionGraph;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
@@ -67,7 +70,7 @@ public class GenerateUniprotXRefWithExprInfo {
         log.entry(file);
         ICsvBeanReader beanReader = null;
         try {
-            beanReader = new CsvBeanReader(new FileReader(file), CsvPreference.TAB_PREFERENCE);
+            beanReader = new CsvBeanReader(new FileReader(file), CsvPreference.EXCEL_NORTH_EUROPE_PREFERENCE);
             final String[] header = beanReader.getHeader(false);
             final CellProcessor[] processors = new CellProcessor[] { 
                     new NotNull(), // uniprotXrefId
@@ -102,11 +105,14 @@ public class GenerateUniprotXRefWithExprInfo {
         CallService service = serviceFactory.getCallService();
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
                 new LinkedHashMap<>();
+        //XXX: Following lines (until line XXX) of code are the same than in the CommandGene. Maybe we should move this code to
+        // a shared location and call it for both CommandGene AND Uniprot Xref generation
         serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
         Map<SummaryCallType.ExpressionSummary, SummaryQuality> silverExpressedCallFilter = new HashMap<>();
         silverExpressedCallFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
         Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
         obsDataFilter.put(CallType.Expression.EXPRESSED, true);
+        
         final List<ExpressionCall> calls = service.loadExpressionCalls(
                 new ExpressionCallFilter(silverExpressedCallFilter,
                         Collections.singleton(new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId())),
@@ -116,13 +122,43 @@ public class GenerateUniprotXRefWithExprInfo {
                            CallService.Attribute.EXPERIMENT_COUNTS),
                 serviceOrdering)
             .collect(Collectors.toList());
+
+        final Set<String> organIds = calls.stream()
+                .map(c ->c .getCondition().getAnatEntityId())
+                .collect(Collectors.toSet());
+        
+        Map<SummaryCallType.ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
+        summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE);
+
+        List<ExpressionCall> expressionCalls = service.loadExpressionCalls(
+                new ExpressionCallFilter(summaryCallTypeQualityFilter,
+                        Collections.singleton(new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId())),
+                        null, null, obsDataFilter, null, null),
+                EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
+                        CallService.Attribute.DEV_STAGE_ID,
+                        CallService.Attribute.GLOBAL_MEAN_RANK,
+                        CallService.Attribute.EXPERIMENT_COUNTS),
+                serviceOrdering)
+            .collect(Collectors.toList());
+        List<ExpressionCall> orderedCalls = expressionCalls.stream()
+                .filter(c -> organIds.contains(c.getCondition().getAnatEntityId()))
+                .collect(Collectors.toList());
+        ConditionGraph organStageGraph = new ConditionGraph(
+                orderedCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()), 
+                serviceFactory);
+        Collections.sort(orderedCalls, new ExpressionCall.RankComparator(organStageGraph));
+        final Set<ExpressionCall> redundantCalls = ExpressionCall.identifyRedundantCalls(
+                orderedCalls, organStageGraph);
         serviceFactory.close();
+        orderedCalls.removeAll(redundantCalls);
+        
+        
         String prefixLine = xref.getUniprotId()+"   DR   BGEE; "+xref.getEnsemblId()+";";
         if(calls.size() == 0){
             outputXrefLines.add( prefixLine+" -.");
         }else{
-            outputXrefLines.add(prefixLine+" Expressed in "+calls.size()+" organs, higher expression level in "+
-                    calls.get(0).getCondition().getAnatEntity().getName()+".");
+            outputXrefLines.add(prefixLine+" Expressed in "+orderedCalls.size()+" organs, higher expression level in "+
+                    orderedCalls.get(0).getCondition().getAnatEntity().getName()+".");
         }
     }
     

@@ -6,45 +6,23 @@ div.source-list {
 
 div.source {
     padding: 0;
-}
-
-div.source > div {
-	padding: 0;
+    margin: 0;
 }
 
 .border-top {
     border-top: #ccc 1px solid;
 }
 
-.source-name {
-    width: 150px;
+.source-name, source-details {
     padding: 5px 0 !important;
 }
 
 .source-details-header {
-    max-width: 150px;
     font-weight: 300;
     font-size: 0.9em !important;
     text-transform: uppercase;
-    padding-left: 0 !important;
 }
 
 .details {
-    padding: 5px 5px 5px 0;
-/*        margin: 0 -15px !important; */
-}
-
-@media (max-width: 768px) {
-    .details {
-       border-top: none;
-        margin: 0 !important;
-        padding: 5px;    
-    }
-    .source-name {
-        padding: 5px !important;
-    }
-    .source-details-header {
-        padding-left: 15px !important;
-    
-    }
+    padding: 5px 15px;
 }

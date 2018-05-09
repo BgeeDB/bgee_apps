@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.UncheckedIOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -61,45 +62,70 @@ import org.supercsv.io.ICsvMapReader;
  *
  */
 public class BgeeToBgeeLight extends MySQLDAOUser{
-        
+       
+    /**
+     * Each entry of this enum corresponds to the export of one bgee table that have to be integrated into the bgeelight database.
+     * Each entry contains 4 information :
+     * 1. name of the file containing all data
+     * 2. name of the table in bgeelight
+     * 3. mapping between the name of the columns in the file and the name of the columns in the bgeelight database
+     * 4. sql type of the column in the bgeelight database
+     *
+     */
     private enum TsvFile {
         SPECIES_OUTPUT_FILE("species_bgee_light.tsv", "species", "{GENOME_VERSION=genomeVersion, GENOME_SPECIES_ID=genomeSpeciesId, ID=speciesId, "
-                + "COMMON_NAME=speciesCommonName, GENUS=genus, SPECIES_NAME=species}"),
+                + "COMMON_NAME=speciesCommonName, GENUS=genus, SPECIES_NAME=species}", "{MEDIUMINT, VARCHAR, VARCHAR, VARCHAR, VARCHAR, MEDIUMINT}"),
         GENE_OUTPUT_FILE("genes_bgee_light.tsv", "gene", "{ID=bgeeGeneId, SPECIES_ID=speciesId, DESCRIPTION=geneDescription, "
-                + "ENSEMBL_ID=geneId, NAME=geneName}"),
+                + "ENSEMBL_ID=geneId, NAME=geneName}", "{MEDIUMINT, VARCHAR, VARCHAR, TEXT, MEDIUMINT}"),
         ANATENTITY_OUTPUT_FILE("anat_entities_bgee_light.tsv", "anatEntity", "{ID=anatEntityId, DESCRIPTION=anatEntityDescription, "
-                + "NAME=anatEntityName}"),
+                + "NAME=anatEntityName}", "{VARCHAR, VARCHAR, TEXT}"),
         DEVSTAGE_OUTPUT_FILE("dev_stages_bgee_light.tsv", "stage", "{ID=stageId, DESCRIPTION=stageDescription, "
-                + "NAME=stageName}"), 
+                + "NAME=stageName}", "{VARCHAR, VARCHAR, TEXT}"), 
         GLOBALCOND_OUTPUT_FILE("global_cond_bgee_light.tsv", "globalCond", "{ID=globalConditionId, SPECIES_ID=speciesId, ANAT_ENTITY_ID=anatEntityId, "
-                + "STAGE_ID=stageId}"),
-        GLOBALEXPRESSION_OUTPUT_FILE("global_expression_bgee_light.tsv", "globalExpression", "{BGEE_GENE_ID=bgeeGeneId, CONDITION_ID=globalConditionId, SUMMARY_QUALITY=summaryQuality}");
+                + "STAGE_ID=stageId}", "{MEDIUMINT, VARCHAR, VARCHAR, MEDIUMINT}"),
+        GLOBALEXPRESSION_OUTPUT_FILE("global_expression_bgee_light.tsv", "globalExpression", "{BGEE_GENE_ID=bgeeGeneId, CONDITION_ID=globalConditionId, "
+                + "SUMMARY_QUALITY=summaryQuality}", "{INT, MEDIUMINT, MEDIUMINT, VARCHAR}");
 
         
         private String fileName = "";
         private String tableName = "";
         private Map<String, String> columnMapping = new HashMap<>();
+        private List<String> sqlType;
         
-        TsvFile(String fileName, String tableName, String columnMapping){
+        TsvFile(String fileName, String tableName, String columnMapping, String sqlType){
           this.fileName = fileName;
           this.tableName = tableName;
           this.columnMapping = getColumnMapping(columnMapping);
+          this.sqlType = getDataType(sqlType);
           
         }
         
-        private Map<String, String> getColumnMapping(String StringRepOfMap){
+        private Map<String, String> getColumnMapping(String stringRepOfMap){
+            log.entry(stringRepOfMap);
             Properties props = new Properties();
             try {
-                props.load(new StringReader(StringRepOfMap.substring(1, StringRepOfMap.length() - 1).replace(", ", "\n")));
+                props.load(new StringReader(stringRepOfMap.substring(1, stringRepOfMap.length() - 1).replace(", ", "\n")));
             } catch (IOException e1) {
                 throw log.throwing(new IllegalStateException("Can't access to Map representation of the Mapping"));
             }       
-            Map<String, String> map2 = new HashMap<String, String>();
+            Map<String, String> mapRep = new HashMap<String, String>();
             for (Map.Entry<Object, Object> e : props.entrySet()) {
-                map2.put((String)e.getKey(), (String)e.getValue());
+                mapRep.put((String)e.getKey(), (String)e.getValue());
             }
-            return map2;
+            return log.exit(mapRep);
         }
+        
+        private List<String> getDataType(String stringRepOfList){
+            log.entry(stringRepOfList);
+            List<String> listRep = new ArrayList<>();
+            if(! (stringRepOfList == null || stringRepOfList.isEmpty())){
+                listRep = Arrays.asList(stringRepOfList.substring(1, stringRepOfList.length() - 1).split(","));
+            } else {
+                throw log.throwing(new IllegalStateException("Can't access to List representation of the datayptes"));
+            }
+            return log.exit(listRep.stream().map(d -> d.replace(" ", "")).collect(Collectors.toList()));
+        }
+        
 
     }
 
@@ -457,9 +483,15 @@ public class BgeeToBgeeLight extends MySQLDAOUser{
                             if (columnValue instanceof Integer){
                                 stmt.setInt(i+1 ,Integer.valueOf(columnValue.toString()));            
                             }else if (columnValue instanceof String) {
-                                stmt.setString(i+1,String.valueOf(columnValue));   
+                                stmt.setString(i+1,String.valueOf(columnValue));
                             }else if(columnValue == null){
-                                stmt.setString(i+1, "");
+                                //replace " " by "" to be sure that 
+                                if(tsvFile.sqlType.get(i).equals("VARCHAR") || tsvFile.sqlType.get(i).equals("TEXT")){
+                                    stmt.setNull(i+1, java.sql.Types.VARCHAR);
+                                }else{
+                                    throw log.throwing(new IllegalArgumentException(
+                                            "For the moment only VARCHAR AND TEXT NULL values are taken into account not"));
+                                }
                             }
                             else {
                                 throw log.throwing(new IllegalArgumentException(
@@ -471,9 +503,9 @@ public class BgeeToBgeeLight extends MySQLDAOUser{
                     
                     //commit once all lines of the file have been parsed
                     
-                    this.commit();
+                this.commit();
                 } catch (SQLException e) {
-                    log.error("Can not connect to the database");
+                    log.error("Can not insert at least one {} in the database",tsvFile.tableName);
                     e.printStackTrace();
                 }
             }catch (FileNotFoundException e) {

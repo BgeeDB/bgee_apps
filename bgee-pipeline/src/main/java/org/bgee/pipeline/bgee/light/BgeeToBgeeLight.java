@@ -70,33 +70,38 @@ public class BgeeToBgeeLight extends MySQLDAOUser{
      * 2. name of the table in bgeelight
      * 3. mapping between the name of the columns in the file and the name of the columns in the bgeelight database
      * 4. sql type of the column in the bgeelight database
+     * 5. is the column nullable?
      *
      */
     private enum TsvFile {
         SPECIES_OUTPUT_FILE("species_bgee_light.tsv", "species", "{GENOME_VERSION=genomeVersion, GENOME_SPECIES_ID=genomeSpeciesId, ID=speciesId, "
-                + "COMMON_NAME=speciesCommonName, GENUS=genus, SPECIES_NAME=species}", "{MEDIUMINT, VARCHAR, VARCHAR, VARCHAR, VARCHAR, MEDIUMINT}"),
+                + "COMMON_NAME=speciesCommonName, GENUS=genus, SPECIES_NAME=species}", "{MEDIUMINT, VARCHAR, VARCHAR, VARCHAR, VARCHAR, MEDIUMINT}",
+                "{FALSE, FALSE, FALSE, FALSE, FALSE}"),
         GENE_OUTPUT_FILE("genes_bgee_light.tsv", "gene", "{ID=bgeeGeneId, SPECIES_ID=speciesId, DESCRIPTION=geneDescription, "
-                + "ENSEMBL_ID=geneId, NAME=geneName}", "{MEDIUMINT, VARCHAR, VARCHAR, TEXT, MEDIUMINT}"),
+                + "ENSEMBL_ID=geneId, NAME=geneName}", "{MEDIUMINT, VARCHAR, VARCHAR, TEXT, MEDIUMINT}", 
+                "{FALSE, FALSE, FALSE, TRUE, FALSE}"),
         ANATENTITY_OUTPUT_FILE("anat_entities_bgee_light.tsv", "anatEntity", "{ID=anatEntityId, DESCRIPTION=anatEntityDescription, "
-                + "NAME=anatEntityName}", "{VARCHAR, VARCHAR, TEXT}"),
+                + "NAME=anatEntityName}", "{VARCHAR, VARCHAR, TEXT}", "{FALSE, FALSE, TRUE}"),
         DEVSTAGE_OUTPUT_FILE("dev_stages_bgee_light.tsv", "stage", "{ID=stageId, DESCRIPTION=stageDescription, "
-                + "NAME=stageName}", "{VARCHAR, VARCHAR, TEXT}"), 
+                + "NAME=stageName}", "{VARCHAR, VARCHAR, TEXT}", "{FALSE, FALSE, TRUE}"), 
         GLOBALCOND_OUTPUT_FILE("global_cond_bgee_light.tsv", "globalCond", "{ID=globalConditionId, SPECIES_ID=speciesId, ANAT_ENTITY_ID=anatEntityId, "
-                + "STAGE_ID=stageId}", "{MEDIUMINT, VARCHAR, VARCHAR, MEDIUMINT}"),
+                + "STAGE_ID=stageId}", "{MEDIUMINT, VARCHAR, VARCHAR, MEDIUMINT}", "{FALSE, TRUE, TRUE, FALSE}"),
         GLOBALEXPRESSION_OUTPUT_FILE("global_expression_bgee_light.tsv", "globalExpression", "{BGEE_GENE_ID=bgeeGeneId, CONDITION_ID=globalConditionId, "
-                + "SUMMARY_QUALITY=summaryQuality}", "{INT, MEDIUMINT, MEDIUMINT, VARCHAR}");
+                + "SUMMARY_QUALITY=summaryQuality}", "{INT, MEDIUMINT, MEDIUMINT, VARCHAR}", "{FALSE, FALSE, FALSE, FALSE}");
 
         
         private String fileName = "";
         private String tableName = "";
         private Map<String, String> columnMapping = new HashMap<>();
-        private List<String> sqlType;
+        private List<String> datatypes;
+        private List<String> nullable;
         
-        TsvFile(String fileName, String tableName, String columnMapping, String sqlType){
+        TsvFile(String fileName, String tableName, String columnMapping, String datatypes, String nullable){
           this.fileName = fileName;
           this.tableName = tableName;
           this.columnMapping = getColumnMapping(columnMapping);
-          this.sqlType = getDataType(sqlType);
+          this.datatypes = getListFromString(datatypes);
+          this.nullable = getListFromString(nullable);
           
         }
         
@@ -115,7 +120,7 @@ public class BgeeToBgeeLight extends MySQLDAOUser{
             return log.exit(mapRep);
         }
         
-        private List<String> getDataType(String stringRepOfList){
+        private List<String> getListFromString(String stringRepOfList){
             log.entry(stringRepOfList);
             List<String> listRep = new ArrayList<>();
             if(! (stringRepOfList == null || stringRepOfList.isEmpty())){
@@ -460,10 +465,8 @@ public class BgeeToBgeeLight extends MySQLDAOUser{
             ICsvMapReader mapReader = null;
             try {               
                 mapReader = new CsvMapReader(new FileReader(outputDirectory + tsvFile.fileName), Utils.TSVCOMMENTED);
-                // the header columns are used as the keys to the Map
+                // the header columns are used as the keys of the Mapping
                 String[] header = mapReader.getHeader(true);
-                // create the processor. No null values in the tsv file so we create a generic processor defining only
-                // NotNull() columns
                 CellProcessor[] processors = new CellProcessor[header.length];
                 String sql = "INSERT INTO " + tsvFile.tableName + " (";
                 String variables = "(";
@@ -472,7 +475,7 @@ public class BgeeToBgeeLight extends MySQLDAOUser{
                     sql += tsvFile.columnMapping.get(header[i])+", ";
                     variables += "?, ";
                 }
-                //sql.length() -2 because we remove last curl and space
+                //sql.length() -2 because we remove last comma and space
                 sql = sql.substring(0, sql.length() -2) +") VALUES " + variables.substring(0, variables.length() -2) +")";
                 log.debug("SQL query : {}", sql);
                 Map<String, Object> customerMap;
@@ -485,25 +488,34 @@ public class BgeeToBgeeLight extends MySQLDAOUser{
                             }else if (columnValue instanceof String) {
                                 stmt.setString(i+1,String.valueOf(columnValue));
                             }else if(columnValue == null){
-                                //replace " " by "" to be sure that 
-                                if(tsvFile.sqlType.get(i).equals("VARCHAR") || tsvFile.sqlType.get(i).equals("TEXT")){
-                                    stmt.setNull(i+1, java.sql.Types.VARCHAR);
-                                }else{
+                                if(tsvFile.nullable.get(i).equals("TRUE")){
+                                    if(tsvFile.datatypes.get(i).equals("VARCHAR") || tsvFile.datatypes.get(i).equals("TEXT")){
+                                        stmt.setNull(i+1, java.sql.Types.VARCHAR);
+                                    }else if( tsvFile.datatypes.get(i).equals("INT") || tsvFile.datatypes.get(i).equals("MEDIUMINT")){
+                                        stmt.setNull(i+1, java.sql.Types.INTEGER);
+                                    }else{
                                     throw log.throwing(new IllegalArgumentException(
-                                            "For the moment only VARCHAR AND TEXT NULL values are taken into account not"));
+                                            "the datatype " + tsvFile.datatypes.get(i) + " is not taken into account for nullable columns"));
+                                    }
+                                }else if(tsvFile.nullable.get(i).equals("FALSE")){
+                                    if(tsvFile.datatypes.get(i).equals("VARCHAR") || tsvFile.datatypes.get(i).equals("TEXT")){
+                                        stmt.setString(i+1,"");
+                                    }else{
+                                        throw log.throwing(new IllegalArgumentException(
+                                                "For the moment we only take into account VARCHAR and TEXT sql datatypes to "
+                                                + "transform null column in the TSV file to empty String in the database"));
+                                    }
                                 }
                             }
                             else {
                                 throw log.throwing(new IllegalArgumentException(
-                                        "Each column should be an Integer or a String"));
+                                        "Each column should be an Integer, a String, or null"));
                             }
                         }
                         stmt.executeUpdate();
                     }
-                    
                     //commit once all lines of the file have been parsed
-                    
-                this.commit();
+                    this.commit();
                 } catch (SQLException e) {
                     log.error("Can not insert at least one {} in the database",tsvFile.tableName);
                     e.printStackTrace();

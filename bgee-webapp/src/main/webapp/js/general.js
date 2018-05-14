@@ -236,5 +236,4 @@ var general = {
 // Call the init function when the document is ready()
 $( document ).ready( function(){
 	general.init();
-	loadAutocompleteGene();
 });

@@ -70,7 +70,7 @@ public class GenerateUniprotXRefWithExprInfo {
         log.entry(file);
         ICsvBeanReader beanReader = null;
         try {
-            beanReader = new CsvBeanReader(new FileReader(file), CsvPreference.EXCEL_NORTH_EUROPE_PREFERENCE);
+            beanReader = new CsvBeanReader(new FileReader(file), CsvPreference.TAB_PREFERENCE);
             final String[] header = beanReader.getHeader(false);
             final CellProcessor[] processors = new CellProcessor[] { 
                     new NotNull(), // uniprotXrefId

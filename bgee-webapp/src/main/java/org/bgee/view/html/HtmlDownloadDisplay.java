@@ -252,16 +252,19 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             RequestParameters urlGenerator = this.getNewRequestParameters();
             urlGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
             urlGenerator.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
-            intro.append("<a href='" + urlGenerator.getRequestURL() 
-                    + "' title='See Bgee processed expression values'>processed expression values</a>");
+            intro.append("<a href='").append(urlGenerator.getRequestURL())
+                    .append("' title='See Bgee processed expression values'>processed expression values</a>");
         } else {
             RequestParameters urlGenerator = this.getNewRequestParameters();
             urlGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
             urlGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
-            intro.append("<a href='" + urlGenerator.getRequestURL() 
-                    + "' title='See Bgee gene expression calls'>gene expression calls</a>");
+            intro.append("<a href='").append(urlGenerator.getRequestURL())
+                    .append("' title='See Bgee gene expression calls'>gene expression calls</a>");
         }
-        intro.append(".</p>");
+        intro.append(". All data are available under the " +
+                "<a rel='license' href='" + LICENCE_CC0_URL + "' target='_blank'>" +
+                "    Creative Commons Zero license (CC0)</a>.");
+        intro.append("</p>");
         // FIXME enable link to statistics TSV file
 //        intro.append(", and <a href='" + this.prop.getFTPRootDirectory() 
 //                + "statistics.tsv' title='Database statistics TSV file'>"

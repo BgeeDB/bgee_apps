@@ -57,6 +57,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     protected static final String BGEE_R_PACKAGE_URL = 
             "https://bioconductor.org/packages/release/bioc/html/BgeeDB.html";
 
+    protected static final String LICENCE_CC0_URL =
+            "http://creativecommons.org/publicdomain/zero/1.0/";
+
     /**
      * Escape HTML entities in the provided {@code String}
      * @param stringToWrite A {@code String} that contains the HTML to escape
@@ -314,7 +317,13 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("<div class='container-fluid'>");
 
         this.writeln("<ul class='nav navbar-nav'>");
-        this.writeln("<li><a href='https://www.sib.swiss'>SIB Swiss Institute of Bioinformatics</a></li>");
+        this.writeln("    <li><a href='https://www.sib.swiss'>SIB Swiss Institute of Bioinformatics</a></li>");
+        this.writeln("    <li>");
+        this.writeln("        <a rel='license' href='" + LICENCE_CC0_URL + "' target='_blank'>");
+        this.writeln("            <img src='" + this.prop.getBgeeRootDirectory() + this.prop.getImagesRootDirectory() + 
+                                    "cc-zero.png' alt='CC0' />");
+        this.writeln("        </a>");
+        this.writeln("    </li>");
         this.writeln("</ul>");
         
 

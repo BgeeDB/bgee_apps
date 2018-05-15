@@ -56,9 +56,9 @@ nav img.social-img {
 
 #bgee-menu {
     font-size: 1.1em;
-    margin-bottom: 0px;
-    border-width: 0px;
-    border-radius: 0px;
+    margin-bottom: 0;
+    border-width: 0;
+    border-radius: 0;
     z-index: 100;
 }
 #bgee-menu.navbar-default {
@@ -272,7 +272,7 @@ nav img.social-img {
 }
 
 figure img {
-    margin: 0px auto 3px auto;
+    margin: 0 auto 3px auto;
 }
 
 span.header_details {
@@ -305,11 +305,11 @@ span.header_details {
     height: 120px;
     width: 120px;
     margin: 0 auto;
-    box-shadow: 4px 4px 6px 0px #555;
+    box-shadow: 4px 4px 6px 0 #555;
 }
 
 .feature_list img:hover {
-    box-shadow: 0px 0px 10px 4px #920209;
+    box-shadow: 0 0 10px 4px #920209;
 }
 
 /* TODO: how to make sure that, when one of the figcaption is too long 
@@ -369,7 +369,7 @@ span.search_msg {
 
 div.bgee_search .form {
     margin-bottom: 0;
-    padding-left: 0px;
+    padding-left: 0;
 }
 
 div.bgee_search button {
@@ -387,11 +387,11 @@ img.ajax_waiting {
 /**** FOOTER ****/
 #bgee_footer.navbar-default {
     position: absolute;
-    bottom: 0px;
+    bottom: 0;
 	background-color: rgba(51, 51, 51, 1);
-    margin-bottom: 0px;
-    border-width: 0px;
-    border-radius: 0px;
+    margin-bottom: 0;
+    border-width: 0;
+    border-radius: 0;
     z-index: 50;
     min-height: 30px;
     width: 100%;
@@ -400,11 +400,15 @@ img.ajax_waiting {
 #bgee_footer a {
     color: #F7F8FA;
     text-decoration: none;
-    padding: 5px 15px 5px 0px;
+    padding: 5px 15px 5px 0;
 }
 
 #bgee_footer a:hover {
     text-decoration: underline;
+}
+
+#bgee_footer img {
+    padding-bottom: 2px;
 }
 
 /*! jQuery UI - v1.11.0 - 2014-06-26
@@ -563,7 +567,7 @@ div.bgee_download_section figure.selected {
     border: 4px #282828 solid;
     background: #282828;
     border-radius: 12px 12px 0 0;
-    padding: 0px;
+    padding: 0;
 }
 
 #bgee_data figure,
@@ -574,12 +578,12 @@ div.bgee_download_section figure.selected {
 
 #bgee_data figure:not(.selected) img.species_img,
 #bgee_uniq_species figure:not(.selected) img.species_img {
-    box-shadow: 4px 4px 6px 0px #555;
+    box-shadow: 4px 4px 6px 0 #555;
 }
 
 #bgee_data figure:not(.selected) img.species_img:hover,
 #bgee_uniq_species figure:not(.selected) img.species_img:hover {
-    box-shadow: 0px 0px 10px 4px #920209;
+    box-shadow: 0 0 10px 4px #920209;
  }
   
 /**** BGEE DATASELECTION (banner) ****/
@@ -637,7 +641,7 @@ div.bgee_download_section figure.selected {
 #bgee_data_selection li img.bullet_point {
     width: 25px;
     height: 15px;
-    margin: 0px 5px 5px 0;
+    margin: 0 5px 5px 0;
 }
  
  #bgee_data_selection_cross {
@@ -659,7 +663,7 @@ div.bgee_download_section figure.selected {
  
 #bgee_data figure.selected,
 #bgee_uniq_species figure.selected {
-	padding: 0px;
+	padding: 0;
 }
  
 #bgee_data figure.selected p,

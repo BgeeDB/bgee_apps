@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -157,7 +156,7 @@ public class GenerateUniprotXRefWithExprInfo {
         if(calls.size() == 0){
             outputXrefLines.add( prefixLine+" -.");
         }else{
-            outputXrefLines.add(prefixLine+" Expressed in "+orderedCalls.size()+" organs, higher expression level in "+
+            outputXrefLines.add(prefixLine+" Expressed in "+orderedCalls.size()+" organ(s), highest expression level in "+
                     orderedCalls.get(0).getCondition().getAnatEntity().getName()+".");
         }
     }

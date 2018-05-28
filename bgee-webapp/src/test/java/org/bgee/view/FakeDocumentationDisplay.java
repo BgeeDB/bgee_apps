@@ -48,4 +48,8 @@ public class FakeDocumentationDisplay extends FakeParentDisplay implements Docum
         this.out.println("Test3");
     }
 
+    @Override
+    public void displayDataSets() {
+        this.out.println("Test1");
+    }
 }

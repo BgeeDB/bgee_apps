@@ -15,9 +15,9 @@ import org.bgee.view.ViewFactory;
  * Controller that handles requests having the category "documentation", i.e. with the parameter
  * page=documentation
  *
- * @author 	Valentine Rech de Laval
- * @version Bgee 13
- * @since 	Bgee 13
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, May 2018
+ * @since   Bgee 13, Mar. 2015
  */
 public class CommandDocumentation extends CommandParent {
 
@@ -62,6 +62,9 @@ public class CommandDocumentation extends CommandParent {
         } else if (this.requestParameters.getAction().equals(
                 RequestParameters.ACTION_DOC_HOW_TO_ACCESS)) {
             display.displayHowToAccessDataDocumentation();
+        } else if (this.requestParameters.getAction().equals(
+                RequestParameters.ACTION_DOC_DATA_SETS)) {
+            display.displayDataSets();
         } else {
             throw log.throwing(new PageNotFoundException("Incorrect " + 
                 this.requestParameters.getUrlParametersInstance().getParamAction() + 

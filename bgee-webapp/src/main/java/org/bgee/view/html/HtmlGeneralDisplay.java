@@ -7,7 +7,6 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
@@ -24,8 +23,8 @@ import org.bgee.view.html.HtmlDownloadDisplay.DownloadPageType;
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
- * @version Bgee 14, Feb. 2018
- * @since   Bgee 13
+ * @version Bgee 14, May 2018
+ * @since   Bgee 13, July 2014
  */
 public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisplay {
 
@@ -179,7 +178,9 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         this.writeln("<h2>Gene expression data</h2>");
         this.writeln("<p>Bgee is a database to retrieve and compare gene expression patterns "
                 + "in multiple animal species, produced from multiple data types "
-                + "(RNA-Seq, Affymetrix, <em>in situ</em> hybridization, and EST data).</p>");
+                + "(RNA-Seq, Affymetrix, <em>in situ</em> hybridization, and EST data) "
+				+ "and from multiple data sets (including <a href='https://www.gtexportal.org/home/'" +
+				" title='GTEx portal' target='_blank'>GTEx data</a>).</p>");
         this.writeln("</div>");
         
         this.writeln("<div class='col-sm-4'>");

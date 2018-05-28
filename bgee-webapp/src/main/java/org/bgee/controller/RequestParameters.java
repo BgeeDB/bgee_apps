@@ -85,7 +85,7 @@ import org.bgee.model.expressiondata.baseelements.SummaryQuality;
  * @author  Mathieu Seppey
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Mar. 2017
+ * @version Bgee 14, May 2018
  * @since   Bgee 1
  */
 public class RequestParameters {
@@ -228,6 +228,12 @@ public class RequestParameters {
      * {@link #PAGE_DOCUMENTATION}.
      */
     public static final String ACTION_DOC_TOP_ANAT = "top_anat";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when documentation about data sets  
+     * is requested. Value of the parameter page should be {@link #PAGE_DOCUMENTATION}.
+     */
+    public static final String ACTION_DOC_DATA_SETS = "data_sets";
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
      * (see {@link URLParameters#getParamAction()}) when a species data is requested.

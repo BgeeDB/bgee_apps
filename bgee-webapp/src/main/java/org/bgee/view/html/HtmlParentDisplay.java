@@ -25,7 +25,7 @@ import org.bgee.view.ViewFactory;
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
  * @author  Sebastien Moretti
- * @version Bgee 14, Feb. 2018
+ * @version Bgee 14, May 2018
  * @since   Bgee 13, Jul. 2014
  */
 public class HtmlParentDisplay extends ConcreteDisplayParent {
@@ -366,6 +366,10 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         urlDocBgeeAccess.setPage(RequestParameters.PAGE_DOCUMENTATION);
         urlDocBgeeAccess.setAction(RequestParameters.ACTION_DOC_HOW_TO_ACCESS);
 
+        RequestParameters urlDocDataSets = this.getNewRequestParameters();
+        urlDocDataSets.setPage(RequestParameters.PAGE_DOCUMENTATION);
+        urlDocDataSets.setAction(RequestParameters.ACTION_DOC_DATA_SETS);
+
         RequestParameters urlDocExprCallFiles = this.getNewRequestParameters();
         urlDocExprCallFiles.setPage(RequestParameters.PAGE_DOCUMENTATION);
         urlDocExprCallFiles.setAction(RequestParameters.ACTION_DOC_CALL_DOWLOAD_FILES);
@@ -437,10 +441,10 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' "
               + "aria-haspopup='true' aria-expanded='false'>Download <span class='caret'></span></a>");
         navbar.append("<ul class='dropdown-menu'>");
-        navbar.append("<li><a href='" + urlDownloadExprCallFiles.getRequestURL() + "'>"
-              + GENE_EXPR_CALLS_PAGE_NAME + "</a></li>");
-        navbar.append("<li><a href='" + urlDownloadProcValueFile.getRequestURL() + "'>"
-              + PROCESSED_EXPR_VALUES_PAGE_NAME + "</a></li>");
+        navbar.append("<li><a href='").append(urlDownloadExprCallFiles.getRequestURL()).append("'>")
+                .append(GENE_EXPR_CALLS_PAGE_NAME).append("</a></li>");
+        navbar.append("<li><a href='").append(urlDownloadProcValueFile.getRequestURL()).append("'>")
+                .append(PROCESSED_EXPR_VALUES_PAGE_NAME).append("</a></li>");
         navbar.append("<li><a href='" + BGEE_R_PACKAGE_URL + "' target='_blank'>"
                 + "BgeeDB R package</a></li>");
         navbar.append("</ul>");
@@ -451,19 +455,22 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' "
               + "aria-haspopup='true' aria-expanded='false'>Documentation <span class='caret'></span></a>");
         navbar.append("<ul class='dropdown-menu'>");
-        navbar.append("<li><a title='See how to access to Bgee data' href='" + urlDocBgeeAccess.getRequestURL()
-              + "'>How to access Bgee data</a></li>");
-        navbar.append("<li><a title='TopAnat documentation' href='" + urlDocTopAnat.getRequestURL()
-              + "'>" + TOP_ANAT_PAGE_NAME + "</a></li>");
-        navbar.append("<li><a title='Gene expression call files documentation' href='" + 
-              urlDocExprCallFiles.getRequestURL() + "'>" + GENE_EXPR_CALLS_PAGE_NAME + "</a></li>");
+        navbar.append("<li><a title='See how to access to Bgee data' href='")
+                .append(urlDocBgeeAccess.getRequestURL()).append("'>How to access Bgee data</a></li>");
+        navbar.append("<li><a title='See how to access to GTEx data'href='")
+                .append(urlDocDataSets.getRequestURL()).append("'>GTEx into Bgee</a></li>");
+        navbar.append("<li><a title='TopAnat documentation' href='").append(urlDocTopAnat.getRequestURL())
+                .append("'>").append(TOP_ANAT_PAGE_NAME).append("</a></li>");
+        navbar.append("<li><a title='Gene expression call files documentation' href='")
+                .append(urlDocExprCallFiles.getRequestURL()).append("'>").append(GENE_EXPR_CALLS_PAGE_NAME)
+                .append("</a></li>");
 //        navbar.append("<li><a title='Processed expression value files documentation' href='" + 
 //            urlDocProcValueFiles.getRequestURL() + "'>" + PROCESSED_EXPR_VALUES_PAGE_NAME + "</a></li>");
         navbar.append("<li><a href='https://bioconductor.org/packages/release/bioc/manuals/BgeeDB/man/BgeeDB.pdf'"
                 + " target='_blank'>BgeeDB R package</a></li>");
         navbar.append("<li><a title='Bgee blog' href='https://bgeedb.wordpress.com' target='_blank'>Bgee blog</a></li>");
-        navbar.append("<li><a title='Bgee sources' href='" + urlBgeeSources.getRequestURL()
-              + "'>Bgee sources</a></li>");
+        navbar.append("<li><a title='Bgee sources' href='").append(urlBgeeSources.getRequestURL())
+                .append("'>Bgee sources</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
         

@@ -4,8 +4,8 @@ package org.bgee.view;
  * Interface that defines methods displaying the documentation category, i.e. page=documentation
  *
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Feb 2016
- * @since   Bgee 13
+ * @version Bgee 14, May 2018
+ * @since   Bgee 13, Mar. 2015
  */
 public interface DocumentationDisplay {
     
@@ -33,4 +33,8 @@ public interface DocumentationDisplay {
      */
     public void displayHowToAccessDataDocumentation();
     
+    /**
+     * Display the documentation about data sets in Bgee.
+     */
+    public void displayDataSets();
 }

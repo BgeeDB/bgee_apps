@@ -384,12 +384,123 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
                 "Download the complete dump of the MySQL Bgee database, that contains "
                         + "all the data used to generate the information displayed on this website."));
 
-
-        this.writeln("</div>");
+        this.writeln("</div>"); // close feature_list
         
         this.endDisplay();
 
         log.exit();
+    }
+
+    @Override
+    public void displayDataSets() {
+        log.entry();
+
+        RequestParameters urlExprCalls = this.getNewRequestParameters();
+        urlExprCalls.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlExprCalls.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
+
+        RequestParameters urlSearch = this.getNewRequestParameters();
+        urlSearch.setPage(RequestParameters.PAGE_GENE);
+        
+        RequestParameters urlTopAnat = this.getNewRequestParameters();
+        urlTopAnat.setPage(RequestParameters.PAGE_TOP_ANAT);
+
+        this.startDisplay("Data sets into Bgee");
+
+        this.writeln("<h1>GTEx data into Bgee</h1>");
+
+        this.writeln("<div class='row'>");
+        this.writeln("<div class='" + CENTERED_ELEMENT_CLASS + "'>");
+
+        this.writeln("<div id='bgee_introduction'><p>In addition to the continuous growth of transcriptomics " +
+                "datasets, a few projects are generating very large amounts of data individually. " +
+                "Notably, <a href='https://www.gtexportal.org/home/' title='GTEx portal' target='_blank'>" +
+                "GTEx project</a> provides very interesting information on human gene expression.</p></div>");
+
+        this.writeln("<h2>Annotation process</h2>");
+        this.writeln("<div class='doc_content'>");
+        this.writeln("    <p>We applied a stringent re-annotation process to the GTEx data to retain " +
+                "only healthy tissues and non-contaminated samples, using the information available " +
+                "under restricted-access. For instance, we rejected all samples for 31&#37; of subjects, " +
+                "deemed globally unhealthy from the pathology report (e.g., drug abuse, diabetes, BMI &#62; 35), " +
+                "as well as specific samples from another 28&#37; of subjects who had local pathologies " +
+                "(e.g., brain from Alzheimer patients). We also rejected samples with contamination " +
+                "from other tissues.</p>" +
+                "        <p>In total, only 50&#37; of samples were kept; these represent a high quality " +
+                "subset of GTEx. All these samples were re-annotated manually to specific Uberon " +
+                "anatomy and aging terms.<p>");
+        this.writeln("</div>");
+        
+        this.writeln("<h2>GTEx data into Bgee</h2>");
+        this.writeln("<div class='doc_content'>");
+        this.writeln("<p>All corresponding RNA-seq were reanalyzed in the Bgee pipeline, " +
+                "consistently with all other healthy RNA-seq from human and other species. " +
+                "These data are being made available both through the website, " +
+                "and through <a href='https://bioconductor.org/packages/release/bioc/html/BgeeDB.html' " +
+                "class='external_link' target='_blank'>BgeeDB R package</a> " +
+                "(with sensitive information hidden).</p>");
+        this.writeln("</div>");
+
+        this.writeln("<h3>GTEx data into our website</h3>");
+        this.writeln("<div class='doc_content'>");
+        this.writeln("<ul>");
+        this.writeln("  <li>Annotations can be retrieved from <a href='"+ this.prop.getFTPRootDirectory() +
+                "/download/processed_expr_values/rna_seq/Homo_sapiens/Homo_sapiens_RNA-Seq_experiments_libraries.zip' " +
+                "title='Retrieve human RNA-Seq data per experiment'>RNA-Seq human experiments/libraries info</a>. " +
+                "Experiment ID of GTEx is 'SRP012682'.</li>");
+        this.writeln("  <li>Processed expression values, from GTEx only, are available on our FTP " +
+                "(<a href='" + this.prop.getFTPRootDirectory() + "/download/processed_expr_values/" +
+                "rna_seq/Homo_sapiens/Homo_sapiens_RNA-Seq_read_counts_TPM_FPKM_SRP012682.tsv.zip'>" +
+                "download file</a>).</li>");
+        this.writeln("  <li>Gene expression calls are included into <a href='" + urlExprCalls.getRequestURL() +
+                "#id1'>human files</a></li>");
+        this.writeln("  <li>Each human gene page and includes GTEx data if there is any " +
+                "(search a gene <a href='" + urlSearch.getRequestURL() + "'>here</a>).</li>");
+        this.writeln("  <li>TopAnat analyses can be performs <a href='" + urlTopAnat.getRequestURL() +
+                "'>here</a>, which leverage the power of the abundant GTEx data integrated " +
+                "with many smaller datasets to provide biological insight into gene lists.</li>");
+        this.writeln("</ul>");
+        this.writeln("</div>");
+
+        this.writeln("<h3>GTEx data using R package</h3>");
+        this.writeln("<div class='doc_content'>");
+        this.writeln("<ul>");
+        this.writeln("  <li>Annotations can be retrieved from RNA-Seq human experiments/libraries " +
+                "information. Experiment ID of GTEx is 'SRP012682'.");
+        this.writeln("<pre><code>{");
+        this.writeln("    bgee <- Bgee$new(species = \"Homo_sapiens\", dataType = \"rna_seq\")");
+        this.writeln("    myAnnotation <- getAnnotation(bgee)");
+        this.writeln("}");
+        this.writeln("</code></pre></li>");
+
+        this.writeln("  <li>Quantitative expression data and presence calls for GTEx can be loaded.");
+        this.writeln("<pre><code>{");
+        this.writeln("    bgee <- Bgee$new(species = \"Homo_sapiens\", dataType = \"rna_seq\")");
+        this.writeln("    dataGTEx <- getData(bgee, experimentId = \"SRP012682\")");
+        this.writeln("}");
+        this.writeln("</code></pre></li>");
+
+        this.writeln("  <li>TopAnat analyses can be performs, which leverage the power of the " +
+                "abundant GTEx data integrated with many smaller datasets to provide biological " +
+                "insight into gene lists.");
+        this.writeln("<pre><code>{");
+        this.writeln("    bgee <- Bgee$new(species = \"Homo_sapiens\", dataType = \"rna_seq\")");
+        this.writeln("    myTopAnatData <- loadTopAnatData(bgee)");
+        this.writeln("    geneList <- as.factor(c(rep(0, times=90), rep(1, times=10)))");
+        this.writeln("    names(geneList) <- c(\"ENSMUSG00000064370\", \"ENSMUSG00000064368\", \"ENSMUSG00000064367\")");
+        this.writeln("    myTopAnatObject <- topAnat(myTopAnatData, geneList, nodeSize=1)");
+        this.writeln("}");
+        this.writeln("</code></pre></li>");
+        this.writeln("</ul>");
+        this.writeln("</div>");
+
+        this.writeln("</div>"); // close specific class
+        this.writeln("</div>"); // close row
+
+        this.endDisplay();
+
+        log.exit();
+
     }
 
     //*******************************************************

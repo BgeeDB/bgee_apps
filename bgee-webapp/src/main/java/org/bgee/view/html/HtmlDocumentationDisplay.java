@@ -15,8 +15,8 @@ import org.bgee.view.DocumentationDisplay;
  *
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, June 2015
- * @since   Bgee 13
+ * @version Bgee 14, May 2018
+ * @since   Bgee 13, Mar. 2015
  */
 public class HtmlDocumentationDisplay extends HtmlParentDisplay implements DocumentationDisplay {
 
@@ -187,9 +187,9 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
             this.refExprFileDoc = refExprFileDoc;
         }
         if (topAnatDoc == null) {
-        	this.topAnatDoc = new HtmlDocumentationTopAnat(response, requestParameters, prop, factory);
+            this.topAnatDoc = new HtmlDocumentationTopAnat(response, requestParameters, prop, factory);
         } else {
-        	this.topAnatDoc = topAnatDoc;
+            this.topAnatDoc = topAnatDoc;
         }
     }
     
@@ -284,7 +284,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         this.callFileDoc.writeDocumentation();
         
         this.writeln("</div>"); // close class
-        this.writeln("</div>");	// close row
+        this.writeln("</div>"); // close row
 
         this.endDisplay();
 
@@ -302,7 +302,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         this.refExprFileDoc.writeDocumentation();
         
         this.writeln("</div>"); // close class
-        this.writeln("</div>");	// close row
+        this.writeln("</div>"); // close row
 
         this.endDisplay();
 
@@ -321,7 +321,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         this.topAnatDoc.writeDocumentation();
         
         this.writeln("</div>"); // close class
-        this.writeln("</div>");	// close row
+        this.writeln("</div>"); // close row
 
         this.endDisplay();
 
@@ -346,10 +346,24 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         RequestParameters urlDownloadCallsGenerator = this.getNewRequestParameters();
         urlDownloadCallsGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlDownloadCallsGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
-        
+
+        this.writeln("<h2>How to download Bgee data</h2>");
+
         this.writeln("<div class='feature_list'>");
-        
+
         this.writeln(this.getFeatureDownloadLogos());
+
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(BGEE_R_PACKAGE_URL,
+                true, "BgeeDB R package", "R package",
+                this.prop.getLogoImagesRootDirectory() + "r_logo_color.png",
+                "A package for the annotation and gene expression data download from Bgee database, "
+                        + "and TopAnat analysis."));
+
+        this.writeln("</div>"); // close feature_list
+
+        this.writeln("<h2>Developer corner</h2>");
+
+        this.writeln("<div class='feature_list'>");
 
         this.writeln(HtmlParentDisplay.getSingleFeatureLogo("https://github.com/BgeeDB", 
                 true, "GitHub of the Bgee project", "GitHub", 
@@ -358,17 +372,18 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
                 + "as well as the Confidence Information Ontology (CIO) "
                 + "and the Homology Ontology (HOM), from our GitHub repository."));
 
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(this.prop.getFTPRootDirectory() + 
-                "sql_dump.tar.gz", false, "Download dump the MySQL Bgee database", "MySQL dump", 
-                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "mysql_logo.png", 
-                "Download the complete dump of the MySQL Bgee database, that contains "
-                + "all the data used to generate the information displayed on this website."));
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
+                this.prop.getFTPRootDirectory() + "sql_light_dump.tar.gz", false,
+                "Download the light dump of MySQL Bgee database", "Light MySQL dump",
+                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "mysql_logo.png",
+                "Download the light dump of the MySQL Bgee database, that contains most useful, and explicit information."));
 
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(BGEE_R_PACKAGE_URL, 
-                true, "BgeeDB R package", "R package", 
-                this.prop.getLogoImagesRootDirectory() + "r_logo_color.png", 
-                "A package for the annotation and gene expression data download from Bgee database, "
-                + "and TopAnat analysis."));
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(this.prop.getFTPRootDirectory() +
+                        "sql_dump.tar.gz", false, "Download dump the MySQL Bgee database", "MySQL dump",
+                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "mysql_logo.png",
+                "Download the complete dump of the MySQL Bgee database, that contains "
+                        + "all the data used to generate the information displayed on this website."));
+
 
         this.writeln("</div>");
         

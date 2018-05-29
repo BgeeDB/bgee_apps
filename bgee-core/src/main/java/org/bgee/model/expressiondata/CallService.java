@@ -1011,7 +1011,7 @@ public class CallService extends CommonService {
                 e -> {
                     switch (e.getKey()) {
                         case GENE_ID: 
-                            return GlobalExpressionCallDAO.OrderingAttribute.BGEE_GENE_ID;
+                            return GlobalExpressionCallDAO.OrderingAttribute.PUBLIC_GENE_ID;
                         case ANAT_ENTITY_ID:
                             return GlobalExpressionCallDAO.OrderingAttribute.ANAT_ENTITY_ID;
                         case DEV_STAGE_ID: 

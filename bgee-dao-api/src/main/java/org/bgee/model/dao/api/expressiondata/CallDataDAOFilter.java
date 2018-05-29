@@ -66,7 +66,8 @@ public class CallDataDAOFilter {
      * @return      A {@code Set} of {@code Set}s of {@code DAOExperimentCountFilter}s to parameterize
      *              global expression queries. The filters in an inner {@code Set} are seen as
      *              "OR" conditions. The {@code Set}s in the outer {@code Set} are seen as
-     *              "AND" conditions.
+     *              "AND" conditions. We use this complicated mechanism because it is necessary to use
+     *              "AND" and "OR" conditions to retrieve noExpression calls.
      * @see #getDataTypes()
      */
     public Set<Set<DAOExperimentCountFilter>> getExperimentCountFilters() {

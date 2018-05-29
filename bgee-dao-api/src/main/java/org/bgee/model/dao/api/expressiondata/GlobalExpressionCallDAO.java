@@ -38,7 +38,8 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
     /**
      * The attributes available to order retrieved {@code GlobalExpressionCallTO}s
      * <ul>
-     * <li>{@code GENE_ID}: corresponds to {@link GlobalExpressionCallTO#getBgeeGeneId()}.
+     * <li>{@code BGEE_GENE_ID}: corresponds to {@link GlobalExpressionCallTO#getBgeeGeneId()}.
+     * <li>{@code PUBLIC_GENE_ID}: orders by public gene IDs rather than internal gene IDs (slower query).
      * <li>{@code CONDITION_ID}: corresponds to {@link GlobalExpressionCallTO#getConditionId()}.
      * <li>{@code ANAT_ENTITY_ID}: order by the anat. entity ID used in the conditions of the calls.
      * <li>{@code STAGE_ID}: order by the dev. stage ID used in the conditions of the calls.
@@ -53,7 +54,7 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      * </ul>
      */
     enum OrderingAttribute implements DAO.OrderingAttribute {
-        BGEE_GENE_ID, CONDITION_ID, ANAT_ENTITY_ID, STAGE_ID, OMA_GROUP_ID, MEAN_RANK;
+        BGEE_GENE_ID, PUBLIC_GENE_ID, CONDITION_ID, ANAT_ENTITY_ID, STAGE_ID, OMA_GROUP_ID, MEAN_RANK;
     }
     
     /** 

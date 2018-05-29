@@ -130,7 +130,8 @@ public class CallDAOFilter {
     /**
      * @return  A {@code LinkedHashSet} of {@code CallDataDAOFilter}s to configure the filtering
      *          of conditions with expression data. If several {@code CallDataDAOFilter}s are provided,
-     *          they are seen as "OR" conditions. Can be {@code null} or empty.
+     *          they are seen as "OR" conditions. Can be {@code null} or empty. We allow to provide
+     *          several {@code CallDataDAOFilter}s to be able to filter in different ways for different data types.
      *          Provided as a {@code LinkedHashSet} for convenience, to consistently set parameters 
      *          in queries.
      */
@@ -148,6 +149,7 @@ public class CallDAOFilter {
      *          Note that this is simply a helper method and field as compared to using {@code DAOExperimentCountFilter}s
      *          in {@code CallDataDAOFilter}s (see {@link #getDataFilters()})
      */
+    //XXX: maybe to remove and always set appropriate experimentCountFilters instead
     public Boolean getCallObservedData() {
         return callObservedData;
     }

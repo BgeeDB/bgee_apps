@@ -135,6 +135,7 @@ public class GenerateUniprotXRefWithExprInfo {
                         null, null, obsDataFilter, null, null),
                 EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
                         CallService.Attribute.DEV_STAGE_ID,
+                        CallService.Attribute.DATA_QUALITY,
                         CallService.Attribute.GLOBAL_MEAN_RANK,
                         CallService.Attribute.EXPERIMENT_COUNTS),
                 serviceOrdering)
@@ -142,18 +143,20 @@ public class GenerateUniprotXRefWithExprInfo {
         List<ExpressionCall> orderedCalls = expressionCalls.stream()
                 .filter(c -> organIds.contains(c.getCondition().getAnatEntityId()))
                 .collect(Collectors.toList());
-        ConditionGraph organStageGraph = new ConditionGraph(
-                orderedCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()), 
-                serviceFactory);
-        Collections.sort(orderedCalls, new ExpressionCall.RankComparator(organStageGraph));
-        final Set<ExpressionCall> redundantCalls = ExpressionCall.identifyRedundantCalls(
-                orderedCalls, organStageGraph);
+        if(orderedCalls == null || orderedCalls.isEmpty()){
+            log.info("No expression data for gene "+xref.ensemblId);
+        }else{
+            ConditionGraph organStageGraph = new ConditionGraph(
+                    orderedCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()), 
+                    serviceFactory);
+            Collections.sort(orderedCalls, new ExpressionCall.RankComparator(organStageGraph));
+            final Set<ExpressionCall> redundantCalls = ExpressionCall.identifyRedundantCalls(
+                    orderedCalls, organStageGraph);
+            orderedCalls.removeAll(redundantCalls);
+        }
         serviceFactory.close();
-        orderedCalls.removeAll(redundantCalls);
-        
-        
         String prefixLine = xref.getUniprotId()+"   DR   BGEE; "+xref.getEnsemblId()+";";
-        if(calls.size() == 0){
+        if(orderedCalls.isEmpty()){
             outputXrefLines.add( prefixLine+" -.");
         }else{
             outputXrefLines.add(prefixLine+" Expressed in "+orderedCalls.size()+" organ(s), highest expression level in "+

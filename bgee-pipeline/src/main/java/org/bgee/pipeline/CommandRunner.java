@@ -13,6 +13,7 @@ import org.bgee.pipeline.annotations.InsertSimilarityAnnotation;
 import org.bgee.pipeline.annotations.SimilarityAnnotation;
 import org.bgee.pipeline.expression.InsertPropagatedCalls;
 import org.bgee.pipeline.expression.downloadfile.GenerateExprFile2;
+import org.bgee.pipeline.expression.downloadfile.GenerateRankFile;
 import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile;
 import org.bgee.pipeline.gene.InsertGO;
 import org.bgee.pipeline.ontologycommon.InsertCIO;
@@ -276,9 +277,8 @@ public class CommandRunner {
 //            break;
         //Rank download files
         case "GenerateRankFile": 
-            throw log.throwing(new UnsupportedOperationException("Method disabled while updated"));
-//            GenerateRankFile.main(newArgs);
-//            break;
+            GenerateRankFile.main(newArgs);
+            break;
             
         default: 
             throw log.throwing(new UnsupportedOperationException("The following action " +

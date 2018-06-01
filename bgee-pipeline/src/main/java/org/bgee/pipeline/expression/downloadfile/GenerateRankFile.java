@@ -422,12 +422,13 @@ public class GenerateRankFile {
             dataTypes.add(null);
             if (args.length == 6) {
                 dataTypes = dataTypes.stream().filter(
-                        type -> args[5].equalsIgnoreCase("ALL") && type == null || 
-                                args[5].equalsIgnoreCase(type.name()))
+                        type -> args[5].equalsIgnoreCase("ALL") && type == null|| 
+                                type != null && args[5].equalsIgnoreCase(type.name()))
                         .collect(Collectors.toSet());
                 if (dataTypes.isEmpty()) {
                     throw log.throwing(new IllegalArgumentException("Unrecognized data type: " + args[5]));
                 }
+                log.debug(dataTypes);
             }
             
             GenerateRankFile generator = new GenerateRankFile(pathToUberon);
@@ -733,12 +734,16 @@ public class GenerateRankFile {
         Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
         summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
         Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
-        obsDataFilter.put(null, true);
+        List<DataType> dataTypeFilters = null;
+        if(dataType != null){
+            dataTypeFilters = Arrays.asList(dataType);
+        }
+        obsDataFilter.put(CallType.Expression.EXPRESSED, true);
         return log.exit(service.loadExpressionCalls(
 //                speciesId, 
                 new ExpressionCallFilter(summaryCallTypeQualityFilter,
                     Collections.singleton(new GeneFilter(speciesId)),
-                    null, Arrays.asList(dataType), obsDataFilter, true, true),
+                    null, dataTypeFilters, obsDataFilter, null, null),
                 attrs, 
                 serviceOrdering));
 
@@ -825,7 +830,11 @@ public class GenerateRankFile {
             
             Condition cond = c.getCondition();
             AnatEntity anatEntity = conditionGraph.getAnatEntityOntology().getElement(cond.getAnatEntityId());
-            DevStage devStage = conditionGraph.getDevStageOntology().getElement(cond.getDevStageId());
+            DevStage devStage = null;
+            // if only anat. entities are requested, devStage can be null
+            if(cond.getDevStageId() != null){
+                devStage = conditionGraph.getDevStageOntology().getElement(cond.getDevStageId());
+            }
             //generate a Map DataType -> presence/absence of data
             Map<DataType, Boolean> dataTypeToStatus = Arrays.stream(DataType.values())
                     .collect(Collectors.toMap(

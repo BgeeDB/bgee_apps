@@ -738,12 +738,16 @@ public class GenerateRankFile {
         if(dataType != null){
             dataTypeFilters = Arrays.asList(dataType);
         }
+        Boolean devStageObservedData = true;
+        if(anatEntityOnly){
+            devStageObservedData = null;
+        }
         obsDataFilter.put(CallType.Expression.EXPRESSED, true);
         return log.exit(service.loadExpressionCalls(
 //                speciesId, 
                 new ExpressionCallFilter(summaryCallTypeQualityFilter,
                     Collections.singleton(new GeneFilter(speciesId)),
-                    null, dataTypeFilters, obsDataFilter, null, null),
+                    null, dataTypeFilters, obsDataFilter, true, devStageObservedData),
                 attrs, 
                 serviceOrdering));
 

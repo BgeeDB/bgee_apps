@@ -286,6 +286,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)");
         this.writeln("})(window,document,'script','//www.google-analytics.com/analytics.js','ga');");
         this.writeln("ga('create', 'UA-18281910-2', 'auto');");
+        this.writeln("ga('set', 'anonymizeIp', true);");
         this.writeln("ga('send', 'pageview');");
         this.writeln("</script>");
         

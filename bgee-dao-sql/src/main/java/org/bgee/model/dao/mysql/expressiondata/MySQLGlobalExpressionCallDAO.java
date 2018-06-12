@@ -41,12 +41,11 @@ import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, May 2017
+ * @version Bgee 14, Jun. 2018
  * @see org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallTO
  * @see org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionToRawExpressionTO
  * @since   Bgee 14, Feb. 2017
  */
-//XXX: completely review git diff 03ea09b6b325dd8f9ec9bb4611678fdaf764e9ab..6e5e4219fd40242abf597878e965cce1b3bedb45
 public class MySQLGlobalExpressionCallDAO extends MySQLDAO<GlobalExpressionCallDAO.Attribute> 
 implements GlobalExpressionCallDAO {
     private final static Logger log = LogManager.getLogger(MySQLGlobalExpressionCallDAO.class.getName());
@@ -54,13 +53,12 @@ implements GlobalExpressionCallDAO {
     private final static String GLOBAL_EXPR_ID_FIELD = "globalExpressionId";
     private final static String GLOBAL_EXPR_TABLE_NAME = "globalExpression";
     private final static String GLOBAL_MEAN_RANK_FIELD = "meanRank";
-    //XXX: I think this information is already managed in another class?
-    private final static int DATA_TYPE_COUNT = 4;
-    //XXX: I think this information is already managed in another class?
-    private final static Set<DAOPropagationState> OBSERVED_STATES = EnumSet.of(DAOPropagationState.ALL,
-            DAOPropagationState.SELF, DAOPropagationState.SELF_AND_ANCESTOR, 
-            DAOPropagationState.SELF_AND_DESCENDANT);
-    //TODO: ADD NON_OBSERVED_STATES
+    private final static Set<DAOPropagationState> OBSERVED_STATES = EnumSet.allOf(DAOPropagationState.class)
+            .stream().filter(s -> s.getObservedState())
+            .collect(Collectors.toCollection(() -> EnumSet.noneOf(DAOPropagationState.class)));
+    private final static Set<DAOPropagationState> NON_OBSERVED_STATES = EnumSet.allOf(DAOPropagationState.class)
+            .stream().filter(s -> !s.getObservedState())
+            .collect(Collectors.toCollection(() -> EnumSet.noneOf(DAOPropagationState.class)));
 
     private static String generateSelectClause(Collection<GlobalExpressionCallDAO.Attribute> attrs,
             Collection<GlobalExpressionCallDAO.OrderingAttribute> orderingAttrs,
@@ -485,59 +483,24 @@ implements GlobalExpressionCallDAO {
                             );
                 }
 
-                boolean notAllDataTypes = false;
                 if (callFilter.getDataFilters() != null && !callFilter.getDataFilters().isEmpty()) {
                     sb.append(" AND ");
                     sb.append(generateDataFilters(callFilter.getDataFilters(), globalExprTableName));
-                    //To remove when the two next FIXMEs about observed data states are fixed
-                    notAllDataTypes = callFilter.getDataFilters().stream()
-                            .anyMatch(df -> !df.getDataTypes().containsAll(EnumSet.allOf(DAODataType.class)));
-                }
-
-                //TODO: check the use of getCallObservedData (we want NULL to say "any value")
-                if (callFilter.getCallObservedData() != null) {
-                    //FIXME: we should move this field to CallDataDAOFilter so that it can be based
-                    //only on some data types and not any data type.
-                    if (notAllDataTypes) {
-                        throw log.throwing(new UnsupportedOperationException(
-                                "Filtering on observed data states not yet implemented for specific data types."));
-                    }
-                    sb.append(EnumSet.allOf(DAODataType.class).stream()
-                                .map(d -> d.getFieldNamePrefix() + "ConditionObservedData" + " = ?")
-                                .collect(Collectors.joining(" OR ", " AND (", ")")));
-                }
-
-                if (callFilter.getObservedDataFilter() != null && !callFilter.getObservedDataFilter().isEmpty()) {
-                    //FIXME: we should move this field to CallDataDAOFilter so that it can be based
-                    //only on some data types and not any data type.
-                    if (notAllDataTypes) {
-                        throw log.throwing(new UnsupportedOperationException(
-                                "Filtering on observed data states not yet implemented for specific data types."));
-                    }
-                    sb.append(callFilter.getObservedDataFilter().entrySet().stream()
-                            //FIXME: manage the "non-observed states"
-                            .filter(e -> e.getValue() != null)
-                            .map(e -> {
-                                ConditionDAO.Attribute condParam = e.getKey();
-                                return EnumSet.allOf(DAODataType.class).stream()
-                                        .map(d -> generatePropStateQuery(globalExprTableName, d, condParam))
-                                        .collect(Collectors.joining(" OR ", " AND (", ")"));
-                            }).collect(Collectors.joining("")));
                 }
             }
         }
         return log.exit(sb.toString());
     }
 
-    //FIXME: must manage non-observed states
     private static String generatePropStateQuery(String globalExprTableName,
-            DAODataType dataType, ConditionDAO.Attribute condParam) {
-        log.entry(globalExprTableName, dataType, condParam);
+            DAODataType dataType, ConditionDAO.Attribute condParam, boolean isObservedRequested) {
+        log.entry(globalExprTableName, dataType, condParam, isObservedRequested);
         
         String columnName = getCallCondParamObservedDataFieldName(dataType, condParam);
         return log.exit(globalExprTableName + "." + columnName + " IN (" +
                 BgeePreparedStatement.generateParameterizedQueryString(
-                OBSERVED_STATES.size()) + ")");
+                        isObservedRequested? OBSERVED_STATES.size(): NON_OBSERVED_STATES.size()
+                ) + ")");
     }
     private static String getCallCondParamObservedDataFieldName(DAODataType dataType, ConditionDAO.Attribute condParam) {
         log.entry(dataType, condParam);
@@ -567,39 +530,83 @@ implements GlobalExpressionCallDAO {
         log.entry(dataFilters, globalExprTableName);
 
         return dataFilters.stream()
-            .map(dataFilter ->
-                dataFilter.getExperimentCountFilters().stream()
-                    .map(countOrFilterCollection ->
-                        countOrFilterCollection.stream()
-                            .map(countFilter -> {
-                                String suffix;
-                                switch (countFilter.getQualifier()) {
-                                case GREATER_THAN:
-                                    suffix = " > ";
-                                    break;
-                                case LESS_THAN:
-                                    suffix = " < ";
-                                    break;
-                                case EQUALS_TO:
-                                    suffix = " = ";
-                                    break;
-                                default:
-                                    throw new IllegalArgumentException("Unsupported qualifier: " + countFilter.getQualifier());
-                                }
-                                suffix += "?";
+            .map(dataFilter -> {
+                StringBuilder sb = new StringBuilder();
+                boolean previousClause = false;
 
+                if (dataFilter.getCallObservedData() != null) {
+                    previousClause = true;
+                    sb.append(dataFilter.getDataTypes().stream()
+                                .map(d -> d.getFieldNamePrefix() + "ConditionObservedData" + " = ?")
+                                .collect(Collectors.joining(
+                                        //If we request observed data, it can be observed by any data type
+                                        //=> OR delimiter
+                                        //If we request non-observed data, it must by non-observed by each data type
+                                        //=> AND delimiter
+                                        dataFilter.getCallObservedData()? " OR ": " AND ", "(", ")")));
+                }
+
+                if (!dataFilter.getObservedDataFilter().isEmpty()) {
+                    if (previousClause) {
+                        sb.append(" AND ");
+                    }
+                    previousClause = true;
+                    sb.append(dataFilter.getObservedDataFilter().entrySet().stream()
+                            .map(e -> {
+                                ConditionDAO.Attribute condParam = e.getKey();
                                 return dataFilter.getDataTypes().stream()
-                                        //discard request of no-expression calls from EST data, there is no such field
-                                        .filter(dataType ->
-                                        !CallType.ABSENT.equals(countFilter.getCallType()) || !DAODataType.EST.equals(dataType))
-
-                                        .map(dataType -> getExpCountFilterFieldName(dataType, countFilter))
-                                        .collect(Collectors.joining(" + ", "(", suffix + ")"));
-                            })
-                            .collect(Collectors.joining(" OR ", "(", ")"))
-                    )
-                    .collect(Collectors.joining(" AND ", "(", ")"))
-            )
+                                        .map(d -> generatePropStateQuery(globalExprTableName, d, condParam, e.getValue()))
+                                        .collect(Collectors.joining(
+                                                //If we request observed data, it can be observed by any data type
+                                                //=> OR delimiter
+                                                //If we request non-observed data, it must by non-observed by each data type
+                                                //=> AND delimiter
+                                                e.getValue()? " OR ": " AND ", "(", ")"));
+                            }).collect(Collectors.joining(" AND ", "(", ")")));
+                }
+                
+                if (!dataFilter.getExperimentCountFilters().isEmpty()) {
+                    if (previousClause) {
+                        sb.append(" AND ");
+                    }
+                    sb.append(dataFilter.getExperimentCountFilters().stream()
+                        .map(countOrFilterCollection ->
+                            countOrFilterCollection.stream()
+                                .map(countFilter -> {
+                                    String suffix;
+                                    switch (countFilter.getQualifier()) {
+                                    case GREATER_THAN:
+                                        suffix = " > ";
+                                        break;
+                                    case LESS_THAN:
+                                        suffix = " < ";
+                                        break;
+                                    case EQUALS_TO:
+                                        suffix = " = ";
+                                        break;
+                                    default:
+                                        throw new IllegalArgumentException(
+                                                "Unsupported qualifier: " + countFilter.getQualifier());
+                                    }
+                                    suffix += "?";
+    
+                                    return dataFilter.getDataTypes().stream()
+                                            //discard request of no-expression calls from EST data, there is no such field
+                                            .filter(dataType ->
+                                            !CallType.ABSENT.equals(countFilter.getCallType())
+                                                || !DAODataType.EST.equals(dataType))
+    
+                                            .map(dataType -> getExpCountFilterFieldName(dataType, countFilter))
+                                            .collect(Collectors.joining(" + ", "(", suffix + ")"));
+                                })
+                                .collect(Collectors.joining(" OR ", "(", ")"))
+                        )
+                        .collect(Collectors.joining(" AND ", "(", ")"))
+                    );
+                }
+                
+                return sb.toString();
+            })
            .collect(Collectors.joining(" OR ", "(", ")"));
     }
 
@@ -833,32 +840,27 @@ implements GlobalExpressionCallDAO {
                     }
                 }
 
-                if (callFilter.getDataFilters() != null) {
-                    for (CallDataDAOFilter dataFilter: callFilter.getDataFilters()) {
-                        for (Set<DAOExperimentCountFilter> countOrFilters: dataFilter.getExperimentCountFilters()) {
-                            for (DAOExperimentCountFilter countFilter : countOrFilters) {
-                                stmt.setInt(offsetParamIndex, countFilter.getCount());
-                                offsetParamIndex++;
-                            }
+                for (CallDataDAOFilter dataFilter: callFilter.getDataFilters()) {
+
+                    if (dataFilter.getCallObservedData() != null) {
+                        for (int i = 0; i < dataFilter.getDataTypes().size(); i++) {
+                            stmt.setBoolean(offsetParamIndex, dataFilter.getCallObservedData());
+                            offsetParamIndex++;
                         }
                     }
-                }
 
-                if (callFilter.getCallObservedData() != null) {
-                    stmt.setBooleans(offsetParamIndex,
-                            Collections.nCopies(DATA_TYPE_COUNT, callFilter.getCallObservedData()),
-                            true);
-                    offsetParamIndex += DATA_TYPE_COUNT;
-                }
+                    for (Boolean isObservedData: dataFilter.getObservedDataFilter().values()) {
+                        Set<DAOPropagationState> toUse = isObservedData? OBSERVED_STATES: NON_OBSERVED_STATES;
+                        for (int i = 0; i < dataFilter.getDataTypes().size(); i++) {
+                            stmt.setEnumDAOFields(offsetParamIndex, toUse, true);
+                            offsetParamIndex += toUse.size();
+                        }
+                    }
 
-                if (callFilter.getObservedDataFilter() != null && !callFilter.getObservedDataFilter().isEmpty()) {
-                    for (Boolean isObservedData: callFilter.getObservedDataFilter().values()) {
-                        if (isObservedData != null) {
-                            for (int i = 0; i < DATA_TYPE_COUNT; i++) {
-                                //FIXME: manage non-observed states
-                                stmt.setEnumDAOFields(offsetParamIndex, OBSERVED_STATES, true);
-                                offsetParamIndex += OBSERVED_STATES.size();
-                            }
+                    for (Set<DAOExperimentCountFilter> countOrFilters: dataFilter.getExperimentCountFilters()) {
+                        for (DAOExperimentCountFilter countFilter : countOrFilters) {
+                            stmt.setInt(offsetParamIndex, countFilter.getCount());
+                            offsetParamIndex++;
                         }
                     }
                 }

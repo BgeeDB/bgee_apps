@@ -20,6 +20,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
@@ -104,8 +105,8 @@ public class GenerateUniprotXRefWithExprInfo {
         CallService service = serviceFactory.getCallService();
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
                 new LinkedHashMap<>();
-        //XXX: Following lines (until line XXX) of code are the same than in the CommandGene. Maybe we should move this code to
-        // a shared location and call it for both CommandGene AND Uniprot Xref generation
+        //XXX: Following lines (until line 171) of code are the same than in the CommandGene. We should move this code to
+        // a shared location and call it for both CommandGene AND Uniprot XRef generation
         serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
         Map<SummaryCallType.ExpressionSummary, SummaryQuality> silverExpressedCallFilter = new HashMap<>();
         silverExpressedCallFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
@@ -146,21 +147,38 @@ public class GenerateUniprotXRefWithExprInfo {
         if(orderedCalls == null || orderedCalls.isEmpty()){
             log.info("No expression data for gene "+xref.ensemblId);
         }else{
-            ConditionGraph organStageGraph = new ConditionGraph(
-                    orderedCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()), 
-                    serviceFactory);
-            Collections.sort(orderedCalls, new ExpressionCall.RankComparator(organStageGraph));
-            final Set<ExpressionCall> redundantCalls = ExpressionCall.identifyRedundantCalls(
-                    orderedCalls, organStageGraph);
-            orderedCalls.removeAll(redundantCalls);
-        }
-        serviceFactory.close();
-        String prefixLine = xref.getUniprotId()+"   DR   BGEE; "+xref.getEnsemblId()+";";
-        if(orderedCalls.isEmpty()){
-            outputXrefLines.add( prefixLine+" -.");
-        }else{
-            outputXrefLines.add(prefixLine+" Expressed in "+orderedCalls.size()+" organ(s), highest expression level in "+
-                    orderedCalls.get(0).getCondition().getAnatEntity().getName()+".");
+            try{
+                ConditionGraph organStageGraph = new ConditionGraph(
+                        orderedCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()), 
+                        serviceFactory);
+                log.debug(organStageGraph.getConditions());
+                orderedCalls.sort(new ExpressionCall.RankComparator(organStageGraph));
+                final Set<ExpressionCall> redundantCalls = ExpressionCall.identifyRedundantCalls(
+                        orderedCalls, organStageGraph);
+                orderedCalls.removeAll(redundantCalls);
+                LinkedHashMap<AnatEntity, List<ExpressionCall>> callsByAnatEntity = orderedCalls.stream()
+                        //group by anat. entity
+                        .collect(Collectors.groupingBy(
+                                c -> c.getCondition().getAnatEntity(), 
+                                LinkedHashMap::new, 
+                                Collectors.toList()))
+                        .entrySet().stream()
+                        //discard if all calls of an anat. entity are redundant
+                        .filter(entry -> !redundantCalls.containsAll(entry.getValue()))
+                        //reconstruct the LinkedHashMap
+                        .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(), 
+                                (l1, l2) -> {
+                                    throw log.throwing(new AssertionError("Not possible to have key collision"));
+                                }, 
+                                LinkedHashMap::new));
+                
+                serviceFactory.close();
+                String prefixLine = xref.getUniprotId()+"   DR   BGEE; "+xref.getEnsemblId()+";";
+                outputXrefLines.add(prefixLine+" Expressed in "+callsByAnatEntity.size()+" organ(s), highest expression level in "+
+                        orderedCalls.get(0).getCondition().getAnatEntity().getName()+".");
+            }catch (IllegalArgumentException e) {
+                log.error("Comparison method violates its original contract. No XRef will be generated for gene {}", gene.getEnsemblGeneId());
+            }
         }
     }
     

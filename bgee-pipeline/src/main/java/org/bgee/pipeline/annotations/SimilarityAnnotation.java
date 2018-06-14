@@ -1675,7 +1675,9 @@ public class SimilarityAnnotation {
         //a NOT annotation for all parent taxa annotated; this is not mandatory, 
         //as a structure can disappear in a taxon, so we can only log a warning)
         if (checkWarn && checkPosNegAnnots) {
-            
+
+            log.warn(System.lineSeparator());
+            log.warn("-------------------------------" + System.lineSeparator());
             for (Entry<RawAnnotationBean, Set<Integer>> missingNegativeAnnots: 
                 this.checkNegativeAnnotsParentTaxa(positiveAnnotsToTaxa, negativeAnnotsToTaxa).
                 entrySet()) {
@@ -1690,7 +1692,11 @@ public class SimilarityAnnotation {
                         + "Negative annotations potentially missing in taxa: " 
                         + missingNegativeAnnots.getValue());
             }
-            
+            log.warn("-------------------------------" + System.lineSeparator());
+            log.warn(System.lineSeparator());
+
+            log.warn(System.lineSeparator());
+            log.warn("-------------------------------" + System.lineSeparator());
             for (Entry<RawAnnotationBean, Set<Integer>> missingNegativeAnnots: 
                 this.checkNegativeAnnotsSubTaxa(positiveAnnotsToTaxa, negativeAnnotsToTaxa, false).
                 entrySet()) {
@@ -1705,6 +1711,11 @@ public class SimilarityAnnotation {
                         + " - There is no corresponding positive annotation "
                         + "for the same taxon, or for any sub-taxon.");
             }
+            log.warn("-------------------------------" + System.lineSeparator());
+            log.warn(System.lineSeparator());
+
+            log.warn(System.lineSeparator());
+            log.warn("-------------------------------" + System.lineSeparator());
             for (Entry<RawAnnotationBean, Set<Integer>> missingNegativeAnnots: 
                 this.checkNegativeAnnotsSubTaxa(positiveAnnotsToTaxa, negativeAnnotsToTaxa, true).
                 entrySet()) {
@@ -1717,7 +1728,11 @@ public class SimilarityAnnotation {
                         + " in taxon IDs: " 
                         + negativeAnnotsToTaxa.get(missingNegativeAnnots.getKey()));
             }
-            
+            log.warn("-------------------------------" + System.lineSeparator());
+            log.warn(System.lineSeparator());
+
+            log.warn(System.lineSeparator());
+            log.warn("-------------------------------" + System.lineSeparator());
             //Also, if there are positive annotations using multiple Uberon IDs, most likely 
             //there should be positive annotations for the individual Uberon IDs as well.
             for (RawAnnotationBean posAnnot: positiveAnnotsToTaxa.keySet()) {
@@ -1735,6 +1750,8 @@ public class SimilarityAnnotation {
                     }
                 }
             }
+            log.warn("-------------------------------" + System.lineSeparator());
+            log.warn(System.lineSeparator());
         }
 
         log.debug("Done checking {} annotations", annots.size());

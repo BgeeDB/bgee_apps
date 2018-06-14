@@ -54,8 +54,14 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
         urlTopAnatGenerator.setPage(RequestParameters.PAGE_TOP_ANAT);
         RequestParameters urlDocumentationGenerator = this.getNewRequestParameters();
         urlDocumentationGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
-        
-        this.startDisplay("Bgee about page");
+
+        String version = this.getWebAppVersion();
+        String title = "Bgee ";
+        if (version != null) {
+            title += "release " + version + " ";
+        }
+        title += "about page";
+        this.startDisplay(title);
 
         this.writeln("<h1>About</h1>");
 
@@ -130,6 +136,28 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
                 + "for gene list enrichment tests'>url</a>] "
                 + "<a href='ftp://ftp.bgee.org/general/citation05.ris'>RIS</a></li>");
         this.writeln("</ul>");
+
+        this.writeln("<h2>Which license did we choose?</h2>");
+        
+        this.writeln("<p>" +
+                "   To the extent possible under law, Bgee team has waived all copyright and related " +
+                "   or neighboring rights to Bgee project. This work is published under the " +
+                "   <a rel='license' href='" + LICENCE_CC0_URL + "' target='_blank'>" +
+                "       Creative Commons Zero license (CC0)</a> from Switzerland. " +
+                "   Although CC0 doesn’t legally require users of the data to cite the source, " +
+                "   if you intend to use data from Bgee, it would be nice to cite us." +
+                "</p>" +
+                "<p>" +
+                "    <a rel='license' href='" + LICENCE_CC0_URL + "' target='_blank'>" +
+                "        <img src='" + this.prop.getBgeeRootDirectory() + 
+                            this.prop.getImagesRootDirectory() + "cc-zero-large.png' alt='CC0' />" +
+                "    </a>" +
+                "</p>" +
+                "<p>" +
+                "   Any third party material on this site is the property of its original copyright holders;" +
+                "   see notably \"information about original images\" at the bottom of our homepage" +
+                "   for the animal photos copyright." +
+                "</p>");
 
         this.writeln("<h2>More</h2>");
         

@@ -8,6 +8,7 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.bgee.model.BgeeEnum;
 import org.bgee.model.BgeeEnum.BgeeEnumField;
+import org.bgee.model.expressiondata.CallService;
 
 /**
  * A file (available for download), providing information such as size, category.
@@ -114,63 +115,6 @@ public class DownloadFile {
     }
 
     /**
-     * This enum contains all the different condition parameters of files:
-     * <ul>
-     *   <li>{@code ANAT_ENTITY} corresponds to the anatomical entity parameter</li>
-     *   <li>{@code DEV_STAGE} corresponds to the developmental stage parameter</li>
-     * </ul>
-     *
-     * @author  Valentine Rech de Laval
-     * @version Bgee 14, Apr. 2017
-     * @since   Bgee 14, Apr. 2017
-     */
-    // TODO: should we use CallService.Attribute?
-    // TODO: Yes
-    public enum ConditionParameter implements BgeeEnumField {
-        ANAT_ENTITY("anatomicalEntity"), DEV_STAGE("developmentalStage");
-
-        /** The string representation */
-        private final String stringRepresentation;
-
-        /**
-         * Constructor with 1-param
-         *
-         * @param stringRepresentation A {@code String} corresponding to this {@code ConditionParameter}.
-         */
-        ConditionParameter(String stringRepresentation) {
-            this.stringRepresentation = stringRepresentation;
-        }
-
-        @Override
-        public String getStringRepresentation() {
-            return this.stringRepresentation;
-        }
-        
-        /**
-         * Convert the {@code String} representation of a condition parameter (for instance,
-         * retrieved from request) into a {@code ConditionParameter}.
-         * Operation performed by calling {@link BgeeEnum#convert(Class, String)} with
-         * {@code ConditionParameter} as the {@code Class} argument, and {@code representation}
-         * as the {@code String} argument.
-         *
-         * @param representation            A {@code String} representing a data quality.
-         * @return                          A {@code ConditionParameter} corresponding
-         *                                  to {@code representation}.
-         * @throws IllegalArgumentException If {@code representation} does not correspond
-         *                                  to any {@code ConditionParameter}.
-         * @see #convert(Class, String)
-         */
-        public static final ConditionParameter convertToConditionParameter(String representation) {
-            return BgeeEnum.convert(ConditionParameter.class, representation);
-        }
-
-        @Override
-        public String toString() {
-            return this.getStringRepresentation();
-        }
-    }
-
-    /**
      * See {@link #getPath()}.
      */
     private final String path;
@@ -198,7 +142,7 @@ public class DownloadFile {
     /**
      * See {@link #getConditionParameters()}.
      */
-    private final Set<ConditionParameter> conditionParameters;
+    private final Set<CallService.Attribute> conditionParameters;
 
     /**
      * The constructor provides all values except condition parameters to create a {@code DownloadFile}.
@@ -233,10 +177,13 @@ public class DownloadFile {
      * @throws IllegalArgumentException If any of the argument is {@code null}.
      */
     public DownloadFile(String path, String name, CategoryEnum category, Long size,
-            Integer speciesDataGroupId, Collection<ConditionParameter> conditionParameters) {
+            Integer speciesDataGroupId, Collection<CallService.Attribute> conditionParameters) {
         if (StringUtils.isBlank(path) || StringUtils.isBlank(name) || category == null || 
                 speciesDataGroupId == null) {
             throw new IllegalArgumentException("No argument can be null or blank.");
+        }
+        if (conditionParameters != null && conditionParameters.stream().anyMatch(c -> !c.isConditionParameter())) {
+            throw new IllegalArgumentException("Not a condition parameter");
         }
         this.path = path;
         this.name = name;
@@ -287,10 +234,10 @@ public class DownloadFile {
     /**
      * Gets the condition parameters.
      *
-     * @return  A {@code Set} of {@code ConditionParameter} that are the
+     * @return  A {@code Set} of {@code CallService.Attribute} that are the
      *          condition parameters used to generate this file.
      */
-    public Set<ConditionParameter> getConditionParameters() {
+    public Set<CallService.Attribute> getConditionParameters() {
         return conditionParameters;
     }
 

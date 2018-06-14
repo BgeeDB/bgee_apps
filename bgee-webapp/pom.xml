@@ -109,11 +109,13 @@
         <!-- Filter for topanat-dev, enabling cross-domain queries
              (will make local development easier),
              see http://stackoverflow.com/a/30319456/1768736  -->
+        <!--
         <dependency>
             <groupId>com.thetransactioncompany</groupId>
             <artifactId>cors-filter</artifactId>
         </dependency>
-
+        -->
+        
         <!-- To return CSV files -->
         <dependency>
             <groupId>net.sf.supercsv</groupId>
@@ -133,8 +135,8 @@
         <!-- WARNING: never removes these properties, otherwise your files will be named, e.g.,
              *${filter.org.bgee.webapp.css.version.extension}.css. If you want to disable
              versioning of CSS and JS files, just leave these properties empty. -->
-        <filter.org.bgee.webapp.css.version.extension>min${project.version}a</filter.org.bgee.webapp.css.version.extension>
-        <filter.org.bgee.webapp.javascript.version.extension>min${project.version}a</filter.org.bgee.webapp.javascript.version.extension>
+        <filter.org.bgee.webapp.css.version.extension>min${project.version}b</filter.org.bgee.webapp.css.version.extension>
+        <filter.org.bgee.webapp.javascript.version.extension>min${project.version}b</filter.org.bgee.webapp.javascript.version.extension>
         <!-- This property defines where the minified CSS and JS files will be stored.
              This is useful to be able to change this setting when running the webapp from within Eclipse
              (Eclipse acquires its resources before any plugin can process them, so we modify
@@ -148,55 +150,22 @@
         <!-- property used to activate/deactivate maven-minify-plugin -->
         <skip.minify.plugin>false</skip.minify.plugin>
 
-        <!-- FIXME log4j required in bgee.dao.properties or skip it ??? -->
-        <!-- XXX why isn't it kept simply in bgee.dao.properties? log4j required depending on 
-             whether you want to log SQL statement or not (usually, not in prod) -->
-        <filter.bgee.dao.jdbc.url>jdbc:mysql://127.0.0.1:3306/bgee_v${project.version}</filter.bgee.dao.jdbc.url>
-        <filter.bgee.dao.jdbc.driver.names>com.mysql.jdbc.Driver</filter.bgee.dao.jdbc.driver.names>
 
-        <!-- FIXME Find how other attributes are set !!! -->
-        <!-- XXX which ones? -->
-
-        <!-- Default the parameter to send mail to empty string.
-             This parameter should be overriden in settings.xml if needed -->
-        <!-- XXX why isn't it kept simply in m2/settings.xml? pom.xml file is public.
-             You don't want users of our source code to use or email address by default -->
+        <!-- Default the parameter to use localhost as mail sender.
+             This parameter should be overriden in maven settings.xml if needed -->
         <filter.org.bgee.webapp.mailUri>smtp://localhost/</filter.org.bgee.webapp.mailUri>
-        <!-- "From" address when sending mails at TopAnat job completions -->
-        <filter.org.bgee.webapp.topAnatFromAddress>bgee@bgee.org</filter.org.bgee.webapp.topAnatFromAddress>
-        <!-- Following paths have to be created on host running topanat analysis, and belong to *tomcat* user -->
-        <filter.org.bgee.webapp.requestParametersStorageDirectory>/var/bgee/webapp/${project.version}/requestparameters/</filter.org.bgee.webapp.requestParametersStorageDirectory>
-        <filter.org.bgee.core.topAnatRWorkingDirectory>/var/bgee/webapp/${project.version}/topanat/results/</filter.org.bgee.core.topAnatRWorkingDirectory>
-        <filter.org.bgee.core.topAnatResultsWritingDirectory>/var/bgee/webapp/${project.version}/topanat/results/</filter.org.bgee.core.topAnatResultsWritingDirectory>
-        <!-- Force R path for Linux host because TopAnat runs on Linux servers currently -->
-        <filter.org.bgee.core.topAnatRScriptExecutable>/usr/bin/Rscript</filter.org.bgee.core.topAnatRScriptExecutable>
-
-        <!-- NOTE: org.bgee.webapp.bgeeRootDirectory has TO be linked with Apache configuration
-                   to have the right behavior
-             NOTE: Now ftp://ftp.bgee.org/bgee_v${project.version}/ points to the last version
-                   of a Bgee release -->
+        <!-- "From" address when sending mails at TopAnat job completions.
+             This parameter should be overriden in maven settings.xml so that external users
+             of the webapp fo not use the Bgee mail by default. -->
+        <filter.org.bgee.webapp.topAnatFromAddress></filter.org.bgee.webapp.topAnatFromAddress>
 
         <!-- Set the host we want to link to. For instance, we might want to link to bgee.org
              while the current host is bgee.unil.ch. This is important for generating links in emails.
              Simply set to point to the server root by default, This parameter should be overriden
-             in settings.xml if needed -->
-             <!-- XXX this won't work for production version where the root directory is simply '/'
-                  And it won't work for development version localhost:8080. This is why it was in
-                  our settings.xml, set depending on our environment -->
-        <filter.org.bgee.webapp.bgeeRootDirectory>/bgee${project.version}/</filter.org.bgee.webapp.bgeeRootDirectory>
-        <!-- in production, should be '.bgee.org' -->
-        <filter.org.bgee.webapp.bgeeRootDomain>.bgee.org</filter.org.bgee.webapp.bgeeRootDomain>
-
-        <!-- Set FTP URLs with proper Bgee version -->
-        <!-- XXX means that the default production address won't be ftp://ftp.bgee.org/ -->
-        <filter.org.bgee.webapp.ftpRootDirectory>ftp://ftp.bgee.org/bgee_v${project.version}/</filter.org.bgee.webapp.ftpRootDirectory>
-        <filter.org.bgee.webapp.downloadRootDirectory>ftp://ftp.bgee.org/bgee_v${project.version}/download/</filter.org.bgee.webapp.downloadRootDirectory>
-        <filter.org.bgee.webapp.downloadExprFilesRootDirectory>ftp://ftp.bgee.org/bgee_v${project.version}/download/calls/expr_calls/</filter.org.bgee.webapp.downloadExprFilesRootDirectory>
-        <filter.org.bgee.webapp.downloadDiffExprFilesRootDirectory>ftp://ftp.bgee.org/bgee_v${project.version}/download/calls/diff_expr_calls/</filter.org.bgee.webapp.downloadDiffExprFilesRootDirectory>
-        <filter.org.bgee.webapp.downloadMultiDiffExprFilesRootDirectory>ftp://ftp.bgee.org/bgee_v${project.version}/download/calls/multi_species_diff_expr_calls/</filter.org.bgee.webapp.downloadMultiDiffExprFilesRootDirectory>
-        <filter.org.bgee.webapp.downloadOrthologFilesRootDirectory>ftp://ftp.bgee.org/bgee_v${project.version}/download/orthologs/</filter.org.bgee.webapp.downloadOrthologFilesRootDirectory>
-        <filter.org.bgee.webapp.downloadAffyProcExprValueFilesRootDirectory>ftp://ftp.bgee.org/bgee_v${project.version}/download/processed_expr_values/affymetrix/</filter.org.bgee.webapp.downloadAffyProcExprValueFilesRootDirectory>
-        <filter.org.bgee.webapp.downloadRNASeqProcExprValueFilesRootDirectory>ftp://ftp.bgee.org/bgee_v${project.version}/download/processed_expr_values/rna_seq/</filter.org.bgee.webapp.downloadRNASeqProcExprValueFilesRootDirectory>
+             in Maven settings.xml if needed -->
+        <filter.org.bgee.webapp.bgeeRootDirectory>/</filter.org.bgee.webapp.bgeeRootDirectory>
+        <!-- in production, should be '.bgee.org', set using Maven settings.xml -->
+        <filter.org.bgee.webapp.bgeeRootDomain></filter.org.bgee.webapp.bgeeRootDomain>
     </properties>
 
     <!-- There is a problem when running the webapp from Eclipse: m2e-wtp acquires

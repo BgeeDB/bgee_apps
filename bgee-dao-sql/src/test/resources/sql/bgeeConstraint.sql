@@ -114,12 +114,14 @@ add primary key (anatEntityXRefId, anatEntityId);
 /*!40000 ALTER TABLE `anatEntityXRef` ENABLE KEYS */;
 
 /*!40000 ALTER TABLE `anatEntityRelation` DISABLE KEYS */;
+-- See https://stackoverflow.com/a/42822691/1768736 for motivation
+-- for this design of PK and UNIQUE indexes
 alter table anatEntityRelation
 modify anatEntityRelationId int unsigned not null auto_increment,
-ADD UNIQUE(anatEntityRelationId),
 -- we allow a same relation with same source and target, but different status (direct/indirect)
 -- because they can have different taxon constraints.
-add PRIMARY KEY (anatEntitySourceId, anatEntityTargetId, relationType, relationStatus);
+add primary key (anatEntitySourceId, anatEntityTargetId, relationType, relationStatus),
+add unique(anatEntityRelationId);
 /*!40000 ALTER TABLE `anatEntityRelation` ENABLE KEYS */;
 
 /*!40000 ALTER TABLE `anatEntityRelationTaxonConstraint` DISABLE KEYS */;
@@ -182,7 +184,7 @@ add unique (geneBioTypeName);
 
 /*!40000 ALTER TABLE `gene` DISABLE KEYS */;
 alter table gene
-modify bgeeGeneId MEDIUMINT unsigned not null auto_increment primary key,
+modify bgeeGeneId mediumint unsigned not null auto_increment primary key,
 add unique(geneId, speciesId);
 /*!40000 ALTER TABLE `gene` ENABLE KEYS */;
 
@@ -226,17 +228,19 @@ add unique(transcriptId, bgeeGeneId);
 -- CONDITIONS
 -- ****************************************************
 /*!40000 ALTER TABLE `cond` DISABLE KEYS */;
+-- See https://stackoverflow.com/a/42822691/1768736 for motivation
+-- for this design of PK and UNIQUE indexes
 alter table cond
 modify conditionId mediumint unsigned not null auto_increment,
-ADD UNIQUE(conditionId),
-add PRIMARY KEY(anatEntityId, stageId, speciesId, sex, sexInferred, strain);
+add primary key(anatEntityId, stageId, speciesId, sex, sexInferred, strain),
+add unique(conditionId);
 /*!40000 ALTER TABLE `cond` ENABLE KEYS */;
 
 /*!40000 ALTER TABLE `globalCond` DISABLE KEYS */;
 alter table globalCond
-modify globalConditionId mediumint unsigned not null auto_increment PRIMARY KEY,
--- not a primary key because some field can be null
-ADD UNIQUE(anatEntityId, stageId, speciesId, sex, strain);
+modify globalConditionId mediumint unsigned not null auto_increment primary key,
+-- not a primary key as for table cond, because some field can be null
+add unique(anatEntityId, stageId, speciesId, sex, strain);
 /*!40000 ALTER TABLE `globalCond` ENABLE KEYS */;
 
 /*!40000 ALTER TABLE `globalCondToCond` DISABLE KEYS */;
@@ -244,45 +248,51 @@ alter table globalCondToCond
 -- we set up this primary key using conditionRelationOrigin to benefit from the clustered index
 add primary key (globalConditionId, conditionId, conditionRelationOrigin),
 -- but actually the unique constraint is on globalConditionId and conditionId
-add UNIQUE (globalConditionId, conditionId);
+add unique(globalConditionId, conditionId);
 /*!40000 ALTER TABLE `globalCondToCond` ENABLE KEYS */;
 
 -- ****************************************************
 -- EXPRESSION DATA
 -- ****************************************************
 /*!40000 ALTER TABLE `expression` DISABLE KEYS */;
+-- See https://stackoverflow.com/a/42822691/1768736 for motivation
+-- for this design of PK and UNIQUE indexes
 alter table expression
 modify expressionId int unsigned not null auto_increment,
-ADD UNIQUE(expressionId),
-add PRIMARY KEY(bgeeGeneId, conditionId);
+add primary key(bgeeGeneId, conditionId),
+add unique(expressionId);
 /*!40000 ALTER TABLE `expression` ENABLE KEYS */;
 
 /*!40000 ALTER TABLE `globalExpression` DISABLE KEYS */;
+-- See https://stackoverflow.com/a/42822691/1768736 for motivation
+-- for this design of PK and UNIQUE indexes
 alter table globalExpression
 modify globalExpressionId int unsigned not null auto_increment,
-ADD UNIQUE(globalExpressionId),
-add PRIMARY KEY(bgeeGeneId, globalConditionId);
+add primary key(bgeeGeneId, globalConditionId),
+add unique(globalExpressionId);
 /*!40000 ALTER TABLE `globalExpression` ENABLE KEYS */;
 
 -- ****************************************************
 -- DIFFERENTIAL EXPRESSION DATA
 -- ****************************************************
 /*!40000 ALTER TABLE `differentialExpression` DISABLE KEYS */;
+-- See https://stackoverflow.com/a/42822691/1768736 for motivation
+-- for this design of PK and UNIQUE indexes
 alter table differentialExpression
 modify differentialExpressionId int unsigned not null auto_increment,
-ADD UNIQUE(differentialExpressionId),
 -- TODO: manage maxNumberOfConditions
-add PRIMARY KEY(bgeeGeneId, conditionId, comparisonFactor);
+add primary key(bgeeGeneId, conditionId, comparisonFactor),
+add unique(differentialExpressionId);
 /*!40000 ALTER TABLE `differentialExpression` ENABLE KEYS */;
 
 /*!40000 ALTER TABLE `differentialExpressionAnalysis` DISABLE KEYS */;
 alter table differentialExpressionAnalysis
-modify deaId SMALLINT unsigned not null auto_increment primary key;
+modify deaId smallint unsigned not null auto_increment primary key;
 /*!40000 ALTER TABLE `differentialExpressionAnalysis` ENABLE KEYS */;
 
 /*!40000 ALTER TABLE `deaSampleGroup` DISABLE KEYS */;
 alter table deaSampleGroup
-modify deaSampleGroupId MEDIUMINT unsigned not null auto_increment primary key;
+modify deaSampleGroupId mediumint unsigned not null auto_increment primary key;
 /*!40000 ALTER TABLE `deaSampleGroup` ENABLE KEYS */;
 
 -- ****************************************************
@@ -332,7 +342,7 @@ add primary key (chipTypeId);
 
 /*!40000 ALTER TABLE `affymetrixChip` DISABLE KEYS */;
 alter table affymetrixChip
-modify bgeeAffymetrixChipId SMALLINT unsigned not null auto_increment primary key,
+modify bgeeAffymetrixChipId smallint unsigned not null auto_increment primary key,
 add unique (affymetrixChipId, microarrayExperimentId);
 /*!40000 ALTER TABLE `affymetrixChip` ENABLE KEYS */;
 

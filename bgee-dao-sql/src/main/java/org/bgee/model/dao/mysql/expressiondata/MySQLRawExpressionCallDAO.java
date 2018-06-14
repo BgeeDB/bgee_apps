@@ -65,7 +65,7 @@ public class MySQLRawExpressionCallDAO extends MySQLDAO<RawExpressionCallDAO.Att
         Set<Integer> clonedGeneIds = new HashSet<>(geneIds);
 
         StringBuilder sb = new StringBuilder();
-        sb.append(generateSelectClause(EXPR_TABLE_NAME, colToAttrMap, false, null))
+        sb.append("SELECT ").append(EXPR_TABLE_NAME).append(".*")
           .append(" FROM ").append(EXPR_TABLE_NAME)
           .append(" WHERE ").append(EXPR_TABLE_NAME).append(".")
           .append(MySQLGeneDAO.BGEE_GENE_ID).append(" IN (")

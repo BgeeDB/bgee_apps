@@ -91,6 +91,12 @@ public class SpeciesService extends CommonService {
         }
         return log.exit(species);
     }
+    
+    public Map<Integer, Species> loadSpeciesMap(Set<Integer> speciesIds, boolean withSpeciesInfo) {
+        log.entry(speciesIds, withSpeciesInfo);
+        return log.exit(this.loadSpeciesByIds(speciesIds, withSpeciesInfo)
+                .stream().collect(Collectors.toMap(s -> s.getId(), s -> s)));
+    }
 
     /**
      * Retrieve {@code Species} with data source information.

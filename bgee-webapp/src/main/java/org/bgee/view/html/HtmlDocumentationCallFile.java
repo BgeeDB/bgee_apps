@@ -1510,7 +1510,9 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeln("<div class='alert alert-danger'>"
                 + "With the release of Bgee 14.0, the documentation has not yet been updated. "
                 + "We apologize for any inconvenience. In the meantime, please do not hesitate to "
-                + "contact us if you have any questions, at bgee@sib.swiss or @[twitter link]beedb."
+                + "contact us if you have any questions, using " + getObfuscateEmailInText() + " or "
+                + "<a title='Follow @Bgeedb on Twitter' target='_blank' "
+                + "   href='https://twitter.com/Bgeedb'>@Bgeedb on Twitter</a>."
                 + "</div>");
         
         RequestParameters urlDownloadGenerator = this.getNewRequestParameters();

@@ -10,6 +10,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
@@ -266,19 +267,33 @@ public class URLParameters {
                     .map(e -> e.getStringRepresentation())
                     .collect(Collectors.joining("|")) + ")", 
              String.class);
+
+    /**
+     * For backward compability to Bgee 13, we need to replace "low" with "silver"
+     * and "high" with "gold". This is done in {@code RequestParameters}
+     * based on the parameter name, so it is cleaner to store this parameter name in an attribute.
+     */
+    public static final String SUMMARY_QUALITY_PARAM_NAME = "data_qual";
     /**
      * A {@code Parameter<String>} that contains the summary quality to be used 
      * for TopAnat analysis.
      * Corresponds to the URL parameter "data_qual".
      */
-    private static final Parameter<String> SUMMARY_QUALITY = new Parameter<String>("data_qual",
-            false, false, null, true, DEFAULT_IS_SECURE, 
-            Math.max(RequestParameters.ALL_VALUE.length(), EnumSet.allOf(SummaryQuality.class).stream()
+    //Note: "low" and "high" are only permitted for backward compatibility with Bgee 13.
+    //"low" will be replaced with "silver" and "high" with "gold" in RequestParameters
+    private static final Parameter<String> SUMMARY_QUALITY = new Parameter<String>(SUMMARY_QUALITY_PARAM_NAME,
+            false, false, null, true, DEFAULT_IS_SECURE,
+            Math.max(
+                IntStream.of("low".length(), "high".length(), RequestParameters.ALL_VALUE.length())
+                    .max().getAsInt(),
+                EnumSet.allOf(SummaryQuality.class).stream()
                     .map(e -> e.getStringRepresentation().length())
                     .max(Comparator.naturalOrder()).get()), 
-            "(?i:" + RequestParameters.ALL_VALUE + "|" + EnumSet.allOf(SummaryQuality.class).stream()
-                .map(e -> e.getStringRepresentation())
-                .collect(Collectors.joining("|")) + ")", 
+            "(?i:" + "low" + "|" + "high" + "|" + RequestParameters.ALL_VALUE + "|"
+                    + EnumSet.allOf(SummaryQuality.class).stream()
+                          .map(e -> e.getStringRepresentation())
+                          .collect(Collectors.joining("|"))
+            + ")", 
             String.class);
     /**
      * A {@code Parameter<String>} that contains the data quality to be used 

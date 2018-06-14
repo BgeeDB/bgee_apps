@@ -94,10 +94,10 @@ public class ConditionFilter implements Predicate<Condition> {
     }
     /**
      * @return  A {@code Boolean} defining whether the conditions considered should have been
-     *          observed in expression data in any species. If {@code true}, only conditions
-     *          observed in expression data in any species are considered, not resulting
+     *          observed in expression data. If {@code true}, only conditions
+     *          observed in expression data are considered, not resulting
      *          only from a data propagation; if {@code false}, only conditions resulting
-     *          from data propagation, never observed in expression data of any species,
+     *          from data propagation, never observed in expression data,
      *          are considered; if {@code null}, conditions are considered whatever
      *          their observed data status.
      */

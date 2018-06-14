@@ -13,6 +13,8 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.expressiondata.Call.DiffExpressionCall;
+import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataType;
@@ -53,7 +55,7 @@ import org.bgee.model.gene.GeneFilter;
 //(e.g., calls including substructures for Affymetrix, not including substructures for RNA-Seq).
 //If these two points wanted to be achieved, we could use the new fields of, e.g., ExpressionCallData: 
 // absentHighParentExpCount, presentHighDescExpCount, etc.
-public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & SummaryCallType> implements Predicate<Call<?, T>> {
+public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & SummaryCallType> {
     private final static Logger log = LogManager.getLogger(CallFilter.class.getName());
     
     /**
@@ -65,7 +67,7 @@ public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & Summ
      * @since   Bgee 13
      */
     public static class ExpressionCallFilter
-    extends CallFilter<ExpressionCallData, SummaryCallType.ExpressionSummary> {
+    extends CallFilter<ExpressionCallData, SummaryCallType.ExpressionSummary> implements Predicate<ExpressionCall> {
         
         private final Map<CallType.Expression, Boolean> callObservedData;
 
@@ -164,7 +166,7 @@ public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & Summ
         }
 
         @Override
-        public boolean test(Call<?, ExpressionCallData> call) {
+        public boolean test(ExpressionCall call) {
             // Filter on common fields of Calls
             if (!super.test(call)) {
                 return log.exit(false);
@@ -288,7 +290,7 @@ public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & Summ
      * @since   Bgee 13
      */
     public static class DiffExpressionCallFilter
-    extends CallFilter<ExpressionCallData, SummaryCallType.DiffExpressionSummary> {
+    extends CallFilter<ExpressionCallData, SummaryCallType.DiffExpressionSummary> implements Predicate<DiffExpressionCall> {
         /**
          * See {@link CallFilter#CallFilter(GeneFilter, Collection, Collection, SummaryQuality, SummaryCallType)}.
          */
@@ -334,12 +336,18 @@ public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & Summ
                     .append("]");
             return builder.toString();
         }
+
+        @Override
+        public boolean test(DiffExpressionCall arg0) {
+            // TODO Auto-generated method stub
+            throw log.throwing(new UnsupportedOperationException("Method not implemented"));
+        }
     }
     
     /**
      * @see #getGeneFilters()
      */
-    //XXX: The only problem with using directly ConditionFilters and CallDatas in this class, 
+    //Note: The only problem with using directly ConditionFilters and CallDatas in this class, 
     //is that GeneFilters are costly to use in a query; using the class CallDataConditionFilter 
     //was allowing to have a same GeneFilter to target several conditions/call data combinations. 
     //Now, the same query would be doable by using several CallFilters, but with a same GeneFilter 
@@ -474,6 +482,7 @@ public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & Summ
     /**
      * @return  An unmodifiable {@code Set} {@code GeneFilter}s allowing to configure gene-related
      *          filtering. If several {@code GeneFilter}s are configured, they are seen as "OR" conditions.
+     *          A same species ID should not be used in several {@code GeneFilter}s of this {@code Set}.
      */
     public Set<GeneFilter> getGeneFilters() {
         return geneFilters;
@@ -567,7 +576,6 @@ public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & Summ
         return builder.toString();
     }
 
-    @Override
     // TODO add unit test
     public boolean test(Call<?, T> call) {
         log.entry(call);
@@ -597,7 +605,7 @@ public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & Summ
             .collect(Collectors.toSet());
         if (!dataTypes.isEmpty() 
             && dataTypeFilters != null && !dataTypeFilters.isEmpty()
-            && !dataTypeFilters.stream().anyMatch(f -> dataTypes.contains(f))) {
+            && dataTypeFilters.stream().noneMatch(f -> dataTypes.contains(f))) {
             log.debug("Data type {} not validated: not in {}", dataTypes, dataTypeFilters);
             return log.exit(false);
         }

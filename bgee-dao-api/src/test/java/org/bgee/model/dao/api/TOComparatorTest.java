@@ -18,6 +18,7 @@ import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTO;
 import org.bgee.model.dao.api.anatdev.StageDAO.StageTO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO;
@@ -32,7 +33,6 @@ import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.GlobalNoExpress
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO.CategoryEnum;
-import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO.ConditionParameter;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesToDataGroupTO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesDataGroupTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
@@ -232,22 +232,22 @@ public class TOComparatorTest extends TestAncestor {
     public void testAreDownloadFileTOsEqual() {
         DownloadFileTO to1 = new DownloadFileTO(1, "name1", "desc1", 
                 "path/", 10L, CategoryEnum.EXPR_CALLS_COMPLETE, 1,
-                Collections.singleton(ConditionParameter.ANAT_ENTITY));
+                Collections.singleton(ConditionDAO.Attribute.ANAT_ENTITY_ID));
         DownloadFileTO to2 = new DownloadFileTO(1, "name1", "desc1", 
                 "path/", 10L, CategoryEnum.EXPR_CALLS_COMPLETE, 1,
-                Collections.singleton(ConditionParameter.ANAT_ENTITY));
+                Collections.singleton(ConditionDAO.Attribute.ANAT_ENTITY_ID));
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
         to2 = new DownloadFileTO(1, "name1", "desc1", 
                 "path/", 10L, CategoryEnum.DIFF_EXPR_ANAT_COMPLETE, 1,
-                Collections.singleton(ConditionParameter.ANAT_ENTITY));
+                Collections.singleton(ConditionDAO.Attribute.ANAT_ENTITY_ID));
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         
         to2 = new DownloadFileTO(2, "name1", "desc1", 
                 "path/", 10L, CategoryEnum.EXPR_CALLS_COMPLETE, 1,
-                Collections.singleton(ConditionParameter.ANAT_ENTITY));
+                Collections.singleton(ConditionDAO.Attribute.ANAT_ENTITY_ID));
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
@@ -255,22 +255,22 @@ public class TOComparatorTest extends TestAncestor {
         //see http://stackoverflow.com/a/20542511/1768736
         to1 = new DownloadFileTO(1, "name1", "desc1", 
                 "path/", 3000L, CategoryEnum.EXPR_CALLS_COMPLETE, 1,
-                Collections.singleton(ConditionParameter.ANAT_ENTITY));
+                Collections.singleton(ConditionDAO.Attribute.ANAT_ENTITY_ID));
         to2 = new DownloadFileTO(1, "name1", "desc1", 
                 "path/", 3000L, CategoryEnum.EXPR_CALLS_COMPLETE, 1,
-                Collections.singleton(ConditionParameter.ANAT_ENTITY));
+                Collections.singleton(ConditionDAO.Attribute.ANAT_ENTITY_ID));
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         to1 = new DownloadFileTO(1, "name1", "desc1", 
                 "path/", null, CategoryEnum.EXPR_CALLS_COMPLETE, 1,
-                Collections.singleton(ConditionParameter.ANAT_ENTITY));
+                Collections.singleton(ConditionDAO.Attribute.ANAT_ENTITY_ID));
         to2 = new DownloadFileTO(1, "name1", "desc1", 
                 "path/", null, CategoryEnum.EXPR_CALLS_COMPLETE, 1,
-                Collections.singleton(ConditionParameter.ANAT_ENTITY));
+                Collections.singleton(ConditionDAO.Attribute.ANAT_ENTITY_ID));
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         
         to2 = new DownloadFileTO(1, "name1", "desc1", 
                 "path/", null, CategoryEnum.EXPR_CALLS_COMPLETE, 1,
-                new HashSet<>(Arrays.asList(ConditionParameter.ANAT_ENTITY, ConditionParameter.STAGE)));
+                new HashSet<>(Arrays.asList(ConditionDAO.Attribute.ANAT_ENTITY_ID, ConditionDAO.Attribute.STAGE_ID)));
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
     }
 

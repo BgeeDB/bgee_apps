@@ -221,7 +221,6 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
                    BgeePreparedStatement.generateParameterizedQueryString(clonedSpeIds.size()) + 
                    "))";
         }
-//        sql += " ORDER BY " + tableName + ".anatEntityId";
         
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.

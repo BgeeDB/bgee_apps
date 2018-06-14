@@ -134,7 +134,13 @@ implements SpeciesDataGroupDAO {
         final Set<SpeciesDataGroupDAO.Attribute> clonedAttrs = attributes == null? null: new HashSet<>(attributes);
         final LinkedHashMap<SpeciesDataGroupDAO.OrderingAttribute, DAO.Direction> clonedOrderingAttrs = 
                 orderingAttributes == null? null: new LinkedHashMap<>(orderingAttributes);
-        
+        //Fix issue #173
+        if (clonedAttrs != null && !clonedAttrs.isEmpty() &&
+                clonedOrderingAttrs != null &&
+                clonedOrderingAttrs.containsKey(SpeciesDataGroupDAO.OrderingAttribute.PREFERRED_ORDER)) {
+            clonedAttrs.add(SpeciesDataGroupDAO.Attribute.PREFERRED_ORDER);
+        }
+
         //for now we still use the setAttributes method to be able to use generateSelectAllStatement, 
         //but this method will soon disappear, signature of generateSelectAllStatement should change.
         this.setAttributes(clonedAttrs);
@@ -291,6 +297,10 @@ implements SpeciesDataGroupDAO {
                         case "speciesDataGroupId":
                             groupId = currentValue;
                             break;
+                        case "distToSpe":
+                            //nothing here, this attribute is retrieved solely to be used in ORDER BY clause
+                            //(fix for issue #173)
+                            break;
                         default:
                             log.throwing(new UnrecognizedColumnException(columnName));
                     }
@@ -310,7 +320,20 @@ implements SpeciesDataGroupDAO {
         final LinkedHashMap<SpeciesToGroupOrderingAttribute, DAO.Direction> clonedOrderingAttrs = 
                 orderingAttributes == null? null: new LinkedHashMap<>(orderingAttributes);
         
-        StringBuilder sb = new StringBuilder("SELECT t1.* FROM speciesToDataGroup AS t1 ");
+        StringBuilder sb = new StringBuilder("SELECT t1.*");
+        //Fix issue#173
+        //Note: SpeciesToGroupOrderingAttribute.DATA_GROUP_ID and speciesId is already covered by the clause 't1.*'
+        if (clonedOrderingAttrs != null && clonedOrderingAttrs.containsKey(SpeciesToGroupOrderingAttribute.DISTANCE_TO_SPECIES)) {
+            sb.append(", ")
+              //Here is a subquery to identify the level of the least common ancestor
+              //between the targeted species and the current species.
+              .append("(SELECT t6.taxonLevel FROM taxon AS t6 ")
+              .append("WHERE t6.taxonLeftBound <= LEAST(t3.taxonLeftBound, tSpeciesBounds.tSpeciesLeftBound) ")
+              .append("AND t6.taxonRightBound >= GREATEST(t3.taxonRightBound, tSpeciesBounds.tSpeciesRightBound) ")
+              .append("ORDER BY t6.taxonLevel DESC LIMIT 1) ")
+              .append("AS distToSpe");
+        }
+        sb.append(" FROM speciesToDataGroup AS t1 ");
         
         if (clonedOrderingAttrs != null && !clonedOrderingAttrs.isEmpty()) {
             //If DISTANCE_TO_SPECIES ordering requested, we make joins to get 
@@ -344,12 +367,7 @@ implements SpeciesDataGroupDAO {
                     }
                     break;
                 case DISTANCE_TO_SPECIES:
-                    //Here is a subquery to identify the level of the least common ancestor 
-                    //between the targeted species and the current species.
-                    sb.append("(SELECT t6.taxonLevel FROM taxon AS t6 "
-                            + "WHERE t6.taxonLeftBound <= LEAST(t3.taxonLeftBound, tSpeciesLeftBound) "
-                            + "AND t6.taxonRightBound >= GREATEST(t3.taxonRightBound, tSpeciesRightBound) "
-                            + "ORDER BY t6.taxonLevel DESC LIMIT 1) ");
+                    sb.append("distToSpe ");
                     //the greatest the level of the common ancestor, the closest the species 
                     //is from the targeted species. So, if it is requested to order in ascending 
                     //taxonomic distance, then we need to order by descending taxon level.

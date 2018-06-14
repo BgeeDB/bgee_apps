@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
@@ -62,12 +63,31 @@ implements GlobalExpressionCallDAO {
     //TODO: ADD NON_OBSERVED_STATES
 
     private static String generateSelectClause(Collection<GlobalExpressionCallDAO.Attribute> attrs,
-            Collection<DAODataType> dataTypes, final String globalExprTableName, final String globalCondTableName) {
-        log.entry(attrs, dataTypes, globalExprTableName, globalCondTableName);
+            Collection<GlobalExpressionCallDAO.OrderingAttribute> orderingAttrs,
+            Collection<DAODataType> dataTypes, final String globalExprTableName, final String globalCondTableName,
+            String geneTableName) {
+        log.entry(attrs, orderingAttrs, dataTypes, globalExprTableName, globalCondTableName, geneTableName);
         
-        Set<GlobalExpressionCallDAO.Attribute> clonedAttrs = Collections.unmodifiableSet(
-                attrs == null || attrs.isEmpty()? EnumSet.allOf(GlobalExpressionCallDAO.Attribute.class):
-                    EnumSet.copyOf(attrs));
+        Set<GlobalExpressionCallDAO.Attribute> clonedAttrs = attrs == null || attrs.isEmpty()?
+                EnumSet.allOf(GlobalExpressionCallDAO.Attribute.class):
+                    EnumSet.copyOf(attrs);
+        //fix for #173, see also the end of this method
+        for (GlobalExpressionCallDAO.OrderingAttribute a: orderingAttrs) {
+            switch (a) {
+            case GENE_ID:
+                clonedAttrs.add(GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID);
+                break;
+            case CONDITION_ID:
+                clonedAttrs.add(GlobalExpressionCallDAO.Attribute.CONDITION_ID);
+                break;
+            case MEAN_RANK:
+                clonedAttrs.add(GlobalExpressionCallDAO.Attribute.GLOBAL_MEAN_RANK);
+                break;
+            default:
+                //other ordering attributes do not have a corresponding select attribute
+                break;
+            }
+        }
         Set<DAODataType> clonedDataTypes = Collections.unmodifiableSet(
                 dataTypes == null || dataTypes.isEmpty()? EnumSet.allOf(DAODataType.class):
                     EnumSet.copyOf(dataTypes));
@@ -485,6 +505,39 @@ implements GlobalExpressionCallDAO {
             }
         }).collect(Collectors.joining(", ")));
 
+
+        //fix for #173, see also beginning of this method
+        String selectOrderBy = orderingAttrs.stream()
+        .filter(a -> {
+            switch(a) {
+                case GENE_ID:
+                case CONDITION_ID:
+                case MEAN_RANK:
+                    //These ordering attributes have a correspondence in the select Attributes
+                    //and are already dealt with at the beginning of this method
+                    return false;
+                default:
+                    return true;
+            }
+        })
+        .map(a -> {
+            switch(a) {
+                case ANAT_ENTITY_ID:
+                    return globalCondTableName + ".anatEntityId";
+                case STAGE_ID:
+                    return globalCondTableName + ".stageId";
+                case OMA_GROUP_ID:
+                    return geneTableName + ".OMAParentNodeId";
+                default:
+                    throw log.throwing(new IllegalStateException("Unsupported OrderingAttribute: " + a));
+            }
+        })
+        .collect(Collectors.joining(", "));
+        if (StringUtils.isNotBlank(selectOrderBy)) {
+            sb.append(", ").append(selectOrderBy);
+        }
+
+
         return log.exit(sb.toString());
     }
 
@@ -580,6 +633,13 @@ implements GlobalExpressionCallDAO {
         if (!callFilters.isEmpty()) {
             for (CallDAOFilter callFilter: callFilters) {
                 if (callFilter.getGeneIds() != null && !callFilter.getGeneIds().isEmpty()) {
+                    //For now, we don't support using both gene IDs and species IDs in a same CallDAOFilter.
+                    //If needed, we should either create a "geneSpeciesFilter" in CallDAOFilter,
+                    //or use one CallDAOFilter for the gene IDs and another one for the species IDs.
+                    if (callFilter.getSpeciesIds() != null && !callFilter.getSpeciesIds().isEmpty()) {
+                        throw log.throwing(new UnsupportedOperationException(
+                                "Currently not supported to provide both gene and species IDs in a same CallDAOFilter"));
+                    }
                     sb.append(" AND ");
                     sb.append(globalExprTableName).append(".").append(MySQLGeneDAO.BGEE_GENE_ID)
                     .append(" IN (")
@@ -951,10 +1011,10 @@ implements GlobalExpressionCallDAO {
                     String orderBy = "";
                     switch(entry.getKey()) {
                         case GENE_ID:
-                            orderBy = globalExprTableName + ".bgeeGeneId";
+                            orderBy = globalExprTableName + "." + MySQLGeneDAO.BGEE_GENE_ID;
                             break;
                         case CONDITION_ID:
-                            orderBy = globalExprTableName + ".globalConditionId";
+                            orderBy = globalExprTableName + "." + MySQLConditionDAO.GLOBAL_COND_ID_FIELD;
                             break;
                         case ANAT_ENTITY_ID:
                             orderBy = globalCondTableName + ".anatEntityId";
@@ -1058,7 +1118,8 @@ implements GlobalExpressionCallDAO {
                 .collect(Collectors.toSet());
 
         StringBuilder sb = new StringBuilder();
-        sb.append(generateSelectClause(clonedAttrs, dataTypes, globalExprTableName, globalCondTableName));
+        sb.append(generateSelectClause(clonedAttrs, clonedOrderingAttrs.keySet(), dataTypes,
+                globalExprTableName, globalCondTableName, geneTableName));
         sb.append(generateTableReferences(globalExprTableName, globalCondTableName, condTableName,
                 geneTableName, observedConditionFilter,
                 clonedOrderingAttrs.containsKey(GlobalExpressionCallDAO.OrderingAttribute.OMA_GROUP_ID)));

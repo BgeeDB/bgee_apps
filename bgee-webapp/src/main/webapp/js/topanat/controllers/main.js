@@ -660,6 +660,12 @@
             if (number == undefined) {
                 number = vm.nbRows.selectedOption.id;
             }
+
+            // Issue 126
+            if (number > vm.gridOptions.data.length) {
+                number = vm.gridOptions.data.length;
+            }
+
             // +1 for the header
             var height = (number +1) * vm.row_height;
             angular.element(document.getElementsByClassName('grid')[0]).css('height', height + 'px');
@@ -915,7 +921,7 @@
 
         /*
          jobProgressStart: 'Processing job, waiting for a job id. Please do not close this window.',
-         jobProgress: 'Job has been submitted as jobid: ',
+         jobProgress: 'Job is running - Job ID: ',
          jobProgressBookmark: 'After bookmarking this page it\'s safe to close this window.'
          */
 
@@ -997,7 +1003,7 @@
 
                         vm.jobStatus = data.data.data.jobResponse.jobStatus;
                         logger.success('TopAnat request successful', 'TopAnat ok');
-                        vm.message = lang.jobProgressBookmark+"<br/>"+lang.jobProgress+vm.jobId+'. ('+vm.jobStatus+') ';
+                        vm.message = lang.jobProgressBookmark+"<br/>"+lang.jobProgress+vm.jobId;
                         vm.jobDone = false;
 
                         console.log("calling checkJobStatus");
@@ -1084,7 +1090,7 @@
 
                             statuscounter = statuscounter + 1;
                             vm.jobStatus = data.status;
-                            vm.message = lang.jobProgressBookmark+"<br/>"+lang.jobProgress+vm.jobId+'. ('+vm.jobStatus+') ';
+                            vm.message = lang.jobProgressBookmark+"<br/>"+lang.jobProgress+vm.jobId;
                             
                             //scroll to result container with information about job, 
                             //otherwise it is possible to miss it.
@@ -1210,6 +1216,10 @@
             }
             vm.getFilteredRows(); // In order to get the total number of rows before filtering of results
             vm.jobDone = true; // in order to display the result array
+
+            // Issue 126: Change the default value of the nb of rows to show
+            // if the number of results is less than the default value
+            changeNumberOfRowsToShow(vm.nb_rows);
         }
 
         function displayResults(result) {
@@ -1567,7 +1577,8 @@
         console.log("shouldOpenAdvancedOptions");
         console.log(configuration);
         console.log(vm);
-        if(vm.data_qual != configuration.data_qual ||
+        if((vm.data_qual !== undefined && vm.data_qual !== null &&
+        		vm.data_qual.toUpperCase() !== configuration.data_qual.toUpperCase()) ||
             vm.decorr_type != configuration.decorr_type ||
             vm.node_size != configuration.node_size ||
             vm.nb_node != configuration.nb_node ||

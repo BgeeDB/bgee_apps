@@ -57,8 +57,11 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     protected static final String BGEE_R_PACKAGE_URL = 
             "https://bioconductor.org/packages/release/bioc/html/BgeeDB.html";
 
+    /**
+     * A {@code String} that is the URL of the licence CC0 of Creative Commons.
+     */
     protected static final String LICENCE_CC0_URL =
-            "http://creativecommons.org/publicdomain/zero/1.0/";
+            "https://creativecommons.org/publicdomain/zero/1.0/";
 
     /**
      * Escape HTML entities in the provided {@code String}
@@ -328,6 +331,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         
 
         this.writeln("<ul class='nav navbar-nav navbar-right'>");
+        this.writeln("<li><a href='" + this.getRequestParameters().getStableRequestURL() + "'>Permanent link</a>");
         this.writeln("<li><a href='#TOP' id='sib_footer_gototop'>"
                 + "<span class='glyphicon glyphicon-menu-up'></span> Back to the top</a></li>");
         this.writeln("</ul>");

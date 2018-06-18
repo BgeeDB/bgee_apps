@@ -1481,6 +1481,23 @@ public class RequestParameters {
     }
 
     /**
+     * Return the stable URL corresponding to this {@code RequestParameters} instance using 
+     * the parameters separator provided to the constructor or set afterwards using 
+     * {@link #setParametersSeparator}.
+     *
+     * @return  A {@code String} that contains the URL corresponding to the current state 
+     *          of the request. It will change every time a parameter is modified.
+     * @throws RequestParametersNotStorableException    if an error occur while trying to store 
+     *                                                  the parameters on server, 
+     *                                                  when the generated URL is too long.
+     *
+     */
+    public String getStableRequestURL() throws RequestParametersNotStorableException {
+        log.entry();
+        return log.exit(this.getRequestURL(parametersSeparator, null, false, true));
+    }
+
+    /**
      * Return the URL corresponding to this {@code RequestParameters} instance using 
      * a custom parameters separator instead of the one provided to the constructor or set 
      * afterwards using {@link #setParametersSeparator}.
@@ -1499,7 +1516,7 @@ public class RequestParameters {
     public String getRequestURL(String parametersSeparator) 
             throws RequestParametersNotStorableException {
         log.entry(parametersSeparator);
-        return log.exit(this.getRequestURL(parametersSeparator, null, false));
+        return log.exit(this.getRequestURL(parametersSeparator, null, false, false));
     }
     /**
      * Return the URL corresponding to this {@code RequestParameters} instance using 
@@ -1541,7 +1558,7 @@ public class RequestParameters {
             IllegalStateException {
         log.entry(searchOrHashParams, areSearchParams);
         return log.exit(this.getRequestURL(this.parametersSeparator, 
-                searchOrHashParams, areSearchParams));
+                searchOrHashParams, areSearchParams, false));
     }
     /**
      * Return the URL corresponding to this {@code RequestParameters} instance using 
@@ -1567,6 +1584,8 @@ public class RequestParameters {
      *                              if {@code true}, they will be stored in the search part, 
      *                              all the others in the hash part. The opposite 
      *                              if {@code false}.
+     * @param stableURL             A {@code boolean} defining whether a stable URL
+     *                              should be returned or not.
      * @return  A {@code String} that contains the URL corresponding to the current state 
      *          of the request. It will change every time a parameter is modified
      * @throws RequestParametersNotStorableException    if an error occur while trying to store 
@@ -1583,17 +1602,21 @@ public class RequestParameters {
     //XXX: This method has a js counterpart in {@code requestparameters.js} that should be kept 
     //consistent as much as possible if the method evolves.
     public String getRequestURL(String parametersSeparator, 
-            Collection<URLParameters.Parameter<?>> searchOrHashParams, boolean areSearchParams) 
+                                Collection<URLParameters.Parameter<?>> searchOrHashParams,
+                                boolean areSearchParams, boolean stableURL) 
             throws RequestParametersNotStorableException, IllegalStateException {
-        log.entry(parametersSeparator, searchOrHashParams, areSearchParams);
+        log.entry(parametersSeparator, searchOrHashParams, areSearchParams, stableURL);
         this.generateParametersQuery(parametersSeparator, searchOrHashParams, areSearchParams);
         
-        String url = "";
-        if (StringUtils.isNotBlank(this.prop.getBgeeRootDirectory())) {
-            url += this.prop.getBgeeRootDirectory();
+        String url;
+        if (stableURL) {
+            url = this.prop.getBgeeStableRootDirectory();
         } else {
+            url = this.prop.getBgeeRootDirectory();
+        }
+        if (StringUtils.isBlank(url)) {
             log.warn("No root folder for URL set, using '/'");
-            url += "/";
+            url = "/";
         }
         
         if (StringUtils.isNotBlank(this.parametersQuery)) {

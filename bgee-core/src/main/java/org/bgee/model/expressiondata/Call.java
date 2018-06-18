@@ -276,6 +276,140 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
 
         public static final int MAX_EXPRESSION_SCORE = 1000;
 
+
+        public static List<ExpressionCall> filterAndOrderCallsByRankAndGraph(
+                Collection<ExpressionCall> calls, ConditionGraph conditionGraph) {
+            log.entry(calls, conditionGraph);
+            if (calls == null) {
+                return log.exit(null);
+            }
+            List<ExpressionCall> firstPassSortedCalls = new ArrayList<>(
+                    new HashSet<ExpressionCall>(calls));
+            if (firstPassSortedCalls.size() <= 1) {
+                return log.exit(firstPassSortedCalls);
+            }
+
+            long startOrderingTimeInMs = System.currentTimeMillis();
+            //== CREATE FIRST PASS COMPARATOR AND SORT ==
+            //First, we order by mean rank and gene IDs and species.
+            //(we'll need the rankComparator on its own later, so we create it separately)
+            Comparator<ExpressionCall> rankComparator = Comparator
+                    .comparing(ExpressionCall::getGlobalMeanRank, 
+                            Comparator.nullsLast(Comparator.naturalOrder()));
+            Comparator<ExpressionCall> comparator = rankComparator
+                    .thenComparing(c -> c.getGene() == null? null : c.getGene().getEnsemblGeneId(), 
+                            Comparator.nullsLast(Comparator.naturalOrder()))
+                    //Order by species as, in bgee 14, gene IDs are not unique
+                    .thenComparing(c -> c.getGene() == null? null : c.getGene().getSpecies().getId(), 
+                            Comparator.nullsLast(Comparator.naturalOrder()));
+
+            Collections.sort(firstPassSortedCalls, comparator);
+            //=======
+
+            //== SECOND PASS ORDERING FOR CALLS WITH EQUAL RANKS ==
+            //Now, for calls with equal ranks, we order them whenever possible based on
+            //the relations between Conditions from the provided ConditionGraph.
+            //Remember that at this point we have the guarantee to have at least 2 calls to sort.
+            assert firstPassSortedCalls.size() > 1;
+            List<ExpressionCall> secondPassSortedCalls = new ArrayList<>();
+            List<ExpressionCall> equalRankSortedCalls = new ArrayList<>();
+            equalRankSortedCalls.add(firstPassSortedCalls.get(0));
+
+            for (int i = 1; i < firstPassSortedCalls.size(); i++) {
+                ExpressionCall currentCall = firstPassSortedCalls.get(i);
+                ExpressionCall previousEqualRankCall = equalRankSortedCalls.get(0);
+
+                //If there is a change of rank and it is the same gene.
+                //Better to use the comparator than the equals method, see javadoc
+                //for BigDecimal equals method.
+                if (rankComparator.compare(currentCall, previousEqualRankCall) != 0 &&
+                        Objects.equals(currentCall.getGene(), previousEqualRankCall.getGene())) {
+                    //If there are calls with equal ranks to reorder
+                    if (equalRankSortedCalls.size() > 1) {
+                        // -- SORT HERE
+                    }
+                    secondPassSortedCalls.addAll(equalRankSortedCalls);
+                    //For following iterations, as there is a change of rank, clear the equal rank List
+                    equalRankSortedCalls.clear();
+                }
+
+                equalRankSortedCalls.add(currentCall);
+            }
+            //Add the last (potentially equal) call(s) iterated
+            // -- SORT HERE
+            secondPassSortedCalls.addAll(equalRankSortedCalls);
+            //=======
+
+            log.debug("Calls sorted in {} ms", System.currentTimeMillis() - startOrderingTimeInMs);
+            return log.exit(secondPassSortedCalls);
+        }
+
+        private void sortEqualRankGeneCalls(List<ExpressionCall> equalRankCalls, ConditionGraph graph) {
+            log.entry(equalRankCalls, graph);
+            if (equalRankCalls.size() <= 1) {
+                log.exit(); return;
+            }
+
+            //First, we sort the equal calls by their Condition, to have a stable sorting,
+            //for case where we cannot determine a guaranteed sort order based on the graph relations.
+            Collections.sort(equalRankCalls, Comparator.comparing(ExpressionCall::getCondition,
+                    Comparator.nullsLast(Comparator.naturalOrder())));
+
+            //Now, we do our best to order the calls based on the graph relations between conditions
+            int index1 = 0;
+            //`alreadyCompared` allows to make the computation faster, and also is a protection
+            //against potential cycles in the relations. And a protection against
+            //potential unexpected weird behavior of our comparisons.
+            Map<Condition, Set<Condition>> alreadyCompared = new HashMap<>();
+            while (index1 < equalRankCalls.size()) {
+                int index2 = index1 + 1;
+                while (index2 < equalRankCalls.size()) {
+
+                    ExpressionCall call1 = equalRankCalls.get(index1);
+                    ExpressionCall call2 = equalRankCalls.get(index2);
+                    Condition cond1 = call1.getCondition();
+                    Condition cond2 = call2.getCondition();
+                    alreadyCompared.putIfAbsent(cond1, new HashSet<>());
+                    alreadyCompared.putIfAbsent(cond2, new HashSet<>());
+                    Set<Condition> compared1 = alreadyCompared.get(cond1);
+                    Set<Condition> compared2 = alreadyCompared.get(cond1);
+                    boolean toMove = false;
+
+                    if (!compared1.contains(cond2) && !compared2.contains(cond1)) {
+                        //put non-null condition first
+                        if ((cond1 == null && cond2 != null) ||
+                            //Or more precise conditions first
+                            (cond1 != null && cond2 != null &&
+                                cond1.getSpecies().equals(cond2.getSpecies()) &&
+                                graph.isConditionMorePrecise(cond1, cond2))) {
+                            toMove = true;
+                        }
+                    } else {
+                        assert !(cond1 != null && cond2 != null &&
+                                cond1.getSpecies().equals(cond2.getSpecies()) &&
+                                graph.isConditionMorePrecise(cond1, cond2)):
+                               "If the conditions have been already compared, we shouldn't be in the case "
+                               + "where they would need to be re-ordered, unless there is a cycle "
+                               + "in the ontology, or a weird behavior of our comparisons";
+                    }
+
+                    if (toMove) {
+                        equalRankCalls.remove(index2);
+                        equalRankCalls.add(index1, call2);
+                        //All elements were shifted right after the call to `add`,
+                        //so the element at index1 + 1 is `call1` we just compare to.
+                        //We can start iteration again at index1 + 2.
+                        index2 = index1 + 2;
+                    } else {
+                        index2++;
+                    }
+                    compared1.add(cond2);
+                    compared2.add(cond1);
+                }
+                index1++;
+            }
+        }
+
         /**
          * Remove equal calls from the {@code Collection} and order them using 
          * {@link ExpressionCall.RankComparator}.
@@ -399,6 +533,8 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                         .collect(Collectors.toSet());
                 //check whether any of the validated Condition is a descendant 
                 //of the Condition of the iterated call
+                //(of note, validatedConditions are always from calls with an index lesser than
+                //the index of the iterated call in the List)
                 if (validatedCondition.isEmpty() || Collections.disjoint(validatedCondition, 
                         conditionGraph.getDescendantConditions(call.getCondition()))) {
                     

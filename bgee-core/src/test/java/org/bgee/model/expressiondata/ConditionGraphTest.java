@@ -52,6 +52,17 @@ public class ConditionGraphTest extends TestAncestor {
      *                      {@code false} if it should be loaded directly from {@code Ontology}s.
      */
     private void loadConditionGraph(boolean fromService) {
+        //            anat1
+        //           /  \  \
+        //      anat2  anat3\
+        //                \  \
+        //                anat4
+        //
+        //            stage1
+        //           /  \   \
+        //      stage2 stage3\
+        //                \   \
+        //                stage4
         String anatEntityId1 = "anat1";
         AnatEntity anatEntity1 = new AnatEntity(anatEntityId1);
         String anatEntityId2 = "anat2";
@@ -255,6 +266,37 @@ public class ConditionGraphTest extends TestAncestor {
         assertEquals("Incorrect comparison based on rels between Conditions", -1, 
                 this.conditionGraph.compare(this.conditions.get(3), this.conditions.get(0)));
     }
+
+    /**
+     * Regression test for {@link ConditionGraph#compare(Condition, Condition)},
+     * addressing the problem that the comparator used to give inconsistent results
+     * such as: A = B, B = C, A < C
+     */
+    //@Test
+    public void regressionTestCompare() {
+        this.loadConditionGraph(true);
+
+        //sibling conditions, should be "equals"
+        boolean cond2Cond3Equals = this.conditionGraph.compare(
+                this.conditions.get(1), this.conditions.get(2)) == 0;
+        //conditions on different branches, used to be considered as equal
+        //(it should not be the case anymore after the fix)
+        boolean cond2Cond8Equals = this.conditionGraph.compare(
+                this.conditions.get(1), this.conditions.get(7)) == 0;
+        //condition 8 is a sub-condition of condition 3, so condition 3 is "greater"
+        //than condition 8, before and after the fix
+        boolean cond3GreaterThanCond8 = this.conditionGraph.compare(
+                this.conditions.get(2), this.conditions.get(7)) == 1;
+
+        //before the fix, we should thus have: cond2 = cond3, cond2 = cond8,
+        //and cond8 < cond3, which is inconsistent (a consistent comparison would either
+        //consider that cond3 = cond8, or that cond8 < cond2). We check that this is not the case
+        //after the fix.
+        if (cond2Cond3Equals && cond2Cond8Equals && cond3GreaterThanCond8) {
+            throw log.throwing(new AssertionError("Inconsistent comparisons using ConditionGraph"));
+        }
+    }
+    
 
     /**
      * Test the method {@link ConditionGraph#getDescendantConditions(Condition)}.

@@ -6,7 +6,10 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -41,19 +44,22 @@ import org.supercsv.prefs.CsvPreference;
 public class GenerateUniprotXRefWithExprInfo {
 
     private final static Logger log = LogManager.getLogger(GenerateUniprotXRefWithExprInfo.class.getName());
-    private static List<XrefUniprotBean> xrefUniprotList = new ArrayList<>();
-    private List<String> outputXrefLines = new ArrayList<>();
     
     public static void main(String[] args) throws IOException{
         if(args.length == 2){
             String inputFileName = args[0];
             String outputFileName = args[1];
             GenerateUniprotXRefWithExprInfo expressionInfoGenerator = new GenerateUniprotXRefWithExprInfo();
-            expressionInfoGenerator.loadXrefFileWithoutExprInfo(inputFileName);
-            for(XrefUniprotBean xref:xrefUniprotList){
-                expressionInfoGenerator.generateExpressionInfo(xref);
-            }
-            expressionInfoGenerator.writeXrefWithExpressionInfo(outputFileName);
+            List<XrefUniprotBean> xrefUniprotList = 
+                    expressionInfoGenerator.loadXrefFileWithoutExprInfo(inputFileName);
+            //we can go with parallelStream and foreach because each XRef 
+            //is independant and we order the xrefs later
+            Map <String, String> ensemblIdToXrefLines = 
+                    expressionInfoGenerator.generateExpressionInfo(xrefUniprotList);
+            Map <String, String> sortedEnsemblIdToXrefLines = 
+                    GenerateUniprotXRefWithExprInfo.sortXrefByUniprotId(ensemblIdToXrefLines);
+            expressionInfoGenerator.writeXrefWithExpressionInfo(outputFileName, 
+                    sortedEnsemblIdToXrefLines.values());
         }else{
             throw log.throwing(new IllegalArgumentException("Uncorrect number of arguments."));
         }
@@ -66,8 +72,9 @@ public class GenerateUniprotXRefWithExprInfo {
      * @return  a {@code List} of {@code XrefUniprotBean}
      * @throws IOException
      */
-    private void loadXrefFileWithoutExprInfo(String file) throws IOException{
+    private List<XrefUniprotBean> loadXrefFileWithoutExprInfo(String file) throws IOException {
         log.entry(file);
+        List<XrefUniprotBean> xrefUniprotList = new ArrayList<>();
         ICsvBeanReader beanReader = null;
         try {
             beanReader = new CsvBeanReader(new FileReader(file), CsvPreference.TAB_PREFERENCE);
@@ -87,99 +94,120 @@ public class GenerateUniprotXRefWithExprInfo {
                 beanReader.close();
             }
         }
+        return log.exit(xrefUniprotList);
     }
     
     /**
      * Summarize expression information for one gene. This summarized information contains:
      * - number of Anatomical entities where this gene is expressed
      * - Name of the anatomical entity where this gene has the higher expression level
-     * Take as input a {@code XrefUniprotBean} object that contains all information to call the 
-     * {@code CallService}. 
-     * @param xref  A {@code XrefUniprotBean} object 
+     * Take as input a {@code List} of {@code XrefUniprotBean} object that contains all information 
+     * to call the {@code CallService}. 
+     * @param xrefList  A {@code List} of {@code XrefUniprotBean} containing information retrieved 
+     *                  from Bgee database and needed to create uniprot cross-references
+     * @return A {@code Map} where keys correspond to ensembl gene Ids and each value corresponds 
+     * to one well formated uniprot Xref
      */
-    private void generateExpressionInfo(XrefUniprotBean xref){
-        log.entry(xref);
-        ServiceFactory serviceFactory = new ServiceFactory();
-        Gene gene = serviceFactory.getGeneService().loadGenes(Collections.singleton(
-                new GeneFilter(xref.getSpeciesId(), xref.getEnsemblId()))).findFirst().get();
-        CallService service = serviceFactory.getCallService();
-        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
-                new LinkedHashMap<>();
-        //XXX: Following lines (until line 171) of code are the same than in the CommandGene. We should move this code to
-        // a shared location and call it for both CommandGene AND Uniprot XRef generation
-        serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
-        Map<SummaryCallType.ExpressionSummary, SummaryQuality> silverExpressedCallFilter = new HashMap<>();
-        silverExpressedCallFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
-        Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
-        obsDataFilter.put(CallType.Expression.EXPRESSED, true);
-        
-        final List<ExpressionCall> calls = service.loadExpressionCalls(
-                new ExpressionCallFilter(silverExpressedCallFilter,
-                        Collections.singleton(new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId())),
-                        null, null, obsDataFilter, null, null),
-                EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
-                           CallService.Attribute.GLOBAL_MEAN_RANK,
-                           CallService.Attribute.EXPERIMENT_COUNTS),
-                serviceOrdering)
-            .collect(Collectors.toList());
-
-        final Set<String> organIds = calls.stream()
-                .map(c ->c .getCondition().getAnatEntityId())
-                .collect(Collectors.toSet());
-        
-        Map<SummaryCallType.ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
-        summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE);
-
-        List<ExpressionCall> expressionCalls = service.loadExpressionCalls(
-                new ExpressionCallFilter(summaryCallTypeQualityFilter,
-                        Collections.singleton(new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId())),
-                        null, null, obsDataFilter, null, null),
-                EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
-                        CallService.Attribute.DEV_STAGE_ID,
-                        CallService.Attribute.DATA_QUALITY,
-                        CallService.Attribute.GLOBAL_MEAN_RANK,
-                        CallService.Attribute.EXPERIMENT_COUNTS),
-                serviceOrdering)
-            .collect(Collectors.toList());
-        List<ExpressionCall> orderedCalls = expressionCalls.stream()
-                .filter(c -> organIds.contains(c.getCondition().getAnatEntityId()))
+    private Map<String, String> generateExpressionInfo(List <XrefUniprotBean> xrefList) {
+        log.entry(xrefList);
+        Instant start = Instant.now();
+        Map<String, String> ensemlbIdToXrefLines = new HashMap<>();
+        xrefList.parallelStream().forEach( xref -> {
+            ServiceFactory serviceFactory = new ServiceFactory();
+            Gene gene = serviceFactory.getGeneService().loadGenes(Collections.singleton(
+                    new GeneFilter(xref.getSpeciesId(), xref.getEnsemblId()))).findFirst().get();
+            CallService service = serviceFactory.getCallService();
+            LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
+                    new LinkedHashMap<>();
+            //XXX: Following lines (until line 171) of code are the same than in the CommandGene. 
+            //We should move this code to a shared location and call it for both CommandGene AND Uniprot XRef generation
+            serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
+            Map<SummaryCallType.ExpressionSummary, SummaryQuality> silverExpressedCallFilter = new HashMap<>();
+            silverExpressedCallFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
+            Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
+            obsDataFilter.put(CallType.Expression.EXPRESSED, true);
+            
+            final List<ExpressionCall> calls = service.loadExpressionCalls(
+                    new ExpressionCallFilter(silverExpressedCallFilter,
+                            Collections.singleton(new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId())),
+                            null, null, obsDataFilter, null, null),
+                    EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
+                               CallService.Attribute.GLOBAL_MEAN_RANK,
+                               CallService.Attribute.EXPERIMENT_COUNTS),
+                    serviceOrdering)
                 .collect(Collectors.toList());
-        if(orderedCalls == null || orderedCalls.isEmpty()){
-            log.info("No expression data for gene "+xref.ensemblId);
-        }else{
-            try{
-                ConditionGraph organStageGraph = new ConditionGraph(
-                        orderedCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()), 
-                        serviceFactory);
-                log.debug(organStageGraph.getConditions());
-                orderedCalls.sort(new ExpressionCall.RankComparator(organStageGraph));
-                final Set<ExpressionCall> redundantCalls = ExpressionCall.identifyRedundantCalls(
-                        orderedCalls, organStageGraph);
-                orderedCalls.removeAll(redundantCalls);
-                LinkedHashMap<AnatEntity, List<ExpressionCall>> callsByAnatEntity = orderedCalls.stream()
-                        //group by anat. entity
-                        .collect(Collectors.groupingBy(
-                                c -> c.getCondition().getAnatEntity(), 
-                                LinkedHashMap::new, 
-                                Collectors.toList()))
-                        .entrySet().stream()
-                        //discard if all calls of an anat. entity are redundant
-                        .filter(entry -> !redundantCalls.containsAll(entry.getValue()))
-                        //reconstruct the LinkedHashMap
-                        .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(), 
-                                (l1, l2) -> {
-                                    throw log.throwing(new AssertionError("Not possible to have key collision"));
-                                }, 
-                                LinkedHashMap::new));
-                
-                serviceFactory.close();
-                String prefixLine = xref.getUniprotId()+"   DR   BGEE; "+xref.getEnsemblId()+";";
-                outputXrefLines.add(prefixLine+" Expressed in "+callsByAnatEntity.size()+" organ(s), highest expression level in "+
-                        orderedCalls.get(0).getCondition().getAnatEntity().getName()+".");
-            }catch (IllegalArgumentException e) {
-                log.error("Comparison method violates its original contract. No XRef will be generated for gene {}", gene.getEnsemblGeneId());
+    
+            final Set<String> organIds = calls.stream()
+                    .map(c ->c .getCondition().getAnatEntityId())
+                    .collect(Collectors.toSet());
+            
+            Map<SummaryCallType.ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
+            summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE);
+    
+            List<ExpressionCall> expressionCalls = service.loadExpressionCalls(
+                    new ExpressionCallFilter(summaryCallTypeQualityFilter,
+                            Collections.singleton(new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId())),
+                            null, null, obsDataFilter, null, null),
+                    EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
+                            CallService.Attribute.DEV_STAGE_ID,
+                            CallService.Attribute.DATA_QUALITY,
+                            CallService.Attribute.GLOBAL_MEAN_RANK,
+                            CallService.Attribute.EXPERIMENT_COUNTS),
+                    serviceOrdering)
+                .collect(Collectors.toList());
+            List<ExpressionCall> orderedCalls = expressionCalls.stream()
+                    .filter(c -> organIds.contains(c.getCondition().getAnatEntityId()))
+                    .collect(Collectors.toList());
+            if(orderedCalls == null || orderedCalls.isEmpty()){
+                log.info("No expression data for gene "+xref.ensemblId);
+            }else{
+                try{
+                    ConditionGraph organStageGraph = new ConditionGraph(
+                            orderedCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()), 
+                            serviceFactory);
+                    serviceFactory.close();
+                    orderedCalls.sort(new ExpressionCall.RankComparator(organStageGraph));
+                    final Set<ExpressionCall> redundantCalls = ExpressionCall.identifyRedundantCalls(
+                            orderedCalls, organStageGraph);
+                    orderedCalls.removeAll(redundantCalls);
+                    LinkedHashMap<AnatEntity, List<ExpressionCall>> callsByAnatEntity = orderedCalls.stream()
+                            //group by anat. entity
+                            .collect(Collectors.groupingBy(
+                                    c -> c.getCondition().getAnatEntity(), 
+                                    LinkedHashMap::new, 
+                                    Collectors.toList()))
+                            .entrySet().stream()
+                            //discard if all calls of an anat. entity are redundant
+                            .filter(entry -> !redundantCalls.containsAll(entry.getValue()))
+                            //reconstruct the LinkedHashMap
+                            .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(), 
+                                    (l1, l2) -> {
+                                        throw log.throwing(new AssertionError("Not possible to have key collision"));
+                                    }, 
+                                    LinkedHashMap::new));
+                    String prefixLine = xref.getUniprotId()+"   DR   BGEE; "+xref.getEnsemblId()+";";
+                    ensemlbIdToXrefLines.put(xref.ensemblId, prefixLine+" Expressed in "+callsByAnatEntity.size() +
+                            " organ(s), highest expression level in "+
+                            orderedCalls.get(0).getCondition().getAnatEntity().getName()+".");
+                }catch (IllegalArgumentException e) {
+                    log.error("Comparison method violates its original contract. "
+                            + "No XRef will be generated for gene {}", gene.getEnsemblGeneId());
+                }
             }
-        }
+        });
+        Instant end = Instant.now();
+        log.debug("Time needed to retrieve expressionSummary of {} genes is {} hours", 
+                xrefList.size(), Duration.between(start, end).toHours());
+        return log.exit(ensemlbIdToXrefLines);
+        
+    }
+    
+    private static Map<String, String> sortXrefByUniprotId(Map<String, String> ensemblIdToXrefLines) {
+        log.entry(ensemblIdToXrefLines);
+        return log.exit(ensemblIdToXrefLines.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+                        (oldValue, newValue) -> oldValue, LinkedHashMap::new)));
     }
     
     /**
@@ -190,9 +218,10 @@ public class GenerateUniprotXRefWithExprInfo {
      * Ex: H9G366   DR   BGEE; ENSACAG00000000002; Expressed in 4 organs, higher expression level in brain.
      * 
      * @param file path to the output file
+     * @param outputXrefLines a {@code Collection} of {@Code String} corresponding to all Bgee Xref in Uniprot
      * @throws IOException
      */
-    private void writeXrefWithExpressionInfo(String file) throws IOException{
+    private void writeXrefWithExpressionInfo(String file, Collection <String> outputXrefLines) throws IOException {
         Path filePath = Paths.get(file);
         Files.write(filePath, outputXrefLines, Charset.forName("UTF-8"));
     }
@@ -282,8 +311,8 @@ public class GenerateUniprotXRefWithExprInfo {
 
         @Override
         public String toString() {
-            return "XrefUniprotBean [uniprotId=" + uniprotId + ", ensemblId=" + ensemblId + ", speciesId=" + speciesId
-                    + "]";
+            return "XrefUniprotBean [uniprotId=" + uniprotId + ", ensemblId=" + ensemblId + ", speciesId=" + 
+                    speciesId + "]";
         }
         
         

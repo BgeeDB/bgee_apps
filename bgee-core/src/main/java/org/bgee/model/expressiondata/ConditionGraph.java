@@ -2,7 +2,6 @@ package org.bgee.model.expressiondata;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
@@ -30,7 +29,7 @@ import org.bgee.model.ontology.RelationType;
 //TODO: Actually, maybe we should have an UtilsFactory, as we have a ServiceFactory. 
 //Could return also the ExpressionCallUtils, the ExpressionCall.RankComparator... 
 //that would be much cleaner for unit tests. 
-public class ConditionGraph implements Comparator<Condition> {
+public class ConditionGraph {
 
     private static final Logger log = LogManager.getLogger(ConditionGraph.class.getName());
     
@@ -371,34 +370,54 @@ public class ConditionGraph implements Comparator<Condition> {
         return log.exit(true);
     }
     
-    /**
-     * Compare two {@code Condition}s based on their relations between each other. 
-     * Will return a negative {@code int} if {@code cond1} is more precise than {@code cond2}, 
-     * a positive {@code int} if {@code cond1} is less precise than {@code cond2}, 
-     * {@code 0} if {@code cond1} and {@code cond2} are unrelated.
-     * <p>
-     * For a comparison of {@code Condition}s simply based on their attributes, 
-     * see {@code Condition#compareTo(Condition)}. 
-     * 
-     * @param cond1 The first {@code Condition} to be compared. 
-     * @param cond2 The second {@code Condition} to be compared. 
-     * @return      a negative {@code int}, zero, or a positive {@code int} 
-     *              as the first argument is more precise than, unrelated to, or less precise 
-     *              than the second.
-     * @see #isConditionMorePrecise(Condition, Condition)
-     */
-    @Override
-    public int compare(Condition cond1, Condition cond2) {
-        log.entry(cond1, cond2);
-
-        if (this.isConditionMorePrecise(cond1, cond2)) {
-            return log.exit(1);
-        }
-        if (this.isConditionMorePrecise(cond2, cond1)) {
-            return log.exit(-1);
-        }
-        return log.exit(0);
-    }
+//    /**
+//     * Compare two {@code Condition}s based on their relations between each other. 
+//     * Will return a negative {@code int} if {@code cond1} is more precise than {@code cond2}, 
+//     * a positive {@code int} if {@code cond1} is less precise than {@code cond2}, 
+//     * {@code 0} if {@code cond1} and {@code cond2} are unrelated.
+//     * <p>
+//     * For a comparison of {@code Condition}s simply based on their attributes, 
+//     * see {@code Condition#compareTo(Condition)}. 
+//     * 
+//     * @param cond1 The first {@code Condition} to be compared. 
+//     * @param cond2 The second {@code Condition} to be compared. 
+//     * @return      a negative {@code int}, zero, or a positive {@code int} 
+//     *              as the first argument is more precise than, unrelated to, or less precise 
+//     *              than the second.
+//     * @see #isConditionMorePrecise(Condition, Condition)
+//     */
+//    @Override
+//    public int compare(Condition cond1, Condition cond2) {
+//        log.entry(cond1, cond2);
+//
+//        if (this.isConditionMorePrecise(cond1, cond2)) {
+//            return log.exit(1);
+//        }
+//        if (this.isConditionMorePrecise(cond2, cond1)) {
+//            return log.exit(-1);
+//        }
+//
+//        //Important bug fix: we used to have inconsistent comparisons. Consider the following graph:
+//        //            cond1
+//        //           /     \
+//        //        cond2   cond3
+//        //                  |
+//        //                cond4
+//        //We used to have:
+//        //cond2 and cond3 are neither ancestors nor descendants of each other, so cond2 = cond3
+//        //cond2 and cond4 are neither ancestors nor descendants of each other, so cond2 = cond4
+//        //cond4 is a descendant of cond3, so cond4 < cond3
+//        //=> inconsistent comparison
+//        //
+//        //For a consistent comparison, we should either have
+//        //cond4 = cond3 (we don't want that), or cond4 < cond2.
+//        //This is thus the second case that we implement as a bug fix (cond4 < cond2)
+//        //Basically, when comparing two conditions, A and B, even if A and B are not
+//        //descendant nor ancestor of each other, if condition A has a ancestor condition
+//        //that would be equal to condition B (e.g., an ancestor of A is a sibling of B),
+//        //then, condition A < condition B.
+//        return log.exit(0);
+//    }
     
     /**
      * Get all the {@code Condition}s that are less precise than {@code cond}, 

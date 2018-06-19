@@ -15,8 +15,8 @@ import org.bgee.view.ViewFactory;
  * page=about
  *
  * @author  Valentine Rech de Laval
- * @version Bgee 13
- * @since   Bgee 13
+ * @version Bgee 14, June 2018
+ * @since   Bgee 13, Mar. 2015
  */
 public class CommandAbout extends CommandParent {
 
@@ -49,6 +49,10 @@ public class CommandAbout extends CommandParent {
         
         if (this.requestParameters.getAction() == null) {
             display.displayAboutPage();
+
+        } else if (this.requestParameters.getAction().equals(
+                RequestParameters.ACTION_ABOUT_PRIVACY_POLICY)) {
+            display.displayPrivacyPolicy();
         } else {
             throw log.throwing(new PageNotFoundException("Incorrect " + 
                 this.requestParameters.getUrlParametersInstance().getParamAction() + 

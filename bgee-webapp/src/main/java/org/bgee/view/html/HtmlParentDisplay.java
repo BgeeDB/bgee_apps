@@ -25,7 +25,7 @@ import org.bgee.view.ViewFactory;
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
  * @author  Sebastien Moretti
- * @version Bgee 14, May 2018
+ * @version Bgee 14, June 2018
  * @since   Bgee 13, Jul. 2014
  */
 public class HtmlParentDisplay extends ConcreteDisplayParent {
@@ -358,6 +358,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         RequestParameters urlGeneSearch = this.getNewRequestParameters();
         urlGeneSearch.setPage(RequestParameters.PAGE_GENE);
 
+        RequestParameters urlDownload = this.getNewRequestParameters();
+        urlDownload.setPage(RequestParameters.PAGE_DOWNLOAD);
+        
         RequestParameters urlDownloadProcValueFile = this.getNewRequestParameters();
         urlDownloadProcValueFile.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlDownloadProcValueFile.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
@@ -365,10 +368,6 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         RequestParameters urlDownloadExprCallFiles = this.getNewRequestParameters();
         urlDownloadExprCallFiles.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlDownloadExprCallFiles.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
-
-        RequestParameters urlDocBgeeAccess = this.getNewRequestParameters();
-        urlDocBgeeAccess.setPage(RequestParameters.PAGE_DOCUMENTATION);
-        urlDocBgeeAccess.setAction(RequestParameters.ACTION_DOC_HOW_TO_ACCESS);
 
         RequestParameters urlDocDataSets = this.getNewRequestParameters();
         urlDocDataSets.setPage(RequestParameters.PAGE_DOCUMENTATION);
@@ -445,6 +444,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' "
               + "aria-haspopup='true' aria-expanded='false'>Download <span class='caret'></span></a>");
         navbar.append("<ul class='dropdown-menu'>");
+        navbar.append("<li><a href='").append(urlDownload.getRequestURL())
+                .append("'>Download home</a></li>");
         navbar.append("<li><a href='").append(urlDownloadExprCallFiles.getRequestURL()).append("'>")
                 .append(GENE_EXPR_CALLS_PAGE_NAME).append("</a></li>");
         navbar.append("<li><a href='").append(urlDownloadProcValueFile.getRequestURL()).append("'>")
@@ -459,8 +460,6 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' "
               + "aria-haspopup='true' aria-expanded='false'>Documentation <span class='caret'></span></a>");
         navbar.append("<ul class='dropdown-menu'>");
-        navbar.append("<li><a title='See how to access to Bgee data' href='")
-                .append(urlDocBgeeAccess.getRequestURL()).append("'>How to access Bgee data</a></li>");
         navbar.append("<li><a title='See how to access to GTEx data'href='")
                 .append(urlDocDataSets.getRequestURL()).append("'>GTEx into Bgee</a></li>");
         navbar.append("<li><a title='TopAnat documentation' href='").append(urlDocTopAnat.getRequestURL())
@@ -472,17 +471,23 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 //            urlDocProcValueFiles.getRequestURL() + "'>" + PROCESSED_EXPR_VALUES_PAGE_NAME + "</a></li>");
         navbar.append("<li><a href='https://bioconductor.org/packages/release/bioc/manuals/BgeeDB/man/BgeeDB.pdf'"
                 + " target='_blank'>BgeeDB R package</a></li>");
-        navbar.append("<li><a title='Bgee blog' href='https://bgeedb.wordpress.com' target='_blank'>Bgee blog</a></li>");
-        navbar.append("<li><a title='Bgee sources' href='").append(urlBgeeSources.getRequestURL())
-                .append("'>Bgee sources</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
         
         // About
-        navbar.append("<li><a title='About page' href='" + urlAbout.getRequestURL() + "'>About</a></li>");
+        navbar.append("<li class='dropdown'>");
+        navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' "
+                + "aria-haspopup='true' aria-expanded='false'>About <span class='caret'></span></a>");
+        navbar.append("<ul class='dropdown-menu'>");
+        navbar.append("<li><a href='").append(urlAbout.getRequestURL()).append("'>About Bgee</a></li>");
+        navbar.append("<li><a href='https://bgeedb.wordpress.com' target='_blank'>Bgee blog</a></li>");
+        navbar.append("<li><a href='").append(urlBgeeSources.getRequestURL())
+                .append("'>Bgee sources</a></li>");
+        navbar.append("</ul>");
+        navbar.append("</li>");
         
         // Help
-        navbar.append("<li>" + this.getObfuscateEmailInHelp() + "</li>");
+        navbar.append("<li>" + this.getObfuscateHelpEmail() + "</li>");
 
         navbar.append("</ul>"); // close left nav links
 
@@ -563,16 +568,27 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     }
 
     /**
-     * @return          the {@code String} that is the HTML code of the Contact link.
+     * @return  The {@code String} that is the HTML code of the contact link in menu.
      */
     //TODO move javascript in common.js
-    private String getObfuscateEmailInHelp() {
+    private String getObfuscateHelpEmail() {
         return getObfuscateEmailLink("%48%65%6C%70");
     }
-    
-    protected String getObfuscateEmailInText() {
-        return getObfuscateEmailLink("%62%67%65%65%20%65%6D%61%69%6C");
-        
+
+    /**
+     * @return  The {@code String} that is the HTML code of the contact link in text,
+     *          displaying 'Bgee e-mail'.
+     */
+    protected String getObfuscateBgeeEmail() {
+        return getObfuscateEmailLink("%42%67%65%65%20%65%2D%6D%61%69%6C");
+    }
+
+    /**
+     * @return  The {@code String} that is the HTML code of the contact link in text,
+     *          displaying 'e-mail'.
+     */
+    protected String getObfuscateEmail() {
+        return getObfuscateEmailLink("%65%2D%6D%61%69%6C");
     }
     
     private String getObfuscateEmailLink(String encodedLinkText) {

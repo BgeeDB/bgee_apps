@@ -17,9 +17,10 @@ import org.bgee.controller.RequestParameters;
  * {@code HtmlDocumentationDisplay} was getting too large and too complicated. 
  * 
  * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
  * @see HtmlDocumentationDisplay
- * @version Bgee 13 May 2015
- * @since   Bgee 13
+ * @version Bgee 14, June 2018
+ * @since   Bgee 13, May 2015
  */
 public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
     private static final Logger log = LogManager.getLogger(HtmlDocumentationCallFile.class.getName());
@@ -1510,7 +1511,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeln("<div class='alert alert-danger'>"
                 + "With the release of Bgee 14.0, the documentation has not yet been updated. "
                 + "We apologize for any inconvenience. In the meantime, please do not hesitate to "
-                + "contact us if you have any questions, using " + getObfuscateEmailInText() + " or "
+                + "contact us if you have any questions, using " + getObfuscateBgeeEmail() + " or "
                 + "<a title='Follow @Bgeedb on Twitter' target='_blank' "
                 + "   href='https://twitter.com/Bgeedb'>@Bgeedb on Twitter</a>."
                 + "</div>");

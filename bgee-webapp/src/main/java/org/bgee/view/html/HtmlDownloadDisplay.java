@@ -28,8 +28,8 @@ import org.bgee.view.JsonHelper;
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
- * @version Bgee 14, Apr. 2017
- * @since   Bgee 13
+ * @version Bgee 14, June 2018
+ * @since   Bgee 13, July 2014
  */
 public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDisplay {
  
@@ -69,6 +69,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     }
 
     @Override
+    //TODO: use a different ID than 'feature_list', to provide a different look, 
+    //notably with much larger elements, to provide more text below the figures.
     public void displayDownloadHomePage() {
         log.entry();
         
@@ -76,13 +78,57 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
         this.writeln("<h1>Bgee download page</h1>");
 
+        RequestParameters urlDownloadProcExprValuesGenerator = this.getNewRequestParameters();
+        urlDownloadProcExprValuesGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDownloadProcExprValuesGenerator.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
+
+        RequestParameters urlDownloadCallsGenerator = this.getNewRequestParameters();
+        urlDownloadCallsGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDownloadCallsGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
+
+        this.writeln("<h2>Bgee data</h2>");
+
         this.writeln("<div class='feature_list'>");
+
         this.writeln(this.getFeatureDownloadLogos());
-        this.writeln("</div>");
-        
+
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(BGEE_R_PACKAGE_URL,
+                true, "BgeeDB R package", "R package",
+                this.prop.getLogoImagesRootDirectory() + "r_logo_color.png",
+                "A package for the annotation and gene expression data download from Bgee database, "
+                        + "and TopAnat analysis."));
+
+        this.writeln("</div>"); // close feature_list
+
+        this.writeln("<h2>Developer corner</h2>");
+
+        this.writeln("<div class='feature_list'>");
+
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo("https://github.com/BgeeDB",
+                true, "GitHub of the Bgee project", "GitHub",
+                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "github_logo.png",
+                "Retrieve our annotations of homology between anatomical structures, "
+                        + "as well as the Confidence Information Ontology (CIO) "
+                        + "and the Homology Ontology (HOM), from our GitHub repository."));
+
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
+                this.prop.getFTPRootDirectory() + "sql_lite_dump.tar.gz", false,
+                "Download the dump of MySQL Bgee lite database", "Bgee lite dump",
+                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "mysql_logo.png",
+                "Download the dump of the MySQL Bgee lite database, that contains most useful, and explicit information."));
+
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(this.prop.getFTPRootDirectory() +
+                        "sql_dump.tar.gz", false, "Download dump the MySQL Bgee database", "Bgee dump",
+                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "mysql_logo.png",
+                "Download the complete dump of the MySQL Bgee database, that contains "
+                        + "all the data used to generate the information displayed on this website."));
+
+        this.writeln("</div>"); // close feature_list
+
         this.endDisplay();
 
         log.exit();
+
     }
     
     @Override

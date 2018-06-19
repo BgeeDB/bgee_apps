@@ -85,7 +85,7 @@ import org.bgee.model.expressiondata.baseelements.SummaryQuality;
  * @author  Mathieu Seppey
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, May 2018
+ * @version Bgee 14, June 2018
  * @since   Bgee 1
  */
 public class RequestParameters {
@@ -236,6 +236,12 @@ public class RequestParameters {
     public static final String ACTION_DOC_DATA_SETS = "data_sets";
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when privacy policy  
+     * is requested. Value of the parameter page should be {@link #PAGE_ABOUT}.
+     */
+    public static final String ACTION_ABOUT_PRIVACY_POLICY = "privacy_policy";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
      * (see {@link URLParameters#getParamAction()}) when a species data is requested.
      * Value of the parameter page should be {@link #PAGE_SPECIES}.
      */
@@ -370,15 +376,6 @@ public class RequestParameters {
      * gene expression calls.
      */
     public static final String HASH_DOC_CALL_MULTI_DIFF_COMPLETE = "multi_diff_complete";
-    
-    /**
-     * A {@code String} that is the value taken by the {@code action} parameter 
-     * (see {@link URLParameters#getParamAction()}) when documentation about how to access to
-     * Bgee data is requested. Value of the parameter page should be 
-     * {@link #PAGE_DOCUMENTATION}.
-     */
-    public static final String ACTION_DOC_HOW_TO_ACCESS = "access";
-    
     /**
      * A {@code String} that is the value taken by the {@code displayType} parameter 
      * (see {@link URLParameters#getParamDisplayType()}) to obtain a XML view.

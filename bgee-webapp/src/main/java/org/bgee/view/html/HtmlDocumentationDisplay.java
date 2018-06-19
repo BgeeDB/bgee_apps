@@ -15,7 +15,7 @@ import org.bgee.view.DocumentationDisplay;
  *
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, May 2018
+ * @version Bgee 14, June 2018
  * @since   Bgee 13, Mar. 2015
  */
 public class HtmlDocumentationDisplay extends HtmlParentDisplay implements DocumentationDisplay {
@@ -238,10 +238,6 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
      */
     private String getFeatureDocumentationLogos() {
         log.entry();
-
-        RequestParameters urlHowToAccessGenerator = this.getNewRequestParameters();
-        urlHowToAccessGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
-        urlHowToAccessGenerator.setAction(RequestParameters.ACTION_DOC_HOW_TO_ACCESS);
         
         RequestParameters urlCallFilesGenerator = this.getNewRequestParameters();
         urlCallFilesGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
@@ -255,10 +251,6 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         urlSourcesGenerator.setPage(RequestParameters.PAGE_SOURCE);
 
         StringBuilder logos = new StringBuilder(); 
-
-        logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlHowToAccessGenerator.getRequestURL(), 
-                false, "How to access to Bgee data", "Access to Bgee data", 
-                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "bgee_access_logo.png", null));
 
         //TODO update image when top anat logo is created
         logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlTopAnatGenerator.getRequestURL(), 
@@ -334,69 +326,6 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         this.writeln("</div>"); // close class
         this.writeln("</div>"); // close row
 
-        this.endDisplay();
-
-        log.exit();
-    }
-
-
-    @Override
-    //TODO: use a different ID than 'feature_list', to provide a different look, 
-    //notably with much larger elements, to provide more text below the figures.
-    public void displayHowToAccessDataDocumentation() {
-        log.entry();
-        
-        this.startDisplay("How to access to Bgee data");
-
-        this.writeln("<h1>How to access to Bgee data</h1>");
-
-        RequestParameters urlDownloadProcExprValuesGenerator = this.getNewRequestParameters();
-        urlDownloadProcExprValuesGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
-        urlDownloadProcExprValuesGenerator.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
-
-        RequestParameters urlDownloadCallsGenerator = this.getNewRequestParameters();
-        urlDownloadCallsGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
-        urlDownloadCallsGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
-
-        this.writeln("<h2>How to download Bgee data</h2>");
-
-        this.writeln("<div class='feature_list'>");
-
-        this.writeln(this.getFeatureDownloadLogos());
-
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(BGEE_R_PACKAGE_URL,
-                true, "BgeeDB R package", "R package",
-                this.prop.getLogoImagesRootDirectory() + "r_logo_color.png",
-                "A package for the annotation and gene expression data download from Bgee database, "
-                        + "and TopAnat analysis."));
-
-        this.writeln("</div>"); // close feature_list
-
-        this.writeln("<h2>Developer corner</h2>");
-
-        this.writeln("<div class='feature_list'>");
-
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo("https://github.com/BgeeDB", 
-                true, "GitHub of the Bgee project", "GitHub", 
-                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "github_logo.png", 
-                "Retrieve our annotations of homology between anatomical structures, "
-                + "as well as the Confidence Information Ontology (CIO) "
-                + "and the Homology Ontology (HOM), from our GitHub repository."));
-
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
-                this.prop.getFTPRootDirectory() + "sql_light_dump.tar.gz", false,
-                "Download the light dump of MySQL Bgee database", "Light MySQL dump",
-                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "mysql_logo.png",
-                "Download the light dump of the MySQL Bgee database, that contains most useful, and explicit information."));
-
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(this.prop.getFTPRootDirectory() +
-                        "sql_dump.tar.gz", false, "Download dump the MySQL Bgee database", "MySQL dump",
-                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "mysql_logo.png",
-                "Download the complete dump of the MySQL Bgee database, that contains "
-                        + "all the data used to generate the information displayed on this website."));
-
-        this.writeln("</div>"); // close feature_list
-        
         this.endDisplay();
 
         log.exit();

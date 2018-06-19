@@ -30,6 +30,28 @@ So we include it from scratch in all our pages, to adapt element sizes to it.
     margin-bottom: 0px;
 }
 
+/****PRIVACY PANEL****/
+.privacy-panel {
+    background-color: black;
+    color: #fff;
+    width: 100%;
+    padding: 2em;
+    position: fixed;
+    bottom: 0;
+    z-index: 1000;
+    opacity: 0.8;
+}
+.privacy-panel a {
+    color: #fff;
+    border-bottom: 1px solid #fff
+}
+.privacy-panel .privacy-panel_info {
+    float: left;
+}
+.privacy-panel .privacy-panel_button {
+    float: right;
+}
+
 /****NAVIGATION BAR*** */
 nav img {
     border-radius: 0px;

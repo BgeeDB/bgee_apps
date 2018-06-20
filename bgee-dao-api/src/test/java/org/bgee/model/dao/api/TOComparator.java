@@ -496,11 +496,12 @@ public class TOComparator {
      * @param to2   A {@code HierarchicalGroupToGeneTO} to be compared to {@code to1}.
      * @return      {@code true} if {@code to1} and {@code to2} have all attributes equal.
      */
-    private static boolean areTOsEqual(HierarchicalGroupToGeneTO to1, HierarchicalGroupToGeneTO to2) {
-        log.entry(to1, to2);
+    private static boolean areTOsEqual(HierarchicalGroupToGeneTO toToGene1, HierarchicalGroupToGeneTO toToGene2) {
+        log.entry(toToGene1, toToGene2);
 
-        if (Objects.equals(to1.getBgeeGeneId(), to2.getBgeeGeneId()) && 
-            Objects.equals(to1.getNodeId(), to2.getNodeId())) {
+        if (Objects.equals(toToGene1.getBgeeGeneId(), toToGene2.getBgeeGeneId()) && 
+            Objects.equals(toToGene1.getGroupId(), toToGene2.getGroupId()) &&
+            Objects.equals(toToGene1, toToGene2)) {
             return log.exit(true);
         }
         return log.exit(false);

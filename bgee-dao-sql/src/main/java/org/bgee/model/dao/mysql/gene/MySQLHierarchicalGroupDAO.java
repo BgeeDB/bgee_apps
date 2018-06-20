@@ -145,15 +145,14 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
         // To not overload MySQL with an error com.mysql.jdbc.PacketTooBigException,
         // and because of laziness, we insert terms one at a time
         String sql = "INSERT INTO geneToOma " +
-                     "(OMANodeId, bgeeGeneId, taxonId) " +
+                     "(OMAGroupId, bgeeGeneId, taxonId) " +
                      "values (?, ?, ?)";
 
         try (BgeePreparedStatement stmt =
                 this.getManager().getConnection().prepareStatement(sql)) {
             
             for (HierarchicalGroupToGeneTO groupToGene: groupToGenes) {
-                System.out.println(groupToGene.getNodeId()+" -> "+groupToGene.getBgeeGeneId()+" -> "+groupToGene.getTaxonId());
-                stmt.setInt(1, groupToGene.getNodeId());
+                stmt.setString(1, groupToGene.getGroupId());
                 stmt.setInt(2, groupToGene.getBgeeGeneId());
                 stmt.setInt(3, groupToGene.getTaxonId());
                 groupToGeneInsertedCount += stmt.executeUpdate();
@@ -218,12 +217,13 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
         @Override
         protected HierarchicalGroupToGeneTO getNewTO() throws DAOException {
             log.entry();
-            Integer hogId = null, geneId = null, taxonId = null; 
+            String hogId = null;
+            Integer geneId = null, taxonId = null; 
 
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
-                    if (column.getValue().equals("OMANodeId")) {
-                        hogId = this.getCurrentResultSet().getInt(column.getKey());
+                    if (column.getValue().equals("OMAGroupId")) {
+                        hogId = this.getCurrentResultSet().getString(column.getKey());
                         
                     } else if (column.getValue().equals("bgeeGeneId")) {
                         geneId = this.getCurrentResultSet().getInt(column.getKey());

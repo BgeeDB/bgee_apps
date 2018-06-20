@@ -561,7 +561,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
                 group.getProperty(TAX_ID_ATTRIBUTE), countGroups(group) - 1);
         this.addHierarchicalGroupToGeneTO(
                 group.getProperty(TAX_ID_ATTRIBUTE), group.getNestedGenes(),
-                this.omaNodeId);
+                omaXrefId);
         // Then, we retrieve gene data.
         if (group.getGenes() != null) {
             log.debug("Retrieving genes from group {}", group.getId());
@@ -672,15 +672,15 @@ public class ParseOrthoXML extends MySQLDAOUser {
 
      */
     //XXX: could you remind me why we need this?
-    private void addHierarchicalGroupToGeneTO(String taxonId, List<Gene> genes, Integer omaNodeId) {
-        log.entry(taxonId, omaNodeId, genes);
-        if(taxonId != null && genes != null && omaNodeId != null){
+    private void addHierarchicalGroupToGeneTO(String taxonId, List<Gene> genes, String omaGroupId) {
+        log.entry(taxonId, omaGroupId, genes);
+        if(taxonId != null && genes != null && omaGroupId != null){
             for(Gene groupGene : genes){
                 for (String omaGeneId : retrieveSplittedGeneIdentifier(groupGene)) {
                     if(ensemblIdToBgeeGeneTOs.containsKey(omaGeneId)){
                         for(GeneTO geneTO:ensemblIdToBgeeGeneTOs.get(omaGeneId)){
                             this.hierarchicalGroupToGeneTOs.add(new HierarchicalGroupToGeneTO(
-                                    omaNodeId, geneTO.getId(), 
+                                    omaGroupId, geneTO.getId(), 
                                     Integer.valueOf(taxonId)));
                         }                       
                     }

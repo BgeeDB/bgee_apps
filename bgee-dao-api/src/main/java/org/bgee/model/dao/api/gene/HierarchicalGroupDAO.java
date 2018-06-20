@@ -259,10 +259,10 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
         private static final long serialVersionUID = 3165617503583438525L;
         
         /**
-         * An {@code Integer} representing the ID of a group of homologous genes. 
+         * An {@code String} representing the ID of a group of homologous genes. 
          * This corresponds to the ID of Hierarchical Group (see {@link HierarchicalGroupTO}).
          */
-        private final Integer nodeId;
+        private final String groupId;
         /**
          * An {@code Integer} that is the ID of a gene belonging to the group with ID 
          * {@link #groupId}.
@@ -284,8 +284,8 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
          * @param bgeeGeneId    An {@code Integer} that is the ID of a gene belonging to the group.
          * @param taxonId 		An {@code Integer} that is the ID of a taxonomy level belonging to the group.
          */
-        public HierarchicalGroupToGeneTO (Integer nodeId, Integer bgeeGeneId, Integer taxonId) {
-            this.nodeId = nodeId;
+        public HierarchicalGroupToGeneTO (String groupId, Integer bgeeGeneId, Integer taxonId) {
+            this.groupId = groupId;
             this.bgeeGeneId = bgeeGeneId;
             this.taxonId = taxonId;
         }
@@ -295,8 +295,8 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
          *          This corresponds to the ID of Hierarchical Group (see 
          *          {@link HierarchicalGroupTO}).
          */
-        public Integer getNodeId() {
-            return nodeId;
+        public String getGroupId() {
+            return groupId;
         }
         /**
          * @return  An {@code Integer} that is the ID of a gene belonging to the group with ID 
@@ -316,7 +316,7 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
 
         @Override
         public String toString() {
-            return "HierarchicalGroupToGeneTO[groupId="+this.nodeId+", bgeeGeneId="+this.bgeeGeneId+", taxonId="+this.taxonId+"]";
+            return "HierarchicalGroupToGeneTO[groupId="+this.groupId+", bgeeGeneId="+this.bgeeGeneId+", taxonId="+this.taxonId+"]";
         }
     }
 }

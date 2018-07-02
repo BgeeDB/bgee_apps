@@ -38,7 +38,53 @@ public class ExpressionCallTest extends TestAncestor {
     @Override
     protected Logger getLogger() {
         return log;
-    } 
+    }
+
+    @Test
+    public void shouldFilterAndOrderCallsByRank() {
+        Species species = new Species(1);
+        Condition cond1 = new Condition(new AnatEntity("1"), null, species);
+        Condition cond2 = new Condition(new AnatEntity("2"), null, species);
+        Condition cond3 = new Condition(new AnatEntity("3"), null, species);
+        Condition cond4 = new Condition(new AnatEntity("4"), null, species);
+        Gene gene = new Gene("1", species);
+        ExpressionCall call1 = new ExpressionCall(gene, cond1, null, null, null, null,
+                new BigDecimal("1.0"), new BigDecimal("100"));
+        ExpressionCall call2 = new ExpressionCall(gene, cond2, null, null, null, null,
+                new BigDecimal("2.0"), new BigDecimal("100"));
+        ExpressionCall call3 = new ExpressionCall(gene, cond3, null, null, null, null,
+                new BigDecimal("2.0"), new BigDecimal("100"));
+        ExpressionCall call4 = new ExpressionCall(gene, cond4, null, null, null, null,
+                new BigDecimal("2.0"), new BigDecimal("100"));
+        ConditionGraph graph = mock(ConditionGraph.class);
+        //           cond1
+        //          /   \
+        //     cond2   cond3
+        //              |
+        //             cond4
+        when(graph.isConditionMorePrecise(cond1, cond1)).thenReturn(false);
+        when(graph.isConditionMorePrecise(cond1, cond2)).thenReturn(true);
+        when(graph.isConditionMorePrecise(cond1, cond3)).thenReturn(true);
+        when(graph.isConditionMorePrecise(cond1, cond4)).thenReturn(true);
+        when(graph.isConditionMorePrecise(cond2, cond1)).thenReturn(false);
+        when(graph.isConditionMorePrecise(cond2, cond2)).thenReturn(false);
+        when(graph.isConditionMorePrecise(cond2, cond3)).thenReturn(false);
+        when(graph.isConditionMorePrecise(cond2, cond4)).thenReturn(false);
+        when(graph.isConditionMorePrecise(cond3, cond1)).thenReturn(false);
+        when(graph.isConditionMorePrecise(cond3, cond2)).thenReturn(false);
+        when(graph.isConditionMorePrecise(cond3, cond3)).thenReturn(false);
+        when(graph.isConditionMorePrecise(cond3, cond4)).thenReturn(true);
+        when(graph.isConditionMorePrecise(cond4, cond1)).thenReturn(false);
+        when(graph.isConditionMorePrecise(cond4, cond2)).thenReturn(false);
+        when(graph.isConditionMorePrecise(cond4, cond3)).thenReturn(false);
+        when(graph.isConditionMorePrecise(cond4, cond4)).thenReturn(false);
+
+        List<ExpressionCall> calls = Arrays.asList(call1, call2, call3, call4);
+        List<ExpressionCall> expectedOrder = Arrays.asList(call1, call2, call4, call3);
+        assertEquals("Incorrect ordering of calls", expectedOrder,
+                ExpressionCall.filterAndOrderCallsByRank(calls, graph));
+    }
+
 //    
 //    /**
 //     * Test {@link #ExpressionCall#generateMeanRankScoreClustering(Collection, ClusteringMethod, double)}.

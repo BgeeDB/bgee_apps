@@ -11,7 +11,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.annotations.AnnotationCommon;
 import org.bgee.pipeline.annotations.InsertSimilarityAnnotation;
 import org.bgee.pipeline.annotations.SimilarityAnnotation;
-import org.bgee.pipeline.bgee.lite.BgeeToBgeeLite;
+import org.bgee.pipeline.bgeelite.BgeeToBgeeLite;
 import org.bgee.pipeline.expression.InsertPropagatedCalls;
 import org.bgee.pipeline.expression.downloadfile.GenerateExprFile2;
 import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile;

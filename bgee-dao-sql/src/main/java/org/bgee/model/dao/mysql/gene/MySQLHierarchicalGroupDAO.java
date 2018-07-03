@@ -3,8 +3,8 @@ package org.bgee.model.dao.mysql.gene;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Collection;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,7 +24,6 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
  * A {@code HierarchicalGroupDAO} for MySQL. 
  * 
  * @author Valentine Rech de Laval
- * @author Julien Wollbrett
  * @version Bgee 14
  * @see org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO
  * @since Bgee 13
@@ -128,41 +127,6 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
             throw log.throwing(new DAOException(e));
         }
     }
-
-    //XXX: how this was handled before?
-    @Override
-    public int insertHierarchicalGroupToGene(Collection<HierarchicalGroupToGeneTO> groupToGenes)
-            throws DAOException, IllegalArgumentException {
-        log.entry(groupToGenes);
-
-        if (groupToGenes == null || groupToGenes.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException(
-                    "No hierarchical group to gene is given, then no group to gene mapping is inserted"));
-        }
-
-        int groupToGeneInsertedCount = 0;
-
-        // To not overload MySQL with an error com.mysql.jdbc.PacketTooBigException,
-        // and because of laziness, we insert terms one at a time
-        String sql = "INSERT INTO geneToOma " +
-                     "(OMAGroupId, bgeeGeneId, taxonId) " +
-                     "values (?, ?, ?)";
-
-        try (BgeePreparedStatement stmt =
-                this.getManager().getConnection().prepareStatement(sql)) {
-            
-            for (HierarchicalGroupToGeneTO groupToGene: groupToGenes) {
-                stmt.setString(1, groupToGene.getGroupId());
-                stmt.setInt(2, groupToGene.getBgeeGeneId());
-                stmt.setInt(3, groupToGene.getTaxonId());
-                groupToGeneInsertedCount += stmt.executeUpdate();
-                stmt.clearParameters();
-            }
-            return log.exit(groupToGeneInsertedCount);
-        } catch (SQLException e) {
-            throw log.throwing(new DAOException(e));
-        }
-    }
     
     /**
      * A {@code MySQLDAOResultSet} specific to {@code HierarchicalGroupToGeneTO}.
@@ -217,13 +181,12 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
         @Override
         protected HierarchicalGroupToGeneTO getNewTO() throws DAOException {
             log.entry();
-            String hogId = null;
-            Integer geneId = null, taxonId = null; 
+            Integer hogId = null, geneId = null, taxonId = null; 
 
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
-                    if (column.getValue().equals("OMAGroupId")) {
-                        hogId = this.getCurrentResultSet().getString(column.getKey());
+                    if (column.getValue().equals("OMANodeId")) {
+                        hogId = this.getCurrentResultSet().getInt(column.getKey());
                         
                     } else if (column.getValue().equals("bgeeGeneId")) {
                         geneId = this.getCurrentResultSet().getInt(column.getKey());

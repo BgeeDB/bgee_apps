@@ -124,9 +124,9 @@ public class GeneServiceTest extends TestAncestor {
         HierarchicalGroupDAO hgDao = mock(HierarchicalGroupDAO.class);
         when(managerMock.getHierarchicalGroupDAO()).thenReturn(hgDao);
         HierarchicalGroupToGeneTOResultSet resultSet = getMockResultSet(HierarchicalGroupToGeneTOResultSet.class, 
-                Arrays.asList(new HierarchicalGroupToGeneTO("TO1", 123, 1),
-                        new HierarchicalGroupToGeneTO("TO1", 124, 1),
-                        new HierarchicalGroupToGeneTO("TO2", 223, 1)));
+                Arrays.asList(new HierarchicalGroupToGeneTO(1, 123, 1),
+                        new HierarchicalGroupToGeneTO(1, 124, 1),
+                        new HierarchicalGroupToGeneTO(2, 223, 1)));
         when(hgDao.getGroupToGene(1234, null)).thenReturn(resultSet);
         
         // Mock SpeciesService

@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.management.modelmbean.XMLParseException;
 import javax.xml.stream.XMLStreamException;
@@ -23,7 +24,6 @@ import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTOResultSet;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
-import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTO;
 import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
@@ -37,7 +37,6 @@ import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.io.CsvMapReader;
 import org.supercsv.io.ICsvMapReader;
 
-import sbc.orthoxml.Gene;
 import sbc.orthoxml.Group;
 import sbc.orthoxml.Species;
 import sbc.orthoxml.io.OrthoXMLReader;
@@ -101,13 +100,6 @@ public class ParseOrthoXML extends MySQLDAOUser {
      */
     private Set<HierarchicalGroupTO> hierarchicalGroupTOs;
     
-    /**
-     * A {@code Set} of {@code HierarchicalGroupToGeneTO}s containing mapping between groups, taxonomy level
-     * and genes to be inserted into the Bgee database. See this method for details.
-     * 
-     * @see #generateTOsFromGroup()
-     */
-    private Set<HierarchicalGroupToGeneTO> hierarchicalGroupToGeneTOs;
     
     /**
      * A {@code Set} of {@code GeneTO}s containing genes to be updated into the Bgee
@@ -176,7 +168,6 @@ public class ParseOrthoXML extends MySQLDAOUser {
         this.omaNodeId = 1;
         this.nestedSetBoundSeed = 0;
         this.hierarchicalGroupTOs = new HashSet<HierarchicalGroupTO>();
-        this.hierarchicalGroupToGeneTOs = new HashSet<HierarchicalGroupToGeneTO>();
         this.geneTOs = new HashSet<GeneTO>();
         this.ensemblIdToBgeeGeneTOs = new HashMap<String, Set<GeneTO>>();
         this.bgeeIdToEnsemblId = new HashMap<Integer, String>();
@@ -287,7 +278,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
             // Start a transaction to insert HierarchicalGroupTOs and update GeneTOs
             // in the Bgee data source. Note that we do not need to call rollback if
             // an error occurs, calling closeDAO will rollback any ongoing transaction.
-            int nbInsertedGroups = 0, nbUpdatedGenes = 0, nbInsertedGroupToGene = 0;
+            int nbInsertedGroups = 0, nbUpdatedGenes = 0;
 
             this.startTransaction(); 
 
@@ -300,14 +291,10 @@ public class ParseOrthoXML extends MySQLDAOUser {
             nbUpdatedGenes = this.getGeneDAO().updateGenes(this.geneTOs,
                     Arrays.asList(GeneDAO.Attribute.OMA_PARENT_NODE_ID));
             log.info("Done updating genes.");
-            log.info("Start inserting gene to hierarchical group mapping...");
-            nbInsertedGroupToGene = this.getHierarchicalGroupDAO()
-                    .insertHierarchicalGroupToGene(this.hierarchicalGroupToGeneTOs);
-            log.info("Done inserting gene to hierarchical group mapping.");
-
+            
             this.commit();
-            log.info("Done parsing of OrthoXML file: {} hierarchical groups inserted " +
-                    ",{} genes updated, and {} mapping between hierarchical group and genes inserted.", nbInsertedGroups, nbUpdatedGenes, nbInsertedGroupToGene);
+            log.info("Done parsing of OrthoXML file: {} hierarchical groups inserted and {} genes updated.",
+                    nbInsertedGroups, nbUpdatedGenes);
         } catch (IllegalStateException e) {
             log.catching(e);
             throw log.throwing(new IllegalArgumentException(
@@ -402,7 +389,8 @@ public class ParseOrthoXML extends MySQLDAOUser {
             }
         }
         if (log.isInfoEnabled()) {
-            log.info("Done retrieving gene IDs, {} bge genes found corresponding to {} ensembl genes", this.bgeeIdToEnsemblId.size(), ensemblIdToBgeeGeneTOs.size());
+            log.info("Done retrieving gene IDs, {} bge genes found corresponding to {} ensembl genes",
+                    this.bgeeIdToEnsemblId.size(), ensemblIdToBgeeGeneTOs.size());
         }
 
         log.exit();
@@ -559,9 +547,6 @@ public class ParseOrthoXML extends MySQLDAOUser {
         // So, we need to remove 1 to countGroups() to subtract the current group.
         this.addHierarchicalGroupTO(this.omaNodeId, omaXrefId, this.nestedSetBoundSeed,
                 group.getProperty(TAX_ID_ATTRIBUTE), countGroups(group) - 1);
-        this.addHierarchicalGroupToGeneTO(
-                group.getProperty(TAX_ID_ATTRIBUTE), group.getNestedGenes(),
-                omaXrefId);
         // Then, we retrieve gene data.
         if (group.getGenes() != null) {
             log.debug("Retrieving genes from group {}", group.getId());
@@ -570,21 +555,29 @@ public class ParseOrthoXML extends MySQLDAOUser {
                 boolean isInBgee = false ;
                 for (String omaGeneId : retrieveSplittedGeneIdentifier(groupGene)) {
                     log.debug("Examining OMA geneId {}", omaGeneId);
-                    // we need to copy the gene ID to be able to modify it 
-                    // if geneId is not in bgee, and use it for generate fake geneId 
-                    String currentGeneId = omaGeneId;
                     if(ensemblIdToBgeeGeneTOs.containsKey(omaGeneId)){
                         for(GeneTO geneTO :ensemblIdToBgeeGeneTOs.get(omaGeneId)){
+                            //currentOmaXrefId and currentOmaNodeId are used to add OMAParentNodeId for genes
+                            //mapped to more than one species (as Pan paniscus and Pan troglodytes in Bgee 14)
+                            Integer currentOmaNodeId = this.omaNodeId;
+                            // if one gene is used in different species OMAParentNodeId should not be 
+                            // a duplication node
+                            if(geneTO.getGeneMappedToGeneIdCount().compareTo(1) > 0 
+                                    && group.getProperty(TAX_ID_ATTRIBUTE) == null){
+                                log.debug("should find an other node gene:{} species:{} nodeId: {}", 
+                                        geneTO.getGeneId(), geneTO.getSpeciesId(), this.omaNodeId);
+                                currentOmaNodeId = findClosestParentOrthologousOmaNodeId(group, omaXrefId);
+                            }
                             if (this.addGeneTO(new GeneTO(geneTO.getId(), omaGeneId, null, null, null, null, 
-                                    this.omaNodeId,null, null),
+                                    currentOmaNodeId, null, null),
                                     omaXrefId)) {
                                 isInBgee = true;
                             } else if (!geneMapping.isEmpty()) {
                                 log.debug("Trying to find a x-ref for geneId {} from mapping file", omaGeneId);
                                 if (geneMapping.containsKey(omaGeneId)) {
-                                    log.debug("Mapping found for geneId {}: {}", omaGeneId, currentGeneId);
-                                    if (this.addGeneTO(new GeneTO(geneTO.getId(), geneMapping.get(omaGeneId), null, null, null, null, 
-                                            this.omaNodeId, null, null), omaXrefId)) {
+                                    log.debug("Mapping found for geneId {}", omaGeneId);
+                                    if (this.addGeneTO(new GeneTO(geneTO.getId(), geneMapping.get(omaGeneId), 
+                                            null, null, null, null, currentOmaNodeId, null, null), omaXrefId)) {
                                         isInBgee = true;
                                     }
                                 }
@@ -614,6 +607,45 @@ public class ParseOrthoXML extends MySQLDAOUser {
             }
         }
         return log.exit(true);
+    }
+    /**
+     * Return the closest speciation parent nodeId of one nodeId
+     * Used for gene mapped to more than one species. 
+     * @param group A paralogous {@code Group} for which the closest parent orthologous {@code Group} has to be found
+     * @param omaXrefId A {@code String} corresponding to the nodeId for which we want to find the closest parent
+     * @return the {@code String} Id of the closest parent orthologous {@code Group}
+     */
+    private Integer findClosestParentOrthologousOmaNodeId(Group group, String omaXrefId){
+        log.entry(group);
+        log.debug("try to find an other NodeId");
+        while (group.getProperty(TAX_ID_ATTRIBUTE) == null){
+            group = group.getParent();
+        }
+        final Group closestParentOrthologousGroup = group;
+        Set<Integer> currentOmaNodeIds = hierarchicalGroupTOs.stream()
+                .filter(c -> c.getOMAGroupId().equals(omaXrefId))
+                .filter(c -> c.getTaxonId() ==
+                        Integer.parseInt(closestParentOrthologousGroup.getProperty(TAX_ID_ATTRIBUTE)))
+                .filter(c -> c.getLeftBound() < nestedSetBoundSeed)
+                .filter(c -> c.getRightBound() > nestedSetBoundSeed )
+                .map(c -> c.getId())
+                .collect(Collectors.toSet());
+        if(currentOmaNodeIds.size() > 1){
+            for(Integer nodeId : currentOmaNodeIds){
+                log.error(hierarchicalGroupTOs.stream()
+                .filter(c -> c.getId().equals(nodeId))
+                .findFirst().get());
+            }
+            throw log.throwing(new IllegalStateException("Two parent OMANodeIds have the same TaxonId and OMAGroupId."
+                    + "It should only happen with OMANodeIds having the same parent :" + currentOmaNodeIds));
+        }else if(currentOmaNodeIds.isEmpty()){
+            throw log.throwing(new IllegalStateException("At least one OMANodeId should match both TaxonId" + 
+                    group.getProperty(TAX_ID_ATTRIBUTE) +" and OMAGroupId " + 
+                    group.getId()));
+        }
+        Integer closestParentOrthologousNodeId = currentOmaNodeIds.iterator().next();
+        log.debug("new OMANodeId : {}", closestParentOrthologousNodeId);
+        return log.exit(closestParentOrthologousNodeId);
     }
 
     /**
@@ -658,37 +690,6 @@ public class ParseOrthoXML extends MySQLDAOUser {
         log.exit();
     }
     
-    /**
-     * Given a OMA cross-reference ID with the taxonomy id and a number of children, 
-     * calculate nested set bounds and add it in the {@code Collection} of 
-     * {@code HierarchicalGroupTO}s to be as a nested set model.
-     * 
-     * @param taxonId               An {@code int} that is the taxonomy id of the
-     *                              {@code HierarchicalGroupTO} to create.
-     * @param genes                 A {@code List} of {@code Gene} corresponding to all
-     *                              orthologous genes of this omaNodeId.
-     * @param omaNodeId             An {@code int} that is the unique ID the hierarchical
-     *                              node.
-
-     */
-    //XXX: could you remind me why we need this?
-    private void addHierarchicalGroupToGeneTO(String taxonId, List<Gene> genes, String omaGroupId) {
-        log.entry(taxonId, omaGroupId, genes);
-        if(taxonId != null && genes != null && omaGroupId != null){
-            for(Gene groupGene : genes){
-                for (String omaGeneId : retrieveSplittedGeneIdentifier(groupGene)) {
-                    if(ensemblIdToBgeeGeneTOs.containsKey(omaGeneId)){
-                        for(GeneTO geneTO:ensemblIdToBgeeGeneTOs.get(omaGeneId)){
-                            this.hierarchicalGroupToGeneTOs.add(new HierarchicalGroupToGeneTO(
-                                    omaGroupId, geneTO.getId(), 
-                                    Integer.valueOf(taxonId)));
-                        }                       
-                    }
-                }
-            }
-        }
-    }
-
     /**
      * Given a {@code GeneTO} and an OMA cross-reference ID, add the {@code GeneTO} in the 
      * {@code Collection} of {@code GeneTO}s to be update.

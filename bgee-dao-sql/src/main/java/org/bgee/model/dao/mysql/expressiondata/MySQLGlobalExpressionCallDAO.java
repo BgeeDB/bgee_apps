@@ -417,29 +417,29 @@ implements GlobalExpressionCallDAO {
 
         if (!callFilters.isEmpty()) {
             for (CallDAOFilter callFilter: callFilters) {
-                if (callFilter.getGeneIds() != null && !callFilter.getGeneIds().isEmpty()) {
-                    //For now, we don't support using both gene IDs and species IDs in a same CallDAOFilter.
-                    //If needed, we should either create a "geneSpeciesFilter" in CallDAOFilter,
-                    //or use one CallDAOFilter for the gene IDs and another one for the species IDs.
-                    if (callFilter.getSpeciesIds() != null && !callFilter.getSpeciesIds().isEmpty()) {
-                        throw log.throwing(new UnsupportedOperationException(
-                                "Currently not supported to provide both gene and species IDs in a same CallDAOFilter"));
+                if (callFilter.getGeneIds() != null && !callFilter.getGeneIds().isEmpty() ||
+                        callFilter.getSpeciesIds() != null && !callFilter.getSpeciesIds().isEmpty()) {
+                    sb.append(" AND (");
+                    if (callFilter.getGeneIds() != null && !callFilter.getGeneIds().isEmpty()) {
+                        sb.append(globalExprTableName).append(".").append(MySQLGeneDAO.BGEE_GENE_ID)
+                        .append(" IN (")
+                        .append(BgeePreparedStatement.generateParameterizedQueryString(callFilter.getGeneIds().size()))
+                        .append(")");
                     }
-                    sb.append(" AND ");
-                    sb.append(globalExprTableName).append(".").append(MySQLGeneDAO.BGEE_GENE_ID)
-                    .append(" IN (")
-                    .append(BgeePreparedStatement.generateParameterizedQueryString(callFilter.getGeneIds().size()))
-                    .append(")");
-                }
-
-                if (callFilter.getSpeciesIds() != null && !callFilter.getSpeciesIds().isEmpty()) {
-                    sb.append(" AND ");
-                    //We filter species through the globalCond table rather than the gene table
-                    //because we always need to join to the globalCond table anyway, so we avoid
-                    //yet another join to the gene table.
-                    sb.append(globalCondTableName).append(".speciesId IN (")
-                    .append(BgeePreparedStatement.generateParameterizedQueryString(callFilter.getSpeciesIds().size()))
-                    .append(") ");
+                    //TODO: check everywhere where a CallDAOFilter is instantiated that we don't provide
+                    //the species ID corresponding to some specific bgeeGeneIds requested
+                    if (callFilter.getSpeciesIds() != null && !callFilter.getSpeciesIds().isEmpty()) {
+                        if (callFilter.getGeneIds() != null && !callFilter.getGeneIds().isEmpty()) {
+                            sb.append(" OR ");
+                        }
+                        //We filter species through the globalCond table rather than the gene table
+                        //because we always need to join to the globalCond table anyway, so we avoid
+                        //yet another join to the gene table.
+                        sb.append(globalCondTableName).append(".speciesId IN (")
+                        .append(BgeePreparedStatement.generateParameterizedQueryString(callFilter.getSpeciesIds().size()))
+                        .append(") ");
+                    }
+                    sb.append(")");
                 }
 
                 if (callFilter.getConditionFilters() != null && !callFilter.getConditionFilters().isEmpty()) {

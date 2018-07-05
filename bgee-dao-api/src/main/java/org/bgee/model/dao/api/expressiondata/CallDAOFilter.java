@@ -38,12 +38,19 @@ public class CallDAOFilter {
     private final LinkedHashSet<CallDataDAOFilter> dataFilters;
     
     /**
-     * Constructor accepting all requested parameters. 
+     * Constructor accepting all requested parameters.
+     * <p>
+     * WARNING: provide a species ID only if it means "retrieve calls for ALL genes in that species".
+     * If you are targeting some specific genes in a given species, by providing some gene IDs,
+     * you must NOT also provide its corresponding species ID.
      * 
      * @param geneIds               A {@code Collection} of {@code Integer}s that are IDs of genes 
      *                              to filter expression queries. Can be {@code null} or empty.
      * @param speciesIds            A {@code Collection} of {@code Integer}s that are IDs of species 
      *                              to filter expression queries. Can be {@code null} or empty.
+     *                              Only provide species IDs if you want to retrieve calls for all genes
+     *                              in that species. Do not provide species IDs corresponding to gene IDs
+     *                              provided in {@code geneIds}.
      * @param conditionFilters      A {@code Collection} of {@code ConditionFilter}s to configure 
      *                              the filtering of conditions with expression data. If several 
      *                              {@code ConditionFilter}s are provided, they are seen as "OR" conditions.

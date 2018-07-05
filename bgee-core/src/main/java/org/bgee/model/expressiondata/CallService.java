@@ -538,13 +538,44 @@ public class CallService extends CommonService {
         Set<Integer> geneIdFilter = null;
         Set<Integer> speciesIds = null;
         if (callFilter != null) {
-            //Now retrieve the Bgee gene IDs of the requested genes in GeneFilter.
-            geneIdFilter = geneMap.keySet();
+            //To create the CallDAOFilter, it is important to provide a species ID only if it means:
+            //give me calls for all genes in that species. Otherwise, if specific genes are targeted,
+            //only their bgee Gene IDs should be provided, and without their corresponding species ID.
+            //
+            //Note: if several GeneFilters are provided in a CallFilter, they are seen as OR condition,
+            //so we should be good. And there is even a check in CallFilter to prevent a user to provide
+            //a same species ID in different GeneFilters, so it's not possible to create a non-sense query.
+            //
+            //OK, so we need to provide either bgeeGeneIds if specific genes were requested,
+            //or species IDs if all genes of a species were requested, but not both.
 
-            //Identify the species IDs for which no gene IDs were specifically requested,
-            //maybe no specific gene ID was requested for some species.
-            //Since the Bgee gene IDs we provide to the DAO are unique for a given species,
-            //It is needed to provide the species ID only if no Bgee gene IDs are requested for that species.
+            //BUG FIX: we used to do simply: 'geneIdFilter = geneMap.keySet();'. But actually,
+            //if only a species ID was provided in a GeneFilter, all genes from this species would be present
+            //in the geneMap (see method 'loadGeneMap'). So we need to retrieve bgeeGeneIds only corresponding to
+            //specific genes requested.
+            //First, if specific genes were requested, to identify them faster in the geneMap,
+            //from the GeneFilters we create a Map<speciesId, Set<geneId>> for requested genes
+            if (callFilter.getGeneFilters().stream().anyMatch(gf -> !gf.getEnsemblGeneIds().isEmpty())) {
+                final Map<Integer, Set<String>> speIdToGeneIds = Collections.unmodifiableMap(
+                        callFilter.getGeneFilters().stream()
+                        .filter(gf -> !gf.getEnsemblGeneIds().isEmpty())
+                        .collect(Collectors.toMap(
+                                gf -> gf.getSpeciesId(),
+                                gf -> gf.getEnsemblGeneIds()))
+                        );
+                //now we retrieve the appropriate Bgee gene IDs
+                geneIdFilter = geneMap.entrySet().stream()
+                        .filter(entry -> {
+                            Set<String> speReqGeneIds = speIdToGeneIds.get(entry.getValue().getSpecies().getId());
+                            if (speReqGeneIds == null) return false;
+                            return speReqGeneIds.contains(entry.getValue().getEnsemblGeneId());
+                        })
+                        .map(entry -> entry.getKey())
+                        .collect(Collectors.toSet());
+
+            }
+            //Identify the species IDs for which no gene IDs were specifically requested.
+            //It is needed to provide the species ID only if no specific genes are requested for that species.
             speciesIds = callFilter.getGeneFilters().stream()
                     .filter(gf -> gf.getEnsemblGeneIds().isEmpty())
                     .map(gf -> gf.getSpeciesId())

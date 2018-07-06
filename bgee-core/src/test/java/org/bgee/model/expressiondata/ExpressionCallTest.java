@@ -6,12 +6,7 @@ import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,46 +38,183 @@ public class ExpressionCallTest extends TestAncestor {
     @Test
     public void shouldFilterAndOrderCallsByRank() {
         Species species = new Species(1);
-        Condition cond1 = new Condition(new AnatEntity("1"), null, species);
-        Condition cond2 = new Condition(new AnatEntity("2"), null, species);
-        Condition cond3 = new Condition(new AnatEntity("3"), null, species);
-        Condition cond4 = new Condition(new AnatEntity("4"), null, species);
+        Condition ae1devA = new Condition(new AnatEntity("1"), null, species);
+        Condition ae1devB = new Condition(new AnatEntity("2"), null, species);
+        Condition ae2devA = new Condition(new AnatEntity("3"), null, species);
+        Condition ae2devB = new Condition(new AnatEntity("4"), null, species);
         Gene gene = new Gene("1", species);
-        ExpressionCall call1 = new ExpressionCall(gene, cond1, null, null, null, null,
-                new BigDecimal("1.0"), new BigDecimal("100"));
-        ExpressionCall call2 = new ExpressionCall(gene, cond2, null, null, null, null,
+        ExpressionCall call1 = new ExpressionCall(gene, ae1devA, null, null, null, null,
                 new BigDecimal("2.0"), new BigDecimal("100"));
-        ExpressionCall call3 = new ExpressionCall(gene, cond3, null, null, null, null,
+        ExpressionCall call2 = new ExpressionCall(gene, ae1devB, null, null, null, null,
                 new BigDecimal("2.0"), new BigDecimal("100"));
-        ExpressionCall call4 = new ExpressionCall(gene, cond4, null, null, null, null,
+        ExpressionCall call3 = new ExpressionCall(gene, ae2devA, null, null, null, null,
+                new BigDecimal("2.0"), new BigDecimal("100"));
+        ExpressionCall call4 = new ExpressionCall(gene, ae2devB, null, null, null, null,
                 new BigDecimal("2.0"), new BigDecimal("100"));
         ConditionGraph graph = mock(ConditionGraph.class);
-        //           cond1
+        //           ae1devA
         //          /   \
-        //     cond2   cond3
+        //     ae1devB   ae2devA
         //              |
-        //             cond4
-        when(graph.isConditionMorePrecise(cond1, cond1)).thenReturn(false);
-        when(graph.isConditionMorePrecise(cond1, cond2)).thenReturn(true);
-        when(graph.isConditionMorePrecise(cond1, cond3)).thenReturn(true);
-        when(graph.isConditionMorePrecise(cond1, cond4)).thenReturn(true);
-        when(graph.isConditionMorePrecise(cond2, cond1)).thenReturn(false);
-        when(graph.isConditionMorePrecise(cond2, cond2)).thenReturn(false);
-        when(graph.isConditionMorePrecise(cond2, cond3)).thenReturn(false);
-        when(graph.isConditionMorePrecise(cond2, cond4)).thenReturn(false);
-        when(graph.isConditionMorePrecise(cond3, cond1)).thenReturn(false);
-        when(graph.isConditionMorePrecise(cond3, cond2)).thenReturn(false);
-        when(graph.isConditionMorePrecise(cond3, cond3)).thenReturn(false);
-        when(graph.isConditionMorePrecise(cond3, cond4)).thenReturn(true);
-        when(graph.isConditionMorePrecise(cond4, cond1)).thenReturn(false);
-        when(graph.isConditionMorePrecise(cond4, cond2)).thenReturn(false);
-        when(graph.isConditionMorePrecise(cond4, cond3)).thenReturn(false);
-        when(graph.isConditionMorePrecise(cond4, cond4)).thenReturn(false);
+        //             ae2devB
+        when(graph.isConditionMorePrecise(ae1devA, ae1devA)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae1devA, ae1devB)).thenReturn(true);
+        when(graph.isConditionMorePrecise(ae1devA, ae2devA)).thenReturn(true);
+        when(graph.isConditionMorePrecise(ae1devA, ae2devB)).thenReturn(true);
+        when(graph.isConditionMorePrecise(ae1devB, ae1devA)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae1devB, ae1devB)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae1devB, ae2devA)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae1devB, ae2devB)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae2devA, ae1devA)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae2devA, ae1devB)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae2devA, ae2devA)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae2devA, ae2devB)).thenReturn(true);
+        when(graph.isConditionMorePrecise(ae2devB, ae1devA)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae2devB, ae1devB)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae2devB, ae2devA)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae2devB, ae2devB)).thenReturn(false);
 
         List<ExpressionCall> calls = Arrays.asList(call1, call2, call3, call4);
-        List<ExpressionCall> expectedOrder = Arrays.asList(call1, call2, call4, call3);
+        List<ExpressionCall> expectedOrder = Arrays.asList(call2, call4, call3, call1);
         assertEquals("Incorrect ordering of calls", expectedOrder,
                 ExpressionCall.filterAndOrderCallsByRank(calls, graph));
+    }
+    
+    @Test
+    public void shouldFilterAndOrderCallsByRankWhenGraphOfCond() {
+        Species species = new Species(1);
+        Condition ae1devA = new Condition(new AnatEntity("AE1"), new DevStage("DevA"), species);
+        Condition ae1devB = new Condition(new AnatEntity("AE1"), new DevStage("DevB"), species);
+        Condition ae2devA = new Condition(new AnatEntity("AE2"), new DevStage("DevA"), species);
+        Condition ae2devB = new Condition(new AnatEntity("AE2"), new DevStage("DevB"), species);
+        Condition ae2devD = new Condition(new AnatEntity("AE2"), new DevStage("DevD"), species);
+        Condition ae3devA = new Condition(new AnatEntity("AE3"), new DevStage("DevA"), species);
+        Condition ae3devC = new Condition(new AnatEntity("AE3"), new DevStage("DevC"), species);
+        Condition ae3devD = new Condition(new AnatEntity("AE3"), new DevStage("DevD"), species);
+        Gene gene = new Gene("1", species);
+        ExpressionCall callAe1devA = new ExpressionCall(gene, ae1devA, null, null, null, null,
+                new BigDecimal("2.0"), new BigDecimal("100"));
+        ExpressionCall callAe1devB = new ExpressionCall(gene, ae1devB, null, null, null, null,
+                new BigDecimal("2.0"), new BigDecimal("100"));
+        ExpressionCall callAe2devA = new ExpressionCall(gene, ae2devA, null, null, null, null,
+                new BigDecimal("2.0"), new BigDecimal("100"));
+        ExpressionCall callAe2devB = new ExpressionCall(gene, ae2devB, null, null, null, null,
+                new BigDecimal("2.0"), new BigDecimal("100"));
+        ExpressionCall callAe2devD = new ExpressionCall(gene, ae2devD, null, null, null, null,
+                new BigDecimal("2.0"), new BigDecimal("100"));
+        ExpressionCall callAe3devA = new ExpressionCall(gene, ae3devA, null, null, null, null,
+                new BigDecimal("2.0"), new BigDecimal("100"));
+        ExpressionCall callAe3devC = new ExpressionCall(gene, ae3devC, null, null, null, null,
+                new BigDecimal("2.0"), new BigDecimal("100"));
+        ExpressionCall callAe3devD = new ExpressionCall(gene, ae3devD, null, null, null, null,
+                new BigDecimal("2.0"), new BigDecimal("100"));
+        ConditionGraph graph = mock(ConditionGraph.class);
+        //                 Conditions :
+        //
+        //           AE1              DevA                                          ae1devA
+        //          /   \            /    \                 =>             /          |          \
+        //        AE2   AE3        DevB  DevD                          ae1devB        ae2devA       ae3devA
+        //                          |                                  /   \       /     \     /     \
+        //                         DevC                             ae2devB ae3devC  ae2devB ae2devD ae3devC ae3devD
+        //ae1devA
+        when(graph.isConditionMorePrecise(ae1devA, ae1devA)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae1devA, ae1devB)).thenReturn(true);
+        when(graph.isConditionMorePrecise(ae1devA, ae2devA)).thenReturn(true);
+        when(graph.isConditionMorePrecise(ae1devA, ae2devB)).thenReturn(true);
+        when(graph.isConditionMorePrecise(ae1devA, ae2devD)).thenReturn(true);
+        when(graph.isConditionMorePrecise(ae1devA, ae3devA)).thenReturn(true);
+        when(graph.isConditionMorePrecise(ae1devA, ae3devC)).thenReturn(true);
+        when(graph.isConditionMorePrecise(ae1devA, ae3devD)).thenReturn(true);
+        //ae1devB
+        when(graph.isConditionMorePrecise(ae1devB, ae1devA)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae1devB, ae1devB)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae1devB, ae2devA)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae1devB, ae2devB)).thenReturn(true);
+        when(graph.isConditionMorePrecise(ae1devB, ae2devD)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae1devB, ae3devA)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae1devB, ae3devC)).thenReturn(true);
+        when(graph.isConditionMorePrecise(ae1devB, ae3devD)).thenReturn(false);
+        //ae2devA
+        when(graph.isConditionMorePrecise(ae2devA, ae1devA)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae2devA, ae1devB)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae2devA, ae2devA)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae2devA, ae2devB)).thenReturn(true);
+        when(graph.isConditionMorePrecise(ae2devA, ae2devD)).thenReturn(true);
+        when(graph.isConditionMorePrecise(ae2devA, ae3devA)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae2devA, ae3devC)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae2devA, ae3devD)).thenReturn(false);
+        //ae2devB
+        when(graph.isConditionMorePrecise(ae2devB, ae1devA)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae2devB, ae1devB)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae2devB, ae2devA)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae2devB, ae2devB)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae2devB, ae2devD)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae2devB, ae3devA)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae2devB, ae3devC)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae2devB, ae3devD)).thenReturn(false);
+        //ae2devD
+        when(graph.isConditionMorePrecise(ae2devD, ae1devA)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae2devD, ae1devB)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae2devD, ae2devA)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae2devD, ae2devB)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae2devD, ae2devD)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae2devD, ae3devA)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae2devD, ae3devC)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae2devD, ae3devD)).thenReturn(false);
+        //ae3devA
+        when(graph.isConditionMorePrecise(ae3devA, ae1devA)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae3devA, ae1devB)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae3devA, ae2devA)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae3devA, ae2devB)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae3devA, ae2devD)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae3devA, ae3devA)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae3devA, ae3devC)).thenReturn(true);
+        when(graph.isConditionMorePrecise(ae3devA, ae3devD)).thenReturn(true);
+        //ae3devC
+        when(graph.isConditionMorePrecise(ae3devC, ae1devA)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae3devC, ae1devB)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae3devC, ae2devA)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae3devC, ae2devB)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae3devC, ae2devD)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae3devC, ae3devA)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae3devC, ae3devC)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae3devC, ae3devD)).thenReturn(false);
+        //ae3devD
+        when(graph.isConditionMorePrecise(ae3devD, ae1devA)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae3devD, ae1devB)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae3devD, ae2devA)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae3devD, ae2devB)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae3devD, ae2devD)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae3devD, ae3devA)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae3devD, ae3devC)).thenReturn(false);
+        when(graph.isConditionMorePrecise(ae3devD, ae3devD)).thenReturn(false);
+       
+        
+        List<ExpressionCall> calls = Arrays.asList(callAe1devA, callAe1devB, callAe2devA, 
+                callAe2devB, callAe2devD, callAe3devA, callAe3devC, callAe3devD);
+        //In this example some condition (ae2devB and ae3devC) have two direct parent conditions.
+        //
+        //XXX Maybe the algorithm should prioritize parents having same Anat Entity (like in the web page)???
+        //XXX Then, the correct order could be callAe1devB, callAe2devD, callAe2devB, callAe2devA, callAe3devD, callAe3devC, 
+        //XXX callAe3devA, callAe1devA
+        //XXX rather than callAe2devB, callAe3devC, callAe1devB, callAe2devD, callAe2devA, callAe3devD, callAe3devA, callAe1devA
+        //XXX However, the algorithm works as expected (no error, bug or non-reproducible bug). Even if the the conditions 
+        //XXX are not filters by anat entity, the first appearance of each Anat Entity is in the good order (AE2, AE3 and then AE1)
+        
+        //                 Conditions :
+        //
+        //           AE1              DevA                                        ae1devA
+        //          /   \            /    \                 =>            /          |          \
+        //        AE2   AE3        DevB  DevD                         ae2devA     ae1devB     ae3devA
+        //                          |                                 /     \     /     \     /     \
+        //                         DevC                          ae2devD    ae2devB     ae3devC   ae3devD
+
+        //order that should be computed by current version of the algorithm
+        List<ExpressionCall> expectedOrder = Arrays.asList(callAe2devB, callAe3devC, callAe1devB, callAe2devD, callAe2devA, 
+                callAe3devD, callAe3devA, callAe1devA);
+        assertEquals("Incorrect ordering of calls", expectedOrder,
+                ExpressionCall.filterAndOrderCallsByRank(calls, graph));
+
     }
 
 //    
@@ -129,24 +261,24 @@ public class ExpressionCallTest extends TestAncestor {
 //    public void testRankComparator() {
 //        
 //        //These calls and conditions allow a regression test for management of equal ranks
-//        //cond2 and cond3 will be considered more precise than cond1, and unrelated to each other. 
-//        //It is important for the test that cond1 would be sorted first alphabetically. 
-//        Condition cond1 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), 1);
-//        Condition cond2 = new Condition(new AnatEntity("Anat2"), new DevStage("stage1"), 1);
-//        Condition cond3 = new Condition(new AnatEntity("Anat3"), new DevStage("stage1"), 1);
+//        //ae1devB and ae2devA will be considered more precise than ae1devA, and unrelated to each other. 
+//        //It is important for the test that ae1devA would be sorted first alphabetically. 
+//        Condition ae1devA = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), 1);
+//        Condition ae1devB = new Condition(new AnatEntity("Anat2"), new DevStage("stage1"), 1);
+//        Condition ae2devA = new Condition(new AnatEntity("Anat3"), new DevStage("stage1"), 1);
 //        //we mock the ConditionGraph used to compare Conditions
 //        ConditionGraph condGraph = mock(ConditionGraph.class);
-//        Set<Condition> allConds = new HashSet<>(Arrays.asList(cond1, cond2, cond3));
+//        Set<Condition> allConds = new HashSet<>(Arrays.asList(ae1devA, ae1devB, ae2devA));
 //        when(condGraph.getConditions()).thenReturn(allConds);
-//        when(condGraph.compare(cond1, cond1)).thenReturn(0);
-//        when(condGraph.compare(cond2, cond2)).thenReturn(0);
-//        when(condGraph.compare(cond3, cond3)).thenReturn(0);
-//        when(condGraph.compare(cond1, cond2)).thenReturn(1);
-//        when(condGraph.compare(cond2, cond1)).thenReturn(-1);
-//        when(condGraph.compare(cond1, cond3)).thenReturn(1);
-//        when(condGraph.compare(cond3, cond1)).thenReturn(-1);
-//        when(condGraph.compare(cond2, cond3)).thenReturn(0);
-//        when(condGraph.compare(cond3, cond2)).thenReturn(0);
+//        when(condGraph.compare(ae1devA, ae1devA)).thenReturn(0);
+//        when(condGraph.compare(ae1devB, ae1devB)).thenReturn(0);
+//        when(condGraph.compare(ae2devA, ae2devA)).thenReturn(0);
+//        when(condGraph.compare(ae1devA, ae1devB)).thenReturn(1);
+//        when(condGraph.compare(ae1devB, ae1devA)).thenReturn(-1);
+//        when(condGraph.compare(ae1devA, ae2devA)).thenReturn(1);
+//        when(condGraph.compare(ae2devA, ae1devA)).thenReturn(-1);
+//        when(condGraph.compare(ae1devB, ae2devA)).thenReturn(0);
+//        when(condGraph.compare(ae2devA, ae1devB)).thenReturn(0);
 //
 //        ExpressionCall c1 = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("1.25"));
 //
@@ -156,13 +288,13 @@ public class ExpressionCallTest extends TestAncestor {
 //        //Test ordering based on Conditions
 //        //anat2 will be considered more precise than anat1, and as precise as anat3, 
 //        //the order between anat2 and anat3 should be based on their attributes
-//        ExpressionCall c3 = new ExpressionCall(new Gene("ID1", new Species(1)), cond2, null, null, 
+//        ExpressionCall c3 = new ExpressionCall(new Gene("ID1", new Species(1)), ae1devB, null, null, 
 //                null, null, new BigDecimal("1.27"));
 //        //anat3 will be considered more precise than anat1, so we will have different ordering 
 //        //whether we consider the relations between Conditions, or only attributes of Conditions
-//        ExpressionCall c4 = new ExpressionCall(new Gene("ID1", new Species(1)), cond3, null, null, 
+//        ExpressionCall c4 = new ExpressionCall(new Gene("ID1", new Species(1)), ae2devA, null, null, 
 //                null, null, new BigDecimal("1.27"));
-//        ExpressionCall c5 = new ExpressionCall(new Gene("ID1", new Species(1)), cond1, null, null, 
+//        ExpressionCall c5 = new ExpressionCall(new Gene("ID1", new Species(1)), ae1devA, null, null, 
 //                null, null, new BigDecimal("1.27"));
 //        //test null Conditions last
 //        ExpressionCall c6 = new ExpressionCall(new Gene("ID1", new Species(1)), null, null, null,
@@ -207,50 +339,50 @@ public class ExpressionCallTest extends TestAncestor {
 //    @Test
 //    public void shouldIdentifyRedundantCalls() {
 //      //These calls and conditions allow a regression test for management of equal ranks
-//        //cond2 and cond3 will be considered more precise than cond1, and unrelated to each other
-//        Condition cond1 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), 1);
-//        Condition cond2 = new Condition(new AnatEntity("Anat2"), new DevStage("stage1"), 1);
-//        Condition cond3 = new Condition(new AnatEntity("Anat3"), new DevStage("stage1"), 1);
+//        //ae1devB and ae2devA will be considered more precise than ae1devA, and unrelated to each other
+//        Condition ae1devA = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), 1);
+//        Condition ae1devB = new Condition(new AnatEntity("Anat2"), new DevStage("stage1"), 1);
+//        Condition ae2devA = new Condition(new AnatEntity("Anat3"), new DevStage("stage1"), 1);
 //        //we mock the ConditionGraph used to compare Conditions
 //        ConditionGraph condGraph = mock(ConditionGraph.class);
-//        Set<Condition> allConds = new HashSet<>(Arrays.asList(cond1, cond2, cond3));
+//        Set<Condition> allConds = new HashSet<>(Arrays.asList(ae1devA, ae1devB, ae2devA));
 //        when(condGraph.getConditions()).thenReturn(allConds);
-//        when(condGraph.compare(cond1, cond1)).thenReturn(0);
-//        when(condGraph.compare(cond2, cond2)).thenReturn(0);
-//        when(condGraph.compare(cond3, cond3)).thenReturn(0);
-//        when(condGraph.compare(cond1, cond2)).thenReturn(1);
-//        when(condGraph.compare(cond2, cond1)).thenReturn(-1);
-//        when(condGraph.compare(cond1, cond3)).thenReturn(1);
-//        when(condGraph.compare(cond3, cond1)).thenReturn(-1);
-//        when(condGraph.compare(cond2, cond3)).thenReturn(0);
-//        when(condGraph.compare(cond3, cond2)).thenReturn(0);
-//        when(condGraph.getDescendantConditions(cond1)).thenReturn(new HashSet<>(Arrays.asList(cond2, cond3)));
-//        when(condGraph.getDescendantConditions(cond2)).thenReturn(new HashSet<>());
-//        when(condGraph.getDescendantConditions(cond3)).thenReturn(new HashSet<>());
+//        when(condGraph.compare(ae1devA, ae1devA)).thenReturn(0);
+//        when(condGraph.compare(ae1devB, ae1devB)).thenReturn(0);
+//        when(condGraph.compare(ae2devA, ae2devA)).thenReturn(0);
+//        when(condGraph.compare(ae1devA, ae1devB)).thenReturn(1);
+//        when(condGraph.compare(ae1devB, ae1devA)).thenReturn(-1);
+//        when(condGraph.compare(ae1devA, ae2devA)).thenReturn(1);
+//        when(condGraph.compare(ae2devA, ae1devA)).thenReturn(-1);
+//        when(condGraph.compare(ae1devB, ae2devA)).thenReturn(0);
+//        when(condGraph.compare(ae2devA, ae1devB)).thenReturn(0);
+//        when(condGraph.getDescendantConditions(ae1devA)).thenReturn(new HashSet<>(Arrays.asList(ae1devB, ae2devA)));
+//        when(condGraph.getDescendantConditions(ae1devB)).thenReturn(new HashSet<>());
+//        when(condGraph.getDescendantConditions(ae2devA)).thenReturn(new HashSet<>());
 //        
 //        
 //        //Nothing too complicated with gene ID1, c3 is redundant
-//        ExpressionCall c1 = new ExpressionCall(new Gene("ID1", new Species(1)), cond3, null, null,
+//        ExpressionCall c1 = new ExpressionCall(new Gene("ID1", new Species(1)), ae2devA, null, null,
 //            null, null, new BigDecimal("1.25000"));
-//        ExpressionCall c2 = new ExpressionCall(new Gene("ID1", new Species(1)), cond2, null, null,
+//        ExpressionCall c2 = new ExpressionCall(new Gene("ID1", new Species(1)), ae1devB, null, null,
 //            null, null, new BigDecimal("2.0"));
-//        ExpressionCall c3 = new ExpressionCall(new Gene("ID1", new Species(1)), cond1, null, null,
+//        ExpressionCall c3 = new ExpressionCall(new Gene("ID1", new Species(1)), ae1devA, null, null,
 //            null, null, new BigDecimal("3.00"));
 //        //for gene ID2 we test identification with equal ranks and relations between conditions. 
 //        //c4 is redundant because less precise condition
-//        ExpressionCall c4 = new ExpressionCall(new Gene("ID2", new Species(1)), cond1, null, null,
+//        ExpressionCall c4 = new ExpressionCall(new Gene("ID2", new Species(1)), ae1devA, null, null,
 //            null, null, new BigDecimal("1.250"));
-//        ExpressionCall c5 = new ExpressionCall(new Gene("ID2", new Species(1)), cond3, null, null,
+//        ExpressionCall c5 = new ExpressionCall(new Gene("ID2", new Species(1)), ae2devA, null, null,
 //            null, null, new BigDecimal("1.25000"));
-//        ExpressionCall c6 = new ExpressionCall(new Gene("ID2", new Species(1)), cond2, null, null,
+//        ExpressionCall c6 = new ExpressionCall(new Gene("ID2", new Species(1)), ae1devB, null, null,
 //            null, null, new BigDecimal("1.25"));
 //        //for gene ID3 we test identification with equal ranks and relations between conditions. 
 //        //nothing redundant
-//        ExpressionCall c7 = new ExpressionCall(new Gene("ID3", new Species(1)), cond1, null, null,
+//        ExpressionCall c7 = new ExpressionCall(new Gene("ID3", new Species(1)), ae1devA, null, null,
 //            null, null, new BigDecimal("1"));
-//        ExpressionCall c8 = new ExpressionCall(new Gene("ID3", new Species(1)), cond3, null, null,
+//        ExpressionCall c8 = new ExpressionCall(new Gene("ID3", new Species(1)), ae2devA, null, null,
 //            null, null, new BigDecimal("1.25000"));
-//        ExpressionCall c9 = new ExpressionCall(new Gene("ID3", new Species(1)), cond2, null, null,
+//        ExpressionCall c9 = new ExpressionCall(new Gene("ID3", new Species(1)), ae1devB, null, null,
 //            null, null, new BigDecimal("1.25"));
 //        
 //        Set<ExpressionCall> withRedundancy = new HashSet<>(Arrays.asList(c1, c2, c3, c4, c5, c6, c7, c8, c9));

@@ -15,7 +15,7 @@ import org.bgee.model.source.Source;
  * @author  Frederic Bastian
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Nov. 2016
+ * @version Bgee 13, Jun. 2018
  * @since   Bgee 13, Mar. 2013
  */
 public class Species extends NamedEntity<Integer> {
@@ -39,14 +39,6 @@ public class Species extends NamedEntity<Integer> {
     
     /**@see #getPreferredDisplayOrder() */
     private final Integer preferredDisplayOrder;
-
-    /**
-     * 0-arg constructor private, at least an ID must be provided, see {@link #Species(String)}.
-     */
-    @SuppressWarnings("unused")
-    private Species() {
-        this(null);
-    }
     
     /**
      * Constructor providing the {@code id} of this {@code Species}.
@@ -268,19 +260,9 @@ public class Species extends NamedEntity<Integer> {
         return preferredDisplayOrder;
     }
 
-    @Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + ((genus == null) ? 0 : genus.hashCode());
-        result = prime * result + ((speciesName == null) ? 0 : speciesName.hashCode());
-        result = prime * result + ((genomeVersion == null) ? 0 : genomeVersion.hashCode());
-        result = prime * result + ((dataTypesByDataSourcesForData == null) ? 0 : dataTypesByDataSourcesForData.hashCode());
-        result = prime * result + ((dataTypesByDataSourcesForAnnotation == null) ? 0 : dataTypesByDataSourcesForAnnotation.hashCode());
-        result = prime * result + ((parentTaxonId == null) ? 0 : parentTaxonId.hashCode());
-        result = prime * result + ((preferredDisplayOrder == null) ? 0 : preferredDisplayOrder.hashCode());
-		return result;
-	}
+
+    //we based hashCode/equals of NamedEntity on methods from parent class Entity:
+    //only the ID matter for NamedEntity, as for Entity.
 
 	@Override
     public String toString() {
@@ -294,60 +276,4 @@ public class Species extends NamedEntity<Integer> {
                 .append(", preferredDisplayOrder=").append(preferredDisplayOrder).append("]");
         return builder.toString();
     }
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (!super.equals(obj)) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		Species other = (Species) obj;
-		if (genus == null) {
-			if (other.genus != null) {
-				return false;
-			}
-		} else if (!genus.equals(other.genus)) {
-			return false;
-		}
-		if (speciesName == null) {
-			if (other.speciesName != null) {
-				return false;
-			}
-		} else if (!speciesName.equals(other.speciesName)) {
-			return false;
-		}
-        if (genomeVersion == null) {
-            if (other.genomeVersion != null) {
-                return false;
-            }
-        } else if (!genomeVersion.equals(other.genomeVersion)) {
-            return false;
-        }
-        if (dataTypesByDataSourcesForData == null) {
-            if (other.dataTypesByDataSourcesForData != null)
-                return false;
-        } else if (!dataTypesByDataSourcesForData.equals(other.dataTypesByDataSourcesForData))
-            return false;
-        if (dataTypesByDataSourcesForAnnotation == null) {
-            if (other.dataTypesByDataSourcesForAnnotation != null)
-                return false;
-        } else if (!dataTypesByDataSourcesForAnnotation.equals(other.dataTypesByDataSourcesForAnnotation))
-            return false;
-        if (parentTaxonId == null) {
-            if (other.parentTaxonId != null)
-                return false;
-        } else if (!parentTaxonId.equals(other.parentTaxonId))
-            return false;
-        if (preferredDisplayOrder == null) {
-            if (other.preferredDisplayOrder != null)
-                return false;
-        } else if (!preferredDisplayOrder.equals(other.preferredDisplayOrder))
-            return false;
-		return true;
-	}
 }

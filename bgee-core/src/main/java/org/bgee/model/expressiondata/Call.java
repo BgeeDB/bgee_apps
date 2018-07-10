@@ -174,88 +174,6 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         }
         
         /**
-         * A {@code Comparator} of {@code ExpressionCall}s, performing the following comparisons 
-         * in order: 
-         * <ol>
-         * <li>comparison based on {@link ExpressionCall#getGlobalMeanRank()}
-         * <li>in case of equality, comparison based on {@link ExpressionCall#getGeneId()}
-         * <li>in case of equality, and if a {@code ConditionGraph} was provided at instantiation, 
-         * comparison based on the relations between {@code Condition}s (see 
-         * {@link ExpressionCall#getCondition()} and {@link ConditionGraph#compare(Condition, Condition)})
-         * <li>in case of equality, comparison based on the attributes of {@code Condition}s 
-         * (see {@link ExpressionCall#getCondition()} and {@link Condition#compareTo(Condition)}.
-         * </ol>
-         * 
-         * @author Frederic Bastian
-         * @version Bgee 13 June 2016
-         * @since Bgee 13 June 2016
-         *
-         */
-        public static class RankComparator implements Comparator<ExpressionCall> {
-            /**
-             * The {@code Comparator} to use in method {@link #compare(ExpressionCall, ExpressionCall)}.
-             */
-            private final Comparator<ExpressionCall> rankComparator;
-            /**
-             * The {@code ConditionGraph} used by the {@link #rankComparator}. Can be {@code null}.
-             */
-            private final ConditionGraph conditionGraph;
-            
-            /**
-             * Instantiate a {@code RankComparator} not using any {@code ConditionGraph}.
-             */
-            public RankComparator() {
-                this(null);
-            }
-            /**
-             * Instantiate a {@code RankComparator} that can take into account 
-             * relations between {@code Condition}s, thanks to a {@code ConditionGraph}.
-             * 
-             * @param condGraph A {@code ConditionGraph} used to sort {@code Condition}s based on 
-             *                  their relations between each other, in case of equal ranks 
-             *                  and equal gene IDs. Can be {@code null} if it is not needed 
-             *                  to do such a sorting based on relations.
-             */
-            public RankComparator(ConditionGraph condGraph) {
-                Comparator<ExpressionCall> tmpComparator = Comparator
-                        //Order first by global mean rank
-                        .comparing(ExpressionCall::getGlobalMeanRank, 
-                                Comparator.nullsLast(Comparator.naturalOrder()))
-                        //important in case of score equality: 
-                        //Order by genes
-                        .thenComparing(c -> c.getGene() == null? null : c.getGene().getEnsemblGeneId(), 
-                                Comparator.nullsLast(Comparator.naturalOrder()))
-                        //Order by species as, in bgee 14, gene IDs are not unique
-                        .thenComparing(c -> c.getGene() == null? null : c.getGene().getSpecies().getId(), 
-                    Comparator.nullsLast(Comparator.naturalOrder()));
-                if (condGraph != null) {
-                    tmpComparator = tmpComparator
-                            //Then, we want the most precise conditions first (for the method 
-                            //identifyRedundantCalls, and also for better display)
-                            .thenComparing(ExpressionCall::getCondition, 
-                                    Comparator.nullsLast(condGraph::compare));
-                }
-                this.rankComparator = tmpComparator
-                        //If everything else fails, simply order by the attributes of the Condition
-                        .thenComparing(ExpressionCall::getCondition, 
-                                Comparator.nullsLast(Comparator.naturalOrder()));
-                this.conditionGraph = condGraph;
-            }
-            @Override
-            public int compare(ExpressionCall call1, ExpressionCall call2) {
-                log.entry(call1, call2);
-                return log.exit(this.rankComparator.compare(call1, call2));
-            }
-            /**
-             * @return  The {@code ConditionGraph} used by this {@code Comparator}. Can be {@code null} 
-             *          if none was used. 
-             */
-            public ConditionGraph getConditionGraphs() {
-                return conditionGraph;
-            }
-        }
-        
-        /**
          * A {@code ClusteringMethod} that is the default recommended method for clustering 
          * {@code ExpressionCall}s based on their global mean rank. The default distance threshold 
          * to use is provided by {@link #DEFAULT_DISTANCE_THRESHOLD}.
@@ -276,31 +194,188 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
 
         public static final int MAX_EXPRESSION_SCORE = 1000;
 
+
         /**
-         * Remove equal calls from the {@code Collection} and order them using 
-         * {@link ExpressionCall.RankComparator}.
-         * 
-         * @param calls     A {@code Collection} of {@code ExpressionCall}s to filter 
-         *                  for redundant calls and to order based on their global mean rank.
-         * @param condGraph A {@code ConditionGraph} used to sort {@code Condition}s based on 
-         *                  their relations between each other, in case of equal ranks 
-         *                  and equal gene IDs. Can be {@code null} if it is not needed 
-         *                  to do such a sorting based on relations.
-         * @return          A {@code List} of {@code ExpressionCall}s filtered and ordered. 
-         *                  {@code null} if {@code calls} was {@code null}.
-         * @see ExpressionCall.RankComparator
+         * Filter equal {@code ExpressionCall}s and return a {@code List} ordered based on:
+         * <ol>
+         * <li>comparison of {@link ExpressionCall#getGlobalMeanRank()}
+         * <li>in case of equality, comparison of {@link ExpressionCall#getGene()}
+         * <li>in case of equality, and if a {@code ConditionGraph} was provided at instantiation,
+         * comparison based on the relations between {@code Condition}s (see
+         * {@link ExpressionCall#getCondition()}): calls with more precise {@code Condition}s
+         * are ordered in first positions.
+         * <li>in case of equality, comparison based on the attributes of {@code Condition}s
+         * (see {@link ExpressionCall#getCondition()} and {@link Condition#compareTo(Condition)}.
+         * </ol>
+         *
+         * @param calls             A {@code Collection} of {@code ExpressionCall}s to be ordered
+         * @param conditionGraph    A {@code ConditionGraph} allowing to retrieve relations between {@code Condition}s
+         *                          of the {@code ExpressionCall}s. Can be {@code null} if the relations
+         *                          should not be considered for the ordering.
+         * @return                  A correctly sorted {@code List} of {@code ExpressionCall}s.
          */
-        private static List<ExpressionCall> filterAndOrderByGlobalMeanRank(
-                Collection<ExpressionCall> calls, ConditionGraph conditionGraph) {
+        public static List<ExpressionCall> filterAndOrderCallsByRank(
+                Collection<ExpressionCall> calls, final ConditionGraph conditionGraph) {
             log.entry(calls, conditionGraph);
             if (calls == null) {
                 return log.exit(null);
             }
-            List<ExpressionCall> sortedCalls = new ArrayList<>(new HashSet<ExpressionCall>(calls));
-            long startFilteringTimeInMs = System.currentTimeMillis();
-            Collections.sort(sortedCalls, new RankComparator(conditionGraph));
-            log.debug("Calls sorted in {} ms", System.currentTimeMillis() - startFilteringTimeInMs);
+            Set<ExpressionCall> callsToSort = new HashSet<>(calls);
+            if (callsToSort.size() <= 1) {
+                return log.exit(new ArrayList<>(callsToSort));
+            }
+
+            long startOrderingTimeInMs = System.currentTimeMillis();
+
+            //First, we order by mean rank and gene IDs and species.
+
+            //We want to order calls by their global mean rank, then by their gene.
+            //For calls with equal rank and gene, we order them based on the relations between Conditions
+            //in the ConditionGraph. But to do this, we cannot simply rely on a Comparator (see method
+            //'sortEqualRankGeneCalls').
+            List<ExpressionCall> sortedCalls = callsToSort.stream()
+                    //* First, we group calls with equal ranks and gene, to be later able to order
+                    //these ExpressionCalls based on their Conditions and relations between them.
+                    //* To do that, we could create some fake ExpressionCalls as keys,
+                    //with only the Gene and rank set, but actually, the equals/hashCode methods
+                    //of ExpressionCall do not use the ranks, so we use a SimpleEntry as key.
+                    //(equals/hashCode methods of SimpleEntry use the equals/hashCode methods
+                    //of their key and value, so we're good).
+                    //* It would be better to not rely on the equals method of BigDecimal,
+                    //since 2.1 and 2.10 are not considered equals by this method.
+                    //All our ranks should thus have the same scale for this code to work properly.
+                    .collect(Collectors.groupingBy(
+                            c -> new AbstractMap.SimpleEntry<>(c.getGlobalMeanRank(), c.getGene())))
+
+                    //Now, we order the grouped Map based on the rank of the calls first, then on their Gene
+                    .entrySet().stream().sorted(Map.Entry.comparingByKey(Comparator
+                            //First, we compare the ranks (that are the keys in the Entry)
+                            //(the JVM cannot infer the generic types at the first call to 'comparing',
+                            //we set them explicitly)
+                            .<Map.Entry<BigDecimal, Gene>, BigDecimal>comparing(e -> e.getKey(),
+                                    Comparator.nullsLast(Comparator.naturalOrder()))
+                            //Now, we compare the Genes (that are values in the Entry).
+                            //First, we order by the species ID of the Gene, as in bgee 14, gene IDs are not unique
+                            .thenComparing(e -> e.getValue() == null? null : e.getValue().getSpecies().getId(),
+                                    Comparator.nullsLast(Comparator.naturalOrder()))
+                            //Now by their gene ID
+                            .thenComparing(e -> e.getValue() == null? null : e.getValue().getEnsemblGeneId(),
+                                    Comparator.nullsLast(Comparator.naturalOrder()))
+                            ))
+
+                    //Now, we retrieve the calls in order, based on their rank and Gene,
+                    //and with calls with equal rank and Gene reordered based on the relations between Conditions
+                    //(method 'sortEqualRankGeneCalls')
+                    .flatMap(e -> sortEqualRankGeneCalls(e.getValue(), conditionGraph).stream())
+                    //That's it! :p
+                    .collect(Collectors.toList());
+
+            log.debug("Calls sorted in {} ms", System.currentTimeMillis() - startOrderingTimeInMs);
             return log.exit(sortedCalls);
+        }
+
+        /**
+         * Sort {@code ExpressionCall}s with equal rank and {@code Gene}s based on the relations
+         * between {@code Condition}s of the calls, and based on the {@code Condition}s. We cannot define
+         * a consistent {@code Comparator} to use the relations between {@code Condition}s, this is why
+         * we implemented this method.
+         * <p>
+         * <pre>
+         * For instance, if we have the following relations between some anat. entities:
+         *            anat1
+         *           /  \  \
+         *      anat2  anat3\
+         *                \  \
+         *                anat4
+         * </pre>
+         * The {@code ConditionGraph} will tell us that 'anat4' is more precise than 'anat3', but not than 'anat2'.
+         * Then, anat2 = anat3, anat2 = anat4, but anat3 > anat4 => inconsistent comparator,
+         * leading to spurious results when used in a sort.
+         *
+         * @param equalRankCallsToOrder {@code ExpressionCall}s of same rank and {@code Gene}, to be ordered
+         *                              based on their {@code Condition}s and the relations between them.
+         * @param graph                 A {@code ConditionGraph} allowing to retrieve relations between
+         *                              {@code Condition}s of the {@code ExpressionCall}s. Can be {@code null}
+         *                              if the relations should not be considered for the ordering.
+         * @return                      A correctly sorted {@code List} of {@code ExpressionCall}s.
+         */
+        private static List<ExpressionCall> sortEqualRankGeneCalls(List<ExpressionCall> equalRankCallsToOrder,
+                ConditionGraph graph) {
+            log.entry(equalRankCallsToOrder, graph);
+
+            //We recreate a new List to avoid side-effects.
+            List<ExpressionCall> equalRankCalls = new ArrayList<>(equalRankCallsToOrder);
+
+            if (equalRankCalls.size() <= 1) {
+                return log.exit(equalRankCalls);
+            }
+
+            //First, we sort the equal calls by their Condition, to have a stable sorting,
+            //for case where we cannot determine a guaranteed sort order based on the graph relations.
+            Collections.sort(equalRankCalls, Comparator.comparing(ExpressionCall::getCondition,
+                    Comparator.nullsLast(Comparator.naturalOrder())));
+
+            //If we don't need to order based on relations between Conditions, we stop here
+            if (graph == null) {
+                return log.exit(equalRankCalls);
+            }
+
+            //Now, we do our best to order the calls based on the graph relations between conditions
+            int index1 = 0;
+            //`alreadyCompared` allows to make the computation faster, and is also a protection
+            //against potential cycles in the relations.
+            Map<ExpressionCall, Set<ExpressionCall>> alreadyCompared = new HashMap<>();
+            while (index1 < equalRankCalls.size()) {
+                int index2 = index1 + 1;
+                while (index2 < equalRankCalls.size()) {
+
+                    ExpressionCall call1 = equalRankCalls.get(index1);
+                    ExpressionCall call2 = equalRankCalls.get(index2);
+                    assert Objects.equals(call1.getGlobalMeanRank(), call2.getGlobalMeanRank()) &&
+                        Objects.equals(call1.getGene(), call2.getGene());
+                    Set<ExpressionCall> compared1 = alreadyCompared.computeIfAbsent(call1, k -> new HashSet<>());
+                    Set<ExpressionCall> compared2 = alreadyCompared.computeIfAbsent(call2, k -> new HashSet<>());
+                    Condition cond1 = call1.getCondition();
+                    Condition cond2 = call2.getCondition();
+                    boolean toMove = false;
+
+                    if (!compared1.contains(call2) && !compared2.contains(call1)) {
+                        //put non-null condition first
+                        if ((cond1 == null && cond2 != null) ||
+                            //Or more precise conditions first
+                            (cond1 != null && cond2 != null &&
+                                cond1.getSpecies().equals(cond2.getSpecies()) &&
+                                graph.isConditionMorePrecise(cond1, cond2))) {
+                            toMove = true;
+                        }
+                    } else {
+                        assert !(cond1 != null && cond2 != null &&
+                                cond1.getSpecies().equals(cond2.getSpecies()) &&
+                                graph.isConditionMorePrecise(cond1, cond2)):
+                               "If the conditions have been already compared, we shouldn't be in the case "
+                               + "where they would need to be re-ordered, unless there is a cycle "
+                               + "in the ontology, or a weird behavior of our comparisons";
+                    }
+
+                    if (toMove) {
+                        //XXX: costly operation to remove then add, maybe we should use a LinkedList?
+                        equalRankCalls.remove(index2);
+                        equalRankCalls.add(index1, call2);
+                        //All elements were shifted right after the call to `add`,
+                        //so the element at index1 + 1 is `call1` we just compared to.
+                        //We can start iteration again at index1 + 2.
+                        //And we have to start all over from there because we don't have consistent comparisons
+                        //based on the relations between conditions.
+                        index2 = index1 + 2;
+                    } else {
+                        index2++;
+                    }
+                    compared1.add(call2);
+                    compared2.add(call1);
+                }
+                index1++;
+            }
+            return log.exit(equalRankCalls);
         }
         
         /**
@@ -330,7 +405,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             log.entry(calls, conditionGraph);
             
             //for the computations, we absolutely need to order the calls using RankComparator
-            return log.exit(identifyRedundantCalls(filterAndOrderByGlobalMeanRank(calls, conditionGraph), 
+            return log.exit(identifyRedundantCalls(filterAndOrderCallsByRank(calls, conditionGraph),
                     conditionGraph));
             
         }
@@ -399,6 +474,8 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                         .collect(Collectors.toSet());
                 //check whether any of the validated Condition is a descendant 
                 //of the Condition of the iterated call
+                //(of note, validatedConditions are always from calls with an index lesser than
+                //the index of the iterated call in the List)
                 if (validatedCondition.isEmpty() || Collections.disjoint(validatedCondition, 
                         conditionGraph.getDescendantConditions(call.getCondition()))) {
                     
@@ -439,7 +516,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
 
             //for the computations, we need a List sorted by rank, but we don't need to take 
             //relations between Conditions into account
-            return log.exit(generateMeanRankScoreClustering(filterAndOrderByGlobalMeanRank(calls, null), 
+            return log.exit(generateMeanRankScoreClustering(filterAndOrderCallsByRank(calls, null),
                     method, distanceThreshold));
             
         }

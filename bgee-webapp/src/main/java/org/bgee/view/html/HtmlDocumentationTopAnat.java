@@ -88,7 +88,7 @@ public class HtmlDocumentationTopAnat extends HtmlDocumentationDownloadFile {
         this.writeln("<h3>Examples</h3>");
         // Do not add a trailing slash to the example URLs, see comments in topanat.js
         this.writeln("<ul class='help'>");
-        this.writeln("<li><a href='?page=top_anat#/result/7919f27d143667bc6c137401ce0c91b51e257538' "
+        this.writeln("<li><a href='?page=top_anat#/result/00fecfca04bf1b2cf88ced9b0a937d68f0eea6cb' "
         		+ "title='TopAnat example'>Mouse genes mapped to the GO term \"spermatogenesis\"</a>.</li>");
         this.writeln("<li><a href='?page=top_anat#/result/8fce889da7b4519c5792573ed3933032c8122819' "
                 + "title='TopAnat example'>Human genes involved in autism and epilepsy, with decorrelation</a>.</li>");

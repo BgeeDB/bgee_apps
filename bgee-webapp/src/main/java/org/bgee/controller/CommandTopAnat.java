@@ -1063,9 +1063,6 @@ public class CommandTopAnat extends CommandParent {
             }
             for (String devStageId: devStageIds) {
                 log.debug("Iteration: callType={} - devStageId={}", callType, devStageId);
-                if (StringUtils.isBlank(devStageId)) {
-                    continue;
-                }
                 SummaryCallType callTypeEnum = null;
                 
                 if (BgeeEnum.isInEnum(SummaryCallType.ExpressionSummary.class, callType)) {
@@ -1082,7 +1079,11 @@ public class CommandTopAnat extends CommandParent {
                 builder.summaryQuality(dataQuality);
                 builder.dataTypes(dataTypes);
                 
-                builder.devStageId(devStageId);
+                if (StringUtils.isBlank(devStageId)) {
+                    builder.devStageId(null);
+                } else {
+                    builder.devStageId(devStageId);
+                }
                 if (BgeeEnum.isInEnum(DecorrelationType.class, subDecorrType)) {
                     builder.decorrelationType(DecorrelationType.convertToDecorrelationType(subDecorrType));
                 } else {
@@ -1137,8 +1138,10 @@ public class CommandTopAnat extends CommandParent {
                 .map(DevStage::getId)
                 .collect(Collectors.toSet()); 
         if (devStageIds == null) {
-            // We need stages to be able to build all TopAnatParams
-            return log.exit(allDevStageIds);
+            // 'null' means all stages
+            HashSet<String> allDevStages = new HashSet<>();
+            allDevStages.add(null);
+            return log.exit(allDevStages);
         }
         Set<String> cleanDevStageIds = new HashSet<>(devStageIds);
         if (!allDevStageIds.containsAll(cleanDevStageIds)) {

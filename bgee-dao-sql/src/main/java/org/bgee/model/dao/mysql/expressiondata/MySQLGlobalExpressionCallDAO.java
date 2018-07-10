@@ -426,8 +426,6 @@ implements GlobalExpressionCallDAO {
                         .append(BgeePreparedStatement.generateParameterizedQueryString(callFilter.getGeneIds().size()))
                         .append(")");
                     }
-                    //TODO: check everywhere where a CallDAOFilter is instantiated that we don't provide
-                    //the species ID corresponding to some specific bgeeGeneIds requested
                     if (callFilter.getSpeciesIds() != null && !callFilter.getSpeciesIds().isEmpty()) {
                         if (callFilter.getGeneIds() != null && !callFilter.getGeneIds().isEmpty()) {
                             sb.append(" OR ");
@@ -832,10 +830,6 @@ implements GlobalExpressionCallDAO {
                         if (!condFilter.getDevStageIds().isEmpty()) {
                             stmt.setStrings(offsetParamIndex, condFilter.getDevStageIds(), true);
                             offsetParamIndex += condFilter.getDevStageIds().size();
-                        }
-                        if (condFilter.getObservedConditions() != null) {
-                            stmt.setBoolean(offsetParamIndex, condFilter.getObservedConditions());
-                            offsetParamIndex++;
                         }
                     }
                 }

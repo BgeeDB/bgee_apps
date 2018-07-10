@@ -109,14 +109,6 @@ public class ExpressionCallTest extends TestAncestor {
         ExpressionCall callAe3devD = new ExpressionCall(gene, ae3devD, null, null, null, null,
                 new BigDecimal("2.0"), new BigDecimal("100"));
         ConditionGraph graph = mock(ConditionGraph.class);
-        //                 Conditions :
-        //
-        //           AE1              DevA                                          ae1devA
-        //          /   \            /    \                 =>             /          |          \
-        //        AE2   AE3        DevB  DevD                          ae1devB        ae2devA       ae3devA
-        //                          |                                  /   \       /     \     /     \
-        //                         DevC                             ae2devB ae3devC  ae2devB ae2devD ae3devC ae3devD
-        //ae1devA
         when(graph.isConditionMorePrecise(ae1devA, ae1devA)).thenReturn(false);
         when(graph.isConditionMorePrecise(ae1devA, ae1devB)).thenReturn(true);
         when(graph.isConditionMorePrecise(ae1devA, ae2devA)).thenReturn(true);
@@ -194,12 +186,12 @@ public class ExpressionCallTest extends TestAncestor {
                 callAe2devB, callAe2devD, callAe3devA, callAe3devC, callAe3devD);
         //In this example some condition (ae2devB and ae3devC) have two direct parent conditions.
         //
-        //XXX Maybe the algorithm should prioritize parents having same Anat Entity (like in the web page)???
-        //XXX Then, the correct order could be callAe1devB, callAe2devD, callAe2devB, callAe2devA, callAe3devD, callAe3devC, 
-        //XXX callAe3devA, callAe1devA
-        //XXX rather than callAe2devB, callAe3devC, callAe1devB, callAe2devD, callAe2devA, callAe3devD, callAe3devA, callAe1devA
-        //XXX However, the algorithm works as expected (no error, bug or non-reproducible bug). Even if the the conditions 
-        //XXX are not filters by anat entity, the first appearance of each Anat Entity is in the good order (AE2, AE3 and then AE1)
+        //Maybe the algorithm should prioritize parents having same Anat Entity (like in the web page)???
+        //Then, the correct order could be callAe1devB, callAe2devD, callAe2devB, callAe2devA, callAe3devD, callAe3devC, 
+        //callAe3devA, callAe1devA
+        //rather than callAe2devB, callAe3devC, callAe1devB, callAe2devD, callAe2devA, callAe3devD, callAe3devA, callAe1devA
+        //However, the algorithm works as expected (no error, bug or non-reproducible bug). Even if the the conditions 
+        //are not filters by anat entity, the first appearance of each Anat Entity is in the good order (AE2, AE3 and then AE1)
         
         //                 Conditions :
         //

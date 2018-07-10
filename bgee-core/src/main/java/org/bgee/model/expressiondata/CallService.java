@@ -312,9 +312,14 @@ public class CallService extends CommonService {
             throw new IllegalArgumentException("Some provided species not found in data source");
         }
 
+        //used in methods called below
+        final Map<Integer, Set<String>> requestedSpeToGeneIdsMap = Collections.unmodifiableMap(
+                callFilter.getGeneFilters().stream()
+                .collect(Collectors.toMap(gf -> gf.getSpeciesId(), gf -> gf.getEnsemblGeneIds())));
+
         //Retrieve a Map of Bgee gene IDs to Gene. This will throw a GeneNotFoundException
         //if some requested gene IDs were not found in Bgee.
-        Map<Integer, Gene> geneMap = this.loadGeneMap(callFilter, speciesMap);
+        Map<Integer, Gene> geneMap = this.loadGeneMap(callFilter, speciesMap, requestedSpeToGeneIdsMap);
         assert !geneMap.isEmpty();
 
         // Define condition parameter combination allowing to target a specific data aggregation
@@ -328,8 +333,8 @@ public class CallService extends CommonService {
                         condParamCombination, convertCondParamAttrsToCondDAOAttrs(clonedAttrs)));
 
         // Retrieve calls
-        Stream<ExpressionCall> calls = this.performsGlobalExprCallQuery(geneMap, callFilter,
-                condParamCombination, clonedAttrs, clonedOrderingAttrs)
+        Stream<ExpressionCall> calls = this.performsGlobalExprCallQuery(geneMap, requestedSpeToGeneIdsMap,
+                callFilter, condParamCombination, clonedAttrs, clonedOrderingAttrs)
             .map(to -> mapGlobalCallTOToExpressionCall(to, geneMap, condMap, callFilter, this.getMaxRank(),
                     clonedAttrs));
 
@@ -449,14 +454,9 @@ public class CallService extends CommonService {
                 );
     }
 
-    private Map<Integer, Gene> loadGeneMap(CallFilter<?, ?> callFilter, Map<Integer, Species> speciesMap)
-            throws GeneNotFoundException {
-        log.entry(callFilter, speciesMap);
-
-        //First, get a Map species ID -> requested Ensemble geneIds for making the DAO query.
-        final Map<Integer, Set<String>> requestedSpeToGeneIdsMap = Collections.unmodifiableMap(
-                callFilter.getGeneFilters().stream()
-                .collect(Collectors.toMap(gf -> gf.getSpeciesId(), gf -> gf.getEnsemblGeneIds())));
+    private Map<Integer, Gene> loadGeneMap(CallFilter<?, ?> callFilter, Map<Integer, Species> speciesMap,
+            Map<Integer, Set<String>> requestedSpeToGeneIdsMap) throws GeneNotFoundException {
+        log.entry(callFilter, speciesMap, requestedSpeToGeneIdsMap);
 
         //Make the DAO query and map GeneTOs to Genes. Store them in a Map to keep the bgeeGeneIds.
         final Map<Integer, Gene> geneMap = Collections.unmodifiableMap(this.geneDAO
@@ -513,6 +513,9 @@ public class CallService extends CommonService {
      *                              the associated value being the corresponding {@code Gene}. Note that this {@code Map}
      *                              must be consistent with the {@code GeneFilter}s provided in {@code callFilter}
      *                              (by using, for instance, the method {@link #loadGeneMap(CallFilter, Map)}).
+     * @param requestedSpeToGeneIdsMap  A {@code Map} where keys are {@code Integer}s representing species IDs,
+     *                                  the associated value being a {@code Set} of {@code String}s that are the gene IDs
+     *                                  requested in the {@code GeneFilter}s of {@code callFilter}.
      * @param callFilter            An {@code ExpressionCallFilter} allowing 
      *                              to configure retrieving of data throw {@code DAO}s.
      *                              Cannot be {@code null} or empty (check by calling methods).
@@ -529,10 +532,11 @@ public class CallService extends CommonService {
      *                                  expression propagation states requested.
      */
     private Stream<GlobalExpressionCallTO> performsGlobalExprCallQuery(Map<Integer, Gene> geneMap,
-            ExpressionCallFilter callFilter, Set<ConditionDAO.Attribute> condParamCombination,
+            final Map<Integer, Set<String>> requestedSpeToGeneIdsMap, ExpressionCallFilter callFilter,
+            Set<ConditionDAO.Attribute> condParamCombination,
             Set<Attribute> attributes, LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes)
                     throws IllegalArgumentException {
-        log.entry(geneMap, callFilter, condParamCombination, attributes, orderingAttributes);
+        log.entry(geneMap, requestedSpeToGeneIdsMap, callFilter, condParamCombination, attributes, orderingAttributes);
 
         //now we map each GeneFilter to Bgee gene IDs rather than Ensembl gene IDs.
         Set<Integer> geneIdFilter = null;
@@ -556,18 +560,11 @@ public class CallService extends CommonService {
             //First, if specific genes were requested, to identify them faster in the geneMap,
             //from the GeneFilters we create a Map<speciesId, Set<geneId>> for requested genes
             if (callFilter.getGeneFilters().stream().anyMatch(gf -> !gf.getEnsemblGeneIds().isEmpty())) {
-                final Map<Integer, Set<String>> speIdToGeneIds = Collections.unmodifiableMap(
-                        callFilter.getGeneFilters().stream()
-                        .filter(gf -> !gf.getEnsemblGeneIds().isEmpty())
-                        .collect(Collectors.toMap(
-                                gf -> gf.getSpeciesId(),
-                                gf -> gf.getEnsemblGeneIds()))
-                        );
                 //now we retrieve the appropriate Bgee gene IDs
                 geneIdFilter = geneMap.entrySet().stream()
                         .filter(entry -> {
-                            Set<String> speReqGeneIds = speIdToGeneIds.get(entry.getValue().getSpecies().getId());
-                            if (speReqGeneIds == null) return false;
+                            Set<String> speReqGeneIds = requestedSpeToGeneIdsMap.get(entry.getValue().getSpecies().getId());
+                            if (speReqGeneIds == null || speReqGeneIds.isEmpty()) return false;
                             return speReqGeneIds.contains(entry.getValue().getEnsemblGeneId());
                         })
                         .map(entry -> entry.getKey())

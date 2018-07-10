@@ -52,6 +52,17 @@ public class ConditionGraphTest extends TestAncestor {
      *                      {@code false} if it should be loaded directly from {@code Ontology}s.
      */
     private void loadConditionGraph(boolean fromService) {
+        //            anat1
+        //           /  \  \
+        //      anat2  anat3\
+        //                \  \
+        //                anat4
+        //
+        //            stage1
+        //           /  \   \
+        //      stage2 stage3\
+        //                \   \
+        //                stage4
         String anatEntityId1 = "anat1";
         AnatEntity anatEntity1 = new AnatEntity(anatEntityId1);
         String anatEntityId2 = "anat2";
@@ -211,49 +222,6 @@ public class ConditionGraphTest extends TestAncestor {
             //test passed
         }
         
-    }
-
-    /**
-     * Test {@link ConditionGraph#compare(Condition, Condition)}
-     */
-    @Test
-    public void testCompareDifferentLoadings() {
-        this.loadConditionGraph(true);
-        this.testCompare();
-        this.loadConditionGraph(false);
-        this.testCompare();
-    }
-    /**
-     * Test {@link ConditionGraph#compare(Condition, Condition)}
-     */
-    private void testCompare() {
-        assertEquals("Incorrect comparison based on rels between Conditions", 1, 
-                this.conditionGraph.compare(this.conditions.get(0), this.conditions.get(1)));
-        assertEquals("Incorrect comparison based on rels between Conditions", -1, 
-                this.conditionGraph.compare(this.conditions.get(1), this.conditions.get(0)));
-        assertEquals("Incorrect comparison based on rels between Conditions", 1, 
-                this.conditionGraph.compare(this.conditions.get(0), this.conditions.get(2)));
-        assertEquals("Incorrect comparison based on rels between Conditions", -1, 
-                this.conditionGraph.compare(this.conditions.get(2), this.conditions.get(0)));
-        assertEquals("Incorrect comparison based on rels between Conditions", 0, 
-                this.conditionGraph.compare(this.conditions.get(1), this.conditions.get(2)));
-        assertEquals("Incorrect comparison based on rels between Conditions", 0, 
-                this.conditionGraph.compare(this.conditions.get(2), this.conditions.get(1)));
-
-        assertEquals("Incorrect comparison based on rels between Conditions", 0, 
-                this.conditionGraph.compare(this.conditions.get(5), this.conditions.get(1)));
-        assertEquals("Incorrect comparison based on rels between Conditions", 0, 
-                this.conditionGraph.compare(this.conditions.get(1), this.conditions.get(5)));
-        assertEquals("Incorrect comparison based on rels between Conditions", 1, 
-                this.conditionGraph.compare(this.conditions.get(0), this.conditions.get(4)));
-        assertEquals("Incorrect comparison based on rels between Conditions", -1, 
-                this.conditionGraph.compare(this.conditions.get(4), this.conditions.get(0)));
-        assertEquals("Incorrect comparison based on rels between Conditions", 0, 
-                this.conditionGraph.compare(this.conditions.get(1), this.conditions.get(1)));
-        assertEquals("Incorrect comparison based on rels between Conditions", 1, 
-                this.conditionGraph.compare(this.conditions.get(0), this.conditions.get(3)));
-        assertEquals("Incorrect comparison based on rels between Conditions", -1, 
-                this.conditionGraph.compare(this.conditions.get(3), this.conditions.get(0)));
     }
 
     /**

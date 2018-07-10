@@ -466,7 +466,7 @@ public class GenerateRankFile {
      * for injection purposes. 
      * TODO: to remove once we'll have created an UtilsFactory in bgee-core 
      */
-    private final Function<ConditionGraph, ExpressionCall.RankComparator> rankComparatorSupplier;
+    private final BiFunction<Collection<ExpressionCall>, ConditionGraph, List<ExpressionCall>> rankOrderingFuncSupplier;
     /**
      * A {@code Function} matching the signature of the method of {@code ExpressionCall::identifyRedundantCalls}, 
      * for injection purposes. 
@@ -493,7 +493,7 @@ public class GenerateRankFile {
      * @param uberonOnt                 An {@code Uberon} utiliy to extract XRefs to BTO from.
      */
     public GenerateRankFile(Supplier<ServiceFactory> serviceFactorySupplier, Uberon uberonOnt) {
-        this(serviceFactorySupplier, uberonOnt, ConditionGraph::new, ExpressionCall.RankComparator::new, 
+        this(serviceFactorySupplier, uberonOnt, ConditionGraph::new, ExpressionCall::filterAndOrderCallsByRank, 
                 ExpressionCall::identifyRedundantCalls);
     }
     /**
@@ -501,19 +501,19 @@ public class GenerateRankFile {
      *                                      to be able to provide one to each thread.
      * @param uberonOnt                     An {@code Uberon} utiliy to extract XRefs to BTO from.
      * @param condGraphSupplier             To inject {@code ConditionGraph} instances.
-     * @param rankComparatorSupplier        To inject {@code ExpressionCall.RankComparator} instances.
+     * @param rankOrderingFuncSupplier      To inject the method {@code ExpressionCall::filterAndOrderCallsByRank}.
      * @param redundantCallsFuncSupplier    To inject the method {@code ExpressionCall::identifyRedundantCalls}.
      */
     //TODO: stop using these functional interfaces once we'll have created an UtilsFactory in bgee-core
     protected GenerateRankFile(Supplier<ServiceFactory> serviceFactorySupplier, Uberon uberonOnt, 
             TriFunction<Collection<Condition>, Ontology<AnatEntity, String>, Ontology<DevStage, String>, 
             ConditionGraph> condGraphSupplier, 
-            Function<ConditionGraph, ExpressionCall.RankComparator> rankComparatorSupplier, 
+            BiFunction<Collection<ExpressionCall>, ConditionGraph, List<ExpressionCall>> rankOrderingFuncSupplier, 
             BiFunction<List<ExpressionCall>, ConditionGraph, Set<ExpressionCall>> redundantCallsFuncSupplier) {
         this.serviceFactorySupplier = serviceFactorySupplier;
         this.uberonOnt = uberonOnt;
         this.condGraphSupplier = condGraphSupplier;
-        this.rankComparatorSupplier = rankComparatorSupplier;
+        this.rankOrderingFuncSupplier = rankOrderingFuncSupplier;
         this.redundantCallsFuncSupplier = redundantCallsFuncSupplier;
     }
     

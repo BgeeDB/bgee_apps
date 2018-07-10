@@ -292,14 +292,8 @@ public class CommandGene extends CommandParent {
         ConditionGraph organStageGraph = new ConditionGraph(
                 orderedCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()), 
                 serviceFactory);
-        Collections.sort(orderedCalls, new ExpressionCall.RankComparator(organStageGraph));
-        //ORGAN
-        //We need the ConditionGraph for sorting the calls. Creating the AnatEntityOntology for this graph is costly,
-        //so we re-use the AnatEntityOntology already produced for the organStageGraph
-        ConditionGraph organGraph = new ConditionGraph(
-                organCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()),
-                organStageGraph.getAnatEntityOntology(), null);
-        Collections.sort(organCalls, new ExpressionCall.RankComparator(organGraph));
+        orderedCalls = ExpressionCall.filterAndOrderCallsByRank(orderedCalls, organStageGraph);
+
         //REDUNDANT ORGAN-STAGE CALLS
         final Set<ExpressionCall> redundantCalls = ExpressionCall.identifyRedundantCalls(
                 orderedCalls, organStageGraph);

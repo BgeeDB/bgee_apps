@@ -233,6 +233,7 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
         this.writeln("   <h4>Website and API</h4>");
         this.writeln("   <ul>");
         this.writeln("       <li>IP address</li>");
+        this.writeln("       <li>Email address</li>");
         this.writeln("       <li>Date and time of a visit to the service</li>");
         this.writeln("       <li>Operating system</li>");
         this.writeln("       <li>Browser</li>");

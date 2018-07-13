@@ -17,6 +17,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -363,10 +364,10 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
      *            A {@code Collection} of {@code Integer}s that are IDs of
      *            species for which to generate files.
      */
-    private void extractBgeeDatabase(Collection<Integer> speciesIds, String directory) {
-        log.entry(speciesIds);
-        SpeciesTOResultSet speciesTOs = this.getSpeciesDAO().getSpeciesByIds(new HashSet<>(speciesIds));
-        extractSpeciesTable(speciesTOs, directory);
+    private void extractBgeeDatabase(Collection<Integer> inputSpeciesIds, String directory) {
+        log.entry(inputSpeciesIds);
+        SpeciesTOResultSet speciesTOs = this.getSpeciesDAO().getSpeciesByIds(new HashSet<>(inputSpeciesIds));
+        Set<Integer> speciesIds = extractSpeciesTable(speciesTOs, directory);
         extractAnatEntityTable(directory);
         extractStageTable(directory);
         for (Integer speciesId : speciesIds) {
@@ -574,14 +575,15 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
 
     }
 
-    private void extractSpeciesTable(SpeciesTOResultSet speciesTOs, String directory) {
+    private Set<Integer> extractSpeciesTable(SpeciesTOResultSet speciesTOs, String directory) {
         log.entry(speciesTOs, directory);
-
+        Set<Integer> speciesIds = new HashSet<>();
         String[] header = new String[] { SpeciesDAO.Attribute.ID.name(), SpeciesDAO.Attribute.GENUS.name(),
                 SpeciesDAO.Attribute.SPECIES_NAME.name(), SpeciesDAO.Attribute.COMMON_NAME.name(),
                 SpeciesDAO.Attribute.GENOME_VERSION.name(), SpeciesDAO.Attribute.GENOME_SPECIES_ID.name() };
         // keep the order, to be able to compare files between 2 versions
         List<Map<String, String>> allSpeciesInformation = speciesTOs.getAllTOs().stream().map(species -> {
+            speciesIds.add(species.getId());
             Map<String, String> headerToValue = new HashMap<>();
             headerToValue.put(SpeciesDAO.Attribute.ID.name(), String.valueOf(species.getId()));
             headerToValue.put(SpeciesDAO.Attribute.GENUS.name(), species.getGenus());
@@ -596,7 +598,7 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
         final CellProcessor[] processors = createCellProcessor(TsvFile.SPECIES_OUTPUT_FILE);
         File file = new File(directory, TsvFile.SPECIES_OUTPUT_FILE.getFileName());
         this.writeOutputFile(file, allSpeciesInformation, header, processors);
-        log.exit();
+        return log.exit(speciesIds);
     }
     
     /**

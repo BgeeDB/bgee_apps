@@ -1,8 +1,6 @@
 package org.bgee.controller;
 
 
-import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -18,20 +16,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.model.BgeeUtils;
-import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.Call.ExpressionCall.ClusteringMethod;
-import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.ConditionGraph;
-import org.bgee.model.expressiondata.baseelements.CallType;
-import org.bgee.model.expressiondata.baseelements.SummaryCallType;
-import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
-import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
-import org.bgee.model.gene.GeneFilter;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.ViewFactory;
 
@@ -256,22 +247,21 @@ public class CommandGene extends CommandParent {
 
     private GeneResponse buildGeneResponse(Gene gene) throws IllegalStateException {
         log.entry(gene);
-
         //**************************************
         // Expression calls, ConditionUtils, 
         // sorting, and redundant calls
         //**************************************
-        List<ExpressionCall> organCalls = this.getAnatEntitySilverExpressionCalls(gene);
+        List<ExpressionCall> organCalls = serviceFactory.getCallService().getAnatEntitySilverExpressionCalls(gene);
         if (organCalls.isEmpty()) {
             log.debug("No calls for gene {}", gene.getEnsemblGeneId());
              return log.exit(new GeneResponse(gene, organCalls, new HashSet<>(), true, 
                      new LinkedHashMap<>(), new HashMap<>(), new HashMap<>(), null));
         }
+        
+        final List<ExpressionCall> organStageCalls = serviceFactory.getCallService().getAnatEntityDevStageBronzeExpressionCalls(gene);
         final Set<String> organIds = organCalls.stream()
                 .map(c ->c .getCondition().getAnatEntityId())
                 .collect(Collectors.toSet());
-        
-        final List<ExpressionCall> organStageCalls = this.getAnatEntityDevStageBronzeExpressionCalls(gene);
         //XXX: why don't we provided the organIds to perform the SQL query, instead of filtering afterwards?
         List<ExpressionCall> orderedCalls = organStageCalls.stream()
                 .filter(c -> organIds.contains(c.getCondition().getAnatEntityId()))
@@ -292,14 +282,15 @@ public class CommandGene extends CommandParent {
         ConditionGraph organStageGraph = new ConditionGraph(
                 orderedCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()), 
                 serviceFactory);
-        Collections.sort(orderedCalls, new ExpressionCall.RankComparator(organStageGraph));
+        orderedCalls.sort(new ExpressionCall.RankComparator(organStageGraph));
         //ORGAN
         //We need the ConditionGraph for sorting the calls. Creating the AnatEntityOntology for this graph is costly,
         //so we re-use the AnatEntityOntology already produced for the organStageGraph
-        ConditionGraph organGraph = new ConditionGraph(
-                organCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()),
-                organStageGraph.getAnatEntityOntology(), null);
-        Collections.sort(organCalls, new ExpressionCall.RankComparator(organGraph));
+        //XXX: 4 following lines have been commented because not used
+//        ConditionGraph organGraph = new ConditionGraph(
+//                organCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()),
+//                organStageGraph.getAnatEntityOntology(), null);
+//        organCalls.sort(new ExpressionCall.RankComparator(organGraph));
         //REDUNDANT ORGAN-STAGE CALLS
         final Set<ExpressionCall> redundantCalls = ExpressionCall.identifyRedundantCalls(
                 orderedCalls, organStageGraph);
@@ -333,26 +324,9 @@ public class CommandGene extends CommandParent {
         // Grouping
         //*********************
         long startFilteringTimeInMs = System.currentTimeMillis();
-        //first, filter calls and group calls by anat. entity. We need to preserve the order 
-        //of the keys, as we have already sorted the calls by their rank. 
-        //If filterRedundantCalls is true, we completely discard anat. entities 
-        //that have only redundant calls, but if an anat. entity has some non-redundant calls 
-        //and is not discarded, we preserve all its calls, even the redundant ones. 
-        LinkedHashMap<AnatEntity, List<ExpressionCall>> callsByAnatEntity = exprCalls.stream()
-                //group by anat. entity
-                .collect(Collectors.groupingBy(
-                        c -> c.getCondition().getAnatEntity(), 
-                        LinkedHashMap::new, 
-                        Collectors.toList()))
-                .entrySet().stream()
-                //discard if all calls of an anat. entity are redundant
-                .filter(entry -> !filterRedundantCalls || !redundantCalls.containsAll(entry.getValue()))
-                //reconstruct the LinkedHashMap
-                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(), 
-                        (l1, l2) -> {
-                            throw log.throwing(new AssertionError("Not possible to have key collision"));
-                        }, 
-                        LinkedHashMap::new));
+        LinkedHashMap<AnatEntity, List<ExpressionCall>> callsByAnatEntity =
+                serviceFactory.getCallService()
+                .groupByAnatEntAndFilterOrderedCalls(exprCalls, redundantCalls, true);
 
         //*********************
         // Clustering
@@ -387,82 +361,9 @@ public class CommandGene extends CommandParent {
                 conditionGraph));
     }
     
-    /**
-     * Retrieves the sorted list of {@code ExpressionCall} associated to this gene, 
-     * ordered by global mean rank.
-     * 
-     * @param gene The {@code Gene}
-     * @return     The {@code List} of {@code ExpressionCall} associated to this gene, 
-     *             ordered by global mean rank.
-     */
-    private List<ExpressionCall> getAnatEntitySilverExpressionCalls(Gene gene) {
-        log.entry(gene);
-
-        CallService service = serviceFactory.getCallService();
-
-        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
-                new LinkedHashMap<>();
-        //The ordering is not essential here, because anyway we will need to order calls 
-        //with an equal rank, based on the relations between their conditions, which is difficult 
-        //to make in a query to the data source.
-        //XXX: test if there is a performance difference if we don't use the order by
-        serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
-
-        Map<SummaryCallType.ExpressionSummary, SummaryQuality> silverExpressedCallFilter = new HashMap<>();
-        silverExpressedCallFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
-        Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
-        obsDataFilter.put(CallType.Expression.EXPRESSED, true);
-        final List<ExpressionCall> calls = service.loadExpressionCalls(
-                new ExpressionCallFilter(silverExpressedCallFilter,
-                        Collections.singleton(new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId())),
-                        null, null, obsDataFilter, null, null),
-                EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
-                           //XXX: do we need DATA_QUALITY?
-                           CallService.Attribute.DATA_QUALITY, CallService.Attribute.GLOBAL_MEAN_RANK,
-                           CallService.Attribute.EXPERIMENT_COUNTS),
-                serviceOrdering)
-            .collect(Collectors.toList());
-
-        return log.exit(calls);
-    }
     
-    /**
-     * Retrieves the sorted list of {@code ExpressionCall} associated to this gene, 
-     * ordered by global mean rank.
-     * 
-     * @param gene The {@code Gene}
-     * @return     The {@code List} of {@code ExpressionCall} associated to this gene, 
-     *             ordered by global mean rank.
-     */
-    private List<ExpressionCall> getAnatEntityDevStageBronzeExpressionCalls(Gene gene) {
-        log.entry(gene);
-        
-        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
-                    new LinkedHashMap<>();
-        //The ordering is not essential here, because anyway we will need to order calls 
-        //with an equal rank, based on the relations between their conditions, which is difficult 
-        //to make in a query to the data source.
-        //XXX: test if there is a performance difference if we don't use the order by
-        serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
-            
-        CallService service = serviceFactory.getCallService();
-        
-        Map<SummaryCallType.ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
-        summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE);
-        Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
-        obsDataFilter.put(CallType.Expression.EXPRESSED, true);
-        return log.exit(service.loadExpressionCalls(
-                new ExpressionCallFilter(summaryCallTypeQualityFilter,
-                        Collections.singleton(new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId())),
-                        null, null, obsDataFilter, null, null),
-                EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
-                        CallService.Attribute.DEV_STAGE_ID,
-                        //XXX: do we need DATA_QUALITY?
-                        CallService.Attribute.DATA_QUALITY, CallService.Attribute.GLOBAL_MEAN_RANK,
-                        CallService.Attribute.EXPERIMENT_COUNTS),
-                serviceOrdering)
-            .collect(Collectors.toList()));
-    }
+    
+    
     
     /**
      * Return the {@code Function} corresponding to the clustering method to used, 

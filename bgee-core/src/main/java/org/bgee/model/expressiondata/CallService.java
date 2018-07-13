@@ -9,6 +9,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -57,6 +58,7 @@ import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.gene.GeneNotFoundException;
 import org.bgee.model.species.Species;
 
@@ -340,6 +342,110 @@ public class CallService extends CommonService {
             DiffExpressionCallFilter callFilter) {
         log.entry(speciesId, callFilter);
         throw log.throwing(new UnsupportedOperationException("Load of diff. expression calls not implemented yet"));
+    }
+    
+    /**
+     * Retrieves the {@code List} of silver organ {@code ExpressionCall} associated to one gene, 
+     * ordered by global mean rank.
+     * 
+     * @param gene The {@code Gene} for which {@code ExpressionCall}s are wanted
+     * @return     The {@code List} of {@code ExpressionCall} ordered by global mean rank.
+     */
+    public List<ExpressionCall> getAnatEntitySilverExpressionCalls(Gene gene) {
+        log.entry(gene);
+
+        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
+                new LinkedHashMap<>();
+        //The ordering is not essential here, because anyway we will need to order calls 
+        //with an equal rank, based on the relations between their conditions, which is difficult 
+        //to make in a query to the data source.
+        //XXX: test if there is a performance difference if we don't use the order by
+        serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
+
+        Map<SummaryCallType.ExpressionSummary, SummaryQuality> silverExpressedCallFilter = new HashMap<>();
+        silverExpressedCallFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
+        Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
+        obsDataFilter.put(CallType.Expression.EXPRESSED, true);
+        final List<ExpressionCall> calls = this.loadExpressionCalls(
+                new ExpressionCallFilter(silverExpressedCallFilter,
+                        Collections.singleton(new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId())),
+                        null, null, obsDataFilter, null, null),
+                EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
+                           //XXX: do we need DATA_QUALITY?
+                           CallService.Attribute.DATA_QUALITY, CallService.Attribute.GLOBAL_MEAN_RANK,
+                           CallService.Attribute.EXPERIMENT_COUNTS),
+                serviceOrdering)
+            .collect(Collectors.toList());
+
+        return log.exit(calls);
+    }
+    
+    /**
+     * Retrieves the {@code List} of bronze organ-stage {@code ExpressionCall} associated to one gene, 
+     * ordered by global mean rank.
+     * 
+     * @param gene The {@code Gene} for which {@code ExpressionCall}s are wanted
+     * @return     The {@code List} of {@code ExpressionCall} ordered by global mean rank.
+     */
+    public List<ExpressionCall> getAnatEntityDevStageBronzeExpressionCalls(Gene gene) {
+        log.entry(gene);
+        
+        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
+                    new LinkedHashMap<>();
+        //The ordering is not essential here, because anyway we will need to order calls 
+        //with an equal rank, based on the relations between their conditions, which is difficult 
+        //to make in a query to the data source.
+        //XXX: test if there is a performance difference if we don't use the order by
+        serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
+        
+        Map<SummaryCallType.ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
+        summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE);
+        Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
+        obsDataFilter.put(CallType.Expression.EXPRESSED, true);
+        return log.exit(this.loadExpressionCalls(
+                new ExpressionCallFilter(summaryCallTypeQualityFilter,
+                        Collections.singleton(new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId())),
+                        null, null, obsDataFilter, null, null),
+                EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
+                        CallService.Attribute.DEV_STAGE_ID,
+                        //XXX: do we need DATA_QUALITY?
+                        CallService.Attribute.DATA_QUALITY, CallService.Attribute.GLOBAL_MEAN_RANK,
+                        CallService.Attribute.EXPERIMENT_COUNTS),
+                serviceOrdering)
+            .collect(Collectors.toList()));
+    }
+    /** Remove redundant calls from a {@code List} of {@ExpressionCall}s and retrieve a {@code LinkedHashMap}
+     *  where keys correspond to {@code AnatEntity}s and values correspond to the associated {@code List} 
+     *  of {@code ExpressionCalls}
+     * 
+     * @param orderedCalls A {@code List} of {@code ExpressionCalls} that have been previously sorted
+     * @param redundantCalls A {@code List} of {@code ExpressionCalls} to remove from orderedCalls
+     * @param filterRedundantCalls A {@code boolean} to define if redundantCalls have to be removed
+     * @return A {@code LinkedHashMap} containing of {@code List} of {@code ExpressionCall}s grouped by {@code AnatEntity}
+     */
+    public LinkedHashMap<AnatEntity, List<ExpressionCall>> groupByAnatEntAndFilterOrderedCalls(
+            List<ExpressionCall> orderedCalls, Set<ExpressionCall> redundantCalls, 
+            boolean filterRedundantCalls){
+        //first, filter calls and group calls by anat. entity. We need to preserve the order 
+        //of the keys, as we have already sorted the calls by their rank. 
+        //If filterRedundantCalls is true, we completely discard anat. entities 
+        //that have only redundant calls, but if an anat. entity has some non-redundant calls 
+        //and is not discarded, we preserve all its calls, even the redundant ones. 
+        return log.exit(orderedCalls.stream()
+                //group by anat. entity
+                .collect(Collectors.groupingBy(
+                        c -> c.getCondition().getAnatEntity(), 
+                        LinkedHashMap::new, 
+                        Collectors.toList()))
+                .entrySet().stream()
+                //discard if all calls of an anat. entity are redundant
+                .filter(entry -> !filterRedundantCalls || !redundantCalls.containsAll(entry.getValue()))
+                //reconstruct the LinkedHashMap
+                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(), 
+                        (l1, l2) -> {
+                            throw log.throwing(new AssertionError("Not possible to have key collision"));
+                        }, 
+                        LinkedHashMap::new)));
     }
     
     //*************************************************************************

@@ -562,7 +562,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
                             Integer currentOmaNodeId = this.omaNodeId;
                             // if one gene is used in different species OMAParentNodeId should not be 
                             // a duplication node
-                            if(geneTO.getGeneMappedToGeneIdCount().compareTo(1) > 0 
+                            if(geneTO.getGeneMappedToGeneIdCount() != null && geneTO.getGeneMappedToGeneIdCount().compareTo(1) > 0 
                                     && group.getProperty(TAX_ID_ATTRIBUTE) == null){
                                 log.debug("should find an other node gene:{} species:{} nodeId: {}", 
                                         geneTO.getGeneId(), geneTO.getSpeciesId(), this.omaNodeId);

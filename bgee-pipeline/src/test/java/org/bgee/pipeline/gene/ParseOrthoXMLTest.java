@@ -41,10 +41,10 @@ import org.mockito.stubbing.Answer;
  * 
  * @author Komal Sanjeev
  * @author Valentine Rech de Laval
- * @version Bgee 13
+ * @author Julien Wollbrett
+ * @version Bgee 14
  * @since Bgee 13
  */
-//FIXME: reactivate after fix
 public class ParseOrthoXMLTest extends TestAncestor {
     
     /**
@@ -257,73 +257,73 @@ public class ParseOrthoXMLTest extends TestAncestor {
 //        verify(mockManager.mockGeneDAO, times(1)).setAttributes(GeneDAO.Attribute.ID);
     }
 
-    /**
-     * Test {@link ParseOrthoXML#parseXML(String, String)}, which is the central method of the
-     * class doing all the job, throws error
-     * @throws SQLException 
-     * @throws IllegalStateException 
-     */
-    @Test
-    public void shouldParseXMLFakePrefixError()
-            throws DAOException, XMLStreamException, XMLParseException, IOException, IllegalStateException, SQLException {
-        log.debug("Testing if the OrthoXML file is parsed correctly..");
-
-        // First, we need a mock MySQLDAOManager, for the class to acquire mock
-        // MySQLGeneDAO and mock MySQLHierarchicalGroupDAO. This will allow to verify that
-        // the correct values were tried to be inserted into the database.
-        MockDAOManager mockManager = new MockDAOManager();
-
-        // We need a mock MySQLSpeciesTOResultSet to mock the return of getAllSpecies().
-        MySQLSpeciesTOResultSet mockSpeciesTORs = mock(MySQLSpeciesTOResultSet.class);
-        when(mockManager.mockSpeciesDAO.getAllSpecies()).thenReturn(mockSpeciesTORs);
-        // Determine the behavior of consecutive calls to getTO().
-        when(mockSpeciesTORs.getTO()).thenReturn(
-                // if genomeSpeciesId is not "0" or equal to speciesID
-                // the fakeGeneIdPrefix shouldn't be empty
-                new SpeciesTO(9600, "orangutan", null, null, null, null, null, null, null, 9601),
-                new SpeciesTO(6239, "c.elegans", null, null, null, null, null, null, null, 0));
-        // Determine the behavior of consecutive calls to next().
-        when(mockSpeciesTORs.next()).thenAnswer(new Answer<Boolean>() {
-            int counter = -1;
-            public Boolean answer(InvocationOnMock invocationOnMock) 
-                    throws Throwable {
-                // Return true while there is speciesTO to return 
-                return counter++ < 2;
-            }
-        });
-        
-        // We need a mock MySQLTaxonTOResultSet to mock the return of getAllTaxa().
-        MySQLTaxonTOResultSet mockTaxonTORs = mockGetAllTaxa(mockManager);
-
-        // We need a mock MySQLGeneTOResultSet to mock the return of getAllGenes().
-        MySQLGeneTOResultSet mockGeneTORs = mockGetAllGenes(mockManager);
-
-        try {
-            ParseOrthoXML parser = new ParseOrthoXML(mockManager);
-            parser.parseXML(this.getClass().getResource(OMAFILE).getFile(), null);
-            // test failed
-        } catch (IllegalArgumentException e) {
-            //test passed
-        }
-        // Verify that all ResultSet are closed.
-        verify(mockSpeciesTORs).close();
-        verify(mockTaxonTORs).close();
-        verify(mockGeneTORs).close();
-        
-        // Verify that startTransaction() and commit() never called
-        //XXX Why they are not supposed to be called?
-        verify(mockManager.getConnection(), times(0)).startTransaction();
-        verify(mockManager.getConnection(), times(0)).commit();
-        
-        // Verify that setAttributes are correctly called.
-        //XXX setAttributes method is deprecated
-//        verify(mockManager.mockSpeciesDAO, times(1)).setAttributes(
-//                SpeciesDAO.Attribute.ID, SpeciesDAO.Attribute.COMMON_NAME, 
-//                SpeciesDAO.Attribute.GENOME_SPECIES_ID);
-//        verify(mockManager.mockTaxonDAO, times(1)).setAttributes(TaxonDAO.Attribute.ID);
-//        verify(mockManager.mockGeneDAO, times(1)).setAttributes(GeneDAO.Attribute.ID);
-
-    }
+    //XXX Should maybe be removed as fake prefixes are not used anymore
+//    /**
+//     * Test {@link ParseOrthoXML#parseXML(String, String)}, which is the central method of the
+//     * class doing all the job, throws error
+//     * @throws SQLException 
+//     * @throws IllegalStateException 
+//     */
+//    @Test
+//    public void shouldParseXMLFakePrefixError()
+//            throws DAOException, XMLStreamException, XMLParseException, IOException, IllegalStateException, SQLException {
+//        log.debug("Testing if the OrthoXML file is parsed correctly..");
+//
+//        // First, we need a mock MySQLDAOManager, for the class to acquire mock
+//        // MySQLGeneDAO and mock MySQLHierarchicalGroupDAO. This will allow to verify that
+//        // the correct values were tried to be inserted into the database.
+//        MockDAOManager mockManager = new MockDAOManager();
+//
+//        // We need a mock MySQLSpeciesTOResultSet to mock the return of getAllSpecies().
+//        MySQLSpeciesTOResultSet mockSpeciesTORs = mock(MySQLSpeciesTOResultSet.class);
+//        when(mockManager.mockSpeciesDAO.getAllSpecies()).thenReturn(mockSpeciesTORs);
+//        // Determine the behavior of consecutive calls to getTO().
+//        when(mockSpeciesTORs.getTO()).thenReturn(
+//                // if genomeSpeciesId is not "0" or equal to speciesID
+//                // the fakeGeneIdPrefix shouldn't be empty
+//                new SpeciesTO(9600, "orangutan", null, null, null, null, null, null, null, 9601),
+//                new SpeciesTO(6239, "c.elegans", null, null, null, null, null, null, null, 0));
+//        // Determine the behavior of consecutive calls to next().
+//        when(mockSpeciesTORs.next()).thenAnswer(new Answer<Boolean>() {
+//            int counter = -1;
+//            public Boolean answer(InvocationOnMock invocationOnMock) 
+//                    throws Throwable {
+//                // Return true while there is speciesTO to return 
+//                return counter++ < 2;
+//            }
+//        });
+//        
+//        // We need a mock MySQLTaxonTOResultSet to mock the return of getAllTaxa().
+//        MySQLTaxonTOResultSet mockTaxonTORs = mockGetAllTaxa(mockManager);
+//
+//        // We need a mock MySQLGeneTOResultSet to mock the return of getAllGenes().
+//        MySQLGeneTOResultSet mockGeneTORs = mockGetAllGenes(mockManager);
+//
+//        try {
+//            ParseOrthoXML parser = new ParseOrthoXML(mockManager);
+//            parser.parseXML(this.getClass().getResource(OMAFILE).getFile(), null);
+//            // test failed
+//        } catch (IllegalArgumentException e) {
+//            //test passed
+//        }
+//        // Verify that all ResultSet are closed.
+//        verify(mockSpeciesTORs).close();
+//        verify(mockTaxonTORs).close();
+//        verify(mockGeneTORs).close();
+//        
+//        // Verify that startTransaction() and commit() never called
+//        verify(mockManager.getConnection(), times(0)).startTransaction();
+//        verify(mockManager.getConnection(), times(0)).commit();
+//        
+//        // Verify that setAttributes are correctly called.
+//        //XXX setAttributes method is deprecated
+////        verify(mockManager.mockSpeciesDAO, times(1)).setAttributes(
+////                SpeciesDAO.Attribute.ID, SpeciesDAO.Attribute.COMMON_NAME, 
+////                SpeciesDAO.Attribute.GENOME_SPECIES_ID);
+////        verify(mockManager.mockTaxonDAO, times(1)).setAttributes(TaxonDAO.Attribute.ID);
+////        verify(mockManager.mockGeneDAO, times(1)).setAttributes(GeneDAO.Attribute.ID);
+//
+//    }
     
     /**
      * Define a mock MySQLSpeciesTOResultSet to mock the return of getAllSpecies.

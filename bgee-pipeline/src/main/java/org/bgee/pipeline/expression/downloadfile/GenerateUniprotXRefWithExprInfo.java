@@ -146,7 +146,6 @@ public class GenerateUniprotXRefWithExprInfo {
                         organStageGraph);
                 LinkedHashMap<AnatEntity, List<ExpressionCall>> callsByAnatEntity = service
                         .groupByAnatEntAndFilterOrderedCalls(orderedCalls, redundantCalls, true);
-                serviceFactory.close();
 
                 // Create String representation of the XRef with expression information
                 String prefixLine = xref.getUniprotId() + "   DR   Bgee; " + xref.getEnsemblId() + ";";
@@ -208,12 +207,24 @@ public class GenerateUniprotXRefWithExprInfo {
             return uniprotId;
         }
 
+        public void setUniprotId(String uniprotId) {
+            this.uniprotId = uniprotId;
+        }
+
         public String getEnsemblId() {
             return ensemblId;
         }
 
+        public void setEnsemblId(String ensemblId) {
+            this.ensemblId = ensemblId;
+        }
+
         public Integer getSpeciesId() {
             return speciesId;
+        }
+
+        public void setSpeciesId(Integer speciesId) {
+            this.speciesId = speciesId;
         }
 
         @Override

@@ -1,8 +1,7 @@
 package org.bgee.model.dao.api.expressiondata.rawdata.est;
 
-import java.io.Serializable;
-
-import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAnnotatedDAO.RawDataAnnotatedTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAnnotatedTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayTO;
 
 /**
  * DAO defining queries using or retrieving {@link ESTLibraryTO}s. 
@@ -28,12 +27,12 @@ public interface ESTLibraryDAO {
      * @see org.bgee.model.expressiondata.rawdata.est.ESTLibrary
      * @since Bgee 11
      */
-    public final class ESTLibraryTO extends RawDataAnnotatedTO implements Serializable {
+    public final class ESTLibraryTO extends AssayTO<Integer> implements RawDataAnnotatedTO {
 
         private static final long serialVersionUID = 42352L;
 
-        public ESTLibraryTO() {
-            super();
+        public ESTLibraryTO(Integer id) {
+            super(id);
             this.description = "";
             this.dataSourceId = "";
         }

@@ -1,9 +1,9 @@
 package org.bgee.model.dao.api.expressiondata.rawdata.rnaseq;
 
-import java.io.Serializable;
-
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAnnotatedDAO.RawDataAnnotatedTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAnnotatedTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayPartOfExpTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayTO;
 
 /**
  * {@code DAO} related to RNA-Seq experiments, using {@link RNASeqLibraryTO}s 
@@ -44,14 +44,8 @@ public interface RNASeqLibraryDAO {
      * @see org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqLibrary
      * @since Bgee 12
      */
-    public final class RNASeqLibraryTO extends RawDataAnnotatedTO implements Serializable {
+    public final class RNASeqLibraryTO extends AssayTO<String> implements AssayPartOfExpTO<String>, RawDataAnnotatedTO {
         private static final long serialVersionUID = 1434335L;
-
-        /**
-         * A {@code String} corresponding to the ID 
-         * of the Rna-Seq experiment this library belongs to. 
-         */
-        public String rnaSeqExperimentId;
 
         /**
          * A {@code String} representing the secondary ID 
@@ -126,9 +120,8 @@ public interface RNASeqLibraryDAO {
         /**
          * Default constructor. 
          */
-        public RNASeqLibraryTO() {
-            super();
-            this.rnaSeqExperimentId = null;
+        public RNASeqLibraryTO(String id) {
+            super(id);
             this.secondaryLibraryId = null;
             this.platformId = null;
             this.log2RPKThreshold = -999999;
@@ -142,6 +135,12 @@ public interface RNASeqLibraryDAO {
             this.minReadLength = 0;
             this.maxReadLength = 0;
             this.libraryType = null;
+        }
+
+        @Override
+        public String getExperimentId() {
+            // TODO Auto-generated method stub
+            return null;
         }
     }
 }

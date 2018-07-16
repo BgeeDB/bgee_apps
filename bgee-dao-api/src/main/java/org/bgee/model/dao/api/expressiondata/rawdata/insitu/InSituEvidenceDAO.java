@@ -1,6 +1,7 @@
 package org.bgee.model.dao.api.expressiondata.rawdata.insitu;
 
-import org.bgee.model.dao.api.TransferObject;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayPartOfExpTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayTO;
 
 /**
  * DAO defining queries using or retrieving {@link InSituEvidenceTO}s. 
@@ -26,7 +27,7 @@ public interface InSituEvidenceDAO {
      * @see org.bgee.model.expressiondata.rawdata.insitu.InSituEvidence
      * @since Bgee 11
      */
-    public final class InSituEvidenceTO extends TransferObject {
+    public final class InSituEvidenceTO extends AssayTO<String> implements AssayPartOfExpTO<String> {
 
         /**
          * 
@@ -35,8 +36,14 @@ public interface InSituEvidenceDAO {
         
         public String inSituExperimentId;
         
-        public InSituEvidenceTO() {
-            super();
+        public InSituEvidenceTO(String id) {
+            super(id);
+        }
+
+        @Override
+        public String getExperimentId() {
+            // TODO Auto-generated method stub
+            return null;
         }
     }
 }

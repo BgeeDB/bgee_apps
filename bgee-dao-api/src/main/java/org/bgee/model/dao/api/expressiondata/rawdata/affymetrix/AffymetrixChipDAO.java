@@ -1,9 +1,9 @@
 package org.bgee.model.dao.api.expressiondata.rawdata.affymetrix;
 
-import java.io.Serializable;
-
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAnnotatedDAO.RawDataAnnotatedTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAnnotatedTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayPartOfExpTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayTO;
 
 /**
  * DAO defining queries using or retrieving {@link AffymetrixChipTO}s. 
@@ -41,7 +41,7 @@ public interface AffymetrixChipDAO {
      * @see org.bgee.model.expressiondata.rawdata.affymetrix.AffymetrixChip
      * @since Bgee 11
      */
-    public final class AffymetrixChipTO extends RawDataAnnotatedTO implements Serializable {
+    public final class AffymetrixChipTO extends AssayTO<Integer> implements AssayPartOfExpTO<String>, RawDataAnnotatedTO {
 
         /**
          * 
@@ -58,13 +58,19 @@ public interface AffymetrixChipDAO {
         /**
          * Default constructor. 
          */
-        public AffymetrixChipTO() {
-            super();
+        public AffymetrixChipTO(int id) {
+            super(id);
             this.microarrayExperimentId = null;
             this.affymetrixChipId = null;
             this.chipType = null;
             this.normalizationType = null;
             this.detectionType = null;
+        }
+
+        @Override
+        public String getExperimentId() {
+            // TODO Auto-generated method stub
+            return null;
         }
     }
 }

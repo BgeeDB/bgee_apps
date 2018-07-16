@@ -100,7 +100,7 @@ public class CallService extends CommonService {
      * <li>{@code CALL_TYPE}: corresponds to {@link Call#getSummaryCallType()}.
      * <li>{@code DATA_QUALITY}: corresponds to {@link Call#getSummaryQuality()}.
      * <li>{@code OBSERVED_DATA}: corresponds to {@link Call#getDataPropagation()}.
-     * <li>{@code GLOABAL_MEAN_RANK}: corresponds to {@link ExpressionCall#getGlobalMeanRank()}.
+     * <li>{@code GLOABAL_MEAN_RANK}: corresponds to {@link ExpressionCall#getMeanRank()}.
      * <li>{@code EXPERIMENT_COUNTS}: corresponds to {@link Call#getCallData()} with experiment
      * expression <strong>total</strong> and <strong>self</strong> counts populated per data type
      * for the requested data types.
@@ -110,7 +110,7 @@ public class CallService extends CommonService {
      */
     public static enum Attribute implements Service.Attribute {
         GENE(false), ANAT_ENTITY_ID(true), DEV_STAGE_ID(true), CALL_TYPE(false),
-        DATA_QUALITY(false), OBSERVED_DATA(false), GLOBAL_MEAN_RANK(false),
+        DATA_QUALITY(false), OBSERVED_DATA(false), MEAN_RANK(false),
         EXPERIMENT_COUNTS(false), DATA_TYPE_RANK_INFO(false);
         
         /**
@@ -312,9 +312,14 @@ public class CallService extends CommonService {
             throw new IllegalArgumentException("Some provided species not found in data source");
         }
 
+        //used in methods called below
+        final Map<Integer, Set<String>> requestedSpeToGeneIdsMap = Collections.unmodifiableMap(
+                callFilter.getGeneFilters().stream()
+                .collect(Collectors.toMap(gf -> gf.getSpeciesId(), gf -> gf.getEnsemblGeneIds())));
+
         //Retrieve a Map of Bgee gene IDs to Gene. This will throw a GeneNotFoundException
         //if some requested gene IDs were not found in Bgee.
-        Map<Integer, Gene> geneMap = this.loadGeneMap(callFilter, speciesMap);
+        Map<Integer, Gene> geneMap = this.loadGeneMap(callFilter, speciesMap, requestedSpeToGeneIdsMap);
         assert !geneMap.isEmpty();
 
         // Define condition parameter combination allowing to target a specific data aggregation
@@ -328,8 +333,8 @@ public class CallService extends CommonService {
                         condParamCombination, convertCondParamAttrsToCondDAOAttrs(clonedAttrs)));
 
         // Retrieve calls
-        Stream<ExpressionCall> calls = this.performsGlobalExprCallQuery(geneMap, callFilter,
-                condParamCombination, clonedAttrs, clonedOrderingAttrs)
+        Stream<ExpressionCall> calls = this.performsGlobalExprCallQuery(geneMap, requestedSpeToGeneIdsMap,
+                callFilter, condParamCombination, clonedAttrs, clonedOrderingAttrs)
             .map(to -> mapGlobalCallTOToExpressionCall(to, geneMap, condMap, callFilter, this.getMaxRank(),
                     clonedAttrs));
 
@@ -449,14 +454,9 @@ public class CallService extends CommonService {
                 );
     }
 
-    private Map<Integer, Gene> loadGeneMap(CallFilter<?, ?> callFilter, Map<Integer, Species> speciesMap)
-            throws GeneNotFoundException {
-        log.entry(callFilter, speciesMap);
-
-        //First, get a Map species ID -> requested Ensemble geneIds for making the DAO query.
-        final Map<Integer, Set<String>> requestedSpeToGeneIdsMap = Collections.unmodifiableMap(
-                callFilter.getGeneFilters().stream()
-                .collect(Collectors.toMap(gf -> gf.getSpeciesId(), gf -> gf.getEnsemblGeneIds())));
+    private Map<Integer, Gene> loadGeneMap(CallFilter<?, ?> callFilter, Map<Integer, Species> speciesMap,
+            Map<Integer, Set<String>> requestedSpeToGeneIdsMap) throws GeneNotFoundException {
+        log.entry(callFilter, speciesMap, requestedSpeToGeneIdsMap);
 
         //Make the DAO query and map GeneTOs to Genes. Store them in a Map to keep the bgeeGeneIds.
         final Map<Integer, Gene> geneMap = Collections.unmodifiableMap(this.geneDAO
@@ -481,14 +481,14 @@ public class CallService extends CommonService {
                     Set<String> retrievedGeneIds = retrievedSpeToGeneIdsMap.get(e.getKey());
                     if (e.getValue().isEmpty()) {
                         //if no genes for the requested species, the whole species is offending
-                        if (retrievedGeneIds == null) {
+                        if (retrievedGeneIds == null || retrievedGeneIds.isEmpty()) {
                             return e;
                         }
                         //otherwise, it's OK, we found some genes for that species
                         return null;
                     }
                     //Now, if some specific IDs were requested, check we got all of them
-                    if (e.getValue().size() == retrievedGeneIds.size()) {
+                    if (e.getValue().equals(retrievedGeneIds)) {
                         return null;
                     }
                     Set<String> offendingGeneIds = e.getValue().stream()
@@ -509,6 +509,13 @@ public class CallService extends CommonService {
      * Perform query to retrieve expressed calls without the post-processing of 
      * the results returned by {@code DAO}s.
      *
+     * @param geneMap               A {@code Map} where keys are {@code Integer}s representing Bgee gene IDs,
+     *                              the associated value being the corresponding {@code Gene}. Note that this {@code Map}
+     *                              must be consistent with the {@code GeneFilter}s provided in {@code callFilter}
+     *                              (by using, for instance, the method {@link #loadGeneMap(CallFilter, Map)}).
+     * @param requestedSpeToGeneIdsMap  A {@code Map} where keys are {@code Integer}s representing species IDs,
+     *                                  the associated value being a {@code Set} of {@code String}s that are the gene IDs
+     *                                  requested in the {@code GeneFilter}s of {@code callFilter}.
      * @param callFilter            An {@code ExpressionCallFilter} allowing 
      *                              to configure retrieving of data throw {@code DAO}s.
      *                              Cannot be {@code null} or empty (check by calling methods).
@@ -525,46 +532,47 @@ public class CallService extends CommonService {
      *                                  expression propagation states requested.
      */
     private Stream<GlobalExpressionCallTO> performsGlobalExprCallQuery(Map<Integer, Gene> geneMap,
-            ExpressionCallFilter callFilter, Set<ConditionDAO.Attribute> condParamCombination,
+            final Map<Integer, Set<String>> requestedSpeToGeneIdsMap, ExpressionCallFilter callFilter,
+            Set<ConditionDAO.Attribute> condParamCombination,
             Set<Attribute> attributes, LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes)
                     throws IllegalArgumentException {
-        log.entry(geneMap, callFilter, condParamCombination, attributes, orderingAttributes);
+        log.entry(geneMap, requestedSpeToGeneIdsMap, callFilter, condParamCombination, attributes, orderingAttributes);
 
         //now we map each GeneFilter to Bgee gene IDs rather than Ensembl gene IDs.
         Set<Integer> geneIdFilter = null;
         Set<Integer> speciesIds = null;
         if (callFilter != null) {
-            //generate a Map Species ID -> (Map Ensembl ID -> Bgee gene ID)
-            final Map<Integer, Map<String, Integer>> speToEnsemblToBgeeIds = geneMap.entrySet().stream()
-                    //return one Entry<Integer, Map<String, Integer>> for each gene retrieved
-                    .map(e -> {
-                        Map<String, Integer> ensemblToBgeeIds = new HashMap<>();
-                        ensemblToBgeeIds.put(e.getValue().getEnsemblGeneId(), e.getKey());
-                        return new AbstractMap.SimpleEntry<>(e.getValue().getSpecies().getId(),
-                                ensemblToBgeeIds);
-                    })
-                    //merge the Map<String, Integer> in values for a same speciesId in key
-                    .collect(Collectors.toMap(
-                            e -> e.getKey(),
-                            e -> e.getValue(),
-                            (v1, v2) -> {v1.putAll(v2); return v1;}));
+            //To create the CallDAOFilter, it is important to provide a species ID only if it means:
+            //give me calls for all genes in that species. Otherwise, if specific genes are targeted,
+            //only their bgee Gene IDs should be provided, and without their corresponding species ID.
+            //
+            //Note: if several GeneFilters are provided in a CallFilter, they are seen as OR condition,
+            //so we should be good. And there is even a check in CallFilter to prevent a user to provide
+            //a same species ID in different GeneFilters, so it's not possible to create a non-sense query.
+            //
+            //OK, so we need to provide either bgeeGeneIds if specific genes were requested,
+            //or species IDs if all genes of a species were requested, but not both.
 
-            //Now retrieve the Bgee gene IDs of the requested genes in GeneFilter.
-            geneIdFilter = callFilter.getGeneFilters().stream()
-                    .filter(gf -> speToEnsemblToBgeeIds.containsKey(gf.getSpeciesId()))
-                    .flatMap(gf -> gf.getEnsemblGeneIds().stream()
-                            .map(ensemblId -> speToEnsemblToBgeeIds.get(gf.getSpeciesId())
-                                    .get(ensemblId))
-                    )
-                    .collect(Collectors.toSet());
-            //the method retrieving the requested genes (loadGeneMap) should have made sure
-            //that all requested genes were found
-            assert !geneIdFilter.contains(null);
+            //BUG FIX: we used to do simply: 'geneIdFilter = geneMap.keySet();'. But actually,
+            //if only a species ID was provided in a GeneFilter, all genes from this species would be present
+            //in the geneMap (see method 'loadGeneMap'). So we need to retrieve bgeeGeneIds only corresponding to
+            //specific genes requested.
+            //First, if specific genes were requested, to identify them faster in the geneMap,
+            //from the GeneFilters we create a Map<speciesId, Set<geneId>> for requested genes
+            if (callFilter.getGeneFilters().stream().anyMatch(gf -> !gf.getEnsemblGeneIds().isEmpty())) {
+                //now we retrieve the appropriate Bgee gene IDs
+                geneIdFilter = geneMap.entrySet().stream()
+                        .filter(entry -> {
+                            Set<String> speReqGeneIds = requestedSpeToGeneIdsMap.get(entry.getValue().getSpecies().getId());
+                            if (speReqGeneIds == null || speReqGeneIds.isEmpty()) return false;
+                            return speReqGeneIds.contains(entry.getValue().getEnsemblGeneId());
+                        })
+                        .map(entry -> entry.getKey())
+                        .collect(Collectors.toSet());
 
-            //Identify the species IDs for which no gene IDs were specifically requested,
-            //maybe no specific ID was requested for some species.
-            //Since the Bgee gene IDs we provide to the DAO are unique for a given species,
-            //It is needed to provide the species ID only if no Bgee gene IDs are requested for that species.
+            }
+            //Identify the species IDs for which no gene IDs were specifically requested.
+            //It is needed to provide the species ID only if no specific genes are requested for that species.
             speciesIds = callFilter.getGeneFilters().stream()
                     .filter(gf -> gf.getEnsemblGeneIds().isEmpty())
                     .map(gf -> gf.getSpeciesId())
@@ -594,16 +602,7 @@ public class CallService extends CommonService {
                             condFilter.getObservedConditions()))
                         .collect(Collectors.toSet()),
                     //CallDataDAOFilters
-                    convertCallFilterToCallDataDAOFilters(callFilter),
-                    //observedDataFilters.
-                    //For callObservedData, only the value associated to a null key is considered here,
-                    //other entries for specific call types provided as keys are dealt with
-                    //in the method convertCallFilterToCallDataDAOFilters.
-                    callFilter.getCallObservedData().entrySet().stream()
-                        .filter(e -> e.getKey() == null)
-                        .map(e -> e.getValue())
-                        .findFirst().orElse(null),
-                    convertCallFilterToDAOObservedDataFilter(callFilter, condParamCombination)
+                    convertCallFilterToCallDataDAOFilters(callFilter, condParamCombination)
                 )),
                 // Condition parameters
                 condParamCombination,
@@ -685,39 +684,22 @@ public class CallService extends CommonService {
 
         return log.exit(Collections.unmodifiableSet(daoCondParamComb));
     }
+    /**
+     * Note that this method manages the "observed data" state filters per call type,
+     * but not the "observed data" state filters for any call type (see method
+     * {@link #performsGlobalExprCallQuery(Map, ExpressionCallFilter, Set, Set, LinkedHashMap)}).
+     * @param callFilter
+     * @param condParamCombination
+     * @return
+     */
     private static Set<CallDataDAOFilter> convertCallFilterToCallDataDAOFilters(
-            ExpressionCallFilter callFilter) {
-        log.entry(callFilter);
+            ExpressionCallFilter callFilter, Set<ConditionDAO.Attribute> condParamCombination) {
+        log.entry(callFilter, condParamCombination);
 
-        //Determine whether the lowest quality level was requested
-        final SummaryQuality lowestQual = SummaryQuality.values()[0];
-        //Just to make sure that qualities are in proper order and haven't changed
-        assert lowestQual.equals(SummaryQuality.BRONZE);
-        boolean lowestQualSelected = callFilter.getSummaryCallTypeQualityFilter() == null ||
-                callFilter.getSummaryCallTypeQualityFilter().isEmpty() ||
-                callFilter.getSummaryCallTypeQualityFilter().entrySet().stream()
-                .allMatch(e -> e.getValue() == null || lowestQual.equals(e.getValue()));
-        //now determine whether all data types were requested
-        boolean allDataTypesSelected = callFilter.getDataTypeFilters() == null ||
-                callFilter.getDataTypeFilters().isEmpty() ||
-                callFilter.getDataTypeFilters().equals(EnumSet.allOf(DataType.class));
-        //now determine whether all CallTypes were requested
-        boolean allCallTypesSelected = callFilter.getSummaryCallTypeQualityFilter() == null ||
-                callFilter.getSummaryCallTypeQualityFilter().isEmpty() ||
-                callFilter.getSummaryCallTypeQualityFilter().keySet().equals(EnumSet.allOf(SummaryCallType.ExpressionSummary.class));
-
-        //absolutely no filtering necessary on experiment expression counts in following case.
-        //Note: it is not possible to request no-expression calls from EST data,
-        //but for convenience we do not consider this an error here, otherwise we could not provide
-        //one ExpressionCallFilter to simply say: "give me all calls".
-        if (allCallTypesSelected && lowestQualSelected && allDataTypesSelected &&
-                //this is true only as long as the minimum experiment count threshold is 1
-                MIN_LOW_BRONZE <= 1 && MIN_HIGH_BRONZE <= 1) {
+        if (checkNoFilteringNeeded(callFilter)) {
             return log.exit(null);
         }
 
-        final Set<DAODataType> daoDataTypes = Collections.unmodifiableSet(
-                convertDataTypeToDAODataType(callFilter.getDataTypeFilters()));
         final Map<ExpressionSummary, SummaryQuality> callTypeQualityFilters = 
                 callFilter.getSummaryCallTypeQualityFilter() == null ||
                 callFilter.getSummaryCallTypeQualityFilter().isEmpty()?
@@ -742,157 +724,225 @@ public class CallService extends CommonService {
                                 + "Call Type: " + requestedCallType + " - Data types: " + callFilter.getDataTypeFilters()));
                     }
 
-                    //see org.bgee.model.dao.api.expressiondata.CallDataDAOFilter.getExperimentCountFilters()
-                    //for more details
-                    Set<Set<DAOExperimentCountFilter>> daoExperimentCountFilters = new HashSet<>();
-
-                    final Boolean isExpression;
-                    switch (requestedCallType) {
-                    case EXPRESSED:
-                        isExpression = true;
-                        break;
-                    case NOT_EXPRESSED:
-                        isExpression = false;
-                        break;
-                    default:
-                        throw log.throwing(new IllegalStateException("Unsupported call type: "
-                                + requestedCallType));
-                    }
-                    assert isExpression != null;
-
-                    //reject expression if no-expression is requested, through "AND" filters
-                    //(so, each filter in a separate Set)
-                    if (!isExpression) {
-                        Set<Set<DAOExperimentCountFilter>> rejectExpressionFilters =
-                                EnumSet.allOf(DAOExperimentCount.DataQuality.class).stream()
-                                .map(dataQual -> Collections.singleton(new DAOExperimentCountFilter(
-                                        DAOExperimentCount.CallType.PRESENT, dataQual,
-                                        DAOPropagationState.ALL,
-                                        DAOExperimentCountFilter.Qualifier.EQUALS_TO, 0)))
-                                .collect(Collectors.toSet());
-
-                        daoExperimentCountFilters.addAll(rejectExpressionFilters);
-                    }
-
-                    //requested call type "OR" filters.
-                    //assert just to make sure we cover all DAOExperimentCount.CallTypes
-                    assert DAOExperimentCount.CallType.values().length == 2;
-                    final DAOExperimentCount.CallType daoCallType = convertSummaryCallTypeToDAOCallType(
-                            requestedCallType);
-                    Set<DAOExperimentCountFilter> acceptCallTypeFilters = new HashSet<>();
-                    switch (requestedQual) {
-                    case BRONZE:
-                        acceptCallTypeFilters.add(new DAOExperimentCountFilter(daoCallType,
-                                DAOExperimentCount.DataQuality.LOW,
-                                DAOPropagationState.ALL,
-                                DAOExperimentCountFilter.Qualifier.GREATER_THAN, MIN_LOW_BRONZE - 1));
-                        //also need to get calls supported by high quality data only
-                        acceptCallTypeFilters.add(new DAOExperimentCountFilter(daoCallType,
-                                DAOExperimentCount.DataQuality.HIGH,
-                                DAOPropagationState.ALL,
-                                DAOExperimentCountFilter.Qualifier.GREATER_THAN, MIN_HIGH_BRONZE - 1));
-                        break;
-                    case SILVER:
-                        acceptCallTypeFilters.add(new DAOExperimentCountFilter(daoCallType,
-                                DAOExperimentCount.DataQuality.LOW,
-                                DAOPropagationState.ALL,
-                                DAOExperimentCountFilter.Qualifier.GREATER_THAN, MIN_LOW_SILVER - 1));
-                        //also need to get calls supported by high quality data only
-                        acceptCallTypeFilters.add(new DAOExperimentCountFilter(daoCallType,
-                                DAOExperimentCount.DataQuality.HIGH,
-                                DAOPropagationState.ALL,
-                                DAOExperimentCountFilter.Qualifier.GREATER_THAN, MIN_HIGH_SILVER - 1));
-                        break;
-                    case GOLD:
-                        acceptCallTypeFilters.add(new DAOExperimentCountFilter(daoCallType,
-                                DAOExperimentCount.DataQuality.HIGH,
-                                DAOPropagationState.ALL,
-                                DAOExperimentCountFilter.Qualifier.GREATER_THAN, MIN_HIGH_GOLD - 1));
-                        break;
-                    default:
-                        throw log.throwing(new UnsupportedOperationException(
-                                "Unsupported SummaryQuality: " + requestedQual));
-                    }
-
-                    assert !acceptCallTypeFilters.isEmpty();
-                    daoExperimentCountFilters.add(acceptCallTypeFilters);
-
-//                    //Bug fix: we do NOT discard improper data types to retrieve no-expression calls,
-//                    //otherwise it would mess up the rejectExpressionFilters, and we could end up
-//                    //retrieving, for instance, no-expression calls from Affymetrix data having expression calls
-//                    //from EST data (and we do not want that, if EST data were selected to retrieve the no-expression calls,
-//                    //despite being incorrect, we do not want to retrieve no-expression calls that are expressed
-//                    //according to EST).
-//                    //=> It means it is the DAO job to discard silently such improper fields
-//                    //(see method org.bgee.model.dao.mysql.expressiondata.MySQLGlobalExpressionCallDAO.generateDataFilters(LinkedHashSet, String)) ).
-//                    //Of note, if only EST data were requested for retrieving no-expression calls,
-//                    //an exception would have been thrown by this method already.
-//                    Set<DAODataType> filteredDataTypes = daoDataTypes.stream()
-//                            // we do not keep filters requiring EST data and absence of expression
-//                            .filter(dt -> !(DAODataType.EST.equals(dt) && !isExpression))
-//                            .collect(Collectors.toSet());
-//                    if (filteredDataTypes.isEmpty()) {
-//                        throw log.throwing(new IllegalArgumentException(
-//                                "Impossible to get not expressed calls for EST data only"));
-//                    }
-//                    return new CallDataDAOFilter(daoExperimentCountFilters, filteredDataTypes);
-
-
-                    //Now we deal with getCallObservedData if filtering on specific call type was requested
-                    //(Observed data filter with a global null key are managed directly in the CallDAOFilter)
-                    Set<Set<DAOExperimentCountFilter>> observedDataFilters = new HashSet<>();
-                    if (callFilter.getCallObservedData() != null) {
-                        for (Entry<CallType.Expression, Boolean> obsFilter: callFilter.getCallObservedData().entrySet()) {
-                            //Observed data filter with a global null key are managed directly in the CallDAOFilter
-                            if (obsFilter.getKey() == null) {
-                                continue;
-                            }
-                            if (Boolean.TRUE.equals(obsFilter.getValue())) {
-                                //self present/absent low > 0 OR self present/absent high > 0
-                                //It thus go to the same inner Set
-                                Set<DAOExperimentCountFilter> obsDataOrFilters = new HashSet<>();
-                                for (DAOExperimentCount.DataQuality qual: DAOExperimentCount.DataQuality.values()) {
-                                    obsDataOrFilters.add(
-                                        new DAOExperimentCountFilter(
-                                                convertCallTypeToDAOCallType(obsFilter.getKey()),
-                                                qual,
-                                                DAOPropagationState.SELF,
-                                                DAOExperimentCountFilter.Qualifier.GREATER_THAN,
-                                                0));
-                                }
-                                observedDataFilters.add(obsDataOrFilters);
-                            } else {
-                                //self present/absent low = 0 AND self present/absent high = 0
-                                //It thus go to different inner Set
-                                for (DAOExperimentCount.DataQuality qual: DAOExperimentCount.DataQuality.values()) {
-                                    Set<DAOExperimentCountFilter> obsDataAndFilters = new HashSet<>();
-                                    obsDataAndFilters.add(
-                                        new DAOExperimentCountFilter(
-                                                convertCallTypeToDAOCallType(obsFilter.getKey()),
-                                                qual,
-                                                DAOPropagationState.SELF,
-                                                DAOExperimentCountFilter.Qualifier.EQUALS_TO,
-                                                0));
-                                    observedDataFilters.add(obsDataAndFilters);
-                                }
-                            }
-                        }
-                    }
-                    if (!observedDataFilters.isEmpty()) {
-                        daoExperimentCountFilters.addAll(observedDataFilters);
-                    }
-
-
-                    return new CallDataDAOFilter(daoExperimentCountFilters, daoDataTypes);
+                    return generateCallDataDAOFilter(callFilter, condParamCombination,
+                            //Do not store the value returned by generateExprQualDAOCountFilters in a variable,
+                            //because generateCallDataDAOFilter will modify it before using it.
+                            generateExprQualDAOCountFilters(requestedCallType, requestedQual));
                 })
                 .collect(Collectors.toSet());
-
 
         //the method should have exited right away if no filtering was necessary
         assert callDataDAOFilters != null && !callDataDAOFilters.isEmpty();
         return log.exit(callDataDAOFilters);
     }
+    /**
+     * Checks whether this {@code CallFilter} requires creating {@code CallDataDAOFilter}s.
+     *
+     * @param callFilter    The {@code ExpressionCallFilter} to check for creation of {@code CallDataDAOFilter}s.
+     * @return              {@code true} if no {@code CallDataDAOFilter}s need to be created,
+     *                      {@code false} otherwise.
+     */
+    private static boolean checkNoFilteringNeeded(ExpressionCallFilter callFilter) {
+        log.entry(callFilter);
 
+        //Determine whether the lowest quality level was requested
+        final SummaryQuality lowestQual = SummaryQuality.BRONZE;
+        //Just to make sure that qualities are in proper order and haven't changed
+        assert SummaryQuality.values()[0].equals(SummaryQuality.BRONZE);
+        boolean lowestQualSelected = callFilter.getSummaryCallTypeQualityFilter() == null ||
+                callFilter.getSummaryCallTypeQualityFilter().isEmpty() ||
+                callFilter.getSummaryCallTypeQualityFilter().entrySet().stream()
+                .allMatch(e -> e.getValue() == null || lowestQual.equals(e.getValue()));
+        //now determine whether all data types were requested
+        boolean allDataTypesSelected = callFilter.getDataTypeFilters() == null ||
+                callFilter.getDataTypeFilters().isEmpty() ||
+                callFilter.getDataTypeFilters().equals(EnumSet.allOf(DataType.class));
+        //now determine whether all CallTypes were requested
+        boolean allCallTypesSelected = callFilter.getSummaryCallTypeQualityFilter() == null ||
+                callFilter.getSummaryCallTypeQualityFilter().isEmpty() ||
+                callFilter.getSummaryCallTypeQualityFilter().keySet().equals(EnumSet.allOf(SummaryCallType.ExpressionSummary.class));
+
+        //absolutely no filtering necessary on experiment expression counts in following case.
+        //Note: it is not possible to request no-expression calls from EST data,
+        //but for convenience we do not consider this an error here, otherwise we could not provide
+        //one ExpressionCallFilter to simply say: "give me all calls".
+        return log.exit(allCallTypesSelected && lowestQualSelected && allDataTypesSelected &&
+                //this is true only as long as the minimum experiment count threshold is 1
+                MIN_LOW_BRONZE <= 1 && MIN_HIGH_BRONZE <= 1);
+    }
+
+    private static CallDataDAOFilter generateCallDataDAOFilter(ExpressionCallFilter callFilter,
+            Set<ConditionDAO.Attribute> condParamCombination,
+            Set<Set<DAOExperimentCountFilter>> daoExperimentCountFilters) {
+        log.entry(callFilter, condParamCombination, daoExperimentCountFilters);
+
+        final Set<DAODataType> daoDataTypes = Collections.unmodifiableSet(
+                convertDataTypeToDAODataType(callFilter.getDataTypeFilters()));
+
+        //Now we deal with getCallObservedData if filtering on specific call type was requested
+        //(Observed data filter with a global null key are managed directly in the CallDAOFilter)
+        Set<Set<DAOExperimentCountFilter>> observedDataFilters = new HashSet<>();
+        //state of observation requested whatever the expression call type (key null in getCallObservedData).
+        Boolean callObservedData = null;
+        for (Entry<CallType.Expression, Boolean> obsFilter: callFilter.getCallObservedData().entrySet()) {
+            //state of observation requested whatever the expression call type
+            if (obsFilter.getKey() == null) {
+                callObservedData = obsFilter.getValue();
+            } else {
+                //state of observation for specific expression types
+                //(managed through DAOExperimentCountFilters)
+                if (Boolean.TRUE.equals(obsFilter.getValue())) {
+                    //self present/absent low > 0 OR self present/absent high > 0
+                    //It thus go to the same inner Set
+                    Set<DAOExperimentCountFilter> obsDataOrFilters = new HashSet<>();
+                    for (DAOExperimentCount.DataQuality qual: DAOExperimentCount.DataQuality.values()) {
+                        obsDataOrFilters.add(
+                                new DAOExperimentCountFilter(
+                                        convertCallTypeToDAOCallType(obsFilter.getKey()),
+                                        qual,
+                                        DAOPropagationState.SELF,
+                                        DAOExperimentCountFilter.Qualifier.GREATER_THAN,
+                                        0));
+                    }
+                    observedDataFilters.add(obsDataOrFilters);
+                } else {
+                    //self present/absent low = 0 AND self present/absent high = 0
+                    //It thus go to different inner Set
+                    for (DAOExperimentCount.DataQuality qual: DAOExperimentCount.DataQuality.values()) {
+                        Set<DAOExperimentCountFilter> obsDataAndFilters = new HashSet<>();
+                        obsDataAndFilters.add(
+                                new DAOExperimentCountFilter(
+                                        convertCallTypeToDAOCallType(obsFilter.getKey()),
+                                        qual,
+                                        DAOPropagationState.SELF,
+                                        DAOExperimentCountFilter.Qualifier.EQUALS_TO,
+                                        0));
+                        observedDataFilters.add(obsDataAndFilters);
+                    }
+                }
+            }
+        }
+        if (!observedDataFilters.isEmpty()) {
+            //We shamelessly modify the arguments of this method, since it is a private method,
+            //and the argument passed when calling this method is not stored previously in any variable.
+            daoExperimentCountFilters.addAll(observedDataFilters);
+        }
+
+
+        return log.exit(new CallDataDAOFilter(daoExperimentCountFilters, daoDataTypes, callObservedData,
+                convertCallFilterToDAOObservedDataFilter(callFilter, condParamCombination)));
+    }
+
+    private static Set<Set<DAOExperimentCountFilter>> generateExprQualDAOCountFilters(
+            SummaryCallType.ExpressionSummary requestedCallType, SummaryQuality requestedQual) {
+        log.entry(requestedCallType, requestedQual);
+
+        //see org.bgee.model.dao.api.expressiondata.CallDataDAOFilter.getExperimentCountFilters()
+        //for more details
+        Set<Set<DAOExperimentCountFilter>> daoExperimentCountFilters = new HashSet<>();
+
+        final Boolean isExpression;
+        switch (requestedCallType) {
+        case EXPRESSED:
+            isExpression = true;
+            break;
+        case NOT_EXPRESSED:
+            isExpression = false;
+            break;
+        default:
+            throw log.throwing(new IllegalStateException("Unsupported call type: "
+                    + requestedCallType));
+        }
+        assert isExpression != null;
+
+        //reject expression if no-expression is requested, through "AND" filters
+        //(so, each filter in a separate Set)
+        if (!isExpression) {
+            Set<Set<DAOExperimentCountFilter>> rejectExpressionFilters =
+                    EnumSet.allOf(DAOExperimentCount.DataQuality.class).stream()
+                    .map(dataQual -> Collections.singleton(new DAOExperimentCountFilter(
+                            DAOExperimentCount.CallType.PRESENT, dataQual,
+                            DAOPropagationState.ALL,
+                            DAOExperimentCountFilter.Qualifier.EQUALS_TO, 0)))
+                    .collect(Collectors.toSet());
+
+            daoExperimentCountFilters.addAll(rejectExpressionFilters);
+        }
+
+        //requested call type "OR" filters.
+        //assert just to make sure we cover all DAOExperimentCount.CallTypes
+        assert DAOExperimentCount.CallType.values().length == 2;
+        final DAOExperimentCount.CallType daoCallType = convertSummaryCallTypeToDAOCallType(
+                requestedCallType);
+        Set<DAOExperimentCountFilter> acceptCallTypeFilters = new HashSet<>();
+        switch (requestedQual) {
+        case BRONZE:
+            acceptCallTypeFilters.add(new DAOExperimentCountFilter(daoCallType,
+                    DAOExperimentCount.DataQuality.LOW,
+                    DAOPropagationState.ALL,
+                    DAOExperimentCountFilter.Qualifier.GREATER_THAN, MIN_LOW_BRONZE - 1));
+            //also need to get calls supported by high quality data only
+            acceptCallTypeFilters.add(new DAOExperimentCountFilter(daoCallType,
+                    DAOExperimentCount.DataQuality.HIGH,
+                    DAOPropagationState.ALL,
+                    DAOExperimentCountFilter.Qualifier.GREATER_THAN, MIN_HIGH_BRONZE - 1));
+            break;
+        case SILVER:
+            acceptCallTypeFilters.add(new DAOExperimentCountFilter(daoCallType,
+                    DAOExperimentCount.DataQuality.LOW,
+                    DAOPropagationState.ALL,
+                    DAOExperimentCountFilter.Qualifier.GREATER_THAN, MIN_LOW_SILVER - 1));
+            //also need to get calls supported by high quality data only
+            acceptCallTypeFilters.add(new DAOExperimentCountFilter(daoCallType,
+                    DAOExperimentCount.DataQuality.HIGH,
+                    DAOPropagationState.ALL,
+                    DAOExperimentCountFilter.Qualifier.GREATER_THAN, MIN_HIGH_SILVER - 1));
+            break;
+        case GOLD:
+            acceptCallTypeFilters.add(new DAOExperimentCountFilter(daoCallType,
+                    DAOExperimentCount.DataQuality.HIGH,
+                    DAOPropagationState.ALL,
+                    DAOExperimentCountFilter.Qualifier.GREATER_THAN, MIN_HIGH_GOLD - 1));
+            break;
+        default:
+            throw log.throwing(new UnsupportedOperationException(
+                    "Unsupported SummaryQuality: " + requestedQual));
+        }
+
+        assert !acceptCallTypeFilters.isEmpty();
+        daoExperimentCountFilters.add(acceptCallTypeFilters);
+
+        //Bug fix (commenting of next lines): we do NOT discard improper data types to retrieve no-expression calls,
+        //otherwise it would mess up the rejectExpressionFilters, and we could end up
+        //retrieving, for instance, no-expression calls from Affymetrix data having expression calls
+        //from EST data (and we do not want that, if EST data were selected to retrieve the no-expression calls,
+        //despite being incorrect, we do not want to retrieve no-expression calls that are expressed
+        //according to EST).
+        //=> It means it is the DAO job to discard silently such improper fields
+        //(see method org.bgee.model.dao.mysql.expressiondata.MySQLGlobalExpressionCallDAO.generateDataFilters(LinkedHashSet, String)) ).
+        //Of note, if only EST data were requested for retrieving no-expression calls,
+        //an exception would have been thrown by this method already.
+//      Set<DAODataType> filteredDataTypes = daoDataTypes.stream()
+//      // we do not keep filters requiring EST data and absence of expression
+//          .filter(dt -> !(DAODataType.EST.equals(dt) && !isExpression))
+//          .collect(Collectors.toSet());
+//      if (filteredDataTypes.isEmpty()) {
+//          throw log.throwing(new IllegalArgumentException(
+//                  "Impossible to get not expressed calls for EST data only"));
+//      }
+//      return new CallDataDAOFilter(daoExperimentCountFilters, filteredDataTypes);
+
+        return log.exit(daoExperimentCountFilters);
+    }
+
+    /**
+     * This method manages only the "observed data" states per anatomical entity and/or dev. stages,
+     * it does not manage the condition "observed data" states (see method
+     * {@link #performsGlobalExprCallQuery(Map, ExpressionCallFilter, Set, Set, LinkedHashMap)}).
+     * @param callFilter
+     * @param condParamCombination
+     * @return
+     */
     private static Map<ConditionDAO.Attribute, Boolean> convertCallFilterToDAOObservedDataFilter(
             ExpressionCallFilter callFilter, Set<ConditionDAO.Attribute> condParamCombination) {
         log.entry(callFilter, condParamCombination);
@@ -996,8 +1046,8 @@ public class CallService extends CommonService {
                             GlobalExpressionCallDAO.Attribute.DATA_TYPE_EXPERIMENT_PROPAGATED_COUNTS);
                 case OBSERVED_DATA:
                     return Stream.of(GlobalExpressionCallDAO.Attribute.DATA_TYPE_OBSERVED_DATA);
-                case GLOBAL_MEAN_RANK:
-                    return Stream.of(GlobalExpressionCallDAO.Attribute.GLOBAL_MEAN_RANK);
+                case MEAN_RANK:
+                    return Stream.of(GlobalExpressionCallDAO.Attribute.MEAN_RANK);
                 case DATA_TYPE_RANK_INFO:
                     return Stream.of(GlobalExpressionCallDAO.Attribute.DATA_TYPE_RANK_INFO);
                 default: 
@@ -1016,7 +1066,7 @@ public class CallService extends CommonService {
                 e -> {
                     switch (e.getKey()) {
                         case GENE_ID: 
-                            return GlobalExpressionCallDAO.OrderingAttribute.GENE_ID;
+                            return GlobalExpressionCallDAO.OrderingAttribute.PUBLIC_GENE_ID;
                         case ANAT_ENTITY_ID:
                             return GlobalExpressionCallDAO.OrderingAttribute.ANAT_ENTITY_ID;
                         case DEV_STAGE_ID: 
@@ -1073,7 +1123,7 @@ public class CallService extends CommonService {
     private static ExpressionCall mapGlobalCallTOToExpressionCall(GlobalExpressionCallTO globalCallTO, 
             Map<Integer, Gene> geneMap, Map<Integer, Condition> condMap,
             ExpressionCallFilter callFilter, BigDecimal maxRank, Set<CallService.Attribute> attrs) {
-        log.entry(globalCallTO, geneMap, condMap, attrs);
+        log.entry(globalCallTO, geneMap, condMap, callFilter, maxRank, attrs);
         
         Set<ExpressionCallData> callData = mapGlobalCallTOToExpressionCallData(globalCallTO,
                 attrs, callFilter.getDataTypeFilters());
@@ -1092,9 +1142,9 @@ public class CallService extends CommonService {
             attrs == null || attrs.isEmpty() || attrs.contains(Attribute.EXPERIMENT_COUNTS) ||
                     attrs.contains(Attribute.DATA_TYPE_RANK_INFO)?
                             callData: null,
-            attrs == null || attrs.isEmpty() || attrs.contains(Attribute.GLOBAL_MEAN_RANK)?
-                    globalCallTO.getGlobalMeanRank(): null,
-            attrs == null || attrs.isEmpty() || attrs.contains(Attribute.GLOBAL_MEAN_RANK)?
+            attrs == null || attrs.isEmpty() || attrs.contains(Attribute.MEAN_RANK)?
+                    globalCallTO.getMeanRank(): null,
+            attrs == null || attrs.isEmpty() || attrs.contains(Attribute.MEAN_RANK)?
                     maxRank: null));
     }
     
@@ -1148,12 +1198,12 @@ public class CallService extends CommonService {
                         .collect(Collectors.toSet());
             }
 
-            return log.exit(new ExpressionCallData(dt, counts,
+            return new ExpressionCallData(dt, counts,
                     getExperimentsCounts? cdTO.getPropagatedCount(): null,
                     getRankInfo? cdTO.getRank(): null,
                     getRankInfo? cdTO.getRankNorm(): null,
                     getRankInfo? cdTO.getWeightForMeanRank(): null,
-                    getDataProp? mapDAOCallDataTOToDataPropagation(cdTO): null));
+                    getDataProp? mapDAOCallDataTOToDataPropagation(cdTO): null);
         }).collect(Collectors.toSet()));
     }
 
@@ -1195,7 +1245,7 @@ public class CallService extends CommonService {
         }
     }
     private static Set<DataType> mapDAODataTypeToDataType(Set<DAODataType> dts,
-            Set<DataType> requestedDataTypes) throws IllegalStateException{
+            Set<DataType> requestedDataTypes) throws IllegalArgumentException, IllegalStateException {
         log.entry(dts, requestedDataTypes);
 
         Set<DataType> mappedDataTypes = null;
@@ -1260,8 +1310,7 @@ public class CallService extends CommonService {
     // HELPER METHODS FOR INFERENCES
     //*************************************************************************
 
-    private static <T extends CallData<?>> DataPropagation inferDataPropagation(
-            Set<ExpressionCallData> callData) {
+    private static DataPropagation inferDataPropagation(Set<ExpressionCallData> callData) {
         log.entry(callData);
 
         if (callData == null || callData.isEmpty() || callData.stream()
@@ -1317,6 +1366,9 @@ public class CallService extends CommonService {
             DataPropagation dataProp2) {
         log.entry(dataProp1, dataProp2);
 
+        if (dataProp1 == null && dataProp2 == null) {
+            return log.exit(DATA_PROPAGATION_IDENTITY);
+        }
         if (dataProp1 == null || dataProp1.equals(DATA_PROPAGATION_IDENTITY)) {
             return log.exit(dataProp2);
         }
@@ -1368,13 +1420,13 @@ public class CallService extends CommonService {
         if (state1 == null && state2 == null) {
             return log.exit(null);
         }
-        if (state1 == null && state2 != null) {
+        if (state1 == null) {
             return log.exit(state2);
         }
-        if (state1 != null && state2 == null) {
+        if (state2 == null) {
             return log.exit(state1);
         }
-        assert state1 != null && state2 != null;
+
         if (state1.equals(state2)) {
             return log.exit(state1);
         }
@@ -1398,9 +1450,7 @@ public class CallService extends CommonService {
                 throw log.throwing(new AssertionError("Case not covered, " + propStates));
             }
         } else if (propStates.contains(PropagationState.ANCESTOR)) {
-            if (propStates.contains(PropagationState.SELF)) {
-                return log.exit(PropagationState.SELF_AND_ANCESTOR);
-            } else if (propStates.contains(PropagationState.DESCENDANT)) {
+            if (propStates.contains(PropagationState.DESCENDANT)) {
                 return log.exit(PropagationState.ANCESTOR_AND_DESCENDANT);
             } else if (propStates.contains(PropagationState.SELF_AND_ANCESTOR)) {
                 return log.exit(PropagationState.SELF_AND_ANCESTOR);
@@ -1412,11 +1462,7 @@ public class CallService extends CommonService {
                 throw log.throwing(new AssertionError("Case not covered, " + propStates));
             }
         } else if (propStates.contains(PropagationState.DESCENDANT)) {
-            if (propStates.contains(PropagationState.SELF)) {
-                return log.exit(PropagationState.SELF_AND_DESCENDANT);
-            } else if (propStates.contains(PropagationState.ANCESTOR)) {
-                return log.exit(PropagationState.ANCESTOR_AND_DESCENDANT);
-            } else if (propStates.contains(PropagationState.SELF_AND_ANCESTOR)) {
+            if (propStates.contains(PropagationState.SELF_AND_ANCESTOR)) {
                 return log.exit(PropagationState.ALL);
             } else if (propStates.contains(PropagationState.SELF_AND_DESCENDANT)) {
                 return log.exit(PropagationState.SELF_AND_DESCENDANT);
@@ -1426,13 +1472,7 @@ public class CallService extends CommonService {
                 throw log.throwing(new AssertionError("Case not covered, " + propStates));
             }
         } else if (propStates.contains(PropagationState.SELF_AND_ANCESTOR)) {
-            if (propStates.contains(PropagationState.SELF)) {
-                return log.exit(PropagationState.SELF_AND_ANCESTOR);
-            } else if (propStates.contains(PropagationState.ANCESTOR)) {
-                return log.exit(PropagationState.SELF_AND_ANCESTOR);
-            } else if (propStates.contains(PropagationState.DESCENDANT)) {
-                return log.exit(PropagationState.ALL);
-            } else if (propStates.contains(PropagationState.SELF_AND_DESCENDANT)) {
+            if (propStates.contains(PropagationState.SELF_AND_DESCENDANT)) {
                 return log.exit(PropagationState.ALL);
             } else if (propStates.contains(PropagationState.ANCESTOR_AND_DESCENDANT)) {
                 return log.exit(PropagationState.ALL);
@@ -1440,33 +1480,13 @@ public class CallService extends CommonService {
                 throw log.throwing(new AssertionError("Case not covered, " + propStates));
             }
         } else if (propStates.contains(PropagationState.SELF_AND_DESCENDANT)) {
-            if (propStates.contains(PropagationState.SELF)) {
-                return log.exit(PropagationState.SELF_AND_DESCENDANT);
-            } else if (propStates.contains(PropagationState.ANCESTOR)) {
+            if (propStates.contains(PropagationState.ANCESTOR_AND_DESCENDANT)) {
                 return log.exit(PropagationState.ALL);
-            } else if (propStates.contains(PropagationState.DESCENDANT)) {
-                return log.exit(PropagationState.SELF_AND_DESCENDANT);
-            } else if (propStates.contains(PropagationState.SELF_AND_ANCESTOR)) {
-                return log.exit(PropagationState.ALL);
-            } else if (propStates.contains(PropagationState.ANCESTOR_AND_DESCENDANT)) {
-                return log.exit(PropagationState.ALL);
-            } else {
-                throw log.throwing(new AssertionError("Case not covered, " + propStates));
             }
+            throw log.throwing(new AssertionError("Case not covered, " + propStates));
         } else if (propStates.contains(PropagationState.ANCESTOR_AND_DESCENDANT)) {
-            if (propStates.contains(PropagationState.SELF)) {
-                return log.exit(PropagationState.ALL);
-            } else if (propStates.contains(PropagationState.ANCESTOR)) {
-                return log.exit(PropagationState.ANCESTOR_AND_DESCENDANT);
-            } else if (propStates.contains(PropagationState.DESCENDANT)) {
-                return log.exit(PropagationState.ANCESTOR_AND_DESCENDANT);
-            } else if (propStates.contains(PropagationState.SELF_AND_ANCESTOR)) {
-                return log.exit(PropagationState.ALL);
-            } else if (propStates.contains(PropagationState.SELF_AND_DESCENDANT)) {
-                return log.exit(PropagationState.ALL);
-            } else {
-                throw log.throwing(new AssertionError("Case not covered, " + propStates));
-            }
+            //all cases already covered in previous if/else
+            throw log.throwing(new AssertionError("Case not covered, " + propStates));
         } else {
             throw log.throwing(new AssertionError("Case not covered, " + propStates));
         }
@@ -1479,7 +1499,7 @@ public class CallService extends CommonService {
      */
     private static ExpressionSummary inferSummaryCallType(Set<ExpressionCallData> callData) {
         log.entry(callData);
-        
+
         if (callData.stream().anyMatch(cd -> Expression.EXPRESSED.equals(cd.getCallType()))) {
             return log.exit(ExpressionSummary.EXPRESSED);
         }

@@ -84,9 +84,9 @@ public class CommandTopAnatTest extends TestAncestor {
         Integer bgSelectedSpeciesId = 9606;
         Species bgSelectedSpecies = new Species(9606);
 
-        List<Gene> fgGenes = Arrays.asList(new Gene("ID3", fgSelectedSpecies));
-        List<Gene> bgGenes = Arrays.asList(new Gene("ID1", bgSelectedSpecies),
-                new Gene("ID2", bgSelectedSpecies), new Gene("ID3", fgSelectedSpecies));
+        List<Gene> fgGenes = Arrays.asList(new Gene("ID3", fgSelectedSpecies, 1));
+        List<Gene> bgGenes = Arrays.asList(new Gene("ID1", bgSelectedSpecies, 1),
+                new Gene("ID2", bgSelectedSpecies, 1), new Gene("ID3", fgSelectedSpecies, 1));
 
         when(geneService.loadGenesByEnsemblIds(new TreeSet<>(fgSubmittedGeneIds))).thenReturn(fgGenes.stream());
         when(geneService.loadGenesByEnsemblIds(new TreeSet<>(bgSubmittedGeneIds))).thenReturn(bgGenes.stream());

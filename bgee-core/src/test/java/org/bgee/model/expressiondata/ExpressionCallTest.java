@@ -42,7 +42,7 @@ public class ExpressionCallTest extends TestAncestor {
         Condition ae1devB = new Condition(new AnatEntity("2"), null, species);
         Condition ae2devA = new Condition(new AnatEntity("3"), null, species);
         Condition ae2devB = new Condition(new AnatEntity("4"), null, species);
-        Gene gene = new Gene("1", species);
+        Gene gene = new Gene("1", species, 1);
         ExpressionCall call1 = new ExpressionCall(gene, ae1devA, null, null, null, null,
                 new BigDecimal("2.0"), new BigDecimal("100"));
         ExpressionCall call2 = new ExpressionCall(gene, ae1devB, null, null, null, null,
@@ -91,7 +91,7 @@ public class ExpressionCallTest extends TestAncestor {
         Condition ae3devA = new Condition(new AnatEntity("AE3"), new DevStage("DevA"), species);
         Condition ae3devC = new Condition(new AnatEntity("AE3"), new DevStage("DevC"), species);
         Condition ae3devD = new Condition(new AnatEntity("AE3"), new DevStage("DevD"), species);
-        Gene gene = new Gene("1", species);
+        Gene gene = new Gene("1", species, 1);
         ExpressionCall callAe1devA = new ExpressionCall(gene, ae1devA, null, null, null, null,
                 new BigDecimal("2.0"), new BigDecimal("100"));
         ExpressionCall callAe1devB = new ExpressionCall(gene, ae1devB, null, null, null, null,

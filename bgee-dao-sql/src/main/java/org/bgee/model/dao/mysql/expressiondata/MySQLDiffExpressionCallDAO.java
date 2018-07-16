@@ -12,7 +12,6 @@ import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.ComparisonFactor;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.DiffExprCallType;
-import org.bgee.model.dao.api.expressiondata.DiffExpressionCallParams;
 import org.bgee.model.dao.mysql.MySQLOrderingDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
@@ -49,28 +48,6 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
     //an illegal or inappropriate argument.
     public MySQLDiffExpressionCallDAO(MySQLDAOManager manager) throws IllegalArgumentException {
         super(manager);
-    }
-
-    @Override
-    public DiffExpressionCallTOResultSet getDiffExpressionCalls(DiffExpressionCallParams params) 
-            throws DAOException {
-        log.entry(params);
-        return log.exit(this.getDiffExpressionCalls(null, params.getSpeciesIds(), 
-                params.getComparisonFactor(), 
-                params.getAffymetrixDiffExprCallTypes(), params.isIncludeAffymetrixTypes(),
-                params.getRNASeqDiffExprCallTypes(), params.isIncludeRNASeqTypes(), 
-                params.isSatisfyAllCallTypeConditions()));
-    }
-
-    @Override
-    public DiffExpressionCallTOResultSet getHomologousGenesDiffExpressionCalls(
-            String taxonId, DiffExpressionCallParams params) throws DAOException {
-        log.entry(taxonId, params);
-        return log.exit(this.getDiffExpressionCalls(taxonId, params.getSpeciesIds(), 
-                params.getComparisonFactor(), 
-                params.getAffymetrixDiffExprCallTypes(), params.isIncludeAffymetrixTypes(),
-                params.getRNASeqDiffExprCallTypes(), params.isIncludeRNASeqTypes(), 
-                params.isSatisfyAllCallTypeConditions()));
     }
 
     /**

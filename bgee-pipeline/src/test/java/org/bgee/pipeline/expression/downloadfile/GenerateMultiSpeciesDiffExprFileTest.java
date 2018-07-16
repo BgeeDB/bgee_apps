@@ -36,7 +36,6 @@ import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.ComparisonFactor;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.DiffExprCallType;
-import org.bgee.model.dao.api.expressiondata.DiffExpressionCallParams;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;

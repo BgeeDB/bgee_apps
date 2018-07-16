@@ -20,7 +20,7 @@ import org.bgee.model.dao.api.TransferObject.EnumDAOField;
  * @since Bgee 14 Mar. 2017
  */
 public enum DAODataType implements EnumDAOField {
-    AFFYMETRIX("affymetrix"), EST("est"), IN_SITU("in situ"), RNA_SEQ("rna-seq");
+    AFFYMETRIX("affymetrix", "affymetrix"), EST("est", "est"), IN_SITU("in situ", "inSitu"), RNA_SEQ("rna-seq", "rnaSeq");
     private final static Logger log = LogManager.getLogger(DAODataType.class.getName());
 
     /**
@@ -43,14 +43,20 @@ public enum DAODataType implements EnumDAOField {
      * See {@link #getStringRepresentation()}
      */
     private final String stringRepresentation;
+    /**
+     * See {@link #getFieldNamePrefix()}
+     */
+    private final String fieldNamePrefix;
 
     /**
      * Constructor providing the {@code String} representation of this {@code DataType}.
      * 
      * @param stringRepresentation  A {@code String} corresponding to this {@code DataType}.
+     * @param fieldNamePrefix       A {@code String} that is the prefix of fields related to this {@code DataType}.
      */
-    private DAODataType(String stringRepresentation) {
+    private DAODataType(String stringRepresentation, String fieldNamePrefix) {
         this.stringRepresentation = stringRepresentation;
+        this.fieldNamePrefix = fieldNamePrefix;
     }
     @Override
     public String getStringRepresentation() {
@@ -59,5 +65,11 @@ public enum DAODataType implements EnumDAOField {
     @Override
     public String toString() {
         return this.getStringRepresentation();
+    }
+    /**
+     * @return  A {@code String} that is the prefix of fields related to this {@code DataType}.
+     */
+    public String getFieldNamePrefix() {
+        return this.fieldNamePrefix;
     }
 }

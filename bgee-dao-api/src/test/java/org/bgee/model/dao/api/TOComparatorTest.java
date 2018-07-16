@@ -27,10 +27,6 @@ import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressio
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO;
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO.CallDirection;
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO.CallQuality;
-import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
-import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.GlobalExpressionToExpressionTO;
-import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.GlobalNoExpressionToNoExpressionTO;
-import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO.CategoryEnum;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesToDataGroupTO;
@@ -401,107 +397,6 @@ public class TOComparatorTest extends TestAncestor {
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
     }
-    
-    /**
-     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
-     * using {@code ExpressionCallTO}s.
-     */
-    @Test
-    public void testAreExpressionCallTOEqual() {
-        ExpressionCallTO to1 = new ExpressionCallTO(1, 1, 1, null, 
-                DataState.HIGHQUALITY, null, DataState.LOWQUALITY, null, DataState.HIGHQUALITY, null, 
-                DataState.LOWQUALITY, null, false, false, 
-                ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF, true);
-        ExpressionCallTO to2 = new ExpressionCallTO(1, 1, 1, null, 
-                DataState.HIGHQUALITY, null, DataState.LOWQUALITY, null, DataState.HIGHQUALITY, null, 
-                DataState.LOWQUALITY, null, false, false, 
-                ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF, true);
-        assertTrue(TOComparator.areTOsEqual(to1, to2, true));
-        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
-        
-        to2 = new ExpressionCallTO(1, 1, 1, null, 
-                DataState.HIGHQUALITY, null, DataState.LOWQUALITY, null, DataState.HIGHQUALITY, null, 
-                DataState.LOWQUALITY, null, false, false, 
-                ExpressionCallTO.OriginOfLine.DESCENT, ExpressionCallTO.OriginOfLine.SELF, true);
-        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
-        
-        to2 = new ExpressionCallTO(1, 1, 1, null, 
-                DataState.HIGHQUALITY, null, DataState.LOWQUALITY, null, DataState.HIGHQUALITY, null, 
-                DataState.LOWQUALITY, null, false, false, 
-                ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.BOTH, true);
-        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
-        
-        to2 = new ExpressionCallTO(2, 1, 1, null, 
-                DataState.HIGHQUALITY, null, DataState.LOWQUALITY, null, DataState.HIGHQUALITY, null, 
-                DataState.LOWQUALITY, null, false, false, 
-                ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF, true);
-        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
-        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
-        
-        to2 = new ExpressionCallTO(1, 1, 1, null, 
-                DataState.HIGHQUALITY, null, DataState.LOWQUALITY, null, DataState.HIGHQUALITY, null, 
-                DataState.LOWQUALITY, null, false, false, 
-                ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF, false);
-        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
-        
-        to1 = new ExpressionCallTO(1, 1, 1, new BigDecimal("1.5"), 
-                DataState.HIGHQUALITY, new BigDecimal("2.5"), DataState.LOWQUALITY, new BigDecimal("3.5"), 
-                DataState.HIGHQUALITY, new BigDecimal("4.5"),  
-                DataState.LOWQUALITY, new BigDecimal("5.5"), false, false, 
-                ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF, true);
-        to2 = new ExpressionCallTO(1, 1, 1, new BigDecimal("1.5"), 
-                DataState.HIGHQUALITY, new BigDecimal("2.5"), DataState.LOWQUALITY, new BigDecimal("3.5"), 
-                DataState.HIGHQUALITY, new BigDecimal("4.5"),  
-                DataState.LOWQUALITY, new BigDecimal("5.5"), false, false, 
-                ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF, true);
-        assertTrue(TOComparator.areTOsEqual(to1, to2, true));
-
-        to2 = new ExpressionCallTO(1, 1, 1, new BigDecimal("2.5"), 
-                DataState.HIGHQUALITY, new BigDecimal("2.5"), DataState.LOWQUALITY, new BigDecimal("3.5"), 
-                DataState.HIGHQUALITY, new BigDecimal("4.5"),  
-                DataState.LOWQUALITY, new BigDecimal("5.5"), false, false, 
-                ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF, true);
-        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
-        to2 = new ExpressionCallTO(1, 1, 1, null, 
-                DataState.HIGHQUALITY, new BigDecimal("2.5"), DataState.LOWQUALITY, new BigDecimal("3.5"), 
-                DataState.HIGHQUALITY, new BigDecimal("4.5"),  
-                DataState.LOWQUALITY, new BigDecimal("5.5"), false, false, 
-                ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF, true);
-        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
-        to2 = new ExpressionCallTO(1, 1, 1, new BigDecimal("1.5"), 
-                DataState.HIGHQUALITY, new BigDecimal("200.5"), DataState.LOWQUALITY, new BigDecimal("3.5"), 
-                DataState.HIGHQUALITY, new BigDecimal("4.5"),  
-                DataState.LOWQUALITY, new BigDecimal("5.5"), false, false, 
-                ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF, true);
-        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
-    }
-
-    /**
-     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
-     * using {@code NoExpressionCallTO}s.
-     */
-    @Test
-    public void testAreNoExpressionCallTOEqual() {
-        NoExpressionCallTO to1 = new NoExpressionCallTO(1, 1, 1, 
-                DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
-                DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF);
-        NoExpressionCallTO to2 = new NoExpressionCallTO(1, 1, 1, 
-                DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
-                DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF);
-        assertTrue(TOComparator.areTOsEqual(to1, to2, true));
-        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
-        
-        to2 = new NoExpressionCallTO(1, 1, 1, 
-                DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
-                DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.PARENT);
-        assertFalse(TOComparator.areTOsEqual(to1, to2));
-        
-        to2 = new NoExpressionCallTO(2, 1, 1, 
-                DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
-                DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF);
-        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
-        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
-    }
 
     /**
      * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
@@ -519,37 +414,6 @@ public class TOComparatorTest extends TestAncestor {
         to2 = new ExperimentExpressionTO(1, "1", 2, 3, 4, 999, CallQuality.HIGH, CallDirection.ABSENT);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertFalse(TOComparator.areTOsEqual(to1, to2, false));
-    }
-
-    /**
-     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
-     * using {@code GlobalExpressionToExpressionTO}s.
-     */
-    @Test
-    public void testAreGlobalExpressionToExpressionTOEqual() {
-        GlobalExpressionToExpressionTO to1 = new GlobalExpressionToExpressionTO(1, 10);
-        GlobalExpressionToExpressionTO to2 = new GlobalExpressionToExpressionTO(1, 10);
-        assertTrue(TOComparator.areTOsEqual(to1, to2, true));
-        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
-        
-        to2 = new GlobalExpressionToExpressionTO(1, 20);
-        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
-    }
-    
-    /**
-     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
-     * using {@code GlobalNoExpressionToNoExpressionTO}s.
-     */
-    @Test
-    public void testAreGlobalNoExpressionToNoExpressionTOEqual() {
-        GlobalNoExpressionToNoExpressionTO to1 = new GlobalNoExpressionToNoExpressionTO(1, 10);
-        GlobalNoExpressionToNoExpressionTO to2 = new GlobalNoExpressionToNoExpressionTO(1, 10);
-        assertTrue(TOComparator.areTOsEqual(to1, to2));
-        assertTrue(TOComparator.areTOsEqual(to1, to2, true));
-        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
-        
-        to2 = new GlobalNoExpressionToNoExpressionTO(1, 20);
-        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
     }
 
     /**

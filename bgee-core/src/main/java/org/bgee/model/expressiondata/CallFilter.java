@@ -35,7 +35,7 @@ import org.bgee.model.gene.GeneFilter;
  *          or as a specific subtype, for instance, {@code ExpressionCallData}.
  * @param U The type of {@code SummaryCallType} to be used by this {@code CallFilter}.
  */
-//XXX: would several CallFilters represent AND or OR conditions.
+//Note: would several CallFilters represent AND or OR conditions.
 //If OR conditions, we could provide a Set<Set<CallFilter>> to CallService methods, 
 //to provide AND/OR conditions.
 //IF AND conditions, then we cannot easily target different CallDatas for different ConditionFilters, e.g.: 
@@ -48,7 +48,7 @@ import org.bgee.model.gene.GeneFilter;
 //as it is not possible from the DAO to make one query applying a different Set 
 //of CallData filters to different Sets of GeneFilters, ConditionFilters, etc.
 //***********************
-//XXX: update FEB. 2017. We decided to remove the CallData from this class.
+//Note: update FEB. 2017. We decided to remove the CallData from this class.
 //Because the quality of a call is now computed over all data types, 
 //so we don't want to filter on data quality per data type any more. 
 //Also, so far we don't need to filter calls based on propagation per data type 
@@ -175,6 +175,9 @@ public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & Summ
             //XXX: actually, we can now filter calls based on this information directly in the DAO,
             //so maybe we should force to retrieve this information in the Call solely to test it.
             //TODO: there is more work to do to manage callObservedData when non-null keys are provided
+            if (callObservedData != null && callObservedData.keySet().stream().anyMatch(k -> k != null)) {
+                throw log.throwing(new UnsupportedOperationException("Test not implemented for callObservedData non-null keys"));
+            }
             if (callObservedData != null && callObservedData.containsKey(null) || anatEntityObservedData != null ||
                     devStageObservedData != null) {
 
@@ -432,12 +435,10 @@ public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & Summ
                 summaryCallTypeQualityFilter == null || summaryCallTypeQualityFilter.isEmpty()?
 
                         EnumSet.allOf(callTypeCls).stream()
-                        .map(c -> new AbstractMap.SimpleEntry<>(c, SummaryQuality.BRONZE))
+                        .map(c -> new AbstractMap.SimpleEntry<>(c, SummaryQuality.values()[0]))
                         .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue())):
 
                         new HashMap<>(summaryCallTypeQualityFilter));
-        //just to make sure bronze quality is the lowest quality/that qualities are correctly ordered
-        assert SummaryQuality.BRONZE.equals(SummaryQuality.values()[0]);
 
         if (this.conditionFilters.contains(null)) {
             throw log.throwing(new IllegalStateException("No ConditionFilter can be null."));

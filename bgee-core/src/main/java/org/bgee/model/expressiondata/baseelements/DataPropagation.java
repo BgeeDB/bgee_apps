@@ -137,7 +137,7 @@ public class DataPropagation {
     //this method is useful to abstract away what are the elements defining a condition.
     public EnumSet<PropagationState> getAllPropagationStates() {
         return Stream.of(anatEntityPropagationState, devStagePropagationState)
-                .filter(s -> s != null)
+                .map(s -> s == null? PropagationState.UNKNOWN: s)
                 .collect(Collectors.toCollection(() -> EnumSet.noneOf(PropagationState.class)));
     }
     

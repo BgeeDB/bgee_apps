@@ -412,7 +412,7 @@ public class CommandGene extends CommandParent {
                         null, null, obsDataFilter, null, null),
                 EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
                            //XXX: do we need DATA_QUALITY?
-                           CallService.Attribute.DATA_QUALITY, CallService.Attribute.GLOBAL_MEAN_RANK,
+                           CallService.Attribute.DATA_QUALITY, CallService.Attribute.MEAN_RANK,
                            CallService.Attribute.EXPERIMENT_COUNTS),
                 serviceOrdering)
             .collect(Collectors.toList());
@@ -452,7 +452,7 @@ public class CommandGene extends CommandParent {
                 EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
                         CallService.Attribute.DEV_STAGE_ID,
                         //XXX: do we need DATA_QUALITY?
-                        CallService.Attribute.DATA_QUALITY, CallService.Attribute.GLOBAL_MEAN_RANK,
+                        CallService.Attribute.DATA_QUALITY, CallService.Attribute.MEAN_RANK,
                         CallService.Attribute.EXPERIMENT_COUNTS),
                 serviceOrdering)
             .collect(Collectors.toList()));

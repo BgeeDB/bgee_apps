@@ -953,8 +953,8 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                         c.getCondition().getDevStage().getName();
                 String summaryCallType = convertExpressionSummaryToString(c.getSummaryCallType()); 
                 String summaryQuality = convertSummaryQualityToString(c.getSummaryQuality());
-                String expressionRank = c.getGlobalMeanRank() == null ? NA_VALUE :
-                        c.getFormattedGlobalMeanRank();
+                String expressionRank = c.getMeanRank() == null ? NA_VALUE :
+                        c.getFormattedMeanRank();
                 // FIXME use c.getExpressionScore()
                 String expressionScore = NA_VALUE;// String.valueOf(c.getExpressionScore());
                 Boolean includingObservedData = c.getDataPropagation().isIncludingObservedData();

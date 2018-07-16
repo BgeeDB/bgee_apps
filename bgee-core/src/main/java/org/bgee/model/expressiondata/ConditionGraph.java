@@ -320,11 +320,14 @@ public class ConditionGraph {
      * @param secondCond    The second {@code Condition} to be checked for relations to {@code firstCond}. 
      * @return              {@code true} if {@code secondCond} is more precise than {@code firstCond}.
      * @throws IllegalArgumentException If one of the provided {@code Condition}s is not registered 
-     *                                  to this {@code ConditionGraph}.
+     *                                  to this {@code ConditionGraph}, or one of them is {@code null}.
      */
     public boolean isConditionMorePrecise(Condition firstCond, Condition secondCond) throws IllegalArgumentException {
         log.entry(firstCond, secondCond);
-        
+
+        if (firstCond == null || secondCond == null) {
+            throw log.throwing(new IllegalArgumentException("No provided Condition can be null"));
+        }
         if (!firstCond.getSpecies().equals(secondCond.getSpecies())) {
             throw log.throwing(new IllegalArgumentException("Conditions are not in the same species."
                     + " First condition: " + firstCond + " - Second condition: " + secondCond));

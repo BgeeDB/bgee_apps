@@ -138,7 +138,7 @@ public class TopAnatControllerTest extends TestAncestor {
         Set<DataType> dataTypes = new HashSet<DataType>(Arrays.asList(DataType.AFFYMETRIX));
         relations.put("A", new HashSet<String>(Arrays.asList("B","C")));
         ExpressionCall mockCall = mock(ExpressionCall.class);
-        Gene myGene = new Gene("ENSG001", new Species(9606));
+        Gene myGene = new Gene("ENSG001", new Species(9606), 1);
         Condition mockCondition = mock(Condition.class);
         when(this.mockTopAnatParams.toString()).thenReturn("mockTopAnatParams");
         when(this.mockServiceFactory.toString()).thenReturn("mockServiceFactory");

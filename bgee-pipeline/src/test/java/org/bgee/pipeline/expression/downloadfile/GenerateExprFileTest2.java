@@ -211,7 +211,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
                 CallType.Expression.NOT_EXPRESSED, DataQuality.LOW, PropagationState.ALL, 1));
 
         List<ExpressionCall> calls = Arrays.asList(
-                new ExpressionCall(new Gene("ID1", new Species(1)), 
+                new ExpressionCall(new Gene("ID1", new Species(1), 1), 
                         new Condition(new AnatEntity("ae1", "aeName1", "aeDesc1"),
                                 new DevStage("ds1", "dsName1", "dsDesc1"), new Species(1)),
                         new DataPropagation(PropagationState.SELF, PropagationState.SELF, true),
@@ -220,7 +220,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
                                 10, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
                                 new DataPropagation())),
                         new BigDecimal(90), new BigDecimal(44)),
-                new ExpressionCall(new Gene("ID1", new Species(1)), 
+                new ExpressionCall(new Gene("ID1", new Species(1), 1), 
                         new Condition(new AnatEntity("ae1", "aeName1", "aeDesc1"),
                                 new DevStage("ds2", "dsName2", "dsDesc2"), new Species(2)),
                         new DataPropagation(PropagationState.DESCENDANT, PropagationState.SELF, false),
@@ -228,7 +228,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
                         Arrays.asList(new ExpressionCallData(DataType.EST, exprExperimentCounts,
                                 10, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
                                 new DataPropagation())), null, null),
-                new ExpressionCall(new Gene("ID1", new Species(1)), 
+                new ExpressionCall(new Gene("ID1", new Species(1), 1), 
                         new Condition(new AnatEntity("ae2", "aeName2", "aeDesc2"),
                                 new DevStage("ds1", "dsName1", "dsDesc1"), new Species(1)),
                         new DataPropagation(PropagationState.SELF, PropagationState.ANCESTOR, false),
@@ -244,7 +244,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
         Set<Attribute> attr = new HashSet<>(Arrays.asList(Attribute.ANAT_ENTITY_ID,
                 Attribute.DATA_QUALITY, Attribute.DATA_TYPE_RANK_INFO, Attribute.OBSERVED_DATA, 
                 Attribute.GENE, Attribute.DEV_STAGE_ID, Attribute.CALL_TYPE, Attribute.EXPERIMENT_COUNTS,
-                Attribute.GLOBAL_MEAN_RANK));
+                Attribute.MEAN_RANK));
         
         when(callService.loadExpressionCalls(callFilterSp11, attr, serviceOrdering))
         .thenReturn(calls.stream().filter(c -> c.getCondition().getSpeciesId() == 1));

@@ -28,10 +28,10 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      * <li>{@code ENSEMBL_ID}: corresponds to {@link GeneTO#getGeneId()}.
      * <li>{@code NAME}: corresponds to {@link GeneTO#getName()}.
      * <li>{@code DESCRIPTION}: corresponds to {@link GeneTO#getDescription()}.
-     * <li>{@code SPECIESID}: corresponds to {@link GeneTO#getSpeciesId()}.
-     * <li>{@code GENEBIOTYPEID}: corresponds to {@link GeneTO#getGeneBioTypeId()}.
-     * <li>{@code OMAPARENTNODEID}: corresponds to {@link GeneTO#getOMAParentNodeId()}.
-     * <li>{@code ENSEMBLGENE}: corresponds to {@link GeneTO#isEnsemblGene()}.
+     * <li>{@code SPECIES_ID}: corresponds to {@link GeneTO#getSpeciesId()}.
+     * <li>{@code GENE_BIO_TYPE_ID}: corresponds to {@link GeneTO#getGeneBioTypeId()}.
+     * <li>{@code OMA_PARENT_NODE_ID}: corresponds to {@link GeneTO#getOMAParentNodeId()}.
+     * <li>{@code ENSEMBL_GENE}: corresponds to {@link GeneTO#isEnsemblGene()}.
      * <li>{@code GENE_MAPPED_TO_SAME_GENE_ID_COUNT}: corresponds to {@link GeneTO#getGeneMappedToGeneIdCount()}.
      * </ul>
      * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
@@ -41,7 +41,6 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
     public enum Attribute implements DAO.Attribute {
         ID, ENSEMBL_ID, NAME, DESCRIPTION, SPECIES_ID, GENE_BIO_TYPE_ID, OMA_PARENT_NODE_ID,
         ENSEMBL_GENE, GENE_MAPPED_TO_SAME_GENE_ID_COUNT;
-//        ANCESTRAL_OMA_NODE_ID, ANCESTRAL_OMA_TAXON_ID;
     }
     
     /**

@@ -260,7 +260,6 @@ public class Species extends NamedEntity<Integer> {
         return preferredDisplayOrder;
     }
 
-
     //we based hashCode/equals of NamedEntity on methods from parent class Entity:
     //only the ID matter for NamedEntity, as for Entity.
 

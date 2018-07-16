@@ -193,17 +193,12 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
                 sql += tableName + "." + this.attributeToString(attribute);
             }
         }
-        
-        String expressionTabName = "expression";
+
         String conditionTabName = "cond";
 
         sql += " FROM " + tableName +
                 " LEFT OUTER JOIN cond ON (" +
-                    conditionTabName + ".anatEntityId = " + tableName + ".anatEntityId)" +
-                //XXX: do we need this join to the expression table? If it is in the cond table,
-                //maybe it is informative already?
-                " LEFT OUTER JOIN " + expressionTabName + " ON (" + 
-                    conditionTabName + ".conditionId = " + expressionTabName + ".conditionId)";
+                    conditionTabName + ".anatEntityId = " + tableName + ".anatEntityId)";
         
         String anatEntTaxConstTabName = "anatEntityTaxonConstraint";
 
@@ -212,9 +207,7 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
                     anatEntTaxConstTabName + ".anatEntityId = " + tableName + ".anatEntityId)";
         }
         sql += " WHERE " + tableName + ".nonInformative = true " +
-               //XXX: do we need this join to the expression table? If it is in the cond table,
-               //maybe it is informative already?
-               "AND " + expressionTabName + ".conditionId IS NULL ";
+               "AND " + conditionTabName + ".anatEntityId IS NULL ";
         if (isSpeciesFilter) {
             sql += " AND (" + anatEntTaxConstTabName + ".speciesId IS NULL" +
                    " OR " + anatEntTaxConstTabName + ".speciesId IN (" +

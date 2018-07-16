@@ -16,8 +16,6 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.expressiondata.MySQLConditionDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLDiffExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLExperimentExpressionDAO;
-import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO;
-import org.bgee.model.dao.mysql.expressiondata.MySQLNoExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLRawExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.affymetrix.MySQLAffymetrixProbesetDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituSpotDAO;
@@ -182,22 +180,10 @@ public abstract class MySQLDAOUser {
         return (MySQLConditionDAO) this.manager.getConditionDAO();
     }
     /**
-     * @return  A {@code MySQLExpressionCallDAO}.
-     */
-    protected MySQLExpressionCallDAO getExpressionCallDAO() {
-        return (MySQLExpressionCallDAO) this.manager.getExpressionCallDAO();
-    }
-    /**
      * @return  A {@code MySQLDiffExpressionCallDAO}.
      */
     protected MySQLDiffExpressionCallDAO getDiffExpressionCallDAO() {
         return (MySQLDiffExpressionCallDAO) this.manager.getDiffExpressionCallDAO();
-    }
-    /**
-     * @return  A {@code MySQLNoExpressionCallDAO}.
-     */
-    protected MySQLNoExpressionCallDAO getNoExpressionCallDAO() {
-        return (MySQLNoExpressionCallDAO) this.manager.getNoExpressionCallDAO();
     }
     /**
      * @return  A {@code MySQLNoExpressionCallDAO}.

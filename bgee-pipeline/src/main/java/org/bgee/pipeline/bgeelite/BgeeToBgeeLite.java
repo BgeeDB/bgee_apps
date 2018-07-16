@@ -18,6 +18,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -671,7 +673,14 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
      */
     private void emptyDatabaseTables() {
         log.entry();
+        String serverName = "";
+        Pattern pattern = Pattern.compile("^.*//(.*?):");
+        Matcher matcher = pattern.matcher(this.getManager().getJdbcUrl());
+        if(matcher.find()){
+            serverName = matcher.group(1);
+        }
         for (TsvFile tsvFile : TsvFile.values()) {
+            log.info("delete all data in table {} of bgeelite from {}", tsvFile.getTableName(), serverName);
             String sql = "DELETE FROM " + tsvFile.getTableName();
             try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql)) {
                 stmt.executeUpdate();

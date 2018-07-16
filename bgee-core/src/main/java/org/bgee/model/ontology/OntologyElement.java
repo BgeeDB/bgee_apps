@@ -16,7 +16,7 @@ import org.bgee.model.NamedEntity;
  * @param <T>   The type of this {@code OntologyElement}.
  * @param <U>   The type of ID of this {@code OntologyElement}.
  */
-public interface OntologyElement<T extends NamedEntity<U> & OntologyElement<T, U>, U> {
+public interface OntologyElement<T extends NamedEntity<U> & OntologyElement<T, U>, U extends Comparable<U>> {
 
     /**
      * Get ancestors of the given {@code element} in the given {@code ontology}.

@@ -290,7 +290,7 @@ public class ConditionGraph {
      *                                  {@code ont}.
      * @param <T>   The type of ID of the elements in the ontology or sub-graph.
      */
-    private <T> void checkEntityExistence(Set<String> entityIds, Ontology<?, T> ont) 
+    private <T extends Comparable<T>> void checkEntityExistence(Set<String> entityIds, Ontology<?, T> ont) 
             throws IllegalArgumentException {
         log.entry(entityIds, ont);
         

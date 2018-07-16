@@ -29,7 +29,7 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
  * @param <T>   The type of element in this ontology or sub-graph.
  * @param <U>   The type of ID of the elements in this ontology or sub-graph.
 */
-public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, U>, U> 
+public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, U>, U extends Comparable<U>> 
     extends OntologyBase<T, U> {
 
     private static final Logger log = LogManager.getLogger(MultiSpeciesOntology.class.getName());

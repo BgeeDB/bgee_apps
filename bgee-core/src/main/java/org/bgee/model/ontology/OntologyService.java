@@ -578,7 +578,7 @@ public class OntologyService extends CommonService {
      * @param <T>                   The type of elements for which to retrieve {@code RelationTO}s.
      * @param <U>                   The type of ID of the elements in this ontology or sub-graph.
      */
-    private <T extends NamedEntity<U> & OntologyElement<T, U>, U> Set<RelationTO<U>> getRelationTOs(
+    private <T extends NamedEntity<U> & OntologyElement<T, U>, U extends Comparable<U>> Set<RelationTO<U>> getRelationTOs(
             QuadriFunction<Set<U>, Set<U>, Boolean, Set<RelationStatus>,
             RelationTOResultSet<U>> relationRetrievalFun, 
             Collection<U> entityIds, boolean getAncestors, boolean getDescendants) {

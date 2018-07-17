@@ -14,6 +14,7 @@ import org.bgee.pipeline.annotations.SimilarityAnnotation;
 import org.bgee.pipeline.expression.InsertPropagatedCalls;
 import org.bgee.pipeline.expression.downloadfile.GenerateExprFile2;
 import org.bgee.pipeline.expression.downloadfile.GenerateRankFile;
+import org.bgee.pipeline.expression.downloadfile.GenerateUniprotXRefWithExprInfo;
 import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile;
 import org.bgee.pipeline.gene.InsertGO;
 import org.bgee.pipeline.ontologycommon.InsertCIO;
@@ -279,7 +280,9 @@ public class CommandRunner {
         case "GenerateRankFile": 
             GenerateRankFile.main(newArgs);
             break;
-            
+        case "GenerateUniprotXRef":
+            GenerateUniprotXRefWithExprInfo.main(newArgs);
+            break;
         default: 
             throw log.throwing(new UnsupportedOperationException("The following action " +
                     "is not recognized: " + args[0]));

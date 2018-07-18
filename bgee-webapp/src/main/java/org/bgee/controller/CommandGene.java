@@ -22,6 +22,7 @@ import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.Call.ExpressionCall.ClusteringMethod;
 import org.bgee.model.expressiondata.ConditionGraph;
 import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneFilter;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.ViewFactory;
 
@@ -247,32 +248,15 @@ public class CommandGene extends CommandParent {
 
     private GeneResponse buildGeneResponse(Gene gene) throws IllegalStateException {
         log.entry(gene);
-        //**************************************
-        // Expression calls, ConditionUtils, 
-        // sorting, and redundant calls
-        //**************************************
-        List<ExpressionCall> organCalls = serviceFactory.getCallService().getAnatEntitySilverExpressionCalls(gene);
-        if (organCalls.isEmpty()) {
+        //retrieve calls with silver quality for one anat. entity and at least bronze quality
+        //for the same anat. entity and a dev. stage
+        List<ExpressionCall> calls = serviceFactory.getCallService()
+                .loadAllcondCallsWithSilverAnatEntityCall(gene);
+        if (calls.isEmpty()) {
             log.debug("No calls for gene {}", gene.getEnsemblGeneId());
-             return log.exit(new GeneResponse(gene, organCalls, new HashSet<>(), true, 
+             return log.exit(new GeneResponse(gene, calls, new HashSet<>(), true, 
                      new LinkedHashMap<>(), new HashMap<>(), new HashMap<>(), null));
         }
-        
-        final List<ExpressionCall> organStageCalls = serviceFactory.getCallService().getAnatEntityDevStageBronzeExpressionCalls(gene);
-        final Set<String> organIds = organCalls.stream()
-                .map(c ->c .getCondition().getAnatEntityId())
-                .collect(Collectors.toSet());
-        //XXX: why don't we provided the organIds to perform the SQL query, instead of filtering afterwards?
-        List<ExpressionCall> orderedCalls = organStageCalls.stream()
-                .filter(c -> organIds.contains(c.getCondition().getAnatEntityId()))
-                .collect(Collectors.toList());
-        if (orderedCalls.isEmpty()) {
-            log.debug("No calls for gene {}", gene.getEnsemblGeneId());
-            //XXX: So, organCalls is needed only to determine the organ calls with a at least silver quality?
-             return log.exit(new GeneResponse(gene, orderedCalls, new HashSet<>(), true,
-                     new LinkedHashMap<>(), new HashMap<>(), new HashMap<>(), null));
-        }
-
         //we need to make sure that the ExpressionCalls are ordered in exactly the same way
         //for the display and for the clustering, otherwise the display will be buggy,
         //notably for calls with equal ranks. And we need to take into account
@@ -280,18 +264,17 @@ public class CommandGene extends CommandParent {
         //only by a query to the data source. So, we order them anyway.
         //ORGAN-STAGE
         ConditionGraph organStageGraph = new ConditionGraph(
-                orderedCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()), 
+                calls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()), 
                 serviceFactory);
-        orderedCalls = ExpressionCall.filterAndOrderCallsByRank(orderedCalls, organStageGraph);
+        calls = ExpressionCall.filterAndOrderCallsByRank(calls, organStageGraph);
         //REDUNDANT ORGAN-STAGE CALLS
         final Set<ExpressionCall> redundantCalls = ExpressionCall.identifyRedundantCalls(
-                orderedCalls, organStageGraph);
-
+                calls, organStageGraph);
         //**************************************
         // Grouping of Calls per anat. entity, 
         // Clustering, Building GeneResponse
         //**************************************
-        return log.exit(this.buildGeneResponse(gene, orderedCalls, redundantCalls, true, organStageGraph));
+        return log.exit(this.buildGeneResponse(gene, calls, redundantCalls, true, organStageGraph));
     }
     
     /**

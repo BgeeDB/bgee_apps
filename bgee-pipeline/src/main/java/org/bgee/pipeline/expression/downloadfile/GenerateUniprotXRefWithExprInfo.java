@@ -126,33 +126,33 @@ public class GenerateUniprotXRefWithExprInfo {
 
             // Retrieve expression calls
             CallService service = serviceFactory.getCallService();
-            final List<ExpressionCall> organCalls = service.getAnatEntitySilverExpressionCalls(gene);
-            final List<ExpressionCall> organStageCalls = service.getAnatEntityDevStageBronzeExpressionCalls(gene);
-
-            final Set<String> organIds = organCalls.stream().map(c -> c.getCondition().getAnatEntityId())
-                    .collect(Collectors.toSet());
-            List<ExpressionCall> orderedCalls = organStageCalls.stream()
-                    .filter(c -> organIds.contains(c.getCondition().getAnatEntityId())).collect(Collectors.toList());
-            if (orderedCalls == null || orderedCalls.isEmpty()) {
+            List<ExpressionCall> calls = service
+                    .loadAllcondCallsWithSilverAnatEntityCall(gene);
+            if (calls == null || calls.isEmpty()) {
                 log.info("No expression data for gene " + xref.ensemblId);
             } else {
+                
+              //we need to make sure that the ExpressionCalls are ordered in exactly the same way
+                //for the display and for the clustering, otherwise the display will be buggy,
+                //notably for calls with equal ranks. And we need to take into account
+                //relations between Conditions for filtering them, which would be difficult to achieve
+                //only by a query to the data source. So, we order them anyway.
                 ConditionGraph organStageGraph = new ConditionGraph(
-                        orderedCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()),
+                        calls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()),
                         serviceFactory);
-                // Order organ-stage calls
-                orderedCalls = ExpressionCall.filterAndOrderCallsByRank(orderedCalls, organStageGraph);
+                calls = ExpressionCall.filterAndOrderCallsByRank(calls, organStageGraph);
                 // Identify redundant organ-stage calls
-                final Set<ExpressionCall> redundantCalls = ExpressionCall.identifyRedundantCalls(orderedCalls,
+                final Set<ExpressionCall> redundantCalls = ExpressionCall.identifyRedundantCalls(calls,
                         organStageGraph);
                 LinkedHashMap<AnatEntity, List<ExpressionCall>> callsByAnatEntity = service
-                        .groupByAnatEntAndFilterOrderedCalls(orderedCalls, redundantCalls, true);
+                        .groupByAnatEntAndFilterOrderedCalls(calls, redundantCalls, true);
 
                 // Create String representation of the XRef with expression information
                 String prefixLine = xref.getUniprotId() + "   DR   Bgee; " + xref.getEnsemblId() + ";";
                 ensemlbIdToXrefLines.put(xref.ensemblId,
                         prefixLine + " Expressed in " + callsByAnatEntity.size()
                                 + " organ(s), highest expression level in "
-                                + orderedCalls.get(0).getCondition().getAnatEntity().getName() + ".");
+                                + calls.get(0).getCondition().getAnatEntity().getName() + ".");
             }
         });
         Instant end = Instant.now();

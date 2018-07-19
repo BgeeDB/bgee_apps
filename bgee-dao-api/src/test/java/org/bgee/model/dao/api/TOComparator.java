@@ -24,6 +24,8 @@ import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentE
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallDataTO;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO.RawExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixProbesetDAO.AffymetrixProbesetTO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesDataGroupTO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesToDataGroupTO;
@@ -175,6 +177,8 @@ public class TOComparator {
             return log.exit(areTOsEqual((SourceTO) to1, (SourceTO) to2, compareId));
         } else if (to2 instanceof SourceToSpeciesTO) {
             return log.exit(areTOsEqual((SourceToSpeciesTO) to1,(SourceToSpeciesTO) to2));
+        } else if (to2 instanceof AffymetrixProbesetTO) {
+            return log.exit(areTOsEqual((AffymetrixProbesetTO) to1,(AffymetrixProbesetTO) to2));
         }
 
         throw log.throwing(new IllegalArgumentException("There is no comparison method " +
@@ -1067,6 +1071,46 @@ public class TOComparator {
                 Objects.equals(to1.getSpeciesId(), to2.getSpeciesId()) &&
                 Objects.equals(to1.getDataType(), to2.getDataType()) &&
                 Objects.equals(to1.getInfoType(), to2.getInfoType())) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
+     * Method to compare two {@code AffymetrixProbesetTO}s, to check for complete 
+     * equality of each attribute. 
+     * 
+     * @param to1       A {@code AffymetrixProbesetTO} to be compared to {@code to2}.
+     * @param to2       A {@code AffymetrixProbesetTO} to be compared to {@code to1}.
+     * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
+     */
+    private static boolean areTOsEqual(AffymetrixProbesetTO to1, AffymetrixProbesetTO to2) {
+        log.entry(to1, to2);
+        if (Objects.equals(to1.getId(), to2.getId()) &&
+                areBigDecimalEquals(to1.getNormalizedSignalIntensity(), to2.getNormalizedSignalIntensity()) &&
+                areTOsEqual((CallSourceTO<?>) to1, (CallSourceTO<?>) to2)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
+     * Method to compare two {@code CallSourceTO}s, to check for complete 
+     * equality of each attribute. 
+     * 
+     * @param to1       A {@code AffymetrixProbesetTO} to be compared to {@code to2}.
+     * @param to2       A {@code AffymetrixProbesetTO} to be compared to {@code to1}.
+     * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
+     */
+    private static boolean areTOsEqual(CallSourceTO<?> to1, CallSourceTO<?> to2) {
+        log.entry(to1, to2);
+        if (Objects.equals(to1.getAssayId(), to2.getAssayId()) &&
+                Objects.equals(to1.getBgeeGeneId(), to2.getBgeeGeneId()) &&
+                Objects.equals(to1.getDetectionFlag(), to2.getDetectionFlag()) &&
+                Objects.equals(to1.getExpressionConfidence(), to2.getExpressionConfidence()) &&
+                Objects.equals(to1.getExclusionReason(), to2.getExclusionReason()) &&
+                areBigDecimalEquals(to1.getRank(), to2.getRank()) &&
+                Objects.equals(to1.getExpressionId(), to2.getExpressionId())) {
             return log.exit(true);
         }
         return log.exit(false);

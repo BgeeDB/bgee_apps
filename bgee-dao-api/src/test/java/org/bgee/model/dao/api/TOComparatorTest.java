@@ -27,6 +27,9 @@ import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressio
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO;
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO.CallDirection;
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO.CallQuality;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO.DetectionFlag;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO.ExclusionReason;
+import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixProbesetDAO.AffymetrixProbesetTO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO.CategoryEnum;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesToDataGroupTO;
@@ -623,6 +626,40 @@ public class TOComparatorTest extends TestAncestor {
         assertFalse(TOComparator.areTOsEqual(to1, to2));
 
         to2 = new SourceToSpeciesTO(2, 11, DAODataType.EST, InfoType.DATA);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        assertFalse(TOComparator.areTOsEqual(to1, to2, false));
+    }
+
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object)} 
+     * using {@code AffymetrixProbesetTO}s.
+     */
+    @Test
+    public void testAreAffymetrixProbesetTOEqual() {
+        AffymetrixProbesetTO to1 = new AffymetrixProbesetTO("A1", 1, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
+                ExclusionReason.NOT_EXCLUDED, new BigDecimal("11.1"), new BigDecimal("5.5"), 110);
+        AffymetrixProbesetTO to2 = new AffymetrixProbesetTO("A1", 1, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
+                ExclusionReason.NOT_EXCLUDED, new BigDecimal("11.1"), new BigDecimal("5.5"), 110);
+        assertTrue(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new AffymetrixProbesetTO("A2", 1, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
+                ExclusionReason.NOT_EXCLUDED, new BigDecimal("11.1"), new BigDecimal("5.5"), 110);
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new AffymetrixProbesetTO("A1", 1, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
+                ExclusionReason.NOT_EXCLUDED, new BigDecimal("11.01"), new BigDecimal("5.5"), 110);
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+        
+        to2 = new AffymetrixProbesetTO("A1", 1, 11, DetectionFlag.PRESENT, DataState.HIGHQUALITY,
+                ExclusionReason.NOT_EXCLUDED, new BigDecimal("11.1"), new BigDecimal("5.5"), 110);
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new AffymetrixProbesetTO("A1", 1, 11, DetectionFlag.ABSENT, DataState.LOWQUALITY,
+                ExclusionReason.NOT_EXCLUDED, new BigDecimal("11.1"), new BigDecimal("5.5"), 110);
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new AffymetrixProbesetTO("A1", 1, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
+                ExclusionReason.PRE_FILTERING, new BigDecimal("11.1"), new BigDecimal("5.5"), 110);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertFalse(TOComparator.areTOsEqual(to1, to2, false));
     }

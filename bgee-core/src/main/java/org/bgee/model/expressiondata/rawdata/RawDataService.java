@@ -1,5 +1,6 @@
 package org.bgee.model.expressiondata.rawdata;
 
+import java.io.Closeable;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -26,38 +27,32 @@ public class RawDataService extends CommonService {
         // TODO Auto-generated constructor stub
     }
 
-    public class CallSpliterator<T extends RawCallSource<?>> extends Spliterators.AbstractSpliterator<T> {
+    public abstract class CommonRawDataSpliterator<T, U extends AssayTO<?>, V extends Assay<?>,
+    W extends ExperimentTO<?>, X extends Experiment<?>> extends Spliterators.AbstractSpliterator<T> implements Closeable {
 
-        private final Stream<ExperimentTO> expTOStream;
-        private final Stream<AssayTO> assayTOStream;
-        private final Stream<CallSourceTO> callSourceTOStream;
-        private Iterator<ExperimentTO> expTOIterator;
-        private Iterator<AssayTO> assayTOIterator;
-        private Iterator<CallSourceTO> callSourceTOIterator;
-        private AssayTO lastAssayTO;
-        private Assay lastAssay;
-        private ExperimentTO lastExpTO;
-        private Experiment lastExp;
+        protected final Stream<W> expTOStream;
+        protected final Stream<U> assayTOStream;
+        protected Iterator<W> expTOIterator;
+        protected Iterator<U> assayTOIterator;
+        protected U lastAssayTO;
+        protected W lastExpTO;
+        protected X lastExp;
 
-        private boolean isInitiated;
-        private boolean isClosed;
+        protected boolean isInitiated;
+        protected boolean isClosed;
 
-        public CallSpliterator(Stream<ExperimentTO> expTOStream, Stream<AssayTO> assayTOStream,
-                Stream<CallSourceTO> callSourceTOStream, Class<T> callRawSourceType) {
+        public CommonRawDataSpliterator(Stream<W> expTOStream, Stream<U> assayTOStream) {
             //TODO: check this call to 'super'
             super(Long.MAX_VALUE, Spliterator.ORDERED | Spliterator.IMMUTABLE 
                     | Spliterator.DISTINCT | Spliterator.NONNULL | Spliterator.SORTED);
-            if (assayTOStream == null || callSourceTOStream == null) {
-                throw new IllegalArgumentException("Assay and RawCallSource streams cannot be null");
+            if (assayTOStream == null) {
+                throw new IllegalArgumentException("Assay stream cannot be null");
             }
 
             this.expTOStream = expTOStream;
             this.assayTOStream = assayTOStream;
-            this.callSourceTOStream = callSourceTOStream;
             this.expTOIterator = null;
             this.assayTOIterator = null;
-            this.callSourceTOIterator = null;
-            this.lastAssay = null;
             this.lastAssayTO = null;
             this.lastExp = null;
             this.lastExpTO = null;
@@ -65,14 +60,56 @@ public class RawDataService extends CommonService {
             this.isClosed = false;
         }
 
-        @Override
-        public boolean tryAdvance(Consumer<? super T> action) {
-            log.entry(action);
+        protected <Y> boolean checkLastAssayTOIsValid(Y expectedAssayTOId) {
+            log.entry(expectedAssayTOId);
+            if (expectedAssayTOId == null) {
+                throw log.throwing(new IllegalArgumentException("The expected AssayTO ID cannot be null"));
+            }
+            return log.exit(this.lastAssayTO != null && expectedAssayTOId.equals(this.lastAssayTO.getId()));
+        }
 
+        protected <Y> V loadAssayAdvanceTOIterator(Y expectedAssayTOId) {
+            log.entry(expectedAssayTOId);
+
+            try {
+                this.lastAssayTO = this.assayTOIterator.next();
+            } catch (NoSuchElementException e) {
+                log.catching(Level.DEBUG, e);
+            }
+            if (expectedAssayTOId != null && !this.checkLastAssayTOIsValid(expectedAssayTOId)) {
+                throw log.throwing(new IllegalStateException("No assay matching the call source assay ID "
+                        + expectedAssayTOId
+                        + ". Either the call sources and assays were not properly ordered, or problem in data retrieval"));
+            }
+            if (this.lastAssayTO == null) {
+                return log.exit(null);
+            }
+
+            assert this.expTOIterator == null && !(this.lastAssayTO instanceof AssayPartOfExpTO) ||
+                    this.expTOIterator != null && this.lastAssayTO instanceof AssayPartOfExpTO;
+            if (this.expTOIterator != null && this.lastAssayTO instanceof AssayPartOfExpTO) {
+                AssayPartOfExpTO<?> assayPartOfExpTO = (AssayPartOfExpTO<?>) this.lastAssayTO;
+                if (this.lastExpTO == null || !this.lastExpTO.getId().equals(assayPartOfExpTO.getExperimentId())) {
+                    this.lastExpTO = this.expTOIterator.next();
+                }
+                if (this.lastExpTO == null || !this.lastExpTO.getId().equals(assayPartOfExpTO.getExperimentId())) {
+                    throw log.throwing(new IllegalStateException("No experiment matching the assay experiment ID "
+                            + assayPartOfExpTO.getExperimentId()
+                            + ". Either the assays and experiment were not properly ordered, or problem in data retrieval"));
+                }
+                this.lastExp = mapExperimentTOToExperiment(this.lastExpTO);
+            }
+            if (this.lastAssayTO instanceof AssayPartOfExpTO) {
+                return log.exit(mapAssayPartOfExpTOToAssayPartOfExp((AssayPartOfExpTO<?>) this.lastAssayTO, this.lastExp));
+            }
+            return log.exit(mapAssayTOToAssay(this.lastAssayTO));
+        }
+
+        protected boolean initializeTryAdvance() {
+            log.entry();
             if (this.isClosed) {
                 throw log.throwing(new IllegalStateException("Already close"));
             }
-
             // Lazy loading: we do not get stream iterators (terminal operation)
             // before tryAdvance() is called.
             if (!this.isInitiated) {
@@ -83,49 +120,9 @@ public class RawDataService extends CommonService {
                     this.expTOIterator = this.expTOStream.iterator();
                 }
                 this.assayTOIterator = this.assayTOStream.iterator();
-                this.callSourceTOIterator = this.callSourceTOStream.iterator();
+                return log.exit(true);
             }
-
-            CallSourceTO callSourceTO = null;
-            try {
-                callSourceTO = this.callSourceTOIterator.next();
-            } catch (NoSuchElementException e) {
-                log.catching(Level.DEBUG, e);
-                return log.exit(false);
-            }
-
-            if (this.lastAssayTO == null || !this.lastAssayTO.getId().equals(callSourceTO.getAssayId())) {
-                this.lastAssayTO = this.assayTOIterator.next();
-                if (this.lastAssayTO == null || !this.lastAssayTO.getId().equals(callSourceTO.getAssayId())) {
-                    throw log.throwing(new IllegalStateException("No assay matching the call source assay ID "
-                            + callSourceTO.getAssayId()
-                            + ". Either the call sources and assays were not properly ordered, or problem in data retrieval"));
-                }
-
-                assert this.expTOIterator == null && !(this.lastAssayTO instanceof AssayPartOfExpTO) ||
-                        this.expTOIterator != null && this.lastAssayTO instanceof AssayPartOfExpTO;
-                if (this.expTOIterator != null && this.lastAssayTO instanceof AssayPartOfExpTO) {
-                    AssayPartOfExpTO<?> assayTO = (AssayPartOfExpTO<?>) this.lastAssayTO;
-                    if (this.lastExpTO == null || !this.lastExpTO.getId().equals(assayTO.getExperimentId())) {
-                        this.lastExpTO = this.expTOIterator.next();
-                    }
-                    if (this.lastExpTO == null || !this.lastExpTO.getId().equals(assayTO.getExperimentId())) {
-                        throw log.throwing(new IllegalStateException("No experiment matching the call source experiment ID "
-                                + assayTO.getExperimentId()
-                                + ". Either the assays and experiment were not properly ordered, or problem in data retrieval"));
-                    }
-                    this.lastExp = mapExperimentTOToExperiment(this.lastExpTO);
-                }
-                if (this.lastAssayTO instanceof AssayPartOfExpTO) {
-                    this.lastAssay = mapAssayPartOfExpTOToAssayPartOfExp((AssayPartOfExpTO<?>) this.lastAssayTO,
-                            this.lastExp);
-                } else {
-                    this.lastAssay = mapAssayTOToAssay(this.lastAssayTO);
-                }
-            }
-            RawCallSource<?> callSource = mapRawCallSourceTOToRawCallSource(callSourceTO, this.lastAssay);
-            action.accept((T) callSource);
-            return log.exit(true);
+            return log.exit(false);
         }
 
         /**
@@ -150,15 +147,121 @@ public class RawDataService extends CommonService {
         /** 
          * Close {@code Stream}s provided at instantiation.
          */
+        @Override
+        public void close() {
+            log.entry();
+            if (!this.isClosed){
+                try {
+                    this.assayTOStream.close();
+                    this.expTOStream.close();
+                } finally {
+                    this.isClosed = true;
+                }
+            }
+            log.exit();
+        }
+    }
+
+    public class AssaySpliterator<T extends Assay<?>, U extends AssayTO<?>,
+    W extends ExperimentTO<?>, X extends Experiment<?>> extends CommonRawDataSpliterator<T, U, T, W, X> {
+
+        private final Class<T> assayType;
+
+        public AssaySpliterator(Stream<W> expTOStream, Stream<U> assayTOStream, Class<T> assayType) {
+            super(expTOStream, assayTOStream);
+            this.assayType = assayType;
+        }
+
+        @Override
+        public boolean tryAdvance(Consumer<? super T> action) {
+            log.entry(action);
+
+            this.initializeTryAdvance();
+
+            T assay = this.loadAssayAdvanceTOIterator(null);
+            if (assay == null) {
+                return log.exit(false);
+            }
+            if (this.assayType.isInstance(assay)) {
+                action.accept(this.assayType.cast(assay));
+            } else {
+                throw log.throwing(new IllegalStateException("Unexpected class for Assay, expected "
+                        + this.assayType + " but was " + assay.getClass()));
+            }
+            return log.exit(true);
+        }
+    }
+
+    public class RawCallSourceSpliterator<T extends RawCallSource<?>, U extends CallSourceTO<?>,
+    V extends AssayTO<?>, W extends Assay<?>, X extends ExperimentTO<?>, Y extends Experiment<?>>
+    extends CommonRawDataSpliterator<T, V, W, X, Y> {
+
+        private final Stream<U> callSourceTOStream;
+        private Iterator<U> callSourceTOIterator;
+        private W lastAssay;
+        private Class<T> callRawSourceType;
+
+        public RawCallSourceSpliterator(Stream<X> expTOStream, Stream<V> assayTOStream,
+                Stream<U> callSourceTOStream, Class<T> callRawSourceType) {
+            super(expTOStream, assayTOStream);
+            if (assayTOStream == null || callSourceTOStream == null) {
+                throw new IllegalArgumentException("Assay and RawCallSource streams cannot be null");
+            }
+
+            this.callSourceTOStream = callSourceTOStream;
+            this.callSourceTOIterator = null;
+            this.lastAssay = null;
+            this.callRawSourceType = callRawSourceType;
+        }
+
+        @Override
+        protected boolean initializeTryAdvance() {
+            log.entry();
+            if (super.initializeTryAdvance()) {
+                this.callSourceTOIterator = this.callSourceTOStream.iterator();
+                return log.exit(true);
+            }
+            return log.exit(false);
+        }
+
+        @Override
+        public boolean tryAdvance(Consumer<? super T> action) {
+            log.entry(action);
+
+            this.initializeTryAdvance();
+
+            U callSourceTO = null;
+            try {
+                callSourceTO = this.callSourceTOIterator.next();
+            } catch (NoSuchElementException e) {
+                log.catching(Level.DEBUG, e);
+                return log.exit(false);
+            }
+
+            if (!this.checkLastAssayTOIsValid(callSourceTO.getAssayId())) {
+                this.lastAssay = this.loadAssayAdvanceTOIterator(callSourceTO.getAssayId());
+            }
+            RawCallSource<?> callSource = mapRawCallSourceTOToRawCallSource(callSourceTO, this.lastAssay);
+            if (this.callRawSourceType.isInstance(callSource)) {
+                action.accept(this.callRawSourceType.cast(callSource));
+            } else {
+                throw log.throwing(new IllegalStateException("Unexpected class for RawCallSource, expected "
+                        + this.callRawSourceType + " but was " + callSource.getClass()));
+            }
+            return log.exit(true);
+        }
+
+        /**
+         * Close {@code Stream}s provided at instantiation.
+         */
+        @Override
         public void close() {
             log.entry();
             if (!this.isClosed){
                 try {
                     this.callSourceTOStream.close();
-                    this.assayTOStream.close();
-                    this.expTOStream.close();
                 } finally {
-                    this.isClosed = true;
+                    super.close();
                 }
             }
             log.exit();

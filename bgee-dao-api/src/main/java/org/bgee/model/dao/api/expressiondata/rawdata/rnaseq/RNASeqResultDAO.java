@@ -1,11 +1,10 @@
 package org.bgee.model.dao.api.expressiondata.rawdata.rnaseq;
 
-import java.io.Serializable;
-import java.util.Set;
+import java.math.BigDecimal;
 
 import org.bgee.model.dao.api.DAO;
-import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.rawdata.CallSourceRawDataDAO.CallSourceRawDataTO;
+import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO;
 
 /**
  * {@code DAO} related to RNA-Seq experiments, using {@link RNASeqResultTO}s 
@@ -13,88 +12,81 @@ import org.bgee.model.dao.api.expressiondata.rawdata.CallSourceRawDataDAO.CallSo
  * 
  * @author Frederic Bastian
  * @author Valentine Rech de Laval
- * @version Bgee 13
- * @see RNASeqResultTO
+ * @version Bgee 14
  * @since Bgee 12
  */
 public interface RNASeqResultDAO extends DAO<RNASeqResultDAO.Attribute> {
-    
+
+    /**
+     * {@code Enum} used to define the attributes to populate in the {@code RNASeqResultTO}s 
+     * obtained from this {@code RNASeqResultDAO}.
+     * <ul>
+     * <li>{@code RNA_SEQ_LIBRARY_ID}: corresponds to {@link RNASeqResultTO#getRNASeqLibraryId()}.
+     * <li>{@code BGEE_GENE_ID}: corresponds to {@link RNASeqResultTO#getBgeeGeneId()}.
+     * <li>{@code FPKM}: corresponds to {@link RNASeqResultTO#getFPKM()}.
+     * <li>{@code TPM}: corresponds to {@link RNASeqResultTO#getTPM()}.
+     * <li>{@code READ_COUNT}: corresponds to {@link RNASeqResultTO#getReadCount()}.
+     * <li>{@code DETECTION_FLAG}: corresponds to {@link RNASeqResultTO#getDetectionFlag()}.
+     * <li>{@code RNA_SEQ_DATA}: corresponds to {@link RNASeqResultTO#getExpressionConfidence()}.
+     * <li>{@code REASON_FOR_EXCLUSION}: corresponds to {@link RNASeqResultTO#getExclusionReason()}.
+     * <li>{@code RANK}: corresponds to {@link RNASeqResultTO#getRank()}.
+     * <li>{@code EXPRESSION_ID}: corresponds to {@link RNASeqResultTO#getExpressionId()}.
+     * </ul>
+     */
     public enum Attribute implements DAO.Attribute {
-        ID, GENE_ID, LOG2_RPK, READS_COUNT, EXPRESSION_ID, NOEXPRESSION_ID, DETECTION_FLAG, 
-        RNA_SEQ_DATA, REASON_FOR_EXCLUSION
+        RNA_SEQ_LIBRARY_ID, BGEE_GENE_ID, FPKM, TPM, READ_COUNT, DETECTION_FLAG, 
+        RNA_SEQ_DATA, REASON_FOR_EXCLUSION, RANK, EXPRESSION_ID;
     }
 
     /**
-     * Remove link between some RNA_Seq results and their associated no-expression 
-     * call because of no-expression conflicts. The RNA_Seq results will not be deleted, 
-     * but their association to the specified no-expression calls will be. A reason 
-     * for exclusion should be provided in the data source, such as 'noExpression conflict'.
-     * 
-     * @param noExprIds    A {@code Set} of {@code String}s that are the IDs of 
-     *                     the no-expression calls in conflict, whose association to 
-     *                     RNA_Seq results should be removed. 
-     * @return             An {@code int} that is the number of results that were actually 
-     *                     updated as a result of the call to this method. 
-     * @throws IllegalArgumentException If {@code noExprIds} is empty or null. 
-     * @throws DAOException             If an error occurred while updating the data.
-     */
-    public int updateNoExpressionConflicts(Set<String> noExprIds) 
-            throws DAOException, IllegalArgumentException;
-
-    /**
-     * {@code TransferObject} for the class 
-     * {@link org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqResultDAO}.
-     * <p>
-     * For information on this {@code TransferObject} and its fields, 
-     * see the corresponding class.
-     * 
+     * {@code TransferObject} for RNA-Seq results.
+     *
      * @author Frederic Bastian
      * @author Valentine Rech de Laval
-     * @version Bgee 13
-     * @see org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqResultDAO
+     * @version Bgee 14
      * @since Bgee 12
      */
-    /*
-     * (non-javadoc)
-     * This TO is not in it's final version. We need to known if CallSourceRawDataTO is necessary 
-     * and consistent.
-     * XXX: well, CallSourceRawDataTO is deprecated, was it deprecated before or after this note?
-     */
-    public final class RNASeqResultTO extends CallSourceRawDataTO implements Serializable {
+    public final class RNASeqResultTO extends CallSourceTO<String> {
         private static final long serialVersionUID = 9192921864601490175L;
 
-        /**
-         * A {@code String} corresponding to the ID 
-         * of the RNA-Seq library this result belongs to. 
-         */
-        public String rnaSeqLibraryId;
-        /**
-         * A {@code Float} representing the log2 RPK 
-         * (Reads Per Kilobase) for this gene in this library.
-         */
-        public Float log2RPK;
-        /**
-         * An Integer representing the number of reads aligned to this gene 
-         * in this library. 
-         */
-        // FIXME change this for double or float as it's estimated counts
-        public Integer readsCount;
-        /**
-         * A {@code String} representing the expression call for this gene 
-         * in this library ('undefined', 'present', 'absent').
-         */
-        // TODO change this for an Enum.
-        public String detectionFlag;
+        private final BigDecimal tpm;
+        private final BigDecimal rpkm;
+        private final BigDecimal readCount;
 
         /**
          * Default constructor.
          */
-        public RNASeqResultTO() {
-            super();
-            this.rnaSeqLibraryId = null;
-            this.log2RPK = -999999f;
-            this.readsCount = 0;
-            this.detectionFlag = "undefined";
+        public RNASeqResultTO(String rnaSeqLibraryId, Integer bgeeGeneId, BigDecimal tpm, BigDecimal rpkm,
+                BigDecimal readCount, DetectionFlag detectionFlag, DataState expressionConfidence,
+                ExclusionReason exclusionReason, BigDecimal rank, Integer expressionId) {
+            super(rnaSeqLibraryId, bgeeGeneId, detectionFlag, expressionConfidence, exclusionReason, rank, expressionId);
+            this.tpm = tpm;
+            this.rpkm = rpkm;
+            this.readCount = readCount;
         }
+
+        /**
+         * @return  A {@code BigDecimal} that is the TPM value for this gene in this library.
+         *          The value is <strong>NOT</strong> log transformed.
+         */
+        public BigDecimal getTpm() {
+            return tpm;
+        }
+        /**
+         * @return  A {@code BigDecimal} that is the RPKM value for this gene in this library.
+         *          The value is <strong>NOT</strong> log transformed.
+         */
+        public BigDecimal getRpkm() {
+            return rpkm;
+        }
+        /**
+         * @return  A {@code BigDecimal} that is the count of reads mapped to this gene in this library.
+         *          As of Bgee 14, the counts are "estimated counts", produced using the Kallisto software.
+         *          They are not normalized for read or gene lengths.
+         */
+        public BigDecimal getReadCount() {
+            return readCount;
+        }
+
     }
 }

@@ -25,6 +25,9 @@ import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpre
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO.RawExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataExperimentDAO.ExperimentTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixChipDAO.AffymetrixChipTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixExperimentDAO.AffymetrixExperimentTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixProbesetDAO.AffymetrixProbesetTO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesDataGroupTO;
@@ -179,6 +182,10 @@ public class TOComparator {
             return log.exit(areTOsEqual((SourceToSpeciesTO) to1,(SourceToSpeciesTO) to2));
         } else if (to2 instanceof AffymetrixProbesetTO) {
             return log.exit(areTOsEqual((AffymetrixProbesetTO) to1,(AffymetrixProbesetTO) to2));
+        } else if (to2 instanceof AffymetrixChipTO) {
+            return log.exit(areTOsEqual((AffymetrixChipTO) to1,(AffymetrixChipTO) to2, compareId));
+        } else if (to2 instanceof AffymetrixExperimentTO) {
+            return log.exit(areTOsEqual((AffymetrixExperimentTO) to1,(AffymetrixExperimentTO) to2, compareId));
         }
 
         throw log.throwing(new IllegalArgumentException("There is no comparison method " +
@@ -1077,9 +1084,9 @@ public class TOComparator {
     }
 
     /**
-     * Method to compare two {@code AffymetrixProbesetTO}s, to check for complete 
-     * equality of each attribute. 
-     * 
+     * Method to compare two {@code AffymetrixProbesetTO}s, to check for complete
+     * equality of each attribute.
+     *
      * @param to1       A {@code AffymetrixProbesetTO} to be compared to {@code to2}.
      * @param to2       A {@code AffymetrixProbesetTO} to be compared to {@code to1}.
      * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
@@ -1095,9 +1102,9 @@ public class TOComparator {
     }
 
     /**
-     * Method to compare two {@code CallSourceTO}s, to check for complete 
-     * equality of each attribute. 
-     * 
+     * Method to compare two {@code CallSourceTO}s, to check for complete
+     * equality of each attribute.
+     *
      * @param to1       A {@code AffymetrixProbesetTO} to be compared to {@code to2}.
      * @param to2       A {@code AffymetrixProbesetTO} to be compared to {@code to1}.
      * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
@@ -1117,7 +1124,70 @@ public class TOComparator {
     }
 
     /**
-     * Method to compare floating-point values using an epsilon. 
+     * Method to compare two {@code AffymetrixChipTO}s, to check for complete
+     * equality of each attribute.
+     *
+     * @param to1       An {@code AffymetrixChipTO} to be compared to {@code to2}.
+     * @param to2       An {@code AffymetrixChipTO} to be compared to {@code to1}.
+     * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
+     */
+    private static boolean areTOsEqual(AffymetrixChipTO to1, AffymetrixChipTO to2, boolean compareId) {
+        log.entry(to1, to2);
+        if (TOComparator.areEntityTOsEqual(to1, to2, compareId) &&
+                Objects.equals(to1.getExperimentId(), to2.getExperimentId()) &&
+                Objects.equals(to1.getConditionId(), to2.getConditionId()) &&
+                Objects.equals(to1.getAffymetrixChipId(), to2.getAffymetrixChipId()) &&
+                Objects.equals(to1.getScanDate(), to2.getScanDate()) &&
+                Objects.equals(to1.getChipTypeId(), to2.getChipTypeId()) &&
+                Objects.equals(to1.getNormalizationType(), to2.getNormalizationType()) &&
+                Objects.equals(to1.getDetectionType(), to2.getDetectionType()) &&
+                Objects.equals(to1.getDistinctRankCount(), to2.getDistinctRankCount()) &&
+                areBigDecimalEquals(to1.getQualityScore(), to2.getQualityScore()) &&
+                areBigDecimalEquals(to1.getPercentPresent(), to2.getPercentPresent()) &&
+                areBigDecimalEquals(to1.getMaxRank(), to2.getMaxRank())) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
+     * Method to compare two {@code AffymetrixExperimentTO}s, to check for complete
+     * equality of each attribute.
+     *
+     * @param to1       A {@code AffymetrixExperimentTO} to be compared to {@code to2}.
+     * @param to2       A {@code AffymetrixExperimentTO} to be compared to {@code to1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be
+     *                  used for comparisons. 
+     * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
+     */
+    private static boolean areTOsEqual(AffymetrixExperimentTO to1, AffymetrixExperimentTO to2, boolean compareId) {
+        log.entry(to1, to2);
+        if (areTOsEqual((ExperimentTO<?>) to1, (ExperimentTO<?>) to2, compareId)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    /**
+     * Method to compare two {@code ExperimentTO}s, to check for complete
+     * equality of each attribute.
+     *
+     * @param to1       A {@code AffymetrixProbesetTO} to be compared to {@code to2}.
+     * @param to2       A {@code AffymetrixProbesetTO} to be compared to {@code to1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be
+     *                  used for comparisons. 
+     * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
+     */
+    private static boolean areTOsEqual(ExperimentTO<?> to1, ExperimentTO<?> to2, boolean compareId) {
+        log.entry(to1, to2);
+        if (areEntityTOsEqual(to1, to2, compareId) &&
+                Objects.equals(to1.getDataSourceId(), to2.getDataSourceId())) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
+     * Method to compare floating-point values using an epsilon.
      *
      * @param f1    A {@code Float} to be compared to {@code f2}.
      * @param f2    A {@code Float} to be compared to {@code f1}.

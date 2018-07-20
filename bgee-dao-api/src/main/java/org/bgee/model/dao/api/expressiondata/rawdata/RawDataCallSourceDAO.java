@@ -13,6 +13,8 @@ public class RawDataCallSourceDAO {
     /**
      * {@code Enum} used to define the attributes to populate in the {@code CallSourceRawDataTO}s 
      * obtained from this {@code CallSourceRawDataDAO}.
+     * <p>
+     * These {@code Attribute}s only serve as a reminder of the common fields for all {@code CallSourceTO}s.
      * <ul>
      * <li>{@code ASSAY_ID}: corresponds to {@link CallSourceRawDataTO#getAssayId()}.
      * <li>{@code BGEE_GENE_ID}: corresponds to {@link CallSourceRawDataTO#getBgeeGeneId()}.
@@ -75,7 +77,7 @@ public class RawDataCallSourceDAO {
                 log.entry(representation);
                 return log.exit(TransferObject.convert(DetectionFlag.class, representation));
             }
-        
+
             /**
              * See {@link #getStringRepresentation()}
              */
@@ -98,7 +100,7 @@ public class RawDataCallSourceDAO {
             public String getStringRepresentation() {
                 return this.stringRepresentation;
             }
-        
+
             @Override
             public String toString() {
                 return this.getStringRepresentation();

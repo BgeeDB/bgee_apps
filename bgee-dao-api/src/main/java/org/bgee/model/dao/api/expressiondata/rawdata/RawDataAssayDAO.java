@@ -9,7 +9,6 @@ public class RawDataAssayDAO {
 
         public AssayTO(T id) {
             super(id);
-            // TODO Auto-generated constructor stub
         }
     }
     public static interface AssayPartOfExpTO<T extends Comparable<T>> {

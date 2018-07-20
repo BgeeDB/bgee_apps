@@ -29,6 +29,10 @@ import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentE
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO.CallQuality;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO.DetectionFlag;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO.ExclusionReason;
+import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixChipDAO.AffymetrixChipTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixChipDAO.AffymetrixChipTO.DetectionType;
+import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixChipDAO.AffymetrixChipTO.NormalizationType;
+import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixExperimentDAO.AffymetrixExperimentTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixProbesetDAO.AffymetrixProbesetTO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO.CategoryEnum;
@@ -662,6 +666,48 @@ public class TOComparatorTest extends TestAncestor {
                 ExclusionReason.PRE_FILTERING, new BigDecimal("11.1"), new BigDecimal("5.5"), 110);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertFalse(TOComparator.areTOsEqual(to1, to2, false));
+    }
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object)} 
+     * using {@code AffymetrixChipTO}s.
+     */
+    @Test
+    public void testAreAffymetrixChipTOEqual() {
+        AffymetrixChipTO to1 = new AffymetrixChipTO(1, "Exp1", "Chip1", 1, "2018-07-20", "ChipTypeId1", NormalizationType.GC_RMA,
+                DetectionType.SCHUSTER, new BigDecimal("10"), new BigDecimal("95.5"), new BigDecimal("8557.5"), 9000);
+        AffymetrixChipTO to2 = new AffymetrixChipTO(1, "Exp1", "Chip1", 1, "2018-07-20", "ChipTypeId1", NormalizationType.GC_RMA,
+                DetectionType.SCHUSTER, new BigDecimal("10"), new BigDecimal("95.5"), new BigDecimal("8557.5"), 9000);
+        assertTrue(TOComparator.areTOsEqual(to1, to2));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, true));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+
+        to2 = new AffymetrixChipTO(2, "Exp1", "Chip1", 1, "2018-07-20", "ChipTypeId1", NormalizationType.GC_RMA,
+                DetectionType.SCHUSTER, new BigDecimal("10"), new BigDecimal("95.5"), new BigDecimal("8557.5"), 9000);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+
+        to2 = new AffymetrixChipTO(1, "Exp1", "Chip1", 1, "2017-07-20", "ChipTypeId1", NormalizationType.GC_RMA,
+                DetectionType.SCHUSTER, new BigDecimal("10"), new BigDecimal("95.5"), new BigDecimal("8557.5"), 9000);
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+    }
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object)} 
+     * using {@code AffymetrixExperimentTO}s.
+     */
+    @Test
+    public void testAreAffymetrixExperimentTOEqual() {
+        AffymetrixExperimentTO to1 = new AffymetrixExperimentTO("Exp1", "name", "description", 1);
+        AffymetrixExperimentTO to2 = new AffymetrixExperimentTO("Exp1", "name", "description", 1);
+        assertTrue(TOComparator.areTOsEqual(to1, to2));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, true));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+
+        to2 = new AffymetrixExperimentTO("Exp2", "name", "description", 1);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+
+        to2 = new AffymetrixExperimentTO("Exp1", "name", "description", 2);
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
     }
 
     /**

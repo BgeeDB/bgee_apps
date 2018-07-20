@@ -7,10 +7,24 @@ public class RawDataExperimentDAO {
     public static class ExperimentTO<T extends Comparable<T>> extends NamedEntityTO<T> {
         private static final long serialVersionUID = -3865618442951732061L;
 
-        protected ExperimentTO(T id, String name, String description) {
+        private final Integer dataSourceId;
+
+        protected ExperimentTO(T id, String name, String description, Integer dataSourceId) {
             super(id, name, description);
-            // TODO Auto-generated constructor stub
+            this.dataSourceId = dataSourceId;
         }
-        
+
+        public Integer getDataSourceId() {
+            return dataSourceId;
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("ExperimentTO [id=").append(getId()).append(", name=").append(getName())
+                    .append(", description=").append(getDescription()).append(", dataSourceId=").append(dataSourceId)
+                    .append("]");
+            return builder.toString();
+        }
     }
 }

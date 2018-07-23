@@ -29,6 +29,7 @@ import org.bgee.model.dao.api.expressiondata.rawdata.RawDataExperimentDAO.Experi
 import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixChipDAO.AffymetrixChipTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixExperimentDAO.AffymetrixExperimentTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixProbesetDAO.AffymetrixProbesetTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO.RNASeqLibraryTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultDAO.RNASeqResultTO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesDataGroupTO;
@@ -189,6 +190,8 @@ public class TOComparator {
             return log.exit(areTOsEqual((AffymetrixExperimentTO) to1,(AffymetrixExperimentTO) to2, compareId));
         } else if (to2 instanceof RNASeqResultTO) {
             return log.exit(areTOsEqual((RNASeqResultTO) to1,(RNASeqResultTO) to2));
+        } else if (to2 instanceof RNASeqLibraryTO) {
+            return log.exit(areTOsEqual((RNASeqLibraryTO) to1,(RNASeqLibraryTO) to2, compareId));
         }
 
         throw log.throwing(new IllegalArgumentException("There is no comparison method " +
@@ -1150,6 +1153,8 @@ public class TOComparator {
      *
      * @param to1       An {@code AffymetrixChipTO} to be compared to {@code to2}.
      * @param to2       An {@code AffymetrixChipTO} to be compared to {@code to1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be
+     *                  used for comparisons.
      * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
      */
     private static boolean areTOsEqual(AffymetrixChipTO to1, AffymetrixChipTO to2, boolean compareId) {
@@ -1165,6 +1170,41 @@ public class TOComparator {
                 Objects.equals(to1.getDistinctRankCount(), to2.getDistinctRankCount()) &&
                 areBigDecimalEquals(to1.getQualityScore(), to2.getQualityScore()) &&
                 areBigDecimalEquals(to1.getPercentPresent(), to2.getPercentPresent()) &&
+                areBigDecimalEquals(to1.getMaxRank(), to2.getMaxRank())) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    /**
+     * Method to compare two {@code RNASeqLibraryTO}s, to check for complete
+     * equality of each attribute.
+     *
+     * @param to1       A {@code RNASeqLibraryTO} to be compared to {@code to2}.
+     * @param to2       A {@code RNASeqLibraryTO} to be compared to {@code to1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be
+     *                  used for comparisons.
+     * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
+     */
+    private static boolean areTOsEqual(RNASeqLibraryTO to1, RNASeqLibraryTO to2, boolean compareId) {
+        log.entry(to1, to2);
+        if (TOComparator.areEntityTOsEqual(to1, to2, compareId) &&
+                Objects.equals(to1.getExperimentId(), to2.getExperimentId()) &&
+                Objects.equals(to1.getConditionId(), to2.getConditionId()) &&
+                Objects.equals(to1.getPlatformId(), to2.getPlatformId()) &&
+                areBigDecimalEquals(to1.getTmmFactor(), to2.getTmmFactor()) &&
+                areBigDecimalEquals(to1.getTpmThreshold(), to2.getTpmThreshold()) &&
+                areBigDecimalEquals(to1.getFpkmThreshold(), to2.getFpkmThreshold()) &&
+                areBigDecimalEquals(to1.getAllGenesPercentPresent(), to2.getAllGenesPercentPresent()) &&
+                areBigDecimalEquals(to1.getProteinCodingGenesPercentPresent(), to2.getProteinCodingGenesPercentPresent()) &&
+                areBigDecimalEquals(to1.getIntergenicRegionsPercentPresent(), to2.getIntergenicRegionsPercentPresent()) &&
+                areBigDecimalEquals(to1.getThresholdRatioIntergenicCodingPercent(), to2.getThresholdRatioIntergenicCodingPercent()) &&
+                Objects.equals(to1.getAllReadCount(), to2.getAllReadCount()) &&
+                Objects.equals(to1.getMappedReadCount(), to2.getMappedReadCount()) &&
+                Objects.equals(to1.getMinReadLength(), to2.getMinReadLength()) &&
+                Objects.equals(to1.getMaxReadLength(), to2.getMaxReadLength()) &&
+                Objects.equals(to1.getLibraryType(), to2.getLibraryType()) &&
+                Objects.equals(to1.getLibraryOrientation(), to2.getLibraryOrientation()) &&
+                Objects.equals(to1.getDistinctRankCount(), to2.getDistinctRankCount()) &&
                 areBigDecimalEquals(to1.getMaxRank(), to2.getMaxRank())) {
             return log.exit(true);
         }

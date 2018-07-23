@@ -35,20 +35,15 @@ public interface AffymetrixChipDAO {
             throws DAOException;
 
     /**
-     * {@code TransferObject} for the class 
-     * {@link org.bgee.model.expressiondata.rawdata.affymetrix.AffymetrixChip}.
-     * <p>
-     * For information on this {@code TransferObject} and its fields, 
-     * see the corresponding class.
+     * {@code TransferObject} for Affymetrix chips.
      * 
      * @author Frederic Bastian
-     * @version Bgee 13
-     * @see org.bgee.model.expressiondata.rawdata.affymetrix.AffymetrixChip
+     * @version Bgee 14
      * @since Bgee 11
      */
     public final class AffymetrixChipTO extends AssayTO<Integer> implements AssayPartOfExpTO<String>, RawDataAnnotatedTO {
+        private static final long serialVersionUID = 7479060565564264352L;
         private final static Logger log = LogManager.getLogger(AffymetrixChipTO.class.getName());
-        private static final long serialVersionUID = 1434334L;
 
         /**
          * {@code Enum} representing the different types of normalization that can be applied in Bgee to Affymetrix data.

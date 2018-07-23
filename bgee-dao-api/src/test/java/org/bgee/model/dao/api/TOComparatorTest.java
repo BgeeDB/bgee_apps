@@ -34,6 +34,9 @@ import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixChipDA
 import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixChipDAO.AffymetrixChipTO.NormalizationType;
 import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixExperimentDAO.AffymetrixExperimentTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixProbesetDAO.AffymetrixProbesetTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO.RNASeqLibraryTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO.RNASeqLibraryTO.LibraryOrientation;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO.RNASeqLibraryTO.LibraryType;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultDAO.RNASeqResultTO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO.CategoryEnum;
@@ -636,7 +639,7 @@ public class TOComparatorTest extends TestAncestor {
     }
 
     /**
-     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object)} 
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object)}
      * using {@code AffymetrixProbesetTO}s.
      */
     @Test
@@ -669,7 +672,7 @@ public class TOComparatorTest extends TestAncestor {
         assertFalse(TOComparator.areTOsEqual(to1, to2, false));
     }
     /**
-     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object)} 
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object)}
      * using {@code AffymetrixChipTO}s.
      */
     @Test
@@ -692,7 +695,7 @@ public class TOComparatorTest extends TestAncestor {
         assertFalse(TOComparator.areTOsEqual(to1, to2));
     }
     /**
-     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object)} 
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object)}
      * using {@code AffymetrixExperimentTO}s.
      */
     @Test
@@ -711,7 +714,7 @@ public class TOComparatorTest extends TestAncestor {
         assertFalse(TOComparator.areTOsEqual(to1, to2));
     }
     /**
-     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object)} 
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object)}
      * using {@code RNASeqResultTO}s.
      */
     @Test
@@ -728,6 +731,33 @@ public class TOComparatorTest extends TestAncestor {
 
         to2 = new RNASeqResultTO("L1", 11, new BigDecimal("11.1"), new BigDecimal("6.5"), new BigDecimal("100.2"),
                 DetectionFlag.ABSENT, DataState.HIGHQUALITY, ExclusionReason.NOT_EXCLUDED, new BigDecimal("1.5"), 1254);
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+    }
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object)}
+     * using {@code RNASeqLibraryTO}s.
+     */
+    @Test
+    public void testAreRNASeqLibraryTOEqual() {
+        RNASeqLibraryTO to1 = new RNASeqLibraryTO("L1", "Exp1", 12, "Platform1", new BigDecimal("36"), new BigDecimal("10"),
+                new BigDecimal("50"), new BigDecimal("70"), new BigDecimal("80"), new BigDecimal("2"), new BigDecimal("5"),
+                1000000, 900000, 100, 150, LibraryType.PAIRED_END, LibraryOrientation.FORWARD, new BigDecimal("8557.5"), 9000);
+        RNASeqLibraryTO to2 = new RNASeqLibraryTO("L1", "Exp1", 12, "Platform1", new BigDecimal("36"), new BigDecimal("10"),
+                new BigDecimal("50"), new BigDecimal("70"), new BigDecimal("80"), new BigDecimal("2"), new BigDecimal("5"),
+                1000000, 900000, 100, 150, LibraryType.PAIRED_END, LibraryOrientation.FORWARD, new BigDecimal("8557.5"), 9000);
+        assertTrue(TOComparator.areTOsEqual(to1, to2));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, true));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+
+        to2 = new RNASeqLibraryTO("L2", "Exp1", 12, "Platform1", new BigDecimal("36"), new BigDecimal("10"),
+                new BigDecimal("50"), new BigDecimal("70"), new BigDecimal("80"), new BigDecimal("2"), new BigDecimal("5"),
+                1000000, 900000, 100, 150, LibraryType.PAIRED_END, LibraryOrientation.FORWARD, new BigDecimal("8557.5"), 9000);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+
+        to2 = new RNASeqLibraryTO("L1", "Exp1", 12, "Platform1", new BigDecimal("36"), new BigDecimal("10"),
+                new BigDecimal("50"), new BigDecimal("70"), new BigDecimal("80"), new BigDecimal("2"), new BigDecimal("5"),
+                1000000, 900000, 100, 150, LibraryType.SINGLE_READ, LibraryOrientation.FORWARD, new BigDecimal("8557.5"), 9000);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
     }
 

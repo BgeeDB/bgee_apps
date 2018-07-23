@@ -400,6 +400,10 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         RequestParameters urlAbout = this.getNewRequestParameters();
         urlAbout.setPage(RequestParameters.PAGE_ABOUT);
 
+        RequestParameters urlPrivacyPolicy = this.getNewRequestParameters();
+        urlPrivacyPolicy.setPage(RequestParameters.PAGE_ABOUT);
+        urlPrivacyPolicy.setAction(RequestParameters.ACTION_ABOUT_PRIVACY_POLICY);
+
         // Navigation bar
         StringBuilder navbar = new StringBuilder();
 
@@ -458,7 +462,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
               + "aria-haspopup='true' aria-expanded='false'>Download <span class='caret'></span></a>");
         navbar.append("<ul class='dropdown-menu'>");
         navbar.append("<li><a href='").append(urlDownload.getRequestURL())
-                .append("'>Download home</a></li>");
+                .append("'>Download overview</a></li>");
         navbar.append("<li><a href='").append(urlDownloadExprCallFiles.getRequestURL()).append("'>")
                 .append(GENE_EXPR_CALLS_PAGE_NAME).append("</a></li>");
         navbar.append("<li><a href='").append(urlDownloadProcValueFile.getRequestURL()).append("'>")
@@ -474,7 +478,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
               + "aria-haspopup='true' aria-expanded='false'>Documentation <span class='caret'></span></a>");
         navbar.append("<ul class='dropdown-menu'>");
         navbar.append("<li><a title='See how to access to GTEx data'href='")
-                .append(urlDocDataSets.getRequestURL()).append("'>GTEx into Bgee</a></li>");
+                .append(urlDocDataSets.getRequestURL()).append("'>GTEx in Bgee</a></li>");
         navbar.append("<li><a title='TopAnat documentation' href='").append(urlDocTopAnat.getRequestURL())
                 .append("'>").append(TOP_ANAT_PAGE_NAME).append("</a></li>");
         navbar.append("<li><a title='Gene expression call files documentation' href='")
@@ -493,9 +497,10 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 + "aria-haspopup='true' aria-expanded='false'>About <span class='caret'></span></a>");
         navbar.append("<ul class='dropdown-menu'>");
         navbar.append("<li><a href='").append(urlAbout.getRequestURL()).append("'>About Bgee</a></li>");
-        navbar.append("<li><a href='https://bgeedb.wordpress.com' target='_blank'>Bgee blog</a></li>");
         navbar.append("<li><a href='").append(urlBgeeSources.getRequestURL())
                 .append("'>Bgee sources</a></li>");
+        navbar.append("<li><a href='https://bgeedb.wordpress.com' target='_blank'>Bgee blog</a></li>");
+        navbar.append("<li><a href='").append(urlPrivacyPolicy.getRequestURL()).append("'>Bgee privacy notice</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
         

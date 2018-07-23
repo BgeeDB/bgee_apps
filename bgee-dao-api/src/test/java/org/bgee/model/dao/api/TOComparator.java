@@ -28,6 +28,7 @@ import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSo
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataExperimentDAO.ExperimentTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO.ESTTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO.ESTLibraryTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituExperimentDAO.InSituExperimentTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO.AffymetrixChipTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO.AffymetrixProbesetTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO.MicroarrayExperimentTO;
@@ -201,6 +202,8 @@ public class TOComparator {
             return log.exit(areTOsEqual((ESTLibraryTO) to1, (ESTLibraryTO) to2, compareId));
         } else if (to2 instanceof ESTTO) {
             return log.exit(areTOsEqual((ESTTO) to1, (ESTTO) to2, compareId));
+        } else if (to2 instanceof InSituExperimentTO) {
+            return log.exit(areTOsEqual((InSituExperimentTO) to1, (InSituExperimentTO) to2, compareId));
         }
 
         throw log.throwing(new IllegalArgumentException("There is no comparison method " +
@@ -1286,6 +1289,23 @@ public class TOComparator {
      * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
      */
     private static boolean areTOsEqual(RNASeqExperimentTO to1, RNASeqExperimentTO to2, boolean compareId) {
+        log.entry(to1, to2);
+        if (areTOsEqual((ExperimentTO<?>) to1, (ExperimentTO<?>) to2, compareId)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    /**
+     * Method to compare two {@code InSituExperimentTO}s, to check for complete
+     * equality of each attribute.
+     *
+     * @param to1       A {@code InSituExperimentTO} to be compared to {@code to2}.
+     * @param to2       A {@code InSituExperimentTO} to be compared to {@code to1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be
+     *                  used for comparisons. 
+     * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
+     */
+    private static boolean areTOsEqual(InSituExperimentTO to1, InSituExperimentTO to2, boolean compareId) {
         log.entry(to1, to2);
         if (areTOsEqual((ExperimentTO<?>) to1, (ExperimentTO<?>) to2, compareId)) {
             return log.exit(true);

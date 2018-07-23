@@ -31,6 +31,7 @@ import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSo
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO.ExclusionReason;
 import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO.ESTTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO.ESTLibraryTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituExperimentDAO.InSituExperimentTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO.AffymetrixChipTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO.AffymetrixChipTO.DetectionType;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO.AffymetrixChipTO.NormalizationType;
@@ -831,6 +832,25 @@ public class TOComparatorTest extends TestAncestor {
         to2 = new ESTTO("ID1", "ID2", "LibId1", "clusterId1", 1, DataState.HIGHQUALITY, 1);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertFalse(TOComparator.areTOsEqual(to1, to2, false));
+    }
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object)}
+     * using {@code InSituExperimentTO}s.
+     */
+    @Test
+    public void testAreInSituExperimentTOEqual() {
+        InSituExperimentTO to1 = new InSituExperimentTO("Exp1", "name", "description", 1);
+        InSituExperimentTO to2 = new InSituExperimentTO("Exp1", "name", "description", 1);
+        assertTrue(TOComparator.areTOsEqual(to1, to2));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, true));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+
+        to2 = new InSituExperimentTO("Exp2", "name", "description", 1);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+
+        to2 = new InSituExperimentTO("Exp1", "name", "description", 2);
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
     }
 
     /**

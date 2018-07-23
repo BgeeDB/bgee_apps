@@ -29,11 +29,11 @@ import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentE
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO.CallQuality;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO.DetectionFlag;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO.ExclusionReason;
-import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixChipDAO.AffymetrixChipTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixChipDAO.AffymetrixChipTO.DetectionType;
-import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixChipDAO.AffymetrixChipTO.NormalizationType;
-import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixExperimentDAO.AffymetrixExperimentTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixProbesetDAO.AffymetrixProbesetTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO.AffymetrixChipTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO.AffymetrixChipTO.DetectionType;
+import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO.AffymetrixChipTO.NormalizationType;
+import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO.AffymetrixProbesetTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO.MicroarrayExperimentTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO.RNASeqLibraryTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO.RNASeqLibraryTO.LibraryOrientation;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO.RNASeqLibraryTO.LibraryType;
@@ -700,17 +700,17 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreAffymetrixExperimentTOEqual() {
-        AffymetrixExperimentTO to1 = new AffymetrixExperimentTO("Exp1", "name", "description", 1);
-        AffymetrixExperimentTO to2 = new AffymetrixExperimentTO("Exp1", "name", "description", 1);
+        MicroarrayExperimentTO to1 = new MicroarrayExperimentTO("Exp1", "name", "description", 1);
+        MicroarrayExperimentTO to2 = new MicroarrayExperimentTO("Exp1", "name", "description", 1);
         assertTrue(TOComparator.areTOsEqual(to1, to2));
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
 
-        to2 = new AffymetrixExperimentTO("Exp2", "name", "description", 1);
+        to2 = new MicroarrayExperimentTO("Exp2", "name", "description", 1);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
 
-        to2 = new AffymetrixExperimentTO("Exp1", "name", "description", 2);
+        to2 = new MicroarrayExperimentTO("Exp1", "name", "description", 2);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
     }
     /**

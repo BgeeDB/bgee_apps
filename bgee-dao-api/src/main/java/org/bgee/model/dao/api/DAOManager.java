@@ -30,8 +30,8 @@ import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixProbesetDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultDAO;
 import org.bgee.model.dao.api.file.DownloadFileDAO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
@@ -1068,12 +1068,12 @@ public abstract class DAOManager implements AutoCloseable
     }
     
     /**
-     * Get a new {@link org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixProbesetDAO
+     * Get a new {@link org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO
      * AffymetrixProbesetDAO}, unless this {@code DAOManager} is already closed. 
      * 
      * @return  a new {@code AffymetrixProbesetDAO}.
      * @throws IllegalStateException    If this {@code DAOManager} is already closed.
-     * @see org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixProbesetDAO 
+     * @see org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO 
      * AffymetrixProbesetDAO
      */
     public AffymetrixProbesetDAO getAffymetrixProbesetDAO() {
@@ -1477,7 +1477,7 @@ public abstract class DAOManager implements AutoCloseable
     protected abstract AnatEntityDAO getNewAnatEntityDAO();
     /**
      * Service provider must return a new 
-     * {@link org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixProbesetDAO 
+     * {@link org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO 
      * AffymetrixProbesetDAO} instance when this method is called. 
      * 
      * @return  A new {@code AffymetrixProbesetDAO}

@@ -1,4 +1,4 @@
-package org.bgee.model.dao.api.expressiondata.rawdata.affymetrix;
+package org.bgee.model.dao.api.expressiondata.rawdata.microarray;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -44,7 +44,7 @@ public interface AffymetrixProbesetDAO extends DAO<AffymetrixProbesetDAO.Attribu
 	 * @author Frederic Bastian
 	 * @author Valentine Rech de Laval
 	 * @version Bgee 14
-	 * @see org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixProbesetDAO
+	 * @see org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO
 	 * @since Bgee 11
 	 */
 	public final class AffymetrixProbesetTO extends CallSourceTO<Integer> implements Serializable {

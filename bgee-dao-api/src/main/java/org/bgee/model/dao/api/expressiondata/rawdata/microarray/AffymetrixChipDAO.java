@@ -1,9 +1,10 @@
-package org.bgee.model.dao.api.expressiondata.rawdata.affymetrix;
+package org.bgee.model.dao.api.expressiondata.rawdata.microarray;
 
 import java.math.BigDecimal;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAnnotatedTO;
@@ -18,7 +19,31 @@ import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayTO;
  * @version Bgee 13
  * @since Bgee 01
  */
-public interface AffymetrixChipDAO {
+public interface AffymetrixChipDAO extends DAO<AffymetrixChipDAO.Attribute> {
+
+    /**
+     * {@code Enum} used to define the attributes to populate in the {@code AffymetrixProbesetTO}s 
+     * obtained from this {@code AffymetrixProbesetDAO}.
+     * <ul>
+     * <li>{@code BGEE_AFFYMETRIX_CHIP_ID}: corresponds to {@link AffymetrixChipTO#getId()}.
+     * <li>{@code AFFYMETRIX_CHIP_ID}: corresponds to {@link AffymetrixChipTO#getAffymetrixChipId()}.
+     * <li>{@code EXPERIMENT_ID}: corresponds to {@link AffymetrixChipTO#getExperimentId()}.
+     * <li>{@code CONDITION_ID}: corresponds to {@link AffymetrixChipTO#getConditionId()}.
+     * <li>{@code SCAN_DATE}: corresponds to {@link AffymetrixChipTO#getScanDate()}.
+     * <li>{@code CHIP_TYPE_ID}: corresponds to {@link AffymetrixChipTO#getChipTypeId()}.
+     * <li>{@code NORMALIZATION_TYPE}: corresponds to {@link AffymetrixChipTO#getNormalizationType()}.
+     * <li>{@code DETECTION_TYPE}: corresponds to {@link AffymetrixChipTO#getDetectionType()}.
+     * <li>{@code QUALITY_SCORE}: corresponds to {@link AffymetrixChipTO#getQualityScore()}.
+     * <li>{@code PERCENT_PRESENT}: corresponds to {@link AffymetrixChipTO#getPercentPresent()}.
+     * <li>{@code MAX_RANK}: corresponds to {@link AffymetrixChipTO#getMaxRank()}.
+     * <li>{@code DISTINCT_RANK_COUNT}: corresponds to {@link AffymetrixChipTO#getDistinctRankCount()}.
+     * </ul>
+     */
+    public enum Attribute implements DAO.Attribute {
+        BGEE_AFFYMETRIX_CHIP_ID, AFFYMETRIX_CHIP_ID, EXPERIMENT_ID, CONDITION_ID, SCAN_DATE, CHIP_TYPE_ID, 
+        NORMALIZATION_TYPE, DETECTION_TYPE, QUALITY_SCORE, PERCENT_PRESENT, MAX_RANK, DISTINCT_RANK_COUNT;
+    }
+
     /**
      * Retrieve from a data source a {@code AffymetrixChipTO}, corresponding to 
      * the Affymetrix chip, with the Bgee chip ID {@code bgeeAffymetrixChipId}, 

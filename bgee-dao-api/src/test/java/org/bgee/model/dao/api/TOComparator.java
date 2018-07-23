@@ -26,9 +26,9 @@ import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpre
 import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO.RawExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataExperimentDAO.ExperimentTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixChipDAO.AffymetrixChipTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixExperimentDAO.AffymetrixExperimentTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixProbesetDAO.AffymetrixProbesetTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO.AffymetrixChipTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO.AffymetrixProbesetTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO.MicroarrayExperimentTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO.RNASeqLibraryTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultDAO.RNASeqResultTO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO;
@@ -186,8 +186,8 @@ public class TOComparator {
             return log.exit(areTOsEqual((AffymetrixProbesetTO) to1,(AffymetrixProbesetTO) to2, compareId));
         } else if (to2 instanceof AffymetrixChipTO) {
             return log.exit(areTOsEqual((AffymetrixChipTO) to1,(AffymetrixChipTO) to2, compareId));
-        } else if (to2 instanceof AffymetrixExperimentTO) {
-            return log.exit(areTOsEqual((AffymetrixExperimentTO) to1,(AffymetrixExperimentTO) to2, compareId));
+        } else if (to2 instanceof MicroarrayExperimentTO) {
+            return log.exit(areTOsEqual((MicroarrayExperimentTO) to1,(MicroarrayExperimentTO) to2, compareId));
         } else if (to2 instanceof RNASeqResultTO) {
             return log.exit(areTOsEqual((RNASeqResultTO) to1,(RNASeqResultTO) to2));
         } else if (to2 instanceof RNASeqLibraryTO) {
@@ -1221,7 +1221,7 @@ public class TOComparator {
      *                  used for comparisons. 
      * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
      */
-    private static boolean areTOsEqual(AffymetrixExperimentTO to1, AffymetrixExperimentTO to2, boolean compareId) {
+    private static boolean areTOsEqual(MicroarrayExperimentTO to1, MicroarrayExperimentTO to2, boolean compareId) {
         log.entry(to1, to2);
         if (areTOsEqual((ExperimentTO<?>) to1, (ExperimentTO<?>) to2, compareId)) {
             return log.exit(true);

@@ -4,16 +4,16 @@ import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 
 /**
- * {@code DAO} related to RNA-Seq experiments, using {@link RNASeqExpTO}s 
+ * {@code DAO} related to RNA-Seq experiments, using {@link RNASeqExperimentTO}s
  * to communicate with the client.
  * 
  * @author Frederic Bastian
  * @author Valentine Rech de Laval
  * @version Bgee 13
- * @see RNASeqExpTO
+ * @see RNASeqExperimentTO
  * @since Bgee 12
  */
-public interface RNASeqExpDAO {
+public interface RNASeqExperimentDAO {
     /**
      * Retrieve from the data source a {@code RNASeqExpTO},  
      * corresponding to the RNA-Seq experiment with the ID {@code expId}, 
@@ -27,7 +27,7 @@ public interface RNASeqExpDAO {
      * 			or {@code null} if none could be found. 
      * @throws DAOException 	If an error occurred when accessing the data source.
      */
-    public RNASeqExpTO getExperimentById(String expId) throws DAOException;
+    public RNASeqExperimentTO getExperimentById(String expId) throws DAOException;
 
     /**
      * {@code TransferObject} for the class 
@@ -42,7 +42,7 @@ public interface RNASeqExpDAO {
      * @see org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqExp
      * @since Bgee 12
      */
-    public final class RNASeqExpTO extends TransferObject {
+    public final class RNASeqExperimentTO extends TransferObject {
 
         /**
          * 
@@ -62,7 +62,7 @@ public interface RNASeqExpDAO {
         /**
          * Default constructor. 
          */
-        public RNASeqExpTO() {
+        public RNASeqExperimentTO() {
             super();
             this.description = "";
             this.dataSourceId = "";

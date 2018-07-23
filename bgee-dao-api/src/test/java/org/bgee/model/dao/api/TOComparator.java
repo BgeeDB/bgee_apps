@@ -1107,6 +1107,7 @@ public class TOComparator {
         log.entry(to1, to2, compareId);
         if ((!compareId || Objects.equals(to1.getId(), to2.getId())) &&
                 areBigDecimalEquals(to1.getNormalizedSignalIntensity(), to2.getNormalizedSignalIntensity()) &&
+                areBigDecimalEquals(to1.getRank(), to2.getRank()) &&
                 areTOsEqual(to1, to2)) {
             return log.exit(true);
         }
@@ -1125,7 +1126,8 @@ public class TOComparator {
         if (areTOsEqual((CallSourceTO<?>) to1, (CallSourceTO<?>) to2) &&
                 areBigDecimalEquals(to1.getTpm(), to2.getTpm()) &&
                 areBigDecimalEquals(to1.getFpkm(), to2.getFpkm()) &&
-                areBigDecimalEquals(to1.getReadCount(), to2.getReadCount())) {
+                areBigDecimalEquals(to1.getReadCount(), to2.getReadCount()) &&
+                areBigDecimalEquals(to1.getRank(), to2.getRank())) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -1146,7 +1148,6 @@ public class TOComparator {
                 Objects.equals(to1.getDetectionFlag(), to2.getDetectionFlag()) &&
                 Objects.equals(to1.getExpressionConfidence(), to2.getExpressionConfidence()) &&
                 Objects.equals(to1.getExclusionReason(), to2.getExclusionReason()) &&
-                areBigDecimalEquals(to1.getRank(), to2.getRank()) &&
                 Objects.equals(to1.getExpressionId(), to2.getExpressionId())) {
             return log.exit(true);
         }

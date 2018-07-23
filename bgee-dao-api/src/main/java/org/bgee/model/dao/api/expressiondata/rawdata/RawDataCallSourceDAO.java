@@ -29,6 +29,9 @@ public class RawDataCallSourceDAO {
         ASSAY_ID, BGEE_GENE_ID, DETECTION_FLAG, EXPRESSION_CONFIDENCE, EXCLUSION_REASON, EXPRESSION_ID, RANK;
     }
 
+    public static interface CallSourceWithRankTO {
+        public BigDecimal getRank();
+    }
     /**
      * A {@code TransferObject} carrying information about call source raw data present in the 
      * Bgee database, common to all types of call source raw data (affymetrix probeset, EST, 
@@ -205,11 +208,6 @@ public class RawDataCallSourceDAO {
         private final ExclusionReason exclusionReason;
 
         /**
-         * A {@code BigDecimal} that is the rank of this call source raw data.
-         */
-        private final BigDecimal rank;
-
-        /**
          * A {@code String} representing the ID of the expression associated to this 
          * call source raw data.
          */
@@ -227,19 +225,17 @@ public class RawDataCallSourceDAO {
          *                              of this call source raw data.
          * @param exclusionReason       An {@code ExclusionReason} that is the reason of exclusion 
          *                              of this call source raw data.
-         * @param rank                  A {@code BigDecimal} that is the rank of this call source raw data.
          * @param expressionId          An {@code Integer} that is the ID of the expression associated
          *                              to this call source raw data.
          */
         protected CallSourceTO(T assayId, Integer bgeeGeneId, DetectionFlag detectionFlag, 
-                DataState expressionConfidence, ExclusionReason exclusionReason, BigDecimal rank, Integer expressionId) {
+                DataState expressionConfidence, ExclusionReason exclusionReason, Integer expressionId) {
             super();
             this.assayId = assayId;
             this.bgeeGeneId = bgeeGeneId;
             this.detectionFlag = detectionFlag;
             this.expressionConfidence = expressionConfidence;
             this.exclusionReason = exclusionReason;
-            this.rank = rank;
             this.expressionId = expressionId;
         }
 
@@ -286,13 +282,6 @@ public class RawDataCallSourceDAO {
         }
 
         /**
-         * @return  A {@code BigDecimal} that is the rank of this call source raw data.
-         */
-        public BigDecimal getRank() {
-            return this.rank;
-        }
-
-        /**
          * @return  the {@code Integer} representing the ID of the expression associated to this
          *          call source raw data.
          */
@@ -305,8 +294,8 @@ public class RawDataCallSourceDAO {
             StringBuilder builder = new StringBuilder();
             builder.append("CallSourceTO [assayId=").append(assayId).append(", bgeeGeneId=").append(bgeeGeneId)
                     .append(", detectionFlag=").append(detectionFlag).append(", expressionConfidence=")
-                    .append(expressionConfidence).append(", exclusionReason=").append(exclusionReason).append(", rank=")
-                    .append(rank).append(", expressionId=").append(expressionId).append("]");
+                    .append(expressionConfidence).append(", exclusionReason=").append(exclusionReason)
+                    .append(", expressionId=").append(expressionId).append("]");
             return builder.toString();
         }
     }

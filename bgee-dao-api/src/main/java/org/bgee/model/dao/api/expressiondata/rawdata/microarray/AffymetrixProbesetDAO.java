@@ -1,11 +1,11 @@
 package org.bgee.model.dao.api.expressiondata.rawdata.microarray;
 
-import java.io.Serializable;
 import java.math.BigDecimal;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceWithRankTO;
 
 /**
  * DAO defining queries using or retrieving {@link AffymetrixProbesetTO}s. 
@@ -47,11 +47,10 @@ public interface AffymetrixProbesetDAO extends DAO<AffymetrixProbesetDAO.Attribu
 	 * @see org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO
 	 * @since Bgee 11
 	 */
-	public final class AffymetrixProbesetTO extends CallSourceTO<Integer> implements Serializable {
+	public final class AffymetrixProbesetTO extends CallSourceTO<Integer> implements CallSourceWithRankTO {
+        private static final long serialVersionUID = 1081576994949088868L;
 
-	    private static final long serialVersionUID = 112434L;
-
-	    /**
+        /**
 	     * A {@code String} that is the ID of this probeset.
 	     */
 	    private final String id;
@@ -59,6 +58,10 @@ public interface AffymetrixProbesetDAO extends DAO<AffymetrixProbesetDAO.Attribu
          * A {@code BigDecimal} defining the normalized signal intensity of this probeset.
          */
         private final BigDecimal normalizedSignalIntensity;
+        /**
+         * A {@code BigDecimal} that is the rank of this call source raw data.
+         */
+        private final BigDecimal rank;
 
         /**
          * All of these parameters are optional, so they can be {@code null} when not used.
@@ -83,9 +86,10 @@ public interface AffymetrixProbesetDAO extends DAO<AffymetrixProbesetDAO.Attribu
 	    public AffymetrixProbesetTO(String affymetrixProbesetId, Integer bgeeAffymetrixChipId, Integer bgeeGeneId,
 	            DetectionFlag detectionFlag, DataState expressionConfidence, ExclusionReason exclusionReason,
 	            BigDecimal normalizedSignalIntensity, BigDecimal rank, Integer expressionId) {
-            super(bgeeAffymetrixChipId, bgeeGeneId, detectionFlag, expressionConfidence, exclusionReason, rank, expressionId);
+            super(bgeeAffymetrixChipId, bgeeGeneId, detectionFlag, expressionConfidence, exclusionReason, expressionId);
 	        this.id = affymetrixProbesetId;
 	        this.normalizedSignalIntensity = normalizedSignalIntensity;
+	        this.rank = rank;
 	    }
 
 	    public String getId() {
@@ -97,6 +101,12 @@ public interface AffymetrixProbesetDAO extends DAO<AffymetrixProbesetDAO.Attribu
         public BigDecimal getNormalizedSignalIntensity() {
             return this.normalizedSignalIntensity;
         }
+        /**
+         * @return  A {@code BigDecimal} that is the rank of this call source raw data.
+         */
+        public BigDecimal getRank() {
+            return this.rank;
+        }
 
         @Override
         public String toString() {
@@ -106,7 +116,7 @@ public interface AffymetrixProbesetDAO extends DAO<AffymetrixProbesetDAO.Attribu
                     .append(", normalizedSignalIntensity=").append(normalizedSignalIntensity)
                     .append(", detectionFlag=").append(getDetectionFlag())
                     .append(", expressionConfidence=").append(getExpressionConfidence())
-                    .append(", exclusionReason=").append(getExclusionReason()).append(", rank=").append(getRank())
+                    .append(", exclusionReason=").append(getExclusionReason()).append(", rank=").append(rank)
                     .append(", expressionId=").append(getExpressionId()).append("]");
             return builder.toString();
         }

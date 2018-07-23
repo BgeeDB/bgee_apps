@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceWithRankTO;
 
 /**
  * {@code DAO} related to RNA-Seq experiments, using {@link RNASeqResultTO}s 
@@ -46,12 +47,16 @@ public interface RNASeqResultDAO extends DAO<RNASeqResultDAO.Attribute> {
      * @version Bgee 14
      * @since Bgee 12
      */
-    public final class RNASeqResultTO extends CallSourceTO<String> {
+    public final class RNASeqResultTO extends CallSourceTO<String> implements CallSourceWithRankTO {
         private static final long serialVersionUID = 9192921864601490175L;
 
         private final BigDecimal tpm;
         private final BigDecimal rpkm;
         private final BigDecimal readCount;
+        /**
+         * A {@code BigDecimal} that is the rank of this call source raw data.
+         */
+        private final BigDecimal rank;
 
         /**
          * Default constructor.
@@ -59,10 +64,11 @@ public interface RNASeqResultDAO extends DAO<RNASeqResultDAO.Attribute> {
         public RNASeqResultTO(String rnaSeqLibraryId, Integer bgeeGeneId, BigDecimal tpm, BigDecimal rpkm,
                 BigDecimal readCount, DetectionFlag detectionFlag, DataState expressionConfidence,
                 ExclusionReason exclusionReason, BigDecimal rank, Integer expressionId) {
-            super(rnaSeqLibraryId, bgeeGeneId, detectionFlag, expressionConfidence, exclusionReason, rank, expressionId);
+            super(rnaSeqLibraryId, bgeeGeneId, detectionFlag, expressionConfidence, exclusionReason, expressionId);
             this.tpm = tpm;
             this.rpkm = rpkm;
             this.readCount = readCount;
+            this.rank = rank;
         }
 
         /**
@@ -87,6 +93,12 @@ public interface RNASeqResultDAO extends DAO<RNASeqResultDAO.Attribute> {
         public BigDecimal getReadCount() {
             return readCount;
         }
+        /**
+         * @return  A {@code BigDecimal} that is the rank of this call source raw data.
+         */
+        public BigDecimal getRank() {
+            return this.rank;
+        }
 
         @Override
         public String toString() {
@@ -95,7 +107,7 @@ public interface RNASeqResultDAO extends DAO<RNASeqResultDAO.Attribute> {
                     .append(", tpm=").append(tpm).append(", rpkm=").append(rpkm)
                     .append(", readCount=").append(readCount).append(", detectionFlag=").append(getDetectionFlag())
                     .append(", expressionConfidence=").append(getExpressionConfidence())
-                    .append(", exclusionReason=").append(getExclusionReason()).append(", rank=").append(getRank())
+                    .append(", exclusionReason=").append(getExclusionReason()).append(", rank=").append(rank)
                     .append(", expressionId=").append(getExpressionId()).append("]");
             return builder.toString();
         }

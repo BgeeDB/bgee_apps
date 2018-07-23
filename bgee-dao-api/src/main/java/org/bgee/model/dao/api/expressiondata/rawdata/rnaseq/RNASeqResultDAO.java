@@ -73,10 +73,10 @@ public interface RNASeqResultDAO extends DAO<RNASeqResultDAO.Attribute> {
             return tpm;
         }
         /**
-         * @return  A {@code BigDecimal} that is the RPKM value for this gene in this library.
+         * @return  A {@code BigDecimal} that is the FPKM value for this gene in this library.
          *          The value is <strong>NOT</strong> log transformed.
          */
-        public BigDecimal getRpkm() {
+        public BigDecimal getFpkm() {
             return rpkm;
         }
         /**
@@ -88,5 +88,16 @@ public interface RNASeqResultDAO extends DAO<RNASeqResultDAO.Attribute> {
             return readCount;
         }
 
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("RNASeqResultTO [bgeeGeneId=").append(getBgeeGeneId()).append(", assayId=").append(getAssayId())
+                    .append(", tpm=").append(tpm).append(", rpkm=").append(rpkm)
+                    .append(", readCount=").append(readCount).append(", detectionFlag=").append(getDetectionFlag())
+                    .append(", expressionConfidence=").append(getExpressionConfidence())
+                    .append(", exclusionReason=").append(getExclusionReason()).append(", rank=").append(getRank())
+                    .append(", expressionId=").append(getExpressionId()).append("]");
+            return builder.toString();
+        }
     }
 }

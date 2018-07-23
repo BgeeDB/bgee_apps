@@ -34,6 +34,7 @@ import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixChipDA
 import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixChipDAO.AffymetrixChipTO.NormalizationType;
 import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixExperimentDAO.AffymetrixExperimentTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixProbesetDAO.AffymetrixProbesetTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultDAO.RNASeqResultTO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO.CategoryEnum;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesToDataGroupTO;
@@ -707,6 +708,26 @@ public class TOComparatorTest extends TestAncestor {
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
 
         to2 = new AffymetrixExperimentTO("Exp1", "name", "description", 2);
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+    }
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object)} 
+     * using {@code RNASeqResultTO}s.
+     */
+    @Test
+    public void testAreRNASeqResultTOEqual() {
+        RNASeqResultTO to1 = new RNASeqResultTO("L1", 11, new BigDecimal("11.1"), new BigDecimal("5.5"), new BigDecimal("100.2"),
+                DetectionFlag.ABSENT, DataState.HIGHQUALITY, ExclusionReason.NOT_EXCLUDED, new BigDecimal("1.5"), 1254);
+        RNASeqResultTO to2 = new RNASeqResultTO("L1", 11, new BigDecimal("11.1"), new BigDecimal("5.5"), new BigDecimal("100.2"),
+                DetectionFlag.ABSENT, DataState.HIGHQUALITY, ExclusionReason.NOT_EXCLUDED, new BigDecimal("1.5"), 1254);
+        assertTrue(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new RNASeqResultTO("L1", 11, new BigDecimal("11.1"), new BigDecimal("5.5"), new BigDecimal("100.2"),
+                DetectionFlag.ABSENT, DataState.LOWQUALITY, ExclusionReason.NOT_EXCLUDED, new BigDecimal("1.5"), 1254);
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new RNASeqResultTO("L1", 11, new BigDecimal("11.1"), new BigDecimal("6.5"), new BigDecimal("100.2"),
+                DetectionFlag.ABSENT, DataState.HIGHQUALITY, ExclusionReason.NOT_EXCLUDED, new BigDecimal("1.5"), 1254);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
     }
 

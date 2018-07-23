@@ -29,6 +29,7 @@ import org.bgee.model.dao.api.expressiondata.rawdata.RawDataExperimentDAO.Experi
 import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixChipDAO.AffymetrixChipTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixExperimentDAO.AffymetrixExperimentTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixProbesetDAO.AffymetrixProbesetTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultDAO.RNASeqResultTO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesDataGroupTO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesToDataGroupTO;
@@ -181,11 +182,13 @@ public class TOComparator {
         } else if (to2 instanceof SourceToSpeciesTO) {
             return log.exit(areTOsEqual((SourceToSpeciesTO) to1,(SourceToSpeciesTO) to2));
         } else if (to2 instanceof AffymetrixProbesetTO) {
-            return log.exit(areTOsEqual((AffymetrixProbesetTO) to1,(AffymetrixProbesetTO) to2));
+            return log.exit(areTOsEqual((AffymetrixProbesetTO) to1,(AffymetrixProbesetTO) to2, compareId));
         } else if (to2 instanceof AffymetrixChipTO) {
             return log.exit(areTOsEqual((AffymetrixChipTO) to1,(AffymetrixChipTO) to2, compareId));
         } else if (to2 instanceof AffymetrixExperimentTO) {
             return log.exit(areTOsEqual((AffymetrixExperimentTO) to1,(AffymetrixExperimentTO) to2, compareId));
+        } else if (to2 instanceof RNASeqResultTO) {
+            return log.exit(areTOsEqual((RNASeqResultTO) to1,(RNASeqResultTO) to2));
         }
 
         throw log.throwing(new IllegalArgumentException("There is no comparison method " +
@@ -1091,11 +1094,29 @@ public class TOComparator {
      * @param to2       A {@code AffymetrixProbesetTO} to be compared to {@code to1}.
      * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
      */
-    private static boolean areTOsEqual(AffymetrixProbesetTO to1, AffymetrixProbesetTO to2) {
-        log.entry(to1, to2);
-        if (Objects.equals(to1.getId(), to2.getId()) &&
+    private static boolean areTOsEqual(AffymetrixProbesetTO to1, AffymetrixProbesetTO to2, boolean compareId) {
+        log.entry(to1, to2, compareId);
+        if ((!compareId || Objects.equals(to1.getId(), to2.getId())) &&
                 areBigDecimalEquals(to1.getNormalizedSignalIntensity(), to2.getNormalizedSignalIntensity()) &&
-                areTOsEqual((CallSourceTO<?>) to1, (CallSourceTO<?>) to2)) {
+                areTOsEqual(to1, to2)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    /**
+     * Method to compare two {@code RNASeqResultTO}s, to check for complete
+     * equality of each attribute.
+     *
+     * @param to1       A {@code RNASeqResultTO} to be compared to {@code to2}.
+     * @param to2       A {@code RNASeqResultTO} to be compared to {@code to1}.
+     * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
+     */
+    private static boolean areTOsEqual(RNASeqResultTO to1, RNASeqResultTO to2) {
+        log.entry(to1, to2);
+        if (areTOsEqual((CallSourceTO<?>) to1, (CallSourceTO<?>) to2) &&
+                areBigDecimalEquals(to1.getTpm(), to2.getTpm()) &&
+                areBigDecimalEquals(to1.getFpkm(), to2.getFpkm()) &&
+                areBigDecimalEquals(to1.getReadCount(), to2.getReadCount())) {
             return log.exit(true);
         }
         return log.exit(false);

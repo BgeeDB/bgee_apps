@@ -22,7 +22,7 @@ public interface RNASeqResultDAO extends DAO<RNASeqResultDAO.Attribute> {
      * {@code Enum} used to define the attributes to populate in the {@code RNASeqResultTO}s 
      * obtained from this {@code RNASeqResultDAO}.
      * <ul>
-     * <li>{@code RNA_SEQ_LIBRARY_ID}: corresponds to {@link RNASeqResultTO#getRNASeqLibraryId()}.
+     * <li>{@code RNA_SEQ_LIBRARY_ID}: corresponds to {@link RNASeqResultTO#getAssayId()}.
      * <li>{@code BGEE_GENE_ID}: corresponds to {@link RNASeqResultTO#getBgeeGeneId()}.
      * <li>{@code FPKM}: corresponds to {@link RNASeqResultTO#getFPKM()}.
      * <li>{@code TPM}: corresponds to {@link RNASeqResultTO#getTPM()}.

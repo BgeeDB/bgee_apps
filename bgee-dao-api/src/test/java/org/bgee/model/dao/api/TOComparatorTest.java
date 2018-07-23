@@ -29,6 +29,7 @@ import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentE
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO.CallQuality;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO.DetectionFlag;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO.ExclusionReason;
+import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO.ESTTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO.ESTLibraryTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO.AffymetrixChipTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO.AffymetrixChipTO.DetectionType;
@@ -655,6 +656,7 @@ public class TOComparatorTest extends TestAncestor {
         to2 = new AffymetrixProbesetTO("A2", 1, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
                 ExclusionReason.NOT_EXCLUDED, new BigDecimal("11.1"), new BigDecimal("5.5"), 110);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
 
         to2 = new AffymetrixProbesetTO("A1", 1, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
                 ExclusionReason.NOT_EXCLUDED, new BigDecimal("11.01"), new BigDecimal("5.5"), 110);
@@ -802,6 +804,33 @@ public class TOComparatorTest extends TestAncestor {
 
         to2 = new ESTLibraryTO("Exp1", "name", "description", 2, 2);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
+    }
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object)}
+     * using {@code ESTTO}s.
+     */
+    @Test
+    public void testAreESTTOEqual() {
+        ESTTO to1 = new ESTTO("ID1", "ID2", "LibId1", "clusterId1", 1, DataState.HIGHQUALITY, 110);
+        ESTTO to2 = new ESTTO("ID1", "ID2", "LibId1", "clusterId1", 1, DataState.HIGHQUALITY, 110);
+        assertTrue(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new ESTTO("ID2", "ID2", "LibId1", "clusterId1", 1, DataState.HIGHQUALITY, 110);
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+
+        to2 = new ESTTO("ID1", "ID3", "LibId1", "clusterId1", 1, DataState.HIGHQUALITY, 110);
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+        
+        to2 = new ESTTO("ID1", "ID2", "LibId2", "clusterId1", 1, DataState.HIGHQUALITY, 110);
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new ESTTO("ID1", "ID2", "LibId1", "clusterId2", 1, DataState.HIGHQUALITY, 110);
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new ESTTO("ID1", "ID2", "LibId1", "clusterId1", 1, DataState.HIGHQUALITY, 1);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        assertFalse(TOComparator.areTOsEqual(to1, to2, false));
     }
 
     /**

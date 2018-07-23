@@ -26,6 +26,7 @@ import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpre
 import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO.RawExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataExperimentDAO.ExperimentTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO.ESTTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO.ESTLibraryTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO.AffymetrixChipTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO.AffymetrixProbesetTO;
@@ -177,27 +178,29 @@ public class TOComparator {
         } else if (to1 instanceof DownloadFileTO) {
             return log.exit(areTOsEqual( (DownloadFileTO)to1, (DownloadFileTO) to2, compareId));
         } else if (to2 instanceof SpeciesDataGroupTO) {
-            return log.exit(areTOsEqual((SpeciesDataGroupTO) to1,(SpeciesDataGroupTO) to2, compareId));
+            return log.exit(areTOsEqual((SpeciesDataGroupTO) to1, (SpeciesDataGroupTO) to2, compareId));
         } else if (to2 instanceof SpeciesToDataGroupTO) {
-            return log.exit(areTOsEqual((SpeciesToDataGroupTO) to1,(SpeciesToDataGroupTO) to2));
+            return log.exit(areTOsEqual((SpeciesToDataGroupTO) to1, (SpeciesToDataGroupTO) to2));
         } else if (to2 instanceof SourceTO) {
             return log.exit(areTOsEqual((SourceTO) to1, (SourceTO) to2, compareId));
         } else if (to2 instanceof SourceToSpeciesTO) {
-            return log.exit(areTOsEqual((SourceToSpeciesTO) to1,(SourceToSpeciesTO) to2));
+            return log.exit(areTOsEqual((SourceToSpeciesTO) to1, (SourceToSpeciesTO) to2));
         } else if (to2 instanceof AffymetrixProbesetTO) {
-            return log.exit(areTOsEqual((AffymetrixProbesetTO) to1,(AffymetrixProbesetTO) to2, compareId));
+            return log.exit(areTOsEqual((AffymetrixProbesetTO) to1, (AffymetrixProbesetTO) to2, compareId));
         } else if (to2 instanceof AffymetrixChipTO) {
-            return log.exit(areTOsEqual((AffymetrixChipTO) to1,(AffymetrixChipTO) to2, compareId));
+            return log.exit(areTOsEqual((AffymetrixChipTO) to1, (AffymetrixChipTO) to2, compareId));
         } else if (to2 instanceof MicroarrayExperimentTO) {
-            return log.exit(areTOsEqual((MicroarrayExperimentTO) to1,(MicroarrayExperimentTO) to2, compareId));
+            return log.exit(areTOsEqual((MicroarrayExperimentTO) to1, (MicroarrayExperimentTO) to2, compareId));
         } else if (to2 instanceof RNASeqResultTO) {
-            return log.exit(areTOsEqual((RNASeqResultTO) to1,(RNASeqResultTO) to2));
+            return log.exit(areTOsEqual((RNASeqResultTO) to1, (RNASeqResultTO) to2));
         } else if (to2 instanceof RNASeqLibraryTO) {
-            return log.exit(areTOsEqual((RNASeqLibraryTO) to1,(RNASeqLibraryTO) to2, compareId));
+            return log.exit(areTOsEqual((RNASeqLibraryTO) to1, (RNASeqLibraryTO) to2, compareId));
         } else if (to2 instanceof RNASeqExperimentTO) {
-            return log.exit(areTOsEqual((RNASeqExperimentTO) to1,(RNASeqExperimentTO) to2, compareId));
+            return log.exit(areTOsEqual((RNASeqExperimentTO) to1, (RNASeqExperimentTO) to2, compareId));
         } else if (to2 instanceof ESTLibraryTO) {
-            return log.exit(areTOsEqual((ESTLibraryTO) to1,(ESTLibraryTO) to2, compareId));
+            return log.exit(areTOsEqual((ESTLibraryTO) to1, (ESTLibraryTO) to2, compareId));
+        } else if (to2 instanceof ESTTO) {
+            return log.exit(areTOsEqual((ESTTO) to1, (ESTTO) to2, compareId));
         }
 
         throw log.throwing(new IllegalArgumentException("There is no comparison method " +
@@ -1128,6 +1131,24 @@ public class TOComparator {
                 areBigDecimalEquals(to1.getFpkm(), to2.getFpkm()) &&
                 areBigDecimalEquals(to1.getReadCount(), to2.getReadCount()) &&
                 areBigDecimalEquals(to1.getRank(), to2.getRank())) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    /**
+     * Method to compare two {@code ESTTO}s, to check for complete
+     * equality of each attribute.
+     *
+     * @param to1       A {@code ESTTO} to be compared to {@code to2}.
+     * @param to2       A {@code ESTTO} to be compared to {@code to1}.
+     * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
+     */
+    private static boolean areTOsEqual(ESTTO to1, ESTTO to2, boolean compareId) {
+        log.entry(to1, to2);
+        if ((!compareId || Objects.equals(to1.getId(), to2.getId())) &&
+                areTOsEqual(to1, to2) &&
+                Objects.equals(to1.getEstId2(), to2.getEstId2()) &&
+                Objects.equals(to1.getUniGeneClusterId(), to2.getUniGeneClusterId())) {
             return log.exit(true);
         }
         return log.exit(false);

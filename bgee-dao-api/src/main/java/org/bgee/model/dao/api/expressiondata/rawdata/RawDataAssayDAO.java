@@ -1,17 +1,28 @@
 package org.bgee.model.dao.api.expressiondata.rawdata;
 
 import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.NamedEntityTO;
 
 public class RawDataAssayDAO {
 
-    public static class AssayTO<T extends Comparable<T>> extends EntityTO<T> {
-        private static final long serialVersionUID = -5570797689549107085L;
+    public static interface AssayTO<T extends Comparable<T>> {
+        public T getId();
+    }
+    public static interface AssayPartOfExpTO<T extends Comparable<T>, U extends Comparable<U>> extends AssayTO<T> {
+        public U getExperimentId();
+    }
+    public static class EntityAssayTO<T extends Comparable<T>> extends EntityTO<T> implements AssayTO<T> {
+        private static final long serialVersionUID = 6698645263299277299L;
 
-        public AssayTO(T id) {
+        public EntityAssayTO(T id) {
             super(id);
         }
     }
-    public static interface AssayPartOfExpTO<T extends Comparable<T>> {
-        public T getExperimentId();
+    public static class NamedEntityAssayTO<T extends Comparable<T>> extends NamedEntityTO<T> implements AssayTO<T> {
+        private static final long serialVersionUID = 6081060013742657317L;
+
+        public NamedEntityAssayTO(T id, String name, String description) {
+            super(id, name, description);
+        }
     }
 }

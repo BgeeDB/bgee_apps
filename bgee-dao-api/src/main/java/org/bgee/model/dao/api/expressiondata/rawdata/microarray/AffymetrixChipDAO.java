@@ -9,7 +9,7 @@ import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAnnotatedTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayPartOfExpTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.EntityAssayTO;
 
 /**
  * DAO defining queries using or retrieving {@link AffymetrixChipTO}s. 
@@ -66,7 +66,7 @@ public interface AffymetrixChipDAO extends DAO<AffymetrixChipDAO.Attribute> {
      * @version Bgee 14
      * @since Bgee 11
      */
-    public final class AffymetrixChipTO extends AssayTO<Integer> implements AssayPartOfExpTO<String>, RawDataAnnotatedTO {
+    public final class AffymetrixChipTO extends EntityAssayTO<Integer> implements AssayPartOfExpTO<Integer, String>, RawDataAnnotatedTO {
         private static final long serialVersionUID = 7479060565564264352L;
         private final static Logger log = LogManager.getLogger(AffymetrixChipTO.class.getName());
 

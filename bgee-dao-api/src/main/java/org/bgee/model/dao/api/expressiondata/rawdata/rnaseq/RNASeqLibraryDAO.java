@@ -9,7 +9,7 @@ import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAnnotatedTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayPartOfExpTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.EntityAssayTO;
 
 /**
  * {@code DAO} for {@link RNASeqLibraryTO}s.
@@ -77,7 +77,7 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
      * @version Bgee 14
      * @since Bgee 12
      */
-    public final class RNASeqLibraryTO extends AssayTO<String> implements AssayPartOfExpTO<String>, RawDataAnnotatedTO {
+    public final class RNASeqLibraryTO extends EntityAssayTO<String> implements AssayPartOfExpTO<String, String>, RawDataAnnotatedTO {
         private static final long serialVersionUID = -6303846733657736568L;
         private final static Logger log = LogManager.getLogger(RNASeqLibraryTO.class.getName());
 

@@ -1,5 +1,6 @@
 package org.bgee.model.dao.api.expressiondata.rawdata.est;
 
+import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAnnotatedTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.NamedEntityAssayTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataWithDataSourceTO;
@@ -13,7 +14,22 @@ import org.bgee.model.dao.api.expressiondata.rawdata.RawDataWithDataSourceTO;
  * @see ESTLibraryTO
  * @since Bgee 01
  */
-public interface ESTLibraryDAO {
+public interface ESTLibraryDAO extends DAO<ESTLibraryDAO.Attribute> {
+
+    /**
+     * {@code Enum} used to define the attributes to populate in the {@code ESTLibraryTO}s
+     * obtained from this {@code ESTLibraryDAO}.
+     * <ul>
+     * <li>{@code ID}: corresponds to {@link ESTLibraryTO#getId()}.
+     * <li>{@code NAME}: corresponds to {@link ESTLibraryTO#getName()}.
+     * <li>{@code DESCRIPTION}: corresponds to {@link ESTLibraryTO#getDescription()}.
+     * <li>{@code DATA_SOURCE_ID}: corresponds to {@link ESTLibraryTO#getDataSourceId()}.
+     * <li>{@code CONDITION_ID}: corresponds to {@link ESTLibraryTO#getConditionId()}.
+     * </ul>
+     */
+    public enum Attribute implements DAO.Attribute {
+        ID, NAME, DESCRIPTION, DATA_SOURCE_ID, CONDITION_ID;
+    }
 
     /**
      * {@code TransferObject} for EST libraries.

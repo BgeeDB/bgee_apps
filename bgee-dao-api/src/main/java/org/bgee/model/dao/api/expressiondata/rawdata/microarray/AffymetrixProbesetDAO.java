@@ -101,12 +101,13 @@ public interface AffymetrixProbesetDAO extends DAO<AffymetrixProbesetDAO.Attribu
         @Override
         public String toString() {
             StringBuilder builder = new StringBuilder();
-            builder.append("AffymetrixProbesetTO [id=").append(id).append(", normalizedSignalIntensity=")
-                    .append(normalizedSignalIntensity).append(", getAssayId()=").append(getAssayId())
-                    .append(", getBgeeGeneId()=").append(getBgeeGeneId()).append(", getDetectionFlag()=")
-                    .append(getDetectionFlag()).append(", getExpressionConfidence()=").append(getExpressionConfidence())
-                    .append(", getExclusionReason()=").append(getExclusionReason()).append(", getRank()=")
-                    .append(getRank()).append(", getExpressionId()=").append(getExpressionId()).append("]");
+            builder.append("AffymetrixProbesetTO [id=").append(id).append(", assayId=").append(getAssayId())
+                    .append(", bgeeGeneId=").append(getBgeeGeneId())
+                    .append(", normalizedSignalIntensity=").append(normalizedSignalIntensity)
+                    .append(", detectionFlag=").append(getDetectionFlag())
+                    .append(", expressionConfidence=").append(getExpressionConfidence())
+                    .append(", exclusionReason=").append(getExclusionReason()).append(", rank=").append(getRank())
+                    .append(", expressionId=").append(getExpressionId()).append("]");
             return builder.toString();
         }
 	}

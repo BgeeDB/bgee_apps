@@ -4,7 +4,7 @@ import org.bgee.model.dao.api.NamedEntityTO;
 
 public class RawDataExperimentDAO {
 
-    public static class ExperimentTO<T extends Comparable<T>> extends NamedEntityTO<T> {
+    public static class ExperimentTO<T extends Comparable<T>> extends NamedEntityTO<T> implements RawDataWithDataSourceTO {
         private static final long serialVersionUID = -3865618442951732061L;
 
         private final Integer dataSourceId;
@@ -14,6 +14,7 @@ public class RawDataExperimentDAO {
             this.dataSourceId = dataSourceId;
         }
 
+        @Override
         public Integer getDataSourceId() {
             return dataSourceId;
         }

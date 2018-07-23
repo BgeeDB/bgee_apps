@@ -1,19 +1,34 @@
 package org.bgee.model.dao.api.expressiondata.rawdata.rnaseq;
 
+import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 
 /**
- * {@code DAO} related to RNA-Seq experiments, using {@link RNASeqExperimentTO}s
- * to communicate with the client.
+ * {@code DAO} for {@link RNASeqExperimentTO}s.
  * 
  * @author Frederic Bastian
  * @author Valentine Rech de Laval
- * @version Bgee 13
+ * @version Bgee 14
  * @see RNASeqExperimentTO
  * @since Bgee 12
  */
-public interface RNASeqExperimentDAO {
+public interface RNASeqExperimentDAO extends DAO<RNASeqExperimentDAO.Attribute> {
+
+    /**
+     * {@code Enum} used to define the attributes to populate in the {@code RNASeqExperimentTO}s
+     * obtained from this {@code RNASeqExperimentDAO}.
+     * <ul>
+     * <li>{@code ID}: corresponds to {@link RNASeqExperimentTO#getId()}.
+     * <li>{@code NAME}: corresponds to {@link RNASeqExperimentTO#getName()}.
+     * <li>{@code DESCRIPTION}: corresponds to {@link RNASeqExperimentTO#getDescription()}.
+     * <li>{@code DATA_SOURCE_ID}: corresponds to {@link RNASeqExperimentTO#getDataSourceId()}.
+     * </ul>
+     */
+    public enum Attribute implements DAO.Attribute {
+        ID, NAME, DESCRIPTION, DATA_SOURCE_ID;
+    }
+
     /**
      * Retrieve from the data source a {@code RNASeqExpTO},  
      * corresponding to the RNA-Seq experiment with the ID {@code expId}, 

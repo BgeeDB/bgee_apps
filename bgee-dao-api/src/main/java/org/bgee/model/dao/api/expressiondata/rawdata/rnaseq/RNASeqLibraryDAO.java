@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAnnotatedTO;
@@ -11,16 +12,48 @@ import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayPartOf
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayTO;
 
 /**
- * {@code DAO} related to RNA-Seq experiments, using {@link RNASeqLibraryTO}s 
- * to communicate with the client.
+ * {@code DAO} for {@link RNASeqLibraryTO}s.
  * 
  * @author Frederic Bastian
  * @author Valentine Rech de Laval
- * @version Bgee 13
+ * @version Bgee 14
  * @see RNASeqLibraryTO
  * @since Bgee 12
  */
-public interface RNASeqLibraryDAO {
+public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
+
+    /**
+     * {@code Enum} used to define the attributes to populate in the {@code RNASeqLibraryTO}s
+     * obtained from this {@code RNASeqLibraryDAO}.
+     * <ul>
+     * <li>{@code ID}: corresponds to {@link RNASeqLibraryTO#getId()}.
+     * <li>{@code EXPERIMENT_ID}: corresponds to {@link RNASeqLibraryTO#getExperimentId()}.
+     * <li>{@code CONDITION_ID}: corresponds to {@link RNASeqLibraryTO#getConditionId()}.
+     * <li>{@code PLATFORM_ID}: corresponds to {@link RNASeqLibraryTO#getPlatformId()}.
+     * <li>{@code TMM_FACTOR}: corresponds to {@link RNASeqLibraryTO#getTmmFactor()}.
+     * <li>{@code TPM_THRESHOLD}: corresponds to {@link RNASeqLibraryTO#getTpmThreshold()}.
+     * <li>{@code FPKM_THRESHOLD}: corresponds to {@link RNASeqLibraryTO#getFpkmThreshold()}.
+     * <li>{@code ALL_GENES_PERCENT_PRESENT}: corresponds to {@link RNASeqLibraryTO#getAllGenesPercentPresent()}.
+     * <li>{@code PROTEIN_CODING_GENES_PERCENT_PRESENT}: corresponds to {@link RNASeqLibraryTO#getProteinCodingGenesPercentPresent()}.
+     * <li>{@code INTERGENIC_REGION_PERCENT_PRESENT}: corresponds to {@link RNASeqLibraryTO#getIntergenicRegionsPercentPresent()}.
+     * <li>{@code THRESHOLD_RATIO_INTERGENIC_CODING_PERCENT}: corresponds to {@link RNASeqLibraryTO#getThresholdRatioIntergenicCodingPercent()}.
+     * <li>{@code ALL_READ_COUNT}: corresponds to {@link RNASeqLibraryTO#getAllReadCount()}.
+     * <li>{@code MAPPED_READ_COUNT}: corresponds to {@link RNASeqLibraryTO#getMappedReadCount()}.
+     * <li>{@code MIN_READ_LENGTH}: corresponds to {@link RNASeqLibraryTO#getMinReadLength()}.
+     * <li>{@code MAX_READ_LENGTH}: corresponds to {@link RNASeqLibraryTO#getMaxReadLength()}.
+     * <li>{@code LIBRARY_TYPE}: corresponds to {@link RNASeqLibraryTO#getLibraryType()}.
+     * <li>{@code LIBRARY_ORIENTATION}: corresponds to {@link RNASeqLibraryTO#getLibraryOrientation()}.
+     * <li>{@code MAX_RANK}: corresponds to {@link RNASeqLibraryTO#getMaxRank()}.
+     * <li>{@code DISTINCT_RANK_COUNT}: corresponds to {@link RNASeqLibraryTO#getDistinctRankCount()}.
+     * </ul>
+     */
+    public enum Attribute implements DAO.Attribute {
+        ID, EXPERIMENT_ID, CONDITION_ID, PLATFORM_ID, TMM_FACTOR, TPM_THRESHOLD, FPKM_THRESHOLD,
+        ALL_GENES_PERCENT_PRESENT, PROTEIN_CODING_GENES_PERCENT_PRESENT, INTERGENIC_REGION_PERCENT_PRESENT,
+        THRESHOLD_RATIO_INTERGENIC_CODING_PERCENT, ALL_READ_COUNT, MAPPED_READ_COUNT, MIN_READ_LENGTH, MAX_READ_LENGTH,
+        LIBRARY_TYPE, LIBRARY_ORIENTATION, MAX_RANK, DISTINCT_RANK_COUNT;
+    }
+
     /**
      * Retrieve from a data source a {@code RNASeqLibraryTO},  
      * corresponding to the RNA-Seq library with the ID {@code libraryId}, 
@@ -247,9 +280,6 @@ public interface RNASeqLibraryDAO {
         @Override
         public Integer getConditionId() {
             return this.conditionId;
-        }
-        public String getRnaSeqExperimentId() {
-            return rnaSeqExperimentId;
         }
         public String getPlatformId() {
             return platformId;

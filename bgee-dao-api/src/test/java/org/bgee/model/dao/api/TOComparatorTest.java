@@ -29,6 +29,7 @@ import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentE
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO.CallQuality;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO.DetectionFlag;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO.ExclusionReason;
+import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO.ESTLibraryTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO.AffymetrixChipTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO.AffymetrixChipTO.DetectionType;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO.AffymetrixChipTO.NormalizationType;
@@ -778,6 +779,28 @@ public class TOComparatorTest extends TestAncestor {
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
 
         to2 = new RNASeqExperimentTO("Exp1", "name", "description", 2);
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+    }
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object)}
+     * using {@code ESTLibraryTO}s.
+     */
+    @Test
+    public void testAreESTLibraryTOEqual() {
+        ESTLibraryTO to1 = new ESTLibraryTO("Exp1", "name", "description", 1, 2);
+        ESTLibraryTO to2 = new ESTLibraryTO("Exp1", "name", "description", 1, 2);
+        assertTrue(TOComparator.areTOsEqual(to1, to2));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, true));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+
+        to2 = new ESTLibraryTO("Exp2", "name", "description", 1, 2);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+
+        to2 = new ESTLibraryTO("Exp1", "name2", "description", 1, 2);
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new ESTLibraryTO("Exp1", "name", "description", 2, 2);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
     }
 

@@ -15,6 +15,21 @@ import org.bgee.model.dao.api.expressiondata.rawdata.RawDataExperimentDAO.Experi
  * @since Bgee 01
  */
 public interface MicroarrayExperimentDAO extends DAO<MicroarrayExperimentDAO.Attribute> {
+
+    /**
+     * {@code Enum} used to define the attributes to populate in the {@code MicroarrayExperimentTO}s
+     * obtained from this {@code MicroarrayExperimentDAO}.
+     * <ul>
+     * <li>{@code ID}: corresponds to {@link MicroarrayExperimentTO#getId()}.
+     * <li>{@code NAME}: corresponds to {@link MicroarrayExperimentTO#getName()}.
+     * <li>{@code DESCRIPTION}: corresponds to {@link MicroarrayExperimentTO#getDescription()}.
+     * <li>{@code DATA_SOURCE_ID}: corresponds to {@link MicroarrayExperimentTO#getDataSourceId()}.
+     * </ul>
+     */
+    public enum Attribute implements DAO.Attribute {
+        ID, NAME, DESCRIPTION, DATA_SOURCE_ID;
+    }
+
 	/**
 	 * Retrieve from a data source a {@code AffymetrixExpTO}, corresponding to 
 	 * an Affymetrix experiment with the ID {@code expId}, or {@code null} 

@@ -22,8 +22,8 @@ import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayTO;
 public interface AffymetrixChipDAO extends DAO<AffymetrixChipDAO.Attribute> {
 
     /**
-     * {@code Enum} used to define the attributes to populate in the {@code AffymetrixProbesetTO}s 
-     * obtained from this {@code AffymetrixProbesetDAO}.
+     * {@code Enum} used to define the attributes to populate in the {@code AffymetrixChipTO}s
+     * obtained from this {@code AffymetrixChipDAO}.
      * <ul>
      * <li>{@code BGEE_AFFYMETRIX_CHIP_ID}: corresponds to {@link AffymetrixChipTO#getId()}.
      * <li>{@code AFFYMETRIX_CHIP_ID}: corresponds to {@link AffymetrixChipTO#getAffymetrixChipId()}.

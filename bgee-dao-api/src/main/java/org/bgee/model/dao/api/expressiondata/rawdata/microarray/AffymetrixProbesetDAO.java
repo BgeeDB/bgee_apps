@@ -19,7 +19,7 @@ import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSo
 public interface AffymetrixProbesetDAO extends DAO<AffymetrixProbesetDAO.Attribute> {
 
     /**
-     * {@code Enum} used to define the attributes to populate in the {@code AffymetrixProbesetTO}s 
+     * {@code Enum} used to define the attributes to populate in the {@code AffymetrixProbesetTO}s
      * obtained from this {@code AffymetrixProbesetDAO}.
      * <ul>
      * <li>{@code ID}: corresponds to {@link AffymetrixProbesetTO#getId()}.

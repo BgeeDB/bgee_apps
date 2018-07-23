@@ -34,6 +34,7 @@ import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDA
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO.AffymetrixChipTO.NormalizationType;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO.AffymetrixProbesetTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO.MicroarrayExperimentTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqExperimentDAO.RNASeqExperimentTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO.RNASeqLibraryTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO.RNASeqLibraryTO.LibraryOrientation;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO.RNASeqLibraryTO.LibraryType;
@@ -696,10 +697,10 @@ public class TOComparatorTest extends TestAncestor {
     }
     /**
      * Test the generic method {@link TOComparator#areTOsEqual(Object, Object)}
-     * using {@code AffymetrixExperimentTO}s.
+     * using {@code MicroarrayExperimentTO}s.
      */
     @Test
-    public void testAreAffymetrixExperimentTOEqual() {
+    public void testAreMicroarrayExperimentTOEqual() {
         MicroarrayExperimentTO to1 = new MicroarrayExperimentTO("Exp1", "name", "description", 1);
         MicroarrayExperimentTO to2 = new MicroarrayExperimentTO("Exp1", "name", "description", 1);
         assertTrue(TOComparator.areTOsEqual(to1, to2));
@@ -758,6 +759,25 @@ public class TOComparatorTest extends TestAncestor {
         to2 = new RNASeqLibraryTO("L1", "Exp1", 12, "Platform1", new BigDecimal("36"), new BigDecimal("10"),
                 new BigDecimal("50"), new BigDecimal("70"), new BigDecimal("80"), new BigDecimal("2"), new BigDecimal("5"),
                 1000000, 900000, 100, 150, LibraryType.SINGLE_READ, LibraryOrientation.FORWARD, new BigDecimal("8557.5"), 9000);
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+    }
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object)}
+     * using {@code RNASeqExperimentTO}s.
+     */
+    @Test
+    public void testAreRNASeqExperimentTOEqual() {
+        RNASeqExperimentTO to1 = new RNASeqExperimentTO("Exp1", "name", "description", 1);
+        RNASeqExperimentTO to2 = new RNASeqExperimentTO("Exp1", "name", "description", 1);
+        assertTrue(TOComparator.areTOsEqual(to1, to2));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, true));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+
+        to2 = new RNASeqExperimentTO("Exp2", "name", "description", 1);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+
+        to2 = new RNASeqExperimentTO("Exp1", "name", "description", 2);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
     }
 

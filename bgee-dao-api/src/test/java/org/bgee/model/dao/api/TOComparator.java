@@ -29,6 +29,7 @@ import org.bgee.model.dao.api.expressiondata.rawdata.RawDataExperimentDAO.Experi
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO.AffymetrixChipTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO.AffymetrixProbesetTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO.MicroarrayExperimentTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqExperimentDAO.RNASeqExperimentTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO.RNASeqLibraryTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultDAO.RNASeqResultTO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO;
@@ -192,6 +193,8 @@ public class TOComparator {
             return log.exit(areTOsEqual((RNASeqResultTO) to1,(RNASeqResultTO) to2));
         } else if (to2 instanceof RNASeqLibraryTO) {
             return log.exit(areTOsEqual((RNASeqLibraryTO) to1,(RNASeqLibraryTO) to2, compareId));
+        } else if (to2 instanceof RNASeqExperimentTO) {
+            return log.exit(areTOsEqual((RNASeqExperimentTO) to1,(RNASeqExperimentTO) to2, compareId));
         }
 
         throw log.throwing(new IllegalArgumentException("There is no comparison method " +
@@ -1212,16 +1215,33 @@ public class TOComparator {
     }
 
     /**
-     * Method to compare two {@code AffymetrixExperimentTO}s, to check for complete
+     * Method to compare two {@code MicroarrayExperimentTO}s, to check for complete
      * equality of each attribute.
      *
-     * @param to1       A {@code AffymetrixExperimentTO} to be compared to {@code to2}.
-     * @param to2       A {@code AffymetrixExperimentTO} to be compared to {@code to1}.
+     * @param to1       A {@code MicroarrayExperimentTO} to be compared to {@code to2}.
+     * @param to2       A {@code MicroarrayExperimentTO} to be compared to {@code to1}.
      * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be
      *                  used for comparisons. 
      * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
      */
     private static boolean areTOsEqual(MicroarrayExperimentTO to1, MicroarrayExperimentTO to2, boolean compareId) {
+        log.entry(to1, to2);
+        if (areTOsEqual((ExperimentTO<?>) to1, (ExperimentTO<?>) to2, compareId)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    /**
+     * Method to compare two {@code RNASeqExperimentTO}s, to check for complete
+     * equality of each attribute.
+     *
+     * @param to1       A {@code RNASeqExperimentTO} to be compared to {@code to2}.
+     * @param to2       A {@code RNASeqExperimentTO} to be compared to {@code to1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be
+     *                  used for comparisons. 
+     * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
+     */
+    private static boolean areTOsEqual(RNASeqExperimentTO to1, RNASeqExperimentTO to2, boolean compareId) {
         log.entry(to1, to2);
         if (areTOsEqual((ExperimentTO<?>) to1, (ExperimentTO<?>) to2, compareId)) {
             return log.exit(true);

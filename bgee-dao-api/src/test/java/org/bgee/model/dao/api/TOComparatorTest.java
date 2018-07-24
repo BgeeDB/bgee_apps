@@ -33,6 +33,7 @@ import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO.ESTTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO.ESTLibraryTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituEvidenceDAO.InSituEvidenceTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituExperimentDAO.InSituExperimentTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO.InSituSpotTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO.AffymetrixChipTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO.AffymetrixChipTO.DetectionType;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO.AffymetrixChipTO.NormalizationType;
@@ -874,6 +875,40 @@ public class TOComparatorTest extends TestAncestor {
 
         to2 = new InSituEvidenceTO("Evidence1", "Exp1", true, "urlPart2");
         assertFalse(TOComparator.areTOsEqual(to1, to2));
+    }
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object)}
+     * using {@code InSituSpotTO}s.
+     */
+    @Test
+    public void testAreInSituSpotTOEqual() {
+        InSituSpotTO to1 = new InSituSpotTO("ID1", "pattern1", "A1", 1, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
+                ExclusionReason.NOT_EXCLUDED, 110);
+        InSituSpotTO to2 = new InSituSpotTO("ID1", "pattern1", "A1", 1, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
+                ExclusionReason.NOT_EXCLUDED, 110);
+        assertTrue(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new InSituSpotTO("ID2", "pattern1", "A1", 1, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
+                ExclusionReason.NOT_EXCLUDED, 110);
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+
+        to2 = new InSituSpotTO("ID1", "pattern2", "A1", 1, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
+                ExclusionReason.NOT_EXCLUDED, 110);
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+        
+        to2 = new InSituSpotTO("ID1", "pattern1", "A1", 2, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
+                ExclusionReason.NOT_EXCLUDED, 110);
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new InSituSpotTO("ID1", "pattern1", "A1", 1, 11, DetectionFlag.PRESENT, DataState.HIGHQUALITY,
+                ExclusionReason.NOT_EXCLUDED, 110);
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new InSituSpotTO("ID1", "pattern1", "A1", 1, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
+                ExclusionReason.NOT_EXCLUDED, 120);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        assertFalse(TOComparator.areTOsEqual(to1, to2, false));
     }
 
     /**

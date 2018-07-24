@@ -30,6 +30,7 @@ import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO.ESTTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO.ESTLibraryTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituEvidenceDAO.InSituEvidenceTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituExperimentDAO.InSituExperimentTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO.InSituSpotTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO.AffymetrixChipTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO.AffymetrixProbesetTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO.MicroarrayExperimentTO;
@@ -207,6 +208,8 @@ public class TOComparator {
             return log.exit(areTOsEqual((InSituExperimentTO) to1, (InSituExperimentTO) to2, compareId));
         } else if (to2 instanceof InSituEvidenceTO) {
             return log.exit(areTOsEqual((InSituEvidenceTO) to1, (InSituEvidenceTO) to2, compareId));
+        } else if (to2 instanceof InSituSpotTO) {
+            return log.exit(areTOsEqual((InSituSpotTO) to1, (InSituSpotTO) to2, compareId));
         }
 
         throw log.throwing(new IllegalArgumentException("There is no comparison method " +
@@ -1137,6 +1140,24 @@ public class TOComparator {
                 areBigDecimalEquals(to1.getFpkm(), to2.getFpkm()) &&
                 areBigDecimalEquals(to1.getReadCount(), to2.getReadCount()) &&
                 areBigDecimalEquals(to1.getRank(), to2.getRank())) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    /**
+     * Method to compare two {@code InSituSpotTO}s, to check for complete
+     * equality of each attribute.
+     *
+     * @param to1       A {@code InSituSpotTO} to be compared to {@code to2}.
+     * @param to2       A {@code InSituSpotTO} to be compared to {@code to1}.
+     * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
+     */
+    private static boolean areTOsEqual(InSituSpotTO to1, InSituSpotTO to2, boolean compareId) {
+        log.entry(to1, to2, compareId);
+        if ((!compareId || Objects.equals(to1.getId(), to2.getId())) &&
+                Objects.equals(to1.getInSituExpressionPatternId(), to2.getInSituExpressionPatternId()) &&
+                Objects.equals(to1.getConditionId(), to2.getConditionId()) &&
+                areTOsEqual(to1, to2)) {
             return log.exit(true);
         }
         return log.exit(false);

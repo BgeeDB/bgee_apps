@@ -28,6 +28,7 @@ import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSo
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataExperimentDAO.ExperimentTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO.ESTTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO.ESTLibraryTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituEvidenceDAO.InSituEvidenceTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituExperimentDAO.InSituExperimentTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO.AffymetrixChipTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO.AffymetrixProbesetTO;
@@ -204,6 +205,8 @@ public class TOComparator {
             return log.exit(areTOsEqual((ESTTO) to1, (ESTTO) to2, compareId));
         } else if (to2 instanceof InSituExperimentTO) {
             return log.exit(areTOsEqual((InSituExperimentTO) to1, (InSituExperimentTO) to2, compareId));
+        } else if (to2 instanceof InSituEvidenceTO) {
+            return log.exit(areTOsEqual((InSituEvidenceTO) to1, (InSituEvidenceTO) to2, compareId));
         }
 
         throw log.throwing(new IllegalArgumentException("There is no comparison method " +
@@ -1237,6 +1240,26 @@ public class TOComparator {
                 Objects.equals(to1.getLibraryOrientation(), to2.getLibraryOrientation()) &&
                 Objects.equals(to1.getDistinctRankCount(), to2.getDistinctRankCount()) &&
                 areBigDecimalEquals(to1.getMaxRank(), to2.getMaxRank())) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    /**
+     * Method to compare two {@code InSituEvidenceTO}s, to check for complete
+     * equality of each attribute.
+     *
+     * @param to1       An {@code InSituEvidenceTO} to be compared to {@code to2}.
+     * @param to2       An {@code InSituEvidenceTO} to be compared to {@code to1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be
+     *                  used for comparisons.
+     * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
+     */
+    private static boolean areTOsEqual(InSituEvidenceTO to1, InSituEvidenceTO to2, boolean compareId) {
+        log.entry(to1, to2);
+        if (TOComparator.areEntityTOsEqual(to1, to2, compareId) &&
+                Objects.equals(to1.getExperimentId(), to2.getExperimentId()) &&
+                Objects.equals(to1.getEvidenceDistinguishable(), to2.getEvidenceDistinguishable()) &&
+                Objects.equals(to1.getInSituEvidenceUrlPart(), to2.getInSituEvidenceUrlPart())) {
             return log.exit(true);
         }
         return log.exit(false);

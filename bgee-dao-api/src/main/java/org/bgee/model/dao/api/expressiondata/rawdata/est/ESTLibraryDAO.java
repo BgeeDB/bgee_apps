@@ -1,8 +1,9 @@
 package org.bgee.model.dao.api.expressiondata.rawdata.est;
 
 import org.bgee.model.dao.api.DAO;
+import org.bgee.model.dao.api.NamedEntityTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAnnotatedTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.NamedEntityAssayTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataWithDataSourceTO;
 
 /**
@@ -39,7 +40,8 @@ public interface ESTLibraryDAO extends DAO<ESTLibraryDAO.Attribute> {
      * @version Bgee 14
      * @since Bgee 11
      */
-    public final class ESTLibraryTO extends NamedEntityAssayTO<String> implements RawDataAnnotatedTO, RawDataWithDataSourceTO {
+    public final class ESTLibraryTO extends NamedEntityTO<String>
+    implements AssayTO<String>, RawDataAnnotatedTO, RawDataWithDataSourceTO {
         private static final long serialVersionUID = 6500670452213931420L;
 
         private final Integer dataSourceId;

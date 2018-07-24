@@ -5,11 +5,11 @@ import java.math.BigDecimal;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
+import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAnnotatedTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayPartOfExpTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.EntityAssayTO;
 
 /**
  * {@code DAO} for {@link RNASeqLibraryTO}s.
@@ -77,7 +77,7 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
      * @version Bgee 14
      * @since Bgee 12
      */
-    public final class RNASeqLibraryTO extends EntityAssayTO<String> implements AssayPartOfExpTO<String, String>, RawDataAnnotatedTO {
+    public final class RNASeqLibraryTO extends EntityTO<String> implements AssayPartOfExpTO<String, String>, RawDataAnnotatedTO {
         private static final long serialVersionUID = -6303846733657736568L;
         private final static Logger log = LogManager.getLogger(RNASeqLibraryTO.class.getName());
 

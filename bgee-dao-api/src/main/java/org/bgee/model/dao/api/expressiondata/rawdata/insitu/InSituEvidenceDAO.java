@@ -1,8 +1,8 @@
 package org.bgee.model.dao.api.expressiondata.rawdata.insitu;
 
 import org.bgee.model.dao.api.DAO;
+import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayPartOfExpTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.EntityAssayTO;
 
 /**
  * DAO defining queries using or retrieving {@link InSituEvidenceTO}s. 
@@ -37,7 +37,7 @@ public interface InSituEvidenceDAO extends DAO<InSituEvidenceDAO.Attribute> {
      * @version Bgee 14
      * @since Bgee 11
      */
-    public final class InSituEvidenceTO extends EntityAssayTO<String> implements AssayPartOfExpTO<String, String> {
+    public final class InSituEvidenceTO extends EntityTO<String> implements AssayPartOfExpTO<String, String> {
         private static final long serialVersionUID = 6885005045158337747L;
 
         private final String inSituExperimentId;

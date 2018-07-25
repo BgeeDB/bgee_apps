@@ -88,7 +88,7 @@ public class RawDataService extends CommonService {
             assert this.expTOIterator == null && !(this.lastAssayTO instanceof AssayPartOfExpTO) ||
                     this.expTOIterator != null && this.lastAssayTO instanceof AssayPartOfExpTO;
             if (this.expTOIterator != null && this.lastAssayTO instanceof AssayPartOfExpTO) {
-                AssayPartOfExpTO<?> assayPartOfExpTO = (AssayPartOfExpTO<?>) this.lastAssayTO;
+                AssayPartOfExpTO<?, ?> assayPartOfExpTO = (AssayPartOfExpTO<?, ?>) this.lastAssayTO;
                 if (this.lastExpTO == null || !this.lastExpTO.getId().equals(assayPartOfExpTO.getExperimentId())) {
                     this.lastExpTO = this.expTOIterator.next();
                 }
@@ -100,7 +100,7 @@ public class RawDataService extends CommonService {
                 this.lastExp = mapExperimentTOToExperiment(this.lastExpTO);
             }
             if (this.lastAssayTO instanceof AssayPartOfExpTO) {
-                return log.exit(mapAssayPartOfExpTOToAssayPartOfExp((AssayPartOfExpTO<?>) this.lastAssayTO, this.lastExp));
+                return log.exit(mapAssayPartOfExpTOToAssayPartOfExp((AssayPartOfExpTO<?, ?>) this.lastAssayTO, this.lastExp));
             }
             return log.exit(mapAssayTOToAssay(this.lastAssayTO));
         }
@@ -278,7 +278,7 @@ public class RawDataService extends CommonService {
         //TODO
         return log.exit(null);
     }
-    private static <T extends AssayPartOfExp<?, V>, U extends AssayPartOfExpTO<?>, V extends Experiment<?>>
+    private static <T extends AssayPartOfExp<?, V>, U extends AssayPartOfExpTO<?, ?>, V extends Experiment<?>>
     T mapAssayPartOfExpTOToAssayPartOfExp(U assayTO, V exp) {
         log.entry(assayTO, exp);
         //TODO

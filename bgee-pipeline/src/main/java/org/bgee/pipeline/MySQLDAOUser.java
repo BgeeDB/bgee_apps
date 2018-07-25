@@ -17,7 +17,7 @@ import org.bgee.model.dao.mysql.expressiondata.MySQLConditionDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLDiffExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLExperimentExpressionDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLRawExpressionCallDAO;
-import org.bgee.model.dao.mysql.expressiondata.rawdata.affymetrix.MySQLAffymetrixProbesetDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixProbesetDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituSpotDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqResultDAO;
 import org.bgee.model.dao.mysql.file.MySQLDownloadFileDAO;

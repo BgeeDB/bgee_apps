@@ -1,4 +1,4 @@
-package org.bgee.model.dao.mysql.expressiondata.rawdata.insitu;
+package org.bgee.model.dao.mysql.expressiondata.rawdata.microarray;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -8,20 +8,21 @@ import org.junit.rules.ExpectedException;
 
 
 /**
- * Integration tests for {@link MySQLInSituSpotDAO}, performed on a real MySQL database. 
+ * Integration tests for {@link MySQLAffymetrixProbesetDAO}, performed on a real MySQL database. 
  * See the documentation of {@link org.bgee.model.dao.mysql.MySQLITAncestor} for 
  * important information.
  * 
  * @author Valentine Rech de Laval
  * @version Bgee 13
- * @see org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO
+ * @see org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixProbesetDAO
  * @since Bgee 13
  */
-public class MySQLInSituSpotDAOIT extends MySQLITAncestor {
+public class MySQLAffymetrixProbesetDAOIT extends MySQLITAncestor {
 
-    private final static Logger log = LogManager.getLogger(MySQLInSituSpotDAOIT.class.getName());
+    private final static Logger log = 
+            LogManager.getLogger(MySQLAffymetrixProbesetDAOIT.class.getName());
 
-    public MySQLInSituSpotDAOIT() {
+    public MySQLAffymetrixProbesetDAOIT() {
         super();
     }
     

@@ -108,7 +108,7 @@ public class GenerateRankFileTest extends TestAncestor {
 
         Gene gene1 = new Gene("gene1", spe1);
         Gene gene2 = new Gene("gene2", spe1);
-        Gene gene3 = new Gene("gene3", spe2);
+        Gene gene3 = new Gene("gene3", "gene3Name", null, spe2, 1);
         
       //conditions1 and 2 spe1 gene1
         ExpressionCall c1 = new ExpressionCall(gene1, cond1, new DataPropagation(), 
@@ -236,20 +236,17 @@ public class GenerateRankFileTest extends TestAncestor {
         
         GeneService geneService = mock(GeneService.class);
         when(serviceFactory.getGeneService()).thenReturn(geneService);
-        Supplier<Stream<Gene>> spe1GenesSupplier =
-                () -> Stream.of(gene1, gene2);
-        Supplier<Stream<Gene>> spe2GenesSupplier =
-                () -> Stream.of(gene3);
 
         when(geneService.loadGenes(new GeneFilter(spe1.getId())))
-                .thenReturn(spe1GenesSupplier.get());
+                .thenReturn(Stream.of(gene1, gene2))
+                .thenReturn(Stream.of(gene1, gene2))
+                .thenReturn(Stream.of(gene1, gene2))
+                .thenReturn(Stream.of(gene1, gene2));
         when(geneService.loadGenes(new GeneFilter(spe2.getId())))
-                .thenReturn(spe2GenesSupplier.get());
-//        when(geneService.loadGenes(new GeneFilter(spe1.getId())))
-//                .thenReturn(Arrays.asList(new Gene("gene1", spe1), new Gene("gene2", spe2)).stream());
-//        when(geneService.loadGenes(new GeneFilter(spe2.getId())))
-//                .thenReturn(Arrays.asList(new Gene("gene3", spe2)).stream());
-
+                .thenReturn(Stream.of(gene3))
+                .thenReturn(Stream.of(gene3))
+                .thenReturn(Stream.of(gene3))
+                .thenReturn(Stream.of(gene3));
         
         SpeciesService speciesService = mock(SpeciesService.class);
         when(serviceFactory.getSpeciesService()).thenReturn(speciesService);
@@ -371,57 +368,61 @@ public class GenerateRankFileTest extends TestAncestor {
         File folder1 = testFolder.newFolder("f1");
         File folder2 = testFolder.newFolder("f2");
         generate.generateRankFiles(Collections.singleton(1), false, 
-                new HashSet<>(Arrays.asList(DataType.AFFYMETRIX, (DataType) null)), folder1.getAbsolutePath());
+                new HashSet<>(Arrays.asList(DataType.AFFYMETRIX, null)), folder1.getAbsolutePath());
         generate.generateRankFiles(Collections.singleton(2), false, 
-                new HashSet<>(Arrays.asList(DataType.AFFYMETRIX,(DataType) null)), folder2.getAbsolutePath());
+                new HashSet<>(Arrays.asList(DataType.AFFYMETRIX, null)), folder1.getAbsolutePath());
+        generate.generateRankFiles(Collections.singleton(1), true, 
+                new HashSet<>(Arrays.asList(DataType.AFFYMETRIX, null)), folder2.getAbsolutePath());
+        generate.generateRankFiles(Collections.singleton(2), true, 
+                new HashSet<>(Arrays.asList(DataType.AFFYMETRIX, null)), folder2.getAbsolutePath());
         
         //species1
         this.checkFile(spe1, false, null, 
                 Arrays.asList(
-                        Arrays.asList("gene1", "anat1", "Anat name 1", "stage1", "Stage name 1", 
+                        Arrays.asList("gene1", null, "anat1", "Anat name 1", "stage1", "Stage name 1", 
                                 "1.25", "BTO:0001"), 
-                        Arrays.asList("gene1", "anat2", "Anat name 2", "stage2", "Stage name 2", 
+                        Arrays.asList("gene1", null, "anat2", "Anat name 2", "stage2", "Stage name 2", 
                                 "8.00", null), 
-                        Arrays.asList("gene2", "anat1", "Anat name 1", "stage1", "Stage name 1", 
+                        Arrays.asList("gene2", null, "anat1", "Anat name 1", "stage1", "Stage name 1", 
                                 "10000.00", "BTO:0001")), 
                 folder1, "1_condition_all_data_my_species1.tsv");
         this.checkFile(spe1, true, null, 
                 Arrays.asList(
-                        Arrays.asList("gene1", "anat1", "Anat name 1", 
+                        Arrays.asList("gene1", null, "anat1", "Anat name 1", 
                                 "1.25", "BTO:0001")), 
                 folder2, "1_anat_entity_all_data_my_species1.tsv");
         this.checkFile(spe1, false, DataType.AFFYMETRIX, 
                 Arrays.asList(
-                        Arrays.asList("gene1", "anat2", "Anat name 2", "stage2", "Stage name 2", 
+                        Arrays.asList("gene1", null, "anat2", "Anat name 2", "stage2", "Stage name 2", 
                                 "8.00", null),
-                        Arrays.asList("gene2", "anat1", "Anat name 1", "stage1", "Stage name 1", 
+                        Arrays.asList("gene2", null, "anat1", "Anat name 1", "stage1", "Stage name 1", 
                                 "10000.00", "BTO:0001")), 
                 folder1, "1_condition_affymetrix_my_species1.tsv");
         this.checkFile(spe1, true, DataType.AFFYMETRIX, 
                 Arrays.asList(
-                        Arrays.asList("gene1", "gene 1", "anat1", "Anat name 1", 
+                        Arrays.asList("gene1", null, "anat1", "Anat name 1", 
                                 "1.35", "BTO:0001")), 
                 folder2, "1_anat_entity_affymetrix_my_species1.tsv");
         
         //species2
         this.checkFile(spe2, false, null, 
                 Arrays.asList(
-                        Arrays.asList("gene3", "anat2", "Anat name 2", "stage1", "Stage name 1", 
+                        Arrays.asList("gene3", "gene3Name", "anat2", "Anat name 2", "stage1", "Stage name 1", 
                                 "600.20", null)), 
                 folder1, "2_condition_all_data_my_species2.tsv");
         this.checkFile(spe2, false, DataType.AFFYMETRIX, 
                 Arrays.asList(
-                        Arrays.asList("gene3", "anat2", "Anat name 2", "stage1", "Stage name 1", 
+                        Arrays.asList("gene3", "gene3Name", "anat2", "Anat name 2", "stage1", "Stage name 1", 
                                 "600.20", null)), 
-                folder1, "2_condition_all_data_my_species2.tsv");
+                folder1, "2_condition_affymetrix_my_species2.tsv");
         this.checkFile(spe2, true, null, 
                 Arrays.asList(
-                        Arrays.asList("gene3", "anat2", "Anat name 2", 
+                        Arrays.asList("gene3", "gene3Name", "anat2", "Anat name 2", 
                                 "600.20", null)), 
                 folder2, "2_anat_entity_all_data_my_species2.tsv");
         this.checkFile(spe2, true, DataType.AFFYMETRIX, 
                 Arrays.asList(
-                        Arrays.asList("gene3", "anat2", "Anat name 2", 
+                        Arrays.asList("gene3", "gene3Name", "anat2", "Anat name 2", 
                                 "600.20", null)), 
                 folder2, "2_anat_entity_affymetrix_my_species2.tsv");
         File notExists = Paths.get(folder1.getAbsolutePath(), "spe2_byCondition_affymetrix_my_species2.tsv").toFile();

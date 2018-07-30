@@ -1,4 +1,4 @@
-package org.bgee.model.expressiondata.rawdata.affymetrix;
+package org.bgee.model.expressiondata.rawdata.microarray;
 
 import org.bgee.model.expressiondata.rawdata.Experiment;
 

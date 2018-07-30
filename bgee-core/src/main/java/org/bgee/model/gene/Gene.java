@@ -6,7 +6,11 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.species.Species;
 
 /**
- * Class allowing to describe genes. 
+ * Class allowing to describe genes. The unique identifier for {@code Gene}s
+ * are composed of the Ensembl gene ID (see {@link #getEnsemblGeneId()}) and of the species ID
+ * (see {@link #getSpecies()} and {@link org.bgee.model.species.Species#getId() Species.getId()}).
+ * This is because Ensembl gene IDs are not unique in Bgee, as we sometimes used the genome
+ * of a closely-related species for species with no genome available.
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval

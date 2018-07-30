@@ -24,7 +24,7 @@ import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataExperimentDAO.ExperimentTO;
 import org.bgee.model.expressiondata.baseelements.DataType;
-import org.bgee.model.expressiondata.rawdata.affymetrix.AffymetrixProbeset;
+import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixProbeset;
 
 public class RawCallSourceContainer {
     private final static Logger log = LogManager.getLogger(RawCallSourceContainer.class.getName());

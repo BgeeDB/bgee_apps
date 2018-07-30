@@ -1,4 +1,4 @@
-package org.bgee.model.expressiondata.rawdata.affymetrix;
+package org.bgee.model.expressiondata.rawdata.microarray;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

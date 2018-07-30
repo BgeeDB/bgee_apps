@@ -1,13 +1,15 @@
 package org.bgee.model.expressiondata.rawdata;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.bgee.model.Entity;
-
-public class Assay<T extends Comparable<T>> extends Entity<T> {
-    private final static Logger log = LogManager.getLogger(Assay.class.getName());
-
-    public Assay(T id) throws IllegalArgumentException {
-        super(id);
-    }
+/**
+ * An assay allows to generate {@link RawCallSource}s. When it is part of an {@code Experiment},
+ * it is an {@link AssayPartOfExp}.
+ *
+ * @author Frederic Bastian
+ * @version Bgee 14 Jul. 2018
+ * @since Bgee 14 Jul. 2018
+ *
+ * @param <T>   The type of ID of this assay.
+ */
+public interface Assay<T extends Comparable<T>> {
+    public T getId();
 }

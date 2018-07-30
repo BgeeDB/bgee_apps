@@ -26,6 +26,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
 import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
@@ -44,6 +46,7 @@ import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.GeneFilter;
+import org.bgee.model.species.Species;
 import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.MySQLDAOUser;
 import org.bgee.pipeline.Utils;
@@ -73,20 +76,18 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
      * Each entry of this enum corresponds to the export of one bgee table that
      * have to be integrated into the bgeelite database. Each entry contains 5
      * information : 
-     * <ul>
-     * <li> 1. name of the file containing all data, </li>
-     * <li> 2. name of the table in bgeelite, </li>
-     * <li> 3. mapping between the name of the columns in the file and the name of 
+     * <ol>
+     * <li> name of the file containing all data, </li>
+     * <li> name of the table in bgeelite, </li>
+     * <li> mapping between the name of the columns in the file and the name of 
      * the columns in the bgeelite database, </li>
-     * <li> 4. mapping between the name of the columns in the file and sql type of the
+     * <li> mapping between the name of the columns in the file and sql type of the
      * column in the bgeelite database, </li>
-     * <li> 5. mapping between the name of the columns in the file and the fact the 
+     * <li> mapping between the name of the columns in the file and the fact the 
      * column is nullable. true means nullable, false means not nullable, and null means 
      * not nullable with default value ''</li>
-     * </ul>
-     *
+     * </ol>
      */
-
     @SuppressWarnings("serial")
     private enum TsvFile {
         SPECIES_OUTPUT_FILE("species_bgee_lite.tsv", "species", new LinkedHashMap<String, String>() {
@@ -361,14 +362,15 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
 
     /**
      * Extract data from the bgee database to intermediate TSV files
-     * 
-     * @param speciesIds
-     *            A {@code Collection} of {@code Integer}s that are IDs of
-     *            species for which to generate files.
+     *
+     * @param inputSpeciesIds   A {@code Collection} of {@code Integer}s that are IDs of
+     *                          species for which to generate files.
+     * @param directory         A {@code String} that is the directory where to store files.
      */
     private void extractBgeeDatabase(Collection<Integer> inputSpeciesIds, String directory) {
         log.entry(inputSpeciesIds);
         SpeciesTOResultSet speciesTOs = this.getSpeciesDAO().getSpeciesByIds(new HashSet<>(inputSpeciesIds));
+        // XXX: add check that all provided species IDs are found
         Set<Integer> speciesIds = extractSpeciesTable(speciesTOs, directory);
         extractAnatEntityTable(directory);
         extractStageTable(directory);
@@ -377,15 +379,15 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
             // Note: we can map Ensembl ID to one Bgee gene ID because we use
             // data for only 1 species
             Map<String, Integer> ensemblIdToBgeeGeneId = extractGeneTable(speciesId, directory);
-            Map<String, Integer> condUniqKeyToConditionId = extractGlobalCondTable(speciesId, directory);
-            extractGlobalExpressionTable(ensemblIdToBgeeGeneId, condUniqKeyToConditionId, speciesId, directory);
+            Map<Condition, String> condToConditionId = extractGlobalCondTable(speciesId, directory);
+            extractGlobalExpressionTable(ensemblIdToBgeeGeneId, condToConditionId, speciesId, directory);
         }
         log.exit();
     }
 
     private void extractGlobalExpressionTable(Map<String, Integer> ensemblIdToBgeeGeneId,
-            Map<String, Integer> condUniqKeyToConditionId, Integer speciesId, String directory) {
-        log.entry(ensemblIdToBgeeGeneId, condUniqKeyToConditionId, speciesId, directory);
+            Map<Condition, String> condToConditionId, Integer speciesId, String directory) {
+        log.entry(ensemblIdToBgeeGeneId, condToConditionId, speciesId, directory);
 
         log.debug("Start extracting global expressions for the species {}...", speciesId);
 
@@ -418,17 +420,11 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
                                 CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.DATA_QUALITY),
                         serviceOrdering)
                 .map(call -> {
-                    // XXX: why not use Map<Condition, Integer> for
-                    // condUniqKeyToConditionId?
-                    // this would avoid putting the logic of concatenation in
-                    // three places
-                    // here it would be
-                    // condUniqKeyToConditionId.get(c.getCondition())
                     Map<String, String> headerToValue = new HashMap<>();
                     headerToValue.put(GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID.name(), 
                             String.valueOf(ensemblIdToBgeeGeneId.get(call.getGene().getEnsemblGeneId())));
-                    headerToValue.put(GlobalExpressionCallDAO.Attribute.CONDITION_ID.name(), 
-                            retrieveStringConditionId(condUniqKeyToConditionId, call.getCondition()));
+                    headerToValue.put(GlobalExpressionCallDAO.Attribute.CONDITION_ID.name(),
+                            condToConditionId.get(call.getCondition()));
                     headerToValue.put(GLOBAL_EXPRESSION_SUMMARY_QUALITY, 
                             call.getSummaryQuality().getStringRepresentation());
                     return headerToValue;
@@ -450,8 +446,8 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
                             Map<String, String> headerToValue = new HashMap<>();
                             headerToValue.put(GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID.name(), 
                                     String.valueOf(ensemblIdToBgeeGeneId.get(call.getGene().getEnsemblGeneId())));
-                            headerToValue.put(GlobalExpressionCallDAO.Attribute.CONDITION_ID.name(), 
-                                    retrieveStringConditionId(condUniqKeyToConditionId, call.getCondition()));
+                            headerToValue.put(GlobalExpressionCallDAO.Attribute.CONDITION_ID.name(),
+                                    condToConditionId.get(call.getCondition()));
                             headerToValue.put(GLOBAL_EXPRESSION_SUMMARY_QUALITY, 
                                     call.getSummaryQuality().getStringRepresentation());
                             return headerToValue;
@@ -536,7 +532,7 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
         log.exit();
     }
 
-    private Map<String, Integer> extractGlobalCondTable(Integer speciesId, String directory) {
+    private Map<Condition, String> extractGlobalCondTable(Integer speciesId, String directory) {
         log.entry(speciesId, directory);
         log.debug("Start extracting global conditions for the species {}...", speciesId);
         List<ConditionDAO.Attribute> condAttributesAnatAndStage = 
@@ -558,7 +554,7 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
         conditionTOs.addAll(this.getManager().getConditionDAO().getGlobalConditionsBySpeciesIds(
                 Collections.singleton(speciesId), condAttributesAnatAndStage, attributes).getAllTOs());
         
-        //transformation from a List<ConditionTO> to a Set<List<String>> in order to easily write conditions in a file
+        //transformation from a List<ConditionTO> to a List<Map<String, String>> in order to easily write conditions in a file
         List<Map<String, String>> allglobalCondInformation = conditionTOs.stream().map(cond -> {
             Map<String, String> headerToValue = new HashMap<>();
             headerToValue.put(ConditionDAO.Attribute.ID.name(), String.valueOf(cond.getId()));
@@ -573,7 +569,7 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
         // write global condition tsv file
         File file = new File(directory, TsvFile.GLOBALCOND_OUTPUT_FILE.getFileName());
         this.writeOutputFile(file, allglobalCondInformation, header, processors);
-        return log.exit(createCondUniqIdToConditionIdMap(conditionTOs));
+        return log.exit(createCondToConditionIdMap(conditionTOs));
 
     }
 
@@ -605,32 +601,34 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
     
     /**
      * Create A table of {@code CellProcessor} used by superCSV
-     * @param enumValue The {@TsvFile} Enum values specific to 
+     * @param enumValue The {@code TsvFile} Enum values specific to 
      * @return A table of {@code CellProcessor}
      */
     private CellProcessor[] createCellProcessor(TsvFile enumValue){
         log.entry(enumValue);
-        CellProcessor [] cellProcessor = new CellProcessor [enumValue.getColumnName().size()];
+        CellProcessor [] cellProcessor = new CellProcessor [enumValue.getDatatypes().size()];
         int index = 0;
-        for (String column: enumValue.getColumnName().keySet()){
-            if (enumValue.getIsNullable().get(column) == null || enumValue.getIsNullable().get(column)){
+        for (Map.Entry<String, Integer> entry: enumValue.getDatatypes().entrySet()){
+            Integer dataType = entry.getValue();
+            if (enumValue.getIsNullable().get(entry.getKey()) == null 
+                    || enumValue.getIsNullable().get(entry.getKey())){
               //if isNullable equals to true or null
-                if (enumValue.getDatatypes().get(column).equals(Types.INTEGER)){
+                if (dataType.equals(Types.INTEGER)){
                     cellProcessor[index] = new Optional(new ParseInt());
-                } else if (enumValue.getDatatypes().get(column).equals(Types.VARCHAR)){
+                } else if (dataType.equals(Types.VARCHAR)){
                     cellProcessor[index] = new Optional();
                 } else{
                     throw log.throwing(new IllegalArgumentException("The sql.Types equals to "
-                            + enumValue.getDatatypes().get(column) + "is not currently implemented"));
+                            + dataType + " is not currently implemented"));
                 }
             } else {
-                if (enumValue.getDatatypes().get(column).equals(Types.INTEGER)){
+                if (dataType.equals(Types.INTEGER)){
                     cellProcessor[index] = new NotNull(new ParseInt());
-                } else if (enumValue.getDatatypes().get(column).equals(Types.VARCHAR)){
+                } else if (dataType.equals(Types.VARCHAR)){
                     cellProcessor[index] = new NotNull();
                 } else{
                     throw log.throwing(new IllegalArgumentException("The sql.Types equals to "
-                            + enumValue.getDatatypes().get(column) + "is not currently implemented"));
+                            + dataType + " is not currently implemented"));
                 }
             }
             index++;
@@ -642,7 +640,7 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
      * Write a tsv file
      * 
      * @param file          The {@code File} where data will be written
-     * @param fileLines     A {@code Collection} of {@code Map}. Each element of the {@oce List} corresponds 
+     * @param fileLines     A {@code Collection} of {@code Map}. Each element of the {@code List} corresponds 
      *                      to one line. Each key of the {@code Map} corresponds to one column and each value 
      *                      corresponds to the data that has to be written 
      * @param header        The table of {@code String} used as header by superCSV
@@ -651,10 +649,9 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
     private void writeOutputFile(File file, Collection<Map<String, String>> fileLines, String[] header,
             CellProcessor[] processors) {
         log.entry(file, fileLines, header, processors);
-        boolean fileExists = file.exists()?true:false;
         try {
             try (ICsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(file, true), Utils.TSVCOMMENTED)) {
-                if (!fileExists) {
+                if (!file.exists()) {
                     file.createNewFile();
                     mapWriter.writeHeader(header);
                 }
@@ -692,35 +689,24 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
     }
     
     /**
-     * This method is needed because we can not access to the conditionId when using {@code Condition}
-     * The resulting {@code Map} is then useful to retrieve the conditionId of one {@code Condition}
-     * @param conditionTOs A {@code List} of {@code ConditionTO} for which we want to be able to retrieve
-     * the conditionId
-     * @return A {@code Map} with {@code String} corresponding to the aggregation of anatEntityId and 
-     * devStageId (which is unique) as key, and the corresponding conditionId as value:
+     * This method is needed because we can not access to the conditionId when using {@code Condition}.
+     * The resulting {@code Map} is then useful to retrieve the conditionId from one {@code Condition}.
+     *
+     * @param conditionTOs  A {@code List} of {@code ConditionTO}s for which we want to be able 
+     *                      to retrieve the conditionId.
+     * @return              A {@code Map} where keys are {@code Condition}s representing condition,
+     *                      the associated value being an {@code Integer} that is 
+     *                      the ID of the associated condition.
      */
-    private Map<String, Integer> createCondUniqIdToConditionIdMap(List<ConditionTO> conditionTOs) {
+    private Map<Condition, String> createCondToConditionIdMap(List<ConditionTO> conditionTOs) {
         log.entry();
         return log.exit( conditionTOs.stream()
-                .collect(Collectors.toMap(p -> p.getAnatEntityId() + "_" + p.getStageId(), p -> p.getId())));
+                .collect(Collectors.toMap(
+                        p -> new Condition(new AnatEntity(p.getAnatEntityId()),
+                                new DevStage(p.getStageId()), new Species(p.getSpeciesId())),
+                        p -> String.valueOf(p.getId()))));
     }
     
-    /**
-     * Retrieve the conditionId of one {@code Condition} 
-     * 
-     * @param condUniqKeyToConditionId  A {@code Map} where the key is a {@code String} corresponding to the 
-     *                                  aggregation of one anatEntityId and one devStageId. And the value is 
-     *                                  a {@code String} corresponding to one conditionId 
-     * @param cond                      A {@code Condition} for which we are looking to the conditionId
-     * @return  A {@code String} representation of a conditionId
-     */
-    private String retrieveStringConditionId(Map<String, Integer> condUniqKeyToConditionId, Condition cond) {
-        log.entry();
-        return log.exit(String.valueOf(condUniqKeyToConditionId.get(cond.
-                getAnatEntityId() + "_" + cond.getDevStageId())));
-        
-    }
-
     /**
      * Use all tsv files generated in the previous step of bgeelite creation and integrate
      * data in the bgeelite relational database
@@ -731,10 +717,7 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
 
         for (TsvFile tsvFile : TsvFile.values()) {
             log.info("start integration of data from file {}", tsvFile.getFileName());
-            File file = new File(directory, tsvFile.fileName);
-            // columnIds comes from a LinkedHashMap. They are used to keep order of the columns when using other
-            // HashMap of the TsvFile Enum.
-            List<String> columnIds = tsvFile.getColumnName().keySet().stream().collect(Collectors.toList());
+            File file = new File(directory, tsvFile.getFileName());
             
             try (ICsvMapReader mapReader = new CsvMapReader(new FileReader(file), Utils.TSVCOMMENTED)){
                 // the header columns are used as the keys of the Mapping
@@ -744,7 +727,7 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
                 //create SQL query
                 String sql = "INSERT INTO " + tsvFile.getTableName();
                 sql +=  " " + tsvFile.getColumnName().values().stream().collect(Collectors.joining(", ", "(", ")"));
-                sql += " VALUES " + Collections.nCopies(columnIds.size(), "?").stream()
+                sql += " VALUES " + Collections.nCopies(tsvFile.getColumnName().size(), "?").stream()
                         .collect(Collectors.joining(", ", "(", ")"));
                 log.debug("SQL query : {}", sql);
                 
@@ -756,7 +739,7 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
                     //read all lines of the tsv file
                     while ((customerMap = mapReader.read(header, processors)) != null) {
                         int columnNumber = 1;
-                        for (String columnId : columnIds) {
+                        for (String columnId : tsvFile.getColumnName().keySet()) {
                             
                             Object columnValue = customerMap.get(columnId);
                             if (columnValue instanceof Integer) {
@@ -795,9 +778,9 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
                             + "and the table exist, and that the table is empty."));
                 }
             } catch (FileNotFoundException e) {
-                throw log.throwing(new IllegalStateException("Can not find the file " + directory + tsvFile.fileName));
+                throw log.throwing(new IllegalStateException("Can not find the file " + directory + tsvFile.getFileName()));
             } catch (IOException e) {
-                throw log.throwing(new IllegalStateException("Can not read the file " + directory + tsvFile.fileName));
+                throw log.throwing(new IllegalStateException("Can not read the file " + directory + tsvFile.getFileName()));
             }
         }
         log.exit();

@@ -3,7 +3,11 @@ package org.bgee.model.dao.api.expressiondata.rawdata.rnaseq;
 import java.math.BigDecimal;
 
 import org.bgee.model.dao.api.DAO;
+import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO.DetectionFlag;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO.ExclusionReason;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceWithRankTO;
 
@@ -47,12 +51,18 @@ public interface RNASeqResultDAO extends DAO<RNASeqResultDAO.Attribute> {
      * @version Bgee 14
      * @since Bgee 12
      */
-    public final class RNASeqResultTO extends CallSourceTO<String> implements CallSourceWithRankTO {
+    public final class RNASeqResultTO extends TransferObject implements CallSourceTO<String>, CallSourceWithRankTO {
         private static final long serialVersionUID = 9192921864601490175L;
 
+        private final String rnaSeqLibraryId;
         private final BigDecimal tpm;
         private final BigDecimal rpkm;
         private final BigDecimal readCount;
+        /**
+         * The {@code CallSourceDataTO} carrying the information about
+         * the produced call of presence/absence of expression.
+         */
+        private final CallSourceDataTO callSourceDataTO;
         /**
          * A {@code BigDecimal} that is the rank of this call source raw data.
          */
@@ -64,13 +74,24 @@ public interface RNASeqResultDAO extends DAO<RNASeqResultDAO.Attribute> {
         public RNASeqResultTO(String rnaSeqLibraryId, Integer bgeeGeneId, BigDecimal tpm, BigDecimal rpkm,
                 BigDecimal readCount, DetectionFlag detectionFlag, DataState expressionConfidence,
                 ExclusionReason exclusionReason, BigDecimal rank, Integer expressionId) {
-            super(rnaSeqLibraryId, bgeeGeneId, detectionFlag, expressionConfidence, exclusionReason, expressionId);
+            super();
+            this.rnaSeqLibraryId = rnaSeqLibraryId;
             this.tpm = tpm;
             this.rpkm = rpkm;
             this.readCount = readCount;
             this.rank = rank;
+            this.callSourceDataTO = new CallSourceDataTO(bgeeGeneId, detectionFlag,
+                    expressionConfidence, exclusionReason, expressionId);
         }
 
+        @Override
+        public String getAssayId() {
+            return this.rnaSeqLibraryId;
+        }
+        @Override
+        public CallSourceDataTO getCallSourceDataTO() {
+            return this.callSourceDataTO;
+        }
         /**
          * @return  A {@code BigDecimal} that is the TPM value for this gene in this library.
          *          The value is <strong>NOT</strong> log transformed.
@@ -103,12 +124,11 @@ public interface RNASeqResultDAO extends DAO<RNASeqResultDAO.Attribute> {
         @Override
         public String toString() {
             StringBuilder builder = new StringBuilder();
-            builder.append("RNASeqResultTO [bgeeGeneId=").append(getBgeeGeneId()).append(", assayId=").append(getAssayId())
+            builder.append("RNASeqResultTO [rnaSeqLibraryId=").append(rnaSeqLibraryId)
                     .append(", tpm=").append(tpm).append(", rpkm=").append(rpkm)
-                    .append(", readCount=").append(readCount).append(", detectionFlag=").append(getDetectionFlag())
-                    .append(", expressionConfidence=").append(getExpressionConfidence())
-                    .append(", exclusionReason=").append(getExclusionReason()).append(", rank=").append(rank)
-                    .append(", expressionId=").append(getExpressionId()).append("]");
+                    .append(", readCount=").append(readCount)
+                    .append(", callSourceDataTO=").append(this.callSourceDataTO)
+                    .append(", rank=").append(rank).append("]");
             return builder.toString();
         }
     }

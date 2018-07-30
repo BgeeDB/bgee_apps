@@ -1,7 +1,11 @@
 package org.bgee.model.dao.api.expressiondata.rawdata.est;
 
 import org.bgee.model.dao.api.DAO;
+import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO.DetectionFlag;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO.ExclusionReason;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO;
 
 /**
@@ -32,42 +36,51 @@ public interface ESTDAO extends DAO<ESTDAO.Attribute> {
     }
 
     /**
-     * A {@code TransferObject} representing an EST, as stored in the Bgee database.
+     * An {@code EntityTO} representing an EST, as stored in the Bgee database.
      * 
      * @author Frederic Bastian
      * @author Valentine Rech de Laval
      * @version Bgee 14
      * @since Bgee 11
      */
-    public final class ESTTO extends CallSourceTO<String> {
+    public final class ESTTO extends EntityTO<String> implements CallSourceTO<String> {
         private static final long serialVersionUID = -6130411930176920545L;
 
         /**
-         * A {@code String} that is the primary ID of this EST.
+         * A {@code String} that is the ID of the assay this EST is part of.
          */
-        private final String id;
+        private final String estLibraryId;
         /**
          * A {@code String} representing the secondary ID of the EST (ESTs have two IDs in Unigene).
          */
-        public final String estId2;
+        private final String estId2;
         /**
          * A {@code String} representing the ID of UniGene Cluster associated to this EST.
          */
-        public final String uniGeneClusterId;
+        private final String uniGeneClusterId;
+        /**
+         * The {@code CallSourceDataTO} carrying the information about
+         * the produced call of presence/absence of expression.
+         */
+        private final CallSourceDataTO callSourceDataTO;
 
         public ESTTO(String estId, String estId2, String estLibraryId, String uniGeneClusterId, Integer bgeeGeneId,
                 DataState expressionConfidence, Integer expressionId) {
-            super(estLibraryId, bgeeGeneId, DetectionFlag.PRESENT, expressionConfidence, ExclusionReason.NOT_EXCLUDED, expressionId);
-            this.id = estId;
+            super(estId);
             this.estId2 = estId2;
             this.uniGeneClusterId = uniGeneClusterId;
+            this.estLibraryId = estLibraryId;
+            this.callSourceDataTO = new CallSourceDataTO(bgeeGeneId, DetectionFlag.PRESENT,
+                    expressionConfidence, ExclusionReason.NOT_EXCLUDED, expressionId);
         }
 
-        /**
-         * @return the {@code String} representing the main ID of the EST (ESTs have two IDs in Unigene).
-         */
-        public String getId() {
-            return this.id;
+        @Override
+        public String getAssayId() {
+            return this.estLibraryId;
+        }
+        @Override
+        public CallSourceDataTO getCallSourceDataTO() {
+            return this.callSourceDataTO;
         }
         /**
          * @return the {@code String} representing the secondary ID of the EST (ESTs have two IDs in Unigene).
@@ -85,12 +98,10 @@ public interface ESTDAO extends DAO<ESTDAO.Attribute> {
         @Override
         public String toString() {
             StringBuilder builder = new StringBuilder();
-            builder.append("ESTTO [id=").append(id).append(", estId2=").append(estId2)
-                    .append(", estLibraryId=").append(getAssayId())
-                    .append(", bgeeGeneId=").append(getBgeeGeneId())
+            builder.append("ESTTO [id=").append(this.getId()).append(", estId2=").append(estId2)
+                    .append(", estLibraryId=").append(estLibraryId)
                     .append(", uniGeneClusterId=").append(uniGeneClusterId)
-                    .append(", expressionConfidence=").append(getExpressionConfidence())
-                    .append(", expressionId=").append(getExpressionId()).append("]");
+                    .append(", callSourceDataTO=").append(this.callSourceDataTO).append("]");
             return builder.toString();
         }
     }

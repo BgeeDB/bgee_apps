@@ -24,6 +24,7 @@ import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentE
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallDataTO;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO.RawExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataExperimentDAO.ExperimentTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO.ESTTO;
@@ -1117,10 +1118,10 @@ public class TOComparator {
      */
     private static boolean areTOsEqual(AffymetrixProbesetTO to1, AffymetrixProbesetTO to2, boolean compareId) {
         log.entry(to1, to2, compareId);
-        if ((!compareId || Objects.equals(to1.getId(), to2.getId())) &&
+        if (areEntityTOsEqual(to1, to2, compareId) &&
                 areBigDecimalEquals(to1.getNormalizedSignalIntensity(), to2.getNormalizedSignalIntensity()) &&
                 areBigDecimalEquals(to1.getRank(), to2.getRank()) &&
-                areTOsEqual(to1, to2)) {
+                areCallSourceTOsEqual(to1, to2)) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -1135,7 +1136,7 @@ public class TOComparator {
      */
     private static boolean areTOsEqual(RNASeqResultTO to1, RNASeqResultTO to2) {
         log.entry(to1, to2);
-        if (areTOsEqual((CallSourceTO<?>) to1, (CallSourceTO<?>) to2) &&
+        if (areCallSourceTOsEqual(to1, to2) &&
                 areBigDecimalEquals(to1.getTpm(), to2.getTpm()) &&
                 areBigDecimalEquals(to1.getFpkm(), to2.getFpkm()) &&
                 areBigDecimalEquals(to1.getReadCount(), to2.getReadCount()) &&
@@ -1154,10 +1155,10 @@ public class TOComparator {
      */
     private static boolean areTOsEqual(InSituSpotTO to1, InSituSpotTO to2, boolean compareId) {
         log.entry(to1, to2, compareId);
-        if ((!compareId || Objects.equals(to1.getId(), to2.getId())) &&
+        if (areEntityTOsEqual(to1, to2, compareId) &&
                 Objects.equals(to1.getInSituExpressionPatternId(), to2.getInSituExpressionPatternId()) &&
                 Objects.equals(to1.getConditionId(), to2.getConditionId()) &&
-                areTOsEqual(to1, to2)) {
+                areCallSourceTOsEqual(to1, to2)) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -1172,8 +1173,8 @@ public class TOComparator {
      */
     private static boolean areTOsEqual(ESTTO to1, ESTTO to2, boolean compareId) {
         log.entry(to1, to2);
-        if ((!compareId || Objects.equals(to1.getId(), to2.getId())) &&
-                areTOsEqual(to1, to2) &&
+        if (areEntityTOsEqual(to1, to2, compareId) &&
+                areCallSourceTOsEqual(to1, to2) &&
                 Objects.equals(to1.getEstId2(), to2.getEstId2()) &&
                 Objects.equals(to1.getUniGeneClusterId(), to2.getUniGeneClusterId())) {
             return log.exit(true);
@@ -1185,14 +1186,29 @@ public class TOComparator {
      * Method to compare two {@code CallSourceTO}s, to check for complete
      * equality of each attribute.
      *
-     * @param to1       A {@code AffymetrixProbesetTO} to be compared to {@code to2}.
-     * @param to2       A {@code AffymetrixProbesetTO} to be compared to {@code to1}.
+     * @param to1       A {@code CallSourceTO} to be compared to {@code to2}.
+     * @param to2       A {@code CallSourceTO} to be compared to {@code to1}.
      * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
      */
-    private static boolean areTOsEqual(CallSourceTO<?> to1, CallSourceTO<?> to2) {
+    private static boolean areCallSourceTOsEqual(CallSourceTO<?> to1, CallSourceTO<?> to2) {
         log.entry(to1, to2);
         if (Objects.equals(to1.getAssayId(), to2.getAssayId()) &&
-                Objects.equals(to1.getBgeeGeneId(), to2.getBgeeGeneId()) &&
+                areTOsEqual(to1.getCallSourceDataTO(), to2.getCallSourceDataTO())) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    /**
+     * Method to compare two {@code CallSourceDataTO}s, to check for complete
+     * equality of each attribute.
+     *
+     * @param to1       A {@code CallSourceDataTO} to be compared to {@code to2}.
+     * @param to2       A {@code CallSourceDataTO} to be compared to {@code to1}.
+     * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
+     */
+    private static boolean areTOsEqual(CallSourceDataTO to1, CallSourceDataTO to2) {
+        log.entry(to1, to2);
+        if (Objects.equals(to1.getBgeeGeneId(), to2.getBgeeGeneId()) &&
                 Objects.equals(to1.getDetectionFlag(), to2.getDetectionFlag()) &&
                 Objects.equals(to1.getExpressionConfidence(), to2.getExpressionConfidence()) &&
                 Objects.equals(to1.getExclusionReason(), to2.getExclusionReason()) &&

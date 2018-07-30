@@ -1,9 +1,13 @@
 package org.bgee.model.dao.api.expressiondata.rawdata.insitu;
 
 import org.bgee.model.dao.api.DAO;
+import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAnnotatedTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO.DetectionFlag;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO.ExclusionReason;
 
 /**
  * DAO defining queries using or retrieving {@link InSituSpotTO}s. 
@@ -37,32 +41,43 @@ public interface InSituSpotDAO extends DAO<InSituSpotDAO.Attribute> {
     }
 
     /**
-     * {@code TransferObject} for in situ hybridization spots.
+     * {@code EntityTO} for in situ hybridization spots.
      * 
      * @author Frederic Bastian
      * @author Valentine Rech de Laval
      * @version Bgee 14
      * @since Bgee 11
      */
-    public class InSituSpotTO extends CallSourceTO<String> implements RawDataAnnotatedTO {
+    public class InSituSpotTO extends EntityTO<String> implements CallSourceTO<String>, RawDataAnnotatedTO {
         private static final long serialVersionUID = 163982006869900096L;
 
-        private final String inSituSpotId;
+        private final String inSituEvidenceId;
         private final String inSituExpressionPatternId;
         private final Integer conditionId;
+        /**
+         * The {@code CallSourceDataTO} carrying the information about
+         * the produced call of presence/absence of expression.
+         */
+        private final CallSourceDataTO callSourceDataTO;
 
         public InSituSpotTO(String inSituSpotId, String inSituExpressionPatternId, String inSituEvidenceId,
                 Integer conditionId, Integer bgeeGeneId, DetectionFlag detectionFlag,
                 DataState expressionConfidence, ExclusionReason exclusionReason, Integer expressionId) {
-            super(inSituEvidenceId, bgeeGeneId, detectionFlag, expressionConfidence,
-                    exclusionReason, expressionId);
-            this.inSituSpotId = inSituSpotId;
+            super(inSituSpotId);
+            this.inSituEvidenceId = inSituEvidenceId;
             this.inSituExpressionPatternId = inSituExpressionPatternId;
             this.conditionId = conditionId;
+            this.callSourceDataTO = new CallSourceDataTO(bgeeGeneId, detectionFlag,
+                    expressionConfidence, exclusionReason, expressionId);
         }
 
-        public String getId() {
-            return this.inSituSpotId;
+        @Override
+        public String getAssayId() {
+            return this.inSituEvidenceId;
+        }
+        @Override
+        public CallSourceDataTO getCallSourceDataTO() {
+            return this.callSourceDataTO;
         }
         /**
          * @return  A {@code String} that is an ID used in some source databases.
@@ -78,15 +93,11 @@ public interface InSituSpotDAO extends DAO<InSituSpotDAO.Attribute> {
         @Override
         public String toString() {
             StringBuilder builder = new StringBuilder();
-            builder.append("AffymetrixProbesetTO [id=").append(inSituSpotId)
+            builder.append("InSituSpotTO [id=").append(this.getId())
                     .append(", inSituExpressionPatternId=").append(inSituExpressionPatternId)
                     .append(", conditionId=").append(conditionId)
-                    .append(", assayId=").append(getAssayId())
-                    .append(", bgeeGeneId=").append(getBgeeGeneId())
-                    .append(", detectionFlag=").append(getDetectionFlag())
-                    .append(", expressionConfidence=").append(getExpressionConfidence())
-                    .append(", exclusionReason=").append(getExclusionReason())
-                    .append(", expressionId=").append(getExpressionId()).append("]");
+                    .append(", inSituEvidenceId=").append(inSituEvidenceId)
+                    .append(", callSourceDataTO=").append(this.callSourceDataTO).append("]");
             return builder.toString();
         }
     }

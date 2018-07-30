@@ -1,5 +1,6 @@
 package org.bgee.model.dao.api.expressiondata.rawdata;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 import org.apache.logging.log4j.LogManager;
@@ -7,6 +8,8 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO.DetectionFlag;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO.ExclusionReason;
 
 public class RawDataCallSourceDAO {
 
@@ -33,16 +36,98 @@ public class RawDataCallSourceDAO {
         public BigDecimal getRank();
     }
     /**
-     * A {@code TransferObject} carrying information about call source raw data present in the 
-     * Bgee database, common to all types of call source raw data (affymetrix probeset, EST, 
-     * <em>In Situ</em> spot, and RNA-seq result).
-     * 
+     * An interface describing elements allowing to produce {@link CallSourceDataTO}, for instance:
+     * an Affymetrix probeset, an RNA-Seq result, an EST, an in situ hybridization spot.
+     * <p>
+     * Implementation note: this an interface rather than a class, because some {@code CallSourceTO}
+     * have an ID, some do not, so we want these elements to freely extend {@code EntityTO}, or not,
+     * when appropriate. We thus use a pattern of "composition over inheritance", thanks to the use
+     * of a {@link CallSourceDataTO} (see method {@link #getCallSourceDataTO()}).
+     *
+     * @author Frederic Bastian
+     * @version Bgee 14 Jul. 2018
+     * @see CallSourceDataTO
+     * @since Bgee 14 Jul. 2018
+     *
+     * @param <T> The type of ID of the {@code Assay} this {@code CallSourceTO} is part of.
+     */
+    public static interface CallSourceTO<T extends Comparable<T>> extends Serializable {
+        /**
+         * @return  the ID this {@code CallSourceTO} is part of, for instance, the ID
+         *          of an Affymetrix chip, or of an RNA-Seq library.
+         */
+        public T getAssayId();
+        /**
+         * @return  A {@code CallSourceDataTO} carrying the information about
+         *          the call of presence/absence of expression produced from this {@code CallSourceTO}.
+         */
+        public CallSourceDataTO getCallSourceDataTO();
+
+        /**
+         * Helper method to access to the bgee gene ID carried by the {@code CallSourceDataTO}
+         * returned by {@link #getCallSourceDataTO()}.
+         *
+         * @return  An {@code Integer} representing the internal Bgee gene ID of the gene associated to
+         *          the call source raw data.
+         */
+        public default Integer getBgeeGeneId() {
+            return this.getCallSourceDataTO().getBgeeGeneId();
+        }
+        /**
+         * Helper method to access to the {@code DetectionFlag} carried by the {@code CallSourceDataTO}
+         * returned by {@link #getCallSourceDataTO()}.
+         *
+         * @return  the {@code DetectionFlag} defining the detection flag of the
+         *          call source raw data.
+         */
+        public default DetectionFlag getDetectionFlag() {
+            return this.getCallSourceDataTO().getDetectionFlag();
+        }
+        /**
+         * Helper method to access to the {@code DataState} carried by the {@code CallSourceDataTO}
+         * returned by {@link #getCallSourceDataTO()}.
+         *
+         * @return  the {@code DataState} defining the contribution of data type to the generation
+         *          of the call source raw data.
+         */
+        public default DataState getExpressionConfidence() {
+            return this.getCallSourceDataTO().getExpressionConfidence();
+        }
+        /**
+         * Helper method to access to the {@code ExclusionReason} carried by the {@code CallSourceDataTO}
+         * returned by {@link #getCallSourceDataTO()}.
+         *
+         * @return  the {@code ExclusionReason} defining the reason of exclusion of the
+         *          call source raw data.
+         */
+        public default ExclusionReason getExclusionReason() {
+            return this.getCallSourceDataTO().getExclusionReason();
+        }
+        /**
+         * Helper method to access to the expression ID carried by the {@code CallSourceDataTO}
+         * returned by {@link #getCallSourceDataTO()}.
+         *
+         * @return  the {@code Integer} representing the ID of the expression associated to the
+         *          call source raw data.
+         */
+        public default Integer getExpressionId() {
+            return this.getCallSourceDataTO().getExpressionId();
+        }
+    }
+    /**
+     * A {@code TransferObject} carrying information specifically about the aspect of the raw data
+     * allowing to generate a call of presence/absence of expression. For information about the element
+     * producing this call (for instance, an Affymetrix probeset, having a specific ID),
+     * or the assay which this element belongs to (for instance, the Affymetrix chip which the probeset
+     * belongs to), see {@link CallSourceTO}.
+     *
      * @author Frederic Bastian
      * @author Valentine Rech de Laval
      * @version Bgee 14
+     * @see CallSourceTO
      * @since Bgee 11
      */
-    public static abstract class CallSourceTO<T extends Comparable<T>> extends TransferObject {
+    public static class CallSourceDataTO extends TransferObject {
         private static final long serialVersionUID = -7947051666248235602L;
         private final static Logger log = LogManager.getLogger(CallSourceTO.class.getName());
         /**
@@ -57,7 +142,7 @@ public class RawDataCallSourceDAO {
          * 
          * @author Valentine Rech de Laval
          * @version Bgee 14
-         * @see CallSourceRawDataTO#getExclusionReason()
+         * @see CallSourceDataTO#getExclusionReason()
          * @since Bgee 13
          */
         public enum DetectionFlag implements EnumDAOField {
@@ -125,7 +210,8 @@ public class RawDataCallSourceDAO {
          * </ul>
          * 
          * @author Valentine Rech de Laval
-         * @version Bgee 13
+         * @author Frederic Bastian
+         * @version Bgee 14
          * @since Bgee 13
          */
         public enum ExclusionReason implements EnumDAOField {
@@ -183,9 +269,6 @@ public class RawDataCallSourceDAO {
         //**************************************
         // ATTRIBUTES
         //**************************************
-
-        private final T assayId;
-
         /**
          * A {@code String} representing the ID of the gene associated to this call source raw data.
          */
@@ -216,7 +299,6 @@ public class RawDataCallSourceDAO {
         /**
          * All of these parameters are optional, so they can be {@code null} when not used.
          *
-         * @param assayId               A {@code T} that is the ID of the assay producing this call source raw data.
          * @param bgeeGeneId            An {@code Integer} that is the internal Bgee gene ID of the gene associated to 
          *                              this call source raw data.
          * @param detectionFlag         A {@code DetectionFlag} that is the detection flag of this 
@@ -228,10 +310,9 @@ public class RawDataCallSourceDAO {
          * @param expressionId          An {@code Integer} that is the ID of the expression associated
          *                              to this call source raw data.
          */
-        protected CallSourceTO(T assayId, Integer bgeeGeneId, DetectionFlag detectionFlag, 
+        public CallSourceDataTO(Integer bgeeGeneId, DetectionFlag detectionFlag,
                 DataState expressionConfidence, ExclusionReason exclusionReason, Integer expressionId) {
             super();
-            this.assayId = assayId;
             this.bgeeGeneId = bgeeGeneId;
             this.detectionFlag = detectionFlag;
             this.expressionConfidence = expressionConfidence;
@@ -243,15 +324,8 @@ public class RawDataCallSourceDAO {
         // GETTERS
         //**************************************
         /**
-         * @return A {@code T} that is the ID of the assay producing this call source raw data.
-         */
-        public T getAssayId() {
-            return this.assayId;
-        }
-
-        /**
          * @return  An {@code Integer} representing the internal Bgee gene ID of the gene associated to this
-         *          call source raw data .
+         *          call source raw data.
          */
         public Integer getBgeeGeneId() {
             return this.bgeeGeneId;
@@ -292,7 +366,7 @@ public class RawDataCallSourceDAO {
         @Override
         public String toString() {
             StringBuilder builder = new StringBuilder();
-            builder.append("CallSourceTO [assayId=").append(assayId).append(", bgeeGeneId=").append(bgeeGeneId)
+            builder.append("CallSourceTO [bgeeGeneId=").append(bgeeGeneId)
                     .append(", detectionFlag=").append(detectionFlag).append(", expressionConfidence=")
                     .append(expressionConfidence).append(", exclusionReason=").append(exclusionReason)
                     .append(", expressionId=").append(expressionId).append("]");

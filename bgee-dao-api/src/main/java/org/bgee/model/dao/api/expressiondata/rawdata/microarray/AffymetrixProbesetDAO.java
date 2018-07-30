@@ -3,7 +3,11 @@ package org.bgee.model.dao.api.expressiondata.rawdata.microarray;
 import java.math.BigDecimal;
 
 import org.bgee.model.dao.api.DAO;
+import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO.DetectionFlag;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO.ExclusionReason;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceWithRankTO;
 
@@ -47,13 +51,11 @@ public interface AffymetrixProbesetDAO extends DAO<AffymetrixProbesetDAO.Attribu
 	 * @see org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO
 	 * @since Bgee 11
 	 */
-	public final class AffymetrixProbesetTO extends CallSourceTO<Integer> implements CallSourceWithRankTO {
+	public final class AffymetrixProbesetTO extends EntityTO<String>
+	implements CallSourceTO<Integer>, CallSourceWithRankTO {
         private static final long serialVersionUID = 1081576994949088868L;
 
-        /**
-	     * A {@code String} that is the ID of this probeset.
-	     */
-	    private final String id;
+        private final Integer bgeeAffymetrixChipId;
         /**
          * A {@code BigDecimal} defining the normalized signal intensity of this probeset.
          */
@@ -62,6 +64,11 @@ public interface AffymetrixProbesetDAO extends DAO<AffymetrixProbesetDAO.Attribu
          * A {@code BigDecimal} that is the rank of this call source raw data.
          */
         private final BigDecimal rank;
+        /**
+         * The {@code CallSourceDataTO} carrying the information about
+         * the produced call of presence/absence of expression.
+         */
+        private final CallSourceDataTO callSourceDataTO;
 
         /**
          * All of these parameters are optional, so they can be {@code null} when not used.
@@ -86,15 +93,22 @@ public interface AffymetrixProbesetDAO extends DAO<AffymetrixProbesetDAO.Attribu
 	    public AffymetrixProbesetTO(String affymetrixProbesetId, Integer bgeeAffymetrixChipId, Integer bgeeGeneId,
 	            DetectionFlag detectionFlag, DataState expressionConfidence, ExclusionReason exclusionReason,
 	            BigDecimal normalizedSignalIntensity, BigDecimal rank, Integer expressionId) {
-            super(bgeeAffymetrixChipId, bgeeGeneId, detectionFlag, expressionConfidence, exclusionReason, expressionId);
-	        this.id = affymetrixProbesetId;
+            super(affymetrixProbesetId);
+	        this.bgeeAffymetrixChipId = bgeeAffymetrixChipId;
 	        this.normalizedSignalIntensity = normalizedSignalIntensity;
 	        this.rank = rank;
+            this.callSourceDataTO = new CallSourceDataTO(bgeeGeneId, detectionFlag,
+                    expressionConfidence, exclusionReason, expressionId);
 	    }
 
-	    public String getId() {
-	        return this.id;
-	    }
+        @Override
+        public Integer getAssayId() {
+            return this.bgeeAffymetrixChipId;
+        }
+        @Override
+        public CallSourceDataTO getCallSourceDataTO() {
+            return this.callSourceDataTO;
+        }
         /**
          * @return  the {@code BigDecimal} defining the normalized signal intensity of this probeset.
          */
@@ -111,13 +125,11 @@ public interface AffymetrixProbesetDAO extends DAO<AffymetrixProbesetDAO.Attribu
         @Override
         public String toString() {
             StringBuilder builder = new StringBuilder();
-            builder.append("AffymetrixProbesetTO [id=").append(id).append(", assayId=").append(getAssayId())
-                    .append(", bgeeGeneId=").append(getBgeeGeneId())
+            builder.append("AffymetrixProbesetTO [id=").append(this.getId())
+                    .append(", bgeeAffymetrixChipId=").append(bgeeAffymetrixChipId)
                     .append(", normalizedSignalIntensity=").append(normalizedSignalIntensity)
-                    .append(", detectionFlag=").append(getDetectionFlag())
-                    .append(", expressionConfidence=").append(getExpressionConfidence())
-                    .append(", exclusionReason=").append(getExclusionReason()).append(", rank=").append(rank)
-                    .append(", expressionId=").append(getExpressionId()).append("]");
+                    .append(", callSourceDataTO=").append(this.callSourceDataTO)
+                    .append(", rank=").append(rank).append("]");
             return builder.toString();
         }
 	}

@@ -66,9 +66,10 @@ import owltools.graph.OWLGraphWrapper;
 /**
  * Allows to generate download files providing rank score information. 
  * 
- * @author Frederic Bastian
- * @version Bgee 14 Nov. 2017
- * @since Bgee 13 July 2016
+ * @author  Frederic Bastian
+ * @author  Julien Wollbrett
+ * @version Bgee 14 July 2018
+ * @since   Bgee 13 July 2016
  */
 //XXX: generate a simple file providing the max rank? A bit boring as we have nothing 
 //in bgee-core to do it for now.
@@ -422,7 +423,7 @@ public class GenerateRankFile {
             dataTypes.add(null);
             if (args.length == 6) {
                 dataTypes = dataTypes.stream().filter(
-                        type -> args[5].equalsIgnoreCase("ALL") && type == null|| 
+                        type -> type == null && args[5].equalsIgnoreCase("ALL") || 
                                 type != null && args[5].equalsIgnoreCase(type.name()))
                         .collect(Collectors.toSet());
                 if (dataTypes.isEmpty()) {
@@ -501,6 +502,8 @@ public class GenerateRankFile {
     
     
     /**
+     * Generate rank files for all requested species and data types, in parallel. 
+     *
      * @param speciesIds        A {@code Set} of {@code String}s that are the IDs of the species 
      *                          for which the files should be generated. If {@code null} or empty, 
      *                          all species are considered. 
@@ -717,13 +720,10 @@ public class GenerateRankFile {
         // attrs.add(CallService.Attribute.GLOBAL_DATA_QUALITY);
         // }
         CallService service = serviceFactory.getCallService();
-        // if anatEntity only we need to retrieve silver calls for anat entity
-        // and then retrieve
-        // bronze calls for condition in order to retrieve the smallest rank for
-        // all dev stages.
+        // if anatEntity only we need to retrieve silver calls for anat entity and then retrieve
+        // bronze calls for condition in order to retrieve the smallest rank for all dev stages.
         if (anatEntityOnly) {
             Stream<ExpressionCall> organCalls = service.loadExpressionCalls(
-                    // speciesId,
                     new ExpressionCallFilter(summarySilverCallTypeQualityFilter,
                             Collections.singleton(new GeneFilter(speciesId)), null, dataTypeFilters, obsDataFilter,
                             true, null),
@@ -737,59 +737,58 @@ public class GenerateRankFile {
             summaryCondCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE);
 
             // Create a Map of Map where first key is the ensembl geneId, second
-            // key is an anatEntityId and the
-            // value is the highest rank
-            Stream<ExpressionCall> streamTest = service
-                    .loadExpressionCalls(
-                            new ExpressionCallFilter(summaryCondCallTypeQualityFilter,
-                                    Collections.singleton(new GeneFilter(speciesId)), null, dataTypeFilters,
-                                    obsDataFilter, true, true),
-                            attrs, serviceOrdering);
-            Map<String, Map<String, BigDecimal>> maxRankByAnatEntityIdByGeneId = 
-                    streamTest.collect(Collectors.groupingBy(c -> c.getGene().getEnsemblGeneId(), Collectors
-                            .toMap(c -> c.getCondition().getAnatEntityId(), c -> c.getGlobalMeanRank(), (l1, l2) -> {
-                                if (l1.compareTo(l2) > 0) {
-                                    return l2;
-                                }
-                                return l1;
-                            })));
-//            log.debug(organCalls.collect(Collectors.toSet()));
+            // key is an anatEntityId and the value is the highest rank
+            Map<String, Map<String, BigDecimal>> minRankByAnatEntityIdByGeneId =
+                    service.loadExpressionCalls(
+                                new ExpressionCallFilter(summaryCondCallTypeQualityFilter,
+                                        Collections.singleton(new GeneFilter(speciesId)), null, dataTypeFilters,
+                                        obsDataFilter, true, true),
+                                attrs, serviceOrdering)
+                            .collect(Collectors.groupingBy(
+                                    c -> c.getGene().getEnsemblGeneId(),
+                                    Collectors.toMap(c -> c.getCondition().getAnatEntityId(),
+                                            c -> c.getGlobalMeanRank(),
+                                            (l1, l2) -> {
+                                                if (l1.compareTo(l2) > 0) {
+                                                    return l2;
+                                                }
+                                                return l1;
+                                            }))
+                            );
+            
             //Create a comparator that will be used to order ExpressionCall. Once we retrieved the best 
             //rank for each ExpressionCall we can order them.
-            Comparator <ExpressionCall> callComparator = Comparator
-                    .comparing(call -> call.getGene().getEnsemblGeneId());
-            callComparator = callComparator.thenComparing(Comparator
-                    .comparing(call -> call.getGlobalMeanRank()));
-            callComparator = callComparator.thenComparing(Comparator
-                    .comparing(call -> call.getCondition().getAnatEntityId()));
-            return log.exit(organCalls.map( call -> {
-                BigDecimal minRank = maxRankByAnatEntityIdByGeneId.get(call.getGene().getEnsemblGeneId())
-                        .get(call.getCondition().getAnatEntityId());
-                if (minRank == null) {
-                    throw log.throwing(new IllegalStateException("max rank should not be null for gene "
-                            + call.getGene().getEnsemblGeneId() + " and anat. entity "
-                            + call.getCondition().getAnatEntityId() +".\n"
-                            + "One anat. entity only condition has no corresponding anatEntity + devStage condition"));
-                }
-                return new ExpressionCall(call.getGene(), call.getCondition(), call.getDataPropagation(), 
-                            call.getSummaryCallType(), call.getSummaryQuality(), call.getCallData(), 
-                            minRank,
-                            //XXX Why no getter for maxRank??????
-                            // The max rank is not used there. Then we created a BigDecimal 
-                            // with an arbitrary value (here maxRank = 10)
-                            new BigDecimal("10"));
-            })
+            Comparator<ExpressionCall> callComparator = Comparator
+                    .comparing((ExpressionCall call) -> call.getGene().getEnsemblGeneId())
+                    .thenComparing(call -> call.getGlobalMeanRank())
+                    .thenComparing(call -> call.getCondition().getAnatEntityId());
+            
+            return log.exit(organCalls
+                    .map(call -> {
+                        BigDecimal minRank = minRankByAnatEntityIdByGeneId.get(call.getGene().getEnsemblGeneId())
+                                .get(call.getCondition().getAnatEntityId());
+                        if (minRank == null) {
+                            throw log.throwing(new IllegalStateException("Minimum rank should not be null for gene "
+                                    + call.getGene().getEnsemblGeneId() + " and anat. entity "
+                                    + call.getCondition().getAnatEntityId() +".\n"
+                                    + "One anat. entity only condition has no corresponding anatEntity + devStage condition"));
+                        }
+                        return new ExpressionCall(call.getGene(), call.getCondition(), call.getDataPropagation(), 
+                                call.getSummaryCallType(), call.getSummaryQuality(), call.getCallData(), 
+                                minRank, null);
+                    })
                     .sorted(callComparator));
-
         }
+
+        // Now, we manage the retrieving of calls by considering anatEntity and devStage
         serviceOrdering.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.ASC);
         attrs.add(CallService.Attribute.DEV_STAGE_ID);
         return log.exit(service.loadExpressionCalls(
-                 new ExpressionCallFilter(summarySilverCallTypeQualityFilter,
-                 Collections.singleton(new GeneFilter(speciesId)),
-                 null, dataTypeFilters, obsDataFilter, true, true),
-                 attrs,
-                 serviceOrdering));
+                new ExpressionCallFilter(summarySilverCallTypeQualityFilter,
+                        Collections.singleton(new GeneFilter(speciesId)),
+                        null, dataTypeFilters, obsDataFilter, true, true),
+                attrs,
+                serviceOrdering));
 
     }
 

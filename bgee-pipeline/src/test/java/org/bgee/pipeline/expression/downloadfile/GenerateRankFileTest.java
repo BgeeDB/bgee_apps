@@ -72,10 +72,11 @@ import owltools.graph.OWLGraphWrapper;
 
 /**
  * Unit tests for {@link GenerateRankFile}.
- * 
- * @author Frederic Bastian
- * @version Bgee 13 July 2016
- * @since Bgee 13 July 2016
+ *
+ * @author  Frederic Bastian
+ * @author  Julien Wollbrett
+ * @version Bgee 14 July 2018
+ * @since   Bgee 13 July 2016
  */
 public class GenerateRankFileTest extends TestAncestor {
     private final static Logger log = LogManager.getLogger(GenerateRankFileTest.class.getName());

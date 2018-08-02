@@ -1036,7 +1036,7 @@ public class CallService extends CommonService {
                     return Stream.of(GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID);
                 case ANAT_ENTITY_ID: 
                 case DEV_STAGE_ID: 
-                    return Stream.of(GlobalExpressionCallDAO.Attribute.CONDITION_ID);
+                    return Stream.of(GlobalExpressionCallDAO.Attribute.GLOBAL_CONDITION_ID);
                 case CALL_TYPE: 
                 case DATA_QUALITY:
                     return Stream.of(GlobalExpressionCallDAO.Attribute.DATA_TYPE_EXPERIMENT_TOTAL_COUNTS);

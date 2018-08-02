@@ -75,8 +75,8 @@ implements GlobalExpressionCallDAO {
             case BGEE_GENE_ID:
                 clonedAttrs.add(GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID);
                 break;
-            case CONDITION_ID:
-                clonedAttrs.add(GlobalExpressionCallDAO.Attribute.CONDITION_ID);
+            case GLOBAL_CONDITION_ID:
+                clonedAttrs.add(GlobalExpressionCallDAO.Attribute.GLOBAL_CONDITION_ID);
                 break;
             case MEAN_RANK:
                 clonedAttrs.add(GlobalExpressionCallDAO.Attribute.MEAN_RANK);
@@ -120,7 +120,7 @@ implements GlobalExpressionCallDAO {
         if (observedConditionFiltering ||
                 (!clonedAttrs.contains(GlobalExpressionCallDAO.Attribute.ID) &&
                 (!clonedAttrs.contains(GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID) ||
-                        !clonedAttrs.contains(GlobalExpressionCallDAO.Attribute.CONDITION_ID)))) {
+                        !clonedAttrs.contains(GlobalExpressionCallDAO.Attribute.GLOBAL_CONDITION_ID)))) {
             sb.append("DISTINCT ");
         }
         //XXX: check whether with the last mysql version the optimizer does a better job at choosing the join order
@@ -132,7 +132,7 @@ implements GlobalExpressionCallDAO {
                 return globalExprTableName + "." + GLOBAL_EXPR_ID_FIELD;
             case BGEE_GENE_ID:
                 return globalExprTableName + "." + MySQLGeneDAO.BGEE_GENE_ID;
-            case CONDITION_ID:
+            case GLOBAL_CONDITION_ID:
                 return globalExprTableName + "." + MySQLConditionDAO.GLOBAL_COND_ID_FIELD;
             case MEAN_RANK:
                 return clonedDataTypes.stream()
@@ -294,7 +294,7 @@ implements GlobalExpressionCallDAO {
         .filter(a -> {
             switch(a) {
                 case BGEE_GENE_ID:
-                case CONDITION_ID:
+                case GLOBAL_CONDITION_ID:
                 case MEAN_RANK:
                     //These ordering attributes have a correspondence in the select Attributes
                     //and are already dealt with at the beginning of this method
@@ -696,7 +696,7 @@ implements GlobalExpressionCallDAO {
                         case PUBLIC_GENE_ID:
                             orderBy = geneTableName + ".geneId";
                             break;
-                        case CONDITION_ID:
+                        case GLOBAL_CONDITION_ID:
                             orderBy = globalExprTableName + "." + MySQLConditionDAO.GLOBAL_COND_ID_FIELD;
                             break;
                         case ANAT_ENTITY_ID:

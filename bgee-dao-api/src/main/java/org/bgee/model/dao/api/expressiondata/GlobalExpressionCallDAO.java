@@ -30,7 +30,7 @@ import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO.RawExpressionC
 public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Attribute> {
     
     public enum Attribute implements DAO.Attribute {
-        ID, BGEE_GENE_ID, CONDITION_ID, MEAN_RANK,
+        ID, BGEE_GENE_ID, GLOBAL_CONDITION_ID, MEAN_RANK,
         DATA_TYPE_OBSERVED_DATA,
         DATA_TYPE_EXPERIMENT_TOTAL_COUNTS, DATA_TYPE_EXPERIMENT_SELF_COUNTS,
         DATA_TYPE_EXPERIMENT_PROPAGATED_COUNTS, DATA_TYPE_RANK_INFO;
@@ -54,7 +54,7 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      * </ul>
      */
     enum OrderingAttribute implements DAO.OrderingAttribute {
-        BGEE_GENE_ID, PUBLIC_GENE_ID, CONDITION_ID, ANAT_ENTITY_ID, STAGE_ID, OMA_GROUP_ID, MEAN_RANK;
+        BGEE_GENE_ID, PUBLIC_GENE_ID, GLOBAL_CONDITION_ID, ANAT_ENTITY_ID, STAGE_ID, OMA_GROUP_ID, MEAN_RANK;
     }
     
     /** 

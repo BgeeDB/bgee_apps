@@ -45,6 +45,6 @@ public class InSituSpot extends Entity<String> implements RawCallSource<InSituEv
         return this.annotation;
     }
 
-    //InSituEvidence IDs are unique in the Bgee database, so we don't need to reimplement hashCode/equals,
+    //InSituSpot IDs are unique in the Bgee database, so we don't need to reimplement hashCode/equals,
     //we rely on the implementation from the 'Entity' class.
 }

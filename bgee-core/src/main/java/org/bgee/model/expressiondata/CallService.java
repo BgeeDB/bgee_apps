@@ -68,7 +68,8 @@ import org.bgee.model.species.Species;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Mar. 2017
+ * @author  Julien Wollbrett
+ * @version Bgee 14, Aug. 2018
  * @since   Bgee 13, Oct. 2015
  */
 //******************
@@ -405,18 +406,21 @@ public class CallService extends CommonService {
     }
 
     //XXX Maybe we should move this method to ExpressionCall
-    /** Remove redundant calls from a {@code List} of {@ExpressionCall}s and retrieve a {@code LinkedHashMap}
-     *  where keys correspond to {@code AnatEntity}s and values correspond to the associated {@code List} 
-     *  of {@code ExpressionCalls}
+    /**
+     * Remove redundant calls from a {@code List} of {@code ExpressionCall}s and retrieve 
+     * a {@code LinkedHashMap} where keys correspond to {@code AnatEntity}s 
+     * and values correspond to the associated {@code List} of {@code ExpressionCall}s.
      * 
-     * @param orderedCalls A {@code List} of {@code ExpressionCalls} that have been previously sorted
-     * @param redundantCalls A {@code List} of {@code ExpressionCalls} to remove from orderedCalls
-     * @param filterRedundantCalls A {@code boolean} to define if redundantCalls have to be removed
-     * @return A {@code LinkedHashMap} containing of {@code List} of {@code ExpressionCall}s grouped by {@code AnatEntity}
+     * @param orderedCalls          A {@code List} of {@code ExpressionCalls} that have been previously sorted.
+     * @param redundantCalls        A {@code List} of {@code ExpressionCalls} to remove from orderedCalls.
+     * @param filterRedundantCalls  A {@code boolean} to define if redundantCalls have to be removed.
+     * @return                      The {@code LinkedHashMap} containing of {@code List} of 
+     *                              {@code ExpressionCall}s grouped by {@code AnatEntity}
      */
-    public LinkedHashMap<AnatEntity, List<ExpressionCall>> groupByAnatEntAndFilterOrderedCalls(
+    public LinkedHashMap<AnatEntity, List<ExpressionCall>> groupByAnatEntAndFilterCalls(
             List<ExpressionCall> orderedCalls, Set<ExpressionCall> redundantCalls, 
-            boolean filterRedundantCalls){
+            boolean filterRedundantCalls) {
+        log.entry(orderedCalls, redundantCalls, filterRedundantCalls);
         //first, filter calls and group calls by anat. entity. We need to preserve the order 
         //of the keys, as we have already sorted the calls by their rank. 
         //If filterRedundantCalls is true, we completely discard anat. entities 

@@ -1,12 +1,7 @@
 package org.bgee.controller;
 
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -22,7 +17,6 @@ import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.Call.ExpressionCall.ClusteringMethod;
 import org.bgee.model.expressiondata.ConditionGraph;
 import org.bgee.model.gene.Gene;
-import org.bgee.model.gene.GeneFilter;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.ViewFactory;
 
@@ -33,7 +27,7 @@ import org.bgee.view.ViewFactory;
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @author  Julien Wollbrett
- * @version Bgee 17, July 2018
+ * @version Bgee 14, Aug. 2018
  * @since   Bgee 13, Nov. 2015
  */
 public class CommandGene extends CommandParent {
@@ -62,10 +56,10 @@ public class CommandGene extends CommandParent {
          * @param exprCalls                     See {@link #getExprCalls()}.
          * @param redundantExprCalls            See {@link #getRedundantExprCalls()}.
          * @param includingAllRedundantCalls    See {@link #isIncludingAllRedundantCalls()}.
-         * @param callsByAnatEntityId           See {@link #getCallsByAnatEntityId()}.
+         * @param callsByAnatEntity             See {@link #getCallsByAnatEntity()}.
          * @param clusteringBestEachAnatEntity  See {@link #getClusteringBestEachAnatEntity()}.
          * @param clusteringWithinAnatEntity    See {@link #getClusteringWithinAnatEntity()}.
-         * @param conditionUtils                See {@link #getConditionUtils()}.
+         * @param conditionGraph                See {@link #getConditionGraph()}.
          */
         public GeneResponse(Gene gene, List<ExpressionCall> exprCalls, 
                 Set<ExpressionCall> redundantExprCalls, 
@@ -108,7 +102,7 @@ public class CommandGene extends CommandParent {
         }
         /**
          * @return  A {@code boolean} that is {@code true} if the information returned by 
-         *          {@link #getCallsByAnatEntityId}, {@link #getClusteringBestEachAnatEntity()}, 
+         *          {@link #getCallsByAnatEntity()}, {@link #getClusteringBestEachAnatEntity()}, 
          *          and {@link #getClusteringWithinAnatEntity()}, were built by including all 
          *          redundant calls (see {@link #getRedundantExprCalls()}), {@code false} otherwise.
          */
@@ -257,6 +251,7 @@ public class CommandGene extends CommandParent {
              return log.exit(new GeneResponse(gene, calls, new HashSet<>(), true, 
                      new LinkedHashMap<>(), new HashMap<>(), new HashMap<>(), null));
         }
+        
         //we need to make sure that the ExpressionCalls are ordered in exactly the same way
         //for the display and for the clustering, otherwise the display will be buggy,
         //notably for calls with equal ranks. And we need to take into account
@@ -267,9 +262,11 @@ public class CommandGene extends CommandParent {
                 calls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()), 
                 serviceFactory);
         calls = ExpressionCall.filterAndOrderCallsByRank(calls, organStageGraph);
+        
         //REDUNDANT ORGAN-STAGE CALLS
         final Set<ExpressionCall> redundantCalls = ExpressionCall.identifyRedundantCalls(
                 calls, organStageGraph);
+        
         //**************************************
         // Grouping of Calls per anat. entity, 
         // Clustering, Building GeneResponse
@@ -282,12 +279,12 @@ public class CommandGene extends CommandParent {
      * of grouping of {@code ExpressionCall}s per anatomical entity, and of clustering. 
      * 
      * @param gene                     The requested {@code Gene}.
-     * @param exprCalls                A {@code List} of {@code ExpressionCall}s sorted using 
-     *                                 the {@link ExpressionCall.RankComparator}.
+     * @param exprCalls                A {@code List} of {@code ExpressionCall}s sorted using the  
+     *                                 {@link ExpressionCall#filterAndOrderCallsByRank(Collection, ConditionGraph)}.
      * @param redundantCalls           A {@code Set} of {@code ExpressionCall}s that are redundant.
      * @param filterRedundantCalls     A {@code boolean} defining whether redundant calls 
      *                                 should be filtered for the grouping and clustering steps.
-     * @param conditionUtils           A {@code ConditionUtils} built from {@code exprCalls}.
+     * @param conditionGraph           A {@code ConditionGraph} built from {@code exprCalls}.
      * @return                         A built {@code GeneResponse}.
      */
     private GeneResponse buildGeneResponse(Gene gene, List<ExpressionCall> exprCalls, 
@@ -301,7 +298,7 @@ public class CommandGene extends CommandParent {
         long startFilteringTimeInMs = System.currentTimeMillis();
         LinkedHashMap<AnatEntity, List<ExpressionCall>> callsByAnatEntity =
                 serviceFactory.getCallService()
-                .groupByAnatEntAndFilterOrderedCalls(exprCalls, redundantCalls, true);
+                .groupByAnatEntAndFilterCalls(exprCalls, redundantCalls, true);
 
         //*********************
         // Clustering
@@ -336,22 +333,18 @@ public class CommandGene extends CommandParent {
                 conditionGraph));
     }
     
-    
-    
-    
-    
     /**
      * Return the {@code Function} corresponding to the clustering method to used, 
      * based on the properties {@link BgeeProperties#getGeneScoreClusteringMethod()} 
      * and {@link BgeeProperties#getGeneScoreClusteringThreshold()}. The {@code Function} 
-     * will trigger a call to {@link ExpressionCall#generateMeanRankScoreClustering(
-     * List, ClusteringMethod, Double)}.
+     * will trigger a call to {@link ExpressionCall#generateMeanRankScoreClustering(List,
+     * ClusteringMethod, double)}.
      * 
      * @return     A {@code Function} accepting a {@code List} of {@code ExpressionCall}s 
      *             as input, and returns a {@code Map} corresponding to the clustering as output.
-     * @throws IllegalStateException   If {@link #props} does not provide properties 
+     * @throws IllegalStateException   If {@link #prop} does not provide properties 
      *                                 allowing to parameterize the clustering function.
-     * @see ExpressionCall#generateMeanRankScoreClustering(List, ClusteringMethod, Double)
+     * @see ExpressionCall#generateMeanRankScoreClustering(List, ClusteringMethod, double)
      */
     private Function<List<ExpressionCall>, Map<ExpressionCall, Integer>> getClusteringFunction() 
             throws IllegalStateException {
@@ -378,7 +371,7 @@ public class CommandGene extends CommandParent {
                     callList -> ExpressionCall.generateMeanRankScoreClustering(callList, method, 
                             this.prop.getGeneScoreClusteringThreshold()));
         } catch (IllegalArgumentException e) {
-            throw log.throwing(new IllegalStateException("No custering method corresponding to "
+            throw log.throwing(new IllegalStateException("No clustering method corresponding to "
                     + this.prop.getGeneScoreClusteringMethod().trim()));
         }
     }

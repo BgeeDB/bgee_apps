@@ -64,12 +64,13 @@ import org.supercsv.io.ICsvMapWriter;
  * extracted table. These TSV files will then be used to populate the bgee lite
  * database (initially created for the bioSoda project)
  * 
- * @author Julien Wollbrett
- * @author Valentine Rech de Laval
- * @version Bgee 14, July 2018
- * @since Bgee 14, July 2018
+ * @author  Julien Wollbrett
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, Aug. 2018
+ * @since   Bgee 14, July 2018
  */
 // TODO: add tests
+// TODO: add javadoc to all methods
 public class BgeeToBgeeLite extends MySQLDAOUser {
 
     /**
@@ -302,13 +303,13 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
             throw log.throwing(new IllegalArgumentException("No arguments are provided. At least one argument"
                     + "corresponding to the action to do should be provided"));
         }
+        BgeeToBgeeLite bgeeToBgeeLite = new BgeeToBgeeLite();
         if (args[0].equals("extractFromBgee")) {
             int expectedArgLength = 3;
             if (args.length != expectedArgLength) {
                 throw log.throwing(new IllegalArgumentException("Incorrect number of arguments provided, expected "
                         + expectedArgLength + " arguments, " + args.length + " provided."));
             }
-            BgeeToBgeeLite bgeeToBgeeLite = new BgeeToBgeeLite();
             bgeeToBgeeLite.cleanOutputDir(args[1]);
             bgeeToBgeeLite.extractBgeeDatabase(CommandRunner.parseListArgumentAsInt(args[2]), args[1]);
         } else if (args[0].equals("tsvToBgeeLite")) {
@@ -317,7 +318,6 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
                 throw log.throwing(new IllegalArgumentException("Incorrect number of arguments provided, expected "
                         + expectedArgLength + " arguments, " + args.length + " provided."));
             }
-            BgeeToBgeeLite bgeeToBgeeLite = new BgeeToBgeeLite();
             bgeeToBgeeLite.tsvToBgeeLite(args[1]);
         } else if (args[0].equals("emptyDatabaseTables")) {
             int expectedArgLength = 1;
@@ -325,7 +325,6 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
                 throw log.throwing(new IllegalArgumentException("Incorrect number of arguments provided, expected "
                         + expectedArgLength + " arguments, " + args.length + " provided."));
             }
-            BgeeToBgeeLite bgeeToBgeeLite = new BgeeToBgeeLite();
             bgeeToBgeeLite.emptyDatabaseTables();
         } else {
             throw log.throwing(new IllegalArgumentException(args[0] + " is not recognized as an action"));
@@ -334,12 +333,12 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
 
     // XXX: should we use services when it is possible (at least when we don't need internal IDs)?
     public BgeeToBgeeLite() {
-        this(null);
+        this(null, new ServiceFactory());
     }
 
-    public BgeeToBgeeLite(MySQLDAOManager manager) {
+    public BgeeToBgeeLite(MySQLDAOManager manager, ServiceFactory serviceFactory) {
         super(manager);
-        this.serviceFactory = new ServiceFactory();
+        this.serviceFactory = serviceFactory;
     }
 
     /**
@@ -368,7 +367,7 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
      * @param directory         A {@code String} that is the directory where to store files.
      */
     private void extractBgeeDatabase(Collection<Integer> inputSpeciesIds, String directory) {
-        log.entry(inputSpeciesIds);
+        log.entry(inputSpeciesIds, directory);
         SpeciesTOResultSet speciesTOs = this.getSpeciesDAO().getSpeciesByIds(new HashSet<>(inputSpeciesIds));
         // XXX: add check that all provided species IDs are found
         Set<Integer> speciesIds = extractSpeciesTable(speciesTOs, directory);
@@ -393,6 +392,48 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
 
         String[] header = new String[] { GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID.name(),
                 GlobalExpressionCallDAO.Attribute.CONDITION_ID.name(), GLOBAL_EXPRESSION_SUMMARY_QUALITY };
+        
+        //init ordering attributes for anatEntity and devStage
+        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> orderingAnatStage = 
+                new LinkedHashMap<>();
+        orderingAnatStage.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
+        orderingAnatStage.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
+        orderingAnatStage.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.ASC);
+
+        //init ordering attributes for anatEntity only
+        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> orderingAnatOnly =
+                new LinkedHashMap<>();
+        orderingAnatOnly.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
+        orderingAnatOnly.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
+
+        // return calls where both anatEntity and devStage are not null AND with
+        // a SILVER quality
+        final List<Map<String, String>> callsInformation = this.getGlobalExpressionMap(
+                speciesId, ensemblIdToBgeeGeneId, condToConditionId,
+                EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
+                        CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.DATA_QUALITY),
+                orderingAnatStage) ;
+
+        // return calls with null devStage AND with a SILVER quality
+        callsInformation.addAll(this.getGlobalExpressionMap(
+                speciesId, ensemblIdToBgeeGeneId, condToConditionId,
+                EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
+                        CallService.Attribute.DATA_QUALITY),
+                orderingAnatOnly));
+        
+        //use TsvFile enum to generate the CellProcessor
+        final CellProcessor[] processors = createCellProcessor(TsvFile.GLOBALEXPRESSION_OUTPUT_FILE);
+
+        File file = new File(directory, TsvFile.GLOBALEXPRESSION_OUTPUT_FILE.getFileName());
+        this.writeOutputFile(file, callsInformation, header, processors); 
+        log.exit();
+    }
+
+    private List<Map<String, String>> getGlobalExpressionMap(Integer speciesId,
+            Map<String, Integer> ensemblIdToBgeeGeneId, Map<Condition, String> condToConditionId,
+            Collection<CallService.Attribute> attributes,
+            LinkedHashMap<CallService.OrderingAttribute, Service.Direction> orderingAttributes) {
+        log.entry(speciesId, ensemblIdToBgeeGeneId, condToConditionId, attributes, orderingAttributes);
 
         // init summaryCallTypeQualityFilter
         Map<SummaryCallType.ExpressionSummary, SummaryQuality> silverExpressedCallFilter = new HashMap<>();
@@ -401,68 +442,29 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
         // init callObservedData
         Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
         obsDataFilter.put(CallType.Expression.EXPRESSED, true);
-        
-        //init ordering attributes
-        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
-                new LinkedHashMap<>();
-        serviceOrdering.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
-        serviceOrdering.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
-        serviceOrdering.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.ASC);
 
-        // return calls where both anatEntity and devStage are not null AND with
-        // a SILVER quality
-        final List<Map<String, String>> CallsInformation = serviceFactory.getCallService()
+        return log.exit(serviceFactory.getCallService()
                 .loadExpressionCalls(
                         new ExpressionCallFilter(silverExpressedCallFilter,
-                                Collections.singleton(new GeneFilter(speciesId, ensemblIdToBgeeGeneId.keySet())),
+                                Collections.singleton(
+                                        new GeneFilter(speciesId, ensemblIdToBgeeGeneId.keySet())),
                                 null, null, obsDataFilter, null, null),
-                        EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
-                                CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.DATA_QUALITY),
-                        serviceOrdering)
+                        attributes, orderingAttributes)
                 .map(call -> {
                     Map<String, String> headerToValue = new HashMap<>();
-                    headerToValue.put(GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID.name(), 
+                    headerToValue.put(GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID.name(),
                             String.valueOf(ensemblIdToBgeeGeneId.get(call.getGene().getEnsemblGeneId())));
                     headerToValue.put(GlobalExpressionCallDAO.Attribute.CONDITION_ID.name(),
                             condToConditionId.get(call.getCondition()));
-                    headerToValue.put(GLOBAL_EXPRESSION_SUMMARY_QUALITY, 
+                    headerToValue.put(GLOBAL_EXPRESSION_SUMMARY_QUALITY,
                             call.getSummaryQuality().getStringRepresentation());
                     return headerToValue;
                 })
-                .collect(Collectors.toList());
-
-        // return calls with null devStage AND with a SILVER quality
-        CallsInformation
-                .addAll(serviceFactory.getCallService()
-                        .loadExpressionCalls(
-                                new ExpressionCallFilter(silverExpressedCallFilter,
-                                        Collections.singleton(
-                                                new GeneFilter(speciesId, ensemblIdToBgeeGeneId.keySet())),
-                                        null, null, obsDataFilter, null, null),
-                                EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
-                                        CallService.Attribute.DATA_QUALITY),
-                                new LinkedHashMap<>())
-                        .map(call -> {
-                            Map<String, String> headerToValue = new HashMap<>();
-                            headerToValue.put(GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID.name(), 
-                                    String.valueOf(ensemblIdToBgeeGeneId.get(call.getGene().getEnsemblGeneId())));
-                            headerToValue.put(GlobalExpressionCallDAO.Attribute.CONDITION_ID.name(),
-                                    condToConditionId.get(call.getCondition()));
-                            headerToValue.put(GLOBAL_EXPRESSION_SUMMARY_QUALITY, 
-                                    call.getSummaryQuality().getStringRepresentation());
-                            return headerToValue;
-                        })
-                        .collect(Collectors.toList()));
-        //use TsvFile enum to generate the CellProcessor
-        final CellProcessor[] processors = createCellProcessor(TsvFile.GLOBALEXPRESSION_OUTPUT_FILE);
-
-        File file = new File(directory, TsvFile.GLOBALEXPRESSION_OUTPUT_FILE.getFileName());
-        this.writeOutputFile(file, CallsInformation, header, processors); 
-        log.exit();
+                .collect(Collectors.toList()));
     }
 
     private Map<String, Integer> extractGeneTable(Integer speciesId, String directory) {
-        log.entry(speciesId);
+        log.entry(speciesId, directory);
         log.debug("Start extracting genes for the species {}...", speciesId);
         String[] header = new String[] { GeneDAO.Attribute.ID.name(), GeneDAO.Attribute.ENSEMBL_ID.name(),
                 GeneDAO.Attribute.NAME.name(), GeneDAO.Attribute.DESCRIPTION.name(),
@@ -485,7 +487,7 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
         File file = new File(directory, TsvFile.GENE_OUTPUT_FILE.fileName);
         this.writeOutputFile(file, allGenesInformation, header, processors);
         return log.exit(allTOs.stream().collect(Collectors
-                .toMap(to -> to.getGeneId(), to -> Integer.valueOf(to.getId()))));
+                .toMap(to -> to.getGeneId(), to -> to.getId())));
     }
 
     private void extractAnatEntityTable(String directory) {
@@ -555,7 +557,7 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
                 Collections.singleton(speciesId), condAttributesAnatAndStage, attributes).getAllTOs());
         
         //transformation from a List<ConditionTO> to a List<Map<String, String>> in order to easily write conditions in a file
-        List<Map<String, String>> allglobalCondInformation = conditionTOs.stream().map(cond -> {
+        List<Map<String, String>> allGlobalCondInformation = conditionTOs.stream().map(cond -> {
             Map<String, String> headerToValue = new HashMap<>();
             headerToValue.put(ConditionDAO.Attribute.ID.name(), String.valueOf(cond.getId()));
             headerToValue.put(ConditionDAO.Attribute.ANAT_ENTITY_ID.name(), cond.getAnatEntityId());
@@ -564,13 +566,14 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
             return headerToValue;
         })
         .collect(Collectors.toList());
+        
         //use TsvFile Enum to generate the CellProcessor
         final CellProcessor[] processors = createCellProcessor(TsvFile.GLOBALCOND_OUTPUT_FILE);
+        
         // write global condition tsv file
         File file = new File(directory, TsvFile.GLOBALCOND_OUTPUT_FILE.getFileName());
-        this.writeOutputFile(file, allglobalCondInformation, header, processors);
+        this.writeOutputFile(file, allGlobalCondInformation, header, processors);
         return log.exit(createCondToConditionIdMap(conditionTOs));
-
     }
 
     private Set<Integer> extractSpeciesTable(SpeciesTOResultSet speciesTOs, String directory) {
@@ -604,7 +607,7 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
      * @param enumValue The {@code TsvFile} Enum values specific to 
      * @return A table of {@code CellProcessor}
      */
-    private CellProcessor[] createCellProcessor(TsvFile enumValue){
+    private CellProcessor[] createCellProcessor(TsvFile enumValue) {
         log.entry(enumValue);
         CellProcessor [] cellProcessor = new CellProcessor [enumValue.getDatatypes().size()];
         int index = 0;
@@ -699,7 +702,7 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
      *                      the ID of the associated condition.
      */
     private Map<Condition, String> createCondToConditionIdMap(List<ConditionTO> conditionTOs) {
-        log.entry();
+        log.entry(conditionTOs);
         return log.exit( conditionTOs.stream()
                 .collect(Collectors.toMap(
                         p -> new Condition(new AnatEntity(p.getAnatEntityId()),
@@ -726,7 +729,8 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
                 
                 //create SQL query
                 String sql = "INSERT INTO " + tsvFile.getTableName();
-                sql +=  " " + tsvFile.getColumnName().values().stream().collect(Collectors.joining(", ", "(", ")"));
+                sql += " " + tsvFile.getColumnName().values().stream()
+                        .collect(Collectors.joining(", ", "(", ")"));
                 sql += " VALUES " + Collections.nCopies(tsvFile.getColumnName().size(), "?").stream()
                         .collect(Collectors.joining(", ", "(", ")"));
                 log.debug("SQL query : {}", sql);
@@ -751,16 +755,14 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
                                 //null values but default value of this column is an empty String.
                                 if (tsvFile.getIsNullable().get(columnId) == null) {
                                     stmt.setString(columnNumber, "");
-                                }
-                                else if (tsvFile.getIsNullable().get(columnId)) {
+                                } else if (tsvFile.getIsNullable().get(columnId)) {
                                     stmt.setNull(columnNumber, tsvFile.getDatatypes().get(columnId));
                                 } else {
                                     log.debug(columnValue + " -> " + columnId);
                                         throw log.throwing(new IllegalArgumentException(
                                                 "For the moment we only take into account VARCHAR and TEXT "
-                                                + "sql datatypes to transform null column in the TSV file "
+                                                + "sql data types to transform null column in the TSV file "
                                                 + "to empty String in the database"));
-//                                    }
                                 }
                             } else {
                                 throw log.throwing(new IllegalArgumentException(

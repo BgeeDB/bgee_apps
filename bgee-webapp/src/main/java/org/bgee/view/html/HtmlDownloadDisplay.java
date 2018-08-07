@@ -74,9 +74,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     public void displayDownloadHomePage() {
         log.entry();
         
-        this.startDisplay("Bgee download pages");
+        this.startDisplay("Bgee download overview");
 
-        this.writeln("<h1>Bgee download page</h1>");
+        this.writeln("<h1>Download overview</h1>");
 
         RequestParameters urlDownloadProcExprValuesGenerator = this.getNewRequestParameters();
         urlDownloadProcExprValuesGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);

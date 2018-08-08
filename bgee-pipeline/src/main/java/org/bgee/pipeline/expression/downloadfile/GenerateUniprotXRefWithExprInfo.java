@@ -94,7 +94,7 @@ public class GenerateUniprotXRefWithExprInfo {
      *                          XRefs UniProtKB - Ensembl mapping.
      * @param outputFileName    A {@code String} that is the path to the file where to write data into.
      */
-    private void generate(String inputFileName, String outputFileName) {
+    public void generate(String inputFileName, String outputFileName) {
         log.entry(inputFileName, outputFileName);
         
         // load UniProtKB Xrefs
@@ -122,7 +122,7 @@ public class GenerateUniprotXRefWithExprInfo {
      * @return      The {@code List} of {@code XrefUniprotBean}s.
      * @throws UncheckedIOException If an error occurred while trying to read the {@code file}.
      */
-    private Set<XrefUniprotBean> loadXrefFileWithoutExprInfo(String file) throws UncheckedIOException {
+    public Set<XrefUniprotBean> loadXrefFileWithoutExprInfo(String file) {
         log.entry(file);
         
         Set<XrefUniprotBean> xrefUniprotList = new HashSet<>();
@@ -164,18 +164,14 @@ public class GenerateUniprotXRefWithExprInfo {
         // map used to retrieve Species corresponding to a speciesId
         Map<Integer, Species> speciesByIds = serviceFactory.getSpeciesService().loadSpeciesByIds(null, false)
                 .stream().collect(Collectors.toMap(s -> s.getId(), s -> s));
+        
         // retrieve all geneIds
         Set<Gene> allGenes = xrefList.stream()
                 .map(xref -> new Gene(xref.getEnsemblId(), speciesByIds.get(xref.getSpeciesId())))
                 .collect(Collectors.toSet());
-        // map used to detect genes for which expression information was already retrieved
+        
+        //retrieve expression information for each genes
         Map<Gene, String> expressionInfoByGene = allGenes.parallelStream().map(gene -> {
-            
-//            // Retrieve Gene corresponding to the Xref
-//            Gene gene = serviceFactory.getGeneService()
-//                .loadGenes(Collections.singleton(new GeneFilter(g.getSpecies().getId(), g.getEnsemblGeneId())))
-//                .findFirst().get();
-            
             // Retrieve expression calls
             CallService callService = serviceFactory.getCallService();
             LinkedHashMap<AnatEntity, List<ExpressionCall>> callsByAnatEntity = callService
@@ -193,39 +189,44 @@ public class GenerateUniprotXRefWithExprInfo {
                     .append(callsByAnatEntity.size())
                     .append(" organ(s), highest expression level in ")
                     .append(callsByAnatEntity.keySet().iterator().next().getName());
-            return new AbstractMap.SimpleEntry<Gene, String>(gene, sb.toString());
+                return new AbstractMap.SimpleEntry<Gene, String>(gene, sb.toString());
 
-
-        }).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+        }).filter(e -> e.getValue() != null)
+        .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
         
         Instant end = Instant.now();
         log.debug("Time needed to retrieve expressionSummary of {} genes is {} hours", allGenes.size(),
                 Duration.between(start, end).toHours());
         
         return log.exit(xrefList.parallelStream().map( xref -> {
+            String expressionInfo = expressionInfoByGene.get(new Gene(xref.getEnsemblId(), 
+                    speciesByIds.get(xref.getSpeciesId())));
+            if (expressionInfo == null) {
+                return new AbstractMap.SimpleEntry<String, String>(xref.getEnsemblId(), null);
+            }
             StringBuilder sb = new StringBuilder(xref.getUniprotId())
                     .append("   DR   Bgee; ")
                     .append(xref.getEnsemblId())
                     .append(";")
-                    .append(expressionInfoByGene.get(new Gene(xref.getEnsemblId(), speciesByIds.get(xref.getSpeciesId()))));
+                    .append(expressionInfo);
             return new AbstractMap.SimpleEntry<String, String>(xref.getEnsemblId(), sb.toString());
-        }).collect(Collectors.toMap(e -> e.getKey(), 
+        }).filter(e -> e.getValue() != null)
+        .collect(Collectors.toMap(e -> e.getKey(), 
                 e -> new HashSet<String>(Arrays.asList(e.getValue())), 
                 (v1, v2) -> {
                     Set<String> newSet = new HashSet<>(v1);
                     newSet.addAll(v2);
                     return newSet;
                 })));
-
-
     }
 
     /**
-     * Sort Xrefs by UniProtKB IDs.
+     * Sort Xrefs by EnsemblIDs.
      * 
      * @param ensemblIdToXrefLines  A {@code Map} where keys correspond to Ensembl gene IDs 
      *                              and each value corresponds to UniProtKB Xref line.
-     * @return                      The {@code LinkedHashMap} <String, String>
+     * @return                      The {@code List} where each element is {@code String} representing one well
+     *                              formatted Uniprot XRef
      */
     private static List<String> sortXrefByUniprotId(Map<String, Set<String>> ensemblIdToXrefLines) {
         log.entry(ensemblIdToXrefLines);
@@ -233,9 +234,6 @@ public class GenerateUniprotXRefWithExprInfo {
                 .sorted(Map.Entry.comparingByKey())
                 .flatMap(e -> e.getValue().stream())
                 .collect(Collectors.toList()));
-//                        toMap(Map.Entry::getKey, Map.Entry::getValue,
-//                        // XXX: This removes duplicates, no?
-//                        (oldValue, newValue) -> oldValue, LinkedHashMap::new)));
     }
 
     /**

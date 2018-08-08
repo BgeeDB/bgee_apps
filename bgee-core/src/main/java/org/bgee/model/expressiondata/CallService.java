@@ -345,8 +345,20 @@ public class CallService extends CommonService {
         throw log.throwing(new UnsupportedOperationException("Load of diff. expression calls not implemented yet"));
     }
     
-    
-    public List<ExpressionCall> loadAllcondCallsWithSilverAnatEntityCall(Gene gene) {
+    /**
+     * Load {@code ExpressionCall}s with {@code Condition} having both an {@code AnatEntity} and a {@code DevStage}
+     * grouped by AnatEntity for one {@code Gene}.
+     * Retrieve only {@code ExpressionCall}s that have at least a SILVER {@code SummaryQuality} for a given
+     * {@code AnatEntity} AND at least a BRONZE {@code SummaryQuality} for the same {@code AnatEntity}
+     * and a {@code DevStage}.
+     * These {@code ExpressionCall}s are filtered and ordered by rank using 
+     * {@link ExpressionCall#filterAndOrderCallsByRank(Collection, ConditionGraph)}
+     * 
+     * @param gene      A {@code Gene} for which {@code ExpressionCall}s have to be retrieved
+     * @return          The {@code LinkedHashMap} where values correspond to the {@code List} of
+     *                  {@code ExpressionCall} and keys correspond to the {@code AnatEntity}
+     */
+    public LinkedHashMap<AnatEntity, List<ExpressionCall>> loadCondCallsWithSilverAnatEntityCallsByAnatEntity(Gene gene) {
         log.entry(gene);
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = new LinkedHashMap<>();
         // The ordering is not essential here, because anyway we will need to
@@ -362,6 +374,8 @@ public class CallService extends CommonService {
         silverExpressedCallFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
         Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
         obsDataFilter.put(CallType.Expression.EXPRESSED, true);
+        
+        // Load silver organ calls
         List<ExpressionCall> organCalls = this
                 .loadExpressionCalls(
                         new ExpressionCallFilter(silverExpressedCallFilter,
@@ -376,10 +390,12 @@ public class CallService extends CommonService {
                 .collect(Collectors.toList());
         if (organCalls.isEmpty()) {
             log.debug("No calls for gene {}", gene.getEnsemblGeneId());
-            return log.exit(organCalls);
+            return log.exit(new LinkedHashMap<>());
         }
         Map<SummaryCallType.ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
         summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE);
+       
+        // Load bronze organ-stage calls
         final List<ExpressionCall> organStageCalls = this
                 .loadExpressionCalls(
                         new ExpressionCallFilter(summaryCallTypeQualityFilter,
@@ -401,8 +417,31 @@ public class CallService extends CommonService {
                 .filter(c -> organIds.contains(c.getCondition().getAnatEntityId())).collect(Collectors.toList());
         if (orderedCalls.isEmpty()) {
             log.debug("No calls for gene {}", gene.getEnsemblGeneId());
+            return log.exit(new LinkedHashMap<>());
         }
-        return log.exit(orderedCalls);
+        
+        //we need to make sure that the ExpressionCalls are ordered in exactly the same way
+        //for the display and for the clustering, otherwise the display will be buggy,
+        //notably for calls with equal ranks. And we need to take into account
+        //relations between Conditions for filtering them, which would be difficult to achieve
+        //only by a query to the data source. So, we order them anyway.
+        
+        //ORGAN-STAGE
+        ConditionGraph organStageGraph = new ConditionGraph(
+                orderedCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()), 
+                this.getServiceFactory());
+        orderedCalls = ExpressionCall.filterAndOrderCallsByRank(orderedCalls, organStageGraph);
+        
+        //REDUNDANT ORGAN-STAGE CALLS
+        final Set<ExpressionCall> redundantCalls = ExpressionCall.identifyRedundantCalls(
+                orderedCalls, organStageGraph);
+        
+        //*********************
+        // Grouping
+        //*********************
+        LinkedHashMap<AnatEntity, List<ExpressionCall>> callsByAnatEntity =
+                this.groupByAnatEntAndFilterCalls(orderedCalls, redundantCalls, true);
+        return log.exit(callsByAnatEntity);
     }
 
     //XXX Maybe we should move this method to ExpressionCall

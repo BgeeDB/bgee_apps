@@ -26,7 +26,7 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 
 /**
  * A {@code GeneDAO} for MySQL.
- * 
+ *
  * @author Valentine Rech de Laval
  * @version Bgee 13
  * @see org.bgee.model.dao.api.gene.GeneDAO.GeneTO
@@ -48,7 +48,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
     /**
      * Constructor providing the {@code MySQLDAOManager} that this
      * {@code MySQLDAO} will use to obtain {@code BgeeConnection}s.
-     * 
+     *
      * @param manager
      *            The {@code MySQLDAOManager} to use.
      * @throws IllegalArgumentException
@@ -90,10 +90,10 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
             int limitStart, int resultPerPage) {
         log.entry(searchTerm, speciesIds, limitStart, resultPerPage);
 
-        String sql = "select distinct t1.*";
+        String sql = "SELECT DISTINCT t1.*";
 
         //fix issue#173
-        sql += ", IF (t1.geneId LIKE ?,"
+        sql += ", IF (t1.geneId LIKE ?, "
                     + "CHAR_LENGTH(t1.geneId), "
                     + "IF (t1.geneName LIKE ?, CHAR_LENGTH(t1.geneName), CHAR_LENGTH(t2.geneNameSynonym))) "
                 + "AS matchLength"
@@ -101,32 +101,32 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
                 + "AS termMatch"
                 + ", species.speciesDisplayOrder";
 
-        sql += " from gene as t1 "
+        sql += " FROM gene AS t1 "
                 + "INNER JOIN species ON t1.speciesId = species.speciesId "
-                + "left outer join "
-                    + "(SELECT * FROM geneNameSynonym WHERE geneNameSynonym like ?) as t2 "
-                + "on t1.bgeeGeneId = t2.bgeeGeneId "
-                + "where (t1.geneId like ? or t1.geneName like ? or t2.geneNameSynonym like ?) ";
+                + "LEFT OUTER JOIN "
+                    + "(SELECT * FROM geneNameSynonym WHERE geneNameSynonym LIKE ?) AS t2 "
+                + "ON t1.bgeeGeneId = t2.bgeeGeneId "
+                + "WHERE (t1.geneId LIKE ? OR t1.geneName LIKE ? OR t2.geneNameSynonym LIKE ?) ";
 
         if (speciesIds != null && !speciesIds.isEmpty()) {
 
-            sql += " and (";
+            sql += " AND (";
             for (int i = 0; i < speciesIds.size(); i++) {
 
                 if (i > 0) {
-                    sql += " or ";
+                    sql += " OR ";
                 }
                 sql += " t1.speciesId = ? ";
             }
             sql += ") ";
         }
 
-        sql += "order by matchLength, "
+        sql += "ORDER BY matchLength, "
                 + "species.speciesDisplayOrder, "
                 + "termMatch ";
 
         if (resultPerPage != 0) {
-            sql += "limit ?, ?";
+            sql += "LIMIT ?, ?";
         }
 
         try {
@@ -160,18 +160,18 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
             throw log.throwing(new DAOException(e));
         }
     }
-    
+
     @Override
     public GeneTOResultSet getGenesBySpeciesAndGeneIds(Map<Integer, Set<String>> speciesIdToGeneIds)
             throws DAOException {
         log.entry(speciesIdToGeneIds);
         return log.exit(this.getGenes(speciesIdToGeneIds, null, null));
     }
-    
-    private GeneTOResultSet getGenes(Map<Integer, Set<String>> speciesIdToGeneIds, 
+
+    private GeneTOResultSet getGenes(Map<Integer, Set<String>> speciesIdToGeneIds,
             Collection<Integer> bgeeGeneIds, Boolean withExprData) throws DAOException {
         log.entry(speciesIdToGeneIds, bgeeGeneIds, withExprData);
-        
+
         if (speciesIdToGeneIds != null &&
                 speciesIdToGeneIds.containsKey(null) && speciesIdToGeneIds.size() != 1) {
             throw log.throwing(new IllegalArgumentException(
@@ -206,7 +206,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
                                 throw log.throwing(new IllegalArgumentException("No gene ID can be null"));
                             }
                             return new HashSet<>(e.getValue());
-                        }, 
+                        },
                         (v1, v2) -> {throw new IllegalStateException("Impossible to have duplicated keys.");},
                         () -> new LinkedHashMap<>()));
         Set<Integer> clonedBgeeGeneIds = bgeeGeneIds == null? new HashSet<>(): new HashSet<>(bgeeGeneIds);
@@ -215,7 +215,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 
         sql += " FROM " + GENE_TABLE_NAME;
 
-        if (!clonedSpeciesIdToGeneIds.isEmpty() || !clonedBgeeGeneIds.isEmpty() || 
+        if (!clonedSpeciesIdToGeneIds.isEmpty() || !clonedBgeeGeneIds.isEmpty() ||
                 Boolean.TRUE.equals(withExprData)) {
             sql += " WHERE ";
         }
@@ -244,12 +244,12 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
                            clonedSpeciesIdToGeneIds.size())
                    + ") ";
         }
-        
+
         if (!clonedBgeeGeneIds.isEmpty()) {
             if (!clonedSpeciesIdToGeneIds.isEmpty()) {
                 sql += " AND ";
             }
-            sql += GENE_TABLE_NAME + ".bgeeGeneId IN (" 
+            sql += GENE_TABLE_NAME + ".bgeeGeneId IN ("
                    + BgeePreparedStatement.generateParameterizedQueryString(clonedBgeeGeneIds.size())
                    + ")";
         }
@@ -257,7 +257,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
             if (!clonedSpeciesIdToGeneIds.isEmpty() || !clonedBgeeGeneIds.isEmpty()) {
                 sql += " AND ";
             }
-            sql += "EXISTS (SELECT 1 FROM expression WHERE expression.bgeeGeneId = " 
+            sql += "EXISTS (SELECT 1 FROM expression WHERE expression.bgeeGeneId = "
                    + GENE_TABLE_NAME + ".bgeeGeneId)";
         }
 
@@ -358,7 +358,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
     /**
      * Generates the SELECT clause of a MySQL query used to retrieve
      * {@code GeneTO}s.
-     * 
+     *
      * @param attributes
      *            A {@code Set} of {@code Attribute}s defining the
      *            columns/information the query should retrieve.
@@ -399,7 +399,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
     /**
      * Returns a {@code String} that correspond to the given
      * {@code GeneDAO.Attribute}.
-     * 
+     *
      * @param attribute
      *            An {code GeneDAO.Attribute} that is the attribute to convert
      *            into a {@code String}.
@@ -461,7 +461,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 
     /**
      * A {@code MySQLDAOResultSet} specific to {@code GeneTO}.
-     * 
+     *
      * @author Valentine Rech de Laval
      * @version Bgee 13
      * @since Bgee 13
@@ -472,7 +472,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
          * Delegates to
          * {@link MySQLDAOResultSet#MySQLDAOResultSet(BgeePreparedStatement)}
          * super constructor.
-         * 
+         *
          * @param statement
          *            The first {@code BgeePreparedStatement} to execute a query
          *            on.

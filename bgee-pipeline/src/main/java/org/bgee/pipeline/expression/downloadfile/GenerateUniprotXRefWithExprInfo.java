@@ -16,6 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -45,23 +46,24 @@ public class GenerateUniprotXRefWithExprInfo {
 
     private final static Logger log = LogManager.getLogger(GenerateUniprotXRefWithExprInfo.class.getName());
     
-    private ServiceFactory serviceFactory;
+    private final Supplier<ServiceFactory> serviceFactorySupplier;
 
     /**
      * Default constructor. 
      */
     public GenerateUniprotXRefWithExprInfo() {
-        this(new ServiceFactory());
+        this(ServiceFactory::new);
     }
 
     /**
      * Constructor providing the {@code ServiceFactory} that will be used by 
      * this object to perform queries to the database. This is useful for unit testing.
      *
-     * @param serviceFactory   A {@code ServiceFactory} to use.
+     * @param serviceFactorySupplier        A {@code Supplier} of {@code ServiceFactory}s 
+     *                                      to be able to provide one to each thread.
      */
-    public GenerateUniprotXRefWithExprInfo(ServiceFactory serviceFactory) {
-        this.serviceFactory = serviceFactory;
+    public GenerateUniprotXRefWithExprInfo(Supplier<ServiceFactory> serviceFactorySupplier) {
+        this.serviceFactorySupplier = serviceFactorySupplier;
     }
     
     // XXX: Use service when it will be implemented
@@ -162,6 +164,7 @@ public class GenerateUniprotXRefWithExprInfo {
         Instant start = Instant.now();
         
         // map used to retrieve Species corresponding to a speciesId
+        ServiceFactory serviceFactory = serviceFactorySupplier.get();
         Map<Integer, Species> speciesByIds = serviceFactory.getSpeciesService().loadSpeciesByIds(null, false)
                 .stream().collect(Collectors.toMap(s -> s.getId(), s -> s));
         
@@ -173,7 +176,8 @@ public class GenerateUniprotXRefWithExprInfo {
         //retrieve expression information for each genes
         Map<Gene, String> expressionInfoByGene = allGenes.parallelStream().map(gene -> {
             // Retrieve expression calls
-            CallService callService = serviceFactory.getCallService();
+            ServiceFactory threadSpeServiceFactory = serviceFactorySupplier.get();
+            CallService callService = threadSpeServiceFactory.getCallService();
             LinkedHashMap<AnatEntity, List<ExpressionCall>> callsByAnatEntity = callService
                     .loadCondCallsWithSilverAnatEntityCallsByAnatEntity(gene);
             

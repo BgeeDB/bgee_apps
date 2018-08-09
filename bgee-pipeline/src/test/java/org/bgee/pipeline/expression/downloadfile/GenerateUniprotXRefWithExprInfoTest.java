@@ -63,9 +63,10 @@ public class GenerateUniprotXRefWithExprInfoTest extends TestAncestor {
                new XrefUniprotBean("H9G367", "ENSACAG00000000004", 28377),
                new XrefUniprotBean("G1K846", "ENSACAG00000000006", 28377)));
        
+       
        ServiceFactory serviceFactory = mock(ServiceFactory.class);
        
-       GenerateUniprotXRefWithExprInfo generateUniprotXrefs = new GenerateUniprotXRefWithExprInfo(serviceFactory);
+       GenerateUniprotXRefWithExprInfo generateUniprotXrefs = new GenerateUniprotXRefWithExprInfo(() -> serviceFactory);
        Set<XrefUniprotBean> xrefUniprotListLoaded = generateUniprotXrefs
                .loadXrefFileWithoutExprInfo(this.getClass().getResource(XREF_FILE).getFile());
        assertTrue(xrefUniprotListLoaded.equals(xrefUniprotListWanted));
@@ -142,7 +143,7 @@ public class GenerateUniprotXRefWithExprInfoTest extends TestAncestor {
         
         //method to test
         GenerateUniprotXRefWithExprInfo generateUniproteXrefs = 
-                new GenerateUniprotXRefWithExprInfo(serviceFactory);
+                new GenerateUniprotXRefWithExprInfo(() -> serviceFactory);
         generateUniproteXrefs.generate(this.getClass().getResource(XREF_FILE).getFile(), outputFile);
 
         //check file generation

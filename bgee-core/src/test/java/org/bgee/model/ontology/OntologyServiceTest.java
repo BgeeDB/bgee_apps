@@ -10,6 +10,7 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.bgee.model.ServiceFactory;
@@ -21,6 +22,9 @@ import org.bgee.model.anatdev.DevStageService;
 import org.bgee.model.anatdev.TaxonConstraint;
 import org.bgee.model.anatdev.TaxonConstraintService;
 import org.bgee.model.dao.api.DAOManager;
+import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO;
+import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
+import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTOResultSet;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
@@ -184,6 +188,35 @@ public class OntologyServiceTest extends TestAncestor {
             .thenReturn(relationTaxonConstraints.stream()).thenReturn(relationTaxonConstraints.stream())
             .thenReturn(relationTaxonConstraints.stream()).thenReturn(relationTaxonConstraints.stream());
         
+        TaxonConstraintDAO tcDAO = mock(TaxonConstraintDAO.class);
+        when(managerMock.getTaxonConstraintDAO()).thenReturn(tcDAO);
+        
+        List<TaxonConstraintTO<Integer>> txTOs1 = Arrays.asList(
+                new TaxonConstraintTO<Integer>(1, 11),
+                new TaxonConstraintTO<Integer>(1, 22),
+                new TaxonConstraintTO<Integer>(2, 22),
+                new TaxonConstraintTO<Integer>(3, 11),
+                new TaxonConstraintTO<Integer>(4, 22),
+                new TaxonConstraintTO<Integer>(5, 11),
+                new TaxonConstraintTO<Integer>(5, 22));
+        List<TaxonConstraintTO<Integer>> txTOs2 = Arrays.asList(
+                new TaxonConstraintTO<Integer>(1, 11),
+                new TaxonConstraintTO<Integer>(1, 22),
+                new TaxonConstraintTO<Integer>(2, 22),
+                new TaxonConstraintTO<Integer>(3, 11));
+        List<TaxonConstraintTO<Integer>> txTOs3 = new ArrayList<>();
+        
+        TaxonConstraintTOResultSet<Integer> txTOrs1 = getMockResultSet(TaxonConstraintTOResultSet.class, txTOs1);
+        TaxonConstraintTOResultSet<Integer> txTOrs2 = getMockResultSet(TaxonConstraintTOResultSet.class, txTOs2);
+        TaxonConstraintTOResultSet<Integer> txTOrs3 = getMockResultSet(TaxonConstraintTOResultSet.class, txTOs3);
+        
+        when(tcDAO.getAnatEntityRelationTaxonConstraints(speciesIds, 
+                allRelations.stream().map(rel -> rel.getId()).collect(Collectors.toSet()), null)).thenReturn(txTOrs1);
+        when(tcDAO.getAnatEntityRelationTaxonConstraints(speciesIds, 
+                relationTOs2.stream().map(rel -> rel.getId()).collect(Collectors.toSet()), null)).thenReturn(txTOrs2);
+        when(tcDAO.getAnatEntityRelationTaxonConstraints(speciesIds, new HashSet<>(),  null)).thenReturn(txTOrs3);
+        
+//        
         Set<RelationType> expRelationTypes1 = new HashSet<>(Arrays.asList(
                 RelationType.ISA_PARTOF, RelationType.DEVELOPSFROM));
         
@@ -301,7 +334,24 @@ public class OntologyServiceTest extends TestAncestor {
                 new TaxonConstraint<>(6, null)));
         // Note: we need to use thenReturn() twice because a stream can be use only once 
         when(tcService.loadAnatEntityRelationTaxonConstraintBySpeciesIds(speciesIds))
-            .thenReturn(relationTaxonConstraints.stream()).thenReturn(relationTaxonConstraints.stream());
+            .thenReturn(relationTaxonConstraints.stream())
+            .thenReturn(relationTaxonConstraints.stream());
+        
+        TaxonConstraintDAO tcDAO = mock(TaxonConstraintDAO.class);
+        when(managerMock.getTaxonConstraintDAO()).thenReturn(tcDAO);
+        
+        List<TaxonConstraintTO<Integer>> tcTOs = Arrays.asList(
+                new TaxonConstraintTO<Integer>(1, null),
+                new TaxonConstraintTO<Integer>(2, null),
+                new TaxonConstraintTO<Integer>(3, null),
+                new TaxonConstraintTO<Integer>(4, null),
+                new TaxonConstraintTO<Integer>(5, null),
+                new TaxonConstraintTO<Integer>(6, null));
+        
+        TaxonConstraintTOResultSet<Integer> tcTOResSet = getMockResultSet(TaxonConstraintTOResultSet.class, tcTOs);
+        
+        when(tcDAO.getAnatEntityRelationTaxonConstraints(speciesIds, 
+                allRelations.stream().map(rel -> rel.getId()).collect(Collectors.toSet()), null)).thenReturn(tcTOResSet);
         
         Set<RelationType> expRelationTypes = new HashSet<>(Arrays.asList(RelationType.ISA_PARTOF));
 

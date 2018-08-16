@@ -70,9 +70,11 @@ public class TopAnatParamsTest extends TestAncestor {
      */
     //FIXME: to reactivate
     @Test
-    @Ignore("to reactivate")
+//    @Ignore("to reactivate")
     public void testGetKey(){
-        assertEquals("995e06db82365f141be8847080be4dc1453671f8",this.topAnatParams.getKey());
+        // Value used to generate the key should be [G1, G2][G1, G2, G3, G4]999EXPRESSEDGOLD[AFFYMETRIX]aELIMFISHER101.01.05
+        // The corresponding sha-1 should be 957bffc28bde2338dcb4e7102a1cbc85562bccb5
+        assertEquals("957bffc28bde2338dcb4e7102a1cbc85562bccb5",this.topAnatParams.getKey());
     }
 
     /**
@@ -81,7 +83,7 @@ public class TopAnatParamsTest extends TestAncestor {
     @Test
     public void testConvertRawParametersToCallFilter(){
         CallFilter<?, ?> callFilter = this.topAnatParams.convertRawParametersToCallFilter();
-        assertEquals("ExpressionCallFilter [callObservedData=true, anatEntityObservedData=true,"
+        assertEquals("ExpressionCallFilter [callObservedData={}, anatEntityObservedData=true,"
                 + " devStageObservedData=null, geneFilters=[GeneFilter [speciesId=999,"
                 + " geneIds=[G1, G2, G3, G4]]], conditionFilters=[ConditionFilter"
                 + " [anatEntityIds=[], devStageIds=[a], observedConditions=null]],"

@@ -36,12 +36,12 @@ import org.bgee.view.ViewFactoryProvider.DisplayType;
 /**
  * This is the entry point of bgee-webapp. It can be directly mapped as the main servlet in
  * {@code web.xml} and thus responds to a call to the root "/" of the application
- * 
- * @author Mathieu Seppey
- * @author Frederic Bastian
  *
- * @version Bgee 13, Oct 2016
- * @since Bgee 13
+ * @author  Mathieu Seppey
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, Aug. 2018
+ * @since   Bgee 13, June 2014
  */
 public class FrontController extends HttpServlet {
 
@@ -248,7 +248,7 @@ public class FrontController extends HttpServlet {
 //            } else if (requestParameters.isADAOPageCategory()) {
 //                controller = new CommandDAO(response, requestParameters, this.prop, factory, 
 //                        serviceFactory, this.jobService, user);
-            }else if (requestParameters.isARPackagePageCategory()) {
+            } else if (requestParameters.isARPackagePageCategory()) {
                 controller = new CommandRPackage(response, requestParameters, this.prop, factory, 
                         serviceFactory, this.jobService, user);
             } else if (requestParameters.isAStatsPageCategory()) {
@@ -258,6 +258,8 @@ public class FrontController extends HttpServlet {
                 //TODO: In the future, this should call our Google Monitoring implementation
                 factory.getGeneralDisplay().respondSuccessNoContent();
                 setCookie = false;
+            } else if (requestParameters.isAFaqPageCategory()){
+                controller = new CommandFaq(response, requestParameters, this.prop, factory);
             } else {
                 throw log.throwing(new PageNotFoundException("Request not recognized."));
             }

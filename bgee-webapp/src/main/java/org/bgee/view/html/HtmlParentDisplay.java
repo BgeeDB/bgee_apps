@@ -25,7 +25,7 @@ import org.bgee.view.ViewFactory;
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
  * @author  Sebastien Moretti
- * @version Bgee 14, June 2018
+ * @version Bgee 14, Aug. 2018
  * @since   Bgee 13, Jul. 2014
  */
 public class HtmlParentDisplay extends ConcreteDisplayParent {
@@ -404,6 +404,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         urlPrivacyPolicy.setPage(RequestParameters.PAGE_ABOUT);
         urlPrivacyPolicy.setAction(RequestParameters.ACTION_ABOUT_PRIVACY_POLICY);
 
+        RequestParameters urlFaq = this.getNewRequestParameters();
+        urlFaq.setPage(RequestParameters.PAGE_FAQ);
+        
         // Navigation bar
         StringBuilder navbar = new StringBuilder();
 
@@ -438,8 +441,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' "
               + "aria-haspopup='true' aria-expanded='false'>Analysis <span class='caret'></span></a>");
         navbar.append("<ul class='dropdown-menu'>");
-        navbar.append("<li><a title='TopAnat: Enrichment analyses of expression localization' "
-              + "href='" + urlTopAnat.getRequestURL() + "'>" + TOP_ANAT_PAGE_NAME + "</a></li>");
+        navbar.append("<li><a title='TopAnat: Enrichment analyses of expression localization' href='")
+                .append(urlTopAnat.getRequestURL()).append("'>").append(TOP_ANAT_PAGE_NAME)
+                .append("</a></li>");
         navbar.append("<li><a href='" + BGEE_R_PACKAGE_URL + "' target='_blank'>"
                 + "BgeeDB R package</a></li>");
         navbar.append("</ul>");
@@ -451,8 +455,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' "
               + "aria-haspopup='true' aria-expanded='false'>Search <span class='caret'></span></a>");
         navbar.append("<ul class='dropdown-menu'>");
-        navbar.append("<li><a title='Gene search' href='" + urlGeneSearch.getRequestURL() + 
-              "'>Gene search</a></li>");
+        navbar.append("<li><a title='Gene search' href='").append(urlGeneSearch.getRequestURL())
+                .append("'>Gene search</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
 
@@ -488,6 +492,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 //            urlDocProcValueFiles.getRequestURL() + "'>" + PROCESSED_EXPR_VALUES_PAGE_NAME + "</a></li>");
         navbar.append("<li><a href='https://bioconductor.org/packages/release/bioc/manuals/BgeeDB/man/BgeeDB.pdf'"
                 + " target='_blank'>BgeeDB R package</a></li>");
+        navbar.append("<li><a href='").append(urlFaq.getRequestURL()).append("'>FAQ</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
         
@@ -505,7 +510,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("</li>");
         
         // Help
-        navbar.append("<li>" + this.getObfuscateHelpEmail() + "</li>");
+        navbar.append("<li>").append(this.getObfuscateHelpEmail()).append("</li>");
 
         navbar.append("</ul>"); // close left nav links
 
@@ -513,25 +518,25 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<ul class='nav navbar-nav navbar-right'>");
         
         // R package
-        navbar.append("<li><a title='See our R package' target='_blank' href='" + BGEE_R_PACKAGE_URL + "'>" + 
-                "<img class='social-img' alt='R logo' src='" + this.prop.getLogoImagesRootDirectory() + 
-                "r_logo.png'></a></li>");
+        navbar.append("<li><a title='See our R package' target='_blank' href='" + BGEE_R_PACKAGE_URL + "'>" +
+                "<img class='social-img' alt='R logo' src='")
+                .append(this.prop.getLogoImagesRootDirectory()).append("r_logo.png'></a></li>");
 
         // Twitter
-        navbar.append("<li><a title='Follow @Bgeedb on Twitter' target='_blank' href='https://twitter.com/Bgeedb'>" + 
-                "<img class='social-img' alt='Twitter logo' src='" + this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + 
-                "twitter_logo.png'></a></li>");
+        navbar.append("<li><a title='Follow @Bgeedb on Twitter' target='_blank' href='https://twitter.com/Bgeedb'>" +
+                "<img class='social-img' alt='Twitter logo' src='").append(this.prop.getBgeeRootDirectory())
+                .append(this.prop.getLogoImagesRootDirectory()).append("twitter_logo.png'></a></li>");
 
         // Blog
-        navbar.append("<li><a title='See our blog' target='_blank' href='https://bgeedb.wordpress.com'>" + 
-                "<img class='social-img' alt='Wordpress logo' src='" + this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + 
-                "wordpress_logo.png'></a></li>");
+        navbar.append("<li><a title='See our blog' target='_blank' href='https://bgeedb.wordpress.com'>" +
+                "<img class='social-img' alt='Wordpress logo' src='").append(this.prop.getBgeeRootDirectory())
+                .append(this.prop.getLogoImagesRootDirectory()).append("wordpress_logo.png'></a></li>");
         
         // SIB
-        navbar.append("<li><a id='sib_brand' href='https://www.sib.swiss' target='_blank' "
-                + "title='Link to the SIB Swiss Institute of Bioinformatics'>"
-                + "<img src='" + this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() +
-                "sib_emblem.png' alt='SIB Swiss Institute of Bioinformatics' /></a></li>");
+        navbar.append("<li><a id='sib_brand' href='https://www.sib.swiss' target='_blank' " + 
+                "title='Link to the SIB Swiss Institute of Bioinformatics'><img src='")
+                .append(this.prop.getBgeeRootDirectory()).append(this.prop.getLogoImagesRootDirectory())
+                .append("sib_emblem.png' alt='SIB Swiss Institute of Bioinformatics' /></a></li>");
 
         navbar.append("</ul>");  // close right nav links
         

@@ -15,8 +15,8 @@ import org.bgee.view.AboutDisplay;
  * This class displays the page having the category "about", i.e. with the parameter
  * page=about for the HTML view.
  *
- * @author 	Valentine Rech de Laval
- * @version Bgee 14, June 2018
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, Aug. 2018
  * @since   Bgee 13, Mar. 2015
  */
 public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay {
@@ -187,6 +187,8 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
 
     @Override
     public void displayPrivacyPolicy() {
+        log.entry();
+
         this.startDisplay("Bgee privacy notice");
 
         this.writeln("<h1>Bgee privacy notice</h1>");
@@ -340,10 +342,15 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
         this.writeln("</p>");
         this.writeln("<p>Additional terms: privacy policy</p>");
         this.writeln("</div>"); // close row
+
+        this.endDisplay();
+
+        log.exit();
     }
 
     private String getUnilEmail() {
-        return "<script type='text/javascript'>eval(unescape("
+        log.entry();
+        return log.exit("<script type='text/javascript'>eval(unescape("
                 + "'%66%75%6E%63%74%69%6F%6E%20%73%65%62%5F%74%72%61%6E%73%70%6F%73%65%32%31%30%38" +
                 "%31%32%30%28%68%29%20%7B%76%61%72%20%73%3D%27%61%6D%6C%69%6F%74%67%3A%65%77%61%6E" +
                 "%6C%65%65%6C%67%2E%6C%69%69%6C%72%65%6E%6F%75%40%69%6E%2E%6C%68%63%27%3B%76%61%72" +
@@ -355,11 +362,12 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
                 "%76%61%73%63%72%69%70%74%3A%73%65%62%5F%74%72%61%6E%73%70%6F%73%65%32%31%30%38%31" +
                 "%32%30%28%74%68%69%73%29%22%20%6F%6E%46%6F%63%75%73%3D%22%6A%61%76%61%73%63%72%69" +
                 "%70%74%3A%73%65%62%5F%74%72%61%6E%73%70%6F%73%65%32%31%30%38%31%32%30%28%74%68%69" +
-                "%73%29%22%3E%65%2D%6D%61%69%6C%3C%2F%61%3E%27%29%3B'));</script>";
+                "%73%29%22%3E%65%2D%6D%61%69%6C%3C%2F%61%3E%27%29%3B'));</script>");
     }
 
     private String getSibDpoEmail() {
-        return "<script type='text/javascript'>eval(unescape("
+        log.entry();
+        return log.exit("<script type='text/javascript'>eval(unescape("
                 + "'%66%75%6E%63%74%69%6F%6E%20%73%65%62%5F%74%72%61%6E%73%70%6F%73%65%32%31%30%38" +
                 "%35%39%28%68%29%20%7B%76%61%72%20%73%3D%27%61%6D%6C%69%6F%74%64%3A%6F%70%73%40%62" +
                 "%69%73%2E%69%77%73%73%27%3B%76%61%72%20%72%3D%27%27%3B%66%6F%72%28%76%61%72%20%69" +
@@ -371,7 +379,7 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
                 "%61%6E%73%70%6F%73%65%32%31%30%38%35%39%28%74%68%69%73%29%22%20%6F%6E%46%6F%63%75" +
                 "%73%3D%22%6A%61%76%61%73%63%72%69%70%74%3A%73%65%62%5F%74%72%61%6E%73%70%6F%73%65" +
                 "%32%31%30%38%35%39%28%74%68%69%73%29%22%3E%65%2D%6D%61%69%6C%3C%2F%61%3E%27%29%3B" +
-                "'));</script>";
+                "'));</script>");
     }
 
     @Override

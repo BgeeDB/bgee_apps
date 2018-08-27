@@ -527,11 +527,6 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 "<img class='social-img' alt='Twitter logo' src='").append(this.prop.getBgeeRootDirectory())
                 .append(this.prop.getLogoImagesRootDirectory()).append("twitter_logo.png'></a></li>");
 
-        // Blog
-        navbar.append("<li><a title='See our blog' target='_blank' href='https://bgeedb.wordpress.com'>" +
-                "<img class='social-img' alt='Wordpress logo' src='").append(this.prop.getBgeeRootDirectory())
-                .append(this.prop.getLogoImagesRootDirectory()).append("wordpress_logo.png'></a></li>");
-        
         // SIB
         navbar.append("<li><a id='sib_brand' href='https://www.sib.swiss' target='_blank' " + 
                 "title='Link to the SIB Swiss Institute of Bioinformatics'><img src='")

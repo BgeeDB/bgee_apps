@@ -13,5 +13,5 @@ public interface FaqDisplay {
     /**
      * Display the FAQ page.
      */
-    void displayFaqPage();
+    void writeFaqPage();
 }

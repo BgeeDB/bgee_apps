@@ -5,7 +5,7 @@ package org.bgee.view;
  * has to implements
  *
  * @author 	Valentine Rech de Laval
- * @version Bgee 14, June 2018
+ * @version Bgee 14, Aug. 2018
  * @since   Bgee 13, Mar. 2015
  */
 public interface AboutDisplay {
@@ -15,9 +15,4 @@ public interface AboutDisplay {
      */
     public void displayAboutPage();
 
-    /**
-     * Display the privacy policy.
-     */
-    public void displayPrivacyPolicy();
-   
 }

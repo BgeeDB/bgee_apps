@@ -15,7 +15,7 @@ import org.bgee.view.DocumentationDisplay;
  *
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, June 2018
+ * @version Bgee 14, Aug. 2018
  * @since   Bgee 13, Mar. 2015
  */
 public class HtmlDocumentationDisplay extends HtmlParentDisplay implements DocumentationDisplay {
@@ -124,12 +124,15 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
      * about TopAnat (see {@link #displayTopAnatDocumentation()}).
      */
     private final HtmlDocumentationTopAnat topAnatDoc;
-
     /**
      * A {@code HtmlDocumentationDataSets} used to write the documentation 
      * about data sets in Bgee (see {@link #displayDataSets()}).
      */
     private final HtmlDocumentationDataSets dataSetsDoc;
+    /**
+     * A {@code HtmlFaqDisplay} used to write the FAQ of Bgee (see {@link #displayFaq()}).
+     */
+    private final HtmlFaqDisplay faq;
 
     /**
      * Default constructor.
@@ -148,7 +151,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
     public HtmlDocumentationDisplay(HttpServletResponse response,
             RequestParameters requestParameters, BgeeProperties prop, HtmlFactory factory) 
                     throws IOException {
-        this(response, requestParameters, prop, factory, null, null, null, null);
+        this(response, requestParameters, prop, factory, null, null, null, null, null);
     }
     /**
      * Constructor providing other dependencies.
@@ -177,8 +180,8 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
     public HtmlDocumentationDisplay(HttpServletResponse response,
             RequestParameters requestParameters, BgeeProperties prop, HtmlFactory factory,
             HtmlDocumentationCallFile callFileDoc, HtmlDocumentationRefExprFile refExprFileDoc,
-            HtmlDocumentationTopAnat topAnatDoc, HtmlDocumentationDataSets dataSetsDoc) 
-                    throws IOException {
+            HtmlDocumentationTopAnat topAnatDoc, HtmlDocumentationDataSets dataSetsDoc,
+            HtmlFaqDisplay faq) throws IOException {
         super(response, requestParameters, prop, factory);
         if (callFileDoc == null) {
             this.callFileDoc = 
@@ -201,6 +204,11 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
             this.dataSetsDoc = new HtmlDocumentationDataSets(response, requestParameters, prop, factory);
         } else {
             this.dataSetsDoc = dataSetsDoc;
+        }
+        if (faq == null) {
+            this.faq = new HtmlFaqDisplay(response, requestParameters, prop, factory);
+        } else {
+            this.faq = faq;
         }
     }
     
@@ -348,6 +356,26 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         this.endDisplay();
 
         log.exit();
+    }
+
+    @Override
+    public void displayFaq() {
+        log.entry();
+
+        this.startDisplay("Bgee FAQ");
+
+        this.writeln("<div class='row'>");
+        this.writeln("<div class='" + CENTERED_ELEMENT_CLASS + "'>");
+
+        this.faq.writeFaqPage();
+
+        this.writeln("</div>"); // close CENTERED_ELEMENT_CLASS class
+        this.writeln("</div>"); // close row
+
+        this.endDisplay();
+
+        log.exit();
+
     }
 
     //*******************************************************

@@ -98,15 +98,19 @@ public class HtmlFactory extends ViewFactory {
     @Override
     public AboutDisplay getAboutDisplay() throws IOException {
         log.entry();
-        return log.exit(new HtmlAboutDisplay(
-                this.response, this.requestParameters, this.prop, this));
+        return log.exit(new HtmlAboutDisplay(this.response, this.requestParameters, this.prop, this));
+    }
+
+    @Override
+    public PrivacyPolicyDisplay getPrivacyPolicyDisplay() throws IOException {
+        log.entry();
+        return log.exit(new HtmlPrivacyPolicyDisplay(this.response, this.requestParameters, this.prop, this));
     }
 
     @Override
     public TopAnatDisplay getTopAnatDisplay() throws IOException {
         log.entry();
-        return log.exit(new HtmlTopAnatDisplay(
-                this.response, this.requestParameters, this.prop, this));
+        return log.exit(new HtmlTopAnatDisplay(this.response, this.requestParameters, this.prop, this));
     }
     
 	@Override

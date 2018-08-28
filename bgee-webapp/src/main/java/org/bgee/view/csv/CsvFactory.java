@@ -62,6 +62,11 @@ public class CsvFactory extends ViewFactory {
     }
 
     @Override
+    public PrivacyPolicyDisplay getPrivacyPolicyDisplay() {
+        throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
+    }
+
+    @Override
     public TopAnatDisplay getTopAnatDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
     }

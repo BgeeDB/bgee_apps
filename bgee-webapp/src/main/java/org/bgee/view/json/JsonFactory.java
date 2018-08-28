@@ -90,6 +90,11 @@ public class JsonFactory extends ViewFactory {
     }
 
 	@Override
+    public PrivacyPolicyDisplay getPrivacyPolicyDisplay() {
+        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
+    }
+
+    @Override
 	public GeneDisplay getGeneDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
 	}

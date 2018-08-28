@@ -12,7 +12,7 @@ import org.bgee.controller.RequestParameters;
  * in the URL is 'documentation'.
  *
  * @author 	Valentine Rech de Laval
- * @version Bgee 14, June 2018
+ * @version Bgee 14, Aug. 2018
  * @since   Bgee 13, Mar. 2015
  */
 public class FakeDocumentationDisplay extends FakeParentDisplay implements DocumentationDisplay {
@@ -45,5 +45,10 @@ public class FakeDocumentationDisplay extends FakeParentDisplay implements Docum
     @Override
     public void displayDataSets() {
         this.out.println("Test page displayDataSets() is good !");
+    }
+
+    @Override
+    public void displayFaq() {
+        this.out.println("Test page displayFaq() is good !");
     }
 }

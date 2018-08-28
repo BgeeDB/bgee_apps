@@ -56,6 +56,12 @@ public class XmlFactory extends ViewFactory {
     }
 
     @Override
+    public PrivacyPolicyDisplay getPrivacyPolicyDisplay() {
+        log.entry();
+        throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
+    }
+
+    @Override
     public TopAnatDisplay getTopAnatDisplay() {
         log.entry();
         throw log.throwing(new UnsupportedOperationException("Not available for XML display"));

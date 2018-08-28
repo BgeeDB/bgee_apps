@@ -27,7 +27,7 @@ public class HtmlFaqDisplay extends HtmlParentDisplay implements FaqDisplay {
     }
 
     @Override
-    public void displayFaqPage() {
+    public void writeFaqPage() {
         log.entry();
 
         RequestParameters urlCallPage = this.getNewRequestParameters();
@@ -40,13 +40,8 @@ public class HtmlFaqDisplay extends HtmlParentDisplay implements FaqDisplay {
         urlGenePage.setPage(RequestParameters.PAGE_GENE);
         RequestParameters urlTopAnat = this.getNewRequestParameters();
         urlTopAnat.setPage(RequestParameters.PAGE_TOP_ANAT);
-
-        this.startDisplay("Bgee FAQ");
-
+        
         this.writeln("<h1>Frequently asked questions (FAQ)</h1>");
-
-        this.writeln("<div class='row'>");
-        this.writeln("<div class='" + CENTERED_ELEMENT_CLASS + "'>");
 
         this.writeln("<div id='bgee_introduction'>");
         this.writeln("<p>Got questions? We’ve got answers! Here, you can find Bgee team answers " +
@@ -165,11 +160,6 @@ public class HtmlFaqDisplay extends HtmlParentDisplay implements FaqDisplay {
                 "ProteinExpr"));
         
         this.writeln("</div>"); // close faq-list
-
-        this.writeln("</div>"); // close class CENTERED_ELEMENT_CLASS
-        this.writeln("</div>"); // close row
-
-        this.endDisplay();
 
         log.exit();
     }

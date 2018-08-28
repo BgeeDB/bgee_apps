@@ -12,11 +12,11 @@ import org.bgee.view.ViewFactory;
 
 
 /**
- * Controller that handles requests having the category "documentation", i.e. with the parameter
- * page=documentation
+ * Controller that handles requests having the category "documentation",
+ * i.e. with the parameter page=doc
  *
  * @author  Valentine Rech de Laval
- * @version Bgee 14, June 2018
+ * @version Bgee 14, Aug. 2018
  * @since   Bgee 13, Mar. 2015
  */
 public class CommandDocumentation extends CommandParent {
@@ -56,12 +56,12 @@ public class CommandDocumentation extends CommandParent {
         } else if (this.requestParameters.getAction().equals(
                 RequestParameters.ACTION_DOC_PROC_EXPR_VALUE_DOWLOAD_FILES)) {
             display.displayRefExprDownloadFileDocumentation();
-        } else if (this.requestParameters.getAction().equals(
-                RequestParameters.ACTION_DOC_TOP_ANAT)) {
+        } else if (this.requestParameters.getAction().equals(RequestParameters.ACTION_DOC_TOP_ANAT)) {
             display.displayTopAnatDocumentation();
-        } else if (this.requestParameters.getAction().equals(
-                RequestParameters.ACTION_DOC_DATA_SETS)) {
+        } else if (this.requestParameters.getAction().equals(RequestParameters.ACTION_DOC_DATA_SETS)) {
             display.displayDataSets();
+        } else if (this.requestParameters.getAction().equals(RequestParameters.ACTION_DOC_FAQ)) {
+            display.displayFaq();
         } else {
             throw log.throwing(new PageNotFoundException("Incorrect " + 
                 this.requestParameters.getUrlParametersInstance().getParamAction() + 

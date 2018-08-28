@@ -12,7 +12,7 @@ import org.bgee.controller.RequestParameters;
  * in the URL is 'about'.
  *
  * @author 	Valentine Rech de Laval
- * @version Bgee 14, June 2018
+ * @version Bgee 14, Aug. 2018
  * @since   Bgee 13, Mar. 2015
  */
 public class FakeAboutDisplay  extends FakeParentDisplay implements AboutDisplay {
@@ -26,10 +26,4 @@ public class FakeAboutDisplay  extends FakeParentDisplay implements AboutDisplay
     public void displayAboutPage() {
         this.out.println("Test page displayAboutPage() is good !");
     }
-
-    @Override
-    public void displayPrivacyPolicy() {
-        this.out.println("Test page displayPrivacyPolicy() is good !");
-    }
-
 }

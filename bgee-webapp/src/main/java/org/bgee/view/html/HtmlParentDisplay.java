@@ -340,8 +340,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("</nav>"); // close bgee_footer nev
 
         RequestParameters urlPrivacyPolicy = this.getNewRequestParameters();
-        urlPrivacyPolicy.setPage(RequestParameters.PAGE_ABOUT);
-        urlPrivacyPolicy.setAction(RequestParameters.ACTION_ABOUT_PRIVACY_POLICY);
+        urlPrivacyPolicy.setPage(RequestParameters.PAGE_PRIVACY_POLICY);
 
         this.writeln("<div class='privacy-panel'>");
         this.writeln("    <p class='privacy-panel_info'>We'd like to inform you that we have updated our " +
@@ -394,6 +393,10 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         urlDocTopAnat.setPage(RequestParameters.PAGE_DOCUMENTATION);
         urlDocTopAnat.setAction(RequestParameters.ACTION_DOC_TOP_ANAT);
         
+        RequestParameters urlFaq = this.getNewRequestParameters();
+        urlFaq.setPage(RequestParameters.PAGE_DOCUMENTATION);
+        urlFaq.setAction(RequestParameters.ACTION_DOC_FAQ);
+
         RequestParameters urlBgeeSources = this.getNewRequestParameters();
         urlBgeeSources.setPage(RequestParameters.PAGE_SOURCE);
 
@@ -401,11 +404,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         urlAbout.setPage(RequestParameters.PAGE_ABOUT);
 
         RequestParameters urlPrivacyPolicy = this.getNewRequestParameters();
-        urlPrivacyPolicy.setPage(RequestParameters.PAGE_ABOUT);
-        urlPrivacyPolicy.setAction(RequestParameters.ACTION_ABOUT_PRIVACY_POLICY);
-
-        RequestParameters urlFaq = this.getNewRequestParameters();
-        urlFaq.setPage(RequestParameters.PAGE_FAQ);
+        urlPrivacyPolicy.setPage(RequestParameters.PAGE_PRIVACY_POLICY);
         
         // Navigation bar
         StringBuilder navbar = new StringBuilder();

@@ -91,7 +91,7 @@ public class FrontController extends HttpServlet {
 
     /**
      * Default constructor. It will use default implementations for all dependencies 
-     * (see {@link #FrontController(BgeeProperties, URLParameters, Supplier, ViewFactoryProvider, MailSender)}).
+     * (see {@link #FrontController(BgeeProperties, URLParameters, JobService, UserService, Supplier, ViewFactoryProvider, MailSender)}).
      */
     public FrontController() {
         this(null);
@@ -100,7 +100,7 @@ public class FrontController extends HttpServlet {
     /**
      * Constructor that takes as parameter a {@code java.util.Properties} to create 
      * a {@code BgeeProperties} instance. It will use default implementations for all dependencies 
-     * (see {@link #FrontController(BgeeProperties, URLParameters, Supplier, ViewFactoryProvider, MailSender)}).
+     * (see {@link #FrontController(BgeeProperties, URLParameters, JobService, UserService, Supplier, ViewFactoryProvider, MailSender)}).
      * 
      * @param prop  A {@code java.util.Properties} that will be use to create an instance of
      *              {@code BgeeProperties}
@@ -230,6 +230,8 @@ public class FrontController extends HttpServlet {
                 controller = new CommandDocumentation(response, requestParameters, this.prop, factory);
             } else if (requestParameters.isAnAboutPageCategory()) {
                 controller = new CommandAbout(response, requestParameters, this.prop, factory);
+            } else if (requestParameters.isAPrivatePolicyPageCategory()) {
+                controller = new CommandPrivacyPolicy(response, requestParameters, this.prop, factory);
             } else if (requestParameters.isATopAnatPageCategory()) {
                 controller = new CommandTopAnat(response, requestParameters, this.prop, factory, 
                         serviceFactory, this.jobService, user, this.getServletContext(), this.mailSender);
@@ -258,8 +260,6 @@ public class FrontController extends HttpServlet {
                 //TODO: In the future, this should call our Google Monitoring implementation
                 factory.getGeneralDisplay().respondSuccessNoContent();
                 setCookie = false;
-            } else if (requestParameters.isAFaqPageCategory()){
-                controller = new CommandFaq(response, requestParameters, this.prop, factory);
             } else {
                 throw log.throwing(new PageNotFoundException("Request not recognized."));
             }

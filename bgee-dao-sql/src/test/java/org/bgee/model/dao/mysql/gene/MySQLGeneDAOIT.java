@@ -129,10 +129,10 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
     /**
      * Test the select method {@link MySQLGeneDAO#getGenesWithDataBySpeciesIds(Collection)}.
      */
-    @Test
+//    @Test
     //TODO: implement
-    public void shouldGetGenesWithDataBySpeciesIds() throws SQLException {
-    }
+//    public void shouldGetGenesWithDataBySpeciesIds() throws SQLException {
+//    }
 
     /**
      * Test the select method {@link MySQLGeneDAO#getGenesByIds(Collection)}.

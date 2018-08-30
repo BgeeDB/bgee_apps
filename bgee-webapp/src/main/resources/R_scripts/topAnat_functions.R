@@ -288,29 +288,26 @@ setMethod("GOFisherTestUnder", "classicCount",
 ###################################################################
 # returns a table of over/under expressed terms
 
-makeTable <- function(myData, scores, cutoff, names){
+makeTable <- function(myData, scores, fdrCutoff, pValueCutoff, names){
   fdr <- p.adjust(p=scores, method = "fdr")
-  topTerms <- sort(scores[fdr <= cutoff])
+  topTerms <- sort(scores[fdr <= fdrCutoff])
   topTerms <- as.data.frame(topTerms)
 
   if(nrow(topTerms) != 0){
     odds <- termStat(myData, row.names(topTerms))
-				
     foldEnrichment <- odds[2]/odds[3]
-		
     # Rounding off to 2 decimal places
     foldEnrichment <-format(foldEnrichment,digits=3)
     topTerms<-format(topTerms,digits=3)
     fdr[row.names(topTerms)]<-format(fdr[row.names(topTerms)],digits=3)
-				    
     topTerms <- cbind(odds, foldEnrichment , topTerms, fdr[row.names(topTerms)])
     topTable <- merge(names, topTerms, by.x=0, by.y=0)
     names(topTable) <- c("OrganId", "OrganName", "Annotated", "Significant", "Expected", "foldEnrichment" , "p", "fdr")
+    topTable <- topTable[as.numeric(topTable$p) <= pValueCutoff, ]
     topTable <- topTable[order(as.numeric(topTable$p)), ]
-
-    return(topTable)
+	return(topTable)
   } else{
-    print(paste("There is no significant term with a FDR threshold of ", cutoff, sep=""))
+    print(paste("There is no significant term with a FDR threshold of ", fdrCutoff, sep=""))
     return(NA)
   }
 }

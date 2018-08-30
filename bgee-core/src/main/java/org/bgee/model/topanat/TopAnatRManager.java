@@ -157,7 +157,7 @@ public class TopAnatRManager {
         //code.addRCode("test.stat <- new('elimCount', testStatistic = GOFisherTestUnder, name ='Elim / Fisher test / underrepresentation')");
         //code.addRCode("resFis.under <- getSigGroups(myData, test.stat)");
 
-        code.addRCode("    tableOver <- makeTable(myData,score(resFis), "+this.params.getFdrThreshold() + " , organNames)");
+        code.addRCode("    tableOver <- makeTable(myData,score(resFis), "+this.params.getFdrThreshold() + ", " + this.params.getPvalueThreashold() +" , organNames)");
         //Do NOT sort the table again here. Already sorted by makeTable
 
         code.addRCode("    print(nrow(tableOver))");

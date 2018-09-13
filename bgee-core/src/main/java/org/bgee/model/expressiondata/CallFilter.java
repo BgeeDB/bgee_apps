@@ -47,6 +47,9 @@ import org.bgee.model.gene.GeneFilter;
 //Note that even if they were OR conditions, they should be used in several queries, 
 //as it is not possible from the DAO to make one query applying a different Set 
 //of CallData filters to different Sets of GeneFilters, ConditionFilters, etc.
+//XXX: Actually, if CallFilters are AND conditions, it might be a problem for multispecies queries:
+//we might want to precisely link some GeneFilters and ConditionFilters, so that the Conditions to use
+//are not the same for each species.
 //***********************
 //Note: update FEB. 2017. We decided to remove the CallData from this class.
 //Because the quality of a call is now computed over all data types, 

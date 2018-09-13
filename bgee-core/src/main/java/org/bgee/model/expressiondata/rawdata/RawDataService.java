@@ -1,6 +1,7 @@
 package org.bgee.model.expressiondata.rawdata;
 
 import java.io.Closeable;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -18,6 +19,7 @@ import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayPartOf
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataExperimentDAO.ExperimentTO;
+import org.bgee.model.gene.GeneFilter;
 
 public class RawDataService extends CommonService {
     private final static Logger log = LogManager.getLogger(RawDataService.class.getName());
@@ -25,6 +27,11 @@ public class RawDataService extends CommonService {
     public RawDataService(ServiceFactory serviceFactory) {
         super(serviceFactory);
         // TODO Auto-generated constructor stub
+    }
+
+    public RawDataLoader getRawDataLoader(Collection<GeneFilter> geneFilters, Collection<RawDataConditionFilter> condFilters) {
+        log.entry(geneFilters, condFilters);
+        return log.exit(new RawDataLoader(geneFilters, condFilters, this));
     }
 
     public abstract class CommonRawDataSpliterator<T, U extends AssayTO<?>, V extends Assay<?>,

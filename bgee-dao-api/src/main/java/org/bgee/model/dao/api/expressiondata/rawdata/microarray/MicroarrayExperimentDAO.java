@@ -3,6 +3,7 @@ package org.bgee.model.dao.api.expressiondata.rawdata.microarray;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
+import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataExperimentDAO.ExperimentTO;
 
@@ -43,7 +44,17 @@ public interface MicroarrayExperimentDAO extends DAO<MicroarrayExperimentDAO.Att
      * @throws DAOException 	If an error occurred when accessing the data source. 
 	 */
 	public MicroarrayExperimentTO getExperimentById(String expId) throws DAOException;
-	
+
+	/**
+     * {@code DAOResultSet} specifics to {@code MicroarrayExperimentTO}s
+     * 
+     * @author  Frederic Bastian
+     * @version Bgee 14, Sept. 2017
+     * @since   Bgee 14, Sept. 2017
+     */
+    public interface MicroarrayExperimentTOResultSet extends DAOResultSet<MicroarrayExperimentTO> {
+    }
+
 	/**
 	 * {@code TransferObject} for Affymetrix {@coe RawDataExperimentTO}.
 	 * 

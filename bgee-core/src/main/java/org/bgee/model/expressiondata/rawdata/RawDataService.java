@@ -1,10 +1,11 @@
 package org.bgee.model.expressiondata.rawdata;
 
 import java.io.Closeable;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.Consumer;
@@ -19,20 +20,11 @@ import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayPartOf
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataExperimentDAO.ExperimentTO;
-import org.bgee.model.gene.GeneFilter;
+import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixProbeset;
 
+//XXX: use Java 9 modules to allow access to loading methods only to RawDataLoader and CountLoaders
 public class RawDataService extends CommonService {
     private final static Logger log = LogManager.getLogger(RawDataService.class.getName());
-
-    public RawDataService(ServiceFactory serviceFactory) {
-        super(serviceFactory);
-        // TODO Auto-generated constructor stub
-    }
-
-    public RawDataLoader getRawDataLoader(Collection<GeneFilter> geneFilters, Collection<RawDataConditionFilter> condFilters) {
-        log.entry(geneFilters, condFilters);
-        return log.exit(new RawDataLoader(geneFilters, condFilters, this));
-    }
 
     public abstract class CommonRawDataSpliterator<T, U extends AssayTO<?>, V extends Assay<?>,
     W extends ExperimentTO<?>, X extends Experiment<?>> extends Spliterators.AbstractSpliterator<T> implements Closeable {
@@ -296,5 +288,26 @@ public class RawDataService extends CommonService {
         log.entry(callSourceTO, assay);
         //TODO
         return log.exit(null);
+    }
+
+
+    public RawDataService(ServiceFactory serviceFactory) {
+        super(serviceFactory);
+        // TODO Auto-generated constructor stub
+    }
+
+    public RawDataLoader getRawDataLoader(RawDataFilter filter) {
+        log.entry(filter);
+        return log.exit(new RawDataLoader(Collections.singleton(filter), this));
+    }
+
+    Stream<AffymetrixProbeset> loadAffymetrixProbesets(Set<RawDataFilter> filters) {
+        log.entry(filters);
+        if (filters == null || filters.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("A RawDataFilter must be provided"));
+        }
+        if (filters.contains(null)) {
+            throw log.throwing(new IllegalArgumentException("No RawDataFilter can be null"));
+        }
     }
 }

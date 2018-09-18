@@ -53,6 +53,12 @@ public class ConditionFilter extends BaseConditionFilter<Condition> {
     public ConditionFilter(Collection<String> anatEntityIds, Collection<String> devStageIds,
             Boolean observedConditions) throws IllegalArgumentException {
         super(anatEntityIds, devStageIds);
+        if ((anatEntityIds == null || anatEntityIds.isEmpty()) &&
+                (devStageIds == null || devStageIds.isEmpty()) &&
+                observedConditions == null) {
+            throw log.throwing(new IllegalArgumentException("Some anatatomical entity IDs"
+                + " or developmental stage IDs or observed data status must be provided."));
+        }
         this.observedConditions = observedConditions;
     }
 

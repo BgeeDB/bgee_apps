@@ -41,11 +41,6 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
      */
     public BaseConditionFilter(Collection<String> anatEntityIds, Collection<String> devStageIds)
             throws IllegalArgumentException {
-        if ((anatEntityIds == null || anatEntityIds.isEmpty()) && 
-                (devStageIds == null || devStageIds.isEmpty())) {
-            throw log.throwing(new IllegalArgumentException(
-                    "Some anatatomical entity IDs or developmental stage IDs must be provided."));
-        }
         this.anatEntityIds = Collections.unmodifiableSet(anatEntityIds == null ? 
                 new HashSet<>(): new HashSet<>(anatEntityIds));
         this.devStageIds = Collections.unmodifiableSet(devStageIds == null? 

@@ -80,7 +80,7 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
         if (obj == null) {
             return false;
         }
-        if (getClass() != obj.getClass()) {
+        if (!(obj instanceof BaseConditionFilter)) {
             return false;
         }
         BaseConditionFilter<?> other = (BaseConditionFilter<?>) obj;

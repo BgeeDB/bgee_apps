@@ -77,6 +77,7 @@ public abstract class DataFilter<T extends BaseConditionFilter<?>> {
         return conditionFilters;
     }
 
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -93,7 +94,7 @@ public abstract class DataFilter<T extends BaseConditionFilter<?>> {
         if (obj == null) {
             return false;
         }
-        if (getClass() != obj.getClass()) {
+        if (!(obj instanceof DataFilter)) {
             return false;
         }
         DataFilter<?> other = (DataFilter<?>) obj;

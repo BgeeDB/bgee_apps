@@ -153,7 +153,7 @@ public abstract class BaseCondition<T extends BaseCondition<?>> implements Compa
         if (obj == null) {
             return false;
         }
-        if (getClass() != obj.getClass()) {
+        if (!(obj instanceof BaseCondition)) {
             return false;
         }
         BaseCondition<?> other = (BaseCondition<?>) obj;

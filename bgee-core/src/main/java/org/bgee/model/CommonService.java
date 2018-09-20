@@ -1,5 +1,14 @@
 package org.bgee.model;
 
+import java.util.AbstractMap;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.anatdev.AnatEntity;
@@ -8,11 +17,15 @@ import org.bgee.model.anatdev.TaxonConstraint;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
+import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneFilter;
+import org.bgee.model.gene.GeneNotFoundException;
 import org.bgee.model.species.Species;
+import org.bgee.model.species.SpeciesService;
 
 /**
  * Parent class of several {@code Service}s needing to access common methods. 
@@ -160,5 +173,146 @@ public class CommonService extends Service {
         default:
             throw log.throwing(new IllegalStateException("Unsupported SourceToSpeciesTO.DataType: " + dt));
         }
+    }
+
+    /**
+     * Load a {@code Species} {@code Map} from the provided {@code GeneFilter}s, retrieved from the data source.
+     *
+     * @param geneFilters       A {@code Set} of {@code GeneFilter}s containing the IDs of the {@code Species} to load.
+     * @param speciesService    A {@code SpeciesService} to load {@code Species} from their IDs.
+     * @return                  An unmodifiable {@code Map} where keys are species IDs, the associated value being
+     *                          the corresponding {@code Species}.
+     * @throws IllegalArgumentException If a {@code Species} could not be retrieved based on a ID
+     *                                  provided in {@code geneFilter}s.
+     */
+    protected static Map<Integer, Species> loadSpeciesMapFromGeneFilters(Set<GeneFilter> geneFilters,
+            SpeciesService speciesService) throws IllegalArgumentException {
+        log.entry(geneFilters, speciesService);
+     // Retrieve species, get a map species ID -> Species
+        final Set<Integer> clnSpeIds =  Collections.unmodifiableSet(
+                geneFilters.stream().map(f -> f.getSpeciesId())
+                .collect(Collectors.toSet()));
+        final Map<Integer, Species> speciesMap = Collections.unmodifiableMap(
+                speciesService.loadSpeciesMap(clnSpeIds, false));
+        if (speciesMap.size() != clnSpeIds.size()) {
+            throw new IllegalArgumentException("Some provided species not found in data source");
+        }
+        return log.exit(speciesMap);
+    }
+
+    /**
+     * Load a {@code Gene} {@code Map} from the provided {@code GeneFilter}s, retrieved from the data source.
+     * 
+     * @param geneFilters   A {@code Set} of {@code GeneFilter}s specifying the {@code Gene}s to retrieve
+     *                      from the data source.
+     * @param speciesMap    A {@code Map} where keys are species IDs, the associated value being
+     *                      the corresponding {@code Species}.
+     * @param geneDAO       A {@code GeneDAO} to query the data source for gene information.
+     * @return              An unmodifiable {@code Map} where keys are Bgee internal gene IDs, the associated value being
+     *                      the corresponding {@code Gene}.
+     * @throws GeneNotFoundException    If some requested genes could not be found.
+     * @see #loadSpeciesMapFromGeneFilters(Set, SpeciesService)
+     */
+    protected static Map<Integer, Gene> loadGeneMapFromGeneFilters(Set<GeneFilter> geneFilters,
+            Map<Integer, Species> speciesMap, GeneDAO geneDAO) throws GeneNotFoundException {
+        log.entry(geneFilters, speciesMap, geneDAO);
+
+        final Map<Integer, Set<String>> requestedSpeToGeneIdsMap = Collections.unmodifiableMap(
+                geneFilters.stream()
+                .collect(Collectors.toMap(gf -> gf.getSpeciesId(), gf -> gf.getEnsemblGeneIds())));
+
+        //Make the DAO query and map GeneTOs to Genes. Store them in a Map to keep the bgeeGeneIds.
+        final Map<Integer, Gene> geneMap = Collections.unmodifiableMap(geneDAO
+                .getGenesBySpeciesAndGeneIds(requestedSpeToGeneIdsMap)
+                .stream()
+                .collect(Collectors.toMap(
+                        gTO -> gTO.getId(),
+                        gTO -> mapGeneTOToGene(gTO,
+                                Optional.ofNullable(speciesMap.get(gTO.getSpeciesId()))
+                                .orElseThrow(() -> new IllegalStateException("Missing species ID for gene")))
+                        )));
+
+        //check that we get all specifically requested genes.
+        //First, build a Map Species ID -> Ensembl gene IDs for the retrieved genes.
+        final Map<Integer, Set<String>> retrievedSpeToGeneIdsMap = Collections.unmodifiableMap(
+                geneMap.values().stream()
+                .collect(Collectors.toMap(g -> g.getSpecies().getId(),
+                        g -> Stream.of(g.getEnsemblGeneId()).collect(Collectors.toSet()),
+                        (s1, s2) -> {s1.addAll(s2); return s1;})));
+        //now, check that we found all requested genes.
+        Map<Integer, Set<String>> notFoundSpeToGeneIdsMap = requestedSpeToGeneIdsMap.entrySet().stream()
+                .map(e -> {
+                    Set<String> retrievedGeneIds = retrievedSpeToGeneIdsMap.get(e.getKey());
+                    if (e.getValue().isEmpty()) {
+                        //if no genes for the requested species, the whole species is offending
+                        if (retrievedGeneIds == null || retrievedGeneIds.isEmpty()) {
+                            return e;
+                        }
+                        //otherwise, it's OK, we found some genes for that species
+                        return null;
+                    }
+                    //Now, if some specific IDs were requested, check we got all of them
+                    if (e.getValue().equals(retrievedGeneIds)) {
+                        return null;
+                    }
+                    Set<String> offendingGeneIds = e.getValue().stream()
+                            .filter(id -> !retrievedGeneIds.contains(id))
+                            .collect(Collectors.toSet());
+                    return new AbstractMap.SimpleEntry<>(e.getKey(), offendingGeneIds);
+                })
+                .filter(e -> e != null)
+                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+        if (!notFoundSpeToGeneIdsMap.isEmpty()) {
+            throw log.throwing(new GeneNotFoundException(notFoundSpeToGeneIdsMap));
+        }
+
+        return log.exit(geneMap);
+    }
+
+    //TODO: javadoc
+    protected static Entry<Set<Integer>, Set<Integer>> convertGeneFiltersToBgeeGeneIdsAndSpeciesIds(Set<GeneFilter> geneFilters,
+            Map<Integer, Gene> geneMap) {
+        
+        final Map<Integer, Set<String>> requestedSpeToGeneIdsMap = Collections.unmodifiableMap(
+                geneFilters.stream()
+                .collect(Collectors.toMap(gf -> gf.getSpeciesId(), gf -> gf.getEnsemblGeneIds())));
+        //To create the CallDAOFilter, it is important to provide a species ID only if it means:
+        //give me calls for all genes in that species. Otherwise, if specific genes are targeted,
+        //only their bgee Gene IDs should be provided, and without their corresponding species ID.
+        //
+        //Note: if several GeneFilters are provided in a CallFilter, they are seen as OR condition,
+        //so we should be good. And there is even a check in CallFilter to prevent a user to provide
+        //a same species ID in different GeneFilters, so it's not possible to create a non-sense query.
+        //
+        //OK, so we need to provide either bgeeGeneIds if specific genes were requested,
+        //or species IDs if all genes of a species were requested, but not both.
+
+        //BUG FIX: we used to do simply: 'geneIdFilter = geneMap.keySet();'. But actually,
+        //if only a species ID was provided in a GeneFilter, all genes from this species would be present
+        //in the geneMap (see method 'loadGeneMap'). So we need to retrieve bgeeGeneIds only corresponding to
+        //specific genes requested.
+        //First, if specific genes were requested, to identify them faster in the geneMap,
+        //from the GeneFilters we create a Map<speciesId, Set<geneId>> for requested genes
+        Set<Integer> geneIdFilter = null;
+        if (geneFilters.stream().anyMatch(gf -> !gf.getEnsemblGeneIds().isEmpty())) {
+            //now we retrieve the appropriate Bgee gene IDs
+            geneIdFilter = geneMap.entrySet().stream()
+                    .filter(entry -> {
+                        Set<String> speReqGeneIds = requestedSpeToGeneIdsMap.get(entry.getValue().getSpecies().getId());
+                        if (speReqGeneIds == null || speReqGeneIds.isEmpty()) return false;
+                        return speReqGeneIds.contains(entry.getValue().getEnsemblGeneId());
+                    })
+                    .map(entry -> entry.getKey())
+                    .collect(Collectors.toSet());
+
+        }
+        //Identify the species IDs for which no gene IDs were specifically requested.
+        //It is needed to provide the species ID only if no specific genes are requested for that species.
+        Set<Integer> speciesIds = geneFilters.stream()
+                .filter(gf -> gf.getEnsemblGeneIds().isEmpty())
+                .map(gf -> gf.getSpeciesId())
+                .collect(Collectors.toSet());
+
+        return log.exit(new AbstractMap.SimpleEntry<>(geneIdFilter, speciesIds));
     }
 }

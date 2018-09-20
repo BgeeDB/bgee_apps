@@ -16,6 +16,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.CommonService;
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataConditionFilter;
+import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayPartOfExpTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO;
@@ -288,6 +290,23 @@ public class RawDataService extends CommonService {
         log.entry(callSourceTO, assay);
         //TODO
         return log.exit(null);
+    }
+
+    private static DAORawDataFilter convertRawDataFilterToDAORawDataFilter(RawDataFilter rawDataFilter) {
+        log.entry(rawDataFilter);
+        if (rawDataFilter == null) {
+            return log.exit(null);
+        }
+        
+    }
+    private static DAORawDataConditionFilter convertRawDataConditionFilterToDAORawDataConditionFilter(
+            RawDataConditionFilter condFilter) {
+        log.entry(condFilter);
+        if (condFilter == null) {
+            return log.exit(null);
+        }
+        return log.exit(new DAORawDataConditionFilter(condFilter.getAnatEntityIds(), condFilter.getDevStageIds(),
+                condFilter.getIncludeSubConditions()));
     }
 
 

@@ -1,10 +1,14 @@
 package org.bgee.model.dao.api.expressiondata.rawdata.microarray;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 
 import org.bgee.model.dao.api.DAO;
+import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO.DetectionFlag;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO.ExclusionReason;
@@ -16,7 +20,7 @@ import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSo
  * 
  * @author Frederic Bastian
  * @author Valentine Rech de Laval
- * @version Bgee 14
+ * @version Bgee 14 Sept. 2018
  * @see AffymetrixProbesetTO
  * @since Bgee 01
  */
@@ -40,6 +44,35 @@ public interface AffymetrixProbesetDAO extends DAO<AffymetrixProbesetDAO.Attribu
     public enum Attribute implements DAO.Attribute {
         ID, BGEE_AFFYMETRIX_CHIP_ID, BGEE_GENE_ID, NORMALIZED_SIGNAL_INTENSITY, DETECTION_FLAG, 
         AFFYMETRIX_DATA, REASON_FOR_EXCLUSION, RANK, EXPRESSION_ID;
+    }
+
+    /**
+     * Allows to retrieve {@code AffymetrixProbesetTO}s according to the provided filters,
+     * ordered by microarray experiment IDs and bgee Affymetrix chip IDs and bgee gene IDs and probeset IDs.
+     * <p>
+     * The {@code AffymetrixProbesetTO}s are retrieved and returned as a {@code AffymetrixProbesetTOResultSet}. 
+     * It is the responsibility of the caller to close this {@code DAOResultSet} once results 
+     * are retrieved.
+     *
+     * @param filters          A {@code Collection} of {@code DAORawDataFilter}s allowing to specify
+     *                         which probesets to retrieve.
+     * @param attributes       A {@code Collection} of {@code Attribute}s to specify the information to retrieve
+     *                         from the data source.
+     * @return                 A {@code AffymetrixProbesetTOResultSet} allowing to retrieve the targeted
+     *                         {@code AffymetrixProbesetTO}s.
+     * @throws DAOException    If an error occurred while accessing the data source.
+     */
+    public AffymetrixProbesetTOResultSet getAffymetrixProbesets(Collection<DAORawDataFilter> filters,
+            Collection<Attribute> attributes) throws DAOException;
+
+    /**
+     * {@code DAOResultSet} for {@code AffymetrixProbesetTO}s
+     * 
+     * @author  Frederic Bastian
+     * @version Bgee 14, Sept. 2018
+     * @since   Bgee 14, Sept. 2018
+     */
+    public interface AffymetrixProbesetTOResultSet extends DAOResultSet<AffymetrixProbesetTO> {
     }
 
 	/**

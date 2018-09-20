@@ -1,13 +1,16 @@
 package org.bgee.model.dao.api.expressiondata.rawdata.microarray;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
+import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAnnotatedTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayPartOfExpTO;
 
@@ -16,7 +19,7 @@ import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayPartOf
  * 
  * @author Frederic Bastian
  * @author Valentine Rech de Laval
- * @version Bgee 13
+ * @version Bgee 14 Sept. 2018
  * @since Bgee 01
  */
 public interface AffymetrixChipDAO extends DAO<AffymetrixChipDAO.Attribute> {
@@ -49,21 +52,51 @@ public interface AffymetrixChipDAO extends DAO<AffymetrixChipDAO.Attribute> {
      * the Affymetrix chip, with the Bgee chip ID {@code bgeeAffymetrixChipId}, 
      * {@code null} if no corresponding chip was found.  
      * 
-     * @param bgeeAffymetrixChipId	 	A {@code String} representing the ID 
-     * 									in the Bgee database of the Affymetrix chip 
+     * @param bgeeAffymetrixChipId	 	A {@code String} representing the ID in the Bgee database of the Affymetrix chip 
      * 									that needs to be retrieved from the data source. 
-     * @return	An {@code AffymetrixChipTO}, encapsulating all the data 
-     * 			related to the Affymetrix chip, {@code null} if none could be found. 
-     * @throws DAOException 	If an error occurred when accessing the data source.
+     * @param attributes                A {@code Collection} of {@code Attribute}s to specify the information to retrieve
+     *                                  from the data source.
+     * @return	                        An {@code AffymetrixChipTO}, encapsulating all the data 
+     * 			                        related to the Affymetrix chip, {@code null} if none could be found. 
+     * @throws DAOException 	        If an error occurred when accessing the data source.
      */
-    public AffymetrixChipTO getAffymetrixChipById(String bgeeAffymetrixChipId) 
+    public AffymetrixChipTO getAffymetrixChipById(String bgeeAffymetrixChipId, Collection<Attribute> attributes) 
             throws DAOException;
+
+    /**
+     * Allows to retrieve {@code AffymetrixChipTO}s according to the provided filters,
+     * ordered by microarray experiment IDs and bgee Affymetrix chip IDs.
+     * <p>
+     * The {@code AffymetrixChipTO}s are retrieved and returned as a {@code AffymetrixChipTOResultSet}. 
+     * It is the responsibility of the caller to close this {@code DAOResultSet} once results 
+     * are retrieved.
+     *
+     * @param filters          A {@code Collection} of {@code DAORawDataFilter}s allowing to specify
+     *                         which chips to retrieve.
+     * @param attributes       A {@code Collection} of {@code Attribute}s to specify the information to retrieve
+     *                         from the data source.
+     * @return                 A {@code AffymetrixChipTOResultSet} allowing to retrieve the targeted
+     *                         {@code AffymetrixChipTO}s.
+     * @throws DAOException    If an error occurred while accessing the data source.
+     */
+    public AffymetrixChipTOResultSet getAffymetrixChips(Collection<DAORawDataFilter> filters,
+            Collection<Attribute> attributes) throws DAOException;
+
+    /**
+     * {@code DAOResultSet} for {@code AffymetrixChipTO}s
+     * 
+     * @author  Frederic Bastian
+     * @version Bgee 14, Sept. 2018
+     * @since   Bgee 14, Sept. 2018
+     */
+    public interface AffymetrixChipTOResultSet extends DAOResultSet<AffymetrixChipTO> {
+    }
 
     /**
      * {@code TransferObject} for Affymetrix chips.
      * 
      * @author Frederic Bastian
-     * @version Bgee 14
+     * @version Bgee 14 Sept. 2018
      * @since Bgee 11
      */
     public final class AffymetrixChipTO extends EntityTO<Integer> implements AssayPartOfExpTO<Integer, String>, RawDataAnnotatedTO {

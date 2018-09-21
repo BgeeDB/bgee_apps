@@ -335,7 +335,7 @@ public class CallService extends CommonService {
         log.entry(speciesId, callFilter);
         throw log.throwing(new UnsupportedOperationException("Load of diff. expression calls not implemented yet"));
     }
-    
+
     //*************************************************************************
     // METHODS PERFORMING THE QUERIES TO THE DAOs
     //*************************************************************************

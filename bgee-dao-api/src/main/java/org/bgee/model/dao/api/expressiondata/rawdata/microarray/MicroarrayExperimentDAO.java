@@ -39,13 +39,14 @@ public interface MicroarrayExperimentDAO extends DAO<MicroarrayExperimentDAO.Att
 	 * 
 	 * @param expId            A {@code String} representing the ID of the Affymetrix experiment to retrieve
 	 *                         from the data source.
-     * @param attributes       A {@code Collection} of {@code Attribute}s to specify the information to retrieve
-     *                         from the data source.
+     * @param attributes       A {@code Collection} of {@code Attribute}s to specify the information
+     *                         to retrieve from the data source.
 	 * @return	               A {@code AffymetrixExpTO}, encapsulating all the data related to
 	 *                         the Affymetrix experiment, {@code null} if none could be found.
      * @throws DAOException    If an error occurred when accessing the data source. 
 	 */
-	public MicroarrayExperimentTO getExperimentById(String expId, Collection<Attribute> attributes) throws DAOException;
+	public MicroarrayExperimentTO getExperimentById(String expId, Collection<Attribute> attributes)
+	        throws DAOException;
 
 	/**
 	 * Allows to retrieve {@code MicroarrayExperimentTO}s according to the provided filters,

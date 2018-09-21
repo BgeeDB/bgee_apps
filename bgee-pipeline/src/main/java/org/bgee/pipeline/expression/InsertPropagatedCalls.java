@@ -971,8 +971,7 @@ public class InsertPropagatedCalls extends CallService {
             
             //now we insert the conditions
             Set<ConditionTO> condTOs = newConds.entrySet().stream()
-                    //there is no exprMappedConditionId for global propagated conditions
-                    .map(e -> mapConditionToConditionTO(e.getValue(), null, e.getKey()))
+                    .map(e -> mapConditionToConditionTO(e.getValue(), e.getKey()))
                     .collect(Collectors.toSet());
             if (!condTOs.isEmpty()) {
                 condDAO.insertGlobalConditions(condTOs);

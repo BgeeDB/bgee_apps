@@ -16,6 +16,7 @@ import org.bgee.model.dao.api.anatdev.mapping.RawSimilarityAnnotationDAO.RawSimi
 import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO.GroupToStageTO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SimAnnotToAnatEntityTO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO;
+import org.bgee.model.dao.api.expressiondata.BaseConditionTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.GlobalConditionMaxRankTO;
@@ -26,6 +27,7 @@ import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpre
 import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO.RawExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataExperimentDAO.ExperimentTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO.ESTTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO.ESTLibraryTO;
@@ -144,6 +146,8 @@ public class TOComparator {
             return log.exit(areTOsEqual((RelationTO<?>) to1, (RelationTO<?>) to2, compareId));
         } else if (to1 instanceof ConditionTO) {
             return log.exit(areTOsEqual((ConditionTO) to1, (ConditionTO) to2, compareId));
+        } else if (to1 instanceof RawDataConditionTO) {
+            return log.exit(areTOsEqual((RawDataConditionTO) to1, (RawDataConditionTO) to2, compareId));
         } else if (to1 instanceof GlobalConditionMaxRankTO) {
             return log.exit(areTOsEqual((GlobalConditionMaxRankTO) to1, (GlobalConditionMaxRankTO) to2));
         } else if (to1 instanceof RawExpressionCallTO) {
@@ -684,14 +688,40 @@ public class TOComparator {
         return log.exit(false);
     }
     /**
+     * Method to compare two {@code BaseConditionTO}s, to check for complete equality of each
+     * attribute.
+     * <p>
+     * If {@code compareId} is {@code false}, the value returned by the method {@code getId}
+     * will not be used for comparison.
+     *
+     * @param to1       A {@code BaseConditionTO} to be compared to {@code to2}.
+     * @param to2       A {@code BaseConditionTO} to be compared to {@code to1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be
+     *                  used for comparisons.
+     * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
+     */
+    private static boolean areTOsEqual(BaseConditionTO to1, BaseConditionTO to2, boolean compareId) {
+        log.entry(to1, to2, compareId);
+
+        if (TOComparator.areEntityTOsEqual(to1, to2, compareId) &&
+                StringUtils.equals(to1.getAnatEntityId(), to2.getAnatEntityId()) &&
+                StringUtils.equals(to1.getStageId(), to2.getStageId()) &&
+                Objects.equals(to1.getSex(), to2.getSex()) &&
+                StringUtils.equals(to1.getStrain(), to2.getStrain()) &&
+                Objects.equals(to1.getSpeciesId(), to2.getSpeciesId())) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    /**
      * Method to compare two {@code ConditionTO}s, to check for complete equality of each
      * attribute. 
      * <p>
      * If {@code compareId} is {@code false}, the value returned by the method {@code getId} 
      * will not be used for comparison.
      * 
-     * @param to1       An {@code ConditionTO} to be compared to {@code to2}.
-     * @param to2       An {@code ConditionTO} to be compared to {@code to1}.
+     * @param to1       A {@code ConditionTO} to be compared to {@code to2}.
+     * @param to2       A {@code ConditionTO} to be compared to {@code to1}.
      * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
      *                  used for comparisons. 
      * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
@@ -699,11 +729,30 @@ public class TOComparator {
     private static boolean areTOsEqual(ConditionTO to1, ConditionTO to2, boolean compareId) {
         log.entry(to1, to2, compareId);
 
-        if ((!compareId || Objects.equals(to1.getId(), to2.getId())) && 
-                Objects.equals(to1.getExprMappedConditionId(), to2.getExprMappedConditionId()) &&
-                StringUtils.equals(to1.getAnatEntityId(), to2.getAnatEntityId()) && 
-                StringUtils.equals(to1.getStageId(), to2.getStageId()) && 
-                Objects.equals(to1.getSpeciesId(), to2.getSpeciesId())) {
+        if (areTOsEqual((BaseConditionTO) to1, (BaseConditionTO) to2, compareId)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    /**
+     * Method to compare two {@code RawDataConditionTO}s, to check for complete equality of each
+     * attribute.
+     * <p>
+     * If {@code compareId} is {@code false}, the value returned by the method {@code getId}
+     * will not be used for comparison.
+     *
+     * @param to1       A {@code RawDataConditionTO} to be compared to {@code to2}.
+     * @param to2       A {@code RawDataConditionTO} to be compared to {@code to1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
+     *                  used for comparisons.
+     * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
+     */
+    private static boolean areTOsEqual(RawDataConditionTO to1, RawDataConditionTO to2, boolean compareId) {
+        log.entry(to1, to2, compareId);
+
+        if (areTOsEqual((BaseConditionTO) to1, (BaseConditionTO) to2, compareId) &&
+                Objects.equals(to1.getSexInferred(), to2.getSexInferred()) &&
+                Objects.equals(to1.getExprMappedConditionId(), to2.getExprMappedConditionId())) {
             return log.exit(true);
         }
         return log.exit(false);

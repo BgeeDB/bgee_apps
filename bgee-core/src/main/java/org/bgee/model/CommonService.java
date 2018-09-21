@@ -111,12 +111,10 @@ public class CommonService extends Service {
         }
         return log.exit(new Condition(anatEntity, devStage, species));
     }
-    protected static ConditionTO mapConditionToConditionTO(int condId, Integer exprMappedCondId,
-            Condition cond) {
-        log.entry(condId, exprMappedCondId, cond);
-                
-        return log.exit(new ConditionTO(condId, exprMappedCondId, 
-                cond.getAnatEntityId(), cond.getDevStageId(), cond.getSpeciesId()));
+    protected static ConditionTO mapConditionToConditionTO(int condId, Condition cond) {
+        log.entry(condId, cond);
+        return log.exit(new ConditionTO(condId, cond.getAnatEntityId(), cond.getDevStageId(),
+                cond.getSpeciesId()));
     }
     
     /**

@@ -17,9 +17,11 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTO;
 import org.bgee.model.dao.api.anatdev.StageDAO.StageTO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
+import org.bgee.model.dao.api.expressiondata.BaseConditionTO.Sex;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTO;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.ComparisonFactor;
@@ -399,18 +401,52 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreConditionTOsEqual() {
-        ConditionTO to1 = new ConditionTO(1, 2, "anatEntityId1", "stageId1", 99);
-        ConditionTO to2 = new ConditionTO(1, 2, "anatEntityId1", "stageId1", 99);
+        ConditionTO to1 = new ConditionTO(1, "anatEntityId1", "stageId1", 99);
+        ConditionTO to2 = new ConditionTO(1, "anatEntityId1", "stageId1", 99);
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
-        to2 = new ConditionTO(1, 2, "anatEntityId1", "stageId1", 8);
+        to2 = new ConditionTO(1, "anatEntityId1", "stageId1", 8);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         
-        to2 = new ConditionTO(1, 2, "anatEntityId2", "stageId1", 99);
+        to2 = new ConditionTO(1, "anatEntityId2", "stageId1", 99);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         
-        to2 = new ConditionTO(86, 2, "anatEntityId1", "stageId1", 99);
+        to2 = new ConditionTO(86, "anatEntityId1", "stageId1", 99);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+    }
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)}
+     * using {@code RawDataConditionTO}s.
+     */
+    @Test
+    public void testAreRawDataConditionTOsEqual() {
+        RawDataConditionTO to1 = new RawDataConditionTO(1, 2, "anatEntityId1", "stageId1",
+                Sex.FEMALE, false, "strain1", 99);
+        RawDataConditionTO to2 = new RawDataConditionTO(1, 2, "anatEntityId1", "stageId1",
+                Sex.FEMALE, false, "strain1", 99);
+        assertTrue(TOComparator.areTOsEqual(to1, to2, true));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+
+        to2 = new RawDataConditionTO(1, 10, "anatEntityId1", "stageId1",
+                Sex.FEMALE, false, "strain1", 99);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+
+        to2 = new RawDataConditionTO(1, 2, "anatEntityId1", "stageId1",
+                Sex.MALE, false, "strain1", 99);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+
+        to2 = new RawDataConditionTO(1, 2, "anatEntityId1", "stageId1",
+                Sex.FEMALE, true, "strain1", 99);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+
+        to2 = new RawDataConditionTO(1, 2, "anatEntityId1", "stageId1",
+                Sex.FEMALE, false, "strain2", 99);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+
+        to2 = new RawDataConditionTO(50, 2, "anatEntityId1", "stageId1",
+                Sex.FEMALE, false, "strain1", 99);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
     }

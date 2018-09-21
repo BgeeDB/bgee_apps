@@ -1,14 +1,19 @@
 package org.bgee.model.expressiondata.rawdata;
 
 import java.io.Closeable;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.logging.log4j.Level;
@@ -22,7 +27,12 @@ import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayPartOf
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataExperimentDAO.ExperimentTO;
+import org.bgee.model.dao.api.gene.GeneDAO;
+import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixProbeset;
+import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneFilter;
+import org.bgee.model.species.Species;
 
 //XXX: use Java 9 modules to allow access to loading methods only to RawDataLoader and CountLoaders
 public class RawDataService extends CommonService {
@@ -292,12 +302,21 @@ public class RawDataService extends CommonService {
         return log.exit(null);
     }
 
-    private static DAORawDataFilter convertRawDataFilterToDAORawDataFilter(RawDataFilter rawDataFilter) {
-        log.entry(rawDataFilter);
+    private static DAORawDataFilter convertRawDataFilterToDAORawDataFilter(RawDataFilter rawDataFilter,
+            Map<Integer, Gene> geneMap) {
+        log.entry(rawDataFilter, geneMap);
         if (rawDataFilter == null) {
             return log.exit(null);
         }
-        
+        Entry<Set<Integer>, Set<Integer>> geneIdsSpeciesIdsForDAOs =
+                convertGeneFiltersToBgeeGeneIdsAndSpeciesIds(rawDataFilter.getGeneFilters(), geneMap);
+        return log.exit(new DAORawDataFilter(
+                geneIdsSpeciesIdsForDAOs.getKey(), geneIdsSpeciesIdsForDAOs.getValue(),
+
+                rawDataFilter.getConditionFilters().stream()
+                    .map(cf -> convertRawDataConditionFilterToDAORawDataConditionFilter(cf))
+                    .collect(Collectors.toSet())
+                ));
     }
     private static DAORawDataConditionFilter convertRawDataConditionFilterToDAORawDataConditionFilter(
             RawDataConditionFilter condFilter) {
@@ -306,18 +325,42 @@ public class RawDataService extends CommonService {
             return log.exit(null);
         }
         return log.exit(new DAORawDataConditionFilter(condFilter.getAnatEntityIds(), condFilter.getDevStageIds(),
-                condFilter.getIncludeSubConditions()));
+                condFilter.getIncludeSubConditions(), condFilter.getIncludeParentConditions()));
     }
 
+    private final GeneDAO geneDAO;
 
     public RawDataService(ServiceFactory serviceFactory) {
         super(serviceFactory);
-        // TODO Auto-generated constructor stub
+        this.geneDAO = this.getDaoManager().getGeneDAO();
     }
 
     public RawDataLoader getRawDataLoader(RawDataFilter filter) {
         log.entry(filter);
-        return log.exit(new RawDataLoader(Collections.singleton(filter), this));
+        return log.exit(this.getRawDataLoader(Collections.singleton(filter)));
+    }
+    private RawDataLoader getRawDataLoader(Collection<RawDataFilter> filters) {
+        log.entry(filters);
+        if (filters == null || filters.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("A RawDataFilter must be provided"));
+        }
+        if (filters.contains(null)) {
+            throw log.throwing(new IllegalArgumentException("No RawDataFilter can be null"));
+        }
+        final Set<RawDataFilter> clonedFilters = Collections.unmodifiableSet(new HashSet<>(filters));
+
+        //we prepare the info the Loader will need when calling its various "load" methods.
+        final Set<GeneFilter> geneFilters = Collections.unmodifiableSet(clonedFilters.stream()
+                .flatMap(f -> f.getGeneFilters().stream())
+                .collect(Collectors.toSet()));
+        final Map<Integer, Species> speciesMap = loadSpeciesMapFromGeneFilters(geneFilters,
+                this.getServiceFactory().getSpeciesService());
+        final Map<Integer, Gene> geneMap = loadGeneMapFromGeneFilters(geneFilters, speciesMap, this.geneDAO);
+        Set<DAORawDataFilter> daoRawDataFilters = Collections.unmodifiableSet(clonedFilters.stream()
+                .map(f -> convertRawDataFilterToDAORawDataFilter(f, geneMap))
+                .collect(Collectors.toSet()));
+
+        return log.exit(new RawDataLoader(clonedFilters, this));
     }
 
     Stream<AffymetrixProbeset> loadAffymetrixProbesets(Set<RawDataFilter> filters) {
@@ -328,5 +371,15 @@ public class RawDataService extends CommonService {
         if (filters.contains(null)) {
             throw log.throwing(new IllegalArgumentException("No RawDataFilter can be null"));
         }
+
+        
+    }
+
+
+    //*************************************************************************
+    // METHODS PERFORMING THE QUERIES TO THE DAOs
+    //*************************************************************************
+    private Map<Integer, RawDataCondition> loadRawDataConditionMap(Collection<Species> species) {
+        
     }
 }

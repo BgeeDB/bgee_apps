@@ -3,20 +3,35 @@ package org.bgee.model.expressiondata.rawdata;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixProbeset;
+import org.bgee.model.gene.Gene;
 
 public class RawDataLoader {
     private final static Logger log = LogManager.getLogger(RawDataLoader.class.getName());
 
     private final Set<RawDataFilter> rawDataFilters;
-    private final RawDataService rawDataService;
 
-    RawDataLoader(Collection<RawDataFilter> rawDataFilters, RawDataService rawDataService) {
+    //attributes needed for making the necessary queries
+    private final RawDataService rawDataService;
+    /**
+     * A {@code Set} of {@code DAORawDataFilter}s corresponding to the conversion
+     * of the {@code RawDataFilter}s in {@link #rawDataFilters};
+     */
+    private final Set<DAORawDataFilter> daoRawDataFilters;
+    /**
+     * A {@code Map} where keys are {@code Integer}s corresponding to Bgee internal gene IDs,
+     * the associated value being the corresponding {@code Gene}.
+     */
+    private final Map<Integer, Gene> geneMap;
+
+    RawDataLoader(Set<RawDataFilter> rawDataFilters, RawDataService rawDataService) {
         if (rawDataFilters == null || rawDataFilters.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("At least one RawDataFilter must be provided"));
         }

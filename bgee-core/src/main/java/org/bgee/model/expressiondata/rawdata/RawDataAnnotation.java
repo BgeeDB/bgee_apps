@@ -30,4 +30,20 @@ public class RawDataAnnotation {
         this.annotationSource = annotationSource;
         this.annotationDate = annotationDate;
     }
+
+    public RawDataCondition getRawDataCondition() {
+        return rawDataCondition;
+    }
+
+    public String getCurator() {
+        return curator;
+    }
+
+    public Source getAnnotationSource() {
+        return annotationSource;
+    }
+
+    public String getAnnotationDate() {
+        return annotationDate;
+    }
 }

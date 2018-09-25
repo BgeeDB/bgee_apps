@@ -49,8 +49,8 @@ import org.bgee.model.expressiondata.baseelements.SummaryQuality;
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, Mar. 2017
- * @since   Bgee 13 Nov. 2014
+ * @version Bgee 14, Aug. 2018
+ * @since   Bgee 13, Nov. 2014
  * @see URLParameters.Parameter
  * @see	RequestParameters
  */
@@ -316,6 +316,13 @@ public class URLParameters {
      */
     private static final Parameter<String> DEV_STAGE = new Parameter<String>("stage_id",
             true, false, null, true, DEFAULT_IS_SECURE, 
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+    /**
+     * A {@code Parameter<String>} that contains the anatomical entities to be used.
+     * Corresponds to the URL parameter "stage_id".
+     */
+    private static final Parameter<String> ANAT_ENTITY = new Parameter<>("anat_entity_id",
+            true, false, null, true, DEFAULT_IS_SECURE,
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
     /**
      * A {@code Parameter<String>} that contains the decorrelation type to be used 
@@ -701,6 +708,13 @@ public class URLParameters {
      */
     public Parameter<String> getParamDevStage() {
         return DEV_STAGE;
+    }
+    /**
+     * @return  A {@code Parameter<String>} defining an anatomical entity.
+     *          Corresponds to the URL parameter "anat_entity".
+     */
+    public Parameter<String> getParamAnatEntity() {
+        return ANAT_ENTITY;
     }
     /**
      * @return  A {@code Parameter<String>} defining a decorrelation type.

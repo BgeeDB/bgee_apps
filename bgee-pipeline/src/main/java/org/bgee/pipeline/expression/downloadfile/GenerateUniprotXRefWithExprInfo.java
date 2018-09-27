@@ -191,7 +191,8 @@ public class GenerateUniprotXRefWithExprInfo {
             // Create String representation of the XRef with expression information
             StringBuilder sb = new StringBuilder(" Expressed in ")
                     .append(callsByAnatEntity.size())
-                    .append(" organ(s), highest expression level in ")
+                    .append(" organ").append(callsByAnatEntity.size() > 1? "s": "")
+                    .append(", highest expression level in ")
                     .append(callsByAnatEntity.keySet().iterator().next().getName());
                 return new AbstractMap.SimpleEntry<Gene, String>(gene, sb.toString());
 

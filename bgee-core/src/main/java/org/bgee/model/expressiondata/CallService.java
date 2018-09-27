@@ -58,6 +58,7 @@ import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.gene.GeneNotFoundException;
 import org.bgee.model.species.Species;
@@ -456,7 +457,7 @@ public class CallService extends CommonService {
      * @return                      The {@code LinkedHashMap} containing of {@code List} of 
      *                              {@code ExpressionCall}s grouped by {@code AnatEntity}
      */
-    public LinkedHashMap<AnatEntity, List<ExpressionCall>> groupByAnatEntAndFilterCalls(
+    private LinkedHashMap<AnatEntity, List<ExpressionCall>> groupByAnatEntAndFilterCalls(
             List<ExpressionCall> orderedCalls, Set<ExpressionCall> redundantCalls, 
             boolean filterRedundantCalls) {
         log.entry(orderedCalls, redundantCalls, filterRedundantCalls);
@@ -597,6 +598,7 @@ public class CallService extends CommonService {
         final Map<Integer, Set<String>> requestedSpeToGeneIdsMap = Collections.unmodifiableMap(
                 callFilter.getGeneFilters().stream()
                 .collect(Collectors.toMap(gf -> gf.getSpeciesId(), gf -> gf.getEnsemblGeneIds())));
+        final Map<Integer, GeneBioType> geneBioTypeMap = Collections.unmodifiableMap(loadGeneBioTypeMap(this.geneDAO));
 
         //Make the DAO query and map GeneTOs to Genes. Store them in a Map to keep the bgeeGeneIds.
         final Map<Integer, Gene> geneMap = Collections.unmodifiableMap(this.geneDAO
@@ -606,7 +608,9 @@ public class CallService extends CommonService {
                         gTO -> gTO.getId(),
                         gTO -> mapGeneTOToGene(gTO,
                                 Optional.ofNullable(speciesMap.get(gTO.getSpeciesId()))
-                                .orElseThrow(() -> new IllegalStateException("Missing species ID for gene")))
+                                .orElseThrow(() -> new IllegalStateException("Missing species ID for gene")),
+                                Optional.ofNullable(geneBioTypeMap.get(gTO.getGeneBioTypeId()))
+                                .orElseThrow(() -> new IllegalStateException("Missing gene biotype ID for gene")))
                         )));
 
         //check that we get all specifically requested genes.

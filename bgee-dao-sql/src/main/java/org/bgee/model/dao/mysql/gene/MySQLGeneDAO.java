@@ -26,10 +26,12 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 
 /**
  * A {@code GeneDAO} for MySQL.
- * 
+ *
  * @author Valentine Rech de Laval
- * @version Bgee 13
+ * @author Frederic Bastian
+ * @version Bgee 14 Sep. 2018
  * @see org.bgee.model.dao.api.gene.GeneDAO.GeneTO
+ * @see org.bgee.model.dao.api.gene.GeneDAO.GeneBioTypeTO
  * @since Bgee 13
  */
 public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO {
@@ -287,6 +289,20 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         }
     }
 
+    public GeneBioTypeTOResultSet getGeneBioTypes() {
+        log.entry();
+
+        String sql = "SELECT * FROM geneBioType";
+        // we don't use a try-with-resource, because we return a pointer to the results,
+        // not the actual results, so we should not close this BgeePreparedStatement.
+        try {
+            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
+            return log.exit(new MySQLGeneBioTypeTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+
     // ***************************************************************************
     // METHODS NOT PART OF THE bgee-dao-api, USED BY THE PIPELINE AND NOT MEANT
     // TO BE EXPOSED TO THE PUBLIC API.
@@ -531,6 +547,52 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
             // Set GeneTO
             return log.exit(new GeneTO(id, geneId, geneName, geneDescription, speciesId, geneBioTypeId, OMAParentNodeId,
                     ensemblGene, geneMappedToGeneIdCount));
+        }
+    }
+
+    /**
+     * A {@code MySQLDAOResultSet} specific to {@code GeneBioTypeTO}.
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 14 Sep. 2018
+     * @since Bgee 14 Sep. 2018
+     */
+    public class MySQLGeneBioTypeTOResultSet extends MySQLDAOResultSet<GeneBioTypeTO> implements GeneBioTypeTOResultSet {
+
+        /**
+         * Delegates to
+         * {@link MySQLDAOResultSet#MySQLDAOResultSet(BgeePreparedStatement)}
+         * super constructor.
+         * 
+         * @param statement     The first {@code BgeePreparedStatement} to execute a query on.
+         */
+        private MySQLGeneBioTypeTOResultSet(BgeePreparedStatement statement) {
+            super(statement);
+        }
+
+        @Override
+        protected GeneBioTypeTO getNewTO() {
+            log.entry();
+            String name = null;
+            Integer id = null;
+            // Get results
+            for (Entry<Integer, String> column : this.getColumnLabels().entrySet()) {
+                try {
+                    if (column.getValue().equals("geneBioTypeId")) {
+                        id = this.getCurrentResultSet().getInt(column.getKey());
+
+                    } else if (column.getValue().equals("geneBioTypeName")) {
+                        name = this.getCurrentResultSet().getString(column.getKey());
+
+                    } else {
+                        throw log.throwing(new UnrecognizedColumnException(column.getValue()));
+                    }
+                } catch (SQLException e) {
+                    throw log.throwing(new DAOException(e));
+                }
+            }
+            // Set GeneBioTypeTO
+            return log.exit(new GeneBioTypeTO(id, name));
         }
     }
 }

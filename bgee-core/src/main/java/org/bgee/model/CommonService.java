@@ -1,5 +1,8 @@
 package org.bgee.model;
 
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.anatdev.AnatEntity;
@@ -8,10 +11,13 @@ import org.bgee.model.anatdev.TaxonConstraint;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
+import org.bgee.model.dao.api.gene.GeneDAO;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneBioTypeTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.species.Species;
 
 /**
@@ -109,25 +115,29 @@ public class CommonService extends Service {
     /**
      * Map {@code GeneTO} to a {@code Gene}.
      * 
-     * @param geneTO    A {@code GeneTO} that is the condition from data source
-     *                  to map into {@code Gene}.
-     * @param species   A {@code Species} that is the species of the gene.
-     * @return          The mapped {@code Gene}.
+     * @param geneTO        A {@code GeneTO} that is the condition from data source
+     *                      to map into {@code Gene}.
+     * @param species       A {@code Species} that is the species of the gene.
+     * @param geneBioType   The {@code GeneBioType} of the {@code Gene}.
+     * @return              The mapped {@code Gene}.
      */
-    protected static Gene mapGeneTOToGene(GeneTO geneTO, Species species) {
-        log.entry(geneTO, species);
+    protected static Gene mapGeneTOToGene(GeneTO geneTO, Species species, GeneBioType geneBioType) {
+        log.entry(geneTO, species, geneBioType);
         if (geneTO == null) {
             return log.exit(null);
         }
         if (species == null) {
             throw log.throwing(new IllegalArgumentException("A Species must be provided."));
         }
+        if (geneBioType == null) {
+            throw log.throwing(new IllegalArgumentException("A GeneBioType must be provided."));
+        }
         if (geneTO.getSpeciesId() != null && !geneTO.getSpeciesId().equals(species.getId())) {
             throw log.throwing(new IllegalArgumentException(
                     "Species ID of the gene does not match provided Species."));
         }
         return log.exit(new Gene(geneTO.getGeneId(), geneTO.getName(), geneTO.getDescription(),
-                species, geneTO.getGeneMappedToGeneIdCount()));
+                species, geneBioType, geneTO.getGeneMappedToGeneIdCount()));
     }
 
     /**
@@ -144,6 +154,16 @@ public class CommonService extends Service {
 
         return log.exit(new TaxonConstraint<T>(
                 taxonConstraintTO.getEntityId(), taxonConstraintTO.getSpeciesId()));
+    }
+
+    protected static Map<Integer, GeneBioType> loadGeneBioTypeMap(GeneDAO geneDAO) {
+        log.entry(geneDAO);
+        return log.exit(geneDAO.getGeneBioTypes()
+                .stream().collect(Collectors.toMap(to -> to.getId(), to -> mapGeneBioTypeTOToGeneBioType(to))));
+    }
+    protected static GeneBioType mapGeneBioTypeTOToGeneBioType(GeneBioTypeTO geneBioTypeTO) {
+        log.entry(geneBioTypeTO);
+        return log.exit(new GeneBioType(geneBioTypeTO.getName()));
     }
 
     protected static DataType convertDaoDataTypeToDataType(DAODataType dt) {

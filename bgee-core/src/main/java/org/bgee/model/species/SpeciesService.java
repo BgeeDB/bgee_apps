@@ -31,7 +31,6 @@ import org.bgee.model.source.Source;
  * @since   Bgee 13, Sept. 2015
  */
 public class SpeciesService extends CommonService {
-    
     private static final Logger log = LogManager.getLogger(SpeciesService.class.getName());
 
     /**

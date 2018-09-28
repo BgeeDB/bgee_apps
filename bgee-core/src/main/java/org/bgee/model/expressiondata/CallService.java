@@ -368,15 +368,6 @@ public class CallService extends CommonService {
         if (geneFilter.getEnsemblGeneIds().size() != 1) {
             throw log.throwing(new IllegalArgumentException("GeneFilter not targeting only one gene"));
         }
-        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = new LinkedHashMap<>();
-        // The ordering is not essential here, because anyway we will need to
-        // order calls
-        // with an equal rank, based on the relations between their conditions,
-        // which is difficult
-        // to make in a query to the data source.
-        // XXX: test if there is a performance difference if we don't use the
-        // order by
-        serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
 
         Map<SummaryCallType.ExpressionSummary, SummaryQuality> silverExpressedCallFilter = new HashMap<>();
         silverExpressedCallFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
@@ -393,14 +384,24 @@ public class CallService extends CommonService {
                                 // XXX: do we need DATA_QUALITY?
                                 CallService.Attribute.DATA_QUALITY, CallService.Attribute.GLOBAL_MEAN_RANK,
                                 CallService.Attribute.EXPERIMENT_COUNTS),
-                        serviceOrdering)
+                        null)
                 .collect(Collectors.toList());
         if (organCalls.isEmpty()) {
             log.debug("No calls for gene {}", geneFilter.getEnsemblGeneIds().iterator().next());
             return log.exit(new LinkedHashMap<>());
         }
+
         Map<SummaryCallType.ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
         summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE);
+        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = new LinkedHashMap<>();
+        // The ordering is not essential here, because anyway we will need to
+        // order calls
+        // with an equal rank, based on the relations between their conditions,
+        // which is difficult
+        // to make in a query to the data source.
+        // XXX: test if there is a performance difference if we don't use the
+        // order by
+        serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
        
         // Load bronze organ-stage calls
         final List<ExpressionCall> organStageCalls = this
@@ -415,14 +416,89 @@ public class CallService extends CommonService {
                                 CallService.Attribute.EXPERIMENT_COUNTS),
                         serviceOrdering)
                 .collect(Collectors.toList());
-        final Set<String> organIds = organCalls.stream().map(c -> c.getCondition().getAnatEntityId())
+        
+        return log.exit(this.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
+                organCalls, organStageCalls, true));
+    }
+
+    /**
+     * Same methods as {@link #loadCondCallsWithSilverAnatEntityCallsByAnatEntity(GeneFilter)}
+     * but with the {@code ExpressionCall}s already retrieved. This is a helper method
+     * for cases where the {@code ExpressionCall}s have already been retrieved
+     * for other purpose. If {@code callsFiltered} is {@code false}, the calls will be filtered
+     * to keep only the {@code organCalls} with "expressed" calls and quality higher than "bronze",
+     * and only the {@code organStageCalls} with "expressed" calls (with any quality).
+     *
+     * @param organCalls        A {@code Collection} of {@code ExpressionCall} with {@code Condition}s
+     *                          considering only the anat. entities. They must contain information
+     *                          of expression state, quality, and rank, otherwise an
+     *                          {@code IllegalArgumentException} is thrown.
+     * @param organStageCalls   A {@code List} of {@code ExpressionCall} with {@code Condition}s
+     *                          considering all parameters, ordered by ranks. They must contain information
+     *                          of expression state, quality, and rank, otherwise an
+     *                          {@code IllegalArgumentException} is thrown.
+     * @param callsFiltered     A {@code Boolean} that should be {@code true} if the calls
+     *                          were already filtered for the appropriate expression status
+     *                          and qualities, {@code false} if the calls need to be filtered.
+     * @return                  The {@code LinkedHashMap} where values correspond to the {@code List} of
+     *                          condition {@code ExpressionCall} and keys correspond to the {@code AnatEntity}
+     * @throws IllegalArgumentException If the {@code ExpressionCall}s do not contain the information
+     *                                  needed when fitering them ({@code callsFiltered} set to {@code false})
+     */
+    public LinkedHashMap<AnatEntity, List<ExpressionCall>>
+    loadCondCallsWithSilverAnatEntityCallsByAnatEntity(Collection<ExpressionCall> organCalls,
+            List<ExpressionCall> conditionCalls, boolean callsFiltered) throws IllegalArgumentException {
+        log.entry(organCalls, conditionCalls, callsFiltered);
+
+        Collection<ExpressionCall> filteredOrganCalls = organCalls;
+        if (!callsFiltered) {
+            filteredOrganCalls = organCalls.stream()
+                .filter(c -> {
+                    if (c.getSummaryCallType() == null) {
+                        throw log.throwing(new IllegalArgumentException(
+                                "The provided calls do not have SummaryCallType"));
+                    }
+                    if (c.getSummaryQuality() == null) {
+                        throw log.throwing(new IllegalArgumentException(
+                                "The provided calls do not have SummaryQuality"));
+                    }
+                    if (c.getGlobalMeanRank() == null) {
+                        throw log.throwing(new IllegalArgumentException(
+                                "The provided calls do not have rank info"));
+                    }
+                    return c.getSummaryCallType().equals(ExpressionSummary.EXPRESSED) &&
+                            !c.getSummaryQuality().equals(SummaryQuality.BRONZE);
+                })
+                .collect(Collectors.toSet());
+        }
+        List<ExpressionCall> filteredConditionCalls = conditionCalls;
+        if (!callsFiltered) {
+            filteredConditionCalls = conditionCalls.stream()
+                    .filter(c -> {
+                        if (c.getSummaryCallType() == null) {
+                            throw log.throwing(new IllegalArgumentException(
+                                    "The provided calls do not have SummaryCallType"));
+                        }
+                        if (c.getSummaryQuality() == null) {
+                            throw log.throwing(new IllegalArgumentException(
+                                    "The provided calls do not have SummaryQuality"));
+                        }
+                        if (c.getGlobalMeanRank() == null) {
+                            throw log.throwing(new IllegalArgumentException(
+                                    "The provided calls do not have rank info"));
+                        }
+                        return c.getSummaryCallType().equals(ExpressionSummary.EXPRESSED);
+                    })
+                    .collect(Collectors.toList());
+        }
+        final Set<String> organIds = filteredOrganCalls.stream().map(c -> c.getCondition().getAnatEntityId())
                 .collect(Collectors.toSet());
         // XXX: why don't we provided the organIds to perform the SQL query,
         // instead of filtering afterwards?
-        List<ExpressionCall> orderedCalls = organStageCalls.stream()
+        List<ExpressionCall> orderedCalls = filteredConditionCalls.stream()
                 .filter(c -> organIds.contains(c.getCondition().getAnatEntityId())).collect(Collectors.toList());
         if (orderedCalls.isEmpty()) {
-            log.debug("No calls for gene {}", geneFilter.getEnsemblGeneIds().iterator().next());
+            log.debug("No condition calls for gene");
             return log.exit(new LinkedHashMap<>());
         }
         
@@ -433,14 +509,14 @@ public class CallService extends CommonService {
         //only by a query to the data source. So, we order them anyway.
         
         //ORGAN-STAGE
-        ConditionGraph organStageGraph = new ConditionGraph(
+        ConditionGraph conditionGraph = new ConditionGraph(
                 orderedCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()), 
                 this.getServiceFactory());
-        orderedCalls = ExpressionCall.filterAndOrderCallsByRank(orderedCalls, organStageGraph);
+        orderedCalls = ExpressionCall.filterAndOrderCallsByRank(orderedCalls, conditionGraph);
         
         //REDUNDANT ORGAN-STAGE CALLS
         final Set<ExpressionCall> redundantCalls = ExpressionCall.identifyRedundantCalls(
-                orderedCalls, organStageGraph);
+                orderedCalls, conditionGraph);
         
         //*********************
         // Grouping

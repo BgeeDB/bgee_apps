@@ -23,6 +23,8 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneBioType;
+import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
 import org.bgee.pipeline.TestAncestor;
@@ -72,7 +74,7 @@ public class GenerateUniprotXRefWithExprInfoTest extends TestAncestor {
        assertTrue(xrefUniprotListLoaded.equals(xrefUniprotListWanted));
         
     }
-    
+
     /**
      * Test {@link GenerateUniprotXRefWithExprInfo#generate}.
      */
@@ -83,10 +85,10 @@ public class GenerateUniprotXRefWithExprInfoTest extends TestAncestor {
         Species sp1 = new Species(9606);
         Species sp2 = new Species(28377);
         
-        Gene g1 = new Gene("ENSG00000141198", sp1);
-        Gene g2 = new Gene("ENSG00000141219", sp1);
-        Gene g3 = new Gene("ENSACAG00000000004", sp2);
-        Gene g4 = new Gene("ENSACAG00000000006", sp2);
+        Gene g1 = new Gene("ENSG00000141198", sp1, new GeneBioType("type1"));
+        Gene g2 = new Gene("ENSG00000141219", sp1, new GeneBioType("type1"));
+        Gene g3 = new Gene("ENSACAG00000000004", sp2, new GeneBioType("type1"));
+        Gene g4 = new Gene("ENSACAG00000000006", sp2, new GeneBioType("type1"));
 
         AnatEntity ae1 = new AnatEntity("anat1", "anat1Name", "anat1Desc");
         AnatEntity ae2 = new AnatEntity("anat2", "anat2Name", "anat2Desc");
@@ -134,10 +136,14 @@ public class GenerateUniprotXRefWithExprInfoTest extends TestAncestor {
 
         // Mock methods
         when(speciesService.loadSpeciesByIds(null, false)).thenReturn(new HashSet<>(Arrays.asList(sp1, sp2)));
-        when(callService.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(g1)).thenReturn(callsGene1);
-        when(callService.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(g2)).thenReturn(callsGene2);
-        when(callService.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(g3)).thenReturn(callsGene3);
-        when(callService.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(g4)).thenReturn(callsGene4);
+        when(callService.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
+                new GeneFilter(g1.getSpecies().getId(), g1.getEnsemblGeneId()))).thenReturn(callsGene1);
+        when(callService.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
+                new GeneFilter(g2.getSpecies().getId(), g2.getEnsemblGeneId()))).thenReturn(callsGene2);
+        when(callService.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
+                new GeneFilter(g3.getSpecies().getId(), g3.getEnsemblGeneId()))).thenReturn(callsGene3);
+        when(callService.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
+                new GeneFilter(g4.getSpecies().getId(), g4.getEnsemblGeneId()))).thenReturn(callsGene4);
         
         String outputFile = testFolder.newFile("XRefBgee.tsv").getPath();
         
@@ -151,13 +157,15 @@ public class GenerateUniprotXRefWithExprInfoTest extends TestAncestor {
         assertTrue("File not created: " + outputFile, new File(outputFile).exists());
         
         List <String> fileLinesExpected = Arrays.asList(
-                "H9G367   DR   Bgee; ENSACAG00000000004; Expressed in 1 organ(s), highest expression level in anat3Name",
-                "I3L367   DR   Bgee; ENSG00000141198; Expressed in 5 organ(s), highest expression level in anat1Name",
-                "I3L1T2   DR   Bgee; ENSG00000141198; Expressed in 5 organ(s), highest expression level in anat1Name",
-                "Q15615   DR   Bgee; ENSG00000141219; Expressed in 4 organ(s), highest expression level in anat5Name");
+                "H9G367   DR   Bgee; ENSACAG00000000004; Expressed in 1 organ, highest expression level in anat3Name",
+                "I3L367   DR   Bgee; ENSG00000141198; Expressed in 5 organs, highest expression level in anat1Name",
+                "I3L1T2   DR   Bgee; ENSG00000141198; Expressed in 5 organs, highest expression level in anat1Name",
+                "Q15615   DR   Bgee; ENSG00000141219; Expressed in 4 organs, highest expression level in anat5Name");
         
         List <String> fileLines = Files.lines(Paths.get(outputFile)).collect(Collectors.toList());
-        assertTrue("The file does not contains expected lines" + outputFile, fileLinesExpected.equals(fileLines));
+        assertTrue("The file does not contains expected lines, expected:" + System.lineSeparator()
+                + fileLinesExpected + ", but was:" + System.lineSeparator() + fileLines,
+                fileLinesExpected.equals(fileLines));
 
     }
 }

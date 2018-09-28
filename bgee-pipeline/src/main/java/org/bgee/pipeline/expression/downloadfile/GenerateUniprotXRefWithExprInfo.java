@@ -25,8 +25,7 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallService;
-import org.bgee.model.gene.Gene;
-import org.bgee.model.species.Species;
+import org.bgee.model.gene.GeneFilter;
 import org.supercsv.cellprocessor.ParseInt;
 import org.supercsv.cellprocessor.constraint.NotNull;
 import org.supercsv.cellprocessor.ift.CellProcessor;
@@ -163,29 +162,20 @@ public class GenerateUniprotXRefWithExprInfo {
         
         Instant start = Instant.now();
         
-        // map used to retrieve Species corresponding to a speciesId
-        ServiceFactory serviceFactory = serviceFactorySupplier.get();
-        Map<Integer, Species> speciesByIds = serviceFactory.getSpeciesService().loadSpeciesByIds(null, false)
-                .stream().collect(Collectors.toMap(s -> s.getId(), s -> s));
-        
-        // retrieve all geneIds
-        Set<Gene> allGenes = xrefList.stream()
-                .map(xref -> new Gene(xref.getEnsemblId(), speciesByIds.get(xref.getSpeciesId())))
-                .collect(Collectors.toSet());
-        
         //retrieve expression information for each genes
-        Map<Gene, String> expressionInfoByGene = allGenes.parallelStream().map(gene -> {
+        Map<XrefUniprotBean, String> expressionInfoByGene = xrefList.parallelStream().map(xref -> {
             // Retrieve expression calls
             ServiceFactory threadSpeServiceFactory = serviceFactorySupplier.get();
             CallService callService = threadSpeServiceFactory.getCallService();
             LinkedHashMap<AnatEntity, List<ExpressionCall>> callsByAnatEntity = callService
-                    .loadCondCallsWithSilverAnatEntityCallsByAnatEntity(gene);
+                    .loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
+                            new GeneFilter(xref.getSpeciesId(), xref.getEnsemblId()));
             
             // If no expression for this gene in Bgee
             if (callsByAnatEntity == null || callsByAnatEntity.isEmpty()) {
-                log.info("No expression data for gene " + gene.getEnsemblGeneId());
+                log.info("No expression data for gene " + xref.getEnsemblId());
                 // Add null expression information for this gene
-                return new AbstractMap.SimpleEntry<Gene, String>(gene, null);
+                return new AbstractMap.SimpleEntry<XrefUniprotBean, String>(xref, null);
             }
             
             // Create String representation of the XRef with expression information
@@ -194,18 +184,17 @@ public class GenerateUniprotXRefWithExprInfo {
                     .append(" organ").append(callsByAnatEntity.size() > 1? "s": "")
                     .append(", highest expression level in ")
                     .append(callsByAnatEntity.keySet().iterator().next().getName());
-                return new AbstractMap.SimpleEntry<Gene, String>(gene, sb.toString());
+                return new AbstractMap.SimpleEntry<XrefUniprotBean, String>(xref, sb.toString());
 
         }).filter(e -> e.getValue() != null)
         .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
         
         Instant end = Instant.now();
-        log.debug("Time needed to retrieve expressionSummary of {} genes is {} hours", allGenes.size(),
+        log.debug("Time needed to retrieve expressionSummary of {} genes is {} hours", xrefList.size(),
                 Duration.between(start, end).toHours());
         
         return log.exit(xrefList.parallelStream().map( xref -> {
-            String expressionInfo = expressionInfoByGene.get(new Gene(xref.getEnsemblId(), 
-                    speciesByIds.get(xref.getSpeciesId())));
+            String expressionInfo = expressionInfoByGene.get(xref);
             if (expressionInfo == null) {
                 return new AbstractMap.SimpleEntry<String, String>(xref.getEnsemblId(), null);
             }

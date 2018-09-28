@@ -14,8 +14,8 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.Call.ExpressionCall.ClusteringMethod;
-import org.bgee.model.expressiondata.ConditionGraph;
 import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneFilter;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.ViewFactory;
 
@@ -209,7 +209,8 @@ public class CommandGene extends CommandParent {
         //retrieve calls with silver quality for one anat. entity and at least bronze quality
         //for the same anat. entity and a dev. stage
         LinkedHashMap<AnatEntity, List<ExpressionCall>> callsByAnatEntity = serviceFactory.getCallService()
-                .loadCondCallsWithSilverAnatEntityCallsByAnatEntity(gene);
+                .loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
+                        new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId()));
         if (callsByAnatEntity == null || callsByAnatEntity.isEmpty()) {
             log.debug("No calls for gene {}", gene.getEnsemblGeneId());
              return log.exit(new GeneResponse(gene, true, callsByAnatEntity, 

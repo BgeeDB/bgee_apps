@@ -348,19 +348,26 @@ public class CallService extends CommonService {
     
     /**
      * Load {@code ExpressionCall}s with {@code Condition} having both an {@code AnatEntity} and a {@code DevStage}
-     * grouped by AnatEntity for one {@code Gene}.
+     * grouped by AnatEntity for one {@code Gene}. The {@code GeneFilter} provided as argument
+     * must target only one gene, otherwise an {@code IllegalArgumentException} is thrown.
      * Retrieve only {@code ExpressionCall}s that have at least a SILVER {@code SummaryQuality} for a given
      * {@code AnatEntity} AND at least a BRONZE {@code SummaryQuality} for the same {@code AnatEntity}
      * and a {@code DevStage}.
      * These {@code ExpressionCall}s are filtered and ordered by rank using 
      * {@link ExpressionCall#filterAndOrderCallsByRank(Collection, ConditionGraph)}
      * 
-     * @param gene      A {@code Gene} for which {@code ExpressionCall}s have to be retrieved
-     * @return          The {@code LinkedHashMap} where values correspond to the {@code List} of
-     *                  {@code ExpressionCall} and keys correspond to the {@code AnatEntity}
+     * @param geneFilter    A {@code GeneFilter} targeting a <strong>single gene</strong>
+     *                      for which {@code ExpressionCall}s have to be retrieved
+     * @return              The {@code LinkedHashMap} where values correspond to the {@code List} of
+     *                      {@code ExpressionCall} and keys correspond to the {@code AnatEntity}
+     * @throws IllegalArgumentException If {@code geneFilter} targets not one and only one gene.
      */
-    public LinkedHashMap<AnatEntity, List<ExpressionCall>> loadCondCallsWithSilverAnatEntityCallsByAnatEntity(Gene gene) {
-        log.entry(gene);
+    public LinkedHashMap<AnatEntity, List<ExpressionCall>>
+    loadCondCallsWithSilverAnatEntityCallsByAnatEntity(GeneFilter geneFilter) throws IllegalArgumentException {
+        log.entry(geneFilter);
+        if (geneFilter.getEnsemblGeneIds().size() != 1) {
+            throw log.throwing(new IllegalArgumentException("GeneFilter not targeting only one gene"));
+        }
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = new LinkedHashMap<>();
         // The ordering is not essential here, because anyway we will need to
         // order calls
@@ -380,8 +387,7 @@ public class CallService extends CommonService {
         List<ExpressionCall> organCalls = this
                 .loadExpressionCalls(
                         new ExpressionCallFilter(silverExpressedCallFilter,
-                                Collections
-                                        .singleton(new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId())),
+                                Collections.singleton(geneFilter),
                                 null, null, obsDataFilter, null, null),
                         EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
                                 // XXX: do we need DATA_QUALITY?
@@ -390,7 +396,7 @@ public class CallService extends CommonService {
                         serviceOrdering)
                 .collect(Collectors.toList());
         if (organCalls.isEmpty()) {
-            log.debug("No calls for gene {}", gene.getEnsemblGeneId());
+            log.debug("No calls for gene {}", geneFilter.getEnsemblGeneIds().iterator().next());
             return log.exit(new LinkedHashMap<>());
         }
         Map<SummaryCallType.ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
@@ -400,8 +406,7 @@ public class CallService extends CommonService {
         final List<ExpressionCall> organStageCalls = this
                 .loadExpressionCalls(
                         new ExpressionCallFilter(summaryCallTypeQualityFilter,
-                                Collections
-                                        .singleton(new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId())),
+                                Collections.singleton(geneFilter),
                                 null, null, obsDataFilter, null, null),
                         EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
                                 CallService.Attribute.DEV_STAGE_ID,
@@ -417,7 +422,7 @@ public class CallService extends CommonService {
         List<ExpressionCall> orderedCalls = organStageCalls.stream()
                 .filter(c -> organIds.contains(c.getCondition().getAnatEntityId())).collect(Collectors.toList());
         if (orderedCalls.isEmpty()) {
-            log.debug("No calls for gene {}", gene.getEnsemblGeneId());
+            log.debug("No calls for gene {}", geneFilter.getEnsemblGeneIds().iterator().next());
             return log.exit(new LinkedHashMap<>());
         }
         

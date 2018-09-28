@@ -476,7 +476,13 @@ public class CallService extends CommonService {
                 //discard if all calls of an anat. entity are redundant
                 .filter(entry -> !filterRedundantCalls || !redundantCalls.containsAll(entry.getValue()))
                 //reconstruct the LinkedHashMap
-                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(), 
+                .collect(
+                        //Type inference hint needed, this code was compiling fine in Eclipse,
+                        //not with maven... See for instance
+                        //https://stackoverflow.com/questions/48135796/java-8-inferred-type-does-not-conform-to-upper-bounds-on-netbean-ide
+                        Collectors.<Entry<AnatEntity, List<ExpressionCall>>, AnatEntity,
+                        List<ExpressionCall>, LinkedHashMap<AnatEntity, List<ExpressionCall>>>
+                        toMap(e -> e.getKey(), e -> e.getValue(),
                         (l1, l2) -> {
                             throw log.throwing(new AssertionError("Not possible to have key collision"));
                         }, 

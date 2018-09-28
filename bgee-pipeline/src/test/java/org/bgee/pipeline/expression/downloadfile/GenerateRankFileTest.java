@@ -49,6 +49,7 @@ import org.bgee.model.expressiondata.baseelements.PropagationState;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.gene.GeneService;
 import org.bgee.model.ontology.Ontology;
@@ -107,9 +108,9 @@ public class GenerateRankFileTest extends TestAncestor {
         Condition cond4 = new Condition(anatEntity2, null, spe2);
         Condition cond5 = new Condition(anatEntity2, devStage1, spe2);
 
-        Gene gene1 = new Gene("gene1", spe1);
-        Gene gene2 = new Gene("gene2", spe1);
-        Gene gene3 = new Gene("gene3", "gene3Name", null, spe2, 1);
+        Gene gene1 = new Gene("gene1", spe1, new GeneBioType("type1"));
+        Gene gene2 = new Gene("gene2", spe1, new GeneBioType("type1"));
+        Gene gene3 = new Gene("gene3", "gene3Name", null, spe2, new GeneBioType("type1"), 1);
         
       //conditions1 and 2 spe1 gene1
         ExpressionCall c1 = new ExpressionCall(gene1, cond1, new DataPropagation(), 

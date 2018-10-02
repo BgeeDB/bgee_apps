@@ -381,9 +381,9 @@ public class CallService extends CommonService {
                                 Collections.singleton(geneFilter),
                                 null, null, obsDataFilter, null, null),
                         EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
-                                // XXX: do we need DATA_QUALITY?
-                                CallService.Attribute.DATA_QUALITY, CallService.Attribute.GLOBAL_MEAN_RANK,
-                                CallService.Attribute.EXPERIMENT_COUNTS),
+                                // We don't need the rank here, because we use the min rank of the conditions
+                                // for each anat. entity, rather than the mean rank for the anat. entity
+                                CallService.Attribute.DATA_QUALITY),
                         null)
                 .collect(Collectors.toList());
         if (organCalls.isEmpty()) {
@@ -411,9 +411,7 @@ public class CallService extends CommonService {
                                 null, null, obsDataFilter, null, null),
                         EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
                                 CallService.Attribute.DEV_STAGE_ID,
-                                // XXX: do we need DATA_QUALITY?
-                                CallService.Attribute.DATA_QUALITY, CallService.Attribute.GLOBAL_MEAN_RANK,
-                                CallService.Attribute.EXPERIMENT_COUNTS),
+                                CallService.Attribute.DATA_QUALITY, CallService.Attribute.GLOBAL_MEAN_RANK),
                         serviceOrdering)
                 .collect(Collectors.toList());
         
@@ -462,10 +460,6 @@ public class CallService extends CommonService {
                         throw log.throwing(new IllegalArgumentException(
                                 "The provided calls do not have SummaryQuality"));
                     }
-                    if (c.getGlobalMeanRank() == null) {
-                        throw log.throwing(new IllegalArgumentException(
-                                "The provided calls do not have rank info"));
-                    }
                     return c.getSummaryCallType().equals(ExpressionSummary.EXPRESSED) &&
                             !c.getSummaryQuality().equals(SummaryQuality.BRONZE);
                 })
@@ -479,10 +473,6 @@ public class CallService extends CommonService {
                             throw log.throwing(new IllegalArgumentException(
                                     "The provided calls do not have SummaryCallType"));
                         }
-                        if (c.getSummaryQuality() == null) {
-                            throw log.throwing(new IllegalArgumentException(
-                                    "The provided calls do not have SummaryQuality"));
-                        }
                         if (c.getGlobalMeanRank() == null) {
                             throw log.throwing(new IllegalArgumentException(
                                     "The provided calls do not have rank info"));
@@ -493,8 +483,8 @@ public class CallService extends CommonService {
         }
         final Set<String> organIds = filteredOrganCalls.stream().map(c -> c.getCondition().getAnatEntityId())
                 .collect(Collectors.toSet());
-        // XXX: why don't we provided the organIds to perform the SQL query,
-        // instead of filtering afterwards?
+        // XXX: maybe refactor the code differently to have the organIds to perform the SQL query
+        // retrieving the condition calls
         List<ExpressionCall> orderedCalls = filteredConditionCalls.stream()
                 .filter(c -> organIds.contains(c.getCondition().getAnatEntityId())).collect(Collectors.toList());
         if (orderedCalls.isEmpty()) {
@@ -526,7 +516,6 @@ public class CallService extends CommonService {
         return log.exit(callsByAnatEntity);
     }
 
-    //XXX Maybe we should move this method to ExpressionCall
     /**
      * Remove redundant calls from a {@code List} of {@code ExpressionCall}s and retrieve 
      * a {@code LinkedHashMap} where keys correspond to {@code AnatEntity}s 

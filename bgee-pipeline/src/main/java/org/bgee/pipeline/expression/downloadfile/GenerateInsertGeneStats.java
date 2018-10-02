@@ -35,8 +35,8 @@ import org.bgee.model.species.Species;
  * @version Bgee 14 Sep. 2018
  * @since Bgee 14 Sep. 2018
  */
-public class GenerateGeneStats {
-    private final static Logger log = LogManager.getLogger(GenerateGeneStats.class.getName());
+public class GenerateInsertGeneStats {
+    private final static Logger log = LogManager.getLogger(GenerateInsertGeneStats.class.getName());
 
     public static class GeneStatsBean {
         private String geneId;
@@ -363,7 +363,7 @@ public class GenerateGeneStats {
     /**
      * Default constructor. 
      */
-    public GenerateGeneStats() {
+    public GenerateInsertGeneStats() {
         this(ServiceFactory::new);
     }
     /**
@@ -373,7 +373,7 @@ public class GenerateGeneStats {
      * @param serviceFactorySupplier        A {@code Supplier} of {@code ServiceFactory}s 
      *                                      to be able to provide one to each thread.
      */
-    public GenerateGeneStats(Supplier<ServiceFactory> serviceFactorySupplier) {
+    public GenerateInsertGeneStats(Supplier<ServiceFactory> serviceFactorySupplier) {
         this.serviceFactorySupplier = serviceFactorySupplier;
     }
 
@@ -393,7 +393,7 @@ public class GenerateGeneStats {
             throw log.throwing(new IllegalArgumentException("Incorrect number of arguments."));
         }
 
-        GenerateGeneStats statsGenerator = new GenerateGeneStats();
+        GenerateInsertGeneStats statsGenerator = new GenerateInsertGeneStats();
         statsGenerator.generate(args[0], args[1], args[2]);
         
         log.exit();

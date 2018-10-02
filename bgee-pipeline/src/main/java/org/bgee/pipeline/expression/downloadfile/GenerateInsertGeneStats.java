@@ -454,9 +454,7 @@ public class GenerateInsertGeneStats {
                                     Collections.singleton(geneFilter),
                                     null, null, obsDataFilter, null, null),
                             EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID,
-                                    // XXX: do we need DATA_QUALITY?
-                                    CallService.Attribute.DATA_QUALITY, CallService.Attribute.GLOBAL_MEAN_RANK,
-                                    CallService.Attribute.EXPERIMENT_COUNTS),
+                                    CallService.Attribute.DATA_QUALITY),
                             null)
                     .collect(Collectors.toSet());
 
@@ -466,10 +464,8 @@ public class GenerateInsertGeneStats {
             EnumSet<CallService.Attribute> attrs = Arrays.stream(CallService.Attribute.values())
                     .filter(a -> a.isConditionParameter())
                     .collect(Collectors.toCollection(() -> EnumSet.noneOf(CallService.Attribute.class)));
-            // XXX: do we need DATA_QUALITY?
             attrs.add(CallService.Attribute.DATA_QUALITY);
             attrs.add(CallService.Attribute.GLOBAL_MEAN_RANK);
-            attrs.add(CallService.Attribute.EXPERIMENT_COUNTS);
             List<ExpressionCall> conditionCalls = callService
                     .loadExpressionCalls(
                             new ExpressionCallFilter(null,
@@ -536,6 +532,12 @@ public class GenerateInsertGeneStats {
                 }
             }
 
+            //TODO: manage in all this method cases where there is no calls
+            //generate GeneBioTypeStatsBean: add info for each biotype of number of genes, number of genes with data,
+            //number of genes with PRESENT condition calls (any quality), number with ABSENT condition calls (any quality),
+            //total number of condition calls PRESENT * each quality, condition calls ABSENT * each quality.
+            //insert the GeneBioTypeStatsTO into database
+            //generate files for genes and for biotypes
             bean.setFilteredGenePagePresentAnatEntity(callService
                     .loadCondCallsWithSilverAnatEntityCallsByAnatEntity(organCalls, conditionCalls, false)
                     .size());

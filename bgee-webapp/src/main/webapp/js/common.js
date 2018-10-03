@@ -72,5 +72,69 @@ $(document).ready(function() {
     $( "a[target=_blank]:not(:has(img))" ).not($( "#bgee-menu a" )).each(function() {
     	$( this ).addClass("external_link");
     });
-    
+
+    // Check cookie for privacy notice banner
+    checkCookie();
 });
+
+// Getter/setter for cookies from https://www.w3schools.com/js/js_cookies.asp
+var noticeVersion = 1; // Update this integer if privacy notice updated and needs to be re-validated by the user!
+function checkCookie() {
+    var urlPrivacyPolicy = new requestParameters();
+    urlPrivacyPolicy.addValue(urlParameters.getParamPage(), urlPrivacyPolicy.PAGE_PRIVACY_POLICY());
+    
+    var cookieName = "bgee-privacy-policy";
+    var isPrivacyChecked = getCookie(cookieName);
+    
+    var toDisplay = true;
+    if (isPrivacyChecked === "") {
+        // Unseen notice
+        $('#bgee_privacy_banner_text').html("This website requires cookies, and the limited " +
+            "processing of your personal data in order to function. By using the site " +
+            "you are agreeing to this as outlined in our " +
+            "<a href='" + urlPrivacyPolicy.getRequestURL() + "'>privacy notice</a>.");
+    } else if (isPrivacyChecked < noticeVersion) {
+        // Updated notice
+        $('#bgee_privacy_banner_text').html("We'd like to inform you that we have updated our " +
+            "<a href='" + urlPrivacyPolicy.getRequestURL() + "'>privacy notice</a>.");
+    } else {
+        // Seen and last notice
+        toDisplay = false;
+    }
+    displayPrivacyBanner(cookieName, toDisplay);
+}
+
+function getCookie(cookieName) {
+    var name = cookieName + "=";
+    var decodedCookie = decodeURIComponent(document.cookie);
+    var ca = decodedCookie.split(";");
+    for (var i = 0; i < ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == " ") {
+            c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+        }
+    }
+    return "";
+}
+
+function setCookie(cookieName, cookieVersion) {
+    var d = new Date();
+    d.setTime(d.getTime() + (365*24*60*60*1000)); // 1 year
+    var expires = "expires="+ d.toUTCString();
+    document.cookie = cookieName + "=" + cookieVersion + ";" + expires + ";path=/;Secure";//Add Secure in https (prod)
+}
+
+function displayPrivacyBanner(cookieName, toDisplay) {
+    if (toDisplay) {
+        $('#bgee_privacy_banner').show();
+        $('#bgee_privacy_banner_accept').click(function() {
+            setCookie(cookieName, noticeVersion);
+            $('#bgee_privacy_banner').hide();
+        });
+    } else {
+        $('#bgee_privacy_banner').hide();
+    }
+}

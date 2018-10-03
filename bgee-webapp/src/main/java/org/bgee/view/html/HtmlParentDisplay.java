@@ -339,16 +339,10 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("</div>"); // close container
         this.writeln("</nav>"); // close bgee_footer nev
 
-        RequestParameters urlPrivacyPolicy = this.getNewRequestParameters();
-        urlPrivacyPolicy.setPage(RequestParameters.PAGE_PRIVACY_POLICY);
-
-        this.writeln("<div class='privacy-panel'>");
-        this.writeln("    <p class='privacy-panel_info'>We'd like to inform you that we have updated our " +
-                "             <a href='" + urlPrivacyPolicy.getRequestURL() + "'>privacy notice</a> " +
-                "             to comply with Europe’s new General Data Protection Regulation (GDPR) " +
-                "             that applies since 25 May 2018." +
-                "         </p>");
-        this.writeln("    <a id='privacy-panel_accept' class='privacy-panel_button'>Do not show this banner again</a>");
+        this.writeln("<div id='bgee_privacy_banner'>");
+        // This section is empty, it will be filled by common.js.
+        this.writeln("    <p id='bgee_privacy_banner_text' class='col-sm-9 col-lg-10'></p>");
+        this.writeln("    <a id='bgee_privacy_banner_accept' class='col-sm-3 col-lg-2'>Do not show this banner again</a>");
         this.writeln("</div>"); // close privacy-panel
 
         this.writeln("</div>"); // close sib_container

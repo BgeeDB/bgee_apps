@@ -1,15 +1,9 @@
 package org.bgee.pipeline.expression.downloadfile;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -27,16 +21,57 @@ import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.species.Species;
+import org.supercsv.cellprocessor.ift.CellProcessor;
+import org.supercsv.io.dozer.ICsvDozerBeanWriter;
 
 /**
  * Class used to generate statistics about expression data of genes and gene biotypes.
  *
- * @author Frederic Bastian
- * @version Bgee 14 Sep. 2018
- * @since Bgee 14 Sep. 2018
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14 Oct. 2018
+ * @since   Bgee 14 Sep. 2018
  */
 public class GenerateInsertGeneStats {
+
     private final static Logger log = LogManager.getLogger(GenerateInsertGeneStats.class.getName());
+
+    /**
+     * A {@code String} that is the name of the column containing gene IDs, in the download file.
+     */
+    public final static String GENE_ID_COLUMN_NAME = "Gene ID";
+    public final static String GENE_NAME_COLUMN_NAME = "Gene name";
+    public final static String BIO_TYPE_NAME_COLUMN_NAME = "Biotype";
+    public final static String PRESENT_BRONZE_ANAT_ENTITY_COLUMN_NAME = "Count of calls per anat. entity " +
+            "showing expression of this gene with a bronze quality";
+    public final static String PRESENT_SILVER_ANAT_ENTITY_COLUMN_NAME = "Count of calls per anat. entity " +
+            "showing expression of this gene with a silver quality";
+    public final static String PRESENT_GOLD_ANAT_ENTITY_COLUMN_NAME = "Count of calls per anat. entity " +
+            "showing expression of this gene with a gold quality";
+    public final static String ABSENT_BRONZE_ANAT_ENTITY_COLUMN_NAME = "Count of calls per anat. entity " +
+            "showing absence of expression of this gene with a bronze quality";
+    public final static String ABSENT_SILVER_ANAT_ENTITY_COLUMN_NAME = "Count of calls per anat. entity " +
+            "showing absence of expression of this gene with a silver quality";
+    public final static String ABSENT_GOLD_ANAT_ENTITY_COLUMN_NAME = "Count of calls per anat. entity " +
+            "showing absence of expression of this gene with a gold quality";
+    public final static String PRESENT_BRONZE_COND_COLUMN_NAME = "Count of calls per condition " +
+            "showing expression of this gene with a bronze quality";
+    public final static String PRESENT_SILVER_COND_COLUMN_NAME = "Count of calls per condition " +
+            "showing expression of this gene with a silver quality";
+    public final static String PRESENT_GOLD_COND_COLUMN_NAME = "Count of calls per condition " +
+            "showing expression of this gene with a gold quality";
+    public final static String ABSENT_BRONZE_COND_COLUMN_NAME = "Count of calls per condition " +
+            "showing absence of expression of this gene with a bronze quality";
+    public final static String ABSENT_SILVER_COND_COLUMN_NAME = "Count of calls per condition " +
+            "showing absence of expression of this gene with a silver quality";
+    public final static String ABSENT_GOLD_COND_COLUMN_NAME = "Count of calls per condition " +
+            "showing absence of expression of this gene with a gold quality";
+    // FIXME fix the text
+    public final static String FILTERED_GENE_PAGE_PRESENT_ANAT_ENTITY_COLUMN_NAME =
+            "FILTERED_GENE_PAGE_PRESENT_ANAT_ENTITY";
+    public final static String MIN_RANK_COLUMN_NAME = "Minimum rank for this gene";
+    public final static String MAX_RANK_COLUMN_NAME = "Maximum rank for this gene";
+    public final static String MIN_RANK_ANAT_ENTITY_COLUMN_NAME = "Anat. entity the minimum rank for this gene";
 
     public static class GeneStatsBean {
         private String geneId;
@@ -550,5 +585,184 @@ public class GenerateInsertGeneStats {
         })
         .sorted(Comparator.comparing(bean -> bean.getGeneId()))
         .collect(Collectors.toList());
+    }
+
+    /**
+     * Generates an {@code Array} of {@code String}s used to generate 
+     * the header of a gene stat TSV file.
+     *
+     * @return  The {@code Array} of {@code String}s used to produce the header.
+     */
+    private String[] generateFileHeader() {
+        log.entry();
+        
+        // We use an index to avoid to change hard-coded column numbers when we change columns 
+        int idx = 0;
+
+        String[] headers = new String[19];
+        headers[idx++] = GENE_ID_COLUMN_NAME;
+        headers[idx++] = GENE_NAME_COLUMN_NAME;
+        headers[idx++] = BIO_TYPE_NAME_COLUMN_NAME;
+        headers[idx++] = PRESENT_BRONZE_ANAT_ENTITY_COLUMN_NAME;
+        headers[idx++] = PRESENT_SILVER_ANAT_ENTITY_COLUMN_NAME;
+        headers[idx++] = PRESENT_GOLD_ANAT_ENTITY_COLUMN_NAME;
+        headers[idx++] = ABSENT_BRONZE_ANAT_ENTITY_COLUMN_NAME;
+        headers[idx++] = ABSENT_SILVER_ANAT_ENTITY_COLUMN_NAME;
+        headers[idx++] = ABSENT_GOLD_ANAT_ENTITY_COLUMN_NAME;
+        headers[idx++] = PRESENT_BRONZE_COND_COLUMN_NAME;
+        headers[idx++] = PRESENT_SILVER_COND_COLUMN_NAME;
+        headers[idx++] = PRESENT_GOLD_COND_COLUMN_NAME;
+        headers[idx++] = ABSENT_BRONZE_COND_COLUMN_NAME;
+        headers[idx++] = ABSENT_SILVER_COND_COLUMN_NAME;
+        headers[idx++] = ABSENT_GOLD_COND_COLUMN_NAME;
+        headers[idx++] = FILTERED_GENE_PAGE_PRESENT_ANAT_ENTITY_COLUMN_NAME;
+        headers[idx++] = MIN_RANK_COLUMN_NAME;
+        headers[idx++] = MAX_RANK_COLUMN_NAME;
+        headers[idx++] = MIN_RANK_ANAT_ENTITY_COLUMN_NAME;
+
+        return log.exit(headers);
+    }
+
+    /**
+     * Generate the field mapping for each column of the header of a gene stat TSV file.
+     *
+     * @param header    An {@code Array} of {@code String}s representing the names 
+     *                  of the columns of a gene stat file.
+     * @return          The {@code Array} of {@code String}s that is the field mapping, 
+     *                  put in the {@code Array} at the same index as the column they 
+     *                  are supposed to process.
+     * @throws IllegalArgumentException If a {@code String} in {@code header} is not recognized.
+     */
+    private String[] generateFieldMapping(String[] header) throws IllegalArgumentException {
+        log.entry((Object[]) header);
+
+        //to do a sanity check on species columns in simple files
+
+        String[] mapping = new String[header.length];
+        for (int i = 0; i < header.length; i++) {
+            switch (header[i]) {
+                case GENE_ID_COLUMN_NAME:
+                    mapping[i] = "geneId";
+                    break;
+                case GENE_NAME_COLUMN_NAME:
+                    mapping[i] = "geneName";
+                    break;
+                case BIO_TYPE_NAME_COLUMN_NAME:
+                    mapping[i] = "bioTypeName";
+                    break;
+                case PRESENT_BRONZE_ANAT_ENTITY_COLUMN_NAME:
+                    mapping[i] = "presentBronzeAnatEntity";
+                    break;
+                case PRESENT_SILVER_ANAT_ENTITY_COLUMN_NAME:
+                    mapping[i] = "presentSilverAnatEntity";
+                    break;
+                case PRESENT_GOLD_ANAT_ENTITY_COLUMN_NAME:
+                    mapping[i] = "presentGoldAnatEntity";
+                    break;
+                case ABSENT_BRONZE_ANAT_ENTITY_COLUMN_NAME:
+                    mapping[i] = "absentBronzeAnatEntity";
+                    break;
+                case ABSENT_SILVER_ANAT_ENTITY_COLUMN_NAME:
+                    mapping[i] = "absentSilverAnatEntity";
+                    break;
+                case ABSENT_GOLD_ANAT_ENTITY_COLUMN_NAME:
+                    mapping[i] = "absentGoldAnatEntity";
+                    break;
+                case PRESENT_BRONZE_COND_COLUMN_NAME:
+                    mapping[i] = "presentBronzeCond";
+                    break;
+                case PRESENT_SILVER_COND_COLUMN_NAME:
+                    mapping[i] = "presentSilverCond";
+                    break;
+                case PRESENT_GOLD_COND_COLUMN_NAME:
+                    mapping[i] = "presentGoldCond";
+                    break;
+                case ABSENT_BRONZE_COND_COLUMN_NAME:
+                    mapping[i] = "absentBronzeCond";
+                    break;
+                case ABSENT_SILVER_COND_COLUMN_NAME:
+                    mapping[i] = "absentSilverCond";
+                    break;
+                case ABSENT_GOLD_COND_COLUMN_NAME:
+                    mapping[i] = "absentGoldCond";
+                    break;
+                case FILTERED_GENE_PAGE_PRESENT_ANAT_ENTITY_COLUMN_NAME:
+                    mapping[i] = "filteredGenePagePresentAnatEntity";
+                    break;
+                case MIN_RANK_COLUMN_NAME:
+                    mapping[i] = "minRank";
+                    break;
+                case MAX_RANK_COLUMN_NAME:
+                    mapping[i] = "maxRank";
+                    break;
+                case MIN_RANK_ANAT_ENTITY_COLUMN_NAME:
+                    mapping[i] = "minRankAnatEntity";
+                    break;
+                default:
+                    throw log.throwing(new IllegalArgumentException(
+                            "Unrecognized header: " + header[i] + " for gene stat file."));
+            }
+        }
+        return log.exit(mapping);
+    }
+    
+    /**
+     * Generate {@code Array} of {@code booleans} (one per TSV column) indicating 
+     * whether each column should be quoted or not.
+     *
+     * @param header   An {@code Array} of {@code String}s representing the names of the columns.
+     * @return          The {@code Array} of {@code booleans} (one per TSV column) indicating 
+     *                  whether each column should be quoted or not.
+     */
+    private boolean[] generateQuoteMode(String[] header) {
+        log.entry((Object[]) header);
+        
+        boolean[] quoteMode = new boolean[header.length];
+        for (int i = 0; i < header.length; i++) {
+            switch (header[i]) {
+                case GENE_ID_COLUMN_NAME:
+                case PRESENT_BRONZE_ANAT_ENTITY_COLUMN_NAME:
+                case PRESENT_SILVER_ANAT_ENTITY_COLUMN_NAME:
+                case PRESENT_GOLD_ANAT_ENTITY_COLUMN_NAME:
+                case ABSENT_BRONZE_ANAT_ENTITY_COLUMN_NAME:
+                case ABSENT_SILVER_ANAT_ENTITY_COLUMN_NAME:
+                case ABSENT_GOLD_ANAT_ENTITY_COLUMN_NAME:
+                case PRESENT_BRONZE_COND_COLUMN_NAME:
+                case PRESENT_SILVER_COND_COLUMN_NAME:
+                case PRESENT_GOLD_COND_COLUMN_NAME:
+                case ABSENT_BRONZE_COND_COLUMN_NAME:
+                case ABSENT_SILVER_COND_COLUMN_NAME:
+                case ABSENT_GOLD_COND_COLUMN_NAME:
+                case FILTERED_GENE_PAGE_PRESENT_ANAT_ENTITY_COLUMN_NAME:
+                case MIN_RANK_COLUMN_NAME:
+                case MAX_RANK_COLUMN_NAME:
+                    quoteMode[i] = false;
+                    break;
+                case GENE_NAME_COLUMN_NAME:
+                case BIO_TYPE_NAME_COLUMN_NAME:
+                case MIN_RANK_ANAT_ENTITY_COLUMN_NAME:
+                    quoteMode[i] = true;
+                    break;
+                default:
+                    throw log.throwing(new IllegalArgumentException(
+                            "Unrecognized header: " + header[i] + " for gene stat file."));
+            }
+        }
+        return log.exit(quoteMode);
+    }
+
+    private void writeRows(ICsvDozerBeanWriter writer, CellProcessor[] processors, String[] headers,
+                           List<GeneStatsBean> beans) {
+        log.entry(writer, processors, headers);
+        
+        beans.forEach(c -> {
+            try {
+                writer.write(beans, processors);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
+
+        log.exit();
     }
 }

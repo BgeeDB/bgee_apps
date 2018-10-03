@@ -390,6 +390,301 @@ public class GenerateInsertGeneStats {
         }
     }
 
+    //NOTE: for each biotype of number of genes, number of genes with data,
+    //number of genes with PRESENT condition calls (any quality), number with ABSENT condition calls (any quality),
+    //total number of condition calls PRESENT * each quality, condition calls ABSENT * each quality.
+    public static class BiotypeStatsBean {
+
+        private String bioTypeName;
+        private int geneCount;
+        //number of genes with data
+        private int geneWithData; 
+        //number of genes with PRESENT condition calls (any quality)
+        private int presentCondGene;
+        //number with ABSENT condition calls (any quality)
+        private int absentCondGene;
+
+        //total number of anat. entity calls PRESENT * each quality,
+        private int presentBronzeAnatEntityCalls;
+        private int presentSilverAnatEntityCalls;
+        private int presentGoldAnatEntityCalls;
+        
+        //total number of anat. entity calls ABSENT * each quality.
+        private int absentBronzeAnatEntityCalls;
+        private int absentSilverAnatEntityCalls;
+        private int absentGoldAnatEntityCalls;
+        
+        //total number of condition calls PRESENT * each quality,
+        private int presentBronzeCondCalls;
+        private int presentSilverCondCalls;
+        private int presentGoldCondCalls;
+        
+        //total number of condition calls ABSENT * each quality,
+        private int absentBronzeCondCalls;
+        private int absentSilverCondCalls;
+        private int absentGoldCondCalls;
+
+        // FIXME add ranks?
+
+        public BiotypeStatsBean() {
+            bioTypeName = null;
+            geneCount = 0;
+            geneWithData = 0;
+            presentCondGene = 0;
+            absentCondGene = 0;
+            presentBronzeAnatEntityCalls = 0;
+            presentSilverAnatEntityCalls = 0;
+            presentGoldAnatEntityCalls = 0;
+            absentBronzeAnatEntityCalls = 0;
+            absentSilverAnatEntityCalls = 0;
+            absentGoldAnatEntityCalls = 0;
+            presentBronzeCondCalls = 0;
+            presentSilverCondCalls = 0;
+            presentGoldCondCalls = 0;
+            absentBronzeCondCalls = 0;
+            absentSilverCondCalls = 0;
+            absentGoldCondCalls = 0;
+        }
+
+        public String getBioTypeName() {
+            return bioTypeName;
+        }
+        public void setBioTypeName(String bioTypeName) {
+            this.bioTypeName = bioTypeName;
+        }
+
+        public int getGeneCount() {
+            return geneCount;
+        }
+        public void setGeneCount(int geneCount) {
+            this.geneCount = geneCount;
+        }
+
+        public int getGeneWithData() {
+            return geneWithData;
+        }
+        public void setGeneWithData(int geneWithData) {
+            this.geneWithData = geneWithData;
+        }
+
+        public int getPresentCondGene() {
+            return presentCondGene;
+        }
+        public void setPresentCondGene(int presentCondGene) {
+            this.presentCondGene = presentCondGene;
+        }
+
+        public int getAbsentCondGene() {
+            return absentCondGene;
+        }
+        public void setAbsentCondGene(int absentCondGene) {
+            this.absentCondGene = absentCondGene;
+        }
+
+        public int getPresentBronzeAnatEntityCalls() {
+            return presentBronzeAnatEntityCalls;
+        }
+        public void setPresentBronzeAnatEntityCalls(int presentBronzeAnatEntityCalls) {
+            this.presentBronzeAnatEntityCalls = presentBronzeAnatEntityCalls;
+        }
+
+        public int getPresentSilverAnatEntityCalls() {
+            return presentSilverAnatEntityCalls;
+        }
+        public void setPresentSilverAnatEntityCalls(int presentSilverAnatEntityCalls) {
+            this.presentSilverAnatEntityCalls = presentSilverAnatEntityCalls;
+        }
+
+        public int getPresentGoldAnatEntityCalls() {
+            return presentGoldAnatEntityCalls;
+        }
+        public void setPresentGoldAnatEntityCalls(int presentGoldAnatEntityCalls) {
+            this.presentGoldAnatEntityCalls = presentGoldAnatEntityCalls;
+        }
+
+        public int getAbsentBronzeAnatEntityCalls() {
+            return absentBronzeAnatEntityCalls;
+        }
+        public void setAbsentBronzeAnatEntityCalls(int absentBronzeAnatEntityCalls) {
+            this.absentBronzeAnatEntityCalls = absentBronzeAnatEntityCalls;
+        }
+
+        public int getAbsentSilverAnatEntityCalls() {
+            return absentSilverAnatEntityCalls;
+        }
+        public void setAbsentSilverAnatEntityCalls(int absentSilverAnatEntityCalls) {
+            this.absentSilverAnatEntityCalls = absentSilverAnatEntityCalls;
+        }
+
+        public int getAbsentGoldAnatEntityCalls() {
+            return absentGoldAnatEntityCalls;
+        }
+        public void setAbsentGoldAnatEntityCalls(int absentGoldAnatEntityCalls) {
+            this.absentGoldAnatEntityCalls = absentGoldAnatEntityCalls;
+        }
+
+        public int getPresentBronzeCondCalls() {
+            return presentBronzeCondCalls;
+        }
+        public void setPresentBronzeCondCalls(int presentBronzeCondCalls) {
+            this.presentBronzeCondCalls = presentBronzeCondCalls;
+        }
+
+        public int getPresentSilverCondCalls() {
+            return presentSilverCondCalls;
+        }
+        public void setPresentSilverCondCalls(int presentSilverCondCalls) {
+            this.presentSilverCondCalls = presentSilverCondCalls;
+        }
+
+        public int getPresentGoldCondCalls() {
+            return presentGoldCondCalls;
+        }
+        public void setPresentGoldCondCalls(int presentGoldCondCalls) {
+            this.presentGoldCondCalls = presentGoldCondCalls;
+        }
+
+        public int getAbsentBronzeCondCalls() {
+            return absentBronzeCondCalls;
+        }
+        public void setAbsentBronzeCondCalls(int absentBronzeCondCalls) {
+            this.absentBronzeCondCalls = absentBronzeCondCalls;
+        }
+
+        public int getAbsentSilverCondCalls() {
+            return absentSilverCondCalls;
+        }
+        public void setAbsentSilverCondCalls(int absentSilverCondCalls) {
+            this.absentSilverCondCalls = absentSilverCondCalls;
+        }
+
+        public int getAbsentGoldCondCalls() {
+            return absentGoldCondCalls;
+        }
+        public void setAbsentGoldCondCalls(int absentGoldCondCalls) {
+            this.absentGoldCondCalls = absentGoldCondCalls;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            BiotypeStatsBean other = (BiotypeStatsBean) obj;
+
+            if (bioTypeName == null) {
+                if (other.bioTypeName != null) {
+                    return false;
+                }
+            } else if (!bioTypeName.equals(other.bioTypeName)) {
+                return false;
+            }
+            if (geneCount != other.geneCount) {
+                return false;
+            }
+            if (geneWithData != other.geneWithData) {
+                return false;
+            }
+            if (presentCondGene != other.presentCondGene) {
+                return false;
+            }
+            if (absentCondGene != other.absentCondGene) {
+                return false;
+            }
+            if (presentBronzeAnatEntityCalls != other.presentBronzeAnatEntityCalls) {
+                return false;
+            }
+            if (presentSilverAnatEntityCalls != other.presentSilverAnatEntityCalls) {
+                return false;
+            }
+            if (presentGoldAnatEntityCalls != other.presentGoldAnatEntityCalls) {
+                return false;
+            }
+            if (absentBronzeAnatEntityCalls != other.absentBronzeAnatEntityCalls) {
+                return false;
+            }
+            if (absentSilverAnatEntityCalls != other.absentSilverAnatEntityCalls) {
+                return false;
+            }
+            if (absentGoldAnatEntityCalls != other.absentGoldAnatEntityCalls) {
+                return false;
+            }
+            if (presentBronzeCondCalls != other.presentBronzeCondCalls) {
+                return false;
+            }
+            if (presentSilverCondCalls != other.presentSilverCondCalls) {
+                return false;
+            }
+            if (presentGoldCondCalls != other.presentGoldCondCalls) {
+                return false;
+            }
+            if (absentBronzeCondCalls != other.absentBronzeCondCalls) {
+                return false;
+            }
+            if (absentSilverCondCalls != other.absentSilverCondCalls) {
+                return false;
+            }
+            if (absentGoldCondCalls != other.absentGoldCondCalls) {
+                return false;
+            }
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((bioTypeName == null) ? 0 : bioTypeName.hashCode());
+            result = prime * result + geneCount;
+            result = prime * result + geneWithData;
+            result = prime * result + presentCondGene;
+            result = prime * result + absentCondGene;
+            result = prime * result + presentBronzeAnatEntityCalls;
+            result = prime * result + presentSilverAnatEntityCalls;
+            result = prime * result + presentGoldAnatEntityCalls;
+            result = prime * result + absentBronzeAnatEntityCalls;
+            result = prime * result + absentSilverAnatEntityCalls;
+            result = prime * result + absentGoldAnatEntityCalls;
+            result = prime * result + presentBronzeCondCalls;
+            result = prime * result + presentSilverCondCalls;
+            result = prime * result + presentGoldCondCalls;
+            result = prime * result + absentBronzeCondCalls;
+            result = prime * result + absentSilverCondCalls;
+            result = prime * result + absentGoldCondCalls;
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            final StringBuilder sb = new StringBuilder("BiotypeStatsBean [");
+            sb.append("bioTypeName='").append(bioTypeName).append('\'');
+            sb.append(", geneCount=").append(geneCount);
+            sb.append(", geneWithData=").append(geneWithData);
+            sb.append(", presentCondGene=").append(presentCondGene);
+            sb.append(", absentCondGene=").append(absentCondGene);
+            sb.append(", presentBronzeAnatEntityCalls=").append(presentBronzeAnatEntityCalls);
+            sb.append(", presentSilverAnatEntityCalls=").append(presentSilverAnatEntityCalls);
+            sb.append(", presentGoldAnatEntityCalls=").append(presentGoldAnatEntityCalls);
+            sb.append(", absentBronzeAnatEntityCalls=").append(absentBronzeAnatEntityCalls);
+            sb.append(", absentSilverAnatEntityCalls=").append(absentSilverAnatEntityCalls);
+            sb.append(", absentGoldAnatEntityCalls=").append(absentGoldAnatEntityCalls);
+            sb.append(", presentBronzeCondCalls=").append(presentBronzeCondCalls);
+            sb.append(", presentSilverCondCalls=").append(presentSilverCondCalls);
+            sb.append(", presentGoldCondCalls=").append(presentGoldCondCalls);
+            sb.append(", absentBronzeCondCalls=").append(absentBronzeCondCalls);
+            sb.append(", absentSilverCondCalls=").append(absentSilverCondCalls);
+            sb.append(", absentGoldCondCalls=").append(absentGoldCondCalls);
+            sb.append("]");
+            return sb.toString();
+        }
+    }
+
     /**
      * A {@code Supplier} of {@code ServiceFactory}s to be able to provide one to each thread.
      */
@@ -568,11 +863,10 @@ public class GenerateInsertGeneStats {
             }
 
             //TODO: manage in all this method cases where there is no calls
-            //generate GeneBioTypeStatsBean: add info for each biotype of number of genes, number of genes with data,
-            //number of genes with PRESENT condition calls (any quality), number with ABSENT condition calls (any quality),
-            //total number of condition calls PRESENT * each quality, condition calls ABSENT * each quality.
-            //insert the GeneBioTypeStatsTO into database
-            //generate files for genes and for biotypes
+            //TODO generate GeneBioTypeStatsBeans
+            //TODO insert the GeneBioTypeStatsTO into database
+            //TODO generate files for biotypes
+            //TODO generate files for genes
             bean.setFilteredGenePagePresentAnatEntity(callService
                     .loadCondCallsWithSilverAnatEntityCallsByAnatEntity(organCalls, conditionCalls, false)
                     .size());

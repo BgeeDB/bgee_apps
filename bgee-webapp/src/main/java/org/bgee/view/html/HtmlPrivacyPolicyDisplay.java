@@ -197,6 +197,9 @@ public class HtmlPrivacyPolicyDisplay extends HtmlParentDisplay implements Priva
         this.writeln("  </ul>");
         this.writeln("</p>");
         this.writeln("<p>Additional terms: privacy policy</p>");
+
+        this.writeln("</div>"); // close CENTERED_ELEMENT_CLASS
+
         this.writeln("</div>"); // close row
 
         this.endDisplay();

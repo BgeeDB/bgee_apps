@@ -15,6 +15,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
@@ -24,6 +25,7 @@ import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.species.Species;
+import org.bgee.pipeline.MySQLDAOUser;
 import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.io.dozer.ICsvDozerBeanWriter;
 
@@ -35,7 +37,7 @@ import org.supercsv.io.dozer.ICsvDozerBeanWriter;
  * @version Bgee 14 Oct. 2018
  * @since   Bgee 14 Sep. 2018
  */
-public class GenerateInsertGeneStats {
+public class GenerateInsertGeneStats extends MySQLDAOUser {
 
     private final static Logger log = LogManager.getLogger(GenerateInsertGeneStats.class.getName());
 
@@ -551,7 +553,7 @@ public class GenerateInsertGeneStats {
      * Default constructor. 
      */
     public GenerateInsertGeneStats() {
-        this(ServiceFactory::new);
+        this(ServiceFactory::new, null);
     }
     /**
      * Constructor providing the {@code ServiceFactory} that will be used by 
@@ -560,7 +562,8 @@ public class GenerateInsertGeneStats {
      * @param serviceFactorySupplier        A {@code Supplier} of {@code ServiceFactory}s 
      *                                      to be able to provide one to each thread.
      */
-    public GenerateInsertGeneStats(Supplier<ServiceFactory> serviceFactorySupplier) {
+    public GenerateInsertGeneStats(Supplier<ServiceFactory> serviceFactorySupplier, MySQLDAOManager manager) {
+        super(manager);
         this.serviceFactorySupplier = serviceFactorySupplier;
     }
 
@@ -600,7 +603,7 @@ public class GenerateInsertGeneStats {
         log.entry(path, bioTypeStatsFileSuffix, geneStatsFileSuffix);
 
         ServiceFactory serviceFactory = this.serviceFactorySupplier.get();
-        Set<Species> allSpecies = serviceFactory.getSpeciesService().loadSpeciesByIds(null, false)
+        Set<Species> allSpecies = serviceFactory.getSpeciesService().loadSpeciesByIds(Collections.singleton(7230), false)
                 .stream().collect(Collectors.toSet());
         //launch the computation for each species independently
         for (Species species: allSpecies) {
@@ -611,7 +614,15 @@ public class GenerateInsertGeneStats {
             Set<Gene> genes = serviceFactory.getGeneService().loadGenes(new GeneFilter(species.getId()))
                     .collect(Collectors.toSet());
 
+            try {
                 this.generatePerSpecies(species, genes, path, bioTypeStatsFileSuffix, geneStatsFileSuffix);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            } finally {
+                // close connection to database between each species, to avoid idle
+                // connection reset
+                this.getManager().releaseResources();
+            }
 
             log.info("Done generating of stat files for the species {}.", species.getId());
         }
@@ -814,10 +825,32 @@ public class GenerateInsertGeneStats {
         }
 
         //TODO insert the GeneBioTypeStatsTO into database
+//        Set<BioTypeStatsTO> bioTypeStatsTOs = this.convertBiotypeStatsBeansToTOs(
+//                biotypeStatsBeans.values().parallelStream()
+//                        .flatMap(List::stream)
+//                        .collect(Collectors.toSet()));
+//        try {
+//            this.startTransaction();
+//
+//            log.info("Start inserting of biotype statistics...");
+//            this.geBioTypeStatsDAO().insertBioTypeStats(bioTypeStatsTOs);
+//            log.info("Done inserting biotype statistics");
+//            
+//            this.commit();
+//        } finally {
+//            this.closeDAO();
+//        }
         
         log.exit();
     }
 
+//    private Set<BioTypeStatsTO> convertBiotypeStatsBeansToTOs(Set<BiotypeStatsBean> biotypeStatsBeans) {
+//        log.entry(biotypeStatsBeans);
+//        throw log.throwing(new UnsupportedOperationException("Mathod to be implement"));
+//        return log.exit(biotypeStatsBeans.parallelStream()
+//                .map(b -> new BioTypeStatsTO())
+//                .collect(Collectors.toSet()));
+//    }
     
     private <T extends CommonBean> void writeFiles(StatFileType fileType, String prefixFileName,
                                                    List<T> beans, String path, String fileSuffix)

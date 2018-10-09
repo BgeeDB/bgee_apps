@@ -26,7 +26,12 @@ import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.species.Species;
 import org.bgee.pipeline.MySQLDAOUser;
+import org.bgee.pipeline.Utils;
+import org.supercsv.cellprocessor.constraint.LMinMax;
+import org.supercsv.cellprocessor.constraint.NotNull;
+import org.supercsv.cellprocessor.constraint.StrNotNullOrEmpty;
 import org.supercsv.cellprocessor.ift.CellProcessor;
+import org.supercsv.io.dozer.CsvDozerBeanWriter;
 import org.supercsv.io.dozer.ICsvDozerBeanWriter;
 
 /**
@@ -857,7 +862,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             throws IOException {
         log.entry(fileType, beans, path, fileSuffix);
         
-        String fileName = path + prefixFileName + "_" + fileSuffix + EXTENSION;
+        String fileName = prefixFileName + "_" + fileSuffix + EXTENSION;
         
         File tmpFile = new File(path, fileName + ".tmp");
         // override any existing file
@@ -873,9 +878,10 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             beanWriter.configureBeanMapping(BiotypeStatsBean.class,
                     this.generateFileFieldMapping(fileType, headers));
 
-            beans.forEach(c -> {
+            beanWriter.writeHeader(headers);
+            beans.forEach(b -> {
                 try {
-                    beanWriter.write(beans, processors);
+                    beanWriter.write(b, processors);
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
                 }
@@ -1009,7 +1015,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                 case ABSENT_BRONZE_COND_COLUMN_NAME:
                 case ABSENT_SILVER_COND_COLUMN_NAME:
                 case ABSENT_GOLD_COND_COLUMN_NAME:
-                    new LMinMax(0, Long.MAX_VALUE);
+                    processors[i] = new LMinMax(0, Long.MAX_VALUE);
                     break;
             }
             
@@ -1028,7 +1034,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                         processors[i] = new NotNull();
                         break;
                     case FILTERED_GENE_PAGE_PRESENT_ANAT_ENTITY_COLUMN_NAME:
-                        new LMinMax(0, Long.MAX_VALUE);
+                        processors[i] = new LMinMax(0, Long.MAX_VALUE);
                         break;
                     case MIN_RANK_COLUMN_NAME:
                     case MAX_RANK_COLUMN_NAME:
@@ -1052,7 +1058,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                     case GENE_WITH_DATA_COLUMN_NAME:
                     case PRESENT_COND_GENE_COLUMN_NAME:
                     case ABSENT_COND_GENE_COLUMN_NAME:
-                        new LMinMax(0, Long.MAX_VALUE);
+                        processors[i] = new LMinMax(0, Long.MAX_VALUE);
                         break;
                 }
             }

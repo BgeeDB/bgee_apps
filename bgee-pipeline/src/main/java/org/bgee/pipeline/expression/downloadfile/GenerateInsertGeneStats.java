@@ -1,9 +1,12 @@
 package org.bgee.pipeline.expression.downloadfile;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -35,6 +38,11 @@ import org.supercsv.io.dozer.ICsvDozerBeanWriter;
 public class GenerateInsertGeneStats {
 
     private final static Logger log = LogManager.getLogger(GenerateInsertGeneStats.class.getName());
+
+    /**
+     * A {@code String} that is the extension of download files to be generated.
+     */
+    private final static String EXTENSION = ".tsv";
 
     /**
      * A {@code String} that is the name of the column containing gene IDs, in the download file.
@@ -73,9 +81,18 @@ public class GenerateInsertGeneStats {
     public final static String MAX_RANK_COLUMN_NAME = "Maximum rank for this gene";
     public final static String MIN_RANK_ANAT_ENTITY_COLUMN_NAME = "Anat. entity the minimum rank for this gene";
 
-    public static class GeneStatsBean {
-        private String geneId;
-        private String geneName;
+
+    public final static String GENE_COUNT_COLUMN_NAME = "Number of genes";
+    public final static String GENE_WITH_DATA_COLUMN_NAME = "Number of genes with data";
+    public final static String PRESENT_COND_GENE_COLUMN_NAME = "Count of showing expression";
+    public final static String ABSENT_COND_GENE_COLUMN_NAME = "Count of showing absence of expression";
+
+    public enum StatFileType {
+        GENE_STATS, BIO_TYPE_STATS;
+    }
+
+    public static abstract class CommonBean {
+        
         private String bioTypeName;
         private int presentBronzeAnatEntity;
         private int presentSilverAnatEntity;
@@ -89,14 +106,8 @@ public class GenerateInsertGeneStats {
         private int absentBronzeCond;
         private int absentSilverCond;
         private int absentGoldCond;
-        private int filteredGenePagePresentAnatEntity;
-        private BigDecimal minRank;
-        private BigDecimal maxRank;
-        private AnatEntity minRankAnatEntity;
 
-        public GeneStatsBean() {
-            this.geneId = null;
-            this.geneName = null;
+        public CommonBean() {
             this.bioTypeName = null;
             this.presentBronzeAnatEntity = 0;
             this.presentSilverAnatEntity = 0;
@@ -110,26 +121,7 @@ public class GenerateInsertGeneStats {
             this.absentBronzeCond = 0;
             this.absentSilverCond = 0;
             this.absentGoldCond = 0;
-            this.filteredGenePagePresentAnatEntity = 0;
-            this.minRank = null;
-            this.maxRank = null;
-            this.minRankAnatEntity = null;
         }
-
-        public String getGeneId() {
-            return geneId;
-        }
-        public void setGeneId(String geneId) {
-            this.geneId = geneId;
-        }
-
-        public String getGeneName() {
-            return geneName;
-        }
-        public void setGeneName(String geneName) {
-            this.geneName = geneName;
-        }
-
         public String getBioTypeName() {
             return bioTypeName;
         }
@@ -221,6 +213,124 @@ public class GenerateInsertGeneStats {
             this.absentGoldCond = absentGoldCond;
         }
 
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((bioTypeName == null) ? 0 : bioTypeName.hashCode());
+            result = prime * result + absentBronzeAnatEntity;
+            result = prime * result + absentBronzeCond;
+            result = prime * result + absentGoldAnatEntity;
+            result = prime * result + absentGoldCond;
+            result = prime * result + absentSilverAnatEntity;
+            result = prime * result + absentSilverCond;
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (!super.equals(obj))
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            CommonBean other = (CommonBean) obj;
+            if (absentBronzeAnatEntity != other.absentBronzeAnatEntity) {
+                return false;
+            }
+            if (absentBronzeCond != other.absentBronzeCond) {
+                return false;
+            }
+            if (absentGoldAnatEntity != other.absentGoldAnatEntity) {
+                return false;
+            }
+            if (absentGoldCond != other.absentGoldCond) {
+                return false;
+            }
+            if (absentSilverAnatEntity != other.absentSilverAnatEntity) {
+                return false;
+            }
+            if (absentSilverCond != other.absentSilverCond) {
+                return false;
+            }
+            if (bioTypeName == null) {
+                if (other.bioTypeName != null) {
+                    return false;
+                }
+            } else if (!bioTypeName.equals(other.bioTypeName)) {
+                return false;
+            }
+            if (presentBronzeAnatEntity != other.presentBronzeAnatEntity) {
+                return false;
+            }
+            if (presentBronzeCond != other.presentBronzeCond) {
+                return false;
+            }
+            if (presentGoldAnatEntity != other.presentGoldAnatEntity) {
+                return false;
+            }
+            if (presentGoldCond != other.presentGoldCond) {
+                return false;
+            }
+            if (presentSilverAnatEntity != other.presentSilverAnatEntity) {
+                return false;
+            }
+            if (presentSilverCond != other.presentSilverCond) {
+                return false;
+            }
+            return true;
+        }
+        
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("CommonBean [bioTypeName=").append(bioTypeName).append(", presentBronzeAnatEntity=")
+                    .append(presentBronzeAnatEntity).append(", presentSilverAnatEntity=")
+                    .append(presentSilverAnatEntity).append(", presentGoldAnatEntity=").append(presentGoldAnatEntity)
+                    .append(", absentBronzeAnatEntity=").append(absentBronzeAnatEntity)
+                    .append(", absentSilverAnatEntity=").append(absentSilverAnatEntity)
+                    .append(", absentGoldAnatEntity=").append(absentGoldAnatEntity).append(", presentBronzeCond=")
+                    .append(presentBronzeCond).append(", presentSilverCond=").append(presentSilverCond)
+                    .append(", presentGoldCond=").append(presentGoldCond).append(", absentBronzeCond=")
+                    .append(absentBronzeCond).append(", absentSilverCond=").append(absentSilverCond)
+                    .append(", absentGoldCond=").append(absentGoldCond).append("]");
+            return builder.toString();
+        }
+    }
+
+    public static class GeneStatsBean extends CommonBean {
+        
+        private String geneId;
+        private String geneName;
+        private int filteredGenePagePresentAnatEntity;
+        private BigDecimal minRank;
+        private BigDecimal maxRank;
+        private AnatEntity minRankAnatEntity;
+
+        public GeneStatsBean() {
+            this.geneId = null;
+            this.geneName = null;
+            this.filteredGenePagePresentAnatEntity = 0;
+            this.minRank = null;
+            this.maxRank = null;
+            this.minRankAnatEntity = null;
+        }
+
+        public String getGeneId() {
+            return geneId;
+        }
+        public void setGeneId(String geneId) {
+            this.geneId = geneId;
+        }
+
+        public String getGeneName() {
+            return geneName;
+        }
+        public void setGeneName(String geneName) {
+            this.geneName = geneName;
+        }
+        
         public int getFilteredGenePagePresentAnatEntity() {
             return filteredGenePagePresentAnatEntity;
         }
@@ -252,26 +362,13 @@ public class GenerateInsertGeneStats {
         @Override
         public int hashCode() {
             final int prime = 31;
-            int result = 1;
-            result = prime * result + absentBronzeAnatEntity;
-            result = prime * result + absentBronzeCond;
-            result = prime * result + absentGoldAnatEntity;
-            result = prime * result + absentGoldCond;
-            result = prime * result + absentSilverAnatEntity;
-            result = prime * result + absentSilverCond;
-            result = prime * result + ((bioTypeName == null) ? 0 : bioTypeName.hashCode());
-            result = prime * result + filteredGenePagePresentAnatEntity;
+            int result = super.hashCode();
             result = prime * result + ((geneId == null) ? 0 : geneId.hashCode());
             result = prime * result + ((geneName == null) ? 0 : geneName.hashCode());
+            result = prime * result + filteredGenePagePresentAnatEntity;
             result = prime * result + ((maxRank == null) ? 0 : maxRank.hashCode());
             result = prime * result + ((minRank == null) ? 0 : minRank.hashCode());
             result = prime * result + ((minRankAnatEntity == null) ? 0 : minRankAnatEntity.hashCode());
-            result = prime * result + presentBronzeAnatEntity;
-            result = prime * result + presentBronzeCond;
-            result = prime * result + presentGoldAnatEntity;
-            result = prime * result + presentGoldCond;
-            result = prime * result + presentSilverAnatEntity;
-            result = prime * result + presentSilverCond;
             return result;
         }
         @Override
@@ -279,38 +376,15 @@ public class GenerateInsertGeneStats {
             if (this == obj) {
                 return true;
             }
-            if (obj == null) {
+            if (!super.equals(obj)) {
                 return false;
             }
             if (getClass() != obj.getClass()) {
                 return false;
             }
+            
             GeneStatsBean other = (GeneStatsBean) obj;
-            if (absentBronzeAnatEntity != other.absentBronzeAnatEntity) {
-                return false;
-            }
-            if (absentBronzeCond != other.absentBronzeCond) {
-                return false;
-            }
-            if (absentGoldAnatEntity != other.absentGoldAnatEntity) {
-                return false;
-            }
-            if (absentGoldCond != other.absentGoldCond) {
-                return false;
-            }
-            if (absentSilverAnatEntity != other.absentSilverAnatEntity) {
-                return false;
-            }
-            if (absentSilverCond != other.absentSilverCond) {
-                return false;
-            }
-            if (bioTypeName == null) {
-                if (other.bioTypeName != null) {
-                    return false;
-                }
-            } else if (!bioTypeName.equals(other.bioTypeName)) {
-                return false;
-            }
+            
             if (filteredGenePagePresentAnatEntity != other.filteredGenePagePresentAnatEntity) {
                 return false;
             }
@@ -349,43 +423,17 @@ public class GenerateInsertGeneStats {
             } else if (!minRankAnatEntity.equals(other.minRankAnatEntity)) {
                 return false;
             }
-            if (presentBronzeAnatEntity != other.presentBronzeAnatEntity) {
-                return false;
-            }
-            if (presentBronzeCond != other.presentBronzeCond) {
-                return false;
-            }
-            if (presentGoldAnatEntity != other.presentGoldAnatEntity) {
-                return false;
-            }
-            if (presentGoldCond != other.presentGoldCond) {
-                return false;
-            }
-            if (presentSilverAnatEntity != other.presentSilverAnatEntity) {
-                return false;
-            }
-            if (presentSilverCond != other.presentSilverCond) {
-                return false;
-            }
             return true;
         }
 
         @Override
         public String toString() {
             StringBuilder builder = new StringBuilder();
-            builder.append("GeneStatsBean [geneId=").append(geneId).append(", geneName=").append(geneName)
-                    .append(", bioTypeName=").append(bioTypeName).append(", presentBronzeAnatEntity=")
-                    .append(presentBronzeAnatEntity).append(", presentSilverAnatEntity=")
-                    .append(presentSilverAnatEntity).append(", presentGoldAnatEntity=").append(presentGoldAnatEntity)
-                    .append(", absentBronzeAnatEntity=").append(absentBronzeAnatEntity)
-                    .append(", absentSilverAnatEntity=").append(absentSilverAnatEntity)
-                    .append(", absentGoldAnatEntity=").append(absentGoldAnatEntity).append(", presentBronzeCond=")
-                    .append(presentBronzeCond).append(", presentSilverCond=").append(presentSilverCond)
-                    .append(", presentGoldCond=").append(presentGoldCond).append(", absentBronzeCond=")
-                    .append(absentBronzeCond).append(", absentSilverCond=").append(absentSilverCond)
-                    .append(", absentGoldCond=").append(absentGoldCond).append(", filteredGenePagePresentAnatEntity=")
-                    .append(filteredGenePagePresentAnatEntity).append(", minRank=").append(minRank).append(", maxRank=")
-                    .append(maxRank).append(", minRankAnatEntity=").append(minRankAnatEntity).append("]");
+            builder.append("GeneStatsBean [").append(super.toString()).append("geneId=").append(geneId)
+                    .append(", geneName=").append(geneName)
+                    .append(", filteredGenePagePresentAnatEntity=").append(filteredGenePagePresentAnatEntity)
+                    .append(", minRank=").append(minRank).append(", maxRank=").append(maxRank)
+                    .append(", minRankAnatEntity=").append(minRankAnatEntity).append("]");
             return builder.toString();
         }
     }
@@ -393,64 +441,25 @@ public class GenerateInsertGeneStats {
     //NOTE: for each biotype of number of genes, number of genes with data,
     //number of genes with PRESENT condition calls (any quality), number with ABSENT condition calls (any quality),
     //total number of condition calls PRESENT * each quality, condition calls ABSENT * each quality.
-    public static class BiotypeStatsBean {
+    public static class BiotypeStatsBean extends CommonBean {
 
-        private String bioTypeName;
+        //number of genes
         private int geneCount;
         //number of genes with data
         private int geneWithData; 
+        
         //number of genes with PRESENT condition calls (any quality)
         private int presentCondGene;
         //number with ABSENT condition calls (any quality)
         private int absentCondGene;
 
-        //total number of anat. entity calls PRESENT * each quality,
-        private int presentBronzeAnatEntityCalls;
-        private int presentSilverAnatEntityCalls;
-        private int presentGoldAnatEntityCalls;
-        
-        //total number of anat. entity calls ABSENT * each quality.
-        private int absentBronzeAnatEntityCalls;
-        private int absentSilverAnatEntityCalls;
-        private int absentGoldAnatEntityCalls;
-        
-        //total number of condition calls PRESENT * each quality,
-        private int presentBronzeCondCalls;
-        private int presentSilverCondCalls;
-        private int presentGoldCondCalls;
-        
-        //total number of condition calls ABSENT * each quality,
-        private int absentBronzeCondCalls;
-        private int absentSilverCondCalls;
-        private int absentGoldCondCalls;
-
         // FIXME add ranks?
 
         public BiotypeStatsBean() {
-            bioTypeName = null;
             geneCount = 0;
             geneWithData = 0;
             presentCondGene = 0;
             absentCondGene = 0;
-            presentBronzeAnatEntityCalls = 0;
-            presentSilverAnatEntityCalls = 0;
-            presentGoldAnatEntityCalls = 0;
-            absentBronzeAnatEntityCalls = 0;
-            absentSilverAnatEntityCalls = 0;
-            absentGoldAnatEntityCalls = 0;
-            presentBronzeCondCalls = 0;
-            presentSilverCondCalls = 0;
-            presentGoldCondCalls = 0;
-            absentBronzeCondCalls = 0;
-            absentSilverCondCalls = 0;
-            absentGoldCondCalls = 0;
-        }
-
-        public String getBioTypeName() {
-            return bioTypeName;
-        }
-        public void setBioTypeName(String bioTypeName) {
-            this.bioTypeName = bioTypeName;
         }
 
         public int getGeneCount() {
@@ -480,111 +489,21 @@ public class GenerateInsertGeneStats {
         public void setAbsentCondGene(int absentCondGene) {
             this.absentCondGene = absentCondGene;
         }
-
-        public int getPresentBronzeAnatEntityCalls() {
-            return presentBronzeAnatEntityCalls;
-        }
-        public void setPresentBronzeAnatEntityCalls(int presentBronzeAnatEntityCalls) {
-            this.presentBronzeAnatEntityCalls = presentBronzeAnatEntityCalls;
-        }
-
-        public int getPresentSilverAnatEntityCalls() {
-            return presentSilverAnatEntityCalls;
-        }
-        public void setPresentSilverAnatEntityCalls(int presentSilverAnatEntityCalls) {
-            this.presentSilverAnatEntityCalls = presentSilverAnatEntityCalls;
-        }
-
-        public int getPresentGoldAnatEntityCalls() {
-            return presentGoldAnatEntityCalls;
-        }
-        public void setPresentGoldAnatEntityCalls(int presentGoldAnatEntityCalls) {
-            this.presentGoldAnatEntityCalls = presentGoldAnatEntityCalls;
-        }
-
-        public int getAbsentBronzeAnatEntityCalls() {
-            return absentBronzeAnatEntityCalls;
-        }
-        public void setAbsentBronzeAnatEntityCalls(int absentBronzeAnatEntityCalls) {
-            this.absentBronzeAnatEntityCalls = absentBronzeAnatEntityCalls;
-        }
-
-        public int getAbsentSilverAnatEntityCalls() {
-            return absentSilverAnatEntityCalls;
-        }
-        public void setAbsentSilverAnatEntityCalls(int absentSilverAnatEntityCalls) {
-            this.absentSilverAnatEntityCalls = absentSilverAnatEntityCalls;
-        }
-
-        public int getAbsentGoldAnatEntityCalls() {
-            return absentGoldAnatEntityCalls;
-        }
-        public void setAbsentGoldAnatEntityCalls(int absentGoldAnatEntityCalls) {
-            this.absentGoldAnatEntityCalls = absentGoldAnatEntityCalls;
-        }
-
-        public int getPresentBronzeCondCalls() {
-            return presentBronzeCondCalls;
-        }
-        public void setPresentBronzeCondCalls(int presentBronzeCondCalls) {
-            this.presentBronzeCondCalls = presentBronzeCondCalls;
-        }
-
-        public int getPresentSilverCondCalls() {
-            return presentSilverCondCalls;
-        }
-        public void setPresentSilverCondCalls(int presentSilverCondCalls) {
-            this.presentSilverCondCalls = presentSilverCondCalls;
-        }
-
-        public int getPresentGoldCondCalls() {
-            return presentGoldCondCalls;
-        }
-        public void setPresentGoldCondCalls(int presentGoldCondCalls) {
-            this.presentGoldCondCalls = presentGoldCondCalls;
-        }
-
-        public int getAbsentBronzeCondCalls() {
-            return absentBronzeCondCalls;
-        }
-        public void setAbsentBronzeCondCalls(int absentBronzeCondCalls) {
-            this.absentBronzeCondCalls = absentBronzeCondCalls;
-        }
-
-        public int getAbsentSilverCondCalls() {
-            return absentSilverCondCalls;
-        }
-        public void setAbsentSilverCondCalls(int absentSilverCondCalls) {
-            this.absentSilverCondCalls = absentSilverCondCalls;
-        }
-
-        public int getAbsentGoldCondCalls() {
-            return absentGoldCondCalls;
-        }
-        public void setAbsentGoldCondCalls(int absentGoldCondCalls) {
-            this.absentGoldCondCalls = absentGoldCondCalls;
-        }
-
+        
         @Override
         public boolean equals(Object obj) {
             if (this == obj) {
                 return true;
             }
-            if (obj == null) {
+            if (!super.equals(obj)) {
                 return false;
             }
             if (getClass() != obj.getClass()) {
                 return false;
             }
+            
             BiotypeStatsBean other = (BiotypeStatsBean) obj;
 
-            if (bioTypeName == null) {
-                if (other.bioTypeName != null) {
-                    return false;
-                }
-            } else if (!bioTypeName.equals(other.bioTypeName)) {
-                return false;
-            }
             if (geneCount != other.geneCount) {
                 return false;
             }
@@ -597,89 +516,27 @@ public class GenerateInsertGeneStats {
             if (absentCondGene != other.absentCondGene) {
                 return false;
             }
-            if (presentBronzeAnatEntityCalls != other.presentBronzeAnatEntityCalls) {
-                return false;
-            }
-            if (presentSilverAnatEntityCalls != other.presentSilverAnatEntityCalls) {
-                return false;
-            }
-            if (presentGoldAnatEntityCalls != other.presentGoldAnatEntityCalls) {
-                return false;
-            }
-            if (absentBronzeAnatEntityCalls != other.absentBronzeAnatEntityCalls) {
-                return false;
-            }
-            if (absentSilverAnatEntityCalls != other.absentSilverAnatEntityCalls) {
-                return false;
-            }
-            if (absentGoldAnatEntityCalls != other.absentGoldAnatEntityCalls) {
-                return false;
-            }
-            if (presentBronzeCondCalls != other.presentBronzeCondCalls) {
-                return false;
-            }
-            if (presentSilverCondCalls != other.presentSilverCondCalls) {
-                return false;
-            }
-            if (presentGoldCondCalls != other.presentGoldCondCalls) {
-                return false;
-            }
-            if (absentBronzeCondCalls != other.absentBronzeCondCalls) {
-                return false;
-            }
-            if (absentSilverCondCalls != other.absentSilverCondCalls) {
-                return false;
-            }
-            if (absentGoldCondCalls != other.absentGoldCondCalls) {
-                return false;
-            }
             return true;
         }
 
         @Override
         public int hashCode() {
             final int prime = 31;
-            int result = 1;
-            result = prime * result + ((bioTypeName == null) ? 0 : bioTypeName.hashCode());
+            int result = super.hashCode();
             result = prime * result + geneCount;
             result = prime * result + geneWithData;
             result = prime * result + presentCondGene;
             result = prime * result + absentCondGene;
-            result = prime * result + presentBronzeAnatEntityCalls;
-            result = prime * result + presentSilverAnatEntityCalls;
-            result = prime * result + presentGoldAnatEntityCalls;
-            result = prime * result + absentBronzeAnatEntityCalls;
-            result = prime * result + absentSilverAnatEntityCalls;
-            result = prime * result + absentGoldAnatEntityCalls;
-            result = prime * result + presentBronzeCondCalls;
-            result = prime * result + presentSilverCondCalls;
-            result = prime * result + presentGoldCondCalls;
-            result = prime * result + absentBronzeCondCalls;
-            result = prime * result + absentSilverCondCalls;
-            result = prime * result + absentGoldCondCalls;
             return result;
         }
 
         @Override
         public String toString() {
-            final StringBuilder sb = new StringBuilder("BiotypeStatsBean [");
-            sb.append("bioTypeName='").append(bioTypeName).append('\'');
+            final StringBuilder sb = new StringBuilder("BiotypeStatsBean [").append(super.toString());
             sb.append(", geneCount=").append(geneCount);
             sb.append(", geneWithData=").append(geneWithData);
             sb.append(", presentCondGene=").append(presentCondGene);
             sb.append(", absentCondGene=").append(absentCondGene);
-            sb.append(", presentBronzeAnatEntityCalls=").append(presentBronzeAnatEntityCalls);
-            sb.append(", presentSilverAnatEntityCalls=").append(presentSilverAnatEntityCalls);
-            sb.append(", presentGoldAnatEntityCalls=").append(presentGoldAnatEntityCalls);
-            sb.append(", absentBronzeAnatEntityCalls=").append(absentBronzeAnatEntityCalls);
-            sb.append(", absentSilverAnatEntityCalls=").append(absentSilverAnatEntityCalls);
-            sb.append(", absentGoldAnatEntityCalls=").append(absentGoldAnatEntityCalls);
-            sb.append(", presentBronzeCondCalls=").append(presentBronzeCondCalls);
-            sb.append(", presentSilverCondCalls=").append(presentSilverCondCalls);
-            sb.append(", presentGoldCondCalls=").append(presentGoldCondCalls);
-            sb.append(", absentBronzeCondCalls=").append(absentBronzeCondCalls);
-            sb.append(", absentSilverCondCalls=").append(absentSilverCondCalls);
-            sb.append(", absentGoldCondCalls=").append(absentGoldCondCalls);
             sb.append("]");
             return sb.toString();
         }
@@ -747,21 +604,28 @@ public class GenerateInsertGeneStats {
                 .stream().collect(Collectors.toSet());
         //launch the computation for each species independently
         for (Species species: allSpecies) {
+
+            log.info("Start generating of stat files for the species {}...", species.getId());
+            
             //Retrieve all genes for that species
             Set<Gene> genes = serviceFactory.getGeneService().loadGenes(new GeneFilter(species.getId()))
                     .collect(Collectors.toSet());
 
-            this.generatePerSpecies(species, genes);
+                this.generatePerSpecies(species, genes, path, bioTypeStatsFileSuffix, geneStatsFileSuffix);
+
+            log.info("Done generating of stat files for the species {}.", species.getId());
         }
         
         log.exit();
     }
 
-    private void generatePerSpecies(Species species, Set<Gene> genes) {
-        log.entry(species, genes);
+    private void generatePerSpecies(Species species, Set<Gene> genes, String path,
+                                    String bioTypeStatsFileSuffix, String geneStatsFileSuffix)
+            throws IOException {
+        log.entry(species, genes, path, bioTypeStatsFileSuffix, geneStatsFileSuffix);
 
         //Now we use parallel streams for each gene independently
-        List<GeneStatsBean> orderedBeans = genes.parallelStream().map(gene -> {
+        List<GeneStatsBean> geneStatsBeans = genes.parallelStream().map(gene -> {
             //We need one ServiceFactory per thread
             ServiceFactory serviceFactory = this.serviceFactorySupplier.get();
             CallService callService = serviceFactory.getCallService();
@@ -784,6 +648,7 @@ public class GenerateInsertGeneStats {
                                     Collections.singleton(geneFilter),
                                     null, null, obsDataFilter, null, null),
                             EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID,
+                                    CallService.Attribute.CALL_TYPE,
                                     CallService.Attribute.DATA_QUALITY),
                             null)
                     .collect(Collectors.toSet());
@@ -795,6 +660,7 @@ public class GenerateInsertGeneStats {
                     .filter(a -> a.isConditionParameter())
                     .collect(Collectors.toCollection(() -> EnumSet.noneOf(CallService.Attribute.class)));
             attrs.add(CallService.Attribute.DATA_QUALITY);
+            attrs.add(CallService.Attribute.CALL_TYPE);
             attrs.add(CallService.Attribute.GLOBAL_MEAN_RANK);
             List<ExpressionCall> conditionCalls = callService
                     .loadExpressionCalls(
@@ -862,41 +728,197 @@ public class GenerateInsertGeneStats {
                 }
             }
 
-            //TODO: manage in all this method cases where there is no calls
-            //TODO generate GeneBioTypeStatsBeans
-            //TODO insert the GeneBioTypeStatsTO into database
-            //TODO generate files for biotypes
-            //TODO generate files for genes
-            bean.setFilteredGenePagePresentAnatEntity(callService
-                    .loadCondCallsWithSilverAnatEntityCallsByAnatEntity(organCalls, conditionCalls, false)
-                    .size());
-            ExpressionCall firstCall = conditionCalls.iterator().next();
-            bean.setMinRank(firstCall.getGlobalMeanRank());
-            bean.setMinRankAnatEntity(firstCall.getCondition().getAnatEntity());
-            bean.setMaxRank(conditionCalls.listIterator().previous().getGlobalMeanRank());
-
+            if (organCalls.size() > 0) {
+                bean.setFilteredGenePagePresentAnatEntity(callService
+                        .loadCondCallsWithSilverAnatEntityCallsByAnatEntity(organCalls, conditionCalls, false)
+                        .size());
+            }
+            if (conditionCalls.size() > 0) {
+                ExpressionCall firstCall = conditionCalls.iterator().next();
+                bean.setMinRank(firstCall.getGlobalMeanRank());
+                bean.setMinRankAnatEntity(firstCall.getCondition().getAnatEntity());
+                bean.setMaxRank(conditionCalls.get(conditionCalls.size() - 1).getGlobalMeanRank());
+            }
             return bean;
         })
-        .sorted(Comparator.comparing(bean -> bean.getGeneId()))
+        // We don't need to order them as we group them by ID latter.
+        //.sorted(Comparator.comparing(bean -> bean.getGeneId()))
         .collect(Collectors.toList());
+
+        Map<String, List<GeneStatsBean>> geneBeansByBiotype = geneStatsBeans.stream()
+                .collect(Collectors.groupingBy(GeneStatsBean::getBioTypeName));
+
+        Map<String, List<BiotypeStatsBean>> biotypeStatsBeans = geneBeansByBiotype.entrySet().parallelStream()
+                .map(e -> {
+                    List<GeneStatsBean> geneBeans = e.getValue();
+                    BiotypeStatsBean bsb = new BiotypeStatsBean();
+                    bsb.setAbsentBronzeAnatEntity(0);
+                    bsb.setBioTypeName(e.getKey());
+
+                    // number of genes
+                    bsb.setGeneCount(geneBeans.size());
+
+                    //XXX: we go through the gene beans several times, an unique for-loop could be more efficient?
+                    // number of genes with data,
+                    bsb.setGeneWithData((int) geneBeans.parallelStream()
+                            .filter(g -> getTotalCallCount(g) > 0)
+                            .count());
+
+                    // number of genes with PRESENT condition calls (any quality)
+                    bsb.setPresentCondGene((int) geneBeans.parallelStream()
+                            .filter(g -> g.getPresentGoldCond() + g.getPresentSilverCond() +
+                                    g.getPresentBronzeCond() > 0)
+                            .count());
+
+                    // number with ABSENT condition calls (any quality),
+                    bsb.setAbsentCondGene((int) geneBeans.parallelStream()
+                            .filter(g -> g.getAbsentGoldCond() + g.getAbsentSilverCond() +
+                                    g.getAbsentBronzeCond() > 0)
+                            .count());
+
+                    // total number of anat.entity calls PRESENT * each quality
+                    bsb.setPresentBronzeAnatEntity(this.getSum(geneBeans, GeneStatsBean::getPresentBronzeAnatEntity));
+                    bsb.setPresentSilverAnatEntity(this.getSum(geneBeans, GeneStatsBean::getPresentSilverAnatEntity));
+                    bsb.setPresentGoldAnatEntity(this.getSum(geneBeans, GeneStatsBean::getPresentGoldAnatEntity));
+
+                    // total number of anat.entity calls ABSENT * each quality.
+                    bsb.setAbsentBronzeAnatEntity(this.getSum(geneBeans, GeneStatsBean::getAbsentBronzeCond));
+                    bsb.setAbsentSilverAnatEntity(this.getSum(geneBeans, GeneStatsBean::getAbsentSilverAnatEntity));
+                    bsb.setAbsentGoldAnatEntity(this.getSum(geneBeans, GeneStatsBean::getAbsentGoldAnatEntity));
+
+                    // total number of condition calls PRESENT * each quality
+                    bsb.setPresentBronzeCond(this.getSum(geneBeans, GeneStatsBean::getPresentBronzeCond));
+                    bsb.setPresentSilverCond(this.getSum(geneBeans, GeneStatsBean::getPresentSilverCond));
+                    bsb.setPresentGoldCond(this.getSum(geneBeans, GeneStatsBean::getPresentGoldCond));
+
+                    // total number of condition calls PRESENT * each quality
+                    bsb.setAbsentBronzeCond(this.getSum(geneBeans, GeneStatsBean::getAbsentBronzeCond));
+                    bsb.setAbsentSilverCond(this.getSum(geneBeans, GeneStatsBean::getAbsentSilverCond));
+                    bsb.setAbsentGoldCond(this.getSum(geneBeans, GeneStatsBean::getAbsentGoldCond));
+
+                    return bsb;
+                })
+                .collect(Collectors.groupingBy(BiotypeStatsBean::getBioTypeName));
+
+        
+        Map<String, List<GeneStatsBean>> geneBeansById = geneStatsBeans.stream()
+                .collect(Collectors.groupingBy(GeneStatsBean::getGeneId));
+        for (List<GeneStatsBean> beans : geneBeansById.values()) {
+            this.writeFiles(StatFileType.GENE_STATS, beans.iterator().next().getGeneId(), beans,
+                    path, geneStatsFileSuffix);
+        }
+
+        for (List<BiotypeStatsBean> beans : biotypeStatsBeans.values()) {
+            this.writeFiles(StatFileType.BIO_TYPE_STATS, beans.iterator().next().getBioTypeName(), beans,
+                    path, bioTypeStatsFileSuffix);
+        }
+
+        //TODO insert the GeneBioTypeStatsTO into database
+        
+        log.exit();
+    }
+
+    
+    private <T extends CommonBean> void writeFiles(StatFileType fileType, String prefixFileName,
+                                                   List<T> beans, String path, String fileSuffix)
+            throws IOException {
+        log.entry(fileType, beans, path, fileSuffix);
+        
+        String fileName = path + prefixFileName + "_" + fileSuffix + EXTENSION;
+        
+        File tmpFile = new File(path, fileName + ".tmp");
+        // override any existing file
+        if (tmpFile.exists()) {
+            tmpFile.delete();
+        }
+
+        String[] headers = this.generateFileHeader(fileType);
+        CellProcessor[] processors = this.generateFileCellProcessors(fileType, headers);
+        try {
+            ICsvDozerBeanWriter beanWriter = new CsvDozerBeanWriter(new FileWriter(tmpFile),
+                    Utils.getCsvPreferenceWithQuote(this.generateQuoteMode(headers)));
+            beanWriter.configureBeanMapping(BiotypeStatsBean.class,
+                    this.generateFileFieldMapping(fileType, headers));
+
+            beans.forEach(c -> {
+                try {
+                    beanWriter.write(beans, processors);
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            });
+        } catch (Exception e) {
+            if (tmpFile.exists()) {
+                tmpFile.delete();
+            }
+            throw e;
+        }
+        File file = new File(path, fileName);
+        if (tmpFile.exists()) {
+            tmpFile.renameTo(file);
+            log.info("New file created: {}", file.getPath());
+        }
+
+        log.exit();
+    }
+
+    private int getSum(List<GeneStatsBean> geneBeans, Function<GeneStatsBean, Integer> getter) {
+        log.entry(geneBeans);
+        return log.exit(geneBeans.parallelStream()
+                .map(getter)
+                .mapToInt(Integer::intValue)
+                .sum());
+    }
+
+    private int getTotalCallCount(GeneStatsBean geneBean) {
+        log.entry(geneBean);
+        
+        int total = geneBean.getPresentBronzeAnatEntity() + geneBean.getPresentSilverAnatEntity() + 
+                geneBean.getPresentGoldAnatEntity() + geneBean.getAbsentBronzeAnatEntity() + 
+                geneBean.getAbsentSilverAnatEntity() + geneBean.getAbsentGoldAnatEntity() +
+                geneBean.getPresentBronzeCond() + geneBean.getPresentSilverCond() +
+                geneBean.getPresentGoldCond() + geneBean.getAbsentBronzeCond() +
+                geneBean.getAbsentSilverCond() + geneBean.getAbsentGoldCond();
+        return log.exit(total);
     }
 
     /**
      * Generates an {@code Array} of {@code String}s used to generate 
-     * the header of a gene stat TSV file.
+     * the header of TSV file according to provided file type.
      *
      * @return  The {@code Array} of {@code String}s used to produce the header.
      */
-    private String[] generateFileHeader() {
-        log.entry();
+    private String[] generateFileHeader(StatFileType fileType) {
+        log.entry(fileType);
         
         // We use an index to avoid to change hard-coded column numbers when we change columns 
         int idx = 0;
 
-        String[] headers = new String[19];
-        headers[idx++] = GENE_ID_COLUMN_NAME;
-        headers[idx++] = GENE_NAME_COLUMN_NAME;
+        int nbColumns;
+        switch (fileType) {
+            case GENE_STATS:
+                nbColumns = 19;
+                break;
+            case BIO_TYPE_STATS:
+                nbColumns = 17;
+                break;
+            default:
+                throw new IllegalArgumentException("File type not supported: " + fileType);
+        }
+        String[] headers = new String[nbColumns];
+        
+        if (fileType.equals(StatFileType.GENE_STATS)) {
+            headers[idx++] = GENE_ID_COLUMN_NAME;
+            headers[idx++] = GENE_NAME_COLUMN_NAME;
+        }
         headers[idx++] = BIO_TYPE_NAME_COLUMN_NAME;
+        if (fileType.equals(StatFileType.BIO_TYPE_STATS)) {
+            headers[idx++] = GENE_COUNT_COLUMN_NAME;
+            headers[idx++] = GENE_WITH_DATA_COLUMN_NAME;
+            headers[idx++] = PRESENT_COND_GENE_COLUMN_NAME;
+            headers[idx++] = ABSENT_COND_GENE_COLUMN_NAME;
+        }
+
         headers[idx++] = PRESENT_BRONZE_ANAT_ENTITY_COLUMN_NAME;
         headers[idx++] = PRESENT_SILVER_ANAT_ENTITY_COLUMN_NAME;
         headers[idx++] = PRESENT_GOLD_ANAT_ENTITY_COLUMN_NAME;
@@ -909,38 +931,126 @@ public class GenerateInsertGeneStats {
         headers[idx++] = ABSENT_BRONZE_COND_COLUMN_NAME;
         headers[idx++] = ABSENT_SILVER_COND_COLUMN_NAME;
         headers[idx++] = ABSENT_GOLD_COND_COLUMN_NAME;
-        headers[idx++] = FILTERED_GENE_PAGE_PRESENT_ANAT_ENTITY_COLUMN_NAME;
-        headers[idx++] = MIN_RANK_COLUMN_NAME;
-        headers[idx++] = MAX_RANK_COLUMN_NAME;
-        headers[idx++] = MIN_RANK_ANAT_ENTITY_COLUMN_NAME;
+
+        if (fileType.equals(StatFileType.GENE_STATS)) {
+            headers[idx++] = FILTERED_GENE_PAGE_PRESENT_ANAT_ENTITY_COLUMN_NAME;
+            headers[idx++] = MIN_RANK_COLUMN_NAME;
+            headers[idx++] = MAX_RANK_COLUMN_NAME;
+            headers[idx++] = MIN_RANK_ANAT_ENTITY_COLUMN_NAME;
+        }
 
         return log.exit(headers);
     }
 
     /**
-     * Generate the field mapping for each column of the header of a gene stat TSV file.
+     * Generates an {@code Array} of {@code CellProcessor}s used to process a TSV file 
+     * of type {@code fileType}.
+     *
+     * @param fileType  The {@code FileType} of the file to be generated.
+     * @param header    An {@code Array} of {@code String}s representing the names 
+     *                  of the columns of an file.
+     * @return          An {@code Array} of {@code CellProcessor}s used to process an file.
+     * @throw IllegalArgumentException If {@code fileType} is not managed by this method.
+     */
+    private CellProcessor[] generateFileCellProcessors(StatFileType fileType, String[] header)
+            throws IllegalArgumentException {
+        log.entry(fileType, header);
+
+        CellProcessor[] processors = new CellProcessor[header.length];
+        for (int i = 0; i < header.length; i++) {
+
+            // *** CellProcessors common to all file types ***
+            switch (header[i]) {
+                case BIO_TYPE_NAME_COLUMN_NAME:
+                    processors[i] = new StrNotNullOrEmpty();
+                    break;
+                case PRESENT_BRONZE_ANAT_ENTITY_COLUMN_NAME:
+                case PRESENT_SILVER_ANAT_ENTITY_COLUMN_NAME:
+                case PRESENT_GOLD_ANAT_ENTITY_COLUMN_NAME:
+                case ABSENT_BRONZE_ANAT_ENTITY_COLUMN_NAME:
+                case ABSENT_SILVER_ANAT_ENTITY_COLUMN_NAME:
+                case ABSENT_GOLD_ANAT_ENTITY_COLUMN_NAME:
+                case PRESENT_BRONZE_COND_COLUMN_NAME:
+                case PRESENT_SILVER_COND_COLUMN_NAME:
+                case PRESENT_GOLD_COND_COLUMN_NAME:
+                case ABSENT_BRONZE_COND_COLUMN_NAME:
+                case ABSENT_SILVER_COND_COLUMN_NAME:
+                case ABSENT_GOLD_COND_COLUMN_NAME:
+                    new LMinMax(0, Long.MAX_VALUE);
+                    break;
+            }
+            
+            // If it was one of the column common to all file types, iterate next column name
+            if (processors[i] != null) {
+                continue;
+            }
+
+            if (fileType.equals(StatFileType.GENE_STATS)) {
+                switch (header[i]) {
+                    case GENE_ID_COLUMN_NAME:
+                    case MIN_RANK_ANAT_ENTITY_COLUMN_NAME:
+                        processors[i] = new StrNotNullOrEmpty();
+                        break;
+                    case GENE_NAME_COLUMN_NAME:
+                        processors[i] = new NotNull();
+                        break;
+                    case FILTERED_GENE_PAGE_PRESENT_ANAT_ENTITY_COLUMN_NAME:
+                        new LMinMax(0, Long.MAX_VALUE);
+                        break;
+                    case MIN_RANK_COLUMN_NAME:
+                    case MAX_RANK_COLUMN_NAME:
+                        // It's a String to be able to write values such as '3.32e4'
+                        processors[i] = new StrNotNullOrEmpty();
+                        break;
+                    default:
+                        throw log.throwing(new IllegalArgumentException(
+                                "Unrecognized header: " + header[i] + " for gene stat file."));
+                }
+            }
+
+            // If it was one of the column common to all file types, iterate next column name
+            if (processors[i] != null) {
+                continue;
+            }
+
+            if (fileType.equals(StatFileType.BIO_TYPE_STATS)) {
+                switch (header[i]) {
+                    case GENE_COUNT_COLUMN_NAME:
+                    case GENE_WITH_DATA_COLUMN_NAME:
+                    case PRESENT_COND_GENE_COLUMN_NAME:
+                    case ABSENT_COND_GENE_COLUMN_NAME:
+                        new LMinMax(0, Long.MAX_VALUE);
+                        break;
+                }
+            }
+            
+            if (processors[i] == null) {
+                throw log.throwing(new IllegalArgumentException("Unrecognized header: " + header[i] +
+                        " for file type: " + fileType));
+            }
+        }
+        return log.exit(processors);
+    }
+
+    /**
+     * Generate the field mapping for each column of the header of a TSV file
+     * according to the provided file type.
      *
      * @param header    An {@code Array} of {@code String}s representing the names 
-     *                  of the columns of a gene stat file.
+     *                  of the columns of a stat file.
      * @return          The {@code Array} of {@code String}s that is the field mapping, 
      *                  put in the {@code Array} at the same index as the column they 
      *                  are supposed to process.
      * @throws IllegalArgumentException If a {@code String} in {@code header} is not recognized.
      */
-    private String[] generateFieldMapping(String[] header) throws IllegalArgumentException {
-        log.entry((Object[]) header);
-
-        //to do a sanity check on species columns in simple files
-
+    private String[] generateFileFieldMapping(StatFileType fileType, String[] header) throws IllegalArgumentException {
+        log.entry(fileType, header);
+        
         String[] mapping = new String[header.length];
         for (int i = 0; i < header.length; i++) {
+
+            // *** CellProcessors common to all file types ***
             switch (header[i]) {
-                case GENE_ID_COLUMN_NAME:
-                    mapping[i] = "geneId";
-                    break;
-                case GENE_NAME_COLUMN_NAME:
-                    mapping[i] = "geneName";
-                    break;
                 case BIO_TYPE_NAME_COLUMN_NAME:
                     mapping[i] = "bioTypeName";
                     break;
@@ -980,21 +1090,62 @@ public class GenerateInsertGeneStats {
                 case ABSENT_GOLD_COND_COLUMN_NAME:
                     mapping[i] = "absentGoldCond";
                     break;
-                case FILTERED_GENE_PAGE_PRESENT_ANAT_ENTITY_COLUMN_NAME:
-                    mapping[i] = "filteredGenePagePresentAnatEntity";
-                    break;
-                case MIN_RANK_COLUMN_NAME:
-                    mapping[i] = "minRank";
-                    break;
-                case MAX_RANK_COLUMN_NAME:
-                    mapping[i] = "maxRank";
-                    break;
-                case MIN_RANK_ANAT_ENTITY_COLUMN_NAME:
-                    mapping[i] = "minRankAnatEntity";
-                    break;
-                default:
-                    throw log.throwing(new IllegalArgumentException(
-                            "Unrecognized header: " + header[i] + " for gene stat file."));
+            }
+
+            // If it was one of the column common to all file types, iterate next column name
+            if (mapping[i] != null) {
+                continue;
+            }
+
+            if (fileType.equals(StatFileType.GENE_STATS)) {
+                switch (header[i]) {
+                    case GENE_ID_COLUMN_NAME:
+                        mapping[i] = "geneId";
+                        break;
+                    case GENE_NAME_COLUMN_NAME:
+                        mapping[i] = "geneName";
+                        break;
+                    case FILTERED_GENE_PAGE_PRESENT_ANAT_ENTITY_COLUMN_NAME:
+                        mapping[i] = "filteredGenePagePresentAnatEntity";
+                        break;
+                    case MIN_RANK_COLUMN_NAME:
+                        mapping[i] = "minRank";
+                        break;
+                    case MAX_RANK_COLUMN_NAME:
+                        mapping[i] = "maxRank";
+                        break;
+                    case MIN_RANK_ANAT_ENTITY_COLUMN_NAME:
+                        mapping[i] = "minRankAnatEntity";
+                        break;
+                    default:
+                        throw log.throwing(new IllegalArgumentException(
+                                "Unrecognized header: " + header[i] + " for gene stat file."));
+                }
+            }
+
+            // If it was one of the column common to all file types, iterate next column name
+            if (mapping[i] != null) {
+                continue;
+            }
+
+            if (fileType.equals(StatFileType.BIO_TYPE_STATS)) {
+                switch (header[i]) {
+                    case GENE_COUNT_COLUMN_NAME:
+                        mapping[i] = "geneCount";
+                        break;
+                    case GENE_WITH_DATA_COLUMN_NAME:
+                        mapping[i] = "geneWithData";
+                        break;
+                    case PRESENT_COND_GENE_COLUMN_NAME:
+                        mapping[i] = "presentCondGene";
+                        break;
+                    case ABSENT_COND_GENE_COLUMN_NAME:
+                        mapping[i] = "absentCondGene";
+                }
+            }
+            if (mapping[i] == null) {
+                throw log.throwing(new IllegalArgumentException("Unrecognized header: " + header[i] +
+                        " for file type: " + fileType));
             }
         }
         return log.exit(mapping);
@@ -1015,6 +1166,10 @@ public class GenerateInsertGeneStats {
         for (int i = 0; i < header.length; i++) {
             switch (header[i]) {
                 case GENE_ID_COLUMN_NAME:
+                case GENE_COUNT_COLUMN_NAME:
+                case GENE_WITH_DATA_COLUMN_NAME:
+                case PRESENT_COND_GENE_COLUMN_NAME:
+                case ABSENT_COND_GENE_COLUMN_NAME:
                 case PRESENT_BRONZE_ANAT_ENTITY_COLUMN_NAME:
                 case PRESENT_SILVER_ANAT_ENTITY_COLUMN_NAME:
                 case PRESENT_GOLD_ANAT_ENTITY_COLUMN_NAME:
@@ -1043,20 +1198,5 @@ public class GenerateInsertGeneStats {
             }
         }
         return log.exit(quoteMode);
-    }
-
-    private void writeRows(ICsvDozerBeanWriter writer, CellProcessor[] processors, String[] headers,
-                           List<GeneStatsBean> beans) {
-        log.entry(writer, processors, headers);
-        
-        beans.forEach(c -> {
-            try {
-                writer.write(beans, processors);
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        });
-
-        log.exit();
     }
 }

@@ -17,8 +17,8 @@ function autocompleteGeneSelected(event, ui) {
  	var selectedGeneId = ui.item.id;
  	var selectedSpeciesId = ui.item.speciesId;
  	//XXX: should we use the requestParameters object?
- 	window.location.href = GLOBAL_PROPS.getWebAppURLStart() + "?page=gene&gene_id=" + selectedGeneId
- 		+ "&species_id=" + selectedSpeciesId;
+ 	window.location.href = GLOBAL_PROPS.getWebAppURLStart() + "?page=gene&gene_id=" + encodeURIComponent(selectedGeneId)
+ 		+ "&species_id=" + encodeURIComponent(selectedSpeciesId);
 
  	return this;
 }
@@ -47,7 +47,7 @@ function autocompleteGeneSource(request, responseCallback) {
 	 }
 
 	 var autocompleteGeneRequestParameters = "?page=search&action=auto_complete_gene_search&" +
-	 		"display_type=xml&search=" + request.term;
+	 		"display_type=xml&search=" + encodeURIComponent(request.term);
 	 
 	 $.get(autocompleteGeneRequestParameters, function(xmlResponse) {
 		//we remove regex special chars from the search term, 
@@ -74,6 +74,8 @@ function autocompleteGeneSource(request, responseCallback) {
 	 })
 	 //in case of error, we need to call responseCallback anyway
 	 .error(function(responseCallback) {
+		 $("#bgee_species_search_msg").empty();
+		 $("#bgee_species_search_msg").text("Error while requesting the server.");
 		 responseCallback("Error while requesting the server.");
 	 });
 }

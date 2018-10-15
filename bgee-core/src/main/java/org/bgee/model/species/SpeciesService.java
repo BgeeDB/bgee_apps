@@ -70,7 +70,8 @@ public class SpeciesService extends CommonService {
      * Loads species for a given set of species IDs .
      * 
      * @param speciesIds        A {@code Collection} of {@code Integer}s that are IDs of species 
-     *                          for which to return the {@code Species}s.
+     *                          for which to return the {@code Species}s. If {@code null} or empty,
+     *                          all species in the data source are returned.
      * @param withSpeciesInfo   A {@code boolean}s defining whether data sources of the species
      *                          is retrieved or not.
      * @return                  A {@code Set} containing the {@code Species} with one of the 

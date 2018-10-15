@@ -26,6 +26,7 @@ import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.species.Species;
+import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.MySQLDAOUser;
 import org.bgee.pipeline.Utils;
 import org.supercsv.cellprocessor.ConvertNullTo;
@@ -85,7 +86,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             "gold quality";
 
     public final static String FILTERED_GENE_PAGE_PRESENT_ANAT_ENTITY_COLUMN_NAME =
-            "Count of anat. entity with \"present\" expression calls, filtered as on the Bgee website";
+            "Count of distinct anat. entity with \"present\" expression calls of gold and silver qualities filtered as on the Bgee website";
     public final static String MIN_RANK_COLUMN_NAME = "Minimum rank for this gene over all conditions";
     public final static String MAX_RANK_COLUMN_NAME = "Maximum rank for this gene over all condition";
     public final static String MIN_RANK_ANAT_ENTITY_COLUMN_NAME = "Anat. entity with the minimum rank over all conditions";
@@ -99,8 +100,11 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
 
     public final static String GENE_COUNT_COLUMN_NAME = "Number of genes";
     public final static String GENE_WITH_DATA_COLUMN_NAME = "Number of genes with data";
+    public final static String GENE_PRESENT_ABSENT_SILVER_GOLD_COLUMN_NAME = "Number of genes with data of silver or gold qualities";
     public final static String PRESENT_COND_GENE_COLUMN_NAME = "Number of genes with \"present\" expression calls";
     public final static String ABSENT_COND_GENE_COLUMN_NAME = "Number of genes with \"absent\" expression calls";
+    public final static String FILTERED_GENE_PAGE_GENE_COLUMN_NAME =
+            "Number of genes with \"present\" expression calls of silver and gold qualities filtered as on the Bgee website";
 
     public final static String ANAT_ENTITY_WITH_DATA_COLUMN_NAME = "Number of distinct anat. entities with data";
     public final static String COND_WITH_DATA_COLUMN_NAME = "Number of distinct conditions with data";
@@ -136,6 +140,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
         private BigDecimal maxRank;
         private String formattedMinRank;
         private String formattedMaxRank;
+        private int filteredGenePagePresentAnatEntity;
 
         public CommonBean() {
             this.bioTypeName = null;
@@ -155,6 +160,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             this.maxRank = null;
             this.formattedMinRank = null;
             this.formattedMaxRank = null;
+            this.filteredGenePagePresentAnatEntity = 0;
         }
         public String getBioTypeName() {
             return bioTypeName;
@@ -274,6 +280,13 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
         public void setFormattedMaxRank(String formattedMaxRank) {
             this.formattedMaxRank = formattedMaxRank;
         }
+        
+        public int getFilteredGenePagePresentAnatEntity() {
+            return filteredGenePagePresentAnatEntity;
+        }
+        public void setFilteredGenePagePresentAnatEntity(int filteredGenePagePresentAnatEntity) {
+            this.filteredGenePagePresentAnatEntity = filteredGenePagePresentAnatEntity;
+        }
 
         @Override
         public int hashCode() {
@@ -288,6 +301,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             result = prime * result + absentSilverCond;
             result = prime * result + ((maxRank == null) ? 0 : maxRank.hashCode());
             result = prime * result + ((minRank == null) ? 0 : minRank.hashCode());
+            result = prime * result + filteredGenePagePresentAnatEntity;
             return result;
         }
 
@@ -357,6 +371,9 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             } else if (!minRank.equals(other.minRank)) {
                 return false;
             }
+            if (filteredGenePagePresentAnatEntity != other.filteredGenePagePresentAnatEntity) {
+                return false;
+            }
             return true;
         }
         
@@ -374,6 +391,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                     .append(absentBronzeCond).append(", absentSilverCond=").append(absentSilverCond)
                     .append(", absentGoldCond=").append(absentGoldCond)
                     .append(", minRank=").append(formattedMinRank).append(", maxRank=").append(formattedMaxRank)
+                    .append(", filteredGenePagePresentAnatEntity=").append(filteredGenePagePresentAnatEntity)
                     .append("]");
             return builder.toString();
         }
@@ -383,7 +401,6 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
         
         private String geneId;
         private String geneName;
-        private int filteredGenePagePresentAnatEntity;
         private AnatEntity minRankAnatEntity;
         private AnatEntity filteredGenePageMinRankAnatEntity;
         private String filteredGenePageFormattedMinRank;
@@ -391,6 +408,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
 
         //Not used for writing in the gene TSV files, but to retrieve all unique Conditions and AnatEntities
         //for the information per biotype.
+        private Set<AnatEntity> filteredGenePagePresentAnatEntities;
         private Set<AnatEntity> presentAnatEntities;
         private Set<Condition> presentConds;
         private Set<AnatEntity> absentAnatEntities;
@@ -399,11 +417,11 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
         public GeneStatsBean() {
             this.geneId = null;
             this.geneName = null;
-            this.filteredGenePagePresentAnatEntity = 0;
             this.minRankAnatEntity = null;
             this.filteredGenePageMinRankAnatEntity = null;
             this.filteredGenePageFormattedMinRank = null;
             this.filteredGenePageFormattedMaxRank = null;
+            this.filteredGenePagePresentAnatEntities = new HashSet<>();
             this.presentAnatEntities = new HashSet<>();
             this.presentConds = new HashSet<>();
             this.absentAnatEntities = new HashSet<>();
@@ -422,13 +440,6 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
         }
         public void setGeneName(String geneName) {
             this.geneName = geneName;
-        }
-        
-        public int getFilteredGenePagePresentAnatEntity() {
-            return filteredGenePagePresentAnatEntity;
-        }
-        public void setFilteredGenePagePresentAnatEntity(int filteredGenePagePresentAnatEntity) {
-            this.filteredGenePagePresentAnatEntity = filteredGenePagePresentAnatEntity;
         }
 
         public AnatEntity getMinRankAnatEntity() {
@@ -459,6 +470,10 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             this.filteredGenePageFormattedMaxRank = filteredGenePageFormattedMaxRank;
         }
 
+        public Set<AnatEntity> getFilteredGenePagePresentAnatEntities() {
+            return filteredGenePagePresentAnatEntities;
+        }
+
         public Set<AnatEntity> getPresentAnatEntities() {
             return presentAnatEntities;
         }
@@ -481,11 +496,11 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             int result = super.hashCode();
             result = prime * result + ((geneId == null) ? 0 : geneId.hashCode());
             result = prime * result + ((geneName == null) ? 0 : geneName.hashCode());
-            result = prime * result + filteredGenePagePresentAnatEntity;
             result = prime * result + ((minRankAnatEntity == null) ? 0 : minRankAnatEntity.hashCode());
             result = prime * result + ((filteredGenePageMinRankAnatEntity == null) ? 0 : filteredGenePageMinRankAnatEntity.hashCode());
             result = prime * result + ((filteredGenePageFormattedMinRank == null) ? 0 : filteredGenePageFormattedMinRank.hashCode());
             result = prime * result + ((filteredGenePageFormattedMaxRank == null) ? 0 : filteredGenePageFormattedMaxRank.hashCode());
+            result = prime * result + ((filteredGenePagePresentAnatEntities == null) ? 0 : filteredGenePagePresentAnatEntities.hashCode());
             result = prime * result + ((presentAnatEntities == null) ? 0 : presentAnatEntities.hashCode());
             result = prime * result + ((presentConds == null) ? 0 : presentConds.hashCode());
             result = prime * result + ((absentAnatEntities == null) ? 0 : absentAnatEntities.hashCode());
@@ -505,10 +520,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             }
             
             GeneStatsBean other = (GeneStatsBean) obj;
-            
-            if (filteredGenePagePresentAnatEntity != other.filteredGenePagePresentAnatEntity) {
-                return false;
-            }
+
             if (geneId == null) {
                 if (other.geneId != null) {
                     return false;
@@ -551,6 +563,13 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             } else if (!filteredGenePageFormattedMaxRank.equals(other.filteredGenePageFormattedMaxRank)) {
                 return false;
             }
+            if (filteredGenePagePresentAnatEntities == null) {
+                if (other.filteredGenePagePresentAnatEntities != null) {
+                    return false;
+                }
+            } else if (!filteredGenePagePresentAnatEntities.equals(other.filteredGenePagePresentAnatEntities)) {
+                return false;
+            }
             if (presentAnatEntities == null) {
                 if (other.presentAnatEntities != null) {
                     return false;
@@ -587,7 +606,6 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             StringBuilder builder = new StringBuilder();
             builder.append("GeneStatsBean [").append(super.toString()).append("geneId=").append(geneId)
                     .append(", geneName=").append(geneName)
-                    .append(", filteredGenePagePresentAnatEntity=").append(filteredGenePagePresentAnatEntity)
                     .append(", minRankAnatEntity=").append(minRankAnatEntity)
                     .append(", filteredGenePageMinRankAnatEntity=").append(filteredGenePageMinRankAnatEntity)
                     .append(", filteredGenePageFormattedMinRank=").append(filteredGenePageFormattedMinRank)
@@ -606,6 +624,8 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
         private int geneCount;
         //number of genes with data
         private int geneWithData;
+        private int genePresentAbsentSilverGold;
+        private int filteredGenePageGeneCount;
         private int anatEntityWithData;
         private int condWithData;
 
@@ -621,6 +641,8 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
         public BiotypeStatsBean() {
             geneCount = 0;
             geneWithData = 0;
+            genePresentAbsentSilverGold = 0;
+            filteredGenePageGeneCount = 0;
             anatEntityWithData = 0;
             condWithData = 0;
             presentCondGene = 0;
@@ -643,6 +665,20 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
         }
         public void setGeneWithData(int geneWithData) {
             this.geneWithData = geneWithData;
+        }
+
+        public int getGenePresentAbsentSilverGold() {
+            return genePresentAbsentSilverGold;
+        }
+        public void setGenePresentAbsentSilverGold(int genePresentAbsentSilverGold) {
+            this.genePresentAbsentSilverGold = genePresentAbsentSilverGold;
+        }
+
+        public int getFilteredGenePageGeneCount() {
+            return filteredGenePageGeneCount;
+        }
+        public void setFilteredGenePageGeneCount(int filteredGenePageGeneCount) {
+            this.filteredGenePageGeneCount = filteredGenePageGeneCount;
         }
 
         public int getAnatEntityWithData() {
@@ -721,6 +757,12 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             if (geneWithData != other.geneWithData) {
                 return false;
             }
+            if (genePresentAbsentSilverGold != other.genePresentAbsentSilverGold) {
+                return false;
+            }
+            if (filteredGenePageGeneCount != other.filteredGenePageGeneCount) {
+                return false;
+            }
             if (anatEntityWithData != other.anatEntityWithData) {
                 return false;
             }
@@ -754,6 +796,8 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             int result = super.hashCode();
             result = prime * result + geneCount;
             result = prime * result + geneWithData;
+            result = prime * result + genePresentAbsentSilverGold;
+            result = prime * result + filteredGenePageGeneCount;
             result = prime * result + anatEntityWithData;
             result = prime * result + condWithData;
             result = prime * result + presentCondGene;
@@ -770,6 +814,8 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             final StringBuilder sb = new StringBuilder("BiotypeStatsBean [").append(super.toString());
             sb.append(", geneCount=").append(geneCount);
             sb.append(", geneWithData=").append(geneWithData);
+            sb.append(", genePresentAbsentSilverGold=").append(genePresentAbsentSilverGold);
+            sb.append(", filteredGenePageGeneCount=").append(filteredGenePageGeneCount);
             sb.append(", anatEntityWithData=").append(anatEntityWithData);
             sb.append(", condWithData=").append(condWithData);
             sb.append(", presentCondGene=").append(presentCondGene);
@@ -812,18 +858,26 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
      * <li>path where to store the files
      * <li>suffix of the file names to store stats per biotype. Prefix will be the species name.
      * <li>suffix of the file names to store stats per gene. Prefix will be the species name.
+     * <li>Optional: a list of NCBI species IDs (for instance, {@code 9606} for human) that will be used to 
+     * generate download files, separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}. 
+     * If an empty list is provided (see {@link CommandRunner#EMPTY_LIST}), or this argument is not provided,
+     * all species contained in the database will be used.
      * </ol>
      *
      * @param args  An {@code Array} of {@code String}s containing the requested parameters.
      * @throws IllegalArgumentException     If the arguments are incorrect.
      */
     public static void main(String[] args) throws IllegalArgumentException {
-        if (args.length != 3) {
+        if (args.length != 3 && args.length != 4) {
             throw log.throwing(new IllegalArgumentException("Incorrect number of arguments."));
         }
 
+        Collection<Integer> speciesIds = new HashSet<>();
+        if (args.length == 4) {
+            speciesIds = CommandRunner.parseListArgumentAsInt(args[3]);
+        }
         GenerateInsertGeneStats statsGenerator = new GenerateInsertGeneStats();
-        statsGenerator.generate(args[0], args[1], args[2]);
+        statsGenerator.generate(args[0], args[1], args[2], speciesIds);
         
         log.exit();
     }
@@ -837,12 +891,15 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
      *                                  per biotype. Prefix will be the species name.
      * @param geneStatsFileSuffix       A {@code String} that is the suffix of the file names to store stats
      *                                  per gene. Prefix will be the species name.
+     * @param speciesIds                A {@code Collection} of {@code Integer}s that are the NCBI species IDs
+     *                                  of the species for which we want to launch the computation. If {@code null}
+     *                                  or empty, all species in the database are used.
      */
-    public void generate(String path, String bioTypeStatsFileSuffix, String geneStatsFileSuffix) {
-        log.entry(path, bioTypeStatsFileSuffix, geneStatsFileSuffix);
+    public void generate(String path, String bioTypeStatsFileSuffix, String geneStatsFileSuffix, Collection<Integer> speciesIds) {
+        log.entry(path, bioTypeStatsFileSuffix, geneStatsFileSuffix, speciesIds);
 
         ServiceFactory serviceFactory = this.serviceFactorySupplier.get();
-        Set<Species> allSpecies = serviceFactory.getSpeciesService().loadSpeciesByIds(Collections.singleton(7230), false)
+        Set<Species> allSpecies = serviceFactory.getSpeciesService().loadSpeciesByIds(speciesIds, false)
                 .stream().collect(Collectors.toSet());
         //launch the computation for each species independently
         for (Species species: allSpecies) {
@@ -990,6 +1047,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                 LinkedHashMap<AnatEntity, List<ExpressionCall>> groupedCalls = callService
                         .loadCondCallsWithSilverAnatEntityCallsByAnatEntity(organCalls, conditionCalls, false);
                 bean.setFilteredGenePagePresentAnatEntity(groupedCalls.size());
+                bean.getFilteredGenePagePresentAnatEntities().addAll(groupedCalls.keySet());
                 if (!groupedCalls.isEmpty()) {
                     //The LinkedHashMap has the same interface as Map, so we cannot easily access the last element.
                     //We thus create a List of Entries
@@ -1000,7 +1058,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                     //The max rank here could be understood as the max rank over all condition calls displayed on the gene page.
                     //But I think it's a bit confusing, the gene page mostly display information about anat. entities,
                     //so I take the min rank of the last anat. entity, as for the gene page.
-                    Entry<AnatEntity, List<ExpressionCall>> lastEntry = orderedEntries.listIterator().previous();
+                    Entry<AnatEntity, List<ExpressionCall>> lastEntry = orderedEntries.get(orderedEntries.size() - 1);
                     bean.setFilteredGenePageFormattedMaxRank(lastEntry.getValue().iterator().next().getFormattedGlobalMeanRank());
                 }
             }
@@ -1009,7 +1067,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                 bean.setMinRank(firstCall.getGlobalMeanRank());
                 bean.setFormattedMinRank(firstCall.getFormattedGlobalMeanRank());
                 bean.setMinRankAnatEntity(firstCall.getCondition().getAnatEntity());
-                ExpressionCall lastCall = conditionCalls.listIterator().previous();
+                ExpressionCall lastCall = conditionCalls.get(conditionCalls.size() - 1);
                 bean.setMaxRank(lastCall.getGlobalMeanRank());
                 bean.setFormattedMaxRank(lastCall.getFormattedGlobalMeanRank());
             }
@@ -1031,6 +1089,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
 
                     Set<AnatEntity> anatEntitiesWithData = new HashSet<>();
                     Set<Condition> condsWithData = new HashSet<>();
+                    Set<AnatEntity> filteredGenePagePresentAnatEntities = new HashSet<>();
                     Set<AnatEntity> presentAnatEntities = new HashSet<>();
                     Set<Condition> presentConds = new HashSet<>();
                     Set<AnatEntity> absentAnatEntities = new HashSet<>();
@@ -1040,12 +1099,19 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                             bsb.setGeneWithData(bsb.getGeneWithData() + 1);
                         }
                         if (geneBean.getPresentGoldCond() + geneBean.getPresentSilverCond() +
+                                geneBean.getAbsentGoldCond() + geneBean.getAbsentSilverCond() > 0) {
+                            bsb.setGenePresentAbsentSilverGold(bsb.getGenePresentAbsentSilverGold() + 1);
+                        }
+                        if (geneBean.getPresentGoldCond() + geneBean.getPresentSilverCond() +
                                 geneBean.getPresentBronzeCond() > 0) {
                             bsb.setPresentCondGene(bsb.getPresentCondGene() + 1);
                         }
                         if (geneBean.getAbsentGoldCond() + geneBean.getAbsentSilverCond() +
                                 geneBean.getAbsentBronzeCond() > 0) {
                             bsb.setAbsentCondGene(bsb.getAbsentCondGene() + 1);
+                        }
+                        if (geneBean.getFilteredGenePagePresentAnatEntity() > 0) {
+                            bsb.setFilteredGenePageGeneCount(bsb.getFilteredGenePageGeneCount() + 1);
                         }
                         if (geneBean.getMinRank() != null &&
                                 (bsb.getMinRank() == null || bsb.getMinRank().compareTo(geneBean.getMinRank()) > 0)) {
@@ -1075,6 +1141,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                         anatEntitiesWithData.addAll(geneBean.getAbsentAnatEntities());
                         condsWithData.addAll(geneBean.getPresentConds());
                         condsWithData.addAll(geneBean.getAbsentConds());
+                        filteredGenePagePresentAnatEntities.addAll(geneBean.getFilteredGenePagePresentAnatEntities());
                         presentAnatEntities.addAll(geneBean.getPresentAnatEntities());
                         presentConds.addAll(geneBean.getPresentConds());
                         absentAnatEntities.addAll(geneBean.getAbsentAnatEntities());
@@ -1082,6 +1149,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                     }
                     bsb.setAnatEntityWithData(anatEntitiesWithData.size());
                     bsb.setCondWithData(condsWithData.size());
+                    bsb.setFilteredGenePagePresentAnatEntity(filteredGenePagePresentAnatEntities.size());
                     bsb.setPresentAnatEntityCount(presentAnatEntities.size());
                     bsb.setPresentCondCount(presentConds.size());
                     bsb.setAbsentAnatEntityCount(absentAnatEntities.size());
@@ -1092,9 +1160,9 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                 .sorted(Comparator.comparing(bean -> bean.getBioTypeName()))
                 .collect(Collectors.toList());
 
-        this.writeFiles(StatFileType.GENE_STATS, species.getScientificName().replace(" ", "_"), geneStatsBeans,
+        this.writeFiles(StatFileType.GENE_STATS, species.getScientificName().replaceAll(" ", "_"), geneStatsBeans,
                 path, geneStatsFileSuffix);
-        this.writeFiles(StatFileType.BIO_TYPE_STATS, species.getScientificName().replace(" ", "_"), biotypeStatsBeans,
+        this.writeFiles(StatFileType.BIO_TYPE_STATS, species.getScientificName().replaceAll(" ", "_"), biotypeStatsBeans,
                 path, bioTypeStatsFileSuffix);
 
         //TODO insert the GeneBioTypeStatsTO into database
@@ -1207,7 +1275,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                 nbColumns = 22;
                 break;
             case BIO_TYPE_STATS:
-                nbColumns = 25;
+                nbColumns = 28;
                 break;
             default:
                 throw new IllegalArgumentException("File type not supported: " + fileType);
@@ -1222,8 +1290,10 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
         if (fileType.equals(StatFileType.BIO_TYPE_STATS)) {
             headers[idx++] = GENE_COUNT_COLUMN_NAME;
             headers[idx++] = GENE_WITH_DATA_COLUMN_NAME;
+            headers[idx++] = GENE_PRESENT_ABSENT_SILVER_GOLD_COLUMN_NAME;
             headers[idx++] = PRESENT_COND_GENE_COLUMN_NAME;
             headers[idx++] = ABSENT_COND_GENE_COLUMN_NAME;
+            headers[idx++] = FILTERED_GENE_PAGE_GENE_COLUMN_NAME;
             headers[idx++] = ANAT_ENTITY_WITH_DATA_COLUMN_NAME;
             headers[idx++] = PRESENT_ANAT_ENTITY_COLUMN_NAME;
             headers[idx++] = ABSENT_ANAT_ENTITY_COLUMN_NAME;
@@ -1232,6 +1302,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             headers[idx++] = ABSENT_COND_COLUMN_NAME;
         }
 
+        headers[idx++] = FILTERED_GENE_PAGE_PRESENT_ANAT_ENTITY_COLUMN_NAME;
         headers[idx++] = MIN_RANK_COLUMN_NAME;
         headers[idx++] = MAX_RANK_COLUMN_NAME;
 
@@ -1240,7 +1311,6 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             headers[idx++] = FILTERED_GENE_PAGE_MIN_RANK_COLUMN_NAME;
             headers[idx++] = FILTERED_GENE_PAGE_MAX_RANK_COLUMN_NAME;
             headers[idx++] = FILTERED_GENE_PAGE_MIN_RANK_ANAT_ENTITY_COLUMN_NAME;
-            headers[idx++] = FILTERED_GENE_PAGE_PRESENT_ANAT_ENTITY_COLUMN_NAME;
         }
 
         headers[idx++] = PRESENT_BRONZE_ANAT_ENTITY_COLUMN_NAME;
@@ -1293,6 +1363,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                 case ABSENT_BRONZE_COND_COLUMN_NAME:
                 case ABSENT_SILVER_COND_COLUMN_NAME:
                 case ABSENT_GOLD_COND_COLUMN_NAME:
+                case FILTERED_GENE_PAGE_PRESENT_ANAT_ENTITY_COLUMN_NAME:
                     processors[i] = new LMinMax(0, Long.MAX_VALUE);
                     break;
                 case MIN_RANK_COLUMN_NAME:
@@ -1301,9 +1372,6 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                     //If there is no data for a gene, then there is no rank
                     processors[i] =  new ConvertNullTo("-");
                     break;
-                default:
-                    throw log.throwing(new IllegalArgumentException(
-                            "Unrecognized header: " + header[i] + " for common stat file."));
             }
             
             // If it was one of the column common to all file types, iterate next column name
@@ -1325,17 +1393,12 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                     case FILTERED_GENE_PAGE_MIN_RANK_ANAT_ENTITY_COLUMN_NAME:
                         processors[i] = new ConvertNullTo("-");
                         break;
-                    case FILTERED_GENE_PAGE_PRESENT_ANAT_ENTITY_COLUMN_NAME:
-                        processors[i] = new LMinMax(0, Long.MAX_VALUE);
-                        break;
-                    default:
-                        throw log.throwing(new IllegalArgumentException(
-                                "Unrecognized header: " + header[i] + " for gene stat file."));
                 }
             } else if (fileType.equals(StatFileType.BIO_TYPE_STATS)) {
                 switch (header[i]) {
                     case GENE_COUNT_COLUMN_NAME:
                     case GENE_WITH_DATA_COLUMN_NAME:
+                    case GENE_PRESENT_ABSENT_SILVER_GOLD_COLUMN_NAME:
                     case PRESENT_COND_GENE_COLUMN_NAME:
                     case ABSENT_COND_GENE_COLUMN_NAME:
                     case ANAT_ENTITY_WITH_DATA_COLUMN_NAME:
@@ -1344,11 +1407,9 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                     case COND_WITH_DATA_COLUMN_NAME:
                     case PRESENT_COND_COLUMN_NAME:
                     case ABSENT_COND_COLUMN_NAME:
+                    case FILTERED_GENE_PAGE_GENE_COLUMN_NAME:
                         processors[i] = new LMinMax(0, Long.MAX_VALUE);
                         break;
-                    default:
-                        throw log.throwing(new IllegalArgumentException(
-                                "Unrecognized header: " + header[i] + " for biotype stat file."));
                 }
             }
             
@@ -1424,9 +1485,9 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                 case MAX_RANK_COLUMN_NAME:
                     mapping[i] = "formattedMaxRank";
                     break;
-                default:
-                    throw log.throwing(new IllegalArgumentException(
-                            "Unrecognized header: " + header[i] + " for common stat file."));
+                case FILTERED_GENE_PAGE_PRESENT_ANAT_ENTITY_COLUMN_NAME:
+                    mapping[i] = "filteredGenePagePresentAnatEntity";
+                    break;
             }
 
             // If it was one of the column common to all file types, iterate next column name
@@ -1454,12 +1515,6 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                     case FILTERED_GENE_PAGE_MIN_RANK_ANAT_ENTITY_COLUMN_NAME:
                         mapping[i] = "filteredGenePageMinRankAnatEntity";
                         break;
-                    case FILTERED_GENE_PAGE_PRESENT_ANAT_ENTITY_COLUMN_NAME:
-                        mapping[i] = "filteredGenePagePresentAnatEntity";
-                        break;
-                    default:
-                        throw log.throwing(new IllegalArgumentException(
-                                "Unrecognized header: " + header[i] + " for gene stat file."));
                 }
             } else if (fileType.equals(StatFileType.BIO_TYPE_STATS)) {
                 switch (header[i]) {
@@ -1468,6 +1523,9 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                         break;
                     case GENE_WITH_DATA_COLUMN_NAME:
                         mapping[i] = "geneWithData";
+                        break;
+                    case GENE_PRESENT_ABSENT_SILVER_GOLD_COLUMN_NAME:
+                        mapping[i] = "genePresentAbsentSilverGold";
                         break;
                     case PRESENT_COND_GENE_COLUMN_NAME:
                         mapping[i] = "presentCondGene";
@@ -1493,9 +1551,9 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                     case ABSENT_COND_COLUMN_NAME:
                         mapping[i] = "absentCondCount";
                         break;
-                    default:
-                        throw log.throwing(new IllegalArgumentException(
-                                "Unrecognized header: " + header[i] + " for biotype stat file."));
+                    case FILTERED_GENE_PAGE_GENE_COLUMN_NAME:
+                        mapping[i] = "filteredGenePageGeneCount";
+                        break;
                 }
             }
             if (mapping[i] == null) {
@@ -1523,6 +1581,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                 case GENE_ID_COLUMN_NAME:
                 case GENE_COUNT_COLUMN_NAME:
                 case GENE_WITH_DATA_COLUMN_NAME:
+                case GENE_PRESENT_ABSENT_SILVER_GOLD_COLUMN_NAME:
                 case PRESENT_COND_GENE_COLUMN_NAME:
                 case ABSENT_COND_GENE_COLUMN_NAME:
                 case ANAT_ENTITY_WITH_DATA_COLUMN_NAME:
@@ -1544,6 +1603,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                 case ABSENT_SILVER_COND_COLUMN_NAME:
                 case ABSENT_GOLD_COND_COLUMN_NAME:
                 case FILTERED_GENE_PAGE_PRESENT_ANAT_ENTITY_COLUMN_NAME:
+                case FILTERED_GENE_PAGE_GENE_COLUMN_NAME:
                 case MIN_RANK_COLUMN_NAME:
                 case MAX_RANK_COLUMN_NAME:
                 case FILTERED_GENE_PAGE_MIN_RANK_COLUMN_NAME:

@@ -168,7 +168,7 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
 
         this.writeln("<h2>More</h2>");
         
-        this.writeln("<p>Our curation and ontology resources "
+        this.writeln("<p>Our pipeline source code, as well as our curation and ontology resources "
                 + "can be browsed on <a title='External link to BgeeDB on GitHub' "
                 + "href='https://github.com/BgeeDB/' target='_blank'>our GitHub page</a>.</p>");
 

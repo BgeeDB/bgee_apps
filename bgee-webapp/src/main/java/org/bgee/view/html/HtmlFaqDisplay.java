@@ -55,7 +55,7 @@ public class HtmlFaqDisplay extends HtmlParentDisplay implements FaqDisplay {
         this.writeln(this.getQuestionDisplay(
                 "Are all tissues tested in every species, e.g. in both mouse and rat?",
                 "We integrate publicly available data, and different species are studied in more " +
-                        "or less detail. Only tissues with detected active expression are displayed " +
+                        "or less details. Only tissues with detected active expression are displayed " +
                         "in the gene page on our website. If you use the files available for  " +
                         "download (from here <a href='" + urlCallPage.getRequestURL() + "'>" + 
                         GENE_EXPR_CALLS_PAGE_NAME + "</a>), you can see report of tissues " +
@@ -128,7 +128,7 @@ public class HtmlFaqDisplay extends HtmlParentDisplay implements FaqDisplay {
                         "   (late embryonic stage) will show up in the nomenclature for <i>C. elegans</i>.</p>",
                 "StageNames"));
 
-        this.writeln(this.getQuestionDisplay("Can I found information on strain and/or sex?",
+        this.writeln(this.getQuestionDisplay("Can I find information on strain and/or sex?",
                 "Bgee contains only manually curated healthy expression data (e.g., no gene knock-out, " +
                         "no treatment, no disease). Currently (Bgee release 14), information on " +
                         "strain or sex is not available in files that provides calls of baseline " +
@@ -143,7 +143,7 @@ public class HtmlFaqDisplay extends HtmlParentDisplay implements FaqDisplay {
                 "MoreInfo"));
 
         this.writeln(this.getQuestionDisplay("Are there multi-species comparison available in gene expression calls?",
-                "These files are not currently available. We will generate them as soon as possible.",
+                "These files are not currently available.",
                 "MultiSpecies"));
 
         this.writeln(this.getQuestionDisplay("What can I do with my genes of interest?",

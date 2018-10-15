@@ -89,7 +89,7 @@ function checkCookie() {
     var toDisplay = true;
     if (isPrivacyChecked === "") {
         // Unseen notice
-        $('#bgee_privacy_banner_text').html("This website requires cookies, and the limited " +
+        $('#bgee_privacy_banner_text').html("This website requires cookies, and limited " +
             "processing of your personal data in order to function. By using the site " +
             "you are agreeing to this as outlined in our " +
             "<a href='" + urlPrivacyPolicy.getRequestURL() + "'>privacy notice</a>.");

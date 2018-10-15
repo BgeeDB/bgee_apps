@@ -52,9 +52,9 @@ public class HtmlPrivacyPolicyDisplay extends HtmlParentDisplay implements Priva
         this.writeln("<div class='row'>");
 
         this.writeln("<div class='" + CENTERED_ELEMENT_CLASS + "'>");
-        this.writeln("<p>This privacy notice explains what personal data is collected by the specific " +
-                "service you are requesting, for what purposes, how it is processed, " +
-                "nd how we keep it secure.</p>");
+        this.writeln("<p>This privacy notice explains what personal data are collected by the specific " +
+                "service you are requesting, for what purposes, how they are processed, " +
+                "and how we keep them secure.</p>");
 
         this.writeln("<h2>Who controls your personal data and how to contact us?</h2>");
         this.writeln("<dl>");
@@ -85,7 +85,7 @@ public class HtmlPrivacyPolicyDisplay extends HtmlParentDisplay implements Priva
                 "day-to-day running of the Bgee resource and underlying infrastructure.</p>");
         
         this.writeln("<h2>What personal data is collected from users of the service?" +
-                " How do we use this personal data?</h2>");
+                " How do we use these personal data?</h2>");
         this.writeln("<p>");
         this.writeln("   The personal data collected from the services listed below is as follows:");
         this.writeln("   <h4>Website and API</h4>");
@@ -133,7 +133,7 @@ public class HtmlPrivacyPolicyDisplay extends HtmlParentDisplay implements Priva
         
         this.writeln("<h2>Who will have access to your personal data?</h2>");
         this.writeln("<p>Personal data will only be disclosed to authorized staff of Bgee." +
-                "Your personal data are stored internally and not exposed to third parties or countries." +
+                "Your personal data are stored internally and not exposed to third parties or countries. " +
                 "IP addresses are removed from log files or anonymized before being stored in case they are needed.</p>");
         
         this.writeln("<h2>Will your personal data be transferred to third parties/countries " +

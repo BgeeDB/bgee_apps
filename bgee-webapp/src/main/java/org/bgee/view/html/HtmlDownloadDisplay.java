@@ -107,7 +107,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln(HtmlParentDisplay.getSingleFeatureLogo("https://github.com/BgeeDB",
                 true, "GitHub of the Bgee project", "GitHub",
                 this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "github_logo.png",
-                "Retrieve our annotations of homology between anatomical structures, "
+                "Retrieve the source code of the Bgee pipeline, our annotations of homology between anatomical structures, "
                         + "as well as the Confidence Information Ontology (CIO) "
                         + "and the Homology Ontology (HOM), from our GitHub repository."));
 

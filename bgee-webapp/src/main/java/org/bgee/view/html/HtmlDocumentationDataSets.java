@@ -66,10 +66,12 @@ public class HtmlDocumentationDataSets extends HtmlDocumentationDownloadFile {
         
         this.writeln("<h1>GTEx data into Bgee</h1>");
 
-        this.writeln("<div id='bgee_introduction'><p>In addition to the continuous growth of transcriptomics " +
-                "datasets, a few projects are generating very large amounts of data individually. " +
-                "Notably, <a href='https://www.gtexportal.org/home/' title='GTEx portal' target='_blank'>" +
-                "GTEx project</a> provides very interesting information on human gene expression.</p></div>");
+        this.writeln("<div id='bgee_introduction'><p>In addition to the continuous growth of transcriptomics datasets, "
+                + "some specific projects produce large amounts of data, generated and accessible "
+                + "in a consistent manner, as, notably, "
+                + "the <a href='https://www.gtexportal.org/home/' title='GTEx portal' target='_blank'>" +
+                "GTEx project</a>. The GTEx project aims at building a comprehensive resource for tissue-specific "
+                + "gene expression in human. Here we describe how this dataset was integrated into Bgee.</p></div>");
 
         this.writeln("<h2>Annotation process</h2>");
         this.writeln("<div class='doc_content'>");
@@ -108,7 +110,7 @@ public class HtmlDocumentationDataSets extends HtmlDocumentationDownloadFile {
                 "download file</a>).</li>");
         this.writeln("  <li>Gene expression calls are included into <a href='" + urlExprCalls.getRequestURL() +
                 "#id1'>human files</a></li>");
-        this.writeln("  <li>Each human gene page and includes GTEx data if there is any " +
+        this.writeln("  <li>Each human gene page includes GTEx data if there is any " +
                 "(search a gene <a href='" + urlSearch.getRequestURL() + "'>here</a>).</li>");
         this.writeln("  <li>TopAnat analyses can be performs <a href='" + urlTopAnat.getRequestURL() +
                 "'>here</a>, which leverage the power of the abundant GTEx data integrated " +

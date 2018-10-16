@@ -401,8 +401,8 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
         
         private String geneId;
         private String geneName;
-        private AnatEntity minRankAnatEntity;
-        private AnatEntity filteredGenePageMinRankAnatEntity;
+        private String minRankAnatEntity;
+        private String filteredGenePageMinRankAnatEntity;
         private String filteredGenePageFormattedMinRank;
         private String filteredGenePageFormattedMaxRank;
 
@@ -442,17 +442,17 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             this.geneName = geneName;
         }
 
-        public AnatEntity getMinRankAnatEntity() {
+        public String getMinRankAnatEntity() {
             return minRankAnatEntity;
         }
-        public void setMinRankAnatEntity(AnatEntity minRankAnatEntity) {
+        public void setMinRankAnatEntity(String minRankAnatEntity) {
             this.minRankAnatEntity = minRankAnatEntity;
         }
 
-        public AnatEntity getFilteredGenePageMinRankAnatEntity() {
+        public String getFilteredGenePageMinRankAnatEntity() {
             return filteredGenePageMinRankAnatEntity;
         }
-        public void setFilteredGenePageMinRankAnatEntity(AnatEntity filteredGenePageMinRankAnatEntity) {
+        public void setFilteredGenePageMinRankAnatEntity(String filteredGenePageMinRankAnatEntity) {
             this.filteredGenePageMinRankAnatEntity = filteredGenePageMinRankAnatEntity;
         }
 
@@ -1053,7 +1053,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                     //We thus create a List of Entries
                     List<Entry<AnatEntity, List<ExpressionCall>>> orderedEntries = new ArrayList<>(groupedCalls.entrySet());
                     Entry<AnatEntity, List<ExpressionCall>> firstEntry = orderedEntries.iterator().next();
-                    bean.setFilteredGenePageMinRankAnatEntity(firstEntry.getKey());
+                    bean.setFilteredGenePageMinRankAnatEntity(firstEntry.getKey().getName());
                     bean.setFilteredGenePageFormattedMinRank(firstEntry.getValue().iterator().next().getFormattedGlobalMeanRank());
                     //The max rank here could be understood as the max rank over all condition calls displayed on the gene page.
                     //But I think it's a bit confusing, the gene page mostly display information about anat. entities,
@@ -1066,7 +1066,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                 ExpressionCall firstCall = conditionCalls.iterator().next();
                 bean.setMinRank(firstCall.getGlobalMeanRank());
                 bean.setFormattedMinRank(firstCall.getFormattedGlobalMeanRank());
-                bean.setMinRankAnatEntity(firstCall.getCondition().getAnatEntity());
+                bean.setMinRankAnatEntity(firstCall.getCondition().getAnatEntity().getName());
                 ExpressionCall lastCall = conditionCalls.get(conditionCalls.size() - 1);
                 bean.setMaxRank(lastCall.getGlobalMeanRank());
                 bean.setFormattedMaxRank(lastCall.getFormattedGlobalMeanRank());

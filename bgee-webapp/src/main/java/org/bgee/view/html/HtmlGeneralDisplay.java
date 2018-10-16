@@ -23,7 +23,7 @@ import org.bgee.view.html.HtmlDownloadDisplay.DownloadPageType;
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
- * @version Bgee 14, May 2018
+ * @version Bgee 14, Oct. 2018
  * @since   Bgee 13, July 2014
  */
 public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisplay {
@@ -350,7 +350,8 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 + "  </li>"
                 + "</ul>"
                 + "You can still access to Bgee 13 at <a title='Archive site Bgee version 13' "
-                + "href='https://bgee.org/bgee13' target='_blank'>https://bgee.org/bgee13</a>.");
+                + "href='" + this.prop.getBgeeRootDirectory() + "bgee13' target='_blank'>" 
+				+ this.prop.getBgeeRootDirectory() + "bgee13</a>.");
 
 	    this.writeOneNews("2017-05-16", "Release of Bgee version 14-beta:"
 	            + "<ul>"
@@ -373,7 +374,8 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	            + "  <li>Update of download pages to make it easier to chose files to retrieve; inclusion of gene ranks (as used in gene pages) in call files..</li>"
 	            + "</ul>"
 	            + "You can still access to Bgee 13 at <a title='Archive site Bgee version 13' "
-	            + "href='https://bgee.org/bgee13' target='_blank'>https://bgee.org/bgee13</a>.");
+	            + "href='" + this.prop.getBgeeRootDirectory() + "bgee13' target='_blank'>"
+				+ this.prop.getBgeeRootDirectory() + "bgee13</a>.");
 
 	    this.writeOneNews("2016-07-06", "Release of Bgee version 13.2: "
                 + "<ul>"
@@ -478,10 +480,10 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
         this.writeln("<div class='col-xs-12 col-md-3 archive_site'>");
         this.writeln("View archive sites:");
-        this.writeln("<a title='Archive site Bgee version 12' href='https://bgee.org/bgee12' target='_blank'>"
-                + "version 12</a>");
-        this.writeln("<a title='Archive site Bgee version 13' href='https://bgee.org/bgee13' target='_blank'>"
-                + "version 13</a>");
+        this.writeln("<a title='Archive site Bgee version 12' href='" + 
+				this.prop.getBgeeRootDirectory() + "bgee12' target='_blank'>version 12</a>");
+        this.writeln("<a title='Archive site Bgee version 13' href='" +
+				this.prop.getBgeeRootDirectory() + "bgee13' target='_blank'>version 13</a>");
         this.writeln("</div>");
         
         this.writeln("</div>"); // close bgee_more_info row

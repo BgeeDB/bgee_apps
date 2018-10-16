@@ -28,7 +28,7 @@ import org.bgee.view.JsonHelper;
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
- * @version Bgee 14, June 2018
+ * @version Bgee 14, Oct. 2018
  * @since   Bgee 13, July 2014
  */
 public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDisplay {
@@ -434,8 +434,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         // Cross to close the banner
         banner.append("<div id='bgee_data_selection_cross'>");
         banner.append("<a id='switch_page_link' class= 'banner_link' href=''></a>");
-        banner.append("<img class='closing_cross' src='" + this.prop.getBgeeRootDirectory() + this.prop.getImagesRootDirectory() + "cross.png' " +
-                "title='Close banner' alt='Cross' />");
+        banner.append("<img class='closing_cross' src='")
+                .append(this.prop.getBgeeRootDirectory()).append(this.prop.getImagesRootDirectory())
+                .append("cross.png' ").append("title='Close banner' alt='Cross' />");
         banner.append("</div>");
         
         // Section on the left of the black banner: image for single species or patchwork for group
@@ -657,7 +658,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 	}
 
     /**
-     * Get the 'help' image of the banner in a download page as a HTML 'img' element. 
+     * Get the 'help' link of the banner in a download page as a HTML 'a' element. 
      *
      * @param id    A {@code String} that is the 'id' attribute of the HTML 'a' element.
      * @return      the {@code String} that is the 'help' image as HTML 'img' element.
@@ -665,9 +666,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     private String getHelpLink(String id) {
         log.entry(id);
 
-        return log.exit("<a id='" + id + "' class='doc_link' data-placement='right' data-toggle='popover' "
-                + "data-trigger='hover' data-content='See documentation page' href=''>"
-                + "<span class='glyphicon glyphicon-info-sign'></span></a>");
+        return log.exit("<a id='" + id + "' class='banner_link' href=''>See documentation</a>");
     }
 
     /**

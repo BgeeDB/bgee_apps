@@ -300,10 +300,21 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         RequestParameters urlGenePage = this.getNewRequestParameters();
         urlGenePage.setPage(RequestParameters.PAGE_GENE);
 
-        RequestParameters urlSourcePage = this.getNewRequestParameters();
-        urlSourcePage.setPage(RequestParameters.PAGE_SOURCE);
-	    
-	    this.writeln("<div id='bgee_news' class='panel panel-default'>");
+		RequestParameters urlSourcePage = this.getNewRequestParameters();
+		urlSourcePage.setPage(RequestParameters.PAGE_SOURCE);
+
+		RequestParameters urlPrivatePolicyPage = this.getNewRequestParameters();
+		urlPrivatePolicyPage.setPage(RequestParameters.PAGE_PRIVACY_POLICY);
+
+		RequestParameters urlFaqPage = this.getNewRequestParameters();
+		urlFaqPage.setPage(RequestParameters.PAGE_DOCUMENTATION);
+		urlFaqPage.setAction(RequestParameters.ACTION_DOC_FAQ);
+
+		RequestParameters urlDatasetPage = this.getNewRequestParameters();
+		urlDatasetPage.setPage(RequestParameters.PAGE_DOCUMENTATION);
+		urlDatasetPage.setAction(RequestParameters.ACTION_DOC_DATA_SETS);
+
+		this.writeln("<div id='bgee_news' class='panel panel-default'>");
 	    this.writeln("<div class='panel-heading'>");
 	    this.writeln("<span class='panel-title'>News"
 	                 + "    <span class='header_details'>(features are being added incrementally)"
@@ -312,6 +323,19 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	    
 	    this.writeln("<div class='panel-body'>");
 
+	    //FIXME set the release date
+		this.writeOneNews("2018-10", "Update of our interfaces:"
+				+ "<ul>"
+				+ "  <li>New <a href='" + urlPrivatePolicyPage.getRequestURL() 
+								+ "'>private policy page</a></li>"
+				+ "  <li>New <a href='" + urlFaqPage.getRequestURL() + "'>FAQ page</a> "
+				+ "				where we address common user queries</li>"
+				+ "  <li>New <a href='" + urlDatasetPage.getRequestURL() + "'>documentation page</a>"
+				+ " 			specific to GTEx data to learn where to find information" 
+				+ " 			about this project</li>"
+				+ "  <li>Update the menu</li>"
+				+ "</ul>");
+				
         this.writeOneNews("2018-02-14", "Release of Bgee version 14.0:"
                 + "<ul>"
                 + "  <li>Release of the production version of Bgee release 14:"

@@ -11,8 +11,9 @@
  * - Use a separate file to group misc. functions if needed.
  * 
  * @author  Mathieu Seppey
- * @version Bgee 13 Aug 2014
- * @since   Bgee 13
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14 Oct 2018
+ * @since   Bgee 13 Sept 2014
  */
 
 /**
@@ -75,6 +76,13 @@ $(document).ready(function() {
 
     // Check cookie for privacy notice banner
     checkCookie();
+    
+    // Copy to clipboard
+    // Grab any text in the attribute 'data-co§py' and pass it to the copy function
+    $('.js-tooltip').tooltip();
+    $('.js-copy').click(function() {
+        copyToClipboard($(this));
+    });
 });
 
 // Getter/setter for cookies from https://www.w3schools.com/js/js_cookies.asp
@@ -136,5 +144,32 @@ function displayPrivacyBanner(cookieName, toDisplay) {
         });
     } else {
         $('#bgee_privacy_banner').hide();
+    }
+}
+
+// COPY TO CLIPBOARD
+// ------------------------------------------------------------------------------
+function copyToClipboard(el) {
+    var copyTest = document.queryCommandSupported('copy');
+    var text = el.attr('data-copy');
+    var elOriginalText = el.attr('data-original-title');
+
+    if (copyTest === true) {
+        var copyTextArea = document.createElement("textarea");
+        copyTextArea.value = text;
+        document.body.appendChild(copyTextArea);
+        copyTextArea.select();
+        try {
+            var successful = document.execCommand('copy');
+            var msg = successful ? 'Copied!' : 'Whoops, not copied!';
+            el.attr('data-original-title', msg).tooltip('show');
+        } catch (err) {
+            console.log('Oops, unable to copy');
+        }
+        document.body.removeChild(copyTextArea);
+        el.attr('data-original-title', elOriginalText);
+    } else {
+        // Fallback if browser doesn't support .execCommand('copy')
+        alert("Copy following link by selecting following link and typing Cmd+C or Command+C: " + text);
     }
 }

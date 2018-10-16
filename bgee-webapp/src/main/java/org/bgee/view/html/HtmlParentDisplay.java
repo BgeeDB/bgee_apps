@@ -25,7 +25,7 @@ import org.bgee.view.ViewFactory;
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
  * @author  Sebastien Moretti
- * @version Bgee 14, Aug. 2018
+ * @version Bgee 14, Oct. 2018
  * @since   Bgee 13, Jul. 2014
  */
 public class HtmlParentDisplay extends ConcreteDisplayParent {
@@ -331,7 +331,10 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         
 
         this.writeln("<ul class='nav navbar-nav navbar-right'>");
-        this.writeln("<li><a href='" + this.getRequestParameters().getStableRequestURL() + "'>Permanent link</a>");
+        this.writeln("<li><a class='js-tooltip js-copy' " +
+                "data-copy='" + this.getRequestParameters().getStableRequestURL() + "' " +
+                "data-toggle='tooltip' data-placement='top' " +
+                "data-original-title='Click to copy to clipboard'>Copy permanent link</a>");
         this.writeln("<li><a href='#TOP' id='sib_footer_gototop'>"
                 + "<span class='glyphicon glyphicon-menu-up'></span> Back to the top</a></li>");
         this.writeln("</ul>");
@@ -729,10 +732,11 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         log.entry();
         if (!this.prop.isMinify()) {
             this.includeJs("lib/jquery.min.js");
-            this.includeJs("lib/jquery_plugins/bootstrap.min.js");
             this.includeJs("lib/jquery_plugins/jquery.visible.min.js");
             this.includeJs("lib/jquery_plugins/jquery-ui.min.js");
             this.includeJs("lib/jquery_plugins/toastr.min.js");
+            //we need to add the bootstrap JS file after jQuery JS file to override it for tooltip
+            this.includeJs("lib/jquery_plugins/bootstrap.min.js");
             this.includeJs("bgeeproperties.js");
             this.includeJs("urlparameters.js");
             this.includeJs("requestparameters.js");
@@ -814,11 +818,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected void includeCss() {
         if (!this.prop.isMinify()) {
-            this.includeCss("lib/jquery_plugins/bootstrap.min.css");
             this.includeCss("lib/jquery_plugins/jquery-ui.min.css");
             this.includeCss("lib/jquery_plugins/jquery-ui.structure.min.css");
             this.includeCss("lib/jquery_plugins/jquery-ui.theme.min.css");
             this.includeCss("lib/jquery_plugins/toastr.min.css");
+            //we need to add the bootstrap CSS file after jQuery CSS file to override it for tooltip
+            this.includeCss("lib/jquery_plugins/bootstrap.min.css");
             //we need to add the Bgee CSS files at the end, to override CSS file from bootstrap
             this.includeCss("bgee.css");  
         } else {

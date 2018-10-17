@@ -26,6 +26,10 @@ So we include it from scratch in all our pages, to adapt element sizes to it.
     --archive-second-color: #d0cbbf;
 }
 
+#sib_container a {
+    cursor: pointer;
+}
+
 #sib_container .alert {
     margin-bottom: 0px;
 }
@@ -268,7 +272,6 @@ nav img.social-img {
 
 /****LINKS****/
 #sib_body a {
-    cursor: pointer;
     color: #920209;
     text-decoration: underline;
 }

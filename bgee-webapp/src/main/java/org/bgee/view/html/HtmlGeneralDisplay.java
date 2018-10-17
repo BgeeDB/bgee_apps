@@ -327,7 +327,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 		this.writeOneNews("2018-10", "Update of our interfaces:"
 				+ "<ul>"
 				+ "  <li>New <a href='" + urlPrivatePolicyPage.getRequestURL() 
-								+ "'>private policy page</a></li>"
+								+ "'>privacy policy page</a></li>"
 				+ "  <li>New <a href='" + urlFaqPage.getRequestURL() + "'>FAQ page</a> "
 				+ "				where we address common user queries</li>"
 				+ "  <li>New <a href='" + urlDatasetPage.getRequestURL() + "'>documentation page</a>"

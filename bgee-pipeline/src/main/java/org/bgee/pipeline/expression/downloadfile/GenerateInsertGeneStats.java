@@ -68,10 +68,22 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             "gold quality";
     public final static String ABSENT_BRONZE_ANAT_ENTITY_COLUMN_NAME = "Count of \"absent\" expression calls per anat. entity, " +
             "bronze quality";
-    public final static String ABSENT_SILVER_ANAT_ENTITY_COLUMN_NAME = "Count of \"absent\" expression calls per anat. entity " +
+    public final static String ABSENT_SILVER_ANAT_ENTITY_COLUMN_NAME = "Count of \"absent\" expression calls per anat. entity, " +
             "silver quality";
     public final static String ABSENT_GOLD_ANAT_ENTITY_COLUMN_NAME = "Count of \"absent\" expression calls per anat. entity, " +
             "gold quality";
+    public final static String FILTERED_PRESENT_BRONZE_ANAT_ENTITY_COLUMN_NAME = "Count of \"present\" expression calls per anat. entity " +
+            "as filtered in the download files, bronze quality";
+    public final static String FILTERED_PRESENT_SILVER_ANAT_ENTITY_COLUMN_NAME = "Count of \"present\" expression calls per anat. entity " +
+            "as filtered in the download files, silver quality";
+    public final static String FILTERED_PRESENT_GOLD_ANAT_ENTITY_COLUMN_NAME = "Count of \"present\" expression calls per anat. entity " +
+            "as filtered in the download files, gold quality";
+    public final static String FILTERED_ABSENT_BRONZE_ANAT_ENTITY_COLUMN_NAME = "Count of \"absent\" expression calls per anat. entity " +
+            "as filtered in the download files, bronze quality";
+    public final static String FILTERED_ABSENT_SILVER_ANAT_ENTITY_COLUMN_NAME = "Count of \"absent\" expression calls per anat. entity " +
+            "as filtered in the download files, silver quality";
+    public final static String FILTERED_ABSENT_GOLD_ANAT_ENTITY_COLUMN_NAME = "Count of \"absent\" expression calls per anat. entity " +
+            "as filtered in the download files, gold quality";
     public final static String PRESENT_BRONZE_COND_COLUMN_NAME = "Count of \"present\" expression calls per condition, " +
             "bronze quality";
     public final static String PRESENT_SILVER_COND_COLUMN_NAME = "Count of \"present\" expression calls per condition, " +
@@ -84,6 +96,18 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             "silver quality";
     public final static String ABSENT_GOLD_COND_COLUMN_NAME = "Count of \"absent\" expression calls per condition, " +
             "gold quality";
+    public final static String FILTERED_PRESENT_BRONZE_COND_COLUMN_NAME = "Count of \"present\" expression calls per condition " +
+            "as filtered in the download files, bronze quality";
+    public final static String FILTERED_PRESENT_SILVER_COND_COLUMN_NAME = "Count of \"present\" expression calls per condition " +
+            "as filtered in the download files, silver quality";
+    public final static String FILTERED_PRESENT_GOLD_COND_COLUMN_NAME = "Count of \"present\" expression calls per condition " +
+            "as filtered in the download files, gold quality";
+    public final static String FILTERED_ABSENT_BRONZE_COND_COLUMN_NAME = "Count of \"absent\" expression calls per condition " +
+            "as filtered in the download files, bronze quality";
+    public final static String FILTERED_ABSENT_SILVER_COND_COLUMN_NAME = "Count of \"absent\" expression calls per condition " +
+            "as filtered in the download files, silver quality";
+    public final static String FILTERED_ABSENT_GOLD_COND_COLUMN_NAME = "Count of \"absent\" expression calls per condition " +
+            "as filtered in the download files, gold quality";
 
     public final static String FILTERED_GENE_PAGE_PRESENT_ANAT_ENTITY_COLUMN_NAME =
             "Count of distinct anat. entity with \"present\" expression calls of gold and silver qualities filtered as on the Bgee website";
@@ -130,12 +154,24 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
         private int absentBronzeAnatEntity;
         private int absentSilverAnatEntity;
         private int absentGoldAnatEntity;
+        private int filteredPresentBronzeAnatEntity;
+        private int filteredPresentSilverAnatEntity;
+        private int filteredPresentGoldAnatEntity;
+        private int filteredAbsentBronzeAnatEntity;
+        private int filteredAbsentSilverAnatEntity;
+        private int filteredAbsentGoldAnatEntity;
         private int presentBronzeCond;
         private int presentSilverCond;
         private int presentGoldCond;
         private int absentBronzeCond;
         private int absentSilverCond;
         private int absentGoldCond;
+        private int filteredPresentBronzeCond;
+        private int filteredPresentSilverCond;
+        private int filteredPresentGoldCond;
+        private int filteredAbsentBronzeCond;
+        private int filteredAbsentSilverCond;
+        private int filteredAbsentGoldCond;
         private BigDecimal minRank;
         private BigDecimal maxRank;
         private String formattedMinRank;
@@ -150,137 +186,205 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             this.absentBronzeAnatEntity = 0;
             this.absentSilverAnatEntity = 0;
             this.absentGoldAnatEntity = 0;
+            this.filteredPresentBronzeAnatEntity = 0;
+            this.filteredPresentSilverAnatEntity = 0;
+            this.filteredPresentGoldAnatEntity = 0;
+            this.filteredAbsentBronzeAnatEntity = 0;
+            this.filteredAbsentSilverAnatEntity = 0;
+            this.filteredAbsentGoldAnatEntity = 0;
             this.presentBronzeCond = 0;
             this.presentSilverCond = 0;
             this.presentGoldCond = 0;
             this.absentBronzeCond = 0;
             this.absentSilverCond = 0;
             this.absentGoldCond = 0;
+            this.filteredPresentBronzeCond = 0;
+            this.filteredPresentSilverCond = 0;
+            this.filteredPresentGoldCond = 0;
+            this.filteredAbsentBronzeCond = 0;
+            this.filteredAbsentSilverCond = 0;
+            this.filteredAbsentGoldCond = 0;
             this.minRank = null;
             this.maxRank = null;
             this.formattedMinRank = null;
             this.formattedMaxRank = null;
             this.filteredGenePagePresentAnatEntity = 0;
         }
+
         public String getBioTypeName() {
             return bioTypeName;
         }
         public void setBioTypeName(String bioTypeName) {
             this.bioTypeName = bioTypeName;
         }
-
         public int getPresentBronzeAnatEntity() {
             return presentBronzeAnatEntity;
         }
         public void setPresentBronzeAnatEntity(int presentBronzeAnatEntity) {
             this.presentBronzeAnatEntity = presentBronzeAnatEntity;
         }
-
         public int getPresentSilverAnatEntity() {
             return presentSilverAnatEntity;
         }
         public void setPresentSilverAnatEntity(int presentSilverAnatEntity) {
             this.presentSilverAnatEntity = presentSilverAnatEntity;
         }
-
         public int getPresentGoldAnatEntity() {
             return presentGoldAnatEntity;
         }
         public void setPresentGoldAnatEntity(int presentGoldAnatEntity) {
             this.presentGoldAnatEntity = presentGoldAnatEntity;
         }
-
         public int getAbsentBronzeAnatEntity() {
             return absentBronzeAnatEntity;
         }
         public void setAbsentBronzeAnatEntity(int absentBronzeAnatEntity) {
             this.absentBronzeAnatEntity = absentBronzeAnatEntity;
         }
-
         public int getAbsentSilverAnatEntity() {
             return absentSilverAnatEntity;
         }
         public void setAbsentSilverAnatEntity(int absentSilverAnatEntity) {
             this.absentSilverAnatEntity = absentSilverAnatEntity;
         }
-
         public int getAbsentGoldAnatEntity() {
             return absentGoldAnatEntity;
         }
         public void setAbsentGoldAnatEntity(int absentGoldAnatEntity) {
             this.absentGoldAnatEntity = absentGoldAnatEntity;
         }
-
+        public int getFilteredPresentBronzeAnatEntity() {
+            return filteredPresentBronzeAnatEntity;
+        }
+        public void setFilteredPresentBronzeAnatEntity(int filteredPresentBronzeAnatEntity) {
+            this.filteredPresentBronzeAnatEntity = filteredPresentBronzeAnatEntity;
+        }
+        public int getFilteredPresentSilverAnatEntity() {
+            return filteredPresentSilverAnatEntity;
+        }
+        public void setFilteredPresentSilverAnatEntity(int filteredPresentSilverAnatEntity) {
+            this.filteredPresentSilverAnatEntity = filteredPresentSilverAnatEntity;
+        }
+        public int getFilteredPresentGoldAnatEntity() {
+            return filteredPresentGoldAnatEntity;
+        }
+        public void setFilteredPresentGoldAnatEntity(int filteredPresentGoldAnatEntity) {
+            this.filteredPresentGoldAnatEntity = filteredPresentGoldAnatEntity;
+        }
+        public int getFilteredAbsentBronzeAnatEntity() {
+            return filteredAbsentBronzeAnatEntity;
+        }
+        public void setFilteredAbsentBronzeAnatEntity(int filteredAbsentBronzeAnatEntity) {
+            this.filteredAbsentBronzeAnatEntity = filteredAbsentBronzeAnatEntity;
+        }
+        public int getFilteredAbsentSilverAnatEntity() {
+            return filteredAbsentSilverAnatEntity;
+        }
+        public void setFilteredAbsentSilverAnatEntity(int filteredAbsentSilverAnatEntity) {
+            this.filteredAbsentSilverAnatEntity = filteredAbsentSilverAnatEntity;
+        }
+        public int getFilteredAbsentGoldAnatEntity() {
+            return filteredAbsentGoldAnatEntity;
+        }
+        public void setFilteredAbsentGoldAnatEntity(int filteredAbsentGoldAnatEntity) {
+            this.filteredAbsentGoldAnatEntity = filteredAbsentGoldAnatEntity;
+        }
         public int getPresentBronzeCond() {
             return presentBronzeCond;
         }
         public void setPresentBronzeCond(int presentBronzeCond) {
             this.presentBronzeCond = presentBronzeCond;
         }
-
         public int getPresentSilverCond() {
             return presentSilverCond;
         }
         public void setPresentSilverCond(int presentSilverCond) {
             this.presentSilverCond = presentSilverCond;
         }
-
         public int getPresentGoldCond() {
             return presentGoldCond;
         }
         public void setPresentGoldCond(int presentGoldCond) {
             this.presentGoldCond = presentGoldCond;
         }
-
         public int getAbsentBronzeCond() {
             return absentBronzeCond;
         }
         public void setAbsentBronzeCond(int absentBronzeCond) {
             this.absentBronzeCond = absentBronzeCond;
         }
-
         public int getAbsentSilverCond() {
             return absentSilverCond;
         }
         public void setAbsentSilverCond(int absentSilverCond) {
             this.absentSilverCond = absentSilverCond;
         }
-
         public int getAbsentGoldCond() {
             return absentGoldCond;
         }
         public void setAbsentGoldCond(int absentGoldCond) {
             this.absentGoldCond = absentGoldCond;
         }
-
+        public int getFilteredPresentBronzeCond() {
+            return filteredPresentBronzeCond;
+        }
+        public void setFilteredPresentBronzeCond(int filteredPresentBronzeCond) {
+            this.filteredPresentBronzeCond = filteredPresentBronzeCond;
+        }
+        public int getFilteredPresentSilverCond() {
+            return filteredPresentSilverCond;
+        }
+        public void setFilteredPresentSilverCond(int filteredPresentSilverCond) {
+            this.filteredPresentSilverCond = filteredPresentSilverCond;
+        }
+        public int getFilteredPresentGoldCond() {
+            return filteredPresentGoldCond;
+        }
+        public void setFilteredPresentGoldCond(int filteredPresentGoldCond) {
+            this.filteredPresentGoldCond = filteredPresentGoldCond;
+        }
+        public int getFilteredAbsentBronzeCond() {
+            return filteredAbsentBronzeCond;
+        }
+        public void setFilteredAbsentBronzeCond(int filteredAbsentBronzeCond) {
+            this.filteredAbsentBronzeCond = filteredAbsentBronzeCond;
+        }
+        public int getFilteredAbsentSilverCond() {
+            return filteredAbsentSilverCond;
+        }
+        public void setFilteredAbsentSilverCond(int filteredAbsentSilverCond) {
+            this.filteredAbsentSilverCond = filteredAbsentSilverCond;
+        }
+        public int getFilteredAbsentGoldCond() {
+            return filteredAbsentGoldCond;
+        }
+        public void setFilteredAbsentGoldCond(int filteredAbsentGoldCond) {
+            this.filteredAbsentGoldCond = filteredAbsentGoldCond;
+        }
         public BigDecimal getMinRank() {
             return minRank;
         }
         public void setMinRank(BigDecimal minRank) {
             this.minRank = minRank;
         }
-
-        public String getFormattedMinRank() {
-            return formattedMinRank;
-        }
-        public void setFormattedMinRank(String formattedMinRank) {
-            this.formattedMinRank = formattedMinRank;
-        }
-
         public BigDecimal getMaxRank() {
             return maxRank;
         }
         public void setMaxRank(BigDecimal maxRank) {
             this.maxRank = maxRank;
         }
-
+        public String getFormattedMinRank() {
+            return formattedMinRank;
+        }
+        public void setFormattedMinRank(String formattedMinRank) {
+            this.formattedMinRank = formattedMinRank;
+        }
         public String getFormattedMaxRank() {
             return formattedMaxRank;
         }
         public void setFormattedMaxRank(String formattedMaxRank) {
             this.formattedMaxRank = formattedMaxRank;
         }
-        
         public int getFilteredGenePagePresentAnatEntity() {
             return filteredGenePagePresentAnatEntity;
         }
@@ -292,27 +396,47 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
         public int hashCode() {
             final int prime = 31;
             int result = 1;
-            result = prime * result + ((bioTypeName == null) ? 0 : bioTypeName.hashCode());
             result = prime * result + absentBronzeAnatEntity;
             result = prime * result + absentBronzeCond;
             result = prime * result + absentGoldAnatEntity;
             result = prime * result + absentGoldCond;
             result = prime * result + absentSilverAnatEntity;
             result = prime * result + absentSilverCond;
+            result = prime * result + ((bioTypeName == null) ? 0 : bioTypeName.hashCode());
+            result = prime * result + filteredAbsentBronzeAnatEntity;
+            result = prime * result + filteredAbsentBronzeCond;
+            result = prime * result + filteredAbsentGoldAnatEntity;
+            result = prime * result + filteredAbsentGoldCond;
+            result = prime * result + filteredAbsentSilverAnatEntity;
+            result = prime * result + filteredAbsentSilverCond;
+            result = prime * result + filteredGenePagePresentAnatEntity;
+            result = prime * result + filteredPresentBronzeAnatEntity;
+            result = prime * result + filteredPresentBronzeCond;
+            result = prime * result + filteredPresentGoldAnatEntity;
+            result = prime * result + filteredPresentGoldCond;
+            result = prime * result + filteredPresentSilverAnatEntity;
+            result = prime * result + filteredPresentSilverCond;
             result = prime * result + ((maxRank == null) ? 0 : maxRank.hashCode());
             result = prime * result + ((minRank == null) ? 0 : minRank.hashCode());
-            result = prime * result + filteredGenePagePresentAnatEntity;
+            result = prime * result + presentBronzeAnatEntity;
+            result = prime * result + presentBronzeCond;
+            result = prime * result + presentGoldAnatEntity;
+            result = prime * result + presentGoldCond;
+            result = prime * result + presentSilverAnatEntity;
+            result = prime * result + presentSilverCond;
             return result;
         }
-
         @Override
         public boolean equals(Object obj) {
-            if (this == obj)
+            if (this == obj) {
                 return true;
-            if (!super.equals(obj))
+            }
+            if (obj == null) {
                 return false;
-            if (getClass() != obj.getClass())
+            }
+            if (!(obj instanceof CommonBean)) {
                 return false;
+            }
             CommonBean other = (CommonBean) obj;
             if (absentBronzeAnatEntity != other.absentBronzeAnatEntity) {
                 return false;
@@ -339,6 +463,59 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             } else if (!bioTypeName.equals(other.bioTypeName)) {
                 return false;
             }
+            if (filteredAbsentBronzeAnatEntity != other.filteredAbsentBronzeAnatEntity) {
+                return false;
+            }
+            if (filteredAbsentBronzeCond != other.filteredAbsentBronzeCond) {
+                return false;
+            }
+            if (filteredAbsentGoldAnatEntity != other.filteredAbsentGoldAnatEntity) {
+                return false;
+            }
+            if (filteredAbsentGoldCond != other.filteredAbsentGoldCond) {
+                return false;
+            }
+            if (filteredAbsentSilverAnatEntity != other.filteredAbsentSilverAnatEntity) {
+                return false;
+            }
+            if (filteredAbsentSilverCond != other.filteredAbsentSilverCond) {
+                return false;
+            }
+            if (filteredGenePagePresentAnatEntity != other.filteredGenePagePresentAnatEntity) {
+                return false;
+            }
+            if (filteredPresentBronzeAnatEntity != other.filteredPresentBronzeAnatEntity) {
+                return false;
+            }
+            if (filteredPresentBronzeCond != other.filteredPresentBronzeCond) {
+                return false;
+            }
+            if (filteredPresentGoldAnatEntity != other.filteredPresentGoldAnatEntity) {
+                return false;
+            }
+            if (filteredPresentGoldCond != other.filteredPresentGoldCond) {
+                return false;
+            }
+            if (filteredPresentSilverAnatEntity != other.filteredPresentSilverAnatEntity) {
+                return false;
+            }
+            if (filteredPresentSilverCond != other.filteredPresentSilverCond) {
+                return false;
+            }
+            if (maxRank == null) {
+                if (other.maxRank != null) {
+                    return false;
+                }
+            } else if (!maxRank.equals(other.maxRank)) {
+                return false;
+            }
+            if (minRank == null) {
+                if (other.minRank != null) {
+                    return false;
+                }
+            } else if (!minRank.equals(other.minRank)) {
+                return false;
+            }
             if (presentBronzeAnatEntity != other.presentBronzeAnatEntity) {
                 return false;
             }
@@ -357,26 +534,9 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             if (presentSilverCond != other.presentSilverCond) {
                 return false;
             }
-            if (maxRank == null) {
-                if (other.maxRank != null) {
-                    return false;
-                }
-            } else if (!maxRank.equals(other.maxRank)) {
-                return false;
-            }
-            if (minRank == null) {
-                if (other.minRank != null) {
-                    return false;
-                }
-            } else if (!minRank.equals(other.minRank)) {
-                return false;
-            }
-            if (filteredGenePagePresentAnatEntity != other.filteredGenePagePresentAnatEntity) {
-                return false;
-            }
             return true;
         }
-        
+
         @Override
         public String toString() {
             StringBuilder builder = new StringBuilder();
@@ -385,12 +545,25 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                     .append(presentSilverAnatEntity).append(", presentGoldAnatEntity=").append(presentGoldAnatEntity)
                     .append(", absentBronzeAnatEntity=").append(absentBronzeAnatEntity)
                     .append(", absentSilverAnatEntity=").append(absentSilverAnatEntity)
-                    .append(", absentGoldAnatEntity=").append(absentGoldAnatEntity).append(", presentBronzeCond=")
-                    .append(presentBronzeCond).append(", presentSilverCond=").append(presentSilverCond)
-                    .append(", presentGoldCond=").append(presentGoldCond).append(", absentBronzeCond=")
-                    .append(absentBronzeCond).append(", absentSilverCond=").append(absentSilverCond)
-                    .append(", absentGoldCond=").append(absentGoldCond)
-                    .append(", minRank=").append(formattedMinRank).append(", maxRank=").append(formattedMaxRank)
+                    .append(", absentGoldAnatEntity=").append(absentGoldAnatEntity)
+                    .append(", filteredPresentBronzeAnatEntity=").append(filteredPresentBronzeAnatEntity)
+                    .append(", filteredPresentSilverAnatEntity=").append(filteredPresentSilverAnatEntity)
+                    .append(", filteredPresentGoldAnatEntity=").append(filteredPresentGoldAnatEntity)
+                    .append(", filteredAbsentBronzeAnatEntity=").append(filteredAbsentBronzeAnatEntity)
+                    .append(", filteredAbsentSilverAnatEntity=").append(filteredAbsentSilverAnatEntity)
+                    .append(", filteredAbsentGoldAnatEntity=").append(filteredAbsentGoldAnatEntity)
+                    .append(", presentBronzeCond=").append(presentBronzeCond).append(", presentSilverCond=")
+                    .append(presentSilverCond).append(", presentGoldCond=").append(presentGoldCond)
+                    .append(", absentBronzeCond=").append(absentBronzeCond).append(", absentSilverCond=")
+                    .append(absentSilverCond).append(", absentGoldCond=").append(absentGoldCond)
+                    .append(", filteredPresentBronzeCond=").append(filteredPresentBronzeCond)
+                    .append(", filteredPresentSilverCond=").append(filteredPresentSilverCond)
+                    .append(", filteredPresentGoldCond=").append(filteredPresentGoldCond)
+                    .append(", filteredAbsentBronzeCond=").append(filteredAbsentBronzeCond)
+                    .append(", filteredAbsentSilverCond=").append(filteredAbsentSilverCond)
+                    .append(", filteredAbsentGoldCond=").append(filteredAbsentGoldCond).append(", minRank=")
+                    .append(minRank).append(", maxRank=").append(maxRank).append(", formattedMinRank=")
+                    .append(formattedMinRank).append(", formattedMaxRank=").append(formattedMaxRank)
                     .append(", filteredGenePagePresentAnatEntity=").append(filteredGenePagePresentAnatEntity)
                     .append("]");
             return builder.toString();
@@ -909,9 +1082,14 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             //Retrieve all genes for that species
             Set<Gene> genes = serviceFactory.getGeneService().loadGenes(new GeneFilter(species.getId()))
                     .collect(Collectors.toSet());
+            final Set<AnatEntity> nonInformativeAnatEntities = Collections.unmodifiableSet(
+                    serviceFactory.getAnatEntityService()
+                    .loadNonInformativeAnatEntitiesBySpeciesIds(Collections.singleton(species.getId()))
+                    .collect(Collectors.toSet()));
 
             try {
-                this.generatePerSpecies(species, genes, path, bioTypeStatsFileSuffix, geneStatsFileSuffix);
+                this.generatePerSpecies(species, genes, nonInformativeAnatEntities,
+                        path, bioTypeStatsFileSuffix, geneStatsFileSuffix);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             } finally {
@@ -926,10 +1104,9 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
         log.exit();
     }
 
-    private void generatePerSpecies(Species species, Set<Gene> genes, String path,
-                                    String bioTypeStatsFileSuffix, String geneStatsFileSuffix)
-            throws IOException {
-        log.entry(species, genes, path, bioTypeStatsFileSuffix, geneStatsFileSuffix);
+    private void generatePerSpecies(Species species, Set<Gene> genes, final Set<AnatEntity> nonInformativeAnatEntities,
+            String path, String bioTypeStatsFileSuffix, String geneStatsFileSuffix) throws IOException {
+        log.entry(species, genes, nonInformativeAnatEntities, path, bioTypeStatsFileSuffix, geneStatsFileSuffix);
 
         //Now we use parallel streams for each gene independently
         List<GeneStatsBean> geneStatsBeans = genes.parallelStream().map(gene -> {
@@ -979,15 +1156,25 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                     .collect(Collectors.toList());
 
             for (ExpressionCall call: organCalls) {
+                boolean nonInformative = nonInformativeAnatEntities.contains(call.getCondition().getAnatEntity());
                 if (call.getSummaryCallType().equals(ExpressionSummary.EXPRESSED)) {
                     bean.getPresentAnatEntities().add(call.getCondition().getAnatEntity());
 
                     if (call.getSummaryQuality().equals(SummaryQuality.BRONZE)) {
                         bean.setPresentBronzeAnatEntity(bean.getPresentBronzeAnatEntity() + 1);
+                        if (!nonInformative) {
+                            bean.setFilteredPresentBronzeAnatEntity(bean.getFilteredPresentBronzeAnatEntity() + 1);
+                        }
                     } else if (call.getSummaryQuality().equals(SummaryQuality.SILVER)) {
                         bean.setPresentSilverAnatEntity(bean.getPresentSilverAnatEntity() + 1);
+                        if (!nonInformative) {
+                            bean.setFilteredPresentSilverAnatEntity(bean.getFilteredPresentSilverAnatEntity() + 1);
+                        }
                     } else if (call.getSummaryQuality().equals(SummaryQuality.GOLD)) {
                         bean.setPresentGoldAnatEntity(bean.getPresentGoldAnatEntity() + 1);
+                        if (!nonInformative) {
+                            bean.setFilteredPresentGoldAnatEntity(bean.getFilteredPresentGoldAnatEntity() + 1);
+                        }
                     } else {
                         throw log.throwing(new IllegalStateException(
                                 "Unsupported SummaryQuality: " + call.getSummaryQuality()));
@@ -997,10 +1184,19 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
 
                     if (call.getSummaryQuality().equals(SummaryQuality.BRONZE)) {
                         bean.setAbsentBronzeAnatEntity(bean.getAbsentBronzeAnatEntity() + 1);
+                        if (!nonInformative) {
+                            bean.setFilteredAbsentBronzeAnatEntity(bean.getFilteredAbsentBronzeAnatEntity() + 1);
+                        }
                     } else if (call.getSummaryQuality().equals(SummaryQuality.SILVER)) {
                         bean.setAbsentSilverAnatEntity(bean.getAbsentSilverAnatEntity() + 1);
+                        if (!nonInformative) {
+                            bean.setFilteredAbsentSilverAnatEntity(bean.getFilteredAbsentSilverAnatEntity() + 1);
+                        }
                     } else if (call.getSummaryQuality().equals(SummaryQuality.GOLD)) {
                         bean.setAbsentGoldAnatEntity(bean.getAbsentGoldAnatEntity() + 1);
+                        if (!nonInformative) {
+                            bean.setFilteredAbsentGoldAnatEntity(bean.getFilteredAbsentGoldAnatEntity() + 1);
+                        }
                     } else {
                         throw log.throwing(new IllegalStateException(
                                 "Unsupported SummaryQuality: " + call.getSummaryQuality()));
@@ -1011,15 +1207,25 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                 }
             }
             for (ExpressionCall call: conditionCalls) {
+                boolean nonInformative = nonInformativeAnatEntities.contains(call.getCondition().getAnatEntity());
                 if (call.getSummaryCallType().equals(ExpressionSummary.EXPRESSED)) {
                     bean.getPresentConds().add(call.getCondition());
 
                     if (call.getSummaryQuality().equals(SummaryQuality.BRONZE)) {
                         bean.setPresentBronzeCond(bean.getPresentBronzeCond() + 1);
+                        if (!nonInformative) {
+                            bean.setFilteredPresentBronzeCond(bean.getFilteredPresentBronzeCond() + 1);
+                        }
                     } else if (call.getSummaryQuality().equals(SummaryQuality.SILVER)) {
                         bean.setPresentSilverCond(bean.getPresentSilverCond() + 1);
+                        if (!nonInformative) {
+                            bean.setFilteredPresentSilverCond(bean.getFilteredPresentSilverCond() + 1);
+                        }
                     } else if (call.getSummaryQuality().equals(SummaryQuality.GOLD)) {
                         bean.setPresentGoldCond(bean.getPresentGoldCond() + 1);
+                        if (!nonInformative) {
+                            bean.setFilteredPresentGoldCond(bean.getFilteredPresentGoldCond() + 1);
+                        }
                     } else {
                         throw log.throwing(new IllegalStateException(
                                 "Unsupported SummaryQuality: " + call.getSummaryQuality()));
@@ -1029,10 +1235,19 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
 
                     if (call.getSummaryQuality().equals(SummaryQuality.BRONZE)) {
                         bean.setAbsentBronzeCond(bean.getAbsentBronzeCond() + 1);
+                        if (!nonInformative) {
+                            bean.setFilteredAbsentBronzeCond(bean.getFilteredAbsentBronzeCond() + 1);
+                        }
                     } else if (call.getSummaryQuality().equals(SummaryQuality.SILVER)) {
                         bean.setAbsentSilverCond(bean.getAbsentSilverCond() + 1);
+                        if (!nonInformative) {
+                            bean.setFilteredAbsentSilverCond(bean.getFilteredAbsentSilverCond() + 1);
+                        }
                     } else if (call.getSummaryQuality().equals(SummaryQuality.GOLD)) {
                         bean.setAbsentGoldCond(bean.getAbsentGoldCond() + 1);
+                        if (!nonInformative) {
+                            bean.setFilteredAbsentGoldCond(bean.getFilteredAbsentGoldCond() + 1);
+                        }
                     } else {
                         throw log.throwing(new IllegalStateException(
                                 "Unsupported SummaryQuality: " + call.getSummaryQuality()));
@@ -1129,6 +1344,18 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                         bsb.setAbsentBronzeAnatEntity(bsb.getAbsentBronzeAnatEntity() + geneBean.getAbsentBronzeAnatEntity());
                         bsb.setAbsentSilverAnatEntity(bsb.getAbsentSilverAnatEntity() + geneBean.getAbsentSilverAnatEntity());
                         bsb.setAbsentGoldAnatEntity(bsb.getAbsentGoldAnatEntity() + geneBean.getAbsentGoldAnatEntity());
+                        bsb.setFilteredPresentBronzeAnatEntity(bsb.getFilteredPresentBronzeAnatEntity()
+                                + geneBean.getFilteredPresentBronzeAnatEntity());
+                        bsb.setFilteredPresentSilverAnatEntity(bsb.getFilteredPresentSilverAnatEntity()
+                                + geneBean.getFilteredPresentSilverAnatEntity());
+                        bsb.setFilteredPresentGoldAnatEntity(bsb.getFilteredPresentGoldAnatEntity()
+                                + geneBean.getFilteredPresentGoldAnatEntity());
+                        bsb.setFilteredAbsentBronzeAnatEntity(bsb.getFilteredAbsentBronzeAnatEntity()
+                                + geneBean.getFilteredAbsentBronzeAnatEntity());
+                        bsb.setFilteredAbsentSilverAnatEntity(bsb.getFilteredAbsentSilverAnatEntity()
+                                + geneBean.getFilteredAbsentSilverAnatEntity());
+                        bsb.setFilteredAbsentGoldAnatEntity(bsb.getFilteredAbsentGoldAnatEntity()
+                                + geneBean.getFilteredAbsentGoldAnatEntity());
 
                         bsb.setPresentBronzeCond(bsb.getPresentBronzeCond() + geneBean.getPresentBronzeCond());
                         bsb.setPresentSilverCond(bsb.getPresentSilverCond() + geneBean.getPresentSilverCond());
@@ -1136,6 +1363,18 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                         bsb.setAbsentBronzeCond(bsb.getAbsentBronzeCond() + geneBean.getAbsentBronzeCond());
                         bsb.setAbsentSilverCond(bsb.getAbsentSilverCond() + geneBean.getAbsentSilverCond());
                         bsb.setAbsentGoldCond(bsb.getAbsentGoldCond() + geneBean.getAbsentGoldCond());
+                        bsb.setFilteredPresentBronzeCond(bsb.getFilteredPresentBronzeCond()
+                                + geneBean.getFilteredPresentBronzeCond());
+                        bsb.setFilteredPresentSilverCond(bsb.getFilteredPresentSilverCond()
+                                + geneBean.getFilteredPresentSilverCond());
+                        bsb.setFilteredPresentGoldCond(bsb.getFilteredPresentGoldCond()
+                                + geneBean.getFilteredPresentGoldCond());
+                        bsb.setFilteredAbsentBronzeCond(bsb.getFilteredAbsentBronzeCond()
+                                + geneBean.getFilteredAbsentBronzeCond());
+                        bsb.setFilteredAbsentSilverCond(bsb.getFilteredAbsentSilverCond()
+                                + geneBean.getFilteredAbsentSilverCond());
+                        bsb.setFilteredAbsentGoldCond(bsb.getFilteredAbsentGoldCond()
+                                + geneBean.getFilteredAbsentGoldCond());
 
                         anatEntitiesWithData.addAll(geneBean.getPresentAnatEntities());
                         anatEntitiesWithData.addAll(geneBean.getAbsentAnatEntities());
@@ -1272,10 +1511,10 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
         int nbColumns;
         switch (fileType) {
             case GENE_STATS:
-                nbColumns = 22;
+                nbColumns = 34;
                 break;
             case BIO_TYPE_STATS:
-                nbColumns = 28;
+                nbColumns = 40;
                 break;
             default:
                 throw new IllegalArgumentException("File type not supported: " + fileType);
@@ -1319,12 +1558,24 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
         headers[idx++] = ABSENT_BRONZE_ANAT_ENTITY_COLUMN_NAME;
         headers[idx++] = ABSENT_SILVER_ANAT_ENTITY_COLUMN_NAME;
         headers[idx++] = ABSENT_GOLD_ANAT_ENTITY_COLUMN_NAME;
+        headers[idx++] = FILTERED_PRESENT_BRONZE_ANAT_ENTITY_COLUMN_NAME;
+        headers[idx++] = FILTERED_PRESENT_SILVER_ANAT_ENTITY_COLUMN_NAME;
+        headers[idx++] = FILTERED_PRESENT_GOLD_ANAT_ENTITY_COLUMN_NAME;
+        headers[idx++] = FILTERED_ABSENT_BRONZE_ANAT_ENTITY_COLUMN_NAME;
+        headers[idx++] = FILTERED_ABSENT_SILVER_ANAT_ENTITY_COLUMN_NAME;
+        headers[idx++] = FILTERED_ABSENT_GOLD_ANAT_ENTITY_COLUMN_NAME;
         headers[idx++] = PRESENT_BRONZE_COND_COLUMN_NAME;
         headers[idx++] = PRESENT_SILVER_COND_COLUMN_NAME;
         headers[idx++] = PRESENT_GOLD_COND_COLUMN_NAME;
         headers[idx++] = ABSENT_BRONZE_COND_COLUMN_NAME;
         headers[idx++] = ABSENT_SILVER_COND_COLUMN_NAME;
         headers[idx++] = ABSENT_GOLD_COND_COLUMN_NAME;
+        headers[idx++] = FILTERED_PRESENT_BRONZE_COND_COLUMN_NAME;
+        headers[idx++] = FILTERED_PRESENT_SILVER_COND_COLUMN_NAME;
+        headers[idx++] = FILTERED_PRESENT_GOLD_COND_COLUMN_NAME;
+        headers[idx++] = FILTERED_ABSENT_BRONZE_COND_COLUMN_NAME;
+        headers[idx++] = FILTERED_ABSENT_SILVER_COND_COLUMN_NAME;
+        headers[idx++] = FILTERED_ABSENT_GOLD_COND_COLUMN_NAME;
 
         return log.exit(headers);
     }
@@ -1363,6 +1614,18 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                 case ABSENT_BRONZE_COND_COLUMN_NAME:
                 case ABSENT_SILVER_COND_COLUMN_NAME:
                 case ABSENT_GOLD_COND_COLUMN_NAME:
+                case FILTERED_PRESENT_BRONZE_ANAT_ENTITY_COLUMN_NAME:
+                case FILTERED_PRESENT_SILVER_ANAT_ENTITY_COLUMN_NAME:
+                case FILTERED_PRESENT_GOLD_ANAT_ENTITY_COLUMN_NAME:
+                case FILTERED_ABSENT_BRONZE_ANAT_ENTITY_COLUMN_NAME:
+                case FILTERED_ABSENT_SILVER_ANAT_ENTITY_COLUMN_NAME:
+                case FILTERED_ABSENT_GOLD_ANAT_ENTITY_COLUMN_NAME:
+                case FILTERED_PRESENT_BRONZE_COND_COLUMN_NAME:
+                case FILTERED_PRESENT_SILVER_COND_COLUMN_NAME:
+                case FILTERED_PRESENT_GOLD_COND_COLUMN_NAME:
+                case FILTERED_ABSENT_BRONZE_COND_COLUMN_NAME:
+                case FILTERED_ABSENT_SILVER_COND_COLUMN_NAME:
+                case FILTERED_ABSENT_GOLD_COND_COLUMN_NAME:
                 case FILTERED_GENE_PAGE_PRESENT_ANAT_ENTITY_COLUMN_NAME:
                     processors[i] = new LMinMax(0, Long.MAX_VALUE);
                     break;
@@ -1461,6 +1724,24 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                 case ABSENT_GOLD_ANAT_ENTITY_COLUMN_NAME:
                     mapping[i] = "absentGoldAnatEntity";
                     break;
+                case FILTERED_PRESENT_BRONZE_ANAT_ENTITY_COLUMN_NAME:
+                    mapping[i] = "filteredPresentBronzeAnatEntity";
+                    break;
+                case FILTERED_PRESENT_SILVER_ANAT_ENTITY_COLUMN_NAME:
+                    mapping[i] = "filteredPresentSilverAnatEntity";
+                    break;
+                case FILTERED_PRESENT_GOLD_ANAT_ENTITY_COLUMN_NAME:
+                    mapping[i] = "filteredPresentGoldAnatEntity";
+                    break;
+                case FILTERED_ABSENT_BRONZE_ANAT_ENTITY_COLUMN_NAME:
+                    mapping[i] = "filteredAbsentBronzeAnatEntity";
+                    break;
+                case FILTERED_ABSENT_SILVER_ANAT_ENTITY_COLUMN_NAME:
+                    mapping[i] = "filteredAbsentSilverAnatEntity";
+                    break;
+                case FILTERED_ABSENT_GOLD_ANAT_ENTITY_COLUMN_NAME:
+                    mapping[i] = "filteredAbsentGoldAnatEntity";
+                    break;
                 case PRESENT_BRONZE_COND_COLUMN_NAME:
                     mapping[i] = "presentBronzeCond";
                     break;
@@ -1478,6 +1759,24 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                     break;
                 case ABSENT_GOLD_COND_COLUMN_NAME:
                     mapping[i] = "absentGoldCond";
+                    break;
+                case FILTERED_PRESENT_BRONZE_COND_COLUMN_NAME:
+                    mapping[i] = "filteredPresentBronzeCond";
+                    break;
+                case FILTERED_PRESENT_SILVER_COND_COLUMN_NAME:
+                    mapping[i] = "filteredPresentSilverCond";
+                    break;
+                case FILTERED_PRESENT_GOLD_COND_COLUMN_NAME:
+                    mapping[i] = "filteredPresentGoldCond";
+                    break;
+                case FILTERED_ABSENT_BRONZE_COND_COLUMN_NAME:
+                    mapping[i] = "filteredAbsentBronzeCond";
+                    break;
+                case FILTERED_ABSENT_SILVER_COND_COLUMN_NAME:
+                    mapping[i] = "filteredAbsentSilverCond";
+                    break;
+                case FILTERED_ABSENT_GOLD_COND_COLUMN_NAME:
+                    mapping[i] = "filteredAbsentGoldCond";
                     break;
                 case MIN_RANK_COLUMN_NAME:
                     mapping[i] = "formattedMinRank";
@@ -1596,12 +1895,24 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                 case ABSENT_BRONZE_ANAT_ENTITY_COLUMN_NAME:
                 case ABSENT_SILVER_ANAT_ENTITY_COLUMN_NAME:
                 case ABSENT_GOLD_ANAT_ENTITY_COLUMN_NAME:
+                case FILTERED_PRESENT_BRONZE_ANAT_ENTITY_COLUMN_NAME:
+                case FILTERED_PRESENT_SILVER_ANAT_ENTITY_COLUMN_NAME:
+                case FILTERED_PRESENT_GOLD_ANAT_ENTITY_COLUMN_NAME:
+                case FILTERED_ABSENT_BRONZE_ANAT_ENTITY_COLUMN_NAME:
+                case FILTERED_ABSENT_SILVER_ANAT_ENTITY_COLUMN_NAME:
+                case FILTERED_ABSENT_GOLD_ANAT_ENTITY_COLUMN_NAME:
                 case PRESENT_BRONZE_COND_COLUMN_NAME:
                 case PRESENT_SILVER_COND_COLUMN_NAME:
                 case PRESENT_GOLD_COND_COLUMN_NAME:
                 case ABSENT_BRONZE_COND_COLUMN_NAME:
                 case ABSENT_SILVER_COND_COLUMN_NAME:
                 case ABSENT_GOLD_COND_COLUMN_NAME:
+                case FILTERED_PRESENT_BRONZE_COND_COLUMN_NAME:
+                case FILTERED_PRESENT_SILVER_COND_COLUMN_NAME:
+                case FILTERED_PRESENT_GOLD_COND_COLUMN_NAME:
+                case FILTERED_ABSENT_BRONZE_COND_COLUMN_NAME:
+                case FILTERED_ABSENT_SILVER_COND_COLUMN_NAME:
+                case FILTERED_ABSENT_GOLD_COND_COLUMN_NAME:
                 case FILTERED_GENE_PAGE_PRESENT_ANAT_ENTITY_COLUMN_NAME:
                 case FILTERED_GENE_PAGE_GENE_COLUMN_NAME:
                 case MIN_RANK_COLUMN_NAME:

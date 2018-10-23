@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.Map.Entry;
@@ -34,8 +36,8 @@ import org.supercsv.cellprocessor.constraint.LMinMax;
 import org.supercsv.cellprocessor.constraint.NotNull;
 import org.supercsv.cellprocessor.constraint.StrNotNullOrEmpty;
 import org.supercsv.cellprocessor.ift.CellProcessor;
-import org.supercsv.io.dozer.CsvDozerBeanWriter;
-import org.supercsv.io.dozer.ICsvDozerBeanWriter;
+import org.supercsv.io.CsvBeanWriter;
+import org.supercsv.io.ICsvBeanWriter;
 
 /**
  * Class used to generate statistics about expression data of genes and gene biotypes.
@@ -178,6 +180,14 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
         private String formattedMaxRank;
         private int filteredGenePagePresentAnatEntity;
 
+        //Not used for writing in the gene TSV files, but to retrieve all unique Conditions and AnatEntities
+        //for the information per biotype, and for sums over all genes or all biotypes.
+        private Set<AnatEntity> filteredGenePagePresentAnatEntities;
+        private Set<AnatEntity> presentAnatEntities;
+        private Set<Condition> presentConds;
+        private Set<AnatEntity> absentAnatEntities;
+        private Set<Condition> absentConds;
+
         public CommonBean() {
             this.bioTypeName = null;
             this.presentBronzeAnatEntity = 0;
@@ -209,6 +219,11 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             this.formattedMinRank = null;
             this.formattedMaxRank = null;
             this.filteredGenePagePresentAnatEntity = 0;
+            this.filteredGenePagePresentAnatEntities = new HashSet<>();
+            this.presentAnatEntities = new HashSet<>();
+            this.presentConds = new HashSet<>();
+            this.absentAnatEntities = new HashSet<>();
+            this.absentConds = new HashSet<>();
         }
 
         public String getBioTypeName() {
@@ -392,6 +407,22 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             this.filteredGenePagePresentAnatEntity = filteredGenePagePresentAnatEntity;
         }
 
+        public Set<AnatEntity> getFilteredGenePagePresentAnatEntities() {
+            return filteredGenePagePresentAnatEntities;
+        }
+        public Set<AnatEntity> getPresentAnatEntities() {
+            return presentAnatEntities;
+        }
+        public Set<Condition> getPresentConds() {
+            return presentConds;
+        }
+        public Set<AnatEntity> getAbsentAnatEntities() {
+            return absentAnatEntities;
+        }
+        public Set<Condition> getAbsentConds() {
+            return absentConds;
+        }
+
         @Override
         public int hashCode() {
             final int prime = 31;
@@ -424,6 +455,11 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             result = prime * result + presentGoldCond;
             result = prime * result + presentSilverAnatEntity;
             result = prime * result + presentSilverCond;
+            result = prime * result + ((filteredGenePagePresentAnatEntities == null) ? 0 : filteredGenePagePresentAnatEntities.hashCode());
+            result = prime * result + ((presentAnatEntities == null) ? 0 : presentAnatEntities.hashCode());
+            result = prime * result + ((presentConds == null) ? 0 : presentConds.hashCode());
+            result = prime * result + ((absentAnatEntities == null) ? 0 : absentAnatEntities.hashCode());
+            result = prime * result + ((absentConds == null) ? 0 : absentConds.hashCode());
             return result;
         }
         @Override
@@ -534,6 +570,41 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             if (presentSilverCond != other.presentSilverCond) {
                 return false;
             }
+            if (filteredGenePagePresentAnatEntities == null) {
+                if (other.filteredGenePagePresentAnatEntities != null) {
+                    return false;
+                }
+            } else if (!filteredGenePagePresentAnatEntities.equals(other.filteredGenePagePresentAnatEntities)) {
+                return false;
+            }
+            if (presentAnatEntities == null) {
+                if (other.presentAnatEntities != null) {
+                    return false;
+                }
+            } else if (!presentAnatEntities.equals(other.presentAnatEntities)) {
+                return false;
+            }
+            if (presentConds == null) {
+                if (other.presentConds != null) {
+                    return false;
+                }
+            } else if (!presentConds.equals(other.presentConds)) {
+                return false;
+            }
+            if (absentAnatEntities == null) {
+                if (other.absentAnatEntities != null) {
+                    return false;
+                }
+            } else if (!absentAnatEntities.equals(other.absentAnatEntities)) {
+                return false;
+            }
+            if (absentConds == null) {
+                if (other.absentConds != null) {
+                    return false;
+                }
+            } else if (!absentConds.equals(other.absentConds)) {
+                return false;
+            }
             return true;
         }
 
@@ -579,14 +650,6 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
         private String filteredGenePageFormattedMinRank;
         private String filteredGenePageFormattedMaxRank;
 
-        //Not used for writing in the gene TSV files, but to retrieve all unique Conditions and AnatEntities
-        //for the information per biotype.
-        private Set<AnatEntity> filteredGenePagePresentAnatEntities;
-        private Set<AnatEntity> presentAnatEntities;
-        private Set<Condition> presentConds;
-        private Set<AnatEntity> absentAnatEntities;
-        private Set<Condition> absentConds;
-
         public GeneStatsBean() {
             this.geneId = null;
             this.geneName = null;
@@ -594,11 +657,6 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             this.filteredGenePageMinRankAnatEntity = null;
             this.filteredGenePageFormattedMinRank = null;
             this.filteredGenePageFormattedMaxRank = null;
-            this.filteredGenePagePresentAnatEntities = new HashSet<>();
-            this.presentAnatEntities = new HashSet<>();
-            this.presentConds = new HashSet<>();
-            this.absentAnatEntities = new HashSet<>();
-            this.absentConds = new HashSet<>();
         }
 
         public String getGeneId() {
@@ -643,26 +701,6 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             this.filteredGenePageFormattedMaxRank = filteredGenePageFormattedMaxRank;
         }
 
-        public Set<AnatEntity> getFilteredGenePagePresentAnatEntities() {
-            return filteredGenePagePresentAnatEntities;
-        }
-
-        public Set<AnatEntity> getPresentAnatEntities() {
-            return presentAnatEntities;
-        }
-
-        public Set<Condition> getPresentConds() {
-            return presentConds;
-        }
-
-        public Set<AnatEntity> getAbsentAnatEntities() {
-            return absentAnatEntities;
-        }
-
-        public Set<Condition> getAbsentConds() {
-            return absentConds;
-        }
-
         @Override
         public int hashCode() {
             final int prime = 31;
@@ -673,11 +711,6 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             result = prime * result + ((filteredGenePageMinRankAnatEntity == null) ? 0 : filteredGenePageMinRankAnatEntity.hashCode());
             result = prime * result + ((filteredGenePageFormattedMinRank == null) ? 0 : filteredGenePageFormattedMinRank.hashCode());
             result = prime * result + ((filteredGenePageFormattedMaxRank == null) ? 0 : filteredGenePageFormattedMaxRank.hashCode());
-            result = prime * result + ((filteredGenePagePresentAnatEntities == null) ? 0 : filteredGenePagePresentAnatEntities.hashCode());
-            result = prime * result + ((presentAnatEntities == null) ? 0 : presentAnatEntities.hashCode());
-            result = prime * result + ((presentConds == null) ? 0 : presentConds.hashCode());
-            result = prime * result + ((absentAnatEntities == null) ? 0 : absentAnatEntities.hashCode());
-            result = prime * result + ((absentConds == null) ? 0 : absentConds.hashCode());
             return result;
         }
         @Override
@@ -734,41 +767,6 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                     return false;
                 }
             } else if (!filteredGenePageFormattedMaxRank.equals(other.filteredGenePageFormattedMaxRank)) {
-                return false;
-            }
-            if (filteredGenePagePresentAnatEntities == null) {
-                if (other.filteredGenePagePresentAnatEntities != null) {
-                    return false;
-                }
-            } else if (!filteredGenePagePresentAnatEntities.equals(other.filteredGenePagePresentAnatEntities)) {
-                return false;
-            }
-            if (presentAnatEntities == null) {
-                if (other.presentAnatEntities != null) {
-                    return false;
-                }
-            } else if (!presentAnatEntities.equals(other.presentAnatEntities)) {
-                return false;
-            }
-            if (presentConds == null) {
-                if (other.presentConds != null) {
-                    return false;
-                }
-            } else if (!presentConds.equals(other.presentConds)) {
-                return false;
-            }
-            if (absentAnatEntities == null) {
-                if (other.absentAnatEntities != null) {
-                    return false;
-                }
-            } else if (!absentAnatEntities.equals(other.absentAnatEntities)) {
-                return false;
-            }
-            if (absentConds == null) {
-                if (other.absentConds != null) {
-                    return false;
-                }
-            } else if (!absentConds.equals(other.absentConds)) {
                 return false;
             }
             return true;
@@ -1110,298 +1108,49 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
 
         //Now we use parallel streams for each gene independently
         List<GeneStatsBean> geneStatsBeans = genes.parallelStream().map(gene -> {
-            //We need one ServiceFactory per thread
-            ServiceFactory serviceFactory = this.serviceFactorySupplier.get();
-            CallService callService = serviceFactory.getCallService();
 
-            //For each gene, we retrieve: "present" expression calls (min qual bronze) per anat. entity, and per condition,
-            //and "absent" expression calls (min qual bronze) per anat. entity, and per condition.
-            //Plus also the number of anat. entities with expression filtered as on the gene page
             GeneStatsBean bean = new GeneStatsBean();
             bean.setGeneName(gene.getName());
             bean.setGeneId(gene.getEnsemblGeneId());
             bean.setBioTypeName(gene.getGeneBioType().getName());
 
-            GeneFilter geneFilter = new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId());
-            Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
-            obsDataFilter.put(null, true);
-
-            Set<ExpressionCall> organCalls = callService
-                    .loadExpressionCalls(
-                            new ExpressionCallFilter(null,
-                                    Collections.singleton(geneFilter),
-                                    null, null, obsDataFilter, null, null),
-                            EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID,
-                                    CallService.Attribute.CALL_TYPE,
-                                    CallService.Attribute.DATA_QUALITY),
-                            null)
-                    .collect(Collectors.toSet());
-
-            LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering =
-                    new LinkedHashMap<>();
-            serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
-            EnumSet<CallService.Attribute> attrs = Arrays.stream(CallService.Attribute.values())
-                    .filter(a -> a.isConditionParameter())
-                    .collect(Collectors.toCollection(() -> EnumSet.noneOf(CallService.Attribute.class)));
-            attrs.add(CallService.Attribute.DATA_QUALITY);
-            attrs.add(CallService.Attribute.CALL_TYPE);
-            attrs.add(CallService.Attribute.GLOBAL_MEAN_RANK);
-            List<ExpressionCall> conditionCalls = callService
-                    .loadExpressionCalls(
-                            new ExpressionCallFilter(null,
-                                    Collections.singleton(geneFilter),
-                                    null, null, obsDataFilter, null, null),
-                            attrs,
-                            serviceOrdering)
-                    .collect(Collectors.toList());
-
-            for (ExpressionCall call: organCalls) {
-                boolean nonInformative = nonInformativeAnatEntities.contains(call.getCondition().getAnatEntity());
-                if (call.getSummaryCallType().equals(ExpressionSummary.EXPRESSED)) {
-                    bean.getPresentAnatEntities().add(call.getCondition().getAnatEntity());
-
-                    if (call.getSummaryQuality().equals(SummaryQuality.BRONZE)) {
-                        bean.setPresentBronzeAnatEntity(bean.getPresentBronzeAnatEntity() + 1);
-                        if (!nonInformative) {
-                            bean.setFilteredPresentBronzeAnatEntity(bean.getFilteredPresentBronzeAnatEntity() + 1);
-                        }
-                    } else if (call.getSummaryQuality().equals(SummaryQuality.SILVER)) {
-                        bean.setPresentSilverAnatEntity(bean.getPresentSilverAnatEntity() + 1);
-                        if (!nonInformative) {
-                            bean.setFilteredPresentSilverAnatEntity(bean.getFilteredPresentSilverAnatEntity() + 1);
-                        }
-                    } else if (call.getSummaryQuality().equals(SummaryQuality.GOLD)) {
-                        bean.setPresentGoldAnatEntity(bean.getPresentGoldAnatEntity() + 1);
-                        if (!nonInformative) {
-                            bean.setFilteredPresentGoldAnatEntity(bean.getFilteredPresentGoldAnatEntity() + 1);
-                        }
-                    } else {
-                        throw log.throwing(new IllegalStateException(
-                                "Unsupported SummaryQuality: " + call.getSummaryQuality()));
-                    }
-                } else if (call.getSummaryCallType().equals(ExpressionSummary.NOT_EXPRESSED)) {
-                    bean.getAbsentAnatEntities().add(call.getCondition().getAnatEntity());
-
-                    if (call.getSummaryQuality().equals(SummaryQuality.BRONZE)) {
-                        bean.setAbsentBronzeAnatEntity(bean.getAbsentBronzeAnatEntity() + 1);
-                        if (!nonInformative) {
-                            bean.setFilteredAbsentBronzeAnatEntity(bean.getFilteredAbsentBronzeAnatEntity() + 1);
-                        }
-                    } else if (call.getSummaryQuality().equals(SummaryQuality.SILVER)) {
-                        bean.setAbsentSilverAnatEntity(bean.getAbsentSilverAnatEntity() + 1);
-                        if (!nonInformative) {
-                            bean.setFilteredAbsentSilverAnatEntity(bean.getFilteredAbsentSilverAnatEntity() + 1);
-                        }
-                    } else if (call.getSummaryQuality().equals(SummaryQuality.GOLD)) {
-                        bean.setAbsentGoldAnatEntity(bean.getAbsentGoldAnatEntity() + 1);
-                        if (!nonInformative) {
-                            bean.setFilteredAbsentGoldAnatEntity(bean.getFilteredAbsentGoldAnatEntity() + 1);
-                        }
-                    } else {
-                        throw log.throwing(new IllegalStateException(
-                                "Unsupported SummaryQuality: " + call.getSummaryQuality()));
-                    }
-                } else {
-                    throw log.throwing(new IllegalStateException(
-                            "Unsupported SummaryCallType: " + call.getSummaryCallType()));
-                }
-            }
-            for (ExpressionCall call: conditionCalls) {
-                boolean nonInformative = nonInformativeAnatEntities.contains(call.getCondition().getAnatEntity());
-                if (call.getSummaryCallType().equals(ExpressionSummary.EXPRESSED)) {
-                    bean.getPresentConds().add(call.getCondition());
-
-                    if (call.getSummaryQuality().equals(SummaryQuality.BRONZE)) {
-                        bean.setPresentBronzeCond(bean.getPresentBronzeCond() + 1);
-                        if (!nonInformative) {
-                            bean.setFilteredPresentBronzeCond(bean.getFilteredPresentBronzeCond() + 1);
-                        }
-                    } else if (call.getSummaryQuality().equals(SummaryQuality.SILVER)) {
-                        bean.setPresentSilverCond(bean.getPresentSilverCond() + 1);
-                        if (!nonInformative) {
-                            bean.setFilteredPresentSilverCond(bean.getFilteredPresentSilverCond() + 1);
-                        }
-                    } else if (call.getSummaryQuality().equals(SummaryQuality.GOLD)) {
-                        bean.setPresentGoldCond(bean.getPresentGoldCond() + 1);
-                        if (!nonInformative) {
-                            bean.setFilteredPresentGoldCond(bean.getFilteredPresentGoldCond() + 1);
-                        }
-                    } else {
-                        throw log.throwing(new IllegalStateException(
-                                "Unsupported SummaryQuality: " + call.getSummaryQuality()));
-                    }
-                } else if (call.getSummaryCallType().equals(ExpressionSummary.NOT_EXPRESSED)) {
-                    bean.getAbsentConds().add(call.getCondition());
-
-                    if (call.getSummaryQuality().equals(SummaryQuality.BRONZE)) {
-                        bean.setAbsentBronzeCond(bean.getAbsentBronzeCond() + 1);
-                        if (!nonInformative) {
-                            bean.setFilteredAbsentBronzeCond(bean.getFilteredAbsentBronzeCond() + 1);
-                        }
-                    } else if (call.getSummaryQuality().equals(SummaryQuality.SILVER)) {
-                        bean.setAbsentSilverCond(bean.getAbsentSilverCond() + 1);
-                        if (!nonInformative) {
-                            bean.setFilteredAbsentSilverCond(bean.getFilteredAbsentSilverCond() + 1);
-                        }
-                    } else if (call.getSummaryQuality().equals(SummaryQuality.GOLD)) {
-                        bean.setAbsentGoldCond(bean.getAbsentGoldCond() + 1);
-                        if (!nonInformative) {
-                            bean.setFilteredAbsentGoldCond(bean.getFilteredAbsentGoldCond() + 1);
-                        }
-                    } else {
-                        throw log.throwing(new IllegalStateException(
-                                "Unsupported SummaryQuality: " + call.getSummaryQuality()));
-                    }
-                } else {
-                    throw log.throwing(new IllegalStateException(
-                            "Unsupported SummaryCallType: " + call.getSummaryCallType()));
-                }
-            }
-
-            if (!organCalls.isEmpty()) {
-                LinkedHashMap<AnatEntity, List<ExpressionCall>> groupedCalls = callService
-                        .loadCondCallsWithSilverAnatEntityCallsByAnatEntity(organCalls, conditionCalls, false);
-                bean.setFilteredGenePagePresentAnatEntity(groupedCalls.size());
-                bean.getFilteredGenePagePresentAnatEntities().addAll(groupedCalls.keySet());
-                if (!groupedCalls.isEmpty()) {
-                    //The LinkedHashMap has the same interface as Map, so we cannot easily access the last element.
-                    //We thus create a List of Entries
-                    List<Entry<AnatEntity, List<ExpressionCall>>> orderedEntries = new ArrayList<>(groupedCalls.entrySet());
-                    Entry<AnatEntity, List<ExpressionCall>> firstEntry = orderedEntries.iterator().next();
-                    bean.setFilteredGenePageMinRankAnatEntity(firstEntry.getKey().getName());
-                    bean.setFilteredGenePageFormattedMinRank(firstEntry.getValue().iterator().next().getFormattedGlobalMeanRank());
-                    //The max rank here could be understood as the max rank over all condition calls displayed on the gene page.
-                    //But I think it's a bit confusing, the gene page mostly display information about anat. entities,
-                    //so I take the min rank of the last anat. entity, as for the gene page.
-                    Entry<AnatEntity, List<ExpressionCall>> lastEntry = orderedEntries.get(orderedEntries.size() - 1);
-                    bean.setFilteredGenePageFormattedMaxRank(lastEntry.getValue().iterator().next().getFormattedGlobalMeanRank());
-                }
-            }
-            if (!conditionCalls.isEmpty()) {
-                ExpressionCall firstCall = conditionCalls.iterator().next();
-                bean.setMinRank(firstCall.getGlobalMeanRank());
-                bean.setFormattedMinRank(firstCall.getFormattedGlobalMeanRank());
-                bean.setMinRankAnatEntity(firstCall.getCondition().getAnatEntity().getName());
-                ExpressionCall lastCall = conditionCalls.get(conditionCalls.size() - 1);
-                bean.setMaxRank(lastCall.getGlobalMeanRank());
-                bean.setFormattedMaxRank(lastCall.getFormattedGlobalMeanRank());
-            }
+            this.generateGeneStats(bean, gene, nonInformativeAnatEntities);
+            
             return bean;
         })
         .sorted(Comparator.comparing(bean -> bean.getGeneId()))
         .collect(Collectors.toList());
 
+        //Compute stats per biotype from the gene stats
         List<BiotypeStatsBean> biotypeStatsBeans = geneStatsBeans.stream()
-                .collect(Collectors.groupingBy(GeneStatsBean::getBioTypeName))
-                .entrySet().parallelStream()
-                .map(e -> {
-                    List<GeneStatsBean> geneBeans = e.getValue();
-                    BiotypeStatsBean bsb = new BiotypeStatsBean();
-                    bsb.setBioTypeName(e.getKey());
+        .collect(Collectors.groupingBy(GeneStatsBean::getBioTypeName))
+        .entrySet().parallelStream()
+        .map(e -> {
+            BiotypeStatsBean bsb = new BiotypeStatsBean();
+            bsb.setBioTypeName(e.getKey());
 
-                    // number of genes
-                    bsb.setGeneCount(geneBeans.size());
+            generateBioTypeStats(bsb, e.getValue());
 
-                    Set<AnatEntity> anatEntitiesWithData = new HashSet<>();
-                    Set<Condition> condsWithData = new HashSet<>();
-                    Set<AnatEntity> filteredGenePagePresentAnatEntities = new HashSet<>();
-                    Set<AnatEntity> presentAnatEntities = new HashSet<>();
-                    Set<Condition> presentConds = new HashSet<>();
-                    Set<AnatEntity> absentAnatEntities = new HashSet<>();
-                    Set<Condition> absentConds = new HashSet<>();
-                    for (GeneStatsBean geneBean: geneBeans) {
-                        if (getTotalCallCount(geneBean) > 0) {
-                            bsb.setGeneWithData(bsb.getGeneWithData() + 1);
-                        }
-                        if (geneBean.getPresentGoldCond() + geneBean.getPresentSilverCond() +
-                                geneBean.getAbsentGoldCond() + geneBean.getAbsentSilverCond() > 0) {
-                            bsb.setGenePresentAbsentSilverGold(bsb.getGenePresentAbsentSilverGold() + 1);
-                        }
-                        if (geneBean.getPresentGoldCond() + geneBean.getPresentSilverCond() +
-                                geneBean.getPresentBronzeCond() > 0) {
-                            bsb.setPresentCondGene(bsb.getPresentCondGene() + 1);
-                        }
-                        if (geneBean.getAbsentGoldCond() + geneBean.getAbsentSilverCond() +
-                                geneBean.getAbsentBronzeCond() > 0) {
-                            bsb.setAbsentCondGene(bsb.getAbsentCondGene() + 1);
-                        }
-                        if (geneBean.getFilteredGenePagePresentAnatEntity() > 0) {
-                            bsb.setFilteredGenePageGeneCount(bsb.getFilteredGenePageGeneCount() + 1);
-                        }
-                        if (geneBean.getMinRank() != null &&
-                                (bsb.getMinRank() == null || bsb.getMinRank().compareTo(geneBean.getMinRank()) > 0)) {
-                            bsb.setMinRank(geneBean.getMinRank());
-                            bsb.setFormattedMinRank(geneBean.getFormattedMinRank());
-                        }
-                        if (geneBean.getMaxRank() != null &&
-                                (bsb.getMaxRank() == null || bsb.getMaxRank().compareTo(geneBean.getMaxRank()) < 0)) {
-                            bsb.setMaxRank(geneBean.getMaxRank());
-                            bsb.setFormattedMaxRank(geneBean.getFormattedMaxRank());
-                        }
-                        bsb.setPresentBronzeAnatEntity(bsb.getPresentBronzeAnatEntity() + geneBean.getPresentBronzeAnatEntity());
-                        bsb.setPresentSilverAnatEntity(bsb.getPresentSilverAnatEntity() + geneBean.getPresentSilverAnatEntity());
-                        bsb.setPresentGoldAnatEntity(bsb.getPresentGoldAnatEntity() + geneBean.getPresentGoldAnatEntity());
-                        bsb.setAbsentBronzeAnatEntity(bsb.getAbsentBronzeAnatEntity() + geneBean.getAbsentBronzeAnatEntity());
-                        bsb.setAbsentSilverAnatEntity(bsb.getAbsentSilverAnatEntity() + geneBean.getAbsentSilverAnatEntity());
-                        bsb.setAbsentGoldAnatEntity(bsb.getAbsentGoldAnatEntity() + geneBean.getAbsentGoldAnatEntity());
-                        bsb.setFilteredPresentBronzeAnatEntity(bsb.getFilteredPresentBronzeAnatEntity()
-                                + geneBean.getFilteredPresentBronzeAnatEntity());
-                        bsb.setFilteredPresentSilverAnatEntity(bsb.getFilteredPresentSilverAnatEntity()
-                                + geneBean.getFilteredPresentSilverAnatEntity());
-                        bsb.setFilteredPresentGoldAnatEntity(bsb.getFilteredPresentGoldAnatEntity()
-                                + geneBean.getFilteredPresentGoldAnatEntity());
-                        bsb.setFilteredAbsentBronzeAnatEntity(bsb.getFilteredAbsentBronzeAnatEntity()
-                                + geneBean.getFilteredAbsentBronzeAnatEntity());
-                        bsb.setFilteredAbsentSilverAnatEntity(bsb.getFilteredAbsentSilverAnatEntity()
-                                + geneBean.getFilteredAbsentSilverAnatEntity());
-                        bsb.setFilteredAbsentGoldAnatEntity(bsb.getFilteredAbsentGoldAnatEntity()
-                                + geneBean.getFilteredAbsentGoldAnatEntity());
+            return bsb;
+        })
+        .sorted(Comparator.comparing(bean -> bean.getBioTypeName()))
+        .collect(Collectors.toList());
 
-                        bsb.setPresentBronzeCond(bsb.getPresentBronzeCond() + geneBean.getPresentBronzeCond());
-                        bsb.setPresentSilverCond(bsb.getPresentSilverCond() + geneBean.getPresentSilverCond());
-                        bsb.setPresentGoldCond(bsb.getPresentGoldCond() + geneBean.getPresentGoldCond());
-                        bsb.setAbsentBronzeCond(bsb.getAbsentBronzeCond() + geneBean.getAbsentBronzeCond());
-                        bsb.setAbsentSilverCond(bsb.getAbsentSilverCond() + geneBean.getAbsentSilverCond());
-                        bsb.setAbsentGoldCond(bsb.getAbsentGoldCond() + geneBean.getAbsentGoldCond());
-                        bsb.setFilteredPresentBronzeCond(bsb.getFilteredPresentBronzeCond()
-                                + geneBean.getFilteredPresentBronzeCond());
-                        bsb.setFilteredPresentSilverCond(bsb.getFilteredPresentSilverCond()
-                                + geneBean.getFilteredPresentSilverCond());
-                        bsb.setFilteredPresentGoldCond(bsb.getFilteredPresentGoldCond()
-                                + geneBean.getFilteredPresentGoldCond());
-                        bsb.setFilteredAbsentBronzeCond(bsb.getFilteredAbsentBronzeCond()
-                                + geneBean.getFilteredAbsentBronzeCond());
-                        bsb.setFilteredAbsentSilverCond(bsb.getFilteredAbsentSilverCond()
-                                + geneBean.getFilteredAbsentSilverCond());
-                        bsb.setFilteredAbsentGoldCond(bsb.getFilteredAbsentGoldCond()
-                                + geneBean.getFilteredAbsentGoldCond());
+        //Now we compute a summary over all genes (we don't do it before computing statistics for each biotype
+        //for not messing up the biotype stats)
+        GeneStatsBean allGeneBean = generateAllGeneSummary(geneStatsBeans);
+        //Add the summary at the end of the gene list
+        geneStatsBeans.add(allGeneBean);
 
-                        anatEntitiesWithData.addAll(geneBean.getPresentAnatEntities());
-                        anatEntitiesWithData.addAll(geneBean.getAbsentAnatEntities());
-                        condsWithData.addAll(geneBean.getPresentConds());
-                        condsWithData.addAll(geneBean.getAbsentConds());
-                        filteredGenePagePresentAnatEntities.addAll(geneBean.getFilteredGenePagePresentAnatEntities());
-                        presentAnatEntities.addAll(geneBean.getPresentAnatEntities());
-                        presentConds.addAll(geneBean.getPresentConds());
-                        absentAnatEntities.addAll(geneBean.getAbsentAnatEntities());
-                        absentConds.addAll(geneBean.getAbsentConds());
-                    }
-                    bsb.setAnatEntityWithData(anatEntitiesWithData.size());
-                    bsb.setCondWithData(condsWithData.size());
-                    bsb.setFilteredGenePagePresentAnatEntity(filteredGenePagePresentAnatEntities.size());
-                    bsb.setPresentAnatEntityCount(presentAnatEntities.size());
-                    bsb.setPresentCondCount(presentConds.size());
-                    bsb.setAbsentAnatEntityCount(absentAnatEntities.size());
-                    bsb.setAbsentCondCount(absentConds.size());
+        //Compute a summary over all biotypes
+        BiotypeStatsBean allBioType = generateAllBiotypeSummary(biotypeStatsBeans);
+        //Add the summary at the end of the biotype list
+        biotypeStatsBeans.add(allBioType);
 
-                    return bsb;
-                })
-                .sorted(Comparator.comparing(bean -> bean.getBioTypeName()))
-                .collect(Collectors.toList());
-
-        this.writeFiles(StatFileType.GENE_STATS, species.getScientificName().replaceAll(" ", "_"), geneStatsBeans,
+        //Now, write in files
+        writeFiles(StatFileType.GENE_STATS, species.getScientificName().replaceAll(" ", "_"), geneStatsBeans,
                 path, geneStatsFileSuffix);
-        this.writeFiles(StatFileType.BIO_TYPE_STATS, species.getScientificName().replaceAll(" ", "_"), biotypeStatsBeans,
+        writeFiles(StatFileType.BIO_TYPE_STATS, species.getScientificName().replaceAll(" ", "_"), biotypeStatsBeans,
                 path, bioTypeStatsFileSuffix);
 
         //TODO insert the GeneBioTypeStatsTO into database
@@ -1431,8 +1180,360 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
 //                .map(b -> new BioTypeStatsTO())
 //                .collect(Collectors.toSet()));
 //    }
+
+    private void generateGeneStats(GeneStatsBean bean, Gene gene, final Set<AnatEntity> nonInformativeAnatEntities) {
+        log.entry(bean, gene, nonInformativeAnatEntities);
+
+        //We need one ServiceFactory per thread
+        ServiceFactory serviceFactory = this.serviceFactorySupplier.get();
+        CallService callService = serviceFactory.getCallService();
+
+        GeneFilter geneFilter = new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId());
+        Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
+        obsDataFilter.put(null, true);
+        EnumSet<CallService.Attribute> baseAttrs = EnumSet.of(CallService.Attribute.CALL_TYPE,
+                CallService.Attribute.DATA_QUALITY);
+
+        EnumSet<CallService.Attribute> condParams = EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID);
+        EnumSet<CallService.Attribute> attrs = EnumSet.copyOf(condParams);
+        attrs.addAll(baseAttrs);
+        Set<ExpressionCall> organCalls = callService
+                .loadExpressionCalls(
+                        new ExpressionCallFilter(null,
+                                Collections.singleton(geneFilter),
+                                null, null, obsDataFilter, null, null),
+                        attrs,
+                        null)
+                .collect(Collectors.toSet());
+        sumUpGeneCalls(bean, organCalls, condParams, nonInformativeAnatEntities);
+        
+        condParams = CallService.Attribute.getAllConditionParameters();
+        attrs = EnumSet.copyOf(condParams);
+        attrs.addAll(baseAttrs);
+        attrs.add(CallService.Attribute.GLOBAL_MEAN_RANK);
+        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering =
+                new LinkedHashMap<>();
+        serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
+        List<ExpressionCall> conditionCalls = callService
+                .loadExpressionCalls(
+                        new ExpressionCallFilter(null,
+                                Collections.singleton(geneFilter),
+                                null, null, obsDataFilter, null, null),
+                        attrs,
+                        serviceOrdering)
+                .collect(Collectors.toList());
+        sumUpGeneCalls(bean, conditionCalls, condParams, nonInformativeAnatEntities);
+
+
+        if (!organCalls.isEmpty()) {
+            LinkedHashMap<AnatEntity, List<ExpressionCall>> groupedCalls = callService
+                    .loadCondCallsWithSilverAnatEntityCallsByAnatEntity(organCalls, conditionCalls, false);
+            bean.setFilteredGenePagePresentAnatEntity(groupedCalls.size());
+            bean.getFilteredGenePagePresentAnatEntities().addAll(groupedCalls.keySet());
+            if (!groupedCalls.isEmpty()) {
+                //The LinkedHashMap has the same interface as Map, so we cannot easily access the last element.
+                //We thus create a List of Entries
+                List<Entry<AnatEntity, List<ExpressionCall>>> orderedEntries = new ArrayList<>(groupedCalls.entrySet());
+                Entry<AnatEntity, List<ExpressionCall>> firstEntry = orderedEntries.iterator().next();
+                bean.setFilteredGenePageMinRankAnatEntity(firstEntry.getKey().getName());
+                bean.setFilteredGenePageFormattedMinRank(firstEntry.getValue().iterator().next().getFormattedGlobalMeanRank());
+                //The max rank here could be understood as the max rank over all condition calls displayed on the gene page.
+                //But I think it's a bit confusing, the gene page mostly display information about anat. entities,
+                //so I take the min rank of the last anat. entity, as for the gene page.
+                Entry<AnatEntity, List<ExpressionCall>> lastEntry = orderedEntries.get(orderedEntries.size() - 1);
+                bean.setFilteredGenePageFormattedMaxRank(lastEntry.getValue().iterator().next().getFormattedGlobalMeanRank());
+            }
+        }
+        if (!conditionCalls.isEmpty()) {
+            ExpressionCall firstCall = conditionCalls.iterator().next();
+            bean.setMinRank(firstCall.getGlobalMeanRank());
+            bean.setFormattedMinRank(firstCall.getFormattedGlobalMeanRank());
+            bean.setMinRankAnatEntity(firstCall.getCondition().getAnatEntity().getName());
+            ExpressionCall lastCall = conditionCalls.get(conditionCalls.size() - 1);
+            bean.setMaxRank(lastCall.getGlobalMeanRank());
+            bean.setFormattedMaxRank(lastCall.getFormattedGlobalMeanRank());
+        }
+
+        log.exit();
+    }
+    private static void generateBioTypeStats(BiotypeStatsBean bsb, List<GeneStatsBean> geneBeans) {
+        log.entry(bsb, geneBeans);
+
+        // number of genes
+        bsb.setGeneCount(geneBeans.size());
+
+        for (GeneStatsBean geneBean: geneBeans) {
+            if (getTotalCallCount(geneBean) > 0) {
+                bsb.setGeneWithData(bsb.getGeneWithData() + 1);
+            }
+            if (geneBean.getPresentGoldCond() + geneBean.getPresentSilverCond() +
+                    geneBean.getAbsentGoldCond() + geneBean.getAbsentSilverCond() > 0) {
+                bsb.setGenePresentAbsentSilverGold(bsb.getGenePresentAbsentSilverGold() + 1);
+            }
+            if (geneBean.getPresentGoldCond() + geneBean.getPresentSilverCond() +
+                    geneBean.getPresentBronzeCond() > 0) {
+                bsb.setPresentCondGene(bsb.getPresentCondGene() + 1);
+            }
+            if (geneBean.getAbsentGoldCond() + geneBean.getAbsentSilverCond() +
+                    geneBean.getAbsentBronzeCond() > 0) {
+                bsb.setAbsentCondGene(bsb.getAbsentCondGene() + 1);
+            }
+            if (geneBean.getFilteredGenePagePresentAnatEntity() > 0) {
+                bsb.setFilteredGenePageGeneCount(bsb.getFilteredGenePageGeneCount() + 1);
+            }
+
+            setMinMaxRank(bsb, geneBean);
+            sumAllGeneStatsCallCounts(bsb, geneBean);
+            addAnatEntitiesConds(bsb, geneBean);
+        }
+        sumAnatEntityCondCount(bsb);
+
+        log.exit();
+    }
+    private static GeneStatsBean generateAllGeneSummary(Collection<GeneStatsBean> geneStatsBeans) {
+        log.entry(geneStatsBeans);
+
+        GeneStatsBean allGeneBean = new GeneStatsBean();
+        String empty = "-";
+        allGeneBean.setGeneName("All genes");
+        allGeneBean.setGeneId(empty);
+        allGeneBean.setBioTypeName(empty);
+        allGeneBean.setFilteredGenePageMinRankAnatEntity(empty);
+        allGeneBean.setFilteredGenePageFormattedMinRank(empty);
+        allGeneBean.setFilteredGenePageFormattedMaxRank(empty);
+        for (GeneStatsBean geneBean: geneStatsBeans) {
+            sumAllGeneStatsCallCounts(allGeneBean, geneBean);
+            setMinMaxRank(allGeneBean, geneBean);
+        }
+        return log.exit(allGeneBean);
+    }
+    private static BiotypeStatsBean generateAllBiotypeSummary(Collection<BiotypeStatsBean> biotypeStatsBeans) {
+        log.entry(biotypeStatsBeans);
+
+        BiotypeStatsBean allBioType = new BiotypeStatsBean();
+        allBioType.setBioTypeName("All biotypes");
+        for (BiotypeStatsBean biotypeStatsBean: biotypeStatsBeans) {
+            allBioType.setGeneWithData(allBioType.getGeneWithData() + biotypeStatsBean.getGeneWithData());
+            allBioType.setGenePresentAbsentSilverGold(allBioType.getGenePresentAbsentSilverGold()
+                    + biotypeStatsBean.getGenePresentAbsentSilverGold());
+            allBioType.setPresentCondGene(allBioType.getPresentCondGene()
+                    + biotypeStatsBean.getPresentCondGene());
+            allBioType.setAbsentCondGene(allBioType.getAbsentCondGene()
+                    + biotypeStatsBean.getAbsentCondGene());
+            allBioType.setFilteredGenePageGeneCount(allBioType.getFilteredGenePageGeneCount()
+                    + biotypeStatsBean.getFilteredGenePageGeneCount());
+
+            setMinMaxRank(allBioType, biotypeStatsBean);
+            sumAllGeneStatsCallCounts(allBioType, biotypeStatsBean);
+            addAnatEntitiesConds(allBioType, biotypeStatsBean);
+        }
+        sumAnatEntityCondCount(allBioType);
+        return log.exit(allBioType);
+    }
+
+    private static void setMinMaxRank(CommonBean allBean, CommonBean otherBean) {
+        log.entry(allBean, otherBean);
+
+        if (otherBean.getMinRank() != null &&
+                (allBean.getMinRank() == null ||
+                        allBean.getMinRank().compareTo(otherBean.getMinRank()) > 0)) {
+            allBean.setMinRank(otherBean.getMinRank());
+            allBean.setFormattedMinRank(otherBean.getFormattedMinRank());
+        }
+        if (otherBean.getMaxRank() != null &&
+                (allBean.getMaxRank() == null ||
+                        allBean.getMaxRank().compareTo(otherBean.getMaxRank()) < 0)) {
+            allBean.setMaxRank(otherBean.getMaxRank());
+            allBean.setFormattedMaxRank(otherBean.getFormattedMaxRank());
+        }
+
+        log.exit();
+    }
+    private static void addAnatEntitiesConds(BiotypeStatsBean biotypeBean, CommonBean otherBean) {
+        log.entry(biotypeBean, otherBean);
+
+        biotypeBean.getFilteredGenePagePresentAnatEntities().addAll(
+                otherBean.getFilteredGenePagePresentAnatEntities());
+        biotypeBean.getPresentAnatEntities().addAll(otherBean.getPresentAnatEntities());
+        biotypeBean.getPresentConds().addAll(otherBean.getPresentConds());
+        biotypeBean.getAbsentAnatEntities().addAll(otherBean.getAbsentAnatEntities());
+        biotypeBean.getAbsentConds().addAll(otherBean.getAbsentConds());
+
+        log.exit();
+    }
+    private static void sumAnatEntityCondCount(BiotypeStatsBean biotypeBean) {
+        log.entry(biotypeBean);
+
+        biotypeBean.setAnatEntityWithData(biotypeBean.getPresentAnatEntities().size()
+                + biotypeBean.getAbsentAnatEntities().size());
+        biotypeBean.setCondWithData(biotypeBean.getPresentConds().size()
+                + biotypeBean.getAbsentConds().size());
+        biotypeBean.setFilteredGenePagePresentAnatEntity(
+                biotypeBean.getFilteredGenePagePresentAnatEntities().size());
+        biotypeBean.setPresentAnatEntityCount(biotypeBean.getPresentAnatEntities().size());
+        biotypeBean.setPresentCondCount(biotypeBean.getPresentConds().size());
+        biotypeBean.setAbsentAnatEntityCount(biotypeBean.getAbsentAnatEntities().size());
+        biotypeBean.setAbsentCondCount(biotypeBean.getAbsentConds().size());
+
+        log.exit();
+    }
+    private static void sumUpGeneCalls(GeneStatsBean bean, Collection<ExpressionCall> calls,
+            EnumSet<CallService.Attribute> condParams, Collection<AnatEntity> nonInformativeAnatEntities) {
+        log.entry(bean, calls, condParams, nonInformativeAnatEntities);
     
-    private <T extends CommonBean> void writeFiles(StatFileType fileType, String prefixFileName,
+        Set<CallService.Attribute> anatEntityCondParams = EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID);
+        Set<CallService.Attribute> allCondParams = CallService.Attribute.getAllConditionParameters();
+        boolean anatEntityCalls = false;
+        if (anatEntityCondParams.equals(condParams)) {
+            anatEntityCalls = true;
+        } else if (allCondParams.equals(condParams)) {
+            anatEntityCalls = false;
+        } else {
+            throw log.throwing(new IllegalStateException("Unsupported combination of Condition parameters: "
+                    + condParams));
+        }
+    
+        for (ExpressionCall call: calls) {
+            boolean nonInformative = nonInformativeAnatEntities.contains(call.getCondition().getAnatEntity());
+            incrementGeneBeanFromCall(bean, call, anatEntityCalls, nonInformative);
+    
+            switch (call.getSummaryCallType()) {
+            case EXPRESSED:
+                if (anatEntityCalls) {
+                    bean.getPresentAnatEntities().add(call.getCondition().getAnatEntity());
+                } else {
+                    bean.getPresentConds().add(call.getCondition());
+                }
+                break;
+            case NOT_EXPRESSED:
+                if (anatEntityCalls) {
+                    bean.getAbsentAnatEntities().add(call.getCondition().getAnatEntity());
+                } else {
+                    bean.getAbsentConds().add(call.getCondition());
+                }
+                break;
+            default:
+                throw log.throwing(new IllegalStateException("Unsupported SummaryCallType: " + call.getSummaryCallType()));
+            }
+        }
+    
+        log.exit();
+    }
+    private static void incrementGeneBeanFromCall(GeneStatsBean bean, ExpressionCall call, boolean anatEntityCalls,
+            boolean nonInformativeAnatEntity) {
+        log.entry(bean, call, anatEntityCalls, nonInformativeAnatEntity);
+
+        String getterName = getMethodName(call.getSummaryCallType(), call.getSummaryQuality(), true, anatEntityCalls, false);
+        String setterName = getMethodName(call.getSummaryCallType(), call.getSummaryQuality(), false, anatEntityCalls, false);
+        invokeGetterSetterIncrement(bean, getterName, setterName);
+
+        if (nonInformativeAnatEntity) {
+            String nonInformativeGetterName = getMethodName(call.getSummaryCallType(), call.getSummaryQuality(),
+                    true, anatEntityCalls, true);
+            String nonInformativeSetterName = getMethodName(call.getSummaryCallType(), call.getSummaryQuality(),
+                    false, anatEntityCalls, true);
+            invokeGetterSetterIncrement(bean, nonInformativeGetterName, nonInformativeSetterName);
+        }
+
+        log.exit();
+    }
+    private static void invokeGetterSetterIncrement(GeneStatsBean bean, String getterName, String setterName) {
+        log.entry(bean, getterName, setterName);
+        try {
+            Method getter = getMethod(getterName, true);
+            int currentCount = (int) getter.invoke(bean, (Object[]) null);
+            Method setter = getMethod(setterName, false);
+            setter.invoke(bean, currentCount++);
+        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+            throw log.throwing(new IllegalStateException(e));
+        }
+        log.exit();
+    }
+    private static void sumAllGeneStatsCallCounts(CommonBean allBean, CommonBean otherBean) {
+        log.entry(allBean, otherBean);
+    
+        for (ExpressionSummary callType: ExpressionSummary.values()) {
+            for (SummaryQuality qual: SummaryQuality.values()) {
+                for (boolean anatEntityCalls : new boolean[]{false, true}) {
+                    for (boolean nonInformativeAnatEntity : new boolean[]{false, true}) {
+                        Method getter = getMethod(
+                                getMethodName(callType, qual, true, anatEntityCalls, nonInformativeAnatEntity),
+                                true);
+                        Method setter = getMethod(
+                                getMethodName(callType, qual, false, anatEntityCalls, nonInformativeAnatEntity),
+                                false);
+                        try {
+                            int allValueCount = (int) getter.invoke(allBean, (Object[]) null);
+                            int otherValueCount = (int) getter.invoke(otherBean, (Object[]) null);
+                            setter.invoke(allBean, allValueCount + otherValueCount);
+                        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+                            throw log.throwing(new IllegalStateException(e));
+                        }
+                    }
+                }
+            }
+        }
+    
+        log.exit();
+    }
+    private static String getMethodName(ExpressionSummary callType, SummaryQuality qual, boolean getter, 
+            boolean anatEntityCalls, boolean nonInformativeAnatEntity) {
+        log.entry(callType, qual, anatEntityCalls, nonInformativeAnatEntity);
+
+        String methodName = "get";
+        if (!getter) {
+            methodName = "set";
+        }
+
+        if (nonInformativeAnatEntity) {
+            methodName += "Filtered";
+        }
+
+        switch (callType) {
+        case EXPRESSED:
+            methodName += "Present";
+            break;
+        case NOT_EXPRESSED:
+            methodName += "Absent";
+            break;
+        default:
+            throw log.throwing(new IllegalStateException("Unsupported SummaryCallType: " + callType));
+        }
+
+        switch (qual) {
+        case BRONZE:
+            methodName += "Bronze";
+            break;
+        case SILVER:
+            methodName += "Silver";
+            break;
+        case GOLD:
+            methodName += "Gold";
+            break;
+        default:
+            throw log.throwing(new IllegalStateException("Unsupported SummaryQuality: " + qual));
+        }
+
+        if (anatEntityCalls) {
+            methodName += "AnatEntity";
+        } else {
+            methodName += "Cond";
+        }
+
+        return log.exit(methodName);
+    }
+    private static Method getMethod(String methodName, boolean getter) {
+        log.entry(methodName, getter);
+        try {
+            if (getter) {
+                return log.exit(CommonBean.class.getMethod(methodName, (Class<?>[]) null));
+            }
+            return log.exit(GeneStatsBean.class.getMethod(methodName, int.class));
+        } catch (NoSuchMethodException | SecurityException e) {
+            throw log.throwing(new IllegalStateException(e));
+        }
+    }
+    private static <T extends CommonBean> void writeFiles(StatFileType fileType, String prefixFileName,
                                                    List<T> beans, String path, String fileSuffix)
             throws IOException {
         log.entry(fileType, beans, path, fileSuffix);
@@ -1445,26 +1546,15 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             tmpFile.delete();
         }
 
-        String[] headers = this.generateFileHeader(fileType);
-        CellProcessor[] processors = this.generateFileCellProcessors(fileType, headers);
-        Class<?> beanClass = null;
-        if (fileType.equals(StatFileType.GENE_STATS)) {
-            beanClass = GeneStatsBean.class;
-        } else if (fileType.equals(StatFileType.BIO_TYPE_STATS)) {
-            beanClass = BiotypeStatsBean.class;
-        } else {
-            throw log.throwing(new IllegalStateException("Unrecognized file type: " + fileType));
-        }
-        try (ICsvDozerBeanWriter beanWriter = new CsvDozerBeanWriter(new FileWriter(tmpFile),
-                Utils.getCsvPreferenceWithQuote(this.generateQuoteMode(headers)))) {
-
-            beanWriter.configureBeanMapping(beanClass,
-                    this.generateFileFieldMapping(fileType, headers));
+        String[] headers = generateFileHeader(fileType);
+        CellProcessor[] processors = generateFileCellProcessors(fileType, headers);
+        try (ICsvBeanWriter beanWriter = new CsvBeanWriter(new FileWriter(tmpFile),
+                Utils.getCsvPreferenceWithQuote(generateQuoteMode(headers)))) {
 
             beanWriter.writeHeader(headers);
             beans.forEach(b -> {
                 try {
-                    beanWriter.write(b, processors);
+                    beanWriter.write(b, generateFileFieldMapping(fileType, headers), processors);
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
                 }
@@ -1502,7 +1592,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
      *
      * @return  The {@code Array} of {@code String}s used to produce the header.
      */
-    private String[] generateFileHeader(StatFileType fileType) {
+    private static String[] generateFileHeader(StatFileType fileType) {
         log.entry(fileType);
         
         // We use an index to avoid to change hard-coded column numbers when we change columns 
@@ -1590,7 +1680,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
      * @return          An {@code Array} of {@code CellProcessor}s used to process an file.
      * @throw IllegalArgumentException If {@code fileType} is not managed by this method.
      */
-    private CellProcessor[] generateFileCellProcessors(StatFileType fileType, String[] header)
+    private static CellProcessor[] generateFileCellProcessors(StatFileType fileType, String[] header)
             throws IllegalArgumentException {
         log.entry(fileType, header);
 
@@ -1695,7 +1785,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
      *                  are supposed to process.
      * @throws IllegalArgumentException If a {@code String} in {@code header} is not recognized.
      */
-    private String[] generateFileFieldMapping(StatFileType fileType, String[] header) throws IllegalArgumentException {
+    private static String[] generateFileFieldMapping(StatFileType fileType, String[] header) throws IllegalArgumentException {
         log.entry(fileType, header);
         
         String[] mapping = new String[header.length];
@@ -1871,7 +1961,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
      * @return          The {@code Array} of {@code booleans} (one per TSV column) indicating 
      *                  whether each column should be quoted or not.
      */
-    private boolean[] generateQuoteMode(String[] header) {
+    private static boolean[] generateQuoteMode(String[] header) {
         log.entry((Object[]) header);
         
         boolean[] quoteMode = new boolean[header.length];

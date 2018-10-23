@@ -228,9 +228,9 @@ nav img.social-img {
     color: #626262;
     z-index: 1;
 }
-@media (max-width: 910px) {
+@media (max-width: 960px) {
 	#sib_body {
-	   padding-bottom: 85px;
+	   padding-bottom: 150px;
 	}
 }
 #sib_body h1, #sib_body h2, #sib_body h3 {

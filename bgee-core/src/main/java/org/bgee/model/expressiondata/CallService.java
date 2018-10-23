@@ -149,6 +149,17 @@ public class CallService extends CommonService {
                 throw log.throwing(new IllegalStateException("Cond param not supported"));
             }
         }
+
+        /**
+         * @return  An {@code EnumSet} containing all {@code Attribute}s that are condition parameters
+         *          ({@link #isConditionParameter()} returns {@code true}).
+         */
+        public static EnumSet<Attribute> getAllConditionParameters() {
+            log.entry();
+            return log.exit(Arrays.stream(CallService.Attribute.values())
+                    .filter(a -> a.isConditionParameter())
+                    .collect(Collectors.toCollection(() -> EnumSet.noneOf(CallService.Attribute.class))));
+        }
     }
 
     public static enum OrderingAttribute implements Service.OrderingAttribute {

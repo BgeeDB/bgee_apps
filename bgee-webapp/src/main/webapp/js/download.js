@@ -186,13 +186,13 @@ var download = {
 
             //Google Analytics tracking
             //(see https://developers.google.com/analytics/devguides/collection/analyticsjs/events)
-            $("div#bgee_data_selection a").click(function() {
+            $("div#bgee_data_selection a").on("click", function() {
         		ga ('send', 'event', 'link', 'click', $( this ).attr("href"));
             });
 
             // Add a click listener to every species/group to load the corresponding details 
             // or to hide it if already displayed
-            this.$species.click(function() {
+            this.$species.on("click", function() {
                 download.toggleDetail( $( this ) );
             });
             // Add a listener to the search input to trigger the search process
@@ -226,20 +226,20 @@ var download = {
                 });
             });
             // Add a listener to the cross to close the detail box
-            this.$bgeeDataSelectionCross.click(function(){
+            this.$bgeeDataSelectionCross.on("click", function(){
                 download.closeDetailBox();
             });
 
             // Add a listener to the search box to remove the initial displayed text if present
             // First, keep the initial text in a var for later use
             this.initialText = this.$bgeeSearchBox.val();
-            this.$bgeeSearchBox.click(function() {
+            this.$bgeeSearchBox.on("click", function() {
                 if($( this ).val() == download.initialText){
                     $( this ).val( "" );
                 }
             });
             // Add a listener to the link to show/hide the images copyright and change the text
-            this.$creativeCommonsTitleLink.click( function(){
+            this.$creativeCommonsTitleLink.on("click", function(){
                 download.$creativeCommons.toggle( "blind" );
                 if($( this ).text().indexOf( "Hide" ) > -1){
                     $( this ).text($( this ).text().replace( "Hide","Show" ));
@@ -252,7 +252,7 @@ var download = {
             // For each links with show-header class, 
             // we add listener to show/hide headers and toggle plus/minus src, title and alt image.          
             $( "a.show-header" ).each(function() {
-                $( this ).click( function(){
+                $( this ).on("click", function(){
                 	var headerTableId = $( this ).attr( "id" ).replace( "show_" , "" );
                 	$( "#" + headerTableId ).toggle( "blind" );
                 	
@@ -634,7 +634,7 @@ var download = {
                 }
             }
             
-            this.$bgeeExprDataFormInputs.click(function() {
+            this.$bgeeExprDataFormInputs.on("click", function() {
                 download.updateFormURL( bgeeExprOrganStageCompleteFileUrl, bgeeExprOrganStageSimpleFileUrl,
                 		bgeeExprOrganCompleteFileUrl, bgeeExprOrganSimpleFileUrl );
             });

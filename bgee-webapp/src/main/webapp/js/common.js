@@ -60,11 +60,11 @@ $(document).ready(function() {
     
     // Add a listener in navbar to change caret image when mouse over 'li'
     var $deployLi = $( "#nav ul#bgee_links li" );
-    $deployLi.mouseover( function() {
+    $deployLi.on("mouseover", function() {
     	// Change img
     	$("img", this).attr('src', '/img/arrow_down_light.png');
     });
-    $deployLi.mouseout( function() {
+    $deployLi.on( "mouseout", function() {
     	// Change img
     	$("img", this).attr('src', '/img/arrow_down_dark.png');
     });
@@ -78,9 +78,9 @@ $(document).ready(function() {
     checkCookie();
     
     // Copy to clipboard
-    // Grab any text in the attribute 'data-co§py' and pass it to the copy function
+    // Grab any text in the attribute 'data-copy' and pass it to the copy function
     $('.js-tooltip').tooltip();
-    $('.js-copy').click(function() {
+    $('.js-copy').on("click", function() {
         copyToClipboard($(this));
     });
 });
@@ -138,7 +138,7 @@ function setCookie(cookieName, cookieVersion) {
 function displayPrivacyBanner(cookieName, toDisplay) {
     if (toDisplay) {
         $('#bgee_privacy_banner').show();
-        $('#bgee_privacy_banner_accept').click(function() {
+        $('#bgee_privacy_banner_accept').on("click", function() {
             setCookie(cookieName, noticeVersion);
             $('#bgee_privacy_banner').hide();
         });

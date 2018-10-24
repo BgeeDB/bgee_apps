@@ -153,11 +153,12 @@ public class ConditionGraphTest extends TestAncestor {
                 new HashSet<>(Arrays.asList(anatEntity2, anatEntity3, anatEntity4)));
         // We should not propagate to dev. stages child conditions
         when(devStageOnt.getDescendants(devStage1, false)).thenReturn(new HashSet<>());
-        
+
+        ConditionGraphService condGraphService = new ConditionGraphService(mockFact);
         if (fromService) {
-            this.conditionGraph = new ConditionGraph(this.conditions, mockFact);
+            this.conditionGraph = condGraphService.loadConditionGraph(this.conditions);
         } else {
-            this.conditionGraph = new ConditionGraph(this.conditions, anatEntityOnt, devStageOnt);
+            this.conditionGraph = condGraphService.loadConditionGraph(this.conditions, anatEntityOnt, devStageOnt);
         }
     }
 

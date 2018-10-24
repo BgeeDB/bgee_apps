@@ -11,7 +11,6 @@ import java.nio.file.StandardCopyOption;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
@@ -68,7 +67,7 @@ import owltools.graph.OWLGraphWrapper;
  * 
  * @author  Frederic Bastian
  * @author  Julien Wollbrett
- * @version Bgee 14 July 2018
+ * @version Bgee 14 Oct 2018
  * @since   Bgee 13 July 2016
  */
 //XXX: generate a simple file providing the max rank? A bit boring as we have nothing 
@@ -455,14 +454,6 @@ public class GenerateRankFile {
     //TODO: when Uberon xrefs will have been inserted into the database, use them, 
     //rather than needing to provide an ontology. 
     private final Uberon uberonOnt;
-    
-    /**
-     * A {@code QuadriFunction} matching the constructor of {@code ConditionGraph}, 
-     * for injection purposes. 
-     * TODO: to remove once we'll have created an UtilsFactory in bgee-core 
-     */
-    private final TriFunction<Collection<Condition>, Ontology<AnatEntity, String>, 
-    Ontology<DevStage, String>, ConditionGraph> condGraphSupplier;
   
     
     
@@ -482,21 +473,8 @@ public class GenerateRankFile {
      * @param uberonOnt                 An {@code Uberon} utiliy to extract XRefs to BTO from.
      */
     public GenerateRankFile(Supplier<ServiceFactory> serviceFactorySupplier, Uberon uberonOnt) {
-        this(serviceFactorySupplier, uberonOnt, ConditionGraph::new);
-    }
-    /**
-     * @param serviceFactorySupplier        A {@code Supplier} of {@code ServiceFactory}s 
-     *                                      to be able to provide one to each thread.
-     * @param uberonOnt                     An {@code Uberon} utiliy to extract XRefs to BTO from.
-     * @param condGraphSupplier             To inject {@code ConditionGraph} instances.
-     */
-    //TODO: stop using these functional interfaces once we'll have created an UtilsFactory in bgee-core
-    protected GenerateRankFile(Supplier<ServiceFactory> serviceFactorySupplier, Uberon uberonOnt, 
-            TriFunction<Collection<Condition>, Ontology<AnatEntity, String>, Ontology<DevStage, String>, 
-            ConditionGraph> condGraphSupplier) {
         this.serviceFactorySupplier = serviceFactorySupplier;
         this.uberonOnt = uberonOnt;
-        this.condGraphSupplier = condGraphSupplier;
     }
     
     
@@ -852,7 +830,8 @@ public class GenerateRankFile {
         log.entry(singleGeneExprCalls, gene, anatEntityOnt, devStageOnt);
 
         //Instantiate a ConditionGraph for computations and for display purpose
-        ConditionGraph conditionGraph = this.condGraphSupplier.apply( 
+        ServiceFactory serviceFactory = this.serviceFactorySupplier.get();
+        ConditionGraph conditionGraph = serviceFactory.getConditionGraphService().loadConditionGraph( 
                 singleGeneExprCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()), 
                 anatEntityOnt, devStageOnt);
 

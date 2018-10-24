@@ -9,6 +9,7 @@ import org.bgee.model.anatdev.DevStageService;
 import org.bgee.model.anatdev.TaxonConstraintService;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.expressiondata.ConditionGraphService;
 import org.bgee.model.expressiondata.ConditionService;
 import org.bgee.model.expressiondata.multispecies.MultiSpeciesCallService;
 import org.bgee.model.file.DownloadFileService;
@@ -213,6 +214,14 @@ public class ServiceFactory implements AutoCloseable {
     public ConditionService getConditionService() {
         log.entry();
         return log.exit(new ConditionService(this));
+    }
+
+    /**
+     * @return A newly instantiated {@code ConditionGraphService}
+     */
+    public ConditionGraphService getConditionGraphService() {
+        log.entry();
+        return log.exit(new ConditionGraphService(this));
     }
 
     /**

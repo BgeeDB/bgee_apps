@@ -20,6 +20,7 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
+import org.bgee.model.expressiondata.ConditionGraph;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.baseelements.CallType;
@@ -1084,10 +1085,13 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                     serviceFactory.getAnatEntityService()
                     .loadNonInformativeAnatEntitiesBySpeciesIds(Collections.singleton(species.getId()))
                     .collect(Collectors.toSet()));
+            EnumSet<CallService.Attribute> allCondParams = CallService.Attribute.getAllConditionParameters();
+            ConditionGraph condGraph = serviceFactory.getConditionGraphService().loadConditionGraph(
+                    species.getId(), allCondParams);
 
             try {
                 this.generatePerSpecies(species, genes, nonInformativeAnatEntities,
-                        path, bioTypeStatsFileSuffix, geneStatsFileSuffix);
+                        path, bioTypeStatsFileSuffix, geneStatsFileSuffix, allCondParams, condGraph);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             } finally {
@@ -1103,8 +1107,10 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
     }
 
     private void generatePerSpecies(Species species, Set<Gene> genes, final Set<AnatEntity> nonInformativeAnatEntities,
-            String path, String bioTypeStatsFileSuffix, String geneStatsFileSuffix) throws IOException {
-        log.entry(species, genes, nonInformativeAnatEntities, path, bioTypeStatsFileSuffix, geneStatsFileSuffix);
+            String path, String bioTypeStatsFileSuffix, String geneStatsFileSuffix,
+            EnumSet<CallService.Attribute> allCondParams, ConditionGraph condGraph) throws IOException {
+        log.entry(species, genes, nonInformativeAnatEntities, path, bioTypeStatsFileSuffix,
+                geneStatsFileSuffix, allCondParams, condGraph);
 
         //Now we use parallel streams for each gene independently
         List<GeneStatsBean> geneStatsBeans = genes.parallelStream().map(gene -> {
@@ -1114,7 +1120,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             bean.setGeneId(gene.getEnsemblGeneId());
             bean.setBioTypeName(gene.getGeneBioType().getName());
 
-            this.generateGeneStats(bean, gene, nonInformativeAnatEntities);
+            this.generateGeneStats(bean, gene, nonInformativeAnatEntities, allCondParams, condGraph);
             
             return bean;
         })
@@ -1181,8 +1187,9 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
 //                .collect(Collectors.toSet()));
 //    }
 
-    private void generateGeneStats(GeneStatsBean bean, Gene gene, final Set<AnatEntity> nonInformativeAnatEntities) {
-        log.entry(bean, gene, nonInformativeAnatEntities);
+    private void generateGeneStats(GeneStatsBean bean, Gene gene, final Set<AnatEntity> nonInformativeAnatEntities,
+            EnumSet<CallService.Attribute> allCondParams, ConditionGraph condGraph) {
+        log.entry(bean, gene, nonInformativeAnatEntities, allCondParams, condGraph);
 
         //We need one ServiceFactory per thread
         ServiceFactory serviceFactory = this.serviceFactorySupplier.get();
@@ -1206,9 +1213,8 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                         null)
                 .collect(Collectors.toSet());
         sumUpGeneCalls(bean, organCalls, condParams, nonInformativeAnatEntities);
-        
-        condParams = CallService.Attribute.getAllConditionParameters();
-        attrs = EnumSet.copyOf(condParams);
+
+        attrs = EnumSet.copyOf(allCondParams);
         attrs.addAll(baseAttrs);
         attrs.add(CallService.Attribute.GLOBAL_MEAN_RANK);
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering =
@@ -1222,12 +1228,12 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                         attrs,
                         serviceOrdering)
                 .collect(Collectors.toList());
-        sumUpGeneCalls(bean, conditionCalls, condParams, nonInformativeAnatEntities);
+        sumUpGeneCalls(bean, conditionCalls, allCondParams, nonInformativeAnatEntities);
 
 
         if (!organCalls.isEmpty()) {
             LinkedHashMap<AnatEntity, List<ExpressionCall>> groupedCalls = callService
-                    .loadCondCallsWithSilverAnatEntityCallsByAnatEntity(organCalls, conditionCalls, false);
+                    .loadCondCallsWithSilverAnatEntityCallsByAnatEntity(organCalls, conditionCalls, false, condGraph);
             bean.setFilteredGenePagePresentAnatEntity(groupedCalls.size());
             bean.getFilteredGenePagePresentAnatEntities().addAll(groupedCalls.keySet());
             if (!groupedCalls.isEmpty()) {

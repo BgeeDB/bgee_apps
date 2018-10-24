@@ -39,6 +39,7 @@ import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.ConditionGraph;
+import org.bgee.model.expressiondata.ConditionGraphService;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.CallType.Expression;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
@@ -107,6 +108,7 @@ public class GenerateRankFileTest extends TestAncestor {
         Condition cond3 = new Condition(anatEntity2, devStage2, spe1);
         Condition cond4 = new Condition(anatEntity2, null, spe2);
         Condition cond5 = new Condition(anatEntity2, devStage1, spe2);
+        Set<Condition> allConds = new HashSet<>(Arrays.asList(cond1, cond2, cond3, cond4, cond5));
 
         Gene gene1 = new Gene("gene1", spe1, new GeneBioType("type1"));
         Gene gene2 = new Gene("gene2", spe1, new GeneBioType("type1"));
@@ -363,10 +365,13 @@ public class GenerateRankFileTest extends TestAncestor {
                 Collections.singleton(DataType.AFFYMETRIX), obsDataFilter, true, true)), 
                 eq(attrsWithDev), eq(condServiceOrdering)))
         .thenReturn(exprCallSupplier7.get());
+
+        ConditionGraphService condGraphService = mock(ConditionGraphService.class);
+        when(serviceFactory.getConditionGraphService()).thenReturn(condGraphService);
+        when(condGraphService.loadConditionGraph(eq(allConds), eq(anatEntityOntology), eq(stageOntology))).thenReturn(condGraph);
        
         //*** Launch test ***
-        GenerateRankFile generate = new GenerateRankFile(() -> serviceFactory, uberon, 
-                ((conds, anatOnt, devOnt) -> condGraph));
+        GenerateRankFile generate = new GenerateRankFile(() -> serviceFactory, uberon);
         File folder1 = testFolder.newFolder("f1");
         File folder2 = testFolder.newFolder("f2");
         generate.generateRankFiles(Collections.singleton(1), false, 

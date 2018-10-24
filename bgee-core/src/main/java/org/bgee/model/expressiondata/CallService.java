@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -25,14 +24,11 @@ import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
-import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.DevStageService;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.expressiondata.CallDAOFilter;
 import org.bgee.model.dao.api.expressiondata.CallDataDAOFilter;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
-import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
-import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTOResultSet;
 import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.DAOExperimentCount;
@@ -339,8 +335,9 @@ public class CallService extends CommonService {
         // Retrieve conditions by condition IDs if condition info requested in Attributes
         final Map<Integer, Condition> condMap = Collections.unmodifiableMap(
                 clonedAttrs.stream().noneMatch(a -> a.isConditionParameter())? new HashMap<>():
-                    this.loadGlobalConditionMap(speciesMap.values(),
-                        condParamCombination, convertCondParamAttrsToCondDAOAttrs(clonedAttrs)));
+                    loadGlobalConditionMap(speciesMap.values(),
+                        condParamCombination, convertCondParamAttrsToCondDAOAttrs(clonedAttrs),
+                        this.conditionDAO, this.anatEntityService, this.devStageService));
 
         // Retrieve calls
         Stream<ExpressionCall> calls = this.performsGlobalExprCallQuery(geneMap, callFilter,
@@ -356,7 +353,7 @@ public class CallService extends CommonService {
         log.entry(speciesId, callFilter);
         throw log.throwing(new UnsupportedOperationException("Load of diff. expression calls not implemented yet"));
     }
-    
+
     /**
      * Load {@code ExpressionCall}s with {@code Condition} having both an {@code AnatEntity} and a {@code DevStage}
      * grouped by AnatEntity for one {@code Gene}. The {@code GeneFilter} provided as argument
@@ -376,6 +373,30 @@ public class CallService extends CommonService {
     public LinkedHashMap<AnatEntity, List<ExpressionCall>>
     loadCondCallsWithSilverAnatEntityCallsByAnatEntity(GeneFilter geneFilter) throws IllegalArgumentException {
         log.entry(geneFilter);
+        return log.exit(this.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(geneFilter, null));
+    }
+    /**
+     * Same method as {@link #loadCondCallsWithSilverAnatEntityCallsByAnatEntity(GeneFilter)},
+     * but with an already computed {@code ConditionGraph} provided. This method is used for cases
+     * where computations for several genes will be requested independently, to avoid the need of creating
+     * a {@code ConditionGraph} for each gene. If provided, the {@code Condition}s
+     * in the {@code ConditionGraph} should have the same condition parameters as the {@code Condition}s
+     * in the returned {@code ExpressionCall}s.
+     * 
+     * @param geneFilter    A {@code GeneFilter} targeting a <strong>single gene</strong>
+     *                      for which {@code ExpressionCall}s have to be retrieved.
+     * @param condGraph     A {@code ConditionGraph} for the species the requested gene belongs to,
+     *                      that will be used to order calls and filter redundant calls.
+     *                      Can be {@code null} if the {@code ConditionGraph} needs to be computed
+     *                      by this method.
+     * @return              The {@code LinkedHashMap} where values correspond to the {@code List} of
+     *                      {@code ExpressionCall} and keys correspond to the {@code AnatEntity}
+     * @throws IllegalArgumentException If {@code geneFilter} targets not one and only one gene.
+     */
+    public LinkedHashMap<AnatEntity, List<ExpressionCall>>
+    loadCondCallsWithSilverAnatEntityCallsByAnatEntity(GeneFilter geneFilter, ConditionGraph condGraph)
+            throws IllegalArgumentException {
+        log.entry(geneFilter, condGraph);
         if (geneFilter.getEnsemblGeneIds().size() != 1) {
             throw log.throwing(new IllegalArgumentException("GeneFilter not targeting only one gene"));
         }
@@ -427,7 +448,7 @@ public class CallService extends CommonService {
                 .collect(Collectors.toList());
         
         return log.exit(this.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
-                organCalls, organStageCalls, true));
+                organCalls, organStageCalls, true, condGraph));
     }
 
     /**
@@ -437,6 +458,13 @@ public class CallService extends CommonService {
      * for other purpose. If {@code callsFiltered} is {@code false}, the calls will be filtered
      * to keep only the {@code organCalls} with "expressed" calls and quality higher than "bronze",
      * and only the {@code organStageCalls} with "expressed" calls (with any quality).
+     * <p>
+     * An already computed {@code ConditionGraph} can be provided, for cases where computations
+     * for several genes will be requested independently, to avoid the need of creating
+     * a {@code ConditionGraph} for each gene. A {@code null} {@code ConditionGraph} can be provided
+     * if it is requested to be computed by this method. If provided, the {@code Condition}s
+     * in the {@code ConditionGraph} should have the same condition parameters as the {@code Condition}s
+     * in the {@code ExpressionCall}s in {@code conditionCalls}.
      *
      * @param organCalls        A {@code Collection} of {@code ExpressionCall} with {@code Condition}s
      *                          considering only the anat. entities. They must contain information
@@ -449,15 +477,20 @@ public class CallService extends CommonService {
      * @param callsFiltered     A {@code Boolean} that should be {@code true} if the calls
      *                          were already filtered for the appropriate expression status
      *                          and qualities, {@code false} if the calls need to be filtered.
+     * @param condGraph         A {@code ConditionGraph} for the species the requested gene belongs to,
+     *                          that will be used to order calls and filter redundant calls.
+     *                          Can be {@code null} if the {@code ConditionGraph} needs to be computed
+     *                          by this method.
      * @return                  The {@code LinkedHashMap} where values correspond to the {@code List} of
      *                          condition {@code ExpressionCall} and keys correspond to the {@code AnatEntity}
      * @throws IllegalArgumentException If the {@code ExpressionCall}s do not contain the information
-     *                                  needed when fitering them ({@code callsFiltered} set to {@code false})
+     *                                  needed when filtering them ({@code callsFiltered} set to {@code false})
      */
     public LinkedHashMap<AnatEntity, List<ExpressionCall>>
     loadCondCallsWithSilverAnatEntityCallsByAnatEntity(Collection<ExpressionCall> organCalls,
-            List<ExpressionCall> conditionCalls, boolean callsFiltered) throws IllegalArgumentException {
-        log.entry(organCalls, conditionCalls, callsFiltered);
+            List<ExpressionCall> conditionCalls, boolean callsFiltered, ConditionGraph condGraph)
+                    throws IllegalArgumentException {
+        log.entry(organCalls, conditionCalls, callsFiltered, condGraph);
 
         Collection<ExpressionCall> filteredOrganCalls = organCalls;
         if (!callsFiltered) {
@@ -510,9 +543,11 @@ public class CallService extends CommonService {
         //only by a query to the data source. So, we order them anyway.
         
         //ORGAN-STAGE
-        ConditionGraph conditionGraph = new ConditionGraph(
-                orderedCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()), 
-                this.getServiceFactory());
+        ConditionGraph conditionGraph = condGraph;
+        if (condGraph == null) {
+            conditionGraph = this.getServiceFactory().getConditionGraphService().loadConditionGraph(
+                orderedCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()));
+        }
         orderedCalls = ExpressionCall.filterAndOrderCallsByRank(orderedCalls, conditionGraph);
         
         //REDUNDANT ORGAN-STAGE CALLS
@@ -573,110 +608,6 @@ public class CallService extends CommonService {
     //*************************************************************************
     // METHODS PERFORMING THE QUERIES TO THE DAOs
     //*************************************************************************
-    /**
-     * 
-     * @param species               A {@code Collection} of {@code Species}s that are the species 
-     *                              allowing to filter the conditions to retrieve. If {@code null}
-     *                              or empty, condition for all species are retrieved.
-     * @param condParamCombination  A {@code Collection} of {@code ConditionDAO.Attribute}s defining
-     *                              the combination of condition parameters that were requested
-     *                              for queries, allowing to determine which condition and expression
-     *                              results to target.
-     * @param conditionDAOAttrs     A {@code Collection} of {@code ConditionDAO.Attribute}s defining
-     *                              the attributes to populate in the retrieved {@code ConditionTO}s,
-     *                              and thus, in the returned {@code Condition}s.
-     *                              If {@code null} or empty, then all attributes are retrieved.
-     * @return                      A {@code Map} where keys are {@code Integer}s
-     *                              that are condition IDs, the associated value being
-     *                              the corresponding {@code Condition}.
-     */
-    private Map<Integer, Condition> loadGlobalConditionMap(Collection<Species> species,
-            Collection<ConditionDAO.Attribute> condParamCombination,
-            Collection<ConditionDAO.Attribute> conditionDAOAttrs) {
-        log.entry(species, condParamCombination, conditionDAOAttrs);
-
-        return log.exit(loadConditionMapFromResultSet(
-                (attrs) -> this.conditionDAO.getGlobalConditionsBySpeciesIds(
-                        species.stream().map(s -> s.getId()).collect(Collectors.toSet()),
-                        condParamCombination, attrs),
-                conditionDAOAttrs, species));
-    }
-
-    protected Map<Integer, Condition> loadConditionMapFromResultSet(
-            Function<Collection<ConditionDAO.Attribute>, ConditionTOResultSet> rsFunc,
-            Collection<ConditionDAO.Attribute> conditionDAOAttrs, Collection<Species> species) {
-        log.entry(rsFunc, conditionDAOAttrs, species);
-
-        if (species == null || species.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("Some species must be provided"));
-        }
-
-        Map<Integer, Species> speMap = species.stream()
-                .collect(Collectors.toMap(s -> s.getId(), s -> s, (s1, s2) -> s1));
-        Set<String> anatEntityIds = new HashSet<>();
-        Set<String> stageIds = new HashSet<>();
-        Set<ConditionTO> conditionTOs = new HashSet<>();
-
-        //we need to retrieve the attributes requested, plus the condition ID and species ID in all cases.
-        Set<ConditionDAO.Attribute> clonedAttrs = conditionDAOAttrs == null || conditionDAOAttrs.isEmpty()?
-                EnumSet.allOf(ConditionDAO.Attribute.class): EnumSet.copyOf(conditionDAOAttrs);
-        clonedAttrs.addAll(EnumSet.of(ConditionDAO.Attribute.ID, ConditionDAO.Attribute.SPECIES_ID));
-        ConditionTOResultSet rs = rsFunc.apply(clonedAttrs);
-
-        while (rs.next()) {
-            ConditionTO condTO = rs.getTO();
-            if (!speMap.keySet().contains(condTO.getSpeciesId())) {
-                throw log.throwing(new IllegalArgumentException(
-                        "The retrieved ConditionTOs do not match the provided Species."));
-            }
-            conditionTOs.add(condTO);
-            if (condTO.getAnatEntityId() != null) {
-                anatEntityIds.add(condTO.getAnatEntityId());
-            }
-            if (condTO.getStageId() != null) {
-                stageIds.add(condTO.getStageId());
-            }
-        }
-
-        final Map<String, AnatEntity> anatMap = anatEntityIds.isEmpty()? new HashMap<>():
-            this.anatEntityService.loadAnatEntities(
-                    speMap.keySet(), true, anatEntityIds, false)
-            .collect(Collectors.toMap(a -> a.getId(), a -> a));
-        if (!anatEntityIds.isEmpty() && anatMap.size() != anatEntityIds.size()) {
-            anatEntityIds.removeAll(anatMap.keySet());
-            throw log.throwing(new IllegalStateException("Some anat. entities used in a condition "
-                    + "are not supposed to exist in the related species. Species: " + speMap.keySet()
-                    + " - anat. entities: " + anatEntityIds));
-        }
-        final Map<String, DevStage> stageMap = stageIds.isEmpty()? new HashMap<>():
-            this.devStageService.loadDevStages(
-                    speMap.keySet(), true, stageIds, false)
-            .collect(Collectors.toMap(s -> s.getId(), s -> s));
-        if (!stageIds.isEmpty() && stageMap.size() != stageIds.size()) {
-            stageIds.removeAll(stageMap.keySet());
-            throw log.throwing(new IllegalStateException("Some stages used in a condition "
-                    + "are not supposed to exist in the related species. Species: " + speMap.keySet()
-                    + " - stages: " + stageIds));
-        }
-
-        return log.exit(conditionTOs.stream()
-                .collect(Collectors.toMap(cTO -> cTO.getId(), 
-                        cTO -> mapConditionTOToCondition(cTO,
-                                cTO.getAnatEntityId() == null? null:
-                                    Optional.ofNullable(anatMap.get(cTO.getAnatEntityId())).orElseThrow(
-                                        () -> new IllegalStateException("Anat. entity not found: "
-                                                + cTO.getAnatEntityId())),
-                                cTO.getStageId() == null? null:
-                                    Optional.ofNullable(stageMap.get(cTO.getStageId())).orElseThrow(
-                                        () -> new IllegalStateException("Stage not found: "
-                                                + cTO.getStageId())),
-                                Optional.ofNullable(speMap.get(cTO.getSpeciesId())).orElseThrow(
-                                        () -> new IllegalStateException("Species not found: "
-                                                + cTO.getSpeciesId())))
-                        ))
-                );
-    }
-
     private Map<Integer, Gene> loadGeneMap(CallFilter<?, ?> callFilter, Map<Integer, Species> speciesMap)
             throws GeneNotFoundException {
         log.entry(callFilter, speciesMap);
@@ -1172,23 +1103,6 @@ public class CallService extends CommonService {
         }
     }
 
-    private static Set<ConditionDAO.Attribute> convertCondParamAttrsToCondDAOAttrs(
-            Set<Attribute> attrs) {
-        log.entry(attrs);
-        return log.exit(attrs.stream()
-                .filter(a -> a.isConditionParameter())
-                .map(a -> {
-                    switch (a) {
-                        case ANAT_ENTITY_ID:
-                            return ConditionDAO.Attribute.ANAT_ENTITY_ID;
-                        case DEV_STAGE_ID: 
-                            return ConditionDAO.Attribute.STAGE_ID;                        
-                        default: 
-                            throw log.throwing(new UnsupportedOperationException(
-                                "Condition parameter not supported: " + a));
-                    }
-                }).collect(Collectors.toSet()));
-    }
     private static Set<ConditionDAO.Attribute> convertCondParamOrderingAttrsToCondDAOAttrs(
             Set<OrderingAttribute> attrs) {
         log.entry(attrs);

@@ -63,6 +63,7 @@ import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.ConditionGraph;
+import org.bgee.model.expressiondata.ConditionGraphService;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
@@ -1490,11 +1491,11 @@ public class InsertPropagatedCalls extends CallService {
 
             // We use all existing conditions in the species, and infer all propagated conditions
             log.info("Starting condition inference...");
+            ConditionGraphService condGraphService = this.getServiceFactory().getConditionGraphService();
             Map<Set<ConditionDAO.Attribute>, ConditionGraph> conditionGraphByComb =
                     condMapByComb.entrySet().stream()
                     .map(e -> new AbstractMap.SimpleEntry<>(e.getKey(),
-                            new ConditionGraph(e.getValue().values(), true, true,
-                                    this.getServiceFactory()))
+                            condGraphService.loadConditionGraph(e.getValue().values(), true, true))
                     ).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
             log.info("Done condition inference.");
             
@@ -1661,7 +1662,8 @@ public class InsertPropagatedCalls extends CallService {
                 (attrs) -> this.conditionDAO.getRawConditionsBySpeciesIds(
                         species.stream().map(s -> s.getId()).collect(Collectors.toSet()),
                         attrs),
-                null, species));
+                null, species,
+                this.getServiceFactory().getAnatEntityService(), this.getServiceFactory().getDevStageService()));
     }
     private Map<Integer, Condition> generateConditionMapForCondParams(
             Set<ConditionDAO.Attribute> condParams, Map<Integer, Condition> originalCondMap) {

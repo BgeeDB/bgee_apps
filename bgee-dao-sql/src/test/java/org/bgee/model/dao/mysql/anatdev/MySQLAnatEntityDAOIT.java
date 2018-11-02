@@ -339,6 +339,13 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
     public void shouldGetNonInformativeAnatEntities() throws SQLException {
         
         this.useSelectDB();
+        //TODO: when integration tests will be adapted to the Bgee v14 schema,
+        //a regression test must be implemented for issue #198.
+        //For this, we need a non-informative anat. entity to be part of some conditions used in the expression table,
+        //and some conditions not used in the expression table. The anat. entity should not be identified
+        //as non-informative (the bug was that as soon as a non-informative anat. entity was part of at least one condition
+        //not used in the expression table, it was retrieved by the former version of this query.
+        //Now this should be fixed thanks to the 'NOT EXISTS' subquery of the new version).
 
         MySQLAnatEntityDAO dao = new MySQLAnatEntityDAO(this.getMySQLDAOManager());
         // Test recovery of all attributes without filter on species IDs

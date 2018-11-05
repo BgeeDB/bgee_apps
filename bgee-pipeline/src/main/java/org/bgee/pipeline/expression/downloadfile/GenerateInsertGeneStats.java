@@ -1308,9 +1308,11 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
         allGeneBean.setFilteredGenePageFormattedMinRank(empty);
         allGeneBean.setFilteredGenePageFormattedMaxRank(empty);
         for (GeneStatsBean geneBean: geneStatsBeans) {
+            addAnatEntitiesConds(allGeneBean, geneBean);
             sumAllGeneStatsCallCounts(allGeneBean, geneBean);
             setMinMaxRank(allGeneBean, geneBean);
         }
+        allGeneBean.setFilteredGenePagePresentAnatEntity(allGeneBean.getFilteredGenePagePresentAnatEntities().size());
         return log.exit(allGeneBean);
     }
     private static BiotypeStatsBean generateAllBiotypeSummary(Collection<BiotypeStatsBean> biotypeStatsBeans) {
@@ -1319,6 +1321,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
         BiotypeStatsBean allBioType = new BiotypeStatsBean();
         allBioType.setBioTypeName("All biotypes");
         for (BiotypeStatsBean biotypeStatsBean: biotypeStatsBeans) {
+            allBioType.setGeneCount(allBioType.getGeneCount() + biotypeStatsBean.getGeneCount());
             allBioType.setGeneWithData(allBioType.getGeneWithData() + biotypeStatsBean.getGeneWithData());
             allBioType.setGenePresentAbsentSilverGold(allBioType.getGenePresentAbsentSilverGold()
                     + biotypeStatsBean.getGenePresentAbsentSilverGold());
@@ -1355,15 +1358,15 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
 
         log.exit();
     }
-    private static void addAnatEntitiesConds(BiotypeStatsBean biotypeBean, CommonBean otherBean) {
-        log.entry(biotypeBean, otherBean);
+    private static void addAnatEntitiesConds(CommonBean allBean, CommonBean otherBean) {
+        log.entry(allBean, otherBean);
 
-        biotypeBean.getFilteredGenePagePresentAnatEntities().addAll(
+        allBean.getFilteredGenePagePresentAnatEntities().addAll(
                 otherBean.getFilteredGenePagePresentAnatEntities());
-        biotypeBean.getPresentAnatEntities().addAll(otherBean.getPresentAnatEntities());
-        biotypeBean.getPresentConds().addAll(otherBean.getPresentConds());
-        biotypeBean.getAbsentAnatEntities().addAll(otherBean.getAbsentAnatEntities());
-        biotypeBean.getAbsentConds().addAll(otherBean.getAbsentConds());
+        allBean.getPresentAnatEntities().addAll(otherBean.getPresentAnatEntities());
+        allBean.getPresentConds().addAll(otherBean.getPresentConds());
+        allBean.getAbsentAnatEntities().addAll(otherBean.getAbsentAnatEntities());
+        allBean.getAbsentConds().addAll(otherBean.getAbsentConds());
 
         log.exit();
     }
@@ -1433,12 +1436,13 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
         String setterName = getMethodName(call.getSummaryCallType(), call.getSummaryQuality(), false, anatEntityCalls, false);
         invokeGetterSetterIncrement(bean, getterName, setterName);
 
-        if (nonInformativeAnatEntity) {
-            String nonInformativeGetterName = getMethodName(call.getSummaryCallType(), call.getSummaryQuality(),
+        //If not a non-informative anat. entity, then we can increment the filtered call count
+        if (!nonInformativeAnatEntity) {
+            String filteredGetterName = getMethodName(call.getSummaryCallType(), call.getSummaryQuality(),
                     true, anatEntityCalls, true);
-            String nonInformativeSetterName = getMethodName(call.getSummaryCallType(), call.getSummaryQuality(),
+            String filteredSetterName = getMethodName(call.getSummaryCallType(), call.getSummaryQuality(),
                     false, anatEntityCalls, true);
-            invokeGetterSetterIncrement(bean, nonInformativeGetterName, nonInformativeSetterName);
+            invokeGetterSetterIncrement(bean, filteredGetterName, filteredSetterName);
         }
 
         log.exit();
@@ -1448,8 +1452,13 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
         try {
             Method getter = getMethod(getterName, true);
             int currentCount = (int) getter.invoke(bean, (Object[]) null);
+            log.trace("Getter: {} - Current count: {}", getter, currentCount);
             Method setter = getMethod(setterName, false);
-            setter.invoke(bean, currentCount++);
+            //Damned postfix increment operator :x
+            //https://stackoverflow.com/a/2371150/1768736
+            int incrementedCount = ++currentCount;
+            log.trace("Invoking setter {} for incremented count: {}", setter, incrementedCount);
+            setter.invoke(bean, incrementedCount);
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
             throw log.throwing(new IllegalStateException(e));
         }
@@ -1461,12 +1470,12 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
         for (ExpressionSummary callType: ExpressionSummary.values()) {
             for (SummaryQuality qual: SummaryQuality.values()) {
                 for (boolean anatEntityCalls : new boolean[]{false, true}) {
-                    for (boolean nonInformativeAnatEntity : new boolean[]{false, true}) {
+                    for (boolean filteredAnatEntity : new boolean[]{false, true}) {
                         Method getter = getMethod(
-                                getMethodName(callType, qual, true, anatEntityCalls, nonInformativeAnatEntity),
+                                getMethodName(callType, qual, true, anatEntityCalls, filteredAnatEntity),
                                 true);
                         Method setter = getMethod(
-                                getMethodName(callType, qual, false, anatEntityCalls, nonInformativeAnatEntity),
+                                getMethodName(callType, qual, false, anatEntityCalls, filteredAnatEntity),
                                 false);
                         try {
                             int allValueCount = (int) getter.invoke(allBean, (Object[]) null);
@@ -1483,15 +1492,15 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
         log.exit();
     }
     private static String getMethodName(ExpressionSummary callType, SummaryQuality qual, boolean getter, 
-            boolean anatEntityCalls, boolean nonInformativeAnatEntity) {
-        log.entry(callType, qual, anatEntityCalls, nonInformativeAnatEntity);
+            boolean anatEntityCalls, boolean filteredAnatEntity) {
+        log.entry(callType, qual, getter, anatEntityCalls, filteredAnatEntity);
 
         String methodName = "get";
         if (!getter) {
             methodName = "set";
         }
 
-        if (nonInformativeAnatEntity) {
+        if (filteredAnatEntity) {
             methodName += "Filtered";
         }
 

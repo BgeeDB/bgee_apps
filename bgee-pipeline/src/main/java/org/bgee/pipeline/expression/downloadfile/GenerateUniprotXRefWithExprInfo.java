@@ -11,6 +11,8 @@ import java.time.Instant;
 import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -25,6 +27,8 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.expressiondata.ConditionGraph;
+import org.bgee.model.expressiondata.ConditionGraphService;
 import org.bgee.model.gene.GeneFilter;
 import org.supercsv.cellprocessor.ParseInt;
 import org.supercsv.cellprocessor.constraint.NotNull;
@@ -38,7 +42,9 @@ import org.supercsv.prefs.CsvPreference;
  * the Bgee database.
  * 
  * @author  Julien Wollbrett
- * @version Bgee 14, July 2017
+ * @author  Frederic Bastian
+ * @since Bgee 14 Jul 2017
+ * @version Bgee 14 Nov 2018
  */
 // FIXME: Add unit tests
 public class GenerateUniprotXRefWithExprInfo {
@@ -99,7 +105,7 @@ public class GenerateUniprotXRefWithExprInfo {
         log.entry(inputFileName, outputFileName);
         
         // load UniProtKB Xrefs
-        Set<XrefUniprotBean> xrefUniprotList = this.loadXrefFileWithoutExprInfo(inputFileName);
+        Set<XrefUniprotBean> xrefUniprotList = loadXrefFileWithoutExprInfo(inputFileName);
 
         // generate lines with expression info
         Map<String, Set<String>> ensemblIdToXrefLines = this.generateXrefLines(xrefUniprotList);
@@ -123,7 +129,7 @@ public class GenerateUniprotXRefWithExprInfo {
      * @return      The {@code List} of {@code XrefUniprotBean}s.
      * @throws UncheckedIOException If an error occurred while trying to read the {@code file}.
      */
-    public Set<XrefUniprotBean> loadXrefFileWithoutExprInfo(String file) {
+    public static Set<XrefUniprotBean> loadXrefFileWithoutExprInfo(String file) {
         log.entry(file);
         
         Set<XrefUniprotBean> xrefUniprotList = new HashSet<>();
@@ -161,6 +167,18 @@ public class GenerateUniprotXRefWithExprInfo {
         log.entry(xrefList);
         
         Instant start = Instant.now();
+
+        //First, we build the ConditionGraph needed for filtering calls as on the gene page,
+        //for each species present in the xref list.
+        //This will avoid creating a new graph for each gene, to create it only once per species.
+        final Set<Integer> speciesIds = xrefList.stream().map(xr -> xr.getSpeciesId()).collect(Collectors.toSet());
+        final ServiceFactory serviceFactory = serviceFactorySupplier.get();
+        final ConditionGraphService condGraphService = serviceFactory.getConditionGraphService();
+        final EnumSet<CallService.Attribute> allCondParams = CallService.Attribute.getAllConditionParameters();
+        final Map<Integer, ConditionGraph> condGraphBySpeId = Collections.unmodifiableMap(speciesIds.stream()
+                .collect(Collectors.toMap(id -> id, id -> condGraphService.loadConditionGraph(id, allCondParams))));
+        //Release resources before launching analyses in several threads
+        serviceFactory.close();
         
         //retrieve expression information for each genes
         Map<XrefUniprotBean, String> expressionInfoByGene = xrefList.parallelStream().map(xref -> {
@@ -169,7 +187,8 @@ public class GenerateUniprotXRefWithExprInfo {
             CallService callService = threadSpeServiceFactory.getCallService();
             LinkedHashMap<AnatEntity, List<ExpressionCall>> callsByAnatEntity = callService
                     .loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
-                            new GeneFilter(xref.getSpeciesId(), xref.getEnsemblId()));
+                            new GeneFilter(xref.getSpeciesId(), xref.getEnsemblId()),
+                            condGraphBySpeId.get(xref.getSpeciesId()));
             
             // If no expression for this gene in Bgee
             if (callsByAnatEntity == null || callsByAnatEntity.isEmpty()) {

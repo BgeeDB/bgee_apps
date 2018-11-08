@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -22,6 +23,8 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.expressiondata.ConditionGraph;
+import org.bgee.model.expressiondata.ConditionGraphService;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.gene.GeneFilter;
@@ -37,7 +40,9 @@ import org.junit.rules.TemporaryFolder;
 * Unit tests for {@link GenerateUniprotXRefWithExprInfo}.
 *
 * @author  Julien Wollbrett
-* @version Bgee 14 Aug 2018
+* @author  Frederic Bastian
+* @since Bgee 14 Aug 2018
+* @version Bgee 14 Nov 2018
 */
 
 public class GenerateUniprotXRefWithExprInfoTest extends TestAncestor {
@@ -64,15 +69,10 @@ public class GenerateUniprotXRefWithExprInfoTest extends TestAncestor {
                new XrefUniprotBean("Q15615", "ENSG00000141219", 9606),
                new XrefUniprotBean("H9G367", "ENSACAG00000000004", 28377),
                new XrefUniprotBean("G1K846", "ENSACAG00000000006", 28377)));
-       
-       
-       ServiceFactory serviceFactory = mock(ServiceFactory.class);
-       
-       GenerateUniprotXRefWithExprInfo generateUniprotXrefs = new GenerateUniprotXRefWithExprInfo(() -> serviceFactory);
-       Set<XrefUniprotBean> xrefUniprotListLoaded = generateUniprotXrefs
+
+       Set<XrefUniprotBean> xrefUniprotListLoaded = GenerateUniprotXRefWithExprInfo
                .loadXrefFileWithoutExprInfo(this.getClass().getResource(XREF_FILE).getFile());
        assertTrue(xrefUniprotListLoaded.equals(xrefUniprotListWanted));
-        
     }
 
     /**
@@ -133,17 +133,24 @@ public class GenerateUniprotXRefWithExprInfoTest extends TestAncestor {
         when(serviceFactory.getSpeciesService()).thenReturn(speciesService);
         CallService callService = mock(CallService.class);
         when(serviceFactory.getCallService()).thenReturn(callService);
+        ConditionGraphService condGraphService = mock(ConditionGraphService.class);
+        when(serviceFactory.getConditionGraphService()).thenReturn(condGraphService);
 
         // Mock methods
+        EnumSet<CallService.Attribute> allCondParams = CallService.Attribute.getAllConditionParameters();
+        ConditionGraph graphSpe1 = mock(ConditionGraph.class);
+        ConditionGraph graphSpe2 = mock(ConditionGraph.class);
+        when(condGraphService.loadConditionGraph(sp1.getId(), allCondParams)).thenReturn(graphSpe1);
+        when(condGraphService.loadConditionGraph(sp2.getId(), allCondParams)).thenReturn(graphSpe2);
         when(speciesService.loadSpeciesByIds(null, false)).thenReturn(new HashSet<>(Arrays.asList(sp1, sp2)));
         when(callService.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
-                new GeneFilter(g1.getSpecies().getId(), g1.getEnsemblGeneId()))).thenReturn(callsGene1);
+                new GeneFilter(g1.getSpecies().getId(), g1.getEnsemblGeneId()), graphSpe1)).thenReturn(callsGene1);
         when(callService.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
-                new GeneFilter(g2.getSpecies().getId(), g2.getEnsemblGeneId()))).thenReturn(callsGene2);
+                new GeneFilter(g2.getSpecies().getId(), g2.getEnsemblGeneId()), graphSpe1)).thenReturn(callsGene2);
         when(callService.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
-                new GeneFilter(g3.getSpecies().getId(), g3.getEnsemblGeneId()))).thenReturn(callsGene3);
+                new GeneFilter(g3.getSpecies().getId(), g3.getEnsemblGeneId()), graphSpe2)).thenReturn(callsGene3);
         when(callService.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
-                new GeneFilter(g4.getSpecies().getId(), g4.getEnsemblGeneId()))).thenReturn(callsGene4);
+                new GeneFilter(g4.getSpecies().getId(), g4.getEnsemblGeneId()), graphSpe2)).thenReturn(callsGene4);
         
         String outputFile = testFolder.newFile("XRefBgee.tsv").getPath();
         

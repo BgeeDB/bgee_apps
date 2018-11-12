@@ -14,6 +14,7 @@ import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultDAO;
@@ -142,6 +143,10 @@ public class MockDAOManager2 extends DAOManager {
     @Override
     protected ConditionDAO getNewConditionDAO() {
         return this.instanceMockManager.getNewConditionDAO();
+    }
+    @Override
+    protected RawDataConditionDAO getNewRawDataConditionDAO() {
+        return this.instanceMockManager.getNewRawDataConditionDAO();
     }
     @Override
     protected RawExpressionCallDAO getNewRawExpressionCallDAO() {

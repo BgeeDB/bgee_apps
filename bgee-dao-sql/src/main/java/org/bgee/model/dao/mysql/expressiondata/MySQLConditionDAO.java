@@ -115,12 +115,13 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
         super(manager);
     }
 
-    @Override
-    public ConditionTOResultSet getRawConditionsBySpeciesIds(Collection<Integer> speciesIds,
-            Collection<ConditionDAO.Attribute> attributes) throws DAOException {
-        log.entry(speciesIds, attributes);
-        return log.exit(this.getConditionsBySpeciesIds(false, speciesIds, null, attributes));
-    }
+    //TODO: check whether this method is to moved/has been moved to RawDataConditionDAO?
+//    @Override
+//    public ConditionTOResultSet getRawConditionsBySpeciesIds(Collection<Integer> speciesIds,
+//            Collection<ConditionDAO.Attribute> attributes) throws DAOException {
+//        log.entry(speciesIds, attributes);
+//        return log.exit(this.getConditionsBySpeciesIds(false, speciesIds, null, attributes));
+//    }
 
     @Override
     public ConditionTOResultSet getGlobalConditionsBySpeciesIds(Collection<Integer> speciesIds,
@@ -399,7 +400,10 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                             log.throwing(new UnrecognizedColumnException(columnName));
                     }
                 }
-                return log.exit(new ConditionTO(id, exprMappedCondId, anatEntityId, stageId, speciesId));
+                //TODO: check that we shouldn't have exprMappedCondId anymore here?
+                //And then remove the EXPR_MAPPED_CONDITION_ID attribute?
+//                return log.exit(new ConditionTO(id, exprMappedCondId, anatEntityId, stageId, speciesId));
+                return log.exit(new ConditionTO(id, anatEntityId, stageId, speciesId));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }

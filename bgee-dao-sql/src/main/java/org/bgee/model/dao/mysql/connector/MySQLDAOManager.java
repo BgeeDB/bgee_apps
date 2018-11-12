@@ -28,6 +28,7 @@ import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.file.DownloadFileDAO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
 import org.bgee.model.dao.api.gene.GeneNameSynonymDAO;
@@ -44,6 +45,7 @@ import org.bgee.model.dao.mysql.expressiondata.MySQLDiffExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLExperimentExpressionDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLGlobalExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLRawExpressionCallDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawDataConditionDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituSpotDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixProbesetDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqResultDAO;
@@ -1050,6 +1052,11 @@ public class MySQLDAOManager extends DAOManager {
     protected ConditionDAO getNewConditionDAO() {
         log.entry();
         return log.exit(new MySQLConditionDAO(this));
+    }
+    @Override
+    protected RawDataConditionDAO getNewRawDataConditionDAO() {
+        log.entry();
+        return log.exit(new MySQLRawDataConditionDAO(this));
     }
     @Override
     protected MySQLAffymetrixProbesetDAO getNewAffymetrixProbesetDAO() {

@@ -8,27 +8,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
-import org.bgee.view.AboutDisplay;
-import org.bgee.view.DAODisplay;
-import org.bgee.view.DocumentationDisplay;
-import org.bgee.view.DownloadDisplay;
-import org.bgee.view.ErrorDisplay;
-import org.bgee.view.GeneDisplay;
-import org.bgee.view.GeneralDisplay;
-import org.bgee.view.JobDisplay;
-import org.bgee.view.RPackageDisplay;
-import org.bgee.view.SearchDisplay;
-import org.bgee.view.SourceDisplay;
-import org.bgee.view.SpeciesDisplay;
-import org.bgee.view.TopAnatDisplay;
-import org.bgee.view.ViewFactory;
+import org.bgee.view.*;
 
 /**
  * {@code ViewFactory} that returns all displays for the CSV views.
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 13, Mar. 2016
+ * @version Bgee 14, Aug. 2018
  * @see Delimiter
  * @since   Bgee 13
  */
@@ -83,6 +70,11 @@ public class CsvFactory extends ViewFactory {
 	public GeneDisplay getGeneDisplay() throws IOException {
         throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
 	}
+
+    @Override
+    public RawDataDisplay getRawCallDisplay() throws IOException {
+        throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
+    }
 
     @Override
     public SpeciesDisplay getSpeciesDisplay() throws IOException {

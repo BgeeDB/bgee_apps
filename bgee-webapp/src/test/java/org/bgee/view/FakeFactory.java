@@ -14,7 +14,7 @@ import org.bgee.controller.TestURLParameters;
  * cases.
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Feb. 2016
+ * @version Bgee 14, Aug. 2018
  * @since   Bgee 13
  */
 public class FakeFactory extends ViewFactory {
@@ -95,6 +95,11 @@ public class FakeFactory extends ViewFactory {
 	public GeneDisplay getGeneDisplay() throws IOException {
 		return null;
 	}
+
+    @Override
+    public RawDataDisplay getRawCallDisplay() throws IOException {
+        return null;
+    }
 
     @Override
     public SpeciesDisplay getSpeciesDisplay() throws IOException {

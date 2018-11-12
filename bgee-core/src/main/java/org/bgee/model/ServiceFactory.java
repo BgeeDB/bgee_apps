@@ -11,6 +11,7 @@ import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.ConditionService;
 import org.bgee.model.expressiondata.multispecies.MultiSpeciesCallService;
+import org.bgee.model.expressiondata.rawdata.RawDataService;
 import org.bgee.model.file.DownloadFileService;
 import org.bgee.model.file.SpeciesDataGroupService;
 import org.bgee.model.gene.GeneService;
@@ -117,6 +118,14 @@ public class ServiceFactory implements AutoCloseable {
     public GeneService getGeneService() {
         log.entry();
         return log.exit(new GeneService(this));
+    }
+
+    /**
+     * @return  A newly instantiated {@code RawDataService}
+     */
+    public RawDataService getRawDataService() {
+        log.entry();
+        return log.exit(new RawDataService(this));
     }
 
     /**

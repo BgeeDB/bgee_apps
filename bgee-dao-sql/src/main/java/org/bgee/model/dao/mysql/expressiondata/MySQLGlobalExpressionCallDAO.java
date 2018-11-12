@@ -41,12 +41,11 @@ import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, May 2017
+ * @version Bgee 14, Jun. 2018
  * @see org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallTO
  * @see org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionToRawExpressionTO
  * @since   Bgee 14, Feb. 2017
  */
-//XXX: completely review git diff 03ea09b6b325dd8f9ec9bb4611678fdaf764e9ab..6e5e4219fd40242abf597878e965cce1b3bedb45
 public class MySQLGlobalExpressionCallDAO extends MySQLDAO<GlobalExpressionCallDAO.Attribute> 
 implements GlobalExpressionCallDAO {
     private final static Logger log = LogManager.getLogger(MySQLGlobalExpressionCallDAO.class.getName());
@@ -54,34 +53,33 @@ implements GlobalExpressionCallDAO {
     private final static String GLOBAL_EXPR_ID_FIELD = "globalExpressionId";
     private final static String GLOBAL_EXPR_TABLE_NAME = "globalExpression";
     private final static String GLOBAL_MEAN_RANK_FIELD = "meanRank";
-    //XXX: I think this information is already managed in another class?
-    private final static int DATA_TYPE_COUNT = 4;
-    //XXX: I think this information is already managed in another class?
-    private final static Set<DAOPropagationState> OBSERVED_STATES = EnumSet.of(DAOPropagationState.ALL,
-            DAOPropagationState.SELF, DAOPropagationState.SELF_AND_ANCESTOR, 
-            DAOPropagationState.SELF_AND_DESCENDANT);
-    //TODO: ADD NON_OBSERVED_STATES
+    private final static Set<DAOPropagationState> OBSERVED_STATES = EnumSet.allOf(DAOPropagationState.class)
+            .stream().filter(s -> s.getObservedState())
+            .collect(Collectors.toCollection(() -> EnumSet.noneOf(DAOPropagationState.class)));
+    private final static Set<DAOPropagationState> NON_OBSERVED_STATES = EnumSet.allOf(DAOPropagationState.class)
+            .stream().filter(s -> !s.getObservedState())
+            .collect(Collectors.toCollection(() -> EnumSet.noneOf(DAOPropagationState.class)));
 
     private static String generateSelectClause(Collection<GlobalExpressionCallDAO.Attribute> attrs,
             Collection<GlobalExpressionCallDAO.OrderingAttribute> orderingAttrs,
             Collection<DAODataType> dataTypes, final String globalExprTableName, final String globalCondTableName,
-            String geneTableName) {
-        log.entry(attrs, orderingAttrs, dataTypes, globalExprTableName, globalCondTableName, geneTableName);
+            String geneTableName, boolean observedConditionFiltering) {
+        log.entry(attrs, orderingAttrs, dataTypes, globalExprTableName, globalCondTableName, geneTableName, observedConditionFiltering);
         
         Set<GlobalExpressionCallDAO.Attribute> clonedAttrs = attrs == null || attrs.isEmpty()?
                 EnumSet.allOf(GlobalExpressionCallDAO.Attribute.class):
                     EnumSet.copyOf(attrs);
-        //fix for #173, see also the end of this method
+        //fix for #173, see also the end of this method for columns having no corresponding attributes
         for (GlobalExpressionCallDAO.OrderingAttribute a: orderingAttrs) {
             switch (a) {
-            case GENE_ID:
+            case BGEE_GENE_ID:
                 clonedAttrs.add(GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID);
                 break;
-            case CONDITION_ID:
-                clonedAttrs.add(GlobalExpressionCallDAO.Attribute.CONDITION_ID);
+            case GLOBAL_CONDITION_ID:
+                clonedAttrs.add(GlobalExpressionCallDAO.Attribute.GLOBAL_CONDITION_ID);
                 break;
             case MEAN_RANK:
-                clonedAttrs.add(GlobalExpressionCallDAO.Attribute.GLOBAL_MEAN_RANK);
+                clonedAttrs.add(GlobalExpressionCallDAO.Attribute.MEAN_RANK);
                 break;
             default:
                 //other ordering attributes do not have a corresponding select attribute
@@ -119,11 +117,13 @@ implements GlobalExpressionCallDAO {
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT ");
 
-        if (!clonedAttrs.contains(GlobalExpressionCallDAO.Attribute.ID) &&
+        if (observedConditionFiltering ||
+                (!clonedAttrs.contains(GlobalExpressionCallDAO.Attribute.ID) &&
                 (!clonedAttrs.contains(GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID) ||
-                        !clonedAttrs.contains(GlobalExpressionCallDAO.Attribute.CONDITION_ID))) {
+                        !clonedAttrs.contains(GlobalExpressionCallDAO.Attribute.GLOBAL_CONDITION_ID)))) {
             sb.append("DISTINCT ");
         }
+        //XXX: check whether with the last mysql version the optimizer does a better job at choosing the join order
         sb.append("STRAIGHT_JOIN ");
 
         sb.append(clonedAttrs.stream().map(a -> {
@@ -132,13 +132,21 @@ implements GlobalExpressionCallDAO {
                 return globalExprTableName + "." + GLOBAL_EXPR_ID_FIELD;
             case BGEE_GENE_ID:
                 return globalExprTableName + "." + MySQLGeneDAO.BGEE_GENE_ID;
-            case CONDITION_ID:
+            case GLOBAL_CONDITION_ID:
                 return globalExprTableName + "." + MySQLConditionDAO.GLOBAL_COND_ID_FIELD;
-            case GLOBAL_MEAN_RANK:
+            case MEAN_RANK:
                 return clonedDataTypes.stream()
                         //to avoid division by 0
+                        //generate, e.g.:
+                        //IF (globalExpression.estRankNorm IS NULL AND globalExpression.affymetrixMeanRankNorm IS NULL, NULL, 
                         .map(dt -> dataTypeToNormRankSql.get(dt) + " IS NULL")
                         .collect(Collectors.joining(" AND ", "IF (", ", NULL, "))
+                        //generate, e.g.:
+                        //((
+                        //IF (globalExpression.estRankNorm IS NULL, 0, globalExpression.estRankNorm * globalExpression.estMaxRank)
+                        // + IF (globalExpression.affymetrixMeanRankNorm IS NULL, 0, 
+                        //globalExpression.affymetrixMeanRankNorm * globalExpression.affymetrixDistinctRankSum)
+                        //)
                         + clonedDataTypes.stream()
                         .map(dataType -> {
                             String rankSql = dataTypeToNormRankSql.get(dataType);
@@ -147,10 +155,14 @@ implements GlobalExpressionCallDAO {
                                 throw log.throwing(new IllegalStateException(
                                         "No rank clause associated to data type: " + dataType));
                             }
-                            return "IF(" + rankSql + " IS NULL, 0, " + rankSql + " * " + weightSql + ")";
+                            return "IF (" + rankSql + " IS NULL, 0, " + rankSql + " * " + weightSql + ")";
                         })
                         .collect(Collectors.joining(" + ", "((", ")"))
-                        
+                        //generate, e.g.:
+                        // / (
+                        //IF(globalExpression.estMaxRank IS NULL, 0, globalExpression.estMaxRank)
+                        // + IF(globalExpression.affymetrixDistinctRankSum IS NULL, 0, globalExpression.affymetrixDistinctRankSum)
+                        // ))) AS meanRank
                         + clonedDataTypes.stream()
                         .map(dataType -> {
                             String weightSql = dataTypeToWeightSql.get(dataType);
@@ -255,12 +267,12 @@ implements GlobalExpressionCallDAO {
                         .map(dataType -> {
                             switch (dataType) {
                             case EST:
-                                return "estRank, estRankNorm";
+                                return "estRank, estRankNorm, " + globalCondTableName + ".estMaxRank";
                             case AFFYMETRIX:
                                 return "affymetrixMeanRank, affymetrixMeanRankNorm, "
                                         + "affymetrixDistinctRankSum";
                             case IN_SITU:
-                                return "inSituRank, inSituRankNorm";
+                                return "inSituRank, inSituRankNorm, " + globalCondTableName + ".inSituMaxRank";
                             case RNA_SEQ:
                                 return "rnaSeqMeanRank, rnaSeqMeanRankNorm, "
                                         + "rnaSeqDistinctRankSum";
@@ -270,236 +282,7 @@ implements GlobalExpressionCallDAO {
                             }
                         })
                         .collect(Collectors.joining(", "));
-//            
-//                
-//            case AFFYMETRIX_EXP_PRESENT_HIGH_SELF_COUNT:
-//                stmt.setInt(paramIndex, callTO.getAffymetrixExpPresentHighSelfCount());
-//                paramIndex++;
-//                break;
-//            case AFFYMETRIX_EXP_PRESENT_LOW_SELF_COUNT:
-//                stmt.setInt(paramIndex, callTO.getAffymetrixExpPresentLowSelfCount());
-//                paramIndex++;
-//                break;
-//            case AFFYMETRIX_EXP_ABSENT_HIGH_SELF_COUNT:
-//                stmt.setInt(paramIndex, callTO.getAffymetrixExpAbsentHighSelfCount());
-//                paramIndex++;
-//                break;
-//            case AFFYMETRIX_EXP_ABSENT_LOW_SELF_COUNT:
-//                stmt.setInt(paramIndex, callTO.getAffymetrixExpAbsentLowSelfCount());
-//                paramIndex++;
-//                break;
-//            case AFFYMETRIX_EXP_PRESENT_HIGH_DESCENDANT_COUNT:
-//                stmt.setInt(paramIndex, callTO.getAffymetrixExpPresentHighDescendantCount());
-//                paramIndex++;
-//                break;
-//            case AFFYMETRIX_EXP_PRESENT_LOW_DESCENDANT_COUNT:
-//                stmt.setInt(paramIndex, callTO.getAffymetrixExpPresentLowDescendantCount());
-//                paramIndex++;
-//                break;
-//            case AFFYMETRIX_EXP_ABSENT_HIGH_PARENT_COUNT:
-//                stmt.setInt(paramIndex, callTO.getAffymetrixExpAbsentHighParentCount());
-//                paramIndex++;
-//                break;
-//            case AFFYMETRIX_EXP_ABSENT_LOW_PARENT_COUNT:
-//                stmt.setInt(paramIndex, callTO.getAffymetrixExpAbsentLowParentCount());
-//                paramIndex++;
-//                break;
-//            case AFFYMETRIX_EXP_PRESENT_HIGH_TOTAL_COUNT:
-//                stmt.setInt(paramIndex, callTO.getAffymetrixExpPresentHighTotalCount());
-//                paramIndex++;
-//                break;
-//            case AFFYMETRIX_EXP_PRESENT_LOW_TOTAL_COUNT:
-//                stmt.setInt(paramIndex, callTO.getAffymetrixExpPresentLowTotalCount());
-//                paramIndex++;
-//                break;
-//            case AFFYMETRIX_EXP_ABSENT_HIGH_TOTAL_COUNT:
-//                stmt.setInt(paramIndex, callTO.getAffymetrixExpAbsentHighTotalCount());
-//                paramIndex++;
-//                break;
-//            case AFFYMETRIX_EXP_ABSENT_LOW_TOTAL_COUNT:
-//                stmt.setInt(paramIndex, callTO.getAffymetrixExpAbsentLowTotalCount());
-//                paramIndex++;
-//                break;
-//            case AFFYMETRIX_EXP_PROPAGATED_COUNT:
-//                stmt.setInt(paramIndex, callTO.getAffymetrixExpPropagatedCount());
-//                paramIndex++;
-//                break;
-//                
-//            case RNA_SEQ_EXP_PRESENT_HIGH_SELF_COUNT:
-//                stmt.setInt(paramIndex, callTO.getRNASeqExpPresentHighSelfCount());
-//                paramIndex++;
-//                break;
-//            case RNA_SEQ_EXP_PRESENT_LOW_SELF_COUNT:
-//                stmt.setInt(paramIndex, callTO.getRNASeqExpPresentLowSelfCount());
-//                paramIndex++;
-//                break;
-//            case RNA_SEQ_EXP_ABSENT_HIGH_SELF_COUNT:
-//                stmt.setInt(paramIndex, callTO.getRNASeqExpAbsentHighSelfCount());
-//                paramIndex++;
-//                break;
-//            case RNA_SEQ_EXP_ABSENT_LOW_SELF_COUNT:
-//                stmt.setInt(paramIndex, callTO.getRNASeqExpAbsentLowSelfCount());
-//                paramIndex++;
-//                break;
-//            case RNA_SEQ_EXP_PRESENT_HIGH_DESCENDANT_COUNT:
-//                stmt.setInt(paramIndex, callTO.getRNASeqExpPresentHighDescendantCount());
-//                paramIndex++;
-//                break;
-//            case RNA_SEQ_EXP_PRESENT_LOW_DESCENDANT_COUNT:
-//                stmt.setInt(paramIndex, callTO.getRNASeqExpPresentLowDescendantCount());
-//                paramIndex++;
-//                break;
-//            case RNA_SEQ_EXP_ABSENT_HIGH_PARENT_COUNT:
-//                stmt.setInt(paramIndex, callTO.getRNASeqExpAbsentHighParentCount());
-//                paramIndex++;
-//                break;
-//            case RNA_SEQ_EXP_ABSENT_LOW_PARENT_COUNT:
-//                stmt.setInt(paramIndex, callTO.getRNASeqExpAbsentLowParentCount());
-//                paramIndex++;
-//                break;
-//            case RNA_SEQ_EXP_PRESENT_HIGH_TOTAL_COUNT:
-//                stmt.setInt(paramIndex, callTO.getRNASeqExpPresentHighTotalCount());
-//                paramIndex++;
-//                break;
-//            case RNA_SEQ_EXP_PRESENT_LOW_TOTAL_COUNT:
-//                stmt.setInt(paramIndex, callTO.getRNASeqExpPresentLowTotalCount());
-//                paramIndex++;
-//                break;
-//            case RNA_SEQ_EXP_ABSENT_HIGH_TOTAL_COUNT:
-//                stmt.setInt(paramIndex, callTO.getRNASeqExpAbsentHighTotalCount());
-//                paramIndex++;
-//                break;
-//            case RNA_SEQ_EXP_ABSENT_LOW_TOTAL_COUNT:
-//                stmt.setInt(paramIndex, callTO.getRNASeqExpAbsentLowTotalCount());
-//                paramIndex++;
-//                break;
-//            case RNA_SEQ_EXP_PROPAGATED_COUNT:
-//                stmt.setInt(paramIndex, callTO.getRNASeqExpPropagatedCount());
-//                paramIndex++;
-//                break;
-//                
-//            case EST_LIB_PRESENT_HIGH_SELF_COUNT:
-//                stmt.setInt(paramIndex, callTO.getESTLibPresentHighSelfCount());
-//                paramIndex++;
-//                break;
-//            case EST_LIB_PRESENT_LOW_SELF_COUNT:
-//                stmt.setInt(paramIndex, callTO.getESTLibPresentLowSelfCount());
-//                paramIndex++;
-//                break;
-//            case EST_LIB_PRESENT_HIGH_DESCENDANT_COUNT:
-//                stmt.setInt(paramIndex, callTO.getESTLibPresentHighDescendantCount());
-//                paramIndex++;
-//                break;
-//            case EST_LIB_PRESENT_LOW_DESCENDANT_COUNT:
-//                stmt.setInt(paramIndex, callTO.getESTLibPresentLowDescendantCount());
-//                paramIndex++;
-//                break;
-//            case EST_LIB_PRESENT_HIGH_TOTAL_COUNT:
-//                stmt.setInt(paramIndex, callTO.getESTLibPresentHighTotalCount());
-//                paramIndex++;
-//                break;
-//            case EST_LIB_PRESENT_LOW_TOTAL_COUNT:
-//                stmt.setInt(paramIndex, callTO.getESTLibPresentLowTotalCount());
-//                paramIndex++;
-//                break;
-//            case EST_LIB_PROPAGATED_COUNT:
-//                stmt.setInt(paramIndex, callTO.getESTLibPropagatedCount());
-//                paramIndex++;
-//                break;
-//                
-//            case IN_SITU_EXP_PRESENT_HIGH_SELF_COUNT:
-//                stmt.setInt(paramIndex, callTO.getInSituExpPresentHighSelfCount());
-//                paramIndex++;
-//                break;
-//            case IN_SITU_EXP_PRESENT_LOW_SELF_COUNT:
-//                stmt.setInt(paramIndex, callTO.getInSituExpPresentLowSelfCount());
-//                paramIndex++;
-//                break;
-//            case IN_SITU_EXP_ABSENT_HIGH_SELF_COUNT:
-//                stmt.setInt(paramIndex, callTO.getInSituExpAbsentHighSelfCount());
-//                paramIndex++;
-//                break;
-//            case IN_SITU_EXP_ABSENT_LOW_SELF_COUNT:
-//                stmt.setInt(paramIndex, callTO.getInSituExpAbsentLowSelfCount());
-//                paramIndex++;
-//                break;
-//            case IN_SITU_EXP_PRESENT_HIGH_DESCENDANT_COUNT:
-//                stmt.setInt(paramIndex, callTO.getInSituExpPresentHighDescendantCount());
-//                paramIndex++;
-//                break;
-//            case IN_SITU_EXP_PRESENT_LOW_DESCENDANT_COUNT:
-//                stmt.setInt(paramIndex, callTO.getInSituExpPresentLowDescendantCount());
-//                paramIndex++;
-//                break;
-//            case IN_SITU_EXP_ABSENT_HIGH_PARENT_COUNT:
-//                stmt.setInt(paramIndex, callTO.getInSituExpAbsentHighParentCount());
-//                paramIndex++;
-//                break;
-//            case IN_SITU_EXP_ABSENT_LOW_PARENT_COUNT:
-//                stmt.setInt(paramIndex, callTO.getInSituExpAbsentLowParentCount());
-//                paramIndex++;
-//                break;
-//            case IN_SITU_EXP_PRESENT_HIGH_TOTAL_COUNT:
-//                stmt.setInt(paramIndex, callTO.getInSituExpPresentHighTotalCount());
-//                paramIndex++;
-//                break;
-//            case IN_SITU_EXP_PRESENT_LOW_TOTAL_COUNT:
-//                stmt.setInt(paramIndex, callTO.getInSituExpPresentLowTotalCount());
-//                paramIndex++;
-//                break;
-//            case IN_SITU_EXP_ABSENT_HIGH_TOTAL_COUNT:
-//                stmt.setInt(paramIndex, callTO.getInSituExpAbsentHighTotalCount());
-//                paramIndex++;
-//                break;
-//            case IN_SITU_EXP_ABSENT_LOW_TOTAL_COUNT:
-//                stmt.setInt(paramIndex, callTO.getInSituExpAbsentLowTotalCount());
-//                paramIndex++;
-//                break;
-//            case IN_SITU_EXP_PROPAGATED_COUNT:
-//                stmt.setInt(paramIndex, callTO.getInSituExpPropagatedCount());
-//                paramIndex++;
-//                break;
-//                
-//            case AFFYMETRIX_MEAN_RANK:
-//                stmt.setBigDecimal(paramIndex, callTO.getAffymetrixMeanRank());
-//                paramIndex++;
-//                break;
-//            case RNA_SEQ_MEAN_RANK:
-//                stmt.setBigDecimal(paramIndex, callTO.getRNASeqMeanRank());
-//                paramIndex++;
-//                break;
-//            case EST_RANK:
-//                stmt.setBigDecimal(paramIndex, callTO.getESTRank());
-//                paramIndex++;
-//                break;
-//            case IN_SITU_RANK:
-//                stmt.setBigDecimal(paramIndex, callTO.getInSituRank());
-//                paramIndex++;
-//                break;
-//            case AFFYMETRIX_MEAN_RANK_NORM:
-//                stmt.setBigDecimal(paramIndex, callTO.getAffymetrixMeanRankNorm());
-//                paramIndex++;
-//                break;
-//            case RNA_SEQ_MEAN_RANK_NORM:
-//                stmt.setBigDecimal(paramIndex, callTO.getRNASeqMeanRankNorm());
-//                paramIndex++;
-//                break;
-//            case EST_RANK_NORM:
-//                stmt.setBigDecimal(paramIndex, callTO.getESTRankNorm());
-//                paramIndex++;
-//                break;
-//            case IN_SITU_RANK_NORM:
-//                stmt.setBigDecimal(paramIndex, callTO.getInSituRankNorm());
-//                paramIndex++;
-//                break;
-//            case AFFYMETRIX_DISTINCT_RANK_SUM:
-//                stmt.setBigDecimal(paramIndex, callTO.getAffymetrixDistinctRankSum());
-//                paramIndex++;
-//                break;
-//            case RNA_SEQ_DISTINCT_RANK_SUM:
-//                stmt.setBigDecimal(paramIndex, callTO.getRNASeqDistinctRankSum());
-//                paramIndex++;
-//                break;
+
             default:
                 throw log.throwing(new IllegalStateException("Unsupported attribute: " + a));
             }
@@ -510,8 +293,8 @@ implements GlobalExpressionCallDAO {
         String selectOrderBy = orderingAttrs.stream()
         .filter(a -> {
             switch(a) {
-                case GENE_ID:
-                case CONDITION_ID:
+                case BGEE_GENE_ID:
+                case GLOBAL_CONDITION_ID:
                 case MEAN_RANK:
                     //These ordering attributes have a correspondence in the select Attributes
                     //and are already dealt with at the beginning of this method
@@ -528,6 +311,8 @@ implements GlobalExpressionCallDAO {
                     return globalCondTableName + ".stageId";
                 case OMA_GROUP_ID:
                     return geneTableName + ".OMAParentNodeId";
+                case PUBLIC_GENE_ID:
+                    return geneTableName + ".geneId";
                 default:
                     throw log.throwing(new IllegalStateException("Unsupported OrderingAttribute: " + a));
             }
@@ -543,41 +328,41 @@ implements GlobalExpressionCallDAO {
 
     private static String generateTableReferences(final String globalExprTableName,
             final String globalCondTableName, final String condTableName, final String geneTableName,
-            boolean observedConditionFiltering, final boolean isOrderByOMANodeId) {
+            boolean observedConditionFiltering, final boolean isOrderByOMANodeId, final boolean isOrderByPublicGeneId) {
         log.entry(globalExprTableName, globalCondTableName, condTableName, geneTableName,
-                observedConditionFiltering, isOrderByOMANodeId);
+                observedConditionFiltering, isOrderByOMANodeId, isOrderByPublicGeneId);
 
         StringBuilder sb = new StringBuilder();
 
         //the order of the tables is important in case we use a STRAIGHT_JOIN clause
         sb.append(" FROM ");
 
-        //we use the gene table to filter by species rather than the condition table,
-        //because there is a clustered index for the globalExpression table that is
-        //PRIMAR KEY(bgeeGeneId, globalConditionId). So it is much faster to filter
-        //from the gene table rather than the globalCond table
-        //In order to use the clustered index for the globalExpression table,
-        //if we need both to use the gene table and the globalCond table,
-        //so we link them using the speciesId field, to make one common join
-        //to the globalExpression table afterwards.
-        // XXX: I remove usage of gene table when it is not needed because in reality,
+        //Note: we ALWAYS need to join to the gobalCond table, to be able to filter on the condition parameters
+        //(e.g., 'WHERE anatEntityId IS NOT NULL AND devStageId IS NULL...').
+        //As a consequence, we use the condition table to filter by species rather than the gene table,
+        //since we always need it, and it avoids to make yet another join to the gene table.
+        //But note that there is a clustered index for the globalExpression table that is
+        //PRIMAR KEY(bgeeGeneId, globalConditionId). So we try as much as possible to have bgeeGeneIds
+        //as filters, in order to use this clustered index.
+        // We filter genes based on the bgeeGeneId rather than the Ensembl geneId,
+        // to avoid joins to gene table when it is not needed because in reality,
         // at the time of writing, queries take much more time. For instance,
         // to retrieve calls of the zebrafish, using gene table it took 22 minutes 
         // while without gene table it took 3 minutes.
         sb.append("globalCond AS ").append(globalCondTableName);
-
-        if (isOrderByOMANodeId)  {
-            sb.append(" INNER JOIN ");
-            sb.append("gene AS ").append(geneTableName);
-            sb.append(" ON ").append(geneTableName).append(".").append(MySQLGeneDAO.BGEE_GENE_ID)
-                .append(" = ").append(globalCondTableName).append(".").append(MySQLGeneDAO.BGEE_GENE_ID);
-        }
 
         sb.append(" INNER JOIN ");
         sb.append("globalExpression AS ").append(globalExprTableName);
         sb.append(" ON ").append(globalCondTableName).append(".")
                   .append(MySQLConditionDAO.GLOBAL_COND_ID_FIELD).append(" = ")
                   .append(globalExprTableName).append(".").append(MySQLConditionDAO.GLOBAL_COND_ID_FIELD);
+
+        if (isOrderByOMANodeId || isOrderByPublicGeneId)  {
+            sb.append(" INNER JOIN ");
+            sb.append("gene AS ").append(geneTableName);
+            sb.append(" ON ").append(geneTableName).append(".").append(MySQLGeneDAO.BGEE_GENE_ID)
+                .append(" = ").append(globalExprTableName).append(".").append(MySQLGeneDAO.BGEE_GENE_ID);
+        }
 
         if (observedConditionFiltering) {
             //we want to filter for observed organs/stages without considering the species,
@@ -632,26 +417,27 @@ implements GlobalExpressionCallDAO {
 
         if (!callFilters.isEmpty()) {
             for (CallDAOFilter callFilter: callFilters) {
-                if (callFilter.getGeneIds() != null && !callFilter.getGeneIds().isEmpty()) {
-                    //For now, we don't support using both gene IDs and species IDs in a same CallDAOFilter.
-                    //If needed, we should either create a "geneSpeciesFilter" in CallDAOFilter,
-                    //or use one CallDAOFilter for the gene IDs and another one for the species IDs.
-                    if (callFilter.getSpeciesIds() != null && !callFilter.getSpeciesIds().isEmpty()) {
-                        throw log.throwing(new UnsupportedOperationException(
-                                "Currently not supported to provide both gene and species IDs in a same CallDAOFilter"));
+                if (callFilter.getGeneIds() != null && !callFilter.getGeneIds().isEmpty() ||
+                        callFilter.getSpeciesIds() != null && !callFilter.getSpeciesIds().isEmpty()) {
+                    sb.append(" AND (");
+                    if (callFilter.getGeneIds() != null && !callFilter.getGeneIds().isEmpty()) {
+                        sb.append(globalExprTableName).append(".").append(MySQLGeneDAO.BGEE_GENE_ID)
+                        .append(" IN (")
+                        .append(BgeePreparedStatement.generateParameterizedQueryString(callFilter.getGeneIds().size()))
+                        .append(")");
                     }
-                    sb.append(" AND ");
-                    sb.append(globalExprTableName).append(".").append(MySQLGeneDAO.BGEE_GENE_ID)
-                    .append(" IN (")
-                    .append(BgeePreparedStatement.generateParameterizedQueryString(callFilter.getGeneIds().size()))
-                    .append(")");
-                }
-
-                if (callFilter.getSpeciesIds() != null && !callFilter.getSpeciesIds().isEmpty()) {
-                    sb.append(" AND ");
-                    sb.append(globalCondTableName).append(".speciesId IN (")
-                    .append(BgeePreparedStatement.generateParameterizedQueryString(callFilter.getSpeciesIds().size()))
-                    .append(") ");
+                    if (callFilter.getSpeciesIds() != null && !callFilter.getSpeciesIds().isEmpty()) {
+                        if (callFilter.getGeneIds() != null && !callFilter.getGeneIds().isEmpty()) {
+                            sb.append(" OR ");
+                        }
+                        //We filter species through the globalCond table rather than the gene table
+                        //because we always need to join to the globalCond table anyway, so we avoid
+                        //yet another join to the gene table.
+                        sb.append(globalCondTableName).append(".speciesId IN (")
+                        .append(BgeePreparedStatement.generateParameterizedQueryString(callFilter.getSpeciesIds().size()))
+                        .append(") ");
+                    }
+                    sb.append(")");
                 }
 
                 if (callFilter.getConditionFilters() != null && !callFilter.getConditionFilters().isEmpty()) {
@@ -699,104 +485,125 @@ implements GlobalExpressionCallDAO {
                     sb.append(" AND ");
                     sb.append(generateDataFilters(callFilter.getDataFilters(), globalExprTableName));
                 }
-
-                //TODO: do not hardcode data types
-                //TODO: check the use of getCallObservedData (we want NULL to say "any value")
-                if (callFilter.getCallObservedData() != null) {
-                    sb.append(" AND ").append("(")
-                        .append(globalExprTableName).append(".affymetrixConditionObservedData = ? OR ")
-                        .append(globalExprTableName).append(".estConditionObservedData = ? OR ")
-                        .append(globalExprTableName).append(".inSituConditionObservedData = ? OR ")
-                        .append(globalExprTableName).append(".rnaSeqConditionObservedData = ?").append(")");
-                }
-
-                if (callFilter.getObservedDataFilter() != null && !callFilter.getObservedDataFilter().isEmpty()) {
-                    sb.append(callFilter.getObservedDataFilter().entrySet().stream()
-                            //FIXME: manage the "non-observed states"
-                            .filter(e -> e.getValue() != null)
-                            .map(e -> {
-                                StringBuilder sb2 = new StringBuilder();
-                                sb2.append(" AND ");
-                                sb2.append("(");
-                                ConditionDAO.Attribute attr = e.getKey();
-                                switch (attr) {
-                                    //TODO: do not hardcode data types (see generation for ranks)
-                                    case ANAT_ENTITY_ID:
-                                        sb2.append(generatePropStateQuery(globalExprTableName,
-                                                "affymetrixAnatEntityPropagationState")).append(" OR ")
-                                        .append(generatePropStateQuery(globalExprTableName,
-                                                "estAnatEntityPropagationState")).append(" OR ")
-                                        .append(generatePropStateQuery(globalExprTableName, 
-                                                "inSituAnatEntityPropagationState")).append(" OR ")
-                                        .append(generatePropStateQuery(globalExprTableName,
-                                                "rnaSeqAnatEntityPropagationState"));
-                                        break;
-                                    case STAGE_ID:
-                                        sb2.append(generatePropStateQuery(globalExprTableName,
-                                                "affymetrixStagePropagationState")).append(" OR ")
-                                        .append(generatePropStateQuery(globalExprTableName,
-                                                "estStagePropagationState")).append(" OR ")
-                                        .append(generatePropStateQuery(globalExprTableName,
-                                                "inSituStagePropagationState")).append(" OR ")
-                                        .append(generatePropStateQuery(globalExprTableName,
-                                                "rnaSeqStagePropagationState"));
-                                        break;
-                                    default:
-                                        throw log.throwing(new UnsupportedOperationException(
-                                                "ConditionDAO.Attribute not supported: " + attr));
-                                }
-                                sb2.append(")");
-                                return sb2.toString();
-                            }).collect(Collectors.joining("")));
-                }
             }
         }
         return log.exit(sb.toString());
     }
-    //FIXME: must manage non-observed states
-    private static String generatePropStateQuery(String globalExprTableName, String columnName) {
-        log.entry(globalExprTableName, columnName);
+
+    private static String generatePropStateQuery(String globalExprTableName,
+            DAODataType dataType, ConditionDAO.Attribute condParam, boolean isObservedRequested) {
+        log.entry(globalExprTableName, dataType, condParam, isObservedRequested);
+        
+        String columnName = getCallCondParamObservedDataFieldName(dataType, condParam);
         return log.exit(globalExprTableName + "." + columnName + " IN (" +
                 BgeePreparedStatement.generateParameterizedQueryString(
-                OBSERVED_STATES.size()) + ")");
+                        isObservedRequested? OBSERVED_STATES.size(): NON_OBSERVED_STATES.size()
+                ) + ")");
     }
+    private static String getCallCondParamObservedDataFieldName(DAODataType dataType, ConditionDAO.Attribute condParam) {
+        log.entry(dataType, condParam);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(dataType.getFieldNamePrefix());
+
+        switch (condParam) {
+        case ANAT_ENTITY_ID:
+            sb.append("AnatEntity");
+            break;
+        case STAGE_ID:
+            sb.append("Stage");
+            break;
+        default:
+            throw log.throwing(new UnsupportedOperationException(
+                    "ConditionDAO.Attribute not supported: " + condParam));
+        }
+
+        sb.append("PropagationState");
+
+        return log.exit(sb.toString());
+    }
+
     private static String generateDataFilters(final LinkedHashSet<CallDataDAOFilter> dataFilters,
             final String globalExprTableName) {
         log.entry(dataFilters, globalExprTableName);
 
         return dataFilters.stream()
             .map(dataFilter -> {
-                return dataFilter.getExperimentCountFilters().stream()
-                    .map(countOrFilters -> {
-                        return countOrFilters.stream()
-                            .map(countFilter -> {
-                                String suffix = null;
-                                switch (countFilter.getQualifier()) {
-                                case GREATER_THAN:
-                                    suffix = " > ";
-                                    break;
-                                case LESS_THAN:
-                                    suffix = " < ";
-                                    break;
-                                case EQUALS_TO:
-                                    suffix = " = ";
-                                    break;
-                                default:
-                                    throw new IllegalArgumentException("Unsupported qualifier: " + countFilter.getQualifier());
-                                }
-                                suffix += "?";
+                StringBuilder sb = new StringBuilder();
+                boolean previousClause = false;
 
+                if (dataFilter.getCallObservedData() != null) {
+                    previousClause = true;
+                    sb.append(dataFilter.getDataTypes().stream()
+                                .map(d -> d.getFieldNamePrefix() + "ConditionObservedData" + " = ?")
+                                .collect(Collectors.joining(
+                                        //If we request observed data, it can be observed by any data type
+                                        //=> OR delimiter
+                                        //If we request non-observed data, it must by non-observed by each data type
+                                        //=> AND delimiter
+                                        dataFilter.getCallObservedData()? " OR ": " AND ", "(", ")")));
+                }
+
+                if (!dataFilter.getObservedDataFilter().isEmpty()) {
+                    if (previousClause) {
+                        sb.append(" AND ");
+                    }
+                    previousClause = true;
+                    sb.append(dataFilter.getObservedDataFilter().entrySet().stream()
+                            .map(e -> {
+                                ConditionDAO.Attribute condParam = e.getKey();
                                 return dataFilter.getDataTypes().stream()
-                                        //discard request of no-expression calls from EST data, there is no such field
-                                        .filter(dataType ->
-                                        !CallType.ABSENT.equals(countFilter.getCallType()) || !DAODataType.EST.equals(dataType))
-
-                                        .map(dataType -> getExpCountFilterFieldName(dataType, countFilter))
-                                        .collect(Collectors.joining(" + ", "(", suffix + ")"));
-                            })
-                            .collect(Collectors.joining(" OR ", "(", ")"));
-                    })
-                    .collect(Collectors.joining(" AND ", "(", ")"));
+                                        .map(d -> generatePropStateQuery(globalExprTableName, d, condParam, e.getValue()))
+                                        .collect(Collectors.joining(
+                                                //If we request observed data, it can be observed by any data type
+                                                //=> OR delimiter
+                                                //If we request non-observed data, it must by non-observed by each data type
+                                                //=> AND delimiter
+                                                e.getValue()? " OR ": " AND ", "(", ")"));
+                            }).collect(Collectors.joining(" AND ", "(", ")")));
+                }
+                
+                if (!dataFilter.getExperimentCountFilters().isEmpty()) {
+                    if (previousClause) {
+                        sb.append(" AND ");
+                    }
+                    sb.append(dataFilter.getExperimentCountFilters().stream()
+                        .map(countOrFilterCollection ->
+                            countOrFilterCollection.stream()
+                                .map(countFilter -> {
+                                    String suffix;
+                                    switch (countFilter.getQualifier()) {
+                                    case GREATER_THAN:
+                                        suffix = " > ";
+                                        break;
+                                    case LESS_THAN:
+                                        suffix = " < ";
+                                        break;
+                                    case EQUALS_TO:
+                                        suffix = " = ";
+                                        break;
+                                    default:
+                                        throw new IllegalArgumentException(
+                                                "Unsupported qualifier: " + countFilter.getQualifier());
+                                    }
+                                    suffix += "?";
+    
+                                    return dataFilter.getDataTypes().stream()
+                                            //discard request of no-expression calls from EST data, there is no such field
+                                            .filter(dataType ->
+                                            !CallType.ABSENT.equals(countFilter.getCallType())
+                                                || !DAODataType.EST.equals(dataType))
+    
+                                            .map(dataType -> getExpCountFilterFieldName(dataType, countFilter))
+                                            .collect(Collectors.joining(" + ", "(", suffix + ")"));
+                                })
+                                .collect(Collectors.joining(" OR ", "(", ")"))
+                        )
+                        .collect(Collectors.joining(" AND ", "(", ")"))
+                    );
+                }
+                
+                return sb.toString();
             })
            .collect(Collectors.joining(" OR ", "(", ")"));
     }
@@ -806,18 +613,15 @@ implements GlobalExpressionCallDAO {
         log.entry(dataType, expCountFilter);
 
         StringBuilder sb = new StringBuilder();
+
         switch(dataType) {
         case EST:
-            sb.append("estLib");
+            sb.append(dataType.getFieldNamePrefix()).append("Lib");
             break;
         case AFFYMETRIX:
-            sb.append("affymetrixExp");
-            break;
         case IN_SITU:
-            sb.append("inSituExp");
-            break;
         case RNA_SEQ:
-            sb.append("rnaSeqExp");
+            sb.append(dataType.getFieldNamePrefix()).append("Exp");
             break;
         default:
             throw log.throwing(new IllegalStateException("Unsupported data type: " + dataType));
@@ -872,130 +676,6 @@ implements GlobalExpressionCallDAO {
         sb.append("Count");
         return log.exit(sb.toString());
     }
-//    static {
-//        log.entry();
-//        Map<String, GlobalExpressionCallDAO.Attribute> colToAttributesMap = new HashMap<>();
-//        colToAttributesMap.put(GLOBAL_EXPR_ID_FIELD, GlobalExpressionCallDAO.Attribute.ID);
-//        colToAttributesMap.put(MySQLGeneDAO.BGEE_GENE_ID, GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID);
-//        colToAttributesMap.put(MySQLConditionDAO.GLOBAL_COND_ID_FIELD,
-//                GlobalExpressionCallDAO.Attribute.CONDITION_ID);
-//        
-//        colToAttributesMap.put("globalMeanRank", GlobalExpressionCallDAO.Attribute.GLOBAL_MEAN_RANK);
-//        
-//        colToAttributesMap.put("affymetrixExpPresentHighSelfCount", 
-//                GlobalExpressionCallDAO.Attribute.AFFYMETRIX_EXP_PRESENT_HIGH_SELF_COUNT);
-//        colToAttributesMap.put("affymetrixExpPresentLowSelfCount", 
-//                GlobalExpressionCallDAO.Attribute.AFFYMETRIX_EXP_PRESENT_LOW_SELF_COUNT);
-//        colToAttributesMap.put("affymetrixExpAbsentHighSelfCount", 
-//                GlobalExpressionCallDAO.Attribute.AFFYMETRIX_EXP_ABSENT_HIGH_SELF_COUNT);
-//        colToAttributesMap.put("affymetrixExpAbsentLowSelfCount", 
-//                GlobalExpressionCallDAO.Attribute.AFFYMETRIX_EXP_ABSENT_LOW_SELF_COUNT);
-//        colToAttributesMap.put("affymetrixExpPresentHighDescendantCount", 
-//                GlobalExpressionCallDAO.Attribute.AFFYMETRIX_EXP_PRESENT_HIGH_DESCENDANT_COUNT);
-//        colToAttributesMap.put("affymetrixExpPresentLowDescendantCount", 
-//                GlobalExpressionCallDAO.Attribute.AFFYMETRIX_EXP_PRESENT_LOW_DESCENDANT_COUNT);
-//        colToAttributesMap.put("affymetrixExpAbsentHighParentCount", 
-//                GlobalExpressionCallDAO.Attribute.AFFYMETRIX_EXP_ABSENT_HIGH_PARENT_COUNT);
-//        colToAttributesMap.put("affymetrixExpAbsentLowParentCount", 
-//                GlobalExpressionCallDAO.Attribute.AFFYMETRIX_EXP_ABSENT_LOW_PARENT_COUNT);
-//        colToAttributesMap.put("affymetrixExpPresentHighTotalCount", 
-//                GlobalExpressionCallDAO.Attribute.AFFYMETRIX_EXP_PRESENT_HIGH_TOTAL_COUNT);
-//        colToAttributesMap.put("affymetrixExpPresentLowTotalCount", 
-//                GlobalExpressionCallDAO.Attribute.AFFYMETRIX_EXP_PRESENT_LOW_TOTAL_COUNT);
-//        colToAttributesMap.put("affymetrixExpAbsentHighTotalCount", 
-//                GlobalExpressionCallDAO.Attribute.AFFYMETRIX_EXP_ABSENT_HIGH_TOTAL_COUNT);
-//        colToAttributesMap.put("affymetrixExpAbsentLowTotalCount", 
-//                GlobalExpressionCallDAO.Attribute.AFFYMETRIX_EXP_ABSENT_LOW_TOTAL_COUNT);
-//        colToAttributesMap.put("affymetrixExpPropagatedCount", 
-//                GlobalExpressionCallDAO.Attribute.AFFYMETRIX_EXP_PROPAGATED_COUNT);
-//        
-//        colToAttributesMap.put("rnaSeqExpPresentHighSelfCount", 
-//                GlobalExpressionCallDAO.Attribute.RNA_SEQ_EXP_PRESENT_HIGH_SELF_COUNT);
-//        colToAttributesMap.put("rnaSeqExpPresentLowSelfCount", 
-//                GlobalExpressionCallDAO.Attribute.RNA_SEQ_EXP_PRESENT_LOW_SELF_COUNT);
-//        colToAttributesMap.put("rnaSeqExpAbsentHighSelfCount", 
-//                GlobalExpressionCallDAO.Attribute.RNA_SEQ_EXP_ABSENT_HIGH_SELF_COUNT);
-//        colToAttributesMap.put("rnaSeqExpAbsentLowSelfCount", 
-//                GlobalExpressionCallDAO.Attribute.RNA_SEQ_EXP_ABSENT_LOW_SELF_COUNT);
-//        colToAttributesMap.put("rnaSeqExpPresentHighDescendantCount", 
-//                GlobalExpressionCallDAO.Attribute.RNA_SEQ_EXP_PRESENT_HIGH_DESCENDANT_COUNT);
-//        colToAttributesMap.put("rnaSeqExpPresentLowDescendantCount", 
-//                GlobalExpressionCallDAO.Attribute.RNA_SEQ_EXP_PRESENT_LOW_DESCENDANT_COUNT);
-//        colToAttributesMap.put("rnaSeqExpAbsentHighParentCount", 
-//                GlobalExpressionCallDAO.Attribute.RNA_SEQ_EXP_ABSENT_HIGH_PARENT_COUNT);
-//        colToAttributesMap.put("rnaSeqExpAbsentLowParentCount", 
-//                GlobalExpressionCallDAO.Attribute.RNA_SEQ_EXP_ABSENT_LOW_PARENT_COUNT);
-//        colToAttributesMap.put("rnaSeqExpPresentHighTotalCount", 
-//                GlobalExpressionCallDAO.Attribute.RNA_SEQ_EXP_PRESENT_HIGH_TOTAL_COUNT);
-//        colToAttributesMap.put("rnaSeqExpPresentLowTotalCount", 
-//                GlobalExpressionCallDAO.Attribute.RNA_SEQ_EXP_PRESENT_LOW_TOTAL_COUNT);
-//        colToAttributesMap.put("rnaSeqExpAbsentHighTotalCount", 
-//                GlobalExpressionCallDAO.Attribute.RNA_SEQ_EXP_ABSENT_HIGH_TOTAL_COUNT);
-//        colToAttributesMap.put("rnaSeqExpAbsentLowTotalCount", 
-//                GlobalExpressionCallDAO.Attribute.RNA_SEQ_EXP_ABSENT_LOW_TOTAL_COUNT);
-//        colToAttributesMap.put("rnaSeqExpPropagatedCount", 
-//                GlobalExpressionCallDAO.Attribute.RNA_SEQ_EXP_PROPAGATED_COUNT);
-//        
-//        colToAttributesMap.put("estLibPresentHighSelfCount", 
-//                GlobalExpressionCallDAO.Attribute.EST_LIB_PRESENT_HIGH_SELF_COUNT);
-//        colToAttributesMap.put("estLibPresentLowSelfCount", 
-//                GlobalExpressionCallDAO.Attribute.EST_LIB_PRESENT_LOW_SELF_COUNT);
-//        colToAttributesMap.put("estLibPresentHighDescendantCount", 
-//                GlobalExpressionCallDAO.Attribute.EST_LIB_PRESENT_HIGH_DESCENDANT_COUNT);
-//        colToAttributesMap.put("estLibPresentLowDescendantCount", 
-//                GlobalExpressionCallDAO.Attribute.EST_LIB_PRESENT_LOW_DESCENDANT_COUNT);
-//        colToAttributesMap.put("estLibPresentHighTotalCount", 
-//                GlobalExpressionCallDAO.Attribute.EST_LIB_PRESENT_HIGH_TOTAL_COUNT);
-//        colToAttributesMap.put("estLibPresentLowTotalCount", 
-//                GlobalExpressionCallDAO.Attribute.EST_LIB_PRESENT_LOW_TOTAL_COUNT);
-//        colToAttributesMap.put("estLibPropagatedCount", 
-//                GlobalExpressionCallDAO.Attribute.EST_LIB_PROPAGATED_COUNT);
-//        
-//        colToAttributesMap.put("inSituExpPresentHighSelfCount", 
-//                GlobalExpressionCallDAO.Attribute.IN_SITU_EXP_PRESENT_HIGH_SELF_COUNT);
-//        colToAttributesMap.put("inSituExpPresentLowSelfCount", 
-//                GlobalExpressionCallDAO.Attribute.IN_SITU_EXP_PRESENT_LOW_SELF_COUNT);
-//        colToAttributesMap.put("inSituExpAbsentHighSelfCount", 
-//                GlobalExpressionCallDAO.Attribute.IN_SITU_EXP_ABSENT_HIGH_SELF_COUNT);
-//        colToAttributesMap.put("inSituExpAbsentLowSelfCount", 
-//                GlobalExpressionCallDAO.Attribute.IN_SITU_EXP_ABSENT_LOW_SELF_COUNT);
-//        colToAttributesMap.put("inSituExpPresentHighDescendantCount", 
-//                GlobalExpressionCallDAO.Attribute.IN_SITU_EXP_PRESENT_HIGH_DESCENDANT_COUNT);
-//        colToAttributesMap.put("inSituExpPresentLowDescendantCount", 
-//                GlobalExpressionCallDAO.Attribute.IN_SITU_EXP_PRESENT_LOW_DESCENDANT_COUNT);
-//        colToAttributesMap.put("inSituExpAbsentHighParentCount", 
-//                GlobalExpressionCallDAO.Attribute.IN_SITU_EXP_ABSENT_HIGH_PARENT_COUNT);
-//        colToAttributesMap.put("inSituExpAbsentLowParentCount", 
-//                GlobalExpressionCallDAO.Attribute.IN_SITU_EXP_ABSENT_LOW_PARENT_COUNT);
-//        colToAttributesMap.put("inSituExpPresentHighTotalCount", 
-//                GlobalExpressionCallDAO.Attribute.IN_SITU_EXP_PRESENT_HIGH_TOTAL_COUNT);
-//        colToAttributesMap.put("inSituExpPresentLowTotalCount", 
-//                GlobalExpressionCallDAO.Attribute.IN_SITU_EXP_PRESENT_LOW_TOTAL_COUNT);
-//        colToAttributesMap.put("inSituExpAbsentHighTotalCount", 
-//                GlobalExpressionCallDAO.Attribute.IN_SITU_EXP_ABSENT_HIGH_TOTAL_COUNT);
-//        colToAttributesMap.put("inSituExpAbsentLowTotalCount", 
-//                GlobalExpressionCallDAO.Attribute.IN_SITU_EXP_ABSENT_LOW_TOTAL_COUNT);
-//        colToAttributesMap.put("inSituExpPropagatedCount", 
-//                GlobalExpressionCallDAO.Attribute.IN_SITU_EXP_PROPAGATED_COUNT);
-//
-//        colToAttributesMap.put("affymetrixMeanRank", GlobalExpressionCallDAO.Attribute.AFFYMETRIX_MEAN_RANK);
-//        colToAttributesMap.put("rnaSeqMeanRank", GlobalExpressionCallDAO.Attribute.RNA_SEQ_MEAN_RANK);
-//        colToAttributesMap.put("estRank", GlobalExpressionCallDAO.Attribute.EST_RANK);
-//        colToAttributesMap.put("inSituRank", GlobalExpressionCallDAO.Attribute.IN_SITU_RANK);
-//        colToAttributesMap.put("affymetrixMeanRankNorm", 
-//                GlobalExpressionCallDAO.Attribute.AFFYMETRIX_MEAN_RANK_NORM);
-//        colToAttributesMap.put("rnaSeqMeanRankNorm", 
-//                GlobalExpressionCallDAO.Attribute.RNA_SEQ_MEAN_RANK_NORM);
-//        colToAttributesMap.put("estRankNorm", GlobalExpressionCallDAO.Attribute.EST_RANK_NORM);
-//        colToAttributesMap.put("inSituRankNorm", GlobalExpressionCallDAO.Attribute.IN_SITU_RANK_NORM);
-//        colToAttributesMap.put("affymetrixDistinctRankSum", 
-//                GlobalExpressionCallDAO.Attribute.AFFYMETRIX_DISTINCT_RANK_SUM);
-//        colToAttributesMap.put("rnaSeqDistinctRankSum", 
-//                GlobalExpressionCallDAO.Attribute.RNA_SEQ_DISTINCT_RANK_SUM);
-//
-//        colToAttrMap = Collections.unmodifiableMap(colToAttributesMap);
-//        log.exit();
-//    }
 
     private String generateOrderByClause(
             LinkedHashMap<GlobalExpressionCallDAO.OrderingAttribute, DAO.Direction> orderingAttrs,
@@ -1010,10 +690,13 @@ implements GlobalExpressionCallDAO {
                 .map(entry -> {
                     String orderBy = "";
                     switch(entry.getKey()) {
-                        case GENE_ID:
+                        case BGEE_GENE_ID:
                             orderBy = globalExprTableName + "." + MySQLGeneDAO.BGEE_GENE_ID;
                             break;
-                        case CONDITION_ID:
+                        case PUBLIC_GENE_ID:
+                            orderBy = geneTableName + ".geneId";
+                            break;
+                        case GLOBAL_CONDITION_ID:
                             orderBy = globalExprTableName + "." + MySQLConditionDAO.GLOBAL_COND_ID_FIELD;
                             break;
                         case ANAT_ENTITY_ID:
@@ -1088,14 +771,6 @@ implements GlobalExpressionCallDAO {
             throw log.throwing(new IllegalArgumentException("The condition parameter combination "
                     + "contains some Attributes that are not condition parameters: " + clonedCondParams));
         }
-        //TODO: can't we automatically add the field if requested in ordering clause?
-        if (clonedOrderingAttrs.containsKey(GlobalExpressionCallDAO.OrderingAttribute.MEAN_RANK) 
-                && !clonedAttrs.contains(GlobalExpressionCallDAO.Attribute.GLOBAL_MEAN_RANK)) {
-            throw log.throwing(new IllegalArgumentException("To order by " 
-                    + GlobalExpressionCallDAO.OrderingAttribute.MEAN_RANK
-                    + ", the attribute " + GlobalExpressionCallDAO.Attribute.GLOBAL_MEAN_RANK
-                    + " should be retrieved"));
-        }
 
 
         //******************************************
@@ -1119,10 +794,11 @@ implements GlobalExpressionCallDAO {
 
         StringBuilder sb = new StringBuilder();
         sb.append(generateSelectClause(clonedAttrs, clonedOrderingAttrs.keySet(), dataTypes,
-                globalExprTableName, globalCondTableName, geneTableName));
+                globalExprTableName, globalCondTableName, geneTableName, observedConditionFilter));
         sb.append(generateTableReferences(globalExprTableName, globalCondTableName, condTableName,
                 geneTableName, observedConditionFilter,
-                clonedOrderingAttrs.containsKey(GlobalExpressionCallDAO.OrderingAttribute.OMA_GROUP_ID)));
+                clonedOrderingAttrs.containsKey(GlobalExpressionCallDAO.OrderingAttribute.OMA_GROUP_ID),
+                clonedOrderingAttrs.containsKey(GlobalExpressionCallDAO.OrderingAttribute.PUBLIC_GENE_ID)));
         sb.append(generateWhereClause(clonedCallFilters, globalExprTableName, globalCondTableName,
                 condTableName, clonedCondParams));
         sb.append(generateOrderByClause(clonedOrderingAttrs, globalExprTableName, globalCondTableName, geneTableName));
@@ -1155,39 +831,30 @@ implements GlobalExpressionCallDAO {
                             stmt.setStrings(offsetParamIndex, condFilter.getDevStageIds(), true);
                             offsetParamIndex += condFilter.getDevStageIds().size();
                         }
-                        if (condFilter.getObservedConditions() != null) {
-                            stmt.setBoolean(offsetParamIndex, condFilter.getObservedConditions());
+                    }
+                }
+
+                for (CallDataDAOFilter dataFilter: callFilter.getDataFilters()) {
+
+                    if (dataFilter.getCallObservedData() != null) {
+                        for (int i = 0; i < dataFilter.getDataTypes().size(); i++) {
+                            stmt.setBoolean(offsetParamIndex, dataFilter.getCallObservedData());
                             offsetParamIndex++;
                         }
                     }
-                }
 
-                if (callFilter.getDataFilters() != null) {
-                    for (CallDataDAOFilter dataFilter: callFilter.getDataFilters()) {
-                        for (Set<DAOExperimentCountFilter> countOrFilters: dataFilter.getExperimentCountFilters()) {
-                            for (DAOExperimentCountFilter countFilter : countOrFilters) {
-                                stmt.setInt(offsetParamIndex, countFilter.getCount());
-                                offsetParamIndex++;
-                            }
+                    for (Boolean isObservedData: dataFilter.getObservedDataFilter().values()) {
+                        Set<DAOPropagationState> toUse = isObservedData? OBSERVED_STATES: NON_OBSERVED_STATES;
+                        for (int i = 0; i < dataFilter.getDataTypes().size(); i++) {
+                            stmt.setEnumDAOFields(offsetParamIndex, toUse, true);
+                            offsetParamIndex += toUse.size();
                         }
                     }
-                }
 
-                if (callFilter.getCallObservedData() != null) {
-                    stmt.setBooleans(offsetParamIndex,
-                            Collections.nCopies(DATA_TYPE_COUNT, callFilter.getCallObservedData()),
-                            true);
-                    offsetParamIndex += DATA_TYPE_COUNT;
-                }
-
-                if (callFilter.getObservedDataFilter() != null && !callFilter.getObservedDataFilter().isEmpty()) {
-                    for (Boolean isObservedData: callFilter.getObservedDataFilter().values()) {
-                        if (isObservedData != null) {
-                            for (int i = 0; i < DATA_TYPE_COUNT; i++) {
-                                //FIXME: manage non-observed states
-                                stmt.setEnumDAOFields(offsetParamIndex, OBSERVED_STATES, true);
-                                offsetParamIndex += OBSERVED_STATES.size();
-                            }
+                    for (Set<DAOExperimentCountFilter> countOrFilters: dataFilter.getExperimentCountFilters()) {
+                        for (DAOExperimentCountFilter countFilter : countOrFilters) {
+                            stmt.setInt(offsetParamIndex, countFilter.getCount());
+                            offsetParamIndex++;
                         }
                     }
                 }
@@ -1614,7 +1281,11 @@ implements GlobalExpressionCallDAO {
                 } else if ("affymetrixDistinctRankSum".equals(columnName) &&
                         DAODataType.AFFYMETRIX.equals(dataType) ||
                     "rnaSeqDistinctRankSum".equals(columnName) &&
-                        DAODataType.RNA_SEQ.equals(dataType)) {
+                        DAODataType.RNA_SEQ.equals(dataType) ||
+                    "estMaxRank".equals(columnName) &&
+                        DAODataType.EST.equals(dataType) ||
+                    "inSituMaxRank".equals(columnName) &&
+                        DAODataType.IN_SITU.equals(dataType)) {
 
                     weightForMeanRank = currentResultSet.getBigDecimal(columnName);
                     infoFound = true;

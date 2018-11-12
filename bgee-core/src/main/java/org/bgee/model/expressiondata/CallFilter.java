@@ -27,7 +27,7 @@ import org.bgee.model.gene.GeneFilter;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Nov. 2017
+ * @version Bgee 14, Sep. 2018
  * @since   Bgee 13, Oct. 2015
  *
  * @param T The type of {@code CallData} to be used by this {@code CallFilter}. 
@@ -35,7 +35,7 @@ import org.bgee.model.gene.GeneFilter;
  *          or as a specific subtype, for instance, {@code ExpressionCallData}.
  * @param U The type of {@code SummaryCallType} to be used by this {@code CallFilter}.
  */
-//XXX: would several CallFilters represent AND or OR conditions.
+//Note: would several CallFilters represent AND or OR conditions.
 //If OR conditions, we could provide a Set<Set<CallFilter>> to CallService methods, 
 //to provide AND/OR conditions.
 //IF AND conditions, then we cannot easily target different CallDatas for different ConditionFilters, e.g.: 
@@ -47,15 +47,19 @@ import org.bgee.model.gene.GeneFilter;
 //Note that even if they were OR conditions, they should be used in several queries, 
 //as it is not possible from the DAO to make one query applying a different Set 
 //of CallData filters to different Sets of GeneFilters, ConditionFilters, etc.
+//XXX: Actually, if CallFilters are AND conditions, it might be a problem for multispecies queries:
+//we might want to precisely link some GeneFilters and ConditionFilters, so that the Conditions to use
+//are not the same for each species.
 //***********************
-//XXX: update FEB. 2017. We decided to remove the CallData from this class.
+//Note: update FEB. 2017. We decided to remove the CallData from this class.
 //Because the quality of a call is now computed over all data types, 
 //so we don't want to filter on data quality per data type any more. 
 //Also, so far we don't need to filter calls based on propagation per data type 
 //(e.g., calls including substructures for Affymetrix, not including substructures for RNA-Seq).
 //If these two points wanted to be achieved, we could use the new fields of, e.g., ExpressionCallData: 
 // absentHighParentExpCount, presentHighDescExpCount, etc.
-public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & SummaryCallType> {
+public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & SummaryCallType>
+extends DataFilter<ConditionFilter> {
     private final static Logger log = LogManager.getLogger(CallFilter.class.getName());
     
     /**
@@ -175,6 +179,9 @@ public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & Summ
             //XXX: actually, we can now filter calls based on this information directly in the DAO,
             //so maybe we should force to retrieve this information in the Call solely to test it.
             //TODO: there is more work to do to manage callObservedData when non-null keys are provided
+            if (callObservedData != null && callObservedData.keySet().stream().anyMatch(k -> k != null)) {
+                throw log.throwing(new UnsupportedOperationException("Test not implemented for callObservedData non-null keys"));
+            }
             if (callObservedData != null && callObservedData.containsKey(null) || anatEntityObservedData != null ||
                     devStageObservedData != null) {
 
@@ -343,24 +350,6 @@ public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & Summ
             throw log.throwing(new UnsupportedOperationException("Method not implemented"));
         }
     }
-    
-    /**
-     * @see #getGeneFilters()
-     */
-    //Note: The only problem with using directly ConditionFilters and CallDatas in this class, 
-    //is that GeneFilters are costly to use in a query; using the class CallDataConditionFilter 
-    //was allowing to have a same GeneFilter to target several conditions/call data combinations. 
-    //Now, the same query would be doable by using several CallFilters, but with a same GeneFilter 
-    //reused several times. This is costly, but we could have a mechanism to provide a global GeneFilter 
-    //to the DAO when we see it is always the same GeneFilter used. 
-    //I think it's worth it for the simplification it allows in the class CallFilter.
-    private final Set<GeneFilter> geneFilters;
-    
-    /**
-     * @see #getConditionFilters()
-     */
-    //XXX: all parameters are OR conditions
-    private final Set<ConditionFilter> conditionFilters;
 
     /**
      * @see #getCallDataFilters()
@@ -421,27 +410,19 @@ public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & Summ
     protected CallFilter(Map<U, SummaryQuality> summaryCallTypeQualityFilter,
             Set<GeneFilter> geneFilters, Collection<ConditionFilter> conditionFilters,
             Collection<DataType> dataTypeFilter, Class<U> callTypeCls) throws IllegalArgumentException {
+        super(geneFilters, conditionFilters);
 
-        this.geneFilters = Collections.unmodifiableSet(
-                geneFilters == null? new HashSet<>(): new HashSet<>(geneFilters));
-        this.conditionFilters = Collections.unmodifiableSet(
-            conditionFilters == null? new HashSet<>(): new HashSet<>(conditionFilters));
         this.dataTypeFilters = Collections.unmodifiableSet(
             dataTypeFilter == null? new HashSet<>(): new HashSet<>(dataTypeFilter));
         this.summaryCallTypeQualityFilter = Collections.unmodifiableMap(
                 summaryCallTypeQualityFilter == null || summaryCallTypeQualityFilter.isEmpty()?
 
                         EnumSet.allOf(callTypeCls).stream()
-                        .map(c -> new AbstractMap.SimpleEntry<>(c, SummaryQuality.BRONZE))
+                        .map(c -> new AbstractMap.SimpleEntry<>(c, SummaryQuality.values()[0]))
                         .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue())):
 
                         new HashMap<>(summaryCallTypeQualityFilter));
-        //just to make sure bronze quality is the lowest quality/that qualities are correctly ordered
-        assert SummaryQuality.BRONZE.equals(SummaryQuality.values()[0]);
 
-        if (this.conditionFilters.contains(null)) {
-            throw log.throwing(new IllegalStateException("No ConditionFilter can be null."));
-        }
         if (this.dataTypeFilters.contains(null)) {
             throw log.throwing(new IllegalStateException("No DataTypeFilter can be null."));
         }
@@ -450,13 +431,6 @@ public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & Summ
         }
         if (this.summaryCallTypeQualityFilter.values().contains(null)) {
             throw log.throwing(new IllegalStateException("No SummaryQuality can be null."));
-        }
-
-        //make sure we don't have a same species in different GeneFilters
-        if (this.geneFilters.stream().collect(Collectors.groupingBy(gf -> gf.getSpeciesId()))
-                .values().stream().anyMatch(l -> l.size() > 1)) {
-            throw log.throwing(new IllegalArgumentException(
-                    "A species ID must be present in only one GeneFilter."));
         }
     }
     
@@ -472,29 +446,13 @@ public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & Summ
     protected void checkEmptyFilters() throws IllegalStateException {
         log.entry();
         //To make sure we never pull all data in the database at once.
-        if (this.geneFilters.isEmpty() && this.conditionFilters.isEmpty()) {
+        if (this.getGeneFilters().isEmpty() && this.getConditionFilters().isEmpty()) {
             throw log.throwing(new IllegalStateException(
                     "At least a GeneFilter or a ConditionFilter must be provided."));
         }
         log.exit();
     }
-    
-    /**
-     * @return  An unmodifiable {@code Set} {@code GeneFilter}s allowing to configure gene-related
-     *          filtering. If several {@code GeneFilter}s are configured, they are seen as "OR" conditions.
-     *          A same species ID should not be used in several {@code GeneFilter}s of this {@code Set}.
-     */
-    public Set<GeneFilter> getGeneFilters() {
-        return geneFilters;
-    }
-    /**
-     * @return  An unmodifiable {@code Set} of {@code ConditionFilter}s, allowing to configure 
-     *          the filtering of conditions with expression data. If several 
-     *          {@code ConditionFilter}s are configured, they are seen as "OR" conditions.
-     */
-    public Set<ConditionFilter> getConditionFilters() {
-        return conditionFilters;
-    }
+
     /**
      * @return  An unmodifiable {@code Set} of {@code DataType}s, allowing to configure 
      *          the filtering of data types with expression data.
@@ -514,10 +472,8 @@ public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & Summ
     @Override
     public int hashCode() {
         final int prime = 31;
-        int result = 1;
-        result = prime * result + ((conditionFilters == null) ? 0 : conditionFilters.hashCode());
+        int result = super.hashCode();
         result = prime * result + ((dataTypeFilters == null) ? 0 : dataTypeFilters.hashCode());
-        result = prime * result + ((geneFilters == null) ? 0 : geneFilters.hashCode());
         result = prime * result
                 + ((summaryCallTypeQualityFilter == null) ? 0 : summaryCallTypeQualityFilter.hashCode());
         return result;
@@ -527,32 +483,18 @@ public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & Summ
         if (this == obj) {
             return true;
         }
-        if (obj == null) {
+        if (!super.equals(obj)) {
             return false;
         }
         if (getClass() != obj.getClass()) {
             return false;
         }
         CallFilter<?, ?> other = (CallFilter<?, ?>) obj;
-        if (conditionFilters == null) {
-            if (other.conditionFilters != null) {
-                return false;
-            }
-        } else if (!conditionFilters.equals(other.conditionFilters)) {
-            return false;
-        }
         if (dataTypeFilters == null) {
             if (other.dataTypeFilters != null) {
                 return false;
             }
         } else if (!dataTypeFilters.equals(other.dataTypeFilters)) {
-            return false;
-        }
-        if (geneFilters == null) {
-            if (other.geneFilters != null) {
-                return false;
-            }
-        } else if (!geneFilters.equals(other.geneFilters)) {
             return false;
         }
         if (summaryCallTypeQualityFilter == null) {
@@ -570,8 +512,8 @@ public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & Summ
         StringBuilder builder = new StringBuilder();
         builder.append("CallFilter [summaryCallTypeQualityFilter=").append(summaryCallTypeQualityFilter)
                .append(", dataTypeFilters=").append(dataTypeFilters)
-               .append(", geneFilters=").append(geneFilters)
-               .append(", conditionFilters=").append(conditionFilters)
+               .append(", geneFilters=").append(getGeneFilters())
+               .append(", conditionFilters=").append(getConditionFilters())
                .append("]");
         return builder.toString();
     }
@@ -588,14 +530,14 @@ public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & Summ
         }
 
         // Filter according GeneFilter
-        if (geneFilters != null && !geneFilters.isEmpty()
-                && geneFilters.stream().noneMatch(f -> f.test(call.getGene()))) {
+        if (getGeneFilters() != null && !getGeneFilters().isEmpty()
+                && getGeneFilters().stream().noneMatch(f -> f.test(call.getGene()))) {
             return log.exit(false);
         }
 
         // Filter according ConditionFilters
-        if (conditionFilters != null && !conditionFilters.isEmpty()
-                && conditionFilters.stream().noneMatch(f -> f.test(call.getCondition()))) {
+        if (getConditionFilters() != null && !getConditionFilters().isEmpty()
+                && getConditionFilters().stream().noneMatch(f -> f.test(call.getCondition()))) {
             return log.exit(false);
         }
         

@@ -11,7 +11,7 @@ import org.bgee.model.dao.api.NamedEntityTO;
  * 
  * @param <T> The type of ID of this {@code NamedEntityTO}.
  */
-public class NestedSetModelElementTO<T> extends NamedEntityTO<T> {
+public class NestedSetModelElementTO<T extends Comparable<T>> extends NamedEntityTO<T> {
     private static final long serialVersionUID = 3717417541660503259L;
     /**
      * An {@code Integer} that is the left bound of this element in its nested set model.

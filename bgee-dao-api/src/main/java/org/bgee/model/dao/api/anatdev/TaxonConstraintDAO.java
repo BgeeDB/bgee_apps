@@ -245,45 +245,5 @@ public interface TaxonConstraintDAO {
         public String toString() {
             return "Entity ID: " + this.getEntityId() + " - Species ID: " + this.getSpeciesId();
         }
-
-        //FIXME: I thought TOs never implement hashCode and equals
-        //(we use the TOComparator instead for tests)
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + ((this.getEntityId() == null) ? 0 : this.getEntityId().hashCode());
-            result = prime * result + ((this.getSpeciesId() == null) ? 0 : this.getSpeciesId().hashCode());
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null) {
-                return false;
-            }
-            if (getClass() != obj.getClass()) {
-                return false;
-            }
-            TaxonConstraintTO<?> other = (TaxonConstraintTO<?>) obj;
-            if (this.getEntityId() == null) {
-                if (other.getEntityId() != null) {
-                    return false;
-                }
-            } else if (!this.getEntityId().equals(other.getEntityId())) {
-                return false;
-            }
-            if (this.getSpeciesId() == null) {
-                if (other.getSpeciesId() != null) {
-                    return false;
-                }
-            } else if (!this.getSpeciesId().equals(other.getSpeciesId())) {
-                return false;
-            }
-            return true;
-        }
     }
 }

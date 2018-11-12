@@ -1,18 +1,19 @@
 package org.bgee.model.dao.api.expressiondata.rawdata.est;
 
-import java.io.Serializable;
-import java.util.Collection;
-
 import org.bgee.model.dao.api.DAO;
+import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
-import org.bgee.model.dao.api.expressiondata.rawdata.CallSourceRawDataDAO.CallSourceRawDataTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO.DetectionFlag;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO.ExclusionReason;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO;
 
 /**
  * DAO defining queries using or retrieving {@link ESTTO}s. 
  * 
  * @author Frederic Bastian
  * @author Valentine Rech de Laval
- * @version Bgee 13
+ * @version Bgee 14
  * @since Bgee 01
  */
 public interface ESTDAO extends DAO<ESTDAO.Attribute> {
@@ -21,106 +22,87 @@ public interface ESTDAO extends DAO<ESTDAO.Attribute> {
      * {@code Enum} used to define the attributes to populate in the {@code ESTTO}s obtained from
      * this {@code ESTDAO}.
      * <ul>
-     * <li>{@code ESTID}: corresponds to {@link ESTTO#getId()}.
-     * <li>{@code ESTID2}: corresponds to {@link ESTTO#getEstId2()}.
-     * <li>{@code ESTLIBRARYID}: corresponds to {@link ESTTO#getEstLibraryId()}.
-     * <li>{@code GENEID}: corresponds to {@link ESTTO#getGeneId()}.
-     * <li>{@code UNIGENECLUSTERID}: corresponds to {@link ESTTO#getUniGeneClusterId()}.
-     * <li>{@code EXPRESSIONID}: corresponds to {@link ESTTO#getExpressionId()}.
-     * <li>{@code ESTDATA}: corresponds to {@link ESTTO#getExpressionConfidence()}.
+     * <li>{@code EST_ID}: corresponds to {@link ESTTO#getId()}.
+     * <li>{@code EST_ID2}: corresponds to {@link ESTTO#getEstId2()}.
+     * <li>{@code EST_LIBRARY_ID}: corresponds to {@link ESTTO#getAssayId()}.
+     * <li>{@code BGEE_GENE_ID}: corresponds to {@link ESTTO#getBgeeGeneId()}.
+     * <li>{@code UNIGENE_CLUSTER_ID}: corresponds to {@link ESTTO#getUniGeneClusterId()}.
+     * <li>{@code EXPRESSION_ID}: corresponds to {@link ESTTO#getExpressionId()}.
+     * <li>{@code EST_DATA}: corresponds to {@link ESTTO#getExpressionConfidence()}.
      * </ul>
-     * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
-     * @see org.bgee.model.dao.api.DAO#setAttributes(Enum[])
-     * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        EST_ID, EST_ID2, EST_LIBRARY_ID, GENE_ID, UNIGENE_CLUSTER_ID, EXPRESSION_ID, EST_DATA;
+        EST_ID, EST_ID2, EST_LIBRARY_ID, BGEE_GENE_ID, UNIGENE_CLUSTER_ID, EXPRESSION_ID, EST_DATA;
     }
 
     /**
-     * A {@code TransferObject} representing an EST, as stored in the Bgee database.
-     * <p>
-     * For information on this {@code TransferObject} and its fields, see the corresponding class.
+     * An {@code EntityTO} representing an EST, as stored in the Bgee database.
      * 
      * @author Frederic Bastian
      * @author Valentine Rech de Laval
-     * @version Bgee 13
-     * @see org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO
+     * @version Bgee 14
      * @since Bgee 11
      */
-    /*
-     * (non-javadoc)
-     * This TO is not in it's final version. We need to known if CallSourceRawDataTO is necessary 
-     * and consistent. Need to be thinking.
-     */
-    public final class ESTTO extends CallSourceRawDataTO implements Serializable {
-
-        private static final long serialVersionUID = 12343L;
+    public final class ESTTO extends EntityTO<String> implements CallSourceTO<String> {
+        private static final long serialVersionUID = -6130411930176920545L;
 
         /**
-         * A {@code String} representing the second ID of the EST (ESTs have two IDs in Unigene).
+         * A {@code String} that is the ID of the assay this EST is part of.
          */
-        public final String estId2;
-
+        private final String estLibraryId;
         /**
-         * A {@code String} representing the ID of the EST Library associated to this EST.
+         * A {@code String} representing the secondary ID of the EST (ESTs have two IDs in Unigene).
          */
-        public final String estLibraryId;
-
+        private final String estId2;
         /**
          * A {@code String} representing the ID of UniGene Cluster associated to this EST.
          */
-        public final String UniGeneClusterId;
-
+        private final String uniGeneClusterId;
         /**
-         * Constructor providing the IDs (ESTs have two IDs in Unigene), the ID of the EST Library,
-         * the gene ID, the ID of UniGene Cluster, the ID of the expression, and the expression 
-         * confidence of this EST.
-         * <p>
-         * All of these parameters are optional, so they can be {@code null} when not used.
-         * 
-         * @param estId             A {@code String} that is the ID of this EST.
-         * @param estId2            A {@code String} that is the second ID of this EST.
-         * @param estLibraryId      A {@code String} that is the ID of the EST Library associated 
-         *                          to this EST.
-         * @param geneId            A {@code String} that is the ID of the gene associated to 
-         *                          this EST.
-         * @param UniGeneClusterId  A {@code String} representing the ID of UniGene Cluster
-         *                          associated to this EST.
-         * @param expressionId      A {@code String} that is the ID of the expression associated
-         *                          to this EST.
-         * @param estData           A {@code DataState} that is the expression confidence 
-         *                          of this EST.
+         * The {@code CallSourceDataTO} carrying the information about
+         * the produced call of presence/absence of expression.
          */
-        public ESTTO(String estId, String estId2, String estLibraryId, String geneId, 
-                String UniGeneClusterId, String expressionId, DataState estData) {
-            super(estId, geneId, DetectionFlag.UNDEFINED, expressionId, null, estData, 
-                    ExclusionReason.NOTEXCLUDED);
+        private final CallSourceDataTO callSourceDataTO;
+
+        public ESTTO(String estId, String estId2, String estLibraryId, String uniGeneClusterId, Integer bgeeGeneId,
+                DataState expressionConfidence, Integer expressionId) {
+            super(estId);
             this.estId2 = estId2;
+            this.uniGeneClusterId = uniGeneClusterId;
             this.estLibraryId = estLibraryId;
-            this.UniGeneClusterId = UniGeneClusterId;
+            this.callSourceDataTO = new CallSourceDataTO(bgeeGeneId, DetectionFlag.PRESENT,
+                    expressionConfidence, ExclusionReason.NOT_EXCLUDED, expressionId);
         }
 
+        @Override
+        public String getAssayId() {
+            return this.estLibraryId;
+        }
+        @Override
+        public CallSourceDataTO getCallSourceDataTO() {
+            return this.callSourceDataTO;
+        }
         /**
-         * @return the {@code String} representing the second ID of the EST (ESTs have two IDs in 
-         * Unigene).
+         * @return the {@code String} representing the secondary ID of the EST (ESTs have two IDs in Unigene).
          */
         public String getEstId2() {
             return this.estId2;
         }
-
-        /**
-         * @return the {@code String} representing the ID of the EST Library associated to this EST.
-         */
-        public String getEstLibraryId() {
-            return this.estLibraryId;
-        }
-
         /**
          * @return the {@code String} representing the ID of UniGene Cluster associated to this EST.
          */
         public String getUniGeneClusterId() {
-            return this.UniGeneClusterId;
+            return this.uniGeneClusterId;
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("ESTTO [id=").append(this.getId()).append(", estId2=").append(estId2)
+                    .append(", estLibraryId=").append(estLibraryId)
+                    .append(", uniGeneClusterId=").append(uniGeneClusterId)
+                    .append(", callSourceDataTO=").append(this.callSourceDataTO).append("]");
+            return builder.toString();
         }
     }
 }

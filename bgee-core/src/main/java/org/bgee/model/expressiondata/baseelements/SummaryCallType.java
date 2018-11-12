@@ -1,6 +1,8 @@
 package org.bgee.model.expressiondata.baseelements;
 
+import java.util.EnumSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -182,7 +184,18 @@ public interface SummaryCallType extends CallType {
 
         @Override
         public Set<DataType> getAllowedDataTypes() {
-            return CallType.DiffExpression.DIFF_EXPR_DATA_TYPES;
+            log.entry();
+            //For now, the same data types are allowed for all DiffExpressionSummary types.
+            //So we just delegate to any type of DiffExpression CallType.
+            //Just a check to make sure all allowed data types are still the same
+            Set<Set<DataType>> allCallTypeDataTypes = EnumSet.allOf(DiffExpression.class)
+                    .stream().map(c -> c.getAllowedDataTypes())
+                    .collect(Collectors.toSet());
+            if (allCallTypeDataTypes.size() != 1) {
+                throw log.throwing(new IllegalStateException(
+                        "Not all allowed data types are the same for all diff expression call types"));
+            }
+            return log.exit(DiffExpression.DIFF_EXPRESSED.getAllowedDataTypes());
         }
 
         @Override

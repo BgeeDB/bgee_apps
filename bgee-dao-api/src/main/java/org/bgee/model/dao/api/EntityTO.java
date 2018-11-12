@@ -12,7 +12,7 @@ package org.bgee.model.dao.api;
  * 
  * @param <T> The type of ID of this {@code EntityTO}
  */
-public abstract class EntityTO<T> extends TransferObject {
+public abstract class EntityTO<T extends Comparable<T>> extends TransferObject {
 	private static final long serialVersionUID = 9170289303150839721L;
 	private final T id;
     

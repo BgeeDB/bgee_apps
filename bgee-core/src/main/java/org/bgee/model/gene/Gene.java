@@ -6,7 +6,11 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.species.Species;
 
 /**
- * Class allowing to describe genes. 
+ * Class allowing to describe genes. The unique identifier for {@code Gene}s
+ * are composed of the Ensembl gene ID (see {@link #getEnsemblGeneId()}) and of the species ID
+ * (see {@link #getSpecies()} and {@link org.bgee.model.species.Species#getId() Species.getId()}).
+ * This is because Ensembl gene IDs are not unique in Bgee, as we sometimes used the genome
+ * of a closely-related species for species with no genome available.
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
@@ -50,13 +54,17 @@ public class Gene {
      * These {@code ensemblGeneId} and {@code species} cannot be {@code null}, or blank,
      * otherwise an {@code IllegalArgumentException} will be thrown.
      *  
-     * @param ensemblGeneId A {@code String} representing the ID of this object.
-     * @param species       A {@code Species} representing the species this gene belongs to.
+     * @param ensemblGeneId                         A {@code String} representing the ID of this object.
+     * @param species                               A {@code Species} representing the species this gene belongs to.
+     * @param geneMappedToSameEnsemblGeneIdCount    An {@code Integer} that is the number of genes
+     *                                              in the Bgee database with the same Ensembl gene ID.
+     *                                              See {@link #getGeneMappedToSameEnsemblGeneIdCount()}
+     *                                              for more details.
      * @throws IllegalArgumentException     if {@code ensemblGeneId} is blank,
      *                                      or {@code Species} is {@code null}.
      */
-    public Gene(String ensemblGeneId, Species species) throws IllegalArgumentException {
-        this(ensemblGeneId, null, null, species, 1);
+    public Gene(String ensemblGeneId, Species species, int geneMappedToSameEnsemblGeneIdCount) throws IllegalArgumentException {
+        this(ensemblGeneId, null, null, species, geneMappedToSameEnsemblGeneIdCount);
     }
     /**
      * Constructor providing the {@code ensemblGeneId}, the name, the description,

@@ -15,7 +15,7 @@ package org.bgee.model;
  * 
  * @param <T> The type of ID of this {@code NamedEntity}.
  */
-public abstract class NamedEntity<T> extends Entity<T> {
+public abstract class NamedEntity<T extends Comparable<T>> extends Entity<T> {
 
     /**
      * @see #getName()

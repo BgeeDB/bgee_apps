@@ -44,6 +44,9 @@ public class RawDataLoader {
         this.rawDataFilters = Collections.unmodifiableSet(
                 rawDataFilters == null? new HashSet<>(): new HashSet<>(rawDataFilters));
         this.rawDataService = rawDataService;
+        //TODO: to continue
+        this.geneMap = null;
+        this.daoRawDataFilters = null;
     }
 
     /**
@@ -53,7 +56,8 @@ public class RawDataLoader {
      */
     public Stream<AffymetrixProbeset> loadAffymetrixProbesets() {
         log.entry();
-        
+        //TODO: to continue
+        return null;
     }
 
     public Set<RawDataFilter> getRawDataFilters() {

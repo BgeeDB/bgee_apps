@@ -372,6 +372,8 @@ public class RawDataService extends CommonService {
             throw log.throwing(new IllegalArgumentException("No RawDataFilter can be null"));
         }
 
+        //TODO: to continue
+        return null;
         
     }
 
@@ -380,6 +382,7 @@ public class RawDataService extends CommonService {
     // METHODS PERFORMING THE QUERIES TO THE DAOs
     //*************************************************************************
     private Map<Integer, RawDataCondition> loadRawDataConditionMap(Collection<Species> species) {
-        
+        //TODO: to continue
+        return null;
     }
 }

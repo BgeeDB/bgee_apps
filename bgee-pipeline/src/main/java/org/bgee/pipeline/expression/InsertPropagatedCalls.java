@@ -1656,11 +1656,13 @@ public class InsertPropagatedCalls extends CallService {
     private Map<Integer, Condition> loadRawConditionMap(Collection<Species> species) {
         log.entry(species);
 
-        return log.exit(loadConditionMapFromResultSet(
-                (attrs) -> this.conditionDAO.getRawConditionsBySpeciesIds(
-                        species.stream().map(s -> s.getId()).collect(Collectors.toSet()),
-                        attrs),
-                null, species));
+        //TODO: reimplement/adapt this method for RawDataConditin retrieval
+        throw log.throwing(new UnsupportedOperationException("To reimplement for support RawDataCondition"));
+//        return log.exit(loadConditionMapFromResultSet(
+//                (attrs) -> this.getDaoManager().getRawDataConditionDAO().getRawDataConditionsBySpeciesIds(
+//                        species.stream().map(s -> s.getId()).collect(Collectors.toSet()),
+//                        attrs),
+//                null, species));
     }
     private Map<Integer, Condition> generateConditionMapForCondParams(
             Set<ConditionDAO.Attribute> condParams, Map<Integer, Condition> originalCondMap) {

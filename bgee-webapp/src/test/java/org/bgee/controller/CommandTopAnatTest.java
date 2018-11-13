@@ -28,6 +28,7 @@ import org.bgee.model.job.JobService;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.DevStageService;
 import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.gene.GeneService;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
@@ -84,9 +85,11 @@ public class CommandTopAnatTest extends TestAncestor {
         Integer bgSelectedSpeciesId = 9606;
         Species bgSelectedSpecies = new Species(9606);
 
-        List<Gene> fgGenes = Arrays.asList(new Gene("ID3", fgSelectedSpecies, 1));
-        List<Gene> bgGenes = Arrays.asList(new Gene("ID1", bgSelectedSpecies, 1),
-                new Gene("ID2", bgSelectedSpecies, 1), new Gene("ID3", fgSelectedSpecies, 1));
+        List<Gene> fgGenes = Arrays.asList(new Gene("ID3", fgSelectedSpecies, new GeneBioType("type1")));
+        List<Gene> bgGenes = Arrays.asList(
+                new Gene("ID1", bgSelectedSpecies, new GeneBioType("type1")),
+                new Gene("ID2", bgSelectedSpecies, new GeneBioType("type1")),
+                new Gene("ID3", fgSelectedSpecies, new GeneBioType("type1")));
 
         when(geneService.loadGenesByEnsemblIds(new TreeSet<>(fgSubmittedGeneIds))).thenReturn(fgGenes.stream());
         when(geneService.loadGenesByEnsemblIds(new TreeSet<>(bgSubmittedGeneIds))).thenReturn(bgGenes.stream());

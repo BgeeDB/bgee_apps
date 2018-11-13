@@ -42,6 +42,11 @@ public class Gene {
 	 * The {@code Species} this {@code Gene} belongs to.
 	 */
 	private final Species species;
+
+    /**
+     * The {@code GeneBioType} of this {@code Gene}.
+     */
+    private final GeneBioType geneBioType;
 	
 	/**
 	 * @see #getGeneMappedToSameEnsemblGeneIdCount()
@@ -53,18 +58,15 @@ public class Gene {
      * <p>  
      * These {@code ensemblGeneId} and {@code species} cannot be {@code null}, or blank,
      * otherwise an {@code IllegalArgumentException} will be thrown.
-     *  
-     * @param ensemblGeneId                         A {@code String} representing the ID of this object.
-     * @param species                               A {@code Species} representing the species this gene belongs to.
-     * @param geneMappedToSameEnsemblGeneIdCount    An {@code Integer} that is the number of genes
-     *                                              in the Bgee database with the same Ensembl gene ID.
-     *                                              See {@link #getGeneMappedToSameEnsemblGeneIdCount()}
-     *                                              for more details.
+     *
+     * @param ensemblGeneId A {@code String} representing the ID of this object.
+     * @param species       A {@code Species} representing the species this gene belongs to.
+     * @param geneBioType   The {@code GeneBioType} of this {@code Gene}.
      * @throws IllegalArgumentException     if {@code ensemblGeneId} is blank,
      *                                      or {@code Species} is {@code null}.
      */
-    public Gene(String ensemblGeneId, Species species, int geneMappedToSameEnsemblGeneIdCount) throws IllegalArgumentException {
-        this(ensemblGeneId, null, null, species, geneMappedToSameEnsemblGeneIdCount);
+    public Gene(String ensemblGeneId, Species species, GeneBioType geneBioType) throws IllegalArgumentException {
+        this(ensemblGeneId, null, null, species, geneBioType, 1);
     }
     /**
      * Constructor providing the {@code ensemblGeneId}, the name, the description,
@@ -80,6 +82,7 @@ public class Gene {
      *                                              of this gene.
      * @param species                               A {@code Species} representing the species
      *                                              this gene belongs to.
+     * @param geneBioType                           The {@code GeneBioType} of this {@code Gene}.
      * @param geneMappedToSameEnsemblGeneIdCount    An {@code Integer} that is the number of genes
      *                                              in the Bgee database with the same Ensembl gene ID.
      *                                              See {@link #getGeneMappedToSameEnsemblGeneIdCount()}
@@ -87,7 +90,7 @@ public class Gene {
      * @throws IllegalArgumentException     if {@code ensemblGeneId} is blank,
      *                                      or {@code Species} is {@code null}.
      */
-    public Gene(String ensemblGeneId, String name, String description, Species species,
+    public Gene(String ensemblGeneId, String name, String description, Species species, GeneBioType geneBioType,
             int geneMappedToSameEnsemblGeneIdCount)
         throws IllegalArgumentException {
         if (StringUtils.isBlank(ensemblGeneId)) {
@@ -95,6 +98,9 @@ public class Gene {
         }
         if (species == null) {
             throw log.throwing(new IllegalArgumentException("The Species must be provided."));
+        }
+        if (geneBioType == null) {
+            throw log.throwing(new IllegalArgumentException("The GeneBioType must be provided."));
         }
         if (geneMappedToSameEnsemblGeneIdCount < 1) {
             throw log.throwing(new IllegalArgumentException(
@@ -104,6 +110,7 @@ public class Gene {
         this.name = name;
         this.description = description;
         this.species = species;
+        this.geneBioType = geneBioType;
         this.geneMappedToSameEnsemblGeneIdCount = geneMappedToSameEnsemblGeneIdCount;
     }
     
@@ -131,6 +138,13 @@ public class Gene {
 	public Species getSpecies() {
 		return this.species;
 	}
+    /**
+     * @return  The {@code GeneBioType} of this {@code Gene}
+     * @see <a target='_top' href='http://vega.archive.ensembl.org/info/about/gene_and_transcript_types.html'>http://vega.archive.ensembl.org/info/about/gene_and_transcript_types.html</a>
+     */
+    public GeneBioType getGeneBioType() {
+        return this.geneBioType;
+    }
 	/**
 	 * @return  An {@code Integer} that is the number of genes in the Bgee database
      *          with the same Ensembl gene ID. In Bgee, for some species with no genome available,
@@ -149,6 +163,7 @@ public class Gene {
         int result = 1;
         result = prime * result + ((ensemblGeneId == null) ? 0 : ensemblGeneId.hashCode());
         result = prime * result + ((species == null) ? 0 : species.hashCode());
+        result = prime * result + ((geneBioType == null) ? 0 : geneBioType.hashCode());
         return result;
     }
     @Override
@@ -177,6 +192,13 @@ public class Gene {
         } else if (!species.equals(other.species)) {
             return false;
         }
+        if (geneBioType == null) {
+            if (other.geneBioType != null) {
+                return false;
+            }
+        } else if (!geneBioType.equals(other.geneBioType)) {
+            return false;
+        }
         return true;
     }
 
@@ -187,6 +209,7 @@ public class Gene {
                .append(", name=").append(name)
                .append(", description=").append(description)
                .append(", species=").append(species)
+               .append(", geneBioType=").append(geneBioType)
                .append(", geneMappedToSameEnsemblGeneIdCount=").append(geneMappedToSameEnsemblGeneIdCount).append("]");
         return builder.toString();
     }

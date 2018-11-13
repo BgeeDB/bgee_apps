@@ -15,6 +15,7 @@ import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixChip;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixExperiment;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixProbeset;
 import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.source.Source;
 import org.bgee.model.source.SourceCategory;
 import org.bgee.model.species.Species;
@@ -83,7 +84,7 @@ public class CommandRawData extends CommandParent {
         Stream<AffymetrixProbeset> affymetrixProbesets = null;
         
         Species sp = new Species(9096, "human", "description", "Homo", "sapiens", null, null);
-        Gene gene = new Gene("ENSG00000116062", sp, 1);
+        Gene gene = new Gene("ENSG00000116062", sp, new GeneBioType("protein_coding"));
 
         RawCall rawCall1 = new RawCall(gene, RawCall.DetectionFlag.PRESENT,
                 CallDAO.CallTO.DataState.HIGHQUALITY, RawCall.ExclusionReason.NOT_EXCLUDED);

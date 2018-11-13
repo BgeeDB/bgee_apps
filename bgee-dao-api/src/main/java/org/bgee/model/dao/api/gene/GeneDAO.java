@@ -15,8 +15,9 @@ import org.bgee.model.dao.api.exception.DAOException;
  * @author Valentine Rech de Laval
  * @author Philippe Moret
  * @author Frederic Bastian
- * @version Bgee 14 Mar. 2017
+ * @version Bgee 14 Sep. 2018
  * @see GeneTO
+ * @see GeneBioTypeTO
  * @since Bgee 13
  */
 public interface GeneDAO extends DAO<GeneDAO.Attribute> {
@@ -122,6 +123,17 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
             int limitStart, int resultPerPage);
 
     /**
+     * Retrieves the gene biotypes used in Bgee
+     * <p>
+     * The biotypes are retrieved and returned as a {@code GeneBioTypeTOResultSet}. It is the
+     * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
+     *
+     * @return              A {@code GeneBioTypeTOResultSet} containing all biotypes from data source.
+     * @throws DAOException If an error occurred while accessing the data source. 
+     */
+    public GeneBioTypeTOResultSet getGeneBioTypes();
+
+    /**
      * Update {@code Attribute}s of the provided genes, which are represented as a 
      * {@code Collection} of {@code GeneTO}s
      * 
@@ -150,7 +162,7 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
     }
     
     /**
-     * {@code EntityTO} representing a gene in the Bgee database.
+     * {@code NamedEntityTO} representing a gene in the Bgee database.
      * 
      * @author Valentine Rech de Laval
      * @version Bgee 13
@@ -296,7 +308,40 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
                    .append(", geneMappedToGeneIdCount=").append(geneMappedToGeneIdCount).append("]");
             return builder.toString();
         }
+    }
 
+    /**
+     * {@code DAOResultSet} specifics to {@code GeneBioTypeTO}s
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 14 Sep. 2018
+     * @since Bgee 14 Sep. 2018
+     */
+    public interface GeneBioTypeTOResultSet extends DAOResultSet<GeneBioTypeTO> {
         
+    }
+
+    /**
+     * {@code NamedEntityTO} representing a bio type in the Bgee database.
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 14 Sep. 2018
+     * @since Bgee 14 Sep. 2018
+     */
+    public class GeneBioTypeTO extends NamedEntityTO<Integer> {
+        private static final long serialVersionUID = 1691071746394023190L;
+
+        public GeneBioTypeTO(Integer id, String name) {
+            super(id, name, null);
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("GeneBioTypeTO [geneBioTypeId=").append(this.getId())
+                   .append(", geneBioTypeName=").append(this.getName())
+                   .append("]");
+            return builder.toString();
+        }
     }
 }

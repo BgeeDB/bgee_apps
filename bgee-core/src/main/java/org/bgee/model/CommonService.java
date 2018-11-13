@@ -8,22 +8,34 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.anatdev.DevStage;
+import org.bgee.model.anatdev.DevStageService;
 import org.bgee.model.anatdev.TaxonConstraint;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
 import org.bgee.model.dao.api.gene.GeneDAO;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTOResultSet;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneBioTypeTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.expressiondata.Condition;
+import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.gene.GeneNotFoundException;
+import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
 
@@ -120,25 +132,29 @@ public class CommonService extends Service {
     /**
      * Map {@code GeneTO} to a {@code Gene}.
      * 
-     * @param geneTO    A {@code GeneTO} that is the condition from data source
-     *                  to map into {@code Gene}.
-     * @param species   A {@code Species} that is the species of the gene.
-     * @return          The mapped {@code Gene}.
+     * @param geneTO        A {@code GeneTO} that is the condition from data source
+     *                      to map into {@code Gene}.
+     * @param species       A {@code Species} that is the species of the gene.
+     * @param geneBioType   The {@code GeneBioType} of the {@code Gene}.
+     * @return              The mapped {@code Gene}.
      */
-    protected static Gene mapGeneTOToGene(GeneTO geneTO, Species species) {
-        log.entry(geneTO, species);
+    protected static Gene mapGeneTOToGene(GeneTO geneTO, Species species, GeneBioType geneBioType) {
+        log.entry(geneTO, species, geneBioType);
         if (geneTO == null) {
             return log.exit(null);
         }
         if (species == null) {
             throw log.throwing(new IllegalArgumentException("A Species must be provided."));
         }
+        if (geneBioType == null) {
+            throw log.throwing(new IllegalArgumentException("A GeneBioType must be provided."));
+        }
         if (geneTO.getSpeciesId() != null && !geneTO.getSpeciesId().equals(species.getId())) {
             throw log.throwing(new IllegalArgumentException(
                     "Species ID of the gene does not match provided Species."));
         }
         return log.exit(new Gene(geneTO.getGeneId(), geneTO.getName(), geneTO.getDescription(),
-                species, geneTO.getGeneMappedToGeneIdCount()));
+                species, geneBioType, geneTO.getGeneMappedToGeneIdCount()));
     }
 
     /**
@@ -155,6 +171,16 @@ public class CommonService extends Service {
 
         return log.exit(new TaxonConstraint<T>(
                 taxonConstraintTO.getEntityId(), taxonConstraintTO.getSpeciesId()));
+    }
+
+    protected static Map<Integer, GeneBioType> loadGeneBioTypeMap(GeneDAO geneDAO) {
+        log.entry(geneDAO);
+        return log.exit(geneDAO.getGeneBioTypes()
+                .stream().collect(Collectors.toMap(to -> to.getId(), to -> mapGeneBioTypeTOToGeneBioType(to))));
+    }
+    protected static GeneBioType mapGeneBioTypeTOToGeneBioType(GeneBioTypeTO geneBioTypeTO) {
+        log.entry(geneBioTypeTO);
+        return log.exit(new GeneBioType(geneBioTypeTO.getName()));
     }
 
     protected static DataType convertDaoDataTypeToDataType(DAODataType dt) {
@@ -218,6 +244,7 @@ public class CommonService extends Service {
         final Map<Integer, Set<String>> requestedSpeToGeneIdsMap = Collections.unmodifiableMap(
                 geneFilters.stream()
                 .collect(Collectors.toMap(gf -> gf.getSpeciesId(), gf -> gf.getEnsemblGeneIds())));
+        final Map<Integer, GeneBioType> geneBioTypeMap = Collections.unmodifiableMap(loadGeneBioTypeMap(geneDAO));
 
         //Make the DAO query and map GeneTOs to Genes. Store them in a Map to keep the bgeeGeneIds.
         final Map<Integer, Gene> geneMap = Collections.unmodifiableMap(geneDAO
@@ -227,7 +254,10 @@ public class CommonService extends Service {
                         gTO -> gTO.getId(),
                         gTO -> mapGeneTOToGene(gTO,
                                 Optional.ofNullable(speciesMap.get(gTO.getSpeciesId()))
-                                .orElseThrow(() -> new IllegalStateException("Missing species ID for gene")))
+                                .orElseThrow(() -> new IllegalStateException("Missing species ID for gene")),
+                                Optional.ofNullable(geneBioTypeMap.get(gTO.getGeneBioTypeId()))
+                                .orElseThrow(() -> new IllegalStateException("Missing gene biotype ID for gene"))
+)
                         )));
 
         //check that we get all specifically requested genes.
@@ -328,5 +358,134 @@ public class CommonService extends Service {
                 .collect(Collectors.toSet());
 
         return log.exit(new AbstractMap.SimpleEntry<>(geneIdFilter, speciesIds));
+    }
+
+    /**
+     * 
+     * @param species               A {@code Collection} of {@code Species}s that are the species 
+     *                              allowing to filter the conditions to retrieve. If {@code null}
+     *                              or empty, condition for all species are retrieved.
+     * @param condParamCombination  A {@code Collection} of {@code ConditionDAO.Attribute}s defining
+     *                              the combination of condition parameters that were requested
+     *                              for queries, allowing to determine which condition and expression
+     *                              results to target.
+     * @param conditionDAOAttrs     A {@code Collection} of {@code ConditionDAO.Attribute}s defining
+     *                              the attributes to populate in the retrieved {@code ConditionTO}s,
+     *                              and thus, in the returned {@code Condition}s.
+     *                              If {@code null} or empty, then all attributes are retrieved.
+     * @param conditionDAO          A {@code ConditionDAO} to retrieve conditions from the data source.
+     * @param anatEntityService     An {@code AnatEntityService} to retrieve the {@code AnatEntity}s
+     *                              part of the returned {@code Condition}s.
+     * @param devStageService       A {@code DevStageService} to retrieve the {@code DevStage}s
+     *                              part of the returned {@code Condition}s.
+     * @return                      A {@code Map} where keys are {@code Integer}s
+     *                              that are condition IDs, the associated value being
+     *                              the corresponding {@code Condition}.
+     */
+    protected static Map<Integer, Condition> loadGlobalConditionMap(Collection<Species> species,
+            Collection<ConditionDAO.Attribute> condParamCombination,
+            Collection<ConditionDAO.Attribute> conditionDAOAttrs, ConditionDAO conditionDAO,
+            AnatEntityService anatEntityService, DevStageService devStageService) {
+        log.entry(species, condParamCombination, conditionDAOAttrs, conditionDAO,
+                anatEntityService, devStageService);
+
+        return log.exit(loadConditionMapFromResultSet(
+                (attrs) -> conditionDAO.getGlobalConditionsBySpeciesIds(
+                        species.stream().map(s -> s.getId()).collect(Collectors.toSet()),
+                        condParamCombination, attrs),
+                conditionDAOAttrs, species, anatEntityService, devStageService));
+    }
+    protected static Map<Integer, Condition> loadConditionMapFromResultSet(
+            Function<Collection<ConditionDAO.Attribute>, ConditionTOResultSet> rsFunc,
+            Collection<ConditionDAO.Attribute> conditionDAOAttrs, Collection<Species> species,
+            AnatEntityService anatEntityService, DevStageService devStageService) {
+        log.entry(rsFunc, conditionDAOAttrs, species);
+
+        if (species == null || species.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("Some species must be provided"));
+        }
+
+        Map<Integer, Species> speMap = species.stream()
+                .collect(Collectors.toMap(s -> s.getId(), s -> s, (s1, s2) -> s1));
+        Set<String> anatEntityIds = new HashSet<>();
+        Set<String> stageIds = new HashSet<>();
+        Set<ConditionTO> conditionTOs = new HashSet<>();
+
+        //we need to retrieve the attributes requested, plus the condition ID and species ID in all cases.
+        Set<ConditionDAO.Attribute> clonedAttrs = conditionDAOAttrs == null || conditionDAOAttrs.isEmpty()?
+                EnumSet.allOf(ConditionDAO.Attribute.class): EnumSet.copyOf(conditionDAOAttrs);
+        clonedAttrs.addAll(EnumSet.of(ConditionDAO.Attribute.ID, ConditionDAO.Attribute.SPECIES_ID));
+        ConditionTOResultSet rs = rsFunc.apply(clonedAttrs);
+
+        while (rs.next()) {
+            ConditionTO condTO = rs.getTO();
+            if (!speMap.keySet().contains(condTO.getSpeciesId())) {
+                throw log.throwing(new IllegalArgumentException(
+                        "The retrieved ConditionTOs do not match the provided Species."));
+            }
+            conditionTOs.add(condTO);
+            if (condTO.getAnatEntityId() != null) {
+                anatEntityIds.add(condTO.getAnatEntityId());
+            }
+            if (condTO.getStageId() != null) {
+                stageIds.add(condTO.getStageId());
+            }
+        }
+
+        final Map<String, AnatEntity> anatMap = anatEntityIds.isEmpty()? new HashMap<>():
+            anatEntityService.loadAnatEntities(
+                    speMap.keySet(), true, anatEntityIds, false)
+            .collect(Collectors.toMap(a -> a.getId(), a -> a));
+        if (!anatEntityIds.isEmpty() && anatMap.size() != anatEntityIds.size()) {
+            anatEntityIds.removeAll(anatMap.keySet());
+            throw log.throwing(new IllegalStateException("Some anat. entities used in a condition "
+                    + "are not supposed to exist in the related species. Species: " + speMap.keySet()
+                    + " - anat. entities: " + anatEntityIds));
+        }
+        final Map<String, DevStage> stageMap = stageIds.isEmpty()? new HashMap<>():
+            devStageService.loadDevStages(
+                    speMap.keySet(), true, stageIds, false)
+            .collect(Collectors.toMap(s -> s.getId(), s -> s));
+        if (!stageIds.isEmpty() && stageMap.size() != stageIds.size()) {
+            stageIds.removeAll(stageMap.keySet());
+            throw log.throwing(new IllegalStateException("Some stages used in a condition "
+                    + "are not supposed to exist in the related species. Species: " + speMap.keySet()
+                    + " - stages: " + stageIds));
+        }
+
+        return log.exit(conditionTOs.stream()
+                .collect(Collectors.toMap(cTO -> cTO.getId(), 
+                        cTO -> mapConditionTOToCondition(cTO,
+                                cTO.getAnatEntityId() == null? null:
+                                    Optional.ofNullable(anatMap.get(cTO.getAnatEntityId())).orElseThrow(
+                                        () -> new IllegalStateException("Anat. entity not found: "
+                                                + cTO.getAnatEntityId())),
+                                cTO.getStageId() == null? null:
+                                    Optional.ofNullable(stageMap.get(cTO.getStageId())).orElseThrow(
+                                        () -> new IllegalStateException("Stage not found: "
+                                                + cTO.getStageId())),
+                                Optional.ofNullable(speMap.get(cTO.getSpeciesId())).orElseThrow(
+                                        () -> new IllegalStateException("Species not found: "
+                                                + cTO.getSpeciesId())))
+                        ))
+                );
+    }
+
+    protected static Set<ConditionDAO.Attribute> convertCondParamAttrsToCondDAOAttrs(
+            Collection<CallService.Attribute> attrs) {
+        log.entry(attrs);
+        return log.exit(attrs.stream()
+                .filter(a -> a.isConditionParameter())
+                .map(a -> {
+                    switch (a) {
+                        case ANAT_ENTITY_ID:
+                            return ConditionDAO.Attribute.ANAT_ENTITY_ID;
+                        case DEV_STAGE_ID: 
+                            return ConditionDAO.Attribute.STAGE_ID;                        
+                        default: 
+                            throw log.throwing(new UnsupportedOperationException(
+                                "Condition parameter not supported: " + a));
+                    }
+                }).collect(Collectors.toSet()));
     }
 }

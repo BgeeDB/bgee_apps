@@ -31,7 +31,6 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
-import org.bgee.model.expressiondata.ConditionGraph;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
@@ -245,8 +244,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         this.writeln(getExpressionHTMLByAnat(
                 geneResponse.getCallsByAnatEntity(), 
                 geneResponse.getClusteringBestEachAnatEntity(), 
-                geneResponse.getClusteringWithinAnatEntity(), 
-                geneResponse.getConditionGraph()));
+                geneResponse.getClusteringWithinAnatEntity()));
         
         this.writeln("</div>"); // end table-container
         this.writeln("</div>"); // end class
@@ -287,7 +285,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 + "Max rank score in all species: 4.10e4. Min rank score varies across species.</div>");
 
         //Source info
-        Set<DataType> allowedDataTypes = geneResponse.getExprCalls().stream()
+        Set<DataType> allowedDataTypes = geneResponse.getCallsByAnatEntity().values().stream()
+                .flatMap(List::stream)
                 .flatMap(call -> call.getCallData().stream())
                 .map(d -> d.getDataType())
                 .collect(Collectors.toSet());
@@ -396,10 +395,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      */
     private String getExpressionHTMLByAnat(Map<AnatEntity, List<ExpressionCall>> byAnatEntityId, 
             Map<ExpressionCall, Integer> clusteringBestEachAnatEntity, 
-            Map<ExpressionCall, Integer> clusteringWithinAnatEntity, 
-            final ConditionGraph conditionGraph) {
-        log.entry(byAnatEntityId, clusteringBestEachAnatEntity, clusteringWithinAnatEntity, 
-                conditionGraph);
+            Map<ExpressionCall, Integer> clusteringWithinAnatEntity) {
+        log.entry(byAnatEntityId, clusteringBestEachAnatEntity, clusteringWithinAnatEntity);
 
 
         StringBuilder rowSb = new StringBuilder();
@@ -415,7 +412,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 scoreShift = true;
             }
             
-            rowSb.append(getExpressionRowsForAnatEntity(a, conditionGraph, calls, scoreShift, 
+            rowSb.append(getExpressionRowsForAnatEntity(a, calls, scoreShift, 
                     clusteringWithinAnatEntity))
                  .append("\n");
             previousGroupIndex = currentGroupIndex;
@@ -444,8 +441,6 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      * 
      * @param anatEntity                   The {@code AnatEntity} for which the expression calls 
      *                                     will be displayed.
-     * @param conditionGraph               A {@code ConditionGraph} containing information 
-     *                                     about all {@code Condition}s retrieved from the {@code calls}.
      * @param calls                        A {@code List} of {@code ExpressionCall}s related to 
      *                                     {@code anatEntity}, ordered by their global mean rank. 
      * @param scoreShift                   A {@code boolean} defining whether the global mean rank 
@@ -461,10 +456,10 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      *                                     might not be part of a same cluster).
      * @return                             A {@code String} that is the generated HTML.
      */
-    private String getExpressionRowsForAnatEntity(AnatEntity anatEntity, ConditionGraph conditionGraph,
+    private String getExpressionRowsForAnatEntity(AnatEntity anatEntity, 
             List<ExpressionCall> calls, boolean scoreShift, 
             Map<ExpressionCall, Integer> clusteringWithinAnatEntity) {
-        log.entry(anatEntity, conditionGraph, calls, scoreShift, clusteringWithinAnatEntity);
+        log.entry(anatEntity, calls, scoreShift, clusteringWithinAnatEntity);
         
         StringBuilder sb = new StringBuilder();
         String scoreShiftClassName = "gene-score-shift";

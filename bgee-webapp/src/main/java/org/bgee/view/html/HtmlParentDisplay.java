@@ -306,6 +306,10 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("  \"creator\": [");
         this.writeln("    {\"@type\": \"EducationalOrganization\", \"name\": \"Evolutionary Bioinformatics group\"}");
         this.writeln("  ],");
+        this.writeln("  \"distribution\": [");
+        this.writeln("    {\"@type\": \"DataDownload\", \"contentUrl\": \""+ this.prop.getFTPRootDirectory() + "\"," +
+                "          \"fileFormat\": \"FTP\"}");
+        this.writeln("  ],");
         this.writeln("  \"funder\": [");
         this.writeln("    {\"@type\": \"NGO\", \"name\": \"SIB Swiss Institute of Bioinformatics\"}, ");
         this.writeln("    {\"@type\": \"EducationalOrganization\", \"name\": \"UNIL University of Lausanne\"}");

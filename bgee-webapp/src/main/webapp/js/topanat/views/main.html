@@ -1,8 +1,8 @@
 <div ng-cloak> <!-- class="container-fluid" --> 
 
-    <h1>TopAnat - Gene Expression Enrichment</h1>
+    <h1 property='schema:name'>TopAnat - Gene Expression Enrichment</h1>
 
-    <div id='bgee_introduction'>
+    <div id='bgee_introduction' property='schema:description'>
 	   <p>GO-like enrichment of anatomical terms, mapped to genes by expression patterns.
 	       It is possible to run TopAnat using our 
 	       <a href='https://bioconductor.org/packages/release/bioc/html/BgeeDB.html' class='external_link' 
@@ -15,7 +15,8 @@
     </div>
 
 
-    <form id="queryForm" style="font-size: 14px;" name="queryForm" ng-submit="vm.postForm()" novalidate>
+    <form id="queryForm" style="font-size: 14px;" name="queryForm" ng-submit="vm.postForm()" novalidate
+          property="schema:potentialAction" typeof="schema:Action">
 
         <input type="hidden" ng-model="vm.isFormValidDevStages" required/>
         <input type="hidden" ng-model="vm.isFormValidDataTypes" required/>
@@ -445,7 +446,8 @@
 					ng-disabled="queryForm.$invalid ||
                         !vm.isValidSpecies ||
                         (vm.isBackgroundChecked === '' && !vm.isValidBackground)"
-					ng-show="!vm.formSubmitted && !vm.jobDone">Submit your job
+					ng-show="!vm.formSubmitted && !vm.jobDone"
+                    property="schema:query">Submit your job
 				</button>
 
 				<!-- 2 buttons to display when job is running, 

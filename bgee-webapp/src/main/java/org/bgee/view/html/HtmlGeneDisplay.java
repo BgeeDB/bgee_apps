@@ -71,11 +71,12 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
     @Override
     public void displayGeneHomePage() {
         log.entry();
+        
         this.startDisplay("Gene information");
         
-        this.writeln("<h1>Gene search</h1>");
+        this.writeln("<h1 property='schema:name'>Gene search</h1>");
 
-        this.writeln("<div id='bgee_introduction'>");
+        this.writeln("<div id='bgee_introduction' property='schema:description'>");
         
         this.writeln("<p>Search for genes based on Ensembl gene IDs, gene names, and synonyms.<p>");
 
@@ -84,6 +85,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         this.writeln(getGeneSearchBox(false));
         
         this.endDisplay();
+        
         log.exit();
     }
     
@@ -98,9 +100,9 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         
         this.startDisplay(titleStart);
         
-        this.writeln("<h1>Gene search</h1>");
+        this.writeln("<h1 property='schema:name'>Gene search</h1>");
 
-        this.writeln("<div id='bgee_introduction'>");
+        this.writeln("<div id='bgee_introduction' property='schema:description'>");
         
         this.writeln("<p>The search gene ID is found in several species. Select the desired gene:<p>");
 
@@ -182,16 +184,20 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                     + "col-lg-offset-3 col-lg-6";
         }
         
+        RequestParameters urlTarget = this.getNewRequestParameters();
+        urlTarget.setGeneId(htmlEntities("{search}"));
+
         StringBuilder box = new StringBuilder();
-        box.append("<div class='row'>");
+        box.append("<div class='row' property='schema:potentialAction' typeof='schema:SearchAction'>");
         box.append("<div id='bgee_gene_search' class='row well well-sm ").append(bgeeGeneSearchClass).append("'>");
         box.append("    <form action='javascript:void(0);' method='get'>");
         box.append("        <div class='form'>");
-        box.append("            <label for='bgee_gene_search_completion_box'>Search gene</label>");
+        box.append("            <meta property='target' content='").append(urlTarget.getRequestURL()).append("'/>");
+        box.append("            <label for='bgee_gene_search_completion_box' property='schema:query'>Search gene</label>");
         box.append(             example.toString());
         box.append("            <span id='bgee_species_search_msg' class='search_msg'></span>");
         box.append("            <input id='bgee_gene_search_completion_box' class='form-control' " +
-                                    "autocomplete='off' type='text' name='search'/>");
+                                    "autocomplete='off' type='text' name='search' property='schema:query-input'/>");
         box.append("        </div>");
         box.append("    </form>");
         box.append("</div>");
@@ -217,7 +223,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         this.writeln("</div>"); // close div
 
         //page title
-        this.writeln("<h1 class='gene_title col-sm-9 col-lg-7'>");
+        this.writeln("<h1 class='gene_title col-sm-9 col-lg-7' property='schema:name'>");
         this.writeln("<img src='"
                 + this.prop.getBgeeRootDirectory() + this.prop.getSpeciesImagesRootDirectory()
                 + String.valueOf(gene.getSpecies().getId()) + "_light.jpg' alt='" + htmlEntities(gene.getSpecies().getShortName())
@@ -556,17 +562,29 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
     private static String getGeneInfo(Gene gene) {
         log.entry(gene);
 
-        final StringBuilder table = new StringBuilder("<table id='geneinfo'>");
-        table.append("<tr><th scope='row'>").append("Ensembl ID</th><td>")
-                .append(htmlEntities(gene.getEnsemblGeneId())).append("</td></tr>");
-        table.append("<tr><th scope='row'>").append("Name</th><td>")
-                .append(getStringNotBlankOrDash(gene.getName())).append("</td></tr>");
-        table.append("<tr><th scope='row'>").append("Description</th><td>")
-                .append(getStringNotBlankOrDash(gene.getDescription())).append("</td></tr>");
-        table.append("<tr><th scope='row'>").append("Organism</th><td><em>")
-                .append(htmlEntities(gene.getSpecies().getScientificName())).append("</em>")
-                .append(getSpeciesName(gene.getSpecies().getName()));
-        table.append("</td></tr>");
+        final StringBuilder table = new StringBuilder("<table id='geneinfo' typeof='bs:Gene'>");
+        table.append("<tr>")
+                .append("<th scope='row'>").append("Ensembl ID</th>")
+                .append("<td>").append(htmlEntities(gene.getEnsemblGeneId())).append("</td>")
+                .append("</tr>");
+        table.append("<tr>")
+                .append("<th scope='row'>").append("Name</th>")
+                .append("<td property='bs:name'>")
+                    .append(getStringNotBlankOrDash(gene.getName())).append("</td>")
+                .append("</tr>");
+        table.append("<tr>")
+                .append("<th scope='row'>").append("Description</th>")
+                .append("<td property='bs:description'>")
+                    .append(getStringNotBlankOrDash(gene.getDescription())).append("</td>")
+                .append("</tr>");
+        table.append("<tr>")
+                .append("<th scope='row'>").append("Organism</th>")
+                .append("<td property='bs:taxonomicRange' typeof='bs:Taxon'>")
+                    .append("<em property='bs:name'>")
+                    .append(htmlEntities(gene.getSpecies().getScientificName())).append("</em>")
+                    .append(getSpeciesName(gene.getSpecies().getName()))
+                .append("</td>")
+                .append("</tr>");
 
         return log.exit(table.append("</table>").toString());
     }

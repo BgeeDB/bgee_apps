@@ -76,7 +76,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         
         this.startDisplay("Bgee download overview");
 
-        this.writeln("<h1>Download overview</h1>");
+        this.writeln("<h1 property='schema:name'>Download overview</h1>");
 
         RequestParameters urlDownloadProcExprValuesGenerator = this.getNewRequestParameters();
         urlDownloadProcExprValuesGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
@@ -143,13 +143,13 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln(getKeywordScriptTag(keywords, groups, DownloadPageType.EXPR_CALLS));
         this.writeln("<div id='expr_calls'>");
 
-        this.writeln("<h1>");
+        this.writeln("<h1 property='schema:name'>");
         this.writeln("<img src='" + this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "expr_calls_logo.png' " + 
                 "alt='" + GENE_EXPR_CALLS_PAGE_NAME + " logo'/>" + GENE_EXPR_CALLS_PAGE_NAME);
         this.writeln("</h1>");
         
         // Introduction
-        this.writeln("<div id='bgee_introduction'>");
+        this.writeln("<div id='bgee_introduction' property='schema:description'>");
         this.writeln(this.getIntroduction(DownloadPageType.EXPR_CALLS));
         this.writeln("</div>");
 
@@ -189,14 +189,13 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
         this.writeln("<div id='proc_values'>");
     
-        this.writeln("<h1>");
-        this.writeln("<img src='" + this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "proc_values_logo.png'" + 
-                "' alt='" + PROCESSED_EXPR_VALUES_PAGE_NAME + " logo'/>" + 
-                PROCESSED_EXPR_VALUES_PAGE_NAME);
+        this.writeln("<h1 property='schema:name'>");
+        this.writeln("<img src='" + this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "proc_values_logo.png' " + 
+                "alt='" + PROCESSED_EXPR_VALUES_PAGE_NAME + " logo'/>" + PROCESSED_EXPR_VALUES_PAGE_NAME);
         this.writeln("</h1>");
 
         // Introduction
-        this.writeln("<div id='bgee_introduction'>");
+        this.writeln("<div id='bgee_introduction' property='schema:description'>");
         this.writeln(this.getIntroduction(DownloadPageType.PROC_EXPR_VALUES));
         this.writeln("</div>");
     
@@ -308,7 +307,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                     .append("' title='See Bgee gene expression calls'>gene expression calls</a>");
         }
         intro.append(". All data are available under the " +
-                "<a rel='license' href='" + LICENCE_CC0_URL + "' target='_blank'>" +
+                "<a href='" + LICENCE_CC0_URL + "' target='_blank'>" +
                 "    Creative Commons Zero license (CC0)</a>.");
         intro.append("</p>");
         // FIXME enable link to statistics TSV file
@@ -886,7 +885,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     
     /**
      * Gets the {@code figcaption} element for a given {@code SpeciesDataGroup}
-     * @param species A {SpeciesDataGroup}
+     * @param speciesDataGroup  A {SpeciesDataGroup}
      * @return A {@code String} containing the html code
      */
     private static String getCaption(SpeciesDataGroup speciesDataGroup) {
@@ -899,9 +898,15 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      * @return A {@code String} containing the html code
      */
     private static String getShortNameTag(Species species) {
-    	return getHTMLTag("p", getHTMLTag("i", htmlEntities(species.getShortName())));
+        log.entry(species);
+        
+        Map<String, String> pAttrs = new HashMap<>();
+        pAttrs.put("typeof", "bs:Taxon");
+        Map<String, String> iAttrs = new HashMap<>();
+        iAttrs.put("property", "bs:name");
+        
+        return log.exit(getHTMLTag("p", pAttrs, getHTMLTag("i", iAttrs, htmlEntities(species.getShortName()))));
     }
-    
     
   	@Override
   	protected void includeJs() {

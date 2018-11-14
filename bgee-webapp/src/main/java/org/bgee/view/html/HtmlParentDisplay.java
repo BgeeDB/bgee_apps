@@ -255,6 +255,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected void startDisplay(String title) {
         log.entry(title);
+        
+        String description = "Bgee allows to automatically compare gene expression patterns between species, " +
+                "by referencing expression data on anatomical ontologies, and designing homology " +
+                "relationships between them.";
+        String keywords = "bgee, gene expression, evolution, ontology, anatomy, development, " +
+                "evo-devo database, anatomical ontology, developmental ontology, gene expression evolution";
         this.sendHeaders();
         this.writeln("<!DOCTYPE html>");
         this.writeln("<html lang='en' class='no-js'>");
@@ -262,14 +268,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("<meta charset='UTF-8'>");
         this.writeln("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
         this.writeln("<title>"+title+"</title>");
-        this.writeln("<meta name='description' content='Bgee allows to automatically"
-                + " compare gene expression patterns between species, by referencing"
-                + " expression data on anatomical ontologies, and designing homology"
-                + " relationships between them.'/>");
-        this.writeln("<meta name='keywords' content='bgee, gene expression, "
-                + "evolution, ontology, anatomy, development, evo-devo database, "
-                + "anatomical ontology, developmental ontology, gene expression "
-                + "evolution'/>");
+        this.writeln("<meta name='description' content='" + description + "'/>");
+        this.writeln("<meta name='keywords' content='" + keywords + "'/>");
         this.writeln("<meta name='dcterms.rights' content='Bgee copyright 2007/"
                 + ZonedDateTime.now(ZoneId.of("Europe/Zurich")).getYear()
                 + " UNIL' />");
@@ -291,10 +291,32 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("ga('create', 'UA-18281910-2', 'auto');");
         this.writeln("ga('send', 'pageview');");
         this.writeln("</script>");
-        
+
+        this.writeln("<script type='application/ld+json'>{");
+        this.writeln("  \"@context\": [");
+        this.writeln("    { \"bs\": \"http://bioschemas.org/\" }, \"http://schema.org\"," +
+                "         {\"@base\": \"http://schema.org\"}");
+        this.writeln("  ],");
+        this.writeln("  \"@type\": \"Dataset\",");
+        this.writeln("  \"@id\": \"" + this.getRequestParameters().getRequestURL() + "\",");
+        this.writeln("  \"url\": \"" + this.getRequestParameters().getRequestURL() + "\",");
+        this.writeln("  \"name\": \"Bgee\",");
+        this.writeln("  \"description\": \"" + description + "\",");
+        this.writeln("  \"keywords\": \"" + keywords + "\",");
+        this.writeln("  \"creator\": [");
+        this.writeln("    {\"@type\": \"EducationalOrganization\", \"name\": \"Evolutionary Bioinformatics group\"}");
+        this.writeln("  ],");
+        this.writeln("  \"funder\": [");
+        this.writeln("    {\"@type\": \"NGO\", \"name\": \"SIB Swiss Institute of Bioinformatics\"}, ");
+        this.writeln("    {\"@type\": \"EducationalOrganization\", \"name\": \"UNIL University of Lausanne\"}");
+        this.writeln("  ],");
+        this.writeln("  \"license\": \"https://creativecommons.org/publicdomain/zero/1.0/\",");
+        this.writeln("  \"version\": \"" + this.getWebAppVersion() + "\"");
+        this.writeln("}</script>");
+
         this.writeln("</head>");
-        
-        this.writeln("<body>");
+
+        this.writeln("<body prefix='bs: http://bioschemas.org/'>");
         this.writeln("<noscript>Sorry, your browser does not support JavaScript!</noscript>");
         this.writeln("<div id='bgee_top'><span id='TOP'></span></div>");
         this.writeln("<div id='sib_container' class='container-fluid'>");
@@ -302,7 +324,10 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.displayBgeeHeader();
         this.displayArchiveMessage();
         this.displayWarningMessage();
-        this.writeln("<div id='sib_body'>");
+        this.writeln("<div id='sib_body' typeof='schema:WebPage'>");
+
+        this.writeln("    <meta property='schema:url' content='" +
+                this.getRequestParameters().getRequestURL() + "'/>");
 
         log.exit();
     }

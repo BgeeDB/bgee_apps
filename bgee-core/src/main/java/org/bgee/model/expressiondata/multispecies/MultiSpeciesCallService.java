@@ -358,7 +358,8 @@ public class MultiSpeciesCallService extends Service {
                     .collect(Collectors.toSet());
             log.trace("Anat. entity similarities: {}", anatEntitySimilarities);
             Set<String> anatEntityIds = anatEntitySimilarities.stream()
-                    .map(s -> s.getAnatEntityIds()).flatMap(Set::stream).collect(Collectors.toSet());
+                    .flatMap(s -> s.getAnatEntities().stream().map(a -> a.getId()))
+                    .collect(Collectors.toSet());
             
             // Retrieve dev. stage similarities
             Set<DevStageSimilarity> devStageSimilarities = this.getServiceFactory() 
@@ -432,7 +433,7 @@ public class MultiSpeciesCallService extends Service {
         	multiSpCalls.add(new MultiSpeciesCall<ExpressionCall>(
         			new MultiSpeciesCondition(
         					unmodifiableAESims.stream()
-        						.filter(aes -> ogg.getTaxonId().equals(aes.getTaxonId()))
+        						.filter(aes -> ogg.getTaxonId().equals(aes.getTaxon().getId()))
         						.findFirst().get(),
         					unmodifiableDSSims.stream()
         					.filter(dss -> ogg.getTaxonId().equals(dss.getTaxonId()))
@@ -451,7 +452,7 @@ public class MultiSpeciesCallService extends Service {
             }
             Set<MultiSpeciesCall<ExpressionCall>> currentMultiSpeCalls = multiSpCalls.stream()
             		.filter(msc -> msc.getMultiSpeciesCondition()
-            		.getAnatSimilarity().getAnatEntityIds().contains(call.getCondition().getAnatEntity()))
+            		.getAnatSimilarity().getAnatEntities().contains(call.getCondition().getAnatEntity()))
             		.filter(msc -> msc.getMultiSpeciesCondition()
             		.getStageSimilarity().getDevStageIds().contains(call.getCondition().getDevStageId()))
             		.filter(msc -> msc.getOrthologousGenes().contains(call.getGene()))
@@ -461,7 +462,7 @@ public class MultiSpeciesCallService extends Service {
             	msc.getSpeciesIds().add(call.getGene().getSpecies().getId());
             });
             Set<AnatEntitySimilarity> curAESimilarities = anatEntitySimilarities.stream()
-                    .filter(s -> s.getAnatEntityIds().contains(call.getCondition().getAnatEntityId()))
+                    .filter(s -> s.getAnatEntities().contains(call.getCondition().getAnatEntity()))
                     .collect(Collectors.toSet());
             if (curAESimilarities.size() == 0) {
                 log.trace(call.getCondition().getAnatEntityId() +
@@ -696,7 +697,7 @@ public class MultiSpeciesCallService extends Service {
     	for(String anatEntityId : filter.getMultiSpeciesCondFilter().getAnatEntityIds()){
     		expressionCallAEntities.addAll(
     				anatEntSims.stream()
-    				.flatMap(aes -> aes.getAnatEntityIds().stream())
+    				.flatMap(aes -> aes.getAnatEntities().stream().map(a -> a.getId()))
     				.filter(aes -> aes.contains(anatEntityId))
     				.collect(Collectors.toSet()));
     	}

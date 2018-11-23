@@ -399,7 +399,7 @@ public class CommonService extends Service {
             Function<Collection<ConditionDAO.Attribute>, ConditionTOResultSet> rsFunc,
             Collection<ConditionDAO.Attribute> conditionDAOAttrs, Collection<Species> species,
             AnatEntityService anatEntityService, DevStageService devStageService) {
-        log.entry(rsFunc, conditionDAOAttrs, species);
+        log.entry(rsFunc, conditionDAOAttrs, species, anatEntityService, devStageService);
 
         if (species == null || species.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Some species must be provided"));

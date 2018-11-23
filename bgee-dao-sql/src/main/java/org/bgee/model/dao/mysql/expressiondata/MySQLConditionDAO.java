@@ -131,6 +131,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
         return log.exit(this.getConditionsBySpeciesIds(true, speciesIds, conditionParameters, attributes));
     }
 
+
     private ConditionTOResultSet getConditionsBySpeciesIds(boolean global, Collection<Integer> speciesIds,
             Collection<ConditionDAO.Attribute> conditionParameters, 
             Collection<ConditionDAO.Attribute> attributes) throws DAOException, IllegalArgumentException {
@@ -193,7 +194,6 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
     @Override
     public GlobalConditionMaxRankTO getMaxRank() throws DAOException {
         log.entry();
-
         StringBuilder sb = new StringBuilder();
         //XXX: either we should have a ConditionMaxRankResultSet at some point,
         //or it will be managed directly by the ConditionTOResultSet if we add a 'Set' attribute

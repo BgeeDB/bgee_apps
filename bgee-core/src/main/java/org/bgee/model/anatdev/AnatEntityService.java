@@ -192,11 +192,11 @@ public class AnatEntityService extends Service {
      *                      If empty or {@code null} all available species are used.
      * @param onlyTrusted   A {@code boolean} defining whether results should be restricted 
      *                      to "trusted" annotations.
-     * @return              The {@code Set} of {@link AnatEntitySimilarity} that are anat. entity 
+     * @return              The {@code Stream} of {@link AnatEntitySimilarity} that are anat. entity 
      *                      similarities from provided {@code taxonId}, {@code speciesIds},
      *                      and {@code onlyTrusted}.
      */
-    public Set<AnatEntitySimilarity> loadAnatEntitySimilarities(Integer taxonId,
+    public Stream<AnatEntitySimilarity> loadAnatEntitySimilarities(Integer taxonId,
             Set<Integer> speciesIds, boolean onlyTrusted) {
         log.entry(taxonId, speciesIds, onlyTrusted);
         
@@ -206,7 +206,7 @@ public class AnatEntityService extends Service {
                 .filter(to -> taxonId.equals(to.getTaxonId()))
                 .collect(Collectors.toMap(SummarySimilarityAnnotationTO::getId, Function.identity()));
         
-        Set<AnatEntitySimilarity> results = this.getDaoManager().getSummarySimilarityAnnotationDAO()
+        Stream<AnatEntitySimilarity> results = this.getDaoManager().getSummarySimilarityAnnotationDAO()
                 .getSimAnnotToAnatEntity(taxonId, speciesIds).stream()
                 // group by group id
                 .collect(Collectors.groupingBy(SimAnnotToAnatEntityTO::getSummarySimilarityAnnotationId)) 
@@ -215,8 +215,7 @@ public class AnatEntityService extends Service {
                                 // collect anatEntities as a set
                                 e.getValue().stream()
                                             .map(SimAnnotToAnatEntityTO::getAnatEntityId)
-                                            .collect(Collectors.toSet())))
-                .collect(Collectors.toSet());
+                                            .collect(Collectors.toSet())));
         
         return log.exit(results);
     }

@@ -56,12 +56,20 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
     public GeneTOResultSet getAllGenes() throws DAOException;
     
     /**
-     * Retrieve genes by their ids.
+     * Retrieve genes by their ensembl ids.
      * @param geneIds A {Collection} of gene ids.
      * @return  A {@code GeneTOResultSet} containing genes found from the data source.
      * @throws DAOException
      */
-    public GeneTOResultSet getGenesByIds(Collection<String> geneIds) throws DAOException;
+    public GeneTOResultSet getGenesByEnsemblGeneIds(Collection<String> geneIds) throws DAOException;
+    
+    /**
+     * Retrieve genes by their bgee gene ids.
+     * @param geneIds A {Collection} of gene ids.
+     * @return  A {@code GeneTOResultSet} containing genes found from the data source.
+     * @throws DAOException
+     */
+    public GeneTOResultSet getGenesByIds(Collection<Integer> geneIds) throws DAOException;
     
     /**
      * Retrieves genes from data source according to a {@code Collection} of {@code Integer}s

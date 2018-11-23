@@ -414,4 +414,6 @@ public class ExpressionCallTest extends TestAncestor {
 //        c = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("20100.23"));
 //        assertEquals("Incorrect score formatting", "2.01e4", c.getFormattedGlobalMeanRank());
 //    }
+
 }
+

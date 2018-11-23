@@ -12,8 +12,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.TOComparator;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
-import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
-import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTO;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalNodeTO;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalNodeToGeneTO;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.junit.Rule;
@@ -64,7 +64,7 @@ public class MySQLHierarchicalGroupDAOIT extends MySQLITAncestor {
         
         // No taxon ID
         try {
-            dao.getGroupToGene(taxonId, speciesIds).getAllTOs();
+            dao.getOMANodeToGene(taxonId, speciesIds).getAllTOs();
             fail("No IllegalArgumentException was thrown while taxon ID is null"); 
         } catch (IllegalArgumentException e) {
             // Test passed
@@ -72,39 +72,39 @@ public class MySQLHierarchicalGroupDAOIT extends MySQLITAncestor {
         
         // Taxon ID without species ID (taxonId = 111)
         taxonId = 111;
-        List<HierarchicalGroupToGeneTO> expectedGroupToGene = Arrays.asList(
-                new HierarchicalGroupToGeneTO(1, 2, 1),
-                new HierarchicalGroupToGeneTO(1, 3, 1), 
-                new HierarchicalGroupToGeneTO(5, 1, 1));
-        List<HierarchicalGroupToGeneTO> actualGroupToGene = 
-                dao.getGroupToGene(taxonId, speciesIds).getAllTOs();
+        List<HierarchicalNodeToGeneTO> expectedNodeToGene = Arrays.asList(
+                new HierarchicalNodeToGeneTO(1, 2, 1),
+                new HierarchicalNodeToGeneTO(1, 3, 1), 
+                new HierarchicalNodeToGeneTO(5, 1, 1));
+        List<HierarchicalNodeToGeneTO> actualGroupToGene = 
+                dao.getOMANodeToGene(taxonId, speciesIds).getAllTOs();
         assertTrue("HierarchicalGroupToGeneTOs incorrectly retrieved: actualGroupToGene=" +
-                actualGroupToGene + ", and expectedGroupToGene=" + expectedGroupToGene, 
-                TOComparator.areTOCollectionsEqual(actualGroupToGene, expectedGroupToGene));
+                actualGroupToGene + ", and expectedGroupToGene=" + expectedNodeToGene, 
+                TOComparator.areTOCollectionsEqual(actualGroupToGene, expectedNodeToGene));
 
         // Taxon ID without species ID (taxonId = 211)
         taxonId = 211;
-        expectedGroupToGene = Arrays.asList(new HierarchicalGroupToGeneTO(2, 2, 1));
-        actualGroupToGene = dao.getGroupToGene(taxonId, speciesIds).getAllTOs();
+        expectedNodeToGene = Arrays.asList(new HierarchicalNodeToGeneTO(2, 2, 1));
+        actualGroupToGene = dao.getOMANodeToGene(taxonId, speciesIds).getAllTOs();
         assertTrue("HierarchicalGroupToGeneTOs incorrectly retrieved", 
-                TOComparator.areTOCollectionsEqual(actualGroupToGene, expectedGroupToGene));
+                TOComparator.areTOCollectionsEqual(actualGroupToGene, expectedNodeToGene));
         
         // Taxon ID with one species ID (taxonId = 111 & species ID = 31)
         taxonId = 111;
         speciesIds.add(31);
-        expectedGroupToGene = Arrays.asList(new HierarchicalGroupToGeneTO(1, 3, 1));
-        actualGroupToGene = dao.getGroupToGene(taxonId, speciesIds).getAllTOs();
+        expectedNodeToGene = Arrays.asList(new HierarchicalNodeToGeneTO(1, 3, 1));
+        actualGroupToGene = dao.getOMANodeToGene(taxonId, speciesIds).getAllTOs();
         assertTrue("HierarchicalGroupToGeneTOs incorrectly retrieved", 
-                TOComparator.areTOCollectionsEqual(actualGroupToGene, expectedGroupToGene));
+                TOComparator.areTOCollectionsEqual(actualGroupToGene, expectedNodeToGene));
         
         // Taxon ID with two species IDs (taxonId = 111 & species ID = 31 + 11)
         speciesIds.add(11);
-        expectedGroupToGene = Arrays.asList(
-                new HierarchicalGroupToGeneTO(1, 3, 1), 
-                new HierarchicalGroupToGeneTO(5, 1, 1));        
-        actualGroupToGene = dao.getGroupToGene(taxonId, speciesIds).getAllTOs();
+        expectedNodeToGene = Arrays.asList(
+                new HierarchicalNodeToGeneTO(1, 3, 1), 
+                new HierarchicalNodeToGeneTO(5, 1, 1));        
+        actualGroupToGene = dao.getOMANodeToGene(taxonId, speciesIds).getAllTOs();
         assertTrue("HierarchicalGroupToGeneTOs incorrectly retrieved", 
-                TOComparator.areTOCollectionsEqual(actualGroupToGene, expectedGroupToGene));
+                TOComparator.areTOCollectionsEqual(actualGroupToGene, expectedNodeToGene));
     }
     
     /**
@@ -113,16 +113,16 @@ public class MySQLHierarchicalGroupDAOIT extends MySQLITAncestor {
     @Test
 	public void shouldInsertHierarchicalGroups() throws SQLException {
         this.useEmptyDB();
-        //create a Collection of HierarchicalGroupTOs to be inserted
-        Collection<HierarchicalGroupTO> hgTOs = new ArrayList<HierarchicalGroupTO>();
+        //create a Collection of HierarchicalNodeTOs to be inserted
+        Collection<HierarchicalNodeTO> hgTOs = new ArrayList<HierarchicalNodeTO>();
 
-        hgTOs.add(new HierarchicalGroupTO(1, "HOG:TOTO1", 1, 6, 10));
-        hgTOs.add(new HierarchicalGroupTO(2, "HOG:TOTO2", 2, 3, 10));
-        hgTOs.add(new HierarchicalGroupTO(3, "HOG:TOTO3", 4, 5, 0));
+        hgTOs.add(new HierarchicalNodeTO(1, "HOG:TOTO1", 1, 6, 10));
+        hgTOs.add(new HierarchicalNodeTO(2, "HOG:TOTO2", 2, 3, 10));
+        hgTOs.add(new HierarchicalNodeTO(3, "HOG:TOTO3", 4, 5, 0));
         try {
             MySQLHierarchicalGroupDAO dao = new MySQLHierarchicalGroupDAO(this.getMySQLDAOManager());
             assertEquals("Incorrect number of rows inserted", 3, 
-                    dao.insertHierarchicalGroups(hgTOs));
+                    dao.insertHierarchicalNodes(hgTOs));
             
             //we manually verify the insertion, as we do not want to rely on other methods 
             //that are tested elsewhere.
@@ -163,7 +163,7 @@ public class MySQLHierarchicalGroupDAOIT extends MySQLITAncestor {
             }
             
             this.thrown.expect(IllegalArgumentException.class);
-            dao.insertHierarchicalGroups(new HashSet<HierarchicalGroupTO>());
+            dao.insertHierarchicalNodes(new HashSet<HierarchicalNodeTO>());
         } finally {
             this.emptyAndUseDefaultDB();
         }

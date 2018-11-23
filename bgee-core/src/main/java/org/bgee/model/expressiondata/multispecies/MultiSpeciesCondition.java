@@ -3,6 +3,16 @@ package org.bgee.model.expressiondata.multispecies;
 import org.bgee.model.anatdev.AnatEntitySimilarity;
 import org.bgee.model.anatdev.DevStageSimilarity;
 
+/**
+ * This class describes the conditions related to multispecies gene expression. It captures 
+ * the anatomical entity similarity and the developmental stage similarity used in a multispecies 
+ * gene expression condition. 
+ * 
+ * @author  Julien Wollbrett
+ * @version Bgee 14, Mar. 2017
+ * @since   Bgee 14, Mar. 2017
+ */
+
 public class MultiSpeciesCondition {
 
     /**
@@ -20,8 +30,25 @@ public class MultiSpeciesCondition {
         this.anatSimilarity = anatSimilarity;
         this.stageSimilarity = stageSimilarity;
     }
+    
+    /**
+     * 
+     * @return An {@code AnatEntitySimilarity} that is the group of homologous anatomical entities
+     */
+    public AnatEntitySimilarity getAnatSimilarity() {
+		return anatSimilarity;
+	}
 
-    @Override
+    /**
+     * 
+     * @return A {@code DevStageSimilarity} that is the group of developmental stages
+     */
+	public DevStageSimilarity getStageSimilarity() {
+		return stageSimilarity;
+	}
+
+
+	@Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;

@@ -5,8 +5,8 @@ import java.util.Set;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
+import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.TransferObject;
-import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTOResultSet;
 import org.bgee.model.dao.api.exception.DAOException;
 
 /**
@@ -14,7 +14,7 @@ import org.bgee.model.dao.api.exception.DAOException;
  *
  * @author Valentine Rech de Laval
  * @author Frederic Bastian
- * @version Bgee 13 Mar. 2015
+ * @version Bgee 14 Nov 2018
  * @see SummarySimilarityAnnotationTO
  * @since Bgee 13
  */
@@ -235,17 +235,13 @@ public interface SummarySimilarityAnnotationDAO extends
      * as stored in the Bgee database. 
      * 
      * @author Valentine Rech de Laval
-     * @version Bgee 13
+     * @author Frederic Bastian
+     * @version Bgee 14 Nov 2018
      * @since Bgee 13
      */
-    public final class SummarySimilarityAnnotationTO extends TransferObject {
+    public final class SummarySimilarityAnnotationTO extends EntityTO<Integer> {
 
         private static final long serialVersionUID = 1007360248706863895L;
-
-        /**
-         * A {@code String} representing the ID of this summary similarity annotation.
-         */
-        private final String id;
         
         /**
          * An {@code Integer} representing the taxon targeted by the summary similarity annotation.
@@ -273,7 +269,7 @@ public interface SummarySimilarityAnnotationDAO extends
          * <p>
          * All of these parameters are optional, so they can be {@code null} when not used.
          * 
-         * @param id        A {@code String} that is the ID of this summary similarity annotation. 
+         * @param id        An {@code Integer} that is the ID of this summary similarity annotation. 
          * @param taxonId   An {@code Integer} that is the taxon targeted by the summary similarity 
          *                  annotation.
          * @param negated   A {@code Boolean} defining whether this annotation is negated. 
@@ -281,19 +277,12 @@ public interface SummarySimilarityAnnotationDAO extends
          *                  to this summary similarity annotation.
          * @throws IllegalArgumentException If {@code id} is empty.
          */
-        public SummarySimilarityAnnotationTO(String id, Integer taxonId, 
+        public SummarySimilarityAnnotationTO(Integer id, Integer taxonId, 
                 Boolean negated, String cioId) throws IllegalArgumentException {
-            this.id = id;
+            super(id);
             this.taxonId = taxonId;
             this.negated = negated;
             this.cioId = cioId;
-        }
-
-        /**
-         * @return  the {@code String} representing the ID of this relation.
-         */
-        public String getId() {
-            return this.id;
         }
 
         /**
@@ -352,7 +341,8 @@ public interface SummarySimilarityAnnotationDAO extends
      * an {@link org.bgee.model.dao.api.EntityTO}.
      * 
      * @author Valentine Rech de Laval
-     * @version Bgee 13
+     * @author Frederic Bastian
+     * @version Bgee 14 Nov 2018
      * @since Bgee 13
      */
     public final class SimAnnotToAnatEntityTO extends TransferObject {
@@ -360,9 +350,9 @@ public interface SummarySimilarityAnnotationDAO extends
         private static final long serialVersionUID = -1905883316221485577L;
 
         /**
-         * A {@code String} representing the ID of the summary similarity annotation.
+         * An {@code Integer} representing the ID of the summary similarity annotation.
          */
-        private final String summarySimilarityAnnotationId;
+        private final Integer summarySimilarityAnnotationId;
 
         /**
          * A {@code String} representing the ID of the anatomical entity.         
@@ -374,22 +364,22 @@ public interface SummarySimilarityAnnotationDAO extends
          * (see {@link #getSummarySimilarityAnnotationId()}) and the ID of  
          * the anatomical entity (see {@link #getAnatEntityId()}).
          * 
-         * @param summarySimilarityAnnotationId A {@code String} that is the ID of the  
+         * @param summarySimilarityAnnotationId An {@code Integer} that is the ID of the  
          *                                      summary similarity annotation.
          * @param anatEntityId                  A {@code String} that is the ID of the  
          *                                      anatomical entity.
          */
         public SimAnnotToAnatEntityTO(
-                String summarySimilarityAnnotationId, String anatEntityId) {
+                Integer summarySimilarityAnnotationId, String anatEntityId) {
             super();
             this.summarySimilarityAnnotationId = summarySimilarityAnnotationId;
             this.anatEntityId = anatEntityId;
         }
         
         /**
-         * @return  the {@code String} representing the ID of the summary similarity annotation.
+         * @return  the {@code Integer} representing the ID of the summary similarity annotation.
          */
-        public String getSummarySimilarityAnnotationId() {
+        public Integer getSummarySimilarityAnnotationId() {
             return summarySimilarityAnnotationId;
         }
 

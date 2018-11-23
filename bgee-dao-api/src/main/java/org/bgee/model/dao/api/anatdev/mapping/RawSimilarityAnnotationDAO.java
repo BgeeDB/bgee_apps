@@ -13,7 +13,8 @@ import org.bgee.model.dao.api.exception.DAOException;
  * DAO defining queries using or retrieving {@link RawSimilarityAnnotationTO}s. 
  *
  * @author Valentine Rech de Laval
- * @version Bgee 13
+ * @author Frederic Bastian
+ * @version Bgee 14 Nov 2018
  * @see RawSimilarityAnnotationTO
  * @since Bgee 13
  */
@@ -98,9 +99,9 @@ public interface RawSimilarityAnnotationDAO extends DAO<RawSimilarityAnnotationD
         private static final long serialVersionUID = -3914547838862781138L;
 
         /**
-         * A {@code String} representing the ID of the associated 'summary' similarity annotation.
+         * An {@code Integer} representing the ID of the associated 'summary' similarity annotation.
          */
-        private final String summarySimilarityAnnotationId;
+        private final Integer summarySimilarityAnnotationId;
 
         /**
          * A {@code Boolean} defining whether this annotation is negated (using the NOT qualifier 
@@ -164,7 +165,7 @@ public interface RawSimilarityAnnotationDAO extends DAO<RawSimilarityAnnotationD
          * <p>
          * All of these parameters are optional, so they can be {@code null} when not used.
          * 
-         * @param summarySimilarityAnnotationId A {@code String} that is the ID of the associated
+         * @param summarySimilarityAnnotationId An {@code Integer} that is the ID of the associated
          *                                      'summary' similarity annotation.
          * @param negated                       A {@code Boolean} defining whether this annotation is negated.
          * @param ecoId                         A {@code String} that is the ID of the Evidence Ontology 
@@ -183,7 +184,7 @@ public interface RawSimilarityAnnotationDAO extends DAO<RawSimilarityAnnotationD
          * @param annotationDate                A {@code Date} that is the date when this annotation was made.
          * @throws IllegalArgumentException
          */
-        public RawSimilarityAnnotationTO(String summarySimilarityAnnotationId, Boolean negated, 
+        public RawSimilarityAnnotationTO(Integer summarySimilarityAnnotationId, Boolean negated, 
                 String ecoId, String cioId, String referenceId, String referenceTitle, 
                 String supportingText, String assignedBy, String curator, Date annotationDate) 
                 throws IllegalArgumentException {
@@ -200,10 +201,10 @@ public interface RawSimilarityAnnotationDAO extends DAO<RawSimilarityAnnotationD
         }
 
         /**
-         * @return  the {@code String} representing the ID of the associated 'summary' 
+         * @return  the {@code Integer} representing the ID of the associated 'summary' 
          *          similarity annotation.
          */
-        public String getSummarySimilarityAnnotationId() {
+        public Integer getSummarySimilarityAnnotationId() {
             return this.summarySimilarityAnnotationId;
         }
 

@@ -17,6 +17,8 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTO;
 import org.bgee.model.dao.api.anatdev.StageDAO.StageTO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
+import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SimAnnotToAnatEntityTO;
+import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO;
 import org.bgee.model.dao.api.expressiondata.BaseConditionTO.Sex;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
@@ -965,5 +967,49 @@ public class TOComparatorTest extends TestAncestor {
         assertTrue("Should be equals: " + ten0 + " " + ten1, TOComparator.areBigDecimalEquals(ten0, ten1));
         assertTrue("Should be equals: " + ten0 + " " + ten0, TOComparator.areBigDecimalEquals(ten0, ten0));
 
+    }
+
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object)}
+     * using {@code SummarySimilarityAnnotationTO}s.
+     */
+    @Test
+    public void testAreSummarySimilarityAnnotationTOEqual() {
+        SummarySimilarityAnnotationTO to1 = new SummarySimilarityAnnotationTO(1, 1, false, "CIO:001");
+        SummarySimilarityAnnotationTO to2 = new SummarySimilarityAnnotationTO(1, 1, false, "CIO:001");
+        assertTrue(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new SummarySimilarityAnnotationTO(2, 1, false, "CIO:001");
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+
+        to2 = new SummarySimilarityAnnotationTO(1, 2, false, "CIO:001");
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+        
+        to2 = new SummarySimilarityAnnotationTO(1, 1, true, "CIO:001");
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new SummarySimilarityAnnotationTO(1, 1, false, "CIO:002");
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new SummarySimilarityAnnotationTO(2, 2, false, "CIO:001");
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        assertFalse(TOComparator.areTOsEqual(to1, to2, false));
+    }
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object)}
+     * using {@code SimAnnotToAnatEntityTO}s.
+     */
+    @Test
+    public void testAreSimAnnotToAnatEntityTOEqual() {
+        SimAnnotToAnatEntityTO to1 = new SimAnnotToAnatEntityTO(1, "UBERON:001");
+        SimAnnotToAnatEntityTO to2 = new SimAnnotToAnatEntityTO(1, "UBERON:001");
+        assertTrue(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new SimAnnotToAnatEntityTO(2, "UBERON:001");
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new SimAnnotToAnatEntityTO(1, "UBERON:002");
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
     }
 }

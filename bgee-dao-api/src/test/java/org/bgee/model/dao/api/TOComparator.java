@@ -174,7 +174,7 @@ public class TOComparator {
         } else if (to1 instanceof SummarySimilarityAnnotationTO) {
             return log.exit(areTOsEqual(
                     (SummarySimilarityAnnotationTO) to1, 
-                    (SummarySimilarityAnnotationTO) to2));
+                    (SummarySimilarityAnnotationTO) to2, compareId));
         } else if (to1 instanceof SimAnnotToAnatEntityTO) {
             return log.exit(areTOsEqual((SimAnnotToAnatEntityTO) to1, (SimAnnotToAnatEntityTO) to2));
         } else if (to1 instanceof GroupToStageTO) {
@@ -1007,7 +1007,7 @@ public class TOComparator {
     private static boolean areTOsEqual(RawSimilarityAnnotationTO to1, RawSimilarityAnnotationTO to2) {
         log.entry(to1, to2);
         
-        if (StringUtils.equals(to1.getSummarySimilarityAnnotationId(), to2.getSummarySimilarityAnnotationId()) &&
+        if (Objects.equals(to1.getSummarySimilarityAnnotationId(), to2.getSummarySimilarityAnnotationId()) &&
             Objects.equals(to1.isNegated(), to2.isNegated()) &&
             StringUtils.equals(to1.getECOId(), to2.getECOId()) &&
             StringUtils.equals(to1.getCIOId(), to2.getCIOId()) &&
@@ -1031,9 +1031,9 @@ public class TOComparator {
      * @return      {@code true} if {@code to1} and {@code to2} have all attributes equal.
      */
     private static boolean areTOsEqual(SummarySimilarityAnnotationTO to1, 
-            SummarySimilarityAnnotationTO to2) {
+            SummarySimilarityAnnotationTO to2, boolean compareId) {
         log.entry(to1, to2);
-        if (StringUtils.equals(to1.getId(), to2.getId()) &&
+        if (TOComparator.areEntityTOsEqual(to1, to2, compareId) &&
             Objects.equals(to1.getTaxonId(), to2.getTaxonId()) &&
             Objects.equals(to1.isNegated(), to2.isNegated()) &&
             StringUtils.equals(to1.getCIOId(), to2.getCIOId())) {
@@ -1052,7 +1052,7 @@ public class TOComparator {
      */
     private static boolean areTOsEqual(SimAnnotToAnatEntityTO to1, SimAnnotToAnatEntityTO to2) {
         log.entry(to1, to2);
-        if (StringUtils.equals(
+        if (Objects.equals(
                 to1.getSummarySimilarityAnnotationId(), to2.getSummarySimilarityAnnotationId()) &&
             StringUtils.equals(to1.getAnatEntityId(), to2.getAnatEntityId())) {
             return log.exit(true);

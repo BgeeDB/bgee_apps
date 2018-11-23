@@ -54,6 +54,19 @@ public interface TaxonDAO extends DAO<TaxonDAO.Attribute> {
      */
     public TaxonTOResultSet getAllTaxa() throws DAOException;
     /**
+     * Retrieve taxa from their NCBI taxon IDs.
+     * <p>
+     * The taxa are retrieved and returned as a {@code TaxonTOResultSet}. 
+     * It is the responsibility of the caller to close this {@code DAOResultSet} once 
+     * results are retrieved.
+     *
+     * @param taxonIds  A {@code Collection} of {@code Integer}s that are the IDs of the requested taxa.
+     *                  Can be {@code null} or empty if all taxa are requested.
+     * @return A {@code TaxonTOResultSet} containing the requested taxa.
+     * @throws DAOException If an error occurred when accessing the data source. 
+     */
+    public TaxonTOResultSet getTaxaByIds(Collection<Integer> taxonIds) throws DAOException;
+    /**
      * Retrieve taxa that are either least common ancestor or parent taxon of species in Bgee.
      * For instance, "31414 Euarchontoglires" is the least common ancestor of human and mouse, 
      * and "9605 Homo" the parent taxon of human. 

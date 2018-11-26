@@ -1569,7 +1569,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "This requires careful annotations of the homology history of animal anatomy. "
                 + "These annotations are described in a separate project maintained "
                 + "by the Bgee team, see <a target='_blank' "
-                + "href='https://github.com/BgeeDB/anatomical-similarity-annotations/' "
+                + "href='" + BGEE_GITHUB_URL + "/anatomical-similarity-annotations/' "
                 + "title='See anatomical-similarity-annotations project on GitHub'>"
                 + "homology annotation project on GitHub</a>. <br />"
                 + "In practice, when comparing expression data between several species, "
@@ -3128,13 +3128,13 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + " (column 21)</h5>");
         this.writeln("<p>Unique identifier from the "
                 + "<a target='_blank' title='External link to CIO in OBO' "
-                + "href='https://github.com/BgeeDB/confidence-information-ontology/blob/master/src/ontology/cio-simple.obo'>"
+                + "href='" + BGEE_GITHUB_URL + "/confidence-information-ontology/blob/master/src/ontology/cio-simple.obo'>"
                 + "Confidence Information Ontology</a>, providing the confidence "
                 + "in the annotation of homology of anatomical entities defined in <code>"
                 + MULTI_ANAT_ENTITY_IDS_COL_NAME + "</code> (column 4). This ontology is an attempt "
                 + "to provide a mean to capture the confidence in annotations. "
                 + "See <a target='_blank' title='External link to CIO project' "
-                + "href='https://github.com/BgeeDB/confidence-information-ontology'>"
+                + "href='" + BGEE_GITHUB_URL + "/confidence-information-ontology'>"
                 + "project home</a> for more details.</p>");
         this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
                 + "_col22'>" + ANAT_HOMOLOGY_CIO_NAME_COL_NAME 

@@ -58,6 +58,11 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             "https://bioconductor.org/packages/release/bioc/html/BgeeDB.html";
 
     /**
+     * A {@code String} to be used in {@code class} attribute.
+     */
+    protected static final String BGEE_GITHUB_URL = "https://github.com/BgeeDB";
+    
+    /**
      * A {@code String} that is the URL of the licence CC0 of Creative Commons.
      */
     protected static final String LICENCE_CC0_URL =
@@ -469,6 +474,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 .append(PROCESSED_EXPR_VALUES_PAGE_NAME).append("</a></li>");
         navbar.append("<li><a href='" + BGEE_R_PACKAGE_URL + "' target='_blank'>"
                 + "BgeeDB R package</a></li>");
+        navbar.append("<li><a href='" + BGEE_GITHUB_URL + "' target='_blank'>"
+                + "BgeeDB GitHub repository</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
 

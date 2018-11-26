@@ -294,8 +294,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 
         this.writeln("<script type='application/ld+json'>{");
         this.writeln("  \"@context\": [");
-        this.writeln("    { \"bs\": \"http://bioschemas.org/\" }, \"http://schema.org\"," +
-                "         {\"@base\": \"http://schema.org\"}");
+        this.writeln("    { \"bs\": \"http://bioschemas.org/\" }, \"https://schema.org\"," +
+                "         {\"@base\": \"https://schema.org\"}");
         this.writeln("  ],");
         this.writeln("  \"@type\": \"Dataset\",");
         this.writeln("  \"@id\": \"" + this.getRequestParameters().getRequestURL() + "\",");

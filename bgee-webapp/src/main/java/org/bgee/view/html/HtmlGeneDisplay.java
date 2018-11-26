@@ -184,20 +184,16 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                     + "col-lg-offset-3 col-lg-6";
         }
         
-        RequestParameters urlTarget = this.getNewRequestParameters();
-        urlTarget.setGeneId(htmlEntities("{search}"));
-
         StringBuilder box = new StringBuilder();
-        box.append("<div class='row' property='schema:potentialAction' typeof='schema:SearchAction'>");
+        box.append("<div class='row'>");
         box.append("<div id='bgee_gene_search' class='row well well-sm ").append(bgeeGeneSearchClass).append("'>");
         box.append("    <form action='javascript:void(0);' method='get'>");
         box.append("        <div class='form'>");
-        box.append("            <meta property='target' content='").append(urlTarget.getRequestURL()).append("'/>");
-        box.append("            <label for='bgee_gene_search_completion_box' property='schema:query'>Search gene</label>");
+        box.append("            <label for='bgee_gene_search_completion_box'>Search gene</label>");
         box.append(             example.toString());
         box.append("            <span id='bgee_species_search_msg' class='search_msg'></span>");
         box.append("            <input id='bgee_gene_search_completion_box' class='form-control' " +
-                                    "autocomplete='off' type='text' name='search' property='schema:query-input'/>");
+                                    "autocomplete='off' type='text' name='search'/>");
         box.append("        </div>");
         box.append("    </form>");
         box.append("</div>");

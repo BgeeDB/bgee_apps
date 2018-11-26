@@ -54,8 +54,23 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     /**
      * A {@code String} to be used in {@code class} attribute.
      */
-    protected static final String BGEE_R_PACKAGE_URL = 
+    protected static final String BGEE_R_PACKAGE_URL =
             "https://bioconductor.org/packages/release/bioc/html/BgeeDB.html";
+
+    /**
+     * A {@code String} that are the keywords defining Bgee.
+     */
+    protected static final String BGEE_KEYWORDS =
+            "bgee, gene expression, evolution, ontology, anatomy, development, " +
+            "evo-devo database, anatomical ontology, developmental ontology, gene expression evolution";
+    
+    /**
+     * A {@code String} that is the description of Bgee.
+     */
+    protected static final String BGEE_DESCRIPTION =
+            "Bgee allows to automatically compare gene expression patterns between species, " +
+                    "by referencing expression data on anatomical ontologies, and designing homology " +
+                    "relationships between them.";
 
     /**
      * A {@code String} that is the URL of the licence CC0 of Creative Commons.
@@ -256,11 +271,6 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     protected void startDisplay(String title) {
         log.entry(title);
         
-        String description = "Bgee allows to automatically compare gene expression patterns between species, " +
-                "by referencing expression data on anatomical ontologies, and designing homology " +
-                "relationships between them.";
-        String keywords = "bgee, gene expression, evolution, ontology, anatomy, development, " +
-                "evo-devo database, anatomical ontology, developmental ontology, gene expression evolution";
         this.sendHeaders();
         this.writeln("<!DOCTYPE html>");
         this.writeln("<html lang='en' class='no-js'>");
@@ -268,8 +278,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("<meta charset='UTF-8'>");
         this.writeln("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
         this.writeln("<title>"+title+"</title>");
-        this.writeln("<meta name='description' content='" + description + "'/>");
-        this.writeln("<meta name='keywords' content='" + keywords + "'/>");
+        this.writeln("<meta name='description' content='" + BGEE_DESCRIPTION + "'/>");
+        this.writeln("<meta name='keywords' content='" + BGEE_KEYWORDS + "'/>");
         this.writeln("<meta name='dcterms.rights' content='Bgee copyright 2007/"
                 + ZonedDateTime.now(ZoneId.of("Europe/Zurich")).getYear()
                 + " UNIL' />");
@@ -291,32 +301,6 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("ga('create', 'UA-18281910-2', 'auto');");
         this.writeln("ga('send', 'pageview');");
         this.writeln("</script>");
-
-        this.writeln("<script type='application/ld+json'>{");
-        this.writeln("  \"@context\": [");
-        this.writeln("    { \"bs\": \"http://bioschemas.org/\" }, \"https://schema.org\"," +
-                "         {\"@base\": \"https://schema.org\"}");
-        this.writeln("  ],");
-        this.writeln("  \"@type\": \"Dataset\",");
-        this.writeln("  \"@id\": \"" + this.getRequestParameters().getRequestURL() + "\",");
-        this.writeln("  \"url\": \"" + this.getRequestParameters().getRequestURL() + "\",");
-        this.writeln("  \"name\": \"Bgee\",");
-        this.writeln("  \"description\": \"" + description + "\",");
-        this.writeln("  \"keywords\": \"" + keywords + "\",");
-        this.writeln("  \"creator\": [");
-        this.writeln("    {\"@type\": \"EducationalOrganization\", \"name\": \"Evolutionary Bioinformatics group\"}");
-        this.writeln("  ],");
-        this.writeln("  \"distribution\": [");
-        this.writeln("    {\"@type\": \"DataDownload\", \"contentUrl\": \""+ this.prop.getFTPRootDirectory() + "\"," +
-                "          \"fileFormat\": \"FTP\"}");
-        this.writeln("  ],");
-        this.writeln("  \"funder\": [");
-        this.writeln("    {\"@type\": \"NGO\", \"name\": \"SIB Swiss Institute of Bioinformatics\"}, ");
-        this.writeln("    {\"@type\": \"EducationalOrganization\", \"name\": \"UNIL University of Lausanne\"}");
-        this.writeln("  ],");
-        this.writeln("  \"license\": \"https://creativecommons.org/publicdomain/zero/1.0/\",");
-        this.writeln("  \"version\": \"" + this.getWebAppVersion() + "\"");
-        this.writeln("}</script>");
 
         this.writeln("</head>");
 

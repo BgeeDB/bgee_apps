@@ -101,12 +101,12 @@ public class HtmlDocumentationDataSets extends HtmlDocumentationDownloadFile {
         this.writeln("<div class='doc_content'>");
         this.writeln("<ul>");
         this.writeln("  <li>Annotations can be retrieved from <a href='"+ this.prop.getFTPRootDirectory() +
-                "/download/processed_expr_values/rna_seq/Homo_sapiens/Homo_sapiens_RNA-Seq_experiments_libraries.zip' " +
+                "/download/processed_expr_values/rna_seq/Homo_sapiens/Homo_sapiens_RNA-Seq_experiments_libraries.tar.gz' " +
                 "title='Retrieve human RNA-Seq data per experiment'>RNA-Seq human experiments/libraries info</a>. " +
                 "Experiment ID of GTEx is 'SRP012682'.</li>");
         this.writeln("  <li>Processed expression values, from GTEx only, are available on our FTP " +
                 "(<a href='" + this.prop.getFTPRootDirectory() + "/download/processed_expr_values/" +
-                "rna_seq/Homo_sapiens/Homo_sapiens_RNA-Seq_read_counts_TPM_FPKM_SRP012682.tsv.zip'>" +
+                "rna_seq/Homo_sapiens/Homo_sapiens_RNA-Seq_read_counts_TPM_FPKM_SRP012682.tsv.tar.gz'>" +
                 "download file</a>).</li>");
         this.writeln("  <li>Gene expression calls are included into <a href='" + urlExprCalls.getRequestURL() +
                 "#id1'>human files</a></li>");
@@ -125,27 +125,23 @@ public class HtmlDocumentationDataSets extends HtmlDocumentationDownloadFile {
         this.writeln("<ul>");
         this.writeln("  <li>Annotations can be retrieved from RNA-Seq human experiments/libraries " +
                 "information. Experiment ID of GTEx is 'SRP012682'.");
-        this.writeln("<pre><code>{");
-        this.writeln("    source(\"https://bioconductor.org/biocLite.R\")");
+        this.writeln("<pre><code>    source(\"https://bioconductor.org/biocLite.R\")");
         this.writeln("    biocLite(\"BgeeDB\")");
         this.writeln("    library(BgeeDB)");
         this.writeln("    bgee <- Bgee$new(species = \"Homo_sapiens\", dataType = \"rna_seq\")");
         this.writeln("    myAnnotation <- getAnnotation(bgee)");
-        this.writeln("}");
         this.writeln("</code></pre></li>");
 
         this.writeln("  <li>Quantitative expression data and presence calls for GTEx can be loaded.");
-        this.writeln("<pre><code>{");
-        this.writeln("    bgee <- Bgee$new(species = \"Homo_sapiens\", dataType = \"rna_seq\")");
+        this.writeln("<pre><code>    bgee <- Bgee$new(species = \"Homo_sapiens\", dataType = \"rna_seq\")");
+        this.writeln("    # This step can take a lot of time as all Bgee GTEx data have to be downloaded and uncompressed.");
         this.writeln("    dataGTEx <- getData(bgee, experimentId = \"SRP012682\")");
-        this.writeln("}");
         this.writeln("</code></pre></li>");
 
         this.writeln("  <li>TopAnat analyses can be performs, which leverage the power of the " +
                 "abundant GTEx data integrated with many smaller datasets to provide biological " +
                 "insight into gene lists.");
-        this.writeln("<pre><code>{");
-        this.writeln("    bgee <- Bgee$new(species = \"Homo_sapiens\")");
+        this.writeln("<pre><code>    bgee <- Bgee$new(species = \"Homo_sapiens\")");
         this.writeln("    myTopAnatData <- loadTopAnatData(bgee)");
         this.writeln("    # Retrieve all genes with data in Bgee");
         this.writeln("    allGenes <- unique(row.names(myTopAnatData$gene2anatomy))");
@@ -277,7 +273,6 @@ public class HtmlDocumentationDataSets extends HtmlDocumentationDownloadFile {
         this.writeln("    # Format results");
         this.writeln("    tableOver <- makeTable(myTopAnatData, myTopAnatObject, resFis, 0.1)");
         this.writeln("    tableOver");
-        this.writeln("}");
         this.writeln("</code></pre></li>");
         this.writeln("</ul>");
         this.writeln("</div>");

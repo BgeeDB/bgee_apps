@@ -134,7 +134,7 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
                 + "<br>BgeeDB, an R package for retrieval of curated expression datasets and "
                 + "for gene list enrichment tests."
                 + "<br><em>in</em> F1000Research. "
-                + "[<a target='_blank' href='https://f1000research.com/articles/5-2748/v1' " 
+                + "[<a target='_blank' href='https://f1000research.com/articles/5-2748/v2' " 
                 + "title='BgeeDB, an R package for retrieval of curated expression datasets and "
                 + "for gene list enrichment tests'>url</a>] "
                 + "<a href='ftp://ftp.bgee.org/general/citation05.ris'>RIS</a></li>");

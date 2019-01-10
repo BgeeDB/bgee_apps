@@ -61,6 +61,19 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
     private static final String EXPR_STATE_LINK_TITLE = "See " + EXPR_STATE_COL_NAME 
             + " column description";
     /**
+     * A {@code String} that is the name of the expression rank column in download files, 
+     * HTML escaped if necessary.
+     * @see #EXPR_STATE_LINK_TITLE
+     */
+    private static final String EXPR_RANK_COL_NAME = "Expression rank";
+    /**
+     * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
+     * expression rank column description, HTML escaped if necessary.
+     * @see #EXPR_STATE_COL_NAME
+     */
+    private static final String EXPR_RANK_LINK_TITLE = "See " + EXPR_RANK_COL_NAME 
+            + " column description";
+    /**
      * A {@code String} that is the name of the expression quality column in download files, 
      * HTML escaped if necessary.
      * @see #EXPR_QUAL_LINK_TITLE
@@ -88,18 +101,74 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
     private static final String AFFY_EXPR_STATE_LINK_TITLE = "See " + AFFY_EXPR_STATE_COL_NAME 
             + " column description";
     /**
+     * A {@code String} that is the name of the column containing the count of present high affymetrix data 
+     * in download files, HTML escaped if necessary.
+     * @see #AFFY_PRES_HIGH_LINK_TITLE
+     */
+    private static final String AFFY_PRES_HIGH_COUNT_COL_NAME = "Affymetrix experiment count showing expression of this gene in this condition or in sub-conditions with a high quality";
+    /**
+     * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
+     * count of present high affymetrix data column description (used several times), 
+     * HTML escaped if necessary.
+     * @see #AFFY_PRES_HIGH_COUNT_COL_NAME
+     */
+    private static final String AFFY_PRES_HIGH_COUNT_LINK_TITLE = "See " + AFFY_PRES_HIGH_COUNT_COL_NAME 
+            + " column description";
+    /**
+     * A {@code String} that is the name of the column containing the count of present low affymetrix data 
+     * in download files, HTML escaped if necessary.
+     * @see #AFFY_PRES_LOW_LINK_TITLE
+     */
+    private static final String AFFY_PRES_LOW_COUNT_COL_NAME = "Affymetrix experiment count showing expression of this gene in this condition or in sub-conditions with a low quality";
+    /**
+     * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
+     * count of present low affymetrix data column description (used several times), 
+     * HTML escaped if necessary.
+     * @see #AFFY_PRES_LOW_COUNT_COL_NAME
+     */
+    private static final String AFFY_PRES_LOW_COUNT_LINK_TITLE = "See " + AFFY_PRES_LOW_COUNT_COL_NAME 
+            + " column description";
+    /**
+     * A {@code String} that is the name of the column containing the count of absent high affymetrix data 
+     * in download files, HTML escaped if necessary.
+     * @see #AFFY_ABS_HIGH_LINK_TITLE
+     */
+    private static final String AFFY_ABS_HIGH_COUNT_COL_NAME = "Affymetrix experiment count showing absence of expression of this gene in this condition or in sub-conditions with a high quality";
+    /**
+     * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
+     * count of absent high affymetrix data column description (used several times), 
+     * HTML escaped if necessary.
+     * @see #AFFY_ABS_HIGH_COUNT_COL_NAME
+     */
+    private static final String AFFY_ABS_HIGH_COUNT_LINK_TITLE = "See " + AFFY_ABS_HIGH_COUNT_COL_NAME 
+            + " column description";
+    /**
+     * A {@code String} that is the name of the column containing the count of absent low affymetrix data 
+     * in download files, HTML escaped if necessary.
+     * @see #AFFY_ABS_LOW_LINK_TITLE
+     */
+    private static final String AFFY_ABS_LOW_COUNT_COL_NAME = "Affymetrix experiment count showing absence of expression of this gene in this condition or in sub-conditions with a low quality";
+    /**
+     * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
+     * count of absent low affymetrix data column description (used several times), 
+     * HTML escaped if necessary.
+     * @see #AFFY_ABS_LOW_COUNT_COL_NAME
+     */
+    private static final String AFFY_ABS_LOW_COUNT_LINK_TITLE = "See " + AFFY_ABS_LOW_COUNT_COL_NAME 
+            + " column description";
+    /**
      * A {@code String} that is the name of the expression quality column  for Affymetrix data 
      * in download files, HTML escaped if necessary.
      * @see #AFFY_EXPR_QUAL_LINK_TITLE
      */
     private static final String AFFY_EXPR_QUAL_COL_NAME = "Affymetrix call quality";
-    /**
-     * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
-     * affymetrix expression quality column description (used several times), HTML escaped if necessary.
-     * @see #AFFY_EXPR_QUAL_COL_NAME
-     */
-    private static final String AFFY_EXPR_QUAL_LINK_TITLE = "See " + AFFY_EXPR_QUAL_COL_NAME 
-            + " column description";
+//    /**
+//     * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
+//     * affymetrix expression quality column description (used several times), HTML escaped if necessary.
+//     * @see #AFFY_EXPR_QUAL_COL_NAME
+//     */
+//    private static final String AFFY_EXPR_QUAL_LINK_TITLE = "See " + AFFY_EXPR_QUAL_COL_NAME 
+//            + " column description";
     /**
      * A {@code String} that is the name of the expression state column for EST data 
      * in download files, HTML escaped if necessary.
@@ -114,18 +183,34 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
     private static final String EST_EXPR_STATE_LINK_TITLE = "See " + EST_EXPR_STATE_COL_NAME 
             + " column description";
     /**
-     * A {@code String} that is the name of the expression quality column  for EST data 
+     * A {@code String} that is the name of the column containing the count of present high EST data 
      * in download files, HTML escaped if necessary.
-     * @see #EST_EXPR_QUAL_LINK_TITLE
+     * @see #EST_PRES_HIGH_LINK_TITLE
      */
-    private static final String EST_EXPR_QUAL_COL_NAME = "EST call quality";
+    private static final String EST_PRES_HIGH_COUNT_COL_NAME = "EST experiment count showing expression of this gene in this condition or in sub-conditions with a high quality";
     /**
      * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
-     * EST expression quality column description (used several times), HTML escaped if necessary.
-     * @see #EST_EXPR_QUAL_COL_NAME
+     * count of present high EST data column description (used several times), 
+     * HTML escaped if necessary.
+     * @see #EST_PRES_HIGH_COUNT_COL_NAME
      */
-    private static final String EST_EXPR_QUAL_LINK_TITLE = "See " + EST_EXPR_QUAL_COL_NAME 
+    private static final String EST_PRES_HIGH_COUNT_LINK_TITLE = "See " + EST_PRES_HIGH_COUNT_COL_NAME 
             + " column description";
+    /**
+     * A {@code String} that is the name of the column containing the count of present low EST data 
+     * in download files, HTML escaped if necessary.
+     * @see #EST_PRES_LOW_LINK_TITLE
+     */
+    private static final String EST_PRES_LOW_COUNT_COL_NAME = "EST experiment count showing expression of this gene in this condition or in sub-conditions with a low quality";
+    /**
+     * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
+     * count of present low EST data column description (used several times), 
+     * HTML escaped if necessary.
+     * @see #AFFY_PRES_LOW_COUNT_COL_NAME
+     */
+    private static final String EST_PRES_LOW_COUNT_LINK_TITLE = "See " + EST_PRES_LOW_COUNT_COL_NAME 
+            + " column description";
+
     /**
      * A {@code String} that is the name of the expression state column for in situ data 
      * in download files, HTML escaped if necessary.
@@ -140,18 +225,62 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
     private static final String IN_SITU_EXPR_STATE_LINK_TITLE = "See " + IN_SITU_EXPR_STATE_COL_NAME 
             + " column description";
     /**
-     * A {@code String} that is the name of the expression quality column  for in situ data 
+     * A {@code String} that is the name of the column containing the count of present high in situ data 
      * in download files, HTML escaped if necessary.
-     * @see #IN_SITU_EXPR_QUAL_LINK_TITLE
+     * @see #IN_SITU_PRES_HIGH_LINK_TITLE
      */
-    private static final String IN_SITU_EXPR_QUAL_COL_NAME = "In situ call quality";
+    private static final String IN_SITU_PRES_HIGH_COUNT_COL_NAME = "In situ hybridization experiment count showing expression of this gene in this condition or valid parent conditions with a high quality";
     /**
      * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
-     * EST expression quality column description (used several times), HTML escaped if necessary.
-     * @see #IN_SITU_EXPR_QUAL_COL_NAME
+     * count of present high in situ data column description (used several times), 
+     * HTML escaped if necessary.
+     * @see #IN_SITU_PRES_HIGH_COUNT_COL_NAME
      */
-    private static final String IN_SITU_EXPR_QUAL_LINK_TITLE = "See " + IN_SITU_EXPR_QUAL_COL_NAME 
+    private static final String IN_SITU_PRES_HIGH_COUNT_LINK_TITLE = "See " + IN_SITU_PRES_HIGH_COUNT_COL_NAME 
             + " column description";
+    /**
+     * A {@code String} that is the name of the column containing the count of present low in situ data 
+     * in download files, HTML escaped if necessary.
+     * @see #IN_SITU_PRES_LOW_LINK_TITLE
+     */
+    private static final String IN_SITU_PRES_LOW_COUNT_COL_NAME = "In situ hybridization experiment count showing expression of this gene in this condition or in sub-conditions with a low quality";
+    /**
+     * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
+     * count of present low in situ data column description (used several times), 
+     * HTML escaped if necessary.
+     * @see #IN_SITU_PRES_LOW_COUNT_COL_NAME
+     */
+    private static final String IN_SITU_PRES_LOW_COUNT_LINK_TITLE = "See " + IN_SITU_PRES_LOW_COUNT_COL_NAME 
+            + " column description";
+    /**
+     * A {@code String} that is the name of the column containing the count of absent in situ data 
+     * in download files, HTML escaped if necessary.
+     * @see #IN_SITU_ABS_HIGH_LINK_TITLE
+     */
+    private static final String IN_SITU_ABS_HIGH_COUNT_COL_NAME = "In situ hybridization experiment count showing absence of expression of this gene in this condition or valid parent conditions with a high quality";
+    /**
+     * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
+     * count of absent high in situ data column description (used several times), 
+     * HTML escaped if necessary.
+     * @see #IN_SITU_ABS_HIGH_COUNT_COL_NAME
+     */
+    private static final String IN_SITU_ABS_HIGH_COUNT_LINK_TITLE = "See " + IN_SITU_ABS_HIGH_COUNT_COL_NAME 
+            + " column description";
+    /**
+     * A {@code String} that is the name of the column containing the count of absent low in situ data 
+     * in download files, HTML escaped if necessary.
+     * @see #IN_SITU_ABS_LOW_LINK_TITLE
+     */
+    private static final String IN_SITU_ABS_LOW_COUNT_COL_NAME = "In situ hybridization experiment count showing absence of expression of this gene in this condition or valid parent conditions with a low quality";
+    /**
+     * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
+     * count of absent low in situ data column description (used several times), 
+     * HTML escaped if necessary.
+     * @see #IN_SITU_ABS_LOW_COUNT_COL_NAME
+     */
+    private static final String IN_SITU_ABS_LOW_COUNT_LINK_TITLE = "See " + IN_SITU_ABS_LOW_COUNT_COL_NAME 
+            + " column description";
+
     /**
      * A {@code String} that is the name of the expression state column for RNA-Seq data  
      * in download files, HTML escaped if necessary.
@@ -165,19 +294,77 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      */
     private static final String RNA_SEQ_EXPR_STATE_LINK_TITLE = "See " + RNA_SEQ_EXPR_STATE_COL_NAME 
             + " column description";
+    
+    /**
+     * A {@code String} that is the name of the column containing the count of present high rna-seq data 
+     * in download files, HTML escaped if necessary.
+     * @see #RNA_SEQ_PRES_HIGH_LINK_TITLE
+     */
+    private static final String RNA_SEQ_PRES_HIGH_COUNT_COL_NAME = "RNA-Seq experiment count showing expression of this gene in this condition or in sub-conditions with a high quality";
+    /**
+     * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
+     * count of present high rna-seq data column description (used several times), 
+     * HTML escaped if necessary.
+     * @see #RNA_SEQ_PRES_HIGH_COUNT_COL_NAME
+     */
+    private static final String RNA_SEQ_PRES_HIGH_COUNT_LINK_TITLE = "See " + RNA_SEQ_PRES_HIGH_COUNT_COL_NAME 
+            + " column description";
+    /**
+     * A {@code String} that is the name of the column containing the count of present low rna-seq data 
+     * in download files, HTML escaped if necessary.
+     * @see #RNA_SEQ_PRES_LOW_LINK_TITLE
+     */
+    private static final String RNA_SEQ_PRES_LOW_COUNT_COL_NAME = "RNA-Seq experiment count showing expression of this gene in this condition or in sub-conditions with a low quality";
+    /**
+     * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
+     * count of present low rna-seq data column description (used several times), 
+     * HTML escaped if necessary.
+     * @see #RNA_SEQ_PRES_LOW_COUNT_COL_NAME
+     */
+    private static final String RNA_SEQ_PRES_LOW_COUNT_LINK_TITLE = "See " + RNA_SEQ_PRES_LOW_COUNT_COL_NAME 
+            + " column description";
+    /**
+     * A {@code String} that is the name of the column containing the count of absent high rna-seq data 
+     * in download files, HTML escaped if necessary.
+     * @see #RNA_SEQ_ABS_HIGH_LINK_TITLE
+     */
+    private static final String RNA_SEQ_ABS_HIGH_COUNT_COL_NAME = "RNA-Seq experiment count showing absence of expression of this gene in this condition or in sub-conditions with a high quality";
+    /**
+     * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
+     * count of absent high rna-seq data column description (used several times), 
+     * HTML escaped if necessary.
+     * @see #RNA_SEQ_BS_HIGH_COUNT_COL_NAME
+     */
+    private static final String RNA_SEQ_ABS_HIGH_COUNT_LINK_TITLE = "See " + RNA_SEQ_ABS_HIGH_COUNT_COL_NAME 
+            + " column description";
+    /**
+     * A {@code String} that is the name of the column containing the count of absent low rna-seq data 
+     * in download files, HTML escaped if necessary.
+     * @see #RNA_SEQ_ABS_LOW_LINK_TITLE
+     */
+    private static final String RNA_SEQ_ABS_LOW_COUNT_COL_NAME = "RNA-Seq experiment count showing absence of expression of this gene in this condition or in sub-conditions with a low quality";
+    /**
+     * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
+     * count of absent low rna-seq data column description (used several times), 
+     * HTML escaped if necessary.
+     * @see #RNA_SEQ_ABS_LOW_COUNT_COL_NAME
+     */
+    private static final String RNA_SEQ_ABS_LOW_COUNT_LINK_TITLE = "See " + RNA_SEQ_ABS_LOW_COUNT_COL_NAME 
+            + " column description";
+    
     /**
      * A {@code String} that is the name of the expression quality column  for in situ data 
      * in download files, HTML escaped if necessary.
      * @see #RNA_SEQ_EXPR_QUAL_LINK_TITLE
      */
     private static final String RNA_SEQ_EXPR_QUAL_COL_NAME = "RNA-Seq call quality";
-    /**
-     * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
-     * EST expression quality column description (used several times), HTML escaped if necessary.
-     * @see #RNA_SEQ_EXPR_QUAL_COL_NAME
-     */
-    private static final String RNA_SEQ_EXPR_QUAL_LINK_TITLE = "See " + RNA_SEQ_EXPR_QUAL_COL_NAME 
-            + " column description";
+//    /**
+//     * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
+//     * EST expression quality column description (used several times), HTML escaped if necessary.
+//     * @see #RNA_SEQ_EXPR_QUAL_COL_NAME
+//     */
+//    private static final String RNA_SEQ_EXPR_QUAL_LINK_TITLE = "See " + RNA_SEQ_EXPR_QUAL_COL_NAME 
+//            + " column description";
     /**
      * A {@code String} that is the name of the column describing whether data were "observed",
      * in download files, HTML escaped if necessary.
@@ -539,31 +726,27 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "<ul class='doc_content'>"
                 + "<li><span class='list_element_title'>present</span>: "
                 + "report of presence of expression, from Bgee statistical tests and/or from "
-                + "<i>in situ</i> data sources. See <code>" + EXPR_QUAL_COL_NAME 
-                + "</code> (column " + exprQualColNumber + ") for associated quality level.</li>"
+                + "<i>in situ</i> data sources.</li>"
                 + "<li><span class='list_element_title'>absent</span>: "
                 + "report of absence of expression, from Bgee statistical tests and/or "
-                + "from <i>in situ</i> data sources. In Bgee, calls of absence of expression "
+                + "from <i>in situ</i> data sources. </li></ul>"
+                + "<p>In Bgee, calls of absence of expression "
                 + "are always discarded if there exists a contradicting call of expression, "
-                + "from the same data type and for the same gene, in the same anatomical entity "
-                + "and developmental stage, or in a child entity or child developmental stage. "
-                + "See <code>" + EXPR_QUAL_COL_NAME + "</code> (column " + exprQualColNumber 
-                + ") for associated quality level.</li>"
-                + "<li><span class='list_element_title'>low ambiguity</span>: "
-                + "there exists a call of expression generated from a data type, but "
-                + "there exists a call of absence of expression generated from another data type "
-                + "for the same gene in a parent anatomical entity at the same developmental "
-                + "stage. For instance, gene A is reported to be expressed in the midbrain "
-                + "at young adult stage from Affymetrix data, but is reported to be not expressed "
-                + "in the brain at young adult stage from RNA-Seq data.</li>"
-                + "<li><span class='list_element_title'>high ambiguity</span>: "
-                + "there exists a call of expression generated from a data type, but "
-                + "there exists a call of absence of expression generated from another data type "
-                + "for the same gene, anatomical entity and developmental stage. For instance, "
-                + "gene A is reported to be expressed in the midbrain at young adult stage "
-                + "from Affymetrix data, but is reported to be not expressed in the midbrain "
-                + "at young adult stage from RNA-Seq data.</li>"
-                + "</ul>");
+                + "for the same gene, in the same anatomical entity "
+                + "and developmental stage, or in a child entity or child developmental stage. ");
+    }
+    
+    /**
+     * Generates description of the expression rank column. 
+     * @return  A {@code String} that is the description of the expression rank column 
+     *          in download files, formated in HTML and HTML escaped if necessary.
+     * @see #EXPR_RANK_COL_NAME
+     */
+    private static String getExprRankColDescription() {
+        log.entry();
+        return log.exit("<p>Rank score associated to the call. "
+                + "Rank scores of expression calls are normalized across genes, conditions and species. </p>"
+                + "<p>A Low score means that the gene is highly expressed in the condition.  </p>" );
     }
     /**
      * Generates description of the expression quality column. 
@@ -578,36 +761,59 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      */
     private static String getExprQualColDescription(int exprStateColNumber) {
         log.entry(exprStateColNumber);
-        return log.exit("<p>Quality associated to the call in column <code>" +  EXPR_STATE_COL_NAME
-                + "</code> (column" + exprStateColNumber + "). One of: </p>"
+        
+        
+        return log.exit("<p>In Bgee each call is associated to a quality: </p>"
                 + "<ul class='doc_content'>"
                 + "<li><span class='list_element_title'>high quality</span>: "
-                    + "<ul>"
-                    + "<li>In case of report of expression, expression reported as high quality "
-                    + "from Bgee statistical tests and/or from <i>in situ</i> data sources, "
-                    + "with no contradicting call of absence of expression for same gene, "
-                    + "in same anatomical entity and developmental stage (call generated "
-                    + "either from multiple congruent data, or from single data).</li>"
-                    + "<li>In case of report of absence of expression, call reported as high quality "
-                    + "either from Bgee statistical tests and/or from <i>in situ</i> data sources. "
-                    + "In Bgee, calls of absence of expression are always discarded "
-                    + "if there exists a contradicting call of expression, from the same "
-                    + "data type and for the same gene, in the same anatomical entity "
-                    + "and developmental stage, or in a child entity or child developmental stage. "
-                    + "This is why they are always considered of high quality.</li>"
-                    + "</ul>"
-                + "</li>"
-                + "<li><span class='list_element_title'>poor quality</span>: "
-                + "in case of report of expression, expression reported as low quality "
-                + "from Bgee statistical tests and/or from <i>in situ</i> data sources, "
-                + "or because there exists a conflict of presence/absence of expression "
-                + "for the same gene, anatomical entity and developmental stage, from "
-                + "different data of a same type (conflicts between different data types "
-                + "are treated differently, see <code>ambiguity</code> states in column <code>" 
-                +  EXPR_STATE_COL_NAME + "</code> ).</li>"
-                + "<li><span class='list_element_title'>NA</span>: when the call in column <code>" 
-                +  EXPR_STATE_COL_NAME + "</code> is ambiguous.</li>"
-                + "</ul>");
+                + " presence or absence of expression reported as high quality "
+                + "from Bgee statistical tests and/or from in situ data sources.</li>"
+                + "<li><span class='list_element_title'>low quality</span>: "
+                + " presence or absence of expression reported as low quality "
+                + "from Bgee statistical tests and/or from in situ data sources.</li></ul>"
+                + "<p>From this quality a <code>summary quality</code> is calculated using all calls corresponding "
+                + "to the same gene and condition parameters coming from different experiments "
+                + "and/or datatypes."
+                + "<p>Quality associated to the call in column <code>" +  EXPR_STATE_COL_NAME
+                + "</code> (column" + exprStateColNumber + ") is this <code>summary quality</code> and is "
+                + "calculated using following rules :"
+                + "<ul class='doc_content'>"
+                + "<li><span class='list_element_title'>gold quality</span>: "
+                + "2 or more high quality calls.</li>"
+                + "<li><span class='list_element_title'>silver quality</span>: "
+                + "1 high quality call or 2 low quality calls </li>"
+                + "<li><span class='list_element_title'>bronze quality</span>: "
+                + "1 low quality call (for internal use only. Not present in this file).</li></ul>");
+//        return log.exit("<p>Quality associated to the call in column <code>" +  EXPR_STATE_COL_NAME
+//                + "</code> (column" + exprStateColNumber + "). One of: </p>"
+//                + "<ul class='doc_content'>"
+//                + "<li><span class='list_element_title'>high quality</span>: "
+//                    + "<ul>"
+//                    + "<li>In case of report of presence of expression, expression reported as high quality "
+//                    + "from Bgee statistical tests and/or from <i>in situ</i> data sources, "
+//                    + "with no contradicting call of absence of expression for same gene, "
+//                    + "in same anatomical entity and developmental stage (call generated "
+//                    + "either from multiple congruent data, or from single data).</li>"
+//                    + "<li>In case of report of absence of expression, call reported as high quality "
+//                    + "either from Bgee statistical tests and/or from <i>in situ</i> data sources. "
+//                    + "In Bgee, calls of absence of expression are always discarded "
+//                    + "if there exists a contradicting call of expression, from the same "
+//                    + "data type and for the same gene, in the same anatomical entity "
+//                    + "and developmental stage, or in a child entity or child developmental stage. "
+//                    + "This is why they are always considered of high quality.</li>"
+//                    + "</ul>"
+//                + "</li>"
+//                + "<li><span class='list_element_title'>low quality</span>: "
+//                + "in case of report of expression, expression reported as low quality "
+//                + "from Bgee statistical tests and/or from <i>in situ</i> data sources, "
+//                + "or because there exists a conflict of presence/absence of expression "
+//                + "for the same gene, anatomical entity and developmental stage, from "
+//                + "different data of a same type (conflicts between different data types "
+//                + "are treated differently, see <code>ambiguity</code> states in column <code>" 
+//                +  EXPR_STATE_COL_NAME + "</code> ).</li>"
+//                + "<li><span class='list_element_title'>bronze quality</span>: when the call in column <code>" 
+//                +  EXPR_STATE_COL_NAME + "</code> is ambiguous.</li>"
+//                + "</ul>");
     }
     /**
      * Generates description of the observed data column. 
@@ -628,16 +834,11 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
             throw log.throwing(new IllegalArgumentException("Blank column name provided."));
         }
         
-        String desc = "<p>Values permitted: <code>yes</code> and <code>no</code>.</p>"
-                + "<p>Defines whether a call was generated from propagation only, "
-                + "or whether this call in this anatomical entity/developmental stage condition "
-                + "was actually seen in experimental data (in which case, the call will also "
-                + "be present in the expression simple file).</p>";
+        String desc = "<p>Value permitted: <code>yes</code> and <code>no</code>.</p>"
+                + "<p>Defines whether calls was generated from propagation only, "
+                + "or whether at least one call in this anatomical entity/developmental stage condition "
+                + "was actually seen in experimental data.</p>";
         switch (observedDataColName) {
-            case OBSERVED_DATA_COL_NAME: 
-                desc += "<p>In this column, the information is provided by considering all "
-                        + "data types together.</p>";
-                break;
             case AFFY_OBSERVED_DATA_COL_NAME: 
                 desc += "<p>In this column, the information is provided by solely considering "
                         + "Affymetrix data.</p>";
@@ -661,6 +862,22 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         
         return log.exit(desc);
     }
+    
+    /**
+     * Generates description of the observed data column. 
+     * 
+     * @param observedDataColName   A {@code String} that is the name of the column 
+     *                              for which the description is being generated. 
+     * @return  A {@code String} that is the description of the observed data column 
+     *          in download files, formated in HTML and HTML escaped if necessary.
+     * @see #OBSERVED_DATA_COL_NAME
+     * @see #AFFY_OBSERVED_DATA_COL_NAME
+     * @see #EST_OBSERVED_DATA_COL_NAME
+     * @see #IN_SITU_OBSERVED_DATA_COL_NAME
+     * @see #RNA_SEQ_OBSERVED_DATA_COL_NAME
+     */
+
+    
     /**
      * Generates description of the differential expression state column. 
      * 
@@ -936,7 +1153,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         return log.exit("<table class='download_file_header_desc'>"
                 + "<tbody>"
                 + "<tr><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td>"
-                + "<td>8</td></tr>" + getSingleSpeciesSimpleExprFileHeader(true)
+                + "<td>8</td><td>9</td></tr>" + getSingleSpeciesSimpleExprFileHeader(true)
                 + "</tbody>"
                 + "</table>");
     }
@@ -953,16 +1170,17 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + getSingleSpeciesSimpleExprFileHeader(false) 
                 + "</thead>"
                 + "<tbody>"
-                + "<tr><td>FBgn0005533</td><td>RpS17</td><td>UBERON:0015230</td>"
-                + "<td>dorsal vessel heart</td><td>FBdv:00007124</td>"
-                + "<td>day 49 of adulthood (Drosophila)</td><td>present</td><td>high quality</td></tr>"
-                + "<tr><td>FBgn0005536</td><td>Mbs</td><td>FBbt:00003023</td>"
-                + "<td>adult abdomen (Drosophila)</td><td>UBERON:0000066</td>"
-                + "<td>fully formed stage</td><td>present</td><td>poor quality</td></tr>"
+                + "<tr><td>FBgn0005533</td><td>RpS17</td><td>UBERON:0000473</td>"
+                + "<td>testis</td><td>UBERON:0000066</td>"
+                + "<td>fully formed stage</td><td>present</td><td>siver quality</td>"
+                + "<td>539</td></tr>"
+                + "<tr><td>FBgn0005536</td><td>Mbs</td><td>UBERON:0000033</td>"
+                + "<td>head</td><td>FBdv:00007085</td><td>day 10 of adulthood (Drosophila)</td>"
+                + "<td>present</td><td>gold quality</td><td>1.57e3</td></tr>"
                 + "<tr><td>FBgn0005558</td><td>ey</td><td>FBbt:00001684</td>"
                 + "<td>embryonic/larval hemocyte (Drosophila)</td><td>FBdv:00005339</td>"
                 + "<td>third instar larval stage (Drosophila)</td><td>absent</td>"
-                + "<td>high quality</td></tr>"
+                + "<td>silver quality</td><td>2.35e4</td></tr>"
                 + "</tbody>"
                 + "</table>"
                 + "</div>");
@@ -990,6 +1208,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "<" + colType + ">" + STAGE_NAME_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + EXPR_STATE_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + EXPR_QUAL_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + EXPR_RANK_COL_NAME + "</" + colType + ">"
                 + "</tr>");
     }
     /**
@@ -1026,27 +1245,39 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "<tr><td>ENSDARG00000000002</td><td>ccdc80</td><td>UBERON:0000965</td>"
                 + "<td>lens of camera-type eye</td><td>ZFS:0000033</td>"
                 + "<td>Hatching:Long-pec (Danio)</td>"
-                + "<td>present</td><td>high quality</td><td>yes</td>"
-                + "<td>no data</td><td>no data</td><td>no</td>"
-                + "<td>no data</td><td>no data</td><td>no</td>"
-                + "<td>present</td><td>high quality</td><td>yes</td>"
-                + "<td>no data</td><td>no data</td><td>no</td></tr>"
+                + "<td>present</td><td>gold quality</td><td>385</td>"
+                + "<td>yes</td><td>no data</td><td>0</td>"
+                + "<td>0</td><td>0</td><td>0</td>"
+                + "><td>no</td><td>no data</td><td>0</td>"
+                + "<td>0</td><td>no</td><td>no data</td>"
+                + "<td>0</td><td>0</td><td>0</td>"
+                + "<td>0</td><td>no</td><td>present</td><td>2</td>"
+                + "<td>1</td><td>0</td><td>0</td>"
+                + "<td>yes</td></tr>"
                 
                 + "<tr><td>ENSDARG00000000175</td><td>hoxb2a</td><td>UBERON:0004734</td>"
                 + "<td>gastrula</td><td>ZFS:0000017</td><td>Gastrula:50%-epiboly (Danio)</td>"
-                + "<td>absent</td><td>high quality</td><td>yes</td>"
-                + "<td>absent</td><td>high quality</td><td>no</td>"
-                + "<td>no data</td><td>no data</td><td>no</td>"
-                + "<td>absent</td><td>high quality</td><td>yes</td>"
-                + "<td>no data</td><td>no data</td><td>no</td></tr>"
+                + "<td>absent</td><td>silver quality</td><td>3.6e4</td>"
+                + "<td>yes</td><td>no data</td><td>0</td>"
+                + "<td>0</td><td>0</td><td>0</td>"
+                + "><td>no</td><td>no data</td><td>0</td>"
+                + "<td>0</td><td>no</td><td>absent</td>"
+                + "<td>0</td><td>0</td><td>0</td>"
+                + "<td>1</td><td>no</td><td>absent</td><td>0</td>"
+                + "<td>0</td><td>1</td><td>0</td>"
+                + "<td>yes</td></tr>"
                 
                 + "<tr><td>ENSDARG00000000241</td><td>slc40a1</td><td>UBERON:0000922</td>"
                 + "<td>embryo</td><td>ZFS:0000019</td><td>Gastrula:Shield (Danio)</td>"
-                + "<td>low ambiguity</td><td>NA</td><td>no</td>"
-                + "<td>absent</td><td>high quality</td><td>no</td>"
-                + "<td>no data</td><td>no data</td><td>no</td>"
-                + "<td>present</td><td>high quality</td><td>no</td>"
-                + "<td>no data</td><td>no data</td><td>no</td></tr>"
+                + "<td>present</td><td>silver quality</td><td>8.2e3</td>"
+                + "<td>yes</td><td>present</td><td>0</td>"
+                + "<td>1</td><td>0</td><td>0</td>"
+                + "><td>yes</td><td>no data</td><td>0</td>"
+                + "<td>0</td><td>no</td><td>no data</td>"
+                + "<td>0</td><td>0</td><td>0</td>"
+                + "<td>0</td><td>no</td><td>present</td><td>0</td>"
+                + "<td>1</td><td>0</td><td>0</td>"
+                + "<td>yes</td></tr>"
                 + "</tbody>"
                 + "</table>"
                 + "</div>");
@@ -1074,18 +1305,29 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "<" + colType + ">" + STAGE_NAME_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + EXPR_STATE_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + EXPR_QUAL_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + EXPR_RANK_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + OBSERVED_DATA_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + AFFY_EXPR_STATE_COL_NAME + "</" + colType + ">"
-                + "<" + colType + ">" + AFFY_EXPR_QUAL_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + AFFY_PRES_HIGH_COUNT_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + AFFY_PRES_LOW_COUNT_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + AFFY_ABS_HIGH_COUNT_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + AFFY_ABS_LOW_COUNT_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + AFFY_OBSERVED_DATA_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + EST_EXPR_STATE_COL_NAME + "</" + colType + ">"
-                + "<" + colType + ">" + EST_EXPR_QUAL_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + EST_PRES_HIGH_COUNT_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + EST_PRES_LOW_COUNT_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + EST_OBSERVED_DATA_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + IN_SITU_EXPR_STATE_COL_NAME + "</" + colType + ">"
-                + "<" + colType + ">" + IN_SITU_EXPR_QUAL_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + IN_SITU_PRES_HIGH_COUNT_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + IN_SITU_PRES_LOW_COUNT_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + IN_SITU_ABS_HIGH_COUNT_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + IN_SITU_ABS_LOW_COUNT_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + IN_SITU_OBSERVED_DATA_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + RNA_SEQ_EXPR_STATE_COL_NAME + "</" + colType + ">"
-                + "<" + colType + ">" + RNA_SEQ_EXPR_QUAL_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + RNA_SEQ_PRES_HIGH_COUNT_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + RNA_SEQ_PRES_LOW_COUNT_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + RNA_SEQ_ABS_HIGH_COUNT_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + RNA_SEQ_ABS_LOW_COUNT_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + RNA_SEQ_OBSERVED_DATA_COL_NAME + "</" + colType + ">"
                 + "</tr>");
     }
@@ -1751,6 +1993,17 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "of expression reported in the brain at adult stage; it is then possible to retrieve "
                 + "that, in the midbrain at adult stage, gene A and B are both expressed, "
                 + "while gene C is not, thanks to call propagation.</p>");
+        this.writeln("<p>It is possible to select Two different <code>condition parameters</code>:"
+                + "<ul class='doc_content'>"
+                + "<li><span class='list_element_title'>Anatomical entities and developmental stages</span> "
+                + "files contain one expression call for each unique pair of gene, anatomical entity, and developmental stage. "
+                + "</li>"
+                + "<li><span class='list_element_title'>Anatomical entities (by default) </span> "
+                + "files contain one expression call for each unique pair of gene and anatomical entity."
+                + "If more than one developmental stage map this unique pair, the resulting expression "
+                + "call correspond to summarized information coming from all developmental stages. "
+                + "</li>"
+                + "</ul>");
         this.writeln("<p>Presence/absence calls are then filtered and presented differently "
                 + "depending on whether a <code>simple file</code>, "
                 + "or a <code>complete file</code> is used. Notably: <code>simple files</code> "
@@ -1822,11 +2075,11 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeln("<tr><td>5</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_SIMPLE 
                 + "_col5' title='" 
                 + STAGE_ID_LINK_TITLE + "'>" + STAGE_ID_COL_NAME 
-                + "</a></td><td>FBdv:00005348</td></tr>");
+                + " *</a></td><td>FBdv:00005348</td></tr>");
         this.writeln("<tr><td>6</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_SIMPLE 
                 + "_col6' title='" 
                 + STAGE_NAME_LINK_TITLE + "'>" + STAGE_NAME_COL_NAME 
-                + "</a></td><td>prepupal stage P4(ii) (Drosophila)</td></tr>");
+                + " *</a></td><td>prepupal stage P4(ii) (Drosophila)</td></tr>");
         this.writeln("<tr><td>7</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_SIMPLE 
                 + "_col7' title='" 
                 + EXPR_STATE_LINK_TITLE + "'>" + EXPR_STATE_COL_NAME 
@@ -1834,9 +2087,14 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeln("<tr><td>8</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_SIMPLE 
                 + "_col8' title='" 
                 + EXPR_QUAL_LINK_TITLE + "'>" + EXPR_QUAL_COL_NAME 
-                + "</a></td><td>high quality</td></tr>");
+                + "</a></td><td>silver quality</td></tr>");
+        this.writeln("<tr><td>9</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_SIMPLE 
+                + "_col9' title='" 
+                + EXPR_RANK_LINK_TITLE + "'>" + EXPR_RANK_COL_NAME 
+                + "</a></td><td>1.24e4</td></tr>");
         this.writeln("</tbody>");
         this.writeln("</table>");
+        this.writeln("<b>*</b> only present if developmental stage is selected as a condition parameter");
         this.writeln(getSingleSpeciesSimpleExprFileExample());
         
         this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_SIMPLE 
@@ -1863,6 +2121,9 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_SIMPLE 
                 + "_col8'>" + EXPR_QUAL_COL_NAME + " (column 8)</h5>");
         this.writeln(getExprQualColDescription(7)); 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_SIMPLE 
+                + "_col9'>" + EXPR_RANK_COL_NAME + " (column 9)</h5>");
+        this.writeln(getExprRankColDescription());
         this.writeln("<p><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR 
                 + "'>Back to presence/absence of expression menu</a></p>");
         
@@ -1883,18 +2144,14 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         log.entry();
         
         this.writeln("<h4 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
-                + "'>Complete file</h4>");
-        this.writeln("<p>The differences between simple and complete files are that, "
-                + "in complete files: </p>"
+                + "'>Advanced file</h4>");
+        this.writeln("<p>Simple and advanced files contain the same expression calls (same number of lines) but advanced files contain more information on each call (more columns).</p>"
+                + "<p>Advanced information:  </p>"
                 + "<ul class='doc_content'>"
-                + "<li>details of expression status generated from each data type are provided.</li>"
-                + "<li>all calls are provided, propagated to all possible anatomical entities "
-                + "and developmental stages, including in conditions not annotated in experimental data "
-                + "(calls generated from propagation only).</li>"
-                + "<li>a column allows to determine whether a call was generated from propagation "
-                + "only, or whether the anatomical entity/developmental stage was actually "
-                + "seen in experimental data (such a call would then also be present "
-                + "in simple file).</li>"
+                + "<li>details of expression status generated from each data type are provided (present, absent, no data).</li>"
+                + "<li>details of number of present high quality and present low quality calls from each data type. </li> "
+                + "<li>details of number of absent high quality and absent low quality calls from In situ, Affymetrix, and RNA-Seq. </li> "
+                + "<li>details of data type for which calls are observed. Each call is observed in at least one data type</li>"
                 + "</ul>");
         this.writeln("<table class='call_download_file_desc'>");
         this.writeln("<caption>Format description for single species complete expression file</caption>");
@@ -1921,11 +2178,11 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeln("<tr><td>5</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
                 + "_col5' title='" 
                 + STAGE_ID_LINK_TITLE + "'>" + STAGE_ID_COL_NAME 
-                + "</a></td><td>UBERON:0000113</td></tr>");
+                + " *</a></td><td>UBERON:0000113</td></tr>");
         this.writeln("<tr><td>6</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
                 + "_col6' title='" 
                 + STAGE_NAME_LINK_TITLE + "'>" + STAGE_NAME_COL_NAME 
-                + "</a></td><td>post-juvenile adult stage</td></tr>");
+                + " *</a></td><td>post-juvenile adult stage</td></tr>");
         this.writeln("<tr><td>7</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
                 + "_col7' title='" 
                 + EXPR_STATE_LINK_TITLE + "'>" + EXPR_STATE_COL_NAME 
@@ -1933,61 +2190,109 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeln("<tr><td>8</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
                 + "_col8' title='" 
                 + EXPR_QUAL_LINK_TITLE + "'>" + EXPR_QUAL_COL_NAME 
-                + "</a></td><td>high quality</td></tr>");
+                + "</a></td><td>silver quality</td></tr>");
         this.writeln("<tr><td>9</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
                 + "_col9' title='" 
-                + OBSERVED_DATA_LINK_TITLE + "'>" + OBSERVED_DATA_COL_NAME 
-                + "</a></td><td>yes</td></tr>");
+                + EXPR_RANK_LINK_TITLE + " (column 9)</h5>"
+                + OBSERVED_DATA_LINK_TITLE + "'>" + EXPR_RANK_COL_NAME 
+                    + "</a></td><td>1.23e4</td></tr>");
         this.writeln("<tr><td>10</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
                 + "_col10' title='" 
-                + AFFY_EXPR_STATE_LINK_TITLE + "'>" + AFFY_EXPR_STATE_COL_NAME 
-                + "</a></td><td>present</td></tr>");
+                + OBSERVED_DATA_LINK_TITLE + "'>" + OBSERVED_DATA_COL_NAME 
+                + "</a></td><td>yes</td></tr>");
         this.writeln("<tr><td>11</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
                 + "_col11' title='" 
-                + AFFY_EXPR_QUAL_LINK_TITLE + "'>" + AFFY_EXPR_QUAL_COL_NAME 
-                + "</a></td><td>high quality</td></tr>");
+                + AFFY_EXPR_STATE_LINK_TITLE + "'>" + AFFY_EXPR_STATE_COL_NAME 
+                + "</a></td><td>present</td></tr>");
         this.writeln("<tr><td>12</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
                 + "_col12' title='" 
-                + AFFY_OBSERVED_DATA_LINK_TITLE + "'>" + AFFY_OBSERVED_DATA_COL_NAME 
-                + "</a></td><td>yes</td></tr>");
+                + AFFY_PRES_HIGH_COUNT_LINK_TITLE + "'>" + AFFY_PRES_HIGH_COUNT_COL_NAME 
+                + "</a></td><td>1</td></tr>");
         this.writeln("<tr><td>13</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
                 + "_col13' title='" 
-                + EST_EXPR_STATE_LINK_TITLE + "'>" + EST_EXPR_STATE_COL_NAME 
-                + "</a></td><td>present</td></tr>");
+                + AFFY_PRES_LOW_COUNT_LINK_TITLE + "'>" + AFFY_PRES_LOW_COUNT_COL_NAME 
+                + "</a></td><td>0</td></tr>");
         this.writeln("<tr><td>14</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
                 + "_col14' title='" 
-                + EST_EXPR_QUAL_LINK_TITLE + "'>" + EST_EXPR_QUAL_COL_NAME 
-                + "</a></td><td>poor quality</td></tr>");
+                + AFFY_ABS_HIGH_COUNT_LINK_TITLE + "'>" + AFFY_ABS_HIGH_COUNT_COL_NAME 
+                + "</a></td><td>0</td></tr>");
         this.writeln("<tr><td>15</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
                 + "_col15' title='" 
-                + EST_OBSERVED_DATA_LINK_TITLE + "'>" + EST_OBSERVED_DATA_COL_NAME 
-                + "</a></td><td>yes</td></tr>");
+                + AFFY_ABS_LOW_COUNT_LINK_TITLE + "'>" + AFFY_ABS_LOW_COUNT_COL_NAME 
+                + "</a></td><td>0</td></tr>");
         this.writeln("<tr><td>16</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
                 + "_col16' title='" 
-                + IN_SITU_EXPR_STATE_LINK_TITLE + "'>" + IN_SITU_EXPR_STATE_COL_NAME 
-                + "</a></td><td>present</td></tr>");
+                + AFFY_OBSERVED_DATA_LINK_TITLE + "'>" + AFFY_OBSERVED_DATA_COL_NAME 
+                + "</a></td><td>yes</td></tr>");
         this.writeln("<tr><td>17</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
                 + "_col17' title='" 
-                + IN_SITU_EXPR_QUAL_LINK_TITLE + "'>" + IN_SITU_EXPR_QUAL_COL_NAME 
-                + "</a></td><td>high quality</td></tr>");
+                + EST_EXPR_STATE_LINK_TITLE + "'>" + EST_EXPR_STATE_COL_NAME 
+                + "</a></td><td>present</td></tr>");
         this.writeln("<tr><td>18</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
                 + "_col18' title='" 
-                + IN_SITU_OBSERVED_DATA_LINK_TITLE + "'>" + IN_SITU_OBSERVED_DATA_COL_NAME 
-                + "</a></td><td>yes</td></tr>");
+                + EST_PRES_HIGH_COUNT_LINK_TITLE + "'>" + EST_PRES_HIGH_COUNT_COL_NAME 
+                + "</a></td><td>0</td></tr>");
         this.writeln("<tr><td>19</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
                 + "_col19' title='" 
-                + RNA_SEQ_EXPR_STATE_LINK_TITLE + "'>" + RNA_SEQ_EXPR_STATE_COL_NAME 
-                + "</a></td><td>no data</td></tr>");
+                + EST_PRES_LOW_COUNT_LINK_TITLE + "'>" + EST_PRES_LOW_COUNT_COL_NAME 
+                + "</a></td><td>0</td></tr>");
         this.writeln("<tr><td>20</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
                 + "_col20' title='" 
-                + RNA_SEQ_EXPR_QUAL_LINK_TITLE + "'>" + RNA_SEQ_EXPR_QUAL_COL_NAME 
-                + "</a></td><td>no data</td></tr>");
+                + EST_OBSERVED_DATA_LINK_TITLE + "'>" + EST_OBSERVED_DATA_COL_NAME 
+                + "</a></td><td>no</td></tr>");
         this.writeln("<tr><td>21</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
                 + "_col21' title='" 
+                + IN_SITU_EXPR_STATE_LINK_TITLE + "'>" + IN_SITU_EXPR_STATE_COL_NAME 
+                + "</a></td><td>present</td></tr>");
+        this.writeln("<tr><td>22</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col22' title='" 
+                + IN_SITU_PRES_HIGH_COUNT_LINK_TITLE + "'>" + IN_SITU_PRES_HIGH_COUNT_COL_NAME 
+                + "</a></td><td>1</td></tr>");
+        this.writeln("<tr><td>23</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col23' title='" 
+                + IN_SITU_PRES_LOW_COUNT_LINK_TITLE + "'>" + IN_SITU_PRES_LOW_COUNT_COL_NAME 
+                + "</a></td><td>0</td></tr>");
+        this.writeln("<tr><td>24</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col24' title='" 
+                + IN_SITU_ABS_HIGH_COUNT_LINK_TITLE + "'>" + IN_SITU_ABS_HIGH_COUNT_COL_NAME 
+                + "</a></td><td>0</td></tr>");
+        this.writeln("<tr><td>25</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col25' title='" 
+                + IN_SITU_ABS_LOW_COUNT_LINK_TITLE + "'>" + IN_SITU_ABS_LOW_COUNT_COL_NAME 
+                + "</a></td><td>0</td></tr>");
+        this.writeln("<tr><td>26</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col26' title='" 
+                + IN_SITU_OBSERVED_DATA_LINK_TITLE + "'>" + IN_SITU_OBSERVED_DATA_COL_NAME 
+                + "</a></td><td>yes</td></tr>");
+        this.writeln("<tr><td>27</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col27' title='" 
+                + RNA_SEQ_EXPR_STATE_LINK_TITLE + "'>" + RNA_SEQ_EXPR_STATE_COL_NAME 
+                + "</a></td><td>present</td></tr>");
+        this.writeln("<tr><td>28</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col28' title='" 
+                + RNA_SEQ_PRES_HIGH_COUNT_LINK_TITLE + "'>" + RNA_SEQ_PRES_HIGH_COUNT_COL_NAME 
+                + "</a></td><td>1</td></tr>");
+        this.writeln("<tr><td>29</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col29' title='" 
+                + RNA_SEQ_PRES_LOW_COUNT_LINK_TITLE + "'>" + RNA_SEQ_PRES_LOW_COUNT_COL_NAME 
+                + "</a></td><td>0</td></tr>");
+        this.writeln("<tr><td>30</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col30' title='" 
+                + RNA_SEQ_ABS_HIGH_COUNT_LINK_TITLE + "'>" + RNA_SEQ_ABS_HIGH_COUNT_COL_NAME 
+                + "</a></td><td>0</td></tr>");
+        this.writeln("<tr><td>31</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col31' title='" 
+                + RNA_SEQ_ABS_LOW_COUNT_LINK_TITLE + "'>" + RNA_SEQ_ABS_LOW_COUNT_COL_NAME 
+                + "</a></td><td>0</td></tr>");
+        this.writeln("<tr><td>32</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col32' title='" 
                 + RNA_SEQ_OBSERVED_DATA_LINK_TITLE + "'>" + RNA_SEQ_OBSERVED_DATA_COL_NAME 
-                + "</a></td><td>no</td></tr>");
+                + "</a></td><td>yes</td></tr>");
+        
+
         this.writeln("</tbody>");
         this.writeln("</table>");
+        this.writeln("<b>*</b> only present if developmental stage is selected as a condition parameter");
         this.writeln(getSingleSpeciesCompleteExprFileExample());
         
         this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
@@ -2015,10 +2320,13 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "_col8'>" + EXPR_QUAL_COL_NAME + " (column 8)</h5>");
         this.writeln(getExprQualColDescription(7));
         this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
-                + "_col9'>" + OBSERVED_DATA_COL_NAME + " (column 9)</h5>");
-        this.writeln(getObservedDataColDescription(OBSERVED_DATA_COL_NAME));
+                + "_col9'>" + EXPR_RANK_COL_NAME + " (column 9)</h5>");
+        this.writeln(getExprRankColDescription());
         this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
-                + "_col10'>" + AFFY_EXPR_STATE_COL_NAME + " (column 10)</h5>");
+                + "_col10'>" + OBSERVED_DATA_COL_NAME + " (column 10)</h5>");
+        this.writeln("<p>Value permitted: <code>yes</code></p>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col11'>" + AFFY_EXPR_STATE_COL_NAME + " (column 11)</h5>");
         //TODO: add links to data analyses documentation
         this.writeln("<p>Call generated by Affymetrix data for " 
                 + getColumnListForCall(1, 5, 3, true) + ". One of: </p>"
@@ -2037,82 +2345,56 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "not available, or discarded by Bgee quality controls).</li>"
                 + "</ul>");
         this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
-                + "_col11'>" + AFFY_EXPR_QUAL_COL_NAME + " (column 11)</h5>");
-        //TODO: add links to data analyses documentation
-        this.writeln("<p>Quality associated to the call in column <code>" +  AFFY_EXPR_STATE_COL_NAME
-                + "</code> (column 10). One of: </p>"
-                + "<ul class='doc_content'>"
-                + "<li><span class='list_element_title'>high quality</span>: "
-                    + "<ul>"
-                    + "<li>In case of report of expression, expression reported as high quality "
-                    + "from Bgee statistical tests, "
-                    + "with no contradicting call of absence of expression for same gene, "
-                    + "in same anatomical entity and developmental stage, that would have been "
-                    + "generated by other Affymetrix probesets or chips "
-                    + "(meaning that the call was either generated from multiple congruent data, "
-                    + "or from a single probeset/chip).</li>"
-                    + "<li>In case of report of absence of expression, call reported as high quality "
-                    + "from Bgee statistical tests, with no contradicting call of presence "
-                    + "of expression generated by other Affymetrix probesets or chips "
-                    + "for the same gene, in the same anatomical entity "
-                    + "and developmental stage, or in a child entity or child developmental stage.</li>"
-                    + "</ul>"
-                + "</li>"
-                + "<li><span class='list_element_title'>poor quality</span>: "
-                + "in case of report of expression, expression reported as low quality "
-                + "either from Bgee statistical tests, "
-                + "or because there exists a conflict of presence/absence of expression "
-                + "for the same gene, anatomical entity and developmental stage, generated from "
-                + "other Affymetrix probesets/chips.</li>"
-                + "<li><span class='list_element_title'>no data</span>: no Affymetrix data "
-                + "available for this gene/anatomical entity/developmental stage (data either "
-                + "not available, or discarded by Bgee quality controls).</li>"
-                + "</ul>");
+                + "_col12'>" + AFFY_PRES_HIGH_COUNT_COL_NAME + " (column 12)</h5>");
+        this.writeln("<p> Affymetrix  experiment count showing expression of this gene "
+                + "in this condition or in sub-conditions with a high quality</p>");
         this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
-                + "_col12'>" + AFFY_OBSERVED_DATA_COL_NAME + " (column 12)</h5>");
+                + "_col13'>" + AFFY_PRES_LOW_COUNT_COL_NAME + " (column 13)</h5>");
+        this.writeln("<p> Affymetrix  experiment count showing expression of this gene "
+                + "in this condition or in sub-conditions with a low quality</p>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col14'>" + AFFY_ABS_HIGH_COUNT_COL_NAME + " (column 14)</h5>");
+        this.writeln("<p> Affymetrix experiment count showing absence of expression of this gene "
+                + "in this condition or valid parent conditions with a high quality</p>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col15'>" + AFFY_ABS_LOW_COUNT_COL_NAME + " (column 15)</h5>");
+        this.writeln("<p> Affymetrix experiment count showing absence of expression of this gene "
+                + "in this condition or valid parent conditions with a low quality</p>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col16'>" + AFFY_OBSERVED_DATA_COL_NAME + " (column 16)</h5>");
         this.writeln(getObservedDataColDescription(AFFY_OBSERVED_DATA_COL_NAME));
         this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
-                + "_col13'>" + EST_EXPR_STATE_COL_NAME + " (column 13)</h5>");
+                + "_col17'>" + EST_EXPR_STATE_COL_NAME + " (column 17)</h5>");
         //TODO: add links to data analyses documentation
         this.writeln("<p>Call generated by EST data for " 
-                + getColumnListForCall(1, 5, 3, true) + ". Note that EST data are not used "
-                + "to produce calls of absence of expression. One of: </p>"
-                + "<ul class='doc_content'>"
-                + "<li><span class='list_element_title'>present</span>: "
-                + "expression reported from Bgee statistical tests. "
-                + "See <code>" + EST_EXPR_QUAL_COL_NAME + "</code> (column 14) "
-                + "for associated quality level.</li>"
-                + "<li><span class='list_element_title'>no data</span>: no EST data "
-                + "available for this gene/anatomical entity/developmental stage (data either "
-                + "not available, or discarded by Bgee quality controls).</li>"
-                + "</ul>");
+              + getColumnListForCall(1, 5, 3, true) + ". Note that EST data are not used "
+              + "to produce calls of absence of expression. One of: </p>"
+              + "<ul class='doc_content'>"
+              + "<li><span class='list_element_title'>present</span>: "
+              + "expression reported from Bgee statistical tests.</li>"
+              + "<li><span class='list_element_title'>no data</span>: no EST data "
+              + "available for this gene/anatomical entity/developmental stage (data either "
+              + "not available, or discarded by Bgee quality controls).</li>"
+              + "</ul>");
         this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
-                + "_col14'>" + EST_EXPR_QUAL_COL_NAME + " (column 14)</h5>");
-        //TODO: add links to data analyses documentation
-        this.writeln("<p>Quality associated to the call in column <code>" +  EST_EXPR_STATE_COL_NAME
-                + "</code> (column 13). One of: </p>"
-                + "<ul class='doc_content'>"
-                + "<li><span class='list_element_title'>high quality</span>: "
-                + "expression reported as high quality from Bgee statistical tests.</li>"
-                + "<li><span class='list_element_title'>poor quality</span>: "
-                + "expression reported as poor quality from Bgee statistical tests.</li>"
-                + "<li><span class='list_element_title'>no data</span>: no EST data "
-                + "available for this gene/anatomical entity/developmental stage (data either "
-                + "not available, or discarded by Bgee quality controls).</li>"
-                + "</ul>");
+                + "_col18'>" + EST_PRES_HIGH_COUNT_COL_NAME + " (column 18)</h5>");
+        this.writeln("<p>EST experiment count showing expression of this gene "
+                + "in this condition or in sub-conditions with a high quality</p>");
         this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
-                + "_col15'>" + EST_OBSERVED_DATA_COL_NAME + " (column 15)</h5>");
+                + "_col19'>" + EST_PRES_LOW_COUNT_COL_NAME + " (column 19)</h5>");
+        this.writeln("<p>EST experiment count showing expression of this gene "
+                + "in this condition or in sub-conditions with a low quality</p>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col20'>" + EST_OBSERVED_DATA_COL_NAME + " (column 20)</h5>");
         this.writeln(getObservedDataColDescription(EST_OBSERVED_DATA_COL_NAME));
         this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
-                + "_col16'>" + IN_SITU_EXPR_STATE_COL_NAME + " (column 16)</h5>");
+                + "_col21'>" + IN_SITU_EXPR_STATE_COL_NAME + " (column 21)</h5>");
         //TODO: add links to data analyses documentation
         this.writeln("<p>Call generated by <i>in situ</i> data for " 
                 + getColumnListForCall(1, 5, 3, true) + ". One of: </p>"
                 + "<ul class='doc_content'>"
                 + "<li><span class='list_element_title'>present</span>: "
-                + "report of presence of expression from <i>in situ</i> data sources. "
-                + "See <code>" + IN_SITU_EXPR_QUAL_COL_NAME 
-                + "</code> (column 17) for associated quality level.</li>"
+                + "report of presence of expression from <i>in situ</i> data sources.</li>"
                 + "<li><span class='list_element_title'>absent</span>: "
                 + "report of absence of expression from <i>in situ</i> data sources, "
                 + "with no contradicting call of presence of expression generated by other "
@@ -2124,43 +2406,27 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "not available, or discarded by Bgee quality controls).</li>"
                 + "</ul>");
         this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
-                + "_col17'>" + IN_SITU_EXPR_QUAL_COL_NAME + " (column 17)</h5>");
-        //TODO: add links to data analyses documentation
-        this.writeln("<p>Quality associated to the call in column <code>" + IN_SITU_EXPR_STATE_COL_NAME
-                + "</code> (column 16). One of: </p>"
-                + "<ul class='doc_content'>"
-                + "<li><span class='list_element_title'>high quality</span>: "
-                    + "<ul>"
-                    + "<li>In case of report of expression, expression reported as high quality "
-                    + "from <i>in situ</i> data sources, "
-                    + "with no contradicting call of absence of expression for same gene, "
-                    + "in same anatomical entity and developmental stage "
-                    + "(meaning that the call was either generated from multiple congruent "
-                    + "<i>in situ</i> hybridization evidence lines, or from a single hybridization).</li>"
-                    + "<li>In case of report of absence of expression, call reported as high quality "
-                    + "from <i>in situ</i> data sources, "
-                    + "with no contradicting call of presence of expression generated by other "
-                    + "<i>in situ</i> hybridization evidence lines "
-                    + "for the same gene, in the same anatomical entity "
-                    + "and developmental stage, or in a child entity or child developmental stage.</li>"
-                    + "</ul>"
-                + "</li>"
-                + "<li><span class='list_element_title'>poor quality</span>: "
-                + "in case of report of expression, expression reported as low quality "
-                + "either from <i>in situ</i> data sources, "
-                + "or because there exists a conflict of presence/absence of expression "
-                + "for the same gene, anatomical entity and developmental stage, generated from "
-                + "different <i>in situ</i> hybridization evidence lines.</li>"
-                + "<li><span class='list_element_title'>no data</span>: no <i>in situ</i> data "
-                + "available for this gene/anatomical entity/developmental stage (data either "
-                + "not available, or discarded by Bgee quality controls).</li>"
-                + "</ul>");
+                + "_col22'>" + IN_SITU_PRES_HIGH_COUNT_COL_NAME + " (column 22)</h5>");
+        this.writeln("<p>In Situ experiment count showing expression of this gene "
+                + "in this condition or in sub-conditions with a high quality</p>");
         this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
-                + "_col18'>" + IN_SITU_OBSERVED_DATA_COL_NAME 
-                + " (column 18)</h5>");
+                + "_col23'>" + IN_SITU_PRES_LOW_COUNT_COL_NAME + " (column 23)</h5>");
+        this.writeln("<p>In Situ  experiment count showing expression of this gene "
+                + "in this condition or in sub-conditions with a low quality</p>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col24'>" + IN_SITU_ABS_HIGH_COUNT_COL_NAME + " (column 24)</h5>");
+        this.writeln("<p>In Situ experiment count showing absence of expression of this gene "
+                + "in this condition or valid parent conditions with a high quality</p>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col25'>" + IN_SITU_ABS_LOW_COUNT_COL_NAME + " (column 25)</h5>");
+        this.writeln("<p>In Situ experiment count showing absence of expression of this gene "
+                + "in this condition or valid parent conditions with a low quality</p>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col26'>" + IN_SITU_OBSERVED_DATA_COL_NAME 
+                + " (column 26)</h5>");
         this.writeln(getObservedDataColDescription(IN_SITU_OBSERVED_DATA_COL_NAME));
         this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
-                + "_col19'>" + RNA_SEQ_EXPR_STATE_COL_NAME + " (column 19)</h5>");
+                + "_col27'>" + RNA_SEQ_EXPR_STATE_COL_NAME + " (column 27)</h5>");
         //TODO: add links to data analyses documentation
         this.writeln("<p>Call generated by RNA-Seq data for " 
                 + getColumnListForCall(1, 5, 3, true) + ". One of: </p>"
@@ -2178,41 +2444,28 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "available for this gene/anatomical entity/developmental stage (data either "
                 + "not available, or discarded by Bgee quality controls).</li>"
                 + "</ul>");
+        
+        
+        
         this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
-                + "_col20'>" + RNA_SEQ_EXPR_QUAL_COL_NAME + " (column 20)</h5>");
-        //TODO: add links to data analyses documentation
-        this.writeln("<p>Quality associated to the call in column <code>" +  RNA_SEQ_EXPR_STATE_COL_NAME
-                + "</code> (column 19). One of: </p>"
-                + "<ul class='doc_content'>"
-                + "<li><span class='list_element_title'>high quality</span>: "
-                    + "<ul>"
-                    + "<li>In case of report of expression, expression reported as high quality "
-                    + "from Bgee statistical tests, "
-                    + "with no contradicting call of absence of expression for same gene, "
-                    + "in same anatomical entity and developmental stage, that would have been "
-                    + "generated from other RNA-Seq libraries (meaning that the call was either "
-                    + "generated from several libraries providing congruent results, "
-                    + "or from a single library).</li>"
-                    + "<li>In case of report of absence of expression, call reported as high quality "
-                    + "from Bgee statistical tests, with no contradicting call of presence "
-                    + "of expression generated by other RNA-Seq libraries "
-                    + "for the same gene, in the same anatomical entity "
-                    + "and developmental stage, or in a child entity or child developmental stage.</li>"
-                    + "</ul>"
-                + "</li>"
-                + "<li><span class='list_element_title'>poor quality</span>: "
-                + "in case of report of expression, expression reported as low quality "
-                + "either from Bgee statistical tests, "
-                + "or because there exists a conflict of presence/absence of expression "
-                + "for the same gene, anatomical entity and developmental stage, generated from "
-                + "other RNA-Seq libraries.</li>"
-                + "<li><span class='list_element_title'>no data</span>: no RNA-Seq data "
-                + "available for this gene/anatomical entity/developmental stage (data either "
-                + "not available, or discarded by Bgee quality controls).</li>"
-                + "</ul>");
+                + "_col28'>" + RNA_SEQ_PRES_HIGH_COUNT_COL_NAME + " (column 28)</h5>");
+        this.writeln("<p>RNA-Seq experiment count showing expression of this gene "
+                + "in this condition or in sub-conditions with a high quality</p>");
         this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
-                + "_col21'>" + RNA_SEQ_OBSERVED_DATA_COL_NAME 
-                + " (column 21)</h5>");
+                + "_col29'>" + RNA_SEQ_PRES_LOW_COUNT_COL_NAME + " (column 29)</h5>");
+        this.writeln("<p>RNA-Seq experiment count showing expression of this gene "
+                + "in this condition or in sub-conditions with a low quality</p>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col30'>" + RNA_SEQ_ABS_HIGH_COUNT_COL_NAME + " (column 30)</h5>");
+        this.writeln("<p>RNA-Seq experiment count showing absence of expression of this gene "
+                + "in this condition or valid parent conditions with a high quality</p>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col31'>" + RNA_SEQ_ABS_LOW_COUNT_COL_NAME + " (column 31)</h5>");
+        this.writeln("<p>RNA-Seq experiment count showing absence of expression of this gene "
+                + "in this condition or valid parent conditions with a low quality</p>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col32'>" + RNA_SEQ_OBSERVED_DATA_COL_NAME 
+                + " (column 32)</h5>");
         this.writeln(getObservedDataColDescription(RNA_SEQ_OBSERVED_DATA_COL_NAME));
         this.writeln("<p><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR 
                 + "'>Back to presence/absence of expression menu</a></p>");

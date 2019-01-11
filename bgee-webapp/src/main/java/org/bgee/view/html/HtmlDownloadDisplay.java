@@ -604,8 +604,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         banner.append("</div>");
 		banner.append("<div id='single_simple_expr_headers' class='header_table'>" +
 		        HtmlDocumentationCallFile.getSingleSpeciesSimpleExprFileHeaderDesc() + "</div>");
-		banner.append("<div id='single_complete_expr_headers' class='header_table'>" + 
-		        HtmlDocumentationCallFile.getSingleSpeciesCompleteExprFileHeaderDesc() + "</div>");
+		banner.append("<div id='single_advance_expr_headers' class='header_table'>" + 
+		        HtmlDocumentationCallFile.getSingleSpeciesAdvanceExprFileHeaderDesc() + "</div>");
 		banner.append("</div>");
 		
 	      // Differential expression files

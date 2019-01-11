@@ -1213,10 +1213,10 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
     }
     /**
      * @return  a {@code String} containing the HTML to create a table containing the description 
-     *          of the header of a single species complete expression file (can be used 
+     *          of the header of a single species advance expression file (can be used 
      *          in "help" links).
      */
-    public static String getSingleSpeciesCompleteExprFileHeaderDesc() {
+    public static String getSingleSpeciesAdvanceExprFileHeaderDesc() {
         log.entry();
         return log.exit("<table class='download_file_header_desc'>"
                 + "<tbody>"
@@ -1224,21 +1224,21 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "<td>8</td><td>9</td><td>10</td><td>11</td><td>12</td>"
                 + "<td>13</td><td>14</td><td>15</td><td>16</td><td>17</td>"
                 + "<td>18</td><td>19</td><td>20</td><td>21</td></tr>"
-                + getSingleSpeciesCompleteExprFileHeader(true)
+                + getSingleSpeciesAdvanceExprFileHeader(true)
                 + "</tbody>"
                 + "</table>");
     }
     /**
      * @return  a {@code String} containing the HTML to create a table containing the header 
-     *          and example lines of a single species complete expression file.
+     *          and example lines of a single species advance expression file.
      */
-    public static String getSingleSpeciesCompleteExprFileExample() {
+    public static String getSingleSpeciesAdvanceExprFileExample() {
         log.entry();
         return log.exit("<div class='large-table'>"
         		+ "<table class='call_download_file_example'>"
-                + "<caption>Example lines for single species complete expression file</caption>"
+                + "<caption>Example lines for single species advance expression file</caption>"
                 + "<thead>" 
-                + getSingleSpeciesCompleteExprFileHeader(false) 
+                + getSingleSpeciesAdvanceExprFileHeader(false) 
                 + "</thead>"
                 + "<tbody>"
                 
@@ -1283,14 +1283,14 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "</div>");
     }
     /**
-     * Get the header of single species complete expression file as a HTML 'tr' element, 
+     * Get the header of single species advance expression file as a HTML 'tr' element, 
      * with column being either 'td' or 'th' elements depending on argument {@code withTd}.
      * @param withTd    A {@code boolean} defining whether the column type should be 'td' 
      *                  or 'th'. If {@code true}, 'td' is used.
-     * @return          A {@code String} that is the header of single species complete 
+     * @return          A {@code String} that is the header of single species advance
      *                  expression file as a HTML 'tr' element.
      */
-    private static String getSingleSpeciesCompleteExprFileHeader(boolean withTd) {
+    private static String getSingleSpeciesAdvanceExprFileHeader(boolean withTd) {
         log.entry(withTd);
         String colType ="td";
         if (!withTd) {
@@ -1867,12 +1867,12 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      * have to stayed in sync with id attributes of h2, h3 and h4 tags defined in 
      * {@link #writeSingleSpeciesExprCallFileDoc()}, 
      * {@link #writeSingleSpeciesSimpleExprCallFileDoc()},  
-     * {@link #writeSingleSpeciesCompleteExprCallFileDoc()}, and 
+     * {@link #writeSingleSpeciesAdvanceExprCallFileDoc()}, and 
      * {@link #writeMultiSpeciesDiffExprCallFileDoc()}.
      * 
      * @see #writeSingleSpeciesExprCallFileDoc()
      * @see #writeSingleSpeciesSimpleExprCallFileDoc()
-     * @see #writeSingleSpeciesCompleteExprCallFileDoc()
+     * @see #writeSingleSpeciesAdvanceExprCallFileDoc()
      * @see #writeMultiSpeciesDiffExprCallFileDoc()
      */
     private void writeDocMenuForCallDownloadFiles() {
@@ -1888,15 +1888,15 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeln("<li><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR 
                 + "' title='Quick jump to this section'>" + 
                 "Presence/absence of expression</a>");
-        //Actually there explanations common to simple and complete files, so we don't provide
+        //Actually there explanations common to simple and advance files, so we don't provide
         //direct links to simple/common files, that would skip the common explanations.
 //        this.writeln("<ul>");
 //        this.writeln("<li><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_SIMPLE 
 //                + "' title='Quick jump to this section'>" + 
 //                "Simple file</a></li>");
-//        this.writeln("<li><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+//        this.writeln("<li><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
 //                + "' title='Quick jump to this section'>" + 
-//                "Complete file</a></li>");
+//                "Advance file</a></li>");
 //        this.writeln("</ul>");   
         this.writeln("</li>");              //end of presence/absence
         //diff expression
@@ -1950,13 +1950,13 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
     
     /**
      * Write the documentation related to single species presence/absence of expression 
-     * simple and complete download files. Anchors used in this method for quick jump links 
+     * simple and advance download files. Anchors used in this method for quick jump links 
      * have to stayed in sync with id attributes of h4 tags defined in 
      * {@link #writeSingleSpeciesSimpleExprCallFileDoc()} and 
-     * {@link #writeSingleSpeciesCompleteExprCallFileDoc()}.
+     * {@link #writeSingleSpeciesAdvanceExprCallFileDoc()}.
      * 
      * @see #writeSingleSpeciesSimpleExprCallFileDoc()
-     * @see #writeSingleSpeciesCompleteExprCallFileDoc()
+     * @see #writeSingleSpeciesAdvanceExprCallFileDoc()
      */
     private void writeSingleSpeciesExprCallFileDoc() {
         log.entry();
@@ -2006,10 +2006,10 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "</ul>");
         this.writeln("<p>Presence/absence calls are then filtered and presented differently "
                 + "depending on whether a <code>simple file</code>, "
-                + "or a <code>complete file</code> is used. Notably: <code>simple files</code> "
+                + "or an <code>advance file</code> is used. Notably: <code>simple files</code> "
                 + "aim at providing summarized information over all data types, and only "
                 + "in anatomical entities and developmental stages actually used "
-                + "in experimental data; <code>complete files</code> aim at reporting all information, "
+                + "in experimental data; <code>advance files</code> aim at reporting all information, "
                 + "allowing for instance to retrieve the contribution of each data type to a call, "
                 + "in all possible anatomical entities and developmental stages.</p>");
         this.writeln("<p>Jump to format description for: </p>"
@@ -2017,16 +2017,16 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "<li><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_SIMPLE 
                 + "' title='Quick jump to simple file description'>"
                 + "simple file</a></li>"
-                + "<li><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
-                + "' title='Quick jump to complete file description'>"
-                + "complete file</a></li>"
+                + "<li><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE
+                + "' title='Quick jump to advance file description'>"
+                + "advance file</a></li>"
                 + "</ul>");
         
         //simple expression file
         this.writeSingleSpeciesSimpleExprCallFileDoc();
         
-        //complete expression file
-        this.writeSingleSpeciesCompleteExprCallFileDoc(); //end of presence/absence of expression
+        //advance expression file
+        this.writeSingleSpeciesAdvanceExprCallFileDoc(); //end of presence/absence of expression
         
         
         log.exit();
@@ -2131,22 +2131,21 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
     }
     
     /**
-     * Write the documentation related to single species complete presence/absence of expression 
+     * Write the documentation related to single species advance presence/absence of expression 
      * download files. The id attribute used in h4 tag must stay in sync with anchors used 
      * in quick jump links defined in method {@link #writeSingleSpeciesExprCallFileDoc()}.
-     * If the header of this file changes, {@link #getSingleSpeciesCompleteExprFileHeaderDesc()} 
      * must be updated.
      * 
      * @see #writeSingleSpeciesExprCallFileDoc()
-     * @see #getSingleSpeciesCompleteExprFileHeaderDesc()
+     * @see #getSingleSpeciesAdvanceExprFileHeaderDesc()
      */
-    private void writeSingleSpeciesCompleteExprCallFileDoc() {
+    private void writeSingleSpeciesAdvanceExprCallFileDoc() {
         log.entry();
         
-        this.writeln("<h4 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
-                + "'>Advanced file</h4>");
-        this.writeln("<p>Simple and advanced files contain the same expression calls (same number of lines) but advanced files contain more information on each call (more columns).</p>"
-                + "<p>Advanced information:  </p>"
+        this.writeln("<h4 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE
+                + "'>Advance file</h4>");
+        this.writeln("<p>Simple and advance files contain the same expression calls (same number of lines) but advance files contain more information on each call (more columns).</p>"
+                + "<p>Advance file information:  </p>"
                 + "<ul class='doc_content'>"
                 + "<li>details of expression status generated from each data type are provided (present, absent, no data).</li>"
                 + "<li>details of number of present high quality and present low quality calls from each data type. </li> "
@@ -2154,137 +2153,137 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "<li>details of data type for which calls are observed. Each call is observed in at least one data type</li>"
                 + "</ul>");
         this.writeln("<table class='call_download_file_desc'>");
-        this.writeln("<caption>Format description for single species complete expression file</caption>");
+        this.writeln("<caption>Format description for single species advance expression file</caption>");
         this.writeln("<thead>");
         this.writeln("<tr><th>Column</th><th>Content</th><th>Example</th></tr>");
         this.writeln("</thead>");
         this.writeln("<tbody>");
-        this.writeln("<tr><td>1</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<tr><td>1</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col1' title='" 
                 + GENE_ID_LINK_TITLE + "'>" + GENE_ID_COL_NAME 
                 + "</a></td><td>ENSDARG00000070769</td></tr>");
-        this.writeln("<tr><td>2</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<tr><td>2</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col2' title='" 
                 + GENE_NAME_LINK_TITLE + "'>" + GENE_NAME_COL_NAME 
                 + "</a></td><td>foxg1a</td></tr>");
-        this.writeln("<tr><td>3</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<tr><td>3</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col3' title='" 
                 + ANAT_ENTITY_ID_LINK_TITLE + "'>" + ANAT_ENTITY_ID_COL_NAME 
                 + "</a></td><td>UBERON:0000955</td></tr>");
-        this.writeln("<tr><td>4</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<tr><td>4</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col4' title='" 
                 + ANAT_ENTITY_NAME_LINK_TITLE + "'>" + ANAT_ENTITY_NAME_COL_NAME 
                 + "</a></td><td>brain</td></tr>");
-        this.writeln("<tr><td>5</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<tr><td>5</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col5' title='" 
                 + STAGE_ID_LINK_TITLE + "'>" + STAGE_ID_COL_NAME 
                 + " *</a></td><td>UBERON:0000113</td></tr>");
-        this.writeln("<tr><td>6</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<tr><td>6</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col6' title='" 
                 + STAGE_NAME_LINK_TITLE + "'>" + STAGE_NAME_COL_NAME 
                 + " *</a></td><td>post-juvenile adult stage</td></tr>");
-        this.writeln("<tr><td>7</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<tr><td>7</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col7' title='" 
                 + EXPR_STATE_LINK_TITLE + "'>" + EXPR_STATE_COL_NAME 
                 + "</a></td><td>present</td></tr>");
-        this.writeln("<tr><td>8</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<tr><td>8</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col8' title='" 
                 + EXPR_QUAL_LINK_TITLE + "'>" + EXPR_QUAL_COL_NAME 
                 + "</a></td><td>silver quality</td></tr>");
-        this.writeln("<tr><td>9</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<tr><td>9</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col9' title='" 
                 + EXPR_RANK_LINK_TITLE + " (column 9)</h5>"
                 + OBSERVED_DATA_LINK_TITLE + "'>" + EXPR_RANK_COL_NAME 
                     + "</a></td><td>1.23e4</td></tr>");
-        this.writeln("<tr><td>10</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<tr><td>10</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col10' title='" 
                 + OBSERVED_DATA_LINK_TITLE + "'>" + OBSERVED_DATA_COL_NAME 
                 + "</a></td><td>yes</td></tr>");
-        this.writeln("<tr><td>11</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<tr><td>11</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col11' title='" 
                 + AFFY_EXPR_STATE_LINK_TITLE + "'>" + AFFY_EXPR_STATE_COL_NAME 
                 + "</a></td><td>present</td></tr>");
-        this.writeln("<tr><td>12</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<tr><td>12</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col12' title='" 
                 + AFFY_PRES_HIGH_COUNT_LINK_TITLE + "'>" + AFFY_PRES_HIGH_COUNT_COL_NAME 
                 + "</a></td><td>1</td></tr>");
-        this.writeln("<tr><td>13</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<tr><td>13</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col13' title='" 
                 + AFFY_PRES_LOW_COUNT_LINK_TITLE + "'>" + AFFY_PRES_LOW_COUNT_COL_NAME 
                 + "</a></td><td>0</td></tr>");
-        this.writeln("<tr><td>14</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<tr><td>14</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col14' title='" 
                 + AFFY_ABS_HIGH_COUNT_LINK_TITLE + "'>" + AFFY_ABS_HIGH_COUNT_COL_NAME 
                 + "</a></td><td>0</td></tr>");
-        this.writeln("<tr><td>15</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<tr><td>15</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col15' title='" 
                 + AFFY_ABS_LOW_COUNT_LINK_TITLE + "'>" + AFFY_ABS_LOW_COUNT_COL_NAME 
                 + "</a></td><td>0</td></tr>");
-        this.writeln("<tr><td>16</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<tr><td>16</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col16' title='" 
                 + AFFY_OBSERVED_DATA_LINK_TITLE + "'>" + AFFY_OBSERVED_DATA_COL_NAME 
                 + "</a></td><td>yes</td></tr>");
-        this.writeln("<tr><td>17</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<tr><td>17</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col17' title='" 
                 + EST_EXPR_STATE_LINK_TITLE + "'>" + EST_EXPR_STATE_COL_NAME 
                 + "</a></td><td>present</td></tr>");
-        this.writeln("<tr><td>18</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<tr><td>18</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col18' title='" 
                 + EST_PRES_HIGH_COUNT_LINK_TITLE + "'>" + EST_PRES_HIGH_COUNT_COL_NAME 
                 + "</a></td><td>0</td></tr>");
-        this.writeln("<tr><td>19</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<tr><td>19</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col19' title='" 
                 + EST_PRES_LOW_COUNT_LINK_TITLE + "'>" + EST_PRES_LOW_COUNT_COL_NAME 
                 + "</a></td><td>0</td></tr>");
-        this.writeln("<tr><td>20</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<tr><td>20</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col20' title='" 
                 + EST_OBSERVED_DATA_LINK_TITLE + "'>" + EST_OBSERVED_DATA_COL_NAME 
                 + "</a></td><td>no</td></tr>");
-        this.writeln("<tr><td>21</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<tr><td>21</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col21' title='" 
                 + IN_SITU_EXPR_STATE_LINK_TITLE + "'>" + IN_SITU_EXPR_STATE_COL_NAME 
                 + "</a></td><td>present</td></tr>");
-        this.writeln("<tr><td>22</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<tr><td>22</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col22' title='" 
                 + IN_SITU_PRES_HIGH_COUNT_LINK_TITLE + "'>" + IN_SITU_PRES_HIGH_COUNT_COL_NAME 
                 + "</a></td><td>1</td></tr>");
-        this.writeln("<tr><td>23</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<tr><td>23</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col23' title='" 
                 + IN_SITU_PRES_LOW_COUNT_LINK_TITLE + "'>" + IN_SITU_PRES_LOW_COUNT_COL_NAME 
                 + "</a></td><td>0</td></tr>");
-        this.writeln("<tr><td>24</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<tr><td>24</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col24' title='" 
                 + IN_SITU_ABS_HIGH_COUNT_LINK_TITLE + "'>" + IN_SITU_ABS_HIGH_COUNT_COL_NAME 
                 + "</a></td><td>0</td></tr>");
-        this.writeln("<tr><td>25</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<tr><td>25</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col25' title='" 
                 + IN_SITU_ABS_LOW_COUNT_LINK_TITLE + "'>" + IN_SITU_ABS_LOW_COUNT_COL_NAME 
                 + "</a></td><td>0</td></tr>");
-        this.writeln("<tr><td>26</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<tr><td>26</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col26' title='" 
                 + IN_SITU_OBSERVED_DATA_LINK_TITLE + "'>" + IN_SITU_OBSERVED_DATA_COL_NAME 
                 + "</a></td><td>yes</td></tr>");
-        this.writeln("<tr><td>27</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<tr><td>27</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col27' title='" 
                 + RNA_SEQ_EXPR_STATE_LINK_TITLE + "'>" + RNA_SEQ_EXPR_STATE_COL_NAME 
                 + "</a></td><td>present</td></tr>");
-        this.writeln("<tr><td>28</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<tr><td>28</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col28' title='" 
                 + RNA_SEQ_PRES_HIGH_COUNT_LINK_TITLE + "'>" + RNA_SEQ_PRES_HIGH_COUNT_COL_NAME 
                 + "</a></td><td>1</td></tr>");
-        this.writeln("<tr><td>29</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<tr><td>29</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col29' title='" 
                 + RNA_SEQ_PRES_LOW_COUNT_LINK_TITLE + "'>" + RNA_SEQ_PRES_LOW_COUNT_COL_NAME 
                 + "</a></td><td>0</td></tr>");
-        this.writeln("<tr><td>30</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<tr><td>30</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col30' title='" 
                 + RNA_SEQ_ABS_HIGH_COUNT_LINK_TITLE + "'>" + RNA_SEQ_ABS_HIGH_COUNT_COL_NAME 
                 + "</a></td><td>0</td></tr>");
-        this.writeln("<tr><td>31</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<tr><td>31</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col31' title='" 
                 + RNA_SEQ_ABS_LOW_COUNT_LINK_TITLE + "'>" + RNA_SEQ_ABS_LOW_COUNT_COL_NAME 
                 + "</a></td><td>0</td></tr>");
-        this.writeln("<tr><td>32</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<tr><td>32</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col32' title='" 
                 + RNA_SEQ_OBSERVED_DATA_LINK_TITLE + "'>" + RNA_SEQ_OBSERVED_DATA_COL_NAME 
                 + "</a></td><td>yes</td></tr>");
@@ -2293,39 +2292,39 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeln("</tbody>");
         this.writeln("</table>");
         this.writeln("<b>*</b> only present if developmental stage is selected as a condition parameter");
-        this.writeln(getSingleSpeciesCompleteExprFileExample());
+        this.writeln(getSingleSpeciesAdvanceExprFileExample());
         
-        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col1'>" + GENE_ID_COL_NAME + " (column 1)</h5>");
         this.writeln(getGeneIdColDescription());
-        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col2'>" + GENE_NAME_COL_NAME + " (column 2)</h5>");
         this.writeln(getGeneNameColDescription(1));
-        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col3'>" + ANAT_ENTITY_ID_COL_NAME + " (column 3)</h5>");
         this.writeln(getAnatEntityIdColDescription());
-        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col4'>" + ANAT_ENTITY_NAME_COL_NAME + " (column 4)</h5>");
         this.writeln(getAnatEntityNameColDescription(3));
-        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col5'>" + STAGE_ID_COL_NAME + " (column 5)</h5>");
         this.writeln(getStageIdColDescription());
-        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col6'>" + STAGE_NAME_COL_NAME + " (column 6)</h5>");
         this.writeln(getStageNameColDescription(5));
-        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col7'>" + EXPR_STATE_COL_NAME + " (column 7)</h5>");
         this.writeln(getExprStateColDescription(1, 5, 3, 8, true)); 
-        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col8'>" + EXPR_QUAL_COL_NAME + " (column 8)</h5>");
         this.writeln(getExprQualColDescription(7));
-        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col9'>" + EXPR_RANK_COL_NAME + " (column 9)</h5>");
         this.writeln(getExprRankColDescription());
-        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col10'>" + OBSERVED_DATA_COL_NAME + " (column 10)</h5>");
         this.writeln("<p>Value permitted: <code>yes</code></p>");
-        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col11'>" + AFFY_EXPR_STATE_COL_NAME + " (column 11)</h5>");
         //TODO: add links to data analyses documentation
         this.writeln("<p>Call generated by Affymetrix data for " 
@@ -2344,26 +2343,26 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "available for this gene/anatomical entity/developmental stage (data either "
                 + "not available, or discarded by Bgee quality controls).</li>"
                 + "</ul>");
-        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col12'>" + AFFY_PRES_HIGH_COUNT_COL_NAME + " (column 12)</h5>");
         this.writeln("<p> Affymetrix  experiment count showing expression of this gene "
                 + "in this condition or in sub-conditions with a high quality</p>");
-        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col13'>" + AFFY_PRES_LOW_COUNT_COL_NAME + " (column 13)</h5>");
         this.writeln("<p> Affymetrix  experiment count showing expression of this gene "
                 + "in this condition or in sub-conditions with a low quality</p>");
-        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col14'>" + AFFY_ABS_HIGH_COUNT_COL_NAME + " (column 14)</h5>");
         this.writeln("<p> Affymetrix experiment count showing absence of expression of this gene "
                 + "in this condition or valid parent conditions with a high quality</p>");
-        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col15'>" + AFFY_ABS_LOW_COUNT_COL_NAME + " (column 15)</h5>");
         this.writeln("<p> Affymetrix experiment count showing absence of expression of this gene "
                 + "in this condition or valid parent conditions with a low quality</p>");
-        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col16'>" + AFFY_OBSERVED_DATA_COL_NAME + " (column 16)</h5>");
         this.writeln(getObservedDataColDescription(AFFY_OBSERVED_DATA_COL_NAME));
-        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col17'>" + EST_EXPR_STATE_COL_NAME + " (column 17)</h5>");
         //TODO: add links to data analyses documentation
         this.writeln("<p>Call generated by EST data for " 
@@ -2376,18 +2375,18 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
               + "available for this gene/anatomical entity/developmental stage (data either "
               + "not available, or discarded by Bgee quality controls).</li>"
               + "</ul>");
-        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col18'>" + EST_PRES_HIGH_COUNT_COL_NAME + " (column 18)</h5>");
         this.writeln("<p>EST experiment count showing expression of this gene "
                 + "in this condition or in sub-conditions with a high quality</p>");
-        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col19'>" + EST_PRES_LOW_COUNT_COL_NAME + " (column 19)</h5>");
         this.writeln("<p>EST experiment count showing expression of this gene "
                 + "in this condition or in sub-conditions with a low quality</p>");
-        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col20'>" + EST_OBSERVED_DATA_COL_NAME + " (column 20)</h5>");
         this.writeln(getObservedDataColDescription(EST_OBSERVED_DATA_COL_NAME));
-        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col21'>" + IN_SITU_EXPR_STATE_COL_NAME + " (column 21)</h5>");
         //TODO: add links to data analyses documentation
         this.writeln("<p>Call generated by <i>in situ</i> data for " 
@@ -2405,27 +2404,27 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "available for this gene/anatomical entity/developmental stage (data either "
                 + "not available, or discarded by Bgee quality controls).</li>"
                 + "</ul>");
-        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col22'>" + IN_SITU_PRES_HIGH_COUNT_COL_NAME + " (column 22)</h5>");
         this.writeln("<p>In Situ experiment count showing expression of this gene "
                 + "in this condition or in sub-conditions with a high quality</p>");
-        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col23'>" + IN_SITU_PRES_LOW_COUNT_COL_NAME + " (column 23)</h5>");
         this.writeln("<p>In Situ  experiment count showing expression of this gene "
                 + "in this condition or in sub-conditions with a low quality</p>");
-        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col24'>" + IN_SITU_ABS_HIGH_COUNT_COL_NAME + " (column 24)</h5>");
         this.writeln("<p>In Situ experiment count showing absence of expression of this gene "
                 + "in this condition or valid parent conditions with a high quality</p>");
-        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col25'>" + IN_SITU_ABS_LOW_COUNT_COL_NAME + " (column 25)</h5>");
         this.writeln("<p>In Situ experiment count showing absence of expression of this gene "
                 + "in this condition or valid parent conditions with a low quality</p>");
-        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col26'>" + IN_SITU_OBSERVED_DATA_COL_NAME 
                 + " (column 26)</h5>");
         this.writeln(getObservedDataColDescription(IN_SITU_OBSERVED_DATA_COL_NAME));
-        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col27'>" + RNA_SEQ_EXPR_STATE_COL_NAME + " (column 27)</h5>");
         //TODO: add links to data analyses documentation
         this.writeln("<p>Call generated by RNA-Seq data for " 
@@ -2447,23 +2446,23 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         
         
         
-        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col28'>" + RNA_SEQ_PRES_HIGH_COUNT_COL_NAME + " (column 28)</h5>");
         this.writeln("<p>RNA-Seq experiment count showing expression of this gene "
                 + "in this condition or in sub-conditions with a high quality</p>");
-        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col29'>" + RNA_SEQ_PRES_LOW_COUNT_COL_NAME + " (column 29)</h5>");
         this.writeln("<p>RNA-Seq experiment count showing expression of this gene "
                 + "in this condition or in sub-conditions with a low quality</p>");
-        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col30'>" + RNA_SEQ_ABS_HIGH_COUNT_COL_NAME + " (column 30)</h5>");
         this.writeln("<p>RNA-Seq experiment count showing absence of expression of this gene "
                 + "in this condition or valid parent conditions with a high quality</p>");
-        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col31'>" + RNA_SEQ_ABS_LOW_COUNT_COL_NAME + " (column 31)</h5>");
         this.writeln("<p>RNA-Seq experiment count showing absence of expression of this gene "
                 + "in this condition or valid parent conditions with a low quality</p>");
-        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCE 
                 + "_col32'>" + RNA_SEQ_OBSERVED_DATA_COL_NAME 
                 + " (column 32)</h5>");
         this.writeln(getObservedDataColDescription(RNA_SEQ_OBSERVED_DATA_COL_NAME));

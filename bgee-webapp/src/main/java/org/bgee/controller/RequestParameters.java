@@ -320,10 +320,10 @@ public class RequestParameters {
     public static final String HASH_DOC_CALL_SINGLE_EXPR_SIMPLE = "single_expr_simple";
     /**
      * A {@code String} that is the anchor to use in the hash part of an URL 
-     * to link to the single species complete expression part, in the documentation 
+     * to link to the single species advance expression part, in the documentation 
      * about gene expression calls.
      */
-    public static final String HASH_DOC_CALL_SINGLE_EXPR_COMPLETE = "single_expr_complete";
+    public static final String HASH_DOC_CALL_SINGLE_EXPR_ADVANCE = "single_expr_advance";
     /**
      * A {@code String} that is the anchor to use in the hash part of an URL 
      * to link to the multi species expression part, in the documentation 

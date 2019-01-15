@@ -86,50 +86,47 @@ public class HtmlPrivacyPolicyDisplay extends HtmlParentDisplay implements Priva
         
         this.writeln("<h2>What personal data is collected from users of the service?" +
                 " How do we use these personal data?</h2>");
-        this.writeln("<p>");
-        this.writeln("   The personal data collected from the services listed below is as follows:");
-        this.writeln("   <h4>Website and API</h4>");
-        this.writeln("   <ul>");
-        this.writeln("       <li>IP address</li>");
-        this.writeln("       <li>Email address</li>");
-        this.writeln("       <li>Date and time of a visit to the service</li>");
-        this.writeln("       <li>Operating system</li>");
-        this.writeln("       <li>Browser</li>");
-        this.writeln("       <li>Amount of data transmitted</li>");
-        this.writeln("   </ul>");
-        this.writeln("   <h4>BgeeDB R package</h4>");
-        this.writeln("   <ul>");
-        this.writeln("       <li>IP address</li>");
-        this.writeln("       <li>Date and time of a visit to the service</li>");
-        this.writeln("       <li>Operating system</li>");
-        this.writeln("       <li>Browser</li>");
-        this.writeln("       <li>Amount of data transmitted</li>");
-        this.writeln("   </ul>");
-        this.writeln("   <h4>FTP</h4>");
-        this.writeln("   <ul>");
-        this.writeln("       <li>IP address</li>");
-        this.writeln("       <li>Date and time of a visit to the service</li>");
-        this.writeln("       <li>Operating system</li>");
-        this.writeln("       <li>Browser</li>");
-        this.writeln("       <li>Amount of data transmitted</li>");
-        this.writeln("   </ul>");
-        this.writeln("   <h4>Help desk</h4>");
-        this.writeln("   <ul>");
-        this.writeln("       <li>Name</li>");
-        this.writeln("       <li>Email address</li>");
-        this.writeln("   </ul>");
-        this.writeln("</p>");
-        this.writeln("<p>The data controller will use your personal data for the following purposes:");
-        this.writeln("  <ul>");
-        this.writeln("      <li>To provide the user access to the service</li>");
-        this.writeln("      <li>To answer questions from users</li>");
-        this.writeln("      <li>To better understand the needs of the users and guide future " +
-                "                   improvements of the service</li>");
-        this.writeln("      <li>To create anonymous usage statistics</li>");
-        this.writeln("      <li>To conduct and monitor data protection activities</li>");
-        this.writeln("      <li>To conduct and monitor security activities</li>");
-        this.writeln("  </ul>");
-        this.writeln("</p>");
+        this.writeln("<p>The personal data collected from the services listed below is as follows:</p>");
+        this.writeln("<h4>Website and API</h4>");
+        this.writeln("<ul>");
+        this.writeln("  <li>IP address</li>");
+        this.writeln("  <li>Email address</li>");
+        this.writeln("  <li>Date and time of a visit to the service</li>");
+        this.writeln("  <li>Operating system</li>");
+        this.writeln("  <li>Browser</li>");
+        this.writeln("  <li>Amount of data transmitted</li>");
+        this.writeln("</ul>");
+        this.writeln("<h4>BgeeDB R package</h4>");
+        this.writeln("<ul>");
+        this.writeln("  <li>IP address</li>");
+        this.writeln("  <li>Date and time of a visit to the service</li>");
+        this.writeln("  <li>Operating system</li>");
+        this.writeln("  <li>Browser</li>");
+        this.writeln("  <li>Amount of data transmitted</li>");
+        this.writeln("</ul>");
+        this.writeln("<h4>FTP</h4>");
+        this.writeln("<ul>");
+        this.writeln("  <li>IP address</li>");
+        this.writeln("  <li>Date and time of a visit to the service</li>");
+        this.writeln("  <li>Operating system</li>");
+        this.writeln("  <li>Browser</li>");
+        this.writeln("  <li>Amount of data transmitted</li>");
+        this.writeln("</ul>");
+        this.writeln("<h4>Help desk</h4>");
+        this.writeln("<ul>");
+        this.writeln("  <li>Name</li>");
+        this.writeln("  <li>Email address</li>");
+        this.writeln("</ul>");
+        this.writeln("<p>The data controller will use your personal data for the following purposes:</p>");
+        this.writeln("<ul>");
+        this.writeln("   <li>To provide the user access to the service</li>");
+        this.writeln("   <li>To answer questions from users</li>");
+        this.writeln("   <li>To better understand the needs of the users and guide future " +
+                "                improvements of the service</li>");
+        this.writeln("   <li>To create anonymous usage statistics</li>");
+        this.writeln("   <li>To conduct and monitor data protection activities</li>");
+        this.writeln("   <li>To conduct and monitor security activities</li>");
+        this.writeln("</ul>");
         
         this.writeln("<h2>Who will have access to your personal data?</h2>");
         this.writeln("<p>Personal data will only be disclosed to authorized staff of Bgee." +
@@ -166,36 +163,34 @@ public class HtmlPrivacyPolicyDisplay extends HtmlParentDisplay implements Priva
                 "or even impossible.</p>");
         
         this.writeln("<h2>The joint Data Controllers provide these rights regarding your personal data</h2>");
-        this.writeln("<p>You have the right to:");
-        this.writeln("  <ol>");
-        this.writeln("	    <li>Not be subject to decisions based solely on an automated processing " +
-                "               of data (i.e. without human intervention) without you having " +
-                "               your views taken into consideration.</li>");
-        this.writeln("	    <li>Request at reasonable intervals and without excessive delay or expense, " +
-                "               information about the personal data processed about you. " +
-                "               Under your request we will inform you in writing about, for example, " +
-                "               the origin of the personal data or the preservation period.</li>");
-        this.writeln("	    <li>Request information to understand data processing activities " +
-                "               when the results of these activities are applied to you.</li>");
-        this.writeln("	    <li>Object at any time to the processing of your personal data unless " +
-                "               we can demonstrate that we have legitimate reasons to process your personal data.</li>");
-        this.writeln("	    <li>Request free of charge and without excessive delay rectification or " +
-                "               erasure of your personal data if we have not been processing it " +
-                "               respecting the data protection policies of the respective controllers.</li>");
-        this.writeln("  </ol>");
-        this.writeln("</p>");
+        this.writeln("<p>You have the right to:</p>");
+        this.writeln("<ol>");
+        this.writeln("   <li>Not be subject to decisions based solely on an automated processing " +
+                "            of data (i.e. without human intervention) without you having " +
+                "            your views taken into consideration.</li>");
+        this.writeln("   <li>Request at reasonable intervals and without excessive delay or expense, " +
+                "            information about the personal data processed about you. " +
+                "            Under your request we will inform you in writing about, for example, " +
+                "            the origin of the personal data or the preservation period.</li>");
+        this.writeln("   <li>Request information to understand data processing activities " +
+                "            when the results of these activities are applied to you.</li>");
+        this.writeln("   <li>Object at any time to the processing of your personal data unless " +
+                "            we can demonstrate that we have legitimate reasons to process your personal data.</li>");
+        this.writeln("   <li>Request free of charge and without excessive delay rectification or " +
+                "            erasure of your personal data if we have not been processing it " +
+                "            respecting the data protection policies of the respective controllers.</li>");
+        this.writeln("</ol>");
         this.writeln("<p>Requests and objections can be sent to our " + getObfuscateBgeeEmail() + ".</p>");
         this.writeln("<p>It must be clarified that rights 4 and 5 are only available whenever " +
-                "       the processing of your personal data is not necessary to:");
-        this.writeln("  <ul>");
-        this.writeln("	    <li>Comply with a legal obligation.</li>");
-        this.writeln("	    <li>Perform a task carried out in the public interest.</li>");
-        this.writeln("	    <li>Exercise authority as a data controller.</li>");
-        this.writeln("	    <li>Archive for purposes in the public interest, " +
-                "               or for historical research purposes, or for statistical purposes.</li>");
-        this.writeln("	    <li>Establish, exercise or defend legal claims.</li>");
-        this.writeln("  </ul>");
-        this.writeln("</p>");
+                "       the processing of your personal data is not necessary to:</p>");
+        this.writeln("<ul>");
+        this.writeln("  <li>Comply with a legal obligation.</li>");
+        this.writeln("  <li>Perform a task carried out in the public interest.</li>");
+        this.writeln("  <li>Exercise authority as a data controller.</li>");
+        this.writeln("  <li>Archive for purposes in the public interest, " +
+                "           or for historical research purposes, or for statistical purposes.</li>");
+        this.writeln("  <li>Establish, exercise or defend legal claims.</li>");
+        this.writeln("</ul>");
         this.writeln("<p>Additional terms: privacy policy</p>");
 
         this.writeln("</div>"); // close CENTERED_ELEMENT_CLASS

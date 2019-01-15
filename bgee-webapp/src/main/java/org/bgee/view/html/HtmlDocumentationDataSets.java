@@ -84,7 +84,7 @@ public class HtmlDocumentationDataSets extends HtmlDocumentationDownloadFile {
                 "from other tissues.</p>" +
                 "        <p>In total, only 50&#37; of samples were kept; these represent a high quality " +
                 "subset of GTEx. All these samples were re-annotated manually to specific Uberon " +
-                "anatomy and aging terms.<p>");
+                "anatomy and aging terms.</p>");
         this.writeln("</div>");
 
         this.writeln("<h2>GTEx data into Bgee</h2>");

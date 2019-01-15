@@ -484,7 +484,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' "
               + "aria-haspopup='true' aria-expanded='false'>Documentation <span class='caret'></span></a>");
         navbar.append("<ul class='dropdown-menu'>");
-        navbar.append("<li><a title='See how to access to GTEx data'href='")
+        navbar.append("<li><a title='See how to access to GTEx data' href='")
                 .append(urlDocDataSets.getRequestURL()).append("'>GTEx in Bgee</a></li>");
         navbar.append("<li><a title='TopAnat documentation' href='").append(urlDocTopAnat.getRequestURL())
                 .append("'>").append(TOP_ANAT_PAGE_NAME).append("</a></li>");

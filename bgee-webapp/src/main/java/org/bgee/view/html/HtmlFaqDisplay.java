@@ -47,7 +47,7 @@ public class HtmlFaqDisplay extends HtmlParentDisplay implements FaqDisplay {
         this.writeln("<p>Got questions? We’ve got answers! Here, you can find Bgee team answers " +
                 "in response to the most frequently asked questions. " +
                 "If you don't find answers here, please do not hesitate to contact us, " +
-                "using " + getObfuscateBgeeEmail() + ".<p>");
+                "using " + getObfuscateBgeeEmail() + ".</p>");
         this.writeln("</div>");
 
         this.writeln("<div id='faq-list' class='panel-group' role='tablist' aria-multiselectable='true'>");

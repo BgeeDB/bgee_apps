@@ -77,7 +77,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
         this.writeln("<div id='bgee_introduction'>");
         
-        this.writeln("<p>Search for genes based on Ensembl gene IDs, gene names, and synonyms.<p>");
+        this.writeln("<p>Search for genes based on Ensembl gene IDs, gene names, and synonyms.</p>");
 
         this.writeln("</div>");
 

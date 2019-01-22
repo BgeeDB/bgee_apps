@@ -12,11 +12,11 @@ import org.bgee.controller.RequestParameters;
 /**
  * This abstract class defines a {@code ViewFactory}. A class that extends this one
  * will return for a particular display type (i.e. html, xml, etc.) all appropriate views
- * 
- * @author Mathieu Seppey
- * @author Frederic Bastian
- * @author Valentine Rech de Laval
- * @version Bgee 13, Feb. 2016
+ *
+ * @author  Mathieu Seppey
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, Aug. 2018
  * @since   Bgee 1
  * 
  * @see org.bgee.view.html.HtmlFactory
@@ -111,6 +111,15 @@ public abstract class ViewFactory {
     public abstract AboutDisplay getAboutDisplay() throws IOException;
     
     /**
+     *
+     * @return A {@code PrivacyPolicyDisplay} instance that is the view to be used
+     *
+     * @throws IOException  If an error occurs with the {@code PrintWriter} when writing the
+     *                      response output.
+     */
+    public abstract PrivacyPolicyDisplay getPrivacyPolicyDisplay() throws IOException;
+
+    /**
      *                              
      * @return A {@code TopAnatDisplay} instance of the appropriate display type.
      * 
@@ -177,4 +186,12 @@ public abstract class ViewFactory {
      *                      response output.
      */
     public abstract RPackageDisplay getRPackageDisplay() throws IOException;
+
+    /**
+     * @return A {@code FaqDisplay} instance of the appropriate display type.
+     *
+     * @throws IOException  If an error occurs with the {@code PrintWriter} when writing the
+     *                      response output.
+     */
+    public abstract FaqDisplay getFaqDisplay() throws IOException;
 }

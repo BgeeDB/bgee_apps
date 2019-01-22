@@ -75,22 +75,17 @@ var general = {
             // Add the event listeners to all elements that have a dynamic behavior
 
             // Add a listener to the cross to close the detail box
-            this.$bgeeDataSelectionCross.click(function(){
+            this.$bgeeDataSelectionCross.on("click", function(){
             	general.closeDetailBox();
             });
             // Add a click listener to every species/group to load the corresponding details 
             // or to hide it if already displayed
-            this.$species.click(function() {
+            this.$species.on("click", function() {
             	general.toggleDetail( $( this ) );
-            });
-            
-            // Add a listener to the cross to close the detail box
-            this.$bgeeDataSelectionCross.click(function(){
-            	general.closeDetailBox();
             });
              
             // Add a listener to the link to show/hide the images copyright and change the text
-            this.$creativeCommonsTitleLink.click( function(){
+            this.$creativeCommonsTitleLink.on("click",  function(){
             	general.$creativeCommons.toggle( "blind" );
                 if($( this ).text().indexOf( "Hide" ) > -1){
                     $( this ).text($( this ).text().replace( "Hide","Show" ));

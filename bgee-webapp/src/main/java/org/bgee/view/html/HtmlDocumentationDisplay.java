@@ -15,8 +15,8 @@ import org.bgee.view.DocumentationDisplay;
  *
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, June 2015
- * @since   Bgee 13
+ * @version Bgee 14, Aug. 2018
+ * @since   Bgee 13, Mar. 2015
  */
 public class HtmlDocumentationDisplay extends HtmlParentDisplay implements DocumentationDisplay {
 
@@ -124,6 +124,15 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
      * about TopAnat (see {@link #displayTopAnatDocumentation()}).
      */
     private final HtmlDocumentationTopAnat topAnatDoc;
+    /**
+     * A {@code HtmlDocumentationDataSets} used to write the documentation 
+     * about data sets in Bgee (see {@link #displayDataSets()}).
+     */
+    private final HtmlDocumentationDataSets dataSetsDoc;
+    /**
+     * A {@code HtmlFaqDisplay} used to write the FAQ of Bgee (see {@link #displayFaq()}).
+     */
+    private final HtmlFaqDisplay faq;
 
     /**
      * Default constructor.
@@ -142,7 +151,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
     public HtmlDocumentationDisplay(HttpServletResponse response,
             RequestParameters requestParameters, BgeeProperties prop, HtmlFactory factory) 
                     throws IOException {
-        this(response, requestParameters, prop, factory, null, null, null);
+        this(response, requestParameters, prop, factory, null, null, null, null, null);
     }
     /**
      * Constructor providing other dependencies.
@@ -171,8 +180,8 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
     public HtmlDocumentationDisplay(HttpServletResponse response,
             RequestParameters requestParameters, BgeeProperties prop, HtmlFactory factory,
             HtmlDocumentationCallFile callFileDoc, HtmlDocumentationRefExprFile refExprFileDoc,
-            HtmlDocumentationTopAnat topAnatDoc) 
-                    throws IOException {
+            HtmlDocumentationTopAnat topAnatDoc, HtmlDocumentationDataSets dataSetsDoc,
+            HtmlFaqDisplay faq) throws IOException {
         super(response, requestParameters, prop, factory);
         if (callFileDoc == null) {
             this.callFileDoc = 
@@ -187,9 +196,19 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
             this.refExprFileDoc = refExprFileDoc;
         }
         if (topAnatDoc == null) {
-        	this.topAnatDoc = new HtmlDocumentationTopAnat(response, requestParameters, prop, factory);
+            this.topAnatDoc = new HtmlDocumentationTopAnat(response, requestParameters, prop, factory);
         } else {
-        	this.topAnatDoc = topAnatDoc;
+            this.topAnatDoc = topAnatDoc;
+        }
+        if (dataSetsDoc == null) {
+            this.dataSetsDoc = new HtmlDocumentationDataSets(response, requestParameters, prop, factory);
+        } else {
+            this.dataSetsDoc = dataSetsDoc;
+        }
+        if (faq == null) {
+            this.faq = new HtmlFaqDisplay(response, requestParameters, prop, factory);
+        } else {
+            this.faq = faq;
         }
     }
     
@@ -227,10 +246,6 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
      */
     private String getFeatureDocumentationLogos() {
         log.entry();
-
-        RequestParameters urlHowToAccessGenerator = this.getNewRequestParameters();
-        urlHowToAccessGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
-        urlHowToAccessGenerator.setAction(RequestParameters.ACTION_DOC_HOW_TO_ACCESS);
         
         RequestParameters urlCallFilesGenerator = this.getNewRequestParameters();
         urlCallFilesGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
@@ -244,10 +259,6 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         urlSourcesGenerator.setPage(RequestParameters.PAGE_SOURCE);
 
         StringBuilder logos = new StringBuilder(); 
-
-        logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlHowToAccessGenerator.getRequestURL(), 
-                false, "How to access to Bgee data", "Access to Bgee data", 
-                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "bgee_access_logo.png", null));
 
         //TODO update image when top anat logo is created
         logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlTopAnatGenerator.getRequestURL(), 
@@ -284,7 +295,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         this.callFileDoc.writeDocumentation();
         
         this.writeln("</div>"); // close class
-        this.writeln("</div>");	// close row
+        this.writeln("</div>"); // close row
 
         this.endDisplay();
 
@@ -302,7 +313,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         this.refExprFileDoc.writeDocumentation();
         
         this.writeln("</div>"); // close class
-        this.writeln("</div>");	// close row
+        this.writeln("</div>"); // close row
 
         this.endDisplay();
 
@@ -321,60 +332,50 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         this.topAnatDoc.writeDocumentation();
         
         this.writeln("</div>"); // close class
-        this.writeln("</div>");	// close row
+        this.writeln("</div>"); // close row
 
         this.endDisplay();
 
         log.exit();
     }
 
-
     @Override
-    //TODO: use a different ID than 'feature_list', to provide a different look, 
-    //notably with much larger elements, to provide more text below the figures.
-    public void displayHowToAccessDataDocumentation() {
+    public void displayDataSets() {
         log.entry();
-        
-        this.startDisplay("How to access to Bgee data");
 
-        this.writeln("<h1>How to access to Bgee data</h1>");
+        this.startDisplay("Data sets into Bgee");
 
-        RequestParameters urlDownloadProcExprValuesGenerator = this.getNewRequestParameters();
-        urlDownloadProcExprValuesGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
-        urlDownloadProcExprValuesGenerator.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
+        this.writeln("<div class='row'>");
+        this.writeln("<div class='" + CENTERED_ELEMENT_CLASS + "'>");
 
-        RequestParameters urlDownloadCallsGenerator = this.getNewRequestParameters();
-        urlDownloadCallsGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
-        urlDownloadCallsGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
-        
-        this.writeln("<div class='feature_list'>");
-        
-        this.writeln(this.getFeatureDownloadLogos());
+        this.dataSetsDoc.writeDocumentation();
 
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo("https://github.com/BgeeDB", 
-                true, "GitHub of the Bgee project", "GitHub", 
-                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "github_logo.png", 
-                "Retrieve our annotations of homology between anatomical structures, "
-                + "as well as the Confidence Information Ontology (CIO) "
-                + "and the Homology Ontology (HOM), from our GitHub repository."));
+        this.writeln("</div>"); // close CENTERED_ELEMENT_CLASS class
+        this.writeln("</div>"); // close row
 
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(this.prop.getFTPRootDirectory() + 
-                "sql_dump.tar.gz", false, "Download dump the MySQL Bgee database", "MySQL dump", 
-                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "mysql_logo.png", 
-                "Download the complete dump of the MySQL Bgee database, that contains "
-                + "all the data used to generate the information displayed on this website."));
-
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(BGEE_R_PACKAGE_URL, 
-                true, "BgeeDB R package", "R package", 
-                this.prop.getLogoImagesRootDirectory() + "r_logo_color.png", 
-                "A package for the annotation and gene expression data download from Bgee database, "
-                + "and TopAnat analysis."));
-
-        this.writeln("</div>");
-        
         this.endDisplay();
 
         log.exit();
+    }
+
+    @Override
+    public void displayFaq() {
+        log.entry();
+
+        this.startDisplay("Bgee FAQ");
+
+        this.writeln("<div class='row'>");
+        this.writeln("<div class='" + CENTERED_ELEMENT_CLASS + "'>");
+
+        this.faq.writeFaqPage();
+
+        this.writeln("</div>"); // close CENTERED_ELEMENT_CLASS class
+        this.writeln("</div>"); // close row
+
+        this.endDisplay();
+
+        log.exit();
+
     }
 
     //*******************************************************

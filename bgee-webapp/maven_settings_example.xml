@@ -50,6 +50,7 @@
       <filter.org.bgee.webapp.topAnatFromAddress>personal@email.com</filter.org.bgee.webapp.topAnatFromAddress>
       <!-- Root of the server to use. Important to generate correct links in emails -->
       <filter.org.bgee.webapp.bgeeRootDirectory>http://test.com/</filter.org.bgee.webapp.bgeeRootDirectory>
+      <filter.org.bgee.webapp.bgeeStableRootDirectory>http://test.com/test14/</filter.org.bgee.webapp.bgeeStableRootDirectory>
       <filter.org.bgee.webapp.bgeeRootDomain>.test.com</filter.org.bgee.webapp.bgeeRootDomain>
     </properties>
   </profile>
@@ -81,6 +82,7 @@
       <filter.org.bgee.webapp.topAnatFromAddress>official@production.com</filter.org.bgee.webapp.topAnatFromAddress>
       <!-- Root of the server to use. Important to generate correct links in emails -->
       <filter.org.bgee.webapp.bgeeRootDirectory>http://production.com/</filter.org.bgee.webapp.bgeeRootDirectory>
+      <filter.org.bgee.webapp.bgeeStableRootDirectory>http://production.com/production14/</filter.org.bgee.webapp.bgeeStableRootDirectory>
       <filter.org.bgee.webapp.bgeeRootDomain>.production.com</filter.org.bgee.webapp.bgeeRootDomain>
     </properties>
   </profile>

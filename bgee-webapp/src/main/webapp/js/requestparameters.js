@@ -45,11 +45,11 @@
  * }
  * </pre>
  * 
- * @author Mathieu Seppey
- * @author Frederic Bastian
- * @author Valentine Rech de Laval
- * @version Bgee 13, Feb. 2016
- * @since Bgee 13
+ * @author  Mathieu Seppey
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, Aug. 2018
+ * @since   Bgee 13, Aug. 2014
  */
 
 function requestParameters(queryString, encodeUrl, parametersSeparator){
@@ -161,6 +161,20 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
     	return pageAbout;
     }
     /**
+     * A {@code String} that is the value taken by the {@code page} parameter
+     * (see {@link #getParamPage()}) when an about page is requested.
+     * This parameter will then be provided outside of this class through the method
+     * {@link #PAGE_PRIVACY_POLICY()} (to get the behavior of a public final parameter).
+     */
+    var pagePrivacyPolicy = 'privacy_policy';
+    /**
+     * A method to obtain the value taken by the {@code page} parameter
+     * (see {@link #getParamPage()}) when an privacy policy page is requested.
+     */
+    this.PAGE_PRIVACY_POLICY = function() {
+        return pagePrivacyPolicy;
+    }
+    /**
      * A {@code String} that is the value taken by the {@code page} parameter  
      * (see {@link #getParamPage()}) when a gene page is requested.
      * This parameter will then be provided outside of this class through the method 
@@ -258,23 +272,6 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      */
     this.ACTION_DOC_PROC_EXPR_VALUE_DOWLOAD_FILES = function() {
     	return actionDocProcExprValueDownloadFiles;
-    }
-    /**
-     * A {@code String} that is the value taken by the {@code action} parameter
-     * (see {@link #getParamAction()}) when documentation about how to access to 
-     * Bgee data is requested.
-     * This parameter will then be provided outside of this class through the method 
-     * {@link #ACTION_DOC_HOW_TO_ACCESS()} (to get the behavior 
-     * of a public final parameter).
-     */
-    var actionDocHowToAccess = 'access';
-    /**
-     * A method to obtain the value taken by the {@code action} parameter
-     * (see {@link #getParamAction()}) when documentation about how to access to 
-     * Bgee data is requested.
-     */
-    this.ACTION_DOC_HOW_TO_ACCESS = function() {
-    	return actionDocHowToAccess;
     }
     /**
      * A {@code String} that is the value taken by the {@code action} parameter
@@ -1144,6 +1141,19 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
         }
         return false;
     };
+    /**
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     * category "privacy_policy"
+     */
+    this.isAPrivacyPolicyPageCategory = function()
+    {
+        if (this.getFirstValue(urlParameters.getParamPage()) != null &&
+            this.getFirstValue(urlParameters.getParamPage()) == this.PAGE_PRIVACY_POLICY()) {
+            return true;
+        }
+        return false;
+    };
+
 //    /**
 //     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
 //     * category "anatomy"

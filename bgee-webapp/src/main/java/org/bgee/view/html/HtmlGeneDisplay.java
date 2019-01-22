@@ -58,6 +58,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      *                             the current request.
      * @param prop                 A {@code BgeeProperties} instance that contains the properties
      *                             to use.
+     * @param jsonHelper           A {@code JsonHelper} used to read/write variables into JSON. 
      * @param factory              The {@code HtmlFactory} that instantiated this object.
      * @throws IOException         If there is an issue when trying to get or to use the {@code PrintWriter}.
      */
@@ -76,7 +77,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
         this.writeln("<div id='bgee_introduction'>");
         
-        this.writeln("<p>Search for genes based on Ensembl gene IDs, gene names, and synonyms.<p>");
+        this.writeln("<p>Search for genes based on Ensembl gene IDs, gene names, and synonyms.</p>");
 
         this.writeln("</div>");
 
@@ -556,13 +557,13 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         log.entry(gene);
 
         final StringBuilder table = new StringBuilder("<table id='geneinfo'>");
-        table.append("<tr><th>").append("Ensembl ID</th><td>")
+        table.append("<tr><th scope='row'>").append("Ensembl ID</th><td>")
                 .append(htmlEntities(gene.getEnsemblGeneId())).append("</td></tr>");
-        table.append("<tr><th>").append("Name</th><td>")
+        table.append("<tr><th scope='row'>").append("Name</th><td>")
                 .append(getStringNotBlankOrDash(gene.getName())).append("</td></tr>");
-        table.append("<tr><th>").append("Description</th><td>")
+        table.append("<tr><th scope='row'>").append("Description</th><td>")
                 .append(getStringNotBlankOrDash(gene.getDescription())).append("</td></tr>");
-        table.append("<tr><th>").append("Organism</th><td><em>")
+        table.append("<tr><th scope='row'>").append("Organism</th><td><em>")
                 .append(htmlEntities(gene.getSpecies().getScientificName())).append("</em>")
                 .append(getSpeciesName(gene.getSpecies().getName()));
         table.append("</td></tr>");

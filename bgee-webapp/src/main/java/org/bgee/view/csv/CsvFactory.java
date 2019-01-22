@@ -8,29 +8,16 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
-import org.bgee.view.AboutDisplay;
-import org.bgee.view.DAODisplay;
-import org.bgee.view.DocumentationDisplay;
-import org.bgee.view.DownloadDisplay;
-import org.bgee.view.ErrorDisplay;
-import org.bgee.view.GeneDisplay;
-import org.bgee.view.GeneralDisplay;
-import org.bgee.view.JobDisplay;
-import org.bgee.view.RPackageDisplay;
-import org.bgee.view.SearchDisplay;
-import org.bgee.view.SourceDisplay;
-import org.bgee.view.SpeciesDisplay;
-import org.bgee.view.TopAnatDisplay;
-import org.bgee.view.ViewFactory;
+import org.bgee.view.*;
 
 /**
  * {@code ViewFactory} that returns all displays for the CSV views.
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 13, Mar. 2016
+ * @version Bgee 14, Aug. 2018
  * @see Delimiter
- * @since   Bgee 13
+ * @since   Bgee 13, July 2014
  */
 public class CsvFactory extends ViewFactory {	
     
@@ -65,22 +52,27 @@ public class CsvFactory extends ViewFactory {
     }
 
     @Override
-    public DocumentationDisplay getDocumentationDisplay() throws IOException {
+    public DocumentationDisplay getDocumentationDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
     }
 
     @Override
-    public AboutDisplay getAboutDisplay() throws IOException {
+    public AboutDisplay getAboutDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
     }
 
     @Override
-    public TopAnatDisplay getTopAnatDisplay() throws IOException {
+    public PrivacyPolicyDisplay getPrivacyPolicyDisplay() {
+        throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
+    }
+
+    @Override
+    public TopAnatDisplay getTopAnatDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
     }
 
 	@Override
-	public GeneDisplay getGeneDisplay() throws IOException {
+	public GeneDisplay getGeneDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
 	}
 
@@ -92,12 +84,12 @@ public class CsvFactory extends ViewFactory {
     }
 
 	@Override
-	public SearchDisplay getSearchDisplay() throws IOException {
+	public SearchDisplay getSearchDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
 	}
 	
 	@Override
-    public SourceDisplay getSourceDisplay() throws IOException {
+    public SourceDisplay getSourceDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
     }
 
@@ -120,5 +112,10 @@ public class CsvFactory extends ViewFactory {
         log.entry();
         return log.exit(new CsvRPackageDisplay(this.response, this.requestParameters, this.prop, this, 
                 this.delimiter));
+    }
+
+    @Override
+    public FaqDisplay getFaqDisplay() {
+        throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
     }
 }

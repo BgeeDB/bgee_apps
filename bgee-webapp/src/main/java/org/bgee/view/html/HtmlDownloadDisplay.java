@@ -28,8 +28,8 @@ import org.bgee.view.JsonHelper;
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
- * @version Bgee 14, Apr. 2017
- * @since   Bgee 13
+ * @version Bgee 14, Oct. 2018
+ * @since   Bgee 13, July 2014
  */
 public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDisplay {
  
@@ -69,20 +69,66 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     }
 
     @Override
+    //TODO: use a different ID than 'feature_list', to provide a different look, 
+    //notably with much larger elements, to provide more text below the figures.
     public void displayDownloadHomePage() {
         log.entry();
         
-        this.startDisplay("Bgee download pages");
+        this.startDisplay("Bgee download overview");
 
-        this.writeln("<h1>Bgee download page</h1>");
+        this.writeln("<h1>Download overview</h1>");
+
+        RequestParameters urlDownloadProcExprValuesGenerator = this.getNewRequestParameters();
+        urlDownloadProcExprValuesGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDownloadProcExprValuesGenerator.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
+
+        RequestParameters urlDownloadCallsGenerator = this.getNewRequestParameters();
+        urlDownloadCallsGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDownloadCallsGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
+
+        this.writeln("<h2>Bgee data</h2>");
 
         this.writeln("<div class='feature_list'>");
+
         this.writeln(this.getFeatureDownloadLogos());
-        this.writeln("</div>");
-        
+
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(BGEE_R_PACKAGE_URL,
+                true, "BgeeDB R package", "R package",
+                this.prop.getLogoImagesRootDirectory() + "r_logo_color.png",
+                "A package for the annotation and gene expression data download from Bgee database, "
+                        + "and TopAnat analysis."));
+
+        this.writeln("</div>"); // close feature_list
+
+        this.writeln("<h2>Developer corner</h2>");
+
+        this.writeln("<div class='feature_list'>");
+
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(BGEE_GITHUB_URL,
+                true, "GitHub of the Bgee project", "GitHub",
+                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "github_logo.png",
+                "Retrieve the source code of the Bgee pipeline, our annotations of homology between anatomical structures, "
+                        + "as well as the Confidence Information Ontology (CIO) "
+                        + "and the Homology Ontology (HOM), from our GitHub repository."));
+
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
+                this.prop.getFTPRootDirectory() + "sql_lite_dump.tar.gz", false,
+                "Download the dump of MySQL Bgee lite database", "Bgee lite dump",
+                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "mysql_logo.png",
+                "Download the dump of the MySQL Bgee lite database, that contains most useful, and explicit information."));
+
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(this.prop.getFTPRootDirectory() +
+                        "sql_dump.tar.gz", false, "Download dump the MySQL Bgee database", "Bgee dump",
+                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "mysql_logo.png",
+                "Download the complete dump of the MySQL Bgee database, that contains "
+                        + "all the data used to generate the information displayed on this website."));
+
+        this.writeln("</div>"); // close feature_list
+
         this.endDisplay();
 
         log.exit();
+
     }
     
     @Override
@@ -388,8 +434,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         // Cross to close the banner
         banner.append("<div id='bgee_data_selection_cross'>");
         banner.append("<a id='switch_page_link' class= 'banner_link' href=''></a>");
-        banner.append("<img class='closing_cross' src='" + this.prop.getBgeeRootDirectory() + this.prop.getImagesRootDirectory() + "cross.png' " +
-                "title='Close banner' alt='Cross' />");
+        banner.append("<img class='closing_cross' src='")
+                .append(this.prop.getBgeeRootDirectory()).append(this.prop.getImagesRootDirectory())
+                .append("cross.png' ").append("title='Close banner' alt='Cross' />");
         banner.append("</div>");
         
         // Section on the left of the black banner: image for single species or patchwork for group
@@ -557,8 +604,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         banner.append("</div>");
 		banner.append("<div id='single_simple_expr_headers' class='header_table'>" +
 		        HtmlDocumentationCallFile.getSingleSpeciesSimpleExprFileHeaderDesc() + "</div>");
-		banner.append("<div id='single_complete_expr_headers' class='header_table'>" + 
-		        HtmlDocumentationCallFile.getSingleSpeciesCompleteExprFileHeaderDesc() + "</div>");
+		banner.append("<div id='single_advanced_expr_headers' class='header_table'>" + 
+		        HtmlDocumentationCallFile.getSingleSpeciesAdvancedExprFileHeaderDesc() + "</div>");
 		banner.append("</div>");
 		
 	      // Differential expression files
@@ -611,7 +658,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 	}
 
     /**
-     * Get the 'help' image of the banner in a download page as a HTML 'img' element. 
+     * Get the 'help' link of the banner in a download page as a HTML 'a' element. 
      *
      * @param id    A {@code String} that is the 'id' attribute of the HTML 'a' element.
      * @return      the {@code String} that is the 'help' image as HTML 'img' element.
@@ -619,9 +666,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     private String getHelpLink(String id) {
         log.entry(id);
 
-        return log.exit("<a id='" + id + "' class='doc_link' data-placement='right' data-toggle='popover' "
-                + "data-trigger='hover' data-content='See documentation page' href=''>"
-                + "<span class='glyphicon glyphicon-info-sign'></span></a>");
+        return log.exit("<a id='" + id + "' class='banner_link' href=''>See documentation</a>");
     }
 
     /**

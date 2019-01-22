@@ -8,29 +8,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
-import org.bgee.view.AboutDisplay;
-import org.bgee.view.DAODisplay;
-import org.bgee.view.DocumentationDisplay;
-import org.bgee.view.DownloadDisplay;
-import org.bgee.view.ErrorDisplay;
-import org.bgee.view.GeneDisplay;
-import org.bgee.view.GeneralDisplay;
-import org.bgee.view.JobDisplay;
-import org.bgee.view.JsonHelper;
-import org.bgee.view.RPackageDisplay;
-import org.bgee.view.SearchDisplay;
-import org.bgee.view.SourceDisplay;
-import org.bgee.view.SpeciesDisplay;
-import org.bgee.view.TopAnatDisplay;
-import org.bgee.view.ViewFactory;
+import org.bgee.view.*;
 
 /**
  * {@code ViewFactory} returning objects generating JSON views.
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Feb. 2016
- * @since   Bgee 13
+ * @version Bgee 14, Aug. 2018
+ * @since   Bgee 13, July 2015
  */
 public class JsonFactory extends ViewFactory { 
     
@@ -84,27 +70,32 @@ public class JsonFactory extends ViewFactory {
     }
 
     @Override
-    public GeneralDisplay getGeneralDisplay() throws IOException {
+    public GeneralDisplay getGeneralDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
     }
 
     @Override
-    public DownloadDisplay getDownloadDisplay() throws IOException {
+    public DownloadDisplay getDownloadDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
     }
 
     @Override
-    public DocumentationDisplay getDocumentationDisplay() throws IOException {
+    public DocumentationDisplay getDocumentationDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
     }
 
     @Override
-    public AboutDisplay getAboutDisplay() throws IOException {
+    public AboutDisplay getAboutDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
     }
 
 	@Override
-	public GeneDisplay getGeneDisplay() throws IOException {
+    public PrivacyPolicyDisplay getPrivacyPolicyDisplay() {
+        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
+    }
+
+    @Override
+	public GeneDisplay getGeneDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
 	}
 
@@ -115,15 +106,15 @@ public class JsonFactory extends ViewFactory {
             this.prop, this.jsonHelper, this));
     }
 	@Override
-	public SearchDisplay getSearchDisplay() throws IOException {
+	public SearchDisplay getSearchDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
 	}
     @Override
-    public SourceDisplay getSourceDisplay() throws IOException {
+    public SourceDisplay getSourceDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
     }
     @Override
-    public DAODisplay getDAODisplay() throws IOException {
+    public DAODisplay getDAODisplay() {
         log.entry();
         throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
     }
@@ -135,8 +126,13 @@ public class JsonFactory extends ViewFactory {
             this.prop, this.jsonHelper, this));
     }
     @Override
-	public RPackageDisplay getRPackageDisplay() throws IOException {
+	public RPackageDisplay getRPackageDisplay() {
 	    log.entry();
 	    throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
 	}
+
+    @Override
+    public FaqDisplay getFaqDisplay() {
+        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
+    }
 }

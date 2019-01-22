@@ -8,29 +8,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
-import org.bgee.view.AboutDisplay;
-import org.bgee.view.DAODisplay;
-import org.bgee.view.DocumentationDisplay;
-import org.bgee.view.DownloadDisplay;
-import org.bgee.view.ErrorDisplay;
-import org.bgee.view.GeneDisplay;
-import org.bgee.view.GeneralDisplay;
-import org.bgee.view.JobDisplay;
-import org.bgee.view.TopAnatDisplay;
-import org.bgee.view.JsonHelper;
-import org.bgee.view.RPackageDisplay;
-import org.bgee.view.SearchDisplay;
-import org.bgee.view.SourceDisplay;
-import org.bgee.view.SpeciesDisplay;
-import org.bgee.view.ViewFactory;
+import org.bgee.view.*;
 
 /**
  * {@code ViewFactory} that returns all displays for the HTML view.
  * 
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Feb. 2016
- * @since   Bgee 13
+ * @version Bgee 14, Aug. 2018
+ * @since   Bgee 13, July 2014
  */
 public class HtmlFactory extends ViewFactory {
     
@@ -112,15 +98,19 @@ public class HtmlFactory extends ViewFactory {
     @Override
     public AboutDisplay getAboutDisplay() throws IOException {
         log.entry();
-        return log.exit(new HtmlAboutDisplay(
-                this.response, this.requestParameters, this.prop, this));
+        return log.exit(new HtmlAboutDisplay(this.response, this.requestParameters, this.prop, this));
+    }
+
+    @Override
+    public PrivacyPolicyDisplay getPrivacyPolicyDisplay() throws IOException {
+        log.entry();
+        return log.exit(new HtmlPrivacyPolicyDisplay(this.response, this.requestParameters, this.prop, this));
     }
 
     @Override
     public TopAnatDisplay getTopAnatDisplay() throws IOException {
         log.entry();
-        return log.exit(new HtmlTopAnatDisplay(
-                this.response, this.requestParameters, this.prop, this));
+        return log.exit(new HtmlTopAnatDisplay(this.response, this.requestParameters, this.prop, this));
     }
     
 	@Override
@@ -158,4 +148,9 @@ public class HtmlFactory extends ViewFactory {
 	    log.entry();
 	    throw log.throwing(new UnsupportedOperationException("Not available for HTML display"));
 	}
+    @Override
+    public FaqDisplay getFaqDisplay() throws IOException {
+        log.entry();
+        return log.exit(new HtmlFaqDisplay(this.response, this.requestParameters, this.prop, this));
+    }
 }

@@ -15,9 +15,9 @@ import org.bgee.view.AboutDisplay;
  * This class displays the page having the category "about", i.e. with the parameter
  * page=about for the HTML view.
  *
- * @author 	Valentine Rech de Laval
- * @version Bgee 13
- * @since 	Bgee 13
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, Aug. 2018
+ * @since   Bgee 13, Mar. 2015
  */
 public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay {
 
@@ -54,6 +54,8 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
         urlTopAnatGenerator.setPage(RequestParameters.PAGE_TOP_ANAT);
         RequestParameters urlDocumentationGenerator = this.getNewRequestParameters();
         urlDocumentationGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
+        RequestParameters urlPrivacyPolicy = this.getNewRequestParameters();
+        urlPrivacyPolicy.setPage(RequestParameters.PAGE_PRIVACY_POLICY);
 
         String version = this.getWebAppVersion();
         String title = "Bgee ";
@@ -68,6 +70,7 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
         this.writeln("<div class='row'>");
 
         this.writeln("<div class='" + CENTERED_ELEMENT_CLASS + "'>");
+
         this.writeln("<h2>What is Bgee?</h2>");
 
         this.writeln("<p>Bgee is a database to retrieve and compare gene expression patterns "
@@ -122,7 +125,7 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
                 + "Comte A, Dahdul WM, Dececchi TA, Druzinsky RE, Hayamizu TF, Ibrahim N, Lewis SE, "
                 + "Mabee PM, Niknejad A, Robinson-Rechavi M, Sereno PC, Mungall CJ."
                 + "<br>Unification of multi-species vertebrate anatomy ontologies for comparative biology in Uberon."
-                + "<br><em>in</em> J Biomed Semantics (2014): 5:21."
+                + "<br><em>in</em> J Biomed Semantics (2014): 5:21. "
                 + "[<a target='_blank' href='https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4089931/' " 
                 + "title='Unification of multi-species vertebrate anatomy ontologies for comparative biology in Uberon'>url</a>] "
                 + "<a href='ftp://ftp.bgee.org/general/citation04.ris'>RIS</a></li>");
@@ -130,8 +133,8 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
                 + "<br>Komljenovic A, Roux J, Robinson-Rechavi M and Bastian F."
                 + "<br>BgeeDB, an R package for retrieval of curated expression datasets and "
                 + "for gene list enrichment tests."
-                + "<br><em>in</em> F1000Research. ."
-                + "[<a target='_blank' href='https://f1000research.com/articles/5-2748/v1' " 
+                + "<br><em>in</em> F1000Research. "
+                + "[<a target='_blank' href='https://f1000research.com/articles/5-2748/v2' " 
                 + "title='BgeeDB, an R package for retrieval of curated expression datasets and "
                 + "for gene list enrichment tests'>url</a>] "
                 + "<a href='ftp://ftp.bgee.org/general/citation05.ris'>RIS</a></li>");
@@ -159,11 +162,15 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
                 "   for the animal photos copyright." +
                 "</p>");
 
+        this.writeln("<h2>What is our privacy policy?</h2>");
+        this.writeln("<p>You can find all details about our privacy policy in the dedicated page " +
+                "<a href='" + urlPrivacyPolicy.getRequestURL() + "'>Bgee privacy notice</a></p>");
+
         this.writeln("<h2>More</h2>");
         
-        this.writeln("<p>Our curation and ontology resources "
+        this.writeln("<p>Our pipeline source code, as well as our curation and ontology resources "
                 + "can be browsed on <a title='External link to BgeeDB on GitHub' "
-                + "href='https://github.com/BgeeDB/' target='_blank'>our GitHub page</a>.</p>");
+                + "href='" + BGEE_GITHUB_URL + "' target='_blank'>our GitHub page</a>.</p>");
 
         this.writeln("<p>More information about data analyses and database content is available " +
                 "in the <a href='" + urlDocumentationGenerator.getRequestURL() + 

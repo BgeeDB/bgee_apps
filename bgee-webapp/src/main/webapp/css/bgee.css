@@ -26,8 +26,32 @@ So we include it from scratch in all our pages, to adapt element sizes to it.
     --archive-second-color: #d0cbbf;
 }
 
+#sib_container a {
+    cursor: pointer;
+}
+
 #sib_container .alert {
     margin-bottom: 0px;
+}
+
+/****PRIVACY PANEL****/
+#bgee_privacy_banner {
+    background-color: black;
+    color: #fff;
+    width: 100%;
+    padding: 2em;
+    position: fixed;
+    bottom: 0;
+    z-index: 1000;
+    opacity: 0.8;
+}
+#bgee_privacy_banner a {
+    color: #fff;
+    text-decoration-line: underline;
+}
+
+#bgee_privacy_banner a:hover {
+    text-decoration-style: double;
 }
 
 /****NAVIGATION BAR*** */
@@ -204,9 +228,9 @@ nav img.social-img {
     color: #626262;
     z-index: 1;
 }
-@media (max-width: 910px) {
+@media (max-width: 960px) {
 	#sib_body {
-	   padding-bottom: 85px;
+	   padding-bottom: 150px;
 	}
 }
 #sib_body h1, #sib_body h2, #sib_body h3 {
@@ -248,7 +272,6 @@ nav img.social-img {
 
 /****LINKS****/
 #sib_body a {
-    cursor: pointer;
     color: #920209;
     text-decoration: underline;
 }

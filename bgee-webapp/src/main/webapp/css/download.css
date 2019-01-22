@@ -132,11 +132,7 @@ p.file_info a:hover {
     color: #DBDBDB;
 }
 
-#bgee_data_selection a.doc_link {
-    color: #DBDBDB;
-}
-
-#bgee_data_selection .banner_link, #bgee_data_selection_cross .banner_link:visited {
+#bgee_data_selection .banner_link, #bgee_data_selection .banner_link:visited {
     margin-right: 10px;
 	color: #717171;
 }

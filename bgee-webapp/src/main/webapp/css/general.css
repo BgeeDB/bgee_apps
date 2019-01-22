@@ -110,6 +110,12 @@
     font-weight: bold;
 }
 
+#bgee_news .panel-body{
+    overflow-y: auto;
+    height: 320px;
+    overflow-x: hidden;
+}
+
 .archive_site {
     float: right;
     font-size: 0.8em;

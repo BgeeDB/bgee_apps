@@ -1511,7 +1511,7 @@ public class RequestParameters {
      *                                                  when the generated URL is too long.
      * 
      */
-    //TODO : is this method still useful now if we can set the parameter separator ?
+    //TODO : are the three following methods still useful, since apparently we use setters to define these arguments ?
     public String getRequestURL(String parametersSeparator) 
             throws RequestParametersNotStorableException {
         log.entry(parametersSeparator);

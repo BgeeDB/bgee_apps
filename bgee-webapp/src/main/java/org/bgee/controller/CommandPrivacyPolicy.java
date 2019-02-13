@@ -1,29 +1,28 @@
 package org.bgee.controller;
 
-import java.io.IOException;
-
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.PageNotFoundException;
-import org.bgee.view.AboutDisplay;
+import org.bgee.view.PrivacyPolicyDisplay;
 import org.bgee.view.ViewFactory;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
 /**
- * Controller that handles requests having the category "about", i.e. with the parameter
- * page=about
+ * Controller that handles requests having the category "privacy_policy",
+ * i.e. with the parameter page=privacy_policy.
  *
  * @author  Valentine Rech de Laval
  * @version Bgee 14, Aug. 2018
- * @since   Bgee 13, Mar. 2015
+ * @since   Bgee 14, Aug. 2018
  */
-public class CommandAbout extends CommandParent {
+public class CommandPrivacyPolicy extends CommandParent {
 
     /**
      * {@code Logger} of the class. 
      */
-    private final static Logger log = LogManager.getLogger(CommandAbout.class.getName());
+    private final static Logger log = LogManager.getLogger(CommandPrivacyPolicy.class.getName());
 
     /**
      * Default constructor.
@@ -36,20 +35,20 @@ public class CommandAbout extends CommandParent {
      *                          to use.
      * @param viewFactory       A {@code ViewFactory} that provides the display type to be used.
      */
-    public CommandAbout(HttpServletResponse response, RequestParameters requestParameters, 
-            BgeeProperties prop, ViewFactory viewFactory) {
+    public CommandPrivacyPolicy(HttpServletResponse response, RequestParameters requestParameters,
+                                BgeeProperties prop, ViewFactory viewFactory) {
         super(response, requestParameters, prop, viewFactory);
     }
 
     @Override
     public void processRequest() throws IOException, PageNotFoundException {
         log.entry();
-        
-        AboutDisplay display = this.viewFactory.getAboutDisplay();
+
+        PrivacyPolicyDisplay display = this.viewFactory.getPrivacyPolicyDisplay();
         
         if (this.requestParameters.getAction() == null) {
-            display.displayAboutPage();
-
+            display.displayPrivacyPolicyPage();
+            
         } else {
             throw log.throwing(new PageNotFoundException("Incorrect " + 
                 this.requestParameters.getUrlParametersInstance().getParamAction() + 

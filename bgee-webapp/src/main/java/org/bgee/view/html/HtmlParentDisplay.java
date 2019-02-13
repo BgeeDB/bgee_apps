@@ -25,7 +25,7 @@ import org.bgee.view.ViewFactory;
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
  * @author  Sebastien Moretti
- * @version Bgee 14, Feb. 2018
+ * @version Bgee 14, Oct. 2018
  * @since   Bgee 13, Jul. 2014
  */
 public class HtmlParentDisplay extends ConcreteDisplayParent {
@@ -56,6 +56,17 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected static final String BGEE_R_PACKAGE_URL = 
             "https://bioconductor.org/packages/release/bioc/html/BgeeDB.html";
+
+    /**
+     * A {@code String} to be used in {@code class} attribute.
+     */
+    protected static final String BGEE_GITHUB_URL = "https://github.com/BgeeDB";
+    
+    /**
+     * A {@code String} that is the URL of the licence CC0 of Creative Commons.
+     */
+    protected static final String LICENCE_CC0_URL =
+            "https://creativecommons.org/publicdomain/zero/1.0/";
 
     /**
      * Escape HTML entities in the provided {@code String}
@@ -283,6 +294,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)");
         this.writeln("})(window,document,'script','//www.google-analytics.com/analytics.js','ga');");
         this.writeln("ga('create', 'UA-18281910-2', 'auto');");
+        this.writeln("ga('set', 'anonymizeIp', true);");
         this.writeln("ga('send', 'pageview');");
         this.writeln("</script>");
         
@@ -314,17 +326,33 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("<div class='container-fluid'>");
 
         this.writeln("<ul class='nav navbar-nav'>");
-        this.writeln("<li><a href='https://www.sib.swiss'>SIB Swiss Institute of Bioinformatics</a></li>");
+        this.writeln("    <li><a href='https://www.sib.swiss'>SIB Swiss Institute of Bioinformatics</a></li>");
+        this.writeln("    <li>");
+        this.writeln("        <a rel='license' href='" + LICENCE_CC0_URL + "' target='_blank'>");
+        this.writeln("            <img src='" + this.prop.getBgeeRootDirectory() + this.prop.getImagesRootDirectory() + 
+                                    "cc-zero.png' alt='CC0' />");
+        this.writeln("        </a>");
+        this.writeln("    </li>");
         this.writeln("</ul>");
         
 
         this.writeln("<ul class='nav navbar-nav navbar-right'>");
+        this.writeln("<li><a class='js-tooltip js-copy' " +
+                "data-copy='" + this.getRequestParameters().getStableRequestURL() + "' " +
+                "data-toggle='tooltip' data-placement='top' " +
+                "data-original-title='Click to copy to clipboard'>Copy permanent link</a>");
         this.writeln("<li><a href='#TOP' id='sib_footer_gototop'>"
                 + "<span class='glyphicon glyphicon-menu-up'></span> Back to the top</a></li>");
         this.writeln("</ul>");
         
         this.writeln("</div>"); // close container
         this.writeln("</nav>"); // close bgee_footer nev
+
+        this.writeln("<div id='bgee_privacy_banner'>");
+        // This section is empty, it will be filled by common.js.
+        this.writeln("    <p id='bgee_privacy_banner_text' class='col-sm-9 col-lg-10'></p>");
+        this.writeln("    <a id='bgee_privacy_banner_accept' class='col-sm-3 col-lg-2'>Do not show this banner again</a>");
+        this.writeln("</div>"); // close privacy-panel
 
         this.writeln("</div>"); // close sib_container
         
@@ -345,6 +373,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         RequestParameters urlGeneSearch = this.getNewRequestParameters();
         urlGeneSearch.setPage(RequestParameters.PAGE_GENE);
 
+        RequestParameters urlDownload = this.getNewRequestParameters();
+        urlDownload.setPage(RequestParameters.PAGE_DOWNLOAD);
+        
         RequestParameters urlDownloadProcValueFile = this.getNewRequestParameters();
         urlDownloadProcValueFile.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlDownloadProcValueFile.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
@@ -353,9 +384,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         urlDownloadExprCallFiles.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlDownloadExprCallFiles.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
 
-        RequestParameters urlDocBgeeAccess = this.getNewRequestParameters();
-        urlDocBgeeAccess.setPage(RequestParameters.PAGE_DOCUMENTATION);
-        urlDocBgeeAccess.setAction(RequestParameters.ACTION_DOC_HOW_TO_ACCESS);
+        RequestParameters urlDocDataSets = this.getNewRequestParameters();
+        urlDocDataSets.setPage(RequestParameters.PAGE_DOCUMENTATION);
+        urlDocDataSets.setAction(RequestParameters.ACTION_DOC_DATA_SETS);
 
         RequestParameters urlDocExprCallFiles = this.getNewRequestParameters();
         urlDocExprCallFiles.setPage(RequestParameters.PAGE_DOCUMENTATION);
@@ -365,12 +396,19 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         urlDocTopAnat.setPage(RequestParameters.PAGE_DOCUMENTATION);
         urlDocTopAnat.setAction(RequestParameters.ACTION_DOC_TOP_ANAT);
         
+        RequestParameters urlFaq = this.getNewRequestParameters();
+        urlFaq.setPage(RequestParameters.PAGE_DOCUMENTATION);
+        urlFaq.setAction(RequestParameters.ACTION_DOC_FAQ);
+
         RequestParameters urlBgeeSources = this.getNewRequestParameters();
         urlBgeeSources.setPage(RequestParameters.PAGE_SOURCE);
 
         RequestParameters urlAbout = this.getNewRequestParameters();
         urlAbout.setPage(RequestParameters.PAGE_ABOUT);
 
+        RequestParameters urlPrivacyPolicy = this.getNewRequestParameters();
+        urlPrivacyPolicy.setPage(RequestParameters.PAGE_PRIVACY_POLICY);
+        
         // Navigation bar
         StringBuilder navbar = new StringBuilder();
 
@@ -405,8 +443,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' "
               + "aria-haspopup='true' aria-expanded='false'>Analysis <span class='caret'></span></a>");
         navbar.append("<ul class='dropdown-menu'>");
-        navbar.append("<li><a title='TopAnat: Enrichment analyses of expression localization' "
-              + "href='" + urlTopAnat.getRequestURL() + "'>" + TOP_ANAT_PAGE_NAME + "</a></li>");
+        navbar.append("<li><a title='TopAnat: Enrichment analyses of expression localization' href='")
+                .append(urlTopAnat.getRequestURL()).append("'>").append(TOP_ANAT_PAGE_NAME)
+                .append("</a></li>");
         navbar.append("<li><a href='" + BGEE_R_PACKAGE_URL + "' target='_blank'>"
                 + "BgeeDB R package</a></li>");
         navbar.append("</ul>");
@@ -418,8 +457,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' "
               + "aria-haspopup='true' aria-expanded='false'>Search <span class='caret'></span></a>");
         navbar.append("<ul class='dropdown-menu'>");
-        navbar.append("<li><a title='Gene search' href='" + urlGeneSearch.getRequestURL() + 
-              "'>Gene search</a></li>");
+        navbar.append("<li><a title='Gene search' href='").append(urlGeneSearch.getRequestURL())
+                .append("'>Gene search</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
 
@@ -428,12 +467,16 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' "
               + "aria-haspopup='true' aria-expanded='false'>Download <span class='caret'></span></a>");
         navbar.append("<ul class='dropdown-menu'>");
-        navbar.append("<li><a href='" + urlDownloadExprCallFiles.getRequestURL() + "'>"
-              + GENE_EXPR_CALLS_PAGE_NAME + "</a></li>");
-        navbar.append("<li><a href='" + urlDownloadProcValueFile.getRequestURL() + "'>"
-              + PROCESSED_EXPR_VALUES_PAGE_NAME + "</a></li>");
+        navbar.append("<li><a href='").append(urlDownload.getRequestURL())
+                .append("'>Download overview</a></li>");
+        navbar.append("<li><a href='").append(urlDownloadExprCallFiles.getRequestURL()).append("'>")
+                .append(GENE_EXPR_CALLS_PAGE_NAME).append("</a></li>");
+        navbar.append("<li><a href='").append(urlDownloadProcValueFile.getRequestURL()).append("'>")
+                .append(PROCESSED_EXPR_VALUES_PAGE_NAME).append("</a></li>");
         navbar.append("<li><a href='" + BGEE_R_PACKAGE_URL + "' target='_blank'>"
                 + "BgeeDB R package</a></li>");
+        navbar.append("<li><a href='" + BGEE_GITHUB_URL + "' target='_blank'>"
+                + "BgeeDB GitHub repository</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
 
@@ -442,27 +485,36 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' "
               + "aria-haspopup='true' aria-expanded='false'>Documentation <span class='caret'></span></a>");
         navbar.append("<ul class='dropdown-menu'>");
-        navbar.append("<li><a title='See how to access to Bgee data' href='" + urlDocBgeeAccess.getRequestURL()
-              + "'>How to access Bgee data</a></li>");
-        navbar.append("<li><a title='TopAnat documentation' href='" + urlDocTopAnat.getRequestURL()
-              + "'>" + TOP_ANAT_PAGE_NAME + "</a></li>");
-        navbar.append("<li><a title='Gene expression call files documentation' href='" + 
-              urlDocExprCallFiles.getRequestURL() + "'>" + GENE_EXPR_CALLS_PAGE_NAME + "</a></li>");
+        navbar.append("<li><a title='See how to access to GTEx data' href='")
+                .append(urlDocDataSets.getRequestURL()).append("'>GTEx in Bgee</a></li>");
+        navbar.append("<li><a title='TopAnat documentation' href='").append(urlDocTopAnat.getRequestURL())
+                .append("'>").append(TOP_ANAT_PAGE_NAME).append("</a></li>");
+        navbar.append("<li><a title='Gene expression call files documentation' href='")
+                .append(urlDocExprCallFiles.getRequestURL()).append("'>").append(GENE_EXPR_CALLS_PAGE_NAME)
+                .append("</a></li>");
 //        navbar.append("<li><a title='Processed expression value files documentation' href='" + 
 //            urlDocProcValueFiles.getRequestURL() + "'>" + PROCESSED_EXPR_VALUES_PAGE_NAME + "</a></li>");
         navbar.append("<li><a href='https://bioconductor.org/packages/release/bioc/manuals/BgeeDB/man/BgeeDB.pdf'"
                 + " target='_blank'>BgeeDB R package</a></li>");
-        navbar.append("<li><a title='Bgee blog' href='https://bgeedb.wordpress.com' target='_blank'>Bgee blog</a></li>");
-        navbar.append("<li><a title='Bgee sources' href='" + urlBgeeSources.getRequestURL()
-              + "'>Bgee sources</a></li>");
+        navbar.append("<li><a href='").append(urlFaq.getRequestURL()).append("'>FAQ</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
         
         // About
-        navbar.append("<li><a title='About page' href='" + urlAbout.getRequestURL() + "'>About</a></li>");
+        navbar.append("<li class='dropdown'>");
+        navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' "
+                + "aria-haspopup='true' aria-expanded='false'>About <span class='caret'></span></a>");
+        navbar.append("<ul class='dropdown-menu'>");
+        navbar.append("<li><a href='").append(urlAbout.getRequestURL()).append("'>About Bgee</a></li>");
+        navbar.append("<li><a href='").append(urlBgeeSources.getRequestURL())
+                .append("'>Bgee sources</a></li>");
+        navbar.append("<li><a href='https://bgeedb.wordpress.com' target='_blank'>Bgee blog</a></li>");
+        navbar.append("<li><a href='").append(urlPrivacyPolicy.getRequestURL()).append("'>Bgee privacy notice</a></li>");
+        navbar.append("</ul>");
+        navbar.append("</li>");
         
         // Help
-        navbar.append("<li>" + this.getObfuscateEmailInHelp() + "</li>");
+        navbar.append("<li>").append(this.getObfuscateHelpEmail()).append("</li>");
 
         navbar.append("</ul>"); // close left nav links
 
@@ -470,25 +522,20 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<ul class='nav navbar-nav navbar-right'>");
         
         // R package
-        navbar.append("<li><a title='See our R package' target='_blank' href='" + BGEE_R_PACKAGE_URL + "'>" + 
-                "<img class='social-img' alt='R logo' src='" + this.prop.getLogoImagesRootDirectory() + 
-                "r_logo.png'></a></li>");
+        navbar.append("<li><a title='See our R package' target='_blank' href='" + BGEE_R_PACKAGE_URL + "'>" +
+                "<img class='social-img' alt='R logo' src='")
+                .append(this.prop.getLogoImagesRootDirectory()).append("r_logo.png'></a></li>");
 
         // Twitter
-        navbar.append("<li><a title='Follow @Bgeedb on Twitter' target='_blank' href='https://twitter.com/Bgeedb'>" + 
-                "<img class='social-img' alt='Twitter logo' src='" + this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + 
-                "twitter_logo.png'></a></li>");
+        navbar.append("<li><a title='Follow @Bgeedb on Twitter' target='_blank' href='https://twitter.com/Bgeedb'>" +
+                "<img class='social-img' alt='Twitter logo' src='").append(this.prop.getBgeeRootDirectory())
+                .append(this.prop.getLogoImagesRootDirectory()).append("twitter_logo.png'></a></li>");
 
-        // Blog
-        navbar.append("<li><a title='See our blog' target='_blank' href='https://bgeedb.wordpress.com'>" + 
-                "<img class='social-img' alt='Wordpress logo' src='" + this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + 
-                "wordpress_logo.png'></a></li>");
-        
         // SIB
-        navbar.append("<li><a id='sib_brand' href='https://www.sib.swiss' target='_blank' "
-                + "title='Link to the SIB Swiss Institute of Bioinformatics'>"
-                + "<img src='" + this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() +
-                "sib_emblem.png' alt='SIB Swiss Institute of Bioinformatics' /></a></li>");
+        navbar.append("<li><a id='sib_brand' href='https://www.sib.swiss' target='_blank' " + 
+                "title='Link to the SIB Swiss Institute of Bioinformatics'><img src='")
+                .append(this.prop.getBgeeRootDirectory()).append(this.prop.getLogoImagesRootDirectory())
+                .append("sib_emblem.png' alt='SIB Swiss Institute of Bioinformatics' /></a></li>");
 
         navbar.append("</ul>");  // close right nav links
         
@@ -543,16 +590,27 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     }
 
     /**
-     * @return          the {@code String} that is the HTML code of the Contact link.
+     * @return  The {@code String} that is the HTML code of the contact link in menu.
      */
     //TODO move javascript in common.js
-    private String getObfuscateEmailInHelp() {
+    private String getObfuscateHelpEmail() {
         return getObfuscateEmailLink("%48%65%6C%70");
     }
-    
-    protected String getObfuscateEmailInText() {
-        return getObfuscateEmailLink("%62%67%65%65%20%65%6D%61%69%6C");
-        
+
+    /**
+     * @return  The {@code String} that is the HTML code of the contact link in text,
+     *          displaying 'Bgee e-mail'.
+     */
+    protected String getObfuscateBgeeEmail() {
+        return getObfuscateEmailLink("%42%67%65%65%20%65%2D%6D%61%69%6C");
+    }
+
+    /**
+     * @return  The {@code String} that is the HTML code of the contact link in text,
+     *          displaying 'e-mail'.
+     */
+    protected String getObfuscateEmail() {
+        return getObfuscateEmailLink("%65%2D%6D%61%69%6C");
     }
     
     private String getObfuscateEmailLink(String encodedLinkText) {
@@ -682,10 +740,11 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         log.entry();
         if (!this.prop.isMinify()) {
             this.includeJs("lib/jquery.min.js");
-            this.includeJs("lib/jquery_plugins/bootstrap.min.js");
             this.includeJs("lib/jquery_plugins/jquery.visible.min.js");
             this.includeJs("lib/jquery_plugins/jquery-ui.min.js");
             this.includeJs("lib/jquery_plugins/toastr.min.js");
+            //we need to add the bootstrap JS file after jQuery JS file to override it for tooltip
+            this.includeJs("lib/jquery_plugins/bootstrap.min.js");
             this.includeJs("bgeeproperties.js");
             this.includeJs("urlparameters.js");
             this.includeJs("requestparameters.js");
@@ -767,11 +826,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected void includeCss() {
         if (!this.prop.isMinify()) {
-            this.includeCss("lib/jquery_plugins/bootstrap.min.css");
             this.includeCss("lib/jquery_plugins/jquery-ui.min.css");
             this.includeCss("lib/jquery_plugins/jquery-ui.structure.min.css");
             this.includeCss("lib/jquery_plugins/jquery-ui.theme.min.css");
             this.includeCss("lib/jquery_plugins/toastr.min.css");
+            //we need to add the bootstrap CSS file after jQuery CSS file to override it for tooltip
+            this.includeCss("lib/jquery_plugins/bootstrap.min.css");
             //we need to add the Bgee CSS files at the end, to override CSS file from bootstrap
             this.includeCss("bgee.css");  
         } else {
@@ -887,41 +947,44 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected static String getImageSources() {
         log.entry();
-        
+
+        String commonsWikipedia = "https://commons.wikimedia.org/wiki";
+        String gnuOrg           = "https://www.gnu.org/copyleft/fdl.html";
+        String creativeCommons  = "https://creativecommons.org";
         StringBuilder sources = new StringBuilder();
         sources.append("<p id='creativecommons_title'>Images from Wikimedia Commons. In most cases, pictures corresponds to the sequenced strains. <a>Show information about original images.</a></p>");
         sources.append("<div id='creativecommons'>");
-        sources.append("<p><i>Homo sapiens</i> picture by Leonardo da Vinci (Life time: 1519) [Public domain]. <a target='_blank' href='http://commons.wikimedia.org/wiki/File:Da_Vinci%27s_Anatomical_Man.jpg#mediaviewer/File:Da_Vinci%27s_Anatomical_Man.jpg'>See <i>H. sapiens</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Mus musculus</i> picture by Rasbak [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AApodemus_sylvaticus_bosmuis.jpg'>See <i>M. musculus</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Danio rerio</i> picture by Azul (Own work) [see page for license], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AZebrafisch.jpg'>See <i>D. rerio</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Drosophila melanogaster</i> picture by Andr&eacute; Karwath aka Aka (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/2.5'>CC-BY-SA-2.5</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ADrosophila_melanogaster_-_side_(aka).jpg'>See <i>D. melanogaster</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Caenorhabditis elegans</i> picture by Bob Goldstein, UNC Chapel Hill http://bio.unc.edu/people/faculty/goldstein/ (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ACelegansGoldsteinLabUNC.jpg'>See <i>C. elegans</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Pan troglodytes</i> picture by Thomas Lersch (Own work) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a>, <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a> or <a target='_blank' href='http://creativecommons.org/licenses/by/2.5'>CC-BY-2.5</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ASchimpanse_Zoo_Leipzig.jpg'>See <i>P. troglodytes</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Pan paniscus</i> picture by Ltshears (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a> or <a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ABonobo1_CincinnatiZoo.jpg'>See <i>P. paniscus</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Gorilla gorilla</i> picture by Brocken Inaglory (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a> or <a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AMale_gorilla_in_SF_zoo.jpg'>See <i>G. gorilla</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Macaca mulatta</i> picture by Aiwok (Own work) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0-2.5-2.0-1.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AMacaca_mulatta_3.JPG'>See <i>M. mulatta</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Rattus norvegicus</i> picture by Reg Mckenna (originally posted to Flickr as Wild Rat) [<a target='_blank' href='http://creativecommons.org/licenses/by/2.0'>CC-BY-2.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AWildRat.jpg'>See <i>R. norvegicus</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Bos taurus</i> picture by User Robert Merkel on en.wikipedia (US Department of Agriculture) [Public domain], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AHereford_bull_large.jpg'>See <i>B. taurus</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Sus scrofa</i> picture by Joshua Lutz (Own work) [Public domain], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ASus_scrofa_scrofa.jpg'>See <i>S. scrofa</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Equus caballus</i> picture by Doug Antczak Baker Institute for Animal Health College of Veterinary Medicine Cornell University [Public Domain], <a target='_blank' href='https://commons.wikimedia.org/wiki/File:Twilight20008-300.jpg#/media/File:Twilight20008-300.jpg'>See <i>E. caballus</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Oryctolagus cuniculus</i> picture by JJ Harrison (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='https://commons.wikimedia.org/wiki/File:Oryctolagus_cuniculus_Tasmania_2.jpg#/media/File:Oryctolagus_cuniculus_Tasmania_2.jpg'>See <i>O. cuniculus</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Canis lupus familiaris</i> picture by Mood210 (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='https://commons.wikimedia.org/wiki/File:Male_fawn_Boxer_undocked.jpg#/media/File:Male_fawn_Boxer_undocked.jpg'>See <i>C. lupus familiaris</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Felis catus</i> picture [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='https://commons.wikimedia.org/wiki/File:Valentino.jpg#/media/File:Valentino.jpg'>See <i>F. catus</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Cavia porcellus</i> picture by Variraptor (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='https://commons.wikimedia.org/wiki/File:Yoyocochondinde.JPG#/media/File:Yoyocochondinde.JPG'>See <i>C. porcellus</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Erinaceus europaeus</i> picture by Michael Gäbler (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='https://commons.wikimedia.org/wiki/File:Erinaceus_europaeus_(Linnaeus,_1758).jpg#/media/File:Erinaceus_europaeus_(Linnaeus,_1758).jpg'>See <i>E. europaeus</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Monodelphis domestica</i> picture by <i>Marsupial Genome Sheds Light on the Evolution of Immunity.</i> Hill E, PLoS Biology Vol. 4/3/2006, e75 <a rel='nofollow' href='http://dx.doi.org/10.1371/journal.pbio.0040075'>http://dx.doi.org/10.1371/journal.pbio.0040075</a> [<a target='_blank' href='http://creativecommons.org/licenses/by/2.5'>CC-BY-2.5</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AOpossum_with_young.png'>See <i>M. domestica</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Ornithorhynchus anatinus</i> picture by Dr. Philip Bethge (private) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0-2.5-2.0-1.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AOrnithorhynchus.jpg'>See <i>O. anatinus</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Gallus gallus</i> picture by Subramanya C K (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ARed_jungle_fowl.png'>See <i>G. gallus</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Anolis carolinensis</i> picture by PiccoloNamek (Moved from Image:P1010027.jpg) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AAnolis_carolinensis.jpg'>See <i>A. carolinensis</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Xenopus tropicalis</i> picture by V&aacute;clav Gvo&zcaron;d&iacute;k (http://calphotos.berkeley.edu) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/2.5'>CC-BY-SA-2.5</a>, <a target='_blank' href='http://creativecommons.org/licenses/by-sa/2.5'>CC-BY-SA-2.5</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AXenopus_tropicalis01.jpeg'>See <i>X. tropicalis</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Drosophila ananassae</i> picture by Nicolas Gompel [<a target='_blank' href='https://creativecommons.org/licenses/by-nc-sa/2.0/fr/'>CC BY-NC-SA 2.0 FR</a>], <a target='_blank' href='http://gompel.org/drosophilidae'>See <i>D. ananassae</i> picture via Nicolas Gompel's lab website</a></p>");
-        sources.append("<p><i>Drosophila mojavensis</i> picture by Nicolas Gompel [<a target='_blank' href='https://creativecommons.org/licenses/by-nc-sa/2.0/fr/'>CC BY-NC-SA 2.0 FR</a>], <a target='_blank' href='http://gompel.org/drosophilidae'>See <i>D. mojavensis</i> picture via Nicolas Gompel's lab website</a></p>");
+        sources.append("<p><i>Homo sapiens</i> picture by Leonardo da Vinci (Life time: 1519) [Public domain]. <a target='_blank' href='" + commonsWikipedia + "/File:Da_Vinci%27s_Anatomical_Man.jpg#mediaviewer/File:Da_Vinci%27s_Anatomical_Man.jpg'>See <i>H. sapiens</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Mus musculus</i> picture by Rasbak [<a target='_blank' href='" + gnuOrg + "'>GFDL</a> or <a target='_blank' href='" + creativeCommons + "/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a>], <a target='_blank' href='" + commonsWikipedia + "/File%3AApodemus_sylvaticus_bosmuis.jpg'>See <i>M. musculus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Danio rerio</i> picture by Azul (Own work) [see page for license], <a target='_blank' href='" + commonsWikipedia + "/File%3AZebrafisch.jpg'>See <i>D. rerio</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Drosophila melanogaster</i> picture by Andr&eacute; Karwath aka Aka (Own work) [<a target='_blank' href='" + creativeCommons + "/licenses/by-sa/2.5'>CC-BY-SA-2.5</a>], <a target='_blank' href='" + commonsWikipedia + "/File%3ADrosophila_melanogaster_-_side_(aka).jpg'>See <i>D. melanogaster</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Caenorhabditis elegans</i> picture by Bob Goldstein, UNC Chapel Hill http://bio.unc.edu/people/faculty/goldstein/ (Own work) [<a target='_blank' href='" + creativeCommons + "/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='" + commonsWikipedia + "/File%3ACelegansGoldsteinLabUNC.jpg'>See <i>C. elegans</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Pan troglodytes</i> picture by Thomas Lersch (Own work) [<a target='_blank' href='" + gnuOrg + "'>GFDL</a>, <a target='_blank' href='" + creativeCommons + "/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a> or <a target='_blank' href='" + creativeCommons + "/licenses/by/2.5'>CC-BY-2.5</a>], <a target='_blank' href='" + commonsWikipedia + "/File%3ASchimpanse_Zoo_Leipzig.jpg'>See <i>P. troglodytes</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Pan paniscus</i> picture by Ltshears (Own work) [<a target='_blank' href='" + creativeCommons + "/licenses/by-sa/3.0'>CC-BY-SA-3.0</a> or <a target='_blank' href='" + gnuOrg + "'>GFDL</a>], <a target='_blank' href='" + commonsWikipedia + "/File%3ABonobo1_CincinnatiZoo.jpg'>See <i>P. paniscus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Gorilla gorilla</i> picture by Brocken Inaglory (Own work) [<a target='_blank' href='" + creativeCommons + "/licenses/by-sa/3.0'>CC-BY-SA-3.0</a> or <a target='_blank' href='" + gnuOrg + "'>GFDL</a>], <a target='_blank' href='" + commonsWikipedia + "/File%3AMale_gorilla_in_SF_zoo.jpg'>See <i>G. gorilla</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Macaca mulatta</i> picture by Aiwok (Own work) [<a target='_blank' href='" + gnuOrg + "'>GFDL</a> or <a target='_blank' href='" + creativeCommons + "/licenses/by-sa/3.0'>CC-BY-SA-3.0-2.5-2.0-1.0</a>], <a target='_blank' href='" + commonsWikipedia + "/File%3AMacaca_mulatta_3.JPG'>See <i>M. mulatta</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Rattus norvegicus</i> picture by Reg Mckenna (originally posted to Flickr as Wild Rat) [<a target='_blank' href='" + creativeCommons + "/licenses/by/2.0'>CC-BY-2.0</a>], <a target='_blank' href='" + commonsWikipedia + "/File%3AWildRat.jpg'>See <i>R. norvegicus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Bos taurus</i> picture by User Robert Merkel on en.wikipedia (US Department of Agriculture) [Public domain], <a target='_blank' href='" + commonsWikipedia + "/File%3AHereford_bull_large.jpg'>See <i>B. taurus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Sus scrofa</i> picture by Joshua Lutz (Own work) [Public domain], <a target='_blank' href='" + commonsWikipedia + "/File%3ASus_scrofa_scrofa.jpg'>See <i>S. scrofa</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Equus caballus</i> picture by Doug Antczak Baker Institute for Animal Health College of Veterinary Medicine Cornell University [Public Domain], <a target='_blank' href='" + commonsWikipedia + "/File:Twilight20008-300.jpg#/media/File:Twilight20008-300.jpg'>See <i>E. caballus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Oryctolagus cuniculus</i> picture by JJ Harrison (Own work) [<a target='_blank' href='" + creativeCommons + "/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='" + commonsWikipedia + "/File:Oryctolagus_cuniculus_Tasmania_2.jpg#/media/File:Oryctolagus_cuniculus_Tasmania_2.jpg'>See <i>O. cuniculus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Canis lupus familiaris</i> picture by Mood210 (Own work) [<a target='_blank' href='" + creativeCommons + "/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='" + commonsWikipedia + "/File:Male_fawn_Boxer_undocked.jpg#/media/File:Male_fawn_Boxer_undocked.jpg'>See <i>C. lupus familiaris</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Felis catus</i> picture [<a target='_blank' href='" + creativeCommons + "/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='" + commonsWikipedia + "/File:Valentino.jpg#/media/File:Valentino.jpg'>See <i>F. catus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Cavia porcellus</i> picture by Variraptor (Own work) [<a target='_blank' href='" + creativeCommons + "/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='" + commonsWikipedia + "/File:Yoyocochondinde.JPG#/media/File:Yoyocochondinde.JPG'>See <i>C. porcellus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Erinaceus europaeus</i> picture by Michael Gäbler (Own work) [<a target='_blank' href='" + creativeCommons + "/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='" + commonsWikipedia + "/File:Erinaceus_europaeus_(Linnaeus,_1758).jpg#/media/File:Erinaceus_europaeus_(Linnaeus,_1758).jpg'>See <i>E. europaeus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Monodelphis domestica</i> picture by <i>Marsupial Genome Sheds Light on the Evolution of Immunity.</i> Hill E, PLoS Biology Vol. 4/3/2006, e75 <a rel='nofollow' href='http://dx.doi.org/10.1371/journal.pbio.0040075'>http://dx.doi.org/10.1371/journal.pbio.0040075</a> [<a target='_blank' href='" + creativeCommons + "/licenses/by/2.5'>CC-BY-2.5</a>], <a target='_blank' href='" + commonsWikipedia + "/File%3AOpossum_with_young.png'>See <i>M. domestica</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Ornithorhynchus anatinus</i> picture by Dr. Philip Bethge (private) [<a target='_blank' href='" + gnuOrg + "'>GFDL</a> or <a target='_blank' href='" + creativeCommons + "/licenses/by-sa/3.0'>CC-BY-SA-3.0-2.5-2.0-1.0</a>], <a target='_blank' href='" + commonsWikipedia + "/File%3AOrnithorhynchus.jpg'>See <i>O. anatinus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Gallus gallus</i> picture by Subramanya C K (Own work) [<a target='_blank' href='" + creativeCommons + "/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='" + commonsWikipedia + "/File%3ARed_jungle_fowl.png'>See <i>G. gallus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Anolis carolinensis</i> picture by PiccoloNamek (Moved from Image:P1010027.jpg) [<a target='_blank' href='" + gnuOrg + "'>GFDL</a> or <a target='_blank' href='" + creativeCommons + "/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a>], <a target='_blank' href='" + commonsWikipedia + "/File%3AAnolis_carolinensis.jpg'>See <i>A. carolinensis</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Xenopus tropicalis</i> picture by V&aacute;clav Gvo&zcaron;d&iacute;k (http://calphotos.berkeley.edu) [<a target='_blank' href='" + creativeCommons + "/licenses/by-sa/2.5'>CC-BY-SA-2.5</a>, <a target='_blank' href='" + creativeCommons + "/licenses/by-sa/2.5'>CC-BY-SA-2.5</a> or <a target='_blank' href='" + creativeCommons + "/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='" + commonsWikipedia + "/File%3AXenopus_tropicalis01.jpeg'>See <i>X. tropicalis</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Drosophila ananassae</i> picture by Nicolas Gompel [<a target='_blank' href='" + creativeCommons + "/licenses/by-nc-sa/2.0/'>CC BY-NC-SA 2.0 FR</a>], <a target='_blank' href='http://gompel.org/drosophilidae'>See <i>D. ananassae</i> picture via Nicolas Gompel's lab website</a></p>");
+        sources.append("<p><i>Drosophila mojavensis</i> picture by Nicolas Gompel [<a target='_blank' href='" + creativeCommons + "/licenses/by-nc-sa/2.0/'>CC BY-NC-SA 2.0 FR</a>], <a target='_blank' href='http://gompel.org/drosophilidae'>See <i>D. mojavensis</i> picture via Nicolas Gompel's lab website</a></p>");
         sources.append("<p><i>Drosophila pseudoobscura</i> picture, <a target='_blank' href='http://metazoa.ensembl.org/i/species/large/Drosophila_pseudoobscura.png'>See <i>D. pseudoobscura </i> picture via Ensembl Metazoa</a></p>");
-        sources.append("<p><i>Drosophila simulans</i> picture by Nicolas Gompel [<a target='_blank' href='https://creativecommons.org/licenses/by-nc-sa/2.0/fr/'>CC BY-NC-SA 2.0 FR</a>], <a target='_blank' href='http://gompel.org/drosophilidae'>See <i>D. simulans</i> picture via Nicolas Gompel's lab website</a></p>");
-        sources.append("<p><i>Drosophila virilis</i> picture by Nicolas Gompel [<a target='_blank' href='https://creativecommons.org/licenses/by-nc-sa/2.0/fr/'>CC BY-NC-SA 2.0 FR</a>], <a target='_blank' href='http://gompel.org/drosophilidae'>See <i>D. virilis</i> picture via Nicolas Gompel's lab website</a></p>");
-        sources.append("<p><i>Drosophila yakuba</i> picture by Nicolas Gompel [<a target='_blank' href='https://creativecommons.org/licenses/by-nc-sa/2.0/fr/'>CC BY-NC-SA 2.0 FR</a>], <a target='_blank' href='http://gompel.org/drosophilidae'>See <i>D. yakuba</i> picture via Nicolas Gompel's lab website</a></p>");
-        //        sources.append("<p><i>Pongo pygmaeus</i> picture by Greg Hume (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ASUMATRAN_ORANGUTAN.jpg'>See <i>P. pygmaeus</i> picture via Wikimedia Commons</a></p>");
-        //        sources.append("<p><i>Tetraodon nigroviridis</i> picture by Starseed (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/de/deed.en'>CC-BY-SA-3.0-de</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ATetraodon_nigroviridis_1.jpg'>See <i>T. nigroviridis</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Drosophila simulans</i> picture by Nicolas Gompel [<a target='_blank' href='" + creativeCommons + "/licenses/by-nc-sa/2.0/'>CC BY-NC-SA 2.0 FR</a>], <a target='_blank' href='http://gompel.org/drosophilidae'>See <i>D. simulans</i> picture via Nicolas Gompel's lab website</a></p>");
+        sources.append("<p><i>Drosophila virilis</i> picture by Nicolas Gompel [<a target='_blank' href='" + creativeCommons + "/licenses/by-nc-sa/2.0/'>CC BY-NC-SA 2.0 FR</a>], <a target='_blank' href='http://gompel.org/drosophilidae'>See <i>D. virilis</i> picture via Nicolas Gompel's lab website</a></p>");
+        sources.append("<p><i>Drosophila yakuba</i> picture by Nicolas Gompel [<a target='_blank' href='" + creativeCommons + "/licenses/by-nc-sa/2.0/'>CC BY-NC-SA 2.0 FR</a>], <a target='_blank' href='http://gompel.org/drosophilidae'>See <i>D. yakuba</i> picture via Nicolas Gompel's lab website</a></p>");
+        //        sources.append("<p><i>Pongo pygmaeus</i> picture by Greg Hume (Own work) [<a target='_blank' href='" + creativeCommons + "/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='" + commonsWikipedia + "/File%3ASUMATRAN_ORANGUTAN.jpg'>See <i>P. pygmaeus</i> picture via Wikimedia Commons</a></p>");
+        //        sources.append("<p><i>Tetraodon nigroviridis</i> picture by Starseed (Own work) [<a target='_blank' href='" + creativeCommons + "/licenses/by-sa/3.0/de/deed.en'>CC-BY-SA-3.0-de</a> or <a target='_blank' href='" + creativeCommons + "/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='" + commonsWikipedia + "/File%3ATetraodon_nigroviridis_1.jpg'>See <i>T. nigroviridis</i> picture via Wikimedia Commons</a></p>");
         sources.append("</div>");
     
         return log.exit(sources.toString());

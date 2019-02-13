@@ -12,7 +12,7 @@
 					//TODO: do it the angular way
 					$('#appLoading').show();
 				};
-				element.bind('click', loadingMessageCallback);
+				element.on('click', loadingMessageCallback);
 //            scope.$watch('loading', function (val) {
 //
 //                $('#appLoading').hide();

@@ -194,33 +194,26 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
             }
         }
         
-        String expressionTabName = "expression";
-        String conditionTabName = "cond";
-
-        sql += " FROM " + tableName +
-                " LEFT OUTER JOIN cond ON (" +
-                    conditionTabName + ".anatEntityId = " + tableName + ".anatEntityId)" +
-                //XXX: do we need this join to the expression table? If it is in the cond table,
-                //maybe it is informative already?
-                " LEFT OUTER JOIN " + expressionTabName + " ON (" + 
-                    conditionTabName + ".conditionId = " + expressionTabName + ".conditionId)";
-        
+        String exprTabName = "expression";
+        String condTabName = "cond";
         String anatEntTaxConstTabName = "anatEntityTaxonConstraint";
 
+        sql += " FROM " + tableName;
+
         if (isSpeciesFilter) {
-            sql += " INNER JOIN " + anatEntTaxConstTabName + " ON (" +
-                    anatEntTaxConstTabName + ".anatEntityId = " + tableName + ".anatEntityId)";
+            sql += " INNER JOIN " + anatEntTaxConstTabName + " ON " +
+                    anatEntTaxConstTabName + ".anatEntityId = " + tableName + ".anatEntityId";
         }
-        sql += " WHERE " + tableName + ".nonInformative = true " +
-               //XXX: do we need this join to the expression table? If it is in the cond table,
-               //maybe it is informative already?
-               "AND " + expressionTabName + ".conditionId IS NULL ";
+        sql += " WHERE " + tableName + ".nonInformative = true ";
         if (isSpeciesFilter) {
             sql += " AND (" + anatEntTaxConstTabName + ".speciesId IS NULL" +
                    " OR " + anatEntTaxConstTabName + ".speciesId IN (" +
                    BgeePreparedStatement.generateParameterizedQueryString(clonedSpeIds.size()) + 
                    "))";
         }
+        sql += " AND NOT EXISTS (SELECT 1 FROM " + condTabName + " INNER JOIN " + exprTabName
+                        + " ON " + condTabName + ".exprMappedConditionId = " + exprTabName + ".conditionId "
+                        + "WHERE " + condTabName + ".anatEntityId = " + tableName + ".anatEntityId)";
         
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.

@@ -666,8 +666,8 @@
                 number = vm.gridOptions.data.length;
             }
 
-            // +1 for the header
-            var height = (number +1) * vm.row_height;
+            // number + 1 for the header and + 17 for the scroll footer
+            var height = (number + 1) * vm.row_height + 17;
             angular.element(document.getElementsByClassName('grid')[0]).css('height', height + 'px');
         }
 

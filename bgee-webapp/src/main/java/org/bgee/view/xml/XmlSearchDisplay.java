@@ -42,18 +42,24 @@ public class XmlSearchDisplay extends XmlParentDisplay implements SearchDisplay 
         	//find out where the match came from, to display it
         	String label = "";
         	String labelSource = "";
-        	if (gene.getGene().getName().toLowerCase().indexOf(searchTerm.toLowerCase()) != -1) {
+        	switch(gene.getMatchSource()) {
+        	case NAME:
             	//match name
         		label = gene.getGene().getName();
         		labelSource = "name";
-        	} else if (gene.getGene().getEnsemblGeneId().toLowerCase().indexOf(searchTerm.toLowerCase()) != -1) {
+        		break;
+        	case ID:
             	//match ID
         		label = gene.getGene().getEnsemblGeneId();
         		labelSource = "id";
-        	} else {
+        		break;
+        	case SYNONYM:
         		//find the matching synonym 
         		label = gene.getMatchedSynonym();
         		labelSource = "synonym";
+        		break;
+            default:
+                throw log.throwing(new IllegalStateException("Unrecognized MatchSource: " + gene.getMatchSource()));
         	}
         	
         	this.writeln("<gene id='" + XmlParentDisplay.xmlEntities(gene.getGene().getEnsemblGeneId()) + "' " +

@@ -9,30 +9,35 @@ package org.bgee.model.gene;
  *
  */
 public class GeneMatch {
-    
-    private final Gene gene;
-    
-    private final String synonym;
+    public enum MatchSource {
+        ID, NAME, SYNONYM;
+    }
 
-	public GeneMatch(Gene gene, String synonym) {
+    private final Gene gene;
+    private final String synonym;
+    private final MatchSource matchSource;
+
+	public GeneMatch(Gene gene, String synonym, MatchSource matchSource) {
+	    if (gene == null || matchSource == null) {
+	        throw new IllegalArgumentException("A Gene and a MatchSource must be provided.");
+	    }
 		this.gene = gene;
 		this.synonym = synonym;
+		this.matchSource = matchSource;
 	}
-	
-	/**
-	 * @return A {boolean}, true if the match was on a synonym of the gene, false otherwise.
-	 */
-	public boolean isSynonymMatch(){
-		return synonym != null;
-	}
-	
+
 	/**
 	 * @return A {@code Gene} that was matched by the search.
 	 */
 	public Gene getGene() {
 		return gene;
 	}
-	
+	/**
+	 * @return A {@code MatchSource} representing how the gene was identified from the search term.
+	 */
+	public MatchSource getMatchSource() {
+	    return matchSource;
+	}
 	/**
 	 * @return A {@code String} representing the matched synonym, null when there is no synonym match
 	 */
@@ -46,6 +51,7 @@ public class GeneMatch {
         int result = 1;
         result = prime * result + ((gene == null) ? 0 : gene.hashCode());
         result = prime * result + ((synonym == null) ? 0 : synonym.hashCode());
+        result = prime * result + ((matchSource == null) ? 0 : matchSource.hashCode());
         return result;
     }
 
@@ -75,15 +81,22 @@ public class GeneMatch {
         } else if (!synonym.equals(other.synonym)) {
             return false;
         }
+        if (matchSource == null) {
+            if (other.matchSource != null) {
+                return false;
+            }
+        } else if (!matchSource.equals(other.matchSource)) {
+            return false;
+        }
         return true;
     }
 
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("GeneMatch [gene=").append(gene).append(", synonym=").append(synonym).append("]");
+        builder.append("GeneMatch [gene=").append(gene).append(", synonym=").append(synonym)
+        .append(", matchSource=").append(matchSource)
+        .append("]");
         return builder.toString();
     }
-	
-	
 }

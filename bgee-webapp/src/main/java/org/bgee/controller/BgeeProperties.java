@@ -142,6 +142,23 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * @see #getBgeeRootDirectory()
      */
     public final static String BGEE_ROOT_DIRECTORY_DEFAULT = "/";
+    
+    /**
+     * A {@code String} that is the key to access to the System property that is read at the 
+     * initialization of {@code BgeeProperties} to set the stable bgee root directory.
+     *
+     * @see #BGEE_STABLE_ROOT_DIRECTORY_DEFAULT
+     * @see #getBgeeStableRootDirectory()
+     */
+    public final static String BGEE_STABLE_ROOT_DIRECTORY_KEY = "org.bgee.webapp.bgeeStableRootDirectory";
+    /**
+     * A {@code String} that is the default value of the stable bgee root directory.
+     *
+     * @see #BGEE_STABLE_ROOT_DIRECTORY_KEY
+     * @see #getBgeeStableRootDirectory()
+     */
+    public final static String BGEE_STABLE_ROOT_DIRECTORY_DEFAULT = "/";
+
     /**
      * A {@code String} that is the key to access to the System property that is read at the 
      * initialization of {@code BgeeProperties} to set the bgee root domain (e.g., '.bgee.org').
@@ -653,6 +670,13 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * for instance, "http://bgee.org/".
      */
     private final String bgeeRootDirectory;
+
+    /**
+     * A {@code String} that defines the stable root of URLs to Bgee, 
+     * for instance, "http://bgee.org/bgee14/".
+     */
+    private final String bgeeStableRootDirectory;
+    
     /**
      * A {@code String} that defines the root domain of Bgee servers, 
      * for instance, ".bgee.org".
@@ -849,6 +873,8 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
                 REQUEST_PARAMETERS_STORAGE_DIRECTORY_DEFAULT);
         bgeeRootDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 BGEE_ROOT_DIRECTORY_KEY, BGEE_ROOT_DIRECTORY_DEFAULT);
+        bgeeStableRootDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS,
+                BGEE_STABLE_ROOT_DIRECTORY_KEY, BGEE_STABLE_ROOT_DIRECTORY_DEFAULT);
         bgeeRootDomain = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 BGEE_ROOT_DOMAIN_KEY, BGEE_ROOT_DOMAIN_DEFAULT);
         ftpRootDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
@@ -961,6 +987,15 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
     public String getBgeeRootDirectory() {
         return bgeeRootDirectory;
     }
+
+    /**
+     * @return  A {@code String} that defines the stable root of URLs to Bgee, for instance, 
+     *          "http://bgee.org/bgee14/".
+     */
+    public String getBgeeStableRootDirectory() {
+        return bgeeStableRootDirectory;
+    }
+    
     /**
      * @return  A {@code String} that defines the root domain of Bgee servers, 
      *          for instance, ".bgee.org".

@@ -135,8 +135,8 @@
         <!-- WARNING: never removes these properties, otherwise your files will be named, e.g.,
              *${filter.org.bgee.webapp.css.version.extension}.css. If you want to disable
              versioning of CSS and JS files, just leave these properties empty. -->
-        <filter.org.bgee.webapp.css.version.extension>min${project.version}b</filter.org.bgee.webapp.css.version.extension>
-        <filter.org.bgee.webapp.javascript.version.extension>min${project.version}b</filter.org.bgee.webapp.javascript.version.extension>
+        <filter.org.bgee.webapp.css.version.extension>min${project.version}c</filter.org.bgee.webapp.css.version.extension>
+        <filter.org.bgee.webapp.javascript.version.extension>min${project.version}c</filter.org.bgee.webapp.javascript.version.extension>
         <!-- This property defines where the minified CSS and JS files will be stored.
              This is useful to be able to change this setting when running the webapp from within Eclipse
              (Eclipse acquires its resources before any plugin can process them, so we modify
@@ -276,10 +276,11 @@
                             <jsTargetDir>js/</jsTargetDir>
                             <jsSourceFiles>
                                 <jsSourceFile>lib/jquery.min.js</jsSourceFile>
-                                <jsSourceFile>lib/jquery_plugins/bootstrap.min.js</jsSourceFile>
                                 <jsSourceFile>lib/jquery_plugins/jquery.visible.min.js</jsSourceFile>
                                 <jsSourceFile>lib/jquery_plugins/jquery-ui.min.js</jsSourceFile>
                                 <jsSourceFile>lib/jquery_plugins/toastr.min.js</jsSourceFile>
+                                <!-- Bootstrap JS file is after jQuery JS file to override it for tooltip -->
+                                <jsSourceFile>lib/jquery_plugins/bootstrap.min.js</jsSourceFile>
                             </jsSourceFiles>
                             <!-- Files already provided minified. The suffix will then not be added  -->
                             <jsFinalFile>vendor_common.${filter.org.bgee.webapp.javascript.version.extension}.js</jsFinalFile>
@@ -289,11 +290,12 @@
                             <!-- the css files need to keep their relative location -->
                             <cssTargetDir>css/lib/jquery_plugins/</cssTargetDir>
                             <cssSourceFiles>
-                                <cssSourceFile>lib/jquery_plugins/bootstrap.min.css</cssSourceFile>
                                 <cssSourceFile>lib/jquery_plugins/jquery-ui.min.css</cssSourceFile>
                                 <cssSourceFile>lib/jquery_plugins/jquery-ui.structure.min.css</cssSourceFile>
                                 <cssSourceFile>lib/jquery_plugins/jquery-ui.theme.min.css</cssSourceFile>
                                 <cssSourceFile>lib/jquery_plugins/toastr.min.css</cssSourceFile>
+                                <!-- Bootstrap CSS file is after jQuery CSS file to override it for tooltip -->
+                                <cssSourceFile>lib/jquery_plugins/bootstrap.min.css</cssSourceFile>
                             </cssSourceFiles>
                             <!-- Files already provided minified. The suffix will then not be added  -->
                             <cssFinalFile>vendor_common.${filter.org.bgee.webapp.css.version.extension}.css</cssFinalFile>

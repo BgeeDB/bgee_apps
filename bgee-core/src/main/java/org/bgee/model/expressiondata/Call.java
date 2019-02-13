@@ -886,6 +886,8 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         private static final NumberFormat getNumberFormat(int max) {
             log.entry(max);
             NumberFormat formatter = NumberFormat.getInstance(Locale.US);
+            //IMPORTANT: if you change the rounding mode, or the min/max fraction digits,
+            //you have to also update the method getFormattedGlobalMeanRank
             formatter.setRoundingMode(RoundingMode.HALF_UP);
             if (max < 10) {
                 formatter.setMaximumFractionDigits(2);
@@ -987,14 +989,19 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                 throw log.throwing(new IllegalStateException("No rank was provided for this call."));
             }
             NumberFormat formatter = null;
-            //start with values over 1000, more chances to have a match
-            if (this.globalMeanRank.compareTo(new BigDecimal(1000)) >= 0) {
+            //start with values over 1000, more chances to have a match.
+            //And since we are going to round half up, 999.5 will be rounded to 1000
+            //IMPORTANT: if you want to change the rounding etc, you have to change the method getNumberFormat
+            if (this.globalMeanRank.compareTo(new BigDecimal(999.5)) >= 0) {
                 formatter = FORMAT1000;
-            } else if (this.globalMeanRank.compareTo(new BigDecimal(10)) < 0) {
+            //2 significant digits kept below 10, so 9.995 will be rounded to 10
+            } else if (this.globalMeanRank.compareTo(new BigDecimal(9.995)) < 0) {
                 formatter = FORMAT1;
-            } else if (this.globalMeanRank.compareTo(new BigDecimal(100)) < 0) {
+            //1 significant digit kept below 100, so 99.95 will be rounded to 100
+            } else if (this.globalMeanRank.compareTo(new BigDecimal(99.95)) < 0) {
                 formatter = FORMAT10;
-            } else if (this.globalMeanRank.compareTo(new BigDecimal(1000)) < 0) {
+            //0 significant digit kept below 1000, so 999.5 will be rounded to 1000
+            } else if (this.globalMeanRank.compareTo(new BigDecimal(999.5)) < 0) {
                 formatter = FORMAT100;
             }
             //1E2 to 1e2

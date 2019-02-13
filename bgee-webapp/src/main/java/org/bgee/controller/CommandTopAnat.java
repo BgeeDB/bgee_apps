@@ -587,7 +587,7 @@ public class CommandTopAnat extends CommandParent {
         RequestParameters resultParams = new RequestParameters();
         resultParams.setPage(RequestParameters.PAGE_TOP_ANAT);
         resultParams.setURLHash("/result/" + this.requestParameters.getDataKey());
-        final String resultUrl = resultParams.getRequestURL();
+        final String resultUrl = resultParams.getStableRequestURL();
         
         //OK, we need to launch the analyses. 
         //launch analysis in a different thread, otherwise the response will not be sent.

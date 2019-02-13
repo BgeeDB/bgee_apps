@@ -54,6 +54,12 @@ public class RequestParametersTest extends TestAncestor {
     private static final String TEST_ROOT_DIR = "testRootDir/";
     
     /**
+     * A {@code String} that will be used to define the value of the property with name 
+     * {@link BgeeProperties#BGEE_STABLE_ROOT_DIRECTORY_KEY}.
+     */
+    private static final String TEST_STABLE_ROOT_DIR = "testStableRootDir/";
+
+    /**
      * The instance of {@code URLParameters} that provides the parameters
      */
     private static TestURLParameters testURLParameters;
@@ -108,6 +114,7 @@ public class RequestParametersTest extends TestAncestor {
     public static void resetProperties(){
         System.clearProperty(BgeeProperties.PROPERTIES_FILE_NAME_KEY);
         System.clearProperty(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.BGEE_STABLE_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.URL_MAX_LENGTH_KEY);
     }
 
@@ -131,6 +138,7 @@ public class RequestParametersTest extends TestAncestor {
         props.setProperty(BgeeProperties.URL_MAX_LENGTH_KEY, "120");
         //in order to test that generated URLs include the Bgee root directory
         props.setProperty(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY, TEST_ROOT_DIR);
+        props.setProperty(BgeeProperties.BGEE_STABLE_ROOT_DIRECTORY_KEY, TEST_STABLE_ROOT_DIR);
 
         BgeeProperties.getBgeeProperties(props);
 
@@ -235,6 +243,15 @@ public class RequestParametersTest extends TestAncestor {
                 + "s2&test_integer=1234&"
                 + "test_integer=2345&test_boolean=true&test_boolean="
                 + "false",this.requestParametersWithNoKey.getRequestURL());
+        
+        assertEquals("Incorrect query returned ", TEST_STABLE_ROOT_DIR + "?test_string=string1&"
+                + "test_list=s1"
+                + java.net.URLEncoder.encode(
+                testURLParameters.getParamTestStringList().getSeparators().get(0),
+                "UTF-8")
+                + "s2&test_integer=1234&"
+                + "test_integer=2345&test_boolean=true&test_boolean="
+                + "false",this.requestParametersWithNoKey.getStableRequestURL());
 
         assertEquals("Incorrect query returned ", TEST_ROOT_DIR + "?test_string=string1+"
                 + "test_list=s1" 
@@ -278,12 +295,11 @@ public class RequestParametersTest extends TestAncestor {
                         "UTF-8")
                 + "s2+data=" + this.generatedKey, 
                         this.requestParametersHavingAKey.getRequestURL("+"));
-
     }
     
     /**
      * Test the methods {@link RequestParameters#getRequestURL(Collection, boolean)} and 
-     * {@link RequestParameters#getRequestURL(String, Collection, boolean)}.
+     * {@link RequestParameters#getRequestURL(String, Collection, boolean, boolean)}.
      * 
      * @throws MultipleValuesNotAllowedException 
      * @throws RequestParametersNotStorableException 
@@ -298,7 +314,7 @@ public class RequestParametersTest extends TestAncestor {
         // in different ways. Do it with the default parameters separator and with
         // a custom one.
         // The URL root directory to use to generate URLs is defined in loadMockRequest().
-        Collection<URLParameters.Parameter<?>> params = new HashSet<URLParameters.Parameter<?>>();
+        Collection<URLParameters.Parameter<?>> params = new HashSet<>();
         params.add(RequestParametersTest.testURLParameters.getParamTestString());
         params.add(RequestParametersTest.testURLParameters.getParamTestBoolean());
         
@@ -321,6 +337,17 @@ public class RequestParametersTest extends TestAncestor {
                 this.requestParametersWithNoKey.getRequestURL(
                         params, false));
         
+        assertEquals("Incorrect query returned ", TEST_STABLE_ROOT_DIR + "?test_list=s1"
+                        + java.net.URLEncoder.encode(
+                testURLParameters.getParamTestStringList().getSeparators().get(0),
+                "UTF-8")
+                        + "s2"
+                        + "&test_integer=1234&test_integer=2345" + RequestParameters.JS_HASH_SEPARATOR
+                        + "test_string=string1&test_boolean=true&test_boolean=false",
+                this.requestParametersWithNoKey.getRequestURL(
+                        params, false));
+
+
         //if we provide an empty Collection, we should be able to get either 
         //all params in the search part, or all params in the hash part
         params.clear();
@@ -345,7 +372,7 @@ public class RequestParametersTest extends TestAncestor {
                         params, true));
         
         //same tests, but with custom separator
-        params = new HashSet<URLParameters.Parameter<?>>();
+        params = new HashSet<>();
         params.add(RequestParametersTest.testURLParameters.getParamTestString());
         params.add(RequestParametersTest.testURLParameters.getParamTestBoolean());
         assertEquals("Incorrect query returned ", TEST_ROOT_DIR + "?test_string=string1"
@@ -356,7 +383,7 @@ public class RequestParametersTest extends TestAncestor {
                         "UTF-8")
                 + "s2+test_integer=1234"
                 + "+test_integer=2345",this.requestParametersWithNoKey.getRequestURL("+", 
-                        params, true));
+                        params, true, false));
         assertEquals("Incorrect query returned ", TEST_ROOT_DIR + "?test_list=s1" 
                 + java.net.URLEncoder.encode(
                         testURLParameters.getParamTestStringList().getSeparators().get(0), 
@@ -365,7 +392,7 @@ public class RequestParametersTest extends TestAncestor {
                 + "+test_integer=1234+test_integer=2345" + RequestParameters.JS_HASH_SEPARATOR 
                 + "test_string=string1+test_boolean=true+test_boolean=false",
                 this.requestParametersWithNoKey.getRequestURL("+", 
-                        params, false));
+                        params, false, false));
         
         params.clear();
         assertEquals("Incorrect query returned ", TEST_ROOT_DIR + "?test_string=string1"
@@ -376,7 +403,7 @@ public class RequestParametersTest extends TestAncestor {
                 + "s2+test_integer="
                 + "1234+test_integer=2345+test_boolean=true+test_boolean="
                 + "false", this.requestParametersWithNoKey.getRequestURL("+", 
-                        params, false));
+                        params, false, false));
         assertEquals("Incorrect query returned ", TEST_ROOT_DIR + RequestParameters.JS_HASH_SEPARATOR 
                 + "test_string=string1+test_list=s1" 
                 + java.net.URLEncoder.encode(
@@ -385,7 +412,7 @@ public class RequestParametersTest extends TestAncestor {
                 + "s2+test_integer=1234+test_integer=2345"
                 + "+test_boolean=true+test_boolean=false", 
                 this.requestParametersWithNoKey.getRequestURL("+", 
-                        params, true));
+                        params, true, false));
         
 
         // Add a parameter value to exceed the threshold over which a key is used
@@ -395,7 +422,7 @@ public class RequestParametersTest extends TestAncestor {
         // it is non storable, and with parameters attributed to search or hash part
         this.addParamsToExceedThreshold(this.requestParametersWithNoKey);
 
-        params = new HashSet<URLParameters.Parameter<?>>();
+        params = new HashSet<>();
         params.add(RequestParametersTest.testURLParameters.getParamData());
         assertEquals("Incorrect query returned ", TEST_ROOT_DIR + 
                 "?test_string=string1+test_list=s1" 
@@ -404,7 +431,7 @@ public class RequestParametersTest extends TestAncestor {
                         "UTF-8")
                 + "s2" + RequestParameters.JS_HASH_SEPARATOR 
                 + "data=" + this.generatedKey, 
-                this.requestParametersWithNoKey.getRequestURL("+", params, false));
+                this.requestParametersWithNoKey.getRequestURL("+", params, false, false));
         assertEquals("Incorrect query returned ", TEST_ROOT_DIR + 
                 "?data=" + this.generatedKey + RequestParameters.JS_HASH_SEPARATOR 
                 + "test_string=string1+test_list=s1" 
@@ -412,13 +439,13 @@ public class RequestParametersTest extends TestAncestor {
                         testURLParameters.getParamTestStringList().getSeparators().get(0), 
                         "UTF-8")
                 + "s2", 
-                this.requestParametersWithNoKey.getRequestURL("+", params, true));
+                this.requestParametersWithNoKey.getRequestURL("+", params, true, false));
 
         //check that an exception is thrown if setURLHash is used along with setting 
         //data parameters in hash
         this.requestParametersWithNoKey.setURLHash("myHash");
         try {
-            this.requestParametersWithNoKey.getRequestURL("+", params, true);
+            this.requestParametersWithNoKey.getRequestURL("+", params, true, false);
             //test failed
             throw log.throwing(new AssertionError("An exception should have been thrown."));
         } catch (IllegalStateException e) {

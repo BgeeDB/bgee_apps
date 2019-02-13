@@ -66,7 +66,7 @@ public class HtmlDocumentationTopAnat extends HtmlDocumentationDownloadFile {
         		+ "except that it analyzes the anatomical structures where genes are expressed, "
         		+ "rather than their GO functional annotations.</p>");
         this.writeln("<p>See also our "
-        		+ "<a href='https://bgeedb.wordpress.com/2015/11/24/topanat-go-like-enrichment-of-anatomical-terms-mapped-to-genes-by-expression-patterns/' "
+        		+ "<a href='https://bgeedb.wordpress.com/category/topanat/' "
         		+ "title='Link to the Bgee Wordpress blog' target='_blank'>blog post</a> "
         		+ "about TopAnat for more information.</p>");
         this.writeln("<p><strong>Please note that the results can be slow to compute</strong>, "

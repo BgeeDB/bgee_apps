@@ -11,6 +11,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.annotations.AnnotationCommon;
 import org.bgee.pipeline.annotations.InsertSimilarityAnnotation;
 import org.bgee.pipeline.annotations.SimilarityAnnotation;
+import org.bgee.pipeline.bgeelite.BgeeToBgeeLite;
 import org.bgee.pipeline.expression.InsertPropagatedCalls;
 import org.bgee.pipeline.expression.downloadfile.GenerateExprFile2;
 import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile;
@@ -279,7 +280,12 @@ public class CommandRunner {
             throw log.throwing(new UnsupportedOperationException("Method disabled while updated"));
 //            GenerateRankFile.main(newArgs);
 //            break;
-            
+        
+        //---------- Generate Bgee Lite database -----------
+        case "GenerateBgeeLite":
+            BgeeToBgeeLite.main(newArgs);
+            break;
+                   
         default: 
             throw log.throwing(new UnsupportedOperationException("The following action " +
                     "is not recognized: " + args[0]));

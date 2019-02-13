@@ -7,7 +7,6 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
@@ -24,8 +23,8 @@ import org.bgee.view.html.HtmlDownloadDisplay.DownloadPageType;
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
- * @version Bgee 14, Feb. 2018
- * @since   Bgee 13
+ * @version Bgee 14, Oct. 2018
+ * @since   Bgee 13, July 2014
  */
 public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisplay {
 
@@ -179,7 +178,9 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         this.writeln("<h2>Gene expression data</h2>");
         this.writeln("<p>Bgee is a database to retrieve and compare gene expression patterns "
                 + "in multiple animal species, produced from multiple data types "
-                + "(RNA-Seq, Affymetrix, <em>in situ</em> hybridization, and EST data).</p>");
+                + "(RNA-Seq, Affymetrix, <em>in situ</em> hybridization, and EST data) "
+				+ "and from multiple data sets (including <a href='https://www.gtexportal.org/home/'" +
+				" title='GTEx portal' target='_blank'>GTEx data</a>).</p>");
         this.writeln("</div>");
         
         this.writeln("<div class='col-sm-4'>");
@@ -299,10 +300,21 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         RequestParameters urlGenePage = this.getNewRequestParameters();
         urlGenePage.setPage(RequestParameters.PAGE_GENE);
 
-        RequestParameters urlSourcePage = this.getNewRequestParameters();
-        urlSourcePage.setPage(RequestParameters.PAGE_SOURCE);
-	    
-	    this.writeln("<div id='bgee_news' class='panel panel-default'>");
+		RequestParameters urlSourcePage = this.getNewRequestParameters();
+		urlSourcePage.setPage(RequestParameters.PAGE_SOURCE);
+
+		RequestParameters urlPrivatePolicyPage = this.getNewRequestParameters();
+		urlPrivatePolicyPage.setPage(RequestParameters.PAGE_PRIVACY_POLICY);
+
+		RequestParameters urlFaqPage = this.getNewRequestParameters();
+		urlFaqPage.setPage(RequestParameters.PAGE_DOCUMENTATION);
+		urlFaqPage.setAction(RequestParameters.ACTION_DOC_FAQ);
+
+		RequestParameters urlDatasetPage = this.getNewRequestParameters();
+		urlDatasetPage.setPage(RequestParameters.PAGE_DOCUMENTATION);
+		urlDatasetPage.setAction(RequestParameters.ACTION_DOC_DATA_SETS);
+
+		this.writeln("<div id='bgee_news' class='panel panel-default'>");
 	    this.writeln("<div class='panel-heading'>");
 	    this.writeln("<span class='panel-title'>News"
 	                 + "    <span class='header_details'>(features are being added incrementally)"
@@ -311,6 +323,19 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	    
 	    this.writeln("<div class='panel-body'>");
 
+	    //FIXME set the release date
+		this.writeOneNews("2019-02", "Update of our interfaces:"
+				+ "<ul>"
+				+ "  <li>New <a href='" + urlPrivatePolicyPage.getRequestURL() 
+								+ "'>privacy policy page</a></li>"
+				+ "  <li>New <a href='" + urlFaqPage.getRequestURL() + "'>FAQ page</a> "
+				+ "				where we address common user queries</li>"
+				+ "  <li>New <a href='" + urlDatasetPage.getRequestURL() + "'>documentation page</a>"
+				+ " 			specific to GTEx data to learn where to find information" 
+				+ " 			about this project</li>"
+				+ "  <li>Update the menu</li>"
+				+ "</ul>");
+				
         this.writeOneNews("2018-02-14", "Release of Bgee version 14.0:"
                 + "<ul>"
                 + "  <li>Release of the production version of Bgee release 14:"
@@ -325,7 +350,8 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 + "  </li>"
                 + "</ul>"
                 + "You can still access to Bgee 13 at <a title='Archive site Bgee version 13' "
-                + "href='https://bgee.org/bgee13' target='_blank'>https://bgee.org/bgee13</a>.");
+                + "href='" + this.prop.getBgeeRootDirectory() + "bgee13' target='_blank'>" 
+				+ this.prop.getBgeeRootDirectory() + "bgee13</a>.");
 
 	    this.writeOneNews("2017-05-16", "Release of Bgee version 14-beta:"
 	            + "<ul>"
@@ -348,7 +374,8 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	            + "  <li>Update of download pages to make it easier to chose files to retrieve; inclusion of gene ranks (as used in gene pages) in call files..</li>"
 	            + "</ul>"
 	            + "You can still access to Bgee 13 at <a title='Archive site Bgee version 13' "
-	            + "href='https://bgee.org/bgee13' target='_blank'>https://bgee.org/bgee13</a>.");
+	            + "href='" + this.prop.getBgeeRootDirectory() + "bgee13' target='_blank'>"
+				+ this.prop.getBgeeRootDirectory() + "bgee13</a>.");
 
 	    this.writeOneNews("2016-07-06", "Release of Bgee version 13.2: "
                 + "<ul>"
@@ -422,16 +449,16 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	                      + "</ul>");
 	    this.writeOneNews("2015-04-16", "Release of the multi-species " +
 	                      "differential expression data (across anatomy) for 6 groups, see <a href='" +
-	                      urlDownload.getRequestURL() + "' " + "title='Bgee download page'>" +
-	                      "download page</a>.");
+	                      urlDownload.getRequestURL() + "' " + "title='Download overview'>" +
+	                      "download overview</a>.");
 	    this.writeOneNews("2015-03-03", "Release of the single-species " +
 	                      "differential expression data for 11 species, see <a href='" +
-	                      urlDownload.getRequestURL() + "' " + "title='Bgee download page'>" +
-	                      "download page</a>.");
+	                      urlDownload.getRequestURL() + "' " + "title='Download overview'>" +
+	                      "download overview</a>.");
 	    this.writeOneNews("2014-12-19", "Release of the single-species " +
 	                      "expression data for 17 species, see <a href='" +
-	                      urlDownload.getRequestURL() + "' " + "title='Bgee download page'>" +
-	                      "download page</a>.");
+	                      urlDownload.getRequestURL() + "' " + "title='Download overview'>" +
+	                      "download overview</a>.");
 	    
 	    this.writeln("</div>"); // close panel-body
 	    this.writeln("</div>"); // close panel
@@ -447,16 +474,16 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     	
         this.writeln("<div id='bgee_more_info' class='row'>");
     	
-        this.writeln("<div class='col-xs-12 col-md-10'>");
+        this.writeln("<div class='col-xs-12 col-lg-9'>");
         this.writeln(getImageSources());
         this.writeln("</div>");
 
-        this.writeln("<div class='col-xs-12 col-md-3 archive_site'>");
+        this.writeln("<div class='col-xs-12 col-lg-3 archive_site'>");
         this.writeln("View archive sites:");
-        this.writeln("<a title='Archive site Bgee version 12' href='https://bgee.org/bgee12' target='_blank'>"
-                + "version 12</a>");
-        this.writeln("<a title='Archive site Bgee version 13' href='https://bgee.org/bgee13' target='_blank'>"
-                + "version 13</a>");
+        this.writeln("<a title='Archive site Bgee version 12' href='" + 
+				this.prop.getBgeeRootDirectory() + "bgee12' target='_blank'>version 12</a>");
+        this.writeln("<a title='Archive site Bgee version 13' href='" +
+				this.prop.getBgeeRootDirectory() + "bgee13' target='_blank'>version 13</a>");
         this.writeln("</div>");
         
         this.writeln("</div>"); // close bgee_more_info row

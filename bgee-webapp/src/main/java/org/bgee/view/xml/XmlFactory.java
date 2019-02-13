@@ -8,27 +8,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
-import org.bgee.view.AboutDisplay;
-import org.bgee.view.DAODisplay;
-import org.bgee.view.DocumentationDisplay;
-import org.bgee.view.DownloadDisplay;
-import org.bgee.view.ErrorDisplay;
-import org.bgee.view.GeneDisplay;
-import org.bgee.view.GeneralDisplay;
-import org.bgee.view.JobDisplay;
-import org.bgee.view.RPackageDisplay;
-import org.bgee.view.SearchDisplay;
-import org.bgee.view.SourceDisplay;
-import org.bgee.view.SpeciesDisplay;
-import org.bgee.view.TopAnatDisplay;
-import org.bgee.view.ViewFactory;
+import org.bgee.view.*;
 
 /**
  * {@code ViewFactory} returning objects generating XML views.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Feb. 2016
- * @since   Bgee 13
+ * @version Bgee 14, Aug. 2018
+ * @since   Bgee 13, July 2014
  */
 public class XmlFactory extends ViewFactory {
     
@@ -57,30 +44,36 @@ public class XmlFactory extends ViewFactory {
     }
 
     @Override
-    public DocumentationDisplay getDocumentationDisplay() throws IOException {
+    public DocumentationDisplay getDocumentationDisplay() {
         log.entry();
         throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
     }
 
     @Override
-    public AboutDisplay getAboutDisplay() throws IOException {
+    public AboutDisplay getAboutDisplay() {
         log.entry();
         throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
     }
 
     @Override
-    public TopAnatDisplay getTopAnatDisplay() throws IOException {
+    public PrivacyPolicyDisplay getPrivacyPolicyDisplay() {
+        log.entry();
+        throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
+    }
+
+    @Override
+    public TopAnatDisplay getTopAnatDisplay() {
         log.entry();
         throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
     }
 
 	@Override
-	public GeneDisplay getGeneDisplay() throws IOException {
+	public GeneDisplay getGeneDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
 	}
 
     @Override
-    public SpeciesDisplay getSpeciesDisplay() throws IOException {
+    public SpeciesDisplay getSpeciesDisplay() {
         log.entry();
         throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
     }
@@ -92,25 +85,30 @@ public class XmlFactory extends ViewFactory {
 	}
 
     @Override
-    public SourceDisplay getSourceDisplay() throws IOException {
+    public SourceDisplay getSourceDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
     }
 
     @Override
-    public DAODisplay getDAODisplay() throws IOException {
+    public DAODisplay getDAODisplay() {
         log.entry();
         throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
     }
 
     @Override
-    public JobDisplay getJobDisplay() throws IOException {
+    public JobDisplay getJobDisplay() {
         log.entry();
         throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
     }
     
     @Override
-	public RPackageDisplay getRPackageDisplay() throws IOException {
+	public RPackageDisplay getRPackageDisplay() {
 	    log.entry();
 	    throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
 	}
+
+    @Override
+    public FaqDisplay getFaqDisplay() {
+        throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
+    }
 }

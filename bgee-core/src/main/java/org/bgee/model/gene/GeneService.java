@@ -18,7 +18,6 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneNameSynonymDAO.GeneNameSynonymTO;
-import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTOResultSet;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
 
@@ -251,21 +250,35 @@ public class GeneService extends CommonService {
         log.entry(geneTO, term, synonymList, species);
         Gene gene = mapGeneTOToGene(geneTO, species);
         // if the gene name or id match there is no synonym
-        if (geneTO.getName().toLowerCase().contains(term.toLowerCase())
-                || String.valueOf(geneTO.getGeneId()).contains(term)) {
-            return log.exit(new GeneMatch(gene, null));
+        //Fix issue with term search such as "upk\3a". MySQL does not consider the backslash
+        //and returns terms, that are then not matched here
+        final String termLowerCase = term.toLowerCase();
+        final String termLowerCaseEscaped = termLowerCase.replaceAll("\\\\", "");
+        final String geneIdLowerCase = geneTO.getGeneId().toLowerCase();
+        if (geneIdLowerCase.contains(termLowerCase) || geneIdLowerCase.contains(termLowerCaseEscaped)) {
+            return log.exit(new GeneMatch(gene, null, GeneMatch.MatchSource.ID));
+        }
+        final String geneNameLowerCase = geneTO.getName().toLowerCase();
+        if (geneNameLowerCase.contains(termLowerCase) || geneNameLowerCase.contains(termLowerCaseEscaped)) {
+            return log.exit(new GeneMatch(gene, null, GeneMatch.MatchSource.NAME));
         }
 
         // otherwise we fetch synonym and find the first match
         List<String> synonyms = synonymList.stream().
-                filter(s -> s.toLowerCase().contains(term.toLowerCase()))
+                filter(s -> {
+                    String synonymLowerCase = s.toLowerCase();
+                    return synonymLowerCase.contains(termLowerCase) ||
+                            //Fix issue with term search such as "upk\3a". MySQL does not consider the backslash
+                            //and returns terms, that are then not matched here
+                            synonymLowerCase.contains(termLowerCaseEscaped);
+                    })
                 .collect(Collectors.toList());
                 
         if (synonyms.size() < 1) {
             throw new IllegalStateException("The term should match either the gene id/name "
                     + "or one of its synonyms. Term: " + term + " GeneTO;" + geneTO);
         }
-        return log.exit(new GeneMatch(gene, synonyms.get(0)));
+        return log.exit(new GeneMatch(gene, synonyms.get(0), GeneMatch.MatchSource.SYNONYM));
     }
 
     private Map<Integer, Species> loadSpeciesMapFromGeneTOs(Collection<GeneTO> geneTOs, boolean withSpeciesInfo) {

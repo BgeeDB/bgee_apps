@@ -36,12 +36,12 @@ import org.bgee.view.ViewFactoryProvider.DisplayType;
 /**
  * This is the entry point of bgee-webapp. It can be directly mapped as the main servlet in
  * {@code web.xml} and thus responds to a call to the root "/" of the application
- * 
- * @author Mathieu Seppey
- * @author Frederic Bastian
  *
- * @version Bgee 13, Oct 2016
- * @since Bgee 13
+ * @author  Mathieu Seppey
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, Aug. 2018
+ * @since   Bgee 13, June 2014
  */
 public class FrontController extends HttpServlet {
 
@@ -91,7 +91,7 @@ public class FrontController extends HttpServlet {
 
     /**
      * Default constructor. It will use default implementations for all dependencies 
-     * (see {@link #FrontController(BgeeProperties, URLParameters, Supplier, ViewFactoryProvider, MailSender)}).
+     * (see {@link #FrontController(BgeeProperties, URLParameters, JobService, UserService, Supplier, ViewFactoryProvider, MailSender)}).
      */
     public FrontController() {
         this(null);
@@ -100,7 +100,7 @@ public class FrontController extends HttpServlet {
     /**
      * Constructor that takes as parameter a {@code java.util.Properties} to create 
      * a {@code BgeeProperties} instance. It will use default implementations for all dependencies 
-     * (see {@link #FrontController(BgeeProperties, URLParameters, Supplier, ViewFactoryProvider, MailSender)}).
+     * (see {@link #FrontController(BgeeProperties, URLParameters, JobService, UserService, Supplier, ViewFactoryProvider, MailSender)}).
      * 
      * @param prop  A {@code java.util.Properties} that will be use to create an instance of
      *              {@code BgeeProperties}
@@ -230,6 +230,8 @@ public class FrontController extends HttpServlet {
                 controller = new CommandDocumentation(response, requestParameters, this.prop, factory);
             } else if (requestParameters.isAnAboutPageCategory()) {
                 controller = new CommandAbout(response, requestParameters, this.prop, factory);
+            } else if (requestParameters.isAPrivatePolicyPageCategory()) {
+                controller = new CommandPrivacyPolicy(response, requestParameters, this.prop, factory);
             } else if (requestParameters.isATopAnatPageCategory()) {
                 controller = new CommandTopAnat(response, requestParameters, this.prop, factory, 
                         serviceFactory, this.jobService, user, this.getServletContext(), this.mailSender);
@@ -248,7 +250,7 @@ public class FrontController extends HttpServlet {
 //            } else if (requestParameters.isADAOPageCategory()) {
 //                controller = new CommandDAO(response, requestParameters, this.prop, factory, 
 //                        serviceFactory, this.jobService, user);
-            }else if (requestParameters.isARPackagePageCategory()) {
+            } else if (requestParameters.isARPackagePageCategory()) {
                 controller = new CommandRPackage(response, requestParameters, this.prop, factory, 
                         serviceFactory, this.jobService, user);
             } else if (requestParameters.isAStatsPageCategory()) {

@@ -496,7 +496,7 @@ public class CommandGene extends CommandParent {
                     callList -> ExpressionCall.generateMeanRankScoreClustering(callList, method, 
                             this.prop.getGeneScoreClusteringThreshold()));
         } catch (IllegalArgumentException e) {
-            throw log.throwing(new IllegalStateException("No custering method corresponding to "
+            throw log.throwing(new IllegalStateException("No clustering method corresponding to "
                     + this.prop.getGeneScoreClusteringMethod().trim()));
         }
     }

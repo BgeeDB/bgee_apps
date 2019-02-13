@@ -486,7 +486,7 @@ create table gene (
 
 create table geneToOma (
     bgeeGeneId mediumint unsigned not null,
-    OMANodeId int unsigned not null COMMENT 'OMA Hierarchical Orthologous node id',
+    OMAGroupId varchar(255) not null COMMENT 'OMA Hierarchical Orthologous Group id. We store the OMAGroupId rather than the OMANodeId, because it allows to retrieve absolutely all homologs of a gene, without needing to target a specific taxonomic level',
     taxonId mediumint unsigned not null
 ) engine = innodb;
 

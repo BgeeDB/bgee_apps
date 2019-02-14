@@ -54,6 +54,8 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
         this.startDisplay("Welcome to Bgee: a dataBase for Gene Expression Evolution");
 
+        this.addSchemaMarkup();
+
         if (groups.stream().anyMatch(SpeciesDataGroup::isMultipleSpecies)) {
             throw log.throwing(new IllegalArgumentException(
                     "Only single-species groups should be displayed on the home page."));
@@ -71,7 +73,6 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         
         this.displayNews();
 
-
         this.writeln("<hr class='home-divider'/>");
 
         this.displayBgeeButtons("end_buttons");
@@ -83,6 +84,51 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         log.exit();
     }
     
+    /**
+     * Add schema.org markup to the page.
+     */
+    private void addSchemaMarkup() {
+        log.entry();
+        
+        // We build the RequestParameters without geneId to keep '{' and '}' instead of replace them due to by secureString() 
+        RequestParameters urlActionTarget = this.getNewRequestParameters();
+        urlActionTarget.setPage(RequestParameters.PAGE_GENE);
+
+        this.writeln("<script type='application/ld+json'>{");
+        this.writeln("  \"@context\": [");
+        this.writeln("    { \"bs\": \"http://bioschemas.org/\" }, \"https://schema.org\"," +
+                "         {\"@base\": \"https://schema.org\"}");
+        this.writeln("  ],");
+        this.writeln("  \"@type\": \"Dataset\",");
+        this.writeln("  \"@id\": \"" + this.getRequestParameters().getRequestURL() + "\",");
+        this.writeln("  \"url\": \"" + this.getRequestParameters().getRequestURL() + "\",");
+        this.writeln("  \"name\": \"Bgee\",");
+        this.writeln("  \"description\": \"" + BGEE_DESCRIPTION + "\",");
+        this.writeln("  \"keywords\": \"" + BGEE_KEYWORDS + "\",");
+        this.writeln("  \"creator\": [");
+        this.writeln("    {\"@type\": \"EducationalOrganization\", \"name\": \"Evolutionary Bioinformatics group\"}");
+        this.writeln("  ],");
+        this.writeln("  \"distribution\": [");
+        this.writeln("    {\"@type\": \"DataDownload\", \"contentUrl\": \""+ this.prop.getFTPRootDirectory() + "\"," +
+                "          \"fileFormat\": \"TSV\"}");
+        this.writeln("  ],");
+        this.writeln("  \"funder\": [");
+        this.writeln("    {\"@type\": \"NGO\", \"name\": \"SIB Swiss Institute of Bioinformatics\"}, ");
+        this.writeln("    {\"@type\": \"EducationalOrganization\", \"name\": \"UNIL University of Lausanne\"}");
+        this.writeln("  ],");
+        this.writeln("  \"license\": \"https://creativecommons.org/publicdomain/zero/1.0/\",");
+        this.writeln("  \"version\": \"" + this.getWebAppVersion() + "\",");
+        this.writeln("  \"potentialAction\": {");
+        this.writeln("      \"@type\": \"SearchAction\",");
+        this.writeln("      \"target\": \""+ urlActionTarget.getRequestURL()
+                + "&" + urlActionTarget.getUrlParametersInstance().getParamGeneId() + "={query}\",");
+        this.writeln("      \"query-input\": \"required name=query\"");
+        this.writeln("  }");
+
+        this.writeln("}</script>");
+        log.exit();
+    }
+
     /**
      * Display the banner with species (without any interaction).
      * 

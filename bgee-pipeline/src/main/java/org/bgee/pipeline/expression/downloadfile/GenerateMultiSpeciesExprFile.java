@@ -620,7 +620,7 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
 
         // Retrieve species names, gene names, stage names, anat. entity names, for all species
         // XXX: retrieve only for speciesIds? 
-        Map<Integer, String> speciesNamesByIds = this.checkAndGetLatinNamesBySpeciesIds(setSpecies,
+        Map<Integer, String> speciesNamesByIds = Utils.checkAndGetLatinNamesBySpeciesIds(setSpecies,
                 serviceFactorySupplier.get().getSpeciesService());
         Map<Integer, String> geneNamesByIds = 
                 BgeeDBUtils.getGeneNamesByIds(setSpecies, this.getGeneDAO());

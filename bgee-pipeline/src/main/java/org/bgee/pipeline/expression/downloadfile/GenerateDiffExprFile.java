@@ -353,7 +353,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         // Retrieve species names and IDs (all species names if speciesIds is null or empty)
         // FIXME give a service to checkAndGetLatinNamesBySpeciesIds
         Map<Integer, String> speciesNamesForFilesByIds = 
-                checkAndGetLatinNamesBySpeciesIds(setSpecies, null);
+                Utils.checkAndGetLatinNamesBySpeciesIds(setSpecies, null);
         assert speciesNamesForFilesByIds.size() >= setSpecies.size();
     
         // If no file types are given by user, we set all file types

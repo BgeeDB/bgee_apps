@@ -2,9 +2,11 @@ package org.bgee.pipeline.expression.downloadfile.collaboration;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -29,6 +31,7 @@ import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
@@ -39,9 +42,13 @@ import org.bgee.model.ontology.RelationType;
 import org.bgee.pipeline.Utils;
 import org.supercsv.cellprocessor.StrReplace;
 import org.supercsv.cellprocessor.Trim;
+import org.supercsv.cellprocessor.constraint.IsIncludedIn;
 import org.supercsv.cellprocessor.constraint.NotNull;
+import org.supercsv.cellprocessor.constraint.StrNotNullOrEmpty;
 import org.supercsv.cellprocessor.ift.CellProcessor;
+import org.supercsv.io.CsvListWriter;
 import org.supercsv.io.CsvMapReader;
+import org.supercsv.io.ICsvListWriter;
 import org.supercsv.io.ICsvMapReader;
 import org.supercsv.prefs.CsvPreference;
 
@@ -68,16 +75,13 @@ public class OncoMX {
         HIGH, MEDIUM, LOW;
     }
 
+    // ************************************
+    // STATIC ATTRIBUTES AND METHODS
+    // ************************************
     /**
      * A {@code Set} of {DataType}s used to build the data for OncoMX.
      */
     private final static Set<DataType> DATA_TYPES = EnumSet.of(DataType.RNA_SEQ);
-    /**
-     * A {@code Set} of {@code String}s that are the IDs of the developmental stages requested by OncoMX
-     * to retrieve expression calls.
-     */
-    private final static Set<String> SELECTED_DEV_STAGES = Collections.unmodifiableSet(
-            new HashSet<>(Arrays.asList("")));
 
     public static void main(String[] args) {
         log.entry((Object[]) args);
@@ -205,8 +209,15 @@ public class OncoMX {
         return log.exit(calls);
     }
 
+
+    // ************************************
+    // INSTANCE ATTRIBUTES AND METHODS
+    // ************************************
     private final ServiceFactory serviceFactory;
 
+    public OncoMX() {
+        this(new ServiceFactory());
+    }
     public OncoMX(ServiceFactory serviceFactory) {
         if (serviceFactory == null) {
             throw log.throwing(new IllegalArgumentException("ServiceFactory cannot be null"));
@@ -214,10 +225,11 @@ public class OncoMX {
         this.serviceFactory = serviceFactory;
     }
 
-    public void generateFile(String oncomxUberonTermFile, int speciesId) throws FileNotFoundException, IOException {
-        log.entry(oncomxUberonTermFile, speciesId);
+    public void generateFile(int speciesId, Set<String> selectedDevStages,
+            String oncomxUberonTermFile, String outputFile) throws FileNotFoundException, IOException {
+        log.entry(speciesId, selectedDevStages, oncomxUberonTermFile, outputFile);
 
-        //Check that the species ID is vali and retrieve its latin name
+        //Check that the species ID is valid and retrieve its latin name
         String speciesLatinName = Utils.checkAndGetLatinNamesBySpeciesIds(Collections.singleton(speciesId),
                 this.serviceFactory.getSpeciesService()).get(speciesId);
 
@@ -237,12 +249,12 @@ public class OncoMX {
         //Now we load the developmental stage ontology to retrieve all children terms
         //of the stage selected for OncoMX.
         final Ontology<DevStage, String> devStageOnt = this.serviceFactory.getOntologyService()
-                .getDevStageOntology(speciesId, SELECTED_DEV_STAGES, false, true);
-        Set<String> allDevStageIds = SELECTED_DEV_STAGES.stream()
+                .getDevStageOntology(speciesId, selectedDevStages, false, true);
+        Set<String> allDevStageIds = selectedDevStages.stream()
                 .flatMap(id -> devStageOnt.getDescendants(devStageOnt.getElement(id)).stream())
                 .map(devStage -> devStage.getId())
                 .collect(Collectors.toSet());
-        allDevStageIds.addAll(SELECTED_DEV_STAGES);
+        allDevStageIds.addAll(selectedDevStages);
         log.info("Done.");
         
 
@@ -276,6 +288,68 @@ public class OncoMX {
         log.info("Start iterating the calls and writing to output file...");
         //Now, we iterate the calls to write in the output file after retrieving the expression categories,
         //and filtering for requested anatomical entities/dev. stages only.
+        //We use a quick and dirty ListWriter
+        try (ICsvListWriter listWriter = new CsvListWriter(new FileWriter(outputFile), Utils.TSVCOMMENTED)) {
+            final String[] header = new String[] { "Ensembl gene ID", "Gene name",
+                    "Anatomical entity ID", "Anatomical entity name",
+                    "Developmental stage ID", "Developmental stage name",
+                    "Gene expression category", "Anatomical entity expression category",
+                    "Call quality", "Expression rank score" };
+            // write the header
+            listWriter.writeHeader(header);
+
+            //allowed expression categories
+            Set<Object> allowedExpressionCategories = Arrays.stream(ExpressionLevelCat.values())
+                    .map(c -> c.toString())
+                    .collect(Collectors.toSet());
+            allowedExpressionCategories.add(ExpressionSummary.NOT_EXPRESSED.toString());
+            //allowed call qualities
+            Set<Object> allowedCallQualities = Arrays.stream(SummaryQuality.values())
+                    .map(q -> q.toString())
+                    .collect(Collectors.toSet());
+            //CellProcessors
+            final CellProcessor[] processors = new CellProcessor[] { 
+                    new StrNotNullOrEmpty(), // gene ID
+                    new NotNull(), // gene name
+                    new StrNotNullOrEmpty(), // anat. entity ID
+                    new StrNotNullOrEmpty(), // anat. entity name
+                    new StrNotNullOrEmpty(), // dev. stage ID
+                    new StrNotNullOrEmpty(), // dev. stage name
+                    new IsIncludedIn(allowedExpressionCategories), // gene expression cat.
+                    new IsIncludedIn(allowedExpressionCategories), // anat. entity expression cat.
+                    new IsIncludedIn(allowedCallQualities), // call qual.
+                    new StrNotNullOrEmpty() // rank score
+            };
+
+            //Write the calls
+            for (ExpressionCall call: calls) {
+                //Check whether it is a call to be written
+                if (!allUberonIds.contains(call.getCondition().getAnatEntity().getId())) {
+                    continue;
+                }
+                if (!allDevStageIds.contains(call.getCondition().getDevStage().getId())) {
+                    continue;
+                }
+                List<Object> toWrite = new ArrayList<>();
+                toWrite.add(call.getGene().getEnsemblGeneId());
+                toWrite.add(call.getGene().getName());
+                toWrite.add(call.getCondition().getAnatEntity().getId());
+                toWrite.add(call.getCondition().getAnatEntity().getName());
+                toWrite.add(call.getCondition().getDevStage().getId());
+                toWrite.add(call.getCondition().getDevStage().getName());
+                Pair<BigDecimal, BigDecimal> geneMinMaxRank = minMaxRanksPerGene.get(call.getGene());
+                toWrite.add(getExpressionLevelCat(geneMinMaxRank.getLeft(), geneMinMaxRank.getRight(),
+                        call.getGlobalMeanRank()).toString());
+                Pair<BigDecimal, BigDecimal> anatEntityMinMaxRank = minMaxRanksPerAnatEntity.get(
+                        call.getCondition().getAnatEntity());
+                toWrite.add(getExpressionLevelCat(anatEntityMinMaxRank.getLeft(), anatEntityMinMaxRank.getRight(),
+                        call.getGlobalMeanRank()).toString());
+                toWrite.add(call.getSummaryQuality().toString());
+                toWrite.add(call.getFormattedGlobalMeanRank());
+
+                listWriter.write(toWrite, processors);
+            }
+        }
         log.info("Done.");
         
 

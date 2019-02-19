@@ -1,5 +1,6 @@
 package org.bgee.pipeline.expression.downloadfile.collaboration;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -8,13 +9,16 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -39,6 +43,7 @@ import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.ontology.Ontology;
 import org.bgee.model.ontology.RelationType;
+import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.Utils;
 import org.supercsv.cellprocessor.StrReplace;
 import org.supercsv.cellprocessor.Trim;
@@ -59,8 +64,8 @@ import org.supercsv.prefs.CsvPreference;
  * @since Bgee 14 Feb. 2019
  * @version Bgee 14 Feb. 2019
  */
-public class OncoMX {
-    private final static Logger log = LogManager.getLogger(OncoMX.class.getName());
+public class GenerateOncoMXFile {
+    private final static Logger log = LogManager.getLogger(GenerateOncoMXFile.class.getName());
 
     /**
      * The different categories of expression level requested by OnoMX.
@@ -83,9 +88,41 @@ public class OncoMX {
      */
     private final static Set<DataType> DATA_TYPES = EnumSet.of(DataType.RNA_SEQ);
 
-    public static void main(String[] args) {
+    /**
+     * Launches the generation of the files used by OncoMX.
+     * Parameters that must be provided in order in {@code args} are:
+     * <ol>
+     * <li>The path to the file containing the Uberon IDs to consider, provided by OncoMX.
+     * An example of this file is provided in {@code src/test/resources/oncomx/human_doid_slim_uberon_mapping.csv}.
+     * Children of the Uberon terms retrieved will also be considered.
+     * <li>Path to the output directory where to store the generated files.
+     * <li> a {@code Map} where keys are {@code int} that are the IDs of the species to generate the files for,
+     * and each value is a set of strings, corresponding to developmental stage IDs to retrieve data for.
+     * Children of these stages will also be considered.
+     * Example: 9606//UBERON:0000113,10090//UBERON:0000113
+     * </ol>
+     *
+     * @param args                      An {@code Array} of {@code String}s containing the requested parameters.
+     * @throws FileNotFoundException    IF a file could not be found.
+     * @throws IOException              If an error occurred while reading/writing a file.
+     */
+    public static void main(String[] args) throws FileNotFoundException, IOException {
         log.entry((Object[]) args);
 
+        int expectedArgLength = 3;
+        if (args.length != expectedArgLength) {
+            throw log.throwing(new IllegalArgumentException("Incorrect number of arguments " +
+                "provided, expected " + expectedArgLength + " arguments, " + args.length + 
+                " provided."));
+        }
+
+        String pathToOncoMXUberonTermFile = args[0];
+        String outputDir = args[1];
+        LinkedHashMap<Integer, List<String>> speIdToStageIds = CommandRunner.parseMapArgumentAsIntKeysStringValues(args[2]);
+        GenerateOncoMXFile generateOncoMX = new GenerateOncoMXFile();
+        for (Entry<Integer, List<String>> entry: speIdToStageIds.entrySet()) {
+            generateOncoMX.generateFile(entry.getKey(), entry.getValue(), pathToOncoMXUberonTermFile, outputDir);
+        }
         log.exit();
     }
 
@@ -215,20 +252,27 @@ public class OncoMX {
     // ************************************
     private final ServiceFactory serviceFactory;
 
-    public OncoMX() {
+    public GenerateOncoMXFile() {
         this(new ServiceFactory());
     }
-    public OncoMX(ServiceFactory serviceFactory) {
+    public GenerateOncoMXFile(ServiceFactory serviceFactory) {
         if (serviceFactory == null) {
             throw log.throwing(new IllegalArgumentException("ServiceFactory cannot be null"));
         }
         this.serviceFactory = serviceFactory;
     }
 
-    public void generateFile(int speciesId, Set<String> selectedDevStages,
-            String oncomxUberonTermFile, String outputFile) throws FileNotFoundException, IOException {
-        log.entry(speciesId, selectedDevStages, oncomxUberonTermFile, outputFile);
+    public void generateFile(int speciesId, Collection<String> devStageIds,
+            String oncomxUberonTermFile, String outputDirectory) throws FileNotFoundException, IOException {
+        log.entry(speciesId, devStageIds, oncomxUberonTermFile, outputDirectory);
 
+        log.info("Generating OncoMX file for species {}", speciesId);
+        if (devStageIds == null || devStageIds.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("Some stage IDs must be provided"));
+        }
+        //We use a LinkedHashSet for consistent generation of file name
+        Set<String> selectedDevStageIds = devStageIds.stream().sorted()
+                .collect(Collectors.toCollection(LinkedHashSet::new));
         //Check that the species ID is valid and retrieve its latin name
         String speciesLatinName = Utils.checkAndGetLatinNamesBySpeciesIds(Collections.singleton(speciesId),
                 this.serviceFactory.getSpeciesService()).get(speciesId);
@@ -249,12 +293,12 @@ public class OncoMX {
         //Now we load the developmental stage ontology to retrieve all children terms
         //of the stage selected for OncoMX.
         final Ontology<DevStage, String> devStageOnt = this.serviceFactory.getOntologyService()
-                .getDevStageOntology(speciesId, selectedDevStages, false, true);
-        Set<String> allDevStageIds = selectedDevStages.stream()
+                .getDevStageOntology(speciesId, selectedDevStageIds, false, true);
+        Set<String> allDevStageIds = selectedDevStageIds.stream()
                 .flatMap(id -> devStageOnt.getDescendants(devStageOnt.getElement(id)).stream())
                 .map(devStage -> devStage.getId())
                 .collect(Collectors.toSet());
-        allDevStageIds.addAll(selectedDevStages);
+        allDevStageIds.addAll(selectedDevStageIds);
         log.info("Done.");
         
 
@@ -288,8 +332,21 @@ public class OncoMX {
         log.info("Start iterating the calls and writing to output file...");
         //Now, we iterate the calls to write in the output file after retrieving the expression categories,
         //and filtering for requested anatomical entities/dev. stages only.
+        // We will write results in temporary files that we will rename at the end
+        // if everything is correct
+        String tmpExtension = ".tmp";
+        String fileName = (speciesLatinName
+                + selectedDevStageIds.stream().collect(Collectors.joining("_"))
+                + DATA_TYPES.stream().map(d -> d.toString()).collect(Collectors.joining("_")))
+                .replaceAll(" ", "_") + ".tsv";
+        File tmpFile = new File(outputDirectory, fileName + tmpExtension);
+        // override any existing file
+        if (tmpFile.exists()) {
+            tmpFile.delete();
+        }
         //We use a quick and dirty ListWriter
-        try (ICsvListWriter listWriter = new CsvListWriter(new FileWriter(outputFile), Utils.TSVCOMMENTED)) {
+        int dataRowCount = 0;
+        try (ICsvListWriter listWriter = new CsvListWriter(new FileWriter(tmpFile), Utils.TSVCOMMENTED)) {
             final String[] header = new String[] { "Ensembl gene ID", "Gene name",
                     "Anatomical entity ID", "Anatomical entity name",
                     "Developmental stage ID", "Developmental stage name",
@@ -348,11 +405,29 @@ public class OncoMX {
                 toWrite.add(call.getFormattedGlobalMeanRank());
 
                 listWriter.write(toWrite, processors);
+                dataRowCount++;
+            }
+        } catch (Exception e) {
+            if (tmpFile.exists()) {
+                tmpFile.delete();
+            }
+            throw e;
+        }
+        // now, if everything went fine, we rename or delete the temporary files
+        if (dataRowCount > 0) {
+            log.info("Done, file for the species {} contains {} rows without including header.",
+                    speciesId, dataRowCount);
+            File file = new File(outputDirectory, fileName);
+            if (tmpFile.exists()) {
+                tmpFile.renameTo(file);
+            }            
+        } else {
+            log.warn("Done, file for the species {} contains no rows.", speciesId);
+            if (tmpFile.exists()) {
+                tmpFile.delete();
             }
         }
-        log.info("Done.");
         
-
         log.exit();
     }
 }

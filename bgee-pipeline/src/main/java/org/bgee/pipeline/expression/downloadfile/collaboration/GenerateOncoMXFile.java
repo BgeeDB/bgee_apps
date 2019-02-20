@@ -126,7 +126,8 @@ public class GenerateOncoMXFile {
         log.exit();
     }
 
-    private static ExpressionLevelCat getExpressionLevelCat(BigDecimal minRank, BigDecimal maxRank, BigDecimal currentRank) {
+    private static ExpressionLevelCat getExpressionLevelCat(BigDecimal minRank, BigDecimal maxRank, BigDecimal currentRank)
+    throws IllegalArgumentException {
         log.entry(minRank, maxRank, currentRank);
         if (minRank == null || maxRank == null || currentRank == null) {
             throw log.throwing(new IllegalArgumentException("All ranks must be provided"));
@@ -408,21 +409,26 @@ public class GenerateOncoMXFile {
                     continue;
                 }
                 List<Object> toWrite = new ArrayList<>();
-                toWrite.add(call.getGene().getEnsemblGeneId());
-                toWrite.add(call.getGene().getName());
-                toWrite.add(call.getCondition().getAnatEntity().getId());
-                toWrite.add(call.getCondition().getAnatEntity().getName());
-                toWrite.add(call.getCondition().getDevStage().getId());
-                toWrite.add(call.getCondition().getDevStage().getName());
-                Pair<BigDecimal, BigDecimal> geneMinMaxRank = minMaxRanksPerGene.get(call.getGene());
-                toWrite.add(getExpressionLevelCat(geneMinMaxRank.getLeft(), geneMinMaxRank.getRight(),
-                        call.getGlobalMeanRank()).toString());
-                Pair<BigDecimal, BigDecimal> anatEntityMinMaxRank = minMaxRanksPerAnatEntity.get(
-                        call.getCondition().getAnatEntity());
-                toWrite.add(getExpressionLevelCat(anatEntityMinMaxRank.getLeft(), anatEntityMinMaxRank.getRight(),
-                        call.getGlobalMeanRank()).toString());
-                toWrite.add(call.getSummaryQuality().toString());
-                toWrite.add(call.getFormattedGlobalMeanRank());
+                try {
+                    toWrite.add(call.getGene().getEnsemblGeneId());
+                    toWrite.add(call.getGene().getName());
+                    toWrite.add(call.getCondition().getAnatEntity().getId());
+                    toWrite.add(call.getCondition().getAnatEntity().getName());
+                    toWrite.add(call.getCondition().getDevStage().getId());
+                    toWrite.add(call.getCondition().getDevStage().getName());
+                    Pair<BigDecimal, BigDecimal> geneMinMaxRank = minMaxRanksPerGene.get(call.getGene());
+                    toWrite.add(getExpressionLevelCat(geneMinMaxRank.getLeft(), geneMinMaxRank.getRight(),
+                            call.getGlobalMeanRank()).toString());
+                    Pair<BigDecimal, BigDecimal> anatEntityMinMaxRank = minMaxRanksPerAnatEntity.get(
+                            call.getCondition().getAnatEntity());
+                    toWrite.add(getExpressionLevelCat(anatEntityMinMaxRank.getLeft(), anatEntityMinMaxRank.getRight(),
+                            call.getGlobalMeanRank()).toString());
+                    toWrite.add(call.getSummaryQuality().toString());
+                    toWrite.add(call.getFormattedGlobalMeanRank());
+                } catch (IllegalArgumentException e) {
+                    log.error("Error with call: {}", call);
+                    throw log.throwing(e);
+                }
 
                 listWriter.write(toWrite, processors);
                 dataRowCount++;

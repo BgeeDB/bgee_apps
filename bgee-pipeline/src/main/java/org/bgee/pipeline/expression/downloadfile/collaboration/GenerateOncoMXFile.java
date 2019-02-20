@@ -416,13 +416,18 @@ public class GenerateOncoMXFile {
                     toWrite.add(call.getCondition().getAnatEntity().getName());
                     toWrite.add(call.getCondition().getDevStage().getId());
                     toWrite.add(call.getCondition().getDevStage().getName());
-                    Pair<BigDecimal, BigDecimal> geneMinMaxRank = minMaxRanksPerGene.get(call.getGene());
-                    toWrite.add(getExpressionLevelCat(geneMinMaxRank.getLeft(), geneMinMaxRank.getRight(),
-                            call.getMeanRank()).toString());
-                    Pair<BigDecimal, BigDecimal> anatEntityMinMaxRank = minMaxRanksPerAnatEntity.get(
-                            call.getCondition().getAnatEntity());
-                    toWrite.add(getExpressionLevelCat(anatEntityMinMaxRank.getLeft(), anatEntityMinMaxRank.getRight(),
-                            call.getMeanRank()).toString());
+                    if (ExpressionSummary.NOT_EXPRESSED.equals(call.getSummaryCallType())) {
+                        toWrite.add(ExpressionSummary.NOT_EXPRESSED.toString());
+                        toWrite.add(ExpressionSummary.NOT_EXPRESSED.toString());
+                    } else {
+                        Pair<BigDecimal, BigDecimal> geneMinMaxRank = minMaxRanksPerGene.get(call.getGene());
+                        toWrite.add(getExpressionLevelCat(geneMinMaxRank.getLeft(), geneMinMaxRank.getRight(),
+                                call.getMeanRank()).toString());
+                        Pair<BigDecimal, BigDecimal> anatEntityMinMaxRank = minMaxRanksPerAnatEntity.get(
+                                call.getCondition().getAnatEntity());
+                        toWrite.add(getExpressionLevelCat(anatEntityMinMaxRank.getLeft(), anatEntityMinMaxRank.getRight(),
+                                call.getMeanRank()).toString());
+                    }
                     toWrite.add(call.getSummaryQuality().toString());
                     toWrite.add(call.getFormattedMeanRank());
                 } catch (IllegalArgumentException e) {

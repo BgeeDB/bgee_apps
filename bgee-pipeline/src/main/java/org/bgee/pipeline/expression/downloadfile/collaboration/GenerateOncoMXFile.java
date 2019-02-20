@@ -207,10 +207,10 @@ public class GenerateOncoMXFile {
             while( (rowMap = reader.read(header, processors)) != null ) {
                 String uberonId = (String) rowMap.get(uberonColName);
                 //We skip empty Uberon IDs (N/A replaced with empty strings)
-                if (StringUtils.isBlank("uberonId")) {
+                if (StringUtils.isBlank(uberonId)) {
                     continue;
                 }
-                uberonIds.add(uberonId);
+                uberonIds.add(uberonId.replace("_", ":"));
             }
         }
 
@@ -284,21 +284,41 @@ public class GenerateOncoMXFile {
         //Now we load the anatomical ontology in order to retrieve child terms of the requested terms
         final Ontology<AnatEntity, String> anatOnt = this.serviceFactory.getOntologyService()
                 .getAnatEntityOntology(speciesId, uberonIds, EnumSet.of(RelationType.ISA_PARTOF), false, true);
-        Set<String> allUberonIds = uberonIds.stream()
-                .flatMap(id -> anatOnt.getDescendants(anatOnt.getElement(id)).stream())
+        Set<AnatEntity> anatEntities = uberonIds.stream()
+                .map(id -> {
+                    AnatEntity anatEntity = anatOnt.getElement(id);
+                    if (anatEntity == null) {
+                        log.warn("Could not find Uberon ID in Ontology: {}", id);
+                    }
+                    return anatEntity;
+                })
+                .filter(ae -> ae != null)
+                .collect(Collectors.toSet());
+        Set<String> allUberonIds = anatEntities.stream()
+                .flatMap(ae -> anatOnt.getDescendants(ae).stream())
                 .map(anatEntity -> anatEntity.getId())
                 .collect(Collectors.toSet());
-        allUberonIds.addAll(uberonIds);
+        allUberonIds.addAll(anatEntities.stream().map(ae -> ae.getId()).collect(Collectors.toSet()));
 
         //Now we load the developmental stage ontology to retrieve all children terms
         //of the stage selected for OncoMX.
         final Ontology<DevStage, String> devStageOnt = this.serviceFactory.getOntologyService()
                 .getDevStageOntology(speciesId, selectedDevStageIds, false, true);
-        Set<String> allDevStageIds = selectedDevStageIds.stream()
-                .flatMap(id -> devStageOnt.getDescendants(devStageOnt.getElement(id)).stream())
+        Set<DevStage> devStages = selectedDevStageIds.stream()
+                .map(id -> {
+                    DevStage devStage = devStageOnt.getElement(id);
+                    if (devStage == null) {
+                        log.warn("Could not find stage ID in Ontology: {}", id);
+                    }
+                    return devStage;
+                })
+                .filter(ds -> ds != null)
+                .collect(Collectors.toSet());
+        Set<String> allDevStageIds = devStages.stream()
+                .flatMap(ds -> devStageOnt.getDescendants(ds).stream())
                 .map(devStage -> devStage.getId())
                 .collect(Collectors.toSet());
-        allDevStageIds.addAll(selectedDevStageIds);
+        allDevStageIds.addAll(devStages.stream().map(ds -> ds.getId()).collect(Collectors.toSet()));
         log.info("Done.");
         
 

@@ -301,7 +301,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         // Check user input, retrieve info for generating file names
         // Retrieve species names and IDs (all species names if speciesIds is null or empty)
         // FIXME use supplier?
-        Map<Integer, String> speciesNamesForFilesByIds = this.checkAndGetLatinNamesBySpeciesIds(
+        Map<Integer, String> speciesNamesForFilesByIds = Utils.checkAndGetLatinNamesBySpeciesIds(
                 setSpecies, serviceFactorySupplier.get().getSpeciesService());
         assert speciesNamesForFilesByIds.size() >= setSpecies.size();
 

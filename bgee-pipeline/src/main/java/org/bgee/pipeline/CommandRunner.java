@@ -13,7 +13,11 @@ import org.bgee.pipeline.annotations.InsertSimilarityAnnotation;
 import org.bgee.pipeline.annotations.SimilarityAnnotation;
 import org.bgee.pipeline.bgeelite.BgeeToBgeeLite;
 import org.bgee.pipeline.expression.InsertPropagatedCalls;
-import org.bgee.pipeline.expression.downloadfile.*;
+import org.bgee.pipeline.expression.downloadfile.GenerateExprFile2;
+import org.bgee.pipeline.expression.downloadfile.GenerateInsertGeneStats;
+import org.bgee.pipeline.expression.downloadfile.GenerateUniprotXRefWithExprInfo;
+import org.bgee.pipeline.expression.downloadfile.collaboration.GenerateOncoMXFile;
+import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile;
 import org.bgee.pipeline.gene.InsertGO;
 import org.bgee.pipeline.ontologycommon.InsertCIO;
 import org.bgee.pipeline.ontologycommon.InsertECO;
@@ -279,6 +283,9 @@ public class CommandRunner {
             throw log.throwing(new UnsupportedOperationException("Method disabled while updated"));
 //            GenerateRankFile.main(newArgs);
 //            break;
+        case "GenerateOncoMXFile":
+            GenerateOncoMXFile.main(newArgs);
+            break;
         
         //---------- Generate Bgee Lite database -----------
         case "GenerateBgeeLite":
@@ -401,7 +408,6 @@ public class CommandRunner {
         log.entry(mapArg);
         return log.exit(CommandRunner.parseMapArgument(mapArg, String.class, Integer.class));
     }
-    
     /**
      * Parses a command line argument and returns a corresponding {@code Map}.
      * 
@@ -415,6 +421,20 @@ public class CommandRunner {
     public static LinkedHashMap<Integer, List<Integer>> parseMapArgumentAsAllInteger(String mapArg) {
         log.entry(mapArg);
         return log.exit(CommandRunner.parseMapArgument(mapArg, Integer.class, Integer.class));
+    }
+    /**
+     * Parses a command line argument and returns a corresponding {@code Map}.
+     * 
+     * @param mapArg    A {@code String} corresponding to a map encoded as command-line argument.
+     * @return          A {@code LinkedHashMap} where keys are {@code Integer}s and values are 
+     *                  {@code List}s of {@code String}s, corresponding to {code mapArg}.
+     * @see #LIST_SEPARATOR
+     * @see #KEY_VALUE_SEPARATOR
+     * @see #VALUE_SEPARATOR
+     */
+    public static LinkedHashMap<Integer, List<String>> parseMapArgumentAsIntKeysStringValues(String mapArg) {
+        log.entry(mapArg);
+        return log.exit(CommandRunner.parseMapArgument(mapArg, Integer.class, String.class));
     }
 
     /**

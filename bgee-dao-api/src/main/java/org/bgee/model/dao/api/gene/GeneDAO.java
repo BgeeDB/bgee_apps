@@ -20,6 +20,7 @@ import org.bgee.model.dao.api.exception.DAOException;
  * @see GeneBioTypeTO
  * @since Bgee 13
  */
+//TODO: all methods should accept Attributes as arguments, and not use the 'setAttributes' method anymore
 public interface GeneDAO extends DAO<GeneDAO.Attribute> {
     /**
      * {@code Enum} used to define the attributes to populate in the {@code GeneTO}s 

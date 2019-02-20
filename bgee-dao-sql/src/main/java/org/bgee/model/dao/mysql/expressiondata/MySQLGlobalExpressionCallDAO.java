@@ -1021,20 +1021,18 @@ implements GlobalExpressionCallDAO {
                 .get(ConditionDAO.Attribute.ANAT_ENTITY_ID);
         if (anatPropState == null) {
             stmt.setNull(newParamIndex, Types.VARCHAR);
-            newParamIndex++;
         } else {
             stmt.setString(newParamIndex, anatPropState.getStringRepresentation());
-            newParamIndex++;
         }
+        newParamIndex++;
         DAOPropagationState stagePropState = callDataTO.getDataPropagation()
                 .get(ConditionDAO.Attribute.STAGE_ID);
         if (stagePropState == null) {
             stmt.setNull(newParamIndex, Types.VARCHAR);
-            newParamIndex++;
         } else {
             stmt.setString(newParamIndex, stagePropState.getStringRepresentation());
-            newParamIndex++;
         }
+        newParamIndex++;
         stmt.setBoolean(newParamIndex, callDataTO.isConditionObservedData());
         newParamIndex++;
 

@@ -202,6 +202,7 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
                         case CONDITION_PARAMETERS:
                             String values = currentResultSet.getString(columnName);
                             if (values != null) {
+                                //XXX: create a method 'getSet' in MySQLDAOResultSet?
                                 condParams = Arrays.stream(values.split(","))
                                         .map(s -> convertToConditionParameter(s))
                                         .collect(Collectors.toSet());

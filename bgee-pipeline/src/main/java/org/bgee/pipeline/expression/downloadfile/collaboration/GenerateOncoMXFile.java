@@ -239,7 +239,7 @@ public class GenerateOncoMXFile {
                         ),
                 EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
                         CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.CALL_TYPE, 
-                        CallService.Attribute.DATA_QUALITY, CallService.Attribute.GLOBAL_MEAN_RANK,
+                        CallService.Attribute.DATA_QUALITY, CallService.Attribute.MEAN_RANK,
                         CallService.Attribute.EXPERIMENT_COUNTS),
                 serviceOrdering //we order by gene and rank
                 ).collect(Collectors.toList());
@@ -332,7 +332,7 @@ public class GenerateOncoMXFile {
         log.info("Grouping calls and retrieving min/max ranks per aggregate...");
         //We create a Collector function to retrieve min and max ranks from an aggregate of calls
         Collector<ExpressionCall, ?, Pair<BigDecimal, BigDecimal>> aggregateRank = 
-                Collectors.mapping(c -> ImmutablePair.of(c.getGlobalMeanRank(), c.getGlobalMeanRank()),
+                Collectors.mapping(c -> ImmutablePair.of(c.getMeanRank(), c.getMeanRank()),
                     Collectors.reducing(ImmutablePair.of(null, null),
                         (a, b) -> ImmutablePair.of(
                                 getMinMax(a.getLeft(), b.getLeft(), true),
@@ -418,13 +418,13 @@ public class GenerateOncoMXFile {
                     toWrite.add(call.getCondition().getDevStage().getName());
                     Pair<BigDecimal, BigDecimal> geneMinMaxRank = minMaxRanksPerGene.get(call.getGene());
                     toWrite.add(getExpressionLevelCat(geneMinMaxRank.getLeft(), geneMinMaxRank.getRight(),
-                            call.getGlobalMeanRank()).toString());
+                            call.getMeanRank()).toString());
                     Pair<BigDecimal, BigDecimal> anatEntityMinMaxRank = minMaxRanksPerAnatEntity.get(
                             call.getCondition().getAnatEntity());
                     toWrite.add(getExpressionLevelCat(anatEntityMinMaxRank.getLeft(), anatEntityMinMaxRank.getRight(),
-                            call.getGlobalMeanRank()).toString());
+                            call.getMeanRank()).toString());
                     toWrite.add(call.getSummaryQuality().toString());
-                    toWrite.add(call.getFormattedGlobalMeanRank());
+                    toWrite.add(call.getFormattedMeanRank());
                 } catch (IllegalArgumentException e) {
                     log.error("Error with call: {}", call);
                     throw log.throwing(e);

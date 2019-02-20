@@ -34,7 +34,7 @@ import org.bgee.model.species.Taxon;
  * @param <T>   The type of element in this ontology or sub-graph.
  * @param <U>   The type of ID of the elements in this ontology or sub-graph.
  */
-public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T, U>, U> {
+public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T, U>, U extends Comparable<U>> {
 
     private static final Logger log = LogManager.getLogger(OntologyBase.class.getName());
     

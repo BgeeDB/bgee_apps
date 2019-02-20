@@ -388,20 +388,6 @@ public class OntologyService extends CommonService {
         return log.exit(ont);
     }
 
-    //XXX: why do we need this? See comment about OntologyRelation. Method not used anywhere in the project
-    public Set<OntologyRelation<String>> getAnatEntityRelations(Collection<Integer> speciesIds,
-        Collection<String> entityIds,  Collection<RelationType> relationTypes, 
-        Collection<OntologyRelation.RelationStatus> relationStatus,
-        boolean getAncestors, boolean getDescendants) {
-        log.entry(speciesIds, entityIds, relationTypes, relationStatus, getAncestors, getDescendants);
-        RelationTOResultSet<String> relationTOs = getDaoManager().getRelationDAO().getAnatEntityRelations(
-                speciesIds, false, null, null,
-                true, mapRelTypeToRelTypeTO(relationTypes), 
-                mapRelStatusToRelStatusTO(relationStatus), null);
-
-        return log.exit(convertAERelTOResSetToElementRelations(relationTOs));
-    }
-
     private Set<RelationTO<String>> getAnatEntityRelationTOs(Collection<Integer> speciesIds,
         Collection<String> entityIds,  Collection<RelationType> relationTypes,
         boolean getAncestors, boolean getDescendants) {
@@ -592,7 +578,7 @@ public class OntologyService extends CommonService {
      * @param <T>                   The type of elements for which to retrieve {@code RelationTO}s.
      * @param <U>                   The type of ID of the elements in this ontology or sub-graph.
      */
-    private <T extends NamedEntity<U> & OntologyElement<T, U>, U> Set<RelationTO<U>> getRelationTOs(
+    private <T extends NamedEntity<U> & OntologyElement<T, U>, U extends Comparable<U>> Set<RelationTO<U>> getRelationTOs(
             QuadriFunction<Set<U>, Set<U>, Boolean, Set<RelationStatus>,
             RelationTOResultSet<U>> relationRetrievalFun, 
             Collection<U> entityIds, boolean getAncestors, boolean getDescendants) {
@@ -690,87 +676,4 @@ public class OntologyService extends CommonService {
         }
         return log.exit(requestedEntityIds);
     }
-
-    //TODO: to remove
-    private Set<OntologyRelation<String>> convertAERelTOResSetToElementRelations(
-    		RelationTOResultSet<String> relationTOResSet){
-        log.entry(relationTOResSet);
-        return log.exit(relationTOResSet.stream().map(relTO -> {
-            return new OntologyRelation<String>(relTO.getSourceId(), relTO.getTargetId(), 
-                    mapRelTypeTOToRelType(relTO.getRelationType()),
-                    mapRelStatusTOToRelStatus(relTO.getRelationStatus()));
-        }).collect(Collectors.toSet()));
-
-    }
-
-    //TODO: to remove
-	private static Set<RelationTO.RelationType> mapRelTypeToRelTypeTO(Collection<RelationType> relationTypes) {
-		Set<RelationTO.RelationType> relTypeTOs= new HashSet<>();
-		for(RelationType relationType : relationTypes){
-			switch (relationType) {
-			case ISA_PARTOF:
-				relTypeTOs.add(RelationTO.RelationType.ISA_PARTOF);
-				break;
-			case DEVELOPSFROM:
-				relTypeTOs.add(RelationTO.RelationType.DEVELOPSFROM);
-				break;
-			case TRANSFORMATIONOF:
-				relTypeTOs.add(RelationTO.RelationType.TRANSFORMATIONOF);
-				break;
-			default:
-				throw log.throwing(new UnsupportedOperationException("relation type not supported: " + relationType));
-			}
-		}
-		return relTypeTOs;
-	}
-
-	//TODO: to remove
-	private static RelationType mapRelTypeTOToRelType(RelationTO.RelationType relTypeTO) {
-		switch (relTypeTO) {
-			case ISA_PARTOF:
-				return RelationType.ISA_PARTOF;
-			case DEVELOPSFROM:
-				return RelationType.DEVELOPSFROM;
-			case TRANSFORMATIONOF:
-				return RelationType.TRANSFORMATIONOF;
-			default:
-				throw log.throwing(new UnsupportedOperationException("relation type not supported: " + relTypeTO));
-		}
-	}
-
-    //TODO: to remove
-	private static OntologyRelation.RelationStatus mapRelStatusTOToRelStatus(RelationStatus relStatusTO) {
-		switch (relStatusTO) {
-			case DIRECT:
-				return OntologyRelation.RelationStatus.DIRECT;
-			case INDIRECT:
-				return OntologyRelation.RelationStatus.INDIRECT;
-			case REFLEXIVE:
-				return OntologyRelation.RelationStatus.REFLEXIVE;
-			default:
-				throw log.throwing(new UnsupportedOperationException("relation status not supported: " + relStatusTO));
-		}
-	}
-
-    //XXX: why do we need this?
-	private static Set<RelationTO.RelationStatus> mapRelStatusToRelStatusTO(Collection<OntologyRelation.RelationStatus> relationStatus) {
-		log.entry(relationStatus);
-		Set<RelationTO.RelationStatus> relStatusTOs= new HashSet<>();
-		for(OntologyRelation.RelationStatus rs : relationStatus){
-			switch (rs) {
-			case DIRECT:
-				relStatusTOs.add(RelationTO.RelationStatus.DIRECT);
-				break;
-			case INDIRECT:
-				relStatusTOs.add(RelationTO.RelationStatus.INDIRECT);
-				break;
-			case REFLEXIVE:
-				relStatusTOs.add(RelationTO.RelationStatus.REFLEXIVE);
-				break;
-			default:
-				throw log.throwing(new UnsupportedOperationException("relation status not supported: " + relationStatus));
-			}
-		}
-		return relStatusTOs;
-	}
 }

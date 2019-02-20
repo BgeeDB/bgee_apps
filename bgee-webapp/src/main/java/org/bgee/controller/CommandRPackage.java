@@ -14,7 +14,6 @@ import java.util.stream.Stream;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.InvalidRequestException;
@@ -36,9 +35,8 @@ import org.bgee.model.job.Job;
 import org.bgee.model.job.JobService;
 import org.bgee.model.job.exception.ThreadAlreadyWorkingException;
 import org.bgee.model.job.exception.TooManyJobsException;
-import org.bgee.model.ontology.OntologyRelation;
+import org.bgee.model.ontology.Ontology;
 import org.bgee.model.ontology.OntologyService;
-import org.bgee.model.ontology.RelationType;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
 import org.bgee.view.RPackageDisplay;
@@ -285,6 +283,7 @@ public class CommandRPackage extends CommandParent {
      * @throws InvalidRequestException  In case of invalid request parameter.
      * @throws IOException              In case of issue when writing results. 
      */
+    //TODO: test
     private void processGetAnatEntityRelations() throws InvalidRequestException, IOException {
         log.entry();
         RPackageDisplay display = this.viewFactory.getRPackageDisplay();
@@ -316,23 +315,13 @@ public class CommandRPackage extends CommandParent {
         if (speciesIds == null || speciesIds.size() != 1) {
             throw log.throwing(new InvalidRequestException("One and only one species ID must be provided"));
         }
-//        Integer speciesId = speciesIds.iterator().next();
+        Integer speciesId = speciesIds.iterator().next();
         //****************************************
         // Perform query and display results
         //****************************************
-//        Ontology<AnatEntity, String> anatOntology = ontologyService.getAnatEntityOntology(
-//                speciesId, null, Collections.singleton(RelationType.ISA_PARTOF), false, false);
-//        Set<AnatEntity> anatEntities = anatOntology.getElements();
-//        anatEntities.stream().forEach(ae -> {
-//                anatEntityRelations.put(ae.getId(), 
-//                        anatOntology.getAncestors(ae, true).stream().map(target -> target.getId())
-//                        .collect(Collectors.toSet()));
-//        });
-        Set<OntologyRelation<String>> elementRelations = ontologyService.getAnatEntityRelations(speciesIds, null,
-                Collections.singleton(RelationType.ISA_PARTOF), 
-                Collections.singleton(OntologyRelation.RelationStatus.DIRECT), false, false);
-        
-        display.displayAERelations(requestedAttrs, elementRelations);
+        Ontology<AnatEntity, String> anatEntityOnt = ontologyService.getAnatEntityOntology(speciesIds, null)
+                .getAsSingleSpeciesOntology(speciesId);
+        display.displayAERelations(requestedAttrs, anatEntityOnt);
         
         log.exit();
     }

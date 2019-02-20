@@ -77,6 +77,11 @@ public class CsvFactory extends ViewFactory {
 	}
 
     @Override
+    public RawDataDisplay getRawCallDisplay() throws IOException {
+        throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
+    }
+
+    @Override
     public SpeciesDisplay getSpeciesDisplay() throws IOException {
         log.entry();
         return log.exit(new CsvSpeciesDisplay(this.response, this.requestParameters, this.prop, this, 

@@ -33,6 +33,7 @@ import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.function.PentaFunction;
 import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.gene.GeneService;
 import org.bgee.model.species.Species;
 import org.junit.Before;
@@ -138,7 +139,7 @@ public class TopAnatControllerTest extends TestAncestor {
         Set<DataType> dataTypes = new HashSet<DataType>(Arrays.asList(DataType.AFFYMETRIX));
         relations.put("A", new HashSet<String>(Arrays.asList("B","C")));
         ExpressionCall mockCall = mock(ExpressionCall.class);
-        Gene myGene = new Gene("ENSG001", new Species(9606));
+        Gene myGene = new Gene("ENSG001", new Species(9606), new GeneBioType("type1"));
         Condition mockCondition = mock(Condition.class);
         when(this.mockTopAnatParams.toString()).thenReturn("mockTopAnatParams");
         when(this.mockServiceFactory.toString()).thenReturn("mockServiceFactory");

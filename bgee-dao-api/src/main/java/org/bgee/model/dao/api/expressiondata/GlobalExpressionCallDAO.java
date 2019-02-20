@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -29,7 +30,7 @@ import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO.RawExpressionC
 public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Attribute> {
     
     public enum Attribute implements DAO.Attribute {
-        ID, BGEE_GENE_ID, CONDITION_ID, GLOBAL_MEAN_RANK,
+        ID, BGEE_GENE_ID, GLOBAL_CONDITION_ID, MEAN_RANK,
         DATA_TYPE_OBSERVED_DATA,
         DATA_TYPE_EXPERIMENT_TOTAL_COUNTS, DATA_TYPE_EXPERIMENT_SELF_COUNTS,
         DATA_TYPE_EXPERIMENT_PROPAGATED_COUNTS, DATA_TYPE_RANK_INFO;
@@ -37,7 +38,8 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
     /**
      * The attributes available to order retrieved {@code GlobalExpressionCallTO}s
      * <ul>
-     * <li>{@code GENE_ID}: corresponds to {@link GlobalExpressionCallTO#getBgeeGeneId()}.
+     * <li>{@code BGEE_GENE_ID}: corresponds to {@link GlobalExpressionCallTO#getBgeeGeneId()}.
+     * <li>{@code PUBLIC_GENE_ID}: orders by public gene IDs rather than internal gene IDs (slower query).
      * <li>{@code CONDITION_ID}: corresponds to {@link GlobalExpressionCallTO#getConditionId()}.
      * <li>{@code ANAT_ENTITY_ID}: order by the anat. entity ID used in the conditions of the calls.
      * <li>{@code STAGE_ID}: order by the dev. stage ID used in the conditions of the calls.
@@ -46,15 +48,13 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      * for gene orthology, then the {@code OMAParentNodeId} of the gene is used (see 
      * {@link org.bgee.model.dao.api.gene.GeneDAO.GeneTO#getOMAParentNodeId()}); otherwise, 
      * the OMA group the gene belongs to at the level of the targeted taxon is used. 
-     * <li>{@code MEAN_RANK}: Corresponds to {@link GlobalExpressionCallTO#getGlobalMeanRank()}. 
+     * <li>{@code MEAN_RANK}: Corresponds to {@link GlobalExpressionCallTO#getMeanRank()}. 
      * Order results by mean rank of the gene in the corresponding condition. 
      * Only the mean ranks computed from the data types requested in the query are considered. 
      * </ul>
      */
-    //TODO: make consistent BGEE_GENE_ID in Attribute and GENE_ID in OrderingAttribute,
-    //GLOBAL_MEAN_RANK and MEAN_RANK
     enum OrderingAttribute implements DAO.OrderingAttribute {
-        GENE_ID, CONDITION_ID, ANAT_ENTITY_ID, STAGE_ID, OMA_GROUP_ID, MEAN_RANK;
+        BGEE_GENE_ID, PUBLIC_GENE_ID, GLOBAL_CONDITION_ID, ANAT_ENTITY_ID, STAGE_ID, OMA_GROUP_ID, MEAN_RANK;
     }
     
     /** 
@@ -141,15 +141,15 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
 
         private static final long serialVersionUID = -1057540315343857464L;
         
-        private final BigDecimal globalMeanRank;
+        private final BigDecimal meanRank;
         
         private final Set<GlobalExpressionCallDataTO> callDataTOs;
         
         public GlobalExpressionCallTO(Integer id, Integer bgeeGeneId, Integer conditionId,
-                BigDecimal globalMeanRank, Set<GlobalExpressionCallDataTO> callDataTOs) {
+                BigDecimal meanRank, Set<GlobalExpressionCallDataTO> callDataTOs) {
             super(id, bgeeGeneId, conditionId);
             
-            this.globalMeanRank = globalMeanRank;
+            this.meanRank = meanRank;
             this.callDataTOs = callDataTOs;
             //there should be at most one GlobalExpressionCallDataTO per data type.
             //we simply use Collectors.toMap that throws an exception in case of key collision
@@ -165,8 +165,8 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
          *          to only retrieved Affymetrix data, then this rank will be equal to the rank 
          *          returned by {@link #getAffymetrixMeanRank()}.
          */
-        public BigDecimal getGlobalMeanRank() {
-            return globalMeanRank;
+        public BigDecimal getMeanRank() {
+            return meanRank;
         }
         /**
          * @return  A {@code Set} of {@code GlobalExpressionCallDataTO}s storing the data supporting this call,
@@ -183,7 +183,7 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
             builder.append("GlobalExpressionCallTO [id=").append(getId())
                    .append(", bgeeGeneId=").append(getBgeeGeneId())
                    .append(", conditionId=").append(getConditionId())
-                   .append(", globalMeanRank=").append(globalMeanRank)
+                   .append(", meanRank=").append(meanRank)
                    .append(", callDataTOs=").append(callDataTOs)
                    .append("]");
             return builder.toString();
@@ -228,10 +228,9 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
             }
             this.dataType = dataType;
             this.conditionObservedData = conditionObservedData;
-            this.dataPropagation = Collections.unmodifiableMap(dataPropagation == null? null:
-                new HashMap<>(dataPropagation));
+            this.dataPropagation = dataPropagation == null? null: Collections.unmodifiableMap(new HashMap<>(dataPropagation));
 
-            this.experimentCounts = experimentCounts;
+            this.experimentCounts = experimentCounts == null? null: Collections.unmodifiableSet(new HashSet<>(experimentCounts));
             this.propagatedCount = propagatedCount;
 
             this.rank = rank;

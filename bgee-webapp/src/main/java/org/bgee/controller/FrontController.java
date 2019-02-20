@@ -224,26 +224,39 @@ public class FrontController extends HttpServlet {
             CommandParent controller = null;
             if (requestParameters.isTheHomePage()) {
                 controller = new CommandHome(response, requestParameters, this.prop, factory, serviceFactory);
+                
             } else if (requestParameters.isADownloadPageCategory()) {
                 controller = new CommandDownload(response, requestParameters, this.prop, factory, serviceFactory);
+                
             } else if (requestParameters.isADocumentationPageCategory()) {
                 controller = new CommandDocumentation(response, requestParameters, this.prop, factory);
+                
             } else if (requestParameters.isAnAboutPageCategory()) {
                 controller = new CommandAbout(response, requestParameters, this.prop, factory);
+
             } else if (requestParameters.isAPrivatePolicyPageCategory()) {
                 controller = new CommandPrivacyPolicy(response, requestParameters, this.prop, factory);
+
             } else if (requestParameters.isATopAnatPageCategory()) {
                 controller = new CommandTopAnat(response, requestParameters, this.prop, factory, 
                         serviceFactory, this.jobService, user, this.getServletContext(), this.mailSender);
+                
             } else if (requestParameters.isAJobPageCategory()) {
                 controller = new CommandJob(response, requestParameters, this.prop, factory, 
                         serviceFactory, this.jobService, user);
+                
             } else if (requestParameters.isAGenePageCategory()){
-                controller = new CommandGene(response, requestParameters, this.prop, factory, serviceFactory);      
+                controller = new CommandGene(response, requestParameters, this.prop, factory, serviceFactory);
+
+            } else if (requestParameters.isARawDataPageCategory()){
+                controller = new CommandRawData(response, requestParameters, this.prop, factory, serviceFactory);
+
             } else if (requestParameters.isASourcePageCategory()){
-                controller = new CommandSource(response, requestParameters, this.prop, factory, serviceFactory);      
+                controller = new CommandSource(response, requestParameters, this.prop, factory, serviceFactory);
+                
             } else if (requestParameters.isASpeciesPageCategory()){
-                controller = new CommandSpecies(response, requestParameters, this.prop, factory, serviceFactory);      
+                controller = new CommandSpecies(response, requestParameters, this.prop, factory, serviceFactory);
+                
             } else if (requestParameters.getAction() != null &&
                 		requestParameters.getAction().equals(RequestParameters.ACTION_AUTO_COMPLETE_GENE_SEARCH)) {
             		controller = new CommandSearch(response, requestParameters, prop, factory, serviceFactory);

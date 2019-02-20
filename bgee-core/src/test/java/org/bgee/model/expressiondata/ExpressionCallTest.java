@@ -15,6 +15,7 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.species.Species;
 import org.junit.Test;
 
@@ -38,11 +39,12 @@ public class ExpressionCallTest extends TestAncestor {
     @Test
     public void shouldFilterAndOrderCallsByRank() {
         Species species = new Species(1);
+        GeneBioType bioType = new GeneBioType("biotype");
         Condition ae1devA = new Condition(new AnatEntity("1"), null, species);
         Condition ae1devB = new Condition(new AnatEntity("2"), null, species);
         Condition ae2devA = new Condition(new AnatEntity("3"), null, species);
         Condition ae2devB = new Condition(new AnatEntity("4"), null, species);
-        Gene gene = new Gene("1", species);
+        Gene gene = new Gene("1", species, bioType);
         ExpressionCall call1 = new ExpressionCall(gene, ae1devA, null, null, null, null,
                 new BigDecimal("2.0"), new BigDecimal("100"));
         ExpressionCall call2 = new ExpressionCall(gene, ae1devB, null, null, null, null,
@@ -83,6 +85,7 @@ public class ExpressionCallTest extends TestAncestor {
     @Test
     public void shouldFilterAndOrderCallsByRankWhenGraphOfCond() {
         Species species = new Species(1);
+        GeneBioType bioType = new GeneBioType("biotype");
         Condition ae1devA = new Condition(new AnatEntity("AE1"), new DevStage("DevA"), species);
         Condition ae1devB = new Condition(new AnatEntity("AE1"), new DevStage("DevB"), species);
         Condition ae2devA = new Condition(new AnatEntity("AE2"), new DevStage("DevA"), species);
@@ -91,7 +94,7 @@ public class ExpressionCallTest extends TestAncestor {
         Condition ae3devA = new Condition(new AnatEntity("AE3"), new DevStage("DevA"), species);
         Condition ae3devC = new Condition(new AnatEntity("AE3"), new DevStage("DevC"), species);
         Condition ae3devD = new Condition(new AnatEntity("AE3"), new DevStage("DevD"), species);
-        Gene gene = new Gene("1", species);
+        Gene gene = new Gene("1", species, bioType);
         ExpressionCall callAe1devA = new ExpressionCall(gene, ae1devA, null, null, null, null,
                 new BigDecimal("2.0"), new BigDecimal("100"));
         ExpressionCall callAe1devB = new ExpressionCall(gene, ae1devB, null, null, null, null,

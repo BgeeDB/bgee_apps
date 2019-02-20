@@ -2,18 +2,16 @@ package org.bgee.model.expressiondata;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
+import org.bgee.model.expressiondata.Condition.ConditionEntities;
 import org.bgee.model.ontology.Ontology;
-import org.bgee.model.ontology.RelationType;
 
 /**
  * Class providing convenience operations on {@link Condition}s.
@@ -23,21 +21,21 @@ import org.bgee.model.ontology.RelationType;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Feb. 2017
+ * @version Bgee 14, Oct. 2018
+ * @see ConditionGraphService
  * @since   Bgee 13, Dec. 2015
  */
 //TODO: Actually, maybe we should have an UtilsFactory, as we have a ServiceFactory. 
 //Could return also the ExpressionCallUtils, the ExpressionCall.RankComparator... 
-//that would be much cleaner for unit tests. 
+//that would be much cleaner for unit tests.
+//Note: there is now a ConditionGraphService, but I let this comment here for other classes.
 public class ConditionGraph {
-
     private static final Logger log = LogManager.getLogger(ConditionGraph.class.getName());
-    
+
     /**
      * A {@code Map} associating IDs of {@code Condition}s as key to the corresponding {@code Condition} as value.
      */
     private final Set<Condition> conditions;
-    
     /**
      * @see #getAnatEntityOntology()
      */
@@ -46,235 +44,74 @@ public class ConditionGraph {
      * @see #getDevStageOntology()
      */
     private final Ontology<DevStage, String> devStageOnt;
-    
     /**
      * @see #isInferredAncestralConditions()
      */
     private final boolean inferAncestralConditions;
-    
     /**
      * @see #isInferredDescendantConditions()
      */
     private final boolean inferDescendantConditions;
-    
+
     /**
-     * Constructor providing the {@code conditions} and the {@code serviceFactory}.
-     * <p>
-     * The constructor retrieves ontologies.
-     *   
-     * @param conditions        A {@code Collection} of {@code Condition}s that will be managed 
-     *                          by this {@code ConditionGraph}.
-     * @param serviceFactory    A {@code ServiceFactory} to acquire {@code Service}s from.
-     * @throws IllegalArgumentException If any of the arguments is {@code null} or empty, 
-     *                                  or if the anat. entity or dev. stage of a {@code Condition} 
-     *                                  does not exist in the requested species.
-     */
-    public ConditionGraph(Collection<Condition> conditions, ServiceFactory serviceFactory) {
-        this(conditions, false, false, serviceFactory);
-    }
-    
-    /**
-     * Constructor providing the {@code conditions} and defining whether the ancestral conditions
-     * should be inferred.
-     * <p>
-     * The constructor retrieves ontologies.  
+     * Constructor accepting all parameters.  
      * 
      * @param conditions            A {@code Collection} of {@code Condition}s that will be managed 
      *                              by this {@code ConditionGraph}.
      * @param inferAncestralConds   A {@code boolean} defining whether the ancestral conditions
-     *                              should be inferred.
+     *                              were inferred.
      * @param inferDescendantConds  A {@code boolean} defining whether the descendant conditions
-     *                              should be inferred.
-     * @throws IllegalArgumentException If any of the arguments is {@code null} or empty, 
-     *                                  or if {@code Condition}s does not exist in the same species.
-     */
-    public ConditionGraph(Collection<Condition> conditions, boolean inferAncestralConds,
-            boolean inferDescendantConds, ServiceFactory serviceFactory) throws IllegalArgumentException {
-        this(conditions, inferAncestralConds, inferDescendantConds, serviceFactory, null, null);
-    }
-    
-    /**
-     * Constructor providing the {@code conditions}, anatomical entity ontology, and
-     * developmental stage ontology.
-     * <p>
-     * The constructor retrieves ontologies if {@code null}.  
-     * 
-     * @param conditions            A {@code Collection} of {@code Condition}s that will be managed 
-     *                              by this {@code ConditionGraph}.
-     * @param anatEntityOnt         An {@code Ontology} of {@code AnatEntity}s that is 
-     *                              the ontology of anatomical entities of a single species.
-     *                              If {@code null}, the constructor retrieves the ontology.  
-     * @param devStageOnt           An {@code Ontology} of {@code DevStage}s that is 
-     *                              the ontology of developmental stages of a single species.
-     *                              If {@code null}, the constructor retrieves the ontology.  
-     * @throws IllegalArgumentException If any of the arguments is {@code null} or empty, 
-     *                                  or if {@code Condition}s does not exist in the same species.
-     */
-    public ConditionGraph(Collection<Condition> conditions, Ontology<AnatEntity, String> anatEntityOnt,
-            Ontology<DevStage, String> devStageOnt) throws IllegalArgumentException {
-        this(conditions, false, false, anatEntityOnt, devStageOnt);
-    }
-    
-    /**
-     * Constructor providing the {@code conditions}, anatomical entity ontology, developmental stage
-     * ontology, and defining whether the ancestral conditions should be inferred.
-     * <p>
-     * The constructor retrieves ontologies if {@code null}.  
-     * 
-     * @param conditions            A {@code Collection} of {@code Condition}s that will be managed 
-     *                              by this {@code ConditionGraph}.
-     * @param inferAncestralConds   A {@code boolean} defining whether the ancestral conditions
-     *                              should be inferred.
-     * @param anatEntityOnt         An {@code Ontology} of {@code AnatEntity}s that is 
-     *                              the ontology of anatomical entities of a single species.
-     *                              If {@code null}, the constructor retrieves the ontology.  
-     * @param devStageOnt           An {@code Ontology} of {@code DevStage}s that is 
-     *                              the ontology of developmental stages of a single species.
-     *                              If {@code null}, the constructor retrieves the ontology.  
-     * @throws IllegalArgumentException If any of the arguments is {@code null} or empty, 
-     *                                  or if {@code Condition}s does not exist in the same species.
-     */
-    public ConditionGraph(Collection<Condition> conditions, boolean inferAncestralConds,
-            boolean inferDescendantConds, Ontology<AnatEntity, String> anatEntityOnt,
-            Ontology<DevStage, String> devStageOnt) throws IllegalArgumentException {
-        this(conditions, inferAncestralConds, inferDescendantConds, null, anatEntityOnt, devStageOnt);
-    }
-    
-    /**
-     * Constructor accepting all parameters.
-     * <p>
-     * The constructor retrieves ontologies if {@code null}.  
-     * 
-     * @param conditions            A {@code Collection} of {@code Condition}s that will be managed 
-     *                              by this {@code ConditionGraph}.
-     * @param inferAncestralConds   A {@code boolean} defining whether the ancestral conditions
-     *                              should be inferred.
-     * @param serviceFactory        A {@code ServiceFactory} to acquire {@code Service}s from.
-     * @param anatEntityOnt         An {@code Ontology} of {@code AnatEntity}s that is 
-     *                              the ontology of anatomical entities of a single species.
-     *                              If {@code null}, the constructor retrieves the ontology.  
-     * @param devStageOnt           An {@code Ontology} of {@code DevStage}s that is 
-     *                              the ontology of developmental stages of a single species.
-     *                              If {@code null}, the constructor retrieves the ontology.  
-     * @throws IllegalArgumentException If any of the arguments is {@code null} or empty, 
-     *                                  or if {@code Condition}s does not exist in the same species.
+     *                              were inferred.
+     * @param anatEntityOnt         An {@code Ontology} of {@code AnatEntity}s present
+     *                              in the provided {@code Condition}s, if any. Otherwise,
+     *                              can be {@code null}.
+     * @param devStageOnt           An {@code Ontology} of {@code DevStage}s present
+     *                              in the provided {@code Condition}s, if any. Otherwise,
+     *                              can be {@code null}.
+     * @throws IllegalArgumentException If {@code conditions} is {@code null} or empty, 
+     *                                  or if the provided {@code Condition}s does not exist in the same species,
+     *                                  or if the {@code Ontology}s are not provided appropriately,
+     *                                  or if some {@code AnatEntity} or {@code DevStage} in {@code conditions}
+     *                                  does not exist in the related ontologies.
      */
     //XXX: we'll see what we'll do for multi-species later, for now we only accept a single species. 
     //I guess multi-species would need a separate class, e.g., MultiSpeciesConditionUtils.
-    //TODO: unit test for ancestral condition inferences
-    //TODO: refactor this constructor, methods getAncestorConditions and getDescendantConditions
-    private ConditionGraph(Collection<Condition> conditions, 
+    public ConditionGraph(Collection<Condition> conditions, 
             boolean inferAncestralConds, boolean inferDescendantConds,
-            ServiceFactory serviceFactory, Ontology<AnatEntity, String> anatEntityOnt,
-            Ontology<DevStage, String> devStageOnt) throws IllegalArgumentException {
-        log.entry(conditions, inferAncestralConds, inferDescendantConds, serviceFactory, anatEntityOnt, devStageOnt);
+            Ontology<AnatEntity, String> anatEntityOnt, Ontology<DevStage, String> devStageOnt)
+                    throws IllegalArgumentException {
+        log.entry(conditions, inferAncestralConds, inferDescendantConds, anatEntityOnt, devStageOnt);
 
-        long startTimeInMs = System.currentTimeMillis();
-        log.debug("Start creation of ConditionGraph");
         if (conditions == null || conditions.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Some conditions must be provided."));
         }
-        if (serviceFactory == null && anatEntityOnt == null && devStageOnt == null) {
-            throw log.throwing(new IllegalArgumentException(
-                    "A ServiceFactory or some ontologies must be provided."));
+        if (anatEntityOnt == null && devStageOnt == null) {
+            throw log.throwing(new IllegalArgumentException("Ontologies must be provided."));
         }
-        
-        this.inferAncestralConditions = inferAncestralConds;
-        this.inferDescendantConditions = inferDescendantConds;
-        Set<Condition> tempConditions = new HashSet<>(conditions);
-        
-        Set<String> anatEntityIds = new HashSet<>();
-        Set<String> devStageIds = new HashSet<>();
-        for (Condition cond: tempConditions) {
-            if (cond.getAnatEntityId() != null) {
-                anatEntityIds.add(cond.getAnatEntityId());
-            }
-            if (cond.getDevStageId() != null) {
-                devStageIds.add(cond.getDevStageId());
-            }
-        }
-        
-        //Get species ID from conditions and check if it is the same in all conditions
-        Set<Integer> speciesIds = conditions.stream().map(c -> c.getSpecies().getId()).collect(Collectors.toSet());
-        if (speciesIds.size() != 1) {
-            throw log.throwing(new IllegalArgumentException("Conditions should be in the same species."));
-        }
-        Integer speciesId = speciesIds.iterator().next();
-        if (!anatEntityIds.isEmpty()) {
-            //it will be checked later that all anat. entities are present in the ontology
-            if (anatEntityOnt != null) {
-                this.anatEntityOnt = anatEntityOnt;
-            } else if (serviceFactory != null) {
-                this.anatEntityOnt = serviceFactory.getOntologyService().getAnatEntityOntology(
-                        speciesId, anatEntityIds, EnumSet.of(RelationType.ISA_PARTOF), 
-                        inferAncestralConds, inferDescendantConds);
-            } else {
-                throw log.throwing(new IllegalArgumentException(
-                        "No ServiceFactory nor anatomical ontology provided."));
-            }
-        } else {
-            this.anatEntityOnt = null;
-        }
-        if (!devStageIds.isEmpty()) {
-            //it will be checked later that all dev. stages are present in the ontology
-            if (devStageOnt != null) {
-                this.devStageOnt = devStageOnt;
-            } else if (serviceFactory != null) {
-                this.devStageOnt = serviceFactory.getOntologyService().getDevStageOntology(
-                        speciesId, devStageIds, inferAncestralConds, inferDescendantConds);
-            } else {
-                throw log.throwing(new IllegalArgumentException(
-                        "No ServiceFactory nor developmental ontology provided."));
-            }
-        } else {
-            this.devStageOnt = null;
-        }
-        
-        if (this.anatEntityOnt != null && this.devStageOnt != null 
-                && this.anatEntityOnt.getSpeciesId() != this.devStageOnt.getSpeciesId()) {
+        if (anatEntityOnt != null && devStageOnt != null 
+                && anatEntityOnt.getSpeciesId() != devStageOnt.getSpeciesId()) {
             throw log.throwing(new IllegalArgumentException("Ontologies should be in the same species."));
         }
 
-        //TODO: test inference of descendant conditions
-        if (inferAncestralConds || inferDescendantConds) {
-            Set<Condition> newPropagatedConditions = tempConditions.stream().flatMap(cond -> {
-                Set<DevStage> propStages = new HashSet<>();
-                propStages.add(cond.getDevStage());
-                if (this.devStageOnt != null && cond.getDevStageId() != null) {
-                    if (inferAncestralConds) {
-                        propStages.addAll(this.devStageOnt.getAncestors(cond.getDevStage()));
-                    }
-                    if (inferDescendantConds) {
-                        propStages.addAll(this.devStageOnt.getDescendants(cond.getDevStage()));
-                    }
-                }
-                
-                Set<AnatEntity> propAnatEntitys = new HashSet<>();
-                propAnatEntitys.add(cond.getAnatEntity());
-                if (this.anatEntityOnt != null && cond.getAnatEntityId() != null) {
-                    if (inferAncestralConds) {
-                        propAnatEntitys.addAll(this.anatEntityOnt.getAncestors(cond.getAnatEntity()));
-                    }
-                    if (inferDescendantConds) {
-                        propAnatEntitys.addAll(this.anatEntityOnt.getDescendants(cond.getAnatEntity()));
-                    }
-                }
-                
-                return propAnatEntitys.stream()
-                        .flatMap(propAnatEntity -> propStages.stream().map(propStage -> 
-                            new Condition(propAnatEntity, propStage, cond.getSpecies())))
-                        .filter(propCond -> !cond.equals(propCond));
+        this.conditions = Collections.unmodifiableSet(new HashSet<>(conditions));
 
-            }).collect(Collectors.toSet());
-            
-            tempConditions.addAll(newPropagatedConditions);
+        ConditionEntities entities = new ConditionEntities(this.conditions);
+        if (entities.getSpecies().size() != 1) {
+            throw log.throwing(new IllegalArgumentException("Conditions should be in the same species."));
         }
-        this.conditions = Collections.unmodifiableSet(tempConditions);
+        if (anatEntityOnt == null && !entities.getAnatEntityIds().isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("Anatomical ontology must be provided."));
+        }
+        if (devStageOnt == null && !entities.getDevStageIds().isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("Dev. stage ontology must be provided."));
+        }
+        this.checkEntityExistence(entities.getDevStageIds(), devStageOnt);
+        this.checkEntityExistence(entities.getAnatEntityIds(), anatEntityOnt);
 
-        this.checkEntityExistence(devStageIds, this.devStageOnt);
-        this.checkEntityExistence(anatEntityIds, this.anatEntityOnt);
-
-        log.debug("ConditionGraph created in {} ms", System.currentTimeMillis() - startTimeInMs);
+        this.anatEntityOnt = anatEntityOnt;
+        this.devStageOnt = devStageOnt;
+        this.inferAncestralConditions = inferAncestralConds;
+        this.inferDescendantConditions = inferDescendantConds;
         log.exit();
     }
     
@@ -290,7 +127,7 @@ public class ConditionGraph {
      *                                  {@code ont}.
      * @param <T>   The type of ID of the elements in the ontology or sub-graph.
      */
-    private <T> void checkEntityExistence(Set<String> entityIds, Ontology<?, T> ont) 
+    private <T extends Comparable<T>> void checkEntityExistence(Set<String> entityIds, Ontology<?, T> ont) 
             throws IllegalArgumentException {
         log.entry(entityIds, ont);
         
@@ -320,11 +157,14 @@ public class ConditionGraph {
      * @param secondCond    The second {@code Condition} to be checked for relations to {@code firstCond}. 
      * @return              {@code true} if {@code secondCond} is more precise than {@code firstCond}.
      * @throws IllegalArgumentException If one of the provided {@code Condition}s is not registered 
-     *                                  to this {@code ConditionGraph}.
+     *                                  to this {@code ConditionGraph}, or one of them is {@code null}.
      */
     public boolean isConditionMorePrecise(Condition firstCond, Condition secondCond) throws IllegalArgumentException {
         log.entry(firstCond, secondCond);
-        
+
+        if (firstCond == null || secondCond == null) {
+            throw log.throwing(new IllegalArgumentException("No provided Condition can be null"));
+        }
         if (!firstCond.getSpecies().equals(secondCond.getSpecies())) {
             throw log.throwing(new IllegalArgumentException("Conditions are not in the same species."
                     + " First condition: " + firstCond + " - Second condition: " + secondCond));

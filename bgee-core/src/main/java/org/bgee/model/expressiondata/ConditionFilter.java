@@ -1,33 +1,21 @@
 package org.bgee.model.expressiondata;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.function.Predicate;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * A filter to parameterize queries using expression data conditions. 
+ * A filter to parameterize queries using expression data {@link Condition}s.
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, July 2016
+ * @version Bgee 14, Sept 2018
  * @since   Bgee 13, Oct. 2015
  */
-public class ConditionFilter implements Predicate<Condition> {
+public class ConditionFilter extends BaseConditionFilter<Condition> {
     private final static Logger log = LogManager.getLogger(ConditionFilter.class.getName());
-    
-    /**
-     * @see #getAnatEntityIds()
-     */
-    private final Set<String> anatEntityIds;
-    /**
-     * @see #getDevStageIds()
-     */
-    private final Set<String> devStageIds;
+
     /**
      * @see #getObservedConditions()
      */
@@ -64,34 +52,16 @@ public class ConditionFilter implements Predicate<Condition> {
     //Because it seems it can be managed through query of data propagation in CallFilter
     public ConditionFilter(Collection<String> anatEntityIds, Collection<String> devStageIds,
             Boolean observedConditions) throws IllegalArgumentException {
-        if ((anatEntityIds == null || anatEntityIds.isEmpty()) && 
+        super(anatEntityIds, devStageIds);
+        if ((anatEntityIds == null || anatEntityIds.isEmpty()) &&
                 (devStageIds == null || devStageIds.isEmpty()) &&
                 observedConditions == null) {
             throw log.throwing(new IllegalArgumentException("Some anatatomical entity IDs"
-                    + " or developmental stage IDs or observed data status must be provided."));
+                + " or developmental stage IDs or observed data status must be provided."));
         }
-        this.anatEntityIds = Collections.unmodifiableSet(anatEntityIds == null ? 
-                new HashSet<>(): new HashSet<>(anatEntityIds));
-        this.devStageIds = Collections.unmodifiableSet(devStageIds == null? 
-                new HashSet<>(): new HashSet<>(devStageIds));
         this.observedConditions = observedConditions;
     }
 
-
-    /**
-     * @return  An unmodifiable {@code Set} of {@code String}s that are the IDs 
-     *          of the anatomical entities that this {@code ConditionFilter} will specify to use.
-     */
-    public Set<String> getAnatEntityIds() {
-        return anatEntityIds;
-    }
-    /**
-     * @return  An unmodifiable {@code Set} of {@code String}s that are the IDs 
-     *          of the developmental stages that this {@code ConditionFilter} will specify to use.
-     */
-    public Set<String> getDevStageIds() {
-        return devStageIds;
-    }
     /**
      * @return  A {@code Boolean} defining whether the conditions considered should have been
      *          observed in expression data. If {@code true}, only conditions
@@ -105,92 +75,41 @@ public class ConditionFilter implements Predicate<Condition> {
         return observedConditions;
     }
 
-
     @Override
     public int hashCode() {
         final int prime = 31;
-        int result = 1;
-        result = prime * result + ((anatEntityIds == null) ? 0 : anatEntityIds.hashCode());
-        result = prime * result + ((devStageIds == null) ? 0 : devStageIds.hashCode());
+        int result = super.hashCode();
         result = prime * result + ((observedConditions == null) ? 0 : observedConditions.hashCode());
         return result;
     }
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) {
+        if (this == obj)
             return true;
-        }
-        if (obj == null) {
+        if (!super.equals(obj))
             return false;
-        }
-        if (getClass() != obj.getClass()) {
+        if (getClass() != obj.getClass())
             return false;
-        }
         ConditionFilter other = (ConditionFilter) obj;
-        if (anatEntityIds == null) {
-            if (other.anatEntityIds != null) {
-                return false;
-            }
-        } else if (!anatEntityIds.equals(other.anatEntityIds)) {
-            return false;
-        }
-        if (devStageIds == null) {
-            if (other.devStageIds != null) {
-                return false;
-            }
-        } else if (!devStageIds.equals(other.devStageIds)) {
-            return false;
-        }
         if (observedConditions == null) {
-            if (other.observedConditions != null) {
+            if (other.observedConditions != null)
                 return false;
-            }
-        } else if (!observedConditions.equals(other.observedConditions)) {
+        } else if (!observedConditions.equals(other.observedConditions))
             return false;
-        }
         return true;
     }
 
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("ConditionFilter [anatEntityIds=").append(anatEntityIds)
-               .append(", devStageIds=").append(devStageIds)
+        builder.append("ConditionFilter [anatEntityIds=").append(getAnatEntityIds())
+               .append(", devStageIds=").append(getDevStageIds())
                .append(", observedConditions=").append(observedConditions).append("]");
         return builder.toString();
     }
 
 
-    /**
-     * Evaluates this {@code ConditionFilter} on the given {@code Condition}.
-     * 
-     * @param condition A {@code Condition} that is the condition to be evaluated.
-     * @return          {@code true} if the {@code condition} matches the {@code ConditionFilter}.
-     */
-    @Override
-    public boolean test(Condition condition) {
-        log.entry(condition);
-
-        boolean isValid = true;
-        
-        // Check dev. stage ID 
-        if (condition.getDevStageId() != null 
-            && this.getDevStageIds() != null && !this.getDevStageIds().isEmpty()
-            && !this.getDevStageIds().contains(condition.getDevStageId())) {
-            log.debug("Dev. stage {} not validated: not in {}",
-                condition.getDevStageId(), this.getDevStageIds());
-            isValid = false;
-        }
-    
-        // Check anat. entity ID 
-        if (condition.getAnatEntityId() != null 
-            && this.getAnatEntityIds() != null && !this.getAnatEntityIds().isEmpty()
-            && !this.getAnatEntityIds().contains(condition.getAnatEntityId())) {
-            log.debug("Anat. entity {} not validated: not in {}",
-                condition.getAnatEntityId(), this.getAnatEntityIds());
-            isValid = false;
-        }
-        
-        return log.exit(isValid);
-    }
+    //Since we cannot use the attribute "observedConditions" to check for the validity of the Condition
+    //provided to the 'test' method, we do not need to reimplement the 'test' method of BaseConditionFilter.
+    //This might change in the future if other attributes are added.
 }

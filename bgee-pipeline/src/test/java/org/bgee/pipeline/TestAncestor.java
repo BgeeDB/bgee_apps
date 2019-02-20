@@ -1,6 +1,5 @@
 package org.bgee.pipeline;
 
-import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -14,10 +13,6 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.CallParams;
-import org.bgee.model.dao.api.expressiondata.DiffExpressionCallParams;
-import org.bgee.model.dao.api.expressiondata.ExpressionCallParams;
-import org.bgee.model.dao.api.expressiondata.NoExpressionCallParams;
 import org.bgee.model.dao.mysql.anatdev.MySQLAnatEntityDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLTaxonConstraintDAO;
@@ -27,9 +22,7 @@ import org.bgee.model.dao.mysql.anatdev.mapping.MySQLSummarySimilarityAnnotation
 import org.bgee.model.dao.mysql.connector.BgeeConnection;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.expressiondata.MySQLDiffExpressionCallDAO;
-import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO;
-import org.bgee.model.dao.mysql.expressiondata.MySQLNoExpressionCallDAO;
-import org.bgee.model.dao.mysql.expressiondata.rawdata.affymetrix.MySQLAffymetrixProbesetDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixProbesetDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituSpotDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqResultDAO;
 import org.bgee.model.dao.mysql.file.MySQLDownloadFileDAO;
@@ -47,7 +40,6 @@ import org.bgee.model.dao.mysql.species.MySQLTaxonDAO;
 import org.junit.Rule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
-import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -172,10 +164,6 @@ public abstract class TestAncestor
         		mock(MySQLHierarchicalGroupDAO.class);
         public final MySQLStageDAO mockStageDAO = mock(MySQLStageDAO.class);
         public final MySQLRelationDAO mockRelationDAO = mock(MySQLRelationDAO.class);
-        public final MySQLExpressionCallDAO mockExpressionCallDAO = 
-                mock(MySQLExpressionCallDAO.class);
-        public final MySQLNoExpressionCallDAO mockNoExpressionCallDAO = 
-                mock(MySQLNoExpressionCallDAO.class);
         public final MySQLDiffExpressionCallDAO mockDiffExpressionCallDAO = 
                 mock(MySQLDiffExpressionCallDAO.class);
         public final MySQLAnatEntityDAO mockAnatEntityDAO = mock(MySQLAnatEntityDAO.class);
@@ -267,14 +255,6 @@ public abstract class TestAncestor
             return this.mockRelationDAO;
         }
         @Override
-        protected MySQLExpressionCallDAO getNewExpressionCallDAO() {
-            return this.mockExpressionCallDAO;
-        }
-        @Override
-        protected MySQLNoExpressionCallDAO getNewNoExpressionCallDAO() {
-            return this.mockNoExpressionCallDAO;
-        }
-        @Override
         protected MySQLDiffExpressionCallDAO getNewDiffExpressionCallDAO() {
             return this.mockDiffExpressionCallDAO;
         }
@@ -323,72 +303,4 @@ public abstract class TestAncestor
             return this.mockStageGroupingDAO;
         }
 	}
-
-
-    /**
-     * Custom matcher for verifying IDs of species allowing to filter 
-     * the calls to use of actual and expected {@code CallParams}.
-     */
-	//TODO: we use this design because CallParams is not yet stabilized, and we need 
-	//to think about the implementation of its equals/hashCode methods.
-	//To remove when it will be implemented. 
-    private static class CallParamsMatcher extends ArgumentMatcher<CallParams> {
-        
-        private final CallParams expected;
-        
-        public CallParamsMatcher(CallParams expected) {
-            this.expected = expected;
-        }
-        
-        @Override
-        public boolean matches(Object actual) {
-            if (actual == null && expected == null)
-                return true;
-            if (actual == null && expected != null)
-                return false;
-            if (!actual.getClass().equals(expected.getClass()))
-                return false;
-            
-            if (!((CallParams) actual).getSpeciesIds().equals(expected.getSpeciesIds())) {
-                return false;
-            }
-            if (actual instanceof ExpressionCallParams && 
-                    (((ExpressionCallParams) actual).isIncludeSubstructures() != 
-                        ((ExpressionCallParams) expected).isIncludeSubstructures() || 
-                    ((ExpressionCallParams) actual).isIncludeSubStages() != 
-                        ((ExpressionCallParams) expected).isIncludeSubStages())) {
-                return false;
-            }
-            if (actual instanceof DiffExpressionCallParams) {
-                DiffExpressionCallParams tmpActual = (DiffExpressionCallParams) actual;
-                DiffExpressionCallParams tmpExpected = (DiffExpressionCallParams) expected;
-                if (tmpActual.getComparisonFactor() != tmpExpected.getComparisonFactor() ||
-                    !tmpActual.getAffymetrixDiffExprCallTypes().equals(
-                            tmpExpected.getAffymetrixDiffExprCallTypes()) ||
-                    tmpActual.isIncludeAffymetrixTypes() != tmpExpected.isIncludeAffymetrixTypes() ||
-                    !tmpActual.getRNASeqDiffExprCallTypes().equals(
-                            tmpExpected.getRNASeqDiffExprCallTypes()) ||
-                    tmpActual.isIncludeRNASeqTypes() != tmpExpected.isIncludeRNASeqTypes() ||
-                    tmpActual.isSatisfyAllCallTypeConditions() != 
-                            tmpExpected.isSatisfyAllCallTypeConditions()){
-                    return false;
-                }
-            }
-            if (actual instanceof NoExpressionCallParams && 
-                    ((NoExpressionCallParams) actual).isIncludeParentStructures() != 
-                    ((NoExpressionCallParams) expected).isIncludeParentStructures()) {
-                return false;
-            }
-            return true;
-        }
-    }
-    
-    /**
-     * Convenience factory method for using the custom {@code CallParams} matcher.
-     * 
-     *  @param expected  A {@code CallParams} that is the argument to be verified.
-     */
-    protected static CallParams valueCallParamEq(CallParams params) {
-        return argThat(new CallParamsMatcher(params));
-    }
 }

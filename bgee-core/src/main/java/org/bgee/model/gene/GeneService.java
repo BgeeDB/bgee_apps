@@ -28,14 +28,14 @@ import org.bgee.model.species.SpeciesService;
  * @author  Philippe Moret
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, May 2017
- * @since   Bgee 13, Sept. 2015
+ * @version Bgee 14, Sep. 2018
+ * @since   Bgee 13, Sep. 2015
  */
 public class GeneService extends CommonService {
-    
     private static final Logger log = LogManager.getLogger(GeneService.class.getName());
     
     private final SpeciesService speciesService;
+    private final GeneDAO geneDAO;
 
     /**
      * @param serviceFactory            The {@code ServiceFactory} to be used to obtain {@code Service}s 
@@ -45,6 +45,7 @@ public class GeneService extends CommonService {
     public GeneService(ServiceFactory serviceFactory) {
         super(serviceFactory);
         this.speciesService = this.getServiceFactory().getSpeciesService();
+        this.geneDAO = this.getDaoManager().getGeneDAO();
     }
     
     /**
@@ -81,10 +82,11 @@ public class GeneService extends CommonService {
             throw log.throwing(new IllegalArgumentException(
                     "GeneFilters contain unrecognized species IDs: " + unrecognizedSpeciesIds));
         }
+        final Map<Integer, GeneBioType> geneBioTypeMap = Collections.unmodifiableMap(loadGeneBioTypeMap(this.geneDAO));
         
         return log.exit(mapGeneTOStreamToGeneStream(
-                getDaoManager().getGeneDAO().getGenesBySpeciesAndGeneIds(filtersToMap).stream(),
-                speciesMap));
+                this.geneDAO.getGenesBySpeciesAndGeneIds(filtersToMap).stream(),
+                speciesMap, geneBioTypeMap));
     }
 
     /**
@@ -138,12 +140,13 @@ public class GeneService extends CommonService {
         
         //we expect very few results from a single Ensembl ID, so we don't preload all species
         //in database as for method 'loadGenesByEnsemblIds'
-        Set<GeneTO> geneTOs = this.getDaoManager().getGeneDAO()
+        Set<GeneTO> geneTOs = this.geneDAO
                 .getGenesByIds(Collections.singleton(ensemblGeneId))
                 .stream().collect(Collectors.toSet());
-        Map<Integer, Species> speciesMap = loadSpeciesMapFromGeneTOs(geneTOs, withSpeciesInfo);
+        final Map<Integer, Species> speciesMap = Collections.unmodifiableMap(loadSpeciesMapFromGeneTOs(geneTOs, withSpeciesInfo));
+        final Map<Integer, GeneBioType> geneBioTypeMap = Collections.unmodifiableMap(loadGeneBioTypeMap(this.geneDAO));
         
-        return log.exit(mapGeneTOStreamToGeneStream(geneTOs.stream(), speciesMap)
+        return log.exit(mapGeneTOStreamToGeneStream(geneTOs.stream(), speciesMap, geneBioTypeMap)
                 .collect(Collectors.toSet()));
     }
 
@@ -170,11 +173,12 @@ public class GeneService extends CommonService {
         //we don't have access to the species ID information before getting the GeneTOs,
         //and we want to return a Stream without iterating the GeneTOs first,
         //so we load all species in database
-        Map<Integer, Species> speciesMap = this.speciesService.loadSpeciesMap(null, withSpeciesInfo);
+        final Map<Integer, Species> speciesMap = Collections.unmodifiableMap(this.speciesService.loadSpeciesMap(null, withSpeciesInfo));
+        final Map<Integer, GeneBioType> geneBioTypeMap = Collections.unmodifiableMap(loadGeneBioTypeMap(this.geneDAO));
 
         return log.exit(mapGeneTOStreamToGeneStream(
-                getDaoManager().getGeneDAO().getGenesByIds(ensemblGeneIds).stream(),
-                speciesMap));
+                this.geneDAO.getGenesByIds(ensemblGeneIds).stream(),
+                speciesMap, geneBioTypeMap));
     	
     }
 
@@ -200,7 +204,7 @@ public class GeneService extends CommonService {
 //        
 //        final Map<Integer, Species> speciesMap = this.speciesService.loadSpeciesMap(clnSpId, false);
 //
-//        final Map<Integer, Gene> geneMap = Collections.unmodifiableMap(this.getDaoManager().getGeneDAO()
+//        final Map<Integer, Gene> geneMap = Collections.unmodifiableMap(this.geneDAO
 //            .getGenesBySpeciesIds(speciesIds).stream()
 //                .collect(Collectors.toMap(
 //                    gTO -> gTO.getId(),
@@ -223,16 +227,16 @@ public class GeneService extends CommonService {
      */
     public List<GeneMatch> searchByTerm(final String term) {
         log.entry(term);
-        GeneDAO dao = getDaoManager().getGeneDAO();
         
-        List<GeneTO> geneTOs = dao.getGeneBySearchTerm(term, null, 1, 100).stream().collect(Collectors.toList());
+        List<GeneTO> geneTOs = this.geneDAO.getGeneBySearchTerm(term, null, 1, 100).stream().collect(Collectors.toList());
         
         // if result is empty, return an empty list
         if (geneTOs.isEmpty()) {
             return log.exit(new LinkedList<>());
         }
         
-        Map<Integer, Species> speciesMap = loadSpeciesMapFromGeneTOs(geneTOs, false);
+        final Map<Integer, Species> speciesMap = Collections.unmodifiableMap(loadSpeciesMapFromGeneTOs(geneTOs, false));
+        final Map<Integer, GeneBioType> geneBioTypeMap = Collections.unmodifiableMap(loadGeneBioTypeMap(this.geneDAO));
         Set<Integer> bgeeGeneIds = geneTOs.stream().map(GeneTO::getId).collect(Collectors.toSet());
         
         final Map<Integer, List<String>> synonymMap = getDaoManager().getGeneNameSynonymDAO()
@@ -241,14 +245,22 @@ public class GeneService extends CommonService {
                         Collectors.mapping(GeneNameSynonymTO::getGeneNameSynonym, Collectors.toList())));
 
         return log.exit(geneTOs.stream()
-            .map(g -> geneMatch(g, term, synonymMap.get(g.getId()), speciesMap.get(g.getSpeciesId())))
+            .map(g -> geneMatch(g, term, synonymMap.get(g.getId()), speciesMap.get(g.getSpeciesId()),
+                    geneBioTypeMap.get(g.getGeneBioTypeId())))
             .collect(Collectors.toList()));
     }
 
+    public Set<GeneBioType> loadGeneBioTypes() {
+        log.entry();
+        return log.exit(this.geneDAO.getGeneBioTypes()
+                .stream().map(to -> mapGeneBioTypeTOToGeneBioType(to))
+                .collect(Collectors.toSet()));
+    }
+
     private GeneMatch geneMatch(final GeneTO geneTO, final String term,
-            final List<String> synonymList, final Species species) {
-        log.entry(geneTO, term, synonymList, species);
-        Gene gene = mapGeneTOToGene(geneTO, species);
+            final List<String> synonymList, final Species species, final GeneBioType geneBioType) {
+        log.entry(geneTO, term, synonymList, species, geneBioType);
+        Gene gene = mapGeneTOToGene(geneTO, species, geneBioType);
         // if the gene name or id match there is no synonym
         //Fix issue with term search such as "upk\3a". MySQL does not consider the backslash
         //and returns terms, that are then not matched here
@@ -288,8 +300,9 @@ public class GeneService extends CommonService {
     }
     
     private static Stream<Gene> mapGeneTOStreamToGeneStream(Stream<GeneTO> geneTOStream,
-            Map<Integer, Species> speciesMap) {
-        log.entry(geneTOStream, speciesMap);
-        return log.exit(geneTOStream.map(to -> mapGeneTOToGene(to, speciesMap.get(to.getSpeciesId()))));
+            Map<Integer, Species> speciesMap, Map<Integer, GeneBioType> geneBioTypeMap) {
+        log.entry(geneTOStream, speciesMap, geneBioTypeMap);
+        return log.exit(geneTOStream.map(to -> mapGeneTOToGene(to, speciesMap.get(to.getSpeciesId()),
+                geneBioTypeMap.get(to.getGeneBioTypeId()))));
     }
 }

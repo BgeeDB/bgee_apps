@@ -15,7 +15,7 @@ package org.bgee.model;
  * @param <T> The type of ID of this {@code Entity}
  */
 //TODO: use Parametric class to specify whether ID is a String or a Integer. Same in NamedEntity.
-public abstract class Entity<T> {
+public abstract class Entity<T extends Comparable<T>> {
 	/**
 	 * @see #getId()
 	 */
@@ -35,7 +35,7 @@ public abstract class Entity<T> {
      * {@code id} cannot be {@code null}, otherwise an {@code IllegalArgumentException} is thrown. 
      * 
      * @param id	A {@code T} representing the ID of this {@code Entity}.
-     * @throws IllegalArgumentException 	if {@code id} is {@code null}. 
+     * @throws IllegalArgumentException 	if {@code id} is blank. 
      */
     public Entity(T id) throws IllegalArgumentException {
         if (id == null) {

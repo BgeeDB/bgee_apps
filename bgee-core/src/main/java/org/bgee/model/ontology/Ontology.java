@@ -41,7 +41,7 @@ public class Ontology<T extends NamedEntity<U> & OntologyElement<T, U>, U extend
      * @param type              A {@code Class<T>} that is the type of {@code elements} 
      *                          to be store by this {@code Ontology}.
      */
-    protected Ontology(Integer speciesId, Collection<T> elements,
+    public Ontology(Integer speciesId, Collection<T> elements,
             Collection<RelationTO<U>> relations, Collection<RelationType> relationTypes,
             ServiceFactory serviceFactory, Class<T> type) {
         super(elements, relations, relationTypes, serviceFactory, type);

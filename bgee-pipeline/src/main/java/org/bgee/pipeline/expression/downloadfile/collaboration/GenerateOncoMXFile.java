@@ -43,6 +43,7 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.expressiondata.ConditionFilter;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
@@ -179,8 +180,12 @@ public class GenerateOncoMXFile {
 
                 //if the entity changes, or if it is the latest iteration (one iteration after
                 //the last element was retrieved, this.elementIterator.next() threw an exception),
-                //we generate the List grouping elements for the same entity, as all elements were iterated for that entity.
-                U currentEntity = this.extractEntityFunction.apply(currentElement);
+                //we generate the List grouping elements for the same entity,
+                //as all elements were iterated for that entity.
+                U currentEntity = null;
+                if (currentElement != null) {
+                    currentEntity = this.extractEntityFunction.apply(currentElement);
+                }
                 if (!currentIteration || !currentEntity.equals(lastEntity)) {
                     assert (currentIteration && currentElement != null) || (!currentIteration && currentElement == null);
                     currentIteration = false;
@@ -372,41 +377,78 @@ public class GenerateOncoMXFile {
         return log.exit(uberonIds);
     }
     private static Stream<List<ExpressionCall>> getExpressionCallsPerGene(
-            final CallService callService, int speciesId) {
-        log.entry(callService, speciesId);
+            final CallService callService, int speciesId, Collection<String> validAnatEntityIds,
+            Collection<String> validDevStageIds) {
+        log.entry(callService, speciesId, validAnatEntityIds, validDevStageIds);
 
+        //Query the CallService
+        Stream<ExpressionCall> callStream = callService.loadExpressionCalls(
+                getGeneCallFilter(speciesId, validAnatEntityIds, validDevStageIds),
+                //Attributes requested
+                getGeneCallAttributes(),
+                getGeneServiceOrdering() //we order by gene and rank
+                );
+
+        return log.exit(getCallsByGeneStream(callStream));
+    }
+    protected static ExpressionCallFilter getGeneCallFilter(int speciesId,
+            Collection<String> validAnatEntityIds, Collection<String> validDevStageIds) {
+        log.entry(speciesId, validAnatEntityIds, validDevStageIds);
         //We want observed data only for any call type
         Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
         obsDataFilter.put(null, true);
+        return log.exit(new ExpressionCallFilter(
+                        null, //we want expressed/not-expressed calls of any quality
+                        //all genes for the requested species
+                        Collections.singleton(new GeneFilter(speciesId)),
+                        //only calls in the valid anat. entities and dev. stages
+                        Collections.singleton(new ConditionFilter(validAnatEntityIds,
+                                validDevStageIds)), //all conditions
+                        DATA_TYPES, //data requested by OncoMX only
+                        obsDataFilter, //only observed data
+                        //no filter on observed data in anat. entity and stage,
+                        //it will anyway be both from the previous filter
+                        null, null
+                        ));
+    }
+    protected static Set<CallService.Attribute> getGeneCallAttributes() {
+        log.entry();
+        return log.exit(EnumSet.of(CallService.Attribute.GENE,
+                CallService.Attribute.ANAT_ENTITY_ID,
+                CallService.Attribute.DEV_STAGE_ID,
+                CallService.Attribute.CALL_TYPE, CallService.Attribute.DATA_QUALITY,
+                CallService.Attribute.MEAN_RANK));
+    }
+    protected static LinkedHashMap<CallService.OrderingAttribute, Service.Direction>
+    getGeneServiceOrdering() {
+        log.entry();
         //For ordering by gene and rank score, to retrieve the min and max ranks per gene
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
                 new LinkedHashMap<>();
         serviceOrdering.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
         serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
+        return log.exit(serviceOrdering);
+    }
+    private static Map<AnatEntity, Pair<BigDecimal, BigDecimal>> getMinMaxRanksPerAnatEntity(
+            final CallService callService, int speciesId, Collection<String> validAnatEntityIds) {
+        log.entry(callService, speciesId, validAnatEntityIds);
 
         //Query the CallService
         Stream<ExpressionCall> callStream = callService.loadExpressionCalls(
-                new ExpressionCallFilter(
-                        null, //we want expressed/not-expressed calls of any quality
-                        Collections.singleton(new GeneFilter(speciesId)), //all genes for the requested species
-                        null, //all conditions
-                        DATA_TYPES, //data requested by OncoMX only
-                        obsDataFilter, //only observed data
-                        null, null //no filter on observed data in anat. entity and stage, it will anyway be both from the previous filter
-                        ),
-                //Attributes requested
-                EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID, CallService.Attribute.DEV_STAGE_ID,
-                        CallService.Attribute.CALL_TYPE, CallService.Attribute.DATA_QUALITY,
-                        CallService.Attribute.MEAN_RANK),
-                serviceOrdering //we order by gene and rank
-                );
+                getAnatEntityCallFilter(speciesId, validAnatEntityIds),
+                getAnatEntityCallAttributes(),
+                getAnatEntityServiceOrdering()
+        );
 
-        return log.exit(getCallsByGeneStream(callStream));
+        //Now return the min/max rank per anat. entity
+        return log.exit(getCallsByAnatEntityStream(callStream)
+                .map(calls -> new AbstractMap.SimpleEntry<AnatEntity, Pair<BigDecimal, BigDecimal>>(
+                        calls.get(0).getCondition().getAnatEntity(), getMinMaxRanksFromCallGroup(calls)))
+                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue())));
     }
-    private static Map<AnatEntity, Pair<BigDecimal, BigDecimal>> getMinMaxRanksPerAnatEntity(
-            final CallService callService, int speciesId) {
-        log.entry(callService, speciesId);
-
+    protected static ExpressionCallFilter getAnatEntityCallFilter(int speciesId,
+            Collection<String> validAnatEntityIds) {
+        log.entry(speciesId, validAnatEntityIds);
         //For getting the min/max ranks for each anat. entity, we consider only EXPRESSED expression calls,
         //of any quality
         Map<SummaryCallType.ExpressionSummary, SummaryQuality> expressedCallFilter = new HashMap<>();
@@ -417,36 +459,34 @@ public class GenerateOncoMXFile {
         //there are observed data, even if only NOT_EXPRESSED
         Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
         obsDataFilter.put(null, true);
+        return log.exit(new ExpressionCallFilter(
+                expressedCallFilter, //we want expressed calls from all qualities
+                Collections.singleton(new GeneFilter(speciesId)), //all genes for the requested species
+                //only calls in the valid anat. entities, but at any stage
+                Collections.singleton(new ConditionFilter(validAnatEntityIds, null)),
+                DATA_TYPES, //data requested by OncoMX only
+                obsDataFilter, //only observed data
+                null, null //no filter on observed data in anat. entity and stage, it will anyway be both from the previous filter
+                ));
+    }
+    protected static LinkedHashMap<CallService.OrderingAttribute, Service.Direction>
+    getAnatEntityServiceOrdering() {
+        log.entry();
         //For ordering by anat. entity and rank score, to retrieve the min and max ranks per anat. entity
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
                 new LinkedHashMap<>();
         serviceOrdering.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
         serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
-
-        //Query the CallService
-        Stream<ExpressionCall> callStream = callService.loadExpressionCalls(
-                new ExpressionCallFilter(
-                        expressedCallFilter, //we want expressed calls from all qualities
-                        Collections.singleton(new GeneFilter(speciesId)), //all genes for the requested species
-                        null, //all conditions
-                        DATA_TYPES, //data requested by OncoMX only
-                        obsDataFilter, //only observed data
-                        null, null //no filter on observed data in anat. entity and stage, it will anyway be both from the previous filter
-                        ),
-                //Ranks used in Bgee are the ranks computed from anat. entity and dev. stage condition parameters,
-                //so we request both the anat. entity and the dev. stage IDs.
-                //We don't care about the gene IDs at this point, nor the expression state, since we requested
-                //expressed calls only.
-                EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID, CallService.Attribute.DEV_STAGE_ID,
-                        CallService.Attribute.MEAN_RANK),
-                serviceOrdering //we order by anat. entity and rank
-                );
-
-        //Now return the min/max rank per anat. entity
-        return log.exit(getCallsByAnatEntityStream(callStream)
-                .map(calls -> new AbstractMap.SimpleEntry<AnatEntity, Pair<BigDecimal, BigDecimal>>(
-                        calls.get(0).getCondition().getAnatEntity(), getMinMaxRanksFromCallGroup(calls)))
-                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue())));
+        return log.exit(serviceOrdering);
+    }
+    protected static Set<CallService.Attribute> getAnatEntityCallAttributes() {
+        log.entry();
+        //Ranks used in Bgee are the ranks computed from anat. entity and dev. stage condition parameters,
+        //so we request both the anat. entity and the dev. stage IDs.
+        //We don't care about the gene IDs at this point, nor the expression state, since we requested
+        //expressed calls only.
+        return log.exit(EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID, CallService.Attribute.DEV_STAGE_ID,
+                CallService.Attribute.MEAN_RANK));
     }
     private static Stream<List<ExpressionCall>> getCallsByAnatEntityStream(Stream<ExpressionCall> callStream) {
         log.entry(callStream);
@@ -574,12 +614,14 @@ public class GenerateOncoMXFile {
         //Now, to be able to create the classification high expression level/medium/low for genes and organs,
         //we retrieve the min and max ranks in each anat. entity
         Map<AnatEntity, Pair<BigDecimal, BigDecimal>> minMaxRanksPerAnatEntity =
-                getMinMaxRanksPerAnatEntity(this.serviceFactory.getCallService(), speciesId);
+                getMinMaxRanksPerAnatEntity(this.serviceFactory.getCallService(), speciesId,
+                        allUberonIds);
         log.info("Done.");
 
         log.info("Retrieving expression calls grouped by genes...");
         Stream<List<ExpressionCall>> callsPerGeneStream = getExpressionCallsPerGene(
-                this.serviceFactory.getCallService(), speciesId);
+                this.serviceFactory.getCallService(), speciesId,
+                allUberonIds, allDevStageIds);
         log.info("Done.");
 
 

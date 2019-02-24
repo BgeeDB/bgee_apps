@@ -34,6 +34,7 @@ import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.function.PentaFunction;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
+import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.gene.GeneService;
 import org.bgee.model.species.Species;
 import org.junit.Before;
@@ -99,7 +100,7 @@ public class TopAnatControllerTest extends TestAncestor {
     public void initTest() {
 
         // create the result directory if needed
-        File newDir = new File(System.getProperty("java.io.tmpdir")+"test");        
+        File newDir = new File(System.getProperty("java.io.tmpdir"),"test");        
 
         if (!newDir.exists()) {
             newDir.mkdirs();
@@ -153,7 +154,10 @@ public class TopAnatControllerTest extends TestAncestor {
         when(this.mockTopAnatParams.getDataTypes()).thenReturn(dataTypes);
         when(mockAnatEntityService.loadAnatEntitiesBySpeciesIds(any()))
         .thenReturn(Arrays.asList(mockEntity).stream());
-        when(mockAnatEntityService.loadDirectIsAPartOfRelationships(any())).thenReturn(relations);
+        when(mockGeneService.loadGenes(new GeneFilter(1, new HashSet<String>())))
+        .thenReturn(Stream.empty())
+        .thenReturn(Stream.empty());
+        
         when(mockEntity.getId()).thenReturn("2");
         when(mockEntity.getName()).thenReturn("testEntity");
         when(mockCallService.loadExpressionCalls(any(), any(), any()))
@@ -205,13 +209,13 @@ public class TopAnatControllerTest extends TestAncestor {
                 + "rScriptAnalysisFileName=topAnat_script.R, paramsOutputFileName=topAnat_Params.txt, "
                 + "anatEntitiesFilename=topAnat_AnatEntitiesNames_1.tsv, "
                 + "anatEntitiesRelationshipsFileName=topAnat_AnatEntitiesRelationships_1.tsv, "
-                + "geneToAnatEntitiesFileName=topAnat_GeneToAnatEntities_1_DIFF_EXPRESSED_AFFYMETRIX_LOW.tsv,"
+                + "geneToAnatEntitiesFileName=topAnat_GeneToAnatEntities_1_DIFF_EXPRESSED_AFFYMETRIX_SILVER.tsv,"
                 + " rScriptConsoleFileName=topAnat_log.R_console, zipFileName=topAnat_results.zip, "
                 + "controller=TopAnatController \\[readWriteLocks=\\{.*\\}, props=BgeeProperties "
                 + "\\[topAnatRScriptExecutable=/usr/bin/Rscript, topAnatRWorkingDirectory=topanat/results/, "
                 + "topAnatFunctionFile=/R_scripts/topAnat_functions.R, "
                 + "topAnatResultsWritingDirectory=.*\\], "
-                + "serviceFactory=mockServiceFactory, taskManager=Optional.empty, topAnatAnalysisSupplier=, "
+                + "serviceFactory=mockServiceFactory, job=Optional.empty, topAnatAnalysisSupplier=, "
                 + "topAnatParams=\\[mockTopAnatParams, mockTopAnatParams\\]\\], props=BgeeProperties "
                 + "\\[topAnatRScriptExecutable=/usr/bin/Rscript, topAnatRWorkingDirectory=topanat/results/, "
                 + "topAnatFunctionFile=/R_scripts/topAnat_functions.R, topAnatResultsWritingDirectory=.*"

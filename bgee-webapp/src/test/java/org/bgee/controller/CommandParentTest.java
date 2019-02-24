@@ -214,11 +214,16 @@ public class CommandParentTest extends TestAncestor {
 
         FileInputStream inStream = new FileInputStream(file);
         byte[] buffer = new byte[4096];
-        int bytesRead = -1;
+        int bytesRead;
         while ((bytesRead = inStream.read(buffer)) != -1) {
             verify(outputStream).write(buffer, 0, bytesRead);
         }
         inStream.close();
         verify(outputStream).close();
+
+        // Here, we want only to test if We there is no mime type
+        when(context.getMimeType(filePath)).thenReturn(null);
+        command.launchFileDownload(filePath, "myFile");
+        verify(response).setContentType("application/octet-stream");
     }
 }

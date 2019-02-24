@@ -323,6 +323,8 @@ public class FrontController extends HttpServlet {
             }
             if (errorDisplay == null) {
                 log.error("Could not display error message to caller: {}", realException);
+                log.exit();
+                return;
             }
             
             if (realException instanceof InvalidFormatException) {

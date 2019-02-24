@@ -68,5 +68,4 @@ public class CommandSearch extends CommandParent {
         
         log.exit();
     }
-
 }

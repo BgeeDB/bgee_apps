@@ -26,7 +26,7 @@ import org.bgee.model.ontology.Ontology;
  * @since   Bgee 13, Dec. 2015
  */
 //TODO: Actually, maybe we should have an UtilsFactory, as we have a ServiceFactory. 
-//Could return also the ExpressionCallUtils, the ExpressionCall.RankComparator... 
+//Could return also the ExpressionCallUtils, etc. 
 //that would be much cleaner for unit tests.
 //Note: there is now a ConditionGraphService, but I let this comment here for other classes.
 public class ConditionGraph {

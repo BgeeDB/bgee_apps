@@ -90,9 +90,14 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
     public void displayGeneChoice(Set<Gene> genes) {
         log.entry(genes);
         
+        if (genes == null || genes.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Gene list should not be empty to display the gene choice page."));
+        }
+
         List<Gene> clnGenes = new ArrayList<>(genes);
+        Gene gene = clnGenes.iterator().next();
         
-        Gene gene = clnGenes.stream().findFirst().get();
         String titleStart = "Genes: " + gene.getName() + " - " + gene.getEnsemblGeneId();
         
         this.startDisplay(titleStart);

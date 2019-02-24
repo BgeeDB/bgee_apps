@@ -999,7 +999,9 @@ public class RequestParameters {
             storageFile = new File(prop.getRequestParametersStorageDirectory() 
                     + this.getFirstValue(this.getKeyParam()));
             if (storageFile.exists()) {
-                storageFile.delete();
+                if (!storageFile.delete()) {
+                    log.error("The file was not deleted before before throwing the exception");
+                }
             }
             throw new RequestParametersNotStorableException(
                     "An error occurred and it was not possible to store the parameters.");

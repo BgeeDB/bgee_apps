@@ -16,6 +16,7 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.TOComparator;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTO;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTOResultSet;
@@ -80,7 +81,7 @@ public class BgeeDBUtilsTest extends TestAncestor {
         try (MockDAOManager mockManager = new MockDAOManager()) {
             SpeciesTOResultSet mockSpeciesResultSet = this.mockGetAllSpecies(mockManager);
             
-            assertEquals("Incorrect speciesIDs retrieved", Arrays.asList("21", "11", "30"), 
+            assertEquals("Incorrect speciesIDs retrieved", Arrays.asList(21, 11, 30), 
                     BgeeDBUtils.getSpeciesIdsFromDb(mockManager.getSpeciesDAO()));
             verify(mockManager.getSpeciesDAO()).setAttributes(SpeciesDAO.Attribute.ID);
             verify(mockSpeciesResultSet).close();
@@ -97,7 +98,7 @@ public class BgeeDBUtilsTest extends TestAncestor {
 
             this.mockGetAllSpecies(mockManager);
             assertEquals("Incorrect speciesIDs checked and retrieved", 
-                    Arrays.asList("21", "11", "30"), BgeeDBUtils.checkAndGetSpeciesIds(
+                    Arrays.asList(21, 11, 30), BgeeDBUtils.checkAndGetSpeciesIds(
                             null, mockManager.getSpeciesDAO()));
             
             this.mockGetAllSpecies(mockManager);
@@ -293,10 +294,10 @@ public class BgeeDBUtilsTest extends TestAncestor {
                     new HashSet<>(Arrays.asList(1, 2)))).thenReturn(
                             mockRS);
             
-            Map<String, String> expectedReturnedVal = new HashMap<String, String>();
-            expectedReturnedVal.put("1", "gene A");
-            expectedReturnedVal.put("2", "gene B");
-            expectedReturnedVal.put("3", "gene C");
+            Map<Integer, String> expectedReturnedVal = new HashMap<Integer, String>();
+            expectedReturnedVal.put(1, "gene A");
+            expectedReturnedVal.put(2, "gene B");
+            expectedReturnedVal.put(3, "gene C");
             
             assertEquals("Incorrect ID-name mapping", expectedReturnedVal, 
                     BgeeDBUtils.getGeneNamesByIds(
@@ -378,11 +379,10 @@ public class BgeeDBUtilsTest extends TestAncestor {
                     new HashSet<>(Arrays.asList(1, 2)))).thenReturn(
                             mockRS);
             
-            Map<String, GeneTO> expectedReturnedVal = new HashMap<String, GeneTO>();
-            expectedReturnedVal.put("1", gene1);
-            expectedReturnedVal.put("2", gene2);
-            expectedReturnedVal.put("3", gene3);
-            
+            Map<Integer, GeneTO> expectedReturnedVal = new HashMap<Integer, GeneTO>();
+            expectedReturnedVal.put(1, gene1);
+            expectedReturnedVal.put(2, gene2);
+            expectedReturnedVal.put(3, gene3);
             assertEquals("Incorrect ID-TO mapping", expectedReturnedVal, 
                     BgeeDBUtils.getGeneTOsByIds(
                             new HashSet<>(Arrays.asList(1, 2)), 

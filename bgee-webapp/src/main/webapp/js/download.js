@@ -370,12 +370,12 @@ var download = {
         	this.$bgeeExprDataFormSubmit.attr( "href", url );
         },
         
-		/**
-		 * Gets the url of the file of the given category (undefined if not found)
-		 */
-        getUrlForFileCategory: function(files, category) {
-        	return getUrlForFileCategory(files, category, undefined);
-        },
+        // /**
+		 // * Gets the url of the file of the given category (undefined if not found)
+		 // */
+        // getUrlForFileCategory: function(files, category) {
+        // 	return getUrlForFileCategory(files, category, undefined);
+        // },
 
         /**
 		 * Gets the url of the file of the given category and conditions combination
@@ -385,7 +385,7 @@ var download = {
         	for (var idx = 0; idx < files.length; idx++) {
         		var file = files[idx];
         		// '===' works  because if you know that the array is in the same order 
-        		if (file.category == category && (conditionParams === undefined
+        		if (file.category === category && (conditionParams === undefined
         				|| download.compareArrays(conditionParams.sort(), file.conditionParameters.sort()))) {
         			return file.path;
         		}
@@ -421,19 +421,12 @@ var download = {
         },
         
         /**
-        * Returns the formatted size for the file of the given category (undefined if no file found)
-        */
-        getSizeForFileCategory: function(files, category) {
-        	return getSizeForFileCategory(files, category, undefined);
-        },
-        
-        /**
          * Returns the formatted size for the file of the given category (undefined if no file found)
          */
          getSizeForFileCategory: function(files, category, conditionParams) {
          	for (var idx = 0; idx < files.length; idx++) {
          		var file = files[idx];
-         		if (file.category == category && (conditionParams === undefined
+         		if (file.category === category && (conditionParams === undefined
         				|| download.compareArrays(conditionParams.sort(), file.conditionParameters.sort()))) {
          			var size = file.size;
          			// formatting file size

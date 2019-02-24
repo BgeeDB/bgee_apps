@@ -992,7 +992,7 @@
                         vm.jobDone = true;
                         // Do not remove the trailing slash, see comments in topanat.js
                         vm.resultUrl = '/result/'+vm.hash+'/';
-                        getResults(data);
+                        getResults();
 
                     } else if(data.data.data.jobResponse.jobId && data.data.data.jobResponse.data) {
 

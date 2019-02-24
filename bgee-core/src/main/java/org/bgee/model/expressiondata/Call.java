@@ -404,7 +404,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                 ConditionGraph conditionGraph) throws IllegalArgumentException {
             log.entry(calls, conditionGraph);
             
-            //for the computations, we absolutely need to order the calls using RankComparator
+            //for the computations, we absolutely need to order the calls using a ConditionGraph
             return log.exit(identifyRedundantCalls(filterAndOrderCallsByRank(calls, conditionGraph),
                     conditionGraph));
             
@@ -415,13 +415,14 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          * This method performs exactly the same operation as {@link #identifyRedundantCalls(
          * Collection, ConditionGraph)}, but is provided for performance issue: several methods, 
          * in this class and outside, absolutely need to use a {@code List} of {@code ExpressionCall}s 
-         * sorted by the {@code RankComparator} using a {@code ConditionGraph}, which can be costly 
+         * sorted using a {@code ConditionGraph}, which can be costly 
          * for considering relations between {@code Condition}s; it is then possible 
          * to sort a {@code List} of {@code ExpressionCall}s outside of this method, to reuse it 
          * for different method calls.
          * 
-         * @param calls            A {@code List} of {@code ExpressionCall}s to filter, sorted using 
-         *                         the {@code RankComparator}. 
+         * @param calls            A {@code List} of {@code ExpressionCall}s to filter, most likely
+         *                         previously sorted using a {@code ConditionGraph} (see
+         *                         {@link #identifyRedundantCalls(Collection, ConditionGraph)}).
          * @param conditionGraph   A {@code ConditionGraph}, containing all the {@code Condition}s 
          *                         related to {@code calls}. Otherwise, an {@code IllegalArgumentException} 
          *                         is thrown. 
@@ -431,7 +432,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          *                                  or if an information of global mean rank or of Condition 
          *                                  was missing in an {@code ExpressionCall}, or if the list 
          *                                  was not sorted at least based on ranks.
-         * @see ExpressionCall.RankComparator
+         * @see #identifyRedundantCalls(Collection, ConditionGraph)
          * @see ConditionGraph#isConditionMorePrecise(Condition, Condition)
          * @see ConditionGraph#getDescendantConditions(Condition)
          */
@@ -445,9 +446,8 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             Set<ExpressionCall> validatedCalls = new HashSet<>();
             ExpressionCall previousCall = null;
             for (ExpressionCall call: calls) {
-                //We cannot make sure that the List was ordered using a RankComparator 
-                //with a ConditionGraph, it would be too costly, but we perform a minimal check 
-                //on ranks and conditions
+                //We cannot make sure that the List was ordered using a ConditionGraph,
+                //it would be too costly, but we perform a minimal check on ranks and conditions
                 if (call.getMeanRank() == null) {
                     throw log.throwing(new IllegalArgumentException("Missing rank for call: "
                             + call));
@@ -527,7 +527,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          * Collection, ClusteringMethod, double)}, but is provided for performance issue: 
          * some clustering methods need to sort the {@code ExpressionCall}s based on their rank, 
          * and several methods, in this class or outside, absolutely need to use a {@code List} 
-         * of {@code ExpressionCall}s sorted by the {@code RankComparator}, 
+         * of {@code ExpressionCall}s sorted using a {@code ConditionGraph}, 
          * which can be costly when relations between {@code Condition}s need to be considered; 
          * because the clustering needs to be consistent with such lists, it is then possible 
          * to sort a {@code List} of {@code ExpressionCall}s outside of this method, to reuse it 

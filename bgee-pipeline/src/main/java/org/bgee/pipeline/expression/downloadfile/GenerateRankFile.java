@@ -42,6 +42,7 @@ import org.bgee.model.expressiondata.ConditionGraph;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
@@ -759,7 +760,7 @@ public class GenerateRankFile {
                         }
                         return new ExpressionCall(call.getGene(), call.getCondition(), call.getDataPropagation(), 
                                 call.getSummaryCallType(), call.getSummaryQuality(), call.getCallData(), 
-                                minRank, null);
+                                new ExpressionLevelInfo(minRank));
                     })
                     .sorted(callComparator));
         }

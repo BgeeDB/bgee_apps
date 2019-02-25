@@ -1,9 +1,6 @@
 package org.bgee.model.expressiondata;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,7 +9,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -31,6 +27,7 @@ import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DiffExpressionFactor;
+import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.DiffExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
@@ -859,56 +856,6 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             } 
             return log.exit(calls.get((size - 1)/2).getMeanRank().doubleValue());
         }
-        
-        /**
-         * A {@code NumberFormat} to format rank scores less than 10.
-         */
-        private static final NumberFormat FORMAT1 = getNumberFormat(1);
-        /**
-         * A {@code NumberFormat} to format rank scores less than 100.
-         */
-        private static final NumberFormat FORMAT10 = getNumberFormat(10);
-        /**
-         * A {@code NumberFormat} to format rank scores less than 1000.
-         */
-        private static final NumberFormat FORMAT100 = getNumberFormat(100);
-        /**
-         * A {@code NumberFormat} to format rank scores greater than or equal to 1000.
-         */
-        private static final NumberFormat FORMAT1000 = getNumberFormat(1000);
-        /**
-         * @param max   An {@code int} to retrieve a {@code NumberFormat} managing values 
-         *              less than 10, or less than 100, or less than 1000, or greater than 
-         *              or equal to 10000.
-         * @return      A {@code NumberFormat} parameterized for formatting rank scores 
-         *              of the appropriate range.
-         */
-        private static final NumberFormat getNumberFormat(int max) {
-            log.entry(max);
-            NumberFormat formatter = NumberFormat.getInstance(Locale.US);
-            //IMPORTANT: if you change the rounding mode, or the min/max fraction digits,
-            //you have to also update the method getFormattedGlobalMeanRank
-            formatter.setRoundingMode(RoundingMode.HALF_UP);
-            if (max < 10) {
-                formatter.setMaximumFractionDigits(2);
-                formatter.setMinimumFractionDigits(2);
-            } else if (max < 100) {
-                formatter.setMaximumFractionDigits(1);
-                formatter.setMinimumFractionDigits(1);
-            } else if (max < 1000) {
-                formatter.setMaximumFractionDigits(0);
-                formatter.setMinimumFractionDigits(0);
-            //FIXME: the javadoc for DecimalFormat explicitly states that NumberFormat.getInstance
-            //may return subclasses of NumberFormat other than DecimalFormat, this means this code
-            //is potentially broken on some machines. (Note FB: otherwise, why do you think I bothered
-            //using this NumberFormat mechanism, seriously? :p)
-            } else if (formatter instanceof DecimalFormat) {
-                ((DecimalFormat) formatter).applyPattern("0.00E0");
-            } else {
-                throw log.throwing(new IllegalStateException("No formatter could be defined"));
-            }
-            return log.exit(formatter);
-        }
 
         //*******************************************
         // INSTANCE ATTRIBUTES AND METHODS
@@ -916,49 +863,28 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
 
         private final DataPropagation dataPropagation;
         /**
-         * @see #getMeanRank()
-         * ATTRIBUTE NOT TAKEN INTO ACCOUNT IN HASHCODE/EQUALS METHODS.
+         * See {@link #getExpressionLevelInfo()}
          */
-        //TODO: Maybe create a new RankScore class, storing the rank, 
-        //plus an information of confidence about it.
-        private final BigDecimal meanRank;
-        /**
-         * A {@code BigDecimal} that is the max rank over all conditions and data types
-         * for the combination of condition parameters used to produce this {@code ExpressionCall}.
-         * Stores for convenience to be able to compute a global expression score.
-         * ATTRIBUTE NOT TAKEN INTO ACCOUNT IN HASHCODE/EQUALS METHODS.
-         */
-        private final BigDecimal maxRank;
+        //ATTRIBUTE NOT TAKEN INTO ACCOUNT IN HASHCODE/EQUALS METHODS.
+        private final ExpressionLevelInfo expressionLevelInfo;
 
         public ExpressionCall(Gene gene, Condition condition, DataPropagation dataPropagation, 
                 ExpressionSummary summaryCallType, SummaryQuality summaryQual, 
                 Collection<ExpressionCallData> callData,
-                BigDecimal globalMeanRank, BigDecimal maxRank) {
+                ExpressionLevelInfo expressionLevelInfo) {
             this(gene, condition, dataPropagation, summaryCallType, summaryQual, callData,
-                    globalMeanRank, maxRank, null);
+                    expressionLevelInfo, null);
         }
         public ExpressionCall(Gene gene, Condition condition, DataPropagation dataPropagation, 
                 ExpressionSummary summaryCallType, SummaryQuality summaryQual, 
                 Collection<ExpressionCallData> callData,
-                BigDecimal globalMeanRank, BigDecimal maxRank,
+                ExpressionLevelInfo expressionLevelInfo,
                 Collection<ExpressionCall> sourceCalls) {
             super(gene, condition, summaryCallType, summaryQual, callData,
                 sourceCalls == null ? new HashSet<>() : sourceCalls.stream()
                     .map(c -> (Call<ExpressionSummary, ExpressionCallData>) c)
                     .collect(Collectors.toSet()));
-            
-            if (globalMeanRank != null && globalMeanRank.compareTo(new BigDecimal(0)) <= 0 ||
-                    maxRank != null && maxRank.compareTo(new BigDecimal(0)) <= 0) {
-                throw log.throwing(new IllegalArgumentException(
-                        "A rank cannot be less than or equal to 0."));
-            }
-            if (globalMeanRank != null && maxRank == null) {
-                throw log.throwing(new IllegalArgumentException(
-                        "The max rank must be provided when a rank is provided."));
-            }
-            //BigDecimal are immutable, no need to copy them
-            this.meanRank = globalMeanRank;
-            this.maxRank = maxRank;
+            this.expressionLevelInfo = expressionLevelInfo;
             this.dataPropagation = dataPropagation;
         }
 
@@ -966,46 +892,30 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             return dataPropagation;
         }
         /**
-         * @return  The {@code BigDecimal} corresponding to the score allowing to rank 
-         *          this {@code ExpressionCall}.
-         *          
+         * @return  An {@code ExpressionLevelInfo} providing information
+         *          about the expression level of this {@code ExpressionCall}.
+         */
+        //ATTRIBUTE NOT TAKEN INTO ACCOUNT IN HASHCODE/EQUALS METHODS.
+        public ExpressionLevelInfo getExpressionLevelInfo() {
+            return expressionLevelInfo;
+        }
+        /**
+         * @return  See {@link org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo#getRank()
+         *          ExpressionLevelInfo#getRank()}.
          * @see #getFormattedMeanRank()
          */
         public BigDecimal getMeanRank() {
-            return this.meanRank;
-        }
-        public Integer getExpressionScore() {
-            throw new UnsupportedOperationException("Not implemented");
+            return this.getExpressionLevelInfo() == null? null: this.getExpressionLevelInfo().getRank();
         }
         /**
-         * @return  A {@code String} corresponding to the rank score of this call, formatted 
-         *          with always 3 digits displayed, e.g.: 1.23, 12.3, 123, 1.23e3, ... 
-         *          
+         * @return  See {@link org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo#getFormattedRank()
+         *          ExpressionLevelInfo#getFormattedRank()}.
          * @see #getMeanRank()
          */
         public String getFormattedMeanRank() {
             log.entry();
-            if (this.meanRank == null) {
-                throw log.throwing(new IllegalStateException("No rank was provided for this call."));
-            }
-            NumberFormat formatter = null;
-            //start with values over 1000, more chances to have a match.
-            //And since we are going to round half up, 999.5 will be rounded to 1000
-            //IMPORTANT: if you want to change the rounding etc, you have to change the method getNumberFormat
-            if (this.meanRank.compareTo(new BigDecimal(999.5)) >= 0) {
-                formatter = FORMAT1000;
-            //2 significant digits kept below 10, so 9.995 will be rounded to 10
-            } else if (this.meanRank.compareTo(new BigDecimal(9.995)) < 0) {
-                formatter = FORMAT1;
-            //1 significant digit kept below 100, so 99.95 will be rounded to 100
-            } else if (this.meanRank.compareTo(new BigDecimal(99.95)) < 0) {
-                formatter = FORMAT10;
-            //0 significant digit kept below 1000, so 999.5 will be rounded to 1000
-            } else if (this.meanRank.compareTo(new BigDecimal(999.5)) < 0) {
-                formatter = FORMAT100;
-            }
-            //1E2 to 1e2
-            return log.exit(formatter.format(this.meanRank).toLowerCase(Locale.ENGLISH));
+            return log.exit(this.getExpressionLevelInfo() == null? null:
+                this.getExpressionLevelInfo().getFormattedRank());
         }
         
         @Override
@@ -1042,13 +952,12 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             StringBuilder builder = new StringBuilder();
             builder.append("ExpressionCall [gene=").append(getGene())
                    .append(", condition=").append(getCondition())
-                   .append(", dataPropagation=").append(getDataPropagation())
                    .append(", summaryCallType=").append(getSummaryCallType())
                    .append(", summaryQuality=").append(getSummaryQuality())
+                   .append(", expressionLevelInfo=").append(expressionLevelInfo)
+                   .append(", dataPropagation=").append(getDataPropagation())
                    .append(", callData=").append(getCallData())
                    .append(", sourceCalls()=").append(getSourceCalls())
-                   .append(", globalMeanRank=").append(meanRank)
-                   .append(", maxRank=").append(maxRank)
                    .append("]");
             return builder.toString();
         }

@@ -46,6 +46,7 @@ import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.ExperimentExpressionCount;
+import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
 import org.bgee.model.expressiondata.baseelements.PropagationState;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
@@ -121,7 +122,7 @@ public class GenerateRankFileTest extends TestAncestor {
                                 new ExperimentExpressionCount(Expression.EXPRESSED, DataQuality.LOW, 
                                         PropagationState.SELF, 2)), 2, new BigDecimal("5.0"), 
                                 new BigDecimal("1.25"), new BigDecimal("1.25"), new DataPropagation())),
-                        new BigDecimal("1.25"), new BigDecimal("1.25"));   
+                        new ExpressionLevelInfo(new BigDecimal("1.25")));   
         
         ExpressionCall c2 = new ExpressionCall(gene1, cond2, new DataPropagation(), 
                 ExpressionSummary.EXPRESSED, SummaryQuality.SILVER,  Arrays.asList(
@@ -129,7 +130,7 @@ public class GenerateRankFileTest extends TestAncestor {
                                 new ExperimentExpressionCount(Expression.EXPRESSED, DataQuality.LOW, 
                                         PropagationState.SELF, 2)), 2, new BigDecimal("1.25"), 
                                 new BigDecimal("1.25"), new BigDecimal("1.25"), new DataPropagation())),
-                new BigDecimal("1.25"), new BigDecimal("1.25"));
+                new ExpressionLevelInfo(new BigDecimal("1.25")));
         
         ExpressionCall c3 = new ExpressionCall(gene1, cond3, new DataPropagation(), 
                 ExpressionSummary.EXPRESSED, SummaryQuality.SILVER,  Arrays.asList(
@@ -137,7 +138,7 @@ public class GenerateRankFileTest extends TestAncestor {
                                 new ExperimentExpressionCount(Expression.EXPRESSED, DataQuality.LOW, 
                                         PropagationState.SELF, 2)), 2, new BigDecimal("8.0"), 
                                 new BigDecimal("8.0"), new BigDecimal("8.0"), new DataPropagation())),
-                new BigDecimal("8.0"), new BigDecimal("8.0"));
+                new ExpressionLevelInfo(new BigDecimal("8.0")));
         
         //condition3 spe1 gene2
         ExpressionCall c4 = new ExpressionCall(gene1, cond2, new DataPropagation(), 
@@ -146,7 +147,7 @@ public class GenerateRankFileTest extends TestAncestor {
                                 new ExperimentExpressionCount(Expression.EXPRESSED, DataQuality.LOW, 
                                         PropagationState.SELF, 2)), 2, new BigDecimal("1.25"), 
                                 new BigDecimal("1.35"), new BigDecimal("1.35"), new DataPropagation())),
-                new BigDecimal("1.35"), new BigDecimal("1.35"));
+                new ExpressionLevelInfo(new BigDecimal("1.35")));
         
         //condition2 spe1 gene2
         ExpressionCall c5 = new ExpressionCall(gene2, cond2, new DataPropagation(), 
@@ -168,7 +169,7 @@ public class GenerateRankFileTest extends TestAncestor {
                                 new ExperimentExpressionCount(Expression.EXPRESSED, DataQuality.HIGH, 
                                         PropagationState.SELF, 2)), 2, new BigDecimal("10000.00"), 
                                 new BigDecimal("10000.00"), new BigDecimal("10000.00"), new DataPropagation())),  
-                new BigDecimal("10000.00"), new BigDecimal("10000.00"));
+                new ExpressionLevelInfo(new BigDecimal("10000.00")));
         
         //condition4 spe2 gene3
         ExpressionCall c6 = new ExpressionCall(gene3, cond4, new DataPropagation(), 
@@ -186,7 +187,7 @@ public class GenerateRankFileTest extends TestAncestor {
                                 new ExperimentExpressionCount(Expression.EXPRESSED, DataQuality.HIGH, 
                                         PropagationState.SELF, 2)), 2, new BigDecimal("10000.45"), 
                                 new BigDecimal("10000.45"), new BigDecimal("10000.45"), new DataPropagation())),
-                new BigDecimal("10000.45"), new BigDecimal("10000.45"));
+                new ExpressionLevelInfo(new BigDecimal("10000.45")));
         
       //condition5 spe2 gene3
         ExpressionCall c7 = new ExpressionCall(gene3, cond5, new DataPropagation(), 
@@ -204,7 +205,7 @@ public class GenerateRankFileTest extends TestAncestor {
                                 new ExperimentExpressionCount(Expression.EXPRESSED, DataQuality.HIGH, 
                                         PropagationState.SELF, 2)), 2, new BigDecimal("10000.45"), 
                                 new BigDecimal("10000.45"), new BigDecimal("10000.45"), new DataPropagation())),
-                new BigDecimal("600.2"), new BigDecimal("10000.45"));
+                new ExpressionLevelInfo(new BigDecimal("600.2")));
         
         
         //*** Mock services and utils ***

@@ -22,6 +22,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
+import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.ConditionGraph;
 import org.bgee.model.expressiondata.ConditionGraphService;
@@ -97,11 +98,11 @@ public class GenerateUniprotXRefWithExprInfoTest extends TestAncestor {
         AnatEntity ae5 = new AnatEntity("anat5", "anat5Name", "anat5Desc");
         
         ExpressionCall call1 = new ExpressionCall(null, null, null, null, null, 
-                null, new BigDecimal("2.0"), new BigDecimal("2.0"));
+                null, new ExpressionLevelInfo(new BigDecimal("2.0")));
         ExpressionCall call2 = new ExpressionCall(null, null, null, null, null, 
-                null, new BigDecimal("4.0"), new BigDecimal("4.0"));
+                null, new ExpressionLevelInfo(new BigDecimal("4.0")));
         ExpressionCall call3 = new ExpressionCall(null, null, null, null, null, 
-                null, new BigDecimal("6.0"), new BigDecimal("6.0"));
+                null, new ExpressionLevelInfo(new BigDecimal("6.0")));
 
         List<ExpressionCall> calls1 = Arrays.asList(call1, call2, call3);
         List<ExpressionCall> calls2 = Arrays.asList(call3, call1);

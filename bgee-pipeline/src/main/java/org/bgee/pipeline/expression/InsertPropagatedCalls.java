@@ -1430,7 +1430,7 @@ public class InsertPropagatedCalls extends CallService {
 
     public InsertPropagatedCalls(Supplier<ServiceFactory> serviceFactorySupplier, 
             List<Set<ConditionDAO.Attribute>> condParamCombinations, int speciesId) {
-        super(serviceFactorySupplier.get(), null);
+        super(serviceFactorySupplier.get());
         if (condParamCombinations == null || condParamCombinations.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Condition attributes should not be empty"));
         }

@@ -1,6 +1,5 @@
 package org.bgee.model.expressiondata;
 
-import java.math.BigDecimal;
 import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
@@ -12,7 +11,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -50,6 +48,7 @@ import org.bgee.model.expressiondata.baseelements.PropagationState;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.ExperimentExpressionCount;
+import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
@@ -65,7 +64,7 @@ import org.bgee.model.species.Species;
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @author  Julien Wollbrett
- * @version Bgee 14, Aug. 2018
+ * @version Bgee 14, Feb. 2019
  * @since   Bgee 13, Oct. 2015
  */
 //******************
@@ -227,46 +226,34 @@ public class CallService extends CommonService {
     private final GlobalExpressionCallDAO globalExprCallDAO;
     private final AnatEntityService anatEntityService;
     private final DevStageService devStageService;
+//    /**
+//     * @param serviceFactory            The {@code ServiceFactory} to be used to obtain {@code Service}s 
+//     *                                  and {@code DAOManager}.
+//     * @throws IllegalArgumentException If {@code serviceFactory} is {@code null}.
+//     */
+//    public CallService(ServiceFactory serviceFactory) {
+//        this(serviceFactory,
+//                Optional.ofNullable(serviceFactory.getDAOManager().getConditionDAO().getMaxRank())
+//                .map(maxRankTO -> maxRankTO.getGlobalMaxRank())
+//                .orElseThrow(() -> new IllegalStateException("No max rank could be retrieved.")));
+//    }
     /**
-     * @see #getMaxRank()
-     */
-    private final BigDecimal maxRank;
-    /**
-     * @param serviceFactory            The {@code ServiceFactory} to be used to obtain {@code Service}s 
-     *                                  and {@code DAOManager}.
-     * @throws IllegalArgumentException If {@code serviceFactory} is {@code null}.
-     */
-    public CallService(ServiceFactory serviceFactory) {
-        this(serviceFactory,
-                Optional.ofNullable(serviceFactory.getDAOManager().getConditionDAO().getMaxRank())
-                .map(maxRankTO -> maxRankTO.getGlobalMaxRank())
-                .orElseThrow(() -> new IllegalStateException("No max rank could be retrieved.")));
-    }
-    /**
-     * Constructor useful in case the ranks and max ranks have not yet been inserted,
-     * before expression call propagation. There is no check performed to make sure
-     * a max rank could be retrieved.
-     *
+//     * Constructor useful in case the ranks and max ranks have not yet been inserted,
+//     * before expression call propagation. There is no check performed to make sure
+//     * a max rank could be retrieved.
+//     *
      * @param serviceFactory    The {@code ServiceFactory} to be used to obtain {@code Service}s 
      *                          and {@code DAOManager}.
-     * @param maxRank           A {@code BigDecimal} that is the max expression rank over
-     *                          all conditions and data types. Can be {@code null}.
+//     * @param maxRank           A {@code BigDecimal} that is the max expression rank over
+//     *                          all conditions and data types. Can be {@code null}.
      */
-    protected CallService(ServiceFactory serviceFactory, BigDecimal maxRank) {
+    public CallService(ServiceFactory serviceFactory) {
         super(serviceFactory);
         this.conditionDAO = this.getDaoManager().getConditionDAO();
         this.geneDAO = this.getDaoManager().getGeneDAO();
         this.globalExprCallDAO = this.getDaoManager().getGlobalExpressionCallDAO();
         this.anatEntityService = this.getServiceFactory().getAnatEntityService();
         this.devStageService = this.getServiceFactory().getDevStageService();
-        this.maxRank = maxRank;
-    }
-
-    /**
-     * @return  A {@code BigDecimal} that is the max expression rank over all conditions and data types.
-     */
-    public BigDecimal getMaxRank() {
-        return maxRank;
     }
 
     //*************************************************
@@ -335,8 +322,7 @@ public class CallService extends CommonService {
         // Retrieve calls
         Stream<ExpressionCall> calls = this.performsGlobalExprCallQuery(geneMap, callFilter, condParamCombination,
                 clonedAttrs, clonedOrderingAttrs)
-            .map(to -> mapGlobalCallTOToExpressionCall(to, geneMap, condMap, callFilter, this.getMaxRank(),
-                    clonedAttrs));
+            .map(to -> mapGlobalCallTOToExpressionCall(to, geneMap, condMap, callFilter, clonedAttrs));
 
         return log.exit(calls);
     }
@@ -1166,8 +1152,8 @@ public class CallService extends CommonService {
     //*************************************************************************
     private static ExpressionCall mapGlobalCallTOToExpressionCall(GlobalExpressionCallTO globalCallTO, 
             Map<Integer, Gene> geneMap, Map<Integer, Condition> condMap,
-            ExpressionCallFilter callFilter, BigDecimal maxRank, Set<CallService.Attribute> attrs) {
-        log.entry(globalCallTO, geneMap, condMap, callFilter, maxRank, attrs);
+            ExpressionCallFilter callFilter, Set<CallService.Attribute> attrs) {
+        log.entry(globalCallTO, geneMap, condMap, callFilter, attrs);
         
         Set<ExpressionCallData> callData = mapGlobalCallTOToExpressionCallData(globalCallTO,
                 attrs, callFilter.getDataTypeFilters());
@@ -1187,9 +1173,7 @@ public class CallService extends CommonService {
                     attrs.contains(Attribute.DATA_TYPE_RANK_INFO)?
                             callData: null,
             attrs == null || attrs.isEmpty() || attrs.contains(Attribute.MEAN_RANK)?
-                    globalCallTO.getMeanRank(): null,
-            attrs == null || attrs.isEmpty() || attrs.contains(Attribute.MEAN_RANK)?
-                    maxRank: null));
+                    new ExpressionLevelInfo(globalCallTO.getMeanRank()): null));
     }
     
     private static Set<ExpressionCallData> mapGlobalCallTOToExpressionCallData(

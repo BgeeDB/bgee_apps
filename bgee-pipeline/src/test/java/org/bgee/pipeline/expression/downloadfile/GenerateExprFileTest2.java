@@ -42,6 +42,7 @@ import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.ExperimentExpressionCount;
+import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
 import org.bgee.model.expressiondata.baseelements.PropagationState;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
@@ -192,7 +193,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
                         Arrays.asList(new ExpressionCallData(DataType.AFFYMETRIX, exprExperimentCounts,
                                 10, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
                                 new DataPropagation())),
-                        new BigDecimal(90), new BigDecimal(44)),
+                        new ExpressionLevelInfo(new BigDecimal(90))),
                 new ExpressionCall(new Gene("ID1", new Species(1), new GeneBioType("type1")),
                         new Condition(new AnatEntity("ae1", "aeName1", "aeDesc1"),
                                 new DevStage("ds2", "dsName2", "dsDesc2"), new Species(2)),
@@ -200,7 +201,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
                         ExpressionSummary.EXPRESSED, SummaryQuality.SILVER,
                         Arrays.asList(new ExpressionCallData(DataType.EST, exprExperimentCounts,
                                 10, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
-                                new DataPropagation())), null, null),
+                                new DataPropagation())), null),
                 new ExpressionCall(new Gene("ID1", new Species(1), new GeneBioType("type1")),
                         new Condition(new AnatEntity("ae2", "aeName2", "aeDesc2"),
                                 new DevStage("ds1", "dsName1", "dsDesc1"), new Species(1)),
@@ -212,7 +213,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
                                 new ExpressionCallData(DataType.IN_SITU, noExprExperimentCounts,
                                         10, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
                                         new DataPropagation())
-                                ), null, null));
+                                ), null));
         
         Set<Attribute> attr = getAttributes(true);
         
@@ -397,7 +398,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
                             )),
                             0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
                             new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)))), 
-                new BigDecimal(1257.34), new BigDecimal(100.00)));
+                new ExpressionLevelInfo(new BigDecimal(1257.34))));
         
         // Line number: simple true: X simple false: 2 complete: 2
         callsSp11.add(new ExpressionCall(g1 , new Condition(ae1, parentDs2, spe11), 
@@ -428,7 +429,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
                             )),
                             0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
                             new DataPropagation(PropagationState.SELF, PropagationState.DESCENDANT, false)))), 
-                new BigDecimal(1257.34), new BigDecimal(100.00)));
+                new ExpressionLevelInfo(new BigDecimal(1257.34))));
 
         // Line number: simple true: 2 simple false: 3 complete: 3
         callsSp11.add(new ExpressionCall(g2 , new Condition(ae1, ds2, spe11), 
@@ -446,7 +447,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
                                      DataQuality.HIGH, PropagationState.ALL, 0))),
                             0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
                             new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)))), 
-                new BigDecimal(1257.34), new BigDecimal(100.00)));
+                new ExpressionLevelInfo(new BigDecimal(1257.34))));
         
         // Line number: simple true: X simple false: 4 complete: 4
         callsSp11.add(new ExpressionCall(g2 , new Condition(ae1, parentDs2, spe11), 
@@ -475,7 +476,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
                                      DataQuality.LOW, PropagationState.ALL, 0))),
                            0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
                            new DataPropagation(PropagationState.ANCESTOR, PropagationState.SELF, false)))), 
-                new BigDecimal(1257.34), new BigDecimal(100.00)));
+                new ExpressionLevelInfo(new BigDecimal(1257.34))));
 
         // Line number: simple true: 3 simple false: 5 complete: 5
         callsSp11.add(new ExpressionCall(g3 , new Condition(ae1, ds2, spe11), 
@@ -504,7 +505,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
                                      DataQuality.HIGH, PropagationState.ALL, 0))),
                            0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
                            new DataPropagation(PropagationState.ANCESTOR, PropagationState.SELF, false)))), 
-                new BigDecimal(1257.34), new BigDecimal(100.00)));
+                new ExpressionLevelInfo(new BigDecimal(1257.34))));
 
         // Line number: simple true: X simple false: X complete: 6
         callsSp11.add(new ExpressionCall(g3 , new Condition(ae3, ds2, spe11), 
@@ -533,7 +534,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
                                      DataQuality.HIGH, PropagationState.ALL, 0))),
                            0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
                            new DataPropagation(PropagationState.ANCESTOR, PropagationState.SELF, false)))), 
-                new BigDecimal(1257.34), new BigDecimal(100.00)));
+                new ExpressionLevelInfo(new BigDecimal(1257.34))));
         
         ExpressionCallFilter callFilter = getCallFilter(Collections.singleton(new GeneFilter(spe11.getId())));
         
@@ -584,7 +585,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
                                      DataQuality.HIGH, PropagationState.ALL, 0))),
                            0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
                            new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)))), 
-                new BigDecimal(1257.34), new BigDecimal(100.00)));
+                new ExpressionLevelInfo(new BigDecimal(1257.34))));
 
         // Line number: simple true: X simple false: X complete: 2
         callsSp22.add(new ExpressionCall(g4, new Condition(ae2, ds2, spe22),
@@ -602,7 +603,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
                                      DataQuality.HIGH, PropagationState.ALL, 0))),
                             0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
                             new DataPropagation(PropagationState.ANCESTOR, PropagationState.SELF, false)))), 
-                new BigDecimal(1257.34), new BigDecimal(100.00)));
+                new ExpressionLevelInfo(new BigDecimal(1257.34))));
         
         if (!isObservedDataOnly) {
             callsSp22.add(new ExpressionCall(g4, new Condition(ae2, null, spe22),
@@ -620,7 +621,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
                                          DataQuality.HIGH, PropagationState.ALL, 0))),
                                 0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
                                 new DataPropagation(PropagationState.ANCESTOR, PropagationState.SELF, false)))), 
-                    new BigDecimal(1257.34), new BigDecimal(100.00)));
+                    new ExpressionLevelInfo(new BigDecimal(1257.34))));
         }
 
         Stream<ExpressionCall> mockCallStreamSp22 = callsSp22.stream();

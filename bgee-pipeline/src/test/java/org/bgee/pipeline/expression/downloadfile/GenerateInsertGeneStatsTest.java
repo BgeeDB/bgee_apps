@@ -6,12 +6,15 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
+import org.bgee.model.expressiondata.ConditionGraphService;
 import org.bgee.model.expressiondata.baseelements.CallType;
+import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
@@ -79,6 +82,18 @@ public class GenerateInsertGeneStatsTest extends TestAncestor {
         when(speciesService.loadSpeciesByIds(speciesIds, false)).thenReturn(
                 new HashSet<>(Arrays.asList(sp1, sp2)));
 
+        AnatEntityService anatEntityService = mock(AnatEntityService.class);
+        when(serviceFactory.getAnatEntityService()).thenReturn(anatEntityService);
+        // Mock the load of non informative anatomical entities
+        when(anatEntityService.loadNonInformativeAnatEntitiesBySpeciesIds(Collections.singleton(9606)))
+        .thenReturn(Arrays.asList(new AnatEntity("NonInfoAnatEnt1")).stream());
+        when(anatEntityService.loadNonInformativeAnatEntitiesBySpeciesIds(Collections.singleton(10090)))
+        .thenReturn(Arrays.asList(new AnatEntity("NonInfoAnatEnt2")).stream());
+
+        // FIXME add mock for condition graph
+        ConditionGraphService condGraphService = mock(ConditionGraphService.class);
+        when(serviceFactory.getConditionGraphService()).thenReturn(condGraphService);
+
         GeneService geneService = mock(GeneService.class);
         when(serviceFactory.getGeneService()).thenReturn(geneService);
         
@@ -122,10 +137,10 @@ public class GenerateInsertGeneStatsTest extends TestAncestor {
         List<ExpressionCall> g1s1ConditionCalls = Arrays.asList(
                 new ExpressionCall(null, new Condition(ae1, ds1, sp1), null,
                         ExpressionSummary.EXPRESSED, SummaryQuality.GOLD, null,
-                        new BigDecimal(10), new BigDecimal(20)),
+                        new ExpressionLevelInfo(new BigDecimal(10))),
                 new ExpressionCall(null, new Condition(ae1, ds2, sp1), null,
                         ExpressionSummary.EXPRESSED, SummaryQuality.SILVER, null,
-                        new BigDecimal(11), new BigDecimal(20)));
+                        new ExpressionLevelInfo(new BigDecimal(11))));
         when(callService.loadExpressionCalls(
                 new ExpressionCallFilter(null, Collections.singleton(g1Sp1Filter),
                         null, null, obsDataFilter, null, null),
@@ -143,7 +158,7 @@ public class GenerateInsertGeneStatsTest extends TestAncestor {
         List<ExpressionCall> g1s2ConditionCalls = Arrays.asList(
                 new ExpressionCall(null, new Condition(ae2, ds1, sp1), null,
                         ExpressionSummary.EXPRESSED, SummaryQuality.SILVER, null,
-                        new BigDecimal(10), new BigDecimal(20)));
+                        new ExpressionLevelInfo(new BigDecimal(10))));
         when(callService.loadExpressionCalls(
                 new ExpressionCallFilter(null, Collections.singleton(g1Sp2Filter),
                         null, null, obsDataFilter, null, null),
@@ -162,10 +177,10 @@ public class GenerateInsertGeneStatsTest extends TestAncestor {
         List<ExpressionCall> g2s2ConditionCalls = Arrays.asList(
                 new ExpressionCall(null, new Condition(ae1, ds2, sp1), null,
                         ExpressionSummary.NOT_EXPRESSED, SummaryQuality.SILVER, null,
-                        new BigDecimal(4), new BigDecimal(30)),
+                        new ExpressionLevelInfo(new BigDecimal(4))),
                 new ExpressionCall(null, new Condition(ae2, ds1, sp1), null,
                         ExpressionSummary.NOT_EXPRESSED, SummaryQuality.GOLD, null,
-                        new BigDecimal(10), new BigDecimal(20)));
+                        new ExpressionLevelInfo(new BigDecimal(10))));
         when(callService.loadExpressionCalls(
                 new ExpressionCallFilter(null, Collections.singleton(g2Sp2Filter),
                         null, null, obsDataFilter, null, null),
@@ -175,7 +190,6 @@ public class GenerateInsertGeneStatsTest extends TestAncestor {
                         null, null, obsDataFilter, null, null),
                 condAttrs, serviceOrdering)).thenReturn(g2s2ConditionCalls.stream());
 
-        // FIXME add mock for condition graph
         
         String directory = testFolder.newFolder("folder_stats").getPath();
         

@@ -25,6 +25,7 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
+import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.CallService;
@@ -165,24 +166,24 @@ public class GenerateOncoMXFileTest extends TestAncestor {
         BigDecimal maxRank = new BigDecimal("10000");
         ExpressionCall anatEntity1Call1 = new ExpressionCall(gene1, cond1_1, null, 
                 null, null, 
-                null, new BigDecimal("10.1"), maxRank);
+                null, new ExpressionLevelInfo(new BigDecimal("10.1")));
         ExpressionCall anatEntity1Call2 = new ExpressionCall(gene2, cond1_2, null, 
                 null, null, 
-                null, new BigDecimal("20"), maxRank);
+                null, new ExpressionLevelInfo(new BigDecimal("200")));
         ExpressionCall anatEntity1Call3 = new ExpressionCall(gene3, cond1_3, null, 
                 null, null, 
-                null, new BigDecimal("30"), maxRank);
+                null, new ExpressionLevelInfo(new BigDecimal("300")));
         //Now, an organ with only one call
         ExpressionCall anatEntity2Call1 = new ExpressionCall(gene1, cond2_1, null, 
                 null, null, 
-                null, new BigDecimal("1"), maxRank);
+                null, new ExpressionLevelInfo(new BigDecimal("1")));
         //An organ with 2 genes expressed
         ExpressionCall anatEntity3Call1 = new ExpressionCall(gene1, cond3_1, null, 
                 null, null, 
-                null, new BigDecimal("1"), maxRank);
+                null, new ExpressionLevelInfo(new BigDecimal("1")));
         ExpressionCall anatEntity3Call2 = new ExpressionCall(gene2, cond3_3, null, 
                 null, null, 
-                null, new BigDecimal("100"), maxRank);
+                null, new ExpressionLevelInfo(new BigDecimal("1000")));
         List<ExpressionCall> anatEntityCalls = Arrays.asList(anatEntity1Call1,
                 anatEntity1Call2, anatEntity1Call3,
                 anatEntity2Call1,
@@ -196,26 +197,26 @@ public class GenerateOncoMXFileTest extends TestAncestor {
         //*** Gene calls ***
         ExpressionCall gene1Call1 = new ExpressionCall(gene1, cond1_1, null, 
                 ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE, 
-                null, new BigDecimal("10.1"), maxRank);
+                null, new ExpressionLevelInfo(new BigDecimal("10.1")));
         ExpressionCall gene1Call2 = new ExpressionCall(gene1, cond2_1, null, 
                 ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE, 
-                null, new BigDecimal("1"), maxRank);
+                null, new ExpressionLevelInfo(new BigDecimal("1")));
         ExpressionCall gene1Call3 = new ExpressionCall(gene1, cond3_1, null, 
                 ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE, 
-                null, new BigDecimal("1"), maxRank);
+                null, new ExpressionLevelInfo(new BigDecimal("1")));
         //not expressed call, should not have been seen in the anat. entity calls
         ExpressionCall gene1Call4 = new ExpressionCall(gene1, cond3_2, null, 
                 ExpressionSummary.NOT_EXPRESSED, SummaryQuality.SILVER, 
-                null, maxRank, maxRank);
+                null, new ExpressionLevelInfo(maxRank));
         ExpressionCall gene2Call1 = new ExpressionCall(gene1, cond1_2, null, 
                 ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE, 
-                null, new BigDecimal("20"), maxRank);
+                null, new ExpressionLevelInfo(new BigDecimal("200")));
         ExpressionCall gene2Call2 = new ExpressionCall(gene1, cond3_3, null, 
                 ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE, 
-                null, new BigDecimal("100"), maxRank);
+                null, new ExpressionLevelInfo(new BigDecimal("1000")));
         ExpressionCall gene3Call1 = new ExpressionCall(gene3, cond1_3, null, 
                 ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE, 
-                null, new BigDecimal("30"), maxRank);
+                null, new ExpressionLevelInfo(new BigDecimal("300")));
         List<ExpressionCall> geneCalls = Arrays.asList(gene1Call1, gene1Call2,
                 gene1Call3, gene1Call4,
                 gene2Call1, gene2Call2,

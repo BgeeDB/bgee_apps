@@ -62,6 +62,7 @@ import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.ExperimentExpressionCount;
+import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
 import org.bgee.model.expressiondata.baseelements.PropagationState;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
@@ -356,7 +357,7 @@ public class CallServiceTest extends TestAncestor {
                                     )),
                                     0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
                                     new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)))), 
-                        new BigDecimal(1257.34), new BigDecimal(100.00)),
+                        new ExpressionLevelInfo(new BigDecimal(1257.34))),
                 
                 new ExpressionCall(g1, new Condition(anatEntity1, stage2, spe1), 
                     new DataPropagation(PropagationState.SELF, PropagationState.SELF, true),
@@ -395,7 +396,7 @@ public class CallServiceTest extends TestAncestor {
                                         PropagationState.ALL, 1))),
                                 0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
                                 new DataPropagation(PropagationState.SELF, PropagationState.SELF, true))),
-                    new BigDecimal(125.00), new BigDecimal(100.00)),
+                    new ExpressionLevelInfo(new BigDecimal(125.00))),
                 
                 new ExpressionCall(g1, new Condition(anatEntity1, stage3, spe1), 
                         new DataPropagation(PropagationState.SELF, PropagationState.SELF, true),
@@ -422,7 +423,7 @@ public class CallServiceTest extends TestAncestor {
                                                 PropagationState.ALL, 1))),
                                         0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
                                         new DataPropagation(PropagationState.SELF, PropagationState.SELF, true))), 
-                        new BigDecimal(125.00), new BigDecimal(100.00)));
+                        new ExpressionLevelInfo(new BigDecimal(125.00))));
         
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
                 new LinkedHashMap<>();
@@ -897,7 +898,7 @@ public class CallServiceTest extends TestAncestor {
                                     )),
                                     0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
                                   new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)))), 
-                        new BigDecimal(1257.34), new BigDecimal(100.00)), 
+                        new ExpressionLevelInfo(new BigDecimal(1257.34))), 
                 new ExpressionCall(g1, cond2, 
                         new DataPropagation(PropagationState.SELF, PropagationState.SELF, true),
                         ExpressionSummary.EXPRESSED, SummaryQuality.SILVER, 
@@ -908,7 +909,7 @@ public class CallServiceTest extends TestAncestor {
                                     )),
                                     0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
                                   new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)))), 
-                        new BigDecimal(1257.34), new BigDecimal(100.00)),
+                        new ExpressionLevelInfo(new BigDecimal(1257.34))),
                 new ExpressionCall(g2, cond3, 
                         new DataPropagation(PropagationState.SELF, PropagationState.SELF, true),
                         ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE, 
@@ -919,7 +920,7 @@ public class CallServiceTest extends TestAncestor {
                                     )),
                                     0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
                                   new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)))), 
-                        new BigDecimal(1257.34), new BigDecimal(100.00)) 
+                        new ExpressionLevelInfo(new BigDecimal(1257.34))) 
             );
         
         Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
@@ -1155,7 +1156,7 @@ public class CallServiceTest extends TestAncestor {
                                             PropagationState.ALL, 3))),
                                     0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
                                   new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)))), 
-                        new BigDecimal(125.42), new BigDecimal(100.00)));
+                        new ExpressionLevelInfo(new BigDecimal(125.42))));
 
 
         

@@ -31,6 +31,7 @@ import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.ExperimentExpressionCount;
+import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
@@ -168,7 +169,7 @@ public class CallFilterTest extends TestAncestor {
         
         ExpressionCall call1 = new ExpressionCall(new Gene("g1", new Species(1), new GeneBioType("b")),
             new Condition(ae1, ds1, sp1), selfSelfPropagation, ExpressionSummary.EXPRESSED, 
-            SummaryQuality.GOLD, callData, new BigDecimal(125.00), new BigDecimal(125.00));
+            SummaryQuality.GOLD, callData, new ExpressionLevelInfo(new BigDecimal(125.00)));
         
         // Test ConditionFilter
         ConditionFilter cond1 = new ConditionFilter(Collections.singleton("ae1"), Collections.singleton("ds1"));
@@ -238,7 +239,7 @@ public class CallFilterTest extends TestAncestor {
         
         ExpressionCall call2 = new ExpressionCall(new Gene("g1", new Species(1), new GeneBioType("b")), 
                 new Condition(ae1, ds1, sp1), selfSelfPropagation, ExpressionSummary.EXPRESSED, 
-                SummaryQuality.SILVER, callData, new BigDecimal(125.00), new BigDecimal(125.00));
+                SummaryQuality.SILVER, callData, new ExpressionLevelInfo(new BigDecimal(125.00)));
         callTypeMap = new HashMap<>();
         callTypeMap.put(ExpressionSummary.EXPRESSED, SummaryQuality.GOLD);
         callFilter = new ExpressionCallFilter(callTypeMap, null, Collections.singleton(cond1), 

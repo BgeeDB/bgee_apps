@@ -385,21 +385,21 @@ public class GenerateOncoMXFile {
 
         return log.exit(uberonIds);
     }
-    private static Stream<List<ExpressionCall>> getExpressionCallsPerGene(
-            final CallService callService, int speciesId) {
-        log.entry(callService, speciesId);
+    private static List<ExpressionCall> getExpressionCallsPerGene(
+            final CallService callService, String geneEnsemblId, int speciesId) {
+        log.entry(callService, geneEnsemblId, speciesId);
 
         //Query the CallService
         Stream<ExpressionCall> callStream = callService.loadExpressionCalls(
-                getGeneCallFilter(speciesId),
+                getGeneCallFilter(geneEnsemblId, speciesId),
                 //Attributes requested
                 getGeneCallAttributes(),
                 getGeneServiceOrdering() //we order by gene and rank
                 );
 
-        return log.exit(getCallsByGeneStream(callStream));
+        return log.exit(callStream.collect(Collectors.toList()));
     }
-    protected static ExpressionCallFilter getGeneCallFilter(int speciesId) {
+    protected static ExpressionCallFilter getGeneCallFilter(String geneEnsemblId, int speciesId) {
         log.entry(speciesId);
         //We want observed data only for any call type
         Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
@@ -407,7 +407,7 @@ public class GenerateOncoMXFile {
         return log.exit(new ExpressionCallFilter(
                         null, //we want expressed/not-expressed calls of any quality
                         //all genes for the requested species
-                        Collections.singleton(new GeneFilter(speciesId)),
+                        Collections.singleton(new GeneFilter(speciesId, geneEnsemblId)),
                         //calls in any anat. entity and dev. stage
                         //This is because we want to retrieve the min and max ranks
                         //for each gene, so we don't retrieve data only for the conditions
@@ -630,13 +630,7 @@ public class GenerateOncoMXFile {
                         allUberonIds);
         log.info("Done.");
 
-        log.info("Retrieving expression calls grouped by genes...");
-        Stream<List<ExpressionCall>> callsPerGeneStream = getExpressionCallsPerGene(
-                this.serviceFactory.getCallService(), speciesId);
-        log.info("Done.");
 
-
-        log.info("Start iterating the calls and writing to output file...");
         //Now, we iterate the calls to write in the output file after retrieving the expression categories,
         //and filtering for requested anatomical entities/dev. stages only.
         // We will write results in temporary files that we will rename at the end
@@ -687,14 +681,29 @@ public class GenerateOncoMXFile {
             };
 
             //Write the calls
-            Iterator<List<ExpressionCall>> callsPerGeneIterator = callsPerGeneStream.iterator();
-            while (callsPerGeneIterator.hasNext()) {
-                List<ExpressionCall> callsPerGene = callsPerGeneIterator.next();
+            //We retrieve calls for each gene one by one for lower memory usage
+            //(but of course it's slower), and we write directly into the output file.
+            //First, we retrieve all genes for the requested species
+            log.info("Starting to query the gene calls and to write to output file...");
+            List<Gene> genes = this.serviceFactory.getGeneService()
+                    .loadGenes(new GeneFilter(speciesId))
+                    .sorted(Comparator.comparing(g -> g.getEnsemblGeneId()))
+                    .collect(Collectors.toList());
+            int geneCount = genes.size();
+            int geneIteration = 0;
+//            Iterator<List<ExpressionCall>> callsPerGeneIterator = callsPerGeneStream.iterator();
+            CallService callService = this.serviceFactory.getCallService();
+            for (Gene gene: genes) {
+                //Get all calls for that gene (not only the calls in the conditions
+                //requested by OncoMX, because we want to compute the min/max ranks of this gene
+                //in any condition)
+                List<ExpressionCall> geneCalls = getExpressionCallsPerGene(
+                        callService, gene.getEnsemblGeneId(), speciesId);
                 //Get min/max ranks for the current gene
-                Pair<BigDecimal, BigDecimal> geneMinMaxRanks = getMinMaxRanksFromCallGroup(callsPerGene);
+                Pair<BigDecimal, BigDecimal> geneMinMaxRanks = getMinMaxRanksFromCallGroup(geneCalls);
 
                 //Now write the calls
-                for (ExpressionCall call: callsPerGene) {
+                for (ExpressionCall call: geneCalls) {
                     //Check whether it is a call to be written
                     //(In order to retrieve the min and max ranks for each gene,
                     //we have retrieve all calls in any condition, and not only the calls
@@ -705,6 +714,7 @@ public class GenerateOncoMXFile {
                             !allDevStageIds.contains(call.getCondition().getDevStage().getId())) {
                         continue;
                     }
+
                     List<Object> toWrite = new ArrayList<>();
                     try {
                         toWrite.add(call.getGene().getEnsemblGeneId());
@@ -735,8 +745,16 @@ public class GenerateOncoMXFile {
                         throw log.throwing(e);
                     }
 
-                    listWriter.write(toWrite, processors);
+                    try {
+                        listWriter.write(toWrite, processors);
+                    } catch (Exception e) {
+                        log.catching(e);
+                    }
                     dataRowCount++;
+                }
+                geneIteration++;
+                if (geneIteration % 1000 == 0) {
+                    log.info("{}/{} genes done", geneIteration, geneCount);
                 }
             }
         } catch (Exception e) {

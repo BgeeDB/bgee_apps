@@ -221,11 +221,11 @@ public class GenerateOncoMXFileTest extends TestAncestor {
                 gene1Call3, gene1Call4,
                 gene2Call1, gene2Call2,
                 gene3Call1);
-        when(callService.loadExpressionCalls(
-                GenerateOncoMXFile.getGeneCallFilter(9606),
-                GenerateOncoMXFile.getGeneCallAttributes(),
-                GenerateOncoMXFile.getGeneServiceOrdering()
-        )).thenReturn(geneCalls.stream());
+//        when(callService.loadExpressionCalls(
+//                GenerateOncoMXFile.getGeneCallFilter(9606),
+//                GenerateOncoMXFile.getGeneCallAttributes(),
+//                GenerateOncoMXFile.getGeneServiceOrdering()
+//        )).thenReturn(geneCalls.stream());
 
         //*****************************************
         // ACTUAL TEST

@@ -300,8 +300,8 @@ public class GenerateOncoMXFile {
         log.exit();
     }
 
-    private static ExpressionLevelCat getExpressionLevelCat(BigDecimal minRank, BigDecimal maxRank, BigDecimal currentRank)
-    throws IllegalArgumentException {
+    private static ExpressionLevelCat getExpressionLevelCat(BigDecimal minRank, BigDecimal maxRank,
+            BigDecimal currentRank) throws IllegalArgumentException {
         log.entry(minRank, maxRank, currentRank);
         if (minRank == null || maxRank == null || currentRank == null) {
             throw log.throwing(new IllegalArgumentException("All ranks must be provided"));
@@ -322,17 +322,26 @@ public class GenerateOncoMXFile {
             return log.exit(ExpressionLevelCat.values()[0]);
         }
         //Otherwise, we compute the threshold and categories
-        BigDecimal catCount = new BigDecimal(ExpressionLevelCat.values().length);
+        int catCount = ExpressionLevelCat.values().length;
+        BigDecimal catCountDec = new BigDecimal(catCount);
         int scale = Math.max(currentRank.scale(), Math.max(minRank.scale(), maxRank.scale()));
-        BigDecimal threshold = diff.divide(catCount, scale, RoundingMode.HALF_UP);
-        for (int i = 0 ; i < ExpressionLevelCat.values().length; i++) {
+        BigDecimal threshold = diff.divide(catCountDec, scale, RoundingMode.HALF_UP);
+        log.trace("Category threshold: {}", threshold);
+        for (int i = 0 ; i < catCount; i++) {
+            ExpressionLevelCat cat = ExpressionLevelCat.values()[i];
+            //No need to evaluate if it is the last category that is being iterated.
+            //Plus, we don't want to evaluate the last category because of rouding error
+            //on the catMax computation
+            if (i == catCount - 1) {
+                return log.exit(cat);
+            }
             BigDecimal catMax = minRank.add(threshold.multiply(new BigDecimal(i + 1)));
+            log.trace("Category rank max for category {}: {}", cat, catMax);
             if (currentRank.compareTo(catMax) <= 0) {
-                return log.exit(ExpressionLevelCat.values()[i]);
+                return log.exit(cat);
             }
         }
-        throw log.throwing(new IllegalStateException("No expression category could be assigned, min rank: "
-                    + minRank + ", max rank: " + maxRank + ", current rank: " + currentRank));
+        throw log.throwing(new AssertionError("A category should always be assigned"));
     }
     /**
      * Retrieve the Uberon IDs requested by OncoMX from the file they provide.
@@ -377,13 +386,12 @@ public class GenerateOncoMXFile {
         return log.exit(uberonIds);
     }
     private static Stream<List<ExpressionCall>> getExpressionCallsPerGene(
-            final CallService callService, int speciesId, Collection<String> validAnatEntityIds,
-            Collection<String> validDevStageIds) {
-        log.entry(callService, speciesId, validAnatEntityIds, validDevStageIds);
+            final CallService callService, int speciesId) {
+        log.entry(callService, speciesId);
 
         //Query the CallService
         Stream<ExpressionCall> callStream = callService.loadExpressionCalls(
-                getGeneCallFilter(speciesId, validAnatEntityIds, validDevStageIds),
+                getGeneCallFilter(speciesId),
                 //Attributes requested
                 getGeneCallAttributes(),
                 getGeneServiceOrdering() //we order by gene and rank
@@ -391,9 +399,8 @@ public class GenerateOncoMXFile {
 
         return log.exit(getCallsByGeneStream(callStream));
     }
-    protected static ExpressionCallFilter getGeneCallFilter(int speciesId,
-            Collection<String> validAnatEntityIds, Collection<String> validDevStageIds) {
-        log.entry(speciesId, validAnatEntityIds, validDevStageIds);
+    protected static ExpressionCallFilter getGeneCallFilter(int speciesId) {
+        log.entry(speciesId);
         //We want observed data only for any call type
         Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
         obsDataFilter.put(null, true);
@@ -401,9 +408,13 @@ public class GenerateOncoMXFile {
                         null, //we want expressed/not-expressed calls of any quality
                         //all genes for the requested species
                         Collections.singleton(new GeneFilter(speciesId)),
+                        //calls in any anat. entity and dev. stage
+                        //This is because we want to retrieve the min and max ranks
+                        //for each gene, so we don't retrieve data only for the conditions
+                        //requested by OncoMX, we will filter the calls afterwards
+                        //before printing them in the file
                         //only calls in the valid anat. entities and dev. stages
-                        Collections.singleton(new ConditionFilter(validAnatEntityIds,
-                                validDevStageIds)), //all conditions
+                        null,
                         DATA_TYPES, //data requested by OncoMX only
                         obsDataFilter, //only observed data
                         //no filter on observed data in anat. entity and stage,
@@ -569,6 +580,7 @@ public class GenerateOncoMXFile {
         Set<String> uberonIds = retrieveRequestedUberonIds(oncomxUberonTermFile);
 
         log.info("Retrieval of ontology terms...");
+        //TODO: refactor anat. entity/dev. stage ontology code below
         //Now we load the anatomical ontology in order to retrieve child terms of the requested terms
         final Ontology<AnatEntity, String> anatOnt = this.serviceFactory.getOntologyService()
                 .getAnatEntityOntology(speciesId, uberonIds, EnumSet.of(RelationType.ISA_PARTOF), false, true);
@@ -620,8 +632,7 @@ public class GenerateOncoMXFile {
 
         log.info("Retrieving expression calls grouped by genes...");
         Stream<List<ExpressionCall>> callsPerGeneStream = getExpressionCallsPerGene(
-                this.serviceFactory.getCallService(), speciesId,
-                allUberonIds, allDevStageIds);
+                this.serviceFactory.getCallService(), speciesId);
         log.info("Done.");
 
 
@@ -631,8 +642,8 @@ public class GenerateOncoMXFile {
         // We will write results in temporary files that we will rename at the end
         // if everything is correct
         String tmpExtension = ".tmp";
-        String fileName = (speciesLatinName
-                + selectedDevStageIds.stream().collect(Collectors.joining("_"))
+        String fileName = (speciesLatinName + "_"
+                + selectedDevStageIds.stream().collect(Collectors.joining("_")) + "_"
                 + DATA_TYPES.stream().map(d -> d.toString()).collect(Collectors.joining("_")))
                 .replaceAll(" ", "_") + ".tsv";
         File tmpFile = new File(outputDirectory, fileName + tmpExtension);
@@ -646,7 +657,8 @@ public class GenerateOncoMXFile {
             final String[] header = new String[] { "Ensembl gene ID", "Gene name",
                     "Anatomical entity ID", "Anatomical entity name",
                     "Developmental stage ID", "Developmental stage name",
-                    "Gene expression category", "Anatomical entity expression category",
+                    "Expression level relative to gene",
+                    "Expression level relative to anatomical entity",
                     "Call quality", "Expression rank score" };
             // write the header
             listWriter.writeHeader(header);
@@ -684,10 +696,13 @@ public class GenerateOncoMXFile {
                 //Now write the calls
                 for (ExpressionCall call: callsPerGene) {
                     //Check whether it is a call to be written
-                    if (!allUberonIds.contains(call.getCondition().getAnatEntity().getId())) {
-                        continue;
-                    }
-                    if (!allDevStageIds.contains(call.getCondition().getDevStage().getId())) {
+                    //(In order to retrieve the min and max ranks for each gene,
+                    //we have retrieve all calls in any condition, and not only the calls
+                    //on the conditions requested by OncoMX. We do the filtering here)
+                    //XXX: maybe to rewrite with Conditions to better manage the evolution
+                    //of ConditionParameters?
+                    if (!allUberonIds.contains(call.getCondition().getAnatEntity().getId()) ||
+                            !allDevStageIds.contains(call.getCondition().getDevStage().getId())) {
                         continue;
                     }
                     List<Object> toWrite = new ArrayList<>();

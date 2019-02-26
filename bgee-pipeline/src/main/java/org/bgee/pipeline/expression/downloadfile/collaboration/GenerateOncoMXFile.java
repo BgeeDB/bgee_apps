@@ -658,10 +658,11 @@ public class GenerateOncoMXFile {
             listWriter.writeHeader(header);
 
             //allowed expression categories
+            String absent = "ABSENT";
             Set<Object> allowedExpressionCategories = Arrays.stream(ExpressionLevelCat.values())
                     .map(c -> c.toString())
                     .collect(Collectors.toSet());
-            allowedExpressionCategories.add(ExpressionSummary.NOT_EXPRESSED.toString());
+            allowedExpressionCategories.add(absent);
             //allowed call qualities
             Set<Object> allowedCallQualities = Arrays.stream(SummaryQuality.values())
                     .map(q -> q.toString())
@@ -724,8 +725,8 @@ public class GenerateOncoMXFile {
                         toWrite.add(call.getCondition().getDevStage().getId());
                         toWrite.add(call.getCondition().getDevStage().getName());
                         if (ExpressionSummary.NOT_EXPRESSED.equals(call.getSummaryCallType())) {
-                            toWrite.add(ExpressionSummary.NOT_EXPRESSED.toString());
-                            toWrite.add(ExpressionSummary.NOT_EXPRESSED.toString());
+                            toWrite.add(absent);
+                            toWrite.add(absent);
                         } else {
                             //If the gene is EXPRESSED, we're sure there is some rank info to be used.
                             toWrite.add(getExpressionLevelCat(geneMinMaxRanks.getLeft(), geneMinMaxRanks.getRight(),

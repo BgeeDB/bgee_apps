@@ -900,16 +900,22 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             return expressionLevelInfo;
         }
         /**
+         * Helper method delegated to {@link org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo#getRank()
+         * ExpressionLevelInfo.getRank()} from {@link #getExpressionLevelInfo()}.
          * @return  See {@link org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo#getRank()
-         *          ExpressionLevelInfo#getRank()}.
+         *          ExpressionLevelInfo.getRank()}.
+         * @see #getExpressionLevelInfo()
          * @see #getFormattedMeanRank()
          */
         public BigDecimal getMeanRank() {
             return this.getExpressionLevelInfo() == null? null: this.getExpressionLevelInfo().getRank();
         }
         /**
+         * Helper method delegated to {@link org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo#getRank()
+         * ExpressionLevelInfo.getFormattedRank()} from {@link #getExpressionLevelInfo()}.
          * @return  See {@link org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo#getFormattedRank()
-         *          ExpressionLevelInfo#getFormattedRank()}.
+         *          ExpressionLevelInfo.getFormattedRank()}.
+         * @see #getExpressionLevelInfo()
          * @see #getMeanRank()
          */
         public String getFormattedMeanRank() {

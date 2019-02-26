@@ -98,18 +98,25 @@ public class CallService extends CommonService {
      * <li>{@code CALL_TYPE}: corresponds to {@link Call#getSummaryCallType()}.
      * <li>{@code DATA_QUALITY}: corresponds to {@link Call#getSummaryQuality()}.
      * <li>{@code OBSERVED_DATA}: corresponds to {@link Call#getDataPropagation()}.
-     * <li>{@code GLOABAL_MEAN_RANK}: corresponds to {@link ExpressionCall#getMeanRank()}.
+     * <li>{@code MEAN_RANK}: corresponds to {@link ExpressionCall#getMeanRank()}.
      * <li>{@code EXPERIMENT_COUNTS}: corresponds to {@link Call#getCallData()} with experiment
      * expression <strong>total</strong> and <strong>self</strong> counts populated per data type
      * for the requested data types.
      * <li>{@code DATA_TYPE_RANK_INFO}: corresponds to {@link Call#getCallData()}
      * with rank info populated per data type for the requested data types.
+     * <li>{@code GENE_QUAL_EXPR_LEVEL}: corresponds to {@link
+     * org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo#getQualExprLevelRelativeToGene()
+     * ExpressionLevelInfo.getQualExprLevelRelativeToGene()} from {@link ExpressionCall#getExpressionLevelInfo()}.
+     * <li>{@code ANAT_ENTITY_QUAL_EXPR_LEVEL}: corresponds to {@link
+     * org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo#getQualExprLevelRelativeToAnatEntity()
+     * ExpressionLevelInfo.getQualExprLevelRelativeToAnatEntity()} from {@link ExpressionCall#getExpressionLevelInfo()}.
      * </ul>
      */
     public static enum Attribute implements Service.Attribute {
         GENE(false), ANAT_ENTITY_ID(true), DEV_STAGE_ID(true), CALL_TYPE(false),
         DATA_QUALITY(false), OBSERVED_DATA(false), MEAN_RANK(false),
-        EXPERIMENT_COUNTS(false), DATA_TYPE_RANK_INFO(false);
+        EXPERIMENT_COUNTS(false), DATA_TYPE_RANK_INFO(false),
+        GENE_QUAL_EXPR_LEVEL(false), ANAT_ENTITY_QUAL_EXPR_LEVEL(false);
         
         /**
          * @see #isConditionParameter()
@@ -217,7 +224,13 @@ public class CallService extends CommonService {
             PropagationState.SELF, PropagationState.ANCESTOR, PropagationState.DESCENDANT,
             PropagationState.SELF_AND_ANCESTOR, PropagationState.SELF_AND_DESCENDANT,
             PropagationState.ANCESTOR_AND_DESCENDANT, PropagationState.ALL);
-
+    /**
+     * A {@code Set} of {@code ConditionDAO.Attribute}s used as of Bgee 14 to retrieve ranks
+     * (for now, we don't use mean ranks computed for anatomical entities only, or dev. stages only;
+     * that might be the case in future releases of Bgee).
+     */
+    private static final Set<ConditionDAO.Attribute> COND_PARAM_COMBINATION_FOR_RANKS = EnumSet.of(
+            ConditionDAO.Attribute.ANAT_ENTITY_ID, ConditionDAO.Attribute.STAGE_ID);
     //*************************************************
     // INSTANCE ATTRIBUTES AND CONSTRUCTOR
     //*************************************************
@@ -319,12 +332,122 @@ public class CallService extends CommonService {
                         condParamCombination, convertCondParamAttrsToCondDAOAttrs(clonedAttrs),
                         this.conditionDAO, this.anatEntityService, this.devStageService));
 
-        // Retrieve calls
+        // Retrieve calls.
+        //We might need to perform additional queries if the attributes GENE_QUAL_EXPR_LEVEL and/or
+        //ANAT_ENTITY_QUAL_EXPR_LEVEL were requested.
         Stream<ExpressionCall> calls = this.performsGlobalExprCallQuery(geneMap, callFilter, condParamCombination,
                 clonedAttrs, clonedOrderingAttrs)
             .map(to -> mapGlobalCallTOToExpressionCall(to, geneMap, condMap, callFilter, clonedAttrs));
 
         return log.exit(calls);
+    }
+
+    private static boolean isQueryAllowingToComputeGeneQualExprLevel(ExpressionCallFilter callFilter,
+            Set<ConditionDAO.Attribute> condParamCombination, Set<Attribute> attributes,
+            LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes) {
+        log.entry(callFilter, condParamCombination, attributes, orderingAttributes);
+
+        //Perform the checks for qualitative expression levels relative to any entity
+        if (!isQueryAllowingToComputeAnyQualExprLevel(callFilter, condParamCombination, attributes, orderingAttributes)) {
+            return log.exit(false);
+        }
+        //Now, we do only the remaining checks for qualitative expression levels relative to genes
+
+        //Obviously we need the gene info
+        if (!attributes.contains(Attribute.GENE)) {
+            return log.exit(false);
+        }
+
+        //We would also need the results to be retrieved ordered by gene IDs first
+        //Will work if the query is done on one species only, otherwise we can have a same Ensemble Gene ID
+        //linked to different species, when we use the genome of a closely related species
+        if (!orderingAttributes.keySet().iterator().next().equals(OrderingAttribute.GENE_ID)) {
+            return log.exit(false);
+        }
+
+        //We would need the query to retrieve expression calls in any anat. entity-stage,
+        //not discarding observed conditions or calls, to compute the expression level categories
+        if ((callFilter.getConditionFilters() != null && callFilter.getConditionFilters().stream()
+                .anyMatch(cf -> !cf.getAnatEntityIds().isEmpty()))) {
+            return log.exit(false);
+        }
+
+        return log.exit(true);
+    }
+    private static boolean isQueryAllowingToComputeAnatEntityQualExprLevel(ExpressionCallFilter callFilter,
+            Set<ConditionDAO.Attribute> condParamCombination, Set<Attribute> attributes,
+            LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes) {
+        log.entry(callFilter, condParamCombination, attributes, orderingAttributes);
+
+        //Perform the checks for qualitative expression levels relative to any entity
+        if (!isQueryAllowingToComputeAnyQualExprLevel(callFilter, condParamCombination, attributes, orderingAttributes)) {
+            return log.exit(false);
+        }
+        //Now, we do only the remaining checks for qualitative expression levels relative to anat. entities
+
+        //Obviously we need the anat. entity info
+        if (!attributes.contains(Attribute.ANAT_ENTITY_ID)) {
+            return log.exit(false);
+        }
+
+        //We would also need the results to be retrieved ordered by anat. entity IDs first
+        //Will work if the query is done on one species only, otherwise we can have a same anat. entity ID
+        //linked to different species
+        if (!orderingAttributes.keySet().iterator().next().equals(OrderingAttribute.ANAT_ENTITY_ID)) {
+            return log.exit(false);
+        }
+
+        //We would need the query to retrieve expression calls in any dev. stage and for any gene,
+        //not discarding observed conditions or calls, to compute the expression level categories
+        if (callFilter.getGeneFilters().stream().anyMatch(gf -> !gf.getEnsemblGeneIds().isEmpty())) {
+            return log.exit(false);
+        }
+
+        return log.exit(true);
+    }
+    private static boolean isQueryAllowingToComputeAnyQualExprLevel(ExpressionCallFilter callFilter,
+            Set<ConditionDAO.Attribute> condParamCombination, Set<Attribute> attributes,
+            LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes) {
+        log.entry(callFilter, condParamCombination, attributes, orderingAttributes);
+
+        //If ranks not requested, we can't do anything
+        if (!attributes.contains(Attribute.MEAN_RANK)) {
+            return log.exit(false);
+        }
+
+        //Since for now we use ranks only from calls with params GENE-ANAT_ENTITY-DEV_STAGE,
+        //This is the condition parameter combination we need
+        if (!condParamCombination.equals(COND_PARAM_COMBINATION_FOR_RANKS)) {
+            return log.exit(false);
+        }
+
+        //We would also need the results to be retrieved ordered by gene/anat. entity IDs first
+        //Will work if the query is done on one species only, otherwise we can have a same Ensemble Gene ID
+        //(when we use the genome of a closely related species) or anat. entity ID linked to different species.
+        Set<Integer> requestedSpeciesIds = callFilter.getGeneFilters().stream()
+                .map(gf -> gf.getSpeciesId()).collect(Collectors.toSet());
+        if (orderingAttributes.isEmpty() || requestedSpeciesIds.size() != 1) {
+            return log.exit(false);
+        }
+
+        //We would need the query to retrieve expression calls at least in any stage,
+        //not discarding observed conditions or calls, to compute the expression level categories
+        Boolean observedExpressedCalls = callFilter.getCallObservedData().get(CallType.Expression.EXPRESSED);
+        if ((callFilter.getConditionFilters() != null && callFilter.getConditionFilters().stream()
+                .anyMatch(cf -> !cf.getDevStageIds().isEmpty() || Boolean.FALSE.equals(cf.getObservedConditions()))) ||
+                Boolean.FALSE.equals(observedExpressedCalls) ||
+                Boolean.FALSE.equals(callFilter.getAnatEntityObservedData()) ||
+                Boolean.FALSE.equals(callFilter.getDevStageObservedData())) {
+            return log.exit(false);
+        }
+
+        //We would need the query to retrieve calls of presence of expression of any quality
+        SummaryQuality exprQual = callFilter.getSummaryCallTypeQualityFilter().get(SummaryCallType.ExpressionSummary.EXPRESSED);
+        if (exprQual == null || !exprQual.equals(SummaryQuality.values()[0])) {
+            return log.exit(false);
+        }
+
+        return log.exit(true);
     }
     
     public Stream<DiffExpressionCall> loadDiffExpressionCalls(Integer speciesId, 

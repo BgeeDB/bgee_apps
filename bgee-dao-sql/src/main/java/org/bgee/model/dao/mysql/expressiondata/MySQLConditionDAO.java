@@ -46,6 +46,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
     public final static String RAW_COND_ID_FIELD = "conditionId";
     public final static String GLOBAL_COND_ID_FIELD = "globalConditionId";
     private final static String COND_REL_ORIGIN_FIELD = "conditionRelationOrigin";
+    public final static String ANAT_ENTITY_ID_FIELD = "anatEntityId";
 
     /**
      * @param tableName             A {@code String} that is the name of the global condition table

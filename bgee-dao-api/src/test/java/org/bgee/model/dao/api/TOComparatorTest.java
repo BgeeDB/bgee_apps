@@ -31,6 +31,7 @@ import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressio
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO;
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO.CallDirection;
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO.CallQuality;
+import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.EntityMinMaxRanksTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO.DetectionFlag;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO.ExclusionReason;
 import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO.ESTTO;
@@ -1017,5 +1018,30 @@ public class TOComparatorTest extends TestAncestor {
 
         a3 = new SimAnnotToAnatEntityTO("id1", "XX");
         assertFalse("Should not be equals: " + a1 + " " + a3, TOComparator.areTOsEqual(a1, a3));
+    }
+
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)}
+     * using {@code EntityMinMaxRanksTO}s.
+     */
+    @Test
+    public void testAreEntityMinMaxRanksTOsEqual() {
+        EntityMinMaxRanksTO<Integer> to1 = new EntityMinMaxRanksTO<>(1, new BigDecimal("1"), new BigDecimal("2"), 1);
+        EntityMinMaxRanksTO<Integer> to2 = new EntityMinMaxRanksTO<>(1, new BigDecimal("1"), new BigDecimal("2"), 1);
+        assertTrue(TOComparator.areTOsEqual(to1, to2, true));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+
+        to2 = new EntityMinMaxRanksTO<>(1, new BigDecimal("1.5"), new BigDecimal("2"), 1);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+
+        to2 = new EntityMinMaxRanksTO<>(1, new BigDecimal("1"), new BigDecimal("2.5"), 1);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+
+        to2 = new EntityMinMaxRanksTO<>(1, new BigDecimal("1"), new BigDecimal("2"), 2);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+
+        to2 = new EntityMinMaxRanksTO<>(2, new BigDecimal("1"), new BigDecimal("2"), 1);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
     }
 }

@@ -22,6 +22,7 @@ import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.GlobalConditionMaxRankTO;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO;
+import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.EntityMinMaxRanksTO;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallDataTO;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO.RawExpressionCallTO;
@@ -223,6 +224,8 @@ public class TOComparator {
             return log.exit(areTOsEqual((InSituEvidenceTO) to1, (InSituEvidenceTO) to2, compareId));
         } else if (to2 instanceof InSituSpotTO) {
             return log.exit(areTOsEqual((InSituSpotTO) to1, (InSituSpotTO) to2, compareId));
+        } else if (to2 instanceof EntityMinMaxRanksTO) {
+            return log.exit(areTOsEqual((EntityMinMaxRanksTO<?>) to1, (EntityMinMaxRanksTO<?>) to2, compareId));
         }
 
         throw log.throwing(new IllegalArgumentException("There is no comparison method " +
@@ -1446,6 +1449,15 @@ public class TOComparator {
             return log.exit(true);
         }
         return log.exit(false);
+    }
+
+    private static boolean areTOsEqual(EntityMinMaxRanksTO<?> to1, EntityMinMaxRanksTO<?> to2, boolean compareId){
+        log.entry(to1, to2, compareId);
+        return log.exit(TOComparator.areEntityTOsEqual(to1, to2, compareId) &&
+                Objects.equals(to1.getMinRank(), to2.getMinRank()) &&
+                Objects.equals(to1.getMaxRank(), to2.getMaxRank()) &&
+                Objects.equals(to1.speciesId(), to2.speciesId())
+        );
     }
 
     /**

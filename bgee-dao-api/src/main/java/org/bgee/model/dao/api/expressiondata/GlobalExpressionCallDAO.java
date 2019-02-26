@@ -14,6 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
+import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO.RawExpressionCallTO;
@@ -56,7 +57,7 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
     enum OrderingAttribute implements DAO.OrderingAttribute {
         BGEE_GENE_ID, PUBLIC_GENE_ID, GLOBAL_CONDITION_ID, ANAT_ENTITY_ID, STAGE_ID, OMA_GROUP_ID, MEAN_RANK;
     }
-    
+
     /** 
      * Retrieves global calls from data source in the appropriate table specified by 
      * {@code conditionParameters}.
@@ -71,7 +72,7 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      *                              as "OR" conditions. Can be {@code null} or empty.
      * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
      *                              combination of condition parameters that were requested for queries, 
-     *                              allowing to determine which condition and expression tables to target
+     *                              allowing to determine which condition and calls to target
      *                              (see {@link ConditionDAO.Attribute#isConditionParameter()}).
      * @param attributes            A {@code Collection} of {@code GlobalExpressionCallDAO.Attribute}s 
      *                              defining the attributes to populate in the returned 
@@ -98,6 +99,68 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
             LinkedHashMap<OrderingAttribute, DAO.Direction> orderingAttributes)
                     throws DAOException, IllegalArgumentException;
 
+    /**
+     * Obtains the min. and max ranks of genes. For now, to retrieve ranks it should be queried only
+     * EXPRESSED calls with min quality BRONZE, in all dev. stages and all anat. entities,
+     * only from observed calls, with anat. entity and dev. stage condition parameters. But we don't do any check
+     * on this here, to let the possibility to the user to query with different parameters.
+     * <p>
+     * In the {@code EntityMinMaxRanksTO}s obtained from the returned {@code EntityMinMaxRanksTOResultSet}:
+     * <ul>
+     * <li>{@link EntityMinMaxRanksTO#getId()} will return the Bgee gene ID as {@code Integer}
+     * <li>the species ID will not be provided ({@link EntityMinMaxRanksTO#getSpeciesId()} returns {@code null}),
+     * since the Bgee gene ID are unique over all species (we do not need the species ID to distinguish
+     * different Bgee gene IDs).
+     * </ul>
+     *
+     * @param callFilters           A {@code Collection} of {@code CallDAOFilter}s,
+     *                              allowing to configure this query. If several
+     *                              {@code CallDAOFilter}s are provided, they are seen
+     *                              as "OR" conditions. Can be {@code null} or empty.
+     * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
+     *                              combination of condition parameters that were requested for queries,
+     *                              allowing to determine which condition and calls to target
+     *                              (see {@link ConditionDAO.Attribute#isConditionParameter()}).
+     * @return                      A {@code EntityMinMaxRanksTOResultSet} allowing to retrieve
+     *                              the requested {@code EntityMinMaxRanksTO}s.
+     * @throws DAOException             If an error occurred when accessing the data source.
+     * @throws IllegalArgumentException If {@code callFilters} is {@code null} or empty,
+     *                                  or if one of the {@code Attribute}s in {@code conditionParameters}
+     *                                  is not a condition parameter attributes (see
+     *                                  {@link ConditionDAO.Attribute#isConditionParameter()}).
+     */
+    public EntityMinMaxRanksTOResultSet<Integer> getMinMaxRanksPerGene(Collection<CallDAOFilter> callFilters,
+            Collection<ConditionDAO.Attribute> conditionParameters) throws DAOException, IllegalArgumentException;
+    /**
+     * Obtains the min. and max ranks of anatomical entities. For now, to retrieve ranks it should be queried only
+     * EXPRESSED calls with min quality BRONZE, in all dev. stages and for all genes,
+     * only from observed calls, with anat. entity and dev. stage condition parameters. But we don't do any check
+     * on this here, to let the possibility to the user to query with different parameters.
+     * <p>
+     * In the {@code EntityMinMaxRanksTO}s obtained from the returned {@code EntityMinMaxRanksTOResultSet}:
+     * <ul>
+     * <li>{@link EntityMinMaxRanksTO#getId()} will return the anatomical entity ID as {@code String}
+     * <li>the species ID is provided ({@link EntityMinMaxRanksTO#getSpeciesId()} returns a non-{@code null} value),
+     * since a same anatomical entity ID can be used in several species.
+     *
+     * @param callFilters           A {@code Collection} of {@code CallDAOFilter}s,
+     *                              allowing to configure this query. If several
+     *                              {@code CallDAOFilter}s are provided, they are seen
+     *                              as "OR" conditions. Can be {@code null} or empty.
+     * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
+     *                              combination of condition parameters that were requested for queries,
+     *                              allowing to determine which condition and calls to target
+     *                              (see {@link ConditionDAO.Attribute#isConditionParameter()}).
+     * @return                      A {@code EntityMinMaxRanksTOResultSet} allowing to retrieve
+     *                              the requested {@code EntityMinMaxRanksTO}s.
+     * @throws DAOException             If an error occurred when accessing the data source.
+     * @throws IllegalArgumentException If {@code callFilters} is {@code null} or empty,
+     *                                  or if one of the {@code Attribute}s in {@code conditionParameters}
+     *                                  is not a condition parameter attributes (see
+     *                                  {@link ConditionDAO.Attribute#isConditionParameter()}).
+     */
+    public EntityMinMaxRanksTOResultSet<String> getMinMaxRanksPerAnatEntity(Collection<CallDAOFilter> callFilters,
+            Collection<ConditionDAO.Attribute> conditionParameters) throws DAOException, IllegalArgumentException;
     /**
      * Retrieve the maximum of global expression IDs.
      *
@@ -126,6 +189,18 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      * @since   Bgee 14, Feb. 2017
      */
     public interface GlobalExpressionCallTOResultSet extends DAOResultSet<GlobalExpressionCallTO> {
+    }
+
+    /**
+     * {@code DAOResultSet} specifics to {@code EntityMinMaxRanksTO}s
+     *
+     * @author  Frederic Bastian
+     * @version Bgee 14, Feb. 2019
+     * @since   Bgee 14, Feb. 2019
+     *
+     * @param <T> The type of ID of the returned {@code EntityMinMaxRanksTO}s
+     */
+    public interface EntityMinMaxRanksTOResultSet<T extends Comparable<T>> extends DAOResultSet<EntityMinMaxRanksTO<T>> {
     }
     
     /**
@@ -289,6 +364,50 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
                    .append(", rank=").append(rank)
                    .append(", rankNorm=").append(rankNorm)
                    .append(", weightForMeanRank=").append(weightForMeanRank)
+                   .append("]");
+            return builder.toString();
+        }
+    }
+
+    /**
+     * An {@code EntityTO} to store min. and max ranks associated to an entity (such as a gene, or an anat. entity).
+     *
+     * @author Frederic Bastian
+     * @version Bgee 14 Feb. 2019
+     * @since Bgee 14 Feb. 2019
+     *
+     * @param <T> The type of ID of this {@code EntityTO}
+     */
+    public static class EntityMinMaxRanksTO<T extends Comparable<T>> extends EntityTO<T> {
+        private static final long serialVersionUID = -4260272894290918736L;
+
+        private final BigDecimal minRank;
+        private final BigDecimal maxRank;
+        private final Integer speciesId;
+
+        public EntityMinMaxRanksTO(T entityId, BigDecimal minRank, BigDecimal maxRank, Integer speciesId) {
+            super(entityId);
+            this.minRank = minRank;
+            this.maxRank = maxRank;
+            this.speciesId = speciesId;
+        }
+        public BigDecimal getMinRank() {
+            return minRank;
+        }
+        public BigDecimal getMaxRank() {
+            return maxRank;
+        }
+        public Integer speciesId() {
+            return speciesId;
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("EntityMinMaxRanksTO [entityId=").append(this.getId())
+                   .append(", minRank=").append(minRank)
+                   .append(", maxRank=").append(maxRank)
+                   .append(", speciesId=").append(speciesId)
                    .append("]");
             return builder.toString();
         }

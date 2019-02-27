@@ -1,5 +1,6 @@
 package org.bgee.model.expressiondata;
 
+import java.math.BigDecimal;
 import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
@@ -11,13 +12,17 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.CommonService;
+import org.bgee.model.ElementGroupFromListSpliterator;
 import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
@@ -45,9 +50,12 @@ import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.CallType.Expression;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.PropagationState;
+import org.bgee.model.expressiondata.baseelements.QualitativeExpressionLevel;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.EntityMinMaxRanks;
 import org.bgee.model.expressiondata.baseelements.ExperimentExpressionCount;
+import org.bgee.model.expressiondata.baseelements.ExpressionLevelCategory;
 import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
@@ -107,9 +115,15 @@ public class CallService extends CommonService {
      * <li>{@code GENE_QUAL_EXPR_LEVEL}: corresponds to {@link
      * org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo#getQualExprLevelRelativeToGene()
      * ExpressionLevelInfo.getQualExprLevelRelativeToGene()} from {@link ExpressionCall#getExpressionLevelInfo()}.
+     * <strong>Important:</strong> if this attribute is used, then the attributes {@code GENE}
+     * and {@code MEAN_RANK} must also be requested, otherwise an {@code IllegalArgumentException}
+     * will be thrown by the methods.
      * <li>{@code ANAT_ENTITY_QUAL_EXPR_LEVEL}: corresponds to {@link
      * org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo#getQualExprLevelRelativeToAnatEntity()
      * ExpressionLevelInfo.getQualExprLevelRelativeToAnatEntity()} from {@link ExpressionCall#getExpressionLevelInfo()}.
+     * <strong>Important:</strong> if this attribute is used, then the attributes {@code ANAT_ENTITY_ID}
+     * and {@code MEAN_RANK} must also be requested, otherwise an {@code IllegalArgumentException}
+     * will be thrown by the methods.
      * </ul>
      */
     public static enum Attribute implements Service.Attribute {
@@ -231,6 +245,22 @@ public class CallService extends CommonService {
      */
     private static final Set<ConditionDAO.Attribute> COND_PARAM_COMBINATION_FOR_RANKS = EnumSet.of(
             ConditionDAO.Attribute.ANAT_ENTITY_ID, ConditionDAO.Attribute.STAGE_ID);
+    /**
+     * A {@code Map} containing a single {@code Entry} where the key is the {@code ExpressionSummary}
+     * and the value is the {@code SummaryQuality} necessary to correctly retrieve all rank info.
+     * Used to initialize a new {@link CallFilter.ExpressionCallFilter}.
+     */
+    private static final Map<SummaryCallType.ExpressionSummary, SummaryQuality>
+    CALL_TYPE_QUAL_FOR_RANKS_FILTER = Collections.singletonMap(ExpressionSummary.EXPRESSED,
+            SummaryQuality.BRONZE);
+    /**
+     * A {@code Map} containing a single {@code Entry} where the key is the {@code Expression}
+     * and the value is the {@code Boolean} necessary to correctly retrieve all rank info.
+     * Used to initialize a new {@link CallFilter.ExpressionCallFilter}.
+     * Needed since as of Bgee 14, ranks are computed only for observed calls.
+     */
+    private final static Map<Expression, Boolean> OBSERVED_DATA_FOR_RANKS_FILTER =
+            Collections.singletonMap(Expression.EXPRESSED, true);
     //*************************************************
     // INSTANCE ATTRIBUTES AND CONSTRUCTOR
     //*************************************************
@@ -311,6 +341,20 @@ public class CallService extends CommonService {
             throw log.throwing(new IllegalArgumentException("A CallFilter must be provided, "
                     + "at least to specify the targeted Species (through the GeneFilters)"));
         }
+        if (clonedAttrs.contains(Attribute.GENE_QUAL_EXPR_LEVEL) &&
+                (!clonedAttrs.contains(Attribute.GENE) || !clonedAttrs.contains(Attribute.MEAN_RANK))) {
+            throw log.throwing(new IllegalArgumentException(
+                    "If " + Attribute.GENE_QUAL_EXPR_LEVEL + " is requested, "
+                    + Attribute.GENE + " and " + Attribute.MEAN_RANK
+                    + " must also be requested"));
+        }
+        if (clonedAttrs.contains(Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL) &&
+                (!clonedAttrs.contains(Attribute.ANAT_ENTITY_ID) || !clonedAttrs.contains(Attribute.MEAN_RANK))) {
+            throw log.throwing(new IllegalArgumentException(
+                    "If " + Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL + " is requested, "
+                    + Attribute.ANAT_ENTITY_ID + " and " + Attribute.MEAN_RANK
+                    + " must also be requested"));
+        }
 
         // Retrieve species, get a map species ID -> Species
         final Map<Integer, Species> speciesMap = loadSpeciesMapFromGeneFilters(callFilter.getGeneFilters(),
@@ -326,20 +370,283 @@ public class CallService extends CommonService {
                 loadConditionParameterCombination(callFilter, clonedAttrs, clonedOrderingAttrs.keySet()));
 
         // Retrieve conditions by condition IDs if condition info requested in Attributes
+        // (explicitly, or because clonedAttrs is empty and all attributes are requested),
+        // or ANAT_ENTITY_QUAL_EXPR_LEVEL is requested (which is pretty much the same,
+        // since it's mandatory to request anat. entity info in that case)
+        boolean loadCondMap = clonedAttrs.isEmpty() ||
+                clonedAttrs.contains(Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL) ||
+                clonedAttrs.stream().anyMatch(a -> a.isConditionParameter());
         final Map<Integer, Condition> condMap = Collections.unmodifiableMap(
-                clonedAttrs.stream().noneMatch(a -> a.isConditionParameter())? new HashMap<>():
+                !loadCondMap?
+                    new HashMap<>():
                     loadGlobalConditionMap(speciesMap.values(),
                         condParamCombination, convertCondParamAttrsToCondDAOAttrs(clonedAttrs),
                         this.conditionDAO, this.anatEntityService, this.devStageService));
 
-        // Retrieve calls.
-        //We might need to perform additional queries if the attributes GENE_QUAL_EXPR_LEVEL and/or
-        //ANAT_ENTITY_QUAL_EXPR_LEVEL were requested.
-        Stream<ExpressionCall> calls = this.performsGlobalExprCallQuery(geneMap, callFilter, condParamCombination,
-                clonedAttrs, clonedOrderingAttrs)
-            .map(to -> mapGlobalCallTOToExpressionCall(to, geneMap, condMap, callFilter, clonedAttrs));
+        // Retrieve min./max ranks per anat. entity if info requested
+        // and if the main expression call query will not allow to obtain this information
+        Map<AnatEntity, EntityMinMaxRanks<AnatEntity>> anatEntityMinMaxRanks =
+                loadMinMaxRanksPerAnatEntity(clonedAttrs, clonedOrderingAttrs, condParamCombination,
+                        geneMap, condMap, callFilter);
+        // Retrieve min./max ranks per gene if info requested
+        // and if the main expression call query will not allow to obtain this information
+        Map<Gene, EntityMinMaxRanks<Gene>> geneMinMaxRanks = loadMinMaxRanksPerGene(
+                clonedAttrs, clonedOrderingAttrs, condParamCombination, geneMap, callFilter);
 
-        return log.exit(calls);
+        
+        //All necessary information ready, retrieve ExpressionCalls
+        return log.exit(loadExpressionCallStream(callFilter, clonedAttrs, clonedOrderingAttrs,
+                condParamCombination, geneMap, condMap, anatEntityMinMaxRanks, geneMinMaxRanks));
+    }
+
+    private Stream<ExpressionCall> loadExpressionCallStream(ExpressionCallFilter callFilter,
+            Set<Attribute> attrs, LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttrs,
+            Set<ConditionDAO.Attribute> condParamCombination,
+            final Map<Integer, Gene> geneMap, final Map<Integer, Condition> condMap,
+            Map<AnatEntity, EntityMinMaxRanks<AnatEntity>> anatEntityMinMaxRanks,
+            Map<Gene, EntityMinMaxRanks<Gene>> geneMinMaxRanks) {
+        log.entry(callFilter, attrs, orderingAttrs, condParamCombination, geneMap, condMap,
+                anatEntityMinMaxRanks, geneMinMaxRanks);
+
+        // Retrieve the Stream<GlobalExpressionCallTO>
+        Stream<GlobalExpressionCallTO> toStream = this.performsGlobalExprCallQuery(geneMap, callFilter, condParamCombination,
+                attrs, orderingAttrs);
+
+        //Intermediary step in case some min./max ranks are necessary
+        //but can be retrieved through the main expression call query.
+        //In that case, we will map to a new Stream of GlobalExpressionCallTOs
+        //after the intermediate steps.
+        if (attrs.isEmpty() || attrs.contains(Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL) ||
+                attrs.contains(Attribute.GENE_QUAL_EXPR_LEVEL)) {
+
+            //better to check this way than by checking whether anatEntityMinMaxRanks is empty
+            //in case there is no matching expression calls
+            boolean computeAnatEntityMinMax = isQueryAllowingToComputeAnatEntityQualExprLevel(callFilter,
+                    condParamCombination, attrs, orderingAttrs);
+            //better to check this way than by checking whether geneMinMaxRanks is empty
+            //in case there is no matching expression calls
+            boolean computeGeneMinMax = isQueryAllowingToComputeGeneQualExprLevel(callFilter,
+                    condParamCombination, attrs, orderingAttrs);
+            assert !(computeAnatEntityMinMax && computeGeneMinMax);
+
+            //Remap to a new Stream that will group calls with same anat. entity or with same gene,
+            //depending on what can be computed from the calls
+            Stream<List<GlobalExpressionCallTO>> toListStream = null;
+            if (computeAnatEntityMinMax) {
+                assert anatEntityMinMaxRanks.isEmpty();
+                toListStream = StreamSupport.stream(
+                        new ElementGroupFromListSpliterator<
+                        GlobalExpressionCallTO, String, List<GlobalExpressionCallTO>>(
+                                toStream,
+                                callTO -> condMap.get(callTO.getConditionId()).getAnatEntityId(),
+                                (id1, id2) -> id1.compareTo(id2)),
+                        false);
+            } else if (computeGeneMinMax) {
+                assert geneMinMaxRanks.isEmpty();
+                toListStream = StreamSupport.stream(
+                        new ElementGroupFromListSpliterator<
+                        GlobalExpressionCallTO, Integer, List<GlobalExpressionCallTO>>(
+                                toStream,
+                                callTO -> callTO.getBgeeGeneId(),
+                                (id1, id2) -> id1.compareTo(id2)),
+                        false);
+            }
+
+            //If indeed it is possible to compute min./max ranks from the list of calls
+            if (toListStream != null) {
+                return log.exit(toListStream.flatMap(toList -> {
+                    List<ExpressionCall> intermediateCalls = toList.stream()
+                            //To retrieve the min./max ranks, we need to know
+                            //the SummaryCall, so in order to compute CallData and SumaryCall
+                            //several times, we directly create ExpressionCalls
+                            .map(to -> mapGlobalCallTOToExpressionCall(to, geneMap, condMap, callFilter,
+                                    null, null, attrs))
+                            .collect(Collectors.toList());
+
+                    if (intermediateCalls.isEmpty()) {
+                        return intermediateCalls.stream();
+                    }
+                    //Compute the anatEntityMinMaxRank from this List of ExpressionCalls
+                    //if possible, otherwise retrieve it from the min./max ranks
+                    //computed through a previous independent query, if any was performed.
+                    EntityMinMaxRanks<AnatEntity> anatEntityMinMaxRank = computeAnatEntityMinMax?
+                            getMinMaxRanksFromCallGroup(intermediateCalls,
+                                    call -> call.getCondition().getAnatEntity()):
+                            anatEntityMinMaxRanks.get(intermediateCalls.iterator().next()
+                                    .getCondition().getAnatEntity());
+                    //Compute the geneMinMaxRank from this List of ExpressionCalls
+                    //if possible, otherwise retrieve it from the min./max ranks
+                    //computed through a previous independent query, if any was performed
+                    EntityMinMaxRanks<Gene> geneMinMaxRank = computeGeneMinMax?
+                            getMinMaxRanksFromCallGroup(intermediateCalls,
+                                    call -> call.getGene()):
+                            geneMinMaxRanks.get(intermediateCalls.iterator().next()
+                                    .getGene());
+                    //Produce a new ExpressionCall using the information of min./max ranks
+                    //we just computed
+                    return intermediateCalls.stream().map(c -> new ExpressionCall(
+                            c.getGene(),
+                            c.getCondition(),
+                            c.getDataPropagation(),
+                            c.getSummaryCallType(),
+                            c.getSummaryQuality(),
+                            c.getCallData(),
+                            loadExpressionLevelInfo(c.getMeanRank(), anatEntityMinMaxRank,
+                                    geneMinMaxRank)
+                            ));
+                }));
+            }
+        }
+
+        //The information of min.max ranks was not requested, or it was not possible
+        //to compute some min.max ranks from the retrieved ExpressionCalls
+        //(information then already retrieved through previous independent queries,
+        //provided through arguments anatEntityMinMaxRanks and geneMinMaxRanks).
+        //We thus don't use intermediate steps to create the ExpressionCalls.
+        return log.exit(toStream
+            .map(to -> mapGlobalCallTOToExpressionCall(to, geneMap, condMap, callFilter,
+                    anatEntityMinMaxRanks, geneMinMaxRanks, attrs)));
+        
+    }
+
+    private static <T> EntityMinMaxRanks<T> getMinMaxRanksFromCallGroup(
+            Collection<ExpressionCall> calls, Function<ExpressionCall, T> extractEntityFun) {
+        log.entry(calls, extractEntityFun);
+
+        BigDecimal minRankExpressedCalls = null;
+        BigDecimal maxRankExpressedCalls = null;
+        T previousEntity = null;
+        for (ExpressionCall call: calls) {
+            T entity = extractEntityFun.apply(call);
+            if (previousEntity != null && !previousEntity.equals(entity)) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Calls do not have the same grouping criterion, previous entity: "
+                        + previousEntity + " - current entity: " + entity));
+            }
+            //We assume that either we are seeing only EXPRESSED calls, and maybe the information
+            //is not provided; or the information is provided, and we discard NOT_EXPRESSED calls
+            if (ExpressionSummary.NOT_EXPRESSED.equals(call.getSummaryCallType())) {
+                continue;
+            }
+            BigDecimal rank = call.getMeanRank();
+            if (rank == null) {
+                throw log.throwing(new IllegalArgumentException(
+                        "The calls do not have all the required information, call seen: " + call));
+            }
+            //Note: maybe we should assume that the Collection of ExpressionCall is a List ordered by ranks,
+            //and simply get the first EXPRESSED calls and the last EXPRESSED calls?
+            //But then if we have to check whether it is an EXPRESSED or NOT_EXPRESSED call,
+            //we have to iterate all the list all the same.
+            if (minRankExpressedCalls == null || rank.compareTo(minRankExpressedCalls) < 0) {
+                minRankExpressedCalls = rank;
+            }
+            if (maxRankExpressedCalls == null || rank.compareTo(maxRankExpressedCalls) > 0) {
+                maxRankExpressedCalls = rank;
+            }
+            previousEntity = entity;
+        }
+        //If there was only NOT_EXPRESSED calls, the min and max ranks will both be null
+        return log.exit(new EntityMinMaxRanks<T>(minRankExpressedCalls, maxRankExpressedCalls,
+                previousEntity));
+    }
+
+    private Map<AnatEntity, EntityMinMaxRanks<AnatEntity>> loadMinMaxRanksPerAnatEntity(
+            Set<Attribute> attrs, LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttrs,
+            Set<ConditionDAO.Attribute> condParamCombination, Map<Integer, Gene> geneMap,
+            Map<Integer, Condition> condMap, ExpressionCallFilter callFilter) {
+        log.entry(attrs, orderingAttrs, condParamCombination, geneMap, condMap, callFilter);
+
+        if (//qualitative expression levels relative to anat. entities not requested
+            (!attrs.isEmpty() && !attrs.contains(Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL)) ||
+            //or the main expression call query will allow to obtain the min.max ranks per anat. entity
+            isQueryAllowingToComputeAnatEntityQualExprLevel(callFilter, condParamCombination,
+                    attrs, orderingAttrs)) {
+            //No need to query min./max ranks then
+            return log.exit(new HashMap<>());
+        }
+
+        //Query to retrieve min./max ranks
+        //We regenerate a new ExpressionCallFilter for properly performing the query
+        ExpressionCallFilter newFilter = new ExpressionCallFilter(
+                CALL_TYPE_QUAL_FOR_RANKS_FILTER,
+                //new GeneFilters, we need to retrieve data for all genes of the requested species
+                callFilter.getGeneFilters().stream().map(gf -> new GeneFilter(gf.getSpeciesId()))
+                .collect(Collectors.toSet()),
+                //new ConditionFilters, we need to retrieve data for all dev. stages and not for
+                //non-observed conditions.
+                //We-re happy to keep a filtering based on anat. entity IDs though
+                callFilter.getConditionFilters().stream()
+                .map(cf -> new ConditionFilter(cf.getAnatEntityIds(), null))
+                .collect(Collectors.toSet()),
+                //we keep the same data types as requested
+                callFilter.getDataTypeFilters(),
+                //only call observed data, since as of Bgee 14 ranks are computed
+                //only for observed data
+                OBSERVED_DATA_FOR_RANKS_FILTER,
+                //then we don't care about anat. entity/dev. stage observed data specifically
+                false, false);
+        //convert ExpressionCallFilter into CallDAOFilter
+        CallDAOFilter daoFilter = convertCallFilterToCallDAOFilter(geneMap, newFilter,
+                condParamCombination);
+        //Create a Map from anat. entity ID to AnatEntity from the condMap
+        final Map<String, AnatEntity> idToAnatEntity = Collections.unmodifiableMap(
+                condMap.values().stream()
+                .map(c -> new AbstractMap.SimpleEntry<>(c.getAnatEntityId(), c.getAnatEntity()))
+                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue())));
+
+        //Perform query and map TOs to EntityMinMaxRanks
+        return log.exit(this.globalExprCallDAO.getMinMaxRanksPerAnatEntity(Arrays.asList(daoFilter),
+                condParamCombination).stream()
+        .map(minMaxRanksTO -> new EntityMinMaxRanks<AnatEntity>(
+                minMaxRanksTO.getMinRank(), minMaxRanksTO.getMaxRank(),
+                Optional.ofNullable(idToAnatEntity.get(minMaxRanksTO.getId()))
+                    .orElseThrow(() -> new IllegalStateException("Missing AnatEntity"))))
+        .collect(Collectors.toMap(emmr -> emmr.getEntityConsidered(), emmr -> emmr)));
+    }
+
+    private Map<Gene, EntityMinMaxRanks<Gene>> loadMinMaxRanksPerGene(
+            Set<Attribute> attrs, LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttrs,
+            Set<ConditionDAO.Attribute> condParamCombination, Map<Integer, Gene> geneMap,
+            ExpressionCallFilter callFilter) {
+        log.entry(attrs, orderingAttrs, condParamCombination, geneMap, callFilter);
+
+        if (//qualitative expression levels relative to genes not requested
+            (!attrs.isEmpty() && !attrs.contains(Attribute.GENE_QUAL_EXPR_LEVEL)) ||
+            //or the main expression call query will allow to obtain the min.max ranks per gene
+            isQueryAllowingToComputeGeneQualExprLevel(callFilter, condParamCombination,
+                    attrs, orderingAttrs)) {
+            //No need to query min./max ranks then
+            return log.exit(new HashMap<>());
+        }
+
+        //Query to retrieve min./max ranks
+        //We regenerate a new ExpressionCallFilter for properly performing the query
+        ExpressionCallFilter newFilter = new ExpressionCallFilter(
+                CALL_TYPE_QUAL_FOR_RANKS_FILTER,
+                //Use the same GeneFilters
+                callFilter.getGeneFilters(),
+                //new ConditionFilters, we need to retrieve data for all dev. stages and all
+                //anat. entites and not for non-observed conditions.
+                null,
+                //we keep the same data types as requested
+                callFilter.getDataTypeFilters(),
+                //only call observed data, since as of Bgee 14 ranks are computed
+                //only for observed data
+                OBSERVED_DATA_FOR_RANKS_FILTER,
+                //then we don't care about anat. entity/dev. stage observed data specifically
+                false, false);
+        //convert ExpressionCallFilter into CallDAOFilter
+        CallDAOFilter daoFilter = convertCallFilterToCallDAOFilter(geneMap, newFilter,
+                condParamCombination);
+
+        //Perform query and map TOs to EntityMinMaxRanks
+        return log.exit(this.globalExprCallDAO.getMinMaxRanksPerGene(Arrays.asList(daoFilter),
+                condParamCombination).stream()
+        .map(minMaxRanksTO -> new EntityMinMaxRanks<Gene>(
+                minMaxRanksTO.getMinRank(), minMaxRanksTO.getMaxRank(),
+                Optional.ofNullable(geneMap.get(minMaxRanksTO.getId()))
+                    .orElseThrow(() -> new IllegalStateException("Missing Gene"))))
+        .collect(Collectors.toMap(emmr -> emmr.getEntityConsidered(), emmr -> emmr)));
     }
 
     private static boolean isQueryAllowingToComputeGeneQualExprLevel(ExpressionCallFilter callFilter,
@@ -739,41 +1046,11 @@ public class CallService extends CommonService {
                     throws IllegalArgumentException {
         log.entry(geneMap, callFilter, condParamCombination, attributes, orderingAttributes);
 
-        //now we map each GeneFilter to Bgee gene IDs rather than Ensembl gene IDs.
-        Set<Integer> geneIdFilter = null;
-        Set<Integer> speciesIds = null;
-        if (callFilter != null) {
-            Entry<Set<Integer>, Set<Integer>> geneIdsSpeciesIds = convertGeneFiltersToBgeeGeneIdsAndSpeciesIds(
-                    callFilter.getGeneFilters(), geneMap);
-            geneIdFilter = geneIdsSpeciesIds.getKey();
-            speciesIds = geneIdsSpeciesIds.getValue();
-        }
-
-        if ((speciesIds == null || speciesIds.isEmpty()) &&
-                (geneIdFilter == null || geneIdFilter.isEmpty())) {
-            throw log.throwing(new IllegalArgumentException(
-                    "No species nor gene IDs retrieved for filtering results."));
-        }
         //TODO: retrieve sub-structures and sub-stages depending on ConditionFilter
         Stream<GlobalExpressionCallTO> calls = this.globalExprCallDAO
             .getGlobalExpressionCalls(Arrays.asList(
                 //generate an ExpressionCallDAOFilter from callFilter 
-                new CallDAOFilter(
-                    // gene IDs
-                    geneIdFilter, 
-                    //species
-                    speciesIds,
-                    //ConditionFilters
-                    callFilter == null || callFilter.getConditionFilters() == null? null:
-                        callFilter.getConditionFilters().stream()
-                        .map(condFilter -> new DAOConditionFilter(
-                            condFilter.getAnatEntityIds(),
-                            condFilter.getDevStageIds(),
-                            condFilter.getObservedConditions()))
-                        .collect(Collectors.toSet()),
-                    //CallDataDAOFilters
-                    convertCallFilterToCallDataDAOFilters(callFilter, condParamCombination)
-                )),
+                    convertCallFilterToCallDAOFilter(geneMap, callFilter, condParamCombination)),
                 // Condition parameters
                 condParamCombination,
                 // Attributes
@@ -789,6 +1066,43 @@ public class CallService extends CommonService {
     //*************************************************************************
     // HELPER METHODS CONVERTING INFORMATION FROM Call LAYER to DAO LAYER
     //*************************************************************************
+    private static CallDAOFilter convertCallFilterToCallDAOFilter(Map<Integer, Gene> geneMap,
+            ExpressionCallFilter callFilter, Set<ConditionDAO.Attribute> condParamCombination) {
+        log.entry(geneMap, callFilter, condParamCombination);
+
+        //we map each GeneFilter to Bgee gene IDs rather than Ensembl gene IDs.
+        Set<Integer> geneIdFilter = null;
+        Set<Integer> speciesIds = null;
+        if (callFilter != null) {
+            Entry<Set<Integer>, Set<Integer>> geneIdsSpeciesIds = convertGeneFiltersToBgeeGeneIdsAndSpeciesIds(
+                    callFilter.getGeneFilters(), geneMap);
+            geneIdFilter = geneIdsSpeciesIds.getKey();
+            speciesIds = geneIdsSpeciesIds.getValue();
+        }
+
+        if ((speciesIds == null || speciesIds.isEmpty()) &&
+                (geneIdFilter == null || geneIdFilter.isEmpty())) {
+            throw log.throwing(new IllegalArgumentException(
+                    "No species nor gene IDs retrieved for filtering results."));
+        }
+
+        return log.exit(new CallDAOFilter(
+                    // gene IDs
+                    geneIdFilter, 
+                    //species
+                    speciesIds,
+                    //ConditionFilters
+                    callFilter == null || callFilter.getConditionFilters() == null? null:
+                        callFilter.getConditionFilters().stream()
+                        .map(condFilter -> new DAOConditionFilter(
+                            condFilter.getAnatEntityIds(),
+                            condFilter.getDevStageIds(),
+                            condFilter.getObservedConditions()))
+                        .collect(Collectors.toSet()),
+                    //CallDataDAOFilters
+                    convertCallFilterToCallDataDAOFilters(callFilter, condParamCombination)
+                ));
+    }
     /**
      * 
      * @param callFilter
@@ -1275,17 +1589,23 @@ public class CallService extends CommonService {
     //*************************************************************************
     private static ExpressionCall mapGlobalCallTOToExpressionCall(GlobalExpressionCallTO globalCallTO, 
             Map<Integer, Gene> geneMap, Map<Integer, Condition> condMap,
-            ExpressionCallFilter callFilter, Set<CallService.Attribute> attrs) {
-        log.entry(globalCallTO, geneMap, condMap, callFilter, attrs);
+            ExpressionCallFilter callFilter,
+            Map<AnatEntity, EntityMinMaxRanks<AnatEntity>> anatEntityMinMaxRanks,
+            Map<Gene, EntityMinMaxRanks<Gene>> geneMinMaxRanks,
+            Set<CallService.Attribute> attrs) {
+        log.entry(globalCallTO, geneMap, condMap, callFilter, anatEntityMinMaxRanks,
+                geneMinMaxRanks, attrs);
         
         Set<ExpressionCallData> callData = mapGlobalCallTOToExpressionCallData(globalCallTO,
                 attrs, callFilter.getDataTypeFilters());
 
+        Condition cond = condMap.get(globalCallTO.getConditionId());
+        Gene gene = geneMap.get(globalCallTO.getBgeeGeneId());
         return log.exit(new ExpressionCall(
             attrs == null || attrs.isEmpty() || attrs.contains(Attribute.GENE)?
-                    geneMap.get(globalCallTO.getBgeeGeneId()): null,
+                    gene: null,
             attrs == null || attrs.isEmpty() || attrs.stream().anyMatch(a -> a.isConditionParameter())?
-                    condMap.get(globalCallTO.getConditionId()): null,
+                    cond: null,
             attrs == null || attrs.isEmpty() || attrs.contains(Attribute.OBSERVED_DATA)?
                     inferDataPropagation(callData): null,
             attrs == null || attrs.isEmpty() || attrs.contains(Attribute.CALL_TYPE)?
@@ -1296,7 +1616,22 @@ public class CallService extends CommonService {
                     attrs.contains(Attribute.DATA_TYPE_RANK_INFO)?
                             callData: null,
             attrs == null || attrs.isEmpty() || attrs.contains(Attribute.MEAN_RANK)?
-                    new ExpressionLevelInfo(globalCallTO.getMeanRank()): null));
+                    loadExpressionLevelInfo(globalCallTO.getMeanRank(),
+                            anatEntityMinMaxRanks == null? null:
+                                anatEntityMinMaxRanks.get(cond.getAnatEntity()),
+                            geneMinMaxRanks == null? null: geneMinMaxRanks.get(gene)): null));
+    }
+
+    private static ExpressionLevelInfo loadExpressionLevelInfo(BigDecimal rank, 
+            EntityMinMaxRanks<AnatEntity> anatEntityMinMaxRank, EntityMinMaxRanks<Gene> geneMinMaxRank) {
+        log.entry(rank, anatEntityMinMaxRank, geneMinMaxRank);
+        return log.exit(new ExpressionLevelInfo(rank,
+            rank == null || geneMinMaxRank == null? null: new QualitativeExpressionLevel<Gene>(
+                    ExpressionLevelCategory.getExpressionLevelCategory(
+                            geneMinMaxRank, rank), geneMinMaxRank),
+            rank == null || anatEntityMinMaxRank == null? null: new QualitativeExpressionLevel<AnatEntity>(
+                    ExpressionLevelCategory.getExpressionLevelCategory(
+                            anatEntityMinMaxRank, rank), anatEntityMinMaxRank)));
     }
     
     private static Set<ExpressionCallData> mapGlobalCallTOToExpressionCallData(

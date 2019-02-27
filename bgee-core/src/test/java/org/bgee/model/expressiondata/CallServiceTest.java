@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyCollectionOf;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -39,6 +40,8 @@ import org.bgee.model.dao.api.expressiondata.DAOExperimentCount;
 import org.bgee.model.dao.api.expressiondata.DAOExperimentCountFilter;
 import org.bgee.model.dao.api.expressiondata.DAOPropagationState;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.EntityMinMaxRanksTO;
+import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.EntityMinMaxRanksTOResultSet;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallDataTO;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallTOResultSet;
@@ -55,9 +58,12 @@ import org.bgee.model.expressiondata.baseelements.CallType.Expression;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.EntityMinMaxRanks;
 import org.bgee.model.expressiondata.baseelements.ExperimentExpressionCount;
+import org.bgee.model.expressiondata.baseelements.ExpressionLevelCategory;
 import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
 import org.bgee.model.expressiondata.baseelements.PropagationState;
+import org.bgee.model.expressiondata.baseelements.QualitativeExpressionLevel;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
@@ -65,7 +71,10 @@ import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.ontology.RelationType;
 import org.bgee.model.species.Species;
+import org.junit.Before;
 import org.junit.Test;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 /**
  * Unit tests for {@link CallService}.
@@ -85,12 +94,23 @@ public class CallServiceTest extends TestAncestor {
         return log;
     }
     
-    
-    private void configureMockGeneDAOForBioType() {
+    private final Species spe1 = new Species(1);
+
+    @Before
+    public void configureMocks() {
         getLogger().entry();
         GeneBioTypeTOResultSet geneBioTypeTOResultSet = getMockResultSet(GeneBioTypeTOResultSet.class,
                 Arrays.asList(new GeneBioTypeTO(1, "b")));
         when(this.geneDAO.getGeneBioTypes()).thenReturn(geneBioTypeTOResultSet);
+
+        Map<Integer, Species> speciesById = new HashMap<>();
+        speciesById.put(spe1.getId(), spe1);
+        when(this.speciesService.loadSpeciesMap(new HashSet<>(Arrays.asList(spe1.getId())), false))
+        .thenReturn(speciesById);
+
+        GlobalConditionMaxRankTO maxRankTO = new GlobalConditionMaxRankTO(new BigDecimal(100),new BigDecimal(100));
+        when(this.condDAO.getMaxRank()).thenReturn(maxRankTO);
+
         getLogger().exit();
     }
     
@@ -104,7 +124,6 @@ public class CallServiceTest extends TestAncestor {
         //First test for one gene, with sub-stages but without substructures. 
         //Retrieving all attributes, ordered by mean rank.
         
-        Species spe1 = new Species(1);
         Integer bgeeGeneId1 = 1;
         Integer cond1Id = 1;
         Integer cond2Id = 2;
@@ -263,13 +282,7 @@ public class CallServiceTest extends TestAncestor {
         when(this.devStageOnt.getAncestors(stage1, false)).thenReturn(new HashSet<>(Arrays.asList(stage2, stage3)));
         when(this.devStageOnt.getAncestors(stage2, false)).thenReturn(new HashSet<>(Arrays.asList(stage3)));
         when(this.devStageOnt.getAncestors(stage3, false)).thenReturn(new HashSet<>());
-        
-        Map<Integer, Species> speciesById = new HashMap<>();
-        speciesById.put(spe1.getId(), spe1);
-        when(this.speciesService.loadSpeciesMap(new HashSet<>(Arrays.asList(1)), false)).thenReturn(speciesById);
-        
-        GlobalConditionMaxRankTO maxRankTO = new GlobalConditionMaxRankTO(new BigDecimal(100),new BigDecimal(100));
-        when(this.condDAO.getMaxRank()).thenReturn(maxRankTO);
+
         ConditionTOResultSet condTOResultSet = getMockResultSet(ConditionTOResultSet.class, Arrays.asList(
                 new ConditionTO(1, anatEntity1.getId(), stage1.getId(), spe1.getId()),
                 new ConditionTO(2, anatEntity1.getId(), stage2.getId(), spe1.getId()),
@@ -285,7 +298,6 @@ public class CallServiceTest extends TestAncestor {
         Map<Integer, Set<String>> speciesIdToGeneIds = new HashMap<>();
         speciesIdToGeneIds.put(spe1.getId(), Collections.singleton(g1.getEnsemblGeneId()));
         when(this.geneDAO.getGenesBySpeciesAndGeneIds(speciesIdToGeneIds)).thenReturn(geneTOResultSet);
-        configureMockGeneDAOForBioType();
 
 
         List<ExpressionCall> expectedResults = Arrays.asList(
@@ -696,7 +708,6 @@ public class CallServiceTest extends TestAncestor {
     public void shouldLoadExpressionCallsForSeveralGenes() {
         //Retrieving geneId, anatEntityId, unordered, with substructures but without sub-stages.
         
-        Species spe1 = new Species(1);
         GeneTO gTO1 = new GeneTO(1, "gene1", "geneName1", spe1.getId());
         GeneTO gTO2 = new GeneTO(2, "gene2", "geneName2", spe1.getId());
         Gene g1 = new Gene(gTO1.getGeneId(), gTO1.getName(), null, spe1, new GeneBioType("b"), 1);
@@ -722,11 +733,6 @@ public class CallServiceTest extends TestAncestor {
         speciesIdToGeneIds.put(spe1.getId(), 
                 new HashSet<>(Arrays.asList(g1.getEnsemblGeneId(), g2.getEnsemblGeneId())));
         when(this.geneDAO.getGenesBySpeciesAndGeneIds(speciesIdToGeneIds)).thenReturn(geneTOResultSet);
-        configureMockGeneDAOForBioType();
-        
-        Map<Integer, Species> speciesById = new HashMap<>();
-        speciesById.put(spe1.getId(), spe1);
-        when(this.speciesService.loadSpeciesMap(new HashSet<>(Arrays.asList(1)), false)).thenReturn(speciesById);
                 
         Map<ConditionDAO.Attribute, DAOPropagationState> dataPropagation = new HashMap<>();
         dataPropagation.put(ConditionDAO.Attribute.ANAT_ENTITY_ID, DAOPropagationState.SELF);
@@ -812,9 +818,6 @@ public class CallServiceTest extends TestAncestor {
         when(this.anatEntityOnt.getAncestors(anatEntity2, false)).thenReturn(new HashSet<>());
         when(this.devStageOnt.getAncestors(devStage1, false)).thenReturn(new HashSet<>(Arrays.asList(devStage2)));
         when(this.devStageOnt.getAncestors(devStage2, false)).thenReturn(new HashSet<>());
-        
-        GlobalConditionMaxRankTO maxRankTO = new GlobalConditionMaxRankTO(new BigDecimal(100),new BigDecimal(100));
-        when(this.condDAO.getMaxRank()).thenReturn(maxRankTO);
 
         List<ExpressionCall> expectedResults = Arrays.asList(
                 new ExpressionCall(g1, cond1, 
@@ -966,7 +969,6 @@ public class CallServiceTest extends TestAncestor {
     public void shouldLoadExpressionCallsWithFiltering() {
         //More complex query
         
-        Species spe1 = new Species(1);
         GeneTO gTO1 = new GeneTO(1, "gene1", "geneName1", spe1.getId());
         Gene g1 = new Gene(gTO1.getGeneId(), gTO1.getName(), null, spe1, new GeneBioType("b"), 1);
         
@@ -1034,14 +1036,7 @@ public class CallServiceTest extends TestAncestor {
         Map<Integer, Set<String>> speciesIdToGeneIds = new HashMap<>();
         speciesIdToGeneIds.put(spe1.getId(), Collections.singleton(g1.getEnsemblGeneId()));
         when(this.geneDAO.getGenesBySpeciesAndGeneIds(speciesIdToGeneIds)).thenReturn(geneTOResultSet);
-        configureMockGeneDAOForBioType();
-        
-        Map<Integer, Species> speciesById = new HashMap<>();
-        speciesById.put(spe1.getId(), spe1);
-        when(this.speciesService.loadSpeciesMap(new HashSet<>(Arrays.asList(1)), false)).thenReturn(speciesById);
-        
-        GlobalConditionMaxRankTO maxRankTO = new GlobalConditionMaxRankTO(new BigDecimal(100),new BigDecimal(100));
-        when(this.condDAO.getMaxRank()).thenReturn(maxRankTO);
+
         ConditionTOResultSet condTOResultSet = 
                 getMockResultSet(ConditionTOResultSet.class, Arrays.asList(condTO1));
         when(this.condDAO.getGlobalConditionsBySpeciesIds(eq(Collections.singleton(spe1.getId())), 
@@ -1157,5 +1152,354 @@ public class CallServiceTest extends TestAncestor {
       eq(getAllGlobalExpressionCallDAOAttributes()),
       // ordering attributes
       eq(orderingAttrs));
+    }
+
+    /**
+     * Test the method {@link CallService#loadExpressionCalls(String, ExpressionCallFilter, 
+     * Collection, LinkedHashMap, boolean)} when quantitative expression levels are requested.
+     */
+    @SuppressWarnings("unchecked")
+    @Test
+    public void shouldLoadCallsWithQuantExprLevels() {
+        //2 genes, 2 organs, 1 stage, 2 conditions
+        GeneTO gTO1 = new GeneTO(1, "gene1", "geneName1", spe1.getId());
+        Gene g1 = new Gene(gTO1.getGeneId(), gTO1.getName(), null, spe1, new GeneBioType("b"), 1);
+        GeneTO gTO2 = new GeneTO(2, "gene2", "geneName2", spe1.getId());
+        Gene g2 = new Gene(gTO2.getGeneId(), gTO2.getName(), null, spe1, new GeneBioType("b"), 1);
+        AnatEntity anatEntity1 = new AnatEntity("anatEntity1");
+        AnatEntity anatEntity2 = new AnatEntity("anatEntity2");
+        DevStage devStage1 = new DevStage("devStage1");
+        ConditionTO condTO1 = new ConditionTO(1, anatEntity1.getId(), devStage1.getId(), spe1.getId());
+        ConditionTO condTO2 = new ConditionTO(2, anatEntity2.getId(), devStage1.getId(), spe1.getId());
+        Condition cond1 = new Condition(anatEntity1, devStage1, spe1);
+        Condition cond2 = new Condition(anatEntity2, devStage1, spe1);
+
+        //Mock services and objects
+        when(this.ontService.getAnatEntityOntology(eq(spe1.getId()), anyCollectionOf(String.class),
+                eq(EnumSet.of(RelationType.ISA_PARTOF)), eq(false), eq(false)))
+        .thenReturn(this.anatEntityOnt);
+        when(this.ontService.getDevStageOntology(spe1.getId(), new HashSet<>(Arrays.asList(
+                "stageId1")), false, false)).thenReturn(this.devStageOnt);
+        when(this.anatEntityService.loadAnatEntities(Collections.singleton(spe1.getId()), 
+                true, new HashSet<String>(Arrays.asList(
+                        anatEntity1.getId())),false))
+        .thenAnswer(
+                new Answer<Stream<AnatEntity>>() {
+                    public Stream<AnatEntity> answer(InvocationOnMock invocation) {
+                        return Stream.of(anatEntity1);
+                    }
+                });
+        when(this.anatEntityService.loadAnatEntities(Collections.singleton(spe1.getId()), 
+                true, new HashSet<String>(Arrays.asList(
+                        anatEntity1.getId(), anatEntity2.getId())),false))
+        .thenAnswer(
+                new Answer<Stream<AnatEntity>>() {
+                    public Stream<AnatEntity> answer(InvocationOnMock invocation) {
+                        return Stream.of(anatEntity1, anatEntity2);
+                    }
+                });
+        when(this.devStageService.loadDevStages(Collections.singleton(spe1.getId()), 
+                true, new HashSet<String>(Arrays.asList(
+                        devStage1.getId())),false))
+        .thenAnswer(
+                new Answer<Stream<DevStage>>() {
+                    public Stream<DevStage> answer(InvocationOnMock invocation) {
+                        return Stream.of(devStage1);
+                    }
+                });
+        when(this.anatEntityOnt.getElements()).thenReturn(new HashSet<>(Arrays.asList(anatEntity1, anatEntity2)));
+        when(this.devStageOnt.getElements()).thenReturn(new HashSet<>(Arrays.asList(devStage1)));
+        when(this.anatEntityOnt.getElement(anatEntity1.getId())).thenReturn(anatEntity1);
+        when(this.anatEntityOnt.getElement(anatEntity2.getId())).thenReturn(anatEntity2);
+        when(this.devStageOnt.getElement(devStage1.getId())).thenReturn(devStage1);
+        // No relation to not propagate calls
+        when(this.anatEntityOnt.getAncestors(anatEntity1, true)).thenReturn(new HashSet<>());
+        when(this.anatEntityOnt.getAncestors(anatEntity2, true)).thenReturn(new HashSet<>());
+        when(this.devStageOnt.getAncestors(devStage1, true)).thenReturn(new HashSet<>());
+
+        Map<Integer, Set<String>> speciesIdToGeneIds = new HashMap<>();
+        speciesIdToGeneIds.put(spe1.getId(), Collections.singleton(g1.getEnsemblGeneId()));
+        when(this.geneDAO.getGenesBySpeciesAndGeneIds(speciesIdToGeneIds)).thenAnswer(
+                new Answer<GeneTOResultSet>() {
+                    public GeneTOResultSet answer(InvocationOnMock invocation) {
+                        return getMockResultSet(GeneTOResultSet.class, Arrays.asList(
+                                new GeneTO(gTO1.getId(), gTO1.getGeneId(), gTO1.getName(), gTO1.getDescription(), gTO1.getSpeciesId(), 
+                                        1, 1, true, 1)));
+                    }
+                });
+        speciesIdToGeneIds = new HashMap<>();
+        speciesIdToGeneIds.put(spe1.getId(), new HashSet<>());
+        when(this.geneDAO.getGenesBySpeciesAndGeneIds(speciesIdToGeneIds)).thenAnswer(
+                new Answer<GeneTOResultSet>() {
+                    public GeneTOResultSet answer(InvocationOnMock invocation) {
+                        return getMockResultSet(GeneTOResultSet.class, Arrays.asList(
+                                new GeneTO(gTO1.getId(), gTO1.getGeneId(), gTO1.getName(), gTO1.getDescription(), gTO1.getSpeciesId(), 
+                                        1, 1, true, 1),
+                                new GeneTO(gTO2.getId(), gTO2.getGeneId(), gTO2.getName(), gTO2.getDescription(), gTO2.getSpeciesId(), 
+                                        1, 1, true, 1)));
+                    }
+                });
+
+        when(this.condDAO.getGlobalConditionsBySpeciesIds(Collections.singleton(spe1.getId()), 
+                EnumSet.of(ConditionDAO.Attribute.ANAT_ENTITY_ID, 
+                        ConditionDAO.Attribute.STAGE_ID),
+                EnumSet.of(ConditionDAO.Attribute.ANAT_ENTITY_ID, 
+                        ConditionDAO.Attribute.STAGE_ID, ConditionDAO.Attribute.ID,
+                        ConditionDAO.Attribute.SPECIES_ID))).thenAnswer(
+                                new Answer<ConditionTOResultSet>() {
+                                    public ConditionTOResultSet answer(InvocationOnMock invocation) {
+                                        return getMockResultSet(ConditionTOResultSet.class,
+                                                Arrays.asList(condTO1, condTO2));
+                                    }
+                                });
+
+        //To mock the returned GlobalExpressionCallTOResultSets
+        //4 calls: 2 genes in 2 organs
+        List<GlobalExpressionCallTO> callTOs = Arrays.asList(
+                //cond1: ranks from 10 to 10000
+                //cond2: ranks from 20000 to 30000
+                //gene1: ranks from 10 to 30000
+                //gene2: ranks from 10000 to 20000
+                //gene1 - cond1: gene HIGH, anat HIGH
+                //gene1 - cond2: gene LOW, anat LOW
+                //gene2 - cond1: gene HIGH, anat LOW
+                //gene2 - cond2: gene LOW, anat HIGH
+                new GlobalExpressionCallTO(1, gTO1.getId(), condTO1.getId(), 
+                        new BigDecimal("10"), null),
+                new GlobalExpressionCallTO(2, gTO1.getId(), condTO2.getId(), 
+                        new BigDecimal("30000"), null),
+                new GlobalExpressionCallTO(3, gTO2.getId(), condTO1.getId(), 
+                        new BigDecimal("10000"), null),
+                new GlobalExpressionCallTO(4, gTO2.getId(), condTO2.getId(), 
+                        new BigDecimal("20000"), null)
+                );
+        //To mock the returned min./max ranks
+        EntityMinMaxRanksTO<Integer> g1MinMax = new EntityMinMaxRanksTO<>(gTO1.getId(),
+                new BigDecimal("10"), new BigDecimal("30000"), null);
+        EntityMinMaxRanksTO<Integer> g2MinMax = new EntityMinMaxRanksTO<>(gTO2.getId(),
+                new BigDecimal("10000"), new BigDecimal("20000"), null);
+        EntityMinMaxRanksTO<String> ae1MinMax = new EntityMinMaxRanksTO<>(anatEntity1.getId(),
+                new BigDecimal("10"), new BigDecimal("10000"), null);
+        EntityMinMaxRanksTO<String> ae2MinMax = new EntityMinMaxRanksTO<>(anatEntity2.getId(),
+                new BigDecimal("20000"), new BigDecimal("30000"), null);
+
+        //Create the objects used for calling the GlobalExpressionCallDAO
+        DAOExperimentCountFilter presentLowAllCountFilter = new DAOExperimentCountFilter(
+                DAOExperimentCount.CallType.PRESENT, DAOExperimentCount.DataQuality.LOW,
+                DAOPropagationState.ALL, DAOExperimentCountFilter.Qualifier.GREATER_THAN, 0);
+        DAOExperimentCountFilter presentHighAllCountFilter = new DAOExperimentCountFilter(
+                DAOExperimentCount.CallType.PRESENT, DAOExperimentCount.DataQuality.HIGH,
+                DAOPropagationState.ALL, DAOExperimentCountFilter.Qualifier.GREATER_THAN, 0);
+        CallDataDAOFilter presentObservedDataDAOFilter = new CallDataDAOFilter(
+                new HashSet<>(Arrays.asList(
+                        new HashSet<>(Arrays.asList(presentLowAllCountFilter, presentHighAllCountFilter))
+                            )),
+                 null, true, new HashMap<>());
+
+        CallDAOFilter allObservedPresentCallDAOFilter = new CallDAOFilter(
+                null, Arrays.asList(spe1.getId()),
+                null, Arrays.asList(presentObservedDataDAOFilter));
+        CallDAOFilter oneGeneOneOrganObservedPresentCallDAOFilter = new CallDAOFilter(
+                Arrays.asList(gTO1.getId()), Arrays.asList(spe1.getId()),
+                Arrays.asList(new DAOConditionFilter(Arrays.asList(anatEntity1.getId()), null, null)),
+                Arrays.asList(presentObservedDataDAOFilter));
+        CallDAOFilter oneGeneAllOrganObservedPresentCallDAOFilter = new CallDAOFilter(
+                Arrays.asList(gTO1.getId()), Arrays.asList(spe1.getId()),
+                null,
+                Arrays.asList(presentObservedDataDAOFilter));
+        CallDAOFilter allGeneOneOrganObservedPresentCallDAOFilter = new CallDAOFilter(
+                null, Arrays.asList(spe1.getId()),
+                Arrays.asList(new DAOConditionFilter(Arrays.asList(anatEntity1.getId()), null, null)),
+                Arrays.asList(presentObservedDataDAOFilter));
+
+        Set<ConditionDAO.Attribute> allCondParams = EnumSet.of(
+                ConditionDAO.Attribute.ANAT_ENTITY_ID, ConditionDAO.Attribute.STAGE_ID);
+        Set<GlobalExpressionCallDAO.Attribute> attributes = EnumSet.of(
+                GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID,
+                GlobalExpressionCallDAO.Attribute.GLOBAL_CONDITION_ID,
+                GlobalExpressionCallDAO.Attribute.MEAN_RANK);
+        LinkedHashMap<GlobalExpressionCallDAO.OrderingAttribute, DAO.Direction> orderByGeneAttributes =
+                new LinkedHashMap<>();
+        orderByGeneAttributes.put(GlobalExpressionCallDAO.OrderingAttribute.PUBLIC_GENE_ID, DAO.Direction.ASC);
+        orderByGeneAttributes.put(GlobalExpressionCallDAO.OrderingAttribute.MEAN_RANK, DAO.Direction.ASC);
+        LinkedHashMap<GlobalExpressionCallDAO.OrderingAttribute, DAO.Direction> orderByAnatAttributes =
+                new LinkedHashMap<>();
+        orderByAnatAttributes.put(GlobalExpressionCallDAO.OrderingAttribute.ANAT_ENTITY_ID, DAO.Direction.ASC);
+        orderByAnatAttributes.put(GlobalExpressionCallDAO.OrderingAttribute.MEAN_RANK, DAO.Direction.ASC);
+
+        //Mock calls to GlobalExpressionCallDAO
+        //All calls with no ordering
+        GlobalExpressionCallTOResultSet mockCallTOResultSet = getMockResultSet(
+                GlobalExpressionCallTOResultSet.class, callTOs);
+        when(this.globalExprCallDAO.getGlobalExpressionCalls(Arrays.asList(allObservedPresentCallDAOFilter),
+                allCondParams, attributes, new LinkedHashMap<>()))
+        .thenReturn(mockCallTOResultSet);
+        //All present bronze calls order by gene and rank
+        mockCallTOResultSet = getMockResultSet(
+                GlobalExpressionCallTOResultSet.class, callTOs);
+        when(this.globalExprCallDAO.getGlobalExpressionCalls(Arrays.asList(allObservedPresentCallDAOFilter),
+                allCondParams, attributes, orderByGeneAttributes))
+        .thenReturn(mockCallTOResultSet);
+        //All present bronze calls order by anat. entity and rank
+        mockCallTOResultSet = getMockResultSet(
+                GlobalExpressionCallTOResultSet.class,
+                Arrays.asList(callTOs.get(0), callTOs.get(2), callTOs.get(1), callTOs.get(3)));
+        when(this.globalExprCallDAO.getGlobalExpressionCalls(Arrays.asList(allObservedPresentCallDAOFilter),
+                allCondParams, attributes, orderByAnatAttributes))
+        .thenReturn(mockCallTOResultSet);
+        //1 present bronze call for 1 gene in 1 organ
+        mockCallTOResultSet = getMockResultSet(
+                GlobalExpressionCallTOResultSet.class,
+                Arrays.asList(callTOs.get(0)));
+        when(this.globalExprCallDAO.getGlobalExpressionCalls(
+                Arrays.asList(oneGeneOneOrganObservedPresentCallDAOFilter),
+                allCondParams, attributes, null))
+        .thenReturn(mockCallTOResultSet);
+        //min./max rank for one gene
+        EntityMinMaxRanksTOResultSet<Integer> mockGeneMinMaxResultSet = getMockResultSet(
+                EntityMinMaxRanksTOResultSet.class, 
+                Arrays.asList(g1MinMax));
+        when(this.globalExprCallDAO.getMinMaxRanksPerGene(
+                Arrays.asList(oneGeneAllOrganObservedPresentCallDAOFilter),
+                allCondParams))
+        .thenReturn(mockGeneMinMaxResultSet);
+        //min./max rank for one organ
+        EntityMinMaxRanksTOResultSet<String> mockAnatMinMaxResultSet = getMockResultSet(
+                EntityMinMaxRanksTOResultSet.class, 
+                Arrays.asList(ae1MinMax));
+        when(this.globalExprCallDAO.getMinMaxRanksPerAnatEntity(
+                Arrays.asList(allGeneOneOrganObservedPresentCallDAOFilter),
+                allCondParams))
+        .thenReturn(mockAnatMinMaxResultSet);
+        //min./max rank for all genes
+        when(this.globalExprCallDAO.getMinMaxRanksPerGene(
+                Arrays.asList(allObservedPresentCallDAOFilter),
+                allCondParams)).thenAnswer(
+                        new Answer<EntityMinMaxRanksTOResultSet<Integer>>() {
+                            public EntityMinMaxRanksTOResultSet<Integer> answer(InvocationOnMock invocation) {
+                                return getMockResultSet(
+                                        EntityMinMaxRanksTOResultSet.class, 
+                                        Arrays.asList(g1MinMax, g2MinMax));
+                            }
+                        });
+        //min./max rank for all organs
+        when(this.globalExprCallDAO.getMinMaxRanksPerAnatEntity(
+                Arrays.asList(allObservedPresentCallDAOFilter),
+                allCondParams)).thenAnswer(
+                        new Answer<EntityMinMaxRanksTOResultSet<String>>() {
+                            public EntityMinMaxRanksTOResultSet<String> answer(InvocationOnMock invocation) {
+                                return getMockResultSet(
+                                        EntityMinMaxRanksTOResultSet.class, 
+                                        Arrays.asList(ae1MinMax, ae2MinMax));
+                            }
+                        });
+
+        //expected results
+        ExpressionCall callg1ae1 = new ExpressionCall(g1, cond1, 
+                null, null, null, null, 
+                new ExpressionLevelInfo(new BigDecimal("10"),
+                        new QualitativeExpressionLevel<Gene>(ExpressionLevelCategory.HIGH,
+                                new EntityMinMaxRanks<Gene>(
+                                        new BigDecimal("10"), new BigDecimal("30000"),
+                                        g1)),
+                        new QualitativeExpressionLevel<AnatEntity>(ExpressionLevelCategory.HIGH,
+                                new EntityMinMaxRanks<AnatEntity>(
+                                        new BigDecimal("10"), new BigDecimal("10000"),
+                                        anatEntity1))));
+        ExpressionCall callg1ae2 = new ExpressionCall(g1, cond2, 
+                null, null, null, null, 
+                new ExpressionLevelInfo(new BigDecimal("30000"),
+                        new QualitativeExpressionLevel<Gene>(ExpressionLevelCategory.LOW,
+                                new EntityMinMaxRanks<Gene>(
+                                        new BigDecimal("10"), new BigDecimal("30000"),
+                                        g1)),
+                        new QualitativeExpressionLevel<AnatEntity>(ExpressionLevelCategory.LOW,
+                                new EntityMinMaxRanks<AnatEntity>(
+                                        new BigDecimal("20000"), new BigDecimal("30000"),
+                                        anatEntity2))));
+        ExpressionCall callg2ae1 = new ExpressionCall(g2, cond1, 
+                null, null, null, null, 
+                new ExpressionLevelInfo(new BigDecimal("10000"),
+                        new QualitativeExpressionLevel<Gene>(ExpressionLevelCategory.HIGH,
+                                new EntityMinMaxRanks<Gene>(
+                                        new BigDecimal("10000"), new BigDecimal("20000"),
+                                        g1)),
+                        new QualitativeExpressionLevel<AnatEntity>(ExpressionLevelCategory.LOW,
+                                new EntityMinMaxRanks<AnatEntity>(
+                                        new BigDecimal("10"), new BigDecimal("10000"),
+                                        anatEntity1))));
+        ExpressionCall callg2ae2 = new ExpressionCall(g2, cond2, 
+                null, null, null, null, 
+                new ExpressionLevelInfo(new BigDecimal("20000"),
+                        new QualitativeExpressionLevel<Gene>(ExpressionLevelCategory.LOW,
+                                new EntityMinMaxRanks<Gene>(
+                                        new BigDecimal("10000"), new BigDecimal("20000"),
+                                        g1)),
+                        new QualitativeExpressionLevel<AnatEntity>(ExpressionLevelCategory.HIGH,
+                                new EntityMinMaxRanks<AnatEntity>(
+                                        new BigDecimal("20000"), new BigDecimal("30000"),
+                                        anatEntity1))));
+
+        CallService service = new CallService(this.serviceFactory);
+        Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
+        summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE);
+        Map<Expression, Boolean> callObservedData = new HashMap<>();
+        callObservedData.put(null, true);
+        Set<CallService.Attribute> attrs = EnumSet.of(Attribute.GENE, Attribute.ANAT_ENTITY_ID,
+                Attribute.DEV_STAGE_ID, Attribute.MEAN_RANK, Attribute.GENE_QUAL_EXPR_LEVEL,
+                Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL);
+
+        //First, test by requesting all calls without any ordering.
+        //The service should retrieve the calls, but also the min./max ranks per anat. entity
+        //and per gene. That will make 3 calls to the DAO
+        Set<ExpressionCall> actualResults = service.loadExpressionCalls(
+                new ExpressionCallFilter(summaryCallTypeQualityFilter, 
+                        Collections.singleton(new GeneFilter(spe1.getId())),
+                        null, 
+                        null, 
+                        callObservedData,
+                        null, null), 
+                attrs,
+                null)
+                .collect(Collectors.toSet());
+        assertEquals("Incorrect calls retrieved for all calls unordered query", 
+                new HashSet<>(Arrays.asList(callg1ae1, callg1ae2, callg2ae1, callg2ae2)),
+                actualResults);
+        //Verify that the DAO for min./max ranks was correctly called
+        verify(this.globalExprCallDAO, times(1)).getMinMaxRanksPerGene(
+                Arrays.asList(allObservedPresentCallDAOFilter),
+                allCondParams);
+        verify(this.globalExprCallDAO, times(1)).getMinMaxRanksPerAnatEntity(
+                Arrays.asList(allObservedPresentCallDAOFilter),
+                allCondParams);
+
+        //Now, test by requesting all calls, but ordered by genes.
+        //The service should use the calls retrieved for computing min./max ranks per gene,
+        //rather than querying the database
+        this.configureMocks();
+        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
+                new LinkedHashMap<>();
+        serviceOrdering.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
+        serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
+        List<ExpressionCall> actualResultsOrdered = service.loadExpressionCalls(
+                new ExpressionCallFilter(summaryCallTypeQualityFilter, 
+                        Collections.singleton(new GeneFilter(spe1.getId())),
+                        null, 
+                        null, 
+                        callObservedData,
+                        null, null), 
+                attrs,
+                serviceOrdering)
+                .collect(Collectors.toList());
+        assertEquals("Incorrect calls retrieved for all calls ordered query", 
+                Arrays.asList(callg1ae1, callg1ae2, callg2ae1, callg2ae2),
+                actualResultsOrdered);
+        //Verify that the DAO for min./max ranks was correctly called
+        verify(this.globalExprCallDAO, times(1)).getMinMaxRanksPerGene(
+                Arrays.asList(allObservedPresentCallDAOFilter),
+                allCondParams);
+        verify(this.globalExprCallDAO, times(2)).getMinMaxRanksPerAnatEntity(
+                Arrays.asList(allObservedPresentCallDAOFilter),
+                allCondParams);
     }
 }

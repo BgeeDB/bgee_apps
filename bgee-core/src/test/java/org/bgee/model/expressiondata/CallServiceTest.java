@@ -86,7 +86,7 @@ import org.junit.Test;
  * @since   Bgee 13, Nov. 2015
  */
 public class CallServiceTest extends TestAncestor {
-    
+
     private final static Logger log = LogManager.getLogger(CallServiceTest.class.getName());
         
     @Override
@@ -429,7 +429,8 @@ public class CallServiceTest extends TestAncestor {
                 new LinkedHashMap<>();
         serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
         
-        List<CallService.Attribute> attrs = Arrays.asList(Attribute.values());
+        Set<CallService.Attribute> attrs = EnumSet.complementOf(
+                EnumSet.of(Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL, Attribute.GENE_QUAL_EXPR_LEVEL));
         
         Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
         summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
@@ -443,7 +444,7 @@ public class CallServiceTest extends TestAncestor {
                                 new GeneFilter(g1.getSpecies().getId(), g1.getEnsemblGeneId())),
                         null, null, callObservedData,
                     null, null), 
-                attrs, // all attributes 
+                attrs,
                 serviceOrdering)
                 .collect(Collectors.toList());
 
@@ -934,7 +935,8 @@ public class CallServiceTest extends TestAncestor {
                 new LinkedHashMap<>();
         serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
         
-        List<CallService.Attribute> attrs = Arrays.asList(Attribute.values());
+        Set<CallService.Attribute> attrs = EnumSet.complementOf(
+                EnumSet.of(Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL, Attribute.GENE_QUAL_EXPR_LEVEL));
         
         CallService service = new CallService(serviceFactory);
         
@@ -945,7 +947,7 @@ public class CallServiceTest extends TestAncestor {
                                         Arrays.asList(g1.getEnsemblGeneId(), g2.getEnsemblGeneId()))),
                         null, null, callObservedData,
                     null, null), 
-                attrs, // all attributes 
+                attrs,
                 serviceOrdering)
                 .collect(Collectors.toList());
         
@@ -1171,7 +1173,8 @@ public class CallServiceTest extends TestAncestor {
         callObservedData.put(Expression.EXPRESSED, true);
         callObservedData.put(Expression.NOT_EXPRESSED, false);
         
-        List<CallService.Attribute> attrs = Arrays.asList(Attribute.values());
+        Set<CallService.Attribute> attrs = EnumSet.complementOf(
+                EnumSet.of(Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL, Attribute.GENE_QUAL_EXPR_LEVEL));
         
         CallService service = new CallService(serviceFactory);
         
@@ -1186,7 +1189,7 @@ public class CallServiceTest extends TestAncestor {
                                 DataType.EST), 
                         callObservedData,
                     null, null), 
-                attrs, // all attributes 
+                attrs,
                 serviceOrdering)
                 .collect(Collectors.toList());
         

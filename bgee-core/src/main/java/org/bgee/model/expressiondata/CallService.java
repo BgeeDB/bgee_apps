@@ -592,7 +592,8 @@ public class CallService extends CommonService {
         final Map<String, AnatEntity> idToAnatEntity = Collections.unmodifiableMap(
                 condMap.values().stream()
                 .map(c -> new AbstractMap.SimpleEntry<>(c.getAnatEntityId(), c.getAnatEntity()))
-                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue())));
+                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(),
+                        (v1, v2) -> v1)));
 
         //Perform query and map TOs to EntityMinMaxRanks
         return log.exit(this.globalExprCallDAO.getMinMaxRanksPerAnatEntity(Arrays.asList(daoFilter),
@@ -1615,7 +1616,9 @@ public class CallService extends CommonService {
             attrs == null || attrs.isEmpty() || attrs.contains(Attribute.EXPERIMENT_COUNTS) ||
                     attrs.contains(Attribute.DATA_TYPE_RANK_INFO)?
                             callData: null,
-            attrs == null || attrs.isEmpty() || attrs.contains(Attribute.MEAN_RANK)?
+            attrs == null || attrs.isEmpty() || attrs.contains(Attribute.MEAN_RANK) ||
+            attrs.contains(Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL) ||
+            attrs.contains(Attribute.GENE_QUAL_EXPR_LEVEL)?
                     loadExpressionLevelInfo(globalCallTO.getMeanRank(),
                             anatEntityMinMaxRanks == null? null:
                                 anatEntityMinMaxRanks.get(cond.getAnatEntity()),

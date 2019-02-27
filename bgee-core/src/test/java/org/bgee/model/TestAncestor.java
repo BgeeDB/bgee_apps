@@ -10,8 +10,21 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.anatdev.AnatEntityService;
+import org.bgee.model.anatdev.DevStage;
+import org.bgee.model.anatdev.DevStageService;
+import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.TransferObject;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO;
+import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
+import org.bgee.model.dao.api.gene.GeneDAO;
+import org.bgee.model.ontology.MultiSpeciesOntology;
+import org.bgee.model.ontology.Ontology;
+import org.bgee.model.ontology.OntologyService;
+import org.bgee.model.species.SpeciesService;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
@@ -161,41 +174,97 @@ public abstract class TestAncestor {
     protected static <T> Collection<T> collectionEq(Collection<T> expectedCollection) {
         return argThat(new IsCollectionEqual<>(expectedCollection));
     }
+
+
+    //attributes that will hold mock services, DAOs and complex objects
+    //Services
+    protected ServiceFactory serviceFactory;
+    protected SpeciesService speciesService;
+    protected OntologyService ontService;
+    protected AnatEntityService anatEntityService;
+    protected DevStageService devStageService;
+    //DAOs
+    protected DAOManager manager;
+    protected GlobalExpressionCallDAO globalExprCallDAO;
+    protected ConditionDAO condDAO;
+    protected GeneDAO geneDAO;
+    //Complex objects
+    protected Ontology<AnatEntity, String> anatEntityOnt;
+    protected MultiSpeciesOntology<AnatEntity, String> multiSpeAnatEntityOnt;
+    protected Ontology<DevStage, String> devStageOnt;
+    protected MultiSpeciesOntology<DevStage, String> multiSpeDevStageOnt;
+
+    /**
+     * Default Constructor. 
+     */
+    public TestAncestor() {
+        
+    }
+
+    @Before
+    //suppress warning as we cannot specify generic type for a mock
+    @SuppressWarnings("unchecked")
+    public void loadMockObjects() {
+        getLogger().entry();
+
+        //Services
+        this.serviceFactory = mock(ServiceFactory.class);
+        this.speciesService = mock(SpeciesService.class);
+        this.ontService = mock(OntologyService.class);
+        this.anatEntityService = mock(AnatEntityService.class);
+        this.devStageService = mock(DevStageService.class);
+        //DAOs
+        this.manager = mock(DAOManager.class);
+        this.globalExprCallDAO = mock(GlobalExpressionCallDAO.class);
+        this.condDAO = mock(ConditionDAO.class);
+        this.geneDAO = mock(GeneDAO.class);
+        //Complex objects
+        this.anatEntityOnt = mock(Ontology.class);
+        this.multiSpeAnatEntityOnt = mock(MultiSpeciesOntology.class);
+        this.devStageOnt = mock(Ontology.class);
+        this.multiSpeDevStageOnt = mock(MultiSpeciesOntology.class);
+
+
+        //Services
+        when(this.serviceFactory.getSpeciesService()).thenReturn(this.speciesService);
+        when(this.serviceFactory.getOntologyService()).thenReturn(this.ontService);
+        when(this.serviceFactory.getAnatEntityService()).thenReturn(this.anatEntityService);
+        when(this.serviceFactory.getDevStageService()).thenReturn(this.devStageService);
+        //DAOs
+        when(this.serviceFactory.getDAOManager()).thenReturn(this.manager);
+        when(this.manager.getGlobalExpressionCallDAO()).thenReturn(this.globalExprCallDAO);
+        when(this.manager.getConditionDAO()).thenReturn(this.condDAO);
+        when(this.manager.getGeneDAO()).thenReturn(this.geneDAO);
+
+        getLogger().exit();
+    }
+
+    /**
+     * A {@code TestWatcher} to log starting, succeeded and failed tests. 
+     */
+    @Rule
+    public TestWatcher watchman = new TestWatcher() {
+        @Override
+        protected void starting(Description description) {
+            getLogger().info("Starting test: {}", description);
+        }
+        @Override
+        protected void failed(Throwable e, Description description) {
+            if (getLogger().isErrorEnabled()) {
+                getLogger().error("Test failed: " + description, e);
+            }
+        }
+        @Override
+        protected void succeeded(Description description) {
+            getLogger().info("Test succeeded: {}", description);
+        }
+    };
     
-	/**
-	 * Default Constructor. 
-	 */
-	public TestAncestor() {
-		
-	}
-	/**
-	 * A {@code TestWatcher} to log starting, succeeded and failed tests. 
-	 */
-	@Rule
-	public TestWatcher watchman = new TestWatcher() {
-	    @Override
-	    protected void starting(Description description) {
-	    	getLogger().info("Starting test: {}", description);
-	    }
-	    @Override
-	    protected void failed(Throwable e, Description description) {
-	    	if (getLogger().isErrorEnabled()) {
-	    		getLogger().error("Test failed: " + description, e);
-	    	}
-	    }
-	    @Override
-	    protected void succeeded(Description description) {
-	    	getLogger().info("Test succeeded: {}", description);
-	    }
-	};
-	
-	/**
-	 * Return the logger of the class. 
-	 * @return 	A {@code Logger}
-	 */
-	protected Logger getLogger() {
-		 return LogManager.getLogger(this.getClass().getName());
-	}
-	
-	
+    /**
+     * Return the logger of the class. 
+     * @return     A {@code Logger}
+     */
+    protected Logger getLogger() {
+         return LogManager.getLogger(this.getClass().getName());
+    }
 }

@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyCollectionOf;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -24,14 +23,10 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
-import org.bgee.model.ServiceFactory;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.anatdev.AnatEntity;
-import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.anatdev.DevStage;
-import org.bgee.model.anatdev.DevStageService;
 import org.bgee.model.dao.api.DAO;
-import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.expressiondata.CallDAOFilter;
 import org.bgee.model.dao.api.expressiondata.CallDataDAOFilter;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
@@ -47,7 +42,6 @@ import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallDataTO;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallTOResultSet;
-import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneBioTypeTOResultSet;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneBioTypeTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
@@ -69,11 +63,8 @@ import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.gene.GeneFilter;
-import org.bgee.model.ontology.Ontology;
-import org.bgee.model.ontology.OntologyService;
 import org.bgee.model.ontology.RelationType;
 import org.bgee.model.species.Species;
-import org.bgee.model.species.SpeciesService;
 import org.junit.Test;
 
 /**
@@ -93,12 +84,13 @@ public class CallServiceTest extends TestAncestor {
     protected Logger getLogger() {
         return log;
     }
-
-    private void configureMockGeneDAOForBioType(GeneDAO geneDAO) {
-        getLogger().entry(geneDAO);
+    
+    
+    private void configureMockGeneDAOForBioType() {
+        getLogger().entry();
         GeneBioTypeTOResultSet geneBioTypeTOResultSet = getMockResultSet(GeneBioTypeTOResultSet.class,
                 Arrays.asList(new GeneBioTypeTO(1, "b")));
-        when(geneDAO.getGeneBioTypes()).thenReturn(geneBioTypeTOResultSet);
+        when(this.geneDAO.getGeneBioTypes()).thenReturn(geneBioTypeTOResultSet);
         getLogger().exit();
     }
     
@@ -110,19 +102,7 @@ public class CallServiceTest extends TestAncestor {
     @Test
     public void shouldLoadExpressionCallsForBasicGene() {
         //First test for one gene, with sub-stages but without substructures. 
-        //Retrieving all attributes, ordered by mean rank. 
-        DAOManager manager = mock(DAOManager.class);
-        ServiceFactory serviceFactory = mock(ServiceFactory.class);
-        
-        when(serviceFactory.getDAOManager()).thenReturn(manager);
-        GlobalExpressionCallDAO dao = mock(GlobalExpressionCallDAO.class);
-        when(manager.getGlobalExpressionCallDAO()).thenReturn(dao);
-        ConditionDAO condDAO = mock(ConditionDAO.class);
-        when(manager.getConditionDAO()).thenReturn(condDAO);
-        GeneDAO geneDAO = mock(GeneDAO.class);
-        when(manager.getGeneDAO()).thenReturn(geneDAO);
-        SpeciesService speciesService = mock(SpeciesService.class);
-        when(serviceFactory.getSpeciesService()).thenReturn(speciesService);
+        //Retrieving all attributes, ordered by mean rank.
         
         Species spe1 = new Species(1);
         Integer bgeeGeneId1 = 1;
@@ -234,7 +214,7 @@ public class CallServiceTest extends TestAncestor {
 
         
         //we'll do the verify afterwards, it's easier to catch a problem in the parameters
-        when(dao.getGlobalExpressionCalls(
+        when(this.globalExprCallDAO.getGlobalExpressionCalls(
                 // CallDAOFilters
                 anyCollectionOf(CallDAOFilter.class), 
                 // condition parameters
@@ -244,25 +224,13 @@ public class CallServiceTest extends TestAncestor {
                 // ordering attributes
                 anyObject()))
         .thenReturn(resultSetMock);
-        
-        OntologyService ontService = mock(OntologyService.class);
-        AnatEntityService anatEntityService = mock(AnatEntityService.class);
-        DevStageService devStageService = mock(DevStageService.class);
-        when(serviceFactory.getOntologyService()).thenReturn(ontService);
-        when(serviceFactory.getAnatEntityService()).thenReturn(anatEntityService);
-        when(serviceFactory.getDevStageService()).thenReturn(devStageService);
-        //suppress warning as we cannot specify generic type for a mock
-        @SuppressWarnings("unchecked")
-        Ontology<AnatEntity, String> anatEntityOnt = mock(Ontology.class);
-        //suppress warning as we cannot specify generic type for a mock
-        @SuppressWarnings("unchecked")
-        Ontology<DevStage, String> devStageOnt = mock(Ontology.class);
 
-        when(ontService.getAnatEntityOntology(spe1.getId(), new HashSet<>(Arrays.asList(
+
+        when(this.ontService.getAnatEntityOntology(spe1.getId(), new HashSet<>(Arrays.asList(
                 "anatEntityId1")), EnumSet.of(RelationType.ISA_PARTOF), true, false))
-        .thenReturn(anatEntityOnt);
-        when(ontService.getDevStageOntology(spe1.getId(), new HashSet<>(Arrays.asList(
-                "stageId1", "stageId2")), true, false)).thenReturn(devStageOnt);
+        .thenReturn(this.anatEntityOnt);
+        when(this.ontService.getDevStageOntology(spe1.getId(), new HashSet<>(Arrays.asList(
+                "stageId1", "stageId2")), true, false)).thenReturn(this.devStageOnt);
         String anatEntityId1 = "anatEntityId1";
         AnatEntity anatEntity1 = new AnatEntity(anatEntityId1);
         String stageId1 = "stageId1";
@@ -273,40 +241,40 @@ public class CallServiceTest extends TestAncestor {
         DevStage stage3 = new DevStage(stageId3);
         Gene g1 = new Gene("geneId1", spe1, new GeneBioType("b"));
         
-        when(anatEntityService.loadAnatEntities(Collections.singleton(spe1.getId()), 
+        when(this.anatEntityService.loadAnatEntities(Collections.singleton(spe1.getId()), 
                 true, new HashSet<String>(Arrays.asList(anatEntity1.getId())),false))
         .thenReturn(Stream.of(anatEntity1));
-        when(devStageService.loadDevStages(Collections.singleton(spe1.getId()), 
+        when(this.devStageService.loadDevStages(Collections.singleton(spe1.getId()), 
                 true, new HashSet<String>(Arrays.asList(
                         stage1.getId(), stage2.getId(), stage3.getId())),false))
         .thenReturn(Stream.of(stage1, stage2, stage3));
 
-        when(anatEntityOnt.getElements()).thenReturn(new HashSet<>(Arrays.asList(anatEntity1)));
-        when(devStageOnt.getElements()).thenReturn(new HashSet<>(Arrays.asList(stage1, stage2, stage3)));
-        when(anatEntityOnt.getElement(anatEntityId1)).thenReturn(anatEntity1);
-        when(devStageOnt.getElement(stageId1)).thenReturn(stage1);
-        when(devStageOnt.getElement(stageId2)).thenReturn(stage2);
-        when(devStageOnt.getElement(stageId3)).thenReturn(stage3);
-        when(anatEntityOnt.getAncestors(anatEntity1)).thenReturn(new HashSet<>());
-        when(devStageOnt.getAncestors(stage1)).thenReturn(new HashSet<>(Arrays.asList(stage2, stage3)));
-        when(devStageOnt.getAncestors(stage2)).thenReturn(new HashSet<>(Arrays.asList(stage3)));
-        when(devStageOnt.getAncestors(stage3)).thenReturn(new HashSet<>());
-        when(anatEntityOnt.getAncestors(anatEntity1, false)).thenReturn(new HashSet<>());
-        when(devStageOnt.getAncestors(stage1, false)).thenReturn(new HashSet<>(Arrays.asList(stage2, stage3)));
-        when(devStageOnt.getAncestors(stage2, false)).thenReturn(new HashSet<>(Arrays.asList(stage3)));
-        when(devStageOnt.getAncestors(stage3, false)).thenReturn(new HashSet<>());
+        when(this.anatEntityOnt.getElements()).thenReturn(new HashSet<>(Arrays.asList(anatEntity1)));
+        when(this.devStageOnt.getElements()).thenReturn(new HashSet<>(Arrays.asList(stage1, stage2, stage3)));
+        when(this.anatEntityOnt.getElement(anatEntityId1)).thenReturn(anatEntity1);
+        when(this.devStageOnt.getElement(stageId1)).thenReturn(stage1);
+        when(this.devStageOnt.getElement(stageId2)).thenReturn(stage2);
+        when(this.devStageOnt.getElement(stageId3)).thenReturn(stage3);
+        when(this.anatEntityOnt.getAncestors(anatEntity1)).thenReturn(new HashSet<>());
+        when(this.devStageOnt.getAncestors(stage1)).thenReturn(new HashSet<>(Arrays.asList(stage2, stage3)));
+        when(this.devStageOnt.getAncestors(stage2)).thenReturn(new HashSet<>(Arrays.asList(stage3)));
+        when(this.devStageOnt.getAncestors(stage3)).thenReturn(new HashSet<>());
+        when(this.anatEntityOnt.getAncestors(anatEntity1, false)).thenReturn(new HashSet<>());
+        when(this.devStageOnt.getAncestors(stage1, false)).thenReturn(new HashSet<>(Arrays.asList(stage2, stage3)));
+        when(this.devStageOnt.getAncestors(stage2, false)).thenReturn(new HashSet<>(Arrays.asList(stage3)));
+        when(this.devStageOnt.getAncestors(stage3, false)).thenReturn(new HashSet<>());
         
         Map<Integer, Species> speciesById = new HashMap<>();
         speciesById.put(spe1.getId(), spe1);
-        when(speciesService.loadSpeciesMap(new HashSet<>(Arrays.asList(1)), false)).thenReturn(speciesById);
+        when(this.speciesService.loadSpeciesMap(new HashSet<>(Arrays.asList(1)), false)).thenReturn(speciesById);
         
         GlobalConditionMaxRankTO maxRankTO = new GlobalConditionMaxRankTO(new BigDecimal(100),new BigDecimal(100));
-        when(condDAO.getMaxRank()).thenReturn(maxRankTO);
+        when(this.condDAO.getMaxRank()).thenReturn(maxRankTO);
         ConditionTOResultSet condTOResultSet = getMockResultSet(ConditionTOResultSet.class, Arrays.asList(
                 new ConditionTO(1, anatEntity1.getId(), stage1.getId(), spe1.getId()),
                 new ConditionTO(2, anatEntity1.getId(), stage2.getId(), spe1.getId()),
                 new ConditionTO(3, anatEntity1.getId(), stage3.getId(), spe1.getId())));
-        when(condDAO.getGlobalConditionsBySpeciesIds(eq(Collections.singleton(spe1.getId())), 
+        when(this.condDAO.getGlobalConditionsBySpeciesIds(eq(Collections.singleton(spe1.getId())), 
                 eq(new HashSet<>(Arrays.asList(ConditionDAO.Attribute.ANAT_ENTITY_ID, 
                         ConditionDAO.Attribute.STAGE_ID))),
                 anyObject())).thenReturn(condTOResultSet);
@@ -316,8 +284,8 @@ public class CallServiceTest extends TestAncestor {
                         1, 1, true, 1)));
         Map<Integer, Set<String>> speciesIdToGeneIds = new HashMap<>();
         speciesIdToGeneIds.put(spe1.getId(), Collections.singleton(g1.getEnsemblGeneId()));
-        when(geneDAO.getGenesBySpeciesAndGeneIds(speciesIdToGeneIds)).thenReturn(geneTOResultSet);
-        configureMockGeneDAOForBioType(geneDAO);
+        when(this.geneDAO.getGenesBySpeciesAndGeneIds(speciesIdToGeneIds)).thenReturn(geneTOResultSet);
+        configureMockGeneDAOForBioType();
 
 
         List<ExpressionCall> expectedResults = Arrays.asList(
@@ -437,7 +405,7 @@ public class CallServiceTest extends TestAncestor {
         Map<Expression, Boolean> callObservedData = new HashMap<>();
         callObservedData.put(Expression.EXPRESSED, true);
         callObservedData.put(Expression.NOT_EXPRESSED, false);
-        CallService service = new CallService(serviceFactory);
+        CallService service = new CallService(this.serviceFactory);
         List<ExpressionCall> actualResults = service.loadExpressionCalls(
                 new ExpressionCallFilter(summaryCallTypeQualityFilter, 
                         Collections.singleton(
@@ -454,7 +422,7 @@ public class CallServiceTest extends TestAncestor {
                 new LinkedHashMap<>();
         orderingAttrs.put(GlobalExpressionCallDAO.OrderingAttribute.MEAN_RANK, DAO.Direction.ASC);
         
-        verify(dao).getGlobalExpressionCalls(
+        verify(this.globalExprCallDAO).getGlobalExpressionCalls(
                 //CallDAOFilters
                 anyObject(), 
                 // condition parameters
@@ -471,13 +439,10 @@ public class CallServiceTest extends TestAncestor {
 //    @Test
 //    @Ignore("Test ignored until it is re-implemented following many modifications.")
 //    public void shouldLoadExpressionCallsForTwoExpressionSummary() {
-//        DAOManager manager = mock(DAOManager.class);
-//        ServiceFactory serviceFactory = mock(ServiceFactory.class);
-//        when(serviceFactory.getDAOManager()).thenReturn(manager);
 //        ExpressionCallDAO exprDao = mock(ExpressionCallDAO.class);
-//        when(manager.getExpressionCallDAO()).thenReturn(exprDao);
+//        when(this.manager.getExpressionCallDAO()).thenReturn(exprDao);
 //        NoExpressionCallDAO noExprDao = mock(NoExpressionCallDAO.class);
-//        when(manager.getNoExpressionCallDAO()).thenReturn(noExprDao);
+//        when(this.manager.getNoExpressionCallDAO()).thenReturn(noExprDao);
 //        
 //        LinkedHashMap<ExpressionCallDAO.OrderingAttribute, DAO.Direction> orderingAttrs = 
 //                new LinkedHashMap<>();
@@ -537,24 +502,11 @@ public class CallServiceTest extends TestAncestor {
 //        when(noExprDao.getNoExpressionCalls(anyObject())) //NoExpressionCallParams
 //        .thenReturn(resultSetNoExprMock);
 //
-//        OntologyService ontService = mock(OntologyService.class);
-//        AnatEntityService anatEntityService = mock(AnatEntityService.class);
-//        DevStageService devStageService = mock(DevStageService.class);
-//        when(serviceFactory.getOntologyService()).thenReturn(ontService);
-//        when(serviceFactory.getAnatEntityService()).thenReturn(anatEntityService);
-//        when(serviceFactory.getDevStageService()).thenReturn(devStageService);
-//        //suppress warning as we cannot specify generic type for a mock
-//        @SuppressWarnings("unchecked")
-//        MultiSpeciesOntology<AnatEntity, String> anatEntityOnt = mock(MultiSpeciesOntology.class);
-//        //suppress warning as we cannot specify generic type for a mock
-//        @SuppressWarnings("unchecked")
-//        MultiSpeciesOntology<DevStage, String> devStageOnt = mock(MultiSpeciesOntology.class);
-//
-//        when(ontService.getAnatEntityOntology(Arrays.asList(1), new HashSet<>(Arrays.asList(
+//        when(this.ontService.getAnatEntityOntology(Arrays.asList(1), new HashSet<>(Arrays.asList(
 //                "anatEntityId1", "anatEntityId2")), EnumSet.of(RelationType.ISA_PARTOF), true, false))
-//        .thenReturn(anatEntityOnt);
-//        when(ontService.getDevStageOntology(Arrays.asList(1), new HashSet<>(Arrays.asList(
-//                "stageId1", "stageId2")), true, false)).thenReturn(devStageOnt);
+//        .thenReturn(this.multiSpeAnatEntityOnt);
+//        when(this.ontService.getDevStageOntology(Arrays.asList(1), new HashSet<>(Arrays.asList(
+//                "stageId1", "stageId2")), true, false)).thenReturn(this.multiSpeDevStageOnt);
 //        String anatEntityId1 = "anatEntityId1";
 //        AnatEntity anatEntity1 = new AnatEntity(anatEntityId1);
 //        String anatEntityId2 = "anatEntityId2";
@@ -566,26 +518,26 @@ public class CallServiceTest extends TestAncestor {
 //        String stageId3 = "stageId3";
 //        DevStage stage3 = new DevStage(stageId3);
 //
-//        when(anatEntityOnt.getElements()).thenReturn(new HashSet<>(Arrays.asList(anatEntity1, anatEntity2)));
-//        when(anatEntityOnt.getElement(anatEntityId1)).thenReturn(anatEntity1);
-//        when(anatEntityOnt.getElement(anatEntityId2)).thenReturn(anatEntity2);
-//        when(anatEntityOnt.getAncestors(anatEntity1)).thenReturn(new HashSet<>());
-//        when(anatEntityOnt.getAncestors(anatEntity1, false)).thenReturn(new HashSet<>());
-//        when(anatEntityOnt.getAncestors(anatEntity2)).thenReturn(new HashSet<>(Arrays.asList(anatEntity1)));
-//        when(anatEntityOnt.getAncestors(anatEntity2, false)).thenReturn(new HashSet<>(Arrays.asList(anatEntity1)));
-//        when(anatEntityOnt.getDescendants(anatEntity1)).thenReturn(new HashSet<>(Arrays.asList(anatEntity2)));
-//        when(anatEntityOnt.getDescendants(anatEntity1, false)).thenReturn(new HashSet<>(Arrays.asList(anatEntity2)));
+//        when(this.multiSpeAnatEntityOnt.getElements()).thenReturn(new HashSet<>(Arrays.asList(anatEntity1, anatEntity2)));
+//        when(this.multiSpeAnatEntityOnt.getElement(anatEntityId1)).thenReturn(anatEntity1);
+//        when(this.multiSpeAnatEntityOnt.getElement(anatEntityId2)).thenReturn(anatEntity2);
+//        when(this.multiSpeAnatEntityOnt.getAncestors(anatEntity1)).thenReturn(new HashSet<>());
+//        when(this.multiSpeAnatEntityOnt.getAncestors(anatEntity1, false)).thenReturn(new HashSet<>());
+//        when(this.multiSpeAnatEntityOnt.getAncestors(anatEntity2)).thenReturn(new HashSet<>(Arrays.asList(anatEntity1)));
+//        when(this.multiSpeAnatEntityOnt.getAncestors(anatEntity2, false)).thenReturn(new HashSet<>(Arrays.asList(anatEntity1)));
+//        when(this.multiSpeAnatEntityOnt.getDescendants(anatEntity1)).thenReturn(new HashSet<>(Arrays.asList(anatEntity2)));
+//        when(this.multiSpeAnatEntityOnt.getDescendants(anatEntity1, false)).thenReturn(new HashSet<>(Arrays.asList(anatEntity2)));
 //
-//        when(devStageOnt.getElements()).thenReturn(new HashSet<>(Arrays.asList(stage1, stage2, stage3)));
-//        when(devStageOnt.getElement(stageId1)).thenReturn(stage1);
-//        when(devStageOnt.getElement(stageId2)).thenReturn(stage2);
-//        when(devStageOnt.getElement(stageId3)).thenReturn(stage3);
-//        when(devStageOnt.getAncestors(stage1)).thenReturn(new HashSet<>(Arrays.asList(stage2, stage3)));
-//        when(devStageOnt.getAncestors(stage2)).thenReturn(new HashSet<>(Arrays.asList(stage3)));
-//        when(devStageOnt.getAncestors(stage3)).thenReturn(new HashSet<>());
-//        when(devStageOnt.getAncestors(stage1, false)).thenReturn(new HashSet<>(Arrays.asList(stage2, stage3)));
-//        when(devStageOnt.getAncestors(stage2, false)).thenReturn(new HashSet<>(Arrays.asList(stage3)));
-//        when(devStageOnt.getAncestors(stage3, false)).thenReturn(new HashSet<>());
+//        when(this.multiSpeDevStageOnt.getElements()).thenReturn(new HashSet<>(Arrays.asList(stage1, stage2, stage3)));
+//        when(this.multiSpeDevStageOnt.getElement(stageId1)).thenReturn(stage1);
+//        when(this.multiSpeDevStageOnt.getElement(stageId2)).thenReturn(stage2);
+//        when(this.multiSpeDevStageOnt.getElement(stageId3)).thenReturn(stage3);
+//        when(this.multiSpeDevStageOnt.getAncestors(stage1)).thenReturn(new HashSet<>(Arrays.asList(stage2, stage3)));
+//        when(this.multiSpeDevStageOnt.getAncestors(stage2)).thenReturn(new HashSet<>(Arrays.asList(stage3)));
+//        when(this.multiSpeDevStageOnt.getAncestors(stage3)).thenReturn(new HashSet<>());
+//        when(this.multiSpeDevStageOnt.getAncestors(stage1, false)).thenReturn(new HashSet<>(Arrays.asList(stage2, stage3)));
+//        when(this.multiSpeDevStageOnt.getAncestors(stage2, false)).thenReturn(new HashSet<>(Arrays.asList(stage3)));
+//        when(this.multiSpeDevStageOnt.getAncestors(stage3, false)).thenReturn(new HashSet<>());
 //
 //        List<ExpressionCall> expectedResults = Arrays.asList(
 //            new ExpressionCall("geneId1", new Condition("anatEntityId1", "stageId1", "speciesId1"), 
@@ -705,7 +657,7 @@ public class CallServiceTest extends TestAncestor {
 //        serviceOrdering.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.ASC);
 //        
 //
-//        CallService service = new CallService(serviceFactory);
+//        CallService service = new CallService(this.serviceFactory);
 //        List<ExpressionCall> actualResults = service.loadExpressionCalls("speciesId1", 
 //                new ExpressionCallFilter(null, null, null, null, null, new DataPropagation()),
 //                null, // all attributes 
@@ -742,18 +694,7 @@ public class CallServiceTest extends TestAncestor {
     // it allows to detect if all calls are read when only one query has calls
     @Test
     public void shouldLoadExpressionCallsForSeveralGenes() {
-        //Retrieving geneId, anatEntityId, unordered, with substructures but without sub-stages. 
-        DAOManager manager = mock(DAOManager.class);
-        ServiceFactory serviceFactory = mock(ServiceFactory.class);
-        when(serviceFactory.getDAOManager()).thenReturn(manager);
-        SpeciesService speciesService = mock(SpeciesService.class);
-        when(serviceFactory.getSpeciesService()).thenReturn(speciesService);
-        GlobalExpressionCallDAO dao = mock(GlobalExpressionCallDAO.class);
-        when(manager.getGlobalExpressionCallDAO()).thenReturn(dao);
-        GeneDAO geneDAO = mock(GeneDAO.class);
-        when(manager.getGeneDAO()).thenReturn(geneDAO);
-        ConditionDAO condDAO = mock(ConditionDAO.class);
-        when(manager.getConditionDAO()).thenReturn(condDAO);
+        //Retrieving geneId, anatEntityId, unordered, with substructures but without sub-stages.
         
         Species spe1 = new Species(1);
         GeneTO gTO1 = new GeneTO(1, "gene1", "geneName1", spe1.getId());
@@ -780,12 +721,12 @@ public class CallServiceTest extends TestAncestor {
         Map<Integer, Set<String>> speciesIdToGeneIds = new HashMap<>();
         speciesIdToGeneIds.put(spe1.getId(), 
                 new HashSet<>(Arrays.asList(g1.getEnsemblGeneId(), g2.getEnsemblGeneId())));
-        when(geneDAO.getGenesBySpeciesAndGeneIds(speciesIdToGeneIds)).thenReturn(geneTOResultSet);
-        configureMockGeneDAOForBioType(geneDAO);
+        when(this.geneDAO.getGenesBySpeciesAndGeneIds(speciesIdToGeneIds)).thenReturn(geneTOResultSet);
+        configureMockGeneDAOForBioType();
         
         Map<Integer, Species> speciesById = new HashMap<>();
         speciesById.put(spe1.getId(), spe1);
-        when(speciesService.loadSpeciesMap(new HashSet<>(Arrays.asList(1)), false)).thenReturn(speciesById);
+        when(this.speciesService.loadSpeciesMap(new HashSet<>(Arrays.asList(1)), false)).thenReturn(speciesById);
                 
         Map<ConditionDAO.Attribute, DAOPropagationState> dataPropagation = new HashMap<>();
         dataPropagation.put(ConditionDAO.Attribute.ANAT_ENTITY_ID, DAOPropagationState.SELF);
@@ -794,7 +735,7 @@ public class CallServiceTest extends TestAncestor {
                 new ConditionTO(1, anatEntity1.getId(), devStage1.getId(), spe1.getId()),
                 new ConditionTO(2, anatEntity1.getId(), devStage2.getId(), spe1.getId()),
                 new ConditionTO(3, anatEntity2.getId(), devStage1.getId(), spe1.getId())));
-        when(condDAO.getGlobalConditionsBySpeciesIds(eq(Collections.singleton(spe1.getId())), 
+        when(this.condDAO.getGlobalConditionsBySpeciesIds(eq(Collections.singleton(spe1.getId())), 
                 eq(new HashSet<>(Arrays.asList(ConditionDAO.Attribute.ANAT_ENTITY_ID, 
                         ConditionDAO.Attribute.STAGE_ID))),
                 anyObject())).thenReturn(condTOResultSet);
@@ -830,7 +771,7 @@ public class CallServiceTest extends TestAncestor {
                                                 0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77)))))));
 
         //we'll do the verify afterwards, it's easier to catch a problem in the parameters
-        when(dao.getGlobalExpressionCalls(
+        when(this.globalExprCallDAO.getGlobalExpressionCalls(
                 // CallDAOFilters
                 anyCollectionOf(CallDAOFilter.class), 
                 // condition parameters
@@ -840,53 +781,40 @@ public class CallServiceTest extends TestAncestor {
                 // ordering attributes
                 anyObject()))
         .thenReturn(resultSetMock);
-        
-        OntologyService ontService = mock(OntologyService.class);
-        AnatEntityService anatEntityService = mock(AnatEntityService.class);
-        DevStageService devStageService = mock(DevStageService.class);
-        when(serviceFactory.getOntologyService()).thenReturn(ontService);
-        when(serviceFactory.getAnatEntityService()).thenReturn(anatEntityService);
-        when(serviceFactory.getDevStageService()).thenReturn(devStageService);
-        //suppress warning as we cannot specify generic type for a mock
-        @SuppressWarnings("unchecked")
-        Ontology<AnatEntity, String> anatEntityOnt = mock(Ontology.class);
-        //suppress warning as we cannot specify generic type for a mock
-        @SuppressWarnings("unchecked")
-        Ontology<DevStage, String> devStageOnt = mock(Ontology.class);
 
-        when(ontService.getAnatEntityOntology(spe1.getId(), Arrays.asList(
+        when(this.ontService.getAnatEntityOntology(spe1.getId(), Arrays.asList(
                 anatEntity1.getId(), anatEntity2.getId()), 
                 EnumSet.of(RelationType.ISA_PARTOF), true, false))
-            .thenReturn(anatEntityOnt);
-        when(ontService.getDevStageOntology(spe1.getId(), Arrays.asList(
-                devStage1.getId(), devStage2.getId()), true, false)).thenReturn(devStageOnt);
+            .thenReturn(this.anatEntityOnt);
+        when(this.ontService.getDevStageOntology(spe1.getId(), Arrays.asList(
+                devStage1.getId(), devStage2.getId()), true, false)).thenReturn(this.devStageOnt);
         
-        when(anatEntityService.loadAnatEntities(Collections.singleton(spe1.getId()), 
+        when(this.anatEntityService.loadAnatEntities(Collections.singleton(spe1.getId()), 
                 true, new HashSet<String>(Arrays.asList(
                         anatEntity1.getId(), anatEntity2.getId())),false))
         .thenReturn(Stream.of(anatEntity1, anatEntity2));
-        when(devStageService.loadDevStages(Collections.singleton(spe1.getId()), 
+        when(this.devStageService.loadDevStages(Collections.singleton(spe1.getId()), 
                 true, new HashSet<String>(Arrays.asList(
                         devStage1.getId(), devStage2.getId())),false))
         .thenReturn(Stream.of(devStage1, devStage2));
 
-        when(anatEntityOnt.getElements()).thenReturn(new HashSet<>(Arrays.asList(anatEntity1, anatEntity2)));
-        when(devStageOnt.getElements()).thenReturn(new HashSet<>(Arrays.asList(devStage1, devStage2)));
-        when(anatEntityOnt.getElement(anatEntity1.getId())).thenReturn(anatEntity1);
-        when(anatEntityOnt.getElement(anatEntity2.getId())).thenReturn(anatEntity2);
-        when(devStageOnt.getElement(devStage1.getId())).thenReturn(devStage1);
-        when(devStageOnt.getElement(devStage2.getId())).thenReturn(devStage2);
-        when(anatEntityOnt.getAncestors(anatEntity1)).thenReturn(new HashSet<>(Arrays.asList(anatEntity2)));
-        when(anatEntityOnt.getAncestors(anatEntity2)).thenReturn(new HashSet<>());
-        when(devStageOnt.getAncestors(devStage1)).thenReturn(new HashSet<>(Arrays.asList(devStage2)));
-        when(devStageOnt.getAncestors(devStage2)).thenReturn(new HashSet<>());
-        when(anatEntityOnt.getAncestors(anatEntity1, false)).thenReturn(new HashSet<>(Arrays.asList(anatEntity2)));
-        when(anatEntityOnt.getAncestors(anatEntity2, false)).thenReturn(new HashSet<>());
-        when(devStageOnt.getAncestors(devStage1, false)).thenReturn(new HashSet<>(Arrays.asList(devStage2)));
-        when(devStageOnt.getAncestors(devStage2, false)).thenReturn(new HashSet<>());
+        when(this.anatEntityOnt.getElements()).thenReturn(new HashSet<>(Arrays.asList(anatEntity1, anatEntity2)));
+        when(this.devStageOnt.getElements()).thenReturn(new HashSet<>(Arrays.asList(devStage1, devStage2)));
+        when(this.anatEntityOnt.getElement(anatEntity1.getId())).thenReturn(anatEntity1);
+        when(this.anatEntityOnt.getElement(anatEntity2.getId())).thenReturn(anatEntity2);
+        when(this.devStageOnt.getElement(devStage1.getId())).thenReturn(devStage1);
+        when(this.devStageOnt.getElement(devStage2.getId())).thenReturn(devStage2);
+        when(this.anatEntityOnt.getAncestors(anatEntity1)).thenReturn(new HashSet<>(Arrays.asList(anatEntity2)));
+        when(this.anatEntityOnt.getAncestors(anatEntity2)).thenReturn(new HashSet<>());
+        when(this.devStageOnt.getAncestors(devStage1)).thenReturn(new HashSet<>(Arrays.asList(devStage2)));
+        when(this.devStageOnt.getAncestors(devStage2)).thenReturn(new HashSet<>());
+        when(this.anatEntityOnt.getAncestors(anatEntity1, false)).thenReturn(new HashSet<>(Arrays.asList(anatEntity2)));
+        when(this.anatEntityOnt.getAncestors(anatEntity2, false)).thenReturn(new HashSet<>());
+        when(this.devStageOnt.getAncestors(devStage1, false)).thenReturn(new HashSet<>(Arrays.asList(devStage2)));
+        when(this.devStageOnt.getAncestors(devStage2, false)).thenReturn(new HashSet<>());
         
         GlobalConditionMaxRankTO maxRankTO = new GlobalConditionMaxRankTO(new BigDecimal(100),new BigDecimal(100));
-        when(condDAO.getMaxRank()).thenReturn(maxRankTO);
+        when(this.condDAO.getMaxRank()).thenReturn(maxRankTO);
 
         List<ExpressionCall> expectedResults = Arrays.asList(
                 new ExpressionCall(g1, cond1, 
@@ -938,7 +866,7 @@ public class CallServiceTest extends TestAncestor {
         Set<CallService.Attribute> attrs = EnumSet.complementOf(
                 EnumSet.of(Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL, Attribute.GENE_QUAL_EXPR_LEVEL));
         
-        CallService service = new CallService(serviceFactory);
+        CallService service = new CallService(this.serviceFactory);
         
         List<ExpressionCall> actualResults = service.loadExpressionCalls(
                 new ExpressionCallFilter(summaryCallTypeQualityFilter, 
@@ -958,7 +886,7 @@ public class CallServiceTest extends TestAncestor {
                 new LinkedHashMap<>();
         orderingAttrs.put(GlobalExpressionCallDAO.OrderingAttribute.MEAN_RANK, DAO.Direction.ASC);
         
-        verify(dao).getGlobalExpressionCalls(
+        verify(this.globalExprCallDAO).getGlobalExpressionCalls(
                 //CallDAOFilters
         eq(Arrays.asList(
                 new CallDAOFilter(new HashSet<>(Arrays.asList(1, 2)), new HashSet<>(), null, 
@@ -1037,11 +965,6 @@ public class CallServiceTest extends TestAncestor {
     @Test
     public void shouldLoadExpressionCallsWithFiltering() {
         //More complex query
-        DAOManager manager = mock(DAOManager.class);
-        ServiceFactory serviceFactory = mock(ServiceFactory.class);
-        when(serviceFactory.getDAOManager()).thenReturn(manager);
-        GlobalExpressionCallDAO dao = mock(GlobalExpressionCallDAO.class);
-        when(manager.getGlobalExpressionCallDAO()).thenReturn(dao);
         
         Species spe1 = new Species(1);
         GeneTO gTO1 = new GeneTO(1, "gene1", "geneName1", spe1.getId());
@@ -1071,7 +994,7 @@ public class CallServiceTest extends TestAncestor {
                         ));
         
         //we'll do the verify afterwards, it's easier to catch a problem in the parameters
-        when(dao.getGlobalExpressionCalls(
+        when(this.globalExprCallDAO.getGlobalExpressionCalls(
                 // CallDAOFilters
                 anyCollectionOf(CallDAOFilter.class), 
                 // condition parameters
@@ -1081,67 +1004,47 @@ public class CallServiceTest extends TestAncestor {
                 // ordering attributes
                 anyObject()))
         .thenReturn(resultSetMock);
-        
-        OntologyService ontService = mock(OntologyService.class);
-        AnatEntityService anatEntityService = mock(AnatEntityService.class);
-        DevStageService devStageService = mock(DevStageService.class);
-        when(serviceFactory.getOntologyService()).thenReturn(ontService);
-        when(serviceFactory.getAnatEntityService()).thenReturn(anatEntityService);
-        when(serviceFactory.getDevStageService()).thenReturn(devStageService);
-        //suppress warning as we cannot specify generic type for a mock
-        @SuppressWarnings("unchecked")
-        Ontology<AnatEntity, String> anatEntityOnt = mock(Ontology.class);
-        //suppress warning as we cannot specify generic type for a mock
-        @SuppressWarnings("unchecked")
-        Ontology<DevStage, String> devStageOnt = mock(Ontology.class);
 
-        when(ontService.getAnatEntityOntology(spe1.getId(), new HashSet<>(Arrays.asList(
+        when(this.ontService.getAnatEntityOntology(spe1.getId(), new HashSet<>(Arrays.asList(
                 "anatEntityId1")), EnumSet.of(RelationType.ISA_PARTOF), false, false))
-        .thenReturn(anatEntityOnt);
-        when(ontService.getDevStageOntology(spe1.getId(), new HashSet<>(Arrays.asList(
-                "stageId1", "stageId2")), false, false)).thenReturn(devStageOnt);
+        .thenReturn(this.anatEntityOnt);
+        when(this.ontService.getDevStageOntology(spe1.getId(), new HashSet<>(Arrays.asList(
+                "stageId1", "stageId2")), false, false)).thenReturn(this.devStageOnt);
         
-        when(anatEntityService.loadAnatEntities(Collections.singleton(spe1.getId()), 
+        when(this.anatEntityService.loadAnatEntities(Collections.singleton(spe1.getId()), 
                 true, new HashSet<String>(Arrays.asList(
                         anatEntity1.getId())),false))
         .thenReturn(Stream.of(anatEntity1));
-        when(devStageService.loadDevStages(Collections.singleton(spe1.getId()), 
+        when(this.devStageService.loadDevStages(Collections.singleton(spe1.getId()), 
                 true, new HashSet<String>(Arrays.asList(
                         devStage1.getId())),false))
         .thenReturn(Stream.of(devStage1));
 
-        when(anatEntityOnt.getElements()).thenReturn(new HashSet<>(Arrays.asList(anatEntity1)));
-        when(devStageOnt.getElements()).thenReturn(new HashSet<>(Arrays.asList(devStage1)));
-        when(anatEntityOnt.getElement(anatEntity1.getId())).thenReturn(anatEntity1);
-        when(devStageOnt.getElement(devStage1.getId())).thenReturn(devStage1);
+        when(this.anatEntityOnt.getElements()).thenReturn(new HashSet<>(Arrays.asList(anatEntity1)));
+        when(this.devStageOnt.getElements()).thenReturn(new HashSet<>(Arrays.asList(devStage1)));
+        when(this.anatEntityOnt.getElement(anatEntity1.getId())).thenReturn(anatEntity1);
+        when(this.devStageOnt.getElement(devStage1.getId())).thenReturn(devStage1);
         // No relation to not propagate calls
-        when(anatEntityOnt.getAncestors(anatEntity1, true)).thenReturn(new HashSet<>());
-        when(devStageOnt.getAncestors(devStage1, true)).thenReturn(new HashSet<>());
-        
-        SpeciesService speciesService = mock(SpeciesService.class);
-        when(serviceFactory.getSpeciesService()).thenReturn(speciesService);
-        ConditionDAO condDAO = mock(ConditionDAO.class);
-        when(manager.getConditionDAO()).thenReturn(condDAO);
-        
-        GeneDAO geneDAO = mock(GeneDAO.class);
-        when(manager.getGeneDAO()).thenReturn(geneDAO);
+        when(this.anatEntityOnt.getAncestors(anatEntity1, true)).thenReturn(new HashSet<>());
+        when(this.devStageOnt.getAncestors(devStage1, true)).thenReturn(new HashSet<>());
+
         GeneTOResultSet geneTOResultSet = getMockResultSet(GeneTOResultSet.class, Arrays.asList(
                 new GeneTO(1, g1.getEnsemblGeneId(), g1.getName(), g1.getDescription(), g1.getSpecies().getId(), 
                         1, 1, true, 1)));
         Map<Integer, Set<String>> speciesIdToGeneIds = new HashMap<>();
         speciesIdToGeneIds.put(spe1.getId(), Collections.singleton(g1.getEnsemblGeneId()));
-        when(geneDAO.getGenesBySpeciesAndGeneIds(speciesIdToGeneIds)).thenReturn(geneTOResultSet);
-        configureMockGeneDAOForBioType(geneDAO);
+        when(this.geneDAO.getGenesBySpeciesAndGeneIds(speciesIdToGeneIds)).thenReturn(geneTOResultSet);
+        configureMockGeneDAOForBioType();
         
         Map<Integer, Species> speciesById = new HashMap<>();
         speciesById.put(spe1.getId(), spe1);
-        when(speciesService.loadSpeciesMap(new HashSet<>(Arrays.asList(1)), false)).thenReturn(speciesById);
+        when(this.speciesService.loadSpeciesMap(new HashSet<>(Arrays.asList(1)), false)).thenReturn(speciesById);
         
         GlobalConditionMaxRankTO maxRankTO = new GlobalConditionMaxRankTO(new BigDecimal(100),new BigDecimal(100));
-        when(condDAO.getMaxRank()).thenReturn(maxRankTO);
+        when(this.condDAO.getMaxRank()).thenReturn(maxRankTO);
         ConditionTOResultSet condTOResultSet = 
                 getMockResultSet(ConditionTOResultSet.class, Arrays.asList(condTO1));
-        when(condDAO.getGlobalConditionsBySpeciesIds(eq(Collections.singleton(spe1.getId())), 
+        when(this.condDAO.getGlobalConditionsBySpeciesIds(eq(Collections.singleton(spe1.getId())), 
                 eq(new HashSet<>(Arrays.asList(ConditionDAO.Attribute.ANAT_ENTITY_ID, 
                         ConditionDAO.Attribute.STAGE_ID))),
                 anyObject())).thenReturn(condTOResultSet);
@@ -1176,7 +1079,7 @@ public class CallServiceTest extends TestAncestor {
         Set<CallService.Attribute> attrs = EnumSet.complementOf(
                 EnumSet.of(Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL, Attribute.GENE_QUAL_EXPR_LEVEL));
         
-        CallService service = new CallService(serviceFactory);
+        CallService service = new CallService(this.serviceFactory);
         
         List<ExpressionCall> actualResults = service.loadExpressionCalls(
                 new ExpressionCallFilter(summaryCallTypeQualityFilter, 
@@ -1200,7 +1103,7 @@ public class CallServiceTest extends TestAncestor {
                 new LinkedHashMap<>();
         orderingAttrs.put(GlobalExpressionCallDAO.OrderingAttribute.MEAN_RANK, DAO.Direction.ASC);
         
-        verify(dao).getGlobalExpressionCalls(
+        verify(this.globalExprCallDAO).getGlobalExpressionCalls(
         //CallDAOFilters
         eq(Arrays.asList(
               new CallDAOFilter(new HashSet<>(Arrays.asList(1)), new HashSet<>(), 

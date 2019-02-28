@@ -1,5 +1,7 @@
 package org.bgee.model;
 
+import java.util.Comparator;
+
 /**
  * Parent class of all classes corresponding to real entities in the Bgee database. 
  * For instance, a {@code Gene}, a {@code Species}, 
@@ -14,8 +16,14 @@ package org.bgee.model;
  * 
  * @param <T> The type of ID of this {@code Entity}
  */
-//TODO: use Parametric class to specify whether ID is a String or a Integer. Same in NamedEntity.
 public abstract class Entity<T extends Comparable<T>> {
+    /**
+     * A {@code Comparator} for {@code Entity}s. Sort {@code Entity}s based on their ID
+     * ({@code null} IDs sorted last).
+     */
+    public static Comparator<Entity<?>> COMPARATOR = Comparator
+            .comparing(e -> e.getId(), Comparator.nullsLast(Comparator.naturalOrder()));
+
 	/**
 	 * @see #getId()
 	 */

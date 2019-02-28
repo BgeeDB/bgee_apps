@@ -1,5 +1,7 @@
 package org.bgee.model.gene;
 
+import java.util.Comparator;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,7 +24,14 @@ import org.bgee.model.species.Species;
 //as we sometimes use genomes of closely-related species.
 public class Gene {
     private final static Logger log = LogManager.getLogger(Gene.class.getName());
-    
+
+    /**
+     * A {@code Comparator} for {@code Gene}s. Sort {@code Gene}s based on their species ID first
+     * ({@code null} species ID sorted last), then comparing their Ensembl gene ID ({@code null} values sorted last).
+     */
+    public static Comparator<Gene> COMPARATOR = Comparator
+            .<Gene, Integer>comparing(g -> g.getSpecies().getId(), Comparator.nullsLast(Comparator.naturalOrder()))
+            .thenComparing(g -> g.getEnsemblGeneId(), Comparator.nullsLast(Comparator.naturalOrder()));
     /**
      * A {@code String} that is the Ensembl gene ID.
      */

@@ -82,7 +82,7 @@ import org.mockito.stubbing.Answer;
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @author  Julien Wollbrett
- * @version Bgee 14, Aug. 2018
+ * @version Bgee 14, Feb. 2019
  * @since   Bgee 13, Nov. 2015
  */
 public class CallServiceTest extends TestAncestor {
@@ -1300,11 +1300,11 @@ public class CallServiceTest extends TestAncestor {
                 null, Arrays.asList(spe1.getId()),
                 null, Arrays.asList(presentObservedDataDAOFilter));
         CallDAOFilter oneGeneOneOrganObservedPresentCallDAOFilter = new CallDAOFilter(
-                Arrays.asList(gTO1.getId()), Arrays.asList(spe1.getId()),
+                Arrays.asList(gTO1.getId()), Arrays.asList(),
                 Arrays.asList(new DAOConditionFilter(Arrays.asList(anatEntity1.getId()), null, null)),
                 Arrays.asList(presentObservedDataDAOFilter));
         CallDAOFilter oneGeneAllOrganObservedPresentCallDAOFilter = new CallDAOFilter(
-                Arrays.asList(gTO1.getId()), Arrays.asList(spe1.getId()),
+                Arrays.asList(gTO1.getId()), Arrays.asList(),
                 null,
                 Arrays.asList(presentObservedDataDAOFilter));
         CallDAOFilter allGeneOneOrganObservedPresentCallDAOFilter = new CallDAOFilter(
@@ -1353,7 +1353,7 @@ public class CallServiceTest extends TestAncestor {
                 Arrays.asList(callTOs.get(0)));
         when(this.globalExprCallDAO.getGlobalExpressionCalls(
                 Arrays.asList(oneGeneOneOrganObservedPresentCallDAOFilter),
-                allCondParams, attributes, null))
+                allCondParams, attributes, orderByGeneAttributes))
         .thenReturn(mockCallTOResultSet);
         //min./max rank for one gene
         EntityMinMaxRanksTOResultSet<Integer> mockGeneMinMaxResultSet = getMockResultSet(
@@ -1475,7 +1475,7 @@ public class CallServiceTest extends TestAncestor {
 
         //Now, test by requesting all calls, but ordered by genes.
         //The service should use the calls retrieved for computing min./max ranks per gene,
-        //rather than querying the database
+        //rather than querying the database, and querying the database for min./max ranks per anat. entity
         this.configureMocks();
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
                 new LinkedHashMap<>();
@@ -1500,6 +1500,62 @@ public class CallServiceTest extends TestAncestor {
                 allCondParams);
         verify(this.globalExprCallDAO, times(2)).getMinMaxRanksPerAnatEntity(
                 Arrays.asList(allObservedPresentCallDAOFilter),
+                allCondParams);
+
+        //Now, test by requesting all calls, but ordered by anat. entities.
+        //The service should use the calls retrieved for computing min./max ranks per anat. entity,
+        //rather than querying the database, and querying the database for min./max ranks per gene
+        this.configureMocks();
+        serviceOrdering = new LinkedHashMap<>();
+        serviceOrdering.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
+        serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
+        actualResultsOrdered = service.loadExpressionCalls(
+                new ExpressionCallFilter(summaryCallTypeQualityFilter, 
+                        Collections.singleton(new GeneFilter(spe1.getId())),
+                        null, 
+                        null, 
+                        callObservedData,
+                        null, null), 
+                attrs,
+                serviceOrdering)
+                .collect(Collectors.toList());
+        assertEquals("Incorrect calls retrieved for all calls ordered query", 
+                Arrays.asList(callg1ae1, callg2ae1, callg1ae2, callg2ae2),
+                actualResultsOrdered);
+        //Verify that the DAO for min./max ranks was correctly called
+        verify(this.globalExprCallDAO, times(2)).getMinMaxRanksPerGene(
+                Arrays.asList(allObservedPresentCallDAOFilter),
+                allCondParams);
+        verify(this.globalExprCallDAO, times(2)).getMinMaxRanksPerAnatEntity(
+                Arrays.asList(allObservedPresentCallDAOFilter),
+                allCondParams);
+
+        //Now, query call for one gene in one anat. entity. The service should query the database
+        //for both min./max ranks per anat. entity and per gene
+        this.configureMocks();
+        serviceOrdering = new LinkedHashMap<>();
+        serviceOrdering.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
+        serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
+        actualResultsOrdered = service.loadExpressionCalls(
+                new ExpressionCallFilter(summaryCallTypeQualityFilter, 
+                        Collections.singleton(new GeneFilter(spe1.getId(), g1.getEnsemblGeneId())),
+                        Collections.singleton(new ConditionFilter(Collections.singleton(anatEntity1.getId()), null)), 
+                        null, 
+                        callObservedData,
+                        null, null), 
+                attrs,
+                serviceOrdering)
+                .collect(Collectors.toList());
+        assertEquals("Incorrect calls retrieved for all calls ordered query", 
+                Arrays.asList(callg1ae1),
+                actualResultsOrdered);
+        //Verify that the DAO for min./max ranks was correctly called.
+        //The should have been queried only for one specific gene, and one specific anat. entity
+        verify(this.globalExprCallDAO, times(1)).getMinMaxRanksPerGene(
+                Arrays.asList(oneGeneAllOrganObservedPresentCallDAOFilter),
+                allCondParams);
+        verify(this.globalExprCallDAO, times(1)).getMinMaxRanksPerAnatEntity(
+                Arrays.asList(allGeneOneOrganObservedPresentCallDAOFilter),
                 allCondParams);
     }
 }

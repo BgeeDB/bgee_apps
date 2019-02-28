@@ -494,7 +494,9 @@ public class CallService extends CommonService {
                                 null, null, obsDataFilter, null, null),
                         EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
                                 CallService.Attribute.DEV_STAGE_ID,
-                                CallService.Attribute.DATA_QUALITY, CallService.Attribute.MEAN_RANK),
+                                CallService.Attribute.DATA_QUALITY, CallService.Attribute.MEAN_RANK,
+                                //We need the EXPERIMENT_COUNTS to know which data types produced calls
+                                CallService.Attribute.EXPERIMENT_COUNTS),
                         serviceOrdering)
                 .collect(Collectors.toList());
         

@@ -116,7 +116,8 @@ implements GlobalExpressionCallDAO {
             case GLOBAL_CONDITION_ID:
                 return globalExprTableName + "." + MySQLConditionDAO.GLOBAL_COND_ID_FIELD;
             case MEAN_RANK:
-                return generateMeanRankClause(clonedDataTypes, globalExprTableName, globalCondTableName);
+                return generateMeanRankClause(clonedDataTypes, globalExprTableName, globalCondTableName)
+                        + " AS " + GLOBAL_MEAN_RANK_FIELD;
             case DATA_TYPE_OBSERVED_DATA:
                 return clonedDataTypes.stream()
                         .map(dataType -> {
@@ -333,7 +334,7 @@ implements GlobalExpressionCallDAO {
                 .map(dataType -> {
                     String weightSql = dataTypeToWeightSql.get(dataType);
                     return "IF(" + weightSql + " IS NULL, 0, " + weightSql + ")";})
-                .collect(Collectors.joining(" + ", "/ (", "))) AS " + GLOBAL_MEAN_RANK_FIELD)));
+                .collect(Collectors.joining(" + ", "/ (", ")))")));
     }
 
     private static String generateTableReferences(final String globalExprTableName,

@@ -91,10 +91,7 @@ public class ExpressionLevelInfo {
     public ExpressionLevelInfo(BigDecimal rank,
             QualitativeExpressionLevel<Gene> qualExprLevelRelativeToGene,
             QualitativeExpressionLevel<AnatEntity> qualExprLevelRelativeToAnatEntity) {
-        if (rank == null) {
-            throw log.throwing(new IllegalArgumentException("At least a rank must be provided"));
-        }
-        if (rank.compareTo(new BigDecimal(0)) <= 0) {
+        if (rank != null && rank.compareTo(new BigDecimal(0)) <= 0) {
             throw log.throwing(new IllegalArgumentException(
                     "The rank cannot be less than or equal to 0."));
         }
@@ -119,7 +116,7 @@ public class ExpressionLevelInfo {
     public String getFormattedRank() {
         log.entry();
         if (this.rank == null) {
-            throw log.throwing(new IllegalStateException("No rank was provided for this call."));
+            return log.exit(null);
         }
         NumberFormat formatter = null;
         //start with values over 1000, more chances to have a match.

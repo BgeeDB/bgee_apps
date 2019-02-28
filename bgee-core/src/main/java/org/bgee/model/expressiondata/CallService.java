@@ -455,7 +455,7 @@ public class CallService extends CommonService {
         Map<SummaryCallType.ExpressionSummary, SummaryQuality> silverExpressedCallFilter = new HashMap<>();
         silverExpressedCallFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
         Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
-        obsDataFilter.put(CallType.Expression.EXPRESSED, true);
+        obsDataFilter.put(null, true);
         
         // Load silver organ calls
         List<ExpressionCall> organCalls = this
@@ -496,7 +496,11 @@ public class CallService extends CommonService {
                                 CallService.Attribute.DEV_STAGE_ID,
                                 CallService.Attribute.DATA_QUALITY, CallService.Attribute.MEAN_RANK,
                                 //We need the EXPERIMENT_COUNTS to know which data types produced calls
-                                CallService.Attribute.EXPERIMENT_COUNTS),
+                                CallService.Attribute.EXPERIMENT_COUNTS,
+                                //Retrieve qualitative expression levels relative to gene,
+                                //this doesn't add any additional queries, since we retrieved all necessary calls
+                                //to perform the computation
+                                CallService.Attribute.GENE_QUAL_EXPR_LEVEL),
                         serviceOrdering)
                 .collect(Collectors.toList());
         
@@ -931,7 +935,7 @@ public class CallService extends CommonService {
         log.entry(callFilter, condParamCombination, attributes, orderingAttributes);
 
         //Perform the checks for qualitative expression levels relative to any entity
-        if (!isQueryAllowingToComputeAnyQualExprLevel(callFilter, condParamCombination, attributes, orderingAttributes)) {
+        if (!isQueryAllowingToComputeAnyQualExprLevel(callFilter, condParamCombination, attributes)) {
             return log.exit(false);
         }
         //Now, we do only the remaining checks for qualitative expression levels relative to genes
@@ -941,11 +945,15 @@ public class CallService extends CommonService {
             return log.exit(false);
         }
 
-        //We would also need the results to be retrieved ordered by gene IDs first
+        //We would also need the results to be retrieved ordered by gene IDs first,
+        //unless only one gene is requested
         //Will work if the query is done on one species only, otherwise we can have a same Ensemble Gene ID
         //linked to different species, when we use the genome of a closely related species
         //(part of the checks done in isQueryAllowingToComputeAnyQualExprLevel)
-        if (!orderingAttributes.keySet().iterator().next().equals(OrderingAttribute.GENE_ID)) {
+        if ((orderingAttributes.isEmpty() ||
+                !orderingAttributes.keySet().iterator().next().equals(OrderingAttribute.GENE_ID)) &&
+                (callFilter.getGeneFilters().size() != 1 ||
+                callFilter.getGeneFilters().iterator().next().getEnsemblGeneIds().size() != 1)) {
             return log.exit(false);
         }
 
@@ -966,7 +974,7 @@ public class CallService extends CommonService {
         log.entry(callFilter, condParamCombination, attributes, orderingAttributes);
 
         //Perform the checks for qualitative expression levels relative to any entity
-        if (!isQueryAllowingToComputeAnyQualExprLevel(callFilter, condParamCombination, attributes, orderingAttributes)) {
+        if (!isQueryAllowingToComputeAnyQualExprLevel(callFilter, condParamCombination, attributes)) {
             return log.exit(false);
         }
         //Now, we do only the remaining checks for qualitative expression levels relative to anat. entities
@@ -976,10 +984,16 @@ public class CallService extends CommonService {
             return log.exit(false);
         }
 
-        //We would also need the results to be retrieved ordered by anat. entity IDs first
+        //We would also need the results to be retrieved ordered by anat. entity IDs first,
+        //unless only one anat. entity is requested
         //Will work if the query is done on one species only, otherwise we can have a same anat. entity ID
         //linked to different species (part of the checks done in isQueryAllowingToComputeAnyQualExprLevel)
-        if (!orderingAttributes.keySet().iterator().next().equals(OrderingAttribute.ANAT_ENTITY_ID)) {
+        if ((orderingAttributes.isEmpty() ||
+                !orderingAttributes.keySet().iterator().next().equals(OrderingAttribute.ANAT_ENTITY_ID)) &&
+                (callFilter.getConditionFilters().isEmpty() ||
+                        callFilter.getConditionFilters().stream().anyMatch(cf -> cf.getAnatEntityIds().size() != 1) ||
+                        callFilter.getConditionFilters().stream().flatMap(cf -> cf.getAnatEntityIds().stream())
+                                .collect(Collectors.toSet()).size() != 1)) {
             return log.exit(false);
         }
 
@@ -994,9 +1008,8 @@ public class CallService extends CommonService {
     }
 
     private static boolean isQueryAllowingToComputeAnyQualExprLevel(ExpressionCallFilter callFilter,
-            Set<ConditionDAO.Attribute> condParamCombination, Set<Attribute> attributes,
-            LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes) {
-        log.entry(callFilter, condParamCombination, attributes, orderingAttributes);
+            Set<ConditionDAO.Attribute> condParamCombination, Set<Attribute> attributes) {
+        log.entry(callFilter, condParamCombination, attributes);
 
         //If ranks not requested, we can't do anything
         if (!attributes.contains(Attribute.MEAN_RANK)) {
@@ -1009,30 +1022,42 @@ public class CallService extends CommonService {
             return log.exit(false);
         }
 
-        //We would also need the results to be retrieved ordered by gene/anat. entity IDs first
-        //Will work if the query is done on one species only, otherwise we can have a same Ensemble Gene ID
-        //(when we use the genome of a closely related species), or same anat. entity ID,
-        //linked to different species.
-        Set<Integer> requestedSpeciesIds = callFilter.getGeneFilters().stream()
-                .map(gf -> gf.getSpeciesId()).collect(Collectors.toSet());
-        if (orderingAttributes.isEmpty() || requestedSpeciesIds.size() != 1) {
+        //We would need the query to retrieve calls of presence of expression of any quality
+        SummaryQuality exprQual = callFilter.getSummaryCallTypeQualityFilter().get(SummaryCallType.ExpressionSummary.EXPRESSED);
+        if (exprQual == null || !exprQual.equals(SummaryQuality.values()[0])) {
             return log.exit(false);
         }
 
-        //We would need the query to retrieve expression calls at least in any stage,
-        //not discarding observed conditions or calls, to compute the expression level categories
-        if ((callFilter.getConditionFilters() != null && callFilter.getConditionFilters().stream()
-                .anyMatch(cf -> !cf.getDevStageIds().isEmpty() || Boolean.FALSE.equals(cf.getObservedConditions()))) ||
-                Boolean.FALSE.equals(callFilter.getCallObservedData().get(CallType.Expression.EXPRESSED)) ||
-                Boolean.FALSE.equals(callFilter.getCallObservedData().get(null)) ||
+        //We need calls to include observed data, from any call type (meaning, we need expressed calls from any quality,
+        //from observed data, but the call can have been observed from absence of expression in the condition itself,
+        //and still be an EXPRESSED call thanks to sub-conditions). So the CallObservedData parameter should not restrain
+        //to calls having observed expression in the condition itself
+        if ((!callFilter.getCallObservedData().containsKey(null) &&
+                !callFilter.getCallObservedData().keySet().containsAll(EnumSet.allOf(CallType.Expression.class))) ||
+            callFilter.getCallObservedData().values().stream().anyMatch(b -> Boolean.FALSE.equals(b))) {
+            return log.exit(false);
+        }
+        //We can't use the main query if it was requested to obtain non-observed conditions,
+        //or non-observed calls along anatomy of dev. stages
+        if (callFilter.getConditionFilters().stream().anyMatch(cf -> Boolean.FALSE.equals(cf.getObservedConditions())) ||
                 Boolean.FALSE.equals(callFilter.getAnatEntityObservedData()) ||
                 Boolean.FALSE.equals(callFilter.getDevStageObservedData())) {
             return log.exit(false);
         }
 
-        //We would need the query to retrieve calls of presence of expression of any quality
-        SummaryQuality exprQual = callFilter.getSummaryCallTypeQualityFilter().get(SummaryCallType.ExpressionSummary.EXPRESSED);
-        if (exprQual == null || !exprQual.equals(SummaryQuality.values()[0])) {
+        //We would also need the results to be retrieved ordered by gene/anat. entity IDs first,
+        //unless one specific gene or one specific anat. entity was requested (checked in the calling methods).
+        //Will work if the query is done on one species only, otherwise we can have a same Ensemble Gene ID
+        //(when we use the genome of a closely related species), or same anat. entity ID,
+        //linked to different species.
+        Set<Integer> requestedSpeciesIds = callFilter.getGeneFilters().stream()
+                .map(gf -> gf.getSpeciesId()).collect(Collectors.toSet());
+        if (requestedSpeciesIds.size() != 1) {
+            return log.exit(false);
+        }
+
+        //We need the query to retrieve expression calls at least in any stage
+        if (callFilter.getConditionFilters().stream().anyMatch(cf -> !cf.getDevStageIds().isEmpty())) {
             return log.exit(false);
         }
 

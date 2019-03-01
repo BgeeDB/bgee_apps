@@ -53,7 +53,8 @@ public enum ExpressionLevelCategory {
         BigDecimal maxRank = relativeEntityMinMaxRanks.getMaxRank();
         if (!relativeEntityMinMaxRanks.isInRange(rank)) {
             throw log.throwing(new IllegalArgumentException("Inconsistent rank, min rank: "
-                    + minRank + ", max rank: " + maxRank + ", rank: " + rank));
+                    + minRank + ", max rank: " + maxRank + ", rank: " + rank + ", entity considered: "
+                    + relativeEntityMinMaxRanks.getEntityConsidered()));
         }
         //Get the level threshold.
         BigDecimal diff = maxRank.subtract(minRank);

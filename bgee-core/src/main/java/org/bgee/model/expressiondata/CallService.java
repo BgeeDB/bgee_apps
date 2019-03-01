@@ -115,14 +115,14 @@ public class CallService extends CommonService {
      * <li>{@code GENE_QUAL_EXPR_LEVEL}: corresponds to {@link
      * org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo#getQualExprLevelRelativeToGene()
      * ExpressionLevelInfo.getQualExprLevelRelativeToGene()} from {@link ExpressionCall#getExpressionLevelInfo()}.
-     * <strong>Important:</strong> if this attribute is used, then the attributes {@code GENE}
-     * and {@code MEAN_RANK} must also be requested, otherwise an {@code IllegalArgumentException}
+     * <strong>Important:</strong> if this attribute is used, then the attributes {@code GENE},
+     * {@code CALL_TYPE} and {@code MEAN_RANK} must also be requested, otherwise an {@code IllegalArgumentException}
      * will be thrown by the methods.
      * <li>{@code ANAT_ENTITY_QUAL_EXPR_LEVEL}: corresponds to {@link
      * org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo#getQualExprLevelRelativeToAnatEntity()
      * ExpressionLevelInfo.getQualExprLevelRelativeToAnatEntity()} from {@link ExpressionCall#getExpressionLevelInfo()}.
-     * <strong>Important:</strong> if this attribute is used, then the attributes {@code ANAT_ENTITY_ID}
-     * and {@code MEAN_RANK} must also be requested, otherwise an {@code IllegalArgumentException}
+     * <strong>Important:</strong> if this attribute is used, then the attributes {@code ANAT_ENTITY_ID},
+     * {@code CALL_TYPE} and {@code MEAN_RANK} must also be requested, otherwise an {@code IllegalArgumentException}
      * will be thrown by the methods.
      * </ul>
      */
@@ -342,17 +342,19 @@ public class CallService extends CommonService {
                     + "at least to specify the targeted Species (through the GeneFilters)"));
         }
         if (clonedAttrs.contains(Attribute.GENE_QUAL_EXPR_LEVEL) &&
-                (!clonedAttrs.contains(Attribute.GENE) || !clonedAttrs.contains(Attribute.MEAN_RANK))) {
+                (!clonedAttrs.contains(Attribute.GENE) || !clonedAttrs.contains(Attribute.MEAN_RANK) ||
+                        !clonedAttrs.contains(Attribute.CALL_TYPE))) {
             throw log.throwing(new IllegalArgumentException(
                     "If " + Attribute.GENE_QUAL_EXPR_LEVEL + " is requested, "
-                    + Attribute.GENE + " and " + Attribute.MEAN_RANK
+                    + Attribute.GENE + ", " + Attribute.MEAN_RANK + ", and " + Attribute.CALL_TYPE
                     + " must also be requested"));
         }
         if (clonedAttrs.contains(Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL) &&
-                (!clonedAttrs.contains(Attribute.ANAT_ENTITY_ID) || !clonedAttrs.contains(Attribute.MEAN_RANK))) {
+                (!clonedAttrs.contains(Attribute.ANAT_ENTITY_ID) || !clonedAttrs.contains(Attribute.MEAN_RANK) ||
+                        !clonedAttrs.contains(Attribute.CALL_TYPE))) {
             throw log.throwing(new IllegalArgumentException(
                     "If " + Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL + " is requested, "
-                    + Attribute.ANAT_ENTITY_ID + " and " + Attribute.MEAN_RANK
+                    + Attribute.ANAT_ENTITY_ID + ", " + Attribute.MEAN_RANK + ", and " + Attribute.CALL_TYPE
                     + " must also be requested"));
         }
 
@@ -866,7 +868,7 @@ public class CallService extends CommonService {
                             c.getSummaryCallType(),
                             c.getSummaryQuality(),
                             c.getCallData(),
-                            loadExpressionLevelInfo(c.getMeanRank(),
+                            loadExpressionLevelInfo(c.getSummaryCallType(), c.getMeanRank(),
                                     anatEntityMinMaxRank != null? anatEntityMinMaxRank:
                                         anatEntityMinMaxRanks.get(c.getCondition().getAnatEntity()),
                                     geneMinMaxRank != null? geneMinMaxRank:
@@ -1104,16 +1106,25 @@ public class CallService extends CommonService {
                 previousEntity));
     }
 
-    private static ExpressionLevelInfo loadExpressionLevelInfo(BigDecimal rank,
+    private static ExpressionLevelInfo loadExpressionLevelInfo(ExpressionSummary exprSummary, BigDecimal rank,
             EntityMinMaxRanks<AnatEntity> anatEntityMinMaxRank, EntityMinMaxRanks<Gene> geneMinMaxRank) {
-        log.entry(rank, anatEntityMinMaxRank, geneMinMaxRank);
+        log.entry(exprSummary, rank, anatEntityMinMaxRank, geneMinMaxRank);
         return log.exit(new ExpressionLevelInfo(rank,
-            rank == null || geneMinMaxRank == null? null: new QualitativeExpressionLevel<Gene>(
-                    ExpressionLevelCategory.getExpressionLevelCategory(
-                            geneMinMaxRank, rank), geneMinMaxRank),
-            rank == null || anatEntityMinMaxRank == null? null: new QualitativeExpressionLevel<AnatEntity>(
-                    ExpressionLevelCategory.getExpressionLevelCategory(
-                            anatEntityMinMaxRank, rank), anatEntityMinMaxRank)));
+                loadQualExprLevel(exprSummary, rank, geneMinMaxRank),
+                loadQualExprLevel(exprSummary, rank, anatEntityMinMaxRank)));
+    }
+    private static <T> QualitativeExpressionLevel<T> loadQualExprLevel(ExpressionSummary exprSummary, BigDecimal rank,
+            EntityMinMaxRanks<T> minMaxRanks) {
+        log.entry(exprSummary, rank, minMaxRanks);
+        if (ExpressionSummary.NOT_EXPRESSED.equals(exprSummary)) {
+            return log.exit(new QualitativeExpressionLevel<>(ExpressionLevelCategory.ABSENT, minMaxRanks));
+        }
+        if (ExpressionSummary.EXPRESSED.equals(exprSummary) && rank != null && minMaxRanks != null) {
+            return log.exit(new QualitativeExpressionLevel<>(
+                    ExpressionLevelCategory.getExpressionLevelCategory(minMaxRanks, rank),
+                    minMaxRanks));
+        }
+        return log.exit(null);
     }
 
     //*************************************************************************
@@ -1656,6 +1667,8 @@ public class CallService extends CommonService {
 
         Condition cond = condMap.get(globalCallTO.getConditionId());
         Gene gene = geneMap.get(globalCallTO.getBgeeGeneId());
+        ExpressionSummary exprSummary = attrs == null || attrs.isEmpty() || attrs.contains(Attribute.CALL_TYPE)?
+                inferSummaryCallType(callData): null;
         return log.exit(new ExpressionCall(
             attrs == null || attrs.isEmpty() || attrs.contains(Attribute.GENE)?
                     gene: null,
@@ -1663,8 +1676,7 @@ public class CallService extends CommonService {
                     cond: null,
             attrs == null || attrs.isEmpty() || attrs.contains(Attribute.OBSERVED_DATA)?
                     inferDataPropagation(callData): null,
-            attrs == null || attrs.isEmpty() || attrs.contains(Attribute.CALL_TYPE)?
-                    inferSummaryCallType(callData): null,
+            exprSummary,
             attrs == null || attrs.isEmpty() || attrs.contains(Attribute.DATA_QUALITY)?
                     inferSummaryQuality(callData): null,
             attrs == null || attrs.isEmpty() || attrs.contains(Attribute.EXPERIMENT_COUNTS) ||
@@ -1673,7 +1685,7 @@ public class CallService extends CommonService {
             attrs == null || attrs.isEmpty() || attrs.contains(Attribute.MEAN_RANK) ||
             attrs.contains(Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL) ||
             attrs.contains(Attribute.GENE_QUAL_EXPR_LEVEL)?
-                    loadExpressionLevelInfo(globalCallTO.getMeanRank(),
+                    loadExpressionLevelInfo(exprSummary, globalCallTO.getMeanRank(),
                             anatEntityMinMaxRanks == null? null:
                                 anatEntityMinMaxRanks.get(cond.getAnatEntity()),
                             geneMinMaxRanks == null? null: geneMinMaxRanks.get(gene)): null));

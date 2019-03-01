@@ -297,7 +297,7 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
                 Set<DAOExperimentCount> experimentCounts, Integer propagatedCount,
                 BigDecimal rank, BigDecimal rankNorm, BigDecimal weightForMeanRank) {
 
-            if (dataPropagation.keySet().stream().anyMatch(a -> !a.isConditionParameter())) {
+            if (dataPropagation != null && dataPropagation.keySet().stream().anyMatch(a -> !a.isConditionParameter())) {
                 throw log.throwing(new IllegalArgumentException("Invalid condition parameters: "
                         + dataPropagation.keySet()));
             }

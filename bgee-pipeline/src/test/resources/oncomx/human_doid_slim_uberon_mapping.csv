@@ -1,5 +1,4 @@
 Slim,UBERON_doid.owl,UBERON_name_ontobee,Notes
-DOID:1192 / peripheral nervous system neoplasm & DOID:3953 / adrenal gland cancer,UBERON_0002369,adrenal gland,"NOTE - maps to 3953, not 1192"
 DOID:1785 / pituitary cancer,UBERON_0000007,pituitary gland,
 DOID:4362 / cervical cancer,UBERON_0000002,uterine cervix,
 Paratesticular tumour,N/A,,No DOID - closest is DOID:10207 / paratesticular lipoma

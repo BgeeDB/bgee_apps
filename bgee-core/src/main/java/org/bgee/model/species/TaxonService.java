@@ -31,6 +31,13 @@ public class TaxonService extends Service {
     public TaxonService(ServiceFactory serviceFactory) {
         super(serviceFactory);
     }
+
+    public Stream<Taxon> loadTaxaByIds(Collection<Integer> taxonIds) {
+        log.entry(taxonIds);
+        return log.exit(this.getDaoManager().getTaxonDAO()
+                .getTaxaByIds(taxonIds).stream()
+                .map(TaxonService::mapFromTO));
+    }
     
     /**
      * Retrieve {@code Taxon}s that are LCA of the provided species.

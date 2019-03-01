@@ -15,14 +15,12 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 
-import com.mysql.jdbc.StringUtils;
-
 /**
  * A {@code SummarySimilarityAnnotationDAO} for MySQL.
  *
  * @author Valentine Rech de Laval
  * @author Frederic Bastian
- * @version Bgee 13 Mar. 2015
+ * @version Bgee 14 Nov 2018
  * @see org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO
  * @since Bgee 13
  */
@@ -382,7 +380,7 @@ public class MySQLSummarySimilarityAnnotationDAO
         try (BgeePreparedStatement stmt = 
                 this.getManager().getConnection().prepareStatement(sqlExpression)) {
             for (SummarySimilarityAnnotationTO summaryTO: summaryTOs) {
-                stmt.setInt(1, Integer.parseInt(summaryTO.getId()));
+                stmt.setInt(1, summaryTO.getId());
                 stmt.setInt(2, summaryTO.getTaxonId());
                 stmt.setBoolean(3, summaryTO.isNegated());
                 stmt.setString(4, summaryTO.getCIOId());
@@ -424,8 +422,7 @@ public class MySQLSummarySimilarityAnnotationDAO
         try (BgeePreparedStatement stmt = 
                 this.getManager().getConnection().prepareStatement(sqlExpression)) {
             for (SimAnnotToAnatEntityTO simAnnotToAnatEntityTO: simAnnotToAnatEntityTOs) {
-                stmt.setInt(1, 
-                        Integer.parseInt(simAnnotToAnatEntityTO.getSummarySimilarityAnnotationId()));
+                stmt.setInt(1, simAnnotToAnatEntityTO.getSummarySimilarityAnnotationId());
                 stmt.setString(2, simAnnotToAnatEntityTO.getAnatEntityId());
                 rowInsertedCount += stmt.executeUpdate();
                 stmt.clearParameters();
@@ -495,14 +492,14 @@ public class MySQLSummarySimilarityAnnotationDAO
         protected SummarySimilarityAnnotationTO getNewTO() throws DAOException {
             log.entry();
 
-            String id = null, cioId = null;
-            Integer taxonId = null;
+            String cioId = null;
+            Integer id = null, taxonId = null;
             Boolean negated = null;
 
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
                     if (column.getValue().equals("summarySimilarityAnnotationId")) {
-                        id = this.getCurrentResultSet().getString(column.getKey());
+                        id = this.getCurrentResultSet().getInt(column.getKey());
                         
                     } else if (column.getValue().equals("taxonId")) {
                         taxonId = this.getCurrentResultSet().getInt(column.getKey());
@@ -578,12 +575,13 @@ public class MySQLSummarySimilarityAnnotationDAO
         protected SimAnnotToAnatEntityTO getNewTO() throws DAOException {
             log.entry();
 
-            String summarySimilarityAnnotationId = null, anatEntityId = null; 
+            Integer summarySimilarityAnnotationId = null;
+            String anatEntityId = null; 
 
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
                     if (column.getValue().equals("summarySimilarityAnnotationId")) {
-                        summarySimilarityAnnotationId = this.getCurrentResultSet().getString(column.getKey());
+                        summarySimilarityAnnotationId = this.getCurrentResultSet().getInt(column.getKey());
                         
                     } else if (column.getValue().equals("anatEntityId")) {
                         anatEntityId = this.getCurrentResultSet().getString(column.getKey());

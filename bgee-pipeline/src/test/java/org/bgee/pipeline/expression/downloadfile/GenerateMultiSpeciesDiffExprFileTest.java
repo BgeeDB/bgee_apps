@@ -39,7 +39,7 @@ import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressio
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
-import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTO;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalNodeToGeneTO;
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO;
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO;
 import org.bgee.model.dao.api.species.SpeciesDAO;
@@ -53,7 +53,7 @@ import org.bgee.model.dao.mysql.anatdev.mapping.MySQLSummarySimilarityAnnotation
 import org.bgee.model.dao.mysql.anatdev.mapping.MySQLSummarySimilarityAnnotationDAO.MySQLSummarySimilarityAnnotationTOResultSet;
 import org.bgee.model.dao.mysql.expressiondata.MySQLDiffExpressionCallDAO.MySQLDiffExpressionCallTOResultSet;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO.MySQLGeneTOResultSet;
-import org.bgee.model.dao.mysql.gene.MySQLHierarchicalGroupDAO.MySQLHierarchicalGroupToGeneTOResultSet;
+import org.bgee.model.dao.mysql.gene.MySQLHierarchicalGroupDAO.MySQLHierarchicalNodeToGeneTOResultSet;
 import org.bgee.model.dao.mysql.ontologycommon.MySQLCIOStatementDAO.MySQLCIOStatementTOResultSet;
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO.MySQLSpeciesTOResultSet;
 import org.bgee.model.dao.mysql.species.MySQLTaxonDAO.MySQLTaxonTOResultSet;

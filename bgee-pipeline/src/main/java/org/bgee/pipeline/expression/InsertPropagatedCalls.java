@@ -835,7 +835,6 @@ public class InsertPropagatedCalls extends CallService {
                         }
                         insertedCondMap.putAll(newCondMap);
 
-
                         //Now, we insert relations between globalConditions and source raw conditions,
                         //to be able to later retrieve relations between globalExpressions to expressions,
                         //without needing the table globalExpressionToExpression, that was very much too large

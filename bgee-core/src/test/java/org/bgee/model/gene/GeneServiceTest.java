@@ -23,8 +23,8 @@ import org.bgee.model.dao.api.gene.GeneNameSynonymDAO;
 import org.bgee.model.dao.api.gene.GeneNameSynonymDAO.GeneNameSynonymTO;
 import org.bgee.model.dao.api.gene.GeneNameSynonymDAO.GeneNameSynonymTOResultSet;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
-import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTO;
-import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTOResultSet;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalNodeToGeneTO;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalNodeToGeneTOResultSet;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
 import org.junit.Ignore;
@@ -137,11 +137,11 @@ public class GeneServiceTest extends TestAncestor {
         // Mock HierarchicalGroupDAO
         HierarchicalGroupDAO hgDao = mock(HierarchicalGroupDAO.class);
         when(managerMock.getHierarchicalGroupDAO()).thenReturn(hgDao);
-        HierarchicalGroupToGeneTOResultSet resultSet = getMockResultSet(HierarchicalGroupToGeneTOResultSet.class, 
-                Arrays.asList(new HierarchicalGroupToGeneTO(1, 123, 1),
-                        new HierarchicalGroupToGeneTO(1, 124, 1),
-                        new HierarchicalGroupToGeneTO(2, 223, 1)));
-        when(hgDao.getGroupToGene(1234, null)).thenReturn(resultSet);
+        HierarchicalNodeToGeneTOResultSet resultSet = getMockResultSet(HierarchicalNodeToGeneTOResultSet.class, 
+                Arrays.asList(new HierarchicalNodeToGeneTO(1, 123, 3),
+                        new HierarchicalNodeToGeneTO(1, 124, 3),
+                        new HierarchicalNodeToGeneTO(2, 223, 4)));
+        when(hgDao.getOMANodeToGene(1234, null)).thenReturn(resultSet);
         
         // Mock SpeciesService
         SpeciesService speciesService = mock(SpeciesService.class);

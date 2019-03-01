@@ -19,6 +19,7 @@ import org.bgee.pipeline.expression.downloadfile.GenerateUniprotXRefWithExprInfo
 import org.bgee.pipeline.expression.downloadfile.collaboration.GenerateOncoMXFile;
 import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile;
 import org.bgee.pipeline.gene.InsertGO;
+import org.bgee.pipeline.gene.ParseOrthoXML;
 import org.bgee.pipeline.ontologycommon.InsertCIO;
 import org.bgee.pipeline.ontologycommon.InsertECO;
 import org.bgee.pipeline.ontologycommon.OntologyTools;
@@ -244,9 +245,8 @@ public class CommandRunner {
             
         //---------- Hierarchical groups -----------
         case "ParseOrthoXML":
-            throw log.throwing(new UnsupportedOperationException("Method disabled while updated"));
-            //ParseOrthoXML.main(newArgs);
-            //break;
+            ParseOrthoXML.main(newArgs);
+            break;
 
         //---------- Call propagation -----------
         case "InsertGlobalCalls":

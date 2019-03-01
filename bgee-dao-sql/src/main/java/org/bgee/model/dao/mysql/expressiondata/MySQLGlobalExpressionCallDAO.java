@@ -50,7 +50,6 @@ import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 public class MySQLGlobalExpressionCallDAO extends MySQLDAO<GlobalExpressionCallDAO.Attribute> 
 implements GlobalExpressionCallDAO {
     private final static Logger log = LogManager.getLogger(MySQLGlobalExpressionCallDAO.class.getName());
-
     private final static String GLOBAL_EXPR_ID_FIELD = "globalExpressionId";
     private final static String GLOBAL_EXPR_TABLE_NAME = "globalExpression";
     private final static String GLOBAL_MEAN_RANK_FIELD = "meanRank";
@@ -1127,7 +1126,6 @@ implements GlobalExpressionCallDAO {
                 stmt.setInt(newParamIndex, 0);
                 newParamIndex++;
             }
-
             return log.exit(newParamIndex);
         }
 

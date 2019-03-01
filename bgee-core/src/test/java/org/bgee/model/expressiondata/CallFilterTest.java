@@ -113,155 +113,155 @@ public class CallFilterTest extends TestAncestor {
         new DiffExpressionCallFilter(null, null, conditionFilter, null);
         new DiffExpressionCallFilter(null, geneFilter, conditionFilter, null);
     }
-    
-    /**
-     * Test the method {@link CallFilter#test(Call)}.
-     */
-    @Test
-    public void shouldTest() {
-        
-        Collection<ExpressionCallData> callData = new HashSet<>();
-        Set<ExperimentExpressionCount> counts = new HashSet<>();
-        counts.addAll(VALID_EXP_COUNTS.get(DataType.EST).stream()
-                .filter(c -> !(c.getCallType().equals(CallType.Expression.EXPRESSED)
-                    && DataQuality.HIGH.equals(c.getDataQuality()) 
-                    && PropagationState.SELF.equals(c.getPropagationState())))
-                .filter(c -> !(c.getCallType().equals(CallType.Expression.EXPRESSED)
-                    && DataQuality.HIGH.equals(c.getDataQuality()) 
-                    && PropagationState.ALL.equals(c.getPropagationState())))
-                .collect(Collectors.toSet()));
-        counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.HIGH,
-                PropagationState.SELF, 2));
-        counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.HIGH,
-                PropagationState.ALL, 2));
-        callData.add(new ExpressionCallData(DataType.EST, counts, 0, null, null, null, null));
-        
-        counts = new HashSet<>();
-        counts.addAll(VALID_EXP_COUNTS.get(DataType.AFFYMETRIX).stream()
-            .filter(c -> !(c.getCallType().equals(CallType.Expression.EXPRESSED)
-                && DataQuality.HIGH.equals(c.getDataQuality()) 
-                && PropagationState.SELF.equals(c.getPropagationState())))
-            .filter(c -> !(c.getCallType().equals(CallType.Expression.EXPRESSED)
-                && DataQuality.HIGH.equals(c.getDataQuality()) 
-                && PropagationState.ALL.equals(c.getPropagationState())))
-            .filter(c -> !(c.getCallType().equals(CallType.Expression.EXPRESSED)
-                && DataQuality.LOW.equals(c.getDataQuality())
-                && PropagationState.SELF.equals(c.getPropagationState())))
-            .filter(c -> !(c.getCallType().equals(CallType.Expression.EXPRESSED)
-                && DataQuality.LOW.equals(c.getDataQuality()) 
-                && PropagationState.ALL.equals(c.getPropagationState())))
-            .collect(Collectors.toSet()));
-        counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.LOW,
-                PropagationState.SELF, 1));
-        counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.LOW,
-                PropagationState.ALL, 1));
-        counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.HIGH,
-                PropagationState.SELF, 0));
-        counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.HIGH,
-                PropagationState.ALL, 0));
-        callData.add(new ExpressionCallData(DataType.AFFYMETRIX, counts, 0, null, null, null, null));
-        
-        AnatEntity ae1 = new AnatEntity("ae1");
-        DevStage ds1 = new DevStage("ds1");
-        Species sp1 = new Species(1);
-        
-        DataPropagation selfSelfPropagation = new DataPropagation(PropagationState.SELF, PropagationState.SELF);
-        
-        ExpressionCall call1 = new ExpressionCall(new Gene("g1", new Species(1), new GeneBioType("b")),
-            new Condition(ae1, ds1, sp1), selfSelfPropagation, ExpressionSummary.EXPRESSED, 
-            SummaryQuality.GOLD, callData, new ExpressionLevelInfo(new BigDecimal(125.00)));
-        
-        // Test ConditionFilter
-        ConditionFilter cond1 = new ConditionFilter(Collections.singleton("ae1"), Collections.singleton("ds1"));
-        Map<SummaryCallType.ExpressionSummary, SummaryQuality> callTypeMap = new HashMap<>();
-        Map<Expression, Boolean> expressedData = new HashMap<>();
-        expressedData.put(Expression.EXPRESSED, true);
-        callTypeMap.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
-        ExpressionCallFilter callFilter = new ExpressionCallFilter(callTypeMap, null, Collections.singleton(cond1),
-            Arrays.asList(DataType.EST), expressedData, null, null);
-        assertTrue("Call should pass the filter", callFilter.test(call1));
 
-        callTypeMap = new HashMap<>();
-        callTypeMap.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
-        callFilter = new ExpressionCallFilter(callTypeMap, null, Collections.singleton(cond1),
-                Arrays.asList(DataType.AFFYMETRIX), null, null, null);
-        assertTrue("Call should pass the filter", callFilter.test(call1));
-
-        callTypeMap = new HashMap<>();
-        
-        callTypeMap.put(ExpressionSummary.EXPRESSED, SummaryQuality.GOLD);
-        callFilter = new ExpressionCallFilter(callTypeMap, null, Collections.singleton(cond1),
-                null, expressedData, null, null);
-        assertTrue("Call should pass the filter", callFilter.test(call1));
-
-        callTypeMap = new HashMap<>();
-        callTypeMap.put(ExpressionSummary.EXPRESSED, SummaryQuality.GOLD);
-        callFilter = new ExpressionCallFilter(callTypeMap, null, Collections.singleton(cond1),
-            Arrays.asList(DataType.AFFYMETRIX, DataType.EST), expressedData, null, null);
-        assertTrue("Call should pass the filter", callFilter.test(call1));
-
-        callTypeMap = new HashMap<>();
-        callTypeMap.put(ExpressionSummary.EXPRESSED, SummaryQuality.GOLD);
-        callFilter = new ExpressionCallFilter(callTypeMap, null, Collections.singleton(cond1),
-                Arrays.asList(DataType.RNA_SEQ), expressedData, null, null);
-        assertFalse("Call should not pass the filter", callFilter.test(call1));
-
-        callTypeMap = new HashMap<>();
-        callTypeMap.put(ExpressionSummary.NOT_EXPRESSED, SummaryQuality.BRONZE);
-        callFilter = new ExpressionCallFilter(callTypeMap, null, Collections.singleton(cond1),
-                Arrays.asList(DataType.AFFYMETRIX), expressedData, null, null);
-        assertFalse("Call should not pass the filter", callFilter.test(call1));
-
-        callTypeMap = new HashMap<>();
-        callTypeMap.put(ExpressionSummary.EXPRESSED, SummaryQuality.GOLD);
-        Map<Expression, Boolean> notExpressedData = new HashMap<>();
-        notExpressedData.put(Expression.NOT_EXPRESSED, true);
-        notExpressedData.put(Expression.EXPRESSED, false);
-        callFilter = new ExpressionCallFilter(callTypeMap, null, Collections.singleton(cond1),
-                Arrays.asList(DataType.IN_SITU), notExpressedData, null, null);
-        assertFalse("Call should not pass the filter", callFilter.test(call1));
-
-        callData.clear();
-        counts = new HashSet<>();
-        counts.addAll(VALID_EXP_COUNTS.get(DataType.AFFYMETRIX).stream()
-            .filter(c -> !(c.getCallType().equals(CallType.Expression.EXPRESSED)
-                && DataQuality.LOW.equals(c.getDataQuality())
-                && PropagationState.SELF.equals(c.getPropagationState())))
-            .filter(c -> !(c.getCallType().equals(CallType.Expression.EXPRESSED)
-                && DataQuality.LOW.equals(c.getDataQuality()) 
-                && PropagationState.ALL.equals(c.getPropagationState())))
-            .collect(Collectors.toSet()));
-        counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.LOW,
-                PropagationState.SELF, 1));
-        counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.LOW,
-                PropagationState.ALL, 1));
-        callData.add(new ExpressionCallData(DataType.AFFYMETRIX, counts, 0, null, null, null, null));
-        
-        ExpressionCall call2 = new ExpressionCall(new Gene("g1", new Species(1), new GeneBioType("b")), 
-                new Condition(ae1, ds1, sp1), selfSelfPropagation, ExpressionSummary.EXPRESSED, 
-                SummaryQuality.SILVER, callData, new ExpressionLevelInfo(new BigDecimal(125.00)));
-        callTypeMap = new HashMap<>();
-        callTypeMap.put(ExpressionSummary.EXPRESSED, SummaryQuality.GOLD);
-        callFilter = new ExpressionCallFilter(callTypeMap, null, Collections.singleton(cond1), 
-                null, expressedData, null, null);
-        assertFalse("Call should not pass the filter", callFilter.test(call2));
-
-        // Test gene filter
-        Set<ConditionFilter> validConditionFilters = new HashSet<>();
-        validConditionFilters.add(new ConditionFilter(Arrays.asList("ae1", "ae2"), Arrays.asList("ds1", "ds2")));
-        callFilter = new ExpressionCallFilter(null, Collections.singleton(new GeneFilter(1, "g1")),
-                validConditionFilters, null, null, null, null);
-        assertTrue("Call should pass the filter", callFilter.test(call1));
-
-        Set<ConditionFilter> notValidConditionFilters = new HashSet<>();
-        notValidConditionFilters.add(new ConditionFilter(Arrays.asList("ae1", "ae2"), Arrays.asList("ds2")));
-        callFilter = new ExpressionCallFilter(null, Collections.singleton(new GeneFilter(1, "g1")),
-                notValidConditionFilters, null, null, null, null);
-        assertFalse("Call should not pass the filter", callFilter.test(call1));
-
-        // Test gene filter
-        callFilter = new ExpressionCallFilter(null, Collections.singleton(new GeneFilter(1, "g2")),
-                validConditionFilters, null, null, null, null);
-        assertFalse("Call should not pass the filter", callFilter.test(call1));
-    }
+//    /**
+//     * Test the method {@link CallFilter#test(Call)}.
+//     */
+//    @Test
+//    public void shouldTest() {
+//        
+//        Collection<ExpressionCallData> callData = new HashSet<>();
+//        Set<ExperimentExpressionCount> counts = new HashSet<>();
+//        counts.addAll(VALID_EXP_COUNTS.get(DataType.EST).stream()
+//                .filter(c -> !(c.getCallType().equals(CallType.Expression.EXPRESSED)
+//                    && DataQuality.HIGH.equals(c.getDataQuality()) 
+//                    && PropagationState.SELF.equals(c.getPropagationState())))
+//                .filter(c -> !(c.getCallType().equals(CallType.Expression.EXPRESSED)
+//                    && DataQuality.HIGH.equals(c.getDataQuality()) 
+//                    && PropagationState.ALL.equals(c.getPropagationState())))
+//                .collect(Collectors.toSet()));
+//        counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.HIGH,
+//                PropagationState.SELF, 2));
+//        counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.HIGH,
+//                PropagationState.ALL, 2));
+//        callData.add(new ExpressionCallData(DataType.EST, counts, 0, null, null, null, null));
+//        
+//        counts = new HashSet<>();
+//        counts.addAll(VALID_EXP_COUNTS.get(DataType.AFFYMETRIX).stream()
+//            .filter(c -> !(c.getCallType().equals(CallType.Expression.EXPRESSED)
+//                && DataQuality.HIGH.equals(c.getDataQuality()) 
+//                && PropagationState.SELF.equals(c.getPropagationState())))
+//            .filter(c -> !(c.getCallType().equals(CallType.Expression.EXPRESSED)
+//                && DataQuality.HIGH.equals(c.getDataQuality()) 
+//                && PropagationState.ALL.equals(c.getPropagationState())))
+//            .filter(c -> !(c.getCallType().equals(CallType.Expression.EXPRESSED)
+//                && DataQuality.LOW.equals(c.getDataQuality())
+//                && PropagationState.SELF.equals(c.getPropagationState())))
+//            .filter(c -> !(c.getCallType().equals(CallType.Expression.EXPRESSED)
+//                && DataQuality.LOW.equals(c.getDataQuality()) 
+//                && PropagationState.ALL.equals(c.getPropagationState())))
+//            .collect(Collectors.toSet()));
+//        counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.LOW,
+//                PropagationState.SELF, 1));
+//        counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.LOW,
+//                PropagationState.ALL, 1));
+//        counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.HIGH,
+//                PropagationState.SELF, 0));
+//        counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.HIGH,
+//                PropagationState.ALL, 0));
+//        callData.add(new ExpressionCallData(DataType.AFFYMETRIX, counts, 0, null, null, null, null));
+//        
+//        AnatEntity ae1 = new AnatEntity("ae1");
+//        DevStage ds1 = new DevStage("ds1");
+//        Species sp1 = new Species(1);
+//        
+//        DataPropagation selfSelfPropagation = new DataPropagation(PropagationState.SELF, PropagationState.SELF);
+//        
+//        ExpressionCall call1 = new ExpressionCall(new Gene("g1", new Species(1), new GeneBioType("b")),
+//            new Condition(ae1, ds1, sp1), selfSelfPropagation, ExpressionSummary.EXPRESSED, 
+//            SummaryQuality.GOLD, callData, new ExpressionLevelInfo(new BigDecimal(125.00)));
+//        
+//        // Test ConditionFilter
+//        ConditionFilter cond1 = new ConditionFilter(Collections.singleton("ae1"), Collections.singleton("ds1"));
+//        Map<SummaryCallType.ExpressionSummary, SummaryQuality> callTypeMap = new HashMap<>();
+//        Map<Expression, Boolean> expressedData = new HashMap<>();
+//        expressedData.put(Expression.EXPRESSED, true);
+//        callTypeMap.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
+//        ExpressionCallFilter callFilter = new ExpressionCallFilter(callTypeMap, null, Collections.singleton(cond1),
+//            Arrays.asList(DataType.EST), expressedData, null, null);
+//        assertTrue("Call should pass the filter", callFilter.test(call1));
+//
+//        callTypeMap = new HashMap<>();
+//        callTypeMap.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
+//        callFilter = new ExpressionCallFilter(callTypeMap, null, Collections.singleton(cond1),
+//                Arrays.asList(DataType.AFFYMETRIX), null, null, null);
+//        assertTrue("Call should pass the filter", callFilter.test(call1));
+//
+//        callTypeMap = new HashMap<>();
+//        
+//        callTypeMap.put(ExpressionSummary.EXPRESSED, SummaryQuality.GOLD);
+//        callFilter = new ExpressionCallFilter(callTypeMap, null, Collections.singleton(cond1),
+//                null, expressedData, null, null);
+//        assertTrue("Call should pass the filter", callFilter.test(call1));
+//
+//        callTypeMap = new HashMap<>();
+//        callTypeMap.put(ExpressionSummary.EXPRESSED, SummaryQuality.GOLD);
+//        callFilter = new ExpressionCallFilter(callTypeMap, null, Collections.singleton(cond1),
+//            Arrays.asList(DataType.AFFYMETRIX, DataType.EST), expressedData, null, null);
+//        assertTrue("Call should pass the filter", callFilter.test(call1));
+//
+//        callTypeMap = new HashMap<>();
+//        callTypeMap.put(ExpressionSummary.EXPRESSED, SummaryQuality.GOLD);
+//        callFilter = new ExpressionCallFilter(callTypeMap, null, Collections.singleton(cond1),
+//                Arrays.asList(DataType.RNA_SEQ), expressedData, null, null);
+//        assertFalse("Call should not pass the filter", callFilter.test(call1));
+//
+//        callTypeMap = new HashMap<>();
+//        callTypeMap.put(ExpressionSummary.NOT_EXPRESSED, SummaryQuality.BRONZE);
+//        callFilter = new ExpressionCallFilter(callTypeMap, null, Collections.singleton(cond1),
+//                Arrays.asList(DataType.AFFYMETRIX), expressedData, null, null);
+//        assertFalse("Call should not pass the filter", callFilter.test(call1));
+//
+//        callTypeMap = new HashMap<>();
+//        callTypeMap.put(ExpressionSummary.EXPRESSED, SummaryQuality.GOLD);
+//        Map<Expression, Boolean> notExpressedData = new HashMap<>();
+//        notExpressedData.put(Expression.NOT_EXPRESSED, true);
+//        notExpressedData.put(Expression.EXPRESSED, false);
+//        callFilter = new ExpressionCallFilter(callTypeMap, null, Collections.singleton(cond1),
+//                Arrays.asList(DataType.IN_SITU), notExpressedData, null, null);
+//        assertFalse("Call should not pass the filter", callFilter.test(call1));
+//
+//        callData.clear();
+//        counts = new HashSet<>();
+//        counts.addAll(VALID_EXP_COUNTS.get(DataType.AFFYMETRIX).stream()
+//            .filter(c -> !(c.getCallType().equals(CallType.Expression.EXPRESSED)
+//                && DataQuality.LOW.equals(c.getDataQuality())
+//                && PropagationState.SELF.equals(c.getPropagationState())))
+//            .filter(c -> !(c.getCallType().equals(CallType.Expression.EXPRESSED)
+//                && DataQuality.LOW.equals(c.getDataQuality()) 
+//                && PropagationState.ALL.equals(c.getPropagationState())))
+//            .collect(Collectors.toSet()));
+//        counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.LOW,
+//                PropagationState.SELF, 1));
+//        counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.LOW,
+//                PropagationState.ALL, 1));
+//        callData.add(new ExpressionCallData(DataType.AFFYMETRIX, counts, 0, null, null, null, null));
+//        
+//        ExpressionCall call2 = new ExpressionCall(new Gene("g1", new Species(1), new GeneBioType("b")), 
+//                new Condition(ae1, ds1, sp1), selfSelfPropagation, ExpressionSummary.EXPRESSED, 
+//                SummaryQuality.SILVER, callData, new ExpressionLevelInfo(new BigDecimal(125.00)));
+//        callTypeMap = new HashMap<>();
+//        callTypeMap.put(ExpressionSummary.EXPRESSED, SummaryQuality.GOLD);
+//        callFilter = new ExpressionCallFilter(callTypeMap, null, Collections.singleton(cond1), 
+//                null, expressedData, null, null);
+//        assertFalse("Call should not pass the filter", callFilter.test(call2));
+//
+//        // Test gene filter
+//        Set<ConditionFilter> validConditionFilters = new HashSet<>();
+//        validConditionFilters.add(new ConditionFilter(Arrays.asList("ae1", "ae2"), Arrays.asList("ds1", "ds2")));
+//        callFilter = new ExpressionCallFilter(null, Collections.singleton(new GeneFilter(1, "g1")),
+//                validConditionFilters, null, null, null, null);
+//        assertTrue("Call should pass the filter", callFilter.test(call1));
+//
+//        Set<ConditionFilter> notValidConditionFilters = new HashSet<>();
+//        notValidConditionFilters.add(new ConditionFilter(Arrays.asList("ae1", "ae2"), Arrays.asList("ds2")));
+//        callFilter = new ExpressionCallFilter(null, Collections.singleton(new GeneFilter(1, "g1")),
+//                notValidConditionFilters, null, null, null, null);
+//        assertFalse("Call should not pass the filter", callFilter.test(call1));
+//
+//        // Test gene filter
+//        callFilter = new ExpressionCallFilter(null, Collections.singleton(new GeneFilter(1, "g2")),
+//                validConditionFilters, null, null, null, null);
+//        assertFalse("Call should not pass the filter", callFilter.test(call1));
+//    }
 }

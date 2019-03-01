@@ -99,16 +99,28 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
     @Override
     public TaxonTOResultSet getAllTaxa() throws DAOException {
         log.entry();
-        
+        return log.exit(this.getTaxaByIds(null));
+    }
+    @Override
+    public TaxonTOResultSet getTaxaByIds(Collection<Integer> taxonIds) throws DAOException {
+        log.entry(taxonIds);
+
+        Set<Integer> clonedTaxIds = Collections.unmodifiableSet(taxonIds == null? new HashSet<>(): new HashSet<>(taxonIds));
         //Construct sql query
         String sql = this.generateSelectClause(this.getAttributes(), "taxon");
         sql += "FROM taxon";
+        if (!clonedTaxIds.isEmpty()) {
+            sql += " WHERE taxonId IN (" + BgeePreparedStatement.generateParameterizedQueryString(clonedTaxIds.size()) + ")";
+        }
     
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.
         BgeePreparedStatement stmt = null;
         try {
             stmt = this.getManager().getConnection().prepareStatement(sql.toString());
+            if (!clonedTaxIds.isEmpty()) {
+                stmt.setIntegers(1, clonedTaxIds, true);
+            }
             return log.exit(new MySQLTaxonTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

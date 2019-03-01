@@ -17,9 +17,9 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTO;
 import org.bgee.model.dao.api.anatdev.StageDAO.StageTO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
-import org.bgee.model.dao.api.expressiondata.BaseConditionTO.Sex;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SimAnnotToAnatEntityTO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO;
+import org.bgee.model.dao.api.expressiondata.BaseConditionTO.Sex;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
@@ -56,8 +56,8 @@ import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesDataGroupTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO.Domain;
-import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
-import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTO;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalNodeTO;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalNodeToGeneTO;
 import org.bgee.model.dao.api.keyword.KeywordDAO.EntityToKeywordTO;
 import org.bgee.model.dao.api.keyword.KeywordDAO.KeywordTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
@@ -185,37 +185,37 @@ public class TOComparatorTest extends TestAncestor {
     
     /**
      * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
-     * using {@code HierarchicalGroupTO}s.
+     * using {@code HierarchicalNodeTO}s.
      */
     @Test
-    public void testAreHierarchicalGroupTOEqual() {
-        HierarchicalGroupTO to1 = new HierarchicalGroupTO(1, "ID1", 1, 2, 10);
-        HierarchicalGroupTO to2 = new HierarchicalGroupTO(1, "ID1", 1, 2, 10);
+    public void testAreHierarchicalNodeTOEqual() {
+        HierarchicalNodeTO to1 = new HierarchicalNodeTO(1, "ID1", 1, 2, 10);
+        HierarchicalNodeTO to2 = new HierarchicalNodeTO(1, "ID1", 1, 2, 10);
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
-        to2 = new HierarchicalGroupTO(1, "ID1", 1, 2, 5);
+        to2 = new HierarchicalNodeTO(1, "ID1", 1, 2, 5);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
         
-        to2 = new HierarchicalGroupTO(2, "ID1", 1, 2, 10);
+        to2 = new HierarchicalNodeTO(2, "ID1", 1, 2, 10);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
     }
     
     /**
      * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
-     * using {@code HierarchicalGroupToGeneTO}s.
+     * using {@code HierarchicalNodeToGeneTO}s.
      */
     @Test
-    public void testAreHierarchicalGroupToGeneTOEqual() {
-        HierarchicalGroupToGeneTO to1 = new HierarchicalGroupToGeneTO(1, 1, 1);
-        HierarchicalGroupToGeneTO to2 = new HierarchicalGroupToGeneTO(1, 1, 1);
+    public void testAreHierarchicalNodeToGeneTOEqual() {
+        HierarchicalNodeToGeneTO to1 = new HierarchicalNodeToGeneTO(1, 1, 1);
+        HierarchicalNodeToGeneTO to2 = new HierarchicalNodeToGeneTO(1, 1, 1);
         assertTrue(TOComparator.areTOsEqual(to1, to2));
         
-        to2 = new HierarchicalGroupToGeneTO(1, 2, 1);
+        to2 = new HierarchicalNodeToGeneTO(1, 2, 1);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
         
-        to1 = new HierarchicalGroupToGeneTO(2, 2, 2);
+        to1 = new HierarchicalNodeToGeneTO(2, 2, 2);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
     }
     
@@ -974,8 +974,8 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testSummarySimilarityAnnotationComparator() {
-        SummarySimilarityAnnotationTO a1 = new SummarySimilarityAnnotationTO("id", 9606, true, "cioId");
-        SummarySimilarityAnnotationTO a2 = new SummarySimilarityAnnotationTO("id", 9606, true, "cioId");
+        SummarySimilarityAnnotationTO a1 = new SummarySimilarityAnnotationTO(1, 9606, true, "cioId");
+        SummarySimilarityAnnotationTO a2 = new SummarySimilarityAnnotationTO(1, 9606, true, "cioId");
         
         assertTrue("Null are the same", TOComparator.areTOsEqual(null, null));
         assertFalse("Null is different", TOComparator.areTOsEqual(a1, null));
@@ -984,16 +984,16 @@ public class TOComparatorTest extends TestAncestor {
         assertTrue("Should be equals: " + a1 + " " + a2, TOComparator.areTOsEqual(a1, a2));
         assertTrue("Should be equals: " + a1 + " " + a1, TOComparator.areTOsEqual(a1, a1));
 
-        SummarySimilarityAnnotationTO a3 = new SummarySimilarityAnnotationTO("XX", 9606, true, "cioId");
+        SummarySimilarityAnnotationTO a3 = new SummarySimilarityAnnotationTO(2, 9606, true, "cioId");
         assertFalse("Should not be equals: " + a1 + " " + a3, TOComparator.areTOsEqual(a1, a3));
 
-        a3 = new SummarySimilarityAnnotationTO("id", 0, true, "cioId");
+        a3 = new SummarySimilarityAnnotationTO(1, 0, true, "cioId");
         assertFalse("Should not be equals: " + a1 + " " + a3, TOComparator.areTOsEqual(a1, a3));
 
-        a3 = new SummarySimilarityAnnotationTO("id", 9606, false, "cioId");
+        a3 = new SummarySimilarityAnnotationTO(1, 9606, false, "cioId");
         assertFalse("Should not be equals: " + a1 + " " + a3, TOComparator.areTOsEqual(a1, a3));
 
-        a3 = new SummarySimilarityAnnotationTO("id", 9606, true, "XXX");
+        a3 = new SummarySimilarityAnnotationTO(1, 9606, true, "XXX");
         assertFalse("Should not be equals: " + a1 + " " + a3, TOComparator.areTOsEqual(a1, a3));
     }
 
@@ -1003,8 +1003,8 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testSimAnnotToAnatEntityComparator() {
-        SimAnnotToAnatEntityTO a1 = new SimAnnotToAnatEntityTO("id1", "cioId1");
-        SimAnnotToAnatEntityTO a2 = new SimAnnotToAnatEntityTO("id1", "cioId1");
+        SimAnnotToAnatEntityTO a1 = new SimAnnotToAnatEntityTO(1, "cioId1");
+        SimAnnotToAnatEntityTO a2 = new SimAnnotToAnatEntityTO(1, "cioId1");
 
         assertTrue("Null are the same", TOComparator.areTOsEqual(null, null));
         assertFalse("Null is different", TOComparator.areTOsEqual(a1, null));
@@ -1013,10 +1013,10 @@ public class TOComparatorTest extends TestAncestor {
         assertTrue("Should be equals: " + a1 + " " + a2, TOComparator.areTOsEqual(a1, a2));
         assertTrue("Should be equals: " + a1 + " " + a1, TOComparator.areTOsEqual(a1, a1));
 
-        SimAnnotToAnatEntityTO a3 = new SimAnnotToAnatEntityTO("XX", "cioId1");
+        SimAnnotToAnatEntityTO a3 = new SimAnnotToAnatEntityTO(2, "cioId1");
         assertFalse("Should not be equals: " + a1 + " " + a3, TOComparator.areTOsEqual(a1, a3));
 
-        a3 = new SimAnnotToAnatEntityTO("id1", "XX");
+        a3 = new SimAnnotToAnatEntityTO(1, "XX");
         assertFalse("Should not be equals: " + a1 + " " + a3, TOComparator.areTOsEqual(a1, a3));
     }
 
@@ -1043,5 +1043,49 @@ public class TOComparatorTest extends TestAncestor {
         to2 = new EntityMinMaxRanksTO<>(2, new BigDecimal("1"), new BigDecimal("2"), 1);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+    }
+
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object)}
+     * using {@code SummarySimilarityAnnotationTO}s.
+     */
+    @Test
+    public void testAreSummarySimilarityAnnotationTOEqual() {
+        SummarySimilarityAnnotationTO to1 = new SummarySimilarityAnnotationTO(1, 1, false, "CIO:001");
+        SummarySimilarityAnnotationTO to2 = new SummarySimilarityAnnotationTO(1, 1, false, "CIO:001");
+        assertTrue(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new SummarySimilarityAnnotationTO(2, 1, false, "CIO:001");
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+
+        to2 = new SummarySimilarityAnnotationTO(1, 2, false, "CIO:001");
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+        
+        to2 = new SummarySimilarityAnnotationTO(1, 1, true, "CIO:001");
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new SummarySimilarityAnnotationTO(1, 1, false, "CIO:002");
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new SummarySimilarityAnnotationTO(2, 2, false, "CIO:001");
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        assertFalse(TOComparator.areTOsEqual(to1, to2, false));
+    }
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object)}
+     * using {@code SimAnnotToAnatEntityTO}s.
+     */
+    @Test
+    public void testAreSimAnnotToAnatEntityTOEqual() {
+        SimAnnotToAnatEntityTO to1 = new SimAnnotToAnatEntityTO(1, "UBERON:001");
+        SimAnnotToAnatEntityTO to2 = new SimAnnotToAnatEntityTO(1, "UBERON:001");
+        assertTrue(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new SimAnnotToAnatEntityTO(2, "UBERON:001");
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new SimAnnotToAnatEntityTO(1, "UBERON:002");
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
     }
 }

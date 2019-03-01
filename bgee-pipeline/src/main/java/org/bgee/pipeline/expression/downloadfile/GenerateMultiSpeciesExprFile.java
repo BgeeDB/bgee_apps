@@ -825,7 +825,7 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
         return log.exit(calls.map(c -> {
             int i = 0;
             for (Entry<MultiSpExprFileType, ICsvDozerBeanWriter> writerFileType : writersUsed.entrySet()) {
-                Integer omaNodeId = c.getOMANodeId();
+                String omaGroupId = c.getOMAGroupId();
 //                String geneName = geneNamesByIds.containsKey(geneId)? geneNamesByIds.get(geneId) : "";
 //                String anatEntityId = c.getCondition().getAnatEntityId();
 //                String anatEntityName = anatEntityNamesByIds.get(anatEntityId);

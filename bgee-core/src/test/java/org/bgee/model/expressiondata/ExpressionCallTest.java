@@ -390,3 +390,4 @@ public class ExpressionCallTest extends TestAncestor {
         assertEquals("Incorrect score formatting", "2.01e4", c.getFormattedMeanRank());
     }
 }
+

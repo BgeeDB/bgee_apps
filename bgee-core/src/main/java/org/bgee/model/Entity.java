@@ -17,13 +17,6 @@ import java.util.Comparator;
  * @param <T> The type of ID of this {@code Entity}
  */
 public abstract class Entity<T extends Comparable<T>> {
-    /**
-     * A {@code Comparator} for {@code Entity}s. Sort {@code Entity}s based on their ID
-     * ({@code null} IDs sorted last).
-     */
-    public static Comparator<Entity<?>> COMPARATOR = Comparator
-            .comparing(e -> e.getId(), Comparator.nullsLast(Comparator.naturalOrder()));
-
 	/**
 	 * @see #getId()
 	 */

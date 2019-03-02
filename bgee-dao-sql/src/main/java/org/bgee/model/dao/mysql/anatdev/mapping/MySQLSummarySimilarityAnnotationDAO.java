@@ -2,6 +2,10 @@ package org.bgee.model.dao.mysql.anatdev.mapping;
 
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -20,20 +24,135 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
  *
  * @author Valentine Rech de Laval
  * @author Frederic Bastian
- * @version Bgee 14 Nov 2018
+ * @version Bgee 14 Mar. 2019
  * @see org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO
  * @since Bgee 13
  */
 public class MySQLSummarySimilarityAnnotationDAO 
                                 extends MySQLDAO<SummarySimilarityAnnotationDAO.Attribute> 
                                 implements SummarySimilarityAnnotationDAO {
+    private final static Logger log =
+            LogManager.getLogger(MySQLSummarySimilarityAnnotationDAO.class.getName());
 
     /**
-     * {@code Logger} of the class. 
+     * A {@code Map} of column name to their corresponding {@code Attribute}.
      */
-    private final static Logger log = 
-            LogManager.getLogger(MySQLSummarySimilarityAnnotationDAO.class.getName());
+    private static final Map<String, SummarySimilarityAnnotationDAO.Attribute> COL_TO_ATTR_MAP;
+    private static final String SUMMARY_SIM_ANNOT_TABLE = "summarySimilarityAnnotation";
+    private static final String SIM_ANNOT_TO_ANAT_ENTITY_TABLE = "similarityAnnotationToAnatEntityId";
+    private static final String SUMMARY_SIM_ID_FIELD = "summarySimilarityAnnotationId";
+    static {
+        COL_TO_ATTR_MAP = new HashMap<>();
+        COL_TO_ATTR_MAP.put("summarySimilarityAnnotationId", SummarySimilarityAnnotationDAO.Attribute.ID);
+        COL_TO_ATTR_MAP.put("taxonId", SummarySimilarityAnnotationDAO.Attribute.TAXON_ID);
+        COL_TO_ATTR_MAP.put("negated", SummarySimilarityAnnotationDAO.Attribute.NEGATED);
+        COL_TO_ATTR_MAP.put("CIOId", SummarySimilarityAnnotationDAO.Attribute.CIO_ID);
+    }
+
+    private static String generateTableRef(Integer taxonId, boolean ancestralTaxaAnnots,
+            boolean descentTaxaAnnots, Boolean positiveAnnots, Boolean trusted) {
+        log.entry(taxonId, ancestralTaxaAnnots, descentTaxaAnnots, positiveAnnots, trusted);
+        if (taxonId == null || taxonId <= 0) {
+            throw log.throwing(new IllegalArgumentException("Valid taxon ID must be provided"));
+        }
+        StringBuilder sb = new StringBuilder();
+
+        boolean getAncOrDes = taxonId != null && (ancestralTaxaAnnots || descentTaxaAnnots);
+        sb.append(" FROM ");
+        if (getAncOrDes) {
+            sb.append("taxon AS t1 ");
+            //retrieve the ancestors, and the requested taxon itself
+            if (ancestralTaxaAnnots) {
+                sb.append("INNER JOIN taxon AS t2 ")
+                  .append("ON t2.taxonLeftBound <= t1.taxonLeftBound AND ")
+                  .append("t2.taxonRightBound >= t1.taxonRightBound ");
+            }
+            //retrieve the descendants, and the requested taxon itself
+            if (descentTaxaAnnots) {
+                sb.append("INNER JOIN taxon AS t3 ")
+                  .append("ON t3.taxonLeftBound >= t1.taxonLeftBound AND ")
+                  .append("t3.taxonRightBound =< t1.taxonRightBound ");
+            }
+            sb.append("INNER JOIN ");
+        }
+        sb.append(SUMMARY_SIM_ANNOT_TABLE);
+        if (getAncOrDes) {
+            sb.append(" ON ");
+            if (ancestralTaxaAnnots) {
+                sb.append("t2.taxonId = ").append(SUMMARY_SIM_ANNOT_TABLE).append(".taxonId ");
+            }
+            if (descentTaxaAnnots) {
+                if (ancestralTaxaAnnots) {
+                    sb.append(" OR ");
+                }
+                sb.append("t3.taxonId = ").append(SUMMARY_SIM_ANNOT_TABLE).append(".taxonId ");
+            }
+        }
+        if (trusted != null) {
+            sb.append(" INNER JOIN CIOStatement AS t4 ")
+              .append("ON t4.CIOId = ").append(SUMMARY_SIM_ANNOT_TABLE).append(".CIOId ");
+        }
+
+        return log.exit(sb.toString());
+    }
+    private static String generateWhereCond(Integer taxonId, boolean ancestralTaxaAnnots,
+            boolean descentTaxaAnnots, Boolean positiveAnnots, Boolean trusted) {
+        log.entry(taxonId, ancestralTaxaAnnots, descentTaxaAnnots, positiveAnnots, trusted);
+        if (taxonId == null || taxonId <= 0) {
+            throw log.throwing(new IllegalArgumentException("Valid taxon ID must be provided"));
+        }
+        StringBuilder sb = new StringBuilder();
+
+        String targetTaxonIdTable = SUMMARY_SIM_ANNOT_TABLE;
+        boolean getAncOrDes = taxonId != null && (ancestralTaxaAnnots || descentTaxaAnnots);
+        if (getAncOrDes) {
+            targetTaxonIdTable = "taxon";
+        }
+
+        boolean whereClauseStarted = false;
+        if (taxonId != null) {
+            sb.append(" WHERE ").append(targetTaxonIdTable).append(".taxonId = ?");
+            whereClauseStarted = true;
+        }
+        if (positiveAnnots != null) {
+            if (!whereClauseStarted) {
+                sb.append(" WHERE ");
+            } else {
+                sb.append(" AND ");
+            }
+            sb.append(SUMMARY_SIM_ANNOT_TABLE).append(".negated = ?");
+            whereClauseStarted = true;
+        }
+        if (trusted != null) {
+            if (!whereClauseStarted) {
+                sb.append(" WHERE ");
+            } else {
+                sb.append(" AND ");
+            }
+            sb.append("t4.trusted = ?");
+            whereClauseStarted = true;
+        }
     
+        return log.exit(sb.toString());
+    }
+    private static void parameterizeStatement(BgeePreparedStatement stmt, Integer taxonId,
+            Boolean positiveAnnots, Boolean trusted) throws SQLException {
+        log.entry(stmt, taxonId, positiveAnnots, trusted);
+        int paramIndex = 1;
+        if (taxonId != null) {
+            stmt.setInt(paramIndex, taxonId);
+            paramIndex++;
+        }
+        if (positiveAnnots != null) {
+            stmt.setBoolean(paramIndex, positiveAnnots);
+            paramIndex++;
+        }
+        if (trusted != null) {
+            stmt.setBoolean(paramIndex, trusted);
+            paramIndex++;
+        }
+    }
+
     /**
      * Constructor providing the {@code MySQLDAOManager} that this {@code MySQLDAO} 
      * will use to obtain {@code BgeeConnection}s.
@@ -49,58 +168,32 @@ public class MySQLSummarySimilarityAnnotationDAO
     @Override
     public SummarySimilarityAnnotationTOResultSet getAllSummarySimilarityAnnotations()
             throws DAOException {
-        
         log.entry();
-        
-        String tableName = "summarySimilarityAnnotation";
-        
-        //Construct sql query
-        String sql = this.generateSelectClause(this.getAttributes(), tableName, 
-                !this.getAttributes().contains(SummarySimilarityAnnotationDAO.Attribute.ID));
-
-        sql += " FROM " + tableName;
-
-        //we don't use a try-with-resource, because we return a pointer to the results, 
-        //not the actual results, so we should not close this BgeePreparedStatement.
-        try {
-            return log.exit(new MySQLSummarySimilarityAnnotationTOResultSet(
-                    this.getManager().getConnection().prepareStatement(sql)));
-        } catch (SQLException e) {
-            throw log.throwing(new DAOException(e));
-        }
+        return log.exit(this.getSummarySimilarityAnnotations(null, false, false, null, null, null));
     }
-
     @Override
     public SummarySimilarityAnnotationTOResultSet getSummarySimilarityAnnotations(
-            Integer taxonId)  throws DAOException, IllegalArgumentException {
-        return this.getSummarySimilarityAnnotations(taxonId, false);
-    }
-            
-    @Override
-    public SummarySimilarityAnnotationTOResultSet getSummarySimilarityAnnotations(
-            Integer taxonId, boolean onlyTrusted) throws DAOException, IllegalArgumentException {
-        log.entry(taxonId, onlyTrusted);
-        
-        if (taxonId == null || taxonId <= 0) {
-            throw log.throwing(new IllegalArgumentException("Valid taxon ID must be provided"));
-        }
-        
-        String sql = this.generateSelectClause(this.getAttributes(), "t3", true);
-        sql += " FROM taxon AS t1 INNER JOIN taxon AS t2 "
-                + "ON t2.taxonLeftBound <= t1.taxonLeftBound AND "
-                + "t2.taxonRightBound >= t1.taxonRightBound "
-                + "INNER JOIN summarySimilarityAnnotation AS t3 "
-                + "ON t3.taxonId = t2.taxonId "
-                + "INNER JOIN CIOStatement AS t4 "
-                + "ON t3.CIOId = t4.CIOId "
-                + "WHERE t1.taxonId = ? "
-                + (onlyTrusted ? " AND t4.trusted <> 0 " : "");
-        
-        //we don't use a try-with-resource, because we return a pointer to the results, 
+            Integer taxonId, boolean ancestralTaxaAnnots, boolean descentTaxaAnnots,
+            Boolean positiveAnnots, Boolean trusted,
+            Collection<SummarySimilarityAnnotationDAO.Attribute> attrs)
+                    throws DAOException, IllegalArgumentException {
+        log.entry(taxonId, ancestralTaxaAnnots, descentTaxaAnnots, positiveAnnots, trusted, attrs);
+
+        Set<SummarySimilarityAnnotationDAO.Attribute> clonedAttrs = Collections.unmodifiableSet(
+                attrs == null? new HashSet<>(): new HashSet<>(attrs));
+
+        StringBuilder sb = new StringBuilder(generateSelectClause(SUMMARY_SIM_ANNOT_TABLE, COL_TO_ATTR_MAP,
+                true, clonedAttrs));
+        sb.append(generateTableRef(taxonId, ancestralTaxaAnnots, descentTaxaAnnots,
+                positiveAnnots, trusted));
+        sb.append(generateWhereCond(taxonId, ancestralTaxaAnnots, descentTaxaAnnots,
+                positiveAnnots, trusted));
+
+        //we don't use a try-with-resource, because we return a pointer to the results,
         //not the actual results, so we should not close this BgeePreparedStatement.
         try {
-            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
-            stmt.setInt(1, taxonId);
+            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());
+            parameterizeStatement(stmt, taxonId, positiveAnnots, trusted);
             return log.exit(new MySQLSummarySimilarityAnnotationTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
@@ -108,251 +201,36 @@ public class MySQLSummarySimilarityAnnotationDAO
     }
 
     @Override
-    public SimAnnotToAnatEntityTOResultSet getSimAnnotToAnatEntity(Integer taxonId, 
-            Set<Integer> speciesIds) throws DAOException, IllegalArgumentException {
-        log.entry(taxonId, speciesIds);
-        if (taxonId == null || taxonId <= 0) {
-            throw log.throwing(new IllegalArgumentException("Valid taxon ID must be provided"));
-        }
-        
-        String sql = this.getAnnotToAnatEntityQueryStart();
-        
-        if (speciesIds != null && !speciesIds.isEmpty()) {
-            //retrieve structures existing in ALL requested species
-            sql += "AND (EXISTS (SELECT 1 FROM anatEntityTaxonConstraint AS t5 "
-                    + "WHERE t5.anatEntityId = t4.anatEntityId AND t5.speciesId IS NULL) OR (";
-            for (int i = 0; i < speciesIds.size(); i++) {
-                if (i > 0) {
-                    sql += "AND ";
-                }
-                sql += "EXISTS (SELECT 1 FROM anatEntityTaxonConstraint AS t5 "
-                    + "WHERE t5.anatEntityId = t4.anatEntityId AND t5.speciesId = ?) ";
-            }
-            sql += ")) ";
-        }
-        
-        //we don't use a try-with-resource, because we return a pointer to the results, 
-        //not the actual results, so we should not close this BgeePreparedStatement.
-        try {
-            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
-            stmt.setInt(1, taxonId);
-            if (speciesIds != null && !speciesIds.isEmpty()) {
-                stmt.setIntegers(2, speciesIds, true);
-            }
-            return log.exit(new MySQLSimAnnotToAnatEntityTOResultSet(stmt));
-        } catch (SQLException e) {
-            throw log.throwing(new DAOException(e));
-        }
-    }
-
-    @Override
-    public SimAnnotToAnatEntityTOResultSet getSimAnnotToLostAnatEntity(Integer taxonId, 
-            Set<Integer> speciesIds) throws DAOException, IllegalArgumentException {
-        log.entry(taxonId, speciesIds);
-        if (taxonId == null || taxonId <= 0) {
-            throw log.throwing(new IllegalArgumentException("Valid taxon ID must be provided"));
-        }
-        if (speciesIds == null || speciesIds.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("Some species must be provided."));
-        }
-        
-        String sql = this.getAnnotToAnatEntityQueryStart();
-        
-        //retrieve structures existing in NONE of the requested species
-        sql += "AND NOT EXISTS (SELECT 1 FROM anatEntityTaxonConstraint AS t5 "
-                + "WHERE t5.anatEntityId = t4.anatEntityId AND t5.speciesId IS NULL) ";
-        for (int i = 0; i < speciesIds.size(); i++) {
-            sql += "AND NOT EXISTS (SELECT 1 FROM anatEntityTaxonConstraint AS t5 "
-                    + "WHERE t5.anatEntityId = t4.anatEntityId AND t5.speciesId = ?) ";
-        }
-        
-        //we don't use a try-with-resource, because we return a pointer to the results, 
-        //not the actual results, so we should not close this BgeePreparedStatement.
-        try {
-            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
-            stmt.setInt(1, taxonId);
-            stmt.setIntegers(2, speciesIds, true);
-            return log.exit(new MySQLSimAnnotToAnatEntityTOResultSet(stmt));
-        } catch (SQLException e) {
-            throw log.throwing(new DAOException(e));
-        }
-    }
-    
-    /**
-     * Generates the SELECT clause of a MySQL query used to retrieve 
-     * {@code SummarySimilarityAnnotationTO}s.
-     * 
-     * @param attributes                A {@code Set} of {@code Attribute}s defining 
-     *                                  the columns/information the query should retrieve.
-     * @param tableName                 A {@code String} defining the name of the summary similarity 
-     *                                  annotation table used.
-     * @param distinct                  A {@code boolean} defining whether the 'DISTINCT' option 
-     *                                  should be used in the 'SELECT' clause.
-     * @return                          A {@code String} containing the SELECT clause 
-     *                                  for the requested query.
-     * @throws IllegalArgumentException If one {@code Attribute} of {@code attributes} is unknown.
-     */
-    private String generateSelectClause(Set<SummarySimilarityAnnotationDAO.Attribute> attributes,
-            String tableName, boolean distinct) throws IllegalArgumentException {
-        log.entry(attributes, tableName, distinct);
-    
-        String sql = "SELECT "; 
-        if (distinct) {
-            sql += "DISTINCT ";
-        }
-        if (attributes == null || attributes.isEmpty()) {
-            return log.exit(sql + tableName + ".* ");
-        }
-    
-        boolean firstIteration = true;
-        for (SummarySimilarityAnnotationDAO.Attribute attribute: attributes) {
-            if (!firstIteration) {
-                sql += ", ";
-            }
-            sql += tableName + ".";
-            if (attribute.equals(SummarySimilarityAnnotationDAO.Attribute.ID)) {
-                sql += "summarySimilarityAnnotationId";
-            } else if (attribute.equals(SummarySimilarityAnnotationDAO.Attribute.TAXON_ID)) {
-                sql += "taxonId";
-            } else if (attribute.equals(SummarySimilarityAnnotationDAO.Attribute.NEGATED)) {
-                sql += "negated";
-            } else if (attribute.equals(SummarySimilarityAnnotationDAO.Attribute.CIO_ID)) {
-                sql += "CIOId";
-            } else {
-                throw log.throwing(new IllegalArgumentException("The attribute provided (" +
-                        attribute.toString() + ") is unknown for " + 
-                        SummarySimilarityAnnotationDAO.class.getName()));
-            }
-            firstIteration = false;
-        }
-        return log.exit(sql);
-    }
-
-    /**
-     * @return  A {@code String} that is the beginning of a SQL query allowing to retrieve 
-     *          mappings from similarity annotations to anatomical entities, 
-     *          valid in a provided taxon.
-     */
-    //FIXME: for now, this methods tries to always recover the largest mapping possible, 
-    //so, if for a given taxon, we have valid homology limb|fin, and homology limb, 
-    //it will return the homology limb|fin. Problem is, if the homology limb|fin 
-    //was to be non-trusted, we would recover both the homology limb|fin AND the homology 
-    //limb. Maybe what we need is actually a filtering on the application side...
-    //this requires more thought.
-    //Also, hat about cases where the homology is between entities existing in a same species, 
-    //such as mouth|anus, or lung|swim bladder in lungfish.
-    //And what about cases such as limb|paired fin and paired fin|median fin fold 
-    //homologous at the vetebrata level?
-    private String getAnnotToAnatEntityQueryStart() {
+    public SimAnnotToAnatEntityTOResultSet getAllSimAnnotToAnatEntity() {
         log.entry();
+        return log.exit(this.getSimAnnotToAnatEntity(null, false, false, null, null));
+    }
+    @Override
+    public SimAnnotToAnatEntityTOResultSet getSimAnnotToAnatEntity(Integer taxonId,
+            boolean ancestralTaxaAnnots, boolean descentTaxaAnnots,
+            Boolean positiveAnnots, Boolean trusted) throws DAOException, IllegalArgumentException {
+        log.entry(taxonId, ancestralTaxaAnnots, descentTaxaAnnots, positiveAnnots, trusted);
+
+        StringBuilder sb = new StringBuilder("SELECT DISTINCT ");
+        sb.append(SIM_ANNOT_TO_ANAT_ENTITY_TABLE).append(".* ");
+
+        sb.append(generateTableRef(taxonId, ancestralTaxaAnnots, descentTaxaAnnots,
+                positiveAnnots, trusted));
+        sb.append(" INNER JOIN ").append(SIM_ANNOT_TO_ANAT_ENTITY_TABLE)
+          .append(" ON ").append(SIM_ANNOT_TO_ANAT_ENTITY_TABLE).append(".").append(SUMMARY_SIM_ID_FIELD)
+          .append(" = ").append(SUMMARY_SIM_ANNOT_TABLE).append(".").append(SUMMARY_SIM_ID_FIELD);
+        sb.append(generateWhereCond(taxonId, ancestralTaxaAnnots, descentTaxaAnnots,
+                positiveAnnots, trusted));
         
-        String sql = "SELECT DISTINCT t4.* "
-                + "FROM taxon AS t1 INNER JOIN taxon AS t2 "
-                + "ON t2.taxonLeftBound <= t1.taxonLeftBound AND "
-                + "t2.taxonRightBound >= t1.taxonRightBound "
-                + "INNER JOIN summarySimilarityAnnotation AS t3 ON t3.taxonId = t2.taxonId "
-                + "INNER JOIN similarityAnnotationToAnatEntityId AS t4 "
-                + "ON t4.summarySimilarityAnnotationId = t3.summarySimilarityAnnotationId "
-                + "INNER JOIN CIOStatement AS t5 ON t3.cioId = t5.cioId "
-                + "WHERE t3.negated = 0 AND t1.taxonId = ? "
-                //we check whether there exists another valid annotation, 
-                //that includes the same anat entity, but that would link more anat entities; 
-                //in that case, we discard the currently examined annotation
-                //(e.g., to retrieve the homology 'lung-swim bladder', and to discard 
-                //the homology 'swim bladder' alone: this will allow more comparisons)
-                + "AND NOT EXISTS "
-                    + "(SELECT 1 FROM similarityAnnotationToAnatEntityId AS t29 "
-                    + "INNER JOIN summarySimilarityAnnotation AS t30 "
-                    + "ON t30.summarySimilarityAnnotationId = t29.summarySimilarityAnnotationId "
-                    + "INNER JOIN taxon AS t10 ON t30.taxonId = t10.taxonId "
-                    + "INNER JOIN CIOStatement AS t50 ON t30.cioId = t50.cioId "
-                    + "WHERE t29.anatEntityId = t4.anatEntityId AND "
-                    //that doesn't have the same ID 
-                    + "t30.summarySimilarityAnnotationId != t3.summarySimilarityAnnotationId AND "
-                    //annotated to a a valid requested taxon
-                    + "t10.taxonLeftBound <= t1.taxonLeftBound AND "
-                    + "t10.taxonRightBound >= t1.taxonRightBound AND "
-                    //that is either trusted, or not trusted, if the annotation 
-                    //that is being checked is not trusted
-                    + "t50.trusted >= t5.trusted "
-                    + " AND ("
-                        //that are either annotated to more recent taxa with at least 
-                        //as many structures
-                        + "(t10.taxonLeftBound > t2.taxonLeftBound AND "
-                        + "t10.taxonRightBound < t2.taxonRightBound AND "
-                        + "(SELECT COUNT(*) FROM similarityAnnotationToAnatEntityId AS t40 "
-                        + "WHERE t40.summarySimilarityAnnotationId = t30.summarySimilarityAnnotationId) "
-                        + ">= (SELECT COUNT(*) FROM similarityAnnotationToAnatEntityId AS t40 "
-                        + "WHERE t40.summarySimilarityAnnotationId = t3.summarySimilarityAnnotationId)) "
-                        + "OR "
-                        //or that are annotated to any valid taxa, with a higher number 
-                        //of related anatomical entities
-                        + "(SELECT COUNT(*) FROM similarityAnnotationToAnatEntityId AS t40 "
-                        + "WHERE t40.summarySimilarityAnnotationId = t30.summarySimilarityAnnotationId) "
-                        + "> (SELECT COUNT(*) FROM similarityAnnotationToAnatEntityId AS t40 "
-                        + "WHERE t40.summarySimilarityAnnotationId = t3.summarySimilarityAnnotationId) "
-                    + ")"
-                    //NOT EXISTS closing bracket    
-                    + ")";
-                
-                
-//                //check that this is the similarity annotated to the most recent valid taxon 
-//                //for this anatomical structure.
-//                + "AND NOT EXISTS "
-//                    //first, we search for annotations including the organ currently iterated 
-//                    //(t27)
-//                    + "(SELECT 1 FROM similarityAnnotationToAnatEntityId AS t27 "
-//                    //then, we retrieve these annotations (t28)
-//                    + "INNER JOIN similarityAnnotationToAnatEntityId AS t28 "
-//                    + "ON t28.summarySimilarityAnnotationId = t27.summarySimilarityAnnotationId "
-//                    //and finally, we retrieve all annotations including any organs 
-//                    //that were part of the annotations retrieved in t28. 
-//                    //so, for instance: we start from the annotation 'mesenchyme pelvic fin'
-//                    //-> Sarcopterygii; we retrieve all annotations including this organ, 
-//                    //notably 'hindlimb mesenchyme|mesenchyme pelvic fin' -> vertebrata; 
-//                    //this allows to retrieve the annotation 'hindlimb mesenchyme' 
-//                    //-> tetrapoda (table t29). So, if we were to retrieve the homology for tetrapoda, 
-//                    //we could discard the annotation 'mesenchyme pelvic fin' -> Sarcopterygii 
-//                    //to keep only the more relevant annotation 'hindlimb mesenchyme' 
-//                    //-> tetrapoda
-//                    + "INNER JOIN similarityAnnotationToAnatEntityId AS t29 "
-//                    + "ON t29.anatEntityId = t28.anatEntityId "
-//                    + "INNER JOIN summarySimilarityAnnotation AS t30 "
-//                    + "ON t30.summarySimilarityAnnotationId = t29.summarySimilarityAnnotationId "
-//                    + "INNER JOIN taxon AS t10 ON t30.taxonId = t10.taxonId "
-//                    + "INNER JOIN CIOStatement AS t50 ON t30.cioId = t50.cioId "
-//                    + "WHERE t27.anatEntityId = t4.anatEntityId AND "
-//                    //annotated to a a valid requested taxon
-//                    + "t10.taxonLeftBound <= t1.taxonLeftBound AND "
-//                    + "t10.taxonRightBound >= t1.taxonRightBound AND "
-//                    //that is either trusted, or not trusted, if the annotation 
-//                    //that is being checked is not trusted
-//                    + "t50.trusted >= t5.trusted "
-//                    
-//                    + " AND ("
-//                        //that are annotated to more recent taxa
-//                        + "(t10.taxonLeftBound > t2.taxonLeftBound AND "
-//                        + "t10.taxonRightBound < t2.taxonRightBound) "
-//                        + "OR "
-//                        //or that are annotated to the same taxon, with a higher number 
-//                        //of related anatomical entities
-//                        //(for cases such as, for instance, lung annotated to Gnathostomata, 
-//                        //and lung|swim bladder annotated to Gnathostomata 
-//                        //=> we want to recover lung|swim bladder).
-//                        + "(t10.taxonId = t2.taxonId AND "
-//                        //and that have a highest number of anat entities used 
-//                        //(for cases such as, for instance, lung annotated to Gnathostomata, 
-//                        //and lung|swim bladder annotated to Gnathostomata 
-//                        //=> we want to recover lung|swim bladder)
-//                        + "(SELECT COUNT(*) FROM similarityAnnotationToAnatEntityId AS t40 "
-//                        + "WHERE t40.summarySimilarityAnnotationId = t30.summarySimilarityAnnotationId) "
-//                        + "> (SELECT COUNT(*) FROM similarityAnnotationToAnatEntityId AS t40 "
-//                        + "WHERE t40.summarySimilarityAnnotationId = t3.summarySimilarityAnnotationId)) "
-//                    + ")"
-//                    //NOT EXISTS closing bracket    
-//                    + ")";
-        
-        return log.exit(sql);
+        //we don't use a try-with-resource, because we return a pointer to the results, 
+        //not the actual results, so we should not close this BgeePreparedStatement.
+        try {
+            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());
+            parameterizeStatement(stmt, taxonId, positiveAnnots, trusted);
+            return log.exit(new MySQLSimAnnotToAnatEntityTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
     }
 
     @Override
@@ -496,28 +374,34 @@ public class MySQLSummarySimilarityAnnotationDAO
             Integer id = null, taxonId = null;
             Boolean negated = null;
 
-            for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
-                try {
-                    if (column.getValue().equals("summarySimilarityAnnotationId")) {
-                        id = this.getCurrentResultSet().getInt(column.getKey());
-                        
-                    } else if (column.getValue().equals("taxonId")) {
-                        taxonId = this.getCurrentResultSet().getInt(column.getKey());
-
-                    } else if (column.getValue().equals("negated")) {
-                        negated = this.getCurrentResultSet().getBoolean(column.getKey());
-
-                    } else if (column.getValue().equals("CIOId")) {
-                        cioId = this.getCurrentResultSet().getString(column.getKey());
-                    } else {
-                        throw log.throwing(new UnrecognizedColumnException(column.getValue()));
+            try {
+                for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
+                    String columnName = column.getValue();
+                    int columnIndex = column.getKey();
+                    SummarySimilarityAnnotationDAO.Attribute attr = getAttributeFromColName(
+                            columnName, COL_TO_ATTR_MAP);
+                    switch (attr) {
+                    case ID:
+                        id = this.getCurrentResultSet().getInt(columnIndex);
+                        break;
+                    case TAXON_ID:
+                        taxonId = this.getCurrentResultSet().getInt(columnIndex);
+                        break;
+                    case NEGATED:
+                        negated = this.getCurrentResultSet().getBoolean(columnIndex);
+                        break;
+                    case CIO_ID:
+                        cioId = this.getCurrentResultSet().getString(columnIndex);
+                        break;
+                    default:
+                        log.throwing(new UnrecognizedColumnException(columnName));
                     }
-
-                } catch (SQLException e) {
-                    throw log.throwing(new DAOException(e));
                 }
+                return log.exit(new SummarySimilarityAnnotationTO(id, taxonId, negated, cioId));
+
+            } catch (SQLException e) {
+                throw log.throwing(new DAOException(e));
             }
-            return log.exit(new SummarySimilarityAnnotationTO(id, taxonId, negated, cioId));
         }
     }
     

@@ -1,4 +1,4 @@
-package org.bgee.model.anatdev;
+package org.bgee.model.anatdev.multispemapping;
 
 import java.util.Set;
 
@@ -7,7 +7,8 @@ import java.util.Set;
  * 
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Aug. 2016 
+ * @author  Frederic Bastian
+ * @version Bgee 13, Mar. 2019 
  * @since   Bgee 13, Apr. 2016 
  */
 public class DevStageSimilarity {
@@ -84,10 +85,10 @@ public class DevStageSimilarity {
 
     @Override
     public String toString() {
-    	StringBuilder builder = new StringBuilder();
+        StringBuilder builder = new StringBuilder();
         builder.append("DevStageSimilarity [dev. stage IDs = ").append(getDevStageIds())
-        	.append(", taxonId = ").append(taxonId)
-        	.append("]");
+            .append(", taxonId = ").append(taxonId)
+            .append("]");
         return builder.toString();
     }
 }

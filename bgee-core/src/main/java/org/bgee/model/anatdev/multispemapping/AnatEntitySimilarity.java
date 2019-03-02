@@ -1,4 +1,4 @@
-package org.bgee.model.anatdev;
+package org.bgee.model.anatdev.multispemapping;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.species.Taxon;
 
 /**
@@ -15,7 +16,7 @@ import org.bgee.model.species.Taxon;
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
  * @author Frederic Bastian
- * @version Bgee 14 Nov 2018
+ * @version Bgee 14 Mar. 2019
  * @since   Bgee 13, Apr. 2016
  */
 public class AnatEntitySimilarity {

@@ -21,10 +21,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.anatdev.AnatEntityService;
-import org.bgee.model.anatdev.AnatEntitySimilarity;
-import org.bgee.model.anatdev.DevStageService;
-import org.bgee.model.anatdev.DevStageSimilarity;
+import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarity;
+import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityService;
+import org.bgee.model.anatdev.multispemapping.DevStageSimilarity;
+import org.bgee.model.anatdev.multispemapping.DevStageSimilarityService;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.baseelements.CallType;
@@ -65,8 +65,8 @@ public class MultiSpeciesCallService extends Service {
     }
     
     private final CallService callService;
-    private final AnatEntityService anatEntityService;
-    private final DevStageService devStageService;
+    private final AnatEntitySimilarityService anatEntitySimilarityService;
+    private final DevStageSimilarityService devStageSimilarityService;
     private final OntologyService ontologyService;
     private final SpeciesService speciesService;
     private final GeneService geneService;
@@ -79,8 +79,8 @@ public class MultiSpeciesCallService extends Service {
     public MultiSpeciesCallService(ServiceFactory serviceFactory) {
         super(serviceFactory);
         this.callService = this.getServiceFactory().getCallService();
-        this.anatEntityService = this.getServiceFactory().getAnatEntityService();
-        this.devStageService = this.getServiceFactory().getDevStageService();
+        this.anatEntitySimilarityService = this.getServiceFactory().getAnatEntitySimilarityService();
+        this.devStageSimilarityService = this.getServiceFactory().getDevStageSimilarityService();
         this.ontologyService = this.getServiceFactory().getOntologyService();
         this.speciesService = this.getServiceFactory().getSpeciesService();
         this.geneService = this.getServiceFactory().getGeneService();
@@ -354,7 +354,7 @@ public class MultiSpeciesCallService extends Service {
 
             // Retrieve anat. entity similarities
             Set<AnatEntitySimilarity> anatEntitySimilarities = this.getServiceFactory()
-                    .getAnatEntityService().loadAnatEntitySimilarities(taxonId, clonedSpeIds, true)
+                    .getAnatEntitySimilarityService().loadAnatEntitySimilarities(taxonId, clonedSpeIds, true)
                     .collect(Collectors.toSet());
             log.trace("Anat. entity similarities: {}", anatEntitySimilarities);
             Set<String> anatEntityIds = anatEntitySimilarities.stream()
@@ -363,7 +363,7 @@ public class MultiSpeciesCallService extends Service {
             
             // Retrieve dev. stage similarities
             Set<DevStageSimilarity> devStageSimilarities = this.getServiceFactory() 
-                    .getDevStageService().loadDevStageSimilarities(taxonId, clonedSpeIds);
+                    .getDevStageSimilarityService().loadDevStageSimilarities(taxonId, clonedSpeIds);
             log.trace("Dev. stage similarities: {}", devStageSimilarities);
             Set<String> devStageIds = devStageSimilarities.stream()
                     .map(s -> s.getDevStageIds()).flatMap(Set::stream).collect(Collectors.toSet());
@@ -641,7 +641,7 @@ public class MultiSpeciesCallService extends Service {
     	Set<AnatEntitySimilarity> anatEntitySimilarities = new HashSet<>();
     	lcaTaxonToSpecies.entrySet().forEach(t -> {
     		anatEntitySimilarities.addAll(
-    				anatEntityService.loadAnatEntitySimilarities(
+    				anatEntitySimilarityService.loadAnatEntitySimilarities(
     						t.getKey().getId(),
     						t.getValue().stream().map(s -> s.getId()).collect(Collectors.toSet()),
     						true)
@@ -664,7 +664,7 @@ public class MultiSpeciesCallService extends Service {
     	Set<DevStageSimilarity> devStageSimilarities = new HashSet<>();
     	//Retrieve dev stage sim for each taxon and a set of species
     	taxonToSpecies.entrySet().stream().forEach(t -> {
-    		Set<DevStageSimilarity> groupingStages = devStageService.loadDevStageSimilarities(
+    		Set<DevStageSimilarity> groupingStages = devStageSimilarityService.loadDevStageSimilarities(
     				t.getKey().getId(), 
     				t.getValue().stream().map(
     						s -> s.getId()).collect(Collectors.toSet())

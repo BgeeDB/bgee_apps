@@ -7,6 +7,8 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.anatdev.DevStageService;
 import org.bgee.model.anatdev.TaxonConstraintService;
+import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityService;
+import org.bgee.model.anatdev.multispemapping.DevStageSimilarityService;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.ConditionGraphService;
@@ -138,6 +140,14 @@ public class ServiceFactory implements AutoCloseable {
     }
 
     /**
+     * @return  A newly instantiated {@code DevStageSimilarityService}
+     */
+    public DevStageSimilarityService getDevStageSimilarityService() {
+        log.entry();
+        return log.exit(new DevStageSimilarityService(this));
+    }
+
+    /**
      * @return A newly instantiated {@code DownloadFileService}
      */
     public DownloadFileService getDownloadFileService() {
@@ -183,6 +193,14 @@ public class ServiceFactory implements AutoCloseable {
     public AnatEntityService getAnatEntityService() {
         log.entry();
         return log.exit(new AnatEntityService(this));
+    }
+
+    /**
+     * @return A newly instantiated {@code AnatEntitySimilarityService}
+     */
+    public AnatEntitySimilarityService getAnatEntitySimilarityService() {
+        log.entry();
+        return log.exit(new AnatEntitySimilarityService(this));
     }
     
     /**

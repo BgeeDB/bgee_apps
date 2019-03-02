@@ -1,7 +1,7 @@
 package org.bgee.model.expressiondata.multispecies;
 
-import org.bgee.model.anatdev.AnatEntitySimilarity;
-import org.bgee.model.anatdev.DevStageSimilarity;
+import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarity;
+import org.bgee.model.anatdev.multispemapping.DevStageSimilarity;
 
 /**
  * This class describes the conditions related to multispecies gene expression. It captures 

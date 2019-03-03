@@ -18,7 +18,7 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, Feb. 2017
+ * @version Bgee 14 Mar. 2019
  * @since   Bgee 13
  * @see RelationTO
  */
@@ -208,6 +208,12 @@ public interface RelationDAO extends DAO<RelationDAO.Attribute> {
      * @param relationStatus        A {@code Collection} of {@code RelationStatus} that are the status
      *                              allowing to filter the relations to retrieve.
      *                              Can be {@code null} or empty.
+     * @param lca                   A {@code boolean} specifying if {@code true} to only retrieve
+     *                              relations connecting the requested taxa in {@code sourceTaxIds}
+     *                              and {@code targetTaxIds} to taxa that are
+     *                              least common ancestors of species in Bgee. The relations linking
+     *                              some {@code sourceTaxIds} to some {@code targetTaxIds} are always
+     *                              retrieved.
      * @param attributes            A {@code Collection} of {@code RelationDAO.Attribute}s 
      *                              defining the attributes to populate in the returned 
      *                              {@code RelationTO}s. If {@code null} or empty, 
@@ -218,7 +224,7 @@ public interface RelationDAO extends DAO<RelationDAO.Attribute> {
      */
     public RelationTOResultSet<Integer> getTaxonRelations(Collection<Integer> sourceTaxIds, 
         Collection<Integer> targetTaxIds, Boolean sourceOrTarget, Collection<RelationStatus> relationStatus, 
-        Collection<RelationDAO.Attribute> attributes);
+        boolean lca, Collection<RelationDAO.Attribute> attributes);
     
 
     /**

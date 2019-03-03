@@ -23,7 +23,7 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
  * Parent class of all MySQL DAOs of this module.
  * 
  * @author Frederic Bastian
- * @version Bgee 13
+ * @version Bgee 14 Mar. 2019
  * @since Bgee 01
  *
  * @param <T>   The type of {@code DAO.Attribute} that can be used with this {@code DAO}, 
@@ -353,7 +353,7 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
      * @param speciesCount  An {@code int} that is the number of requested species.
      * @return              A {@code String} that is the SQL EXISTS clause.
      */
-    protected String getAllSpeciesExistsClause(String existsPart, int speciesCount) {
+    protected static String getAllSpeciesExistsClause(String existsPart, int speciesCount) {
         log.entry(existsPart, speciesCount);
         
         return log.exit("(EXISTS(" + existsPart + " IS NULL) OR (" 

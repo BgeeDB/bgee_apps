@@ -435,8 +435,11 @@ public class OntologyTest extends TestAncestor {
 
         Set<Integer> speciesIds = new HashSet<>(Arrays.asList(1, 2, 3));
 
-        Taxon tax1 = new Taxon(1), tax2 = new Taxon(2), tax3 = new Taxon(3), 
-            tax10 = new Taxon(10), tax100 = new Taxon(100); 
+        Taxon tax1 = new Taxon(1, "name1", "desc1", "scName1", 3, false),
+              tax2 = new Taxon(2, "name2", "desc2", "scName2", 3, false),
+              tax3 = new Taxon(3, "name3", "desc3", "scName3", 3, false), 
+              tax10 = new Taxon(10, "name10", "desc10", "scName10", 2, true),
+              tax100 = new Taxon(100, "name100", "desc100", "scName100", 1, true); 
         // tax100--
         // |        \
         // tax10     \
@@ -470,13 +473,6 @@ public class OntologyTest extends TestAncestor {
         
         assertEquals("Incorrect ordered ancestors",
             Arrays.asList(tax10), ontology.getOrderedAncestors(tax1, ISA_RELATIONS));
-
-        try {
-            ontology.getOrderedAncestors(new Taxon(-1));
-            fail("Should throws an exception");
-        } catch (IllegalArgumentException e) {
-            // Test passed
-        }
     }
     
     /**
@@ -488,8 +484,11 @@ public class OntologyTest extends TestAncestor {
 
         Set<Integer> speciesIds = new HashSet<>(Arrays.asList(1, 2, 3));
 
-        Taxon tax1 = new Taxon(1), tax2 = new Taxon(2), tax3 = new Taxon(3), 
-            tax10 = new Taxon(10), tax100 = new Taxon(100); 
+        Taxon tax1 = new Taxon(1, "name1", "desc1", "scName1", 3, false),
+              tax2 = new Taxon(2, "name2", "desc2", "scName2", 3, false),
+              tax3 = new Taxon(3, "name3", "desc3", "scName3", 3, false), 
+              tax10 = new Taxon(10, "name10", "desc10", "scName10", 2, true),
+              tax100 = new Taxon(100, "name100", "desc100", "scName100", 1, true);
         // tax100--
         // |        \
         // tax10     \
@@ -525,12 +524,6 @@ public class OntologyTest extends TestAncestor {
             // Test passed because sub-level is not positive
         }
 
-        try {
-            ontology.getDescendantsUntilSubLevel(new Taxon(-1), 1);
-            fail("Should throws an exception");
-        } catch (IllegalArgumentException e) {
-            // Test passed because taxon ID not found
-        }
     }
 
     /**

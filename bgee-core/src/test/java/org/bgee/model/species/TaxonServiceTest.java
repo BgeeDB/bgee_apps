@@ -48,7 +48,7 @@ public class TaxonServiceTest extends TestAncestor {
                 new TaxonTO(9443, "primates", "Primates", 3, 4, 3, true));
 
         TaxonService service = new TaxonService(serviceFactory);
-        assertEquals("Incorrect taxa", new Taxon(9443,  "primates", null),
+        assertEquals("Incorrect taxa", new Taxon(9443,  "primates", null, "Primates", 3, true),
                 service.loadLeastCommonAncestor(speciesIds));
     }
     /**
@@ -73,9 +73,9 @@ public class TaxonServiceTest extends TestAncestor {
         when(dao.getTaxa(taxIds, false, null)).thenReturn(mockTaxonRs1);
         
         Set<Taxon> expectedTaxa = new HashSet<>(Arrays.asList(
-                new Taxon(9443,  "primates", null), 
-                new Taxon(40674, "mammals", null), 
-                new Taxon(7742, "vertebrates", null)));
+                new Taxon(9443,  "primates", null, "Primates", 3, true),
+                new Taxon(40674, "mammals", null, "Mammalia", 2, false),
+                new Taxon(7742, "vertebrates", null, "Vertebrata", 1, true)));
         TaxonService service = new TaxonService(serviceFactory);
         assertEquals("Incorrect taxa", expectedTaxa,
                 service.loadTaxa(taxIds, false).collect(Collectors.toSet()));

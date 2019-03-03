@@ -79,6 +79,7 @@ public class TaxonService extends Service {
      */
     private static Taxon mapFromTO(TaxonTO taxonTO) {
         log.entry(taxonTO);
-        return log.exit(new Taxon(taxonTO.getId(), taxonTO.getName(), taxonTO.getDescription()));
+        return log.exit(new Taxon(taxonTO.getId(), taxonTO.getName(), taxonTO.getDescription(),
+                taxonTO.getScientificName(), taxonTO.getLevel(), taxonTO.isLca()));
     }
 }

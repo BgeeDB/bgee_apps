@@ -13,11 +13,16 @@ import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
 /**
  * A {@link Service} to obtain {@link Taxon} objects. 
  * Users should use the {@link ServiceFactory} to obtain {@code TaxonService}.
+ * <p>
+ * To retrieve relations between taxa, or taxonomy leading to requested species, etc,
+ * see methods returning an {@code Ontology<Taxon, Integer>} in
+ * {@link org.bgee.model.ontology.OntologyService}.
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Nov. 2016
+ * @version Bgee 14 Mar. 2019
  * @since   Bgee 13, Sept. 2015
+ * @see org.bgee.model.ontology.OntologyService
  */
 public class TaxonService extends Service {
 
@@ -32,43 +37,38 @@ public class TaxonService extends Service {
         super(serviceFactory);
     }
 
-    public Stream<Taxon> loadTaxaByIds(Collection<Integer> taxonIds) {
+    /**
+     * Retrieve taxa from their NCBI taxon IDs.
+     *
+     * @param taxonIds  A {@code Collection} of {@code Integer}s that are the IDs of the requested taxa.
+     *                  Can be {@code null} or empty if all taxa are requested.
+     * @param lca       A {@code boolean} specifying, if {@code true}, to only retrieve
+     *                  taxa that are least common ancestors of species in Bgee.
+     * @return          A {@code Stream} of the requested {@code Taxon}s.
+     */
+    public Stream<Taxon> loadTaxa(Collection<Integer> taxonIds, boolean lca) {
         log.entry(taxonIds);
         return log.exit(this.getDaoManager().getTaxonDAO()
-                .getTaxaByIds(taxonIds).stream()
+                .getTaxa(taxonIds, lca, null).stream()
                 .map(TaxonService::mapFromTO));
     }
-    
     /**
-     * Retrieve {@code Taxon}s that are LCA of the provided species.
-     * If {@code commonAncestor} is {@code true}, all ancestors of the LCA will also be retrieved.
+     * Retrieve the LCA of the provided species, considering only species in Bgee.
+     * <p>
+     * The {@code Taxon} returned is guaranteed to be non-{@code null} (in the most extreme case:
+     * the LCA of all species in Bgee).
      * 
-     * @param speciesIds        A {@code Collection} of {@code Integer}s that are the IDs of species 
-     *                          to filter taxa to retrieve. Can be {@code null} or empty.
-     * @param commonAncestor    A {@code boolean} defining whether the entities retrieved
-     *                          should be common ancestor.
-     * @return                  A {@code Stream} of {@code Taxon}s retrieved for
-     *                          the requested parameters.
+     * @param speciesIds        A {@code Collection} of {@code Integer}s that are the IDs of 
+     *                          the species for which we want to retrieve the LCA.
+     *                          If {@code null} or empty, then all species in Bgee are considered
+     *                          (leading to return the LCA of all species in Bgee)
+     * @return                  A {@code Taxon} that is the least common ancestor
+     *                          of the requested species. Only species in Bgee are considered.
      */
-    // FIXME: I'm not sure of the interpretation of the boolean commonAncestor
-    // on the shitty figure of the issue 125
-    public Stream<Taxon> loadTaxa(Collection<Integer> speciesIds, boolean includeAncestors) {
-        log.entry(speciesIds, includeAncestors);
-        return log.exit(this.getDaoManager().getTaxonDAO()
-                .getLeastCommonAncestor(speciesIds, includeAncestors).stream()
-                .map(TaxonService::mapFromTO));
-    }
-    
-    /**
-     * Retrieve {@code Taxon}s that are either least common ancestor
-     * or parent taxon of species in data source.
-     * 
-     * @return  A {@code Stream} of {@code Taxon}s retrieved for the requested parameters.
-     */
-    public Stream<Taxon> loadAllLeastCommonAncestorAndParentTaxa() {
-        return log.exit(this.getDaoManager().getTaxonDAO()
-                .getAllLeastCommonAncestorAndParentTaxa(null).stream()
-                .map(TaxonService::mapFromTO));
+    public Taxon loadLeastCommonAncestor(Collection<Integer> speciesIds) {
+        log.entry(speciesIds);
+        return log.exit(mapFromTO(this.getDaoManager().getTaxonDAO()
+                .getLeastCommonAncestor(speciesIds, null)));
     }
 
     /**

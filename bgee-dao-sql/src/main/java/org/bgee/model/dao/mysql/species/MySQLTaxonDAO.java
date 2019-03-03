@@ -3,9 +3,9 @@ package org.bgee.model.dao.mysql.species;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Optional;
+import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
@@ -23,17 +23,28 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
  * A {@code TaxonDAO} for MySQL. 
  * 
  * @author Frederic Bastian
- * @version Bgee 13
+ * @version Bgee 14 Mar. 2019
  * @see org.bgee.model.dao.api.species.TaxonDAO.TaxonTO
  * @since Bgee 13
  */
-public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute> 
-    implements TaxonDAO {
+public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute> implements TaxonDAO {
+    private final static Logger log = LogManager.getLogger(MySQLTaxonDAO.class.getName());
+
     /**
-     * {@code Logger} of the class. 
+     * A {@code Map} of column name to their corresponding {@code Attribute}.
      */
-    private final static Logger log = 
-            LogManager.getLogger(MySQLTaxonDAO.class.getName());
+    private static final Map<String, TaxonDAO.Attribute> COL_TO_ATTR_MAP;
+    private static final String TAXON_TABLE = "taxon";
+    static {
+        COL_TO_ATTR_MAP = new HashMap<>();
+        COL_TO_ATTR_MAP.put("taxonId", TaxonDAO.Attribute.ID);
+        COL_TO_ATTR_MAP.put("taxonCommonName", TaxonDAO.Attribute.COMMON_NAME);
+        COL_TO_ATTR_MAP.put("taxonScientificName", TaxonDAO.Attribute.SCIENTIFIC_NAME);
+        COL_TO_ATTR_MAP.put("taxonLeftBound", TaxonDAO.Attribute.LEFT_BOUND);
+        COL_TO_ATTR_MAP.put("taxonRightBound", TaxonDAO.Attribute.RIGHT_BOUND);
+        COL_TO_ATTR_MAP.put("taxonLevel", TaxonDAO.Attribute.LEVEL);
+        COL_TO_ATTR_MAP.put("bgeeSpeciesLCA", TaxonDAO.Attribute.LCA);
+    }
     
     /**
      * Constructor providing the {@code MySQLDAOManager} that this {@code MySQLDAO} 
@@ -44,80 +55,40 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
     public MySQLTaxonDAO(MySQLDAOManager manager) throws IllegalArgumentException {
         super(manager);
     }
-    
-    /**
-     * Generates the SELECT clause of a MySQL query used to retrieve {@code TaxonTO}s.
-     * 
-     * @param attributes                A {@code Set} of {@code Attribute}s defining 
-     *                                  the columns/information the query should retrieve.
-     * @param taxonTableName            A {@code String} defining the name used for 
-     *                                  the expression table.
-     * @return                          A {@code String} containing the SELECT clause 
-     *                                  for the requested query, ending with a whitespace.
-     */
-    private String generateSelectClause(Set<TaxonDAO.Attribute> attributes, 
-            String taxonTableName) {
-        log.entry(attributes, taxonTableName);
-        
-        String sql = new String(); 
-        //always include the DISTINCT clause, this table is small.
-        if (attributes == null || attributes.size() == 0) {
-            sql += "SELECT DISTINCT " + taxonTableName + ".*";
-        } else {
-            for (TaxonDAO.Attribute attribute: attributes) {
-                if (sql.length() == 0) {
-                    sql += "SELECT DISTINCT ";
-                } else {
-                    sql += ", ";
-                }
-                if (attribute.equals(TaxonDAO.Attribute.ID)) {
-                    sql += taxonTableName + ".taxonId";
-                } else if (attribute.equals(TaxonDAO.Attribute.COMMON_NAME)) {
-                    sql += taxonTableName + ".taxonCommonName";
-                } else if (attribute.equals(TaxonDAO.Attribute.SCIENTIFIC_NAME)) {
-                    sql += taxonTableName + ".taxonScientificName";
-                } else if (attribute.equals(TaxonDAO.Attribute.LEFT_BOUND)) {
-                    sql += taxonTableName + ".taxonLeftBound";
-                } else if (attribute.equals(TaxonDAO.Attribute.RIGHT_BOUND)) {
-                    sql += taxonTableName + ".taxonRightBound";
-                } else if (attribute.equals(TaxonDAO.Attribute.LEVEL)) {
-                    sql += taxonTableName + ".taxonLevel";
-                } else if (attribute.equals(TaxonDAO.Attribute.LCA)) {
-                    sql += taxonTableName + ".bgeeSpeciesLCA";
-                } else {
-                    throw log.throwing(new IllegalArgumentException(
-                            "The attribute provided (" + attribute.toString() + 
-                            ") is unknown for " + TaxonDAO.class.getName()));
-                }
-            }
-        }
-        sql += " ";
-        
-        return log.exit(sql);
-    }
 
     @Override
-    public TaxonTOResultSet getAllTaxa() throws DAOException {
-        log.entry();
-        return log.exit(this.getTaxaByIds(null));
-    }
-    @Override
-    public TaxonTOResultSet getTaxaByIds(Collection<Integer> taxonIds) throws DAOException {
-        log.entry(taxonIds);
+    public TaxonTOResultSet getTaxa(Collection<Integer> taxonIds, boolean lca,
+            Collection<TaxonDAO.Attribute> attributes) throws DAOException {
+        log.entry(taxonIds, lca, attributes);
 
-        Set<Integer> clonedTaxIds = Collections.unmodifiableSet(taxonIds == null? new HashSet<>(): new HashSet<>(taxonIds));
+        Set<Integer> clonedTaxIds = Collections.unmodifiableSet(taxonIds == null? new HashSet<>():
+            new HashSet<>(taxonIds));
+        Set<TaxonDAO.Attribute> clonedAttrs = Collections.unmodifiableSet(attributes == null? new HashSet<>():
+            new HashSet<>(attributes));
         //Construct sql query
-        String sql = this.generateSelectClause(this.getAttributes(), "taxon");
-        sql += "FROM taxon";
-        if (!clonedTaxIds.isEmpty()) {
-            sql += " WHERE taxonId IN (" + BgeePreparedStatement.generateParameterizedQueryString(clonedTaxIds.size()) + ")";
+        StringBuilder sb = new StringBuilder(generateSelectClause(TAXON_TABLE, COL_TO_ATTR_MAP,
+                true, clonedAttrs));
+        sb.append(" FROM ").append(TAXON_TABLE);
+        if (!clonedTaxIds.isEmpty() || lca) {
+            sb.append(" WHERE ");
+            if (!clonedTaxIds.isEmpty()) {
+                sb.append("taxonId IN (")
+                  .append(BgeePreparedStatement.generateParameterizedQueryString(clonedTaxIds.size()))
+                  .append(")");
+            }
+            if (lca) {
+                if (!clonedTaxIds.isEmpty()) {
+                    sb.append(" AND ");
+                }
+                sb.append("bgeeSpeciesLCA = 1");
+            }
         }
     
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.
         BgeePreparedStatement stmt = null;
         try {
-            stmt = this.getManager().getConnection().prepareStatement(sql.toString());
+            stmt = this.getManager().getConnection().prepareStatement(sb.toString());
             if (!clonedTaxIds.isEmpty()) {
                 stmt.setIntegers(1, clonedTaxIds, true);
             }
@@ -128,81 +99,55 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
     }
 
     @Override
-    public TaxonTOResultSet getAllLeastCommonAncestorAndParentTaxa(Collection<TaxonDAO.Attribute> attrs) 
-            throws DAOException {
-        log.entry(attrs);
-
-        //argument fitering/preparation
-        Set<TaxonDAO.Attribute> filteredAttrs = Optional.ofNullable(attrs)
-                .map(e -> EnumSet.copyOf(e)).orElse(EnumSet.allOf(TaxonDAO.Attribute.class));
-        
-        //Construct sql query
-        String sql = this.generateSelectClause(filteredAttrs, "taxon");
-        sql += "FROM taxon WHERE ";
-        //keep taxa that are either a LCA of species in Bgee
-        sql += "bgeeSpeciesLCA = 1 ";
-        //or that are a parent taxon of a species in Bgee
-        sql += "OR EXISTS (SELECT 1 FROM species WHERE species.taxonId = taxon.taxonId) ";
-    
-        //we don't use a try-with-resource, because we return a pointer to the results, 
-        //not the actual results, so we should not close this BgeePreparedStatement.
-        BgeePreparedStatement stmt = null;
-        try {
-            stmt = this.getManager().getConnection().prepareStatement(sql);
-            return log.exit(new MySQLTaxonTOResultSet(stmt));
-        } catch (SQLException e) {
-            throw log.throwing(new DAOException(e));
-        }
-    }
-
-    @Override
     //TODO: integration test - test also a case where species are member of a same taxon leaf
-    public TaxonTOResultSet getLeastCommonAncestor(Collection<Integer> speciesIds, 
-            boolean includeAncestors) throws DAOException, IllegalArgumentException {
-        log.entry(speciesIds, includeAncestors);
+    public TaxonTO getLeastCommonAncestor(Collection<Integer> speciesIds,
+            Collection<TaxonDAO.Attribute> attributes) throws DAOException {
+        log.entry(speciesIds, attributes);
         
         final Set<Integer> clonedSpeIds = Collections.unmodifiableSet(
                 speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds));
-        
-        String sql = this.generateSelectClause(this.getAttributes(), "t1");
-        //Quick fix for issue #173
-        if (!includeAncestors) {
-            sql += ", t1.taxonLeftBound ";
+        Set<TaxonDAO.Attribute> clonedAttrs = Collections.unmodifiableSet(attributes == null? new HashSet<>():
+            new HashSet<>(attributes));
+
+        //Construct sql query
+        StringBuilder sb = new StringBuilder(generateSelectClause("t1", COL_TO_ATTR_MAP,
+                true, clonedAttrs));
+        //We always add taxonLeftBound unless it was requested in attributes.
+        //fix for issue #173
+        if (!clonedAttrs.isEmpty() && !clonedAttrs.contains(TaxonDAO.Attribute.LEFT_BOUND)) {
+            sb.append(", t1.taxonLeftBound ");
         }
-        sql += "FROM taxon AS t1 INNER JOIN ";
+        sb.append("FROM taxon AS t1 INNER JOIN ");
         //find the min left bound and max right bound of the taxa which the requested species 
         //belong to; the LCA is the lowest node with a leftBound < min left bound && 
         //rightBound > max right bound. 
         //we use a temp table to avoid using two subqueries in the WHERE clause.
-        sql += "(SELECT MIN(taxonLeftBound) AS minLeftBound, "
-                + "MAX(taxonRightBound) AS maxRightBound FROM taxon "
-                + "INNER JOIN species on taxon.taxonId = species.taxonId ";
+        sb.append("(SELECT MIN(taxonLeftBound) AS minLeftBound, ")
+          .append("MAX(taxonRightBound) AS maxRightBound FROM taxon ")
+          .append("INNER JOIN species on taxon.taxonId = species.taxonId ");
         //no species requested: find the LCA of all species in Bgee. Otherwise, parameterize. 
         if (!clonedSpeIds.isEmpty()) {
-            sql += "WHERE speciesId IN (" + 
-                    BgeePreparedStatement.generateParameterizedQueryString(
-                            clonedSpeIds.size()) + ")";
+            sb.append("WHERE speciesId IN (")
+              .append(BgeePreparedStatement.generateParameterizedQueryString(clonedSpeIds.size()))
+              .append(")");
         }
         //it is important to compare using greater/lower than *or equal to*, 
         //otherwise we would miss the LCA if species are all member of a same taxon leaf.
-        sql += ") AS minMaxTable ON t1.taxonLeftBound <= minMaxTable.minLeftBound and "
-                + "t1.taxonRightBound >= minMaxTable.maxRightBound ";
-        //if we want all ancestors starting from the LCA (includeAncestors == true), 
-        //then this is it. Otherwise, we retrieve the lowest node among the valid ancestors.
-        if (!includeAncestors) {
-            sql += "ORDER BY t1.taxonLeftBound DESC LIMIT 1";
-        }
+        sb.append(") AS minMaxTable ON t1.taxonLeftBound <= minMaxTable.minLeftBound and ")
+          .append("t1.taxonRightBound >= minMaxTable.maxRightBound ");
+        //we retrieve the lowest node among the valid ancestors.
+        sb.append("ORDER BY t1.taxonLeftBound DESC LIMIT 1");
         
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.
         try {
-            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
+            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());
             if (!clonedSpeIds.isEmpty()) {
                 stmt.setIntegers(1, clonedSpeIds, true);
             }
-            
-            return log.exit(new MySQLTaxonTOResultSet(stmt));
-            
+            try(MySQLTaxonTOResultSet rs = new MySQLTaxonTOResultSet(stmt)) {
+                return log.exit(rs.stream().findFirst().get());
+            }
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -286,40 +231,43 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
             Integer taxonId = null, taxonLeftBound = null, taxonRightBound = null, taxonLevel = null;
             Boolean bgeeSpeciesLCA = null;
             // Get results
-            for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
-                try {
-                    if (column.getValue().equals("taxonId")) {
-                        taxonId = this.getCurrentResultSet().getInt(column.getKey());
-
-                    } else if (column.getValue().equals("taxonCommonName")) {
-                        taxonName = this.getCurrentResultSet().getString(column.getKey());
-
-                    } else if (column.getValue().equals("taxonScientificName")) {
-                        taxonScientificName = this.getCurrentResultSet().getString(
-                                column.getKey());
-
-                    } else if (column.getValue().equals("taxonLeftBound")) {
-                        taxonLeftBound = this.getCurrentResultSet().getInt(column.getKey());
-
-                    } else if (column.getValue().equals("taxonRightBound")) {
-                        taxonRightBound = this.getCurrentResultSet().getInt(column.getKey());
-
-                    } else if (column.getValue().equals("taxonLevel")) {
-                        taxonLevel = this.getCurrentResultSet().getInt(column.getKey());
-
-                    } else if (column.getValue().equals("bgeeSpeciesLCA")) {
-                        bgeeSpeciesLCA = this.getCurrentResultSet().getBoolean(column.getKey());
-                    } else {
-                        throw log.throwing(new UnrecognizedColumnException(column.getValue()));
+            try {
+                for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
+                    String columnName = column.getValue();
+                    int columnIndex = column.getKey();
+                    TaxonDAO.Attribute attr = getAttributeFromColName(columnName, COL_TO_ATTR_MAP);
+                    switch (attr) {
+                    case ID:
+                        taxonId = this.getCurrentResultSet().getInt(columnIndex);
+                        break;
+                    case COMMON_NAME:
+                        taxonName = this.getCurrentResultSet().getString(columnIndex);
+                        break;
+                    case SCIENTIFIC_NAME:
+                        taxonScientificName = this.getCurrentResultSet().getString(columnIndex);
+                        break;
+                    case LEFT_BOUND:
+                        taxonLeftBound = this.getCurrentResultSet().getInt(columnIndex);
+                        break;
+                    case RIGHT_BOUND:
+                        taxonRightBound = this.getCurrentResultSet().getInt(columnIndex);
+                        break;
+                    case LEVEL:
+                        taxonLevel = this.getCurrentResultSet().getInt(columnIndex);
+                        break;
+                    case LCA:
+                        bgeeSpeciesLCA = this.getCurrentResultSet().getBoolean(columnIndex);
+                        break;
+                    default:
+                        log.throwing(new UnrecognizedColumnException(columnName));
                     }
-                } catch (SQLException e) {
-                    throw log.throwing(new DAOException(e));
                 }
+                //Set TaxonTO
+                return log.exit(new TaxonTO(taxonId, taxonName, taxonScientificName, 
+                        taxonLeftBound, taxonRightBound, taxonLevel, bgeeSpeciesLCA));
+            } catch (SQLException e) {
+                throw log.throwing(new DAOException(e));
             }
-            //Set TaxonTO
-            return log.exit(new TaxonTO(taxonId, taxonName, taxonScientificName, 
-                    taxonLeftBound, taxonRightBound, taxonLevel, bgeeSpeciesLCA));
         }
     }
-
 }

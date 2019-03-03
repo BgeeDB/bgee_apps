@@ -424,7 +424,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
         log.info("Start retrieving taxon IDs...");
         TaxonDAO dao = this.getTaxonDAO();
         //dao.setAttributes(TaxonDAO.Attribute.ID);
-        try (TaxonTOResultSet rsTaxa = dao.getAllTaxa()) {
+        try (TaxonTOResultSet rsTaxa = dao.getTaxa(null, false, null)) {
             while (rsTaxa.next()) {
                 this.taxonIdsInBgee.add(rsTaxa.getTO().getId());
             }

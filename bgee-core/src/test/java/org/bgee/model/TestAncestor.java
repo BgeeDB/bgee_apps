@@ -20,10 +20,12 @@ import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.ontology.MultiSpeciesOntology;
 import org.bgee.model.ontology.Ontology;
 import org.bgee.model.ontology.OntologyService;
 import org.bgee.model.species.SpeciesService;
+import org.bgee.model.species.TaxonService;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestWatcher;
@@ -183,11 +185,13 @@ public abstract class TestAncestor {
     protected OntologyService ontService;
     protected AnatEntityService anatEntityService;
     protected DevStageService devStageService;
+    protected TaxonService taxonService;
     //DAOs
     protected DAOManager manager;
     protected GlobalExpressionCallDAO globalExprCallDAO;
     protected ConditionDAO condDAO;
     protected GeneDAO geneDAO;
+    protected RelationDAO relationDao;
     //Complex objects
     protected Ontology<AnatEntity, String> anatEntityOnt;
     protected MultiSpeciesOntology<AnatEntity, String> multiSpeAnatEntityOnt;
@@ -213,11 +217,13 @@ public abstract class TestAncestor {
         this.ontService = mock(OntologyService.class);
         this.anatEntityService = mock(AnatEntityService.class);
         this.devStageService = mock(DevStageService.class);
+        this.taxonService = mock(TaxonService.class);
         //DAOs
         this.manager = mock(DAOManager.class);
         this.globalExprCallDAO = mock(GlobalExpressionCallDAO.class);
         this.condDAO = mock(ConditionDAO.class);
         this.geneDAO = mock(GeneDAO.class);
+        this.relationDao = mock(RelationDAO.class);
         //Complex objects
         this.anatEntityOnt = mock(Ontology.class);
         this.multiSpeAnatEntityOnt = mock(MultiSpeciesOntology.class);
@@ -230,11 +236,13 @@ public abstract class TestAncestor {
         when(this.serviceFactory.getOntologyService()).thenReturn(this.ontService);
         when(this.serviceFactory.getAnatEntityService()).thenReturn(this.anatEntityService);
         when(this.serviceFactory.getDevStageService()).thenReturn(this.devStageService);
+        when(this.serviceFactory.getTaxonService()).thenReturn(this.taxonService);
         //DAOs
         when(this.serviceFactory.getDAOManager()).thenReturn(this.manager);
         when(this.manager.getGlobalExpressionCallDAO()).thenReturn(this.globalExprCallDAO);
         when(this.manager.getConditionDAO()).thenReturn(this.condDAO);
         when(this.manager.getGeneDAO()).thenReturn(this.geneDAO);
+        when(this.manager.getRelationDAO()).thenReturn(this.relationDao);
 
         getLogger().exit();
     }

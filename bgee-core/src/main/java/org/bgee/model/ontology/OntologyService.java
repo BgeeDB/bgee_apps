@@ -433,9 +433,11 @@ public class OntologyService extends CommonService {
             boolean lcaRequestSpecies, boolean lcaBgeeSpecies) {
         log.entry(speciesIds, lcaRequestSpecies, lcaBgeeSpecies);
 
+        Set<Integer> clonedSpeIds = speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds);
+
         //First, we need to retrieve the requested species and extract their genus taxon IDs
         List<Integer> genusIds = this.getServiceFactory().getSpeciesService()
-                .loadSpeciesByIds(speciesIds, false).stream()
+                .loadSpeciesByIds(clonedSpeIds, false).stream()
                 .map(s -> s.getParentTaxonId())
                 .collect(Collectors.toList());
 

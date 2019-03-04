@@ -523,7 +523,44 @@ public class OntologyTest extends TestAncestor {
         } catch (IllegalArgumentException e) {
             // Test passed because sub-level is not positive
         }
+    }
 
+    /**
+     * Unit test for the method {@link OntologyBase#getLeastCommonAncestors(Collection, Collection)}.
+     */
+    @Test
+    public void shoulGetLeastCommonAncestors() {
+        AnatEntity ae1 = new AnatEntity("UBERON:0001", "A", "A description");
+        AnatEntity ae2 = new AnatEntity("UBERON:0002", "B", "B description");
+        AnatEntity ae2p = new AnatEntity("UBERON:0002p", "Bprime", "Bprime description");
+        AnatEntity ae3 = new AnatEntity("UBERON:0003", "C", "C description");
+        AnatEntity ae4 = new AnatEntity("UBERON:0004", "D", "D description");
+        AnatEntity ae5 = new AnatEntity("UBERON:0005", "E", "E description");
+        AnatEntity ae6 = new AnatEntity("UBERON:0006", "F", "F description");
+        AnatEntity ae7 = new AnatEntity("UBERON:0007", "G", "G description");
+        Set<AnatEntity> elements = new HashSet<>(Arrays.asList(ae1, ae2, ae2p, ae3, ae4, ae5, ae6, ae7));
+        Set<RelationTO<String>> relations = this.getAnatEntityRelationTOs();
+        //We add some relations to have a better test
+        relations.add(new RelationTO<>(7, "UBERON:0004", "UBERON:0002",
+                RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT));
+        relations.add(new RelationTO<>(8, "UBERON:0004", "UBERON:0002p",
+                RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT));
+        relations.add(new RelationTO<>(9, "UBERON:0004", "UBERON:0001",
+                RelationTO.RelationType.ISA_PARTOF, RelationStatus.INDIRECT));
+        relations.add(new RelationTO<>(10, "UBERON:0005", "UBERON:0002",
+                RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT));
+        relations.add(new RelationTO<>(10, "UBERON:0006", "UBERON:0007",
+                RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT));
+
+        Ontology<AnatEntity, String> ontology = new Ontology<>(1,
+                elements, relations, ALL_RELATIONS, serviceFactory, AnatEntity.class);
+
+        assertEquals(new HashSet<>(Arrays.asList(ae2, ae2p)), ontology.getLeastCommonAncestors(
+                Arrays.asList(ae3, ae4), EnumSet.of(RelationType.ISA_PARTOF)));
+        assertEquals(new HashSet<>(Arrays.asList(ae2)), ontology.getLeastCommonAncestors(
+                Arrays.asList(ae3, ae4, ae5), EnumSet.of(RelationType.ISA_PARTOF)));
+        assertEquals(new HashSet<>(), ontology.getLeastCommonAncestors(
+                Arrays.asList(ae3, ae6), EnumSet.of(RelationType.ISA_PARTOF)));
     }
 
     /**

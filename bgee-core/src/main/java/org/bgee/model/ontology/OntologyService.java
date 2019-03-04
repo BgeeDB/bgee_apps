@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -251,18 +252,21 @@ public class OntologyService extends CommonService {
 //                    .loadAnatEntityRelationTaxonConstraintBySpeciesIds(speciesIds)
 //                    .collect(Collectors.toSet());
         //---
-        log.debug("RelationTaxonConstraints retrieved in {} ms", System.currentTimeMillis() - startTimeInMs2);
-        startTimeInMs2 = System.currentTimeMillis();
-        Set<TaxonConstraint<String>> taxonConstraints = getServiceFactory().getTaxonConstraintService()
-                    .loadAnatEntityTaxonConstraintBySpeciesIds(speciesIds)
-                    .collect(Collectors.toSet());
-        log.debug("AnatEntityTaxonConstraints retrieved in {} ms", System.currentTimeMillis() - startTimeInMs2);
+        //We use a Map notably in order to filter the taxon constraints for only the retrieved anat, entities
+        //XXX: should we allow the method loadAnatEntityTaxonConstraintBySpeciesIds to accept requested
+        //anat. entity IDs as arguments?
+        Map<String, AnatEntity> requestedAnatEntities = this.getServiceFactory().getAnatEntityService()
+                .loadAnatEntities(speciesIds, true,
+                        this.getRequestedEntityIds(anatEntityIds, rels), true)
+                .collect(Collectors.toMap(ae -> ae.getId(), ae -> ae));
+        log.debug("Requested anat. entity IDs: {}", requestedAnatEntities.keySet());
         MultiSpeciesOntology<AnatEntity, String> ont = new MultiSpeciesOntology<AnatEntity, String>(speciesIds,
-                this.getServiceFactory().getAnatEntityService()
-                    .loadAnatEntities(speciesIds, true,
-                            this.getRequestedEntityIds(anatEntityIds, rels), true)
-                    .collect(Collectors.toSet()), 
-                rels, taxonConstraints, relationTaxonConstraints, relationTypes,
+                requestedAnatEntities.values(), rels,
+                this.getServiceFactory().getTaxonConstraintService()
+                        .loadAnatEntityTaxonConstraintBySpeciesIds(speciesIds)
+                        .filter(tc -> requestedAnatEntities.containsKey(tc.getEntityId()))
+                        .collect(Collectors.toSet()),
+                relationTaxonConstraints, relationTypes,
                 this.getServiceFactory(), AnatEntity.class);
 
         log.debug("AnatEntityOntology created in {} ms", System.currentTimeMillis() - startTimeInMs);
@@ -371,17 +375,21 @@ public class OntologyService extends CommonService {
 
         Set<RelationTO<String>> rels = this.getDevStageRelationTOs(speciesIds, devStageIds, 
                 getAncestors, getDescendants);
-        Set<TaxonConstraint<String>> taxonConstraints = getServiceFactory().getTaxonConstraintService()
-                .loadDevStageTaxonConstraintBySpeciesIds(speciesIds)
-                .collect(Collectors.toSet());
+        //We use a Map notably in order to filter the taxon constraints for only the retrieved stages
+        //XXX: should we allow the method loadDevStageTaxonConstraintBySpeciesIds to accept requested
+        //anat. entity IDs as arguments?
+        Map<String, DevStage> requestedDevStages = this.getServiceFactory().getDevStageService()
+                .loadDevStages(speciesIds, true, this.getRequestedEntityIds(devStageIds, rels))
+                .collect(Collectors.toMap(s -> s.getId(), s -> s));
         //there is no relation IDs for nested set models, so no TaxonConstraints. 
         //Relations simply exist if both the source and target of the relations 
         //exists in the targeted species.
         MultiSpeciesOntology<DevStage, String> ont = new MultiSpeciesOntology<DevStage, String>(speciesIds, 
-                this.getServiceFactory().getDevStageService()
-                    .loadDevStages(speciesIds, true, this.getRequestedEntityIds(devStageIds, rels))
-                    .collect(Collectors.toSet()), 
-                rels, taxonConstraints, new HashSet<>(), EnumSet.of(RelationType.ISA_PARTOF),
+                requestedDevStages.values(), rels,
+                getServiceFactory().getTaxonConstraintService().loadDevStageTaxonConstraintBySpeciesIds(speciesIds)
+                        .filter(tc -> requestedDevStages.containsKey(tc.getEntityId()))
+                        .collect(Collectors.toSet()),
+                new HashSet<>(), EnumSet.of(RelationType.ISA_PARTOF),
                 this.getServiceFactory(), DevStage.class);
 
         log.debug("DevStageOntology created in {} ms", System.currentTimeMillis() - startTimeInMs);

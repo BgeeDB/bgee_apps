@@ -56,6 +56,7 @@ public class OntologyServiceTest extends TestAncestor {
      * Test the method{@link OntologyService#getAnatEntityOntology(
      * Collection, Collection, boolean, boolean, AnatEntityService)}.
      */
+    @SuppressWarnings("unchecked")
     @Test
     public void shouldGetAnatEntityOntology() {
         DAOManager managerMock = mock(DAOManager.class);
@@ -103,7 +104,7 @@ public class OntologyServiceTest extends TestAncestor {
                 newTargetAnatEntityIds, true, daoRelationTypes1, relationStatus, null))
             .thenReturn(mockRelationRs1b);
 
-        List<RelationTO<String>> relationTOs2 = Arrays.asList(allRelations.get(0), allRelations.get(1));
+        List<RelationTO<String>> relationTOs2 = Arrays.asList(allRelations.get(0));
         RelationTOResultSet<String> mockRelationRs2 = getMockResultSet(RelationTOResultSet.class, relationTOs2);
         when(relationDao.getAnatEntityRelations(speciesIds, true, sourceAnatEntityIds, null, true, 
         		daoRelationTypes23, relationStatus, null)).thenReturn(mockRelationRs2);
@@ -126,10 +127,10 @@ public class OntologyServiceTest extends TestAncestor {
         when(serviceFactory.getAnatEntityService()).thenReturn(anatEntityService);
         
         Set<AnatEntity> anatEntities1 = new HashSet<>(Arrays.asList(
-        		new AnatEntity("1", "UBERON:0001", "desc1"),
-        		new AnatEntity("2", "UBERON:0002", "desc2"),
-        		new AnatEntity("3", "UBERON:0002p", "desc2p"),
-        		new AnatEntity("4", "UBERON:0003", "desc3")));
+        		new AnatEntity("UBERON:0001", "UBERON:0001", "desc1"),
+        		new AnatEntity("UBERON:0002", "UBERON:0002", "desc2"),
+        		new AnatEntity("UBERON:0002p", "UBERON:0002p", "desc2p"),
+        		new AnatEntity( "UBERON:0003", "UBERON:0003", "desc3")));
         Stream<AnatEntity> anatEntityStream1 = anatEntities1.stream();
         Set<String> expAnatEntityIds1 = new HashSet<String>(
         		Arrays.asList("UBERON:0001", "UBERON:0002", "UBERON:0002p", "UBERON:0003"));
@@ -137,9 +138,9 @@ public class OntologyServiceTest extends TestAncestor {
         	.thenReturn(anatEntityStream1);
 
         Set<AnatEntity> anatEntities2 = new HashSet<>(Arrays.asList(
-        		new AnatEntity("1", "UBERON:0001", "desc1"),
-        		new AnatEntity("2", "UBERON:0002", "desc2"),
-        		new AnatEntity("3", "UBERON:0002p", "desc2p")));
+        		new AnatEntity("UBERON:0001", "UBERON:0001", "desc1"),
+        		new AnatEntity("UBERON:0002", "UBERON:0002", "desc2"),
+        		new AnatEntity("UBERON:0002p", "UBERON:0002p", "desc2p")));
         Stream<AnatEntity> anatEntityStream2 = anatEntities2.stream();
         Set<String> expAnatEntityIds2 = new HashSet<String>(
         		Arrays.asList("UBERON:0001", "UBERON:0002", "UBERON:0002p"));
@@ -147,8 +148,8 @@ public class OntologyServiceTest extends TestAncestor {
         	.thenReturn(anatEntityStream2);
 
         Set<AnatEntity> anatEntities3 = new HashSet<>(Arrays.asList(
-        		new AnatEntity("2", "UBERON:0002", "desc2"),
-        		new AnatEntity("3", "UBERON:0002p", "desc2p")));
+        		new AnatEntity("UBERON:0002", "UBERON:0002", "desc2"),
+        		new AnatEntity("UBERON:0002p", "UBERON:0002p", "desc2p")));
         Stream<AnatEntity> anatEntityStream3 = anatEntities3.stream();
         Set<String> expAnatEntityIds3 = new HashSet<String>(
         		Arrays.asList("UBERON:0002", "UBERON:0002p"));
@@ -159,7 +160,7 @@ public class OntologyServiceTest extends TestAncestor {
         TaxonConstraintService tcService = mock(TaxonConstraintService.class);
         when(serviceFactory.getTaxonConstraintService()).thenReturn(tcService);
 
-        Set<TaxonConstraint<String>> taxonConstraints = new HashSet<>(Arrays.asList(
+        List<TaxonConstraint<String>> taxonConstraints = Arrays.asList(
                 // UBERON:0001 sp1/sp2/sp3 --------------------
                 // |                    \                      |
                 // UBERON:0002 sp1/sp2   UBERON:0002p sp2/sp3  | 
@@ -171,14 +172,14 @@ public class OntologyServiceTest extends TestAncestor {
                 new TaxonConstraint<>("UBERON:0002p", 33),
                 new TaxonConstraint<>("UBERON:0002p", 33),
                 new TaxonConstraint<>("UBERON:0003", 11),
-                new TaxonConstraint<>("UBERON:0003", 22)));
+                new TaxonConstraint<>("UBERON:0003", 22));
         // Note: we need to use thenReturn() twice because a stream can be use only once 
         when(tcService.loadAnatEntityTaxonConstraintBySpeciesIds(speciesIds))
             .thenReturn(taxonConstraints.stream()).thenReturn(taxonConstraints.stream())
             .thenReturn(taxonConstraints.stream()).thenReturn(taxonConstraints.stream())
             .thenReturn(taxonConstraints.stream()).thenReturn(taxonConstraints.stream());
         
-        Set<TaxonConstraint<Integer>> relationTaxonConstraints = new HashSet<>(Arrays.asList(
+        List<TaxonConstraint<Integer>> relationTaxonConstraints = Arrays.asList(
                 // UBERON:0001 ------------------
                 // | sp1/sp2   \ sp2            |
                 // UBERON:0002   UBERON:0002p   | sp2/sp1 (indirect)
@@ -190,7 +191,7 @@ public class OntologyServiceTest extends TestAncestor {
                 new TaxonConstraint<>(3, 11),
                 new TaxonConstraint<>(4, 22),
                 new TaxonConstraint<>(5, 11),
-                new TaxonConstraint<>(5, 22)));
+                new TaxonConstraint<>(5, 22));
         // Note: we need to use thenReturn() twice because a stream can be use only once 
         when(tcService.loadAnatEntityRelationTaxonConstraintBySpeciesIds(speciesIds))
             .thenReturn(relationTaxonConstraints.stream()).thenReturn(relationTaxonConstraints.stream())
@@ -210,9 +211,7 @@ public class OntologyServiceTest extends TestAncestor {
                 new TaxonConstraintTO<Integer>(5, 22));
         List<TaxonConstraintTO<Integer>> txTOs2 = Arrays.asList(
                 new TaxonConstraintTO<Integer>(1, 11),
-                new TaxonConstraintTO<Integer>(1, 22),
-                new TaxonConstraintTO<Integer>(2, 22),
-                new TaxonConstraintTO<Integer>(3, 11));
+                new TaxonConstraintTO<Integer>(1, 22));
         List<TaxonConstraintTO<Integer>> txTOs3 = new ArrayList<>();
         
         TaxonConstraintTOResultSet<Integer> txTOrs1 = getMockResultSet(TaxonConstraintTOResultSet.class, txTOs1);
@@ -235,7 +234,7 @@ public class OntologyServiceTest extends TestAncestor {
 
         OntologyBase<AnatEntity, String> expectedOntology1 = 
         		new MultiSpeciesOntology<>(speciesIds, anatEntities1, new HashSet<>(allRelations),
-        		        taxonConstraints, relationTaxonConstraints,
+        		        new HashSet<>(taxonConstraints), new HashSet<>(relationTaxonConstraints),
         		        expRelationTypes1, serviceFactory, AnatEntity.class);
         assertEquals("Incorrect anatomical entity ontology",
                 expectedOntology1, service.getAnatEntityOntology(speciesIds, anatEntityIds,
@@ -243,15 +242,19 @@ public class OntologyServiceTest extends TestAncestor {
         
         OntologyBase<AnatEntity, String> expectedOntology2 = 
         		new MultiSpeciesOntology<>(speciesIds, anatEntities2, new HashSet<>(relationTOs2),
-                        taxonConstraints, relationTaxonConstraints,
+        		        new HashSet<>(Arrays.asList(taxonConstraints.get(0), taxonConstraints.get(1),
+        		                taxonConstraints.get(2), taxonConstraints.get(3), taxonConstraints.get(4))),
+        		        new HashSet<>(Arrays.asList(relationTaxonConstraints.get(0), relationTaxonConstraints.get(1))),
         		        expRelationTypes23, serviceFactory, AnatEntity.class);
         assertEquals("Incorrect anatomical entity ontology",
                 expectedOntology2, service.getAnatEntityOntology(speciesIds, anatEntityIds,
                 		expRelationTypes23, true, false));
         
         OntologyBase<AnatEntity, String> expectedOntology3 = 
-        		new MultiSpeciesOntology<>(speciesIds, anatEntities3, new HashSet<>(relationTOs3),
-                        taxonConstraints, relationTaxonConstraints,
+        		new MultiSpeciesOntology<>(speciesIds, anatEntities3, new HashSet<>(),
+                        new HashSet<>(Arrays.asList(taxonConstraints.get(1),
+                                taxonConstraints.get(2), taxonConstraints.get(3), taxonConstraints.get(4))),
+                        new HashSet<>(),
         		        expRelationTypes23, serviceFactory, AnatEntity.class);
         assertEquals("Incorrect anatomical entity ontology",
                 expectedOntology3, service.getAnatEntityOntology(speciesIds, anatEntityIds,
@@ -264,6 +267,7 @@ public class OntologyServiceTest extends TestAncestor {
      * <p>
      * Regression test: missed relations of inferred entities.
      */
+    @SuppressWarnings("unchecked")
     @Test
     public void shouldGetAnatEntityOntology_gettingAllRelations() {
         DAOManager managerMock = mock(DAOManager.class);
@@ -312,10 +316,10 @@ public class OntologyServiceTest extends TestAncestor {
         when(serviceFactory.getAnatEntityService()).thenReturn(anatEntityService);
         
         Set<AnatEntity> anatEntities = new HashSet<>(Arrays.asList(
-                new AnatEntity("1", "UBERON:0001", "desc1"),
-                new AnatEntity("2", "UBERON:0002", "desc2"),
-                new AnatEntity("3", "UBERON:0003", "desc3"),
-                new AnatEntity("4", "UBERON:0004", "desc4")));
+                new AnatEntity("UBERON:0001", "UBERON:0001", "desc1"),
+                new AnatEntity("UBERON:0002", "UBERON:0002", "desc2"),
+                new AnatEntity("UBERON:0003", "UBERON:0003", "desc3"),
+                new AnatEntity("UBERON:0004", "UBERON:0004", "desc4")));
         Stream<AnatEntity> anatEntityStream1 = anatEntities.stream();
         Set<String> expAnatEntityIds1 = new HashSet<String>(
                 Arrays.asList("UBERON:0001", "UBERON:0002", "UBERON:0003", "UBERON:0004"));
@@ -379,6 +383,7 @@ public class OntologyServiceTest extends TestAncestor {
      * Test the method 
      * {@link OntologyService#getDevStageOntology(Collection, boolean, boolean, DevStageService)}.
      */
+    @SuppressWarnings("unchecked")
     @Test
     public void shouldGetStageOntology() {
         DAOManager managerMock = mock(DAOManager.class);
@@ -473,18 +478,18 @@ public class OntologyServiceTest extends TestAncestor {
 
         TaxonConstraintService tcService = mock(TaxonConstraintService.class);
         when(serviceFactory.getTaxonConstraintService()).thenReturn(tcService);
-        Set<TaxonConstraint<String>> stageTCs = 
+        List<TaxonConstraint<String>> stageTCs = 
                 // stage1 sp1/sp2 -------
                 // |               \     \    
                 // stage2 sp1/sp2   |     stage2p sp2
                 // |               /      | 
                 // stage3 sp1             stage3p sp2
-                new HashSet<>(Arrays.asList(
+                Arrays.asList(
                         new TaxonConstraint<>("Stage_id1", null),
                         new TaxonConstraint<>("Stage_id2", null),
                         new TaxonConstraint<>("Stage_id2p", 2),
                         new TaxonConstraint<>("Stage_id3", 1),
-                        new TaxonConstraint<>("Stage_id3p", 2)));
+                        new TaxonConstraint<>("Stage_id3p", 2));
 
         // Note: we need to use thenReturn() twice because a stream can be use only once
         when(tcService.loadDevStageTaxonConstraintBySpeciesIds(speciesIds))
@@ -499,22 +504,25 @@ public class OntologyServiceTest extends TestAncestor {
 
         MultiSpeciesOntology<DevStage, String> expectedOntology1 = 
         		new MultiSpeciesOntology<DevStage, String>(speciesIds, devStages1,
-        		        new HashSet<>(allRelationTOs), stageTCs, null,
-        		        expRelationTypes, serviceFactory, DevStage.class);
+        		        new HashSet<>(allRelationTOs),
+        		        Arrays.asList(stageTCs.get(0), stageTCs.get(1), stageTCs.get(2), stageTCs.get(3)),
+        		        null, expRelationTypes, serviceFactory, DevStage.class);
         assertEquals("Incorrect dev. stage ontology", expectedOntology1,
         		service.getDevStageOntology(speciesIds, stageIds, true, true));
 
         MultiSpeciesOntology<DevStage, String> expectedOntology2 = 
         		new MultiSpeciesOntology<DevStage, String>(speciesIds, devStages2,
-        		        new HashSet<>(allRelationTOs), stageTCs, null,
-        		        expRelationTypes, serviceFactory, DevStage.class);
+        		        new HashSet<>(allRelationTOs),
+        		        Arrays.asList(stageTCs.get(0), stageTCs.get(1), stageTCs.get(2), stageTCs.get(3)),
+        		        null, expRelationTypes, serviceFactory, DevStage.class);
         assertEquals("Incorrect dev. stage ontology", expectedOntology2,
         		service.getDevStageOntology(speciesIds, stageIds, false, true));
 
         MultiSpeciesOntology<DevStage, String> expectedOntology3 = 
         		new MultiSpeciesOntology<DevStage, String>(speciesIds, devStages3,
-        		        new HashSet<>(relationTOs3), stageTCs, null,
-        		        expRelationTypes, serviceFactory, DevStage.class);
+        		        new HashSet<>(relationTOs3),
+        		        Arrays.asList(stageTCs.get(0), stageTCs.get(1)),
+        		        null, expRelationTypes, serviceFactory, DevStage.class);
         assertEquals("Incorrect dev. stage ontology", expectedOntology3, 
         		service.getDevStageOntology(speciesIds, stageIds, false, false));
     }

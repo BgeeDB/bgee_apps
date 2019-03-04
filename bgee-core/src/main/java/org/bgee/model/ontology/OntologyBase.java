@@ -694,7 +694,6 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
         result = prime * result + ((type == null) ? 0 : type.hashCode());
         return result;
     }
-
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
@@ -730,8 +729,11 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
 
     @Override
     public String toString() {
-        return "Elements: " + elements + " - Relations: " + relations +
-                " - Relation types: " + relationTypes +
-                " - Type: " + type;
+        StringBuilder builder = new StringBuilder();
+        builder.append("OntologyBase [elements=").append(elements)
+               .append(", relations=").append(relations)
+               .append(", relationTypes=").append(relationTypes)
+               .append(", type=").append(type).append("]");
+        return builder.toString();
     }
 }

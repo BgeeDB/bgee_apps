@@ -24,7 +24,7 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
  * 
  * @author  Valentine Rech de Laval
  * @author Frederic Bastian
- * @version Bgee 14 Mar. 2017
+ * @version Bgee 14 Mar 2019
  * @since   Bgee 13, July 2016
  * @param <T>   The type of element in this ontology or sub-graph.
  * @param <U>   The type of ID of the elements in this ontology or sub-graph.
@@ -431,5 +431,63 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
         return log.exit(new Ontology<>(speciesId, this.getElements(Arrays.asList(speciesId)),
                 this.getRelations(Arrays.asList(speciesId)), this.getRelationTypes(),
                 this.getServiceFactory(), this.getType()));
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + ((entityTaxonConstraints == null) ? 0 : entityTaxonConstraints.hashCode());
+        result = prime * result + ((relationTaxonConstraints == null) ? 0 : relationTaxonConstraints.hashCode());
+        result = prime * result + ((speciesIds == null) ? 0 : speciesIds.hashCode());
+        return result;
+    }
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!super.equals(obj)) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        MultiSpeciesOntology<?, ?> other = (MultiSpeciesOntology<?, ?>) obj;
+        if (entityTaxonConstraints == null) {
+            if (other.entityTaxonConstraints != null) {
+                return false;
+            }
+        } else if (!entityTaxonConstraints.equals(other.entityTaxonConstraints)) {
+            return false;
+        }
+        if (relationTaxonConstraints == null) {
+            if (other.relationTaxonConstraints != null) {
+                return false;
+            }
+        } else if (!relationTaxonConstraints.equals(other.relationTaxonConstraints)) {
+            return false;
+        }
+        if (speciesIds == null) {
+            if (other.speciesIds != null) {
+                return false;
+            }
+        } else if (!speciesIds.equals(other.speciesIds)) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("MultiSpeciesOntology [speciesIds=").append(speciesIds)
+               .append(", getElements()=").append(getElements())
+               .append(", getRelations()=").append(getRelations())
+               .append(", getRelationTypes()=").append(getRelationTypes())
+               .append(", relationTaxonConstraints=").append(relationTaxonConstraints)
+               .append(", entityTaxonConstraints=").append(entityTaxonConstraints)
+               .append(", getType()=").append(getType()).append("]");
+        return builder.toString();
     }
 }

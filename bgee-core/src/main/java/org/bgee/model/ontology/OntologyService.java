@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -13,7 +14,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.CommonService;
 import org.bgee.model.NamedEntity;
-import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
@@ -22,7 +22,6 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTOResultSet;
 import org.bgee.model.function.QuadriFunction;
-import org.bgee.model.species.Species;
 import org.bgee.model.species.Taxon;
 
 /**
@@ -34,6 +33,7 @@ import org.bgee.model.species.Taxon;
  * @version Bgee 13, Nov. 2016
  * @since   Bgee 13, Dec. 2015
  */
+//TODO: unit tests for all getTaxonOntology... methods
 public class OntologyService extends CommonService {
 
     private static final Logger log = LogManager.getLogger(OntologyService.class.getName());
@@ -388,6 +388,175 @@ public class OntologyService extends CommonService {
         return log.exit(ont);
     }
 
+    /**
+     * Returns the {@code Taxon} {@code Ontology} going from the root of the taxonomy
+     * to the leaves genus leading to species included in Bgee.
+     *
+     * @return  A {@code Taxon} {@code Ontology} corresponding to the entire taxonomy
+     *          for all the species included in Bgee.
+     */
+    public Ontology<Taxon, Integer> getTaxonOntology() {
+        log.entry();
+        return log.exit(this.getTaxonOntologyFromTaxonIds(null, false, false, false));
+    }
+    /**
+     * Returns the {@code Taxon} {@code Ontology} going from the root of the taxonomy
+     * to the leaves genus leading to the species requested in arguments.
+     * If {@code lca} is {@code true}, additionally to the genus taxa of the requested species,
+     * only the least common ancestors of some of the requested species are returned
+     * (and not only <strong>the</strong> least common ancestor of all requested species).
+     *
+     * @param speciesIds        A {@code Collection} of {@code Integer}s that are IDs of the species 
+     *                          to retrieve the taxonomy for. Can be {@code null} or empty to retrieve
+     *                          the entire taxonomy for all the species included in Bgee.
+     * @param lcaRequestSpecies A {@code boolean} defining whether to only retrieve,
+     *                          additionally to the genus taxa of the requested species, taxa that are
+     *                          least common ancestors of the requested species. If {@code true},
+     *                          only least common ancestors of the requested species are retrieved,
+     *                          if {@code false}, all ancestor taxa are retrieved.
+     * @param lcaBgeeSpecies    A {@code boolean} defining whether to only retrieve,
+     *                          additionally to the genus taxa of the requested species, taxa that are
+     *                          least common ancestors of some species in Bgee. Taken into account
+     *                          only if {@code lcaRequestSpecies} is {@code false}.
+     *                          If {@code lcaRequestSpecies} is {@code false} and this argument
+     *                          is {@code true}, only least common ancestors of species in Bgee
+     *                          are retrieved.
+     * @return                  A {@code Taxon} {@code Ontology} corresponding to the taxonomy
+     *                          for the requested species, always including at least the genus taxa
+     *                          of the requested species, including only the least common ancestors
+     *                          of the requested species if {@code lcaRequestSpecies} is {@code true},
+     *                          or only the least common ancestors of some species in Bgee
+     *                          if {@code lcaRequestSpecies} is {@code false} and {@code lcaBgeeSpecies}
+     *                          is {@code true}, or all the ancestor taxa otherwise.
+     */
+    public Ontology<Taxon, Integer> getTaxonOntologyLeadingToSpecies(Collection<Integer> speciesIds,
+            boolean lcaRequestSpecies, boolean lcaBgeeSpecies) {
+        log.entry(speciesIds, lcaRequestSpecies, lcaBgeeSpecies);
+
+        //First, we need to retrieve the requested species and extract their genus taxon IDs
+        List<Integer> genusIds = this.getServiceFactory().getSpeciesService()
+                .loadSpeciesByIds(speciesIds, false).stream()
+                .map(s -> s.getParentTaxonId())
+                .collect(Collectors.toList());
+
+        //Now, we retrieve relations from genus to ancestor taxa, taking into account only LCAs
+        //if lcaRequestSpecies or lcaBgeeSpecies is true
+        Ontology<Taxon, Integer> sourceOnt = this.getTaxonOntologyFromTaxonIds(genusIds,
+                lcaRequestSpecies || lcaBgeeSpecies, true, false);
+        if (!lcaRequestSpecies) {
+            return log.exit(sourceOnt);
+        }
+
+        //Now, if lcaRequestSpecies is true, we identify the taxa that are LCA of
+        //some of the requested species
+        Set<Taxon> validTaxa = new HashSet<>();
+        List<Taxon> genusTaxa = genusIds.stream().map(id -> sourceOnt.getElement(id))
+                .collect(Collectors.toList());
+        validTaxa.addAll(genusTaxa);
+        for (int i = 0; i < genusTaxa.size(); i++) {
+            for (int y = i + 1; y < genusTaxa.size(); y++) {
+                Set<Taxon> commonAncestors = sourceOnt.getLeastCommonAncestors(
+                        Arrays.asList(genusTaxa.get(i), genusTaxa.get(y)), null);
+                assert commonAncestors.size() == 1;
+                validTaxa.addAll(commonAncestors);
+            }
+        }
+        //create a new ontology subset
+        Set<Integer> validTaxIds = validTaxa.stream().map(t -> t.getId()).collect(Collectors.toSet());
+        return log.exit(new Ontology<Taxon, Integer>(null, validTaxa,
+                sourceOnt.getRelations().stream()
+                .filter(r -> validTaxIds.contains(r.getSourceId()) &&
+                        validTaxIds.contains(r.getTargetId()))
+                .collect(Collectors.toSet()),
+                EnumSet.of(RelationType.ISA_PARTOF), this.getServiceFactory(), Taxon.class));
+    }
+    /**
+     * Returns the {@code Taxon} {@code Ontology} for the taxa that is the least common ancestor
+     * of the requested species. This method is a helper method delegating to {@link
+     * #getTaxonOntologyFromTaxon(Collection, boolean, boolean, boolean)} after having found
+     * the least common ancestor of the species by calling {@link org.bgee.model.species.TaxonService
+     * #loadLeastCommonAncestor(Collection)}.
+     * <p>
+     * The returned {@code Ontology} contains ancestors and/or descendants of the least common ancestor
+     * according to {@code getAncestors} and {@code getDescendants}, respectively. 
+     * If both {@code getAncestors} and {@code getDescendants} are {@code false}, 
+     * then only the least common ancestor is considered.
+     *
+     * @param speciesIds        A {@code Collection} of {@code Integer}s that are the species IDs
+     *                          which to retrieve the least common ancestor for, in order
+     *                          to populate the returned {@code Ontology}.
+     *                          Can be {@code null} or empty to seed the {@code Ontology} with
+     *                          the root of the ontology.
+     * @param lcaBgeeSpecies    A {@code boolean} defining whether to only retrieve ancestor
+     *                          (if {@code getAncestors} is {@code true}) and/or descendant taxa
+     *                          (if {@code getDescendants} is {@code true}) that are
+     *                          least common ancestors of some species in Bgee. If {@code true},
+     *                          only least common ancestors are retrieved, if {@code false},
+     *                          all taxa are retrieved. This argument matters only if
+     *                          {@code getAncestors} and/or {@code getDescendants} are {@code true}.
+     * @param getAncestors      A {@code boolean} defining whether the ancestors of the requested taxa, 
+     *                          and the relations leading to them, should be retrieved.
+     * @param getDescendants    A {@code boolean} defining whether the descendants of the requested taxa, 
+     *                          and the relations leading to them, should be retrieved.
+     * @return                  A {@code Taxon} {@code Ontology} corresponding to the taxonomy
+     *                          for the requested taxa, including only the least common ancestors
+     *                          of species in Bgee if {@code lcaBgeeSpecies} is {@code true}.
+     */
+    public Ontology<Taxon, Integer> getTaxonOntologyFromSpeciesLCA(Collection<Integer> speciesIds,
+            boolean lcaBgeeSpecies, boolean getAncestors, boolean getDescendants) {
+        log.entry(speciesIds, lcaBgeeSpecies, getAncestors, getDescendants);
+        Taxon lcaTax = this.getServiceFactory().getTaxonService().loadLeastCommonAncestor(speciesIds);
+        return log.exit(this.getTaxonOntologyFromTaxonIds(Collections.singleton(lcaTax.getId()),
+                lcaBgeeSpecies, getAncestors, getDescendants));
+    }
+    /**
+     * Returns the {@code Taxon} {@code Ontology} for the requested taxa. 
+     * <p>
+     * The returned {@code Ontology} contains ancestors and/or descendants of the requested taxa
+     * according to {@code getAncestors} and {@code getDescendants}, respectively. 
+     * If both {@code getAncestors} and {@code getDescendants} are {@code false}, 
+     * then only relations between provided taxa are considered.
+     *
+     * @param taxonIds          A {@code Collection} of {@code Integer}s that are taxon IDs
+     *                          to be retrieved in the returned {@code Ontology}.
+     *                          Can be {@code null} or empty to retrieve all taxa.
+     * @param lcaBgeeSpecies    A {@code boolean} defining whether to only retrieve ancestor
+     *                          (if {@code getAncestors} is {@code true}) and/or descendant taxa
+     *                          (if {@code getDescendants} is {@code true}) that are
+     *                          least common ancestors of some species in Bgee. If {@code true},
+     *                          only least common ancestors are retrieved, if {@code false},
+     *                          all taxa are retrieved. If some specific taxa are requested
+     *                          in {@code taxonIds}, they are always retrieved whatever
+     *                          the status of this argument and whether they are LCA.
+     *                          So This argument matters only if {@code getAncestors} and/or
+     *                          {@code getDescendants} are {@code true}.
+     * @param getAncestors      A {@code boolean} defining whether the ancestors of the requested taxa, 
+     *                          and the relations leading to them, should be retrieved.
+     * @param getDescendants    A {@code boolean} defining whether the descendants of the requested taxa, 
+     *                          and the relations leading to them, should be retrieved.
+     * @return                   A {@code Taxon} {@code Ontology} corresponding to the taxonomy
+     *                          for the requested taxa, including only the least common ancestors
+     *                          of species in Bgee if {@code lcaBgeeSpecies} is {@code true}.
+     */
+    public Ontology<Taxon, Integer> getTaxonOntologyFromTaxonIds(Collection<Integer> taxonIds,
+            boolean lcaBgeeSpecies, boolean getAncestors, boolean getDescendants) {
+        log.entry(taxonIds, lcaBgeeSpecies, getAncestors, getDescendants);
+
+        Set<Integer> clonedTaxIds = taxonIds == null? new HashSet<>(): new HashSet<>(taxonIds);
+        Set<RelationTO<Integer>> rels = this.getTaxonRelationTOs(clonedTaxIds, lcaBgeeSpecies,
+                getAncestors, getDescendants);
+        return log.exit(new Ontology<Taxon, Integer>(null,
+                this.getServiceFactory().getTaxonService()
+                .loadTaxa(this.getRequestedEntityIds(clonedTaxIds, rels), false)
+                //The method TaxonService.loadTaxa does not have a mechanism to specify
+                //"returns me only LCAs unless they are the seed requested taxon IDs",
+                //so we request all taxon IDs, including non-lca even if lca is true,
+                //and we filer afterwards
+                .filter(t -> !lcaBgeeSpecies || t.isLca() || clonedTaxIds.contains(t.getId()))
+                .collect(Collectors.toSet()),
+            rels, EnumSet.of(RelationType.ISA_PARTOF), this.getServiceFactory(), Taxon.class));
+    }
+
     private Set<RelationTO<String>> getAnatEntityRelationTOs(Collection<Integer> speciesIds,
         Collection<String> entityIds,  Collection<RelationType> relationTypes,
         boolean getAncestors, boolean getDescendants) {
@@ -405,7 +574,6 @@ public class OntologyService extends CommonService {
                 null);
         return log.exit(getRelationTOs(fun, entityIds, getAncestors, getDescendants));
     }
-
     private Set<RelationTO<String>> getDevStageRelationTOs(Collection<Integer> speciesIds, 
             Collection<String> entityIds, boolean getAncestors, boolean getDescendants) {
         log.entry(speciesIds, entityIds, getAncestors, getDescendants);
@@ -414,147 +582,14 @@ public class OntologyService extends CommonService {
                 speciesIds, true, s, t, b, r, null);
         return log.exit(getRelationTOs(fun, entityIds, getAncestors, getDescendants));
     }
-
     private Set<RelationTO<Integer>> getTaxonRelationTOs(Collection<Integer> entityIds,
-            boolean getAncestors, boolean getDescendants) {
-        log.entry(entityIds, getAncestors, getDescendants);
+            final boolean lca, boolean getAncestors, boolean getDescendants) {
+        log.entry(entityIds, lca, getAncestors, getDescendants);
         QuadriFunction<Set<Integer>, Set<Integer>, Boolean, Set<RelationStatus>, RelationTOResultSet<Integer>> fun =
-            (s, t, b, r) -> getDaoManager().getRelationDAO().getTaxonRelations(s, t, b, r, null);
+            (s, t, b, r) -> getDaoManager().getRelationDAO().getTaxonRelations(s, t, b, r, lca, null);
         return log.exit(getRelationTOs(fun, entityIds, getAncestors, getDescendants));
     }
 
-    /**
-     * Retrieve the {@code MultiSpeciesOntology} of all {@code Taxon}s that are either least
-     * common ancestor or parent taxon of species in data source.
-     *  
-     * @return  The {@code MultiSpeciesOntology} of all {@code Taxon}.
-     */
-    public MultiSpeciesOntology<Taxon, Integer> getTaxonOntology() {
-        log.entry();
-        
-        Set<RelationTO<Integer>> rels = this.getTaxonRelationTOs(null, false, false);
-        return log.exit(new MultiSpeciesOntology<Taxon, Integer>(
-            this.getServiceFactory().getSpeciesService().loadSpeciesByIds(null, false).stream()
-                .map(Species::getId).collect(Collectors.toSet()), 
-            this.getServiceFactory().getTaxonService()
-                .loadAllLeastCommonAncestorAndParentTaxa()
-                .collect(Collectors.toSet()), 
-            rels, null, new HashSet<>(), EnumSet.of(RelationType.ISA_PARTOF),
-            this.getServiceFactory(), Taxon.class));
-    }
-
-    /**
-     * Retrieve the {@code MultiSpeciesOntology} of {@code Taxon}s for the requested species,
-     * taxon IDs, and relation status.
-     * <p>
-     * The returned {@code Ontology} contains only {@code Taxon}s corresponding to 
-     * the provided taxon IDs, and only the relations between them 
-     * with a {@code RelationType} {@code ISA_PARTOF} are included. 
-     *  
-     * @param speciesId         An {@code Integer} that is the ID of species 
-     *                          which to retrieve taxa for. Can be {@code null} or empty.
-     * @param taxonIds          A {@code Collection} of {@code Integer}s that are taxon IDs
-     *                          of the {@code MultiSpeciesOntology} to retrieve.
-     *                          Can be {@code null} or empty.
-     * @return                  The {@code MultiSpeciesOntology} of the {@code Taxon}s 
-     *                          for the requested species and taxa. 
-     */
-    public MultiSpeciesOntology<Taxon, Integer> getTaxonOntology(Integer speciesId,
-             Collection<Integer> taxonIds) {
-        log.entry(speciesId, taxonIds);
-        return log.exit(this.getTaxonOntology(Arrays.asList(speciesId), taxonIds, false, false));
-    }
-    
-    /**
-     * Retrieve the {@code MultiSpeciesOntology} of {@code Taxon}s for the requested species,
-     * taxon IDs, and relation status.
-     * <p>
-     * The returned {@code Ontology} contains only {@code Taxon}s corresponding to 
-     * the provided taxon IDs, and only the relations between them 
-     * with a {@code RelationType} {@code ISA_PARTOF} are included. 
-     *  
-     * @param speciesIds        A {@code Collection} of {@code Integer}s that are IDs of species 
-     *                          which to retrieve taxa for. If several IDs are provided, 
-     *                          taxa existing in any of them will be retrieved. 
-     *                          Can be {@code null} or empty.
-     * @param taxonIds          A {@code Collection} of {@code Integer}s that are taxon IDs
-     *                          of the {@code MultiSpeciesOntology} to retrieve.
-     *                          Can be {@code null} or empty.
-     * @return                  The {@code MultiSpeciesOntology} of the {@code Taxon}s 
-     *                          for the requested species and taxa. 
-     */
-    public MultiSpeciesOntology<Taxon, Integer> getTaxonOntology(
-            Collection<Integer> speciesIds, Collection<Integer> taxonIds) {
-        log.entry(taxonIds, speciesIds);
-        return log.exit(this.getTaxonOntology(speciesIds, taxonIds, false, false));
-    } 
-    
-    /**
-     * Retrieve the {@code MultiSpeciesOntology} of {@code Taxon}s for the requested species,
-     * taxon IDs, and relation status. 
-     * <p>
-     * The returned {@code MultiSpeciesOntology} contains ancestors and/or descendants according to
-     * {@code getAncestors} and {@code getDescendants}, respectively. 
-     * If both {@code getAncestors} and {@code getDescendants} are {@code false}, 
-     * then only relations between provided taxa are considered.
-     * 
-     * @param speciesId         An {@code Integer} that is the ID of species 
-     *                          which to retrieve taxa for. Can be {@code null} or empty.
-     * @param taxonIds          A {@code Collection} of {@code Integer}s that are taxon IDs
-     *                          of the {@code MultiSpeciesOntology} to retrieve.
-     *                          Can be {@code null} or empty.
-     * @param getAncestors      A {@code boolean} defining whether the ancestors of the selected 
-     *                          taxa, and the relations leading to them, should be retrieved.
-     * @param getDescendants    A {@code boolean} defining whether the descendants of the selected 
-     *                          taxa, and the relations leading to them, should be retrieved.
-     * @return                  The {@code MultiSpeciesOntology} of the {@code Taxon}s 
-     *                          for the requested species, taxa, and relation status. 
-     */
-    public MultiSpeciesOntology<Taxon, Integer> getTaxonOntology(Integer speciesId,
-            Collection<Integer> taxonIds, boolean getAncestors, boolean getDescendants) {
-        log.entry(speciesId, taxonIds, getAncestors, getDescendants);
-        return log.exit(this.getTaxonOntology(Arrays.asList(speciesId), taxonIds,
-                getAncestors, getDescendants));
-    }
-
-    /**
-     * Retrieve the {@code MultiSpeciesOntology} of {@code Taxon}s for the requested species,
-     * taxon IDs, and relation status. 
-     * <p>
-     * The returned {@code MultiSpeciesOntology} contains ancestors and/or descendants according to
-     * {@code getAncestors} and {@code getDescendants}, respectively. 
-     * If both {@code getAncestors} and {@code getDescendants} are {@code false}, 
-     * then only relations between provided taxa are considered.
-     * 
-     * @param speciesIds        A {@code Collection} of {@code Integer}s that are IDs of species 
-     *                          which to retrieve taxa for. If several IDs are provided, 
-     *                          taxa existing in any of them will be retrieved. 
-     *                          Can be {@code null} or empty.
-     * @param taxonIds          A {@code Collection} of {@code Integer}s that are taxon IDs
-     *                          of the {@code MultiSpeciesOntology} to retrieve.
-     *                          Can be {@code null} or empty.
-     * @param getAncestors      A {@code boolean} defining whether the ancestors of the selected 
-     *                          taxa, and the relations leading to them, should be retrieved.
-     * @param getDescendants    A {@code boolean} defining whether the descendants of the selected 
-     *                          taxa, and the relations leading to them, should be retrieved.
-     * @return                  The {@code MultiSpeciesOntology} of the {@code Taxon}s 
-     *                          for the requested species and taxa. 
-     */
-    // FIXME: this method contained error (elements are not corrects), so it's disabled. Tests are ignored.
-    // When enable, do not forgot to refactor with getTaxonOntology()
-    public MultiSpeciesOntology<Taxon, Integer> getTaxonOntology(Collection<Integer> speciesIds,
-            Collection<Integer> taxonIds, boolean getAncestors, boolean getDescendants) {
-        log.entry(taxonIds, speciesIds, getAncestors, getDescendants);
-        throw log.throwing(new UnsupportedOperationException("Recovery of taxonomy with parameters is not implemented"));
-//        Set<RelationTO> rels = this.getTaxonRelationTOs(taxonIds, getAncestors, getDescendants);
-//        return log.exit(new MultiSpeciesOntology<Taxon>(speciesIds, 
-//                this.getServiceFactory().getTaxonService()
-//                    .loadTaxa(speciesIds, true)
-//                    .collect(Collectors.toSet()), 
-//                rels, null, new HashSet<>(), EnumSet.of(RelationType.ISA_PARTOF),
-//                this.getServiceFactory(), Taxon.class));
-    }
-    
     /**
      * Convenience method to retrieve {@code RelationTO}s for any {@code OntologyElement} type. 
      * 
@@ -609,6 +644,8 @@ public class OntologyService extends CommonService {
         }
         
         Set<RelationTO<U>> relations = new HashSet<>();
+        log.debug("sourceIds: {}, targetIds: {}, sourceOrTarget: {}, relationStatus: {}",
+                sourceIds, targetIds, sourceOrTarget, relationStatus);
         relations.addAll(relationRetrievalFun.apply(sourceIds, targetIds, sourceOrTarget, relationStatus)
                     //need to wrap the RelationTOs to get hashCode/equals
                     .stream().map(relTO -> new WrapperRelationTO<>(relTO))
@@ -639,6 +676,8 @@ public class OntologyService extends CommonService {
 
             //Query only if new terms have been discovered
             if (!newSourceIds.isEmpty() || !newTargetIds.isEmpty()) {
+                log.debug("new sourceIds: {}, new targetIds: {}, sourceOrTarget: {}, relationStatus: {}",
+                        newSourceIds, newTargetIds, sourceOrTarget, relationStatus);
                 relations.addAll(relationRetrievalFun.apply(newSourceIds, newTargetIds, 
                                 sourceOrTarget, relationStatus)
                         //need to wrap the RelationTOs to get hashCode/equals

@@ -68,23 +68,58 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute> implements S
     public SpeciesTOResultSet getSpeciesByIds(Collection<Integer> speciesIds,
             Collection<SpeciesDAO.Attribute> attributes) throws DAOException {
         log.entry(speciesIds, attributes);
+        return log.exit(this.getSpeciesByIdsAndTaxonIds(speciesIds, null, attributes));
+    }
+
+    @Override
+    public SpeciesTOResultSet getSpeciesByTaxonIds(Collection<Integer> taxonIds,
+            Collection<SpeciesDAO.Attribute> attributes) throws DAOException {
+        log.entry(taxonIds, attributes);
+        return log.exit(this.getSpeciesByIdsAndTaxonIds(null, taxonIds, attributes));
+    }
+
+    private SpeciesTOResultSet getSpeciesByIdsAndTaxonIds(Collection<Integer> speciesIds,
+            Collection<Integer> taxonIds, Collection<SpeciesDAO.Attribute> attributes)
+                    throws DAOException {
+        log.entry(speciesIds, taxonIds, attributes);
 
         Set<SpeciesDAO.Attribute> clonedAttrs = Collections.unmodifiableSet(
                 attributes == null? new HashSet<>(): new HashSet<>(attributes));
         Set<Integer> clonedSpeIds = Collections.unmodifiableSet(
                 speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds));
+        Set<Integer> clonedTaxIds = Collections.unmodifiableSet(
+                taxonIds == null? new HashSet<>(): new HashSet<>(taxonIds));
 
         String sql = generateSelectClause("species", COL_TO_ATTR_MAP, true, clonedAttrs);
         //fix for issue#173
         if (!clonedAttrs.isEmpty() && !clonedAttrs.contains(SpeciesDAO.Attribute.DISPLAY_ORDER)) {
             sql += ", speciesDisplayOrder ";
         }
-        sql += "FROM species ";
+        sql += "FROM ";
+        if (!clonedTaxIds.isEmpty()) {
+            sql += "taxon AS t1 INNER JOIN taxon AS t2 ON t2.taxonLeftBound >= t1.taxonLeftBound "
+                 + "AND t2.taxonRightBound <= t1.taxonRightBound "
+                 + "INNER JOIN ";
+        }
+        sql += "species ";
+        if (!clonedTaxIds.isEmpty()) {
+            sql += " ON t2.taxonId = species.taxonId ";
+        }
         
         if (!clonedSpeIds.isEmpty()) {
             sql += " WHERE speciesId IN (" + 
                        BgeePreparedStatement.generateParameterizedQueryString(
                                clonedSpeIds.size()) + ")";
+        }
+        if (!clonedTaxIds.isEmpty()) {
+            if (!clonedSpeIds.isEmpty()) {
+                sql += " AND ";
+            } else {
+                sql += " WHERE ";
+            }
+            sql += "t1.taxonId IN (" +
+                    BgeePreparedStatement.generateParameterizedQueryString(
+                            clonedTaxIds.size()) + ")";
         }
         
         sql += " ORDER BY speciesDisplayOrder";
@@ -93,9 +128,15 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute> implements S
         //not the actual results, so we should not close this BgeePreparedStatement.
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
+            int index = 1;
             if (!clonedSpeIds.isEmpty()) {
-                stmt.setIntegers(1, clonedSpeIds, true);
-            }  
+                stmt.setIntegers(index, clonedSpeIds, true);
+                index += clonedSpeIds.size();
+            }
+            if (!clonedTaxIds.isEmpty()) {
+                stmt.setIntegers(index, clonedTaxIds, true);
+                index += clonedTaxIds.size();
+            }
             return log.exit(new MySQLSpeciesTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

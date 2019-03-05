@@ -92,6 +92,23 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
             Collection<Attribute> attributes) throws DAOException;
 
     /**
+     * Retrieve from the data source the species existing in the requested taxa.
+     * <p>
+     * The species are retrieved and returned as a {@code SpeciesTOResultSet}.
+     * It is the responsibility of the caller to close this {@code DAOResultSet} once
+     * results are retrieved.
+     *
+     * @param taxonIds          A {@code Collection} of {@code Integer}s that are the IDs
+     *                          of the taxa which we want to retrieve species for.
+     * @param attributes        A {@code Collection} of {@code Attribute}s representing the attributes
+     *                          to populate in the returned {@code SpeciesTO}s.
+     * @return                  A {@code SpeciesTOResultSet} containing the requested {@code SpeciesTO}s.
+     * @throws DAOException     If an error occurred while accessing the data source.
+     */
+    public SpeciesTOResultSet getSpeciesByTaxonIds(Collection<Integer> taxonIds,
+            Collection<Attribute> attributes) throws DAOException;
+
+    /**
      * Retrieve all the species that are part of any data group.
      *
      * @param attributes    A {@code Collection} of {@code Attribute}s representing the attributes

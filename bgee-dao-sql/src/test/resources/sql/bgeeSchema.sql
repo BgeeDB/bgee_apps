@@ -473,6 +473,8 @@ create table gene (
     geneName varchar(255) not null default '' COMMENT 'Gene name',
     geneDescription TEXT COMMENT 'Gene description',
     speciesId mediumint unsigned not null COMMENT 'NCBI species taxon id this gene belongs to',
+-- TODO: check if we should add 'not null' to geneBioTypeId.
+-- This depends on pipeline. If we update biotype after insertion of gene, it's not possible to set 'not null'.
     geneBioTypeId smallint unsigned COMMENT 'Gene BioType id (type of gene)',
 -- can be null if the gene does not belong to a hierarchical group
 -- a gene can belong to one and only one group

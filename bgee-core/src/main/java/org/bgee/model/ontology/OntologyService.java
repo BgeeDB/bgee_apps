@@ -237,7 +237,6 @@ public class OntologyService extends CommonService {
 
         Set<RelationTO<String>> rels = this.getAnatEntityRelationTOs(speciesIds, anatEntityIds,
                 relationTypes, getAncestors, getDescendants);
-        long startTimeInMs2 = System.currentTimeMillis();
         Set<Integer> relIds = rels.stream().map(rel -> rel.getId()).collect(Collectors.toSet());
         //Here, we don't want to expose the internal relation IDs as part of the Bgee API, so rather than
         //using the TaxonConstraintService, we directly use the TaxonConstraintDAO
@@ -253,8 +252,6 @@ public class OntologyService extends CommonService {
 //                    .collect(Collectors.toSet());
         //---
         //We use a Map notably in order to filter the taxon constraints for only the retrieved anat, entities
-        //XXX: should we allow the method loadAnatEntityTaxonConstraintBySpeciesIds to accept requested
-        //anat. entity IDs as arguments?
         Map<String, AnatEntity> requestedAnatEntities = this.getServiceFactory().getAnatEntityService()
                 .loadAnatEntities(speciesIds, true,
                         this.getRequestedEntityIds(anatEntityIds, rels), true)
@@ -377,7 +374,7 @@ public class OntologyService extends CommonService {
                 getAncestors, getDescendants);
         //We use a Map notably in order to filter the taxon constraints for only the retrieved stages
         //XXX: should we allow the method loadDevStageTaxonConstraintBySpeciesIds to accept requested
-        //anat. entity IDs as arguments?
+        //dev stage IDs as arguments?
         Map<String, DevStage> requestedDevStages = this.getServiceFactory().getDevStageService()
                 .loadDevStages(speciesIds, true, this.getRequestedEntityIds(devStageIds, rels))
                 .collect(Collectors.toMap(s -> s.getId(), s -> s));

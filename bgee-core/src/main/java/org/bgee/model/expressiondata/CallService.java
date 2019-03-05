@@ -815,7 +815,7 @@ public class CallService extends CommonService {
             if (computeAnatEntityMinMax) {
                 assert anatEntityMinMaxRanks.isEmpty();
                 toListStream = StreamSupport.stream(
-                        new ElementGroupFromListSpliterator<>(
+                        new ElementGroupFromListSpliterator<GlobalExpressionCallTO, String>(
                                 toStream,
                                 callTO -> condMap.get(callTO.getConditionId()).getAnatEntityId(),
                                 (id1, id2) -> id1.compareTo(id2)),
@@ -823,7 +823,7 @@ public class CallService extends CommonService {
             } else if (computeGeneMinMax) {
                 assert geneMinMaxRanks.isEmpty();
                 toListStream = StreamSupport.stream(
-                        new ElementGroupFromListSpliterator<>(
+                        new ElementGroupFromListSpliterator<GlobalExpressionCallTO, Integer>(
                                 toStream,
                                 callTO -> callTO.getBgeeGeneId(),
                                 (id1, id2) -> id1.compareTo(id2)),

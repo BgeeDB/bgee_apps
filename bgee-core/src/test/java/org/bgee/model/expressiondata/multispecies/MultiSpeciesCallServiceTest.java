@@ -1,58 +1,154 @@
 package org.bgee.model.expressiondata.multispecies;
-//package org.bgee.model.analysis;
-//
-//import static org.junit.Assert.assertEquals;
-//import static org.mockito.Mockito.mock;
-//import static org.mockito.Mockito.when;
-//
-//import java.util.ArrayList;
-//import java.util.Arrays;
-//import java.util.Collection;
-//import java.util.HashMap;
-//import java.util.HashSet;
-//import java.util.LinkedHashMap;
-//import java.util.Map;
-//import java.util.Set;
-//import java.util.stream.Collectors;
-//import java.util.stream.Stream;
-//
-//import org.bgee.model.Service.Direction;
-//import org.bgee.model.ServiceFactory;
-//import org.bgee.model.TestAncestor;
-//import org.bgee.model.anatdev.AnatEntityService;
-//import org.bgee.model.anatdev.AnatEntitySimilarity;
-//import org.bgee.model.anatdev.DevStageService;
-//import org.bgee.model.anatdev.DevStageSimilarity;
-//import org.bgee.model.expressiondata.Call.ExpressionCall;
-//import org.bgee.model.expressiondata.CallData.ExpressionCallData;
-//import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
-//import org.bgee.model.expressiondata.CallService;
-//import org.bgee.model.expressiondata.Condition;
-//import org.bgee.model.expressiondata.ConditionFilter;
-//import org.bgee.model.expressiondata.MultiSpeciesCall;
-//import org.bgee.model.expressiondata.baseelements.CallType.Expression;
-//import org.bgee.model.expressiondata.baseelements.DataType;
-//import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
-//import org.bgee.model.expressiondata.baseelements.SummaryQuality;
-//import org.bgee.model.gene.Gene;
-//import org.bgee.model.gene.GeneFilter;
-//import org.bgee.model.gene.GeneService;
-//import org.bgee.model.ontology.MultiSpeciesOntology;
-//import org.bgee.model.ontology.OntologyService;
-//import org.bgee.model.species.Species;
-//import org.bgee.model.species.Taxon;
-//import org.junit.Ignore;
-//import org.junit.Test;
-//
-///**
-// * This class holds the unit tests for the {@code MultiSpeciesCallService} class.
-// * 
-// * @author  Valentine Rech de Laval
-// * @version Bgee 14, Feb. 2017
-// * @since   Bgee 14, Nov. 2016
-// */
-//public class AnalysisServiceTest extends TestAncestor {
-//
+
+import org.bgee.model.Service;
+import org.bgee.model.ServiceFactory;
+import org.bgee.model.TestAncestor;
+import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarity;
+import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityService;
+import org.bgee.model.expressiondata.Call.ExpressionCall;
+import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
+import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.expressiondata.Condition;
+import org.bgee.model.expressiondata.ConditionFilter;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
+import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneBioType;
+import org.bgee.model.gene.GeneFilter;
+import org.bgee.model.species.Species;
+import org.bgee.model.species.Taxon;
+import org.junit.Test;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+/**
+ * This class holds the unit tests for the {@code MultiSpeciesCallService} class.
+ * 
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, Mar. 2019
+ * @since   Bgee 14, Nov. 2016
+ */
+public class MultiSpeciesCallServiceTest extends TestAncestor {
+    
+    /**
+     * Test the method
+     * {@link MultiSpeciesCallService#loadSimilarityExpressionCalls(int, GeneFilter, ConditionFilter, boolean)}.
+     */
+    @Test
+    public void shouldLoadMultiSpeciesCalls() {
+        // Initialize mocks
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        CallService callService = mock(CallService.class);
+        when(serviceFactory.getCallService()).thenReturn(callService);
+        AnatEntitySimilarityService aeSimService = mock(AnatEntitySimilarityService.class);
+        when(serviceFactory.getAnatEntitySimilarityService()).thenReturn(aeSimService);
+
+        int taxonId = 10;
+        Taxon taxon = new Taxon(taxonId, null, null, "scientificName", 1, true);
+        
+        int speciesId1 = 1;
+        int speciesId2 = 2;
+        Species species1 = new Species(speciesId1);
+        Species species2 = new Species(speciesId2);
+
+        String anatEntityId1a = "anatEntityId1a";
+        String anatEntityId1b = "anatEntityId1b";
+        String anatEntityId2a = "anatEntityId2a";
+        AnatEntity anatEntity1a = new AnatEntity(anatEntityId1a);
+        AnatEntity anatEntity1b = new AnatEntity(anatEntityId1b);
+        AnatEntity anatEntity2a = new AnatEntity(anatEntityId2a);
+        
+        Gene gene1 = new Gene("gene1a", species1, new GeneBioType("biotype1"));
+        Gene gene2a = new Gene("gene2a", species2, new GeneBioType("biotype1"));
+        Gene gene2b = new Gene("gene2b", species2, new GeneBioType("biotype1"));
+        Set<String> sp1GenesIds = Collections.singleton(gene1.getEnsemblGeneId());
+        GeneFilter geneFilter1 = new GeneFilter(speciesId1, sp1GenesIds);
+        Set<GeneFilter> geneFilters = Collections.singleton(geneFilter1);
+
+        // aeSim1
+        ExpressionCall call1 = new ExpressionCall(gene1, new Condition(anatEntity1a,  null, species1),
+                null, ExpressionSummary.EXPRESSED, SummaryQuality.GOLD, null, null);
+        ExpressionCall call2 = new ExpressionCall(gene1, new Condition(anatEntity2a,  null, species1),
+                null, ExpressionSummary.EXPRESSED, SummaryQuality.GOLD, null, null);
+        ExpressionCall call4 = new ExpressionCall(gene2a, new Condition(anatEntity2a, null, species2),
+                null, ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE, null, null);
+        // aeSim2
+        ExpressionCall call3 = new ExpressionCall(gene1, new Condition(anatEntity1b,  null, species1),
+                null, ExpressionSummary.EXPRESSED, SummaryQuality.GOLD, null, null);
+        ExpressionCall call5 = new ExpressionCall(gene2b, new Condition(anatEntity1b, null, species2),
+                null, ExpressionSummary.NOT_EXPRESSED, SummaryQuality.SILVER, null, null);
+
+        AnatEntitySimilarity aeSim1 = new AnatEntitySimilarity(taxon, Arrays.asList(anatEntity1a, anatEntity2a));
+        AnatEntitySimilarity aeSim2 = new AnatEntitySimilarity(taxon, Arrays.asList(anatEntity1b));
+        
+        Set<AnatEntitySimilarity> aeSimilarities = new HashSet<>(Arrays.asList(aeSim1, aeSim2));
+
+        boolean onlyTrusted = true;
+        when(aeSimService.loadPositiveAnatEntitySimilarities(taxonId, onlyTrusted))
+                .thenReturn(aeSimilarities.stream());
+
+        ConditionFilter providedCondFilter = new ConditionFilter(new HashSet<>(
+                Arrays.asList(anatEntityId1a, anatEntityId1b)), null);
+        ConditionFilter usedCondFilter = new ConditionFilter(new HashSet<>(
+                Arrays.asList(anatEntityId1a, anatEntityId1b, anatEntityId2a)), null);
+
+        Map<SummaryCallType.ExpressionSummary, SummaryQuality> qualityFilter =
+                new HashMap<>();
+        qualityFilter.put(SummaryCallType.ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE);
+        qualityFilter.put(SummaryCallType.ExpressionSummary.NOT_EXPRESSED, SummaryQuality.BRONZE);
+
+        ExpressionCallFilter usedCallFilter = new ExpressionCallFilter(
+                qualityFilter, geneFilters, Collections.singleton(usedCondFilter), null, null, null, null);
+
+        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering =
+                new LinkedHashMap<>();
+        serviceOrdering.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
+
+        when(callService.loadExpressionCalls(usedCallFilter,
+                EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
+                        CallService.Attribute.CALL_TYPE),
+                serviceOrdering))
+                .thenReturn(Stream.of(call1, call2, call3, call4, call5));
+
+        MultiSpeciesCallService service = new MultiSpeciesCallService(serviceFactory);
+
+        Stream<SimilarityExpressionCall> similarityExpressionCallStream = 
+                service.loadSimilarityExpressionCalls(taxonId, geneFilter1, providedCondFilter, onlyTrusted);
+
+        List<SimilarityExpressionCall> simCalls = similarityExpressionCallStream
+                .collect(Collectors.toList());
+        
+        // FIXME SimilarityExpressionCalls are correct, not sure that the order is also correct.
+        assertEquals(new SimilarityExpressionCall(
+                        gene1, new MultiSpeciesCondition(aeSim1, null), Arrays.asList(call1, call2), null), 
+                simCalls.get(1));
+        assertEquals(new SimilarityExpressionCall(
+                gene1, new MultiSpeciesCondition(aeSim2, null), Arrays.asList(call3), null),
+                simCalls.get(0));
+        assertEquals(new SimilarityExpressionCall(
+                gene2a, new MultiSpeciesCondition(aeSim1, null), Arrays.asList(call4), null),
+                simCalls.get(2));
+        assertEquals(new SimilarityExpressionCall(
+                gene2b, new MultiSpeciesCondition(aeSim2, null), Arrays.asList(call5), null),
+                simCalls.get(3));
+
+
 //    /**
 //     * Test the method {@link MultiSpeciesCallService#loadMultiSpeciesExpressionCalls(Gene, Collection)}.
 //     */
@@ -232,5 +328,5 @@ package org.bgee.model.expressiondata.multispecies;
 //            expected.get(taxId10), actual.get(taxId10));
 //        assertEquals("Incorrect multi-species expression calls for tax ID 100",
 //            expected.get(taxId100), actual.get(taxId100));
-//    }
-//}
+    }
+}

@@ -16,7 +16,7 @@ import org.bgee.model.gene.Gene;
  * 
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Aug. 2016
+ * @version Bgee 14, Mar. 2019
  * @since   Bgee 13, Apr. 2016
  */
 public class MultiSpeciesCall<T extends Call<?, ?>> {
@@ -59,26 +59,34 @@ public class MultiSpeciesCall<T extends Call<?, ?>> {
     private final BigDecimal conservationScore;
 
     /**
-     * Constructor providing the anat entity similarity group, the dev. stage similarity group,
-     * the taxon ID, the OMA group ID and its orthologous genes, the single-species calls,
-     * and the conservation score of this {@code MultiSpeciesCall}. 
+     * Constructor providing the multi-species condition, the taxon ID, the OMA group ID 
+     * and its orthologous genes, the single-species calls, and the conservation score of 
+     * this {@code MultiSpeciesCall}. 
      * 
-     * @param anatSimilarity    An {@code AnatEntitySimilarity} that is the group 
-     *                          of homologous organs of this call.
-     * @param stageSimilarity   A {@code DevStageSimilarity} that is the group of stages of this call.
+     * @param cond              A {@code MultiSpeciesCondition} that is the condition
+     *                          related to this call.
      * @param taxonId           An {@code Integer} that is the ID of the taxon of this call.
      * @param omaGroupId        A {@code String} that is the ID of the OMA Group of 
      *                          orthologous genes of this call.
-     * @param orthologGenes   	A {@code Collection} of {@code Gene}s that are the orthologous genes
-     * 							of both this {@code omaGroupId} and this {@code taxonId}.
+     * @param orthologousGenes  A {@code Collection} of {@code Gene}s that are the orthologous genes
+     *                          of both this {@code omaGroupId} and this {@code taxonId}.
      * @param calls             A {@code Collection} of {@code Call}s that are single-species calls
      *                          used to constitute this {@code MultiSpeciesCall}.
      * @param conservationScore A {@code BigDecimal} that is the conservation score
      *                          of this {@code MultiSpeciesCall}.
      */
-    public MultiSpeciesCall(MultiSpeciesCondition cond,
-            Integer taxonId, String omaGroupId, Collection<Gene> orthologousGenes, Collection<T> calls,
-            BigDecimal conservationScore) {
+    public MultiSpeciesCall(MultiSpeciesCondition cond, Integer taxonId, String omaGroupId,
+                            Collection<Gene> orthologousGenes, Collection<T> calls,
+                            BigDecimal conservationScore) {
+
+        if (calls != null && calls.stream().anyMatch(c -> c.getGene() == null)) {
+            throw log.throwing(new IllegalArgumentException("No gene of single-species calls can be null"));
+        }
+        if (calls != null && orthologousGenes != null 
+                && calls.stream().anyMatch(c -> !orthologousGenes.contains(c.getGene()))) {
+            throw log.throwing(new IllegalArgumentException(
+                    "All genes of single-species calls should be in the provided genes"));
+        }
 
         this.multiSpeciesCondition = cond;
         this.taxonId = taxonId;

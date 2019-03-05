@@ -16,20 +16,27 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.ElementGroupFromListSpliterator;
+import org.bgee.model.Entity;
 import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarity;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityService;
 import org.bgee.model.anatdev.multispemapping.DevStageSimilarity;
 import org.bgee.model.anatdev.multispemapping.DevStageSimilarityService;
+import org.bgee.model.expressiondata.Call;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.ConditionFilter;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.gene.GeneService;
@@ -731,4 +738,176 @@ public class MultiSpeciesCallService extends Service {
     			filter.getDataTypeFilters(), callObservedData, true, true);
     }
     
+    /**
+     * Retrieves similar expression calls from the provided {@code geneFilter},
+     * {@code conditionFilter}, and {@code onlyTrusted}.
+     *
+     * @param taxonId           An {@code int} that is the NCBI ID of the taxon for which 
+     * 	                        calls should be retrieved.
+     * @param geneFilter        A {@code GeneFilter} containing the IDs of genes for which 
+     *                          similar expression calls should be retrieved.
+     * @param conditionFilter   A {@code ConditionFilter} containing the conditions for which 
+     *                          similar expression calls should be retrieved.
+     * @param onlyTrusted       A {@code boolean} defining whether results should be restricted 
+     *                          to "trusted" annotations.
+     *                          If {@code true}, only trusted annotations are returned.
+     * @return                  The {@code Stream} of {@code SimilarityExpressionCall}s that are 
+     *                          the similar expression calls for the requested parameters.
+     */
+    public Stream<SimilarityExpressionCall> loadSimilarityExpressionCalls(int taxonId,
+            GeneFilter geneFilter, ConditionFilter conditionFilter, boolean onlyTrusted) {
+        log.entry(taxonId, geneFilter, conditionFilter, onlyTrusted);
+
+        if (geneFilter == null) {
+            throw log.throwing(new IllegalArgumentException("Provided geneFilter should not be null"));
+        }
+        if (conditionFilter == null) {
+            throw log.throwing(new IllegalArgumentException("Provided conditionFilter should not be null"));
+        }
+
+        // Retrieve AnatEntitySimilarity from the provided taxon
+        Set<AnatEntitySimilarity> anatEntitySimilarities = anatEntitySimilarityService
+                .loadPositiveAnatEntitySimilarities(taxonId, onlyTrusted)
+                // we keep anat. entity similarities with at least one anat. entity from condition filters
+                .filter(s -> s.getAllAnatEntities().stream()
+                        .anyMatch(ae -> conditionFilter.getAnatEntityIds().contains(ae.getId())))
+                .collect(Collectors.toSet());
+
+        // Build a new condition filter based on retrieved anat. entity similarities
+        Set<String> allAnatEntityIds = anatEntitySimilarities.stream()
+                .map(s -> s.getAllAnatEntities().stream()
+                        .map(AnatEntity::getId)
+                        .collect(Collectors.toSet()))
+                .flatMap(Set::stream)
+                .collect(Collectors.toSet());
+        ConditionFilter newConditionFilter = new ConditionFilter(allAnatEntityIds, null);
+
+        Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
+        summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE);
+        summaryCallTypeQualityFilter.put(ExpressionSummary.NOT_EXPRESSED, SummaryQuality.BRONZE);
+
+        // Build a new ExpressionCallFilter to use the ConditionFilter with similar anat. entities
+        ExpressionCallFilter expressionCallFilter = new ExpressionCallFilter(
+                summaryCallTypeQualityFilter, Collections.singleton(geneFilter),
+                Collections.singletonList(newConditionFilter), null, null, null, null);
+
+        // Define an order to be able to use an ElementGroupFromListSpliterator
+        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering =
+                new LinkedHashMap<>();
+        serviceOrdering.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
+        
+        // Retrieve ExpressionCalls
+        Stream<ExpressionCall> callStream = callService.loadExpressionCalls(
+                expressionCallFilter,
+                EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
+                        CallService.Attribute.CALL_TYPE),
+                serviceOrdering);
+
+        Stream<List<ExpressionCall>> callsByGene = StreamSupport.stream(
+                new ElementGroupFromListSpliterator<>(callStream, Call::getGene, Gene.COMPARATOR), false);
+
+        // Build SimilarityExpressionCalls for each Gene/AnatEntitySimilarity
+        Stream<SimilarityExpressionCall> similarityExpressionCallStream =
+                callsByGene.flatMap(callList -> {
+                    Gene gene = callList.get(0).getGene();
+                    return anatEntitySimilarities.stream()
+                            .map(anatEntitySimilarity -> {
+                                MultiSpeciesCondition cond = new MultiSpeciesCondition(anatEntitySimilarity, null);
+                                List<ExpressionCall> filteredCalls = callList.stream()
+                                        .filter(c -> anatEntitySimilarity.getAllAnatEntities().contains(c.getCondition().getAnatEntity()))
+                                        .collect(Collectors.toList());
+                                return new SimilarityExpressionCall(gene, cond, filteredCalls, null);
+                            }).filter(s -> !s.getCalls().isEmpty());
+                });
+        return log.exit(similarityExpressionCallStream);
+
+    }
+
+    /**
+     * Retrieves gene expression calls for any arbitrary group of genes,
+     * and not only for orthologous genes.
+     *
+     * @param taxonId       An {@code int} that is the NCBI ID of the taxon for which 
+     * 	                    calls should be retrieved.
+     * @param callFilter    An {@code ExpressionCallFilter} allowing to filter
+     *                      retrieving of expression calls.
+     * @param onlyTrusted   A {@code boolean} defining whether results should be restricted 
+     *                      to "trusted" annotations.
+     *                      If {@code true}, only trusted annotations are returned.
+     * @return              The {@code Stream} of {@code MultiSpeciesCall}s that are 
+     *                          the multi-species expression calls for the requested parameters.
+     */
+    public Stream<SimilarityExpressionCall> loadSimilarityExpressionCalls(int taxonId,
+            ExpressionCallFilter callFilter, boolean onlyTrusted) {
+        log.entry(taxonId, callFilter, onlyTrusted);
+
+        if (callFilter.getConditionFilters() == null) {
+            throw log.throwing(new IllegalArgumentException("Provided conditionFilters should not be null"));
+        }
+        if (callFilter.getConditionFilters().stream()
+                .anyMatch(f -> f.getDevStageIds() == null || !f.getDevStageIds().isEmpty())) {
+            throw log.throwing(new UnsupportedOperationException(
+                    "Dev. stages are not managed to retrieve SimilarityExpressionCalls"));
+        }
+        
+        // Retrieve AnatEntitySimilarity from the provided taxon
+        final Set<String> providedAnatEntityIds = callFilter.getConditionFilters().stream()
+                .flatMap(f -> f.getAnatEntityIds().stream())
+                .collect(Collectors.toSet());
+        Set<AnatEntitySimilarity> anatEntitySimilarities = anatEntitySimilarityService
+                .loadPositiveAnatEntitySimilarities(taxonId, onlyTrusted)
+                // we keep anat. entity similarities with at least one anat. entity from condition filters
+                .filter(s -> s.getAllAnatEntities().stream()
+                        .anyMatch(ae -> providedAnatEntityIds.contains(ae.getId())))
+                .collect(Collectors.toSet());
+
+        // Build the condition filter based on the AnatEntitySimilarity
+        Set<String> retrievedAnatEntityIds = anatEntitySimilarities.stream()
+                .map(AnatEntitySimilarity::getAllAnatEntities)
+                .flatMap(Set::stream)
+                .map(Entity::getId)
+                .collect(Collectors.toSet());
+        // FIXME not sure we can have only one condition filter if there are several ones in provided callFilter
+        ConditionFilter newConditionFilter = new ConditionFilter(retrievedAnatEntityIds, null);
+
+        // Build a new ExpressionCallFilter to use the ConditionFilter with similar anat. entities
+        // XXX: I don't see why we pass to the method an ExpressionCallFilter instead of GeneFilters and ConditionFilter
+        ExpressionCallFilter updatedCallFilter = new ExpressionCallFilter(
+                callFilter.getSummaryCallTypeQualityFilter(),
+                callFilter.getGeneFilters(),
+                Collections.singletonList(newConditionFilter),
+                callFilter.getDataTypeFilters(), callFilter.getCallObservedData(),
+                callFilter.getAnatEntityObservedData(), callFilter.getDevStageObservedData());
+
+        // XXX from here it's a duplicate of the previous method.
+        // Define an order to be able to use an ElementGroupFromListSpliterator
+        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering =
+                new LinkedHashMap<>();
+        serviceOrdering.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
+
+        // Retrieve ExpressionCalls
+        Stream<ExpressionCall> callStream = callService.loadExpressionCalls(
+                updatedCallFilter,
+                EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
+                        CallService.Attribute.CALL_TYPE),
+                serviceOrdering);
+
+        Stream<List<ExpressionCall>> callsByGene = StreamSupport.stream(
+                new ElementGroupFromListSpliterator<>(callStream, Call::getGene, Gene.COMPARATOR), false);
+
+        // Build SimilarityExpressionCalls for each Gene/AnatEntitySimilarity
+        Stream<SimilarityExpressionCall> similarityExpressionCallStream =
+                callsByGene.flatMap(callList -> {
+                    Gene gene = callList.get(0).getGene();
+                    return anatEntitySimilarities.stream()
+                            .map(anatEntitySimilarity -> {
+                                MultiSpeciesCondition cond = new MultiSpeciesCondition(anatEntitySimilarity, null);
+                                List<ExpressionCall> filteredCalls = callList.stream()
+                                        .filter(c -> anatEntitySimilarity.getAllAnatEntities().contains(c.getCondition().getAnatEntity()))
+                                        .collect(Collectors.toList());
+                                return new SimilarityExpressionCall(gene, cond, filteredCalls, null);
+                            }).filter(s -> !s.getCalls().isEmpty());
+                });
+        return log.exit(similarityExpressionCallStream);
+    }
 }

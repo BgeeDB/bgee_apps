@@ -3,6 +3,7 @@ package org.bgee.model.anatdev.multispemapping;
 import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -58,6 +59,73 @@ public class AnatEntitySimilarityService extends Service {
             throw log.throwing(new IllegalArgumentException("Taxon ID must be stricly positive."));
         }
 
+        Set<SummarySimilarityAnnotationTO> validAnnots = this.getValidAnnots(taxonId, onlyTrusted);
+        //NOW RETRIEVE TRANSFORMATION_OF RELATED ENTITIES
+        
+        
+        //Filter the annotations to use now.
+//        Set<SummarySimilarityAnnotationTO> finalAnnots = annotsInValidTaxa.stream().filter(a -> {
+//            Set<String> anatEntityIds = annotToAnatEntities.get(a);
+//        })
+        //Now, we need to discard multiple-entity annotations that were not validated,
+        //and single-entity annotations for the anat. entities part of a validated
+        //multiple-entity annotation
+
+        //Load the taxa we're gonna need in a Map where the key is the taxon ID
+//        Set<Integer> allTaxonIds = simAnnotations.values().stream()
+//                .map(annot -> annot.getTaxonId())
+//                .collect(Collectors.toSet());
+//        final Map<Integer, Taxon> taxa = Collections.unmodifiableMap(
+//                this.getServiceFactory().getTaxonService().loadTaxaByIds(allTaxonIds)
+//                .collect(Collectors.toMap(t -> t.getId(), t -> t)));
+
+        //Now we need to get all mappings between anat. entities, to be able to load the anat. entities we need
+        Map<Integer, List<SimAnnotToAnatEntityTO>> groupedMappingTOs = 
+                this.getDaoManager().getSummarySimilarityAnnotationDAO()
+                .getSimAnnotToAnatEntity(taxonId, true, false, true, onlyTrusted).stream()
+                .collect(Collectors.groupingBy(SimAnnotToAnatEntityTO::getSummarySimilarityAnnotationId));
+        //get the anat. entities in Map where the key is their ID
+        Set<String> anatEntityIds = groupedMappingTOs.values().stream()
+                .flatMap(l -> l.stream().map(s -> s.getAnatEntityId()))
+                .collect(Collectors.toSet());
+        final Map<String, AnatEntity> anatEntityMap = Collections.unmodifiableMap(
+                this.getServiceFactory().getAnatEntityService()
+                .loadAnatEntities(null, true, anatEntityIds, false)
+                .collect(Collectors.toMap(a -> a.getId(), a -> a)));
+
+        //Now we produce the AnatEntitySimilarities
+//        return log.exit(groupedMappingTOs.entrySet().stream().map(e -> {
+//            SummarySimilarityAnnotationTO annot = idToAnnots.get(e.getKey());
+//            if (annot == null) {
+//                throw log.throwing(new IllegalStateException(
+//                        "Missing annotation with ID " + e.getKey()));
+//            }
+//            Set<AnatEntity> anatEntities = e.getValue().stream()
+//                    .map(mapping -> {
+//                        AnatEntity anatEntity = anatEntityMap.get(mapping.getAnatEntityId());
+//                        if (anatEntity == null) {
+//                            throw log.throwing(new IllegalStateException(
+//                                    "Missing anat. entity with ID " + mapping.getAnatEntityId()));
+//                        }
+//                        return anatEntity;
+//                    })
+//                    .collect(Collectors.toSet());
+//            Taxon taxon = taxonOnt.getElement(annot.getTaxonId());
+//            if (taxon == null) {
+//                throw log.throwing(new IllegalStateException(
+//                        "Missing taxon with ID " + annot.getTaxonId()));
+//            }
+//            return new AnatEntitySimilarity(taxon, anatEntities);
+//        }));
+        return null;
+    }
+
+    private Set<SummarySimilarityAnnotationTO> getValidAnnots(int taxonId, boolean onlyTrusted) {
+        log.entry(taxonId, onlyTrusted);
+
+        //*******************************************
+        // DATA RETRIEVAL
+        //*******************************************
         //We need the taxon ontology for the requested taxon and its ancestors and descendants,
         //in order to correctly filter the similarity annotations to return.
         Ontology<Taxon, Integer> taxonOnt = this.getServiceFactory().getOntologyService()
@@ -103,7 +171,54 @@ public class AnatEntitySimilarityService extends Service {
                         e -> new HashSet<>(Arrays.asList(e.getValue())),
                         (v1, v2) -> {v1.addAll(v2); return v1;}));
 
-        //Now, perform filtering. The aim is to identify when to keep a multiple-entity annotations
+
+        //*******************************************
+        // ANNOTATION FILTERING
+        //*******************************************
+        //--------------------------------------
+        // MULTIPLE-ENTITY ANNOTATION FILTERING
+        //--------------------------------------
+        //Get a final list of multiple-entity annotations to keep
+        Set<SummarySimilarityAnnotationTO> validMultEntAnnots = this.getValidMultipleEntityAnnotations(validTaxonIds,
+                anatEntityIdToSimAnnots, annotToAnatEntities);
+
+        //-------------------------------------
+        // SINGLE-ENTITY ANNOTATION FILTERING
+        //-------------------------------------
+        //Retrieve all single-entity annotations of anat. entities part of a validated multiple-entity annotation,
+        //we will discard them
+        Set<SummarySimilarityAnnotationTO> singleEntAnnotsToDiscard = validMultEntAnnots.stream()
+                //Retrieve the anat. entity IDs part of this multiple-entity annotation
+                .flatMap(a -> annotToAnatEntities.get(a).stream())
+                //Now map these anat. entity IDs to the single-entity annotations to discard.
+                .flatMap(id -> anatEntityIdToSimAnnots.get(id).stream().filter(a -> annotToAnatEntities.get(a).size() == 1))
+                .collect(Collectors.toSet());
+
+        //-------------
+        // FINAL LIST
+        //-------------
+        //OK, now we can retrieve all the valid annotations to consider for the requested taxon
+        Set<SummarySimilarityAnnotationTO> finalAnnots = annotToAnatEntities.keySet().stream().filter(a -> {
+            if (!validTaxonIds.contains(a.getTaxonId())) {
+                return false;
+            }
+            int anatEntityCount = annotToAnatEntities.get(a).size();
+            if ((anatEntityCount > 1 && !validMultEntAnnots.contains(a)) ||
+                    (anatEntityCount == 1 && singleEntAnnotsToDiscard.contains(a))) {
+                return false;
+            }
+            return true;
+        }).collect(Collectors.toSet());
+
+        return log.exit(finalAnnots);
+    }
+
+    private Set<SummarySimilarityAnnotationTO> getValidMultipleEntityAnnotations(Set<Integer> validTaxonIds,
+            Map<String, Set<SummarySimilarityAnnotationTO>> anatEntityIdToSimAnnots,
+            Map<SummarySimilarityAnnotationTO, Set<String>> annotToAnatEntities) {
+        log.entry(validTaxonIds, anatEntityIdToSimAnnots, annotToAnatEntities);
+
+        //The aim here is to identify when to keep a multiple-entity annotations
         //and discard the corresponding single-entity annotations, or the other way around.
         //Multiple-entity annotations are valid when:
         //* all the entities part of the annotation exist in the requested taxon or in some sub-taxa
@@ -204,81 +319,41 @@ public class AnatEntitySimilarityService extends Service {
                         + "validated and should not have been reexamined: " + anatEntityIds));
             }
         }
-        //Retrieve all anat. entity IDs part of a validated multiple-entity annotations
-        //associated to the annotations
-        Map<String, Set<SummarySimilarityAnnotationTO>> idsToValidatedMultEntAnnots =
+
+        //If a multiple-entity annotation have its anat. entities that are all contained
+        //in  the anat. entities of another multiple-entity annotation, then we keep the annotations
+        //with the smallest number of anat. entities
+        List<Entry<Set<String>, Set<SummarySimilarityAnnotationTO>>> orderedMultEntAnnots =
                 validAnatEntityIdsToMultipleEntityAnnots.entrySet().stream()
-                .flatMap(e -> e.getKey().stream()
-                        .map(id -> new AbstractMap.SimpleEntry<>(id, e.getValue())))
-                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(),
-                        (v1, v2) -> {v1.addAll(v2); return v1;}));
-        //If several multiple-entity annotations overlap for a same anat. entity,
-        //we keep the annotations with less anat. entities
-//        Set<SummarySimilarityAnnotationTO> toDiscard = idsToValidatedMultEntAnnots.entrySet().stream()
-//                .map(e -> {
-//                    List<SummarySimilarityAnnotationTO> annots = new ArrayList<>(e.getValue());
-//                    for (int i = 0; i < annots.size(); i++) {
-//                        for (int j = i + 1; j < annots.size(); j++) {
-//                            SummarySimilarityAnnotationTO annot1 = annots.get(i);
-//                            SummarySimilarityAnnotationTO annot2 = annots.get(j);
-//                            Set<String> anatEntityIds1 = annotToAnatEntities.get(annot1);
-//                            Set<String> anatEntityIds2 = annotToAnatEntities.get(annot2);
-//                        }
-//                    }
-//                }).collect(Collectors.toSet());
-        //Filter the annotations to use now.
-//        Set<SummarySimilarityAnnotationTO> finalAnnots = annotsInValidTaxa.stream().filter(a -> {
-//            Set<String> anatEntityIds = annotToAnatEntities.get(a);
-//        })
-        //Now, we need to discard multiple-entity annotations that were not validated,
-        //and single-entity annotations for the anat. entities part of a validated
-        //multiple-entity annotation
+                .sorted(Comparator.comparing(e -> e.getKey().size()))
+                .collect(Collectors.toList());
+        Set<SummarySimilarityAnnotationTO> multEntAnnotsToDiscard = new HashSet<>();
+        for (int i = 0; i < orderedMultEntAnnots.size(); i++) {
+            Entry<Set<String>, Set<SummarySimilarityAnnotationTO>> entry1 = orderedMultEntAnnots.get(i);
+            Set<SummarySimilarityAnnotationTO> annots1 = entry1.getValue();
+            if (multEntAnnotsToDiscard.contains(annots1.iterator().next())) {
+                //If this annot was already discarded, any other annotation with more anat. entities
+                //and containing all the anat. entities of this annotation would have already been discarded as well.
+                continue;
+            }
+            for (int j = i + 1; j < orderedMultEntAnnots.size(); j++) {
+                Entry<Set<String>, Set<SummarySimilarityAnnotationTO>> entry2 = orderedMultEntAnnots.get(j);
+                Set<SummarySimilarityAnnotationTO> annots2 = entry2.getValue();
+                Set<String> anatEntityIds1 = entry1.getKey();
+                Set<String> anatEntityIds2 = entry2.getKey();
+                assert anatEntityIds1.size() > 1 && anatEntityIds2.size() > 1 &&
+                        anatEntityIds1.size() <= anatEntityIds2.size();
+                if (anatEntityIds1.size() != anatEntityIds2.size() && anatEntityIds2.containsAll(anatEntityIds1)) {
+                    multEntAnnotsToDiscard.addAll(annots2);
+                }
+            }
+        }
 
-        //Load the taxa we're gonna need in a Map where the key is the taxon ID
-//        Set<Integer> allTaxonIds = simAnnotations.values().stream()
-//                .map(annot -> annot.getTaxonId())
-//                .collect(Collectors.toSet());
-//        final Map<Integer, Taxon> taxa = Collections.unmodifiableMap(
-//                this.getServiceFactory().getTaxonService().loadTaxaByIds(allTaxonIds)
-//                .collect(Collectors.toMap(t -> t.getId(), t -> t)));
-
-        //Now we need to get all mappings between anat. entities, to be able to load the anat. entities we need
-        Map<Integer, List<SimAnnotToAnatEntityTO>> groupedMappingTOs = 
-                this.getDaoManager().getSummarySimilarityAnnotationDAO()
-                .getSimAnnotToAnatEntity(taxonId, true, false, true, onlyTrusted).stream()
-                .collect(Collectors.groupingBy(SimAnnotToAnatEntityTO::getSummarySimilarityAnnotationId));
-        //get the anat. entities in Map where the key is their ID
-        Set<String> anatEntityIds = groupedMappingTOs.values().stream()
-                .flatMap(l -> l.stream().map(s -> s.getAnatEntityId()))
+        //Get a final list of multiple-entity annotations to keep
+        Set<SummarySimilarityAnnotationTO> validMultEntAnnots = validAnatEntityIdsToMultipleEntityAnnots.values().stream()
+                .flatMap(s -> s.stream().filter(a -> !multEntAnnotsToDiscard.contains(a)))
                 .collect(Collectors.toSet());
-        final Map<String, AnatEntity> anatEntityMap = Collections.unmodifiableMap(
-                this.getServiceFactory().getAnatEntityService()
-                .loadAnatEntities(null, true, anatEntityIds, false)
-                .collect(Collectors.toMap(a -> a.getId(), a -> a)));
 
-        //Now we produce the AnatEntitySimilarities
-        return log.exit(groupedMappingTOs.entrySet().stream().map(e -> {
-            SummarySimilarityAnnotationTO annot = idToAnnots.get(e.getKey());
-            if (annot == null) {
-                throw log.throwing(new IllegalStateException(
-                        "Missing annotation with ID " + e.getKey()));
-            }
-            Set<AnatEntity> anatEntities = e.getValue().stream()
-                    .map(mapping -> {
-                        AnatEntity anatEntity = anatEntityMap.get(mapping.getAnatEntityId());
-                        if (anatEntity == null) {
-                            throw log.throwing(new IllegalStateException(
-                                    "Missing anat. entity with ID " + mapping.getAnatEntityId()));
-                        }
-                        return anatEntity;
-                    })
-                    .collect(Collectors.toSet());
-            Taxon taxon = taxonOnt.getElement(annot.getTaxonId());
-            if (taxon == null) {
-                throw log.throwing(new IllegalStateException(
-                        "Missing taxon with ID " + annot.getTaxonId()));
-            }
-            return new AnatEntitySimilarity(taxon, anatEntities);
-        }));
+        return log.exit(validMultEntAnnots);
     }
 }

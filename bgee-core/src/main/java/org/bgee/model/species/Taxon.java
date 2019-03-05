@@ -24,12 +24,12 @@ public class Taxon extends NamedEntity<Integer> implements OntologyElement<Taxon
      * @param description       A {@code String} representing the description of this {@code Taxon}.
      * @param scientificName    See {@link #getScientificName()}.
      * @param level             See {@link #getLevel()}.
-     * @param lca               See {@link #getLca()}.
+     * @param lca               See {@link #isLca()}.
      * @throws IllegalArgumentException if {@code id} is blank, or if {@code level} is non-{@code null}
      *                                  and less than or equal to 0.
      */
     public Taxon(int id, String commonName, String description, String scientificName,
-            Integer level, Boolean lca) {
+            int level, boolean lca) {
         super(id, commonName, description);
         if (level <= 0) {
             throw new IllegalArgumentException("Level cannot be less than or equal to 0");

@@ -46,7 +46,7 @@ public class ElementGroupFromListSpliteratorTest extends TestAncestor {
         List<ExpressionCall> calls = Arrays.asList(call1, call2, call3, call4);
         Function<ExpressionCall, Gene> extractGeneFunc = c1 -> c1.getGene();
 
-        ElementGroupFromListSpliterator<ExpressionCall, Gene, List<ExpressionCall>> spliterator =
+        ElementGroupFromListSpliterator<ExpressionCall, Gene> spliterator =
                 new ElementGroupFromListSpliterator<>(calls.stream(), extractGeneFunc, Gene.COMPARATOR);
         List<List<ExpressionCall>> expectedResults = Arrays.asList(Arrays.asList(call1, call2), Arrays.asList(call3, call4));
         assertEquals("Incorrect grouped Stream produced", expectedResults,

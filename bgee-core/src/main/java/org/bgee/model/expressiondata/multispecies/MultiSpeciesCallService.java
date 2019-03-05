@@ -48,7 +48,7 @@ import org.bgee.model.species.TaxonomyFilter;
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @author  Julien Wollbrett
- * @version Bgee 14, Mar. 2017
+ * @version Bgee 14, Mar. 2019
  * @since   Bgee 13, May 2016
  */
 public class MultiSpeciesCallService extends Service {
@@ -358,7 +358,7 @@ public class MultiSpeciesCallService extends Service {
                     .collect(Collectors.toSet());
             log.trace("Anat. entity similarities: {}", anatEntitySimilarities);
             Set<String> anatEntityIds = anatEntitySimilarities.stream()
-                    .flatMap(s -> s.getAnatEntities().stream().map(a -> a.getId()))
+                    .flatMap(s -> s.getAllAnatEntities().stream().map(a -> a.getId()))
                     .collect(Collectors.toSet());
             
             // Retrieve dev. stage similarities
@@ -452,7 +452,7 @@ public class MultiSpeciesCallService extends Service {
             }
             Set<MultiSpeciesCall<ExpressionCall>> currentMultiSpeCalls = multiSpCalls.stream()
             		.filter(msc -> msc.getMultiSpeciesCondition()
-            		.getAnatSimilarity().getAnatEntities().contains(call.getCondition().getAnatEntity()))
+            		.getAnatSimilarity().getAllAnatEntities().contains(call.getCondition().getAnatEntity()))
             		.filter(msc -> msc.getMultiSpeciesCondition()
             		.getStageSimilarity().getDevStageIds().contains(call.getCondition().getDevStageId()))
             		.filter(msc -> msc.getOrthologousGenes().contains(call.getGene()))
@@ -462,7 +462,7 @@ public class MultiSpeciesCallService extends Service {
             	msc.getSpeciesIds().add(call.getGene().getSpecies().getId());
             });
             Set<AnatEntitySimilarity> curAESimilarities = anatEntitySimilarities.stream()
-                    .filter(s -> s.getAnatEntities().contains(call.getCondition().getAnatEntity()))
+                    .filter(s -> s.getAllAnatEntities().contains(call.getCondition().getAnatEntity()))
                     .collect(Collectors.toSet());
             if (curAESimilarities.size() == 0) {
                 log.trace(call.getCondition().getAnatEntityId() +
@@ -697,7 +697,7 @@ public class MultiSpeciesCallService extends Service {
     	for(String anatEntityId : filter.getMultiSpeciesCondFilter().getAnatEntityIds()){
     		expressionCallAEntities.addAll(
     				anatEntSims.stream()
-    				.flatMap(aes -> aes.getAnatEntities().stream().map(a -> a.getId()))
+    				.flatMap(aes -> aes.getAllAnatEntities().stream().map(a -> a.getId()))
     				.filter(aes -> aes.contains(anatEntityId))
     				.collect(Collectors.toSet()));
     	}

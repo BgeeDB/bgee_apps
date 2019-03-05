@@ -15,7 +15,7 @@ import org.bgee.model.species.Taxon;
  * 
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
- * @author Frederic Bastian
+ * @author  Frederic Bastian
  * @version Bgee 14 Mar. 2019
  * @since   Bgee 13, Apr. 2016
  */
@@ -53,10 +53,11 @@ public class AnatEntitySimilarity {
         return taxon;
     }
     /**
-     * @return  An unmodifiable {@code Set} containing the {@code AnatEntity}s that are part of
+     * @return  An unmodifiable {@code Set} containing all {@code AnatEntity}s that are part of
      *          this {@code AnatEntitySimilarity} group.
      */
-    public Set<AnatEntity> getAnatEntities() {
+    // TODO: To be updated when anat. entities from 'transformation of' will be added
+    public Set<AnatEntity> getAllAnatEntities() {
         return anatEntities;
     }
 

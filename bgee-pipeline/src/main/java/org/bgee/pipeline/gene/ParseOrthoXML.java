@@ -453,7 +453,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
 //        speciesDAO.setAttributes(SpeciesDAO.Attribute.ID, SpeciesDAO.Attribute.COMMON_NAME, 
 //                SpeciesDAO.Attribute.GENOME_SPECIES_ID, SpeciesDAO.Attribute.FAKE_GENE_ID_PREFIX);
         
-        try (SpeciesTOResultSet rsSpecies = speciesDAO.getAllSpecies()) {
+        try (SpeciesTOResultSet rsSpecies = speciesDAO.getAllSpecies(null)) {
             while (rsSpecies.next()) {
                 SpeciesTO speciesTO = rsSpecies.getTO();
                 this.speciesIdsInBgee.add(speciesTO.getId());

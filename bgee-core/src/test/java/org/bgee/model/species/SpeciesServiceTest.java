@@ -55,7 +55,7 @@ public class SpeciesServiceTest extends TestAncestor {
         // ResultSet cannot be reused. As we have 2 tests, we need 2 ResultSet
         SpeciesTOResultSet speciesRS = getMockResultSet(SpeciesTOResultSet.class, speciesTos);
         SpeciesTOResultSet speciesRS2 = getMockResultSet(SpeciesTOResultSet.class, speciesTos);
-		when(speciesDAOMock.getSpeciesFromDataGroups()).thenReturn(speciesRS).thenReturn(speciesRS2);
+		when(speciesDAOMock.getSpeciesFromDataGroups(null)).thenReturn(speciesRS).thenReturn(speciesRS2);
 		
 		SourceToSpeciesTOResultSet sToSpRS = getMockResultSet(SourceToSpeciesTOResultSet.class, 
 		        Arrays.asList(
@@ -117,7 +117,7 @@ public class SpeciesServiceTest extends TestAncestor {
 	    Set<Integer> speciesIds = new HashSet<>(Arrays.asList(9606, 1234));
         SpeciesTOResultSet speciesRS = getMockResultSet(SpeciesTOResultSet.class, speciesTos);
         SpeciesTOResultSet speciesRS2 = getMockResultSet(SpeciesTOResultSet.class, speciesTos);
-        when(speciesDAOMock.getSpeciesByIds(speciesIds)).thenReturn(speciesRS).thenReturn(speciesRS2);
+        when(speciesDAOMock.getSpeciesByIds(speciesIds, null)).thenReturn(speciesRS).thenReturn(speciesRS2);
 
 	    SourceToSpeciesTOResultSet sToSpRS = getMockResultSet(SourceToSpeciesTOResultSet.class, 
 	            Arrays.asList(

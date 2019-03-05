@@ -142,7 +142,8 @@ public class BgeeDBUtilsTest extends TestAncestor {
                         new SpeciesTO(11, null, null, null, null, null, null, null, null, null),
                         new SpeciesTO(30, null, null, null, null, null, null, null, null, null)),
                 MySQLSpeciesTOResultSet.class);
-        when(mockManager.mockSpeciesDAO.getAllSpecies()).thenReturn(mockSpeciesTORs);
+        when(mockManager.mockSpeciesDAO.getAllSpecies(EnumSet.of(SpeciesDAO.Attribute.ID)))
+        .thenReturn(mockSpeciesTORs);
         
         return mockSpeciesTORs;
     }

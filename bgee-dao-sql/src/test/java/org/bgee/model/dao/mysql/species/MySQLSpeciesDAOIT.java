@@ -21,9 +21,10 @@ import org.junit.Test;
  * 
  * @author Frederic Bastian
  * @author Valentine Rech de Laval
- * @version Bgee 13
+ * @version Bgee 14 Mar 2019
  * @since Bgee 13
  */
+//TODO: adapt these tests to fix for issue #173
 public class MySQLSpeciesDAOIT extends MySQLITAncestor {
     private final static Logger log = LogManager.getLogger(MySQLSpeciesDAOIT.class.getName());
     
@@ -123,7 +124,7 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
 
         // Generate result with the method
         MySQLSpeciesDAO dao = new MySQLSpeciesDAO(this.getMySQLDAOManager());
-        List<SpeciesTO> methSpecies = dao.getAllSpecies().getAllTOs();
+        List<SpeciesTO> methSpecies = dao.getAllSpecies(null).getAllTOs();
         
         // Generate manually expected result
         List<SpeciesTO> expectedSpecies = Arrays.asList(
@@ -144,10 +145,8 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
                 TOComparator.areTOCollectionsEqual(methSpecies, expectedSpecies));
         //verify species display order
         assertEquals("Incorrect species order", expectedSpecies, methSpecies);
-        
-        dao.clearAttributes();
-        dao.setAttributes(SpeciesDAO.Attribute.COMMON_NAME);
-        methSpecies = dao.getAllSpecies().getAllTOs();
+
+        methSpecies = dao.getAllSpecies(EnumSet.of(SpeciesDAO.Attribute.COMMON_NAME)).getAllTOs();
         
         // Generate manually expected result
         expectedSpecies = Arrays.asList(
@@ -172,8 +171,8 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
 
         // Generate result with the method
         MySQLSpeciesDAO dao = new MySQLSpeciesDAO(this.getMySQLDAOManager());
-        List<SpeciesTO> speciesTOs = dao.getSpeciesByIds(
-                new HashSet<>(Arrays.asList(11, 31))).getAllTOs();
+        List<SpeciesTO> speciesTOs = dao.getSpeciesByIds(new HashSet<>(Arrays.asList(11, 31)), null)
+                .getAllTOs();
         
         // expected result
         List<SpeciesTO> expectedSpeciesTOs = Arrays.asList(
@@ -185,12 +184,10 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
         assertTrue("SpeciesTOs incorrectly retrieved, expected: " + expectedSpeciesTOs + 
                 ", but was: " + speciesTOs, 
                 TOComparator.areTOCollectionsEqual(speciesTOs, expectedSpeciesTOs));
-        
-        dao.clearAttributes();
-        dao.setAttributes(SpeciesDAO.Attribute.ID, SpeciesDAO.Attribute.GENUS, 
-                SpeciesDAO.Attribute.SPECIES_NAME);
-        speciesTOs = dao.getSpeciesByIds(
-                new HashSet<>(Arrays.asList(11, 31))).getAllTOs();
+
+        speciesTOs = dao.getSpeciesByIds(new HashSet<>(Arrays.asList(11, 31)),
+                EnumSet.of(SpeciesDAO.Attribute.ID, SpeciesDAO.Attribute.GENUS,
+                        SpeciesDAO.Attribute.SPECIES_NAME)).getAllTOs();
         
         // Generate manually expected result
         expectedSpeciesTOs = Arrays.asList(
@@ -200,12 +197,11 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
         assertTrue("SpeciesTOs incorrectly retrieved, expected: " + expectedSpeciesTOs + 
                 ", but was: " + speciesTOs, 
                 TOComparator.areTOCollectionsEqual(speciesTOs, expectedSpeciesTOs));
-        
-        dao.clearAttributes();
-        dao.setAttributes(SpeciesDAO.Attribute.ID, SpeciesDAO.Attribute.GENUS, 
-                SpeciesDAO.Attribute.SPECIES_NAME, SpeciesDAO.Attribute.DISPLAY_ORDER);
-        speciesTOs = dao.getSpeciesByIds(
-                new HashSet<>(Arrays.asList(11, 31))).getAllTOs();
+
+        speciesTOs = dao.getSpeciesByIds(new HashSet<>(Arrays.asList(11, 31)),
+                EnumSet.of(SpeciesDAO.Attribute.ID, SpeciesDAO.Attribute.GENUS,
+                        SpeciesDAO.Attribute.SPECIES_NAME, SpeciesDAO.Attribute.DISPLAY_ORDER))
+                .getAllTOs();
         
         // Generate manually expected result
         expectedSpeciesTOs = Arrays.asList(
@@ -223,7 +219,7 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
 
         // Generate result with the method
         MySQLSpeciesDAO dao = new MySQLSpeciesDAO(this.getMySQLDAOManager());
-        List<SpeciesTO> methSpecies = dao.getSpeciesFromDataGroups().getAllTOs();
+        List<SpeciesTO> methSpecies = dao.getSpeciesFromDataGroups(null).getAllTOs();
 
         // Generate manually expected result
         List<SpeciesTO> expectedSpecies = Arrays.asList(
@@ -237,9 +233,8 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
         assertTrue("SpeciesTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(methSpecies, expectedSpecies));
 
-        dao.clearAttributes();
-        dao.setAttributes(SpeciesDAO.Attribute.COMMON_NAME);
-        methSpecies = dao.getSpeciesFromDataGroups().getAllTOs();
+        methSpecies = dao.getSpeciesFromDataGroups(EnumSet.of(SpeciesDAO.Attribute.COMMON_NAME))
+                .getAllTOs();
 
         // Generate manually expected result
         expectedSpecies = Arrays.asList(

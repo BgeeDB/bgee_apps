@@ -57,7 +57,8 @@ public class SpeciesService extends CommonService {
     public Set<Species> loadSpeciesInDataGroups(boolean withSpeciesInfo)
             throws DAOException, QueryInterruptedException {
         log.entry(withSpeciesInfo);
-        Set<Species> species = this.getDaoManager().getSpeciesDAO().getSpeciesFromDataGroups().stream()
+        Set<Species> species = this.getDaoManager().getSpeciesDAO().getSpeciesFromDataGroups(null)
+                .stream()
                 .map(SpeciesService::mapFromTO)
                 .collect(Collectors.toSet());
         if (withSpeciesInfo) {
@@ -83,7 +84,8 @@ public class SpeciesService extends CommonService {
             throws DAOException, QueryInterruptedException {
         log.entry(speciesIds, withSpeciesInfo);
         Set<Integer> filteredSpecieIds = speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds);
-        Set<Species> species = this.getDaoManager().getSpeciesDAO().getSpeciesByIds(filteredSpecieIds).stream()
+        Set<Species> species = this.getDaoManager().getSpeciesDAO()
+                .getSpeciesByIds(filteredSpecieIds, null).stream()
                 .map(SpeciesService::mapFromTO)
                 .collect(Collectors.toSet());
         if (withSpeciesInfo) {

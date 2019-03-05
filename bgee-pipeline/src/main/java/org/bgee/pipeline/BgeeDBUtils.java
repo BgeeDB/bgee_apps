@@ -57,9 +57,7 @@ public class BgeeDBUtils {
     public static List<Integer> getSpeciesIdsFromDb(SpeciesDAO speciesDAO) throws DAOException {
         log.entry(speciesDAO);
 
-        speciesDAO.setAttributes(SpeciesDAO.Attribute.ID);
-        
-        try (SpeciesTOResultSet rsSpecies = speciesDAO.getAllSpecies()) {
+        try (SpeciesTOResultSet rsSpecies = speciesDAO.getAllSpecies(EnumSet.of(SpeciesDAO.Attribute.ID))) {
             List<Integer> speciesIdsInBgee = new ArrayList<>();
             while (rsSpecies.next()) {
                 speciesIdsInBgee.add(rsSpecies.getTO().getId());

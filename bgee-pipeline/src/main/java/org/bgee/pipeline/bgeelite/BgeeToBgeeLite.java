@@ -368,7 +368,8 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
      */
     private void extractBgeeDatabase(Collection<Integer> inputSpeciesIds, String directory) {
         log.entry(inputSpeciesIds, directory);
-        SpeciesTOResultSet speciesTOs = this.getSpeciesDAO().getSpeciesByIds(new HashSet<>(inputSpeciesIds));
+        SpeciesTOResultSet speciesTOs = this.getSpeciesDAO().getSpeciesByIds(
+                new HashSet<>(inputSpeciesIds), null);
         // XXX: add check that all provided species IDs are found
         Set<Integer> speciesIds = extractSpeciesTable(speciesTOs, directory);
         extractAnatEntityTable(directory);

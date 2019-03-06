@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -17,6 +18,7 @@ import org.bgee.model.dao.api.exception.QueryInterruptedException;
 import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO;
 import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO.InfoType;
 import org.bgee.model.dao.api.species.SpeciesDAO;
+import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.source.Source;
 
@@ -27,7 +29,7 @@ import org.bgee.model.source.Source;
  * @author  Philippe Moret
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Mar. 2017
+ * @version Bgee 14, Mar. 2019
  * @since   Bgee 13, Sept. 2015
  */
 public class SpeciesService extends CommonService {
@@ -72,20 +74,56 @@ public class SpeciesService extends CommonService {
      * 
      * @param speciesIds        A {@code Collection} of {@code Integer}s that are IDs of species 
      *                          for which to return the {@code Species}s. If {@code null} or empty,
-     *                          all species in the data source are returned.
+     *                          all species in Bgee are returned.
      * @param withSpeciesInfo   A {@code boolean}s defining whether data sources of the species
-     *                          is retrieved or not.
-     * @return                  A {@code Set} containing the {@code Species} with one of the 
-     *                          provided species IDs.
+     *                          should be retrieved.
+     * @return                  A {@code Set} containing the {@code Species} matching
+     *                          the requested IDs.
      * @throws DAOException                 If an error occurred while accessing a {@code DAO}.
      * @throws QueryInterruptedException    If a query to a {@code DAO} was intentionally interrupted.
      */
     public Set<Species> loadSpeciesByIds(Collection<Integer> speciesIds, boolean withSpeciesInfo)
             throws DAOException, QueryInterruptedException {
         log.entry(speciesIds, withSpeciesInfo);
-        Set<Integer> filteredSpecieIds = speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds);
-        Set<Species> species = this.getDaoManager().getSpeciesDAO()
-                .getSpeciesByIds(filteredSpecieIds, null).stream()
+        return log.exit(this.loadSpecies(ids -> this.getDaoManager().getSpeciesDAO()
+                .getSpeciesByIds(ids, null), speciesIds, withSpeciesInfo));
+    }
+    /**
+     * Loads species existing in the requested taxa.
+     *
+     * @param taxonIds          A {@code Collection} of {@code Integer}s that are the IDs
+     *                          of the taxa which we want to retrieve species for.
+     *                          If {@code null} or empty, all species in Bgee are returned.
+     * @param withSpeciesInfo   A {@code boolean}s defining whether data sources of the species
+     *                          should be retrieved.
+     * @return                  A {@code Set} containing the {@code Species} existing
+     *                          in the requested taxa.
+     * @throws DAOException                 If an error occurred while accessing a {@code DAO}.
+     * @throws QueryInterruptedException    If a query to a {@code DAO} was intentionally interrupted.
+     */
+    public Set<Species> loadSpeciesByTaxonIds(Collection<Integer> taxonIds, boolean withSpeciesInfo) {
+        log.entry(taxonIds, withSpeciesInfo);
+        return log.exit(this.loadSpecies(ids -> this.getDaoManager().getSpeciesDAO()
+                .getSpeciesByTaxonIds(ids, null), taxonIds, withSpeciesInfo));
+    }
+    /**
+     * @param daoCall           A {@code Function} accepting a {@code Set} of {@code Integer}s
+     *                          that are, in our case, IDs of species or of taxa, and returning
+     *                          a {@code SpeciesTOResultSet}, by calling, in our case, a method
+     *                          of {@code SpeciesDAO} to retrieve species either by species IDs
+     *                          or taxon IDs.
+     * @param speOrTaxIds
+     * @param withSpeciesInfo
+     * @return
+     * @throws DAOException
+     * @throws QueryInterruptedException
+     */
+    private Set<Species> loadSpecies(Function<Set<Integer>, SpeciesTOResultSet> daoCall,
+            Collection<Integer> speOrTaxIds, boolean withSpeciesInfo) throws DAOException, QueryInterruptedException {
+        log.entry(daoCall, speOrTaxIds, withSpeciesInfo);
+
+        Set<Integer> filteredIds = speOrTaxIds == null? new HashSet<>(): new HashSet<>(speOrTaxIds);
+        Set<Species> species = daoCall.apply(filteredIds).stream()
                 .map(SpeciesService::mapFromTO)
                 .collect(Collectors.toSet());
         if (withSpeciesInfo) {

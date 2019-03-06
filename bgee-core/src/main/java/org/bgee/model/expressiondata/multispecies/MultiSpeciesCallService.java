@@ -13,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -361,8 +362,7 @@ public class MultiSpeciesCallService extends Service {
 
             // Retrieve anat. entity similarities
             Set<AnatEntitySimilarity> anatEntitySimilarities = this.getServiceFactory()
-                    .getAnatEntitySimilarityService().loadAnatEntitySimilarities(taxonId, clonedSpeIds, true)
-                    .collect(Collectors.toSet());
+                    .getAnatEntitySimilarityService().loadPositiveAnatEntitySimilarities(taxonId, true);
             log.trace("Anat. entity similarities: {}", anatEntitySimilarities);
             Set<String> anatEntityIds = anatEntitySimilarities.stream()
                     .flatMap(s -> s.getAllAnatEntities().stream().map(a -> a.getId()))
@@ -440,7 +440,7 @@ public class MultiSpeciesCallService extends Service {
         	multiSpCalls.add(new MultiSpeciesCall<ExpressionCall>(
         			new MultiSpeciesCondition(
         					unmodifiableAESims.stream()
-        						.filter(aes -> ogg.getTaxonId().equals(aes.getTaxon().getId()))
+        						.filter(aes -> ogg.getTaxonId().equals(aes.getRequestedTaxon().getId()))
         						.findFirst().get(),
         					unmodifiableDSSims.stream()
         					.filter(dss -> ogg.getTaxonId().equals(dss.getTaxonId()))
@@ -648,12 +648,8 @@ public class MultiSpeciesCallService extends Service {
     	Set<AnatEntitySimilarity> anatEntitySimilarities = new HashSet<>();
     	lcaTaxonToSpecies.entrySet().forEach(t -> {
     		anatEntitySimilarities.addAll(
-    				anatEntitySimilarityService.loadAnatEntitySimilarities(
-    						t.getKey().getId(),
-    						t.getValue().stream().map(s -> s.getId()).collect(Collectors.toSet()),
-    						true)
-    				.collect(Collectors.toSet())
-    				);
+    				anatEntitySimilarityService.loadPositiveAnatEntitySimilarities(
+    						t.getKey().getId(), true));
     	});
     	return log.exit(anatEntitySimilarities);
     }
@@ -744,8 +740,8 @@ public class MultiSpeciesCallService extends Service {
      *
      * @param taxonId           An {@code int} that is the NCBI ID of the taxon for which 
      * 	                        calls should be retrieved.
-     * @param geneFilter        A {@code GeneFilter} containing the IDs of genes for which 
-     *                          similar expression calls should be retrieved.
+     * @param geneFilters       A {@code Collection} of {@code GeneFilter}s allowing to filter
+     *                          the {@code SimilarityExpressionCall}s to retrieve.
      * @param conditionFilter   A {@code ConditionFilter} containing the conditions for which 
      *                          similar expression calls should be retrieved.
      * @param onlyTrusted       A {@code boolean} defining whether results should be restricted 
@@ -755,30 +751,35 @@ public class MultiSpeciesCallService extends Service {
      *                          the similar expression calls for the requested parameters.
      */
     public Stream<SimilarityExpressionCall> loadSimilarityExpressionCalls(int taxonId,
-            GeneFilter geneFilter, ConditionFilter conditionFilter, boolean onlyTrusted) {
-        log.entry(taxonId, geneFilter, conditionFilter, onlyTrusted);
+            Collection<GeneFilter> geneFilters, ConditionFilter conditionFilter, boolean onlyTrusted) {
+        log.entry(taxonId, geneFilters, conditionFilter, onlyTrusted);
 
-        if (geneFilter == null) {
-            throw log.throwing(new IllegalArgumentException("Provided geneFilter should not be null"));
+        if (geneFilters == null || geneFilters.stream().anyMatch(Objects::isNull)) {
+            throw log.throwing(new IllegalArgumentException("No gene filter should be null"));
         }
         if (conditionFilter == null) {
             throw log.throwing(new IllegalArgumentException("Provided conditionFilter should not be null"));
         }
 
+        Set<GeneFilter> clnGeneFilters = Collections.unmodifiableSet(new HashSet<>(geneFilters));
+
         // Retrieve AnatEntitySimilarity from the provided taxon
         Set<AnatEntitySimilarity> anatEntitySimilarities = anatEntitySimilarityService
-                .loadPositiveAnatEntitySimilarities(taxonId, onlyTrusted)
+                .loadPositiveAnatEntitySimilarities(taxonId, onlyTrusted).stream()
                 // we keep anat. entity similarities with at least one anat. entity from condition filters
                 .filter(s -> s.getAllAnatEntities().stream()
                         .anyMatch(ae -> conditionFilter.getAnatEntityIds().contains(ae.getId())))
                 .collect(Collectors.toSet());
 
         // Build a new condition filter based on retrieved anat. entity similarities
-        Set<String> allAnatEntityIds = anatEntitySimilarities.stream()
-                .map(s -> s.getAllAnatEntities().stream()
-                        .map(AnatEntity::getId)
-                        .collect(Collectors.toSet()))
-                .flatMap(Set::stream)
+        // TODO: use similaritiesByAnatEntity to optimize building of SimilarityExpressionCalls
+        Map<AnatEntity, AnatEntitySimilarity> similaritiesByAnatEntity =
+                anatEntitySimilarities.stream()
+                        .flatMap(sim -> sim.getAllAnatEntities().stream()
+                                .map(ae -> new SimpleEntry<>(ae, sim)))
+                        .collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue));
+        Set<String> allAnatEntityIds = similaritiesByAnatEntity.keySet().stream()
+                .map(Entity::getId)
                 .collect(Collectors.toSet());
         ConditionFilter newConditionFilter = new ConditionFilter(allAnatEntityIds, null);
 
@@ -788,7 +789,7 @@ public class MultiSpeciesCallService extends Service {
 
         // Build a new ExpressionCallFilter to use the ConditionFilter with similar anat. entities
         ExpressionCallFilter expressionCallFilter = new ExpressionCallFilter(
-                summaryCallTypeQualityFilter, Collections.singleton(geneFilter),
+                summaryCallTypeQualityFilter, clnGeneFilters,
                 Collections.singletonList(newConditionFilter), null, null, null, null);
 
         // Define an order to be able to use an ElementGroupFromListSpliterator
@@ -855,7 +856,7 @@ public class MultiSpeciesCallService extends Service {
                 .flatMap(f -> f.getAnatEntityIds().stream())
                 .collect(Collectors.toSet());
         Set<AnatEntitySimilarity> anatEntitySimilarities = anatEntitySimilarityService
-                .loadPositiveAnatEntitySimilarities(taxonId, onlyTrusted)
+                .loadPositiveAnatEntitySimilarities(taxonId, onlyTrusted).stream()
                 // we keep anat. entity similarities with at least one anat. entity from condition filters
                 .filter(s -> s.getAllAnatEntities().stream()
                         .anyMatch(ae -> providedAnatEntityIds.contains(ae.getId())))

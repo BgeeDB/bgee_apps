@@ -6,6 +6,7 @@ import org.bgee.model.TestAncestor;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarity;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityService;
+import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityTaxonSummary;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
@@ -22,18 +23,19 @@ import org.bgee.model.species.Taxon;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -48,7 +50,7 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
     
     /**
      * Test the method
-     * {@link MultiSpeciesCallService#loadSimilarityExpressionCalls(int, GeneFilter, ConditionFilter, boolean)}.
+     * {@link MultiSpeciesCallService#loadSimilarityExpressionCalls(int, Collection, ConditionFilter, boolean)}.
      */
     @Test
     public void shouldLoadMultiSpeciesCalls() {
@@ -94,14 +96,16 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         ExpressionCall call5 = new ExpressionCall(gene2b, new Condition(anatEntity1b, null, species2),
                 null, ExpressionSummary.NOT_EXPRESSED, SummaryQuality.SILVER, null, null);
 
-        AnatEntitySimilarity aeSim1 = new AnatEntitySimilarity(taxon, Arrays.asList(anatEntity1a, anatEntity2a));
-        AnatEntitySimilarity aeSim2 = new AnatEntitySimilarity(taxon, Arrays.asList(anatEntity1b));
+        Set<AnatEntitySimilarityTaxonSummary> aeSimTaxonSummaries = Collections.singleton(
+                new AnatEntitySimilarityTaxonSummary(taxon, true, true));
+        AnatEntitySimilarity aeSim1 = new AnatEntitySimilarity(
+                Arrays.asList(anatEntity1a, anatEntity2a), null, taxon, aeSimTaxonSummaries);
+        AnatEntitySimilarity aeSim2 = new AnatEntitySimilarity(
+                Arrays.asList(anatEntity1b), null, taxon, aeSimTaxonSummaries);
         
-        Set<AnatEntitySimilarity> aeSimilarities = new HashSet<>(Arrays.asList(aeSim1, aeSim2));
-
         boolean onlyTrusted = true;
         when(aeSimService.loadPositiveAnatEntitySimilarities(taxonId, onlyTrusted))
-                .thenReturn(aeSimilarities.stream());
+                .thenReturn(new HashSet<>(Arrays.asList(aeSim1, aeSim2)));
 
         ConditionFilter providedCondFilter = new ConditionFilter(new HashSet<>(
                 Arrays.asList(anatEntityId1a, anatEntityId1b)), null);
@@ -129,25 +133,35 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         MultiSpeciesCallService service = new MultiSpeciesCallService(serviceFactory);
 
         Stream<SimilarityExpressionCall> similarityExpressionCallStream = 
-                service.loadSimilarityExpressionCalls(taxonId, geneFilter1, providedCondFilter, onlyTrusted);
+                service.loadSimilarityExpressionCalls(taxonId, Collections.singleton(geneFilter1),
+                        providedCondFilter, onlyTrusted);
 
-        List<SimilarityExpressionCall> simCalls = similarityExpressionCallStream
-                .collect(Collectors.toList());
-        
-        // FIXME SimilarityExpressionCalls are correct, not sure that the order is also correct.
-        assertEquals(new SimilarityExpressionCall(
-                        gene1, new MultiSpeciesCondition(aeSim1, null), Arrays.asList(call1, call2), null), 
-                simCalls.get(1));
-        assertEquals(new SimilarityExpressionCall(
-                gene1, new MultiSpeciesCondition(aeSim2, null), Arrays.asList(call3), null),
-                simCalls.get(0));
-        assertEquals(new SimilarityExpressionCall(
-                gene2a, new MultiSpeciesCondition(aeSim1, null), Arrays.asList(call4), null),
-                simCalls.get(2));
-        assertEquals(new SimilarityExpressionCall(
-                gene2b, new MultiSpeciesCondition(aeSim2, null), Arrays.asList(call5), null),
-                simCalls.get(3));
+        Set<SimilarityExpressionCall> simCalls = similarityExpressionCallStream.collect(Collectors.toSet());
 
+        assertNotNull(simCalls);
+        assertEquals(4, simCalls.size());
+
+        for (SimilarityExpressionCall simCall : simCalls) {
+            if (simCall.getGene().equals(gene1)) {
+                if (simCall.getMultiSpeciesCondition().getAnatSimilarity().getAllAnatEntities().contains(anatEntity1a)) {
+                    assertEquals(new SimilarityExpressionCall(
+                                    gene1, new MultiSpeciesCondition(aeSim1, null), Arrays.asList(call1, call2), null),
+                            simCall);
+                } else {
+                    assertEquals(new SimilarityExpressionCall(
+                                    gene1, new MultiSpeciesCondition(aeSim2, null), Arrays.asList(call3), null),
+                            simCall);
+                }
+            } else if (simCall.getGene().equals(gene2a)) {
+                assertEquals(new SimilarityExpressionCall(
+                                gene2a, new MultiSpeciesCondition(aeSim1, null), Arrays.asList(call4), null),
+                        simCall);
+            } else {
+                assertEquals(new SimilarityExpressionCall(
+                                gene2b, new MultiSpeciesCondition(aeSim2, null), Arrays.asList(call5), null),
+                        simCall);
+            }
+        }
 
 //    /**
 //     * Test the method {@link MultiSpeciesCallService#loadMultiSpeciesExpressionCalls(Gene, Collection)}.

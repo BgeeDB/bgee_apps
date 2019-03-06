@@ -36,6 +36,7 @@ import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.ConditionFilter;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
@@ -815,9 +816,13 @@ public class MultiSpeciesCallService extends Service {
                             .map(anatEntitySimilarity -> {
                                 MultiSpeciesCondition cond = new MultiSpeciesCondition(anatEntitySimilarity, null);
                                 List<ExpressionCall> filteredCalls = callList.stream()
-                                        .filter(c -> anatEntitySimilarity.getAllAnatEntities().contains(c.getCondition().getAnatEntity()))
+                                        .filter(c -> anatEntitySimilarity.getAllAnatEntities()
+                                                .contains(c.getCondition().getAnatEntity()))
                                         .collect(Collectors.toList());
-                                return new SimilarityExpressionCall(gene, cond, filteredCalls, null);
+                                boolean hasExpression = filteredCalls.stream()
+                                        .anyMatch(c -> ExpressionSummary.EXPRESSED.equals(c.getSummaryCallType()));
+                                return new SimilarityExpressionCall(gene, cond, filteredCalls,
+                                        hasExpression? ExpressionSummary.EXPRESSED: ExpressionSummary.NOT_EXPRESSED);
                             }).filter(s -> !s.getCalls().isEmpty());
                 });
         return log.exit(similarityExpressionCallStream);

@@ -85,16 +85,16 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
 
         // aeSim1
         ExpressionCall call1 = new ExpressionCall(gene1, new Condition(anatEntity1a,  null, species1),
-                null, ExpressionSummary.EXPRESSED, SummaryQuality.GOLD, null, null);
+                null, ExpressionSummary.EXPRESSED, null, null, null);
         ExpressionCall call2 = new ExpressionCall(gene1, new Condition(anatEntity2a,  null, species1),
-                null, ExpressionSummary.EXPRESSED, SummaryQuality.GOLD, null, null);
+                null, ExpressionSummary.NOT_EXPRESSED, null, null, null);
         ExpressionCall call4 = new ExpressionCall(gene2a, new Condition(anatEntity2a, null, species2),
-                null, ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE, null, null);
+                null, ExpressionSummary.EXPRESSED, null, null, null);
         // aeSim2
         ExpressionCall call3 = new ExpressionCall(gene1, new Condition(anatEntity1b,  null, species1),
-                null, ExpressionSummary.EXPRESSED, SummaryQuality.GOLD, null, null);
+                null, ExpressionSummary.EXPRESSED, null, null, null);
         ExpressionCall call5 = new ExpressionCall(gene2b, new Condition(anatEntity1b, null, species2),
-                null, ExpressionSummary.NOT_EXPRESSED, SummaryQuality.SILVER, null, null);
+                null, ExpressionSummary.NOT_EXPRESSED, null, null, null);
 
         Set<AnatEntitySimilarityTaxonSummary> aeSimTaxonSummaries = Collections.singleton(
                 new AnatEntitySimilarityTaxonSummary(taxon, true, true));
@@ -145,20 +145,24 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
             if (simCall.getGene().equals(gene1)) {
                 if (simCall.getMultiSpeciesCondition().getAnatSimilarity().getAllAnatEntities().contains(anatEntity1a)) {
                     assertEquals(new SimilarityExpressionCall(
-                                    gene1, new MultiSpeciesCondition(aeSim1, null), Arrays.asList(call1, call2), null),
+                                    gene1, new MultiSpeciesCondition(aeSim1, null),
+                                    Arrays.asList(call1, call2), ExpressionSummary.EXPRESSED),
                             simCall);
                 } else {
                     assertEquals(new SimilarityExpressionCall(
-                                    gene1, new MultiSpeciesCondition(aeSim2, null), Arrays.asList(call3), null),
+                                    gene1, new MultiSpeciesCondition(aeSim2, null),
+                                    Arrays.asList(call3), ExpressionSummary.EXPRESSED),
                             simCall);
                 }
             } else if (simCall.getGene().equals(gene2a)) {
                 assertEquals(new SimilarityExpressionCall(
-                                gene2a, new MultiSpeciesCondition(aeSim1, null), Arrays.asList(call4), null),
+                                gene2a, new MultiSpeciesCondition(aeSim1, null),
+                                Arrays.asList(call4), ExpressionSummary.EXPRESSED),
                         simCall);
             } else {
                 assertEquals(new SimilarityExpressionCall(
-                                gene2b, new MultiSpeciesCondition(aeSim2, null), Arrays.asList(call5), null),
+                                gene2b, new MultiSpeciesCondition(aeSim2, null),
+                                Arrays.asList(call5), ExpressionSummary.NOT_EXPRESSED),
                         simCall);
             }
         }

@@ -59,9 +59,23 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
      * the associated value being a {@code Set} of {@code T}s present in {@link #getElements()},
      * valid in the related species.
      * <p>
-     * A {@code null} key means: entities valid in any species.
+     * A {@code null} key means: entities valid in any Bgee species.
+     * <p>
+     * This attribute is the reverse {@code Map} of {@link #elementToSpeciesIds},
+     * for faster data retrieval.
      */
     private final Map<Integer, Set<T>> speciesIdToElements;
+    /**
+     * A {@code Map} where keys are {@code T}s representing elements of this ontology,
+     * the associated value being a {@code Set} of {@code Integer}s that are the IDs of the species
+     * the element is valid in.
+     * <p>
+     * A {@code null} value means: entity valid in any Bgee species.
+     * <p>
+     * This attribute is the reverse {@code Map} of {@link #speciesIdToElements},
+     * for faster data retrieval.
+     */
+    private final Map<T, Set<Integer>> elementToSpeciesIds;
 
     /**
      * @see #getSpeciesIds()
@@ -129,8 +143,28 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
         this.speciesIdToElements = Collections.unmodifiableMap(
                 entitiesBySpeciesId.entrySet().stream()
                     .collect(Collectors.toMap(e -> e.getKey(), 
-                            e -> Collections.unmodifiableSet((e.getValue())))));
+                            e -> Collections.unmodifiableSet(e.getValue()))));
         log.trace("Entities by speciesId: {}", this.speciesIdToElements);
+        //We also reverse this Map for easier retrieval of taxon constraints per element
+        this.elementToSpeciesIds = Collections.unmodifiableMap(
+                this.speciesIdToElements.entrySet().stream()
+                .flatMap(e -> e.getValue().stream()
+                        .map(element -> new AbstractMap.SimpleEntry<>(element, e.getKey())))
+                .collect(Collectors.toMap(
+                        e -> e.getKey(),
+                        e -> e.getValue() == null? null: new HashSet<>(Arrays.asList(e.getValue())),
+                        (v1, v2) -> {
+                            if (v1 == null || v2 == null) {
+                                throw log.throwing(new IllegalStateException(
+                                    "There shouldn't be any key collision with a null species ID."));
+                            }
+                            v1.addAll(v2);
+                            return v1;
+                        }))
+                .entrySet().stream().collect(Collectors.toMap(
+                        e -> e.getKey(),
+                        e -> Collections.unmodifiableSet(e.getValue())))
+                );
         
         Map<Integer, Set<RelationTO<U>>> relationsBySpeciesId = null;
         if (this.relationTaxonConstraints.isEmpty()) {
@@ -232,6 +266,24 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
      */
     public Set<Integer> getSpeciesIds() {
         return speciesIds;
+    }
+    /**
+     * Retrieve in which species an element is valid.
+     *
+     * @param element   The element for which we want to know the IDs of the species it is valid in.
+     * @return          A {@code Set} of {@code Integer}s that are the IDs of the species
+     *                  which {@code element} is valid in. If the returned value is {@code null},
+     *                  it means that {@code element} is valid in all Bgee species.
+     */
+    public Set<Integer> getSpeciesIdsWithElementValidIn(T element) {
+        log.entry(element);
+        if (element == null) {
+            throw log.throwing(new IllegalArgumentException("Element cannot be null"));
+        }
+        if (!elementToSpeciesIds.containsKey(element)) {
+            throw log.throwing(new IllegalArgumentException("Element is not present in the ontology"));
+        }
+        return log.exit(elementToSpeciesIds.get(element));
     }
 
     /**

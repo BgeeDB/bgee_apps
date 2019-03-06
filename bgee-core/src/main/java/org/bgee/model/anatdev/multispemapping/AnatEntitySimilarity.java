@@ -3,6 +3,7 @@ package org.bgee.model.anatdev.multispemapping;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -22,6 +23,7 @@ import org.bgee.model.species.Taxon;
 public class AnatEntitySimilarity {
     private final static Logger log = LogManager.getLogger(AnatEntitySimilarity.class.getName());
 
+    private final Map<Taxon, Boolean> annotatedTaxonToConfidence;
     private final Taxon taxon;
     /**
      * @see #getAnatEntities

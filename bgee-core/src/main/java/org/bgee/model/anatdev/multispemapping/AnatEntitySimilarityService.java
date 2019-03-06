@@ -14,7 +14,6 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,6 +22,7 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO;
+import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO;
 import org.bgee.model.ontology.MultiSpeciesOntology;
 import org.bgee.model.ontology.Ontology;
 import org.bgee.model.ontology.RelationType;
@@ -56,7 +56,7 @@ public class AnatEntitySimilarityService extends Service {
      *                      to "trusted" annotations. If {@code true}, only trusted annotations are returned.
      * @return              The {@code Stream} of {@link AnatEntitySimilarity}s.
      */
-    public Stream<AnatEntitySimilarity> loadPositiveAnatEntitySimilarities(int taxonId, boolean onlyTrusted) {
+    public Set<AnatEntitySimilarity> loadPositiveAnatEntitySimilarities(int taxonId, boolean onlyTrusted) {
         log.entry(taxonId, onlyTrusted);
         if (taxonId <= 0) {
             throw log.throwing(new IllegalArgumentException("Taxon ID must be stricly positive."));
@@ -68,7 +68,8 @@ public class AnatEntitySimilarityService extends Service {
         //the AnatEntitySimilarity objects
         Ontology<Taxon, Integer> taxonOnt = this.getServiceFactory().getOntologyService()
                 .getTaxonOntologyFromTaxonIds(Collections.singleton(taxonId), false, true, true);
-        if (taxonOnt.getElement(taxonId) == null) {
+        Taxon requestedTaxon = taxonOnt.getElement(taxonId);
+        if (requestedTaxon == null) {
             throw log.throwing(new IllegalArgumentException("Taxon ID not found."));
         }
 
@@ -98,73 +99,28 @@ public class AnatEntitySimilarityService extends Service {
                         //by 'transformation_of' relations.
                         true, true);
 
+        //We also need the CIOStatements, we store them in a Map where the key is their ID.
+        //TODO: add a proper service for CIOStatements, so that we can store them
+        //in the AnatEntitySimilarityTaxonSummarys used in AnatEntitySimilarity
+        Map<String, CIOStatementTO> idToCIOStatementTOMap = this.getDaoManager().getCIOStatementDAO()
+                .getAllCIOStatements().stream()
+                .collect(Collectors.toMap(s -> s.getId(), s -> s));
+
         //Now we can create the AnatEntitySimilarity objects.
-        //We group the annotations by their anat. entity IDs to provide all the annotations
-        //for the mapping to the AnatEntitySimilarity object
-        Map<Set<String>, Set<SummarySimilarityAnnotationTO>> groupedAnnots = validAnnots.entrySet()
+        Set<AnatEntitySimilarity> similarities = validAnnots.entrySet()
+                //We group the annotations by their anat. entity IDs to provide all the annotations
+                //for the mapping to the AnatEntitySimilarity object
                 .stream().collect(Collectors.toMap(
                         e -> e.getValue(),
                         e -> new HashSet<>(Arrays.asList(e.getKey())),
-                        (v1, v2) -> {v1.addAll(v2); return v1;}));
-        
-        
+                        (v1, v2) -> {v1.addAll(v2); return v1;}))
+                //And now we create the AnatEntitySimilarity objects
+                .entrySet().stream()
+                .<AnatEntitySimilarity>map(e -> mapToAnatEntitySimilarity(e.getKey(), e.getValue(), requestedTaxon,
+                        idToCIOStatementTOMap, taxonOnt, anatOnt))
+                .collect(Collectors.toSet());
 
-        //FIXME: to remove when finish
-        return null;
-        //Filter the annotations to use now.
-//        Set<SummarySimilarityAnnotationTO> finalAnnots = annotsInValidTaxa.stream().filter(a -> {
-//            Set<String> anatEntityIds = annotToAnatEntities.get(a);
-//        })
-        //Now, we need to discard multiple-entity annotations that were not validated,
-        //and single-entity annotations for the anat. entities part of a validated
-        //multiple-entity annotation
-
-        //Load the taxa we're gonna need in a Map where the key is the taxon ID
-//        Set<Integer> allTaxonIds = simAnnotations.values().stream()
-//                .map(annot -> annot.getTaxonId())
-//                .collect(Collectors.toSet());
-//        final Map<Integer, Taxon> taxa = Collections.unmodifiableMap(
-//                this.getServiceFactory().getTaxonService().loadTaxaByIds(allTaxonIds)
-//                .collect(Collectors.toMap(t -> t.getId(), t -> t)));
-//
-//        //Now we need to get all mappings between anat. entities, to be able to load the anat. entities we need
-//        Map<Integer, List<SimAnnotToAnatEntityTO>> groupedMappingTOs = 
-//                this.getDaoManager().getSummarySimilarityAnnotationDAO()
-//                .getSimAnnotToAnatEntity(taxonId, true, false, true, onlyTrusted).stream()
-//                .collect(Collectors.groupingBy(SimAnnotToAnatEntityTO::getSummarySimilarityAnnotationId));
-//        //get the anat. entities in Map where the key is their ID
-//        Set<String> anatEntityIds = groupedMappingTOs.values().stream()
-//                .flatMap(l -> l.stream().map(s -> s.getAnatEntityId()))
-//                .collect(Collectors.toSet());
-//        final Map<String, AnatEntity> anatEntityMap = Collections.unmodifiableMap(
-//                this.getServiceFactory().getAnatEntityService()
-//                .loadAnatEntities(null, true, anatEntityIds, false)
-//                .collect(Collectors.toMap(a -> a.getId(), a -> a)));
-
-        //Now we produce the AnatEntitySimilarities
-//        return log.exit(groupedMappingTOs.entrySet().stream().map(e -> {
-//            SummarySimilarityAnnotationTO annot = idToAnnots.get(e.getKey());
-//            if (annot == null) {
-//                throw log.throwing(new IllegalStateException(
-//                        "Missing annotation with ID " + e.getKey()));
-//            }
-//            Set<AnatEntity> anatEntities = e.getValue().stream()
-//                    .map(mapping -> {
-//                        AnatEntity anatEntity = anatEntityMap.get(mapping.getAnatEntityId());
-//                        if (anatEntity == null) {
-//                            throw log.throwing(new IllegalStateException(
-//                                    "Missing anat. entity with ID " + mapping.getAnatEntityId()));
-//                        }
-//                        return anatEntity;
-//                    })
-//                    .collect(Collectors.toSet());
-//            Taxon taxon = taxonOnt.getElement(annot.getTaxonId());
-//            if (taxon == null) {
-//                throw log.throwing(new IllegalStateException(
-//                        "Missing taxon with ID " + annot.getTaxonId()));
-//            }
-//            return new AnatEntitySimilarity(taxon, anatEntities);
-//        }));
+        return log.exit(similarities);
     }
 
     private Map<SummarySimilarityAnnotationTO, Set<String>> getValidAnnots(int taxonId,
@@ -401,5 +357,45 @@ public class AnatEntitySimilarityService extends Service {
                 .collect(Collectors.toSet());
 
         return log.exit(validMultEntAnnots);
+    }
+
+    private static AnatEntitySimilarity mapToAnatEntitySimilarity(Set<String> anatEntityIds,
+            Set<SummarySimilarityAnnotationTO> annotTOs, Taxon requestedTaxon,
+            Map<String, CIOStatementTO> idToCIOStatementTOMap, Ontology<Taxon, Integer> taxonOnt,
+            MultiSpeciesOntology<AnatEntity, String> anatOnt) {
+        log.entry(anatEntityIds, annotTOs, requestedTaxon, idToCIOStatementTOMap, taxonOnt, anatOnt);
+
+        Set<AnatEntity> anatEntities = anatEntityIds.stream()
+                .map(id -> Optional.ofNullable(anatOnt.getElement(id))
+                        .orElseThrow(() -> new IllegalStateException(
+                                "Anat entity could not be found in the ontology: " + id)))
+                .collect(Collectors.toSet());
+        Set<AnatEntity> transformationOfEntities = anatEntities.stream()
+                .flatMap(ae -> anatOnt.getAncestors(ae).stream())
+                .collect(Collectors.toSet());
+        transformationOfEntities.addAll(anatEntities.stream()
+                .flatMap(ae -> anatOnt.getDescendants(ae).stream())
+                .collect(Collectors.toSet()));
+        Set<AnatEntitySimilarityTaxonSummary> summaries = annotTOs.stream()
+                .map(a -> mapToAnatEntitySimilarityTaxonSummary(a, idToCIOStatementTOMap, taxonOnt))
+                .collect(Collectors.toSet());
+
+        return new AnatEntitySimilarity(anatEntities, transformationOfEntities, requestedTaxon,
+                summaries);
+    }
+    private static AnatEntitySimilarityTaxonSummary mapToAnatEntitySimilarityTaxonSummary(
+            SummarySimilarityAnnotationTO annotTO, Map<String, CIOStatementTO> idToCIOStatementTOMap,
+            Ontology<Taxon, Integer> taxonOnt) {
+        log.entry(annotTO, idToCIOStatementTOMap, taxonOnt);
+
+        Taxon taxon = Optional.ofNullable(taxonOnt.getElement(annotTO.getTaxonId()))
+                .orElseThrow(() -> new IllegalStateException(
+                        "Taxon was not found in the taxonomy: " + annotTO.getTaxonId()));
+        boolean trusted = Optional.ofNullable(idToCIOStatementTOMap.get(annotTO.getCIOId()))
+                .orElseThrow(() -> new IllegalStateException(
+                        "CIO statement was not found: " + annotTO.getCIOId()))
+                .isTrusted();
+
+        return log.exit(new AnatEntitySimilarityTaxonSummary(taxon, trusted, !annotTO.isNegated()));
     }
 }

@@ -560,7 +560,7 @@ public class OntologyServiceTest extends TestAncestor {
         .thenReturn(taxa.stream());
         RelationTOResultSet<Integer> mockRelationRs = getMockResultSet(RelationTOResultSet.class,
                 TAXON_RELATIONTOS);
-        when(relationDao.getTaxonRelations(new HashSet<>(), new HashSet<>(),
+        when(relationDAO.getTaxonRelations(new HashSet<>(), new HashSet<>(),
                 false, TAXON_DAO_RELATION_STATUS, false, null))
             .thenReturn(mockRelationRs);
         Ontology<Taxon,Integer> expectedOntology = new Ontology<>(null, taxa,
@@ -584,12 +584,12 @@ public class OntologyServiceTest extends TestAncestor {
         RelationTOResultSet<Integer> mockRelationRs = getMockResultSet(RelationTOResultSet.class,
                 Arrays.asList(TAXON_RELATIONTOS.get(1), TAXON_RELATIONTOS.get(2), TAXON_RELATIONTOS.get(3),
                         TAXON_RELATIONTOS.get(4)));
-        when(relationDao.getTaxonRelations(new HashSet<>(Arrays.asList(TAXA.get(2).getId(), TAXA.get(3).getId())),
+        when(relationDAO.getTaxonRelations(new HashSet<>(Arrays.asList(TAXA.get(2).getId(), TAXA.get(3).getId())),
                 null, true, TAXON_DAO_RELATION_STATUS, false, null))
             .thenReturn(mockRelationRs);
         mockRelationRs = getMockResultSet(RelationTOResultSet.class,
                 Arrays.asList(TAXON_RELATIONTOS.get(0)));
-        when(relationDao.getTaxonRelations(new HashSet<>(Arrays.asList(TAXA.get(0).getId(), TAXA.get(1).getId())),
+        when(relationDAO.getTaxonRelations(new HashSet<>(Arrays.asList(TAXA.get(0).getId(), TAXA.get(1).getId())),
                 new HashSet<>(), true, TAXON_DAO_RELATION_STATUS, false, null))
             .thenReturn(mockRelationRs);
         Ontology<Taxon,Integer> expectedOntology = new Ontology<>(null, taxa,
@@ -615,12 +615,12 @@ public class OntologyServiceTest extends TestAncestor {
         .thenReturn(taxa.stream());
         RelationTOResultSet<Integer> mockRelationRs = getMockResultSet(RelationTOResultSet.class,
                 Arrays.asList(TAXON_RELATIONTOS.get(0), TAXON_RELATIONTOS.get(3), TAXON_RELATIONTOS.get(4)));
-        when(relationDao.getTaxonRelations(null, new HashSet<>(Arrays.asList(TAXA.get(0).getId())),
+        when(relationDAO.getTaxonRelations(null, new HashSet<>(Arrays.asList(TAXA.get(0).getId())),
                 true, TAXON_DAO_RELATION_STATUS, false, null))
             .thenReturn(mockRelationRs);
         mockRelationRs = getMockResultSet(RelationTOResultSet.class,
                 Arrays.asList(TAXON_RELATIONTOS.get(1), TAXON_RELATIONTOS.get(2)));
-        when(relationDao.getTaxonRelations(new HashSet<>(),
+        when(relationDAO.getTaxonRelations(new HashSet<>(),
                 new HashSet<>(Arrays.asList(TAXA.get(1).getId(), TAXA.get(2).getId(), TAXA.get(3).getId())), true,
                 TAXON_DAO_RELATION_STATUS, false, null))
             .thenReturn(mockRelationRs);
@@ -649,12 +649,12 @@ public class OntologyServiceTest extends TestAncestor {
         .thenReturn(taxa.stream());
         RelationTOResultSet<Integer> mockRelationRs = getMockResultSet(RelationTOResultSet.class,
                 Arrays.asList(TAXON_RELATIONTOS.get(1), TAXON_RELATIONTOS.get(2)));
-        when(relationDao.getTaxonRelations(null, new HashSet<>(Arrays.asList(TAXA.get(1).getId())), true,
+        when(relationDAO.getTaxonRelations(null, new HashSet<>(Arrays.asList(TAXA.get(1).getId())), true,
                 TAXON_DAO_RELATION_STATUS, false, null))
             .thenReturn(mockRelationRs);
         mockRelationRs = getMockResultSet(RelationTOResultSet.class,
                 Arrays.asList());
-        when(relationDao.getTaxonRelations(new HashSet<>(),
+        when(relationDAO.getTaxonRelations(new HashSet<>(),
                 new HashSet<>(Arrays.asList(TAXA.get(2).getId(), TAXA.get(3).getId())), true,
                 TAXON_DAO_RELATION_STATUS, false, null))
             .thenReturn(mockRelationRs);
@@ -683,13 +683,13 @@ public class OntologyServiceTest extends TestAncestor {
         .thenReturn(taxa.stream());
         RelationTOResultSet<Integer> mockRelationRs = getMockResultSet(RelationTOResultSet.class,
                 Arrays.asList(TAXON_RELATIONTOS.get(0)));
-        when(relationDao.getTaxonRelations(new HashSet<>(Arrays.asList(TAXA.get(1).getId())),
+        when(relationDAO.getTaxonRelations(new HashSet<>(Arrays.asList(TAXA.get(1).getId())),
                 new HashSet<>(Arrays.asList(TAXA.get(1).getId())), true,
                 TAXON_DAO_RELATION_STATUS, true, null))
             .thenReturn(mockRelationRs);
         mockRelationRs = getMockResultSet(RelationTOResultSet.class,
                 Arrays.asList(TAXON_RELATIONTOS.get(0)));
-        when(relationDao.getTaxonRelations(new HashSet<>(Arrays.asList(TAXA.get(0).getId())),
+        when(relationDAO.getTaxonRelations(new HashSet<>(Arrays.asList(TAXA.get(0).getId())),
                 new HashSet<>(Arrays.asList(TAXA.get(0).getId())), true, TAXON_DAO_RELATION_STATUS, true, null))
         .thenReturn(mockRelationRs);
         Ontology<Taxon,Integer> expectedOntology = new Ontology<>(null, taxa,
@@ -715,13 +715,13 @@ public class OntologyServiceTest extends TestAncestor {
         .thenReturn(taxa.stream());
         RelationTOResultSet<Integer> mockRelationRs = getMockResultSet(RelationTOResultSet.class,
                 Arrays.asList(TAXON_RELATIONTOS.get(1), TAXON_RELATIONTOS.get(3)));
-        when(relationDao.getTaxonRelations(new HashSet<>(Arrays.asList(TAXA.get(2).getId())),
+        when(relationDAO.getTaxonRelations(new HashSet<>(Arrays.asList(TAXA.get(2).getId())),
                 new HashSet<>(Arrays.asList(TAXA.get(2).getId())), true,
                 TAXON_DAO_RELATION_STATUS, true, null))
             .thenReturn(mockRelationRs);
         mockRelationRs = getMockResultSet(RelationTOResultSet.class,
                 Arrays.asList(TAXON_RELATIONTOS.get(0), TAXON_RELATIONTOS.get(1), TAXON_RELATIONTOS.get(3)));
-        when(relationDao.getTaxonRelations(new HashSet<>(Arrays.asList(TAXA.get(0).getId(), TAXA.get(1).getId())),
+        when(relationDAO.getTaxonRelations(new HashSet<>(Arrays.asList(TAXA.get(0).getId(), TAXA.get(1).getId())),
                 new HashSet<>(Arrays.asList(TAXA.get(0).getId(), TAXA.get(1).getId())), true, TAXON_DAO_RELATION_STATUS,
                 true, null))
         .thenReturn(mockRelationRs);
@@ -752,12 +752,12 @@ public class OntologyServiceTest extends TestAncestor {
         RelationTOResultSet<Integer> mockRelationRs = getMockResultSet(RelationTOResultSet.class,
                 Arrays.asList(TAXON_RELATIONTOS.get(1), TAXON_RELATIONTOS.get(2), TAXON_RELATIONTOS.get(3),
                         TAXON_RELATIONTOS.get(4)));
-        when(relationDao.getTaxonRelations(new HashSet<>(Arrays.asList(TAXA.get(2).getId(), TAXA.get(3).getId())),
+        when(relationDAO.getTaxonRelations(new HashSet<>(Arrays.asList(TAXA.get(2).getId(), TAXA.get(3).getId())),
                 null, true, TAXON_DAO_RELATION_STATUS, true, null))
             .thenReturn(mockRelationRs);
         mockRelationRs = getMockResultSet(RelationTOResultSet.class,
                 Arrays.asList(TAXON_RELATIONTOS.get(0)));
-        when(relationDao.getTaxonRelations(new HashSet<>(Arrays.asList(TAXA.get(0).getId(), TAXA.get(1).getId())),
+        when(relationDAO.getTaxonRelations(new HashSet<>(Arrays.asList(TAXA.get(0).getId(), TAXA.get(1).getId())),
                 new HashSet<>(), true, TAXON_DAO_RELATION_STATUS, true, null))
         .thenReturn(mockRelationRs);
         Ontology<Taxon,Integer> expectedOntology = new Ontology<>(null,
@@ -791,12 +791,12 @@ public class OntologyServiceTest extends TestAncestor {
         .thenReturn(taxa.stream());
         RelationTOResultSet<Integer> mockRelationRs = getMockResultSet(RelationTOResultSet.class,
                 Arrays.asList(TAXON_RELATIONTOS.get(0), TAXON_RELATIONTOS.get(1), TAXON_RELATIONTOS.get(2)));
-        when(relationDao.getTaxonRelations(new HashSet<>(Arrays.asList(TAXA.get(1).getId())),
+        when(relationDAO.getTaxonRelations(new HashSet<>(Arrays.asList(TAXA.get(1).getId())),
                 new HashSet<>(Arrays.asList(TAXA.get(1).getId())), true,
                 TAXON_DAO_RELATION_STATUS, false, null))
             .thenReturn(mockRelationRs);
         mockRelationRs = getMockResultSet(RelationTOResultSet.class, TAXON_RELATIONTOS);
-        when(relationDao.getTaxonRelations(new HashSet<>(Arrays.asList(TAXA.get(0).getId(), TAXA.get(2).getId(),
+        when(relationDAO.getTaxonRelations(new HashSet<>(Arrays.asList(TAXA.get(0).getId(), TAXA.get(2).getId(),
                 TAXA.get(3).getId())),
                 new HashSet<>(Arrays.asList(TAXA.get(0).getId(), TAXA.get(2).getId(), TAXA.get(3).getId())),
                 true, TAXON_DAO_RELATION_STATUS, false, null))

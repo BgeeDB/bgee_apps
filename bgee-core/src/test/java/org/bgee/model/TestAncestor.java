@@ -21,9 +21,12 @@ import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
+import org.bgee.model.dao.api.source.SourceToSpeciesDAO;
+import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.ontology.MultiSpeciesOntology;
 import org.bgee.model.ontology.Ontology;
 import org.bgee.model.ontology.OntologyService;
+import org.bgee.model.source.SourceService;
 import org.bgee.model.species.SpeciesService;
 import org.bgee.model.species.TaxonService;
 import org.junit.Before;
@@ -186,12 +189,15 @@ public abstract class TestAncestor {
     protected AnatEntityService anatEntityService;
     protected DevStageService devStageService;
     protected TaxonService taxonService;
+    protected SourceService sourceService;
     //DAOs
     protected DAOManager manager;
     protected GlobalExpressionCallDAO globalExprCallDAO;
     protected ConditionDAO condDAO;
     protected GeneDAO geneDAO;
-    protected RelationDAO relationDao;
+    protected RelationDAO relationDAO;
+    protected SpeciesDAO speciesDAO;
+    protected SourceToSpeciesDAO sourceToSpeciesDAO;
     //Complex objects
     protected Ontology<AnatEntity, String> anatEntityOnt;
     protected MultiSpeciesOntology<AnatEntity, String> multiSpeAnatEntityOnt;
@@ -218,12 +224,15 @@ public abstract class TestAncestor {
         this.anatEntityService = mock(AnatEntityService.class);
         this.devStageService = mock(DevStageService.class);
         this.taxonService = mock(TaxonService.class);
+        this.sourceService = mock(SourceService.class);
         //DAOs
         this.manager = mock(DAOManager.class);
         this.globalExprCallDAO = mock(GlobalExpressionCallDAO.class);
         this.condDAO = mock(ConditionDAO.class);
         this.geneDAO = mock(GeneDAO.class);
-        this.relationDao = mock(RelationDAO.class);
+        this.relationDAO = mock(RelationDAO.class);
+        this.speciesDAO = mock(SpeciesDAO.class);
+        this.sourceToSpeciesDAO = mock(SourceToSpeciesDAO.class);
         //Complex objects
         this.anatEntityOnt = mock(Ontology.class);
         this.multiSpeAnatEntityOnt = mock(MultiSpeciesOntology.class);
@@ -237,12 +246,15 @@ public abstract class TestAncestor {
         when(this.serviceFactory.getAnatEntityService()).thenReturn(this.anatEntityService);
         when(this.serviceFactory.getDevStageService()).thenReturn(this.devStageService);
         when(this.serviceFactory.getTaxonService()).thenReturn(this.taxonService);
+        when(this.serviceFactory.getSourceService()).thenReturn(this.sourceService);
         //DAOs
         when(this.serviceFactory.getDAOManager()).thenReturn(this.manager);
         when(this.manager.getGlobalExpressionCallDAO()).thenReturn(this.globalExprCallDAO);
         when(this.manager.getConditionDAO()).thenReturn(this.condDAO);
         when(this.manager.getGeneDAO()).thenReturn(this.geneDAO);
-        when(this.manager.getRelationDAO()).thenReturn(this.relationDao);
+        when(this.manager.getRelationDAO()).thenReturn(this.relationDAO);
+        when(this.manager.getSpeciesDAO()).thenReturn(this.speciesDAO);
+        when(this.manager.getSourceToSpeciesDAO()).thenReturn(this.sourceToSpeciesDAO);
 
         getLogger().exit();
     }

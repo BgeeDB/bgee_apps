@@ -14,6 +14,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -70,13 +71,14 @@ public class AnatEntitySimilarityService extends Service {
                 .getTaxonOntologyFromTaxonIds(Collections.singleton(taxonId), false, true, true);
         Taxon requestedTaxon = taxonOnt.getElement(taxonId);
         if (requestedTaxon == null) {
-            throw log.throwing(new IllegalArgumentException("Taxon ID not found."));
+            throw log.throwing(new IllegalArgumentException("Taxon ID not found: " + taxonId));
         }
 
+        //Retrieve the similarity annotations
         Map<SummarySimilarityAnnotationTO, Set<String>> validAnnots = this.getValidAnnots(taxonId,
                 onlyTrusted, taxonOnt);
 
-        //Now we need the anatomical ontology for retrieving TRANSFORMATION_OF relations
+        //Now we need the anatomical ontology for retrieving 'transformation_of' relations
         //between anat. entities.
         //Indeed, similarity annotations are created only for mature anatomical entities
         //(for instance, the term "brain" is annotated, not the term "future brain").
@@ -99,8 +101,9 @@ public class AnatEntitySimilarityService extends Service {
                         //by 'transformation_of' relations.
                         true, true);
 
-        //We also need the CIOStatements, we store them in a Map where the key is their ID.
-        //TODO: add a proper service for CIOStatements, so that we can store them
+        //We also need the CIOStatements to know whether an annotation is trusted or not,
+        //we store them in a Map where the key is their ID.
+        //TODO: add a proper service for CIOStatements, so that we can store them directly
         //in the AnatEntitySimilarityTaxonSummarys used in AnatEntitySimilarity
         Map<String, CIOStatementTO> idToCIOStatementTOMap = this.getDaoManager().getCIOStatementDAO()
                 .getAllCIOStatements().stream()
@@ -116,8 +119,8 @@ public class AnatEntitySimilarityService extends Service {
                         (v1, v2) -> {v1.addAll(v2); return v1;}))
                 //And now we create the AnatEntitySimilarity objects
                 .entrySet().stream()
-                .<AnatEntitySimilarity>map(e -> mapToAnatEntitySimilarity(e.getKey(), e.getValue(), requestedTaxon,
-                        idToCIOStatementTOMap, taxonOnt, anatOnt))
+                .<AnatEntitySimilarity>map(e -> mapToAnatEntitySimilarity(e.getKey(), e.getValue(),
+                        requestedTaxon, idToCIOStatementTOMap, taxonOnt, anatOnt))
                 .collect(Collectors.toSet());
 
         return log.exit(similarities);
@@ -132,12 +135,12 @@ public class AnatEntitySimilarityService extends Service {
         //*******************************************
         //We need the taxon ontology for the requested taxon and its ancestors and descendants,
         //in order to correctly filter the similarity annotations to return.
-        Set<Integer> validTaxonIds = taxonOnt.getAncestors(taxonOnt.getElement(taxonId))
-                .stream().map(t -> t.getId()).collect(Collectors.toSet());
-        validTaxonIds.add(taxonId);
+        Set<Integer> validTaxonIds = Stream.concat(Stream.of(taxonId),
+                taxonOnt.getAncestors(taxonOnt.getElement(taxonId))
+                .stream().map(t -> t.getId())).collect(Collectors.toSet());
 
         //Now, we retrieve all similarity annotations annotated to the requested taxon,
-        //but also to its ancestors and descendants, to then filter them appropriately.
+        //but also to its ancestors and descendants, to then filter the valid ones appropriately.
         //
         //First, we retrieve the similarity annotations
         SummarySimilarityAnnotationDAO simAnnotDAO = this.getDaoManager().getSummarySimilarityAnnotationDAO();
@@ -148,7 +151,7 @@ public class AnatEntitySimilarityService extends Service {
         //Since a same annotation can use several anat. entities, we store the links in a Map,
         //for easier retrieval, where each annotation in key is associated to a Set as value
         //containing all the anat. entity IDs it uses.
-        Map<SummarySimilarityAnnotationTO, Set<String>> annotToAnatEntities = simAnnotDAO
+        Map<SummarySimilarityAnnotationTO, Set<String>> annotToAnatEntityIds = simAnnotDAO
                 .getSimAnnotToAnatEntity(taxonId, true, true, true, onlyTrusted)
                 .stream().collect(Collectors.toMap(
                         simToAnat -> Optional.ofNullable(
@@ -163,9 +166,9 @@ public class AnatEntitySimilarityService extends Service {
         //several annotations, we store the anat. entity ID as key in the Map,
         //associated to a Set as value containing all the annotations using them.
         Map<String, Set<SummarySimilarityAnnotationTO>> anatEntityIdToSimAnnots =
-                annotToAnatEntities.entrySet().stream()
+                annotToAnatEntityIds.entrySet().stream()
                 .flatMap(e -> e.getValue().stream().map(id ->
-                        new AbstractMap.SimpleEntry<String, SummarySimilarityAnnotationTO>(id, e.getKey())))
+                        new AbstractMap.SimpleEntry<>(id, e.getKey())))
                 .collect(Collectors.toMap(
                         e -> e.getKey(),
                         e -> new HashSet<>(Arrays.asList(e.getValue())),
@@ -179,26 +182,27 @@ public class AnatEntitySimilarityService extends Service {
         // MULTIPLE-ENTITY ANNOTATION FILTERING
         //--------------------------------------
         //Get a final list of multiple-entity annotations to keep
-        Set<SummarySimilarityAnnotationTO> validMultEntAnnots = this.getValidMultipleEntityAnnotations(validTaxonIds,
-                anatEntityIdToSimAnnots, annotToAnatEntities);
+        Set<SummarySimilarityAnnotationTO> validMultEntAnnots = this.getValidMultipleEntityAnnotations(
+                validTaxonIds, anatEntityIdToSimAnnots, annotToAnatEntityIds);
 
         //-------------------------------------
         // SINGLE-ENTITY ANNOTATION FILTERING
         //-------------------------------------
-        //Retrieve all single-entity annotations of anat. entities part of a validated multiple-entity annotation,
-        //we will discard them
+        //Retrieve all single-entity annotations of anat. entities part of a validated
+        //multiple-entity annotation, we will discard them
         Set<SummarySimilarityAnnotationTO> singleEntAnnotsToDiscard = validMultEntAnnots.stream()
                 //Retrieve the anat. entity IDs part of this multiple-entity annotation
-                .flatMap(a -> annotToAnatEntities.get(a).stream())
+                .flatMap(a -> annotToAnatEntityIds.get(a).stream())
                 //Now map these anat. entity IDs to the single-entity annotations to discard.
-                .flatMap(id -> anatEntityIdToSimAnnots.get(id).stream().filter(a -> annotToAnatEntities.get(a).size() == 1))
+                .flatMap(id -> anatEntityIdToSimAnnots.get(id).stream()
+                        .filter(a -> annotToAnatEntityIds.get(a).size() == 1))
                 .collect(Collectors.toSet());
 
         //-------------
         // FINAL LIST
         //-------------
         //OK, now we can retrieve all the valid annotations to consider for the requested taxon
-        Map<SummarySimilarityAnnotationTO, Set<String>> finalAnnots = annotToAnatEntities
+        Map<SummarySimilarityAnnotationTO, Set<String>> finalAnnots = annotToAnatEntityIds
                 .entrySet().stream().filter(e -> {
                     SummarySimilarityAnnotationTO annot = e.getKey();
                     if (!validTaxonIds.contains(annot.getTaxonId())) {
@@ -217,8 +221,8 @@ public class AnatEntitySimilarityService extends Service {
 
     private Set<SummarySimilarityAnnotationTO> getValidMultipleEntityAnnotations(Set<Integer> validTaxonIds,
             Map<String, Set<SummarySimilarityAnnotationTO>> anatEntityIdToSimAnnots,
-            Map<SummarySimilarityAnnotationTO, Set<String>> annotToAnatEntities) {
-        log.entry(validTaxonIds, anatEntityIdToSimAnnots, annotToAnatEntities);
+            Map<SummarySimilarityAnnotationTO, Set<String>> annotToAnatEntityIds) {
+        log.entry(validTaxonIds, anatEntityIdToSimAnnots, annotToAnatEntityIds);
 
         //The aim here is to identify when to keep a multiple-entity annotations
         //and discard the corresponding single-entity annotations, or the other way around.
@@ -226,29 +230,27 @@ public class AnatEntitySimilarityService extends Service {
         //* all the entities part of the annotation exist in the requested taxon or in some sub-taxa
         //(meaning, each entity has a corresponding single-entity annotation for the requested taxon,
         //or ancestors or descendants of the requested taxon)
-        //* but the entities do not all exist in all the sub-taxa of the requested taxon (meaning, some entity
-        //are annotated to different sub-taxa of the requested taxon, including the requested taxon itself).
+        //* but the entities do not all exist in all the species of the requested taxon (meaning,
+        //at least some entities are annotated to sub-taxa of the requested taxon).
         Map<Set<String>, Set<SummarySimilarityAnnotationTO>> validAnatEntityIdsToMultipleEntityAnnots =
                 new HashMap<>();
         Set<Set<String>> examinedAnatEntityIdsInMultipleEntityAnnots = new HashSet<>();
-        Set<SummarySimilarityAnnotationTO> annotsInValidTaxa = new HashSet<>();
-        ANNOT: for (Entry<SummarySimilarityAnnotationTO, Set<String>> entry: annotToAnatEntities.entrySet()) {
+        ANNOT: for (Entry<SummarySimilarityAnnotationTO, Set<String>> entry: annotToAnatEntityIds.entrySet()) {
             SummarySimilarityAnnotationTO annotTO = entry.getKey();
             Set<String> anatEntityIds = entry.getValue();
             //We examine only annotations that are valid for the requested taxon
             if (!validTaxonIds.contains(annotTO.getTaxonId())) {
                 continue ANNOT;
             }
-            //Store all valid annotations, single- or multiple-entity annots
-            annotsInValidTaxa.add(annotTO);
             //If it is not a multiple-entity annotation, no need to examine further here
             if (anatEntityIds.size() == 1) {
                 continue ANNOT;
             }
-            //Maybe it's a redundant multiple-entity annotations we have already examined
+            //Maybe it's a redundant multiple-entity annotations we have already examined,
             //no need to redo it
             if (!examinedAnatEntityIdsInMultipleEntityAnnots.add(anatEntityIds)) {
-                //If already validated, we add this one to the list of validated multiple-entity annots
+                //If already validated, we add this one to the list of validated multiple-entity annots,
+                //if not validated, this one will not be added to the Map
                 validAnatEntityIdsToMultipleEntityAnnots.computeIfPresent(anatEntityIds,
                         (k, v) -> {v.add(annotTO); return v;});
                 continue ANNOT;
@@ -257,14 +259,19 @@ public class AnatEntitySimilarityService extends Service {
             //For multiple-entity annotations, we retrieve for each anat. entity
             //the single-entity annotations using it, valid in the requested taxon
             //(then including annotations mapped to ancestor taxa) or its descendants.
+            //We check that all the anat. entities exist in some species of the requested taxon,
+            //and that at least some of the anat. entities do not exist in all species
+            //of the requested taxon (meaning that they are annotated to sub-taxa
+            //of the requested taxon, meaning that it's interesting to group them with other
+            //homologous anat. entities for performing comparisons)
             boolean anatEntityNotInValidTaxon = false;
-            ANATENTITY: for (String anatEntityId: anatEntityIds) {
+            for (String anatEntityId: anatEntityIds) {
                 Set<SummarySimilarityAnnotationTO> singleEntityAnnotsForAnat =
                         //we retrieve the annotations using this anat. entity
                         anatEntityIdToSimAnnots.get(anatEntityId)
                         //and we retrieve all the anat. entities associated to the annotation,
                         //in order to keep only single-entity annotations
-                        .stream().filter(a -> annotToAnatEntities.get(a).size() == 1)
+                        .stream().filter(a -> annotToAnatEntityIds.get(a).size() == 1)
                         .collect(Collectors.toSet());
                 //If no single-entity annotation for this anat. entity exists at all
                 //in this lineage, then we discard the multiple-entity annotation:
@@ -276,6 +283,8 @@ public class AnatEntitySimilarityService extends Service {
                 //annotated to Actinopterygii. We then don't want to use "lung-swim bladder"
                 //if the requested taxon is Sarcopterygii, but rather, "lung" only.
                 if (singleEntityAnnotsForAnat.isEmpty()) {
+                    //We won't store this multiple-entity annotation as we move directly
+                    //to the next iteration of ANNOT
                     continue ANNOT;
                 }
                 //Now we check whether the single-entity annotations for this anat. entity
@@ -294,16 +303,15 @@ public class AnatEntitySimilarityService extends Service {
                 //to make comparison, while we could compare the data in each anat. entity individually.
                 //An example is the annotation "mouth-anus" annotated to Bilateria.
                 //"mouth" is annotated to Eumetazoa and "anus" annotated to Bilateria,
-                //which means that both "mouth" and "anus" exist in bilateria.
+                //which means that both "mouth" and "anus" exist in all bilateria.
                 //It would be meaningless to regroup data in "mouth-anus" while we can use both
                 //independently.
-                //At the opposite, in the case of the "lung-swim bladder" example, annotated to
-                //Gnathostomata: if the requested taxon is Gnathostomata, some species have
-                //a swim bladder (annotated to Actinopterygii), some species have a lung
-                //(annotated to Gnathostomata), thus we want to use the annotation "lung-swim bladder"
-                //to make comparisons, as these structures are all present in this lineage,
-                //but in different species.
-                if (singleEntityAnnotsForAnat.stream()
+                //At the opposite, in the "lung-swim bladder" example, annotated to Gnathostomata:
+                //if the requested taxon is Gnathostomata, some species have a swim bladder
+                //(annotated to Actinopterygii), some species have a lung (annotated to Gnathostomata),
+                //thus we want to use the annotation "lung-swim bladder" to make comparisons,
+                //as these structures are all present in this lineage, but in different species.
+                if (!anatEntityNotInValidTaxon && singleEntityAnnotsForAnat.stream()
                         //Check that *all* taxa annotated are invalid
                         .allMatch(a -> !validTaxonIds.contains(a.getTaxonId()))) {
                     //OK, the multiple-entity annotation will be validated,
@@ -325,8 +333,10 @@ public class AnatEntitySimilarityService extends Service {
         }
 
         //If a multiple-entity annotation have its anat. entities that are all contained
-        //in  the anat. entities of another multiple-entity annotation, then we keep the annotations
-        //with the smallest number of anat. entities
+        //in  the anat. entities of another multiple-entity annotation, then we discard the annotation
+        //with the highest number of anat. entities.
+        //So, first, we order validAnatEntityIdsToMultipleEntityAnnots by the number of anat. entity IDs
+        //in each Entry.
         List<Entry<Set<String>, Set<SummarySimilarityAnnotationTO>>> orderedMultEntAnnots =
                 validAnatEntityIdsToMultipleEntityAnnots.entrySet().stream()
                 .sorted(Comparator.comparing(e -> e.getKey().size()))
@@ -337,7 +347,8 @@ public class AnatEntitySimilarityService extends Service {
             Set<SummarySimilarityAnnotationTO> annots1 = entry1.getValue();
             if (multEntAnnotsToDiscard.contains(annots1.iterator().next())) {
                 //If this annot was already discarded, any other annotation with more anat. entities
-                //and containing all the anat. entities of this annotation would have already been discarded as well.
+                //and containing all the anat. entities of this annotation would have already
+                //been discarded as well.
                 continue;
             }
             for (int j = i + 1; j < orderedMultEntAnnots.size(); j++) {
@@ -354,7 +365,8 @@ public class AnatEntitySimilarityService extends Service {
         }
 
         //Get a final list of multiple-entity annotations to keep
-        Set<SummarySimilarityAnnotationTO> validMultEntAnnots = validAnatEntityIdsToMultipleEntityAnnots.values().stream()
+        Set<SummarySimilarityAnnotationTO> validMultEntAnnots = validAnatEntityIdsToMultipleEntityAnnots
+                .values().stream()
                 .flatMap(s -> s.stream().filter(a -> !multEntAnnotsToDiscard.contains(a)))
                 .collect(Collectors.toSet());
 
@@ -373,11 +385,9 @@ public class AnatEntitySimilarityService extends Service {
                                 "Anat entity could not be found in the ontology: " + id)))
                 .collect(Collectors.toSet());
         Set<AnatEntity> transformationOfEntities = anatEntities.stream()
-                .flatMap(ae -> anatOnt.getAncestors(ae).stream())
+                .flatMap(ae -> Stream.concat(anatOnt.getAncestors(ae).stream(),
+                                             anatOnt.getDescendants(ae).stream()))
                 .collect(Collectors.toSet());
-        transformationOfEntities.addAll(anatEntities.stream()
-                .flatMap(ae -> anatOnt.getDescendants(ae).stream())
-                .collect(Collectors.toSet()));
         Set<AnatEntitySimilarityTaxonSummary> summaries = annotTOs.stream()
                 .map(a -> mapToAnatEntitySimilarityTaxonSummary(a, idToCIOStatementTOMap, taxonOnt))
                 .collect(Collectors.toSet());

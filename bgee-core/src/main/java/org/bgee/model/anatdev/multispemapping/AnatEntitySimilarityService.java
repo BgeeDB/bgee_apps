@@ -306,9 +306,11 @@ public class AnatEntitySimilarityService extends Service {
                 if (singleEntityAnnotsForAnat.stream()
                         //Check that *all* taxa annotated are invalid
                         .allMatch(a -> !validTaxonIds.contains(a.getTaxonId()))) {
-                    //OK, the multiple-entity annotation will be validated
+                    //OK, the multiple-entity annotation will be validated,
+                    //unless we don't find for another anat. entity any single-entity annotation
+                    //for requested taxon or ancestors or descendants (see 'continue ANNOT' statement
+                    //above). This is why we don't break the anatEntityIds loop immediately.
                     anatEntityNotInValidTaxon = true;
-                    break ANATENTITY;
                 }
             }
             if (!anatEntityNotInValidTaxon) {

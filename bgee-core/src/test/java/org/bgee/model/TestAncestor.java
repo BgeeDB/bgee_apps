@@ -17,6 +17,7 @@ import org.bgee.model.anatdev.DevStageService;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.TransferObject;
+import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
@@ -42,7 +43,7 @@ import org.mockito.stubbing.Answer;
  * It allows to automatically log starting, succeeded and failed tests.
  * 
  * @author Frederic Bastian
- * @version Bgee 13, Mar 2013
+ * @version Bgee 14 Mar 2019
  * @since Bgee 13
  */
 public abstract class TestAncestor {
@@ -198,6 +199,7 @@ public abstract class TestAncestor {
     protected RelationDAO relationDAO;
     protected SpeciesDAO speciesDAO;
     protected SourceToSpeciesDAO sourceToSpeciesDAO;
+    protected SummarySimilarityAnnotationDAO sumSimAnnotDAO;
     //Complex objects
     protected Ontology<AnatEntity, String> anatEntityOnt;
     protected MultiSpeciesOntology<AnatEntity, String> multiSpeAnatEntityOnt;
@@ -233,6 +235,7 @@ public abstract class TestAncestor {
         this.relationDAO = mock(RelationDAO.class);
         this.speciesDAO = mock(SpeciesDAO.class);
         this.sourceToSpeciesDAO = mock(SourceToSpeciesDAO.class);
+        this.sumSimAnnotDAO = mock(SummarySimilarityAnnotationDAO.class);
         //Complex objects
         this.anatEntityOnt = mock(Ontology.class);
         this.multiSpeAnatEntityOnt = mock(MultiSpeciesOntology.class);
@@ -255,6 +258,7 @@ public abstract class TestAncestor {
         when(this.manager.getRelationDAO()).thenReturn(this.relationDAO);
         when(this.manager.getSpeciesDAO()).thenReturn(this.speciesDAO);
         when(this.manager.getSourceToSpeciesDAO()).thenReturn(this.sourceToSpeciesDAO);
+        when(this.manager.getSummarySimilarityAnnotationDAO()).thenReturn(this.sumSimAnnotDAO);
 
         getLogger().exit();
     }

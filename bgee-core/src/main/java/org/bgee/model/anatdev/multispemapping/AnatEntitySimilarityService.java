@@ -57,6 +57,13 @@ public class AnatEntitySimilarityService extends Service {
      *                      to "trusted" annotations. If {@code true}, only trusted annotations are returned.
      * @return              The {@code Stream} of {@link AnatEntitySimilarity}s.
      */
+    //TODO: remove annots with anat. entities not existing in the requested taxon. Example:
+    //Not having "lung" displayed along "swim bladder" when selecting "Actinopterygii".
+    //Maybe we can base that on the annotations, not the taxon constraints, based on the single-entity annotations
+    //at the same level as the multiple-entity annotations. Like, if you are in the taxa where a single entity annotation
+    //is valid, you discard the other single-entity annotations of the multiple-entity annotations
+    //that were invalidated.
+    //TODO: add transformation_of entities only if they don't themselves have a valid mapping
     public Set<AnatEntitySimilarity> loadPositiveAnatEntitySimilarities(int taxonId, boolean onlyTrusted) {
         log.entry(taxonId, onlyTrusted);
         if (taxonId <= 0) {

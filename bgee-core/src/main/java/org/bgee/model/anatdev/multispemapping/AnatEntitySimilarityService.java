@@ -208,7 +208,10 @@ public class AnatEntitySimilarityService extends Service {
         //-------------
         // FINAL LIST
         //-------------
-        //OK, now we can retrieve all the valid annotations to consider for the requested taxon
+        //OK, now we can retrieve all the valid annotations to consider for the requested taxon.
+        //We'll also discard annotations having only anat. entities not existing in the lineage.
+        //To take again the example of "lung-swim bladder" annotated to Gnathostomata:
+        //If the requested taxon was Sarcopterygii, 
         Map<SummarySimilarityAnnotationTO, Set<String>> finalAnnots = annotToAnatEntityIds
                 .entrySet().stream().filter(e -> {
                     SummarySimilarityAnnotationTO annot = e.getKey();
@@ -233,12 +236,51 @@ public class AnatEntitySimilarityService extends Service {
 
         //The aim here is to identify when to keep a multiple-entity annotations
         //and discard the corresponding single-entity annotations, or the other way around.
-        //Multiple-entity annotations are valid when:
+        //Criteria for using a multiple-entity annotations:
         //* all the entities part of the annotation exist in the requested taxon or in some sub-taxa
         //(meaning, each entity has a corresponding single-entity annotation for the requested taxon,
-        //or ancestors or descendants of the requested taxon)
+        //or ancestors or descendants of the requested taxon).
         //* but the entities do not all exist in all the species of the requested taxon (meaning,
         //at least some entities are annotated to sub-taxa of the requested taxon).
+        //
+        //An example is the annotation "lung-swim bladder" to the taxon Gnathostomata.
+        //If the requested taxon is Gnathostomata, both "lung" and "swim bladder"
+        //exists in this lineage (criteria 1 satisfied), but "swim bladder" is annotated to
+        //the sub-taxon Actinopterygii (criteria 2 satisfied): some species  in the requested taxon
+        //possess a lung but no swim bladder, some possess a swim bladder but no lung.
+        //So we indeed want to use the multiple-entity annotation "lung-swim bladder"
+        //to make comparisons.
+        //If the requested taxon is Sarcopterygii, "lung" exists in this lineage
+        //(because annotated to Gnathostomata as well), but not "swim bladder",
+        //annotated to Actinopterygii (criteria 1 not satisfied). We then don't want to use
+        //"lung-swim bladder" if the requested taxon is Sarcopterygii, but rather, "lung" only.
+        //If the requested taxon is Actinopterygii, both the single-entity "lung" and "swim bladder"
+        //satisfy criteria 1 (because "lung" is annotated to Gnathostomata), but the criteria 2
+        //is not satisfied, since no anatomical entities of the multiple-entity annotation
+        //are annotated to a sub-taxon of Actinopterygii. So the multiple-entity annotation
+        //"lung-swim bladder" is correctly discarded.
+        //Another example for explaining why the criteria 2 is needed
+        //
+        //We still have another problem to address, but it's about validation of
+        //single-entity annotations: in the "lung-swim bladder" example, if the requested taxon
+        //is Actinopterygii, the multiple-entity annotation is correctly discarded,
+        //but the single-entity annotation "lung" is also still considered valid
+        //(but is it really an issue? It's unclear to me whether some Actinopterygii
+        //can have both a lung and a swim bladder, despite what wikipedia says).
+        //Anyway, there's not much we can do about it: 
+        //* using the taxon constraints in Uberon won't solve the problem, "lung" has a relationship
+        //"only_in_taxon NCBITaxon:7776 ! Gnathostomata", which is correct. Could we add a relationship
+        //"never_in_taxon NCBITaxon:7898 ! Actinopterygii"? Well, I'm not so sure it's true.
+        //But at least, it can't hurt to filter the annotations using the Uberon taxon constraints anyway.
+        //* when discarding a multiple-entity annotation, we could maybe also discard
+        //the related single-entity annotations annotated to an ancestor of the requested taxon?
+        //In our case, that would allow to discard "lung" and to keep "swim bladder" only.
+        //But, that would also discard "mouth" in the "mouth-anus" example => we don't want that.
+        //Maybe discard the single-entity annotations if they are both annotated to an ancestor
+        //of the requested taxon, AND annotated to the same taxon as the related discarded
+        //multiple-entity annotation? Well, I think the "mouth-anus" annotation could easily evolved
+        //to be annotated to the same taxon as "mouth"...
+        //
         Map<Set<String>, Set<SummarySimilarityAnnotationTO>> validAnatEntityIdsToMultipleEntityAnnots =
                 new HashMap<>();
         Set<Set<String>> examinedAnatEntityIdsInMultipleEntityAnnots = new HashSet<>();

@@ -87,7 +87,7 @@ public class AnatEntityService extends Service {
     
     /**
      * Retrieve {@code AnatEntity}s for the requested species filtering and anatomical entity IDs.
-     * If an entity in {@code anatEntitiesIds} does not exists according to the species filtering,
+     * If an entity in {@code anatEntityIds} does not exists according to the species filtering,
      * it will not be returned.
      *
      * @param speciesIds        A {@code Collection} of {@code Integer}s that are the IDs of species
@@ -96,7 +96,7 @@ public class AnatEntityService extends Service {
      *                          whether the entities retrieved should be valid in any
      *                          of the requested species (if {@code true}), or in all
      *                          of the requested species (if {@code false} or {@code null}).
-     * @param anatEntitiesIds   A {@code Collection} of {@code String}s that are IDs of anatomical
+     * @param anatEntityIds   A {@code Collection} of {@code String}s that are IDs of anatomical
      *                          entities to retrieve. Can be {@code null} or empty.
      * @param withDescription   A {@code boolean} defining whether the description of the {@code AnatEntity}s
      *                          should be retrieved (higher memory usage).
@@ -104,15 +104,15 @@ public class AnatEntityService extends Service {
      */
     //TODO: unit test with/without description
     public Stream<AnatEntity> loadAnatEntities(Collection<Integer> speciesIds,
-            Boolean anySpecies, Collection<String> anatEntitiesIds, boolean withDescription) {
-        log.entry(speciesIds, anySpecies, anatEntitiesIds, withDescription);
-        return log.exit(this.loadAnatEntities(speciesIds, anySpecies, anatEntitiesIds,
+            Boolean anySpecies, Collection<String> anatEntityIds, boolean withDescription) {
+        log.entry(speciesIds, anySpecies, anatEntityIds, withDescription);
+        return log.exit(this.loadAnatEntities(speciesIds, anySpecies, anatEntityIds,
                 withDescription? null: EnumSet.complementOf(EnumSet.of(Attribute.DESCRIPTION))));
     }
 
     /**
      * Retrieve {@code AnatEntity}s for the requested species filtering and anatomical entity IDs. 
-     * If an entity in {@code anatEntitiesIds} does not exists according to the species filtering, 
+     * If an entity in {@code anatEntityIds} does not exists according to the species filtering, 
      * it will not be returned.
      * 
      * @param speciesIds        A {@code Collection} of {@code Integer}s that are the IDs of species 
@@ -121,7 +121,7 @@ public class AnatEntityService extends Service {
      *                          whether the entities retrieved should be valid in any 
      *                          of the requested species (if {@code true}), or in all 
      *                          of the requested species (if {@code false} or {@code null}).
-     * @param anatEntitiesIds   A {@code Collection} of {@code String}s that are IDs of anatomical
+     * @param anatEntityIds   A {@code Collection} of {@code String}s that are IDs of anatomical
      *                          entities to retrieve. Can be {@code null} or empty.
      * @param attrs             A {@code Collection} of {@code Attribute}s defining the
      *                          attributes to populate in the returned {@code AnatEntity}s.
@@ -129,12 +129,12 @@ public class AnatEntityService extends Service {
      */
     //TODO: unit test with/without description
     public Stream<AnatEntity> loadAnatEntities(Collection<Integer> speciesIds,
-            Boolean anySpecies, Collection<String> anatEntitiesIds, Collection<Attribute> attrs) {
-        log.entry(speciesIds, anySpecies, anatEntitiesIds, attrs);
+            Boolean anySpecies, Collection<String> anatEntityIds, Collection<Attribute> attrs) {
+        log.entry(speciesIds, anySpecies, anatEntityIds, attrs);
         return log.exit(this.getDaoManager().getAnatEntityDAO().getAnatEntities(
                     speciesIds, 
                     anySpecies, 
-                    anatEntitiesIds,
+                    anatEntityIds,
                     attrs == null? null: convertAttrsToDAOAttrs(attrs))
                 .stream()
                 .map(AnatEntityService::mapFromTO));

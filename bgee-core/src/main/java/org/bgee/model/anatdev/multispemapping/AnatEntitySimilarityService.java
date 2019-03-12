@@ -50,25 +50,141 @@ public class AnatEntitySimilarityService extends Service {
 
     /**
      * Load positive anatomical entity similarities valid for the requested {@code taxonId}.
+     * See {@link #loadPositiveAnatEntitySimilarities(int, boolean, Collection)} for details.
      *
-     * @param taxonId       An {@code Integer} that is the NCBI ID of the taxon for which the similarity 
-     *                      annotations should be valid for.
-     * @param onlyTrusted   A {@code boolean} defining whether results should be restricted 
-     *                      to "trusted" annotations. If {@code true}, only trusted annotations are returned.
-     * @return              The {@code Stream} of {@link AnatEntitySimilarity}s.
+     * @param taxonId                   An {@code Integer} that is the NCBI ID of the taxon for which
+     *                                  the similarity annotations should be valid for.
+     * @param onlyTrusted               A {@code boolean} defining whether results should be restricted
+     *                                  to "trusted" annotations. If {@code true}, only trusted annotations
+     *                                  are returned.
+     * @return                          The {@code Stream} of {@link AnatEntitySimilarity}s.
+     * @see #loadPositiveAnatEntitySimilarities(int, boolean, Collection)
      */
-    //TODO: remove annots with anat. entities not existing in the requested taxon. Example:
-    //Not having "lung" displayed along "swim bladder" when selecting "Actinopterygii".
-    //Maybe we can base that on the annotations, not the taxon constraints, based on the single-entity annotations
-    //at the same level as the multiple-entity annotations. Like, if you are in the taxa where a single entity annotation
-    //is valid, you discard the other single-entity annotations of the multiple-entity annotations
-    //that were invalidated.
-    //TODO: add transformation_of entities only if they don't themselves have a valid mapping
     public Set<AnatEntitySimilarity> loadPositiveAnatEntitySimilarities(int taxonId, boolean onlyTrusted) {
         log.entry(taxonId, onlyTrusted);
+        return log.exit(this.loadPositiveAnatEntitySimilarities(taxonId, onlyTrusted, null));
+    }
+    /**
+     * Load positive anatomical entity similarities valid for the requested {@code taxonId}.
+     * Some species IDs can be provided for discarding annotation for which none
+     * of the related anatomical entities exist in any of the requested species.
+     * If this method is called to retrieve all similarity annotations valid for the requested taxon,
+     * the {@code Collection} of species IDs should be {@code null} or empty.
+     * <p>
+     * The most basic purpose of this method is to retrieve similarity annotations annotated to
+     * the requested taxon or one of its ancestors. There are however two subtilities, which are:
+     * i) when to retrieve a multiple-entity annotation (for instance, "lung-swim bladder")
+     * and when to retrieve the corresponding single-entity annotations ("lung" on one hand,
+     * "swim bladder" on the other); and ii) adding to the similarity annotations anatomical entities
+     * related by "transformation_of" relationships.
+     * <p>
+     * <strong>1) Multiple-entity/single-entity annotations</strong>: the point is to determine
+     * when to keep a multiple-entity annotations and discard the corresponding single-entity
+     * annotations, or the other way around. Criteria for using a multiple-entity annotation:
+     * <ul>
+     * <li>all the entities part of the annotation exist in the lineage of the requested taxon
+     * (meaning, each entity has a corresponding single-entity annotation for the requested taxon,
+     * or ancestors or descendants of the requested taxon).
+     * <li>but the entities do not all exist in all the species of the requested taxon (meaning,
+     * at least some entities are annotated to sub-taxa of the requested taxon).
+     * </ul>
+     * An example is the annotation "lung-swim bladder" to the taxon <i>Gnathostomata</i>
+     * (with corresponding single-entity annotations being "lung" annotated to taxon <i>Gnathostomata</i>,
+     * and "swim bladder" annotated to taxon <i>Actinopterygii</i>).
+     * If the requested taxon is <i>Gnathostomata</i>, both "lung" and "swim bladder"
+     * exists in this lineage (criteria 1 satisfied), and "swim bladder" is annotated to
+     * the sub-taxon <i>Actinopterygii</i> (criteria 2 satisfied): some species in the requested taxon
+     * possess a lung but no swim bladder, some possess a swim bladder. So we indeed want to use
+     * the multiple-entity annotation "lung-swim bladder" to make comparisons accross
+     * all the requested taxon.
+     * <p>
+     * If the requested taxon is <i>Sarcopterygii</i>, "lung" exists in this lineage
+     * (because annotated to <i>Gnathostomata</i> as well), but not "swim bladder",
+     * annotated to <i>Actinopterygii</i> (criteria 1 not satisfied). We then don't want to use
+     * "lung-swim bladder" if the requested taxon is <i>Sarcopterygii</i>, but, rather, "lung" only,
+     * since there is no swim bladder in this lineage.
+     * <p>
+     * If the requested taxon is <i>Actinopterygii</i>, both the single-entity annotations "lung"
+     * and "swim bladder" satisfy criteria 1 (because "lung" is annotated to <i>Gnathostomata</i>),
+     * but the criteria 2 is not satisfied, since no anatomical entities of the multiple-entity annotation
+     * are annotated to a sub-taxon of <i>Actinopterygii</i>. It means that all <i>Actinopterygii</i>
+     * could possess a swim bladder and/or a lung, so we don't want to use "lung-swim bladder"
+     * to make comparisons, since we can have more granularity by using "swim bladder" on one hand
+     * and "lung" on the other.
+     * <p>
+     * Another example for explaining why the criteria 2 is needed is the annotation "mouth-anus"
+     * to taxon <i>Eumetazoa</i> (with corresponding single-entity annotations being "mouth"
+     * to taxon <i>Eumetazoa</i> and "anus" to taxon <i>Bilateria</i>). If the requested taxon is
+     * <i>Bilateria</i>, the criterion 1 is satisfied, but not criterion 2: no anatomical entitiy
+     * is annotated to a sub-taxon of the requested taxon. It means that all <i>Bilateria</i>
+     * could possess both a mouth and an anus, so, again, we don't want to use the multiple-entity
+     * annotation "mouth-anus", while we can have a better level of details by comparing data
+     * across species in this taxon in "mouth" on the one hand, "anus" on the other hand.
+     * <p>
+     * We still have another question to address, but it's about validation of
+     * single-entity annotations: in the "lung-swim bladder" example, if the requested taxon
+     * is <i>Actinopterygii</i>, the multiple-entity annotation is correctly discarded,
+     * but the single-entity annotation "lung" is also still considered valid.
+     * Is it really an issue? It is unclear whether some <i>Actinopterygii</i>
+     * can have both a lung and a swim bladder; Wikipedia says it does not happen, other sources say
+     * it does. Anyway, there's not much we can do about it:
+     * <ul>
+     * <li>using the taxon constraints in Uberon would not solve the problem, "lung" has a relationship
+     * "only_in_taxon NCBITaxon:7776 ! <i>Gnathostomata</i>", which is correct. Could we add a relationship
+     * "never_in_taxon NCBITaxon:7898 ! <i>Actinopterygii</i>"? We're not sure about that,
+     * and moreover taxon constraints in Bgee are stored only for the species integrated, so we could give
+     * an incorrect answer to the question "Can an <i>Actinopterygii</i> have a lung?" simply because of
+     * our species sampling. So, users have the possibility to filter similarity annotations
+     * for species IDs provided, up to them to decide depending on their needs.
+     * <li>when discarding a multiple-entity annotation, we could maybe also discard
+     * the related single-entity annotations annotated to an ancestor of the requested taxon?
+     * In our case, that would allow to discard "lung" and to keep "swim bladder" only.
+     * But, that would also discard "mouth" in the "mouth-anus" example => we don't want that.
+     * Maybe discard the single-entity annotations if they are both annotated to an ancestor
+     * of the requested taxon, AND annotated to the same taxon as the related discarded
+     * multiple-entity annotation? Again, wouldn't work with the "mouth-anus" annotation...
+     * </ul>
+     * <p>
+     * <strong>2) Adding related anatomical entities through "transformation_of" relations</strong>:
+     * similarity annotations are created only for mature anatomical entities (for instance,
+     * the term "brain" is annotated, not the term "future brain"). For this reason, we add
+     * to the mappings the terms connected by 'transformation_of" relations to annotated
+     * anatomical entities (so that we use data in both "brain" and "future brain").
+     *
+     * @param taxonId                   An {@code Integer} that is the NCBI ID of the taxon for which
+     *                                  the similarity annotations should be valid for.
+     * @param onlyTrusted               A {@code boolean} defining whether results should be restricted
+     *                                  to "trusted" annotations. If {@code true}, only trusted annotations
+     *                                  are considered.
+     * @param speciesIdsForFiltering    A {@code Collection} of {@code Integer}s representing IDs
+     *                                  of species to filter valid {@code AnatEntitySimilarity}s.
+     *                                  If {@code null} or {@code empty}, all {@code AnatEntitySimilarity}s
+     *                                  valid for {@code taxonId} are returned. Otherwise,
+     *                                  we discard {@code AnatEntitySimilarity}s using only
+     *                                  anatomical entities existing in none of the requested species.
+     * @return                          The {@code Stream} of {@link AnatEntitySimilarity}s.
+     * @implSpec    Providing species IDs for filtering similarity annotations should not change
+     *              the selection of multiple-entity vs. single-entitiy annotations, or the retrieval
+     *              of additional entities through transformation_of relations, etc.
+     *              It means that the filtering should be done <i>a posteriori</i>.
+     *              Indeed, we want the annotations to be always the same for a given requested taxon,
+     *              and to not vary based on the requested species; only to be filtered.
+     *              For instance, if for the requested taxon the annotation "lung-swim bladder"
+     *              should be returned, if you were to discard the single-entity annotation
+     *              "lung", because not existing in the requested species, <strong>before</strong>
+     *              validating "lung-swim bladder", it would lead to discard it and to return
+     *              the single-entity annotation "swim bladder" instead. Or, if the "transformation_of"
+     *              relations considered were retrieved only for the requested species,
+     *              the entities added to source annotations could vary.
+     */
+    public Set<AnatEntitySimilarity> loadPositiveAnatEntitySimilarities(int taxonId, boolean onlyTrusted,
+            Collection<Integer> speciesIdsForFiltering) {
+        log.entry(taxonId, onlyTrusted, speciesIdsForFiltering);
         if (taxonId <= 0) {
             throw log.throwing(new IllegalArgumentException("Taxon ID must be stricly positive."));
         }
+        Set<Integer> clonedSpeIds = speciesIdsForFiltering == null? new HashSet<>():
+            new HashSet<>(speciesIdsForFiltering);
 
         //We need the taxon ontology for the requested taxon and its ancestors and descendants,
         //mainly in order to correctly filter the similarity annotations to return.
@@ -86,16 +202,13 @@ public class AnatEntitySimilarityService extends Service {
                 onlyTrusted, taxonOnt);
 
         //Now we need the anatomical ontology for retrieving 'transformation_of' relations
-        //between anat. entities.
-        //Indeed, similarity annotations are created only for mature anatomical entities
-        //(for instance, the term "brain" is annotated, not the term "future brain").
-        //For this reason, we add to the mappings the terms connected by 'transformation_of"
-        //relations to annotated anatomical entities (so that we use data in both "brain"
-        //and "future brain").
+        //between anat. entities (see javadoc of this method).
         //We retrieve the ontology for any species, and not only the requested species,
         //Because we want the valid mappings to be consistent whatever the requested species.
+        //They could vary if we were to discard some anat. entities and/or transformation_of relations
+        //based on the requested species. (but this anat. ontology is going to be used below
+        //to filter the annotations a posteriori).
         //Retrieve the anat. entity IDs for building the ontology
-        //XXX: actually maybe retrieve the relations for all species of the taxon? How reliable is it?
         Set<String> anatEntityIds = validAnnots.values().stream().flatMap(s -> s.stream())
                 .collect(Collectors.toSet());
         MultiSpeciesOntology<AnatEntity, String> anatOnt = this.getServiceFactory().getOntologyService()
@@ -116,21 +229,31 @@ public class AnatEntitySimilarityService extends Service {
                 .getAllCIOStatements().stream()
                 .collect(Collectors.toMap(s -> s.getId(), s -> s));
 
-        //Now we can create the AnatEntitySimilarity objects.
-        Set<AnatEntitySimilarity> similarities = validAnnots.entrySet()
+        //Create the final AnatEntitySimilarity objects
+        Stream<AnatEntitySimilarity> similarities = validAnnots.entrySet().stream()
                 //We group the annotations by their anat. entity IDs to provide all the annotations
                 //for the mapping to the AnatEntitySimilarity object
-                .stream().collect(Collectors.toMap(
+                .collect(Collectors.toMap(
                         e -> e.getValue(),
                         e -> new HashSet<>(Arrays.asList(e.getKey())),
                         (v1, v2) -> {v1.addAll(v2); return v1;}))
-                //And now we create the AnatEntitySimilarity objects
+                //Now we can create the AnatEntitySimilarity objects.
                 .entrySet().stream()
                 .<AnatEntitySimilarity>map(e -> mapToAnatEntitySimilarity(e.getKey(), e.getValue(),
-                        requestedTaxon, idToCIOStatementTOMap, taxonOnt, anatOnt))
-                .collect(Collectors.toSet());
+                        requestedTaxon, idToCIOStatementTOMap, taxonOnt, anatOnt, anatEntityIds));
+        //This we were we filter the annotations a posteriori based on the requested species
+        if (!clonedSpeIds.isEmpty()) {
+            similarities = similarities.filter(aes -> aes.getAllAnatEntities().stream()
+                    //Keep annotations that have at least one anat. entity existing
+                    //in any of the requested species
+                    .anyMatch(ae -> {
+                        Set<Integer> validSpeIds = anatOnt.getSpeciesIdsWithElementValidIn(ae);
+                        return validSpeIds == null ||
+                                !Collections.disjoint(clonedSpeIds, validSpeIds);
+                    }));
+        }
 
-        return log.exit(similarities);
+        return log.exit(similarities.collect(Collectors.toSet()));
     }
 
     private Map<SummarySimilarityAnnotationTO, Set<String>> getValidAnnots(int taxonId,
@@ -152,14 +275,16 @@ public class AnatEntitySimilarityService extends Service {
         //First, we retrieve the similarity annotations
         SummarySimilarityAnnotationDAO simAnnotDAO = this.getDaoManager().getSummarySimilarityAnnotationDAO();
         Map<Integer, SummarySimilarityAnnotationTO> idToAnnots = simAnnotDAO
-                .getSummarySimilarityAnnotations(taxonId, true, true, true, onlyTrusted, null)
+                .getSummarySimilarityAnnotations(taxonId, true, true, true,
+                        onlyTrusted? true: null,
+                        null)
                 .stream().collect(Collectors.toMap(a -> a.getId(), a -> a));
         //Then, we retrieve the links from similarity annotations to anatomical entities.
         //Since a same annotation can use several anat. entities, we store the links in a Map,
         //for easier retrieval, where each annotation in key is associated to a Set as value
         //containing all the anat. entity IDs it uses.
         Map<SummarySimilarityAnnotationTO, Set<String>> annotToAnatEntityIds = simAnnotDAO
-                .getSimAnnotToAnatEntity(taxonId, true, true, true, onlyTrusted)
+                .getSimAnnotToAnatEntity(taxonId, true, true, true, onlyTrusted? true: null)
                 .stream().collect(Collectors.toMap(
                         simToAnat -> Optional.ofNullable(
                                 idToAnnots.get(simToAnat.getSummarySimilarityAnnotationId()))
@@ -209,9 +334,6 @@ public class AnatEntitySimilarityService extends Service {
         // FINAL LIST
         //-------------
         //OK, now we can retrieve all the valid annotations to consider for the requested taxon.
-        //We'll also discard annotations having only anat. entities not existing in the lineage.
-        //To take again the example of "lung-swim bladder" annotated to Gnathostomata:
-        //If the requested taxon was Sarcopterygii, 
         Map<SummarySimilarityAnnotationTO, Set<String>> finalAnnots = annotToAnatEntityIds
                 .entrySet().stream().filter(e -> {
                     SummarySimilarityAnnotationTO annot = e.getKey();
@@ -235,52 +357,8 @@ public class AnatEntitySimilarityService extends Service {
         log.entry(validTaxonIds, anatEntityIdToSimAnnots, annotToAnatEntityIds);
 
         //The aim here is to identify when to keep a multiple-entity annotations
-        //and discard the corresponding single-entity annotations, or the other way around.
-        //Criteria for using a multiple-entity annotations:
-        //* all the entities part of the annotation exist in the requested taxon or in some sub-taxa
-        //(meaning, each entity has a corresponding single-entity annotation for the requested taxon,
-        //or ancestors or descendants of the requested taxon).
-        //* but the entities do not all exist in all the species of the requested taxon (meaning,
-        //at least some entities are annotated to sub-taxa of the requested taxon).
-        //
-        //An example is the annotation "lung-swim bladder" to the taxon Gnathostomata.
-        //If the requested taxon is Gnathostomata, both "lung" and "swim bladder"
-        //exists in this lineage (criteria 1 satisfied), but "swim bladder" is annotated to
-        //the sub-taxon Actinopterygii (criteria 2 satisfied): some species  in the requested taxon
-        //possess a lung but no swim bladder, some possess a swim bladder but no lung.
-        //So we indeed want to use the multiple-entity annotation "lung-swim bladder"
-        //to make comparisons.
-        //If the requested taxon is Sarcopterygii, "lung" exists in this lineage
-        //(because annotated to Gnathostomata as well), but not "swim bladder",
-        //annotated to Actinopterygii (criteria 1 not satisfied). We then don't want to use
-        //"lung-swim bladder" if the requested taxon is Sarcopterygii, but rather, "lung" only.
-        //If the requested taxon is Actinopterygii, both the single-entity "lung" and "swim bladder"
-        //satisfy criteria 1 (because "lung" is annotated to Gnathostomata), but the criteria 2
-        //is not satisfied, since no anatomical entities of the multiple-entity annotation
-        //are annotated to a sub-taxon of Actinopterygii. So the multiple-entity annotation
-        //"lung-swim bladder" is correctly discarded.
-        //Another example for explaining why the criteria 2 is needed
-        //
-        //We still have another problem to address, but it's about validation of
-        //single-entity annotations: in the "lung-swim bladder" example, if the requested taxon
-        //is Actinopterygii, the multiple-entity annotation is correctly discarded,
-        //but the single-entity annotation "lung" is also still considered valid
-        //(but is it really an issue? It's unclear to me whether some Actinopterygii
-        //can have both a lung and a swim bladder, despite what wikipedia says).
-        //Anyway, there's not much we can do about it: 
-        //* using the taxon constraints in Uberon won't solve the problem, "lung" has a relationship
-        //"only_in_taxon NCBITaxon:7776 ! Gnathostomata", which is correct. Could we add a relationship
-        //"never_in_taxon NCBITaxon:7898 ! Actinopterygii"? Well, I'm not so sure it's true.
-        //But at least, it can't hurt to filter the annotations using the Uberon taxon constraints anyway.
-        //* when discarding a multiple-entity annotation, we could maybe also discard
-        //the related single-entity annotations annotated to an ancestor of the requested taxon?
-        //In our case, that would allow to discard "lung" and to keep "swim bladder" only.
-        //But, that would also discard "mouth" in the "mouth-anus" example => we don't want that.
-        //Maybe discard the single-entity annotations if they are both annotated to an ancestor
-        //of the requested taxon, AND annotated to the same taxon as the related discarded
-        //multiple-entity annotation? Well, I think the "mouth-anus" annotation could easily evolved
-        //to be annotated to the same taxon as "mouth"...
-        //
+        //and discard the corresponding single-entity annotations (see javadoc of method
+        //'loadPositiveAnatEntitySimilarities' for details)
         Map<Set<String>, Set<SummarySimilarityAnnotationTO>> validAnatEntityIdsToMultipleEntityAnnots =
                 new HashMap<>();
         Set<Set<String>> examinedAnatEntityIdsInMultipleEntityAnnots = new HashSet<>();
@@ -425,18 +503,25 @@ public class AnatEntitySimilarityService extends Service {
     private static AnatEntitySimilarity mapToAnatEntitySimilarity(Set<String> anatEntityIds,
             Set<SummarySimilarityAnnotationTO> annotTOs, Taxon requestedTaxon,
             Map<String, CIOStatementTO> idToCIOStatementTOMap, Ontology<Taxon, Integer> taxonOnt,
-            MultiSpeciesOntology<AnatEntity, String> anatOnt) {
-        log.entry(anatEntityIds, annotTOs, requestedTaxon, idToCIOStatementTOMap, taxonOnt, anatOnt);
+            MultiSpeciesOntology<AnatEntity, String> anatOnt, Set<String> anatEntityIdsUsedInAnnots) {
+        log.entry(anatEntityIds, annotTOs, requestedTaxon, idToCIOStatementTOMap, taxonOnt, anatOnt,
+                anatEntityIdsUsedInAnnots);
 
+        //Get the AnatEntity objects corresponding to the IDs
         Set<AnatEntity> anatEntities = anatEntityIds.stream()
                 .map(id -> Optional.ofNullable(anatOnt.getElement(id))
                         .orElseThrow(() -> new IllegalStateException(
                                 "Anat entity could not be found in the ontology: " + id)))
                 .collect(Collectors.toSet());
+        //Transformation_of relationships
         Set<AnatEntity> transformationOfEntities = anatEntities.stream()
                 .flatMap(ae -> Stream.concat(anatOnt.getAncestors(ae).stream(),
                                              anatOnt.getDescendants(ae).stream()))
+                //Before adding the anatomical entities linked by transformation_of relations,
+                //we need to check that they are not used in any valid annotations.
+                .filter(transfOfEnt -> !anatEntityIdsUsedInAnnots.contains(transfOfEnt.getId()))
                 .collect(Collectors.toSet());
+        //AnatEntitySimilarityTaxonSummary
         Set<AnatEntitySimilarityTaxonSummary> summaries = annotTOs.stream()
                 .map(a -> mapToAnatEntitySimilarityTaxonSummary(a, idToCIOStatementTOMap, taxonOnt))
                 .collect(Collectors.toSet());

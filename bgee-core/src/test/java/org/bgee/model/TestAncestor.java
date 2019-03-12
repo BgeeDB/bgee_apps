@@ -21,6 +21,7 @@ import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
+import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.source.SourceToSpeciesDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO;
@@ -200,6 +201,7 @@ public abstract class TestAncestor {
     protected SpeciesDAO speciesDAO;
     protected SourceToSpeciesDAO sourceToSpeciesDAO;
     protected SummarySimilarityAnnotationDAO sumSimAnnotDAO;
+    protected CIOStatementDAO cioStatementDAO;
     //Complex objects
     protected Ontology<AnatEntity, String> anatEntityOnt;
     protected MultiSpeciesOntology<AnatEntity, String> multiSpeAnatEntityOnt;
@@ -236,6 +238,7 @@ public abstract class TestAncestor {
         this.speciesDAO = mock(SpeciesDAO.class);
         this.sourceToSpeciesDAO = mock(SourceToSpeciesDAO.class);
         this.sumSimAnnotDAO = mock(SummarySimilarityAnnotationDAO.class);
+        this.cioStatementDAO = mock(CIOStatementDAO.class);
         //Complex objects
         this.anatEntityOnt = mock(Ontology.class);
         this.multiSpeAnatEntityOnt = mock(MultiSpeciesOntology.class);
@@ -259,6 +262,7 @@ public abstract class TestAncestor {
         when(this.manager.getSpeciesDAO()).thenReturn(this.speciesDAO);
         when(this.manager.getSourceToSpeciesDAO()).thenReturn(this.sourceToSpeciesDAO);
         when(this.manager.getSummarySimilarityAnnotationDAO()).thenReturn(this.sumSimAnnotDAO);
+        when(this.manager.getCIOStatementDAO()).thenReturn(this.cioStatementDAO);
 
         getLogger().exit();
     }

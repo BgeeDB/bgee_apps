@@ -102,7 +102,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
      * @param type                      A {@code Class<T>} that is the type of {@code elements} 
      *                                  to be store by this {@code MultiSpeciesOntology}.
      */
-    protected MultiSpeciesOntology(Collection<Integer> speciesIds, Collection<T> elements, 
+    public MultiSpeciesOntology(Collection<Integer> speciesIds, Collection<T> elements, 
             Collection<RelationTO<U>> relations, Collection<TaxonConstraint<U>> taxonConstraints, 
             Collection<TaxonConstraint<Integer>> relationTaxonConstraints, 
             Collection<RelationType> relationTypes,

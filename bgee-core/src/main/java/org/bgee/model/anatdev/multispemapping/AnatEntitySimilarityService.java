@@ -211,7 +211,7 @@ public class AnatEntitySimilarityService extends Service {
         //Retrieve the anat. entity IDs for building the ontology
         Set<String> anatEntityIds = validAnnots.values().stream().flatMap(s -> s.stream())
                 .collect(Collectors.toSet());
-        log.trace("Anat entity IDs considered for loading anatomical ontology: {}", anatEntityIds);
+        log.debug("Anat entity IDs considered for loading anatomical ontology: {}", anatEntityIds);
         MultiSpeciesOntology<AnatEntity, String> anatOnt = this.getServiceFactory().getOntologyService()
                 .getAnatEntityOntology(
                         (Collection<Integer>) null,

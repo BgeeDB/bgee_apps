@@ -144,7 +144,6 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
                 entitiesBySpeciesId.entrySet().stream()
                     .collect(Collectors.toMap(e -> e.getKey(), 
                             e -> Collections.unmodifiableSet(e.getValue()))));
-        log.trace("Entities by speciesId: {}", this.speciesIdToElements);
         //We also reverse this Map for easier retrieval of taxon constraints per element
         this.elementToSpeciesIds = Collections.unmodifiableMap(
                 this.speciesIdToElements.entrySet().stream()
@@ -165,10 +164,11 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
                         e -> e.getKey(),
                         e -> Collections.unmodifiableSet(e.getValue())))
                 );
+        log.debug("Entities by speciesId: {}", this.speciesIdToElements);
         
         Map<Integer, Set<RelationTO<U>>> relationsBySpeciesId = null;
         if (this.relationTaxonConstraints.isEmpty()) {
-            log.trace("Inferring relation taxon constraints from entity taxon constraints");
+            log.debug("Inferring relation taxon constraints from entity taxon constraints");
             //no relation taxon constraints provided, so we'll try to use the entity taxon constraints:
             //both the source and the target need to be valid in a species for the relation to be valid
             //in that species.
@@ -188,7 +188,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
                                     m1.merge(e2.getKey(), e2.getValue(), (v1, v2) -> {v1.addAll(v2); return v1;});
                                 }
                             });
-            log.trace("Species IDs by entity ID: {}", entityIdToSpeciesIds);
+            log.debug("Species IDs by entity ID: {}", entityIdToSpeciesIds);
             
             //Sadly, Collectors.groupingBy methods do not accept null keys, so we use toMap
             relationsBySpeciesId = this.getRelations().stream()
@@ -228,7 +228,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
             ));
             
         } else {
-            log.trace("Retrieving relation taxon constraints from data source.");
+            log.debug("Retrieving relation taxon constraints from data source.");
             //first, build a Map to easily retrieve a relation from its ID
             final Map<Integer, RelationTO<U>> relMap = this.getRelations().stream()
                     .collect(Collectors.toMap(r -> r.getId(), r -> r));
@@ -250,7 +250,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
                             (v1, v2) -> {v1.addAll(v2); return v1;}
                     ));
         }
-        log.trace("Relations by species ID: {}", relationsBySpeciesId);
+        log.debug("Relations by species ID: {}", relationsBySpeciesId);
         this.relationsBySpeciesId = Collections.unmodifiableMap(
                 relationsBySpeciesId.entrySet().stream()
                     .collect(Collectors.toMap(e -> e.getKey(), 
@@ -281,7 +281,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
             throw log.throwing(new IllegalArgumentException("Element cannot be null"));
         }
         if (!elementToSpeciesIds.containsKey(element)) {
-            log.trace("Elements in the ontology: {}", elementToSpeciesIds.keySet());
+            log.debug("Elements in the ontology: {}", elementToSpeciesIds.keySet());
             throw log.throwing(new IllegalArgumentException("Element is not present in the ontology: "
                                + element));
         }

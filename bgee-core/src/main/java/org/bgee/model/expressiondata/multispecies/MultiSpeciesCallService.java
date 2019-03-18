@@ -3,6 +3,7 @@ package org.bgee.model.expressiondata.multispecies;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -36,14 +37,13 @@ import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.ConditionFilter;
-import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.gene.GeneService;
 import org.bgee.model.gene.OrthologousGeneGroup;
-import org.bgee.model.ontology.MultiSpeciesOntology;
+import org.bgee.model.ontology.Ontology;
 import org.bgee.model.ontology.OntologyService;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
@@ -255,8 +255,8 @@ public class MultiSpeciesCallService extends Service {
         Set<Integer> speciesIds = new HashSet<Integer>(multiSpeciesCallFilter.getTaxonFilter().getSpeciesIds());
         speciesIds.add(geneFilter.getSpeciesId());
         Set<Species> species = speciesService.loadSpeciesByIds(speciesIds, false);
-    	MultiSpeciesOntology<Taxon, Integer> taxonOntology = ontologyService.getTaxonOntology(
-    			speciesIds, null);
+    	Ontology<Taxon, Integer> taxonOntology = ontologyService.getTaxonOntologyLeadingToSpecies(
+    			speciesIds, false, false);
     	Map<Taxon,Set<Species>> leavesLCA = getLeavesLCA(taxonOntology, species, geneFilter);
     	Set<AnatEntitySimilarity> anatEntitySims = getAnatSimByTaxonId(leavesLCA);
     	Set<DevStageSimilarity> devStageSims = getDevStagesSimByTaxonId(leavesLCA);
@@ -324,7 +324,7 @@ public class MultiSpeciesCallService extends Service {
         
         // Get all relevant taxa from the species
         // FIXME: load all taxonomy ontology, should we filter it?
-        MultiSpeciesOntology<Taxon, Integer> taxonOnt = this.getServiceFactory().getOntologyService()
+        Ontology<Taxon, Integer> taxonOnt = this.getServiceFactory().getOntologyService()
                 .getTaxonOntology();
         Integer parentTaxonId = gene.getSpecies().getParentTaxonId();
         if (taxonOnt.getElement(parentTaxonId) == null) {
@@ -366,7 +366,7 @@ public class MultiSpeciesCallService extends Service {
                     .getAnatEntitySimilarityService().loadPositiveAnatEntitySimilarities(taxonId, true);
             log.trace("Anat. entity similarities: {}", anatEntitySimilarities);
             Set<String> anatEntityIds = anatEntitySimilarities.stream()
-                    .flatMap(s -> s.getAllAnatEntities().stream().map(a -> a.getId()))
+                    .flatMap(s -> s.getSourceAnatEntities().stream().map(a -> a.getId()))
                     .collect(Collectors.toSet());
             
             // Retrieve dev. stage similarities
@@ -460,7 +460,7 @@ public class MultiSpeciesCallService extends Service {
             }
             Set<MultiSpeciesCall<ExpressionCall>> currentMultiSpeCalls = multiSpCalls.stream()
             		.filter(msc -> msc.getMultiSpeciesCondition()
-            		.getAnatSimilarity().getAllAnatEntities().contains(call.getCondition().getAnatEntity()))
+            		.getAnatSimilarity().getSourceAnatEntities().contains(call.getCondition().getAnatEntity()))
             		.filter(msc -> msc.getMultiSpeciesCondition()
             		.getStageSimilarity().getDevStageIds().contains(call.getCondition().getDevStageId()))
             		.filter(msc -> msc.getOrthologousGenes().contains(call.getGene()))
@@ -470,7 +470,7 @@ public class MultiSpeciesCallService extends Service {
             	msc.getSpeciesIds().add(call.getGene().getSpecies().getId());
             });
             Set<AnatEntitySimilarity> curAESimilarities = anatEntitySimilarities.stream()
-                    .filter(s -> s.getAllAnatEntities().contains(call.getCondition().getAnatEntity()))
+                    .filter(s -> s.getSourceAnatEntities().contains(call.getCondition().getAnatEntity()))
                     .collect(Collectors.toSet());
             if (curAESimilarities.size() == 0) {
                 log.trace(call.getCondition().getAnatEntityId() +
@@ -590,14 +590,14 @@ public class MultiSpeciesCallService extends Service {
     }
     /**
      * 
-     * @param taxOnt	A {@code MultiSpeciesOntology} containing all taxa and relation between them 
+     * @param taxOnt	An {@code Ontology} containing all taxa and relation between them 
      * @param species	A {@code Set} of {@code Species} for which LCA taxon will be retrieved
      * @param gene		A {code GeneFilter} corresponding to a Set of starting genes IDs from the same
      * 					species.
      * @return			A {@code Map} of {@code Taxon} associated to a {@code Set} of {@code Species}
      * 					corresponding to the Least Common Ancestor taxa for subset of input species
      */
-    private static Map <Taxon,Set<Species>> getLeavesLCA(MultiSpeciesOntology<Taxon, Integer> taxOnt, 
+    private static Map <Taxon,Set<Species>> getLeavesLCA(Ontology<Taxon, Integer> taxOnt, 
     		Set<Species> species, GeneFilter gene){
     	log.entry(taxOnt,species,gene);
     	Map<Taxon, Set<Species>> taxonLCAToSpecies = new HashMap<>();
@@ -701,7 +701,7 @@ public class MultiSpeciesCallService extends Service {
     	for(String anatEntityId : filter.getMultiSpeciesCondFilter().getAnatEntityIds()){
     		expressionCallAEntities.addAll(
     				anatEntSims.stream()
-    				.flatMap(aes -> aes.getAllAnatEntities().stream().map(a -> a.getId()))
+    				.flatMap(aes -> aes.getSourceAnatEntities().stream().map(a -> a.getId()))
     				.filter(aes -> aes.contains(anatEntityId))
     				.collect(Collectors.toSet()));
     	}
@@ -754,29 +754,38 @@ public class MultiSpeciesCallService extends Service {
     public Stream<SimilarityExpressionCall> loadSimilarityExpressionCalls(int taxonId,
             Collection<GeneFilter> geneFilters, ConditionFilter conditionFilter, boolean onlyTrusted) {
         log.entry(taxonId, geneFilters, conditionFilter, onlyTrusted);
-
-        if (geneFilters == null || geneFilters.stream().anyMatch(Objects::isNull)) {
+        if (taxonId <= 0) {
+            throw log.throwing(new IllegalArgumentException("taxonId must be stricly positive"));
+        }
+        if (geneFilters != null && geneFilters.stream().anyMatch(Objects::isNull)) {
             throw log.throwing(new IllegalArgumentException("No gene filter should be null"));
         }
-        if (conditionFilter == null) {
-            throw log.throwing(new IllegalArgumentException("Provided conditionFilter should not be null"));
-        }
-
-        Set<GeneFilter> clnGeneFilters = Collections.unmodifiableSet(new HashSet<>(geneFilters));
+        //If GeneFilters are not provided, we retrieve data for all species of the requested taxon
+        Set<GeneFilter> clnGeneFilters = Collections.unmodifiableSet(
+                geneFilters == null || geneFilters.isEmpty()?
+                        this.getServiceFactory().getSpeciesService()
+                        .loadSpeciesByTaxonIds(Collections.singleton(taxonId), false)
+                        .stream().map(s -> new GeneFilter(s.getId()))
+                        .collect(Collectors.toSet()):
+                            new HashSet<>(geneFilters));
 
         // Retrieve AnatEntitySimilarity from the provided taxon
         Set<AnatEntitySimilarity> anatEntitySimilarities = anatEntitySimilarityService
-                .loadPositiveAnatEntitySimilarities(taxonId, onlyTrusted).stream()
+                .loadPositiveAnatEntitySimilarities(taxonId, onlyTrusted);
+        if (conditionFilter != null) {
                 // we keep anat. entity similarities with at least one anat. entity from condition filters
-                .filter(s -> s.getAllAnatEntities().stream()
-                        .anyMatch(ae -> conditionFilter.getAnatEntityIds().contains(ae.getId())))
+            anatEntitySimilarities = anatEntitySimilarities.stream()
+                    .filter(s -> s.getSourceAnatEntities().stream()
+                            .anyMatch(ae -> conditionFilter.getAnatEntityIds().contains(ae.getId())))
                 .collect(Collectors.toSet());
+        }
 
         // Build a new condition filter based on retrieved anat. entity similarities
-        // TODO: use similaritiesByAnatEntity to optimize building of SimilarityExpressionCalls
+        //XXX: What if an anat. entity is part of several AnatEntitySimilarities?
+        //For now, the key collision will throw an Exception, will see whether it happens.
         Map<AnatEntity, AnatEntitySimilarity> similaritiesByAnatEntity =
                 anatEntitySimilarities.stream()
-                        .flatMap(sim -> sim.getAllAnatEntities().stream()
+                        .flatMap(sim -> sim.getSourceAnatEntities().stream()
                                 .map(ae -> new SimpleEntry<>(ae, sim)))
                         .collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue));
         Set<String> allAnatEntityIds = similaritiesByAnatEntity.keySet().stream()
@@ -812,18 +821,19 @@ public class MultiSpeciesCallService extends Service {
         Stream<SimilarityExpressionCall> similarityExpressionCallStream =
                 callsByGene.flatMap(callList -> {
                     Gene gene = callList.get(0).getGene();
-                    return anatEntitySimilarities.stream()
-                            .map(anatEntitySimilarity -> {
-                                MultiSpeciesCondition cond = new MultiSpeciesCondition(anatEntitySimilarity, null);
-                                List<ExpressionCall> filteredCalls = callList.stream()
-                                        .filter(c -> anatEntitySimilarity.getAllAnatEntities()
-                                                .contains(c.getCondition().getAnatEntity()))
-                                        .collect(Collectors.toList());
-                                boolean hasExpression = filteredCalls.stream()
-                                        .anyMatch(c -> ExpressionSummary.EXPRESSED.equals(c.getSummaryCallType()));
-                                return new SimilarityExpressionCall(gene, cond, filteredCalls,
-                                        hasExpression? ExpressionSummary.EXPRESSED: ExpressionSummary.NOT_EXPRESSED);
-                            }).filter(s -> !s.getCalls().isEmpty());
+                    LinkedHashMap<AnatEntitySimilarity, List<ExpressionCall>> callsPerSimilarity = callList.stream()
+                            .collect(Collectors.toMap(
+                                    c -> similaritiesByAnatEntity.get(c.getCondition().getAnatEntity()),
+                                    c -> new ArrayList<>(Arrays.asList(c)),
+                                    (v1, v2) -> {v1.addAll(v2); return v1;},
+                                    () -> new LinkedHashMap<>()));
+                    return callsPerSimilarity.entrySet().stream().map(e -> {
+                        MultiSpeciesCondition cond = new MultiSpeciesCondition(e.getKey(), null);
+                        boolean hasExpression = e.getValue().stream()
+                                .anyMatch(c -> ExpressionSummary.EXPRESSED.equals(c.getSummaryCallType()));
+                        return new SimilarityExpressionCall(gene, cond, e.getValue(),
+                                hasExpression? ExpressionSummary.EXPRESSED: ExpressionSummary.NOT_EXPRESSED);
+                    });
                 });
         return log.exit(similarityExpressionCallStream);
 
@@ -863,13 +873,13 @@ public class MultiSpeciesCallService extends Service {
         Set<AnatEntitySimilarity> anatEntitySimilarities = anatEntitySimilarityService
                 .loadPositiveAnatEntitySimilarities(taxonId, onlyTrusted).stream()
                 // we keep anat. entity similarities with at least one anat. entity from condition filters
-                .filter(s -> s.getAllAnatEntities().stream()
+                .filter(s -> s.getSourceAnatEntities().stream()
                         .anyMatch(ae -> providedAnatEntityIds.contains(ae.getId())))
                 .collect(Collectors.toSet());
 
         // Build the condition filter based on the AnatEntitySimilarity
         Set<String> retrievedAnatEntityIds = anatEntitySimilarities.stream()
-                .map(AnatEntitySimilarity::getAllAnatEntities)
+                .map(AnatEntitySimilarity::getSourceAnatEntities)
                 .flatMap(Set::stream)
                 .map(Entity::getId)
                 .collect(Collectors.toSet());
@@ -909,7 +919,7 @@ public class MultiSpeciesCallService extends Service {
                             .map(anatEntitySimilarity -> {
                                 MultiSpeciesCondition cond = new MultiSpeciesCondition(anatEntitySimilarity, null);
                                 List<ExpressionCall> filteredCalls = callList.stream()
-                                        .filter(c -> anatEntitySimilarity.getAllAnatEntities().contains(c.getCondition().getAnatEntity()))
+                                        .filter(c -> anatEntitySimilarity.getSourceAnatEntities().contains(c.getCondition().getAnatEntity()))
                                         .collect(Collectors.toList());
                                 return new SimilarityExpressionCall(gene, cond, filteredCalls, null);
                             }).filter(s -> !s.getCalls().isEmpty());

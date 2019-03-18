@@ -281,7 +281,9 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
             throw log.throwing(new IllegalArgumentException("Element cannot be null"));
         }
         if (!elementToSpeciesIds.containsKey(element)) {
-            throw log.throwing(new IllegalArgumentException("Element is not present in the ontology"));
+            log.trace("Elements in the ontology: {}", elementToSpeciesIds.keySet());
+            throw log.throwing(new IllegalArgumentException("Element is not present in the ontology: "
+                               + element));
         }
         return log.exit(elementToSpeciesIds.get(element));
     }

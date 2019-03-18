@@ -347,4 +347,23 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
 //        assertEquals("Incorrect multi-species expression calls for tax ID 100",
 //            expected.get(taxId100), actual.get(taxId100));
     }
+
+    @Test
+    public void makeIntegrationTest() {
+        try (ServiceFactory serviceFactory = new ServiceFactory()) {
+            getLogger().info("SIMILARITY: {}", serviceFactory.getAnatEntitySimilarityService()
+                    .loadPositiveAnatEntitySimilarities(7742, false)
+            .stream().map(s -> s.getSourceAnatEntities().stream()
+                    .map(ae -> ae.getName()).collect(Collectors.joining(", ")))
+            .collect(Collectors.joining("\n")));
+
+            MultiSpeciesCallService callService = serviceFactory.getMultiSpeciesCallService();
+            GeneFilter geneFilter1 = new GeneFilter(9606, Arrays.asList("ENSG00000244734", "ENSG00000130208"));
+            GeneFilter geneFilter2 = new GeneFilter(10090, Arrays.asList("ENSMUSG00000052187", "ENSMUSG00000040564"));
+            callService.loadSimilarityExpressionCalls(7742, Arrays.asList(geneFilter1, geneFilter2), null, false)
+            .forEach(c -> getLogger().info(c.getGene().getName() + " - "
+            + c.getMultiSpeciesCondition().getAnatSimilarity().getAllAnatEntities().stream()
+            .map(ae -> ae.getName()).collect(Collectors.joining(", "))));
+        }
+    }
 }

@@ -144,27 +144,37 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
                 entitiesBySpeciesId.entrySet().stream()
                     .collect(Collectors.toMap(e -> e.getKey(), 
                             e -> Collections.unmodifiableSet(e.getValue()))));
-        //We also reverse this Map for easier retrieval of taxon constraints per element
-        this.elementToSpeciesIds = Collections.unmodifiableMap(
-                this.speciesIdToElements.entrySet().stream()
-                .flatMap(e -> e.getValue().stream()
-                        .map(element -> new AbstractMap.SimpleEntry<>(element, e.getKey())))
-                .collect(Collectors.toMap(
-                        e -> e.getKey(),
-                        e -> e.getValue() == null? null: new HashSet<>(Arrays.asList(e.getValue())),
-                        (v1, v2) -> {
-                            if (v1 == null || v2 == null) {
-                                throw log.throwing(new IllegalStateException(
-                                    "There shouldn't be any key collision with a null species ID."));
-                            }
-                            v1.addAll(v2);
-                            return v1;
-                        }))
-                .entrySet().stream().collect(Collectors.toMap(
-                        e -> e.getKey(),
-                        e -> Collections.unmodifiableSet(e.getValue())))
-                );
         log.debug("Entities by speciesId: {}", this.speciesIdToElements);
+
+        //We also reverse this Map for easier retrieval of taxon constraints per element.
+        //Collectors.toMap does not accept null value (see https://stackoverflow.com/a/24634007/1768736),
+        //and the code is less readable when using the Collectors.collect method, so we do a regular loop.
+        //TODO: implement unit test using taxon constraints with a null species ID for testing this logic.
+        Map<T, Set<Integer>> tmpElementToSpeciesIds = new HashMap<>();
+        for (Entry<Integer, Set<T>> e: this.speciesIdToElements.entrySet()) {
+            Integer speciesId = e.getKey();
+            for (T element: e.getValue()) {
+                //The associated value can be null, so we need to use 'containsKey'
+                if (tmpElementToSpeciesIds.containsKey(element)) {
+                    Set<Integer> existingValue = tmpElementToSpeciesIds.get(element);
+                    if (existingValue == null || speciesId == null) {
+                        throw log.throwing(new IllegalStateException(
+                                "There shouldn't be any key collision with a null species ID."));
+                    }
+                    existingValue.add(speciesId);
+                } else {
+                    tmpElementToSpeciesIds.put(element,
+                            speciesId == null? null: new HashSet<>(Arrays.asList(speciesId)));
+                }
+            }
+        }
+        //Collectors.toMap does not accept null value (see https://stackoverflow.com/a/24634007/1768736)
+        this.elementToSpeciesIds = Collections.unmodifiableMap(tmpElementToSpeciesIds
+                .entrySet().stream().collect(
+                        HashMap::new,
+                        (m, e) -> m.put(e.getKey(),
+                                e.getValue() == null? null: Collections.unmodifiableSet(e.getValue())),
+                        HashMap::putAll));
         
         Map<Integer, Set<RelationTO<U>>> relationsBySpeciesId = null;
         if (this.relationTaxonConstraints.isEmpty()) {

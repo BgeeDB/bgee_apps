@@ -50,8 +50,8 @@ public class MySQLSummarySimilarityAnnotationDAO
     }
 
     private static String generateTableRef(Integer taxonId, boolean ancestralTaxaAnnots,
-            boolean descentTaxaAnnots, Boolean positiveAnnots, Boolean trusted) {
-        log.entry(taxonId, ancestralTaxaAnnots, descentTaxaAnnots, positiveAnnots, trusted);
+            boolean descentTaxaAnnots, Boolean trusted) {
+        log.entry(taxonId, ancestralTaxaAnnots, descentTaxaAnnots, trusted);
         if (taxonId == null || taxonId <= 0) {
             throw log.throwing(new IllegalArgumentException("Valid taxon ID must be provided"));
         }
@@ -71,7 +71,7 @@ public class MySQLSummarySimilarityAnnotationDAO
             if (descentTaxaAnnots) {
                 sb.append("INNER JOIN taxon AS t3 ")
                   .append("ON t3.taxonLeftBound >= t1.taxonLeftBound AND ")
-                  .append("t3.taxonRightBound =< t1.taxonRightBound ");
+                  .append("t3.taxonRightBound <= t1.taxonRightBound ");
             }
             sb.append("INNER JOIN ");
         }
@@ -106,7 +106,7 @@ public class MySQLSummarySimilarityAnnotationDAO
         String targetTaxonIdTable = SUMMARY_SIM_ANNOT_TABLE;
         boolean getAncOrDes = taxonId != null && (ancestralTaxaAnnots || descentTaxaAnnots);
         if (getAncOrDes) {
-            targetTaxonIdTable = "taxon";
+            targetTaxonIdTable = "t1";
         }
 
         boolean whereClauseStarted = false;
@@ -144,7 +144,7 @@ public class MySQLSummarySimilarityAnnotationDAO
             paramIndex++;
         }
         if (positiveAnnots != null) {
-            stmt.setBoolean(paramIndex, positiveAnnots);
+            stmt.setBoolean(paramIndex, !positiveAnnots);
             paramIndex++;
         }
         if (trusted != null) {
@@ -184,8 +184,7 @@ public class MySQLSummarySimilarityAnnotationDAO
 
         StringBuilder sb = new StringBuilder(generateSelectClause(SUMMARY_SIM_ANNOT_TABLE, COL_TO_ATTR_MAP,
                 true, clonedAttrs));
-        sb.append(generateTableRef(taxonId, ancestralTaxaAnnots, descentTaxaAnnots,
-                positiveAnnots, trusted));
+        sb.append(generateTableRef(taxonId, ancestralTaxaAnnots, descentTaxaAnnots, trusted));
         sb.append(generateWhereCond(taxonId, ancestralTaxaAnnots, descentTaxaAnnots,
                 positiveAnnots, trusted));
 
@@ -214,8 +213,7 @@ public class MySQLSummarySimilarityAnnotationDAO
         StringBuilder sb = new StringBuilder("SELECT DISTINCT ");
         sb.append(SIM_ANNOT_TO_ANAT_ENTITY_TABLE).append(".* ");
 
-        sb.append(generateTableRef(taxonId, ancestralTaxaAnnots, descentTaxaAnnots,
-                positiveAnnots, trusted));
+        sb.append(generateTableRef(taxonId, ancestralTaxaAnnots, descentTaxaAnnots, trusted));
         sb.append(" INNER JOIN ").append(SIM_ANNOT_TO_ANAT_ENTITY_TABLE)
           .append(" ON ").append(SIM_ANNOT_TO_ANAT_ENTITY_TABLE).append(".").append(SUMMARY_SIM_ID_FIELD)
           .append(" = ").append(SUMMARY_SIM_ANNOT_TABLE).append(".").append(SUMMARY_SIM_ID_FIELD);

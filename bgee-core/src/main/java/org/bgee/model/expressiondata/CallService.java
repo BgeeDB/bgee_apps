@@ -1712,8 +1712,7 @@ public class CallService extends CommonService {
             boolean getDataProp = attrs == null || attrs.isEmpty() ||
                     attrs.contains(Attribute.OBSERVED_DATA);
             assert !getExperimentsCounts ||
-                    cdTO.getExperimentCounts() != null && !cdTO.getExperimentCounts().isEmpty() &&
-                            cdTO.getPropagatedCount() != null;
+                    cdTO.getExperimentCounts() != null && !cdTO.getExperimentCounts().isEmpty();
             assert !getRankInfo || cdTO.getRank() != null && cdTO.getRankNorm() != null &&
                     cdTO.getWeightForMeanRank() != null;
             assert !getDataProp || cdTO.getDataPropagation() != null &&

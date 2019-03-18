@@ -211,6 +211,7 @@ public class AnatEntitySimilarityService extends Service {
         //Retrieve the anat. entity IDs for building the ontology
         Set<String> anatEntityIds = validAnnots.values().stream().flatMap(s -> s.stream())
                 .collect(Collectors.toSet());
+        log.trace("Anat entity IDs considered for loading anatomical ontology: {}", anatEntityIds);
         MultiSpeciesOntology<AnatEntity, String> anatOnt = this.getServiceFactory().getOntologyService()
                 .getAnatEntityOntology(
                         (Collection<Integer>) null,
@@ -461,20 +462,20 @@ public class AnatEntitySimilarityService extends Service {
 
         //If a multiple-entity annotation have its anat. entities that are all contained
         //in  the anat. entities of another multiple-entity annotation, then we discard the annotation
-        //with the highest number of anat. entities.
+        //with the lowest number of anat. entities.
         //So, first, we order validAnatEntityIdsToMultipleEntityAnnots by the number of anat. entity IDs
-        //in each Entry.
+        //in each Entry in reversed order.
         List<Entry<Set<String>, Set<SummarySimilarityAnnotationTO>>> orderedMultEntAnnots =
                 validAnatEntityIdsToMultipleEntityAnnots.entrySet().stream()
-                .sorted(Comparator.comparing(e -> e.getKey().size()))
+                .sorted(Comparator.comparing(e -> e.getKey().size(), Comparator.reverseOrder()))
                 .collect(Collectors.toList());
         Set<SummarySimilarityAnnotationTO> multEntAnnotsToDiscard = new HashSet<>();
         for (int i = 0; i < orderedMultEntAnnots.size(); i++) {
             Entry<Set<String>, Set<SummarySimilarityAnnotationTO>> entry1 = orderedMultEntAnnots.get(i);
             Set<SummarySimilarityAnnotationTO> annots1 = entry1.getValue();
             if (multEntAnnotsToDiscard.contains(annots1.iterator().next())) {
-                //If this annot was already discarded, any other annotation with more anat. entities
-                //and containing all the anat. entities of this annotation would have already
+                //If this annot was already discarded, any other annotation with less anat. entities
+                //and having only anat. entities contained in this annotation would have already
                 //been discarded as well.
                 continue;
             }
@@ -484,8 +485,8 @@ public class AnatEntitySimilarityService extends Service {
                 Set<String> anatEntityIds1 = entry1.getKey();
                 Set<String> anatEntityIds2 = entry2.getKey();
                 assert anatEntityIds1.size() > 1 && anatEntityIds2.size() > 1 &&
-                        anatEntityIds1.size() <= anatEntityIds2.size();
-                if (anatEntityIds1.size() != anatEntityIds2.size() && anatEntityIds2.containsAll(anatEntityIds1)) {
+                        anatEntityIds1.size() >= anatEntityIds2.size();
+                if (anatEntityIds1.size() != anatEntityIds2.size() && anatEntityIds1.containsAll(anatEntityIds2)) {
                     multEntAnnotsToDiscard.addAll(annots2);
                 }
             }

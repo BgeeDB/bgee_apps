@@ -289,7 +289,9 @@ public class AnatEntitySimilarityService extends Service {
                 .stream().collect(Collectors.toMap(
                         simToAnat -> Optional.ofNullable(
                                 idToAnnots.get(simToAnat.getSummarySimilarityAnnotationId()))
-                                .orElseThrow(() -> new IllegalStateException((
+                                //Needs compiler hint on some Java version
+                                //(See https://stackoverflow.com/a/40865318/1768736)
+                                .<IllegalStateException>orElseThrow(() -> new IllegalStateException((
                                         "Annotation could not be found for ID: "
                                         + simToAnat.getSummarySimilarityAnnotationId()))),
                         simToAnat -> new HashSet<>(Arrays.asList(simToAnat.getAnatEntityId())),
@@ -511,7 +513,9 @@ public class AnatEntitySimilarityService extends Service {
         //Get the AnatEntity objects corresponding to the IDs
         Set<AnatEntity> anatEntities = anatEntityIds.stream()
                 .map(id -> Optional.ofNullable(anatOnt.getElement(id))
-                        .orElseThrow(() -> new IllegalStateException(
+                        //Needs compiler hint on some Java version
+                        //(See https://stackoverflow.com/a/40865318/1768736)
+                        .<IllegalStateException>orElseThrow(() -> new IllegalStateException(
                                 "Anat entity could not be found in the ontology: " + id)))
                 .collect(Collectors.toSet());
         //Transformation_of relationships

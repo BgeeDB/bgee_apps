@@ -826,7 +826,8 @@ public class MultiSpeciesCallService extends Service {
                                     c -> similaritiesByAnatEntity.get(c.getCondition().getAnatEntity()),
                                     c -> new ArrayList<>(Arrays.asList(c)),
                                     (v1, v2) -> {v1.addAll(v2); return v1;},
-                                    () -> new LinkedHashMap<>()));
+                                    //Need compiler hint on my Eclipse version
+                                    () -> new LinkedHashMap<AnatEntitySimilarity, List<ExpressionCall>>()));
                     return callsPerSimilarity.entrySet().stream().map(e -> {
                         MultiSpeciesCondition cond = new MultiSpeciesCondition(e.getKey(), null);
                         boolean hasExpression = e.getValue().stream()

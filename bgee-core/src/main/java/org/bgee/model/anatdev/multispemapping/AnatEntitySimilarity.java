@@ -113,6 +113,16 @@ public class AnatEntitySimilarity {
         return sourceAnatEntities;
     }
     /**
+     * @return  A {@code String} containing the names of the {@code AnatEntity}s
+     *          returned by {@link #getSourceAnatEntities()} ordered by alphabetical orders
+     *          and separated with the string ' - '.
+     */
+    public String getSourceAnatEntityNames() {
+        return sourceAnatEntities.stream().map(ae -> ae.getName())
+                .sorted()
+                .collect(Collectors.joining(" - "));
+    }
+    /**
      * Return the {@code AnatEntity}s that were added to this relation of similarity
      * thanks to'transformation_of' relations. Indeed, similarity annotations are created only
      * for mature anatomical entities (for instance, the term "brain" is annotated,
@@ -134,6 +144,16 @@ public class AnatEntitySimilarity {
         return transformationOfAnatEntities;
     }
     /**
+     * @return  A {@code String} containing the names of the {@code AnatEntity}s
+     *          returned by {@link #getTransformationOfAnatEntities()} ordered by alphabetical orders
+     *          and separated with the string ' - '.
+     */
+    public String getTransformationOfAnatEntityNames() {
+        return transformationOfAnatEntities.stream().map(ae -> ae.getName())
+                .sorted()
+                .collect(Collectors.joining(" - "));
+    }
+    /**
      * Return all {@code AnatEntity}s that are part of this {@code AnatEntitySimilarity} relation.
      * This is a helper method to retrieve the union of the {@code AnatEntity}s returned by
      * {@link #getSourceAnatEntities()} and {@link #getTransformationOfAnatEntities()}.
@@ -150,6 +170,16 @@ public class AnatEntitySimilarity {
                 this.getSourceAnatEntities().stream(),
                 this.getTransformationOfAnatEntities().stream())
                 .collect(Collectors.toSet());
+    }
+    /**
+     * @return  A {@code String} containing the names of the {@code AnatEntity}s
+     *          returned by {@link #getAllAnatEntities()} ordered by alphabetical orders
+     *          and separated with the string ' - '.
+     */
+    public String getAllAnatEntityNames() {
+        return getAllAnatEntities().stream().map(ae -> ae.getName())
+                .sorted()
+                .collect(Collectors.joining(" - "));
     }
     /**
      * Return the {@code Taxon} that was considered to retrieve the anatomical entity similarity.

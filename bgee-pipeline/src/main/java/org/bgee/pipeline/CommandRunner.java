@@ -16,6 +16,7 @@ import org.bgee.pipeline.expression.InsertPropagatedCalls;
 import org.bgee.pipeline.expression.downloadfile.GenerateExprFile2;
 import org.bgee.pipeline.expression.downloadfile.GenerateInsertGeneStats;
 import org.bgee.pipeline.expression.downloadfile.GenerateUniprotXRefWithExprInfo;
+import org.bgee.pipeline.expression.downloadfile.collaboration.GenerateBioSODAFile;
 import org.bgee.pipeline.expression.downloadfile.collaboration.GenerateOncoMXFile;
 import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile;
 import org.bgee.pipeline.gene.InsertGO;
@@ -285,6 +286,9 @@ public class CommandRunner {
 //            break;
         case "GenerateOncoMXFile":
             GenerateOncoMXFile.main(newArgs);
+            break;
+        case "GenerateBioSODAFile":
+            GenerateBioSODAFile.main(newArgs);
             break;
         
         //---------- Generate Bgee Lite database -----------

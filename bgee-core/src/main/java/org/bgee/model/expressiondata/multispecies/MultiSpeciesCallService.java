@@ -781,8 +781,9 @@ public class MultiSpeciesCallService extends Service {
         }
 
         // Build a new condition filter based on retrieved anat. entity similarities
-        //XXX: What if an anat. entity is part of several AnatEntitySimilarities?
-        //For now, the key collision will throw an Exception, will see whether it happens.
+        //FIXME: actually, for non-transitive similarity relations, an AnatEntity
+        //could be part of several AnatEntitySimilaritys, so this should be
+        //a Map<AnatEntity, Set<AnatEntitySimilarity>>
         Map<AnatEntity, AnatEntitySimilarity> similaritiesByAnatEntity =
                 anatEntitySimilarities.stream()
                         .flatMap(sim -> sim.getSourceAnatEntities().stream()
@@ -862,7 +863,7 @@ public class MultiSpeciesCallService extends Service {
             throw log.throwing(new IllegalArgumentException("Provided conditionFilters should not be null"));
         }
         if (callFilter.getConditionFilters().stream()
-                .anyMatch(f -> f.getDevStageIds() == null || !f.getDevStageIds().isEmpty())) {
+                .anyMatch(f -> f.getDevStageIds() != null && !f.getDevStageIds().isEmpty())) {
             throw log.throwing(new UnsupportedOperationException(
                     "Dev. stages are not managed to retrieve SimilarityExpressionCalls"));
         }
@@ -885,6 +886,8 @@ public class MultiSpeciesCallService extends Service {
                 .map(Entity::getId)
                 .collect(Collectors.toSet());
         // FIXME not sure we can have only one condition filter if there are several ones in provided callFilter
+        // FIXME: We can simply remove from each ConditionFilter any anat. entity ID not present
+        // in the AnatEntitySimilarities.
         ConditionFilter newConditionFilter = new ConditionFilter(retrievedAnatEntityIds, null);
 
         // Build a new ExpressionCallFilter to use the ConditionFilter with similar anat. entities

@@ -260,7 +260,9 @@ implements GlobalExpressionCallDAO {
                 case OMA_GROUP_ID:
                     return geneTableName + ".OMAParentNodeId";
                 case PUBLIC_GENE_ID:
-                    return geneTableName + ".geneId";
+                    //FIXME: need to have a species ID ordering attribute
+                    //We need that for our ElementSpliterator
+                    return geneTableName + ".speciesId, " + geneTableName + ".geneId";
                 default:
                     throw log.throwing(new IllegalStateException("Unsupported OrderingAttribute: " + a));
             }
@@ -790,7 +792,9 @@ implements GlobalExpressionCallDAO {
                             orderBy = globalExprTableName + "." + MySQLGeneDAO.BGEE_GENE_ID;
                             break;
                         case PUBLIC_GENE_ID:
-                            orderBy = geneTableName + ".geneId";
+                            //FIXME: need to have a species ID ordering attribute
+                            //We need that for our ElementSpliterator
+                            orderBy = geneTableName + ".speciesId, " + geneTableName + ".geneId";
                             break;
                         case GLOBAL_CONDITION_ID:
                             orderBy = globalExprTableName + "." + MySQLConditionDAO.GLOBAL_COND_ID_FIELD;

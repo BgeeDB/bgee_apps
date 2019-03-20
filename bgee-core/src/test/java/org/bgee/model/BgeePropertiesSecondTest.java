@@ -9,12 +9,12 @@ import org.junit.Test;
  * It checks that the properties are loaded from the correct source
  * These tests are split in several test classes to avoid conflicts between tests due to
  * the per-thread singleton behavior.
- * 
- * @author Mathieu Seppey
- * @author Valentine Rech de Laval
- * @author Frederic Bastian
- * @version Bgee 13, Oct 2016
- * @since Bgee 13
+ *
+ * @author  Mathieu Seppey
+ * @author  Valentine Rech de Laval
+ * @author  Frederic Bastian
+ * @version Bgee 14, Mar. 2019
+ * @since   Bgee 13
  * @see BgeePropertiesParentTest
  * @see BgeePropertiesFirstTest
  * @see BgeePropertiesSecondTest
@@ -38,6 +38,10 @@ public class BgeePropertiesSecondTest extends BgeePropertiesParentTest {
                 bgeeProp.getMajorVersion());
         assertEquals("Wrong property value retrieved","2",
                 bgeeProp.getMinorVersion());
+        assertEquals("Wrong property value retrieved", "searchurl",
+                bgeeProp.getSearchServerURL());
+        assertEquals("Wrong property value retrieved", "searchport",
+                bgeeProp.getSearchServerPort());
         assertEquals("Wrong property value retrieved","/filerexec",
                 bgeeProp.getTopAnatRScriptExecutable());
         assertEquals("Wrong property value retrieved","/filecallerwd",

@@ -37,11 +37,11 @@ import org.apache.logging.log4j.Logger;
  * This class has been inspired from {@code net.sf.log4jdbc.DriverSpy}
  * developed by Arthur Blake.
  * 
- * @author Frederic Bastian
- * @author Mathieu Seppey
- * @author Valentine Rech de Laval
- * @version Bgee 13, Oct. 2016
- * @since Bgee 13
+ * @author  Frederic Bastian
+ * @author  Mathieu Seppey
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, Mar. 2019
+ * @since   Bgee 13
  */
 public class BgeeProperties {
     private final static Logger log = LogManager.getLogger(BgeeProperties.class.getName());
@@ -94,6 +94,36 @@ public class BgeeProperties {
      */
     public final static String PROPERTIES_FILE_NAME_DEFAULT = "/bgee.properties";
     
+    // Sphinx search engine
+    /**
+     * A {@code String} that is the key to access to the System property that contains the value
+     * of the server URL which is used to query a search.
+     * 
+     * @see #BGEE_SEARCH_SERVER_URL_DEFAULT
+     */
+    public final static String BGEE_SEARCH_SERVER_URL_KEY = "org.bgee.search.url";
+
+    /**
+     * A {@code String} that is the default value of the server URL which is used to query a search.
+     *
+     * @see #BGEE_SEARCH_SERVER_URL_KEY
+     */
+    public final static String BGEE_SEARCH_SERVER_URL_DEFAULT = null;
+    /**
+     * A {@code String} that is the key to access to the System property that contains the value
+     * of the server port which is used to query a search.
+     * 
+     * @see #BGEE_SEARCH_SERVER_PORT_DEFAULT
+     */
+    public final static String BGEE_SEARCH_SERVER_PORT_KEY = "org.bgee.search.port";
+
+    /**
+     * A {@code String} that is the default value of the server port which is used to query a search.
+     *
+     * @see #BGEE_SEARCH_SERVER_PORT_KEY
+     */
+    public final static String BGEE_SEARCH_SERVER_PORT_DEFAULT = null;
+
     //TopAnat
     /**
      * A {@code String} that is the key to access to the System property that contains the value
@@ -333,9 +363,9 @@ public class BgeeProperties {
      *
      * @param prop          A {@code java.util.Properties} instance that contains the system 
      *                      properties to look for {@code key} first
-     * @param SYS_PROPS      {@code java.util.Properties} retrieved from System properties, 
+     * @param sysProps      A {@code java.util.Properties} retrieved from System properties, 
      *                      where {@code key} is searched in second
-     * @param FILE_PROPS     {@code java.util.Properties} retrieved from the Bgee properties file, 
+     * @param fileProps     A {@code java.util.Properties} retrieved from the Bgee properties file, 
      *                      where {@code key} is searched in if {@code prop} and {@code SYS_PROPS}
      *                      were undefined or empty for {@code key}. 
      *                      Can be {@code null} if no properties file was found.
@@ -652,6 +682,12 @@ public class BgeeProperties {
         minorVersion = getStringOption(prop, SYS_PROPS, FILE_PROPS,
                 MINOR_VERSION_KEY,
                 MINOR_VERSION_DEFAULT);
+        searchServerUrl = getStringOption(prop, SYS_PROPS, FILE_PROPS,
+                BGEE_SEARCH_SERVER_URL_KEY,
+                BGEE_SEARCH_SERVER_URL_DEFAULT);
+        searchUrlPort = getStringOption(prop, SYS_PROPS, FILE_PROPS,
+                BGEE_SEARCH_SERVER_PORT_KEY,
+                BGEE_SEARCH_SERVER_PORT_DEFAULT);
         topAnatRScriptExecutable = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY,  
                 TOP_ANAT_R_SCRIPT_EXECUTABLE_DEFAULT);
@@ -682,6 +718,16 @@ public class BgeeProperties {
      * (if the release is Bgee {@code v14.2}, the minor version number is {@code 2}).
      */
     private final String minorVersion;
+
+    /**
+     * A {@code String} that is the server URL which is used to query a search.
+     */
+    private final String searchServerUrl;
+
+    /**
+     * A {@code String} that is the server port which is used to query a search.
+     */
+    private final String searchUrlPort;
 
     /**
      * A {@code String} that is the path of RScript Executable file 
@@ -777,6 +823,20 @@ public class BgeeProperties {
      */
     public String getMinorVersion() {
         return minorVersion;
+    }
+
+    // Sphinx search engine
+    /**
+     * @return A {@code String} that is the server URL which is used to query a search.
+     */
+    public String getSearchServerURL() {
+        return searchServerUrl;
+    }
+    /**
+     * @return A {@code String} that is the server port which is used to query a search.
+     */
+    public String getSearchServerPort() {
+        return searchUrlPort;
     }
 
     //TopAnat

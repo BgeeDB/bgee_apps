@@ -25,7 +25,7 @@ $( document ).ready( function(){
                 display: $.fn.dataTable.Responsive.display.modal( {
                     header: function ( row ) {
                         var data = row.data();
-                        return 'Details' + data[1];
+                        return 'Details in ' + data[1];
                     }
                 } ),
                 renderer: function ( api, rowIdx, columns ) {
@@ -33,7 +33,7 @@ $( document ).ready( function(){
                         '<tr><td>' + columns[0].title + '</td><td>' + columns[0].data + '</td></tr>' +
                         '<tr><td>' + columns[1].title + '</td><td>' + columns[1].data + '</td></tr>' +
                         '<tr><td>' + columns[2].title + '</td><td>' + columns[2].data + '</td></tr>' +
-                        '<tr><td>' + columns[4].title + '</td><td>' + columns[3].data + '</td></tr>';
+                        '<tr><td>' + columns[3].title + '</td><td>' + columns[3].data + '</td></tr>';
                     return $('<table class="table"/>').append( data );
                 }
             },
@@ -69,9 +69,9 @@ $( document ).ready( function(){
         columns: [ // sorting definition
             { "orderable": true }, // Ensembl ID
             { "orderable": true }, // Name
-            { "orderable": true},  // Description
-            { "orderable": true },  // Organism
-            { "orderable": true}  // Match
+            { "orderable": true }, // Description
+            { "orderable": true }, // Organism
+            { "orderable": true }  // Match
         ]
     });
 
@@ -128,7 +128,7 @@ $( document ).ready( function(){
            { "orderable": false }, // Anatomical entity - null = default sorting
            { "orderable": false }, // Anat. entity ID - null = default sorting
            { "orderable": false }, // Developmental stage(s) - ordering disabled
-           { "orderable": false},  //score - ordering disabled
+           { "orderable": false }, //score - ordering disabled
            //score ordering disabled, otherwise, use: 
            //{ "orderDataType": "dom-text", "type": "score" }, // Score - custom function
            { "orderable": false } // Quality - ordering disabled

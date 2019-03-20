@@ -99,7 +99,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         this.writeln(this.getGeneSearchBox(false, searchTerm));
 
         if (searchTerm != null) {
-            if  (result.getTotalMatchCount() == 0) {
+            if  (result == null || result.getTotalMatchCount() == 0) {
                 this.writeln("No gene found for '" + searchTerm + "'");
             } else {
                 int matchCount = result.getGeneMatches() == null ? 0 : result.getGeneMatches().size();

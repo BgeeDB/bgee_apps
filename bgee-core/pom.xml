@@ -56,6 +56,10 @@
             <groupId>net.sf.supercsv</groupId>
             <artifactId>super-csv</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.sphx</groupId>
+            <artifactId>api</artifactId>
+        </dependency>
 
     </dependencies>
 

@@ -19,10 +19,10 @@ import org.bgee.model.species.Species;
  * Since we do not want to expose these methods to API users, we do not build this class 
  * as an "utils" that {@code Service}s could use as a dependency, but as a parent class to inherit from.
  * 
- * @author Valentine Rech de Laval
- * @author Frederic Bastian
- * @version Bgee 14 Nov. 2017
- * @since Bgee 14 Feb. 2017
+ * @author  Valentine Rech de Laval
+ * @author  Frederic Bastian
+ * @version Bgee 14, Mar. 2019
+ * @since   Bgee 14, Feb. 2017
  *
  */
 public class CommonService extends Service {
@@ -61,13 +61,13 @@ public class CommonService extends Service {
      * 
      * @param condTO        A {@code ConditionTO} that is the condition from db
      *                      to map into {@code Condition}.
-     * @param speciesId     An {@code Integer} that is the ID of the species for which
-     *                      the {@code ConditionTO}s were retrieved. Allows to avoid requesting
-     *                      this attribute from the {@code ConditionDAO} if only one species was requested.
      * @param anatEntity    The {@code AnatEntity} corresponding to the ID returned by
      *                      {@link ConditionTO#getAnatEntityId()}.
      * @param devStage      The {@code DevStage} corresponding to the ID returned by
      *                      {@link ConditionTO#getStageId()}.
+     * @param species       A {@code Species} that is the species for which the {@code ConditionTO}s 
+     *                      were retrieved. Allows to avoid requesting this attribute 
+     *                      from the {@code ConditionDAO} if only one species was requested.
      * @return              The mapped {@code Condition}.
      */
     protected static Condition mapConditionTOToCondition(ConditionTO condTO,
@@ -121,6 +121,10 @@ public class CommonService extends Service {
         }
         if (species == null) {
             throw log.throwing(new IllegalArgumentException("A Species must be provided."));
+        }
+        if (geneTO.getGeneMappedToGeneIdCount() == null) {
+            throw log.throwing(new IllegalArgumentException(
+                    "The number of genes with the same Ensembl gene ID must be provided."));
         }
         if (geneTO.getSpeciesId() != null && !geneTO.getSpeciesId().equals(species.getId())) {
             throw log.throwing(new IllegalArgumentException(

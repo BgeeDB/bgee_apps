@@ -3,8 +3,8 @@
  * 
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
- * @version Bgee 13, July 2016
- * @since   Bgee 13
+ * @version Bgee 14, Mar. 2019
+ * @since   Bgee 13, Dec. 2015
  */
 
 $( document ).ready( function(){ 
@@ -17,6 +17,64 @@ $( document ).ready( function(){
         return text.replace('<ul','<ol').replace('</ul>','</ol>');
     };
     
+    $('table.gene-search-result').DataTable( {
+        //enable ordering but apply no ordering during initialization
+        "order": [],
+        responsive: {
+            details: {
+                display: $.fn.dataTable.Responsive.display.modal( {
+                    header: function ( row ) {
+                        var data = row.data();
+                        return 'Details' + data[1];
+                    }
+                } ),
+                renderer: function ( api, rowIdx, columns ) {
+                    var data =
+                        '<tr><td>' + columns[0].title + '</td><td>' + columns[0].data + '</td></tr>' +
+                        '<tr><td>' + columns[1].title + '</td><td>' + columns[1].data + '</td></tr>' +
+                        '<tr><td>' + columns[2].title + '</td><td>' + columns[2].data + '</td></tr>' +
+                        '<tr><td>' + columns[4].title + '</td><td>' + columns[3].data + '</td></tr>';
+                    return $('<table class="table"/>').append( data );
+                }
+            },
+            breakpoints: [
+                // We use wrap option. So, we don't want a responsive table for not mobile display.  
+                //make the default datatable breakpoints to be the same as bootstrap
+                { name: 'desktop',  width: Infinity },
+                { name: 'tablet-l', width: Infinity },
+                { name: 'tablet-p', width: Infinity },
+                { name: 'mobile-l', width: 480 },
+                { name: 'mobile-p', width: 320 },
+                //(default datatable parameters: )
+                //{ name: 'desktop',  width: Infinity },
+                //{ name: 'tablet-l', width: 1024 },
+                //{ name: 'tablet-p', width: 768 },
+                //{ name: 'mobile-l', width: 480 },
+                //{ name: 'mobile-p', width: 320 }
+
+                //create breakpoints corresponding exactly to bootstrap
+                { name: 'table_lg', width: Infinity },
+                { name: 'table_md', width: Infinity },
+                { name: 'table_sm', width: Infinity },
+                { name: 'table_xs', width: Infinity }
+            ]
+        },
+        columnDefs: [ // Higher responsivePriority are removed first, target define the order
+            { responsivePriority: 2, targets: 0 }, // Ensembl ID
+            { responsivePriority: 1, targets: 1 }, // Name
+            { responsivePriority: 4, targets: 2 }, // Description
+            { responsivePriority: 3, targets: 3 }, // Organism
+            { responsivePriority: 5, targets: 4 }  // Match
+        ],
+        columns: [ // sorting definition
+            { "orderable": true }, // Ensembl ID
+            { "orderable": true }, // Name
+            { "orderable": true},  // Description
+            { "orderable": true },  // Organism
+            { "orderable": true}  // Match
+        ]
+    });
+
     $('table.expression').DataTable( {
     	//enable ordering but apply no ordering during initialization
     	"order": [],

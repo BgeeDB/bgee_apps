@@ -35,7 +35,10 @@ import org.bgee.model.expressiondata.ConditionGraph;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneMatch;
+import org.bgee.model.gene.GeneMatchResult;
 import org.bgee.model.source.Source;
+import org.bgee.model.species.Species;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.JsonHelper;
 
@@ -45,7 +48,7 @@ import org.bgee.view.JsonHelper;
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, Aug. 2018
+ * @version Bgee 14, Mar. 2019
  * @since   Bgee 13, Oct. 2015
  */
 public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
@@ -71,20 +74,116 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
     @Override
     public void displayGeneHomePage() {
         log.entry();
+        this.displayGeneSearchPage(null, null);
+        log.exit();
+    }
+
+    @Override
+    public void displayGeneSearchResult(String searchTerm, GeneMatchResult result) {
+        log.entry(searchTerm, result);
+        this.displayGeneSearchPage(searchTerm, result);
+        log.exit();
+    }
+
+    private void displayGeneSearchPage(String searchTerm, GeneMatchResult result) {
+        log.entry(searchTerm, result);
         this.startDisplay("Gene information");
         
         this.writeln("<h1>Gene search</h1>");
 
         this.writeln("<div id='bgee_introduction'>");
-        
-        this.writeln("<p>Search for genes based on Ensembl gene IDs, gene names, and synonyms.</p>");
-
+        this.writeln("<p>Search for genes based on Ensembl gene IDs, gene names, " +
+                "gene descriptions, synonyms and cross-references.</p>");
         this.writeln("</div>");
 
-        this.writeln(getGeneSearchBox(false));
+        this.writeln(this.getGeneSearchBox(false, searchTerm));
+
+        if (searchTerm != null) {
+            if  (result.getTotalMatchCount() == 0) {
+                this.writeln("No gene found for '" + searchTerm + "'");
+            } else {
+                int matchCount = result.getGeneMatches() == null ? 0 : result.getGeneMatches().size();
+                boolean estimation = result.getTotalMatchCount() > matchCount;
+                String counterText = "";
+                if (estimation) {
+                    counterText = "About ";
+                }
+                counterText += result.getTotalMatchCount() + " gene(s) found for '" + searchTerm + "'";
+                if (estimation) {
+                    counterText += " (only the first " + matchCount + " genes are displayed)";
+                }
+
+                this.writeln("<div>");
+                this.writeln("<p class='gene-count'>" + counterText + "</p>");
+                this.writeln("</div>"); // close gene-count
+                
+                this.writeln("<div class='table-container'>");
+                this.writeln(this.getResultTable(result.getGeneMatches(), searchTerm));
+                this.writeln("</div>"); // close table-container
+            }
+        }
         
         this.endDisplay();
         log.exit();
+    }
+
+    private String getResultTable(List<GeneMatch> geneMatches, String searchTerm) {
+        log.entry(geneMatches, searchTerm);
+        
+        StringBuilder sb = new StringBuilder();
+        sb.append("<table class='gene-search-result stripe wrap compact responsive'>")
+                .append("<thead><tr>")
+                .append("   <th>Ensembl ID</th>")
+                .append("   <th>Name</th>")
+                .append("   <th>Description</th>")
+                .append("   <th>Organism</th>")
+                .append("   <th>Match</th>")
+                .append("</tr></thead>");
+
+        sb.append("<tbody>");
+        for (GeneMatch geneMatch: geneMatches) {
+            Gene gene = geneMatch.getGene();
+
+            sb.append("<tr>");
+            sb.append("    <td>").append(getSpecificGenePageLink(gene, gene.getEnsemblGeneId())).append("</td>");
+            sb.append("    <td>").append(getSpecificGenePageLink(gene, getStringNotBlankOrDash(gene.getName()))).append("</td>");
+            sb.append("    <td>").append(getStringNotBlankOrDash(gene.getDescription())).append("</td>");
+            sb.append("    <td>").append(getCompleteSpeciesName(gene)).append("</td>");
+            sb.append("    <td>").append(highlightSearchTerm(geneMatch.getMatch(), searchTerm))
+                    .append(" (").append(geneMatch.getMatchSource().toString().toLowerCase()).append(")</td>");
+            sb.append("</tr>");
+        }
+        sb.append("</tbody>");
+
+        sb.append("</table>");
+        return log.exit(sb.toString());
+    }
+
+    /**
+     * Modify the string to highlight the search term
+     * 
+     * @param label 
+     * @param searchTerm
+     * @return
+     */
+    private String highlightSearchTerm(String label, String searchTerm) {
+        log.entry(label, searchTerm);
+
+        //we modify the string to highlight the search term
+        //we do not use the tag <strong> yet, so that we can escape htmlentities after the replacement
+        //(if we escaped html entities BEFORE the replacement, 
+        //then it would not be possible to highlight a html entities term when used as a search term).
+        //why using ":myStrongOpeningTag:" and ":myStrongClosingTag:"? 
+        //Because it's unlikely to be present in the label :p (?i)([aeiou])
+        String newLabel = label.replaceAll("(?i)(" + searchTerm + ")",
+                ":myStrongOpeningTag:$1:myStrongClosingTag:");
+        //then we escape html entities
+        newLabel = htmlEntities(newLabel);
+        //and then we replace the <strong> tag
+        newLabel = newLabel.replaceAll(":myStrongOpeningTag:", "<strong class='search-match'>")
+                .replace(":myStrongClosingTag:", "</strong>");
+
+        return log.exit(newLabel);
     }
     
     @Override
@@ -127,12 +226,24 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
     
     /** 
      * Get the link to the gene page as a HTML 'a' element.
-     *  
-     * @param gene A {@code Gene} that is the gene for which retrieve the link.
-     * @return     The {@code String} that is the link to the gene page as a HTML 'a' element.
+     *
+     * @param gene  A {@code Gene} that is the gene for which retrieve the link.
+     * @return      The {@code String} that is the link to the gene page as a HTML 'a' element.
      */
     private String getSpecificGenePageLink(Gene gene) {
         log.entry(gene);
+        return log.exit(getSpecificGenePageLink(gene, null));
+    }
+
+    /** 
+     * Get the link to the gene page as a HTML 'a' element.
+     *
+     * @param gene      A {@code Gene} that is the gene for which retrieve the link.
+     * @param linkText  A {@code String} that is the text of the link.
+     * @return          The {@code String} that is the link to the gene page as a HTML 'a' element.
+     */
+    private String getSpecificGenePageLink(Gene gene, String linkText) {
+        log.entry(gene, linkText);
         RequestParameters url = this.getNewRequestParameters();
         url.setPage(RequestParameters.PAGE_GENE);
         url.setGeneId(gene.getEnsemblGeneId());
@@ -142,14 +253,11 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             url.setSpeciesId(gene.getSpecies().getId());
         }
 
-        StringBuilder genePageLink = new StringBuilder();
-        genePageLink.append("<a href='").append(url.getRequestURL()).append("'>")
-                    .append(htmlEntities(gene.getEnsemblGeneId())).append(" in ")
-                    .append(htmlEntities(gene.getSpecies().getScientificName()))
-                    .append(" (").append(htmlEntities(gene.getSpecies().getName())).append(")")
-                    .append("</a>");
+        String text = StringUtils.isNotBlank(linkText)? linkText:
+                htmlEntities(gene.getName() + " - " + gene.getEnsemblGeneId())
+                        + " in " + getCompleteSpeciesName(gene);
 
-        return log.exit(genePageLink.toString());
+        return log.exit("<a href='" + url.getRequestURL() + "'>" + text + "</a>");
     }
 
     /**
@@ -157,8 +265,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      *
      * @return  the {@code String} that is the search box as HTML 'div' element.
      */
-    protected String getGeneSearchBox(boolean isSmallBox) {
-        log.entry(isSmallBox);
+    protected String getGeneSearchBox(boolean isSmallBox, String searchTerm) {
+        log.entry(isSmallBox, searchTerm);
     
         RequestParameters urlExample = this.getNewRequestParameters();
         urlExample.setPage(RequestParameters.PAGE_GENE);
@@ -182,16 +290,20 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                     + "col-lg-offset-3 col-lg-6";
         }
         
+        String value = StringUtils.isNotBlank(searchTerm)? "value='" + searchTerm + "'" : "";
         StringBuilder box = new StringBuilder();
         box.append("<div class='row'>");
         box.append("<div id='bgee_gene_search' class='row well well-sm ").append(bgeeGeneSearchClass).append("'>");
         box.append("    <form action='javascript:void(0);' method='get'>");
         box.append("        <div class='form'>");
+        box.append("            <input type='hidden' id='page' name='page' value='gene' />");
         box.append("            <label for='bgee_gene_search_completion_box'>Search gene</label>");
-        box.append(             example.toString());
         box.append("            <span id='bgee_species_search_msg' class='search_msg'></span>");
         box.append("            <input id='bgee_gene_search_completion_box' class='form-control' " +
-                                    "autocomplete='off' type='text' name='search' autofocus/>");
+                                    "autocomplete='off' type='text' name='search' autofocus " +
+                                    "maxlength='100' " + value + " />");
+        box.append("            <input id='bgee_species_search_submit' type='submit' value='Search' />");
+        box.append(             example.toString());
         box.append("        </div>");
         box.append("    </form>");
         box.append("</div>");
@@ -213,7 +325,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
         // Gene search
         this.writeln("<div class='col-sm-3'>");
-        this.writeln(getGeneSearchBox(true));
+        this.writeln(getGeneSearchBox(true, null));
         this.writeln("</div>"); // close div
 
         //page title
@@ -223,8 +335,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 + String.valueOf(gene.getSpecies().getId()) + "_light.jpg' alt='" + htmlEntities(gene.getSpecies().getShortName())
                 + "' />");
         this.writeln(htmlEntities(titleStart));
-        this.writeln(" - <em>" + htmlEntities(gene.getSpecies().getScientificName()) + "</em>");
-        this.writeln(getSpeciesName(gene.getSpecies().getName()));
+        this.writeln(" - " + getCompleteSpeciesName(gene));
         this.writeln("</h1>");
         
         this.writeln("</div>"); // close row
@@ -241,7 +352,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         
         //table-container
         this.writeln("<div class='col-xs-12 col-md-10'>");
-        this.writeln("<div id='table-container'>");
+        this.writeln("<div class='table-container'>");
 
         this.writeln(getExpressionHTMLByAnat(
                 geneResponse.getCallsByAnatEntity(), 
@@ -557,30 +668,31 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         log.entry(gene);
 
         final StringBuilder table = new StringBuilder("<table id='geneinfo'>");
-        table.append("<tr><th scope='row'>").append("Ensembl ID</th><td>")
+        table.append("<tr><th scope='row'>Ensembl ID</th><td>")
                 .append(htmlEntities(gene.getEnsemblGeneId())).append("</td></tr>");
-        table.append("<tr><th scope='row'>").append("Name</th><td>")
+        table.append("<tr><th scope='row'>Name</th><td>")
                 .append(getStringNotBlankOrDash(gene.getName())).append("</td></tr>");
-        table.append("<tr><th scope='row'>").append("Description</th><td>")
+        table.append("<tr><th scope='row'>Description</th><td>")
                 .append(getStringNotBlankOrDash(gene.getDescription())).append("</td></tr>");
-        table.append("<tr><th scope='row'>").append("Organism</th><td><em>")
-                .append(htmlEntities(gene.getSpecies().getScientificName())).append("</em>")
-                .append(getSpeciesName(gene.getSpecies().getName()));
+        table.append("<tr><th scope='row'>Organism</th><td>")
+                .append(getCompleteSpeciesName(gene));
         table.append("</td></tr>");
 
         return log.exit(table.append("</table>").toString());
     }
 
     /**
-     * Return the {@code String} representing the species name surrounded by brackets. 
-     * If {@code name} is blank, it return empty string.
+     * Return the {@code String} representing the species scientific and common names.
+     * The common name, surrounded by brackets, is displayed only if it is defined.
      *
-     * @param name     A {@code String} that is the name of the species.
-     * @return         The {@code String} that is the species name surrounded by brackets.
-     *                 If {@code name} is blank, it returns an empty string.
+     * @param gene  A {@code Gene} that is the gene for which the species name should be displayed.
+     * @return      The {@code String} that is the species scientific and common names.
      */
-    private static String getSpeciesName(String name) {
-        return StringUtils.isNotBlank(name) ? " (" + htmlEntities(name) + ")" : "";
+    private static String getCompleteSpeciesName(Gene gene) {
+        log.entry(gene);
+        Species sp = gene.getSpecies();
+        return log.exit("<em>" + htmlEntities(sp.getScientificName()) + "</em>" 
+                + (StringUtils.isNotBlank(sp.getName()) ? " (" + htmlEntities(sp.getName()) + ")" : ""));
     }
 
     /**

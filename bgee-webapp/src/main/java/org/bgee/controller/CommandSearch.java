@@ -10,7 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.gene.GeneMatch;
+import org.bgee.model.gene.GeneMatchResult;
 import org.bgee.view.SearchDisplay;
 import org.bgee.view.ViewFactory;
 
@@ -19,7 +19,7 @@ import org.bgee.view.ViewFactory;
  * page=search
  *
  * @author  Valentine Rech de Laval
- * @version Bgee 14, May 2018
+ * @version Bgee 14, Mar. 2019
  * @since   Bgee 13, Feb. 2016
  */
 public class CommandSearch extends CommandParent {
@@ -53,13 +53,16 @@ public class CommandSearch extends CommandParent {
         
         if (this.requestParameters.getAction() != null &&
         		this.requestParameters.getAction().equals(RequestParameters.ACTION_AUTO_COMPLETE_GENE_SEARCH)) {
-        	String searchTerm = this.requestParameters.getSearch();
-        	if (StringUtils.isBlank(searchTerm)) {
-                throw log.throwing(new IllegalArgumentException("Blank search term provided."));
-            }
-            List<GeneMatch> geneMatches = serviceFactory.getGeneService().searchByTerm(searchTerm);
+            String searchTerm = this.getSearchTerm();
+            List<String> result = serviceFactory.getGeneService().autocomplete(searchTerm, 20);
+            display.displayMatchesForGeneCompletion(result);
             
-            display.displayGeneCompletionByGeneList(geneMatches, this.requestParameters.getSearch());
+        } else if (this.requestParameters.getAction() != null &&
+                this.requestParameters.getAction().equals(RequestParameters.ACTION_EXPASY_RESULT)) {
+            String searchTerm = this.getSearchTerm();
+            GeneMatchResult result = serviceFactory.getGeneService().searchByTerm(searchTerm, null, 0, 1);
+            display.displayExpasyResult(result.getTotalMatchCount(), searchTerm);
+
         } else {
             throw log.throwing(new PageNotFoundException("Incorrect " + 
                 this.requestParameters.getUrlParametersInstance().getParamAction() + 
@@ -69,4 +72,11 @@ public class CommandSearch extends CommandParent {
         log.exit();
     }
 
+    private String getSearchTerm() {
+        String searchTerm = this.requestParameters.getSearch();
+        if (StringUtils.isBlank(searchTerm)) {
+            throw log.throwing(new IllegalArgumentException("Blank search term provided."));
+        }
+        return searchTerm;
+    }
 }

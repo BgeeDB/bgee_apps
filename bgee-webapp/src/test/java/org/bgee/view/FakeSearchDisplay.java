@@ -18,8 +18,17 @@ public class FakeSearchDisplay extends FakeParentDisplay implements SearchDispla
     }
 
 	@Override
-	public void displayGeneCompletionByGeneList(Collection<GeneMatch> geneMatches, String searchTerm) {
+	public void displayGeneCompletionByGeneList(Collection<GeneMatch> geneMatches) {
         this.out.println("Test search container");
 	}
 
+    @Override
+    public void displayExpasyResult(int count, String searchTerm) {
+        this.out.println("Test search summary container");
+    }
+
+    @Override
+    public void displayMatchesForGeneCompletion(Collection<String> matches) {
+        
+    }
 }

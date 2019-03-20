@@ -12,12 +12,12 @@ import org.bgee.model.dao.api.exception.DAOException;
 /**
  * DAO defining queries using or retrieving {@link GeneTO}s. 
  * 
- * @author Valentine Rech de Laval
- * @author Philippe Moret
- * @author Frederic Bastian
- * @version Bgee 14 Mar. 2017
+ * @author  Valentine Rech de Laval
+ * @author  Philippe Moret
+ * @author  Frederic Bastian
+ * @version Bgee 14, Mar. 2019
  * @see GeneTO
- * @since Bgee 13
+ * @since   Bgee 13, May 2014
  */
 public interface GeneDAO extends DAO<GeneDAO.Attribute> {
     /**
@@ -109,20 +109,6 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
             throws DAOException;
     
     /**
-     * Returns genes according to a search term, matching gene name, id or one synonym.
-     * 
-     * @param searchTerm    A {@code String} containing the term to be searched.
-     * @param speciesIds    A {@code Collection} of {@code Integer}s that are species Ids
-     *                      (may be empty to search on all species).
-     * @param limitStart    An {@code int} representing the index of the first element to return.
-     * @param resultPerPage An {@code int} representing the number of elements to return
-     * 
-     * @return A @{code {@link GeneTOResultSet} encapsulating the results.
-     */
-    public GeneTOResultSet getGeneBySearchTerm(String searchTerm, Collection<Integer> speciesIds,
-            int limitStart, int resultPerPage);
-
-    /**
      * Update {@code Attribute}s of the provided genes, which are represented as a 
      * {@code Collection} of {@code GeneTO}s
      * 
@@ -190,7 +176,7 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
         private final Boolean ensemblGene;
         
         /**
-         * @see #getGeneMappedToIdCount()
+         * @see #getGeneMappedToGeneIdCount() 
          */
         private final Integer geneMappedToGeneIdCount;
 

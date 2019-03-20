@@ -6,7 +6,6 @@ import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -27,10 +26,10 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 /**
  * A {@code GeneDAO} for MySQL.
  *
- * @author Valentine Rech de Laval
- * @version Bgee 13
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, Mar. 2019
  * @see org.bgee.model.dao.api.gene.GeneDAO.GeneTO
- * @since Bgee 13
+ * @since   Bgee 13, May 2014
  */
 public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO {
 
@@ -83,82 +82,6 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         //sanity checks on geneIds will be performed by the getGenes method
         speToGeneMap.put(null, geneIds == null? null: new HashSet<>(geneIds));
         return log.exit(getGenes(speToGeneMap, null, null));
-    }
-
-    @Override
-    public GeneTOResultSet getGeneBySearchTerm(String searchTerm, Collection<Integer> speciesIds,
-            int limitStart, int resultPerPage) {
-        log.entry(searchTerm, speciesIds, limitStart, resultPerPage);
-
-        String sql = "SELECT DISTINCT t1.*";
-
-        //fix issue#173
-        sql += ", IF (t1.geneId LIKE ?, "
-                    + "CHAR_LENGTH(t1.geneId), "
-                    + "IF (t1.geneName LIKE ?, CHAR_LENGTH(t1.geneName), CHAR_LENGTH(t2.geneNameSynonym))) "
-                + "AS matchLength"
-                + ", IF (t1.geneId LIKE ?, t1.geneId, IF (t1.geneName LIKE ?, t1.geneName, t2.geneNameSynonym)) "
-                + "AS termMatch"
-                + ", species.speciesDisplayOrder";
-
-        sql += " FROM gene AS t1 "
-                + "INNER JOIN species ON t1.speciesId = species.speciesId "
-                + "LEFT OUTER JOIN "
-                    + "(SELECT * FROM geneNameSynonym WHERE geneNameSynonym LIKE ?) AS t2 "
-                + "ON t1.bgeeGeneId = t2.bgeeGeneId "
-                + "WHERE (t1.geneId LIKE ? OR t1.geneName LIKE ? OR t2.geneNameSynonym LIKE ?) ";
-
-        if (speciesIds != null && !speciesIds.isEmpty()) {
-
-            sql += " AND (";
-            for (int i = 0; i < speciesIds.size(); i++) {
-
-                if (i > 0) {
-                    sql += " OR ";
-                }
-                sql += " t1.speciesId = ? ";
-            }
-            sql += ") ";
-        }
-
-        sql += "ORDER BY matchLength, "
-                + "species.speciesDisplayOrder, "
-                + "termMatch ";
-
-        if (resultPerPage != 0) {
-            sql += "LIMIT ?, ?";
-        }
-
-        try {
-            BgeePreparedStatement preparedStatement = this.getManager().getConnection().prepareStatement(sql);
-            preparedStatement.setString(1, searchTerm + "%");
-            preparedStatement.setString(2, "%" + searchTerm + "%");
-            preparedStatement.setString(3, searchTerm + "%");
-            preparedStatement.setString(4, "%" + searchTerm + "%");
-            preparedStatement.setString(5, "%" + searchTerm + "%");
-            preparedStatement.setString(6, searchTerm + "%");
-            preparedStatement.setString(7, "%" + searchTerm + "%");
-            preparedStatement.setString(8, "%" + searchTerm + "%");
-            int i = 9;
-
-            if (speciesIds != null && !speciesIds.isEmpty()) {
-                Iterator<Integer> speciesIdIterator = speciesIds.iterator();
-                while (speciesIdIterator.hasNext()) {
-                    preparedStatement.setInt(i, speciesIdIterator.next());
-                    i++;
-                }
-            }
-            if (resultPerPage != 0) {
-                preparedStatement.setInt(i, ((limitStart - 1) * resultPerPage));
-                i++;
-                preparedStatement.setInt(i, resultPerPage);
-                i++;
-            }
-
-            return log.exit(new MySQLGeneTOResultSet(preparedStatement));
-        } catch (SQLException e) {
-            throw log.throwing(new DAOException(e));
-        }
     }
 
     @Override
@@ -362,7 +285,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
      * @param attributes
      *            A {@code Set} of {@code Attribute}s defining the
      *            columns/information the query should retrieve.
-     * @param diffExprTableName
+     * @param geneTableName
      *            A {@code String} defining the name of the gene table used.
      * @return A {@code String} containing the SELECT clause for the requested
      *         query.

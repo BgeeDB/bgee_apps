@@ -539,7 +539,7 @@ img.ajax_waiting {
     color: #333;
 }
 
-.ui-widget-content strong {
+strong.search-match {
     color: #E2011B;
 }
 

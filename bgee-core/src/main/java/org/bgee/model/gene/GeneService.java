@@ -1,9 +1,11 @@
 package org.bgee.model.gene;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -13,22 +15,27 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.BgeeProperties;
 import org.bgee.model.CommonService;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
-import org.bgee.model.dao.api.gene.GeneDAO;
-import org.bgee.model.dao.api.gene.GeneNameSynonymDAO.GeneNameSynonymTO;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
+import org.sphx.api.SphinxClient;
+import org.sphx.api.SphinxException;
+import org.sphx.api.SphinxMatch;
+import org.sphx.api.SphinxResult;
+
+import static org.bgee.model.gene.GeneMatch.MatchSource.*;
 
 /**
- * A {@link Service} to obtain {@link Gene} objects. Users should use the
+ * A {@link org.bgee.model.Service} to obtain {@link Gene} objects. Users should use the
  * {@link org.bgee.model.ServiceFactory ServiceFactory} to obtain {@code GeneService}s.
  * 
  * @author  Philippe Moret
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, May 2017
+ * @version Bgee 14, Mar. 2019
  * @since   Bgee 13, Sept. 2015
  */
 public class GeneService extends CommonService {
@@ -36,15 +43,21 @@ public class GeneService extends CommonService {
     private static final Logger log = LogManager.getLogger(GeneService.class.getName());
     
     private final SpeciesService speciesService;
+    
+    private final SphinxClient sphinxClient;
 
     /**
      * @param serviceFactory            The {@code ServiceFactory} to be used to obtain {@code Service}s 
      *                                  and {@code DAOManager}.
+     * @param props                     A {@code BgeeProperties} that are all properties values
+     *                                  to be used to obtain {@code SphinxClient}s.
      * @throws IllegalArgumentException If {@code serviceFactory} is {@code null}.
      */
-    public GeneService(ServiceFactory serviceFactory) {
+    public GeneService(ServiceFactory serviceFactory, BgeeProperties props) {
         super(serviceFactory);
         this.speciesService = this.getServiceFactory().getSpeciesService();
+        this.sphinxClient = new SphinxClient(props.getSearchServerURL(),
+                Integer.valueOf(props.getSearchServerPort()));
     }
     
     /**
@@ -94,8 +107,8 @@ public class GeneService extends CommonService {
      * For instance, in Bgee the chimpanzee genome is used for analyzing bonobo data.
      * For unambiguous retrieval of {@code Gene}s, see {@link #loadGenes(Collection)}.
      * 
-     * @param geneIds   A {@code String} that is the Ensembl ID of genes to retrieve.
-     * @return          A {@code Set} of matching {@code Gene}s.
+     * @param ensemblGeneId A {@code String} that is the Ensembl ID of genes to retrieve.
+     * @return              A {@code Set} of matching {@code Gene}s.
      */
     public Set<Gene> loadGenesByEnsemblId(String ensemblGeneId) {
         log.entry(ensemblGeneId);
@@ -109,9 +122,9 @@ public class GeneService extends CommonService {
      * For instance, in Bgee the chimpanzee genome is used for analyzing bonobo data.
      * For unambiguous retrieval of {@code Gene}s, see {@link #loadGenes(Collection)}.
      * 
-     * @param geneIds   A {@code Collection} of {@code String}s that are the Ensembl IDs
-     *                  of genes to retrieve.
-     * @return          A {@code Stream} of matching {@code Gene}s.
+     * @param ensemblGeneIds    A {@code Collection} of {@code String}s that are the Ensembl IDs
+     *                          of genes to retrieve.
+     * @return                  A {@code Stream} of matching {@code Gene}s.
      */
     public Stream<Gene> loadGenesByEnsemblIds(Collection<String> ensemblGeneIds) {
         log.entry(ensemblGeneIds);
@@ -125,7 +138,7 @@ public class GeneService extends CommonService {
      * For instance, in Bgee the chimpanzee genome is used for analyzing bonobo data.
      * For unambiguous retrieval of {@code Gene}s, see {@link #loadGenes(Collection)}.
      *
-     * @param geneIds           A {@code String} that is the Ensembl ID of genes to retrieve.
+     * @param ensemblGeneId     A {@code String} that is the Ensembl ID of genes to retrieve.
      * @param withSpeciesInfo   A {@code boolean}s defining whether data sources of the species
      *                          is retrieved or not.
      * @return                  A {@code Set} of matching {@code Gene}s.
@@ -154,7 +167,7 @@ public class GeneService extends CommonService {
      * For instance, in Bgee the chimpanzee genome is used for analyzing bonobo data.
      * For unambiguous retrieval of {@code Gene}s, see {@link #loadGenes(Collection)}.
      *
-     * @param geneIds           A {@code Collection} of {@code String}s that are the Ensembl IDs
+     * @param ensemblGeneIds    A {@code Collection} of {@code String}s that are the Ensembl IDs
      *                          of genes to retrieve.
      * @param withSpeciesInfo   A {@code boolean}s defining whether data sources of the species
      *                          is retrieved or not.
@@ -217,68 +230,192 @@ public class GeneService extends CommonService {
     }
 
     /**
-     * Search the genes by name, id and synonyms.
-     * @param term A {@code String} containing the query 
-     * @return A {@code List} of results (ordered).
+     * Search the genes.
+     * 
+     * @param searchTerm    A {@code String} containing the query 
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that are species Ids
+     *                      (may be empty to search on all species).
+     * @param limitStart    An {@code int} representing the index of the first element to return.
+     * @param resultPerPage An {@code int} representing the number of elements to return
+     * @return              A {@code GeneMatchResult} of results (ordered).
      */
-    public List<GeneMatch> searchByTerm(final String term) {
-        log.entry(term);
-        GeneDAO dao = getDaoManager().getGeneDAO();
-        
-        List<GeneTO> geneTOs = dao.getGeneBySearchTerm(term, null, 1, 100).stream().collect(Collectors.toList());
-        
-        // if result is empty, return an empty list
-        if (geneTOs.isEmpty()) {
-            return log.exit(new LinkedList<>());
+    public GeneMatchResult searchByTerm(final String searchTerm, Collection<Integer> speciesIds,
+                                        int limitStart, int resultPerPage) {
+        log.entry(searchTerm, speciesIds, limitStart, resultPerPage);
+
+        if (speciesIds != null && !speciesIds.isEmpty()) {
+            throw new UnsupportedOperationException("Search with species parameter is not implemented");
         }
         
-        Map<Integer, Species> speciesMap = loadSpeciesMapFromGeneTOs(geneTOs, false);
-        Set<Integer> bgeeGeneIds = geneTOs.stream().map(GeneTO::getId).collect(Collectors.toSet());
-        
-        final Map<Integer, List<String>> synonymMap = getDaoManager().getGeneNameSynonymDAO()
-                .getGeneNameSynonyms(bgeeGeneIds).stream()
-                .collect(Collectors.groupingBy(GeneNameSynonymTO::getBgeeGeneId, 
-                        Collectors.mapping(GeneNameSynonymTO::getGeneNameSynonym, Collectors.toList())));
+        SphinxResult result = this.getSphinxResult(searchTerm, limitStart, resultPerPage, "bgee_genes", null);
 
-        return log.exit(geneTOs.stream()
-            .map(g -> geneMatch(g, term, synonymMap.get(g.getId()), speciesMap.get(g.getSpeciesId())))
-            .collect(Collectors.toList()));
+        if (result != null && result.getStatus() == SphinxClient.SEARCHD_ERROR) {
+            throw log.throwing(new IllegalStateException("Sphinx search has generated an error: "
+                    + result.error));
+        }
+
+        // if result is empty, return an empty list
+        if (result == null || result.totalFound == 0) {
+            return log.exit(new GeneMatchResult(0, null));
+        }
+        
+        // get mapping between attributes names and their index
+        Map<String, Integer> attrNameToIdx = new HashMap<>();
+        for (int idx = 0; idx < result.attrNames.length; idx++) {
+            attrNameToIdx.put(result.attrNames[idx], idx);
+        }
+        
+        // retrieve species map
+        Set<Integer> foundSpeciesIds = Arrays.stream(result.matches)
+                .map(m -> ((Long) m.attrValues.get(attrNameToIdx.get("speciesid"))).intValue())
+                .collect(Collectors.toSet());
+        final Map<Integer, Species> speciesMap = this.speciesService.loadSpeciesMap(foundSpeciesIds, false);
+
+        
+        // build list of GeneMatch
+        List<GeneMatch> geneMatches = Arrays.stream(result.matches)
+                .map(m -> getGeneMatch(m, searchTerm, attrNameToIdx, speciesMap))
+                .sorted()
+                .collect(Collectors.toList());
+        
+        return log.exit(new GeneMatchResult(result.totalFound, geneMatches));
     }
 
-    private GeneMatch geneMatch(final GeneTO geneTO, final String term,
-            final List<String> synonymList, final Species species) {
-        log.entry(geneTO, term, synonymList, species);
-        Gene gene = mapGeneTOToGene(geneTO, species);
-        // if the gene name or id match there is no synonym
+    /**
+     * Retrieve autocomplete suggestions for the gene search from the provided {@code searchTerm}.
+     *
+     * @param searchTerm    A {@code String} containing the query 
+     * @param resultPerPage An {@code int} representing the number of elements to return
+     * @return              A {@code List} of {@code String}s that are suggestions
+     *                      for the gene search autocomplete (ordered).
+     */
+    public List<String> autocomplete(final String searchTerm, int resultPerPage) {
+        log.entry(searchTerm, resultPerPage);
+
+        // The index of the first element is not necessary, as it's for the autocomplete we start at 0.
+        // We use the ranker SPH_RANK_SPH04 to get field equals the exact query first.
+        SphinxResult result = this.getSphinxResult(searchTerm, 0, resultPerPage, "bgee_autocomplete",
+                SphinxClient.SPH_RANK_SPH04);
+
+        if (result != null && result.getStatus() == SphinxClient.SEARCHD_ERROR) {
+            throw log.throwing(new IllegalStateException("Sphinx search has generated an error: "
+                    + result.error));
+        }
+
+        // if result is empty, return an empty list
+        if (result == null || result.totalFound == 0) {
+            return log.exit(new ArrayList<>());
+        }
+
+        // build list of propositions
+        List<String> propositions = Arrays.stream(result.matches)
+                .map(m -> String.valueOf(m.attrValues.get(0)))
+                .collect(Collectors.toList());
+
+        return log.exit(propositions);
+    }
+    
+    /**
+     * Retrieve sphinx result from provided parameters.
+     * 
+     * @param searchTerm    A {@code String} that is the query.
+     * @param limitStart    An {@code int} that is the index of the first element to return.
+     * @param resultPerPage An {@code int} that is the number of elements to return.
+     * @param index         A {@code String} that is the index to query.
+     * @param ranker        An {@code Integer} that is the ranking mode.
+     * @return              The {@code SphinxResult} that is the result of the query.
+     */
+    private SphinxResult getSphinxResult(String searchTerm, int limitStart, int resultPerPage,
+                                         String index, Integer ranker) {
+        log.entry(searchTerm, limitStart, resultPerPage, index, ranker);
+        try {
+            sphinxClient.SetLimits(limitStart, resultPerPage);
+            if (ranker != null) {
+                sphinxClient.SetRankingMode(ranker, null);
+            }
+            return log.exit(sphinxClient.Query(searchTerm, index));
+        } catch (SphinxException e) {
+            throw log.throwing(new IllegalStateException(
+                    "Sphinx search has generated an exception", e));
+        }
+    }
+
+    /**
+     * Convert a {@code SphinxMatch} into a {@code GeneMatch}.
+     * 
+     * @param match         A {@code SphinxMatch} that is the match to be converted.
+     * @param term          A {@code String} that is the query used to retrieve the {@code match}.
+     * @param attrIndexMap  A {@code Map} where keys are {@code String}s corresponding to attributes,
+     *                      the associated values being {@code Integer}s corresponding
+     *                      to index of the attribute.
+     * @param speciesMap    A {@code Map} where keys are {@code Integer}s corresponding to species IDs,
+     *                      the associated values being {@code Species}.
+     * @return              The {@code GeneMatch} that is the converted {@code SphinxMatch}.
+     */
+    private GeneMatch getGeneMatch(final SphinxMatch match, final String term, 
+                                   final Map<String, Integer> attrIndexMap, 
+                                   final Map<Integer, Species> speciesMap) {
+        log.entry(match, term, attrIndexMap, speciesMap);
+
+        Gene gene = new Gene(String.valueOf(match.attrValues.get(attrIndexMap.get("geneid"))),
+                String.valueOf(match.attrValues.get(attrIndexMap.get("genename"))),
+                String.valueOf(match.attrValues.get(attrIndexMap.get("genedescription"))),
+                speciesMap.get(((Long) match.attrValues.get(attrIndexMap.get("speciesid"))).intValue()),
+                ((Long) match.attrValues.get(attrIndexMap.get("genemappedtogeneidcount"))).intValue());
+
+        // If the gene name, id or description match there is no term
         //Fix issue with term search such as "upk\3a". MySQL does not consider the backslash
         //and returns terms, that are then not matched here
         final String termLowerCase = term.toLowerCase();
         final String termLowerCaseEscaped = termLowerCase.replaceAll("\\\\", "");
-        final String geneIdLowerCase = geneTO.getGeneId().toLowerCase();
+
+        final String geneIdLowerCase = gene.getEnsemblGeneId().toLowerCase();
         if (geneIdLowerCase.contains(termLowerCase) || geneIdLowerCase.contains(termLowerCaseEscaped)) {
             return log.exit(new GeneMatch(gene, null, GeneMatch.MatchSource.ID));
         }
-        final String geneNameLowerCase = geneTO.getName().toLowerCase();
+
+        final String geneNameLowerCase = gene.getName().toLowerCase();
         if (geneNameLowerCase.contains(termLowerCase) || geneNameLowerCase.contains(termLowerCaseEscaped)) {
             return log.exit(new GeneMatch(gene, null, GeneMatch.MatchSource.NAME));
         }
-
-        // otherwise we fetch synonym and find the first match
-        List<String> synonyms = synonymList.stream().
-                filter(s -> {
-                    String synonymLowerCase = s.toLowerCase();
-                    return synonymLowerCase.contains(termLowerCase) ||
-                            //Fix issue with term search such as "upk\3a". MySQL does not consider the backslash
-                            //and returns terms, that are then not matched here
-                            synonymLowerCase.contains(termLowerCaseEscaped);
-                    })
-                .collect(Collectors.toList());
-                
-        if (synonyms.size() < 1) {
-            throw new IllegalStateException("The term should match either the gene id/name "
-                    + "or one of its synonyms. Term: " + term + " GeneTO;" + geneTO);
+        final String descriptionLowerCase = gene.getDescription().toLowerCase();
+        if (descriptionLowerCase.contains(termLowerCase) || descriptionLowerCase.contains(termLowerCaseEscaped)) {
+            return log.exit(new GeneMatch(gene, null, DESCRIPTION));
         }
-        return log.exit(new GeneMatch(gene, synonyms.get(0), GeneMatch.MatchSource.SYNONYM));
+
+        // otherwise we fetch term and find the first match
+        final String geneNameSynonym = this.getMatch(match, "genenamesynonym", attrIndexMap,
+                termLowerCase, termLowerCaseEscaped);
+        if (geneNameSynonym != null) {
+            return log.exit(new GeneMatch(gene, geneNameSynonym, SYNONYM));
+        }
+
+        final String geneXRef = this.getMatch(match, "genexref", attrIndexMap, 
+                termLowerCase, termLowerCaseEscaped);
+        if (geneXRef != null) {
+            return log.exit(new GeneMatch(gene, geneXRef, XREF));
+        }
+
+        throw log.throwing(new IllegalStateException("No match found. Term: " + term + " Match;" + match.attrValues));
+    }
+
+    private String getMatch(SphinxMatch match, String attribute, Map<String, Integer> attrIndexMap,
+                            String termLowerCase, String termLowerCaseEscaped) {
+        log.entry(match, attribute, attrIndexMap, termLowerCase, termLowerCaseEscaped);
+
+        String attrs = (String) match.attrValues.get(attrIndexMap.get(attribute));
+        String[] split = attrs.toLowerCase().split("\\|\\|");
+        
+        List<String> terms = Arrays.stream(split)
+                .filter(s ->  s.contains(termLowerCase) ||
+                        //Fix issue with term search such as "upk\3a". MySQL does not consider the backslash
+                        //and returns terms, that are then not matched here
+                        s.contains(termLowerCaseEscaped))
+                .collect(Collectors.toList());
+        if (terms.size() > 0) {
+            return log.exit(terms.get(0));
+        }
+        return log.exit(null);
     }
 
     private Map<Integer, Species> loadSpeciesMapFromGeneTOs(Collection<GeneTO> geneTOs, boolean withSpeciesInfo) {

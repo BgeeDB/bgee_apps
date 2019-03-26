@@ -5,12 +5,17 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.species.Species;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Class allowing to describe genes. 
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14 Mar. 2017
+ * @version Bgee 14, Mar. 2019
  * @since   Bgee 01
  */
 //Note: this class does not extend NamedEntity, because we don't want to expose
@@ -35,6 +40,11 @@ public class Gene {
     private final String description;
 
 	/**
+     * A {@code Set} of {@code String}s that are the synonyms of the gene.
+     */
+    private final Set<String> synonyms;
+
+    /**
 	 * The {@code Species} this {@code Gene} belongs to.
 	 */
 	private final Species species;
@@ -56,7 +66,7 @@ public class Gene {
      *                                      or {@code Species} is {@code null}.
      */
     public Gene(String ensemblGeneId, Species species) throws IllegalArgumentException {
-        this(ensemblGeneId, null, null, species, 1);
+        this(ensemblGeneId, null, null, null, species, 1);
     }
     /**
      * Constructor providing the {@code ensemblGeneId}, the name, the description,
@@ -70,6 +80,8 @@ public class Gene {
      * @param name                                  A {@code String} representing the name of this gene.
      * @param description                           A {@code String} representing the description
      *                                              of this gene.
+     * @param synonyms                              A {@code Collection} of {@code String}s
+     *                                              that are the synonyms of the gene.                                        
      * @param species                               A {@code Species} representing the species
      *                                              this gene belongs to.
      * @param geneMappedToSameEnsemblGeneIdCount    An {@code Integer} that is the number of genes
@@ -79,8 +91,8 @@ public class Gene {
      * @throws IllegalArgumentException     if {@code ensemblGeneId} is blank,
      *                                      or {@code Species} is {@code null}.
      */
-    public Gene(String ensemblGeneId, String name, String description, Species species,
-            int geneMappedToSameEnsemblGeneIdCount)
+    public Gene(String ensemblGeneId, String name, String description, Collection<String> synonyms,
+                Species species, int geneMappedToSameEnsemblGeneIdCount)
         throws IllegalArgumentException {
         if (StringUtils.isBlank(ensemblGeneId)) {
             throw log.throwing(new IllegalArgumentException("The Ensembl gene ID must be provided."));
@@ -95,6 +107,8 @@ public class Gene {
         this.ensemblGeneId = ensemblGeneId;
         this.name = name;
         this.description = description;
+        this.synonyms = Collections.unmodifiableSet(synonyms == null?
+                new HashSet<>(): new HashSet<>(synonyms));
         this.species = species;
         this.geneMappedToSameEnsemblGeneIdCount = geneMappedToSameEnsemblGeneIdCount;
     }
@@ -116,6 +130,12 @@ public class Gene {
      */
     public String getDescription() {
         return description;
+    }
+    /**
+     * @return  The {@code Set} of {@code String}s that are the synonyms of the gene.
+     */
+    public Set<String> getSynonyms() {
+        return synonyms;
     }
     /**
 	 * @return The {@code Species} this {@code Gene} belongs to.
@@ -178,6 +198,7 @@ public class Gene {
         builder.append("Gene [ensemblGeneId=").append(ensemblGeneId)
                .append(", name=").append(name)
                .append(", description=").append(description)
+               .append(", synonyms=").append(synonyms)
                .append(", species=").append(species)
                .append(", geneMappedToSameEnsemblGeneIdCount=").append(geneMappedToSameEnsemblGeneIdCount).append("]");
         return builder.toString();

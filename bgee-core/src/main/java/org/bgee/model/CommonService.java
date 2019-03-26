@@ -14,6 +14,8 @@ import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.species.Species;
 
+import java.util.Collection;
+
 /**
  * Parent class of several {@code Service}s needing to access common methods. 
  * Since we do not want to expose these methods to API users, we do not build this class 
@@ -114,8 +116,8 @@ public class CommonService extends Service {
      * @param species   A {@code Species} that is the species of the gene.
      * @return          The mapped {@code Gene}.
      */
-    protected static Gene mapGeneTOToGene(GeneTO geneTO, Species species) {
-        log.entry(geneTO, species);
+    protected static Gene mapGeneTOToGene(GeneTO geneTO, Species species, Collection<String> synonyms) {
+        log.entry(geneTO, species, synonyms);
         if (geneTO == null) {
             return log.exit(null);
         }
@@ -131,7 +133,7 @@ public class CommonService extends Service {
                     "Species ID of the gene does not match provided Species."));
         }
         return log.exit(new Gene(geneTO.getGeneId(), geneTO.getName(), geneTO.getDescription(),
-                species, geneTO.getGeneMappedToGeneIdCount()));
+                synonyms, species, geneTO.getGeneMappedToGeneIdCount()));
     }
 
     /**

@@ -34,7 +34,7 @@ public class GeneMatch implements Comparable<GeneMatch> {
             .thenComparing(GeneMatch::getMatch, Comparator.nullsLast(String::compareTo));
 
     public enum MatchSource {
-        ID, NAME, SYNONYM, DESCRIPTION, XREF
+        ID, NAME, DESCRIPTION, SYNONYM, XREF
     }
 
     private final Gene gene;

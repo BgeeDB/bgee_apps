@@ -86,9 +86,9 @@ public class GeneServiceTest extends TestAncestor {
 
         // Test
         Set<Gene> expectedGenes = new HashSet<>();
-        expectedGenes.add(new Gene("ID1", "Name1", "Desc1", new Species(11), 1));
-        expectedGenes.add(new Gene("ID2", "Name2", "Desc2", new Species(22), 1));
-        expectedGenes.add(new Gene("ID4", "Name4", "Desc4", new Species(44), 1));
+        expectedGenes.add(new Gene("ID1", "Name1", "Desc1", null, new Species(11), 1));
+        expectedGenes.add(new Gene("ID2", "Name2", "Desc2", null, new Species(22), 1));
+        expectedGenes.add(new Gene("ID4", "Name4", "Desc4", null, new Species(44), 1));
         
         GeneService service = new GeneService(serviceFactory, props);
         Set<GeneFilter> geneFilters = new HashSet<>();
@@ -155,10 +155,10 @@ public class GeneServiceTest extends TestAncestor {
         GeneService service = new GeneService(serviceFactory, props);
         Map<Integer, Set<Gene>> expected = new HashMap<>();
         expected.put(1, new HashSet<>(Arrays.asList(
-            new Gene("ID1", "Name1", "Desc1", new Species(11), 1), 
-            new Gene("ID2", "Name2", "Desc2", new Species(22), 1))));
+            new Gene("ID1", "Name1", "Desc1", null, new Species(11), 1), 
+            new Gene("ID2", "Name2", "Desc2", null, new Species(22), 1))));
         expected.put(2, new HashSet<>(Arrays.asList(
-            new Gene("ID4", "Name4", "Desc4", new Species(44), 1))));
+            new Gene("ID4", "Name4", "Desc4", null, new Species(44), 1))));
         Map<Integer, Set<Gene>> actual = service.getOrthologs(1234, null);
         assertEquals(expected, actual);
     }

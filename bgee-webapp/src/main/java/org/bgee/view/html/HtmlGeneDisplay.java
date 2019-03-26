@@ -54,6 +54,8 @@ import org.bgee.view.JsonHelper;
 public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
     private final static Logger log = LogManager.getLogger(HtmlGeneDisplay.class.getName());
 
+    private final static int MAX_SYNONYM_NUMBER = 10;
+
     /**
      * @param response             A {@code HttpServletResponse} that will be used to display 
      *                             the page to the client.
@@ -676,9 +678,38 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 .append(getStringNotBlankOrDash(gene.getDescription())).append("</td></tr>");
         table.append("<tr><th scope='row'>Organism</th><td>")
                 .append(getCompleteSpeciesName(gene));
+        table.append("<tr><th scope='row'>Synonym(s)</th><td>")
+                .append(getSynonymDisplay(gene.getSynonyms()));
         table.append("</td></tr>");
 
         return log.exit(table.append("</table>").toString());
+    }
+
+    private static String getSynonymDisplay(Set<String> synonyms) {
+        log.entry(synonyms);
+
+        if (synonyms == null || synonyms.size() == 0) {
+            return "-";
+        }
+        
+        boolean tooManySyn = synonyms.size() > MAX_SYNONYM_NUMBER;
+
+        List<String> orderedSynonyms = new ArrayList<>(synonyms);
+        orderedSynonyms.sort(String::compareTo);
+
+        String display = String.join(", ", tooManySyn?
+                orderedSynonyms.subList(0, MAX_SYNONYM_NUMBER): orderedSynonyms);
+        if (tooManySyn) {
+            display +=  "<a role='button' data-toggle='collapse' href='#collapseSynonyms'" +
+                    "        aria-expanded='false' aria-controls='collapseSynonyms'>" +
+                    "       See all synonyms</a>";
+            display += "<div class='collapse' id='collapseSynonyms'>" +
+                    "       <div class='well'>" +
+                    "           All synonyms: " + String.join(", ", orderedSynonyms) +
+                    "       </div>" +
+                    "   </div>";
+        }
+        return log.exit(display);
     }
 
     /**

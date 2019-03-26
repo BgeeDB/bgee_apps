@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -19,6 +20,7 @@ import org.bgee.model.BgeeProperties;
 import org.bgee.model.CommonService;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
+import org.bgee.model.dao.api.gene.GeneNameSynonymDAO.GeneNameSynonymTO;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
 import org.sphx.api.SphinxClient;
@@ -26,7 +28,9 @@ import org.sphx.api.SphinxException;
 import org.sphx.api.SphinxMatch;
 import org.sphx.api.SphinxResult;
 
-import static org.bgee.model.gene.GeneMatch.MatchSource.*;
+import static org.bgee.model.gene.GeneMatch.MatchSource.DESCRIPTION;
+import static org.bgee.model.gene.GeneMatch.MatchSource.SYNONYM;
+import static org.bgee.model.gene.GeneMatch.MatchSource.XREF;
 
 /**
  * A {@link org.bgee.model.Service} to obtain {@link Gene} objects. Users should use the
@@ -42,6 +46,8 @@ public class GeneService extends CommonService {
     
     private static final Logger log = LogManager.getLogger(GeneService.class.getName());
     
+    private static final String SPHINX_SEPARATOR = "\\|\\|";
+
     private final SpeciesService speciesService;
     
     private final SphinxClient sphinxClient;
@@ -73,6 +79,8 @@ public class GeneService extends CommonService {
 
     /**
      * Retrieve {@code Gene}s based on the provided {@code GeneFiter}s.
+     * <p>
+     * This method won't load synonyms in {@code Gene}s, to avoid memory problems.
      * 
      * @param filters       A {@code Collection} of {@code GeneFilter}s allowing to filter
      *                      the {@code Gene}s to retrieve.
@@ -95,9 +103,12 @@ public class GeneService extends CommonService {
                     "GeneFilters contain unrecognized species IDs: " + unrecognizedSpeciesIds));
         }
         
+        // We want to return a Stream without iterating the GeneTOs first,
+        // so we won't load synonyms
+
         return log.exit(mapGeneTOStreamToGeneStream(
                 getDaoManager().getGeneDAO().getGenesBySpeciesAndGeneIds(filtersToMap).stream(),
-                speciesMap));
+                speciesMap, null));
     }
 
     /**
@@ -155,8 +166,12 @@ public class GeneService extends CommonService {
                 .getGenesByIds(Collections.singleton(ensemblGeneId))
                 .stream().collect(Collectors.toSet());
         Map<Integer, Species> speciesMap = loadSpeciesMapFromGeneTOs(geneTOs, withSpeciesInfo);
-        
-        return log.exit(mapGeneTOStreamToGeneStream(geneTOs.stream(), speciesMap)
+
+        // we expect very few results from a single Ensembl ID, so we preload synonyms from database
+        // as for method 'loadGenesByEnsemblIds'
+        Map<Integer, Set<String>> synonymMap = loadSynonymMapFromGeneTOs(geneTOs);
+
+        return log.exit(mapGeneTOStreamToGeneStream(geneTOs.stream(), speciesMap, synonymMap)
                 .collect(Collectors.toSet()));
     }
 
@@ -166,6 +181,8 @@ public class GeneService extends CommonService {
      * in Bgee, the genome of a species can be used for another closely-related species.
      * For instance, in Bgee the chimpanzee genome is used for analyzing bonobo data.
      * For unambiguous retrieval of {@code Gene}s, see {@link #loadGenes(Collection)}.
+     * <p>
+     * This method won't load synonyms in {@code Gene}s, to avoid memory problems.
      *
      * @param ensemblGeneIds    A {@code Collection} of {@code String}s that are the Ensembl IDs
      *                          of genes to retrieve.
@@ -185,10 +202,12 @@ public class GeneService extends CommonService {
         //so we load all species in database
         Map<Integer, Species> speciesMap = this.speciesService.loadSpeciesMap(null, withSpeciesInfo);
 
+        // As we want to return a Stream without iterating the GeneTOs first,
+        // so we won't load synonyms
+        
         return log.exit(mapGeneTOStreamToGeneStream(
                 getDaoManager().getGeneDAO().getGenesByIds(ensemblGeneIds).stream(),
-                speciesMap));
-    	
+                speciesMap, null));
     }
 
     /**
@@ -356,10 +375,15 @@ public class GeneService extends CommonService {
                                    final Map<String, Integer> attrIndexMap, 
                                    final Map<Integer, Species> speciesMap) {
         log.entry(match, term, attrIndexMap, speciesMap);
+        
+        String attrs = (String) match.attrValues.get(attrIndexMap.get("genenamesynonym"));
+        String[] split = attrs.toLowerCase().split(SPHINX_SEPARATOR);
+        List<String> synonyms = Arrays.stream(split).collect(Collectors.toList());
 
         Gene gene = new Gene(String.valueOf(match.attrValues.get(attrIndexMap.get("geneid"))),
                 String.valueOf(match.attrValues.get(attrIndexMap.get("genename"))),
                 String.valueOf(match.attrValues.get(attrIndexMap.get("genedescription"))),
+                synonyms,
                 speciesMap.get(((Long) match.attrValues.get(attrIndexMap.get("speciesid"))).intValue()),
                 ((Long) match.attrValues.get(attrIndexMap.get("genemappedtogeneidcount"))).intValue());
 
@@ -384,6 +408,7 @@ public class GeneService extends CommonService {
         }
 
         // otherwise we fetch term and find the first match
+        // even if synonyms are in genes, we need to store which synonym matches the query   
         final String geneNameSynonym = this.getMatch(match, "genenamesynonym", attrIndexMap,
                 termLowerCase, termLowerCaseEscaped);
         if (geneNameSynonym != null) {
@@ -396,7 +421,8 @@ public class GeneService extends CommonService {
             return log.exit(new GeneMatch(gene, geneXRef, XREF));
         }
 
-        throw log.throwing(new IllegalStateException("No match found. Term: " + term + " Match;" + match.attrValues));
+        throw log.throwing(new IllegalStateException("No match found. Term: " + term 
+                + " Match;" + match.attrValues));
     }
 
     private String getMatch(SphinxMatch match, String attribute, Map<String, Integer> attrIndexMap,
@@ -404,7 +430,7 @@ public class GeneService extends CommonService {
         log.entry(match, attribute, attrIndexMap, termLowerCase, termLowerCaseEscaped);
 
         String attrs = (String) match.attrValues.get(attrIndexMap.get(attribute));
-        String[] split = attrs.toLowerCase().split("\\|\\|");
+        String[] split = attrs.toLowerCase().split(SPHINX_SEPARATOR);
         
         List<String> terms = Arrays.stream(split)
                 .filter(s ->  s.contains(termLowerCase) ||
@@ -424,9 +450,19 @@ public class GeneService extends CommonService {
         return log.exit(this.speciesService.loadSpeciesMap(speciesIds, withSpeciesInfo));
     }
     
+    private Map<Integer, Set<String>> loadSynonymMapFromGeneTOs(Collection<GeneTO> geneTOs) {
+        log.entry(geneTOs);
+        Set<Integer> bgeeGeneIds = geneTOs.stream().map(GeneTO::getId).collect(Collectors.toSet());
+        return log.exit(this.getDaoManager().getGeneNameSynonymDAO()
+                .getGeneNameSynonyms(bgeeGeneIds).stream()
+                .collect(Collectors.groupingBy(GeneNameSynonymTO::getBgeeGeneId,
+                        Collectors.mapping(GeneNameSynonymTO::getGeneNameSynonym, Collectors.toSet()))));
+    }
+
     private static Stream<Gene> mapGeneTOStreamToGeneStream(Stream<GeneTO> geneTOStream,
-            Map<Integer, Species> speciesMap) {
-        log.entry(geneTOStream, speciesMap);
-        return log.exit(geneTOStream.map(to -> mapGeneTOToGene(to, speciesMap.get(to.getSpeciesId()))));
+            Map<Integer, Species> speciesMap, Map<Integer, Set<String>> synonyms) {
+        log.entry(geneTOStream, speciesMap, synonyms);
+        return log.exit(geneTOStream.map(to -> mapGeneTOToGene(to, speciesMap.get(to.getSpeciesId()),
+                synonyms == null ? null : synonyms.get(to.getId()))));
     }
 }

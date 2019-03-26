@@ -171,7 +171,7 @@ public class CommandGene extends CommandParent {
             return clusteringWithinAnatEntity;
         }
         /**
-         * @return  A {@code ConditionUtils} loaded from all {@code Condition}s 
+         * @return  A {@code ConditionGraph} loaded from all {@code Condition}s 
          *          retrieved from the {@code ExpressionCall}s in the {@code List} returned by 
          *          {@link #getExprCalls()}.
          */
@@ -267,7 +267,7 @@ public class CommandGene extends CommandParent {
         log.entry(gene);
 
         //**************************************
-        // Expression calls, ConditionUtils, 
+        // Expression calls, ConditionGraph, 
         // sorting, and redundant calls
         //**************************************
         List<ExpressionCall> organCalls = this.getAnatEntitySilverExpressionCalls(gene);

@@ -337,6 +337,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 + "             </li>"
                 + "  <li>Update of the <a href='" + urlSourcePage.getRequestURL()+ "'>data source page</a>"
                 + "             to provide version information</li>"
+                + "  <li>We have clarified our license; we have chosen CC0.</li>"
 				+ "  <li>Update of the menu</li>"
 				+ "</ul>");
 				

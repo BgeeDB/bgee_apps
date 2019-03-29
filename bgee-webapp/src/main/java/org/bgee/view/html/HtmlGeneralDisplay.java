@@ -331,9 +331,13 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 				+ "  <li>New <a href='" + urlFaqPage.getRequestURL() + "'>FAQ page</a> "
 				+ "				where we address common user queries</li>"
 				+ "  <li>New <a href='" + urlDatasetPage.getRequestURL() + "'>documentation page</a>"
-				+ " 			specific to GTEx data to learn where to find information" 
-				+ " 			about this project</li>"
-				+ "  <li>Update the menu</li>"
+				+ " 			specific to GTEx project to learn how we integrated these data" 
+				+ " 			into Bgee</li>"
+                + "  <li>Update to Bgee 14.0 of the <a href='" + urlCallDoc.getRequestURL()+ "'>gene expression call documentation</a>"
+                + "             </li>"
+                + "  <li>Update of the <a href='" + urlSourcePage.getRequestURL()+ "'>data source page</a>"
+                + "             to provide version information</li>"
+				+ "  <li>Update of the menu</li>"
 				+ "</ul>");
 				
         this.writeOneNews("2018-02-14", "Release of Bgee version 14.0:"

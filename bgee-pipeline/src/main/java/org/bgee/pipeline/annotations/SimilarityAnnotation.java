@@ -1813,7 +1813,13 @@ public class SimilarityAnnotation {
             throw log.throwing(new IllegalArgumentException("Unrecognized "
                     + "AnnotationBean type: " + annot.getClass()));
         }
-        
+
+        //We store errors in local attributes so that we can check whether there is a problem,
+        //without impacting errors already seen that we stored.
+        //XXX: this duplicates the class attributes, duplicate the reinitialization in #reinitErrors(), etc,
+        //there should be a better way to manage that. It was written like that so that we don't reinit
+        //previously seen errors when we simply want to check quickly correctness of an annotation
+        //(to check inferred annotations after checking original annotations)
         boolean allGood = true;
         Set<String> missingUberonIds = new HashSet<>();
         Set<Integer> missingTaxonIds = new HashSet<>();

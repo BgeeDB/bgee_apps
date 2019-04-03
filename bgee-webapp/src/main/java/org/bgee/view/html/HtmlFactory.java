@@ -15,7 +15,7 @@ import org.bgee.view.*;
  * 
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Aug. 2018
+ * @version Bgee 14, Apr. 2019
  * @since   Bgee 13, July 2014
  */
 public class HtmlFactory extends ViewFactory {
@@ -105,6 +105,12 @@ public class HtmlFactory extends ViewFactory {
     public PrivacyPolicyDisplay getPrivacyPolicyDisplay() throws IOException {
         log.entry();
         return log.exit(new HtmlPrivacyPolicyDisplay(this.response, this.requestParameters, this.prop, this));
+    }
+
+    @Override
+    public ProjectsDisplay getProjectsDisplay() throws IOException {
+        log.entry();
+        return log.exit(new HtmlProjectsDisplay(this.response, this.requestParameters, this.prop, this));
     }
 
     @Override

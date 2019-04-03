@@ -25,7 +25,7 @@ import org.bgee.view.ViewFactory;
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
  * @author  Sebastien Moretti
- * @version Bgee 14, Oct. 2018
+ * @version Bgee 14, Apr. 2019
  * @since   Bgee 13, Jul. 2014
  */
 public class HtmlParentDisplay extends ConcreteDisplayParent {
@@ -409,6 +409,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         RequestParameters urlPrivacyPolicy = this.getNewRequestParameters();
         urlPrivacyPolicy.setPage(RequestParameters.PAGE_PRIVACY_POLICY);
         
+        RequestParameters urlProjects = this.getNewRequestParameters();
+        urlProjects.setPage(RequestParameters.PAGE_PROJECTS);
+
         // Navigation bar
         StringBuilder navbar = new StringBuilder();
 
@@ -506,6 +509,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 + "aria-haspopup='true' aria-expanded='false'>About <span class='caret'></span></a>");
         navbar.append("<ul class='dropdown-menu'>");
         navbar.append("<li><a href='").append(urlAbout.getRequestURL()).append("'>About Bgee</a></li>");
+        navbar.append("<li><a href='").append(urlProjects.getRequestURL()).append("'>Bgee projects</a></li>");
         navbar.append("<li><a href='").append(urlBgeeSources.getRequestURL())
                 .append("'>Bgee sources</a></li>");
         navbar.append("<li><a href='https://bgeedb.wordpress.com' target='_blank'>Bgee blog</a></li>");

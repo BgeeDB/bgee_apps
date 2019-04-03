@@ -14,7 +14,7 @@ import org.bgee.view.*;
  * {@code ViewFactory} returning objects generating XML views.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Aug. 2018
+ * @version Bgee 14, Apr. 2019
  * @since   Bgee 13, July 2014
  */
 public class XmlFactory extends ViewFactory {
@@ -57,6 +57,12 @@ public class XmlFactory extends ViewFactory {
 
     @Override
     public PrivacyPolicyDisplay getPrivacyPolicyDisplay() {
+        log.entry();
+        throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
+    }
+
+    @Override
+    public ProjectsDisplay getProjectsDisplay() {
         log.entry();
         throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
     }

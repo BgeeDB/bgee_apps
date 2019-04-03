@@ -175,6 +175,20 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
         return pagePrivacyPolicy;
     }
     /**
+     * A {@code String} that is the value taken by the {@code page} parameter
+     * (see {@link #getParamPage()}) when an projects page is requested.
+     * This parameter will then be provided outside of this class through the method
+     * {@link #PAGE_PRROJECTS()} (to get the behavior of a public final parameter).
+     */
+    var pageProjects = 'projects';
+    /**
+     * A method to obtain the value taken by the {@code page} parameter
+     * (see {@link #getParamPage()}) when an privacy policy page is requested.
+     */
+    this.PAGE_PRROJECTS = function() {
+        return pageProjects;
+    }
+    /**
      * A {@code String} that is the value taken by the {@code page} parameter  
      * (see {@link #getParamPage()}) when a gene page is requested.
      * This parameter will then be provided outside of this class through the method 
@@ -1149,6 +1163,18 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
     {
         if (this.getFirstValue(urlParameters.getParamPage()) != null &&
             this.getFirstValue(urlParameters.getParamPage()) == this.PAGE_PRIVACY_POLICY()) {
+            return true;
+        }
+        return false;
+    };
+    /**
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     * category "projects"
+     */
+    this.isAProjectsPageCategory = function()
+    {
+        if (this.getFirstValue(urlParameters.getParamPage()) != null &&
+            this.getFirstValue(urlParameters.getParamPage()) == this.PAGE_PROJECTS()) {
             return true;
         }
         return false;

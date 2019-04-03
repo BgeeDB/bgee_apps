@@ -40,7 +40,7 @@ import org.bgee.view.ViewFactoryProvider.DisplayType;
  * @author  Mathieu Seppey
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Aug. 2018
+ * @version Bgee 14, Apr. 2019
  * @since   Bgee 13, June 2014
  */
 public class FrontController extends HttpServlet {
@@ -232,6 +232,8 @@ public class FrontController extends HttpServlet {
                 controller = new CommandAbout(response, requestParameters, this.prop, factory);
             } else if (requestParameters.isAPrivatePolicyPageCategory()) {
                 controller = new CommandPrivacyPolicy(response, requestParameters, this.prop, factory);
+            } else if (requestParameters.isAProjectsPageCategory()) {
+                controller = new CommandProjects(response, requestParameters, this.prop, factory);
             } else if (requestParameters.isATopAnatPageCategory()) {
                 controller = new CommandTopAnat(response, requestParameters, this.prop, factory, 
                         serviceFactory, this.jobService, user, this.getServletContext(), this.mailSender);

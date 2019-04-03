@@ -85,7 +85,7 @@ import org.bgee.model.expressiondata.baseelements.SummaryQuality;
  * @author  Mathieu Seppey
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Aug. 2018
+ * @version Bgee 14, Apr. 2019
  * @since   Bgee 1
  */
 public class RequestParameters {
@@ -188,6 +188,11 @@ public class RequestParameters {
      * (see {@link URLParameters#getParamPage()}) when a page related to privacy policy is requested.
      */
     public static final String PAGE_PRIVACY_POLICY = "privacy_policy";
+    /**
+     * A {@code String} that is the value taken by the {@code page} parameter 
+     * (see {@link URLParameters#getParamPage()}) when a page related to projects is requested.
+     */
+    public static final String PAGE_PROJECTS = "projects";
     /**
      * A {@code String} that encapsulates the value of the gene id parameter for the gene page.
      */
@@ -2423,6 +2428,22 @@ public class RequestParameters {
         return log.exit(false);
     }
     
+    /**
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     *
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     * category "projects"
+     */
+    public boolean isAProjectsPageCategory() {
+        log.entry();
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
+                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_PROJECTS)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
     /**
      * @return  A {@code boolean} to tell whether the request is related to job management.
      */

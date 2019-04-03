@@ -13,6 +13,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
+import org.bgee.model.species.Species;
 import org.bgee.view.ConcreteDisplayParent;
 import org.bgee.view.JsonHelper;
 import org.bgee.view.ViewFactory;
@@ -25,7 +26,7 @@ import org.bgee.view.ViewFactory;
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
  * @author  Sebastien Moretti
- * @version Bgee 14, Oct. 2018
+ * @version Bgee 14, Apr. 2019
  * @since   Bgee 13, Jul. 2014
  */
 public class HtmlParentDisplay extends ConcreteDisplayParent {
@@ -67,6 +68,11 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected static final String LICENCE_CC0_URL =
             "https://creativecommons.org/publicdomain/zero/1.0/";
+
+    /**
+     * A {@code String} that is the ID of the human species. 
+     */
+    private static final int HUMAN_SPECIES_ID = 9606;
 
     /**
      * Escape HTML entities in the provided {@code String}
@@ -990,6 +996,28 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         return log.exit(sources.toString());
     }
 
+    /**
+     * Get the src of the provided species for a HTML 'img' element. 
+     * 
+     * @param species       A {@code Species} that is the species for which the src is returned.
+     * @param isLightImg    A {@code boolean} defining whether image should be the light version.
+     * @return              The {@code String} that is the 'src' of the provided species
+     *                      for the HTML 'img' element.
+     */
+    protected String getSpeciesImageSrc(Species species, boolean isLightImg) {
+        log.entry(species, isLightImg);
+
+        StringBuilder src = new StringBuilder();
+        src.append(this.prop.getBgeeRootDirectory()).append(this.prop.getSpeciesImagesRootDirectory());
+        src.append(String.valueOf(species.getId()));
+        if (species.getId() == HUMAN_SPECIES_ID) {
+            src.append("_gtex");
+        }
+        src.append("_light.jpg");
+
+        return log.exit(src.toString());
+    }
+    
     /**
      * @return  A {@code String} that is the formatted version number of the webapp.
      *          {@code null} if this information is not available.

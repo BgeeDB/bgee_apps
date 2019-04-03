@@ -11,11 +11,11 @@ import java.io.IOException;
 
 
 /**
- * This class displays the page having the category "about", i.e. with the parameter
- * page=about for the HTML view.
+ * This class displays the page having the category "privacy_policy", i.e. with the parameter
+ * page=privacy_policy for the HTML view.
  *
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Aug. 2018
+ * @version Bgee 14, Apr. 2019
  * @since   Bgee 13, Mar. 2015
  */
 public class HtmlPrivacyPolicyDisplay extends HtmlParentDisplay implements PrivacyPolicyDisplay {

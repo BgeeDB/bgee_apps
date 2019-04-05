@@ -45,7 +45,7 @@ import org.bgee.view.JsonHelper;
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, Aug. 2018
+ * @version Bgee 14, Apr. 2019
  * @since   Bgee 13, Oct. 2015
  */
 public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
@@ -111,9 +111,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         geneList.append(clnGenes.stream()
             .sorted(Comparator.comparing(g -> g.getSpecies() == null?
                 null: g.getSpecies().getPreferredDisplayOrder(), Comparator.nullsLast(Comparator.naturalOrder())))
-            .map(g -> "<img src='" 
-                    + this.prop.getSpeciesImagesRootDirectory() + String.valueOf(g.getSpecies().getId())
-                    + "_light.jpg' alt='" + htmlEntities(g.getSpecies().getShortName()) 
+            .map(g -> "<img src='" + this.getSpeciesImageSrc(g.getSpecies(), true) + "' " +
+                    "alt='" + htmlEntities(g.getSpecies().getShortName()) 
                     + "' />" + getSpecificGenePageLink(g))
             .collect(Collectors.joining("</div><div class='col-md-offset-3 col-md-6 gene_choice'>",
                     "<div class='col-md-offset-3 col-md-6 gene_choice'>", "</div>")));
@@ -218,10 +217,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
         //page title
         this.writeln("<h1 class='gene_title col-sm-9 col-lg-7'>");
-        this.writeln("<img src='"
-                + this.prop.getBgeeRootDirectory() + this.prop.getSpeciesImagesRootDirectory()
-                + String.valueOf(gene.getSpecies().getId()) + "_light.jpg' alt='" + htmlEntities(gene.getSpecies().getShortName())
-                + "' />");
+        this.writeln("<img src='" + this.getSpeciesImageSrc(gene.getSpecies(), true)
+                + "' alt='" + htmlEntities(gene.getSpecies().getShortName()) + "' />");
         this.writeln(htmlEntities(titleStart));
         this.writeln(" - <em>" + htmlEntities(gene.getSpecies().getScientificName()) + "</em>");
         this.writeln(getSpeciesName(gene.getSpecies().getName()));

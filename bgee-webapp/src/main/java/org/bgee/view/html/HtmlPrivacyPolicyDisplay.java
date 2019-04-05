@@ -11,11 +11,11 @@ import java.io.IOException;
 
 
 /**
- * This class displays the page having the category "about", i.e. with the parameter
- * page=about for the HTML view.
+ * This class displays the page having the category "privacy_policy", i.e. with the parameter
+ * page=privacy_policy for the HTML view.
  *
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Aug. 2018
+ * @version Bgee 14, Apr. 2019
  * @since   Bgee 13, Mar. 2015
  */
 public class HtmlPrivacyPolicyDisplay extends HtmlParentDisplay implements PrivacyPolicyDisplay {
@@ -139,7 +139,7 @@ public class HtmlPrivacyPolicyDisplay extends HtmlParentDisplay implements Priva
         this.writeln("<p>Bgee uses Google Analytics as a third-party analytics service to collect " +
                 "information about website performance and how users navigate through and use our site " +
                 "to help us design better interfaces. We do not use Google Analytics to track you individually " +
-                "or collect personal data.<em>Personal data send to Google Analytics are anonymized upstream.</em></p>");
+                "or collect personal data. <em>Personal data send to Google Analytics are anonymized upstream.</em></p>");
         
         this.writeln("<h2>How long do we keep your personal data?</h2>");
         this.writeln("<p>Any personal data directly obtained from you will be retained as long as " +

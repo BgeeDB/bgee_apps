@@ -48,7 +48,7 @@
  * @author  Mathieu Seppey
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Aug. 2018
+ * @version Bgee 14, Apr. 2019
  * @since   Bgee 13, Aug. 2014
  */
 
@@ -162,7 +162,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
     }
     /**
      * A {@code String} that is the value taken by the {@code page} parameter
-     * (see {@link #getParamPage()}) when an about page is requested.
+     * (see {@link #getParamPage()}) when an privacy policy page is requested.
      * This parameter will then be provided outside of this class through the method
      * {@link #PAGE_PRIVACY_POLICY()} (to get the behavior of a public final parameter).
      */

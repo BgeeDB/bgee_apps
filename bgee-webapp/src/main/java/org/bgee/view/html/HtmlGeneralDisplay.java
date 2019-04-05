@@ -23,7 +23,7 @@ import org.bgee.view.html.HtmlDownloadDisplay.DownloadPageType;
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
- * @version Bgee 14, Oct. 2018
+ * @version Bgee 14, Apr. 2019
  * @since   Bgee 13, July 2014
  */
 public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisplay {
@@ -96,8 +96,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	    groups.stream().filter(sdg -> sdg.isSingleSpecies()).forEach(sdg -> {
 	        Species species = sdg.getMembers().get(0);
 	        Map<String,String> attrs = new HashMap<>();
-	        attrs.put("src", this.prop.getBgeeRootDirectory() + this.prop.getSpeciesImagesRootDirectory() 
-	                            + String.valueOf(species.getId()) + "_light.jpg");
+			attrs.put("src", this.getSpeciesImageSrc(species, true));
 	        attrs.put("alt", htmlEntities(species.getShortName()));
 	        attrs.put("class", "species_img");
 	        homePageSpeciesSection.append(getHTMLTag("img", attrs));
@@ -323,17 +322,21 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	    
 	    this.writeln("<div class='panel-body'>");
 
-	    //FIXME set the release date
-		this.writeOneNews("2019-02", "Update of our interfaces:"
-				+ "<ul>"
+		this.writeOneNews("2019-04-05",
+				  "<ul>"
 				+ "  <li>New <a href='" + urlPrivatePolicyPage.getRequestURL() 
 								+ "'>privacy policy page</a></li>"
 				+ "  <li>New <a href='" + urlFaqPage.getRequestURL() + "'>FAQ page</a> "
 				+ "				where we address common user queries</li>"
 				+ "  <li>New <a href='" + urlDatasetPage.getRequestURL() + "'>documentation page</a>"
-				+ " 			specific to GTEx data to learn where to find information" 
-				+ " 			about this project</li>"
-				+ "  <li>Update the menu</li>"
+				+ " 			specific to GTEx project to learn how we integrated these data" 
+				+ " 			into Bgee</li>"
+                + "  <li>Update to Bgee 14.0 of the <a href='" + urlCallDoc.getRequestURL()+ "'>gene expression call documentation</a>"
+                + "             </li>"
+                + "  <li>Update of the <a href='" + urlSourcePage.getRequestURL()+ "'>data source page</a>"
+                + "             to provide version information</li>"
+                + "  <li>We have clarified our license; we have chosen CC0.</li>"
+				+ "  <li>Update of the menu</li>"
 				+ "</ul>");
 				
         this.writeOneNews("2018-02-14", "Release of Bgee version 14.0:"

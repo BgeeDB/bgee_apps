@@ -28,7 +28,7 @@ import org.bgee.view.JsonHelper;
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
- * @version Bgee 14, Oct. 2018
+ * @version Bgee 14, Apr. 2019
  * @since   Bgee 13, July 2014
  */
 public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDisplay {
@@ -697,8 +697,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         StringBuilder images = new StringBuilder();
         for (Species spe : species) {
             Map<String,String> attrs = new HashMap<>();
-            attrs.put("src", this.prop.getBgeeRootDirectory() + this.prop.getSpeciesImagesRootDirectory() 
-                            + String.valueOf(spe.getId()) + "_light.jpg");
+            attrs.put("src", this.getSpeciesImageSrc(spe, true));
             attrs.put("alt", htmlEntities(spe.getShortName()));
             attrs.put("class", "species_img");
             images.append(getHTMLTag("img", attrs));

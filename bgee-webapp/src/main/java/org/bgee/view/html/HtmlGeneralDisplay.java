@@ -322,9 +322,8 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	    
 	    this.writeln("<div class='panel-body'>");
 
-	    //FIXME set the release date
-		this.writeOneNews("2019-02", "Update of our interfaces:"
-				+ "<ul>"
+		this.writeOneNews("2019-04-05",
+				  "<ul>"
 				+ "  <li>New <a href='" + urlPrivatePolicyPage.getRequestURL() 
 								+ "'>privacy policy page</a></li>"
 				+ "  <li>New <a href='" + urlFaqPage.getRequestURL() + "'>FAQ page</a> "

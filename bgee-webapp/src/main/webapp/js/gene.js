@@ -60,11 +60,11 @@ $( document ).ready( function(){
             ]
         },
         columnDefs: [ // Higher responsivePriority are removed first, target define the order
-            { responsivePriority: 2, targets: 0 }, // Ensembl ID
-            { responsivePriority: 1, targets: 1 }, // Name
-            { responsivePriority: 4, targets: 2 }, // Description
-            { responsivePriority: 3, targets: 3 }, // Organism
-            { responsivePriority: 5, targets: 4 }  // Match
+            { width: "12%", responsivePriority: 2, targets: 0 }, // Ensembl ID
+            { width: "12%", responsivePriority: 1, targets: 1 }, // Name
+            { width: "41%", responsivePriority: 4, targets: 2 }, // Description
+            { width: "20%", responsivePriority: 3, targets: 3 }, // Organism
+            { width: "15%", responsivePriority: 5, targets: 4 }  // Match
         ],
         columns: [ // sorting definition
             { "orderable": true }, // Ensembl ID

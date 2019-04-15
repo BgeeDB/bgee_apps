@@ -296,7 +296,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         StringBuilder box = new StringBuilder();
         box.append("<div class='row'>");
         box.append("<div id='bgee_gene_search' class='row well well-sm ").append(bgeeGeneSearchClass).append("'>");
-        box.append("    <form action='javascript:void(0);' method='get'>");
+        box.append("    <form method='get'>");
         box.append("        <div class='form'>");
         box.append("            <input type='hidden' id='page' name='page' value='gene' />");
         box.append("            <label for='bgee_gene_search_completion_box'>Search gene</label>");

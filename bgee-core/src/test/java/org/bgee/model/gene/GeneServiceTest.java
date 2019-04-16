@@ -1,5 +1,7 @@
 package org.bgee.model.gene;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
 import org.bgee.model.Entity;
 import org.bgee.model.ServiceFactory;
@@ -16,16 +18,25 @@ import org.bgee.model.species.SpeciesService;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.sphx.api.SphinxClient;
+import org.sphx.api.SphinxException;
+import org.sphx.api.SphinxMatch;
+import org.sphx.api.SphinxResult;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -34,7 +45,7 @@ import static org.mockito.Mockito.when;
  * 
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
- * @version Bgee 14, Mar. 2019
+ * @version Bgee 14, Apr. 2019
  * @since   Bgee 13, Nov. 2015
  */
 public class GeneServiceTest extends TestAncestor {
@@ -49,8 +60,7 @@ public class GeneServiceTest extends TestAncestor {
         Properties setProps = new Properties();
         setProps.setProperty(BgeeProperties.BGEE_SEARCH_SERVER_URL_KEY,
                 "/Users/admin/Desktop/topanat/results/");
-        setProps.setProperty(BgeeProperties.BGEE_SEARCH_SERVER_PORT_KEY,
-                "/Users/admin/Desktop/topanat/results/");
+        setProps.setProperty(BgeeProperties.BGEE_SEARCH_SERVER_PORT_KEY, "9999");
         props = BgeeProperties.getBgeeProperties(setProps);
     }
 
@@ -100,24 +110,97 @@ public class GeneServiceTest extends TestAncestor {
     }
     
     @Test
-    //FIXME: implement test
-    public void shouldFindByTerm() {
+    public void shouldAutocomplete() throws SphinxException {
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        SphinxClient sphinxClient = mock(SphinxClient.class);
+
+        SphinxResult sphinxResult = new SphinxResult();
+        sphinxResult.totalFound = 3;
+        sphinxResult.attrNames = new String[]{"hit"};
+        SphinxMatch sphinxMatch1 = new SphinxMatch(1, 10);
+        sphinxMatch1.attrValues = new ArrayList();
+        sphinxMatch1.attrValues.add("ENSG01");
+        SphinxMatch sphinxMatch2 = new SphinxMatch(2, 5);
+        sphinxMatch2.attrValues = new ArrayList();
+        sphinxMatch2.attrValues.add("ENSG02");
+        SphinxMatch sphinxMatch3 = new SphinxMatch(3, 1);
+        sphinxMatch3.attrValues = new ArrayList();
+        sphinxMatch3.attrValues.add("ENSG03");
+        sphinxResult.matches = new SphinxMatch[] {sphinxMatch1, sphinxMatch2, sphinxMatch3};
+
+        String term = "ENSG";
+        when(sphinxClient.Query(term, "bgee_autocomplete")).thenReturn(sphinxResult);
+
+        GeneService service = new GeneService(serviceFactory, sphinxClient, props);
+        List<String> autocompleteResult = service.autocomplete(term, 100);
+
+        assertNotNull(autocompleteResult);
+        assertEquals(Arrays.asList("ENSG01", "ENSG02", "ENSG03"), autocompleteResult);
+    }
+    
+    @Test
+    public void shouldFindByTerm() throws SphinxException {
     	DAOManager managerMock = mock(DAOManager.class);
         ServiceFactory serviceFactory = mock(ServiceFactory.class);
         when(serviceFactory.getDAOManager()).thenReturn(managerMock);
         SpeciesService spService = mock(SpeciesService.class);
         when(serviceFactory.getSpeciesService()).thenReturn(spService);
+        SphinxClient sphinxClient = mock(SphinxClient.class);
 
-        String term = "Name1";
+        Species species = new Species(11, null, null);
+        Map<Integer, Species> speciesMap = new HashMap<>();
+        speciesMap.put(11, species);
+        when(spService.loadSpeciesMap(Collections.singleton(11), false)).thenReturn(speciesMap);
 
-        when(spService.loadSpeciesByIds(new HashSet<>(Arrays.asList(11, 22)), false))
-            .thenReturn(new HashSet<>(Arrays.asList(new Species(11, null, null),
-                new Species(22, null, null))));
+        SphinxResult sphinxResult = new SphinxResult();
+        sphinxResult.totalFound = 1;
+        sphinxResult.attrNames = new String[]{
+                "bgeegeneid", "geneid", "genename", "genedescription",
+                "genenamesynonym", "genexref", "speciesid", "genemappedtogeneidcount"};
+        SphinxMatch sphinxMatch1 = new SphinxMatch(1, 1);
+        sphinxMatch1.attrValues = new ArrayList();
+        sphinxMatch1.attrValues.add(86L);
+        sphinxMatch1.attrValues.add("ENSG0086");
+        sphinxMatch1.attrValues.add("Name1");
+        sphinxMatch1.attrValues.add("Desc1");
+        sphinxMatch1.attrValues.add("Syn1||Syn2||Syn3");
+        sphinxMatch1.attrValues.add("xref_1||xref:2||xref.3");
+        sphinxMatch1.attrValues.add(11L);
+        sphinxMatch1.attrValues.add(1L);
+        sphinxResult.matches = new SphinxMatch[] {sphinxMatch1};
+
+        String term = "Syn2";
+        when(sphinxClient.Query(term, "bgee_genes")).thenReturn(sphinxResult);
         
-        GeneService service = new GeneService(serviceFactory, props);
-//        service.searchByTerm(term, null, 0, 100);
+        GeneService service = new GeneService(serviceFactory, sphinxClient, props);
+        GeneMatchResult geneMatchResult = service.searchByTerm(term, null, 0, 100);
+
+        assertEquals(1, geneMatchResult.getTotalMatchCount());
+        assertNotNull(geneMatchResult.getGeneMatches());
+        assertEquals(1, geneMatchResult.getGeneMatches().size());
+        Gene g = new Gene("ENSG0086", "Name1", "Desc1", Arrays.asList("Syn1", "Syn2", "Syn3"),
+                species, 1);
+        assertEquals(new GeneMatch(g, "syn2", GeneMatch.MatchSource.SYNONYM), geneMatchResult.getGeneMatches().get(0));
     }
     
+    @Test
+    public void shouldFindByTerm_noResult() throws SphinxException {
+        DAOManager managerMock = mock(DAOManager.class);
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(managerMock);
+        SphinxClient sphinxClient = mock(SphinxClient.class);
+
+        String term = "XXX";
+
+        when(sphinxClient.Query(term, "bgee_genes")).thenReturn(null);
+
+        GeneService service = new GeneService(serviceFactory, sphinxClient, props);
+        GeneMatchResult geneMatchResult = service.searchByTerm(term, null, 0, 100);
+
+        assertEquals(0, geneMatchResult.getTotalMatchCount());
+        assertNull(geneMatchResult.getGeneMatches());
+    }
+
     @Test
     @Ignore("Test ignored until the method getOrthologs() is re-implemented.")
     public void testGetOrthologies() {

@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -60,10 +59,21 @@ public class GeneService extends CommonService {
      * @throws IllegalArgumentException If {@code serviceFactory} is {@code null}.
      */
     public GeneService(ServiceFactory serviceFactory, BgeeProperties props) {
+        this(serviceFactory, new SphinxClient(props.getSearchServerURL(),
+                Integer.valueOf(props.getSearchServerPort())), props);
+    }
+
+    /**
+     * @param serviceFactory            The {@code ServiceFactory} to be used to obtain {@code Service}s 
+     *                                  and {@code DAOManager}.
+     * @param props                     A {@code BgeeProperties} that are all properties values
+     *                                  to be used to obtain {@code SphinxClient}s.
+     * @throws IllegalArgumentException If {@code serviceFactory} is {@code null}.
+     */
+    public GeneService(ServiceFactory serviceFactory, SphinxClient sphinxClient, BgeeProperties props) {
         super(serviceFactory);
         this.speciesService = this.getServiceFactory().getSpeciesService();
-        this.sphinxClient = new SphinxClient(props.getSearchServerURL(),
-                Integer.valueOf(props.getSearchServerPort()));
+        this.sphinxClient = sphinxClient;
     }
     
     /**

@@ -28,7 +28,7 @@ import org.junit.Test;
  * important information.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Mar. 2019
+ * @version Bgee 14, Apr. 2019
  * @see org.bgee.model.dao.api.gene.GeneDAO
  * @since   Bgee 13, May 2014
  */
@@ -222,6 +222,41 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
                 TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
     }
     
+    /**
+     * Test the select method {@link MySQLGeneDAO#getGenesByBgeeIds(Collection)}.
+     */
+    @Test
+    public void shouldGetGenesByBgeeIds() throws SQLException {
+
+        this.useSelectDB();
+
+        MySQLGeneDAO dao = new MySQLGeneDAO(this.getMySQLDAOManager());
+
+        // Without specified Bgee geneID
+        dao.setAttributes(Arrays.asList(GeneDAO.Attribute.ID, GeneDAO.Attribute.SPECIES_ID));
+        List<GeneTO> methGenes = dao.getGenesByBgeeIds(null).getAllTOs();
+        List<GeneTO> expectedGenes = Arrays.asList(
+                new GeneTO(1, null, null, null, 11, null, null, null, null),
+                new GeneTO(2, null, null, null, 21, null, null, null, null),
+                new GeneTO(3, null, null, null, 31, null, null, null, null),
+                new GeneTO(4, null, null, null, 21, null, null, null, null));
+        //Compare
+        assertTrue("GeneTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
+
+        // With specified Bgee gene IDs
+        dao.clearAttributes();
+        dao.setAttributes(GeneDAO.Attribute.DESCRIPTION);
+        Set<Integer> bgeeGeneIds = new HashSet<>(Arrays.asList(1, 2, 3));
+        methGenes = dao.getGenesByBgeeIds(bgeeGeneIds).getAllTOs();
+        expectedGenes = Arrays.asList(
+                new GeneTO(null, null, null, "genDesc1", null, null, null, null, null),
+                new GeneTO(null, null, null, "genDesc2", null, null, null, null, null),
+                new GeneTO(null, null, null, "genDesc4", null, null, null, null, null));
+        //Compare
+        assertTrue("GeneTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
+    }
 
     /**
      * Test the update method {@link MySQLGeneDAO#updateGenes(Collection, Collection)}.

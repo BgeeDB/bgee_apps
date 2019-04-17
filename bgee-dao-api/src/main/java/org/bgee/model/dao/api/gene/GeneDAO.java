@@ -15,7 +15,7 @@ import org.bgee.model.dao.api.exception.DAOException;
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
  * @author  Frederic Bastian
- * @version Bgee 14, Mar. 2019
+ * @version Bgee 14, Apr. 2019
  * @see GeneTO
  * @since   Bgee 13, May 2014
  */
@@ -107,6 +107,20 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      */
     public GeneTOResultSet getGenesBySpeciesAndGeneIds(Map<Integer, Set<String>> speciesIdToGeneIds) 
             throws DAOException;
+
+    /**
+     * Retrieves genes from data source according to a {@code Collection} of {@code Integer}s
+     * that are the Bgee gene IDs allowing to filter the genes to use.
+     * <p>
+     * The genes are retrieved and returned as a {@code GeneTOResultSet}. It is the
+     * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
+     *
+     * @param bgeeGeneIds   A {@code Collection} of {@code Integer}s that are the Bgee gene IDs
+     *                      to retrieve genes for. Can be {@code null} or empty.
+     * @return              A {@code GeneTOResultSet} containing matching genes from data source.
+     * @throws DAOException If an error occurred when accessing the data source. 
+     */
+    public GeneTOResultSet getGenesByBgeeIds(Collection<Integer> bgeeGeneIds) throws DAOException;
     
     /**
      * Update {@code Attribute}s of the provided genes, which are represented as a 

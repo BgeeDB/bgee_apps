@@ -1,7 +1,5 @@
 package org.bgee.model.gene;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
 import org.bgee.model.Entity;
 import org.bgee.model.ServiceFactory;
@@ -10,6 +8,9 @@ import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTOResultSet;
+import org.bgee.model.dao.api.gene.GeneXRefDAO;
+import org.bgee.model.dao.api.gene.GeneXRefDAO.GeneXRefTO;
+import org.bgee.model.dao.api.gene.GeneXRefDAO.GeneXRefTOResultSet;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTOResultSet;
@@ -25,6 +26,7 @@ import org.sphx.api.SphinxResult;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -64,6 +66,9 @@ public class GeneServiceTest extends TestAncestor {
         props = BgeeProperties.getBgeeProperties(setProps);
     }
 
+    /**
+     * Test {@link GeneService#loadGenes(Collection)}.
+     */
     @Test
     public void shouldLoadGenes() {
         // initialize mocks
@@ -109,6 +114,81 @@ public class GeneServiceTest extends TestAncestor {
                 expectedGenes, service.loadGenes(geneFilters).collect(Collectors.toSet()));
     }
     
+    /**
+     * Test {@link GeneService#loadGenesByAnyId(Collection, boolean)}.
+     */
+    @Test
+    public void shouldLoadGenesByAnyId() {
+        // Initialize mocks
+        DAOManager managerMock = mock(DAOManager.class);
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(managerMock);
+        SpeciesService speciesService = mock(SpeciesService .class);
+        when(serviceFactory.getSpeciesService()).thenReturn(speciesService);
+        GeneXRefDAO geneXrefDao = mock(GeneXRefDAO.class);
+        when(managerMock.getGeneXRefDAO()).thenReturn(geneXrefDao);
+        GeneDAO geneDao = mock(GeneDAO.class);
+        when(managerMock.getGeneDAO()).thenReturn(geneDao);
+        
+        // Initialize params
+        Set<String> inputIds = new HashSet<>(Arrays.asList("ID1", "OtherID1",
+                "OtherID2", "OtherID4", "UnknownID"));
+
+        // Mock the GeneXrefDAO response
+        GeneXRefTOResultSet mockGeneXRefRs = getMockResultSet(GeneXRefTOResultSet.class,
+                Arrays.asList(new GeneXRefTO(1, "OtherID1", null, null),
+                        new GeneXRefTO(2, "OtherID2", null, null),
+                        new GeneXRefTO(22, "OtherID2", null, null),
+                        new GeneXRefTO(4, "OtherID4", null, null)));
+        when(geneXrefDao.getGeneXRefsByXRefIds(inputIds, 
+                Arrays.asList(GeneXRefDAO.Attribute.BGEE_GENE_ID, GeneXRefDAO.Attribute.XREF_ID)))
+                .thenReturn(mockGeneXRefRs);
+
+        // Mock the SpeciesService response
+        Map<Integer, Species> speciesMap = new HashMap<>();
+        speciesMap.put(1, new Species(1));
+        Map<Integer, Species> speciesMap2 = new HashMap<>();
+        speciesMap2.put(1, new Species(1));
+        speciesMap2.put(2, new Species(2));
+        when(speciesService.loadSpeciesMap(null, false)).thenReturn(speciesMap).thenReturn(speciesMap2);
+
+        // Mock the GeneDAO response from cross-ref ids
+        Set<Integer> bgeeGeneIds = new HashSet<>(Arrays.asList(1, 2, 22, 4));
+        GeneTOResultSet mockGeneRs1 = getMockResultSet(GeneTOResultSet.class,
+                Arrays.asList(new GeneTO(1, "ID1", "Name1a", null, 1, null, null, null, 1),
+                        new GeneTO(2, "ID2", "Name2", null, 1, null, null, null, 1),
+                        new GeneTO(22, "ID22", "Name22", null, 1, null, null, null, 1),
+                        new GeneTO(4, "ID4", "Name4", null, 1, null, null, null, 1)));
+        when(geneDao.getGenesByBgeeIds(bgeeGeneIds)).thenReturn(mockGeneRs1);
+
+        // Mock the GeneDAO response from ensembl ids
+        GeneTOResultSet mockGeneRs2 = getMockResultSet(GeneTOResultSet.class,
+                Arrays.asList(new GeneTO(1, "ID1", "Name1a", null, 1, null, null, null, 1),
+                        new GeneTO(11, "ID1", "Name1b", null, 2, null, null, null, 1)));
+        when(geneDao.getGenesByIds(new HashSet<>(Arrays.asList("ID1", "UnknownID"))))
+                .thenReturn(mockGeneRs2);
+        
+        Map<String,Set<Gene>> expectedMap = new HashMap<>();
+        expectedMap.put("ID1", new HashSet<>(Arrays.asList(
+                new Gene("ID1", "Name1a", null, null, new Species(1), 1),
+                new Gene("ID1", "Name1b", null, null, new Species(2), 1))));
+        expectedMap.put("OtherID1", new HashSet<>(Arrays.asList(
+                new Gene("ID1", "Name1a", null, null, new Species(1), 1))));
+        expectedMap.put("OtherID2", new HashSet<>(Arrays.asList(
+                new Gene("ID2", "Name2",  null, null, new Species(1), 1),
+                new Gene("ID22", "Name22",  null, null, new Species(1), 1))));
+        expectedMap.put("OtherID4", new HashSet<>(
+                Arrays.asList(new Gene("ID4", "Name4",  null, null, new Species(1), 1))));
+        expectedMap.put("UnknownID", new HashSet<>());
+
+        GeneService service = new GeneService(serviceFactory, BgeeProperties.getBgeeProperties());
+        assertEquals("Incorrect genes", expectedMap, service.loadGenesByAnyId(inputIds, false)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+    }
+    
+    /**
+     * Test {@link GeneService#autocomplete(String, int)}.
+     */
     @Test
     public void shouldAutocomplete() throws SphinxException {
         ServiceFactory serviceFactory = mock(ServiceFactory.class);

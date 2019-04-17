@@ -1,5 +1,22 @@
 package org.bgee.model.gene;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.bgee.model.BgeeProperties;
+import org.bgee.model.CommonService;
+import org.bgee.model.ServiceFactory;
+import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
+import org.bgee.model.dao.api.gene.GeneNameSynonymDAO.GeneNameSynonymTO;
+import org.bgee.model.dao.api.gene.GeneXRefDAO;
+import org.bgee.model.species.Species;
+import org.bgee.model.species.SpeciesService;
+import org.sphx.api.SphinxClient;
+import org.sphx.api.SphinxException;
+import org.sphx.api.SphinxMatch;
+import org.sphx.api.SphinxResult;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -8,24 +25,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.bgee.model.BgeeProperties;
-import org.bgee.model.CommonService;
-import org.bgee.model.ServiceFactory;
-import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
-import org.bgee.model.dao.api.gene.GeneNameSynonymDAO.GeneNameSynonymTO;
-import org.bgee.model.species.Species;
-import org.bgee.model.species.SpeciesService;
-import org.sphx.api.SphinxClient;
-import org.sphx.api.SphinxException;
-import org.sphx.api.SphinxMatch;
-import org.sphx.api.SphinxResult;
 
 import static org.bgee.model.gene.GeneMatch.MatchSource.DESCRIPTION;
 import static org.bgee.model.gene.GeneMatch.MatchSource.SYNONYM;
@@ -38,7 +41,7 @@ import static org.bgee.model.gene.GeneMatch.MatchSource.XREF;
  * @author  Philippe Moret
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Mar. 2019
+ * @version Bgee 14, Apr. 2019
  * @since   Bgee 13, Sept. 2015
  */
 public class GeneService extends CommonService {
@@ -256,6 +259,101 @@ public class GeneService extends CommonService {
 //                        e -> e.getValue().stream()
 //                            .map(to -> geneMap.get(to.getBgeeGeneId())).collect(Collectors.toSet())));
 //        return log.exit(results);
+    }
+    
+    /**
+     * Retrieve {@code Gene}s for a given set of IDs (gene IDs or any cross-reference IDs).
+     * 
+     * @param mixedGeneIDs  A {@code Collection} of {@code String}s that are IDs (gene IDs or any 
+     *                      cross-reference IDs) for which to return the gene IDs.
+     * @param withSpeciesInfo   A {@code boolean}s defining whether data sources of the species
+     *                          is retrieved or not.
+     * @return              The {@code Stream} of {@code Entry}s where keys are 
+     *                      provided gene or any cross-reference IDs, the associated value being a
+     *                      {@code Set} of {@code Gene}s they correspond to. 
+     */
+    public Stream<Entry<String, Set<Gene>>> loadGenesByAnyId(Collection<String> mixedGeneIDs,
+                                                             boolean withSpeciesInfo) {
+        log.entry(mixedGeneIDs, withSpeciesInfo);
+
+        Set<String> clnMixedGeneIDs = mixedGeneIDs == null? new HashSet<>(): new HashSet<>(mixedGeneIDs);
+
+        //we need to get the Species genes belong to, in order to instantiate Gene objects.
+        //we don't have access to the species ID information before getting the GeneTOs,
+        //and we want to return a Stream without iterating the GeneTOs first,
+        //so we load all species in database
+        final Map<Integer, Species> speciesMap = this.speciesService.loadSpeciesMap(null, withSpeciesInfo);
+
+        // Get mapping between given IDs and Bgee gene IDs
+        final Map<String, Set<Integer>> mapMixedIdToBgeeGeneIds = 
+                this.loadMappingXRefIdToBgeeGeneIds(clnMixedGeneIDs);
+        final Set<Integer> bgeeGeneIDs = mapMixedIdToBgeeGeneIds.values().stream()
+                .flatMap(Set::stream).collect(Collectors.toSet());
+        
+        // Get Genes from Bgee gene Ids
+        final Map<Integer, Gene> geneMap = Collections.unmodifiableMap(getDaoManager().getGeneDAO()
+                .getGenesByBgeeIds(bgeeGeneIDs).stream()
+                .collect(Collectors.toMap(
+                        EntityTO::getId,
+                        gTO -> mapGeneTOToGene(gTO, speciesMap.get(gTO.getSpeciesId()), null)
+                )));
+
+        // Build mapping between given IDs and genes
+        Map<String, Set<Gene>> mapAnyIdToGenes = mapMixedIdToBgeeGeneIds.entrySet().stream()
+                .collect(Collectors.toMap(
+                        e -> e.getKey(),
+                        e -> e.getValue().stream().map(geneMap::get).collect(Collectors.toSet())));
+
+
+        // Retrieve Genes that were not found using cross-reference IDs (i.e. Ensembl IDs)
+        Set<String> notXRefIds = clnMixedGeneIDs.stream()
+                    .filter(id -> !mapMixedIdToBgeeGeneIds.containsKey(id))
+                    .collect(Collectors.toSet());
+        mapAnyIdToGenes.putAll(this.loadGenesByEnsemblIds(notXRefIds, withSpeciesInfo)
+                .collect(Collectors.toMap(
+                        Gene::getEnsemblGeneId,
+                        g -> Stream.of(g).collect(Collectors.toSet()),
+                        (v1, v2) -> {
+                            Set<Gene> newSet = new HashSet<>(v1);
+                            newSet.addAll(v2);
+                            return newSet;
+                        })));
+
+        // Add provided IDs with no gene found
+        clnMixedGeneIDs.removeAll(mapAnyIdToGenes.keySet());
+        if (!clnMixedGeneIDs.isEmpty()) {
+            for (String clnMixedGeneID : clnMixedGeneIDs) {
+                mapAnyIdToGenes.put(clnMixedGeneID, new HashSet<>());
+            }
+        }
+        // Build mapping between given IDs and genes
+        return log.exit(mapAnyIdToGenes.entrySet().stream());
+    }
+    
+    /**
+     * Retrieve the mapping between a given set of cross-reference IDs. 
+     * and Bgee gene IDs of the data source.
+     * 
+     * @param ids   A {@code Collection} of {@code String}s that are cross-reference IDs
+     *              for which to return the mapping.
+     * @return      The {@code Map} where keys are {@code String}s corresponding to provided IDs,
+     *              and values are {@code Set} of {@code Integers}s that are the associated Bgee gene IDs.
+     */
+    private Map<String, Set<Integer>> loadMappingXRefIdToBgeeGeneIds(Collection<String> ids) {
+        log.entry(ids);
+        
+        Map<String, Set<Integer>> xRefIdToGeneIds = getDaoManager().getGeneXRefDAO()
+                .getGeneXRefsByXRefIds(ids, Arrays.asList(GeneXRefDAO.Attribute.BGEE_GENE_ID, 
+                        GeneXRefDAO.Attribute.XREF_ID)).stream()
+                .collect(Collectors.toMap(
+                        e -> e.getXRefId(),
+                        e -> Stream.of(e.getBgeeGeneId()).collect(Collectors.toSet()), 
+                        (v1, v2) -> {
+                            Set<Integer> newSet = new HashSet<>(v1);
+                            newSet.addAll(v2);
+                            return newSet;
+                        }));
+        return log.exit(xRefIdToGeneIds);
     }
 
     /**

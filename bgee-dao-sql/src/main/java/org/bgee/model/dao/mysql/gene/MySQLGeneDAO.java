@@ -27,7 +27,7 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
  * A {@code GeneDAO} for MySQL.
  *
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Mar. 2019
+ * @version Bgee 14, Apr. 2019
  * @see org.bgee.model.dao.api.gene.GeneDAO.GeneTO
  * @since   Bgee 13, May 2014
  */
@@ -89,6 +89,12 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
             throws DAOException {
         log.entry(speciesIdToGeneIds);
         return log.exit(this.getGenes(speciesIdToGeneIds, null, null));
+    }
+
+    @Override
+    public GeneTOResultSet getGenesByBgeeIds(Collection<Integer> bgeeGeneIds) throws DAOException {
+        log.entry(bgeeGeneIds);
+        return log.exit(this.getGenes(null, bgeeGeneIds, null));
     }
 
     private GeneTOResultSet getGenes(Map<Integer, Set<String>> speciesIdToGeneIds,

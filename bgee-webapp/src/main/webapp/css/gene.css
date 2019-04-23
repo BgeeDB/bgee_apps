@@ -20,15 +20,16 @@ h1.gene_title img {
     border-radius: 8px;
 }
 
-table#geneinfo {
+table.info-table {
 	margin: 1em 0;
 }
 
-table#geneinfo th {
+table.info-table th {
+    vertical-align: top;
     text-align: left;
     padding: 0 0.7em 0.5em 0;
 }
-table#geneinfo td {
+table.info-table td {
     text-align: left;
     padding: 0 0 0.5em 0;
 }
@@ -130,7 +131,7 @@ table.expression td {
 	vertical-align:text-top;
 }
 
-div.gene {
+div.info-content {
 	margin: 1em 2%;
 }
 
@@ -228,3 +229,7 @@ table.dataTable {
     border-top: 2px dotted #920209;
     width: 2em;
 }	
+
+span.more-content {
+    display: none;
+}

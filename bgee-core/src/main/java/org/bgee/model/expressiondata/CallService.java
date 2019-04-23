@@ -66,7 +66,7 @@ import org.bgee.model.species.Species;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Mar. 2019
+ * @version Bgee 14, Apr. 2019
  * @since   Bgee 13, Oct. 2015
  */
 //******************
@@ -467,7 +467,7 @@ public class CallService extends CommonService {
                         gTO -> mapGeneTOToGene(gTO,
                                 Optional.ofNullable(speciesMap.get(gTO.getSpeciesId()))
                                 .orElseThrow(() -> new IllegalStateException("Missing species ID for gene")),
-                                null)
+                                null, null)
                         )));
 
         //check that we get all specifically requested genes.

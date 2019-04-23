@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -27,6 +28,7 @@ import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.CommandGene.GeneResponse;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.NamedEntity;
+import org.bgee.model.XRef;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
@@ -48,14 +50,19 @@ import org.bgee.view.JsonHelper;
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, Mar. 2019
+ * @version Bgee 14, Apr. 2019
  * @since   Bgee 13, Oct. 2015
  */
 public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
     private final static Logger log = LogManager.getLogger(HtmlGeneDisplay.class.getName());
 
-    private final static int MAX_SYNONYM_NUMBER = 10;
+    private final static int MAX_DISPLAYED_ITEMS = 10;
 
+    private final static Comparator<XRef> X_REF_COMPARATOR = Comparator
+            .<XRef, Integer>comparing(x -> x.getSource().getDisplayOrder(), Comparator.nullsLast(Integer::compareTo))
+            .thenComparing(x -> x.getSource().getName(), Comparator.nullsLast(String::compareTo))
+            .thenComparing((XRef::getXRefId), Comparator.nullsLast(String::compareTo));
+    
     /**
      * @param response             A {@code HttpServletResponse} that will be used to display 
      *                             the page to the client.
@@ -343,8 +350,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         this.writeln("</div>"); // close row
 
         //Gene general information
-        this.writeln("<h2>Gene Information</h2>");
-        this.writeln("<div class='gene'>" + getGeneInfo(gene) + "</div>");
+        this.writeln("<h2>General information</h2>");
+        this.writeln("<div class='gene'>" + getGeneralInfo(gene) + "</div>");
 
 
         //Expression data
@@ -428,6 +435,12 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         }
         this.writeln("</div>"); // end other info
         
+        // Cross-references
+        if (gene.getXRefs() != null && gene.getXRefs().size() > 0) {
+            this.writeln("<h2>Cross-references</h2>");
+            this.writeln(getXRefDisplay(gene.getXRefs()));
+        }
+
         this.endDisplay();
         log.exit();
     }
@@ -666,10 +679,11 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      * @param gene     The {@code Gene} for which to display information
      * @return         A {@code String} containing the HTML table containing the information.
      */
-    private static String getGeneInfo(Gene gene) {
+    private static String getGeneralInfo(Gene gene) {
         log.entry(gene);
 
-        final StringBuilder table = new StringBuilder("<table id='geneinfo'>");
+        final StringBuilder table = new StringBuilder("<div class='info-content'>");
+        table.append("<table class='info-table'>");
         table.append("<tr><th scope='row'>Ensembl ID</th><td>")
                 .append(htmlEntities(gene.getEnsemblGeneId())).append("</td></tr>");
         table.append("<tr><th scope='row'>Name</th><td>")
@@ -678,36 +692,101 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 .append(getStringNotBlankOrDash(gene.getDescription())).append("</td></tr>");
         table.append("<tr><th scope='row'>Organism</th><td>")
                 .append(getCompleteSpeciesName(gene));
-        table.append("<tr><th scope='row'>Synonym(s)</th><td>")
-                .append(getSynonymDisplay(gene.getSynonyms()));
-        table.append("</td></tr>");
+        if (gene.getSynonyms() != null && gene.getSynonyms().size() > 0) {
+            table.append("<tr><th scope='row'>Synonym(s)</th><td>")
+                    .append(getSynonymDisplay(gene.getSynonyms()));
+            table.append("</td></tr>");
+        }
+        table.append("</table>");
+        table.append("</div>");
 
-        return log.exit(table.append("</table>").toString());
+        return log.exit(table.toString());
     }
 
+    /**
+     * Generates the HTML code to display the synonyms.
+     *
+     * @param synonyms  A {@code Set} of {@code String}s that are the synonyms to display 
+     * @return          A {@code String} that is the HTML code to display synonyms
+     */
     private static String getSynonymDisplay(Set<String> synonyms) {
         log.entry(synonyms);
 
         if (synonyms == null || synonyms.size() == 0) {
-            return "-";
+            return "No synonyms";
         }
         
-        boolean tooManySyn = synonyms.size() > MAX_SYNONYM_NUMBER;
-
         List<String> orderedSynonyms = new ArrayList<>(synonyms);
         orderedSynonyms.sort(String::compareTo);
 
-        String display = String.join(", ", tooManySyn?
-                orderedSynonyms.subList(0, MAX_SYNONYM_NUMBER): orderedSynonyms);
-        if (tooManySyn) {
-            display +=  "<a role='button' data-toggle='collapse' href='#collapseSynonyms'" +
-                    "        aria-expanded='false' aria-controls='collapseSynonyms'>" +
-                    "       See all synonyms</a>";
-            display += "<div class='collapse' id='collapseSynonyms'>" +
-                    "       <div class='well'>" +
-                    "           All synonyms: " + String.join(", ", orderedSynonyms) +
-                    "       </div>" +
-                    "   </div>";
+        String display = getListDisplay("syn", orderedSynonyms);
+        return log.exit(display);
+    }
+
+    /**
+     * Return the {@code String} that is the HTML code of the cross-references table.
+     *
+     * @param xRefs A {@code Set} of {@code XRef}s that are the cross-references to display
+     * @return      A {@code String} containing the HTML code of the cross-references table
+     */
+    private static String getXRefDisplay(Set<XRef> xRefs) {
+        log.entry(xRefs);
+
+        if (xRefs == null || xRefs.size() == 0) {
+            return "No cross-references";
+        }
+
+        LinkedHashMap<Source, List<String>> xRefsBySource = new ArrayList<>(xRefs).stream()
+                .filter(x -> StringUtils.isNotBlank(x.getXRefUrl()))
+                .sorted(X_REF_COMPARATOR)
+                .collect(Collectors.groupingBy(XRef::getSource, LinkedHashMap::new,
+                        Collectors.mapping(x -> "<a href='" + x.getXRefUrl() + "' target='_blank'>"
+                                        + (StringUtils.isBlank(x.getXRefName()) ? x.getXRefId() : x.getXRefName()) + "</a>"
+                                , Collectors.toList())));
+        StringBuilder display = new StringBuilder("<div class='info-content'>");
+        display.append("<table class='info-table'>");
+
+        for (Entry<Source, List<String>> entry : xRefsBySource.entrySet()) {
+            Source source = entry.getKey();
+
+            List<String> sourceXRefs = entry.getValue();
+            sourceXRefs.sort(Comparator.naturalOrder());
+            
+            display.append("<tr>");
+            
+            display.append("<th>").append(source.getName()).append("</th>");
+            
+            display.append("<td>");
+            display.append(getListDisplay("source_" + source.getId(), sourceXRefs));
+            display.append("</td>");
+            
+            display.append("</tr>");
+        }
+        display.append("</table>");
+        display.append("</div>");
+
+        return log.exit(display.toString());
+    }
+
+    /**
+     * Generates the HTML code to display a list of items with the 'more' link.
+     *
+     * @param idPrefix  A {@code String} that is the prefix of the attribute 'id'.
+     * @param items     A {@code Set} of {@code String}s that are the items to display 
+     * @return          A {@code String} that is the HTML code to display items
+     */
+    private static String getListDisplay(String idPrefix, List<String> items) {
+        log.entry(idPrefix, idPrefix);
+
+        boolean tooManyItems = items.size() > MAX_DISPLAYED_ITEMS;
+
+        String display = String.join(", ", tooManyItems?
+                items.subList(0, MAX_DISPLAYED_ITEMS): items);
+        if (tooManyItems) {
+            display += "<span id='" + idPrefix + "_content' class='more-content'>, " +
+                    String.join(", ", items.subList(MAX_DISPLAYED_ITEMS, items.size())) +
+                    "</span>";
+            display += " <a id='" + idPrefix + "_link' class='more-link'>more</a>";
         }
         return log.exit(display);
     }

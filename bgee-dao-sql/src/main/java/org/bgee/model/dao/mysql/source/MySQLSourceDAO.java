@@ -21,7 +21,7 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
  * A {@code SourceDAO} for MySQL.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, July 2016
+ * @version Bgee 14, Apr. 2019
  * @since   Bgee 13
  * @see     org.bgee.model.dao.api.source.SourceDAO.SourceTO
  */
@@ -63,7 +63,7 @@ public class MySQLSourceDAO extends MySQLDAO<SourceDAO.Attribute> implements Sou
     }
 
     @Override
-    public SourceTOResultSet getDataSourceByIds(Collection<String> dataSourceIds,
+    public SourceTOResultSet getDataSourceByIds(Collection<Integer> dataSourceIds,
             Collection<SourceDAO.Attribute> attributes) throws DAOException, IllegalStateException {
         log.entry(dataSourceIds, attributes);
         return log.exit(this.getDataSources(dataSourceIds, false, attributes));
@@ -145,7 +145,7 @@ public class MySQLSourceDAO extends MySQLDAO<SourceDAO.Attribute> implements Sou
      *                          and {@code attributes}.
      * @throws DAOException     If an error occurred when accessing the data source.
      */
-    private SourceTOResultSet getDataSources(Collection<String> dataSourceIds, boolean displayableOnly, 
+    private SourceTOResultSet getDataSources(Collection<Integer> dataSourceIds, boolean displayableOnly, 
             Collection<SourceDAO.Attribute> attributes) throws DAOException {
         log.entry(dataSourceIds, displayableOnly, attributes);
         
@@ -180,7 +180,7 @@ public class MySQLSourceDAO extends MySQLDAO<SourceDAO.Attribute> implements Sou
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             
             if (isIdFilter) {
-                stmt.setStringsToIntegers(1, dataSourceIds, true);
+                stmt.setIntegers(1, dataSourceIds, true);
             }
             if (displayableOnly) {
                 int offsetParamIndex = (isIdFilter ? dataSourceIds.size() + 1 : 1);

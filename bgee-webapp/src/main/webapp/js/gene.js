@@ -3,7 +3,7 @@
  * 
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Mar. 2019
+ * @version Bgee 14, Apr. 2019
  * @since   Bgee 13, Dec. 2015
  */
 
@@ -163,6 +163,18 @@ $( document ).ready( function(){
     };
 
     loadAutocompleteGene();
+
+    // Add a listener to the link to show/hide the images copyright and change the text
+    $('a.more-link').on("click", function(){
+        var spanId = $( this ).attr('id').replace( "_link" , "_content" );
+        $("#" + spanId).slideToggle();
+        if($( this ).text().indexOf( "more" ) > -1){
+            $( this ).text($( this ).text().replace( "more", "less" ));
+        }
+        else{
+            $( this ).text($( this ).text().replace( "less", "more" ));
+        }
+    });
 } );
 
 //XXX: certainly the parsing needs to be udpated now that rank scores are displayed 

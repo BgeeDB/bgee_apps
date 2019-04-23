@@ -23,7 +23,7 @@ import java.util.Collection;
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, Mar. 2019
+ * @version Bgee 14, Apr. 2019
  * @since   Bgee 14, Feb. 2017
  *
  */
@@ -114,10 +114,13 @@ public class CommonService extends Service {
      * @param geneTO    A {@code GeneTO} that is the condition from data source
      *                  to map into {@code Gene}.
      * @param species   A {@code Species} that is the species of the gene.
+     * @param synonyms  A {@code Collection} of {@code String}s that are synonyms of the gene.
+     * @param xRefs     A {@code Collection} of {@code XRef}s that are cross-references of the gene.
      * @return          The mapped {@code Gene}.
      */
-    protected static Gene mapGeneTOToGene(GeneTO geneTO, Species species, Collection<String> synonyms) {
-        log.entry(geneTO, species, synonyms);
+    protected static Gene mapGeneTOToGene(GeneTO geneTO, Species species, Collection<String> synonyms,
+                                          Collection<XRef> xRefs) {
+        log.entry(geneTO, species, synonyms, xRefs);
         if (geneTO == null) {
             return log.exit(null);
         }
@@ -133,7 +136,7 @@ public class CommonService extends Service {
                     "Species ID of the gene does not match provided Species."));
         }
         return log.exit(new Gene(geneTO.getGeneId(), geneTO.getName(), geneTO.getDescription(),
-                synonyms, species, geneTO.getGeneMappedToGeneIdCount()));
+                synonyms, xRefs, species, geneTO.getGeneMappedToGeneIdCount()));
     }
 
     /**

@@ -68,7 +68,7 @@ public class MySQLGeneXRefDAOIT extends MySQLITAncestor {
     }
 
     /**
-     * Test the select method {@link MySQLGeneXRefDAO#getGeneXRefsByGeneIds(Collection, Collection)}.
+     * Test the select method {@link MySQLGeneXRefDAO#getGeneXRefsByBgeeGeneIds(Collection, Collection)}.
      */
     @Test
     public void shouldGetGeneXRefsByGeneIds() throws SQLException {
@@ -77,13 +77,13 @@ public class MySQLGeneXRefDAOIT extends MySQLITAncestor {
         MySQLGeneXRefDAO dao = new MySQLGeneXRefDAO(this.getMySQLDAOManager());
         
         // Check filtering without any filter
-        List<GeneXRefTO> methXrefs = dao.getGeneXRefsByGeneIds(null, null).getAllTOs();
+        List<GeneXRefTO> methXrefs = dao.getGeneXRefsByBgeeGeneIds(null, null).getAllTOs();
         List<GeneXRefTO> expectedXrefs = this.getAllGeneXrefTOs();
         this.assertRetrievedGeneXRefTOs(expectedXrefs, methXrefs);
 
         // Check filtering with gene ID filter
         Collection<Integer> bgeeGeneIds = Arrays.asList(1, 3); 
-        methXrefs = dao.getGeneXRefsByGeneIds(bgeeGeneIds, null).getAllTOs();
+        methXrefs = dao.getGeneXRefsByBgeeGeneIds(bgeeGeneIds, null).getAllTOs();
         expectedXrefs = this.getAllGeneXrefTOs().stream()
                 .filter(x -> bgeeGeneIds.contains(x.getBgeeGeneId()))
                 .collect(Collectors.toList());

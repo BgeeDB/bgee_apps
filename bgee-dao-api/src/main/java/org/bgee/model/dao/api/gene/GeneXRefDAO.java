@@ -67,7 +67,7 @@ public interface GeneXRefDAO extends DAO<GeneXRefDAO.Attribute> {
      *                      from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public GeneXRefTOResultSet getGeneXRefsByGeneIds(Collection<Integer> bgeeGeneIds,
+    public GeneXRefTOResultSet getGeneXRefsByBgeeGeneIds(Collection<Integer> bgeeGeneIds,
             Collection<GeneXRefDAO.Attribute> attributes) throws DAOException;
 
     /**

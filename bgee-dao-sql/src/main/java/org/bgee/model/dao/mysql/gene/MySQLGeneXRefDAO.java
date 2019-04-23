@@ -54,7 +54,7 @@ public class MySQLGeneXRefDAO extends MySQLDAO<GeneXRefDAO.Attribute> implements
     }
 
     @Override
-    public GeneXRefTOResultSet getGeneXRefsByGeneIds(Collection<Integer> bgeeGeneIds, 
+    public GeneXRefTOResultSet getGeneXRefsByBgeeGeneIds(Collection<Integer> bgeeGeneIds,
             Collection<GeneXRefDAO.Attribute> attributes) throws DAOException {
         log.entry(bgeeGeneIds, attributes);
         return log.exit(this.getGeneXRefs(bgeeGeneIds, null, null, attributes));
@@ -93,7 +93,7 @@ public class MySQLGeneXRefDAO extends MySQLDAO<GeneXRefDAO.Attribute> implements
         }
         
         if (clonedGeneIds != null) {
-            sql += GENE_X_REF_TABLE_NAME + ".geneId IN (" + 
+            sql += GENE_X_REF_TABLE_NAME + ".bgeeGeneId IN (" + 
                     BgeePreparedStatement.generateParameterizedQueryString(clonedGeneIds.size()) + ")";
         }
 
@@ -165,7 +165,7 @@ public class MySQLGeneXRefDAO extends MySQLDAO<GeneXRefDAO.Attribute> implements
                 sql += geneXRefTableName + ".";
 
                 if (attribute.equals(GeneXRefDAO.Attribute.BGEE_GENE_ID)) {
-                    sql += "geneId";
+                    sql += "bgeeGeneId";
                 } else if (attribute.equals(GeneXRefDAO.Attribute.XREF_ID)) {
                     sql += "XRefId";
                 } else if (attribute.equals(GeneXRefDAO.Attribute.XREF_NAME)) {
@@ -211,7 +211,7 @@ public class MySQLGeneXRefDAO extends MySQLDAO<GeneXRefDAO.Attribute> implements
             // Get results
             for (Entry<Integer, String> column : this.getColumnLabels().entrySet()) {
                 try {
-                    if (column.getValue().equals("geneId")) {
+                    if (column.getValue().equals("bgeeGeneId")) {
                         bgeeGeneId = this.getCurrentResultSet().getInt(column.getKey());
 
                     } else if (column.getValue().equals("XRefId")) {

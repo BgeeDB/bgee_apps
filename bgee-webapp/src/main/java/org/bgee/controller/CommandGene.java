@@ -34,6 +34,7 @@ import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.gene.GeneMatchResult;
+import org.bgee.model.gene.GeneMatchResultService;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.ViewFactory;
 
@@ -43,7 +44,7 @@ import org.bgee.view.ViewFactory;
  * @author  Philippe Moret
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Mar. 2019
+ * @version Bgee 14, Apr. 2019
  * @since   Bgee 13, Nov. 2015
  */
 public class CommandGene extends CommandParent {
@@ -183,18 +184,21 @@ public class CommandGene extends CommandParent {
     /**
      * Constructor
      * 
-     * @param response          A {@code HttpServletResponse} that will be used to display the 
-     *                          page to the client
-     * @param requestParameters The {@code RequestParameters} that handles the parameters of the 
-     *                          current request.
-     * @param prop              A {@code BgeeProperties} instance that contains the properties
-     *                          to use.
-     * @param viewFactory       A {@code ViewFactory} that provides the display type to be used.
-     * @param serviceFactory    A {@code ServiceFactory} that provides bgee services.
+     * @param response                  A {@code HttpServletResponse} that will be used to display the 
+     *                                  page to the client
+     * @param requestParameters         The {@code RequestParameters} that handles the parameters of the 
+     *                                  current request.
+     * @param prop                      A {@code BgeeProperties} instance that contains the properties
+     *                                  to use.
+     * @param viewFactory               A {@code ViewFactory} that provides the display type to be used.
+     * @param serviceFactory            A {@code ServiceFactory} that provides bgee services.
+     * @param geneMatchResultService    A {@code GeneMatchResultService} instance allowing to 
+     *                                  use the search engine for a gene.
      */
-    public CommandGene(HttpServletResponse response, RequestParameters requestParameters, BgeeProperties prop,
-            ViewFactory viewFactory, ServiceFactory serviceFactory) {
-        super(response, requestParameters, prop, viewFactory, serviceFactory);
+    public CommandGene(HttpServletResponse response, RequestParameters requestParameters,
+                       BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory,
+                       GeneMatchResultService geneMatchResultService) {
+        super(response, requestParameters, prop, viewFactory, serviceFactory, geneMatchResultService);
     }
 
     @Override
@@ -206,7 +210,7 @@ public class CommandGene extends CommandParent {
         String search = requestParameters.getSearch();
 
         if (StringUtils.isNotBlank(search)) {
-            GeneMatchResult result = serviceFactory.getGeneService().searchByTerm(search, null, 0, 1000);
+            GeneMatchResult result = this.geneMatchResultService.searchByTerm(search, null, 0, 1000);
             display.displayGeneSearchResult(search, result);
             log.exit(); return;
         }

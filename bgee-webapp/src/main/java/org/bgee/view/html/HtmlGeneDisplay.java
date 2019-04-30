@@ -127,7 +127,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 this.writeln("</div>"); // close gene-count
                 
                 this.writeln("<div class='table-container'>");
-                this.writeln(this.getResultTable(result.getGeneMatches(), searchTerm));
+                this.writeln(this.getSearchResultTable(result.getGeneMatches(), searchTerm));
                 this.writeln("</div>"); // close table-container
             }
         }
@@ -136,7 +136,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         log.exit();
     }
 
-    private String getResultTable(List<GeneMatch> geneMatches, String searchTerm) {
+    private String getSearchResultTable(List<GeneMatch> geneMatches, String searchTerm) {
         log.entry(geneMatches, searchTerm);
         
         StringBuilder sb = new StringBuilder();

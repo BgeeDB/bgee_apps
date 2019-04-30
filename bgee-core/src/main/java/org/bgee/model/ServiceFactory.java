@@ -51,7 +51,7 @@ import org.bgee.model.species.TaxonService;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Mar. 2019
+ * @version Bgee 14, Apr. 2019
  * @since   Bgee 13, Sept. 2015
  */
 //XXX: should we put all Services in a same package, so that the constructors are protected 
@@ -74,7 +74,7 @@ public class ServiceFactory implements AutoCloseable {
      * the default {@code DAOManager} returned by {@link DAOManager#getDAOManager()}, 
      * to be used to the {@code Service}s it instantiates. 
      * 
-     * @see #SpeciesService(DAOManager)
+     * @see SpeciesService(DAOManager)
      */
     public ServiceFactory() {
         this(DAOManager.getDAOManager());
@@ -116,7 +116,7 @@ public class ServiceFactory implements AutoCloseable {
      */
     public GeneService getGeneService() {
         log.entry();
-        return log.exit(new GeneService(this, BgeeProperties.getBgeeProperties()));
+        return log.exit(new GeneService(this));
     }
 
     /**

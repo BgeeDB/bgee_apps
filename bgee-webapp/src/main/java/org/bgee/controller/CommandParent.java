@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.logging.log4j.LogManager;
@@ -25,6 +26,7 @@ import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
+import org.bgee.model.gene.GeneMatchResultService;
 import org.bgee.model.job.JobService;
 import org.bgee.view.ViewFactory;
 
@@ -43,7 +45,7 @@ import org.bgee.view.ViewFactory;
  * @author 	Frederic Bastian
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Mar. 2017
+ * @version Bgee 14, Apr. 2019
  * @see 	#processRequest()
  * @since 	Bgee 1
  *
@@ -58,6 +60,10 @@ abstract class CommandParent {
      */
     protected final ViewFactory viewFactory;
     protected final ServiceFactory serviceFactory;
+    /**
+     * The {@code GeneMatchResultService} instance allowing to use the search engine for a gene.
+     */
+    protected final GeneMatchResultService geneMatchResultService;
     /**
      * The {@code JobService} instance allowing to manage jobs between threads 
      * across the entire webapp. 
@@ -126,6 +132,28 @@ abstract class CommandParent {
     }
 
     /**
+     * Constructor. This constructor doesn't provide a {@code ServiceFactory}
+     *
+     * @param response                  A {@code HttpServletResponse} that will be used 
+     *                                  to display the page to the client
+     * @param requestParameters         The {@code RequestParameters} that handles the parameters 
+     *                                  of the current request.
+     * @param prop                      A {@code BgeeProperties} instance that contains the 
+     *                                  properties to use.
+     * @param viewFactory               A {@code ViewFactory} that provides the display type to be used.
+     * @param serviceFactory            A {@code ServiceFactory} that provides the services
+     *                                  (might be null).
+     * @param geneMatchResultService    A {@code GeneMatchResultService} instance allowing to 
+     *                                  use the search engine for a gene (might be null).
+     */
+    public CommandParent(HttpServletResponse response, RequestParameters requestParameters,
+                         BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory,
+                         GeneMatchResultService geneMatchResultService) {
+        this(response, requestParameters, prop, viewFactory, serviceFactory, geneMatchResultService,
+                null, null, null, null);
+    }
+
+    /**
      * Constructor
      * 
      * @param response          A {@code HttpServletResponse} that will be used to display the 
@@ -146,14 +174,45 @@ abstract class CommandParent {
     public CommandParent(HttpServletResponse response, RequestParameters requestParameters,
                          BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory, 
                          JobService jobService, User user, ServletContext context, MailSender mailSender) {
-        log.entry(response, requestParameters, prop, viewFactory, serviceFactory, jobService, 
+        this(response, requestParameters, prop, viewFactory, serviceFactory, null, jobService, 
                 user, context, mailSender);
+    }
+    
+    /**
+     * Constructor
+     *
+     * @param response                  A {@code HttpServletResponse} that will be used to display
+     *                                  the page to the client
+     * @param requestParameters         The {@code RequestParameters} that handles the parameters 
+     *                                  of the current request.
+     * @param prop                      A {@code BgeeProperties} instance that contains
+     *                                  the properties to use.
+     * @param viewFactory               A {@code ViewFactory} that provides the display type to be used.
+     * @param serviceFactory            A {@code ServiceFactory} that provides the services
+     *                                  (might be null)
+     * @param geneMatchResultService    A {@code GeneMatchResultService} instance allowing to 
+     *                                  use the search engine for a gene (might be null).
+     * @param jobService                A {@code JobService} instance allowing to manage jobs
+     *                                  between threads across the entire webapp.
+     * @param user                      The {@code User} who is making the query to the webapp
+     *                                  (might be null).
+     * @param context                   The {@code ServletContext} of the servlet using this object. 
+     *                                  Notably used when forcing file download.
+     * @param mailSender                A {@code MailSender} instance used to send mails to users.
+     */
+    public CommandParent(HttpServletResponse response, RequestParameters requestParameters,
+                         BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory,
+                         GeneMatchResultService geneMatchResultService, JobService jobService,
+                         User user, ServletContext context, MailSender mailSender) {
+        log.entry(response, requestParameters, prop, viewFactory, serviceFactory,
+                geneMatchResultService, jobService, user, context, mailSender);
         this.response = response;
         this.context = context;
         this.requestParameters = requestParameters;
         this.prop = prop;
         this.viewFactory = viewFactory;
         this.serviceFactory = serviceFactory;
+        this.geneMatchResultService = geneMatchResultService;
         this.jobService = jobService;
         this.user = user;
         this.mailSender = mailSender;

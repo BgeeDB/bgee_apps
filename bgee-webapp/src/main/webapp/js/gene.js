@@ -165,15 +165,10 @@ $( document ).ready( function(){
     loadAutocompleteGene();
 
     // Add a listener to the link to show/hide the images copyright and change the text
-    $('a.more-link').on("click", function(){
-        var spanId = $( this ).attr('id').replace( "_link" , "_content" );
-        $("#" + spanId).slideToggle();
-        if($( this ).text().indexOf( "more" ) > -1){
-            $( this ).text($( this ).text().replace( "more", "less" ));
-        }
-        else{
-            $( this ).text($( this ).text().replace( "less", "more" ));
-        }
+    $('.glyphicon.glyphicon-plus').click(function () {
+        $(this).toggleClass("glyphicon-minus").toggleClass("glyphicon-plus");
+        var spanId = $( this ).attr('id').replace( "_click" , "_content" );
+        $("#" + spanId).toggle(1);
     });
 } );
 

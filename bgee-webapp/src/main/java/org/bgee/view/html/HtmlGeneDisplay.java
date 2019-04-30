@@ -739,10 +739,11 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         LinkedHashMap<Source, List<String>> xRefsBySource = new ArrayList<>(xRefs).stream()
                 .filter(x -> StringUtils.isNotBlank(x.getXRefUrl()))
                 .sorted(X_REF_COMPARATOR)
-                .collect(Collectors.groupingBy(XRef::getSource, LinkedHashMap::new,
+                .collect(Collectors.groupingBy(XRef::getSource,
+                        LinkedHashMap::new,
                         Collectors.mapping(x -> "<a href='" + x.getXRefUrl() + "' target='_blank'>"
-                                        + (StringUtils.isBlank(x.getXRefName()) ? x.getXRefId() : x.getXRefName()) + "</a>"
-                                , Collectors.toList())));
+                                        + x.getXRefId() + "</a>" + getFormattedXRefName(x),
+                                Collectors.toList())));
         StringBuilder display = new StringBuilder("<div class='info-content'>");
         display.append("<table class='info-table'>");
 
@@ -769,6 +770,25 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
     }
 
     /**
+     * Generate the formatted cross-reference name.
+     * <p>
+     * If the cross-reference name of {@code xRef} can be split, only the first one is displayed. 
+     * 
+     * @param xRef  A {@code XRef} that is the cross-reference for which the name should be retrieved. 
+     * @return      The {@code String} that is the cross-reference name to display.
+     */
+    private static String getFormattedXRefName(XRef xRef) {
+        log.entry(xRef);
+        String xRefName = "";
+        if (StringUtils.isNotBlank(xRef.getXRefName())) {
+            String[] split = xRef.getXRefName().split("; ");
+            // If we have several names, we display only the first one.
+            xRefName = " (" + split[0] + ")";
+        }
+        return log.exit(xRefName);
+    }
+
+    /**
      * Generates the HTML code to display a list of items with the 'more' link.
      *
      * @param idPrefix  A {@code String} that is the prefix of the attribute 'id'.
@@ -786,7 +806,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             display += "<span id='" + idPrefix + "_content' class='more-content'>, " +
                     String.join(", ", items.subList(MAX_DISPLAYED_ITEMS, items.size())) +
                     "</span>";
-            display += " <a id='" + idPrefix + "_link' class='more-link'>more</a>";
+            display += " <span id='" + idPrefix + "_click' class='glyphicon glyphicon-plus'><span>";
         }
         return log.exit(display);
     }

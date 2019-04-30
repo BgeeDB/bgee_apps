@@ -13,8 +13,9 @@ import java.util.Objects;
  * @author  Valentine Rech de Laval 
  * @version Bgee 14, Apr. 2019
  * @since   Bgee 14, Apr. 2019
+ * @param <T> The type of {@code Entity} ID to which the reference corresponds.
  */
-public class XRef {
+public class XRef<T> {
 
     /**
      * {@code Logger} of the class.
@@ -32,11 +33,16 @@ public class XRef {
     private final String xRefName;
 
     /**
+     * A {@code String} that is the entity to which the reference corresponds.
+     */
+    private final T entityId;
+
+    /**
      * A {@code Source} that is the data source the cross-reference comes from.
      */
     public final Source source;
 
-    public XRef(String xRefId, String xRefName, Source source) {
+    public XRef(String xRefId, String xRefName, Source source, T entityId) {
         if (StringUtils.isBlank(xRefId)) {
             throw log.throwing(new IllegalArgumentException("The cross-reference ID must be provided."));
         }
@@ -46,6 +52,7 @@ public class XRef {
         this.xRefId = xRefId;
         this.xRefName = xRefName;
         this.source = source;
+        this.entityId = entityId;
     }
 
     public String getXRefId() {
@@ -59,19 +66,17 @@ public class XRef {
     public Source getSource() {
         return source;
     }
+    
+    public T getEntityId() {
+        return entityId;
+    }
 
     /**
-     * @return  A {@code String} corresponding to the cross-reference URL.
+     * @return  The {@code String} that is the cross-reference URL.
      */
     public String getXRefUrl() {
-        log.exit();
-        
-        // FIXME: [xref_id] should be defined somewhere
-        if (source != null && StringUtils.isNotBlank(source.getxRefUrl())
-                && source.getxRefUrl().contains("[xref_id]")) {
-           return source.getxRefUrl().replace("[xref_id]", xRefId); 
-        }
-        return log.exit(null);
+        log.entry();
+        return log.exit(Source.buildXRefUrl(source, xRefId, entityId));
     }
 
     @Override
@@ -81,19 +86,21 @@ public class XRef {
         XRef xRef = (XRef) o;
         return Objects.equals(xRefId, xRef.xRefId) &&
                 Objects.equals(xRefName, xRef.xRefName) &&
-                Objects.equals(source, xRef.source);
+                Objects.equals(source, xRef.source) &&
+                Objects.equals(entityId, xRef.entityId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(xRefId, xRefName, source);
+        return Objects.hash(xRefId, xRefName, source, entityId);
     }
 
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("XRef [xRefId=").append(xRefId)
                 .append(", xRefName=").append(xRefName)
-                .append(", source=").append(source).append("]");
+                .append(", source=").append(source)
+                .append(", entityId=").append(entityId).append("]");
         return sb.toString();
     }
 }

@@ -572,13 +572,12 @@ public class GeneService extends CommonService {
 
     private Map<Integer, Set<XRef>> loadXrefsByBgeeGeneIds(Collection<GeneTO> geneTOs) {
         log.entry(geneTOs);
-        
-        Set<Integer> bgeeGeneIds = geneTOs.stream()
-                .map(GeneTO::getId)
-                .collect(Collectors.toSet());
+
+        final Map<Integer, GeneTO> geneTOsById = geneTOs.stream()
+                .collect(Collectors.toMap(EntityTO::getId, t -> t));
 
         Set<GeneXRefTO> xRefTOs = this.getDaoManager().getGeneXRefDAO()
-                .getGeneXRefsByBgeeGeneIds(bgeeGeneIds, null).stream()
+                .getGeneXRefsByBgeeGeneIds(geneTOsById.keySet(), null).stream()
                 .collect(Collectors.toSet());
         
         final Map<Integer, Source> sourceMap = getServiceFactory().getSourceService()
@@ -588,12 +587,13 @@ public class GeneService extends CommonService {
 
         return log.exit(xRefTOs.stream()
                 .collect(Collectors.groupingBy(GeneXRefTO::getBgeeGeneId,
-                        Collectors.mapping(x -> mapGeneXRefTOToXRef(x, sourceMap), Collectors.toSet()))));
+                        Collectors.mapping(x -> mapGeneXRefTOToXRef(x, sourceMap, geneTOsById), Collectors.toSet()))));
     }
 
-    private static XRef mapGeneXRefTOToXRef(GeneXRefTO to, Map<Integer, Source> sourceMap) {
-        log.entry(to, sourceMap);
-        return log.exit(new XRef(to.getXRefId(), to.getXRefName(), sourceMap.get(to.getDataSourceId())));
+    private static XRef mapGeneXRefTOToXRef(GeneXRefTO to, Map<Integer, Source> sourceMap, Map<Integer, GeneTO> geneTOsById) {
+        log.entry(to, sourceMap, geneTOsById);
+        return log.exit(new XRef(to.getXRefId(), to.getXRefName(), sourceMap.get(to.getDataSourceId()), 
+                geneTOsById.get(to.getBgeeGeneId()).getGeneId()));
     }
     
     private static Stream<Gene> mapGeneTOStreamToGeneStream(Stream<GeneTO> geneTOStream,

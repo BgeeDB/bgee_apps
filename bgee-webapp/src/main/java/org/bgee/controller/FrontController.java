@@ -26,6 +26,7 @@ import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.JobResultNotFoundException;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
+import org.bgee.model.gene.GeneMatchResultService;
 import org.bgee.model.job.JobService;
 import org.bgee.model.job.exception.TooManyJobsException;
 import org.bgee.view.ErrorDisplay;
@@ -40,7 +41,7 @@ import org.bgee.view.ViewFactoryProvider.DisplayType;
  * @author  Mathieu Seppey
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Aug. 2018
+ * @version Bgee 14, Apr. 2019
  * @since   Bgee 13, June 2014
  */
 public class FrontController extends HttpServlet {
@@ -74,6 +75,10 @@ public class FrontController extends HttpServlet {
      */
     private final UserService userService;
     /**
+     * The {@code GeneMatchResultService} instance allowing to use the search engine for a gene.
+     */
+    private final GeneMatchResultService geneMatchResultService;
+    /**
      * A {@code Supplier} of {@code ServiceFactory}s, allowing to obtain a new {@code ServiceFactory} 
      * instance at each call to the {@code doRequest} method.
      */
@@ -91,7 +96,8 @@ public class FrontController extends HttpServlet {
 
     /**
      * Default constructor. It will use default implementations for all dependencies 
-     * (see {@link #FrontController(BgeeProperties, URLParameters, JobService, UserService, Supplier, ViewFactoryProvider, MailSender)}).
+     * (see {@link FrontController(BgeeProperties, URLParameters, JobService, UserService,
+     * GeneMatchResultService, Supplier, ViewFactoryProvider, MailSender)}).
      */
     public FrontController() {
         this(null);
@@ -100,13 +106,14 @@ public class FrontController extends HttpServlet {
     /**
      * Constructor that takes as parameter a {@code java.util.Properties} to create 
      * a {@code BgeeProperties} instance. It will use default implementations for all dependencies 
-     * (see {@link #FrontController(BgeeProperties, URLParameters, JobService, UserService, Supplier, ViewFactoryProvider, MailSender)}).
+     * (see {@link FrontController(BgeeProperties, URLParameters, JobService, UserService,
+     * GeneMatchResultService, Supplier, ViewFactoryProvider, MailSender)}).
      * 
      * @param prop  A {@code java.util.Properties} that will be use to create an instance of
      *              {@code BgeeProperties}
      */
     public FrontController(Properties prop) {
-        this(BgeeProperties.getBgeeProperties(prop), null, null, null, null, null, null);
+        this(BgeeProperties.getBgeeProperties(prop), null, null, null, null, null, null, null);
     }
 
     /**
@@ -124,6 +131,9 @@ public class FrontController extends HttpServlet {
      * @param userService               A {@link UserService} instance, allowing to create
      *                                  {@code User} objects to identify and track users in the webapp. 
      *                                  If {@code null}, the default constructor of {@code UserService} is used.  
+     * @param geneMatchResultService    A {@link GeneMatchResultService} instance, allowing to search
+     *                                  {@code GeneMatchResult} objects to identify and track users in the webapp. 
+     *                                  If {@code null}, the default constructor of {@code UserService} is used.  
      * @param serviceFactoryProvider    A {@code Supplier} of {@code ServiceFactory}s, allowing 
      *                                  to obtain a new {@code ServiceFactory} instance 
      *                                  at each call to the {@code doRequest} method. If {@code null}, 
@@ -134,7 +144,7 @@ public class FrontController extends HttpServlet {
      * @param mailSender                A {@code MailSender} instance used to send mails to users.
      */
     public FrontController(BgeeProperties prop, URLParameters urlParameters, 
-            JobService jobService, UserService userService, 
+            JobService jobService, UserService userService, GeneMatchResultService geneMatchResultService,
             Supplier<ServiceFactory> serviceFactoryProvider, ViewFactoryProvider viewFactoryProvider, 
             MailSender mailSender) {
         log.entry(prop, urlParameters, jobService, userService, 
@@ -148,6 +158,9 @@ public class FrontController extends HttpServlet {
         
         this.jobService  = jobService != null? jobService: new JobService(this.prop);
         this.userService = userService != null? userService: new UserService();
+        // FIXME we need to integrate GeneMatchResultService into ServiceFactory 
+        this.geneMatchResultService  = geneMatchResultService != null? geneMatchResultService:
+                new GeneMatchResultService(this.prop);
         
         // If the viewFactoryProvider object is null, just use a new instance, 
         //injecting the properties obtained above. 
@@ -239,14 +252,15 @@ public class FrontController extends HttpServlet {
                 controller = new CommandJob(response, requestParameters, this.prop, factory, 
                         serviceFactory, this.jobService, user);
             } else if (requestParameters.isAGenePageCategory()){
-                controller = new CommandGene(response, requestParameters, this.prop, factory, serviceFactory);      
+                controller = new CommandGene(response, requestParameters, this.prop, factory,
+                        serviceFactory, this.geneMatchResultService);      
             } else if (requestParameters.isASourcePageCategory()){
                 controller = new CommandSource(response, requestParameters, this.prop, factory, serviceFactory);      
             } else if (requestParameters.isASpeciesPageCategory()){
                 controller = new CommandSpecies(response, requestParameters, this.prop, factory, serviceFactory);      
-            } else if (requestParameters.getAction() != null &&
-                		requestParameters.getAction().equals(RequestParameters.ACTION_AUTO_COMPLETE_GENE_SEARCH)) {
-            		controller = new CommandSearch(response, requestParameters, prop, factory, serviceFactory);
+            } else if (requestParameters.isASearchPageCategory()) {
+            		controller = new CommandSearch(response, requestParameters, this.prop, factory,
+                            serviceFactory, this.geneMatchResultService);
 //            } else if (requestParameters.isADAOPageCategory()) {
 //                controller = new CommandDAO(response, requestParameters, this.prop, factory, 
 //                        serviceFactory, this.jobService, user);

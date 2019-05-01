@@ -19,6 +19,13 @@ import org.bgee.controller.exception.ValueSizeExceededException;
 import org.bgee.model.job.exception.TooManyJobsException;
 import org.bgee.view.ErrorDisplay;
 
+/**
+ * This class is the HTML implementation of the {@code ErrorDisplay}.
+ *
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, Mar. 2019
+ * @since   Bgee 14, July 2015
+ */
 public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay {
     
     private final static Logger log = LogManager.getLogger(HtmlErrorDisplay.class.getName());
@@ -196,7 +203,7 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
         this.startDisplay("Invalid request!");
         this.writeln("<p class='alert'>Something wrong happened!</p>");
         this.writeln("<p>This operation is not supported "
-                + "for the requesed view or the requested parameters.</p>");
+                + "for the requested view or the requested parameters.</p>");
 
         this.endDisplay();
         log.exit();

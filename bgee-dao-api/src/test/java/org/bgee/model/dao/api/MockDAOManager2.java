@@ -24,6 +24,7 @@ import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneNameSynonymDAO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO;
+import org.bgee.model.dao.api.gene.GeneXRefDAO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
 import org.bgee.model.dao.api.keyword.KeywordDAO;
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO;
@@ -51,7 +52,7 @@ import static org.mockito.Mockito.mock;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Feb. 2017
+ * @version Bgee 14, Apr. 2019
  * @since   Bgee 13, July 2013
  */
 public class MockDAOManager2 extends DAOManager {
@@ -128,6 +129,10 @@ public class MockDAOManager2 extends DAOManager {
     @Override
     protected GeneDAO getNewGeneDAO() {
         return this.instanceMockManager.getNewGeneDAO();
+    }
+    @Override
+    protected GeneXRefDAO getNewGeneXRefDAO() {
+        return this.instanceMockManager.getNewGeneXRefDAO();
     }
     @Override
     protected HierarchicalGroupDAO getNewHierarchicalGroupDAO() {

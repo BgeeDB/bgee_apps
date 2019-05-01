@@ -3,8 +3,8 @@
  * 
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
- * @version Bgee 13, July 2016
- * @since   Bgee 13
+ * @version Bgee 14, Apr. 2019
+ * @since   Bgee 13, Dec. 2015
  */
 
 $( document ).ready( function(){ 
@@ -17,6 +17,64 @@ $( document ).ready( function(){
         return text.replace('<ul','<ol').replace('</ul>','</ol>');
     };
     
+    $('table.gene-search-result').DataTable( {
+        //enable ordering but apply no ordering during initialization
+        "order": [],
+        responsive: {
+            details: {
+                display: $.fn.dataTable.Responsive.display.modal( {
+                    header: function ( row ) {
+                        var data = row.data();
+                        return 'Details in ' + data[1];
+                    }
+                } ),
+                renderer: function ( api, rowIdx, columns ) {
+                    var data =
+                        '<tr><td>' + columns[0].title + '</td><td>' + columns[0].data + '</td></tr>' +
+                        '<tr><td>' + columns[1].title + '</td><td>' + columns[1].data + '</td></tr>' +
+                        '<tr><td>' + columns[2].title + '</td><td>' + columns[2].data + '</td></tr>' +
+                        '<tr><td>' + columns[3].title + '</td><td>' + columns[3].data + '</td></tr>';
+                    return $('<table class="table"/>').append( data );
+                }
+            },
+            breakpoints: [
+                // We use wrap option. So, we don't want a responsive table for not mobile display.  
+                //make the default datatable breakpoints to be the same as bootstrap
+                { name: 'desktop',  width: Infinity },
+                { name: 'tablet-l', width: Infinity },
+                { name: 'tablet-p', width: Infinity },
+                { name: 'mobile-l', width: 480 },
+                { name: 'mobile-p', width: 320 },
+                //(default datatable parameters: )
+                //{ name: 'desktop',  width: Infinity },
+                //{ name: 'tablet-l', width: 1024 },
+                //{ name: 'tablet-p', width: 768 },
+                //{ name: 'mobile-l', width: 480 },
+                //{ name: 'mobile-p', width: 320 }
+
+                //create breakpoints corresponding exactly to bootstrap
+                { name: 'table_lg', width: Infinity },
+                { name: 'table_md', width: Infinity },
+                { name: 'table_sm', width: Infinity },
+                { name: 'table_xs', width: Infinity }
+            ]
+        },
+        columnDefs: [ // Higher responsivePriority are removed first, target define the order
+            { width: "12%", responsivePriority: 2, targets: 0 }, // Ensembl ID
+            { width: "12%", responsivePriority: 1, targets: 1 }, // Name
+            { width: "41%", responsivePriority: 4, targets: 2 }, // Description
+            { width: "20%", responsivePriority: 3, targets: 3 }, // Organism
+            { width: "15%", responsivePriority: 5, targets: 4 }  // Match
+        ],
+        columns: [ // sorting definition
+            { "orderable": true }, // Ensembl ID
+            { "orderable": true }, // Name
+            { "orderable": true }, // Description
+            { "orderable": true }, // Organism
+            { "orderable": true }  // Match
+        ]
+    });
+
     $('table.expression').DataTable( {
     	//enable ordering but apply no ordering during initialization
     	"order": [],
@@ -70,7 +128,7 @@ $( document ).ready( function(){
            { "orderable": false }, // Anatomical entity - null = default sorting
            { "orderable": false }, // Anat. entity ID - null = default sorting
            { "orderable": false }, // Developmental stage(s) - ordering disabled
-           { "orderable": false},  //score - ordering disabled
+           { "orderable": false }, //score - ordering disabled
            //score ordering disabled, otherwise, use: 
            //{ "orderDataType": "dom-text", "type": "score" }, // Score - custom function
            { "orderable": false } // Quality - ordering disabled
@@ -105,6 +163,13 @@ $( document ).ready( function(){
     };
 
     loadAutocompleteGene();
+
+    // Add a listener to the link to show/hide the images copyright and change the text
+    $('.glyphicon.glyphicon-plus').click(function () {
+        $(this).toggleClass("glyphicon-minus").toggleClass("glyphicon-plus");
+        var spanId = $( this ).attr('id').replace( "_click" , "_content" );
+        $("#" + spanId).toggle(1);
+    });
 } );
 
 //XXX: certainly the parsing needs to be udpated now that rank scores are displayed 

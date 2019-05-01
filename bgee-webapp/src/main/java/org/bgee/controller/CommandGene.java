@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.PageNotFoundException;
@@ -32,6 +33,8 @@ import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSumm
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
+import org.bgee.model.gene.GeneMatchResult;
+import org.bgee.model.gene.GeneMatchResultService;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.ViewFactory;
 
@@ -41,7 +44,7 @@ import org.bgee.view.ViewFactory;
  * @author  Philippe Moret
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, May 2017
+ * @version Bgee 14, Apr. 2019
  * @since   Bgee 13, Nov. 2015
  */
 public class CommandGene extends CommandParent {
@@ -70,10 +73,10 @@ public class CommandGene extends CommandParent {
          * @param exprCalls                     See {@link #getExprCalls()}.
          * @param redundantExprCalls            See {@link #getRedundantExprCalls()}.
          * @param includingAllRedundantCalls    See {@link #isIncludingAllRedundantCalls()}.
-         * @param callsByAnatEntityId           See {@link #getCallsByAnatEntityId()}.
+         * @param callsByAnatEntity             See {@link #getCallsByAnatEntity()}.
          * @param clusteringBestEachAnatEntity  See {@link #getClusteringBestEachAnatEntity()}.
          * @param clusteringWithinAnatEntity    See {@link #getClusteringWithinAnatEntity()}.
-         * @param conditionUtils                See {@link #getConditionUtils()}.
+         * @param conditionGraph                See {@link #getConditionGraph()}.
          */
         public GeneResponse(Gene gene, List<ExpressionCall> exprCalls, 
                 Set<ExpressionCall> redundantExprCalls, 
@@ -116,7 +119,7 @@ public class CommandGene extends CommandParent {
         }
         /**
          * @return  A {@code boolean} that is {@code true} if the information returned by 
-         *          {@link #getCallsByAnatEntityId}, {@link #getClusteringBestEachAnatEntity()}, 
+         *          {@link #getCallsByAnatEntity()}, {@link #getClusteringBestEachAnatEntity()}, 
          *          and {@link #getClusteringWithinAnatEntity()}, were built by including all 
          *          redundant calls (see {@link #getRedundantExprCalls()}), {@code false} otherwise.
          */
@@ -169,7 +172,7 @@ public class CommandGene extends CommandParent {
             return clusteringWithinAnatEntity;
         }
         /**
-         * @return  A {@code ConditionUtils} loaded from all {@code Condition}s 
+         * @return  A {@code ConditionGraph} loaded from all {@code Condition}s 
          *          retrieved from the {@code ExpressionCall}s in the {@code List} returned by 
          *          {@link #getExprCalls()}.
          */
@@ -181,18 +184,21 @@ public class CommandGene extends CommandParent {
     /**
      * Constructor
      * 
-     * @param response          A {@code HttpServletResponse} that will be used to display the 
-     *                          page to the client
-     * @param requestParameters The {@code RequestParameters} that handles the parameters of the 
-     *                          current request.
-     * @param prop              A {@code BgeeProperties} instance that contains the properties
-     *                          to use.
-     * @param viewFactory       A {@code ViewFactory} that provides the display type to be used.
-     * @param serviceFactory    A {@code ServiceFactory} that provides bgee services.
+     * @param response                  A {@code HttpServletResponse} that will be used to display the 
+     *                                  page to the client
+     * @param requestParameters         The {@code RequestParameters} that handles the parameters of the 
+     *                                  current request.
+     * @param prop                      A {@code BgeeProperties} instance that contains the properties
+     *                                  to use.
+     * @param viewFactory               A {@code ViewFactory} that provides the display type to be used.
+     * @param serviceFactory            A {@code ServiceFactory} that provides bgee services.
+     * @param geneMatchResultService    A {@code GeneMatchResultService} instance allowing to 
+     *                                  use the search engine for a gene.
      */
-    public CommandGene(HttpServletResponse response, RequestParameters requestParameters, BgeeProperties prop,
-            ViewFactory viewFactory, ServiceFactory serviceFactory) {
-        super(response, requestParameters, prop, viewFactory, serviceFactory);
+    public CommandGene(HttpServletResponse response, RequestParameters requestParameters,
+                       BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory,
+                       GeneMatchResultService geneMatchResultService) {
+        super(response, requestParameters, prop, viewFactory, serviceFactory, geneMatchResultService);
     }
 
     @Override
@@ -201,6 +207,13 @@ public class CommandGene extends CommandParent {
         GeneDisplay display = viewFactory.getGeneDisplay();
         String geneId = requestParameters.getGeneId();
         Integer speciesId = requestParameters.getSpeciesId();
+        String search = requestParameters.getSearch();
+
+        if (StringUtils.isNotBlank(search)) {
+            GeneMatchResult result = this.geneMatchResultService.searchByTerm(search, null, 0, 1000);
+            display.displayGeneSearchResult(search, result);
+            log.exit(); return;
+        }
 
         if (geneId == null) {
             display.displayGeneHomePage();
@@ -258,7 +271,7 @@ public class CommandGene extends CommandParent {
         log.entry(gene);
 
         //**************************************
-        // Expression calls, ConditionUtils, 
+        // Expression calls, ConditionGraph, 
         // sorting, and redundant calls
         //**************************************
         List<ExpressionCall> organCalls = this.getAnatEntitySilverExpressionCalls(gene);
@@ -315,7 +328,7 @@ public class CommandGene extends CommandParent {
      * @param redundantCalls           A {@code Set} of {@code ExpressionCall}s that are redundant.
      * @param filterRedundantCalls     A {@code boolean} defining whether redundant calls 
      *                                 should be filtered for the grouping and clustering steps.
-     * @param conditionUtils           A {@code ConditionUtils} built from {@code exprCalls}.
+     * @param conditionGraph           A {@code ConditionGraph} built from {@code exprCalls}.
      * @return                         A built {@code GeneResponse}.
      */
     private GeneResponse buildGeneResponse(Gene gene, List<ExpressionCall> exprCalls, 
@@ -463,13 +476,13 @@ public class CommandGene extends CommandParent {
      * based on the properties {@link BgeeProperties#getGeneScoreClusteringMethod()} 
      * and {@link BgeeProperties#getGeneScoreClusteringThreshold()}. The {@code Function} 
      * will trigger a call to {@link ExpressionCall#generateMeanRankScoreClustering(
-     * List, ClusteringMethod, Double)}.
+     * List, ClusteringMethod, double)}.
      * 
      * @return     A {@code Function} accepting a {@code List} of {@code ExpressionCall}s 
      *             as input, and returns a {@code Map} corresponding to the clustering as output.
-     * @throws IllegalStateException   If {@link #props} does not provide properties 
+     * @throws IllegalStateException   If {@link #prop} does not provide properties 
      *                                 allowing to parameterize the clustering function.
-     * @see ExpressionCall#generateMeanRankScoreClustering(List, ClusteringMethod, Double)
+     * @see ExpressionCall#generateMeanRankScoreClustering(List, ClusteringMethod, double)
      */
     private Function<List<ExpressionCall>, Map<ExpressionCall, Integer>> getClusteringFunction() 
             throws IllegalStateException {

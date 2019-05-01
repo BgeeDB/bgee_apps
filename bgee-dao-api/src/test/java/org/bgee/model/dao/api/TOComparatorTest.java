@@ -38,6 +38,7 @@ import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesDataGroupTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO.Domain;
+import org.bgee.model.dao.api.gene.GeneXRefDAO.GeneXRefTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTO;
 import org.bgee.model.dao.api.keyword.KeywordDAO.EntityToKeywordTO;
@@ -58,7 +59,7 @@ import org.junit.Test;
  *  
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Feb. 2017
+ * @version Bgee 14, Apr. 2019
  * @since   Bgee 13, Sep. 2014
  */
 public class TOComparatorTest extends TestAncestor {
@@ -74,7 +75,7 @@ public class TOComparatorTest extends TestAncestor {
     }
     
     /**
-     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * Test the generic method {@link TOComparator#areTOsEqual(TransferObject, TransferObject, boolean)} 
      * using {@code SpeciesTO}s.
      */
     @Test
@@ -106,7 +107,7 @@ public class TOComparatorTest extends TestAncestor {
     }
     
     /**
-     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * Test the generic method {@link TOComparator#areTOsEqual(TransferObject, TransferObject, boolean)} 
      * using {@code TaxonTO}s.
      */
     @Test
@@ -125,7 +126,7 @@ public class TOComparatorTest extends TestAncestor {
     }
     
     /**
-     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * Test the generic method {@link TOComparator#areTOsEqual(TransferObject, TransferObject, boolean)} 
      * using {@code GOTermTO}s.
      */
     @Test
@@ -144,7 +145,7 @@ public class TOComparatorTest extends TestAncestor {
     }
     
     /**
-     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * Test the generic method {@link TOComparator#areTOsEqual(TransferObject, TransferObject, boolean)}
      * using {@code GeneTO}s.
      */
     @Test
@@ -166,7 +167,27 @@ public class TOComparatorTest extends TestAncestor {
     }
     
     /**
-     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * Test the generic method {@link TOComparator#areTOsEqual(TransferObject, TransferObject, boolean)}
+     * using {@code GeneXRefTO}s.
+     */
+    @Test
+    public void testAreGeneXRefTOEqual() {
+        GeneXRefTO to1 = new GeneXRefTO(1, "xref1 ID", "xref1 name", 1);
+        GeneXRefTO to2 = new GeneXRefTO(1, "xref1 ID", "xref1 name", 1);
+        assertTrue(TOComparator.areTOsEqual(to1, to2));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+        
+        to2 = new GeneXRefTO(2, "xref1 ID", "xref1 name", 1);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        assertFalse(TOComparator.areTOsEqual(to1, to2, false));
+        
+        to2 = new GeneXRefTO(2, "xref1 ID", "xref1 name", 22);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        assertFalse(TOComparator.areTOsEqual(to1, to2, false));
+    }
+    
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(TransferObject, TransferObject, boolean)}
      * using {@code HierarchicalGroupTO}s.
      */
     @Test
@@ -185,7 +206,7 @@ public class TOComparatorTest extends TestAncestor {
     }
     
     /**
-     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * Test the generic method {@link TOComparator#areTOsEqual(TransferObject, TransferObject, boolean)}
      * using {@code HierarchicalGroupToGeneTO}s.
      */
     @Test
@@ -202,7 +223,7 @@ public class TOComparatorTest extends TestAncestor {
     }
     
     /**
-     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * Test the generic method {@link TOComparator#areTOsEqual(TransferObject, TransferObject, boolean)}
      * using {@code AnatEntityTO}s.
      */
     @Test
@@ -225,7 +246,7 @@ public class TOComparatorTest extends TestAncestor {
     }
     
     /**
-     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * Test the generic method {@link TOComparator#areTOsEqual(TransferObject, TransferObject, boolean)}
      * using {@code DownloadFileTO}s.
      */
     @Test
@@ -275,7 +296,7 @@ public class TOComparatorTest extends TestAncestor {
     }
 
     /**
-     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object)} 
+     * Test the generic method {@link TOComparator#areTOsEqual(TransferObject, TransferObject, boolean)}
      * using {@code SpeciesDataGroupTO}s.
      */
     @Test
@@ -301,7 +322,7 @@ public class TOComparatorTest extends TestAncestor {
     }
 
     /**
-     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object)} 
+     * Test the generic method {@link TOComparator#areTOsEqual(TransferObject, TransferObject)}
      * using {@code SpeciesToDataGroupTO}s.
      */
     @Test
@@ -319,7 +340,7 @@ public class TOComparatorTest extends TestAncestor {
     }
 
     /**
-     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * Test the generic method {@link TOComparator#areTOsEqual(TransferObject, TransferObject, boolean)}
      * using {@code StageTO}s.
      */
     @Test
@@ -338,7 +359,7 @@ public class TOComparatorTest extends TestAncestor {
     }
     
     /**
-     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * Test the generic method {@link TOComparator#areTOsEqual(TransferObject, TransferObject, boolean)}
      * using {@code TaxonConstraintTO}s.
      */
     @Test
@@ -353,7 +374,7 @@ public class TOComparatorTest extends TestAncestor {
     }
     
     /**
-     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * Test the generic method {@link TOComparator#areTOsEqual(TransferObject, TransferObject, boolean)}
      * using {@code RelationTO}s.
      */
     @Test
@@ -381,7 +402,7 @@ public class TOComparatorTest extends TestAncestor {
     }
     
     /**
-     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * Test the generic method {@link TOComparator#areTOsEqual(TransferObject, TransferObject, boolean)}
      * using {@code ConditionTO}s.
      */
     @Test
@@ -403,7 +424,7 @@ public class TOComparatorTest extends TestAncestor {
     }
     
     /**
-     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * Test the generic method {@link TOComparator#areTOsEqual(TransferObject, TransferObject, boolean)}
      * using {@code ExpressionCallTO}s.
      */
     @Test
@@ -477,7 +498,7 @@ public class TOComparatorTest extends TestAncestor {
     }
 
     /**
-     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * Test the generic method {@link TOComparator#areTOsEqual(TransferObject, TransferObject, boolean)}
      * using {@code NoExpressionCallTO}s.
      */
     @Test
@@ -504,7 +525,7 @@ public class TOComparatorTest extends TestAncestor {
     }
 
     /**
-     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * Test the generic method {@link TOComparator#areTOsEqual(TransferObject, TransferObject, boolean)}
      * using {@code ExperimentExpressionTO}s.
      */
     @Test
@@ -522,7 +543,7 @@ public class TOComparatorTest extends TestAncestor {
     }
 
     /**
-     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * Test the generic method {@link TOComparator#areTOsEqual(TransferObject, TransferObject, boolean)}
      * using {@code GlobalExpressionToExpressionTO}s.
      */
     @Test
@@ -537,7 +558,7 @@ public class TOComparatorTest extends TestAncestor {
     }
     
     /**
-     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * Test the generic method {@link TOComparator#areTOsEqual(TransferObject, TransferObject, boolean)}
      * using {@code GlobalNoExpressionToNoExpressionTO}s.
      */
     @Test
@@ -603,7 +624,7 @@ public class TOComparatorTest extends TestAncestor {
     }
 
     /**
-     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * Test the generic method {@link TOComparator#areTOsEqual(TransferObject, TransferObject, boolean)}
      * using {@code DiffExpressionCallTO}s.
      */
     @Test
@@ -659,7 +680,7 @@ public class TOComparatorTest extends TestAncestor {
     }
 
     /**
-     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * Test the generic method {@link TOComparator#areTOsEqual(TransferObject, TransferObject, boolean)}
      * using {@code KeywordTO}s.
      */
     @Test
@@ -681,7 +702,7 @@ public class TOComparatorTest extends TestAncestor {
     }
 
     /**
-     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * Test the generic method {@link TOComparator#areTOsEqual(TransferObject, TransferObject, boolean)}
      * using {@code EntityToKeywordTO}s.
      */
     @Test
@@ -698,7 +719,7 @@ public class TOComparatorTest extends TestAncestor {
     }
 
     /**
-     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * Test the generic method {@link TOComparator#areTOsEqual(TransferObject, TransferObject, boolean)}
      * using {@code SourceTO}s.
      */
     @Test
@@ -740,7 +761,7 @@ public class TOComparatorTest extends TestAncestor {
     }
 
     /**
-     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * Test the generic method {@link TOComparator#areTOsEqual(TransferObject, TransferObject, boolean)}
      * using {@code SourceToSpeciesTO}s.
      */
     @Test

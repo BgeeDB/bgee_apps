@@ -10,12 +10,12 @@ import org.junit.Before;
  * the per-thread singleton behavior.
  * This abstract class is extended by all other test classes and define the common part of the
  * {@link BgeeProperties} tests.
- * 
- * @author Mathieu Seppey
- * @author Valentine Rech de Laval
- * @author Frederic Bastian
- * @version Bgee 13, Oct 2016
- * @since Bgee 13
+ *
+ * @author  Mathieu Seppey
+ * @author  Valentine Rech de Laval
+ * @author  Frederic Bastian
+ * @version Bgee 14, Mar. 2019
+ * @since   Bgee 13
  * @see BgeePropertiesParentTest
  * @see BgeePropertiesFirstTest
  * @see BgeePropertiesSecondTest
@@ -59,6 +59,8 @@ public abstract class BgeePropertiesParentTest {
     private void clearCommonProperties() {
         System.clearProperty(BgeeProperties.MAJOR_VERSION_KEY);
         System.clearProperty(BgeeProperties.MINOR_VERSION_KEY);
+        System.clearProperty(BgeeProperties.BGEE_SEARCH_SERVER_URL_KEY);
+        System.clearProperty(BgeeProperties.BGEE_SEARCH_SERVER_PORT_KEY);
         System.clearProperty(BgeeProperties.TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY);
         System.clearProperty(BgeeProperties.TOP_ANAT_R_WORKING_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.TOP_ANAT_FUNCTION_FILE_KEY);

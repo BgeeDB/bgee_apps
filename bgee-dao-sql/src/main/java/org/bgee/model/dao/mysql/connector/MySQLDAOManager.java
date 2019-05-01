@@ -54,6 +54,7 @@ import org.bgee.model.dao.mysql.file.MySQLSpeciesDataGroupDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneNameSynonymDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneOntologyDAO;
+import org.bgee.model.dao.mysql.gene.MySQLGeneXRefDAO;
 import org.bgee.model.dao.mysql.gene.MySQLHierarchicalGroupDAO;
 import org.bgee.model.dao.mysql.keyword.MySQLKeywordDAO;
 import org.bgee.model.dao.mysql.ontologycommon.MySQLCIOStatementDAO;
@@ -1007,6 +1008,11 @@ public class MySQLDAOManager extends DAOManager {
     protected MySQLGeneDAO getNewGeneDAO() {
         log.entry();
         return log.exit(new MySQLGeneDAO(this));
+    }
+    @Override
+    protected MySQLGeneXRefDAO getNewGeneXRefDAO() {
+        log.entry();
+        return log.exit(new MySQLGeneXRefDAO(this));
     }
     @Override
     protected MySQLHierarchicalGroupDAO getNewHierarchicalGroupDAO() {

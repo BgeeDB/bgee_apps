@@ -9,4 +9,7 @@ mvn install:install-file -Dfile=source_libraries/ncbi2owl.jar -DgroupId=org.bbop
 rm -rf ~/.m2/repository/sbc/orthoxml/
 mvn install:install-file -Dfile=source_libraries/orthoxml.jar -DgroupId=sbc -DartifactId=orthoxml -Dversion=0.1b -Dpackaging=jar -DgeneratePom=true -DlocalRepositoryPath=repository/
 
+rm -rf ~/.m2/repository/org/sphx/
+mvn install:install-file -Dfile=source_libraries/sphinxapi.jar -DgroupId=org.sphx -DartifactId=api -Dversion=2.3.2 -Dpackaging=jar -DgeneratePom=true -DlocalRepositoryPath=repository/
+
 exit 0

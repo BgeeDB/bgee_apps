@@ -375,7 +375,25 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         this.endDisplay();
 
         log.exit();
+    }
 
+    @Override
+    public void displaySparql() {
+        log.entry();
+
+        this.startDisplay("Bgee SPARQL endpoint");
+
+        this.writeln("<div class='row'>");
+        this.writeln("<div class='" + CENTERED_ELEMENT_CLASS + "'>");
+
+        this.writeln("<p>Beta-sparql</p>");
+
+        this.writeln("</div>"); // close CENTERED_ELEMENT_CLASS class
+        this.writeln("</div>"); // close row
+
+        this.endDisplay();
+
+        log.exit();
     }
 
     //*******************************************************

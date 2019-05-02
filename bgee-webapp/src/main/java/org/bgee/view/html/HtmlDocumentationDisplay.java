@@ -386,7 +386,41 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         this.writeln("<div class='row'>");
         this.writeln("<div class='" + CENTERED_ELEMENT_CLASS + "'>");
 
-        this.writeln("<p>Beta-sparql</p>");
+        this.writeln("<h1>About Bgee SPARQL endpoint</h1>");
+
+        this.writeln("<p>The Bgee SPARQL endpoint is reachable by using your preferable programming "
+                + "language or SPARQL interface through the following URL address: "
+                + "<a href = 'http://biosoda.expasy.org:8080/rdf4j-server/repositories/bgeelight'"
+                + "title = 'Link to the Bgee SPARQL endpoint' class='external_link' "
+                + "target = '_blank'> "
+                + "http://biosoda.expasy.org:8080/rdf4j-server/repositories/bgeelight'</a>.</p>");
+        this.writeln("<p>It was created using an Ontology Based Data "
+                + "Access (OBDA) approach. It queries data stored in the "
+                + "<a href = 'https://github.com/BgeeDB/bgee_pipeline/tree/develop/pipeline/dblite_creation' "
+                + "class='external_link' title ='link to Bgee lite documentation' target = '_blank'>"
+                + "Bgee lite</a> Relational database.</p>");
+        this.writeln("<h1>Virtual RDF serialisation and semantic models</h1>");
+        this.writeln("The virtual RDF serialisation of the Bgee lite "
+                + "database is based on the <a href = 'https://biosoda.github.io/genex/' "
+                + "class='external_link' title ='link to GenEx specification' target = '_blank'> GenEx "
+                + "semantic model specification</a> and the OBDA mappings defined in <a href = "
+                + "'https://github.com/biosoda/bioquery/tree/master/Bgee_OBDA_mappings'"
+                + "title ='link to OBDA mapping' target = '_blank'"
+                + "class='external_link'> OBDA mappings</a>. The mappings are defined with the "
+                + "<a href = 'https://github.com/ontop/ontop/wiki/ontopOBDAModel' "
+                + "title ='link to Ontop mapping language' target = '_blank' "
+                + "class='external_link'> Ontop mapping language</a>. Indeed, the Bgee data "
+                + "remain stored in a relational database (MySQL). </p>");
+        this.writeln("<p>To cross-reference other resources, this SPARQL endpoint contains annotation "
+                + "property assertions defined by a first draft of the life-sciences "
+                + "cross-reference (LSCR) ontology that is available to download at the "
+                + "<a href = 'https://github.com/qfo/OrthologyOntology' target = '_blank' "
+                + "title ='link to Quest for Orthologs github' class='external_link'> Quest for "
+                + "Orthologs github</a> repository "
+                + "<a href = 'https://github.com/qfo/OrthologyOntology/blob/master/lscr.ttl' "
+                + "target = '_blank' title ='link to LSCR ontology' class='external_link'> "
+                + "here</a>.</p>");
+
 
         this.writeln("</div>"); // close CENTERED_ELEMENT_CLASS class
         this.writeln("</div>"); // close row

@@ -283,14 +283,14 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         String bgeeGeneSearchClass= "col-xs-11 small-search-box";
         if (!isSmallBox) {
             example.append("<span class='examples'>Examples: ");
-            urlExample.setGeneId("ENSG00000244734");
-            example.append("<a href='" + urlExample.getRequestURL() + "'>HBB</a> (human)");
-            urlExample.setGeneId("ENSMUSG00000040564");
-            example.append(", <a href='" + urlExample.getRequestURL() + "'>Apoc1</a> (mouse)");
-            urlExample.setGeneId("ENSG00000178104");
-            example.append(", <a href='" + urlExample.getRequestURL() + "'>PDE4DIP</a> (human)");
-            urlExample.setGeneId("ENSDARG00000035350");
-            example.append(", <a href='" + urlExample.getRequestURL() + "'>ins</a> (zebrafish)");
+            urlExample.setSearch("HBB");
+            example.append("<a href='").append(urlExample.getRequestURL()).append("'>HBB</a>");
+            urlExample.setSearch("Apoc1");
+            example.append(", <a href='").append(urlExample.getRequestURL()).append("'>Apoc1</a>");
+            urlExample.setSearch("PDE4DIP");
+            example.append(", <a href='").append(urlExample.getRequestURL()).append("'>PDE4DIP</a>");
+            urlExample.setSearch("insulin");
+            example.append(", <a href='").append(urlExample.getRequestURL()).append("'>insulin</a>");
             example.append("</span>");
 
             bgeeGeneSearchClass = "col-xs-offset-1 col-xs-10 "

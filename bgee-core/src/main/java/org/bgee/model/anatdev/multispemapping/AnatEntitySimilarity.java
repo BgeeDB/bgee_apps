@@ -112,6 +112,9 @@ public class AnatEntitySimilarity {
     public Set<AnatEntity> getSourceAnatEntities() {
         return sourceAnatEntities;
     }
+    public List<AnatEntity> getSourceAnatEntitiesSortedById() {
+        return sourceAnatEntities.stream().sorted(Comparator.comparing(ae -> ae.getId())).collect(Collectors.toList());
+    }
     /**
      * @return  A {@code String} containing the names of the {@code AnatEntity}s
      *          returned by {@link #getSourceAnatEntities()} ordered by alphabetical orders
@@ -170,6 +173,9 @@ public class AnatEntitySimilarity {
                 this.getSourceAnatEntities().stream(),
                 this.getTransformationOfAnatEntities().stream())
                 .collect(Collectors.toSet());
+    }
+    public List<AnatEntity> getAllAnatEntitiesSortedById() {
+        return getAllAnatEntities().stream().sorted(Comparator.comparing(ae -> ae.getId())).collect(Collectors.toList());
     }
     /**
      * @return  A {@code String} containing the names of the {@code AnatEntity}s

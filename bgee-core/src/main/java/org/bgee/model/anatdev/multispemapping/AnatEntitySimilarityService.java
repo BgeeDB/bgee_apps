@@ -162,7 +162,7 @@ public class AnatEntitySimilarityService extends Service {
      *                                  valid for {@code taxonId} are returned. Otherwise,
      *                                  we discard {@code AnatEntitySimilarity}s using only
      *                                  anatomical entities existing in none of the requested species.
-     * @return                          The {@code Stream} of {@link AnatEntitySimilarity}s.
+     * @return                          The {@code Set} of {@link AnatEntitySimilarity}s.
      * @implSpec    Providing species IDs for filtering similarity annotations should not change
      *              the selection of multiple-entity vs. single-entitiy annotations, or the retrieval
      *              of additional entities through transformation_of relations, etc.
@@ -255,6 +255,46 @@ public class AnatEntitySimilarityService extends Service {
         }
 
         return log.exit(similarities.collect(Collectors.toSet()));
+    }
+
+    /**
+     * Retrieve similarities for the requested anatomical entities and the requested species.
+     * For instance, if you are studying data for "swim bladder" in zebrafish, and need to know what is
+     * the homologous organ in human. You would call this method by providing the ID of the "swim bladder" tissue
+     * and the IDs of zebrafish and human species. As a result you would retrieve the {@code AnatEntitySimilarity}
+     * for "swim bladder - lung".
+     *
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that are the NCBI ID of the species
+     *                      which to retrieve similarities for. The similarities valid in the lineage
+     *                      of their least common ancestor will be considered.
+     * @param anatEntityIds A {@code Collection} of {@code String}s that are the IDs of the anatomical entities
+     *                      which the similarity information need to be retrieved for. If {@code null} or empty,
+     *                      all valid similarities are returned.
+     * @param onlyTrusted   A {@code boolean} defining whether results should be restricted
+     *                      to "trusted" annotations. If {@code true}, only trusted annotations are considered.
+     * @return              The {@code Set} of {@link AnatEntitySimilarity}s for the requested anatomical entities
+     *                      and valid for in the lineage of the requested species.
+     */
+    public Set<AnatEntitySimilarity> loadSimilarAnatEntities(Collection<Integer> speciesIds,
+            Collection<String> anatEntityIds, boolean onlyTrusted) {
+        log.entry(speciesIds, anatEntityIds, onlyTrusted);
+
+        Set<Integer> clonedSpeIds = speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds);
+        Set<String> clonedAnatEntityIds = anatEntityIds == null? new HashSet<>(): new HashSet<>(anatEntityIds);
+
+        //First, we find the common ancestor of the requested species
+        Taxon lca = this.getServiceFactory().getTaxonService().loadLeastCommonAncestor(clonedSpeIds);
+        //Now we query the anat. entity similarities for this common ancestor
+        //and existing in at least one of the requested species
+        Set<AnatEntitySimilarity> anatEntitySimilarities = this.loadPositiveAnatEntitySimilarities(
+                lca.getId(), onlyTrusted, clonedSpeIds);
+        //And now we filter the similarities to return only those related to the requested anat. entities
+        if (clonedAnatEntityIds.isEmpty()) {
+            return log.exit(anatEntitySimilarities);
+        }
+        return log.exit(anatEntitySimilarities.stream()
+                .filter(s -> s.getAllAnatEntities().stream().anyMatch(ae -> clonedAnatEntityIds.contains(ae.getId())))
+                .collect(Collectors.toSet()));
     }
 
     private Map<SummarySimilarityAnnotationTO, Set<String>> getValidAnnots(int taxonId,

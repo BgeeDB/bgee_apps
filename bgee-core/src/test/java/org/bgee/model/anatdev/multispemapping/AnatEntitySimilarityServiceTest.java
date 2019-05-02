@@ -45,6 +45,7 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
     }
 
     private List<Taxon> taxa;
+    private Set<Integer> speciesIdsGnathostomataLCA = new HashSet<>(Arrays.asList(1, 2));
 
     @Before
     public void setMockObjects() {
@@ -73,6 +74,10 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
                 new RelationTO<>(13, 33213, 131567, RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.INDIRECT),
                 new RelationTO<>(14, 6073, 6072, RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.DIRECT),
                 new RelationTO<>(15, 6073, 131567, RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.INDIRECT));
+
+        //Mock TaxonService to identify a Gnathostomata common ancestor
+        when(this.taxonService.loadLeastCommonAncestor(speciesIdsGnathostomataLCA))
+        .thenReturn(taxa.get(4));
 
         //Create taxon ontologies
         //Taxon ontology when requested taxon is 8287 Sarcopterygii
@@ -562,5 +567,19 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
         Set<AnatEntitySimilarity> expectedResults = new HashSet<>(Arrays.asList(mouthActinoSim, anusActinoSim,
                 swimBladderActinoSim));
         assertEquals(expectedResults, service.loadPositiveAnatEntitySimilarities(7898, false, Arrays.asList(2)));
+    }
+
+    @Test
+    public void shouldLoadSimilarAnatEntities() {
+        AnatEntitySimilarityService service = new AnatEntitySimilarityService(this.serviceFactory);
+
+        AnatEntitySimilarity fakeLungSwimBladderWhateverGnaSim = new AnatEntitySimilarity(
+                Arrays.asList(new AnatEntity("lung"), new AnatEntity("swimbladder"), new AnatEntity("whatever")),
+                Arrays.asList(new AnatEntity("whatever_precursor")), taxa.get(4),
+                Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(4), true, true)));
+
+        Set<AnatEntitySimilarity> expectedResults = new HashSet<>(Arrays.asList(fakeLungSwimBladderWhateverGnaSim));
+        assertEquals(expectedResults, service.loadSimilarAnatEntities(speciesIdsGnathostomataLCA,
+                Arrays.asList("lung"), false));
     }
 }

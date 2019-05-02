@@ -12,6 +12,7 @@ import org.bgee.pipeline.annotations.AnnotationCommon;
 import org.bgee.pipeline.annotations.InsertSimilarityAnnotation;
 import org.bgee.pipeline.annotations.SimilarityAnnotation;
 import org.bgee.pipeline.bgeelite.BgeeToBgeeLite;
+import org.bgee.pipeline.expression.GenoFishProject;
 import org.bgee.pipeline.expression.InsertPropagatedCalls;
 import org.bgee.pipeline.expression.downloadfile.GenerateExprFile2;
 import org.bgee.pipeline.expression.downloadfile.GenerateInsertGeneStats;
@@ -301,6 +302,12 @@ public class CommandRunner {
         case "GenerateInsertGeneStats":
             GenerateInsertGeneStats.main(newArgs);
             break;
+
+        //---------- Other collaborations -----------
+        case "GenoFishProject":
+            GenoFishProject.main(newArgs);
+            break;
+
         default: 
             throw log.throwing(new UnsupportedOperationException("The following action " +
                     "is not recognized: " + args[0]));

@@ -128,7 +128,7 @@ public class XmlSearchDisplay extends XmlParentDisplay implements SearchDisplay 
 		this.writeln("</url>");
 
 		this.writeln("<description>");
-		this.writeln("Genes found with expression in Bgee");
+		this.writeln("Genes found in gene expression database Bgee");
 		this.writeln("</description>");
 
 		this.writeln("</ExpasyResult>");

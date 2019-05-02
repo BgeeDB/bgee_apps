@@ -294,6 +294,11 @@ nav img.social-img {
     padding-right: 13px;
 }
 
+. copyable-url {
+    font-family: Monaco, monospace;
+    font-size: 0.9em;
+}
+
 figure img {
     margin: 0 auto 3px auto;
 }

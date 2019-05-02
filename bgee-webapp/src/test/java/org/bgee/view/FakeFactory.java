@@ -14,7 +14,7 @@ import org.bgee.controller.TestURLParameters;
  * cases.
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Apr. 2019
+ * @version Bgee 14, May 2019
  * @since   Bgee 13, Aug. 2014
  */
 public class FakeFactory extends ViewFactory {
@@ -92,11 +92,11 @@ public class FakeFactory extends ViewFactory {
     }
 
     @Override
-    public ProjectsDisplay getProjectsDisplay() throws IOException {
+    public CollaborationDisplay getCollaborationDisplay() throws IOException {
         if(prop.getUrlMaxLength() == 9999 && this.requestParameters.getFirstValue(
                 ((TestURLParameters)this.requestParameters.getUrlParametersInstance())
                         .getParamTestString()).equals("test")){
-            return new FakeProjectsDisplay(this.response, this.requestParameters, prop, this);
+            return new FakeCollaborationDisplay(this.response, this.requestParameters, prop, this);
         }
         return null;
     }

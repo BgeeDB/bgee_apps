@@ -16,7 +16,7 @@ import org.bgee.controller.RequestParameters;
  * @author  Mathieu Seppey
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Apr. 2019
+ * @version Bgee 14, May 2019
  * @since   Bgee 1
  * 
  * @see org.bgee.view.html.HtmlFactory
@@ -121,12 +121,12 @@ public abstract class ViewFactory {
 
     /**
      *
-     * @return A {@code ProjectsDisplay} instance that is the view to be used
+     * @return A {@code CollaborationDisplay} instance that is the view to be used
      *
      * @throws IOException  If an error occurs with the {@code PrintWriter} when writing the
      *                      response output.
      */
-    public abstract ProjectsDisplay getProjectsDisplay() throws IOException;
+    public abstract CollaborationDisplay getCollaborationDisplay() throws IOException;
 
     /**
      *                              

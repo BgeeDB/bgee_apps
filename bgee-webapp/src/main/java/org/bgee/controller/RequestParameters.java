@@ -85,7 +85,7 @@ import org.bgee.model.expressiondata.baseelements.SummaryQuality;
  * @author  Mathieu Seppey
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Apr. 2019
+ * @version Bgee 14, May 2019
  * @since   Bgee 1
  */
 public class RequestParameters {
@@ -190,9 +190,9 @@ public class RequestParameters {
     public static final String PAGE_PRIVACY_POLICY = "privacy_policy";
     /**
      * A {@code String} that is the value taken by the {@code page} parameter 
-     * (see {@link URLParameters#getParamPage()}) when a page related to projects is requested.
+     * (see {@link URLParameters#getParamPage()}) when a page related to collaborations is requested.
      */
-    public static final String PAGE_PROJECTS = "projects";
+    public static final String PAGE_COLLABORATIONS = "collaborations";
     /**
      * A {@code String} that encapsulates the value of the gene id parameter for the gene page.
      */
@@ -2433,12 +2433,12 @@ public class RequestParameters {
      * consistent as much as possible if the method evolves.
      *
      * @return  A {@code boolean} to tell whether the request corresponds to a page of the
-     * category "projects"
+     * category "collaborations"
      */
-    public boolean isAProjectsPageCategory() {
+    public boolean isAcollaborationsPageCategory() {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
-                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_PROJECTS)) {
+                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_COLLABORATIONS)) {
             return log.exit(true);
         }
         return log.exit(false);

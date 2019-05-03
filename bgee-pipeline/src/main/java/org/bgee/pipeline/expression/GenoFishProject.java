@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -18,6 +19,8 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarity;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityService;
+import org.bgee.model.ontology.MultiSpeciesOntology;
+import org.bgee.model.species.Species;
 import org.bgee.model.species.Taxon;
 import org.bgee.model.species.TaxonService;
 import org.bgee.pipeline.CommandRunner;
@@ -29,7 +32,7 @@ import org.supercsv.io.CsvListWriter;
 import org.supercsv.io.ICsvListWriter;
 
 /**
- * Generate data necessary for GeneFish-related project with Tina.
+ * Generate data necessary for GenoFish-related project with Tina.
  *
  * @author Frederic Bastian
  * @version Bgee 14 May 2019
@@ -44,6 +47,22 @@ public class GenoFishProject {
     private static final Function<AnatEntitySimilarity, String> EXTRACT_NAMES =
             aes -> aes.getSourceAnatEntitiesSortedById().stream()
             .map(ae -> ae.getName()).collect(Collectors.joining(" - "));
+    //For the fun of understanding how to avoid creating TriFunction interfaces :p
+    private static final Function<AnatEntitySimilarity,
+                                  Function<MultiSpeciesOntology<AnatEntity, String>,
+                                           Function<Map<Integer, Species>, String>>> EXTRACT_SPECIES_NAMES =
+            aes -> anatEntityOnt -> speciesMap -> aes.getAllAnatEntities().stream()
+            .flatMap(ae -> {
+                Set<Integer> speIds = anatEntityOnt.getSpeciesIdsWithElementValidIn(ae);
+                if (speIds == null) {
+                    return speciesMap.values().stream();
+                }
+                return speIds.stream().map(speId -> speciesMap.get(speId));
+            })
+            .map(spe -> spe.getName())
+            .distinct()
+            .sorted()
+            .collect(Collectors.joining(", "));
 
     public static void main(String[] args) throws IOException {
         log.entry((Object[]) args);
@@ -99,24 +118,26 @@ public class GenoFishProject {
         //Just to properly name the file
         TaxonService taxonService = new TaxonService(this.serviceFactory);
         Taxon lca = taxonService.loadLeastCommonAncestor(clonedSpeIds);
-        //In order to write info on anatomical entities with no similarity relation
-        Set<AnatEntity> anatEntities = this.serviceFactory.getAnatEntityService().loadAnatEntities(anatEntityIds, false)
-                .collect(Collectors.toSet());
+        //In order to write info on anatomical entities and about the species they exist in
+        MultiSpeciesOntology<AnatEntity, String> anatEntityOnt = this.serviceFactory.getOntologyService()
+                .getAnatEntityOntology(clonedSpeIds, anatEntityIds);
+        Map<Integer, Species> speciesMap = this.serviceFactory.getSpeciesService().loadSpeciesMap(clonedSpeIds, false);
 
-        writeHomologousStructures(similarities, lca, anatEntities, clonedSpeIds, outputDirectory);
-        writeNonHomologousStructures(similarities, lca, anatEntities, clonedSpeIds, outputDirectory);
+        writeHomologousStructures(similarities, lca, anatEntityOnt, speciesMap, outputDirectory);
+        writeNonHomologousStructures(similarities, lca, anatEntityOnt, speciesMap, outputDirectory);
 
         log.exit();
     }
 
     private static void writeHomologousStructures(List<AnatEntitySimilarity> similarities, Taxon lca,
-            Set<AnatEntity> anatEntities, Set<Integer> speciesIds, String outputDirectory) throws IOException {
-        log.entry(similarities, lca, anatEntities, speciesIds, outputDirectory);
+            MultiSpeciesOntology<AnatEntity, String> anatEntityOnt, Map<Integer, Species> speciesMap,
+            String outputDirectory) throws IOException {
+        log.entry(similarities, lca, anatEntityOnt, speciesMap, outputDirectory);
 
         String tmpExtension = ".tmp";
         String fileExtension = ".tsv";
         String fileName = ("homologous_structures_lca_" + lca.getScientificName())
-                + "_" + anatEntities.size() + "_anat_entities_" + speciesIds.size() + "_species"
+                + "_" + anatEntityOnt.getElements().size() + "_anat_entities_" + speciesMap.size() + "_species"
                 .replaceAll(" ", "_");
         File tmpFile = new File(outputDirectory, fileName + fileExtension + tmpExtension);
         // override any existing file
@@ -125,8 +146,9 @@ public class GenoFishProject {
         }
 
         try (ICsvListWriter listWriter = new CsvListWriter(new FileWriter(tmpFile), Utils.TSVCOMMENTED)) {
-            CellProcessor[] processors = new CellProcessor[]{new StrNotNullOrEmpty(new Unique()), new StrNotNullOrEmpty(new Unique())};
-            String[] header = new String[] {"Anat. entity IDs", "Anat. entity names"};
+            CellProcessor[] processors = new CellProcessor[]{new StrNotNullOrEmpty(new Unique()),
+                    new StrNotNullOrEmpty(new Unique()), new StrNotNullOrEmpty()};
+            String[] header = new String[] {"Anat. entity IDs", "Anat. entity names", "Exists in selected species"};
             // write the header
             listWriter.writeHeader(header);
 
@@ -134,6 +156,7 @@ public class GenoFishProject {
                 List<Object> toWrite = new ArrayList<>();
                 toWrite.add(EXTRACT_IDS.apply(aes));
                 toWrite.add(EXTRACT_NAMES.apply(aes));
+                toWrite.add(EXTRACT_SPECIES_NAMES.apply(aes).apply(anatEntityOnt).apply(speciesMap));
                 listWriter.write(toWrite, processors);
             }
         } catch (Exception e) {
@@ -148,13 +171,14 @@ public class GenoFishProject {
         }
     }
     private static void writeNonHomologousStructures(List<AnatEntitySimilarity> similarities, Taxon lca,
-            Set<AnatEntity> anatEntities, Set<Integer> speciesIds, String outputDirectory) throws IOException {
-        log.entry(similarities, lca, anatEntities, speciesIds, outputDirectory);
+            MultiSpeciesOntology<AnatEntity, String> anatEntityOnt, Map<Integer, Species> speciesMap,
+            String outputDirectory) throws IOException {
+        log.entry(similarities, lca, anatEntityOnt, speciesMap, outputDirectory);
 
         String tmpExtension = ".tmp";
         String fileExtension = ".tsv";
         String fileName = ("non_matching_structures_lca_" + lca.getScientificName())
-                + "_" + anatEntities.size() + "_anat_entities_" + speciesIds.size() + "_species"
+                + "_" + anatEntityOnt.getElements().size() + "_anat_entities_" + speciesMap.size() + "_species"
                 .replaceAll(" ", "_");
         File tmpFile = new File(outputDirectory, fileName + fileExtension + tmpExtension);
         // override any existing file
@@ -163,12 +187,13 @@ public class GenoFishProject {
         }
 
         try (ICsvListWriter listWriter = new CsvListWriter(new FileWriter(tmpFile), Utils.TSVCOMMENTED)) {
-            CellProcessor[] processors = new CellProcessor[]{new StrNotNullOrEmpty(new Unique()), new StrNotNullOrEmpty(new Unique())};
+            CellProcessor[] processors = new CellProcessor[]{new StrNotNullOrEmpty(new Unique()),
+                    new StrNotNullOrEmpty(new Unique())};
             String[] header = new String[] {"Anat. entity ID", "Anat. entity name"};
             // write the header
             listWriter.writeHeader(header);
 
-            for (AnatEntity ae: anatEntities) {
+            for (AnatEntity ae: anatEntityOnt.getElements()) {
                 if (similarities.stream().noneMatch(aes -> aes.getAllAnatEntities().contains(ae))) {
                     List<Object> toWrite = new ArrayList<>();
                     toWrite.add(ae.getId());

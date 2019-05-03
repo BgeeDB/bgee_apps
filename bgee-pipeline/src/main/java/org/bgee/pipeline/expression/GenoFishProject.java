@@ -57,7 +57,7 @@ public class GenoFishProject {
                 if (speIds == null) {
                     return speciesMap.values().stream();
                 }
-                return speIds.stream().map(speId -> speciesMap.get(speId));
+                return speIds.stream().map(speId -> speciesMap.get(speId)).filter(spe -> spe != null);
             })
             .map(spe -> spe.getName())
             .distinct()
@@ -120,7 +120,9 @@ public class GenoFishProject {
         Taxon lca = taxonService.loadLeastCommonAncestor(clonedSpeIds);
         //In order to write info on anatomical entities and about the species they exist in
         MultiSpeciesOntology<AnatEntity, String> anatEntityOnt = this.serviceFactory.getOntologyService()
-                .getAnatEntityOntology(clonedSpeIds, anatEntityIds);
+                //Important to not provide the species IDs here, otherwise we wouldn't know
+                //which anatomical entities do not exist in the requested species
+                .getAnatEntityOntology((Collection<Integer>) null, anatEntityIds);
         Map<Integer, Species> speciesMap = this.serviceFactory.getSpeciesService().loadSpeciesMap(clonedSpeIds, false);
 
         writeHomologousStructures(similarities, lca, anatEntityOnt, speciesMap, outputDirectory);

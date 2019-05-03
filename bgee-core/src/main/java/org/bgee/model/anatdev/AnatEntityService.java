@@ -54,7 +54,20 @@ public class AnatEntityService extends Service {
     public AnatEntityService(ServiceFactory serviceFactory) {
         super(serviceFactory);
     }
-    
+
+    /**
+     * Retrieve {@code AnatEntity}s for the requested IDs.
+     *
+     * @param anatEntityIds     A {@code Collection} of {@code String}s that are the IDs of the anatomical entities 
+     *                          to retrieve.
+     * @param withDescription   A {@code boolean} defining whether the description of the {@code AnatEntity}s
+     *                          should be retrieved (higher memory usage).
+     * @return                  A {@code Stream} of {@code AnatEntity}s retrieved for the requested IDs.
+     */
+    public Stream<AnatEntity> loadAnatEntities(Collection<String> anatEntityIds, boolean withDescription) {
+        log.entry(anatEntityIds, withDescription);
+        return log.exit(this.loadAnatEntities(null, true, anatEntityIds, withDescription));
+    }
     /**
      * Retrieve {@code AnatEntity}s for the requested species IDs, with all descriptions loaded.
      * If several species IDs are provided, the {@code AnatEntity}s existing in any of them are retrieved. 

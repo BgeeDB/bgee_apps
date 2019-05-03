@@ -16,7 +16,7 @@ import java.util.Comparator;
  * @author  Philippe Moret
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Mar. 2019
+ * @version Bgee 14, May 2019
  * @since   Bgee 13, July 2016
  * @see GeneMatchResult
  */
@@ -34,7 +34,7 @@ public class GeneMatch implements Comparable<GeneMatch> {
             .thenComparing(GeneMatch::getMatch, Comparator.nullsLast(String::compareTo));
 
     public enum MatchSource {
-        ID, NAME, DESCRIPTION, SYNONYM, XREF
+        ID, NAME, DESCRIPTION, SYNONYM, XREF, MULTIPLE
     }
 
     private final Gene gene;
@@ -85,16 +85,22 @@ public class GeneMatch implements Comparable<GeneMatch> {
             case SYNONYM:
             case XREF:
                 return log.exit(this.getTerm());
+            case MULTIPLE:
+                return log.exit(null);
             default:
                 throw log.throwing(new IllegalStateException("Unrecognized MatchSource: " + this.getMatchSource()));
         }
     }
 
     /**
-     * @return  An {@code int} that is the length of the match.
+     * @return  An {@code Integer} that is the length of the match.
+     *          Returns {@code null}, if the match comes from multiple sources.
      */
-    private int getMatchLength() {
+    private Integer getMatchLength() {
 	    log.entry();
+	    if (this.getMatch() == null) {
+	        return null;
+        }
         return log.exit(this.getMatch().length());
     }
 

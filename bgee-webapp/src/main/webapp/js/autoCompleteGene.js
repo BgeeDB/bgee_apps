@@ -36,13 +36,7 @@ function autocompleteTermSelected(event, ui) {
  * 							You must always call the response callback even if you encounter an error.
  * 							This ensures that the widget always has the correct state.
  */
-//to cache the last query
-var geneAutocompleteCache = {};
 function autocompleteTermSource(request, responseCallback) {
-	 if (request.term in geneAutocompleteCache) {
-		 responseCallback(geneAutocompleteCache[request.term]);
-		 return;
-	 }
 
 	 var autocompleteTermRequestParameters = "?page=search&action=auto_complete_gene_search&" +
 	 		"display_type=xml&search=" + encodeURIComponent(request.term);
@@ -60,7 +54,6 @@ function autocompleteTermSource(request, responseCallback) {
 		}).get();
 		
 		var subdata = data.slice(0, 20);
-		geneAutocompleteCache[request.term] = subdata;
 		responseCallback(subdata);
 	 })
 	 //in case of error, we need to call responseCallback anyway

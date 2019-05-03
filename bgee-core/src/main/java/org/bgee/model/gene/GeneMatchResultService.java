@@ -1,5 +1,6 @@
 package org.bgee.model.gene;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
@@ -18,6 +19,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.bgee.model.gene.GeneMatch.MatchSource.DESCRIPTION;
+import static org.bgee.model.gene.GeneMatch.MatchSource.MULTIPLE;
 import static org.bgee.model.gene.GeneMatch.MatchSource.SYNONYM;
 import static org.bgee.model.gene.GeneMatch.MatchSource.XREF;
 
@@ -25,7 +27,7 @@ import static org.bgee.model.gene.GeneMatch.MatchSource.XREF;
  * Class allowing to manage and retrieve {@code GeneMatchResult}s.
  *
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Apr. 2019
+ * @version Bgee 14, May 2019
  * @see     GeneMatchResult
  * @since   Bgee 14, Apr. 2019
  */
@@ -82,7 +84,11 @@ public class GeneMatchResultService {
             throw new UnsupportedOperationException("Search with species parameter is not implemented");
         }
 
-        SphinxResult result = this.getSphinxResult(searchTerm, limitStart, resultPerPage, "bgee_genes", null);
+        // We need to get the formatted term here, even if the term is formatted 
+        // in the method getSphinxResult(), to set correctly GeneMatches.
+        String formattedTerm = this.getFormattedTerm(searchTerm);
+
+        SphinxResult result = this.getSphinxResult(formattedTerm, limitStart, resultPerPage, "bgee_genes", null);
 
         if (result != null && result.getStatus() == SphinxClient.SEARCHD_ERROR) {
             throw log.throwing(new IllegalStateException("Sphinx search has generated an error: "
@@ -102,11 +108,21 @@ public class GeneMatchResultService {
 
         // build list of GeneMatch
         List<GeneMatch> geneMatches = Arrays.stream(result.matches)
-                .map(m -> getGeneMatch(m, searchTerm, attrNameToIdx))
+                .map(m -> getGeneMatch(m, formattedTerm, attrNameToIdx))
                 .sorted()
                 .collect(Collectors.toList());
 
         return log.exit(new GeneMatchResult(result.totalFound, geneMatches));
+    }
+
+    /**
+     * Generate the formatted term.
+     * 
+     * @param searchTerm    A {@code String} that is the term to be formatted. 
+     * @return              The {@code String} that is the formatted.
+     */
+    private String getFormattedTerm(String searchTerm) {
+        return StringUtils.normalizeSpace(searchTerm);
     }
 
     /**
@@ -156,12 +172,14 @@ public class GeneMatchResultService {
     private SphinxResult getSphinxResult(String searchTerm, int limitStart, int resultPerPage,
                                          String index, Integer ranker) {
         log.entry(searchTerm, limitStart, resultPerPage, index, ranker);
+
         try {
             sphinxClient.SetLimits(limitStart, resultPerPage);
             if (ranker != null) {
                 sphinxClient.SetRankingMode(ranker, null);
             }
-            return log.exit(sphinxClient.Query(searchTerm, index));
+            String queryTerm = "\"" + this.getFormattedTerm(searchTerm) + "\"";
+            return log.exit(sphinxClient.Query(queryTerm, index));
         } catch (SphinxException e) {
             throw log.throwing(new IllegalStateException(
                     "Sphinx search has generated an exception", e));
@@ -233,9 +251,8 @@ public class GeneMatchResultService {
         if (geneXRef != null) {
             return log.exit(new GeneMatch(gene, geneXRef, XREF));
         }
-
-        throw log.throwing(new IllegalStateException("No match found. Term: " + term
-                + " Match;" + match.attrValues));
+        
+        return log.exit(new GeneMatch(gene, geneXRef, MULTIPLE));
     }
 
     private String getMatch(SphinxMatch match, String attribute, Map<String, Integer> attrIndexMap,

@@ -158,14 +158,31 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             sb.append("    <td>").append(getSpecificGenePageLink(gene, getStringNotBlankOrDash(gene.getName()))).append("</td>");
             sb.append("    <td>").append(getStringNotBlankOrDash(gene.getDescription())).append("</td>");
             sb.append("    <td>").append(getCompleteSpeciesName(gene)).append("</td>");
-            sb.append("    <td>").append(highlightSearchTerm(geneMatch.getMatch(), searchTerm))
-                    .append(" (").append(geneMatch.getMatchSource().toString().toLowerCase()).append(")</td>");
+            sb.append("    <td>").append(getMatch(geneMatch, searchTerm)).append("</td>");
             sb.append("</tr>");
         }
         sb.append("</tbody>");
 
         sb.append("</table>");
         return log.exit(sb.toString());
+    }
+
+    /**
+     * Return the {@code String} representing the match.
+     * 
+     * @param geneMatch     A {@code GeneMatch} that is the match to display.
+     * @param searchTerm    A {@code String} that is term of the search.
+     * @return              The {@code String} representing the match.
+     */
+    private String getMatch(GeneMatch geneMatch, String searchTerm) {
+        log.entry(geneMatch, searchTerm);
+        
+        if (GeneMatch.MatchSource.MULTIPLE.equals(geneMatch.getMatchSource())) {
+            return log.exit("no exact match");
+        }
+
+        return log.exit(highlightSearchTerm(geneMatch.getMatch(), searchTerm) +
+                " (" + geneMatch.getMatchSource().toString().toLowerCase() + ")");
     }
 
     /**
@@ -184,7 +201,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         //then it would not be possible to highlight a html entities term when used as a search term).
         //why using ":myStrongOpeningTag:" and ":myStrongClosingTag:"? 
         //Because it's unlikely to be present in the label :p (?i)([aeiou])
-        String newLabel = label.replaceAll("(?i)(" + searchTerm + ")",
+        String newLabel = label.replaceAll("(?i)(" + StringUtils.normalizeSpace(searchTerm) + ")",
                 ":myStrongOpeningTag:$1:myStrongClosingTag:");
         //then we escape html entities
         newLabel = htmlEntities(newLabel);

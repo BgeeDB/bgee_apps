@@ -540,21 +540,13 @@ strong.search-match {
 
 /* Interaction states
 ----------------------------------*/
-li.ui-menu-item:hover {
-    border-color: #E2011B;
-    border-style: solid;
-    border-width: 1px 0;
-    background-color: #D9DDE1;
-    color: #E2011B;
-    font-weight: bold;
-}
-
-.ui-state-active {
-    border: none !important;
-    background: inherit !important;
-    font-weight: inherit !important;
-    color: inherit !important;
-    text-decoration: none !important;
+li.ui-menu-item:hover, a..ui-state-active {
+    border-color: #E2011B !important;
+    border-style: solid !important;
+    border-width: 1px 0 !important;
+    background-color: #D9DDE1 !important;
+    color: #E2011B !important;
+    font-weight: bold !important;
 }
 
 /**** SPECIES SECTION ****/

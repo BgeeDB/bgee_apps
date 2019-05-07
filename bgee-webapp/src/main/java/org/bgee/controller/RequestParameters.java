@@ -249,6 +249,12 @@ public class RequestParameters {
     public static final String ACTION_DOC_FAQ = "faq";
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when SPARQL Endpoint documentation is requested.
+     * Value of the parameter page should be {@link #PAGE_DOCUMENTATION}.
+     */
+    public static final String ACTION_DOC_SPARQL_ENDPOINT = "sparql";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
      * (see {@link URLParameters#getParamAction()}) when a species data is requested.
      * Value of the parameter page should be {@link #PAGE_SPECIES}.
      */

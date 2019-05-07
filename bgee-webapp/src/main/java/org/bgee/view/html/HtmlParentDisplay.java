@@ -409,10 +409,6 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         RequestParameters urlDocTopAnat = this.getNewRequestParameters();
         urlDocTopAnat.setPage(RequestParameters.PAGE_DOCUMENTATION);
         urlDocTopAnat.setAction(RequestParameters.ACTION_DOC_TOP_ANAT);
-        
-        RequestParameters urlDocSparql = this.getNewRequestParameters();
-        urlDocSparql.setPage(RequestParameters.PAGE_DOCUMENTATION);
-        urlDocSparql.setAction(RequestParameters.ACTION_DOC_SPARQL_ENDPOINT);
 
         RequestParameters urlFaq = this.getNewRequestParameters();
         urlFaq.setPage(RequestParameters.PAGE_DOCUMENTATION);
@@ -510,8 +506,6 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 //            urlDocProcValueFiles.getRequestURL() + "'>" + PROCESSED_EXPR_VALUES_PAGE_NAME + "</a></li>");
         navbar.append("<li><a href='https://bioconductor.org/packages/release/bioc/manuals/BgeeDB/man/BgeeDB.pdf'"
                 + " target='_blank'>BgeeDB R package</a></li>");
-        navbar.append("<li><a title='SPARQL endpoint documentation' href='").append(urlDocSparql.getRequestURL())
-                .append("'>SPARQL endpoint documentation</a></li>");
         navbar.append("<li><a href='").append(urlFaq.getRequestURL()).append("'>FAQ</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");

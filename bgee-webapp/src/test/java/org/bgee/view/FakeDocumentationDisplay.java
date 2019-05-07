@@ -51,9 +51,4 @@ public class FakeDocumentationDisplay extends FakeParentDisplay implements Docum
     public void displayFaq() {
         this.out.println("Test page displayFaq() is good !");
     }
-
-    @Override
-    public void displaySparql() {
-        this.out.println("Test page displaySparql() is good !");
-    }
 }

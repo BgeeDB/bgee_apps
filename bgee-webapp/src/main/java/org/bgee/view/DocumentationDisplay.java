@@ -37,9 +37,4 @@ public interface DocumentationDisplay {
      * Display the FAQ.
      */
     public void displayFaq();
-    
-    /**
-     * Display the SPARQL.
-     */
-    public void displaySparql();
 }

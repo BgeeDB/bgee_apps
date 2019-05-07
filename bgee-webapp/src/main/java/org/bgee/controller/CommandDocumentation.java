@@ -62,8 +62,6 @@ public class CommandDocumentation extends CommandParent {
             display.displayDataSets();
         } else if (this.requestParameters.getAction().equals(RequestParameters.ACTION_DOC_FAQ)) {
             display.displayFaq();
-        } else if (this.requestParameters.getAction().equals(RequestParameters.ACTION_DOC_SPARQL_ENDPOINT)) {
-            display.displaySparql();
         } else {
             throw log.throwing(new PageNotFoundException("Incorrect " + 
                 this.requestParameters.getUrlParametersInstance().getParamAction() + 

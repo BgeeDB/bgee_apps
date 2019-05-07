@@ -267,6 +267,8 @@ public class FrontController extends HttpServlet {
             } else if (requestParameters.isARPackagePageCategory()) {
                 controller = new CommandRPackage(response, requestParameters, this.prop, factory, 
                         serviceFactory, this.jobService, user);
+            } else if (requestParameters.isASparqlPageCategory()) {
+                controller = new CommandSparql(response, requestParameters, this.prop, factory, serviceFactory);
             } else if (requestParameters.isAStatsPageCategory()) {
                 //no specific controllers for this for now. 
                 //We simply respond with a 'success no content' so that the client get no errors, 

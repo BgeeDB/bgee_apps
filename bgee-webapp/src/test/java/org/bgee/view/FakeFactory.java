@@ -155,4 +155,9 @@ public class FakeFactory extends ViewFactory {
     public FaqDisplay getFaqDisplay() throws IOException {
         return null;
     }
+
+    @Override
+    public SparqlDisplay getSparqlDisplay() throws IOException {
+        return null;
+    }
 }

@@ -91,6 +91,15 @@ public abstract class ViewFactory {
      *                      response output.
      */
     public abstract DownloadDisplay getDownloadDisplay() throws IOException;
+    
+    /**
+     *                              
+     * @return A {@code SparqlDisplay} instance that is the view to be used
+     * 
+     * @throws IOException  If an error occurs with the {@code PrintWriter} when writing the
+     *                      response output.
+     */
+    public abstract SparqlDisplay getSparqlDisplay() throws IOException;
 
     /**
      *                              

@@ -109,6 +109,10 @@ public class JsonFactory extends ViewFactory {
 	public SearchDisplay getSearchDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
 	}
+	@Override
+    public SparqlDisplay getSparqlDisplay() {
+        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
+    }
     @Override
     public SourceDisplay getSourceDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));

@@ -153,4 +153,9 @@ public class HtmlFactory extends ViewFactory {
         log.entry();
         return log.exit(new HtmlFaqDisplay(this.response, this.requestParameters, this.prop, this));
     }
+    @Override
+    public SparqlDisplay getSparqlDisplay() throws IOException {
+        log.entry();
+        return log.exit(new HtmlSparqlDisplay(this.response, this.requestParameters, this.prop, this));
+    }
 }

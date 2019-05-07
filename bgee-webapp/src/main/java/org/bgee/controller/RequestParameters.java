@@ -138,6 +138,12 @@ public class RequestParameters {
     
     /**
      * A {@code String} that is the value taken by the {@code page} parameter 
+     * (see {@link URLParameters#getParamPage()}) when a page related to SPARQL is requested.
+     */
+    public static final String PAGE_SPARQL = "sparql";
+    
+    /**
+     * A {@code String} that is the value taken by the {@code page} parameter 
      * (see {@link URLParameters#getParamPage()}) when a about page is requested.
      */
     public static final String PAGE_ABOUT = "about";
@@ -2483,6 +2489,19 @@ public class RequestParameters {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
             this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_RPACKAGE)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    
+    /**
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     * category "sparql".
+     */
+    public boolean isASparqlPageCategory() {
+        log.entry();
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
+            this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_SPARQL)) {
             return log.exit(true);
         }
         return log.exit(false);

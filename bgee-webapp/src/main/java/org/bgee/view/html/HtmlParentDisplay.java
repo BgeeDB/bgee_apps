@@ -382,6 +382,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 
         RequestParameters urlGeneSearch = this.getNewRequestParameters();
         urlGeneSearch.setPage(RequestParameters.PAGE_GENE);
+        
+        RequestParameters urlSparql = this.getNewRequestParameters();
+        urlSparql.setPage(RequestParameters.PAGE_SPARQL);
 
         RequestParameters urlDownload = this.getNewRequestParameters();
         urlDownload.setPage(RequestParameters.PAGE_DOWNLOAD);
@@ -473,6 +476,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<ul class='dropdown-menu'>");
         navbar.append("<li><a title='Gene search' href='").append(urlGeneSearch.getRequestURL())
                 .append("'>Gene search</a></li>");
+        navbar.append("<li><a title='SPARQL endpoint' href='").append(urlSparql.getRequestURL())
+        .append("'>SPARQL endpoint</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
 

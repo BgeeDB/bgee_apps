@@ -48,4 +48,10 @@ public class FakeDownloadDisplay extends FakeParentDisplay implements DownloadDi
     		, Map<Integer, Set<String>> keywords) {
         this.out.println("TestC");
     }
+
+    @Override
+    public void displayMysqlDumpsPage() {
+        this.out.println("MySQL dumps page is good !");
+        
+    }
 }

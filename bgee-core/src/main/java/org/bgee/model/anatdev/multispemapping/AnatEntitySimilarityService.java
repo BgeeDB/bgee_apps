@@ -27,6 +27,7 @@ import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO;
 import org.bgee.model.ontology.MultiSpeciesOntology;
 import org.bgee.model.ontology.Ontology;
 import org.bgee.model.ontology.RelationType;
+import org.bgee.model.species.Species;
 import org.bgee.model.species.Taxon;
 
 /**
@@ -295,6 +296,83 @@ public class AnatEntitySimilarityService extends Service {
         return log.exit(anatEntitySimilarities.stream()
                 .filter(s -> s.getAllAnatEntities().stream().anyMatch(ae -> clonedAnatEntityIds.contains(ae.getId())))
                 .collect(Collectors.toSet()));
+    }
+
+    public AnatEntitySimilarityAnalysis loadAnatEntitySimilarityAnalysis(Collection<Integer> speciesIds,
+            Collection<String> anatEntityIds, boolean onlyTrusted) {
+        log.entry(speciesIds, anatEntityIds, onlyTrusted);
+
+        Set<Integer> clonedSpeIds = speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds);
+        Set<String> clonedAnatEntityIds = anatEntityIds == null? new HashSet<>(): new HashSet<>(anatEntityIds);
+
+        //First, we find the common ancestor of the requested species
+        Taxon lca = this.getServiceFactory().getTaxonService().loadLeastCommonAncestor(clonedSpeIds);
+        //Now we query the anat. entity similarities for this common ancestor
+        //and existing in at least one of the requested species.
+        //Keep only the similarities containing one of the requested anat. entity IDs
+        Set<AnatEntitySimilarity> anatEntitySimilarities = this.loadPositiveAnatEntitySimilarities(
+                lca.getId(), onlyTrusted, clonedSpeIds);
+        //Keep only the similarities containing one of the requested anat. entity IDs
+        if (!clonedAnatEntityIds.isEmpty()) {
+            anatEntitySimilarities = anatEntitySimilarities.stream()
+            .filter(s -> s.getAllAnatEntities().stream()
+                    .anyMatch(ae -> clonedAnatEntityIds.contains(ae.getId())))
+            .collect(Collectors.toSet());
+        }
+
+        Map<Integer, Species> speciesMap = this.getServiceFactory().getSpeciesService()
+                .loadSpeciesMap(null, false);
+        Set<Integer> speciesIdsNotFound = clonedSpeIds.stream()
+                .filter(id -> !speciesMap.containsKey(id))
+                .collect(Collectors.toSet());
+        Set<Species> requestedSpecies = clonedSpeIds.stream()
+                .filter(id -> speciesMap.containsKey(id))
+                .map(id -> speciesMap.get(id))
+                .collect(Collectors.toSet());
+
+        Set<AnatEntity> anatEntitiesInSimilarities = anatEntitySimilarities.stream()
+                .flatMap(aes -> aes.getAllAnatEntities().stream())
+                .collect(Collectors.toSet());
+        Set<String> anatEntityIdsInSimilarities = anatEntitiesInSimilarities.stream()
+                .map(ae -> ae.getId()).collect(Collectors.toSet());
+        //Get the IDs of all anat. entity in similarities plus requested anat. entity IDs
+        Set<String> allAnatEntityIds = new HashSet<>(anatEntityIdsInSimilarities);
+        allAnatEntityIds.addAll(clonedAnatEntityIds);
+        //Get the IDs of anat. entities not part of similarities.
+        Set<String> anatEntityIdsNotInSimilarities = new HashSet<>(allAnatEntityIds);
+        anatEntityIdsNotInSimilarities.removeAll(anatEntityIdsInSimilarities);
+        //Retrieve the anat. entities not part of similarities
+        Set<AnatEntity> anatEntitiesNotInSimilarities = this.getServiceFactory().getAnatEntityService()
+                .loadAnatEntities(anatEntityIdsNotInSimilarities, false)
+                .collect(Collectors.toSet());
+        //Identify the requested IDs that were not found in the database
+        Set<String> allFoundAnatEntityIds = new HashSet<>(anatEntityIdsInSimilarities);
+        allFoundAnatEntityIds.addAll(anatEntitiesNotInSimilarities.stream().map(ae -> ae.getId())
+                .collect(Collectors.toSet()));
+        Set<String> notFoundAnatEntityIds = new HashSet<>(clonedAnatEntityIds);
+        notFoundAnatEntityIds.removeAll(allFoundAnatEntityIds);
+        //Retrieve taxon constraint for the retrieved anat. entities.
+        //First, we create a Map anat. entity ID -> anat. entity
+        Map<String, AnatEntity> idToAnatEntity = Stream.concat(
+                anatEntitiesInSimilarities.stream(), anatEntitiesNotInSimilarities.stream())
+                .collect(Collectors.toMap(ae -> ae.getId(), ae -> ae));
+        Map<AnatEntity, Set<Species>> anatEntityToSpecies = this.getServiceFactory()
+                .getTaxonConstraintService().loadAnatEntityTaxonConstraintBySpeciesIds(null)
+                .filter(tc -> idToAnatEntity.containsKey(tc.getEntityId()))
+                .collect(Collectors.toMap(
+                        tc -> idToAnatEntity.get(tc.getEntityId()),
+                        tc -> {
+                            if (tc.getSpeciesId() == null) {
+                                return new HashSet<>(speciesMap.values());
+                            }
+                            return new HashSet<>(Arrays.asList(speciesMap.get(tc.getSpeciesId())));
+                        },
+                        (v1, v2) -> {v1.addAll(v2); return v1;}));
+
+        return log.exit(new AnatEntitySimilarityAnalysis(clonedAnatEntityIds, notFoundAnatEntityIds,
+                clonedSpeIds, speciesIdsNotFound, requestedSpecies,
+                lca, anatEntitySimilarities, anatEntitiesNotInSimilarities,
+                anatEntityToSpecies));
     }
 
     private Map<SummarySimilarityAnnotationTO, Set<String>> getValidAnnots(int taxonId,

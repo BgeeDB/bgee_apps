@@ -219,6 +219,36 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         log.exit();
     }
     
+    @Override
+    public void displayMysqlDumpsPage() {
+        
+        log.entry();
+        
+        this.startDisplay("Bgee MySQL dumps download");
+        
+        this.writeln("<h1>Bgee MySQL dumps</h1>");
+        
+        this.writeln("<div class='feature_list'>");
+
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(this.prop.getFTPRootDirectory() +
+                        "sql_dump.tar.gz", false, "Download dump the MySQL Bgee database", "Bgee dump",
+                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "mysql_logo.png",
+                "Download the complete dump of the MySQL Bgee database, that contains "
+                        + "all the data used to generate the information displayed on this website."));
+
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
+                this.prop.getFTPRootDirectory() + "sql_lite_dump.tar.gz", false,
+                "Download the dump of MySQL Bgee lite database", "Bgee lite dump",
+                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "mysql_logo.png",
+                "Download the dump of the MySQL Bgee lite database, that contains most useful, and explicit information."));
+        
+        this.writeln("</div>"); // close feature_list
+
+        this.endDisplay();
+
+        log.exit();
+    }
+    
     /**
      * Generates a javascript tag defining variables providing mappings 
      * from {@code SpeciesDataGroup} IDs to directories storing 

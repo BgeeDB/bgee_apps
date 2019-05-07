@@ -42,6 +42,10 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected final static String GENE_EXPR_CALLS_PAGE_NAME = "Gene expression calls";
     /**
+     * A {@code String} that is the page name of the 'mysql dumps' download page.
+     */
+    protected final static String MYSQL_DUMPS_PAGE_NAME = "MySQL dumps";
+    /**
      * A {@code String} that is the page name of the 'gene expression calls' download page.
      */
     protected final static String TOP_ANAT_PAGE_NAME = "TopAnat: Expression enrichment analysis";
@@ -386,6 +390,10 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         urlDownloadProcValueFile.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlDownloadProcValueFile.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
         
+        RequestParameters urlMySQLDumps = this.getNewRequestParameters();
+        urlMySQLDumps.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlMySQLDumps.setAction(RequestParameters.ACTION_MYSQL_DUMPS);
+        
         RequestParameters urlDownloadExprCallFiles = this.getNewRequestParameters();
         urlDownloadExprCallFiles.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlDownloadExprCallFiles.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
@@ -477,16 +485,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' "
               + "aria-haspopup='true' aria-expanded='false'>Download <span class='caret'></span></a>");
         navbar.append("<ul class='dropdown-menu'>");
-        navbar.append("<li><a href='").append(urlDownload.getRequestURL())
-                .append("'>Download overview</a></li>");
         navbar.append("<li><a href='").append(urlDownloadExprCallFiles.getRequestURL()).append("'>")
                 .append(GENE_EXPR_CALLS_PAGE_NAME).append("</a></li>");
         navbar.append("<li><a href='").append(urlDownloadProcValueFile.getRequestURL()).append("'>")
                 .append(PROCESSED_EXPR_VALUES_PAGE_NAME).append("</a></li>");
-        navbar.append("<li><a href='" + BGEE_R_PACKAGE_URL + "' target='_blank'>"
-                + "BgeeDB R package</a></li>");
-        navbar.append("<li><a href='" + BGEE_GITHUB_URL + "' target='_blank'>"
-                + "BgeeDB GitHub repository</a></li>");
+        navbar.append("<li><a href='").append(urlMySQLDumps.getRequestURL()).append("'>")
+                .append(MYSQL_DUMPS_PAGE_NAME).append("</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
 

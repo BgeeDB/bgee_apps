@@ -45,5 +45,10 @@ public interface DownloadDisplay {
      */
      void displayGeneExpressionCallDownloadPage(List<SpeciesDataGroup> groups,
     		                                    Map<Integer, Set<String>> keywords);
+     
+     /**
+      * Display the download page of the MYSQL Dumps.
+      */
+      void displayMysqlDumpsPage();
 
 }

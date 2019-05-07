@@ -75,7 +75,10 @@ public class CommandDownload extends CommandParent {
             } else {
                 display.displayGeneExpressionCallDownloadPage(groups, speciesIdsToTerms);
             }
-        } else {
+        } else if (this.requestParameters.getAction().equals(RequestParameters.ACTION_MYSQL_DUMPS)) {
+            display.displayMysqlDumpsPage();
+        }
+        else {
             throw log.throwing(new PageNotFoundException("Incorrect " + 
                 this.requestParameters.getUrlParametersInstance().getParamAction() + 
                 " parameter value."));

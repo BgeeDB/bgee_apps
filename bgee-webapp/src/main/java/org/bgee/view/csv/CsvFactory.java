@@ -123,4 +123,9 @@ public class CsvFactory extends ViewFactory {
     public FaqDisplay getFaqDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
     }
+
+    @Override
+    public ResourceDisplay getResourceDisplay() throws IOException {
+        throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
+    }
 }

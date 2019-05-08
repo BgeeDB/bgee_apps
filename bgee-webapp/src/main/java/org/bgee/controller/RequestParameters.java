@@ -130,6 +130,12 @@ public class RequestParameters {
      */
     public static final String PAGE_DOWNLOAD = "download";
 
+   /**
+    * A {@code String} that is the value taken by the {@code page} parameter 
+    * (see {@link URLParameters#getParamPage()}) when a resource page is requested.
+    */
+   public static final String PAGE_RESOURCE = "resource";
+    
     /**
      * A {@code String} that is the value taken by the {@code page} parameter 
      * (see {@link URLParameters#getParamPage()}) when a download page is requested.
@@ -315,6 +321,30 @@ public class RequestParameters {
      * Value of the parameter page should be {@link #PAGE_GENE}.
      */
     public static final String ACTION_EXPASY_RESULT = "expasy_result";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when resource page about R packages
+     * is requested. Value of the parameter page should be {@link #PAGE_RESOURCE}.
+     */
+    public static final String ACTION_R_PACKAGES = "r_packages";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when resource page about annotations
+     * is requested. Value of the parameter page should be {@link #PAGE_RESOURCE}.
+     */
+    public static final String ACTION_ANNOTATIONS = "annotations";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when resource page about ontologies
+     * is requested. Value of the parameter page should be {@link #PAGE_RESOURCE}.
+     */
+    public static final String ACTION_ONTOLOGIES = "ontologies";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when resource page about source code
+     * is requested. Value of the parameter page should be {@link #PAGE_RESOURCE}.
+     */
+    public static final String ACTION_SOURCE_CODE = "source_code";
     /**
      * A {@code String} that is the anchor to use in the hash part of an URL 
      * to link to the single-species part, in the documentation about gene expression calls.

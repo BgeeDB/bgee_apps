@@ -92,7 +92,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
         this.writeln(this.getFeatureDownloadLogos());
 
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(BGEE_R_PACKAGE_URL,
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(BGEEDB_R_PACKAGE_URL,
                 true, "BgeeDB R package", "R package",
                 this.prop.getLogoImagesRootDirectory() + "r_logo_color.png",
                 "A package for the annotation and gene expression data download from Bgee database, "

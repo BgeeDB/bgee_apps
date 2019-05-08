@@ -48,7 +48,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     /**
      * A {@code String} that is the page name of the 'Ontologies' resource page.
      */
-    protected final static String ONTOLOGIES_PAGE_NAME = "MySQL dumps";
+    protected final static String ONTOLOGIES_PAGE_NAME = "Ontologies";
     /**
      * A {@code String} that is the page name of the 'processed expression values' download page.
      */
@@ -425,20 +425,20 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 
         // Request parameters for the Resource menu
         RequestParameters urlResourceRPackages = this.getNewRequestParameters();
-        urlDownloadExprCallFiles.setPage(RequestParameters.PAGE_RESOURCE);
-        urlDownloadExprCallFiles.setAction(RequestParameters.ACTION_R_PACKAGES);
+        urlResourceRPackages.setPage(RequestParameters.PAGE_RESOURCE);
+        urlResourceRPackages.setAction(RequestParameters.ACTION_R_PACKAGES);
         
         RequestParameters urlResourceAnnotations = this.getNewRequestParameters();
-        urlDownloadExprCallFiles.setPage(RequestParameters.PAGE_RESOURCE);
-        urlDownloadExprCallFiles.setAction(RequestParameters.ACTION_ANNOTATIONS);
+        urlResourceAnnotations.setPage(RequestParameters.PAGE_RESOURCE);
+        urlResourceAnnotations.setAction(RequestParameters.ACTION_ANNOTATIONS);
         
         RequestParameters urlResourceOntologies = this.getNewRequestParameters();
-        urlDownloadExprCallFiles.setPage(RequestParameters.PAGE_RESOURCE);
-        urlDownloadExprCallFiles.setAction(RequestParameters.ACTION_ONTOLOGIES);
+        urlResourceOntologies.setPage(RequestParameters.PAGE_RESOURCE);
+        urlResourceOntologies.setAction(RequestParameters.ACTION_ONTOLOGIES);
         
         RequestParameters urlResourceSourceCode = this.getNewRequestParameters();
-        urlDownloadExprCallFiles.setPage(RequestParameters.PAGE_RESOURCE);
-        urlDownloadExprCallFiles.setAction(RequestParameters.ACTION_SOURCE_CODE);
+        urlResourceSourceCode.setPage(RequestParameters.PAGE_RESOURCE);
+        urlResourceSourceCode.setAction(RequestParameters.ACTION_SOURCE_CODE);
         
         
         RequestParameters urlDocDataSets = this.getNewRequestParameters();
@@ -541,7 +541,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
               + "aria-haspopup='true' aria-expanded='false'>Resources <span class='caret'></span></a>");
         navbar.append("<ul class='dropdown-menu'>");
         navbar.append("<li><a href='").append(urlResourceRPackages.getRequestURL())
-                .append("' title='Overview of all R packages'>")
+                .append("' title='Overview of R packages'>")
                 .append(R_PACKAGES_PAGE_NAME).append("</a></li>");
         navbar.append("<li><a href='").append(urlResourceAnnotations.getRequestURL())
                 .append("' title='Overview of annotation resources'>")

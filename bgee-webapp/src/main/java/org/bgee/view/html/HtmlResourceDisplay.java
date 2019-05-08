@@ -46,17 +46,17 @@ public class HtmlResourceDisplay extends HtmlParentDisplay implements ResourceDi
     public void displayRPackages() {
         log.entry();
         
+        RequestParameters urlTopAnat = this.getNewRequestParameters();
+        urlTopAnat.setPage(RequestParameters.PAGE_TOP_ANAT);
+        
         this.startDisplay("R Packages overview");
 
         this.writeln("<h1>R Packages overview</h1>");
 
         this.writeln("<div class='feature_list'>");
-        
-        RequestParameters urlTopAnat = this.getNewRequestParameters();
-        urlTopAnat.setPage(RequestParameters.PAGE_TOP_ANAT);
 
         this.writeln(HtmlParentDisplay.getSingleFeatureLogo(BGEEDB_R_PACKAGE_URL,
-                true, "BgeeDB R package", "R package",
+                true, "BgeeDB R package", "BgeeDB R package",
                 this.prop.getLogoImagesRootDirectory() + "r_logo_color.png",
                 "Retrieve the annotation of RNA-seq or Affymetrix experiments integrated "
                 + "into the Bgee database, and download into R the quantitative data and "
@@ -70,8 +70,8 @@ public class HtmlResourceDisplay extends HtmlParentDisplay implements ResourceDi
         
         
 
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(BGEEDB_R_PACKAGE_URL,
-                true, "BgeeCall R package", "R package",
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(BGEECALL_R_PACKAGE_URL,
+                true, "BgeeCall R package", "BgeeCall R package",
                 this.prop.getLogoImagesRootDirectory() + "r_logo_color.png",
                 "Generate present/absent calls for your own RNA-Seq libraries as long as the species"
                 + "are present in Bgee. BgeeCall reuse intergenic regions generated with the expertise"
@@ -89,20 +89,54 @@ public class HtmlResourceDisplay extends HtmlParentDisplay implements ResourceDi
 
     @Override
     public void displayAnnotations() {
-        // TODO Auto-generated method stub
+        log.entry();
+        
+        this.startDisplay("Annotation resources overview");
+
+        this.writeln("<h1>Annotation resources overview</h1>");
+
+        this.writeln("<div class='feature_list'>");
+        
+        this.writeln("</div>"); // close feature_list
+
+        this.endDisplay();
+
+        log.exit();
         
     }
 
     @Override
     public void displayOntologies() {
-        // TODO Auto-generated method stub
+        log.entry();
         
+        this.startDisplay("Ontology resources overview");
+
+        this.writeln("<h1>Ontology resources overview</h1>");
+
+        this.writeln("<div class='feature_list'>");
+        
+        this.writeln("</div>"); // close feature_list
+
+        this.endDisplay();
+
+        log.exit();        
     }
 
     @Override
     public void displaySourceCode() {
-        // TODO Auto-generated method stub
+        log.entry();
         
+        this.startDisplay("Source code resources overview");
+
+        this.writeln("<h1>Source code resources overview</h1>");
+
+        this.writeln("<div class='feature_list'>");
+        
+        this.writeln("</div>"); // close feature_list
+
+        this.endDisplay();
+
+        log.exit();         
     }
 
 }

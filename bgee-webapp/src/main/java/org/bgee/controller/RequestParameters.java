@@ -130,11 +130,11 @@ public class RequestParameters {
      */
     public static final String PAGE_DOWNLOAD = "download";
 
-   /**
+    /**
     * A {@code String} that is the value taken by the {@code page} parameter 
     * (see {@link URLParameters#getParamPage()}) when a resource page is requested.
     */
-   public static final String PAGE_RESOURCE = "resource";
+    public static final String PAGE_RESOURCE = "resource";
     
     /**
      * A {@code String} that is the value taken by the {@code page} parameter 
@@ -2519,6 +2519,19 @@ public class RequestParameters {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
             this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_RPACKAGE)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    
+    /**
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     * category "resources".
+     */
+    public boolean isAResourcePageCategory() {
+        log.entry();
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
+            this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_RESOURCE)) {
             return log.exit(true);
         }
         return log.exit(false);

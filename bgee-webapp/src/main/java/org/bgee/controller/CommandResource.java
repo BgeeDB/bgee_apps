@@ -54,17 +54,17 @@ public class CommandResource extends CommandParent {
 
             display.displayRPackages();
 
-        } if (this.requestParameters.getAction() != null && 
+        } else if (this.requestParameters.getAction() != null && 
                 this.requestParameters.getAction().equals(RequestParameters.ACTION_ANNOTATIONS)) {
 
             display.displayAnnotations();
 
-        } if (this.requestParameters.getAction() != null &&
+        } else if (this.requestParameters.getAction() != null &&
                 this.requestParameters.getAction().equals(RequestParameters.ACTION_ONTOLOGIES)) {
 
             display.displayOntologies();
 
-        } if (this.requestParameters.getAction() != null &&
+        } else if (this.requestParameters.getAction() != null &&
                 this.requestParameters.getAction().equals(RequestParameters.ACTION_SOURCE_CODE)) {
 
             display.displaySourceCode();

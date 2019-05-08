@@ -94,6 +94,15 @@ public abstract class ViewFactory {
     
     /**
      *                              
+     * @return A {@code ResourceDisplay} instance that is the view to be used
+     * 
+     * @throws IOException  If an error occurs with the {@code PrintWriter} when writing the
+     *                      response output.
+     */
+    public abstract ResourceDisplay getResourceDisplay() throws IOException;
+    
+    /**
+     *                              
      * @return A {@code SparqlDisplay} instance that is the view to be used
      * 
      * @throws IOException  If an error occurs with the {@code PrintWriter} when writing the

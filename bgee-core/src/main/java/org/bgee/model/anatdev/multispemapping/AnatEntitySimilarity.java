@@ -6,7 +6,6 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -41,13 +40,6 @@ import org.bgee.model.species.Taxon;
 //See AnatEntitySimilarityTaxonSummary#isPositive() for details.
 public class AnatEntitySimilarity {
     private final static Logger log = LogManager.getLogger(AnatEntitySimilarity.class.getName());
-
-    public static final Function<AnatEntitySimilarity, String> EXTRACT_IDS =
-            aes -> aes.getSourceAnatEntitiesSortedById().stream()
-            .map(ae -> ae.getId()).collect(Collectors.joining(" - "));
-    public static final Function<AnatEntitySimilarity, String> EXTRACT_NAMES =
-            aes -> aes.getSourceAnatEntitiesSortedById().stream()
-            .map(ae -> ae.getName()).collect(Collectors.joining(" - "));
 
     /**
      * @see #getSourceAnatEntities()

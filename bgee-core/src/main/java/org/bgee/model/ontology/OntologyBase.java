@@ -663,6 +663,31 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
     }
 
     /**
+     * Retrieve the elements that are not descendants of other terms among {@code elements}.
+     * For instance, if C is_a B, B is_a A, if {@code elements} contains A, B, and C,
+     * this method will return A.
+     *
+     * @param elements      A {@code Collection} of {@code T}s for which we want to identify the elements
+     *                      that are not descendants of other elements in the {@code Collection}.
+     *                      If {@code null} or empty, this method returns an empty {@code Set}.
+     * @param relationTypes A {@code Collection} of {@code RelationType}s to specify the types of relations
+     *                      to consider for identify ancestors/descendants. If {@code null} or empty,
+     *                      all relation types present in this ontology are considered.
+     * @return              A {@code Set} of {@code T}s that are the elements that are not the descendants
+     *                      of other elements in {@code elements}.
+     */
+    public Set<T> getAncestorsAmongElements(Collection<T> elements, Collection<RelationType> relationTypes) {
+        log.entry(elements, relationTypes);
+        if (elements == null || elements.isEmpty()) {
+            return log.exit(new HashSet<>());
+        }
+        Set<T> clonedElements = new HashSet<>(elements);
+        return log.exit(clonedElements.stream()
+                .filter(e -> Collections.disjoint(clonedElements, this.getAncestors(e, relationTypes)))
+                .collect(Collectors.toSet()));
+    }
+
+    /**
      * Convert a {@code RelationType} from {@code OntologyBase} to a {@code RelationType} 
      * from {@code RelationTO}.
      * 

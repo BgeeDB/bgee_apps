@@ -563,6 +563,25 @@ public class OntologyTest extends TestAncestor {
                 Arrays.asList(ae3, ae6), EnumSet.of(RelationType.ISA_PARTOF)));
     }
 
+    @Test
+    public void shouldGetAncestorsAmongElements() {
+        AnatEntity ae1 = new AnatEntity("UBERON:0001", "A", "A description");
+        AnatEntity ae2 = new AnatEntity("UBERON:0002", "B", "B description");
+        AnatEntity ae3 = new AnatEntity("UBERON:0003", "C", "C description");
+        Set<AnatEntity> elements = new HashSet<>(Arrays.asList(ae1, ae2, ae3));
+        Set<RelationTO<String>> relations = new HashSet<>(Arrays.asList(
+                new RelationTO<>(7, "UBERON:0002", "UBERON:0001",
+                        RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT)));
+
+        Ontology<AnatEntity, String> ontology = new Ontology<>(1,
+                elements, relations, ALL_RELATIONS, serviceFactory, AnatEntity.class);
+
+        assertEquals(new HashSet<>(Arrays.asList(ae1, ae3)), ontology.getAncestorsAmongElements(
+                Arrays.asList(ae1, ae2, ae3), EnumSet.of(RelationType.ISA_PARTOF)));
+        assertEquals(new HashSet<>(Arrays.asList(ae1)), ontology.getAncestorsAmongElements(
+                Arrays.asList(ae1, ae2), null));
+    }
+
     /**
      * Get relations for tests.
      * 

@@ -96,7 +96,7 @@ public class XmlSearchDisplay extends XmlParentDisplay implements SearchDisplay 
 
 		if (matches != null) {
 			for (String match : matches) {
-				this.writeln("<match hit='" + match + "' />");
+				this.writeln("<match hit='" + xmlEntities(match) + "' />");
 			}
 		}
 		this.writeln("</matches>");

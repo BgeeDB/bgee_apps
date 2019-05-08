@@ -540,7 +540,7 @@ strong.search-match {
 
 /* Interaction states
 ----------------------------------*/
-li.ui-menu-item:hover, a..ui-state-active {
+li.ui-menu-item:hover, a.ui-state-active {
     border-color: #E2011B !important;
     border-style: solid !important;
     border-width: 1px 0 !important;

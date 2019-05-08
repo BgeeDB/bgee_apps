@@ -7,9 +7,12 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,6 +29,7 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.ontology.MultiSpeciesOntology;
 import org.bgee.model.ontology.Ontology;
 import org.bgee.model.ontology.RelationType;
+import org.bgee.model.species.Species;
 import org.bgee.model.species.Taxon;
 import org.junit.Before;
 import org.junit.Test;
@@ -46,10 +50,22 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
 
     private List<Taxon> taxa;
     private Set<Integer> speciesIdsGnathostomataLCA = new HashSet<>(Arrays.asList(1, 2));
+    private String anatEntityWithNoSimilarityId = "id_with_no_similarity";
+    private String nonExistingAnatEntityId = "non_existing_id";
 
     @Before
     public void setMockObjects() {
         log.entry();
+
+        when(this.anatEntityService.loadAnatEntities(
+                new HashSet<>(Arrays.asList(anatEntityWithNoSimilarityId, nonExistingAnatEntityId)), false))
+        .thenReturn(Arrays.asList(new AnatEntity(anatEntityWithNoSimilarityId)).stream());
+        Map<Integer, Species> speciesMap = new HashMap<>();
+        speciesMap.put(1, new Species(1));
+        speciesMap.put(2, new Species(2));
+        when(this.speciesService.loadSpeciesMap(null, false))
+        .thenReturn(speciesMap);
+
         taxa = Arrays.asList(
                 new Taxon(131567, "cellular organisms", null, "cellular organisms", 1, false),
                 new Taxon(6072, "Eumetazoa", null, "Eumetazoa", 5, false),
@@ -581,5 +597,49 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
         Set<AnatEntitySimilarity> expectedResults = new HashSet<>(Arrays.asList(fakeLungSwimBladderWhateverGnaSim));
         assertEquals(expectedResults, service.loadSimilarAnatEntities(speciesIdsGnathostomataLCA,
                 Arrays.asList("lung"), false));
+    }
+
+    @Test
+    public void shouldLoadPositiveAnatEntitySimilarityAnalysis() {
+        AnatEntitySimilarityService service = new AnatEntitySimilarityService(this.serviceFactory);
+
+        AnatEntitySimilarity fakeLungSwimBladderWhateverGnaSim = new AnatEntitySimilarity(
+                Arrays.asList(new AnatEntity("lung"), new AnatEntity("swimbladder"), new AnatEntity("whatever")),
+                Arrays.asList(new AnatEntity("whatever_precursor")), taxa.get(4),
+                Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(4), true, true)));
+
+        Collection<String> requestedAnatEntityIds = Arrays.asList("lung", anatEntityWithNoSimilarityId,
+                nonExistingAnatEntityId);
+        Collection<String> requestedAnatEntityIdsNotFound = Arrays.asList(nonExistingAnatEntityId);
+        Set<Integer> requestedSpeciesIds = new HashSet<>(speciesIdsGnathostomataLCA);
+        //Add a "non-existing" species ID
+        Collection<Integer> requestedSpeciesIdsNotFound = Arrays.asList(9999);
+        requestedSpeciesIds.addAll(requestedSpeciesIdsNotFound);
+        Collection<Species> requestedSpecies = speciesIdsGnathostomataLCA.stream().map(id -> new Species(id))
+                .collect(Collectors.toSet());
+        Taxon leastCommonAncestor = this.taxonService.loadLeastCommonAncestor(speciesIdsGnathostomataLCA);
+        Collection<AnatEntitySimilarity> anatEntitySimilarities = Arrays.asList(fakeLungSwimBladderWhateverGnaSim);
+        Collection<AnatEntity> anatEntitiesWithNoSimilarities = Arrays.asList(new AnatEntity(anatEntityWithNoSimilarityId));
+        Map<AnatEntity, Collection<Species>> anatEntitiesExistInSpecies = fakeLungSwimBladderWhateverGnaSim
+                .getAllAnatEntities().stream()
+                .collect(Collectors.toMap(ae -> ae, ae -> Arrays.asList(new Species(1), new Species(2))));
+        anatEntitiesExistInSpecies.put(new AnatEntity(anatEntityWithNoSimilarityId), Arrays.asList(new Species(1)));
+
+        when(this.taxonConstraintService.loadAnatEntityTaxonConstraintBySpeciesIds(null))
+        .thenReturn(Arrays.asList(
+                new TaxonConstraint<>("lung", 1),
+                new TaxonConstraint<>("lung", 2),
+                new TaxonConstraint<>("swimbladder", null),
+                new TaxonConstraint<>("whatever", 1),
+                new TaxonConstraint<>("whatever", 2),
+                new TaxonConstraint<>("whatever_precursor", 1),
+                new TaxonConstraint<>("whatever_precursor", 2),
+                new TaxonConstraint<>(anatEntityWithNoSimilarityId, 1)).stream());
+
+        AnatEntitySimilarityAnalysis expectedResults = new AnatEntitySimilarityAnalysis(requestedAnatEntityIds,
+                requestedAnatEntityIdsNotFound, requestedSpeciesIds, requestedSpeciesIdsNotFound, requestedSpecies,
+                leastCommonAncestor, anatEntitySimilarities, anatEntitiesWithNoSimilarities, anatEntitiesExistInSpecies);
+        assertEquals(expectedResults, service.loadPositiveAnatEntitySimilarityAnalysis(requestedSpeciesIds,
+                requestedAnatEntityIds, false));
     }
 }

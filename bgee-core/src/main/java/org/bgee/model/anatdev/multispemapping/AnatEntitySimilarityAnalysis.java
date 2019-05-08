@@ -51,7 +51,7 @@ public class AnatEntitySimilarityAnalysis {
             Collection<Integer> requestedSpeciesIdsNotFound, Collection<Species> requestedSpecies,
             Taxon leastCommonAncestor, Collection<AnatEntitySimilarity> anatEntitySimilarities,
             Collection<AnatEntity> anatEntitiesWithNoSimilarities,
-            Map<AnatEntity, Set<Species>> anatEntitiesExistInSpecies) {
+            Map<AnatEntity, Collection<Species>> anatEntitiesExistInSpecies) {
         this.requestedAnatEntityIds = Collections.unmodifiableSet(
                 requestedAnatEntityIds == null? new HashSet<>(): new HashSet<>(requestedAnatEntityIds));
         this.requestedAnatEntityIdsNotFound = Collections.unmodifiableSet(
@@ -89,7 +89,13 @@ public class AnatEntitySimilarityAnalysis {
                           this.anatEntitiesWithNoSimilarities.stream())
                 .anyMatch(ae -> !this.anatEntitiesExistInSpecies.containsKey(ae))) {
             throw log.throwing(new IllegalArgumentException(
-                    "Some anat. entities are missing from the species existence Map"));
+                    "Some anat. entities are missing from the species existence Map. All anat. entities: "
+                    + Stream.concat(this.anatEntitySimilarities.stream()
+                            .flatMap(aes -> aes.getAllAnatEntities().stream()),
+                        this.anatEntitiesWithNoSimilarities.stream()).map(ae -> ae.getId())
+                    .collect(Collectors.joining(", ")) + " - anat. entities in species existence map: "
+                    + this.anatEntitiesExistInSpecies.keySet().stream().map(ae -> ae.getId())
+                    .collect(Collectors.joining(", "))));
         }
     }
 
@@ -176,5 +182,116 @@ public class AnatEntitySimilarityAnalysis {
      */
     public Map<AnatEntity, Set<Species>> getAnatEntitiesExistInSpecies() {
         return anatEntitiesExistInSpecies;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((anatEntitiesExistInSpecies == null) ? 0 : anatEntitiesExistInSpecies.hashCode());
+        result = prime * result
+                + ((anatEntitiesWithNoSimilarities == null) ? 0 : anatEntitiesWithNoSimilarities.hashCode());
+        result = prime * result + ((anatEntitySimilarities == null) ? 0 : anatEntitySimilarities.hashCode());
+        result = prime * result + ((leastCommonAncestor == null) ? 0 : leastCommonAncestor.hashCode());
+        result = prime * result + ((requestedAnatEntityIds == null) ? 0 : requestedAnatEntityIds.hashCode());
+        result = prime * result
+                + ((requestedAnatEntityIdsNotFound == null) ? 0 : requestedAnatEntityIdsNotFound.hashCode());
+        result = prime * result + ((requestedSpecies == null) ? 0 : requestedSpecies.hashCode());
+        result = prime * result + ((requestedSpeciesIds == null) ? 0 : requestedSpeciesIds.hashCode());
+        result = prime * result + ((requestedSpeciesIdsNotFound == null) ? 0 : requestedSpeciesIdsNotFound.hashCode());
+        return result;
+    }
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        AnatEntitySimilarityAnalysis other = (AnatEntitySimilarityAnalysis) obj;
+        if (anatEntitiesExistInSpecies == null) {
+            if (other.anatEntitiesExistInSpecies != null) {
+                return false;
+            }
+        } else if (!anatEntitiesExistInSpecies.equals(other.anatEntitiesExistInSpecies)) {
+            return false;
+        }
+        if (anatEntitiesWithNoSimilarities == null) {
+            if (other.anatEntitiesWithNoSimilarities != null) {
+                return false;
+            }
+        } else if (!anatEntitiesWithNoSimilarities.equals(other.anatEntitiesWithNoSimilarities)) {
+            return false;
+        }
+        if (anatEntitySimilarities == null) {
+            if (other.anatEntitySimilarities != null) {
+                return false;
+            }
+        } else if (!anatEntitySimilarities.equals(other.anatEntitySimilarities)) {
+            return false;
+        }
+        if (leastCommonAncestor == null) {
+            if (other.leastCommonAncestor != null) {
+                return false;
+            }
+        } else if (!leastCommonAncestor.equals(other.leastCommonAncestor)) {
+            return false;
+        }
+        if (requestedAnatEntityIds == null) {
+            if (other.requestedAnatEntityIds != null) {
+                return false;
+            }
+        } else if (!requestedAnatEntityIds.equals(other.requestedAnatEntityIds)) {
+            return false;
+        }
+        if (requestedAnatEntityIdsNotFound == null) {
+            if (other.requestedAnatEntityIdsNotFound != null) {
+                return false;
+            }
+        } else if (!requestedAnatEntityIdsNotFound.equals(other.requestedAnatEntityIdsNotFound)) {
+            return false;
+        }
+        if (requestedSpecies == null) {
+            if (other.requestedSpecies != null) {
+                return false;
+            }
+        } else if (!requestedSpecies.equals(other.requestedSpecies)) {
+            return false;
+        }
+        if (requestedSpeciesIds == null) {
+            if (other.requestedSpeciesIds != null) {
+                return false;
+            }
+        } else if (!requestedSpeciesIds.equals(other.requestedSpeciesIds)) {
+            return false;
+        }
+        if (requestedSpeciesIdsNotFound == null) {
+            if (other.requestedSpeciesIdsNotFound != null) {
+                return false;
+            }
+        } else if (!requestedSpeciesIdsNotFound.equals(other.requestedSpeciesIdsNotFound)) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("AnatEntitySimilarityAnalysis [requestedAnatEntityIds=").append(requestedAnatEntityIds)
+                .append(", requestedAnatEntityIdsNotFound=").append(requestedAnatEntityIdsNotFound)
+                .append(", requestedSpeciesIds=").append(requestedSpeciesIds)
+                .append(", requestedSpeciesIdsNotFound=").append(requestedSpeciesIdsNotFound)
+                .append(", requestedSpecies=").append(requestedSpecies)
+                .append(", leastCommonAncestor=").append(leastCommonAncestor)
+                .append(", anatEntitySimilarities=").append(anatEntitySimilarities)
+                .append(", anatEntitiesWithNoSimilarities=").append(anatEntitiesWithNoSimilarities)
+                .append(", anatEntitiesExistInSpecies=").append(anatEntitiesExistInSpecies)
+                .append("]");
+        return builder.toString();
     }
 }

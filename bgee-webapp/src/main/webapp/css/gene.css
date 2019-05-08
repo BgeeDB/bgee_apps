@@ -233,3 +233,8 @@ table.dataTable {
 span.more-content {
     display: none;
 }
+
+span.errorMessage {
+    color: #E2011B;
+    font-weight: bold;
+}

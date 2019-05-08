@@ -40,28 +40,32 @@ function autocompleteTermSource(request, responseCallback) {
 
 	 var autocompleteTermRequestParameters = "?page=search&action=auto_complete_gene_search&" +
 	 		"display_type=xml&search=" + encodeURIComponent(request.term);
-	 
-	 $.get(autocompleteTermRequestParameters, function(xmlResponse) {
-		//we remove regex special chars from the search term, 
-		//to be able to perform a 'replace all' with a regex, 
-		//to highlight the term in the matching result
-		var searchTerm = $.ui.autocomplete.escapeRegex(request.term);
-		
-		var data = $(xmlResponse).find("match").map(function() {
-			var myMatch = $(this);
-            var match = myMatch.attr("hit");
-			return autocompleteTermGenerateLabel(match, searchTerm);
-		}).get();
-		
-		var subdata = data.slice(0, 20);
-		responseCallback(subdata);
-	 })
-	 //in case of error, we need to call responseCallback anyway
-	 .error(function(responseCallback) {
-		 $("#bgee_species_search_msg").empty();
-		 $("#bgee_species_search_msg").text("Error while requesting the server.");
-		 responseCallback("Error while requesting the server.");
-	 });
+
+	$.ajax({
+		type: "GET",
+		dataType: "xml",
+		url: autocompleteTermRequestParameters,
+		success: function(xmlResponse) {
+			//we remove regex special chars from the search term, 
+			//to be able to perform a 'replace all' with a regex, 
+			//to highlight the term in the matching result
+			var searchTerm = $.ui.autocomplete.escapeRegex(request.term);
+
+			var data = $(xmlResponse).find("match").map(function() {
+				var myMatch = $(this);
+				var match = myMatch.attr("hit");
+				return autocompleteTermGenerateLabel(match, searchTerm);
+			}).get();
+
+			var subdata = data.slice(0, 20);
+			responseCallback(subdata);
+		},
+		error: function() {
+			$("#bgee_species_search_msg").empty();
+			$("#bgee_species_search_msg").append($("<span />")
+				.attr("class", 'errorMessage').text("Error"));
+		}
+	});
 }
 
 /**

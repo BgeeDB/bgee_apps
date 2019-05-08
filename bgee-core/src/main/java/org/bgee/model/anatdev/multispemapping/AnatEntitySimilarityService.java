@@ -298,7 +298,7 @@ public class AnatEntitySimilarityService extends Service {
                 .collect(Collectors.toSet()));
     }
 
-    public AnatEntitySimilarityAnalysis loadAnatEntitySimilarityAnalysis(Collection<Integer> speciesIds,
+    public AnatEntitySimilarityAnalysis loadPositiveAnatEntitySimilarityAnalysis(Collection<Integer> speciesIds,
             Collection<String> anatEntityIds, boolean onlyTrusted) {
         log.entry(speciesIds, anatEntityIds, onlyTrusted);
 

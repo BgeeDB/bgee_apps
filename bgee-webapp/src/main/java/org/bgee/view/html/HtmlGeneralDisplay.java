@@ -326,11 +326,11 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	    
 	    this.writeln("<div class='panel-body'>");
 
-		this.writeOneNews("2019-05-07", "Update of the <a href='" + urlGenePage.getRequestURL() +
+		this.writeOneNews("2019-05-08", "Update of the <a href='" + urlGenePage.getRequestURL() +
 				"'>gene search page</a>:" +
 				"<ul>" +
 				"    <li>Addition of a gene search result page (i.e. <a href='" + urlGeneSearchHbb.getRequestURL() + 
-				"			' title='Search genes with 'HBB'>search with 'HBB'</a>)</li>" +
+				"' title='Search genes with \"HBB\"'>search with \"HBB\"</a>)</li>" +
 				"    <li>Improvement of the speed of autocompletion</li>" +
 				"</ul>");
 

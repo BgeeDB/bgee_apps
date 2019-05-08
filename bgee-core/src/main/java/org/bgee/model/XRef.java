@@ -83,7 +83,7 @@ public class XRef<T> {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        XRef xRef = (XRef) o;
+        XRef<?> xRef = (XRef<?>) o;
         return Objects.equals(xRefId, xRef.xRefId) &&
                 Objects.equals(xRefName, xRef.xRefName) &&
                 Objects.equals(source, xRef.source) &&

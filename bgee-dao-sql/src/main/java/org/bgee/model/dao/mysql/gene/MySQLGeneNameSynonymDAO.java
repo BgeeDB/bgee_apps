@@ -28,7 +28,7 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
  */
 public class MySQLGeneNameSynonymDAO extends MySQLDAO<GeneNameSynonymDAO.Attribute> implements GeneNameSynonymDAO {
 
-    private static final Logger log = LogManager.getLogger(MySQLGeneDAO.class.getName());
+    private static final Logger log = LogManager.getLogger(MySQLGeneNameSynonymDAO.class.getName());
 
     /**
      * The table name
@@ -103,17 +103,17 @@ public class MySQLGeneNameSynonymDAO extends MySQLDAO<GeneNameSynonymDAO.Attribu
     }
 
     @Override
-    public GeneNameSynonymTOResultSet getGeneNameSynonyms(Set<Integer> geneIds) {
-        log.entry(geneIds);
+    public GeneNameSynonymTOResultSet getGeneNameSynonyms(Set<Integer> bgeeGeneIds) {
+        log.entry(bgeeGeneIds);
         // Construct sql query
         String sql = this.generateSelectClause(GENE_NAME_SYNONYM_TABLE, COL_NAMES_TO_ATTRS, true);
         sql += " FROM " + GENE_NAME_SYNONYM_TABLE;
-        sql += " WHERE bgeeGeneId IN ("+BgeePreparedStatement.generateParameterizedQueryString(geneIds.size())+")";
+        sql += " WHERE bgeeGeneId IN ("+BgeePreparedStatement.generateParameterizedQueryString(bgeeGeneIds.size())+")";
         
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             
-            stmt.setIntegers(1, geneIds, true);
+            stmt.setIntegers(1, bgeeGeneIds, true);
             // we don't use a try-with-resource, because we return a pointer to the
             // results,
             // not the actual results, so we should not close this

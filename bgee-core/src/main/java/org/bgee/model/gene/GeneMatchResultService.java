@@ -13,6 +13,7 @@ import org.sphx.api.SphinxResult;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -154,6 +155,8 @@ public class GeneMatchResultService {
         // build list of propositions
         List<String> propositions = Arrays.stream(result.matches)
                 .map(m -> String.valueOf(m.attrValues.get(0)))
+                //sort by the shortest matched terms first
+                .sorted(Comparator.comparingInt(m -> m.length()))
                 .collect(Collectors.toList());
 
         return log.exit(propositions);

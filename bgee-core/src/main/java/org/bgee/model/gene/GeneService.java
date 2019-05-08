@@ -163,7 +163,7 @@ public class GeneService extends CommonService {
         // we expect very few results from a single Ensembl ID, so we preload synonyms and x-refs
         // from database
         Map<Integer, Set<String>> synonymMap = loadSynonymsByBgeeGeneIds(geneTOs);
-        Map<Integer, Set<XRef>> xRefsMap = loadXrefsByBgeeGeneIds(geneTOs);
+        Map<Integer, Set<XRef<String>>> xRefsMap = loadXrefsByBgeeGeneIds(geneTOs);
 
         return log.exit(mapGeneTOStreamToGeneStream(geneTOs.stream(), speciesMap, synonymMap, xRefsMap)
                 .collect(Collectors.toSet()));
@@ -343,7 +343,7 @@ public class GeneService extends CommonService {
                         Collectors.mapping(GeneNameSynonymTO::getGeneNameSynonym, Collectors.toSet()))));
     }
 
-    private Map<Integer, Set<XRef>> loadXrefsByBgeeGeneIds(Collection<GeneTO> geneTOs) {
+    private Map<Integer, Set<XRef<String>>> loadXrefsByBgeeGeneIds(Collection<GeneTO> geneTOs) {
         log.entry(geneTOs);
 
         final Map<Integer, GeneTO> geneTOsById = geneTOs.stream()
@@ -363,14 +363,16 @@ public class GeneService extends CommonService {
                         Collectors.mapping(x -> mapGeneXRefTOToXRef(x, sourceMap, geneTOsById), Collectors.toSet()))));
     }
 
-    private static XRef mapGeneXRefTOToXRef(GeneXRefTO to, Map<Integer, Source> sourceMap, Map<Integer, GeneTO> geneTOsById) {
+    private static XRef<String> mapGeneXRefTOToXRef(GeneXRefTO to, Map<Integer, Source> sourceMap,
+                                                    Map<Integer, GeneTO> geneTOsById) {
         log.entry(to, sourceMap, geneTOsById);
-        return log.exit(new XRef(to.getXRefId(), to.getXRefName(), sourceMap.get(to.getDataSourceId()), 
+        return log.exit(new XRef<>(to.getXRefId(), to.getXRefName(), sourceMap.get(to.getDataSourceId()), 
                 geneTOsById.get(to.getBgeeGeneId()).getGeneId()));
     }
     
     private static Stream<Gene> mapGeneTOStreamToGeneStream(Stream<GeneTO> geneTOStream,
-            Map<Integer, Species> speciesMap, Map<Integer, Set<String>> synonyms, Map<Integer, Set<XRef>> xrefs) {
+            Map<Integer, Species> speciesMap, Map<Integer, Set<String>> synonyms, Map<Integer,
+            Set<XRef<String>>> xrefs) {
         log.entry(geneTOStream, speciesMap, synonyms, xrefs);
         return log.exit(geneTOStream.map(to -> mapGeneTOToGene(to, speciesMap.get(to.getSpeciesId()),
                 synonyms == null ? null : synonyms.get(to.getId()),

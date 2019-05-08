@@ -119,7 +119,7 @@ public class CommonService extends Service {
      * @return          The mapped {@code Gene}.
      */
     protected static Gene mapGeneTOToGene(GeneTO geneTO, Species species, Collection<String> synonyms,
-                                          Collection<XRef> xRefs) {
+                                          Collection<XRef<String>> xRefs) {
         log.entry(geneTO, species, synonyms, xRefs);
         if (geneTO == null) {
             return log.exit(null);

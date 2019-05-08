@@ -48,7 +48,7 @@ public class Gene {
     /**
      * A {@code Set} of {@code Xref}s that are the synonyms of the gene.
      */
-    private final Set<XRef> xRefs;
+    private final Set<XRef<String>> xRefs;
 
     /**
 	 * The {@code Species} this {@code Gene} belongs to.
@@ -100,7 +100,7 @@ public class Gene {
      *                                      or {@code Species} is {@code null}.
      */
     public Gene(String ensemblGeneId, String name, String description, Collection<String> synonyms,
-                Collection<XRef> xRefs, Species species, int geneMappedToSameEnsemblGeneIdCount)
+                Collection<XRef<String>> xRefs, Species species, int geneMappedToSameEnsemblGeneIdCount)
         throws IllegalArgumentException {
         if (StringUtils.isBlank(ensemblGeneId)) {
             throw log.throwing(new IllegalArgumentException("The Ensembl gene ID must be provided."));
@@ -150,7 +150,7 @@ public class Gene {
     /**
      * @return  The {@code Set} of {@code XRef}s that are the cross-references of the gene.
      */
-    public Set<XRef> getXRefs() {
+    public Set<XRef<String>> getXRefs() {
         return xRefs;
     }
     /**

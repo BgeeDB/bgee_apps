@@ -58,8 +58,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
     private final static int MAX_DISPLAYED_ITEMS = 10;
 
-    private final static Comparator<XRef<?>> X_REF_COMPARATOR = Comparator
-            .<XRef<?>, Integer>comparing(x -> x.getSource().getDisplayOrder(), Comparator.nullsLast(Integer::compareTo))
+    private final static Comparator<XRef<String>> X_REF_COMPARATOR = Comparator
+            .<XRef<String>, Integer>comparing(x -> x.getSource().getDisplayOrder(), Comparator.nullsLast(Integer::compareTo))
             .thenComparing(x -> x.getSource().getName(), Comparator.nullsLast(String::compareTo))
             .thenComparing((XRef::getXRefId), Comparator.nullsLast(String::compareTo));
     
@@ -746,7 +746,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      * @param xRefs A {@code Set} of {@code XRef}s that are the cross-references to display
      * @return      A {@code String} containing the HTML code of the cross-references table
      */
-    private String getXRefDisplay(Set<XRef<?>> xRefs) {
+    private String getXRefDisplay(Set<XRef<String>> xRefs) {
         log.entry(xRefs);
 
         if (xRefs == null || xRefs.size() == 0) {
@@ -796,7 +796,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      * @param xRef  A {@code XRef} that is the cross-reference for which the name should be retrieved. 
      * @return      The {@code String} that is the cross-reference name to display.
      */
-    private static String getFormattedXRefName(XRef<?> xRef) {
+    private static String getFormattedXRefName(XRef<String> xRef) {
         log.entry(xRef);
         String xRefName = "";
         if (StringUtils.isNotBlank(xRef.getXRefName())) {

@@ -90,6 +90,31 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     protected static final String BGEE_GITHUB_URL = "https://github.com/BgeeDB";
     
     /**
+     * A {@code String} to be used in {@code class} attribute.
+     */
+    protected static final String BGEEDB_GITHUB_URL = "https://github.com/BgeeDB/BgeeDB_R";
+    
+    /**
+     * A {@code String} to be used in {@code class} attribute.
+     */
+    protected static final String BGEECALL_GITHUB_URL = "https://github.com/BgeeDB/BgeeCall";
+    
+    /**
+     * A {@code String} to be used in {@code class} attribute.
+     */
+    protected static final String BGEE_PIPELINE_GITHUB_URL = "https://github.com/BgeeDB/bgee_pipeline";
+    
+    /**
+     * A {@code String} to be used in {@code class} attribute.
+     */
+    protected static final String CIO_GITHUB_URL = "https://github.com/BgeeDB/confidence-information-ontology";
+    
+    /**
+     * A {@code String} to be used in {@code class} attribute.
+     */
+    protected static final String HOM_GITHUB_URL = "https://github.com/BgeeDB/homology-ontology";    
+    
+    /**
      * A {@code String} that is the URL of the licence CC0 of Creative Commons.
      */
     protected static final String LICENCE_CC0_URL =

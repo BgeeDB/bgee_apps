@@ -15,7 +15,7 @@ import org.bgee.view.*;
  * 
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Aug. 2018
+ * @version Bgee 14, May 2019
  * @since   Bgee 13, July 2014
  */
 public class HtmlFactory extends ViewFactory {
@@ -158,5 +158,12 @@ public class HtmlFactory extends ViewFactory {
     public FaqDisplay getFaqDisplay() throws IOException {
         log.entry();
         return log.exit(new HtmlFaqDisplay(this.response, this.requestParameters, this.prop, this));
+    }
+
+    @Override
+    public AnatomicalSimilarityDisplay getAnatomicalSimilarityDisplay() throws IOException {
+        log.entry();
+        return log.exit(new HtmlAnatomicalSimilarityDisplay(
+                this.response, this.requestParameters, this.prop, this));
     }
 }

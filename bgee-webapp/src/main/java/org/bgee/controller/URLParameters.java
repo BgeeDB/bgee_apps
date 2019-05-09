@@ -441,7 +441,16 @@ public class URLParameters {
             "^[a-zA-Z0-9]*$", //accept only ASCII characters for SHA512 hexa representation used in the BgeeDB R package
             String.class);
 
-    //    /**
+    /**
+     * A {@code Parameter<String>} that contains the anatomical entity IDs to be used 
+     * for anatomical similarity analysis.
+     * Corresponds to the URL parameter "ae_list".
+     */
+    private static final Parameter<String> ANAT_ENTITY_LIST = new Parameter<>("ae_list",
+            false, true, DEFAULT_SEPARATORS, true, DEFAULT_IS_SECURE,
+            1000000, DEFAULT_LIST_FORMAT, String.class);
+    
+//    /**
 //     * A {@code Parameter<Boolean>} to determine whether all anatomical structures of 
 //     * an ontology should be displayed. (and not only structures with the parent manually
 //     * expanded by the user). Category of the parameter: ontology display parameter.
@@ -496,6 +505,8 @@ public class URLParameters {
             SEARCH,
             // Species request
             SPECIES_LIST,
+            // Anat. similarity analyze params
+            ANAT_ENTITY_LIST,
             // TopAnat analyze params
             FOREGROUND_LIST, FOREGROUND_FILE, BACKGROUND_LIST, BACKGROUND_FILE,
             EXPRESSION_TYPE, SUMMARY_QUALITY, DATA_TYPE, DEV_STAGE, DECORRELATION_TYPE,
@@ -830,6 +841,14 @@ public class URLParameters {
         return API_KEY;
     }
 
+
+    /**
+     * @return  A {@code Parameter<String>} defining a anatomical entity ID list.
+     *          Corresponds to the URL parameter "ae_list".
+     */
+    public Parameter<String> getParamAnatEntityList() {
+        return ANAT_ENTITY_LIST;
+    }
     /**
      * This class is designed to wrap all parameters that can be received and sent
      * through an HTTP request within the Bgee webapp. 

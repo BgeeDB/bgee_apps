@@ -291,6 +291,9 @@ public class FrontController extends HttpServlet {
                 //TODO: In the future, this should call our Google Monitoring implementation
                 factory.getGeneralDisplay().respondSuccessNoContent();
                 setCookie = false;
+            } else if (requestParameters.isAAnatSimilarityPageCategory()) {
+                controller = new CommandAnatomicalSimilarity(
+                        response, requestParameters, this.prop, factory, serviceFactory);
             } else {
                 throw log.throwing(new PageNotFoundException("Request not recognized."));
             }

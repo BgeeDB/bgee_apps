@@ -13,6 +13,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
+import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.view.ConcreteDisplayParent;
 import org.bgee.view.JsonHelper;
 import org.bgee.view.ViewFactory;
@@ -62,6 +63,10 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected static final String BGEE_GITHUB_URL = "https://github.com/BgeeDB";
     
+    /**
+     * A {@code String} to be used to build the URL of the 
+     */
+    protected static final String UBERON_ID_URL = "http://purl.obolibrary.org/obo/";
     /**
      * A {@code String} that is the URL of the licence CC0 of Creative Commons.
      */
@@ -409,6 +414,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         RequestParameters urlPrivacyPolicy = this.getNewRequestParameters();
         urlPrivacyPolicy.setPage(RequestParameters.PAGE_PRIVACY_POLICY);
         
+        RequestParameters urlAnatSim = this.getNewRequestParameters();
+        urlAnatSim.setPage(RequestParameters.PAGE_ANAT_SIM);
+
         // Navigation bar
         StringBuilder navbar = new StringBuilder();
 
@@ -448,6 +456,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 .append("</a></li>");
         navbar.append("<li><a href='" + BGEE_R_PACKAGE_URL + "' target='_blank'>"
                 + "BgeeDB R package</a></li>");
+        navbar.append("<li><a href='").append(urlAnatSim.getRequestURL()).append("' >")
+                .append("Anatomical similarities</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
 
@@ -1004,5 +1014,21 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             }
         }
         return log.exit(version);
+    }
+
+    /**
+     * @param anatEntity    An {@code AnatEntity} that is the anat. entity for which build the URL.
+     * @param text          A {@code String} that is the text to be displayed for the link.
+     * @return              A {@code String} that is the URLs of the provided anat. entity.
+     */
+    protected String getAnatEntityUrl(AnatEntity anatEntity, String text) {
+        log.entry(anatEntity, text);
+        if (anatEntity == null) {
+            throw log.throwing(new IllegalArgumentException("The provided anat. entity should be not null"));
+        }
+        
+        return log.exit("<a target='_blank' href='" + UBERON_ID_URL + 
+                this.urlEncode(anatEntity.getId().replace(':', '_')) + "'>" + htmlEntities(text) +
+                "</a>");
     }
 }

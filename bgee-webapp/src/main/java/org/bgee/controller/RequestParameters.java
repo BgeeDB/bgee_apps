@@ -153,6 +153,14 @@ public class RequestParameters {
      * (see {@link URLParameters#getParamPage()}) when a page related to topAnat is requested.
      */
     public static final String PAGE_TOP_ANAT = "top_anat";
+    
+    /**
+     * A {@code String} that is the value taken by the {@code page} parameter 
+     * (see {@link URLParameters#getParamPage()}) when a page related to
+     * anatomical similarities is requested.
+     */
+    public static final String PAGE_ANAT_SIM = "anat_similarities";
+
     /**
      * A {@code String} that is the value taken by the {@code page} parameter 
      * (see {@link URLParameters#getParamPage()}) when a page related to job management is requested.
@@ -2313,6 +2321,17 @@ public class RequestParameters {
     public String getApiKey() {
         return this.getFirstValue(this.getUrlParametersInstance().getParamApiKey());
     }
+    /**
+     * Convenient method to retrieve values of the parameter returned by 
+     * {@link URLParameters#getParamAnatEntityList()}. Equivalent to calling 
+     * {@link #getValues(URLParameters.Parameter)} for this parameter.
+     *
+     * @return  A {@code List} of {@code String}s that are the values of 
+     *          the {@code ae_list} URL parameter. Can be {@code null}.
+     */
+    public List<String> getAnatEntityList() {
+        return this.getValues(this.getUrlParametersInstance().getParamAnatEntityList());
+    }
 
     /**
      * This method has a js counterpart in {@code requestparameters.js} that should be kept 
@@ -2650,6 +2669,21 @@ public class RequestParameters {
         log.entry();
         if (isATopAnatPageCategory() &&
                 this.getAction() != null && this.getAction().equals(ACTION_TOP_ANAT_DOWNLOAD)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     *
+     * @return  A {@code boolean} to tell whether the request is related to anat. similarity page.
+     */
+    public boolean isAAnatSimilarityPageCategory() {
+        log.entry();
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
+                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_ANAT_SIM)) {
             return log.exit(true);
         }
         return log.exit(false);

@@ -85,7 +85,7 @@ import org.bgee.model.expressiondata.baseelements.SummaryQuality;
  * @author  Mathieu Seppey
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Aug. 2018
+ * @version Bgee 14, May 2019
  * @since   Bgee 1
  */
 public class RequestParameters {
@@ -1235,6 +1235,10 @@ public class RequestParameters {
                     log.trace("Skipping parameter because not targeted: {}", parameter);
                     continue;
                 }
+                if (parameter.equals(this.urlParametersInstance.getParamPostFormSubmit())) {
+                    log.trace("Skipping parameter because internal parameter not to be displayed: {}", parameter);
+                    continue;
+                }
                 //if a split between parameters in search and hash parts has been requested 
                 if (searchOrHashParams != null) {
                     //first pass, store parameters in the search part of the URL
@@ -1995,6 +1999,25 @@ public class RequestParameters {
         this.resetValues(this.getUrlParametersInstance().getParamAction());
         this.addValue(this.getUrlParametersInstance().getParamAction(), action);
     }
+
+    /**
+     * @return the post_form_submit parameter
+     */
+    public Boolean getPostFormSubmit() {
+        return this.getFirstValue(this.getUrlParametersInstance().getParamPostFormSubmit());
+    }
+    /**
+     * Convenient method to set value of the parameter returned by 
+     * {@link URLParameters#getParamPostFormSubmit()}. Equivalent to calling 
+     * {@link #addValue(URLParameters.Parameter, Object)} for this parameter.
+     *
+     * @param isPostFormSubmit  A {@code String} that is the value of the {@code post_form_submit}
+     *                          URL parameter to set.
+     */
+    public void setPostFormSubmit(Boolean isPostFormSubmit) {
+        this.resetValues(this.getUrlParametersInstance().getParamPostFormSubmit());
+        this.addValue(this.getUrlParametersInstance().getParamPostFormSubmit(), isPostFormSubmit);
+    }
     /**
      * Convenient method to retrieve value of the parameter returned by 
      * {@link URLParameters#getParamData()}. Equivalent to calling 
@@ -2369,6 +2392,27 @@ public class RequestParameters {
         return log.exit(false);
     }
 
+    /**
+     * Allow to know if this request has been performed through a POST form. 
+     *
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     *
+     * @return      {@code true} if this request was performed through a POST form.
+     * @implNote    Note that this parameter is never present in the URL returned 
+     *              by the {@code getRequestURL...} methods (see 
+     *              {@link RequestParameters#generateParametersQuery(
+     *              Set, boolean, boolean, String, Collection, boolean)}) 
+     */
+    public boolean isPostFormSubmit() {
+        log.entry();
+        if (this.getFirstValue(this.urlParametersInstance.getParamPostFormSubmit()) != null &&
+                this.getFirstValue(this.urlParametersInstance.getParamPostFormSubmit())) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    
     /**
      * This method has a js counterpart in {@code requestparameters.js} that should be kept 
      * consistent as much as possible if the method evolves.

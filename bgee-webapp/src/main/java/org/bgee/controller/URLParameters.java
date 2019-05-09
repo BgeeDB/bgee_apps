@@ -49,7 +49,7 @@ import org.bgee.model.expressiondata.baseelements.SummaryQuality;
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, Aug. 2018
+ * @version Bgee 14, May 2019
  * @since   Bgee 13, Nov. 2014
  * @see URLParameters.Parameter
  * @see	RequestParameters
@@ -164,6 +164,15 @@ public class URLParameters {
      */
     private static final Parameter<Boolean> AJAX = new Parameter<Boolean>("ajax",
             false, false, null, false, false, 5, DEFAULT_FORMAT, Boolean.class);
+
+    /**
+     * A {@code Parameter<Boolean>} appended to all POST from to detect them.
+     * Category of the parameter: controller parameter.
+     * Corresponds to the URL parameter "post_form_submit".
+     */
+    private static final Parameter<Boolean> POST_FORM_SUBMIT = new Parameter<>("post_form_submit",
+            false, false, null, false, false, 5, DEFAULT_FORMAT, Boolean.class);
+    
     /**
      * A {@code Parameter<Boolean>} defining whether to display the {@code RequestParameters} 
      * corresponding to a request as part of its response.
@@ -507,8 +516,9 @@ public class URLParameters {
             //webservice parameter
             API_KEY, 
             DISPLAY_REQUEST_PARAMS, 
-            AJAX
-            );
+            AJAX,
+            POST_FORM_SUBMIT
+    );
 
     /**
      * Default constructor
@@ -645,7 +655,13 @@ public class URLParameters {
     public Parameter<Boolean> getParamAjax(){
         return AJAX;
     }
-    
+    /**
+     * @return  A {@code Parameter<Boolean>} appended to all submitted forms in POST to detect them.
+     *          Corresponds to the URL parameter "post_form_submit".
+     */
+    public Parameter<Boolean> getParamPostFormSubmit(){
+        return POST_FORM_SUBMIT;
+    }
     /**
      * @return  A {@code Parameter<Integer>} defining a species ID list.
      *          Corresponds to the URL parameter "species_list".

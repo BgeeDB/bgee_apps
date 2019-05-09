@@ -39,7 +39,7 @@ function autocompleteTermSelected(event, ui) {
 function autocompleteTermSource(request, responseCallback) {
 
 	 var autocompleteTermRequestParameters = "?page=search&action=auto_complete_gene_search&" +
-	 		"display_type=xml&search=" + encodeURIComponent(request.term);
+	 		"display_type=xml&ajax=1&search=" + encodeURIComponent(request.term);
 
 	$.ajax({
 		type: "GET",

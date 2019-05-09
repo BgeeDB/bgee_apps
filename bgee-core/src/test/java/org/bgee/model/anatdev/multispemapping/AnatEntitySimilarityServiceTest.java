@@ -60,11 +60,28 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
         when(this.anatEntityService.loadAnatEntities(
                 new HashSet<>(Arrays.asList(anatEntityWithNoSimilarityId, nonExistingAnatEntityId)), false))
         .thenReturn(Arrays.asList(new AnatEntity(anatEntityWithNoSimilarityId)).stream());
+        when(this.anatEntityService.loadAnatEntities(
+                new HashSet<>(), false))
+        .thenReturn(Arrays.asList(new AnatEntity(anatEntityWithNoSimilarityId),
+                new AnatEntity("lung"), new AnatEntity("swimbladder"), new AnatEntity("whatever"),
+                new AnatEntity("whatever_precursor")).stream());
+
         Map<Integer, Species> speciesMap = new HashMap<>();
         speciesMap.put(1, new Species(1));
         speciesMap.put(2, new Species(2));
         when(this.speciesService.loadSpeciesMap(null, false))
         .thenReturn(speciesMap);
+
+        when(this.taxonConstraintService.loadAnatEntityTaxonConstraintBySpeciesIds(null))
+        .thenReturn(Arrays.asList(
+                new TaxonConstraint<>("lung", 1),
+                new TaxonConstraint<>("lung", 2),
+                new TaxonConstraint<>("swimbladder", null),
+                new TaxonConstraint<>("whatever", 1),
+                new TaxonConstraint<>("whatever", 2),
+                new TaxonConstraint<>("whatever_precursor", 1),
+                new TaxonConstraint<>("whatever_precursor", 2),
+                new TaxonConstraint<>(anatEntityWithNoSimilarityId, 1)).stream());
 
         taxa = Arrays.asList(
                 new Taxon(131567, "cellular organisms", null, "cellular organisms", 1, false),
@@ -625,21 +642,24 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
                 .collect(Collectors.toMap(ae -> ae, ae -> Arrays.asList(new Species(1), new Species(2))));
         anatEntitiesExistInSpecies.put(new AnatEntity(anatEntityWithNoSimilarityId), Arrays.asList(new Species(1)));
 
-        when(this.taxonConstraintService.loadAnatEntityTaxonConstraintBySpeciesIds(null))
-        .thenReturn(Arrays.asList(
-                new TaxonConstraint<>("lung", 1),
-                new TaxonConstraint<>("lung", 2),
-                new TaxonConstraint<>("swimbladder", null),
-                new TaxonConstraint<>("whatever", 1),
-                new TaxonConstraint<>("whatever", 2),
-                new TaxonConstraint<>("whatever_precursor", 1),
-                new TaxonConstraint<>("whatever_precursor", 2),
-                new TaxonConstraint<>(anatEntityWithNoSimilarityId, 1)).stream());
-
         AnatEntitySimilarityAnalysis expectedResults = new AnatEntitySimilarityAnalysis(requestedAnatEntityIds,
                 requestedAnatEntityIdsNotFound, requestedSpeciesIds, requestedSpeciesIdsNotFound, requestedSpecies,
                 leastCommonAncestor, anatEntitySimilarities, anatEntitiesWithNoSimilarities, anatEntitiesExistInSpecies);
         assertEquals(expectedResults, service.loadPositiveAnatEntitySimilarityAnalysis(requestedSpeciesIds,
                 requestedAnatEntityIds, false));
+    }
+    /**
+     * Regression test of a key collision when using {@code Collectors.toMap} in method
+     * {@code loadPositiveAnatEntitySimilarityAnalysis}, because method {@code loadAnatEntities}
+     * could be called with an empty {@code Collection}, leading to retrieve all anat. entities in Bgee,
+     * rather than retrieving only requested anat. entity with no similarity annotations (happened if
+     * all requested anat. entities had a similarity annotation).
+     */
+    @Test
+    public void shouldLoadPositiveAnatEntitySimilarityAnalysisRegressionTest() {
+        AnatEntitySimilarityService service = new AnatEntitySimilarityService(this.serviceFactory);
+        Set<Integer> requestedSpeciesIds = new HashSet<>(speciesIdsGnathostomataLCA);
+        service.loadPositiveAnatEntitySimilarityAnalysis(requestedSpeciesIds,
+                Arrays.asList("lung"), false);
     }
 }

@@ -131,8 +131,8 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
         // Mock the load of species
         when(speciesService.loadSpeciesByIds(speciesIds, false)).thenReturn(
                 new HashSet<>(Arrays.asList(
-                        new Species(11, null, null, "Genus11", "spName1", null, null),
-                        new Species(22, null, null, "Genus22", "spName2", null, null))));
+                        new Species(11, null, null, "Genus11", "spName1", null, null, null),
+                        new Species(22, null, null, "Genus22", "spName2", null, null, null))));
         
         // Mock the load of non informative anatomical entities
         when(anatEntityService.loadNonInformativeAnatEntitiesBySpeciesIds(Collections.singleton(11)))

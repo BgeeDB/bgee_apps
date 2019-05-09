@@ -178,11 +178,13 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
         StringBuilder sb = new StringBuilder();
         sb.append("<h2>Results</h2>");
 
-        if (!result.getAnatEntitySimilarities().isEmpty()) {
+        if (result.getLeastCommonAncestor() != null) {
             sb.append("<p>Least common ancestor of provided species: ")
                     .append(htmlEntities(result.getLeastCommonAncestor().getScientificName()))
                     .append("</p>");
+        }
 
+        if (!result.getAnatEntitySimilarities().isEmpty()) {
             sb.append("<div class='table-container'>");
             sb.append("    <table class='anat-sim-result stripe compact'>");
             sb.append("        <thead>");

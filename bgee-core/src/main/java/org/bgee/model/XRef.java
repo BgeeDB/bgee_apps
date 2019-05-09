@@ -6,43 +6,24 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.source.Source;
 
 import java.util.Objects;
+import java.util.function.Function;
 
 /**
  * Class allowing to describe a cross-reference.
  *
- * @author  Valentine Rech de Laval 
- * @version Bgee 14, Apr. 2019
+ * @author  Valentine Rech de Laval
+ * @author  Frederic Bastian
+ * @version Bgee 14, May 2019
  * @since   Bgee 14, Apr. 2019
- * @param <T> The type of {@code Entity} ID to which the reference corresponds.
  */
-public class XRef<T> {
-
-    /**
-     * {@code Logger} of the class.
-     */
+public class XRef {
     private final static Logger log = LogManager.getLogger(XRef.class.getName());
-    
-    /**
-     * A {@code String} that is the cross-reference ID.
-     */
+
     private final String xRefId;
-
-    /**
-     * A {@code String} that is the cross-reference name.
-     */
     private final String xRefName;
+    private final Source source;
 
-    /**
-     * A {@code String} that is the entity to which the reference corresponds.
-     */
-    private final T entityId;
-
-    /**
-     * A {@code Source} that is the data source the cross-reference comes from.
-     */
-    public final Source source;
-
-    public XRef(String xRefId, String xRefName, Source source, T entityId) {
+    public XRef(String xRefId, String xRefName, Source source) {
         if (StringUtils.isBlank(xRefId)) {
             throw log.throwing(new IllegalArgumentException("The cross-reference ID must be provided."));
         }
@@ -52,47 +33,93 @@ public class XRef<T> {
         this.xRefId = xRefId;
         this.xRefName = xRefName;
         this.source = source;
-        this.entityId = entityId;
-    }
-
-    public String getXRefId() {
-        return xRefId;
-    }
-
-    public String getXRefName() {
-        return xRefName;
-    }
-
-    public Source getSource() {
-        return source;
-    }
-    
-    public T getEntityId() {
-        return entityId;
     }
 
     /**
-     * @return  The {@code String} that is the cross-reference URL.
+     * @return  A {@code String} that is the cross-reference ID.
      */
-    public String getXRefUrl() {
-        log.entry();
-        return log.exit(Source.buildXRefUrl(source, xRefId, entityId));
+    public String getXRefId() {
+        return xRefId;
+    }
+    /**
+     * @return  A {@code String} that is the cross-reference name.
+     */
+    public String getXRefName() {
+        return xRefName;
+    }
+    /**
+     * @return  A {@code Source} that is the data source the cross-reference links to.
+     */
+    public Source getSource() {
+        return source;
+    }
+
+    /**
+     * Returns the cross-reference URL for this {@code XRef}.
+     * <p>
+     * <strong>Important:</strong> users need to URL encode the parameter values,
+     * such as the XRef ID. Also, if the returned URL is meant to be displayed
+     * in an HTML page, {@code convertAmpersandToHTMLEntity} should be set to {@code true},
+     * in order to convert {@code &} characters in the XRef URL to the HTML entity {@code &amp;}
+     * (the conversion is performed before setting parameter values in the URL, it will not mess up
+     * the parameter values). A limitation of this method is that it only offers the possibility
+     * to convert {@code &} characters: maybe some URLs might include other characters that should be
+     * converted to HTML entities to be displayed in a HTML page (but it seems very unlikely);
+     * in that case, users should retrieve themselves the XRef URL (see {@link Source#getXRefUrl()}),
+     * convert applicable characters to HTML entities, and replace the appropriate tags
+     * with correct values (see static attributes in {@link Source} class).
+     * Again, this need seems very unlikely.
+     *
+     * @param convertAmpersandToHTMLEntity  A {@code boolean} specifying, if {@code true}, to replace
+     *                                      {@code &} characters in the URL returned by {@link #getXRefUrl()}
+     *                                      with {@code &amp;} entities.
+     * @param urlEncode                     A {@code Function} accepting a {@code String} and returning
+     *                                      the {@code String} URL encoded. Can be {@code null} if it is not
+     *                                      necessary to URL encode parameter values.
+     * @return                              The {@code String} corresponding to the cross-reference URL.
+     *                                      Can be {@code null} if no cross-reference URL exists for this XRef.
+     * @see Source
+     * @see Source#getXRefUrl()
+     * @implNote    This method does not URL encode the parameter values itself,
+     *              because URL encoding is charset dependent. This method could accept
+     *              the desired charset as argument, but it seems cleaner to simply ask the user
+     *              to provide a way to URL encode the parameter values when needed.
+     */
+    public String getXRefUrl(boolean convertAmpersandToHTMLEntity, Function<String, String> urlEncode) {
+        log.entry(convertAmpersandToHTMLEntity, urlEncode);
+        if (urlEncode == null) {
+            throw log.throwing(new IllegalArgumentException("An URL encoding method must be provided"));
+        }
+
+        String xRefUrl = this.getSource().getXRefUrl();
+        if (StringUtils.isBlank(xRefUrl)) {
+            return log.exit(null);
+        }
+
+        if (convertAmpersandToHTMLEntity) {
+            assert !Source.X_REF_TAG.contains("&");
+            //replaceAll uses regex, we want literal replacement.
+            //'replace' performs all literal replacements, the naming is just terrible.
+            xRefUrl = xRefUrl.replace("&", "&amp;");
+        }
+        if (xRefUrl.contains(Source.X_REF_TAG)) {
+            xRefUrl = xRefUrl.replace(Source.X_REF_TAG, urlEncode.apply(this.getXRefId()));
+        }
+        return log.exit(xRefUrl);
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        XRef<?> xRef = (XRef<?>) o;
+        XRef xRef = (XRef) o;
         return Objects.equals(xRefId, xRef.xRefId) &&
                 Objects.equals(xRefName, xRef.xRefName) &&
-                Objects.equals(source, xRef.source) &&
-                Objects.equals(entityId, xRef.entityId);
+                Objects.equals(source, xRef.source);
     }
-
     @Override
     public int hashCode() {
-        return Objects.hash(xRefId, xRefName, source, entityId);
+        return Objects.hash(xRefId, xRefName, source);
     }
 
     @Override
@@ -100,7 +127,7 @@ public class XRef<T> {
         final StringBuilder sb = new StringBuilder("XRef [xRefId=").append(xRefId)
                 .append(", xRefName=").append(xRefName)
                 .append(", source=").append(source)
-                .append(", entityId=").append(entityId).append("]");
+                .append("]");
         return sb.toString();
     }
 }

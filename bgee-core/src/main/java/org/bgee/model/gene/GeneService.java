@@ -5,7 +5,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.CommonService;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.XRef;
 import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneNameSynonymDAO.GeneNameSynonymTO;
@@ -95,7 +94,7 @@ public class GeneService extends CommonService {
 
         return log.exit(mapGeneTOStreamToGeneStream(
                 getDaoManager().getGeneDAO().getGenesBySpeciesAndGeneIds(filtersToMap).stream(),
-                speciesMap, null, null));
+                speciesMap, null, null, null));
     }
 
     /**
@@ -163,9 +162,12 @@ public class GeneService extends CommonService {
         // we expect very few results from a single Ensembl ID, so we preload synonyms and x-refs
         // from database
         Map<Integer, Set<String>> synonymMap = loadSynonymsByBgeeGeneIds(geneTOs);
-        Map<Integer, Set<XRef<String>>> xRefsMap = loadXrefsByBgeeGeneIds(geneTOs);
+        Map<Integer, Set<GeneXRefTO>> xRefsMap = loadXrefTOsByBgeeGeneIds(geneTOs);
+        //We load all sources, to be able to retrieve the Ensembl and Ensembl metazoa sources anyway
+        final Map<Integer, Source> sourceMap = getServiceFactory().getSourceService()
+                .loadSourcesByIds(null);
 
-        return log.exit(mapGeneTOStreamToGeneStream(geneTOs.stream(), speciesMap, synonymMap, xRefsMap)
+        return log.exit(mapGeneTOStreamToGeneStream(geneTOs.stream(), speciesMap, synonymMap, xRefsMap, sourceMap)
                 .collect(Collectors.toSet()));
     }
 
@@ -201,7 +203,7 @@ public class GeneService extends CommonService {
         
         return log.exit(mapGeneTOStreamToGeneStream(
                 getDaoManager().getGeneDAO().getGenesByIds(ensemblGeneIds).stream(),
-                speciesMap, null, null));
+                speciesMap, null, null, null));
     }
 
     /**
@@ -326,7 +328,6 @@ public class GeneService extends CommonService {
                         Collectors.mapping(GeneXRefTO::getBgeeGeneId, Collectors.toSet())));
         return log.exit(xRefIdToGeneIds);
     }
-    
 
     private Map<Integer, Species> loadSpeciesMap(Collection<GeneTO> geneTOs, boolean withSpeciesInfo) {
         log.entry(geneTOs, withSpeciesInfo);
@@ -343,7 +344,7 @@ public class GeneService extends CommonService {
                         Collectors.mapping(GeneNameSynonymTO::getGeneNameSynonym, Collectors.toSet()))));
     }
 
-    private Map<Integer, Set<XRef<String>>> loadXrefsByBgeeGeneIds(Collection<GeneTO> geneTOs) {
+    private Map<Integer, Set<GeneXRefTO>> loadXrefTOsByBgeeGeneIds(Collection<GeneTO> geneTOs) {
         log.entry(geneTOs);
 
         final Map<Integer, GeneTO> geneTOsById = geneTOs.stream()
@@ -352,30 +353,38 @@ public class GeneService extends CommonService {
         Set<GeneXRefTO> xRefTOs = this.getDaoManager().getGeneXRefDAO()
                 .getGeneXRefsByBgeeGeneIds(geneTOsById.keySet(), null).stream()
                 .collect(Collectors.toSet());
-        
-        final Map<Integer, Source> sourceMap = getServiceFactory().getSourceService()
-                .loadSourcesByIds(xRefTOs.stream()
-                        .map(GeneXRefTO::getDataSourceId)
-                        .collect(Collectors.toSet()));
 
         return log.exit(xRefTOs.stream()
                 .collect(Collectors.groupingBy(GeneXRefTO::getBgeeGeneId,
-                        Collectors.mapping(x -> mapGeneXRefTOToXRef(x, sourceMap, geneTOsById), Collectors.toSet()))));
+                        Collectors.toSet())));
     }
 
-    private static XRef<String> mapGeneXRefTOToXRef(GeneXRefTO to, Map<Integer, Source> sourceMap,
-                                                    Map<Integer, GeneTO> geneTOsById) {
-        log.entry(to, sourceMap, geneTOsById);
-        return log.exit(new XRef<>(to.getXRefId(), to.getXRefName(), sourceMap.get(to.getDataSourceId()), 
-                geneTOsById.get(to.getBgeeGeneId()).getGeneId()));
+    private static GeneXRef mapGeneXRefTOToXRef(GeneXRefTO to, Map<Integer, Source> sourceMap,
+            GeneTO geneTO, Map<Integer, Species> speciesMap) {
+        log.entry(to, sourceMap, geneTO, speciesMap);
+        return log.exit(new GeneXRef(to.getXRefId(), to.getXRefName(), sourceMap.get(to.getDataSourceId()), 
+                geneTO.getGeneId(), speciesMap.get(geneTO.getSpeciesId()).getScientificName()));
     }
-    
+
     private static Stream<Gene> mapGeneTOStreamToGeneStream(Stream<GeneTO> geneTOStream,
-            Map<Integer, Species> speciesMap, Map<Integer, Set<String>> synonyms, Map<Integer,
-            Set<XRef<String>>> xrefs) {
-        log.entry(geneTOStream, speciesMap, synonyms, xrefs);
+            Map<Integer, Species> speciesMap, Map<Integer, Set<String>> synonyms,
+            Map<Integer, Set<GeneXRefTO>> xrefTOs, Map<Integer, Source> sourceMap) {
+        log.entry(geneTOStream, speciesMap, synonyms, xrefTOs, sourceMap);
+
         return log.exit(geneTOStream.map(to -> mapGeneTOToGene(to, speciesMap.get(to.getSpeciesId()),
                 synonyms == null ? null : synonyms.get(to.getId()),
-                xrefs == null ? null : xrefs.get(to.getId()))));
+                        getGeneXRefs(to, xrefTOs, sourceMap, speciesMap))));
+    }
+    private static Set<GeneXRef> getGeneXRefs(GeneTO to, Map<Integer, Set<GeneXRefTO>> xrefTOs,
+            Map<Integer, Source> sourceMap, Map<Integer, Species> speciesMap) {
+        log.entry(to, xrefTOs, sourceMap, speciesMap);
+        Set<GeneXRef> xrefs = xrefTOs == null ? new HashSet<>() : xrefTOs.get(to.getId()).stream()
+                .map(xrefTO -> mapGeneXRefTOToXRef(xrefTO, sourceMap, to, speciesMap))
+                .collect(Collectors.toSet());
+        //We add the source genomic database to the XRef
+        Species species = speciesMap.get(to.getSpeciesId());
+        xrefs.add(new GeneXRef(to.getGeneId(), to.getName(), species.getGenomeSource(), to.getGeneId(),
+                species.getScientificName()));
+        return log.exit(xrefs);
     }
 }

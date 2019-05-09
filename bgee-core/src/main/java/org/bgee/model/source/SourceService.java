@@ -115,7 +115,7 @@ public class SourceService extends CommonService {
                     sourceToSpeciesTOs, source.getId(), InfoType.ANNOTATION);
 
             completedSources.add(new Source(source.getId(), source.getName(), source.getDescription(),
-                    source.getxRefUrl(), source.getExperimentUrl(), source.getEvidenceUrl(),
+                    source.getXRefUrl(), source.getExperimentUrl(), source.getEvidenceUrl(),
                     source.getBaseUrl(), source.getReleaseDate(), source.getReleaseVersion(),
                     source.getToDisplay(), source.getCategory(), source.getDisplayOrder(),
                     forData.isEmpty() ? null : forData, forAnnotation.isEmpty() ? null : forAnnotation));

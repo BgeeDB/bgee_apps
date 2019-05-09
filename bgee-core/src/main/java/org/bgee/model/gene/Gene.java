@@ -41,14 +41,16 @@ public class Gene {
     private final String description;
 
 	/**
-     * A {@code Set} of {@code String}s that are the synonyms of the gene.
+     * @see #getSynonyms()
      */
     private final Set<String> synonyms;
 
     /**
-     * A {@code Set} of {@code Xref}s that are the synonyms of the gene.
+     * @see #getXRefs()
      */
-    private final Set<XRef<String>> xRefs;
+    //What we have are GeneXRefs, but the difference only matters for internal code,
+    //for now we don't need to expose the difference to users.
+    private final Set<XRef> xRefs;
 
     /**
 	 * The {@code Species} this {@code Gene} belongs to.
@@ -87,9 +89,10 @@ public class Gene {
      * @param description                           A {@code String} representing the description
      *                                              of this gene.
      * @param synonyms                              A {@code Collection} of {@code String}s
-     *                                              that are the synonyms of the gene.                                        
-     * @param xRefs                                  A {@code Collection} of {@code XRef}s
-     *                                              that are the cross-references of the gene.                                        
+     *                                              that are the synonyms of this gene name.                                        
+     * @param xRefs                                 A {@code Collection} of {@code GeneXRef}s
+     *                                              that are the cross-references to other resources
+     *                                              for this gene.                                        
      * @param species                               A {@code Species} representing the species
      *                                              this gene belongs to.
      * @param geneMappedToSameEnsemblGeneIdCount    An {@code Integer} that is the number of genes
@@ -100,7 +103,7 @@ public class Gene {
      *                                      or {@code Species} is {@code null}.
      */
     public Gene(String ensemblGeneId, String name, String description, Collection<String> synonyms,
-                Collection<XRef<String>> xRefs, Species species, int geneMappedToSameEnsemblGeneIdCount)
+                Collection<GeneXRef> xRefs, Species species, int geneMappedToSameEnsemblGeneIdCount)
         throws IllegalArgumentException {
         if (StringUtils.isBlank(ensemblGeneId)) {
             throw log.throwing(new IllegalArgumentException("The Ensembl gene ID must be provided."));
@@ -142,15 +145,18 @@ public class Gene {
         return description;
     }
     /**
-     * @return  The {@code Set} of {@code String}s that are the synonyms of the gene.
+     * @return  An unmodifiable {@code Set} of {@code String}s that are the synonyms of this gene name.
      */
     public Set<String> getSynonyms() {
         return synonyms;
     }
     /**
-     * @return  The {@code Set} of {@code XRef}s that are the cross-references of the gene.
+     * @return  An unmodifiable {@code Set} of {@code Xref}s that are cross-references
+     *          to other resources for this gene.
      */
-    public Set<XRef<String>> getXRefs() {
+    //What we have are GeneXRefs, but the difference only matters for internal code,
+    //for now we don't need to expose the difference to users.
+    public Set<XRef> getXRefs() {
         return xRefs;
     }
     /**
@@ -217,7 +223,8 @@ public class Gene {
                .append(", synonyms=").append(synonyms)
                .append(", x-refs=").append(xRefs)
                .append(", species=").append(species)
-               .append(", geneMappedToSameEnsemblGeneIdCount=").append(geneMappedToSameEnsemblGeneIdCount).append("]");
+               .append(", geneMappedToSameEnsemblGeneIdCount=").append(geneMappedToSameEnsemblGeneIdCount)
+               .append("]");
         return builder.toString();
     }
 }

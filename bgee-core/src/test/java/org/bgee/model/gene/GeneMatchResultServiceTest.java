@@ -1,5 +1,6 @@
 package org.bgee.model.gene;
 
+import org.bgee.model.TestAncestor;
 import org.bgee.model.species.Species;
 import org.junit.Test;
 import org.sphx.api.SphinxClient;
@@ -26,7 +27,7 @@ import static org.mockito.Mockito.when;
  * @see     GeneMatchResult
  * @since   Bgee 14, Apr. 2019
  */
-public class GeneMatchResultServiceTest {
+public class GeneMatchResultServiceTest extends TestAncestor {
 
     /**
      * Test {@link GeneMatchResultService#autocomplete(String, int)}.

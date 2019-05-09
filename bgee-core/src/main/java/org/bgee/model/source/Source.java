@@ -4,36 +4,38 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.NamedEntity;
+import org.bgee.model.XRef;
 import org.bgee.model.expressiondata.baseelements.DataType;
 
 /**
  * Class allowing to describe data sources. 
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Apr. 2019
+ * @version Bgee 13, May 2019
  * @since   Bgee 13, Mar. 2016
  */
 public class Source extends NamedEntity<Integer> {
-
-    /**
-     * {@code Logger} of the class.
-     */
     private final static Logger log = LogManager.getLogger(Source.class.getName());
 
     /**
-     * The {@code String} that is the tag to be replaced by a cross-reference ID.
+     * The {@code String} that is the tag to be replaced by a cross-reference ID in URLs
+     * returned by {@link #getXRefUrl()}.
      */
-    private final static String X_REF_TAG = "[xref_id]";
-    
+    public final static String X_REF_TAG = "[xref_id]";
     /**
-     * The {@code String} that is the tag to be replaced by a gene ID.
+     * The {@code String} that is the tag to be replaced by a gene ID in URLs
+     * returned by {@link #getXRefUrl()}.
      */
-    private final static String GENE_TAG = "[gene_id]";
-    
+    public final static String GENE_TAG = "[gene_id]";
+    /**
+     * The {@code String} that is the tag to be replaced by a species scientific name
+     * in URLs returned by {@link #getXRefUrl()}.
+     */
+    public final static String SPECIES_SCIENTIFIC_NAME_TAG = "[species_ensembl_link]";
+
     /**
      * A {@code String} that is the URL for cross-references to data source.
      */
@@ -207,7 +209,15 @@ public class Source extends NamedEntity<Integer> {
         this.dataTypesBySpeciesForAnnotations = dataTypesBySpeciesForAnnotations;
     }
 
-    public String getxRefUrl() {
+    /**
+     * @return  A {@code String} that is the cross-reference URL, with places where parameter values
+     *          should be set identified with tags. For instance:
+     *          'http://metazoa.ensembl.org/[species_ensembl_link]/Gene/Summary?g=[gene_id]'.
+     * @see #X_REF_TAG
+     * @see #GENE_TAG
+     * @see #buildXRefUrl(XRef)
+     */
+    public String getXRefUrl() {
         return xRefUrl;
     }
 
@@ -249,40 +259,6 @@ public class Source extends NamedEntity<Integer> {
 
     public Map<Integer, Set<DataType>> getDataTypesBySpeciesForAnnotation() {
         return dataTypesBySpeciesForAnnotations;
-    }
-
-    /**
-     * Build the cross-reference URL.
-     * <p>
-     * According to the URL template, the builder will use the cross-reference ID or the entityId.
-     * 
-     * @param source    A {@code Source} the is the source of the cross-reference.
-     * @param xRefId    A {@code String} that is the cross-reference ID.
-     * @param entityId  A {@code T} that is the ID to which the reference corresponds.
-     * @return          The {@code String} corresponding to the cross-reference URL.
-     *                  Returns {@code null} if the cross-reference URL is null.
-     * @throws IllegalArgumentException If {@code source} or {@code xRefId} are {@code null} or blank.
-     * @throws IllegalStateException    If no tag in the cross-reference URL was found.
-     */
-    public static <T> String buildXRefUrl(Source source, String xRefId, T entityId) {
-        log.entry(source, xRefId);
-        if (source == null) {
-            throw log.throwing(new IllegalArgumentException("Source cannot be null"));
-        }
-        if (StringUtils.isBlank(xRefId)) {
-            throw log.throwing(new IllegalArgumentException("Cross-reference URL cannot be blank"));
-        }
-        if (StringUtils.isBlank(source.getxRefUrl())) {
-            return log.exit(null);
-        }
-        if (source.getxRefUrl().contains(X_REF_TAG)) {
-            return log.exit(source.getxRefUrl().replace(X_REF_TAG, xRefId));
-        }
-        if (source.getxRefUrl().contains(GENE_TAG)) {
-            return log.exit(source.getxRefUrl().replace(GENE_TAG, String.valueOf(entityId)));
-        }
-        throw log.throwing(new IllegalStateException(
-                "Unrecognized tag in the cross-reference URL: " + source.getxRefUrl()));
     }
 
     @Override
@@ -369,7 +345,7 @@ public class Source extends NamedEntity<Integer> {
 
     @Override
     public String toString() {
-        return super.toString() + " - X-ref URL: " + getxRefUrl() + 
+        return super.toString() + " - X-ref URL: " + getXRefUrl() + 
                 " - Experiment URL: " + getExperimentUrl() + " - Evidence URL: " + getEvidenceUrl() + 
                 " - Base URL: " + getBaseUrl() + " - Release date: " + getReleaseDate() + 
                 " - Release version: " + getReleaseVersion() + " - To display: " + getToDisplay() + 

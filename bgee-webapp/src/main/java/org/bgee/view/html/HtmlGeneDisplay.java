@@ -58,8 +58,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
     private final static int MAX_DISPLAYED_ITEMS = 10;
 
-    private final static Comparator<XRef<String>> X_REF_COMPARATOR = Comparator
-            .<XRef<String>, Integer>comparing(x -> x.getSource().getDisplayOrder(), Comparator.nullsLast(Integer::compareTo))
+    private final static Comparator<XRef> X_REF_COMPARATOR = Comparator
+            .<XRef, Integer>comparing(x -> x.getSource().getDisplayOrder(), Comparator.nullsLast(Integer::compareTo))
             .thenComparing(x -> x.getSource().getName(), Comparator.nullsLast(String::compareTo))
             .thenComparing((XRef::getXRefId), Comparator.nullsLast(String::compareTo));
     
@@ -746,7 +746,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      * @param xRefs A {@code Set} of {@code XRef}s that are the cross-references to display
      * @return      A {@code String} containing the HTML code of the cross-references table
      */
-    private String getXRefDisplay(Set<XRef<String>> xRefs) {
+    private String getXRefDisplay(Set<XRef> xRefs) {
         log.entry(xRefs);
 
         if (xRefs == null || xRefs.size() == 0) {
@@ -754,15 +754,14 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         }
 
         LinkedHashMap<Source, List<String>> xRefsBySource = new ArrayList<>(xRefs).stream()
-                .filter(x -> StringUtils.isNotBlank(x.getXRefUrl()))
+                .filter(x -> StringUtils.isNotBlank(x.getSource().getXRefUrl()))
                 .sorted(X_REF_COMPARATOR)
                 .collect(Collectors.groupingBy(XRef::getSource,
                         LinkedHashMap::new,
-                        //FIXME: maybe the generation of XRef URL should be in the view,
-                        //for proper replacement of '&' with '&amp;' and URL encoding of parameter values
-                        Collectors.mapping(x -> "<a href='" + urlEncode(x.getXRefUrl()) + "' target='_blank'>"
-                                        + htmlEntities(x.getXRefId()) + "</a>" + htmlEntities(getFormattedXRefName(x)),
-                                Collectors.toList())));
+                        Collectors.mapping(x -> "<a href='"
+                                + x.getXRefUrl(true, s -> this.urlEncode(s)) + "' target='_blank'>"
+                                + htmlEntities(x.getXRefId()) + "</a>" + htmlEntities(getFormattedXRefName(x)),
+                            Collectors.toList())));
         StringBuilder display = new StringBuilder("<div class='info-content'>");
         display.append("<table class='info-table'>");
 
@@ -796,7 +795,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      * @param xRef  A {@code XRef} that is the cross-reference for which the name should be retrieved. 
      * @return      The {@code String} that is the cross-reference name to display.
      */
-    private static String getFormattedXRefName(XRef<String> xRef) {
+    private static String getFormattedXRefName(XRef xRef) {
         log.entry(xRef);
         String xRefName = "";
         if (StringUtils.isNotBlank(xRef.getXRefName())) {

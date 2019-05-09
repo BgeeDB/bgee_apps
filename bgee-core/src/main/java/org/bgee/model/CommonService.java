@@ -12,6 +12,7 @@ import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneXRef;
 import org.bgee.model.species.Species;
 
 import java.util.Collection;
@@ -119,7 +120,7 @@ public class CommonService extends Service {
      * @return          The mapped {@code Gene}.
      */
     protected static Gene mapGeneTOToGene(GeneTO geneTO, Species species, Collection<String> synonyms,
-                                          Collection<XRef<String>> xRefs) {
+                                          Collection<GeneXRef> xRefs) {
         log.entry(geneTO, species, synonyms, xRefs);
         if (geneTO == null) {
             return log.exit(null);

@@ -97,8 +97,9 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
         log.exit();
     }
     
-    private String getForm(Set<Species> allSpecies, List<Integer> speciesList, List<String> anatEntityList) {
-        log.entry(allSpecies, speciesList, anatEntityList);
+    private String getForm(Set<Species> allSpecies, List<Integer> userSpeciesIds,
+                           List<String> userAnatEntityIds) {
+        log.entry(allSpecies, userSpeciesIds, userAnatEntityIds);
 
         String speciesDisplay = allSpecies.stream()
                 .sorted(Comparator.comparing(Species::getPreferredDisplayOrder,
@@ -109,7 +110,7 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
                                             this.getRequestParameters().getUrlParametersInstance()
                                                 .getParamSpeciesList().getName() + "'" +
                         "                  value='" + sp.getId() + "' " +
-                                           (speciesList!= null && speciesList.contains(sp.getId())
+                                           (userSpeciesIds!= null && userSpeciesIds.contains(sp.getId())
                                                 ? "checked" : "") +
                         "           />  " + htmlEntities(sp.getScientificName()) +
                         "       </label>" +
@@ -131,7 +132,7 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
                 .getUrlParametersInstance().getParamPostFormSubmit().getName()).append("' value='1' />");
         
         // Anat. entity list
-        String aeText = anatEntityList == null? "" : htmlEntities(String.join("\n", anatEntityList));
+        String aeText = userAnatEntityIds == null? "" : htmlEntities(String.join("\n", userAnatEntityIds));
         sb.append("            <div class='form-group col-sm-5 row'>");
         sb.append("                <label for='bgee_ae_list' class='col-xs-12 group-title'>" +
                 "                       Anatomical entities</label>");
@@ -146,8 +147,15 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
         sb.append("            </div>");
 
         // Species list
-        sb.append("            <div class='form-group col-sm-7 row'>");
+        String allSpeciesCheckedTag = userSpeciesIds != null && allSpecies.stream()
+                .allMatch(s -> userSpeciesIds.contains(s.getId()))? "checked" : "";
+        sb.append("            <div id='bgee_species_list' class='form-group col-sm-7 row'>");
         sb.append("                <span class='col-xs-12 group-title'>Species to define least common ancestor</span>");
+        sb.append("                <div class='checkbox col-sm-6'>" +
+                "                      <label>" +
+                "                          <input type='checkbox' class='select-all' " +allSpeciesCheckedTag + 
+                "                               />  Select all</label>" +
+                "                  </div>");
         sb.append(                 speciesDisplay);
         sb.append("            </div>");
         

@@ -7,13 +7,25 @@
  */
 $( document ).ready( function() {
 
+    $('#bgee_species_list input.select-all').on("click",  function(){
+        if (this.checked) {
+            $('#bgee_species_list input[type=checkbox]').each(function() {
+                this.checked = true;
+            });
+        } else {
+            $('#bgee_species_list input[type=checkbox]').each(function() {
+                this.checked = false;
+            });
+        }
+    });
+    
     $('#bgee_anatsim_submit').on("click",  function(){
         var messageElmt = "#bgee_anatsim_msg";
 
         var message = '';
         
         // Check that at least 2 species are selected 
-        var checked = $("input[type=checkbox]:checked").length;
+        var checked = $("#bgee_species_list input[type=checkbox]:checked").length;
         if (checked === 0 || checked === 1) {
             message = "You must select at least two species. ";
         }

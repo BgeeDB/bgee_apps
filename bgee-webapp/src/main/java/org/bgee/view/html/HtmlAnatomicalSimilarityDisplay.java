@@ -118,10 +118,13 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
         
         StringBuilder sb = new StringBuilder();
 
+        RequestParameters action = this.getNewRequestParameters();
+        action.setPage(RequestParameters.PAGE_ANAT_SIM);
         sb.append("<div class='row'>");
         sb.append("    <div id='bgee_anat_sim' class='row well well-sm col-xs-offset-1 col-xs-10 " +
                 "                                  col-md-offset-1 col-md-10 col-lg-offset-2 col-lg-8'>");
-        sb.append("        <form id='bgee_anat_sim_form' method='post' class='form-inline'>");
+        sb.append("        <form id='bgee_anat_sim_form' method='post' class='form-inline' action='")
+                                    .append(action.getRequestURL()).append("' >");
 
         // Hidden parameter defining it's a POST form
         sb.append("            <input type='hidden' name='").append(this.getRequestParameters()

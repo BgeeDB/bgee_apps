@@ -245,7 +245,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         
         //table-container
         this.writeln("<div class='col-xs-12 col-md-10'>");
-        this.writeln("<div id='table-container'>");
+        this.writeln("<div class='table-container'>");
 
         this.writeln(getExpressionHTMLByAnat(
                 geneResponse.getCallsByAnatEntity(), 

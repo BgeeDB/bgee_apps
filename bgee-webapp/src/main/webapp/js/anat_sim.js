@@ -6,25 +6,40 @@
  * @since   Bgee 14, May 2019
  */
 $( document ).ready( function() {
-   
+
+    $('#bgee_anatsim_submit').on("click",  function(){
+        var messageElmt = "#bgee_anatsim_msg";
+
+        var message = '';
+        
+        // Check that at least 2 species are selected 
+        var checked = $("input[type=checkbox]:checked").length;
+        if (checked === 0 || checked === 1) {
+            message = "You must select at least two species. ";
+        }
+        // Check that something is written in the anat. entity textarea.
+        if ($("#bgee_ae_list").val().length === 0) {
+            message += "You must enter least one Uberon ID. ";
+        }
+        // Check if there is an error.
+        if (message!== '') {
+            $(messageElmt).empty();
+            $(messageElmt).append($("<span />").attr("class", 'errorMessage').text(message));
+            return false;
+        }
+
+        // Set loading img or text
+        $(messageElmt).text('').append($("<img />").attr("class", 'ajax_waiting')
+            .attr("src", "img/wait.gif")
+            .attr("alt", 'Loading'));
+    });
+
     $('table.anat-sim-result').DataTable({
         //enable ordering but apply no ordering during initialization
         "order": [],
         responsive: {
             details: {
-                display: $.fn.dataTable.Responsive.display.modal({
-                    header: function (row) {
-                        var data = row.data();
-                        return 'Details in ' + data[1];
-                    }
-                }),
-                renderer: function (api, rowIdx, columns) {
-                    var data =
-                        '<tr><td>' + columns[0].title + '</td><td>' + columns[0].data + '</td></tr>' +
-                        '<tr><td>' + columns[1].title + '</td><td>' + columns[1].data + '</td></tr>' +
-                        '<tr><td>' + columns[1].title + '</td><td>' + columns[2].data + '</td></tr>';
-                    return $('<table class="table"/>').append(data);
-                }
+                display: $.fn.dataTable.Responsive.display.childRowImmediate
             },
             breakpoints: [
                 //make the default datatable breakpoints to be the same as bootstrap
@@ -50,12 +65,12 @@ $( document ).ready( function() {
         columnDefs: [ // Higher responsivePriority are removed first, target define the order
             {responsivePriority: 0, targets: 0}, // Anat. entities
             {responsivePriority: 1, targets: 1}, // Taxon
-            {responsivePriority: 2, targets: 2} // Species
+            {responsivePriority: 2, targets: 2}  // Species
         ],
         columns: [ // sorting definition
-            {"orderable": true}, // Anatomical entity - null = default sorting
-            {"orderable": true}, // Anat. entity ID - null = default sorting
-            {"orderable": true} // Developmental stage(s) - ordering disabled
+            {"orderable": true}, // Anat. entities
+            {"orderable": true}, // Taxon
+            {"orderable": true}  // Species
         ]
     });
 });

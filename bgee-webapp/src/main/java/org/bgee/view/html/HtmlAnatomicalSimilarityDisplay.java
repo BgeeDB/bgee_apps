@@ -138,7 +138,7 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
         sb.append("                <textarea id='bgee_ae_list' class='form-control col-xs-12' name='")
                 .append(this.getRequestParameters().getUrlParametersInstance()
                         .getParamAnatEntityList().getName()).append("'" +
-                "                            form='bgee_anat_sim_form' required autofocus " +
+                "                            form='bgee_anat_sim_form' autofocus " +
                 "                            rows='13' cols='35' " +
                 "                            placeholder='Enter a list of Uberon IDs'>")
                                         .append(aeText)
@@ -152,8 +152,11 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
         sb.append("            </div>");
         
         // Submit
-        sb.append("            <button class='btn btn-default col-sm-2' type='submit'>Find</button>");
-        
+        sb.append("            <input id='bgee_anatsim_submit' class='col-sm-2' type='submit' value='Find'>");
+
+        // Message
+        sb.append("            <span id='bgee_anatsim_msg' class='col-sm-10'></span>");
+
         sb.append("        </form>");
         sb.append("    </div>");
         sb.append("</div>");
@@ -172,20 +175,22 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
                     .append(htmlEntities(result.getLeastCommonAncestor().getScientificName()))
                     .append("</p>");
 
-            sb.append("<table class='anat-sim-result stripe compact responsive'>");
-            sb.append("    <thead>");
-            sb.append("        <tr>");
-            sb.append("            <th>Anatomical entities</th>");
-            sb.append("            <th>Ancestral taxon</th>");
-            sb.append("            <th>Presence among selected species</th>");
-            sb.append("        </tr>");
-            sb.append("    </thead>");
-            sb.append("    <tbody>");
+            sb.append("<div class='table-container'>");
+            sb.append("    <table class='anat-sim-result stripe compact'>");
+            sb.append("        <thead>");
+            sb.append("            <tr>");
+            sb.append("                <th>Anatomical entities</th>");
+            sb.append("                <th>Ancestral taxon</th>");
+            sb.append("                <th>Presence among selected species</th>");
+            sb.append("            </tr>");
+            sb.append("        </thead>");
+            sb.append("        <tbody>");
             sb.append(result.getAnatEntitySimilarities().stream()
                     .map(sim -> getSimilarityRow(sim, result, taxonOntology))
                     .collect(Collectors.joining()));
-            sb.append("    </tbody>");
-            sb.append("</table>");
+            sb.append("        </tbody>");
+            sb.append("    </table>");
+            sb.append("</div>");
         }
 
         if (!result.getRequestedAnatEntityIdsNotFound().isEmpty()) {

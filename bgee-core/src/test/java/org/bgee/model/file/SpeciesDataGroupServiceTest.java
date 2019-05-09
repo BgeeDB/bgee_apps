@@ -7,6 +7,7 @@ import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesDataGroupTOResultSet;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesToDataGroupTOResultSet;
 import org.bgee.model.file.DownloadFile.CategoryEnum;
+import org.bgee.model.source.Source;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
 import org.junit.Assert;
@@ -46,8 +47,8 @@ public class SpeciesDataGroupServiceTest extends TestAncestor {
 
 
 		// services return values
-		Species v1 = new Species(9606, "human", null, "Homo", "sapiens", "version1", 123);
-		Species v2 = new Species(1234, "name", null, "genus", "someSpecies", "versionA", 234);
+		Species v1 = new Species(9606, "human", null, "Homo", "sapiens", "version1", new Source(1), 123);
+		Species v2 = new Species(1234, "name", null, "genus", "someSpecies", "versionA", new Source(1), 234);
 		
         Set<Species> species = new HashSet<>();
 		species.add(v1);

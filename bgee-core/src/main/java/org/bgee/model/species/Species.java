@@ -15,7 +15,7 @@ import org.bgee.model.source.Source;
  * @author  Frederic Bastian
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Jun. 2018
+ * @version Bgee 14, May 2019
  * @since   Bgee 13, Mar. 2013
  */
 public class Species extends NamedEntity<Integer> {
@@ -28,6 +28,10 @@ public class Species extends NamedEntity<Integer> {
     
     /** @see #getGenomeVersion() */
     private final String genomeVersion;
+    /**
+     * @see #getGenomeSource()
+     */
+    private final Source genomeSource;
 	
     /**@see #getDataTypesByDataSourcesForData() */
     private Map<Source, Set<DataType>> dataTypesByDataSourcesForData;
@@ -59,7 +63,7 @@ public class Species extends NamedEntity<Integer> {
      * @param description   A {@code String} description of this {@code Species}.
      */
     public Species(Integer id, String name, String description) throws IllegalArgumentException {
-        this(id, name, description, null, null, null, null);
+        this(id, name, description, null, null, null, null, null);
     }
     
     /**
@@ -77,8 +81,8 @@ public class Species extends NamedEntity<Integer> {
      * @param parentTaxonId An {@code Integer} representing the ID of the parent taxon of this species.
      */
     public Species(Integer id, String name, String description, String genus, String speciesName,
-            String genomeVersion, Integer parentTaxonId) throws IllegalArgumentException {
-        this(id, name, description, genus, speciesName, genomeVersion, parentTaxonId, null, null, null);
+            String genomeVersion, Source genomeSource, Integer parentTaxonId) throws IllegalArgumentException {
+        this(id, name, description, genus, speciesName, genomeVersion, genomeSource, parentTaxonId, null, null, null);
     }
     
     /**
@@ -98,9 +102,9 @@ public class Species extends NamedEntity<Integer> {
      *                                  in preferred display order.
      */
     public Species(Integer id, String name, String description, String genus, String speciesName,
-        String genomeVersion, Integer parentTaxonId, Integer preferredDisplayOrder)
+        String genomeVersion, Source genomeSource, Integer parentTaxonId, Integer preferredDisplayOrder)
             throws IllegalArgumentException {
-        this(id, name, description, genus, speciesName, genomeVersion, parentTaxonId,
+        this(id, name, description, genus, speciesName, genomeVersion, genomeSource, parentTaxonId,
             null, null, preferredDisplayOrder);
     }
 
@@ -126,9 +130,9 @@ public class Species extends NamedEntity<Integer> {
      *                                              to data types of annotation data of this data source.
      */
     public Species(Integer id, String name, String description, String genus, String speciesName,
-            String genomeVersion, Map<Source, Set<DataType>> dataTypesByDataSourcesForData, 
+            String genomeVersion, Source genomeSource, Map<Source, Set<DataType>> dataTypesByDataSourcesForData, 
             Map<Source, Set<DataType>> dataTypesByDataSourcesForAnnotation) throws IllegalArgumentException {
-        this(id, name, description, genus, speciesName, genomeVersion, null, 
+        this(id, name, description, genus, speciesName, genomeVersion, genomeSource, null, 
                 dataTypesByDataSourcesForData, dataTypesByDataSourcesForAnnotation, null);
     }
     /**
@@ -157,13 +161,14 @@ public class Species extends NamedEntity<Integer> {
      *                                              in preferred display order.
      */
     public Species(Integer id, String name, String description, String genus, String speciesName,
-            String genomeVersion, Integer parentTaxonId, Map<Source, Set<DataType>> dataTypesByDataSourcesForData, 
+            String genomeVersion, Source genomeSource, Integer parentTaxonId, Map<Source, Set<DataType>> dataTypesByDataSourcesForData, 
             Map<Source, Set<DataType>> dataTypesByDataSourcesForAnnotation, Integer preferredDisplayOrder)
                 throws IllegalArgumentException {
         super(id, name, description);
         this.genus = genus;
         this.speciesName = speciesName;
         this.genomeVersion = genomeVersion;
+        this.genomeSource = genomeSource;
         this.parentTaxonId = parentTaxonId;
         this.dataTypesByDataSourcesForData = dataTypesByDataSourcesForData == null ? 
                 null: Collections.unmodifiableMap(new HashMap<>(dataTypesByDataSourcesForData));
@@ -192,6 +197,12 @@ public class Species extends NamedEntity<Integer> {
      */
     public String getGenomeVersion() {
         return this.genomeVersion;
+    }
+    /**
+     * @return  The {@code Source} for the genome of this species.
+     */
+    public Source getGenomeSource() {
+        return genomeSource;
     }
     
     /**

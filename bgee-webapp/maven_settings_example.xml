@@ -38,6 +38,9 @@
       <filter.dao.jdbc.url>jdbc:log4jdbc:mysql://url:port/bgee_v${project.version}</filter.dao.jdbc.url>
       <filter.dao.jdbc.username>username</filter.dao.jdbc.username>
       <filter.dao.jdbc.password>password</filter.dao.jdbc.password>
+      <!-- Properties for running Sphinx -->
+      <filter.org.bgee.search.url>server_url</filter.org.bgee.search.url>
+      <filter.org.bgee.search.port>9312</filter.org.bgee.search.port>
       <!-- Properties for running TopAnat -->
       <filter.org.bgee.core.topAnatRWorkingDirectory>/workingDir/</filter.org.bgee.core.topAnatRWorkingDirectory>
       <filter.org.bgee.core.topAnatResultsWritingDirectory>/resultDir/</filter.org.bgee.core.topAnatResultsWritingDirectory>
@@ -70,6 +73,9 @@
       <filter.dao.jdbc.url>jdbc:mysql://127.0.0.1:3306/bgee_v${project.version}</filter.dao.jdbc.url>
       <filter.dao.jdbc.username>username</filter.dao.jdbc.username>
       <filter.dao.jdbc.password>password</filter.dao.jdbc.password>
+      <!-- Properties for running Sphinx -->
+      <filter.org.bgee.search.url>server_url</filter.org.bgee.search.url>
+      <filter.org.bgee.search.port>9312</filter.org.bgee.search.port>
       <!-- Properties for running TopAnat -->
       <filter.org.bgee.core.topAnatRWorkingDirectory>/workingDir/</filter.org.bgee.core.topAnatRWorkingDirectory>
       <filter.org.bgee.core.topAnatResultsWritingDirectory>/resultDir/</filter.org.bgee.core.topAnatResultsWritingDirectory>

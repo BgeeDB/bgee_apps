@@ -7,6 +7,10 @@ h1.gene_title img {
     border-radius: 8px;
 }
 
+#bgee_species_search_submit {
+    margin-top: 8px;
+}
+
 .gene_choice img {
     margin-top: 10px;
     margin-right: 10px;
@@ -16,15 +20,16 @@ h1.gene_title img {
     border-radius: 8px;
 }
 
-table#geneinfo {
+table.info-table {
 	margin: 1em 0;
 }
 
-table#geneinfo th {
+table.info-table th {
+    vertical-align: top;
     text-align: left;
     padding: 0 0.7em 0.5em 0;
 }
-table#geneinfo td {
+table.info-table td {
     text-align: left;
     padding: 0 0 0.5em 0;
 }
@@ -38,14 +43,18 @@ div#expr_intro {
     padding-left: 2%;
 }
 
-div#table-container {
+div.table-container {
 	margin-left: 2%;
 }
 
-div#table-container label {
-    font-weight: normal;
+p.gene-count {
+    text-align: center;
+    font-weight: bold;
 }
 
+div.table-container label {
+    font-weight: normal;
+}
 
 div.sources {
     margin-top: 2em;
@@ -94,7 +103,7 @@ div.legend table caption {
     border-style: solid;
 }
 
-#table-container table {
+.table-container table {
 	width: 100% !important;
 }
 
@@ -122,7 +131,7 @@ table.expression td {
 	vertical-align:text-top;
 }
 
-div.gene {
+div.info-content {
 	margin: 1em 2%;
 }
 
@@ -220,3 +229,12 @@ table.dataTable {
     border-top: 2px dotted #920209;
     width: 2em;
 }	
+
+span.more-content {
+    display: none;
+}
+
+span.errorMessage {
+    color: #E2011B;
+    font-weight: bold;
+}

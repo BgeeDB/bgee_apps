@@ -2,6 +2,7 @@ package org.bgee.model.source;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -18,11 +19,11 @@ import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO.InfoTy
 import org.bgee.model.expressiondata.baseelements.DataType;
 
 /**
- * A {@link Service} to obtain {@link Source} objects. Users should use the
+ * A {@link org.bgee.model.Service} to obtain {@link Source} objects. Users should use the
  * {@link ServiceFactory} to obtain {@code SourceService}s.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, July 2016
+ * @version Bgee 14, Apr. 2019
  * @since   Bgee 13, Mar. 2016
  */
 public class SourceService extends CommonService {
@@ -57,6 +58,21 @@ public class SourceService extends CommonService {
     }
     
     /**
+     * Retrieve {@code Source}s for a given set of source IDs.
+     *
+     * @param sourceIds     A {@code Collection} of {@code Integer}s that are IDs of sources 
+     *                      for which to return the {@code Source}s.
+     * @return              A {@code Map} storing the mappings from source IDs to {@code Source}s.
+     */
+    public Map<Integer, Source> loadSourcesByIds(Collection<Integer> sourceIds) {
+        log.entry(sourceIds);
+        return log.exit(this.getDaoManager().getSourceDAO()
+                .getDataSourceByIds(sourceIds, null).stream()
+                .map(SourceService::mapFromTO)
+                .collect(Collectors.toMap(Source::getId, s -> s)));
+    }
+    
+    /**
      * Retrieve {@code Source}s to be displayed.
      * 
      * @param withSpeciesInfo   A {@code boolean}s defining whether species information of 
@@ -80,8 +96,8 @@ public class SourceService extends CommonService {
     /**
      * Retrieve {@code Source}s with species information.
      * 
-     * @param   A {@code List} of {@code Source}s that are sources to be completed.
-     * @return  A {@code List} of {@code Source}s that are sources used in Bgee to be displayed.
+     * @param sources   A {@code List} of {@code Source}s that are sources to be completed.
+     * @return          A {@code List} of {@code Source}s that are sources used in Bgee to be displayed.
      */
     private List<Source> loadSpeciesInfo(List<Source> sources) {
         log.entry(sources);
@@ -99,7 +115,7 @@ public class SourceService extends CommonService {
                     sourceToSpeciesTOs, source.getId(), InfoType.ANNOTATION);
 
             completedSources.add(new Source(source.getId(), source.getName(), source.getDescription(),
-                    source.getxRefUrl(), source.getExperimentUrl(), source.getEvidenceUrl(),
+                    source.getXRefUrl(), source.getExperimentUrl(), source.getEvidenceUrl(),
                     source.getBaseUrl(), source.getReleaseDate(), source.getReleaseVersion(),
                     source.getToDisplay(), source.getCategory(), source.getDisplayOrder(),
                     forData.isEmpty() ? null : forData, forAnnotation.isEmpty() ? null : forAnnotation));
@@ -152,11 +168,11 @@ public class SourceService extends CommonService {
         return log.exit(new Source(sourceTO.getId(), sourceTO.getName(), sourceTO.getDescription(),
                 sourceTO.getXRefUrl(), sourceTO.getExperimentUrl(), sourceTO.getEvidenceUrl(),
                 sourceTO.getBaseUrl(), sourceTO.getReleaseDate(), sourceTO.getReleaseVersion(),
-                sourceTO.isToDisplay(), convertDataStateToDataQuality(sourceTO.getSourceCategory()),
+                sourceTO.isToDisplay(), convertSourceCategoryTOToSourceCategory(sourceTO.getSourceCategory()),
                 sourceTO.getDisplayOrder()));
     }
     
-    private static SourceCategory convertDataStateToDataQuality(SourceTO.SourceCategory cat) 
+    private static SourceCategory convertSourceCategoryTOToSourceCategory(SourceTO.SourceCategory cat) 
             throws IllegalStateException{
         log.entry(cat);
         switch(cat) {

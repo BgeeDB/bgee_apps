@@ -15,17 +15,17 @@ import org.apache.logging.log4j.Logger;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14 Mar. 2017
+ * @version Bgee 14, Mar. 2017
  * @since   Bgee 13, Oct. 2015
  */
 public class GeneFilter implements Predicate<Gene> {
     private final static Logger log = LogManager.getLogger(GeneFilter.class.getName());
     /**
-     * @see #getGenesIds()
+     * @see #getEnsemblGeneIds() 
      */
     private final Set<String> geneIds;
     /**
-     * @see #getSpeciesId();
+     * @see #getSpeciesId()
      */
     private final Integer speciesId;
     
@@ -35,8 +35,6 @@ public class GeneFilter implements Predicate<Gene> {
      * for another closely-related species, thus an Ensembl gene ID can correspond to several genes.
      * For instance, in Bgee the chimpanzee genome is used for analyzing bonobo data.
      * 
-     * @param geneId    An {@code String} that is the Ensembl ID of a gene that this {@code GeneFilter} 
-     *                  will specify to use.
      * @param speciesId An {@code int} that is the ID of the species to target.
      * @throws IllegalArgumentException If {@code geneId} is blank or {@code speciesId} less than 1.
      */

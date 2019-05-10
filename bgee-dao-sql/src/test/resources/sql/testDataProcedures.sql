@@ -65,6 +65,15 @@ BEGIN
                ('ID3','genN3','genDesc3',31,null,3,false),
                ('ID4','genN4','genDesc4',21,null,null,true);
         
+        INSERT INTO geneXRef (geneId,XRefId,XRefName,dataSourceId) 
+        VALUES ('ID1','A0A183','LCE6A_HUMAN', 1),
+               ('ID1','AL162596','',2),
+               ('ID1','DQ991251','',2),
+               ('ID2','A0AUZ9','KAL1L_HUMAN',1),
+               ('ID2','I6L9A8','I6L9A8_HUMAN',3),
+               ('ID2','AC007038','',2),
+               ('ID3','Bt.16194','',4);
+
         INSERT INTO geneNameSynonym (geneId,geneNameSynonym) 
         VALUES ('ID1','synonym1'),
                ('ID1','thesame1'),

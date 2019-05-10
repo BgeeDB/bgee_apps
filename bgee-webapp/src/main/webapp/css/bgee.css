@@ -523,11 +523,6 @@ img.ajax_waiting {
     min-height: 0;
 }
 
-.ui-menu .ui-state-focus {
-    margin-top: -1px;
-    margin-bottom: -1px;
-}
-
 /* Component containers
 ----------------------------------*/
 
@@ -539,32 +534,19 @@ img.ajax_waiting {
     color: #333;
 }
 
-.ui-widget-content strong {
+strong.search-match {
     color: #E2011B;
 }
 
 /* Interaction states
 ----------------------------------*/
-.ui-state-hover,
-.ui-widget-content .ui-state-hover,
-.ui-widget-header .ui-state-hover,
-.ui-widget-content .ui-state-focus,
-.ui-widget-header .ui-state-focus {
-    border-color: #E2011B;
-    border-style: solid;
-    border-width: 1px 0;
-    background-color: #D9DDE1;
-    color: #E2011B;
-}
-.ui-state-hover a,
-.ui-state-hover a:hover,
-.ui-state-hover a:link,
-.ui-state-hover a:visited,
-.ui-state-focus a,
-.ui-state-focus a:hover,
-.ui-state-focus a:link,
-.ui-state-focus a:visited {
-    color: #E2011B;
+li.ui-menu-item:hover, a.ui-state-active {
+    border-color: #E2011B !important;
+    border-style: solid !important;
+    border-width: 1px 0 !important;
+    background-color: #D9DDE1 !important;
+    color: #E2011B !important;
+    font-weight: bold !important;
 }
 
 /**** SPECIES SECTION ****/

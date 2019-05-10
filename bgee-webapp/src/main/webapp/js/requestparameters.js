@@ -286,8 +286,21 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      */
     this.ACTION_AUTO_COMPLETE_GENE_SEARCH = function() {
     	return actionAutoCompleteGeneSearch;
-    }
-
+    };
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter
+     * (see {@link #getParamAction()}) when gene page about expasy result is requested.
+     * This parameter will then be provided outside of this class through the method
+     * {@link #ACTION_EXPASY_RESULT()} (to get the behavior of a public final parameter).
+     */
+    var actionExpasyResult = 'expasy_result';
+    /**
+     * A method to obtain the value taken by the {@code action} parameter
+     * (see {@link #getParamAction()}) when gene page about expasy result is requested.
+     */
+    this.ACTION_EXPASY_RESULT = function() {
+        return actionExpasyResult;
+    };
 
     /**
      * A {@code String} that is the anchor to use in the hash part of an URL 

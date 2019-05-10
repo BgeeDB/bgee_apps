@@ -1,40 +1,43 @@
 package org.bgee.model.gene;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.CommonService;
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
-import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneNameSynonymDAO.GeneNameSynonymTO;
+import org.bgee.model.dao.api.gene.GeneXRefDAO;
+import org.bgee.model.dao.api.gene.GeneXRefDAO.GeneXRefTO;
+import org.bgee.model.source.Source;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 /**
- * A {@link Service} to obtain {@link Gene} objects. Users should use the
+ * A {@link org.bgee.model.Service} to obtain {@link Gene} objects. Users should use the
  * {@link org.bgee.model.ServiceFactory ServiceFactory} to obtain {@code GeneService}s.
  * 
  * @author  Philippe Moret
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, May 2017
+ * @version Bgee 14, Apr. 2019
  * @since   Bgee 13, Sept. 2015
  */
 public class GeneService extends CommonService {
     
     private static final Logger log = LogManager.getLogger(GeneService.class.getName());
-    
+
     private final SpeciesService speciesService;
 
     /**
@@ -49,6 +52,8 @@ public class GeneService extends CommonService {
     
     /**
      * Retrieve {@code Gene}s based on the provided {@code GeneFiter}.
+     * <p>
+     * This method won't load synonyms and cross-references in {@code Gene}s, to avoid memory problems.
      * 
      * @param filter        A {@code GeneFilter}s allowing to filter the {@code Gene}s to retrieve.
      * @return              A {@code Stream} of matching {@code Gene}s.
@@ -60,6 +65,8 @@ public class GeneService extends CommonService {
 
     /**
      * Retrieve {@code Gene}s based on the provided {@code GeneFiter}s.
+     * <p>
+     * This method won't load synonyms and cross-references in {@code Gene}s, to avoid memory problems.
      * 
      * @param filters       A {@code Collection} of {@code GeneFilter}s allowing to filter
      *                      the {@code Gene}s to retrieve.
@@ -82,9 +89,12 @@ public class GeneService extends CommonService {
                     "GeneFilters contain unrecognized species IDs: " + unrecognizedSpeciesIds));
         }
         
+        // We want to return a Stream without iterating the GeneTOs first,
+        // so we won't load synonyms
+
         return log.exit(mapGeneTOStreamToGeneStream(
                 getDaoManager().getGeneDAO().getGenesBySpeciesAndGeneIds(filtersToMap).stream(),
-                speciesMap));
+                speciesMap, null, null, null));
     }
 
     /**
@@ -93,9 +103,11 @@ public class GeneService extends CommonService {
      * in Bgee, the genome of a species can be used for another closely-related species.
      * For instance, in Bgee the chimpanzee genome is used for analyzing bonobo data.
      * For unambiguous retrieval of {@code Gene}s, see {@link #loadGenes(Collection)}.
+     * <p>
+     * This method will load synonyms and cross-references in {@code Gene}s.
      * 
-     * @param geneIds   A {@code String} that is the Ensembl ID of genes to retrieve.
-     * @return          A {@code Set} of matching {@code Gene}s.
+     * @param ensemblGeneId A {@code String} that is the Ensembl ID of genes to retrieve.
+     * @return              A {@code Set} of matching {@code Gene}s.
      */
     public Set<Gene> loadGenesByEnsemblId(String ensemblGeneId) {
         log.entry(ensemblGeneId);
@@ -108,10 +120,12 @@ public class GeneService extends CommonService {
      * in Bgee, the genome of a species can be used for another closely-related species.
      * For instance, in Bgee the chimpanzee genome is used for analyzing bonobo data.
      * For unambiguous retrieval of {@code Gene}s, see {@link #loadGenes(Collection)}.
+     * <p>
+     * This method won't load synonyms and cross-references in {@code Gene}s, to avoid memory problems.
      * 
-     * @param geneIds   A {@code Collection} of {@code String}s that are the Ensembl IDs
-     *                  of genes to retrieve.
-     * @return          A {@code Stream} of matching {@code Gene}s.
+     * @param ensemblGeneIds    A {@code Collection} of {@code String}s that are the Ensembl IDs
+     *                          of genes to retrieve.
+     * @return                  A {@code Stream} of matching {@code Gene}s.
      */
     public Stream<Gene> loadGenesByEnsemblIds(Collection<String> ensemblGeneIds) {
         log.entry(ensemblGeneIds);
@@ -124,8 +138,10 @@ public class GeneService extends CommonService {
      * in Bgee, the genome of a species can be used for another closely-related species.
      * For instance, in Bgee the chimpanzee genome is used for analyzing bonobo data.
      * For unambiguous retrieval of {@code Gene}s, see {@link #loadGenes(Collection)}.
+     * <p>
+     * This method will load synonyms and cross-references in {@code Gene}s.
      *
-     * @param geneIds           A {@code String} that is the Ensembl ID of genes to retrieve.
+     * @param ensemblGeneId     A {@code String} that is the Ensembl ID of genes to retrieve.
      * @param withSpeciesInfo   A {@code boolean}s defining whether data sources of the species
      *                          is retrieved or not.
      * @return                  A {@code Set} of matching {@code Gene}s.
@@ -141,9 +157,17 @@ public class GeneService extends CommonService {
         Set<GeneTO> geneTOs = this.getDaoManager().getGeneDAO()
                 .getGenesByIds(Collections.singleton(ensemblGeneId))
                 .stream().collect(Collectors.toSet());
-        Map<Integer, Species> speciesMap = loadSpeciesMapFromGeneTOs(geneTOs, withSpeciesInfo);
-        
-        return log.exit(mapGeneTOStreamToGeneStream(geneTOs.stream(), speciesMap)
+        Map<Integer, Species> speciesMap = loadSpeciesMap(geneTOs, withSpeciesInfo);
+
+        // we expect very few results from a single Ensembl ID, so we preload synonyms and x-refs
+        // from database
+        Map<Integer, Set<String>> synonymMap = loadSynonymsByBgeeGeneIds(geneTOs);
+        Map<Integer, Set<GeneXRefTO>> xRefsMap = loadXrefTOsByBgeeGeneIds(geneTOs);
+        //We load all sources, to be able to retrieve the Ensembl and Ensembl metazoa sources anyway
+        final Map<Integer, Source> sourceMap = getServiceFactory().getSourceService()
+                .loadSourcesByIds(null);
+
+        return log.exit(mapGeneTOStreamToGeneStream(geneTOs.stream(), speciesMap, synonymMap, xRefsMap, sourceMap)
                 .collect(Collectors.toSet()));
     }
 
@@ -153,8 +177,10 @@ public class GeneService extends CommonService {
      * in Bgee, the genome of a species can be used for another closely-related species.
      * For instance, in Bgee the chimpanzee genome is used for analyzing bonobo data.
      * For unambiguous retrieval of {@code Gene}s, see {@link #loadGenes(Collection)}.
+     * <p>
+     * This method won't load synonyms and cross-references in {@code Gene}s, to avoid memory problems.
      *
-     * @param geneIds           A {@code Collection} of {@code String}s that are the Ensembl IDs
+     * @param ensemblGeneIds    A {@code Collection} of {@code String}s that are the Ensembl IDs
      *                          of genes to retrieve.
      * @param withSpeciesInfo   A {@code boolean}s defining whether data sources of the species
      *                          is retrieved or not.
@@ -172,10 +198,12 @@ public class GeneService extends CommonService {
         //so we load all species in database
         Map<Integer, Species> speciesMap = this.speciesService.loadSpeciesMap(null, withSpeciesInfo);
 
+        // As we want to return a Stream without iterating the GeneTOs first,
+        // so we won't load synonyms
+        
         return log.exit(mapGeneTOStreamToGeneStream(
                 getDaoManager().getGeneDAO().getGenesByIds(ensemblGeneIds).stream(),
-                speciesMap));
-    	
+                speciesMap, null, null, null));
     }
 
     /**
@@ -215,81 +243,155 @@ public class GeneService extends CommonService {
 //                            .map(to -> geneMap.get(to.getBgeeGeneId())).collect(Collectors.toSet())));
 //        return log.exit(results);
     }
-
+    
     /**
-     * Search the genes by name, id and synonyms.
-     * @param term A {@code String} containing the query 
-     * @return A {@code List} of results (ordered).
+     * Retrieve {@code Gene}s for a given set of IDs (gene IDs or any cross-reference IDs).
+     * <p>
+     * This method won't load synonyms and cross-references in {@code Gene}s, to avoid memory problems.
+     * 
+     * @param mixedGeneIDs  A {@code Collection} of {@code String}s that are IDs (gene IDs or any 
+     *                      cross-reference IDs) for which to return the gene IDs.
+     * @param withSpeciesInfo   A {@code boolean}s defining whether data sources of the species
+     *                          is retrieved or not.
+     * @return              The {@code Stream} of {@code Entry}s where keys are 
+     *                      provided gene or any cross-reference IDs, the associated value being a
+     *                      {@code Set} of {@code Gene}s they correspond to. 
      */
-    public List<GeneMatch> searchByTerm(final String term) {
-        log.entry(term);
-        GeneDAO dao = getDaoManager().getGeneDAO();
-        
-        List<GeneTO> geneTOs = dao.getGeneBySearchTerm(term, null, 1, 100).stream().collect(Collectors.toList());
-        
-        // if result is empty, return an empty list
-        if (geneTOs.isEmpty()) {
-            return log.exit(new LinkedList<>());
-        }
-        
-        Map<Integer, Species> speciesMap = loadSpeciesMapFromGeneTOs(geneTOs, false);
-        Set<Integer> bgeeGeneIds = geneTOs.stream().map(GeneTO::getId).collect(Collectors.toSet());
-        
-        final Map<Integer, List<String>> synonymMap = getDaoManager().getGeneNameSynonymDAO()
-                .getGeneNameSynonyms(bgeeGeneIds).stream()
-                .collect(Collectors.groupingBy(GeneNameSynonymTO::getBgeeGeneId, 
-                        Collectors.mapping(GeneNameSynonymTO::getGeneNameSynonym, Collectors.toList())));
+    public Stream<Entry<String, Set<Gene>>> loadGenesByAnyId(Collection<String> mixedGeneIDs,
+                                                             boolean withSpeciesInfo) {
+        log.entry(mixedGeneIDs, withSpeciesInfo);
 
-        return log.exit(geneTOs.stream()
-            .map(g -> geneMatch(g, term, synonymMap.get(g.getId()), speciesMap.get(g.getSpeciesId())))
-            .collect(Collectors.toList()));
+        Set<String> clnMixedGeneIDs = mixedGeneIDs == null? new HashSet<>(): new HashSet<>(mixedGeneIDs);
+
+        //we need to get the Species genes belong to, in order to instantiate Gene objects.
+        //we don't have access to the species ID information before getting the GeneTOs,
+        //and we want to return a Stream without iterating the GeneTOs first,
+        //so we load all species in database
+        final Map<Integer, Species> speciesMap = this.speciesService.loadSpeciesMap(null, withSpeciesInfo);
+
+        // Get mapping between given IDs and Bgee gene IDs
+        final Map<String, Set<Integer>> mapMixedIdToBgeeGeneIds = 
+                this.loadMappingXRefIdToBgeeGeneIds(clnMixedGeneIDs);
+        final Set<Integer> bgeeGeneIDs = mapMixedIdToBgeeGeneIds.values().stream()
+                .flatMap(Set::stream).collect(Collectors.toSet());
+        
+        // Get Genes from Bgee gene Ids
+        final Map<Integer, Gene> geneMap = Collections.unmodifiableMap(getDaoManager().getGeneDAO()
+                .getGenesByBgeeIds(bgeeGeneIDs).stream()
+                .collect(Collectors.toMap(
+                        EntityTO::getId,
+                        gTO -> mapGeneTOToGene(gTO, speciesMap.get(gTO.getSpeciesId()), null, null)
+                )));
+
+        // Build mapping between given IDs and genes
+        Map<String, Set<Gene>> mapAnyIdToGenes = mapMixedIdToBgeeGeneIds.entrySet().stream()
+                .collect(Collectors.toMap(
+                        e -> e.getKey(),
+                        e -> e.getValue().stream().map(geneMap::get).collect(Collectors.toSet())));
+
+
+        // Retrieve Genes that were not found using cross-reference IDs (i.e. Ensembl IDs)
+        Set<String> notXRefIds = clnMixedGeneIDs.stream()
+                    .filter(id -> !mapMixedIdToBgeeGeneIds.containsKey(id))
+                    .collect(Collectors.toSet());
+        mapAnyIdToGenes.putAll(this.loadGenesByEnsemblIds(notXRefIds, withSpeciesInfo)
+                .collect(Collectors.groupingBy(Gene::getEnsemblGeneId,
+                        Collectors.mapping(x -> x, Collectors.toSet()))));
+
+        // Add provided IDs with no gene found
+        clnMixedGeneIDs.removeAll(mapAnyIdToGenes.keySet());
+        if (!clnMixedGeneIDs.isEmpty()) {
+            for (String clnMixedGeneID : clnMixedGeneIDs) {
+                mapAnyIdToGenes.put(clnMixedGeneID, new HashSet<>());
+            }
+        }
+        // Build mapping between given IDs and genes
+        return log.exit(mapAnyIdToGenes.entrySet().stream());
+    }
+    
+    /**
+     * Retrieve the mapping between a given set of cross-reference IDs. 
+     * and Bgee gene IDs of the data source.
+     * 
+     * @param ids   A {@code Collection} of {@code String}s that are cross-reference IDs
+     *              for which to return the mapping.
+     * @return      The {@code Map} where keys are {@code String}s corresponding to provided IDs,
+     *              and values are {@code Set} of {@code Integers}s that are the associated Bgee gene IDs.
+     */
+    private Map<String, Set<Integer>> loadMappingXRefIdToBgeeGeneIds(Collection<String> ids) {
+        log.entry(ids);
+        
+        Map<String, Set<Integer>> xRefIdToGeneIds = getDaoManager().getGeneXRefDAO()
+                .getGeneXRefsByXRefIds(ids, Arrays.asList(GeneXRefDAO.Attribute.BGEE_GENE_ID, 
+                        GeneXRefDAO.Attribute.XREF_ID)).stream()
+                .collect(Collectors.groupingBy(GeneXRefTO::getXRefId,
+                        Collectors.mapping(GeneXRefTO::getBgeeGeneId, Collectors.toSet())));
+        return log.exit(xRefIdToGeneIds);
     }
 
-    private GeneMatch geneMatch(final GeneTO geneTO, final String term,
-            final List<String> synonymList, final Species species) {
-        log.entry(geneTO, term, synonymList, species);
-        Gene gene = mapGeneTOToGene(geneTO, species);
-        // if the gene name or id match there is no synonym
-        //Fix issue with term search such as "upk\3a". MySQL does not consider the backslash
-        //and returns terms, that are then not matched here
-        final String termLowerCase = term.toLowerCase();
-        final String termLowerCaseEscaped = termLowerCase.replaceAll("\\\\", "");
-        final String geneIdLowerCase = geneTO.getGeneId().toLowerCase();
-        if (geneIdLowerCase.contains(termLowerCase) || geneIdLowerCase.contains(termLowerCaseEscaped)) {
-            return log.exit(new GeneMatch(gene, null, GeneMatch.MatchSource.ID));
-        }
-        final String geneNameLowerCase = geneTO.getName().toLowerCase();
-        if (geneNameLowerCase.contains(termLowerCase) || geneNameLowerCase.contains(termLowerCaseEscaped)) {
-            return log.exit(new GeneMatch(gene, null, GeneMatch.MatchSource.NAME));
-        }
-
-        // otherwise we fetch synonym and find the first match
-        List<String> synonyms = synonymList.stream().
-                filter(s -> {
-                    String synonymLowerCase = s.toLowerCase();
-                    return synonymLowerCase.contains(termLowerCase) ||
-                            //Fix issue with term search such as "upk\3a". MySQL does not consider the backslash
-                            //and returns terms, that are then not matched here
-                            synonymLowerCase.contains(termLowerCaseEscaped);
-                    })
-                .collect(Collectors.toList());
-                
-        if (synonyms.size() < 1) {
-            throw new IllegalStateException("The term should match either the gene id/name "
-                    + "or one of its synonyms. Term: " + term + " GeneTO;" + geneTO);
-        }
-        return log.exit(new GeneMatch(gene, synonyms.get(0), GeneMatch.MatchSource.SYNONYM));
-    }
-
-    private Map<Integer, Species> loadSpeciesMapFromGeneTOs(Collection<GeneTO> geneTOs, boolean withSpeciesInfo) {
+    private Map<Integer, Species> loadSpeciesMap(Collection<GeneTO> geneTOs, boolean withSpeciesInfo) {
         log.entry(geneTOs, withSpeciesInfo);
         Set<Integer> speciesIds = geneTOs.stream().map(GeneTO::getSpeciesId).collect(Collectors.toSet());
         return log.exit(this.speciesService.loadSpeciesMap(speciesIds, withSpeciesInfo));
     }
     
+    private Map<Integer, Set<String>> loadSynonymsByBgeeGeneIds(Collection<GeneTO> geneTOs) {
+        log.entry(geneTOs);
+        Set<Integer> bgeeGeneIds = geneTOs.stream().map(GeneTO::getId).collect(Collectors.toSet());
+        return log.exit(this.getDaoManager().getGeneNameSynonymDAO()
+                .getGeneNameSynonyms(bgeeGeneIds).stream()
+                .collect(Collectors.groupingBy(GeneNameSynonymTO::getBgeeGeneId,
+                        Collectors.mapping(GeneNameSynonymTO::getGeneNameSynonym, Collectors.toSet()))));
+    }
+
+    private Map<Integer, Set<GeneXRefTO>> loadXrefTOsByBgeeGeneIds(Collection<GeneTO> geneTOs) {
+        log.entry(geneTOs);
+
+        final Map<Integer, GeneTO> geneTOsById = geneTOs.stream()
+                .collect(Collectors.toMap(EntityTO::getId, t -> t));
+
+        Set<GeneXRefTO> xRefTOs = this.getDaoManager().getGeneXRefDAO()
+                .getGeneXRefsByBgeeGeneIds(geneTOsById.keySet(), null).stream()
+                .collect(Collectors.toSet());
+
+        return log.exit(xRefTOs.stream()
+                .collect(Collectors.groupingBy(GeneXRefTO::getBgeeGeneId,
+                        Collectors.toSet())));
+    }
+
+    private static GeneXRef mapGeneXRefTOToXRef(GeneXRefTO to, Map<Integer, Source> sourceMap,
+            GeneTO geneTO, Map<Integer, Species> speciesMap) {
+        log.entry(to, sourceMap, geneTO, speciesMap);
+        return log.exit(new GeneXRef(to.getXRefId(), to.getXRefName(), sourceMap.get(to.getDataSourceId()), 
+                geneTO.getGeneId(), speciesMap.get(geneTO.getSpeciesId()).getScientificName()));
+    }
+
     private static Stream<Gene> mapGeneTOStreamToGeneStream(Stream<GeneTO> geneTOStream,
-            Map<Integer, Species> speciesMap) {
-        log.entry(geneTOStream, speciesMap);
-        return log.exit(geneTOStream.map(to -> mapGeneTOToGene(to, speciesMap.get(to.getSpeciesId()))));
+            Map<Integer, Species> speciesMap, Map<Integer, Set<String>> synonyms,
+            Map<Integer, Set<GeneXRefTO>> xrefTOs, Map<Integer, Source> sourceMap) {
+        log.entry(geneTOStream, speciesMap, synonyms, xrefTOs, sourceMap);
+
+        return log.exit(geneTOStream.map(to -> mapGeneTOToGene(to, speciesMap.get(to.getSpeciesId()),
+                synonyms == null ? null : synonyms.get(to.getId()),
+                        getGeneXRefs(to, xrefTOs, sourceMap, speciesMap))));
+    }
+    private static Set<GeneXRef> getGeneXRefs(GeneTO to, Map<Integer, Set<GeneXRefTO>> xrefTOs,
+            Map<Integer, Source> sourceMap, Map<Integer, Species> speciesMap) {
+        log.entry(to, xrefTOs, sourceMap, speciesMap);
+        if (sourceMap == null) {
+            return log.exit(null);
+        }
+        Set<GeneXRef> xrefs = xrefTOs == null ? new HashSet<>() : xrefTOs.get(to.getId()).stream()
+                .map(xrefTO -> mapGeneXRefTOToXRef(xrefTO, sourceMap, to, speciesMap))
+                .collect(Collectors.toSet());
+        //We add the source genomic database to the XRef
+        Species species = speciesMap.get(to.getSpeciesId());
+        //(but only if the genome used is indeed the genome of the species considered,
+        //and not the genome of a closely related species)
+        if (species.getId().equals(species.getGenomeSpeciesId())) {
+            xrefs.add(new GeneXRef(to.getGeneId(), to.getName(), species.getGenomeSource(), to.getGeneId(),
+                species.getScientificName()));
+        }
+        return log.exit(xrefs);
     }
 }

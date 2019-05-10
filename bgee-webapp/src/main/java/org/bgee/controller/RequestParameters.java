@@ -85,7 +85,7 @@ import org.bgee.model.expressiondata.baseelements.SummaryQuality;
  * @author  Mathieu Seppey
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Aug. 2018
+ * @version Bgee 14, Mar. 2019
  * @since   Bgee 1
  */
 public class RequestParameters {
@@ -183,6 +183,11 @@ public class RequestParameters {
      * (see {@link URLParameters#getParamPage()}) when a page related to sources is requested.
      */
     public static final String PAGE_SOURCE = "source";
+    /**
+     * A {@code String} that is the value taken by the {@code page} parameter 
+     * (see {@link URLParameters#getParamPage()}) when a page related to search is requested.
+     */
+    public static final String PAGE_SEARCH = "search";
     /**
      * A {@code String} that is the value taken by the {@code page} parameter 
      * (see {@link URLParameters#getParamPage()}) when a page related to privacy policy is requested.
@@ -290,7 +295,12 @@ public class RequestParameters {
      * Value of the parameter page should be {@link #PAGE_GENE}.
      */
     public static final String ACTION_AUTO_COMPLETE_GENE_SEARCH = "auto_complete_gene_search";
-
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when expasy result is requested.
+     * Value of the parameter page should be {@link #PAGE_GENE}.
+     */
+    public static final String ACTION_EXPASY_RESULT = "expasy_result";
     /**
      * A {@code String} that is the anchor to use in the hash part of an URL 
      * to link to the single-species part, in the documentation about gene expression calls.
@@ -2042,6 +2052,18 @@ public class RequestParameters {
     public String getSearch() {
     	return this.getFirstValue(this.getUrlParametersInstance().getParamSearch());
     }
+    /**
+     * Convenient method to set value of the parameter returned by 
+     * {@link URLParameters#getParamSpeciesId()}. Equivalent to calling 
+     * {@link #addValue(URLParameters.Parameter, Object)} for this parameter.
+     *
+     * @param searchTerm    A {@code String} that is the value of the {@code search}
+     *                      URL parameter to set.
+     */
+    public void setSearch(String searchTerm) {
+        this.resetValues(this.getUrlParametersInstance().getParamSearch());
+        this.addValue(this.getUrlParametersInstance().getParamSearch(), searchTerm);
+    }
 
     /**
      * @return A {@code String} that will be used as the hash part of URLs returned by 
@@ -2664,6 +2686,20 @@ public class RequestParameters {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
                 this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_SOURCE)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
+     *
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     * category "search"
+     */
+    public boolean isASearchPageCategory() {
+        log.entry();
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
+                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_SEARCH)) {
             return log.exit(true);
         }
         return log.exit(false);

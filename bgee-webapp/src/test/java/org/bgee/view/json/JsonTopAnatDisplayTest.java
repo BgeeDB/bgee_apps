@@ -22,6 +22,7 @@ import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.CommandTopAnat.GeneListResponse;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.anatdev.DevStage;
+import org.bgee.model.source.Source;
 import org.bgee.model.species.Species;
 import org.bgee.view.JsonHelper;
 import org.junit.Test;
@@ -56,8 +57,10 @@ public class JsonTopAnatDisplayTest extends TestAncestor {
         speciesToGeneCount.put(10090, 1L);
         
         TreeMap<Integer, Species> detectedSpecies = new TreeMap<>();
-        detectedSpecies.put(9606, new Species(9606, "human", "", "Homo", "sapiens", "genome9606", null));
-        detectedSpecies.put(10090, new Species(10090, "mouse", "", "Mus", "musculus", "genome10090", null));
+        detectedSpecies.put(9606, new Species(9606, "human", "", "Homo", "sapiens", "genome9606", new Source(1),
+                null, null, null, null, null));
+        detectedSpecies.put(10090, new Species(10090, "mouse", "", "Mus", "musculus", "genome10090", new Source(1),
+                null, null, null, null, null));
 
         Integer selectedSpeciesId = 9606;
         

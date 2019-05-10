@@ -58,11 +58,14 @@ public class SpeciesService extends CommonService {
     public Set<Species> loadSpeciesInDataGroups(boolean withSpeciesInfo)
             throws DAOException, QueryInterruptedException {
         log.entry(withSpeciesInfo);
+        //TODO: refactor
+        Map<Integer, Source> sourceMap = getServiceFactory().getSourceService()
+                .loadSourcesByIds(null);
         Set<Species> species = this.getDaoManager().getSpeciesDAO().getSpeciesFromDataGroups().stream()
-                .map(SpeciesService::mapFromTO)
+                .map(to -> mapFromTO(to, sourceMap.get(to.getDataSourceId())))
                 .collect(Collectors.toSet());
         if (withSpeciesInfo) {
-            species = this.loadDataSourceInfo(species);
+            species = this.loadDataSourceInfo(species, sourceMap);
         }
         return log.exit(species);
     }
@@ -83,11 +86,14 @@ public class SpeciesService extends CommonService {
             throws DAOException, QueryInterruptedException {
         log.entry(speciesIds, withSpeciesInfo);
         Set<Integer> filteredSpecieIds = speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds);
+        //TODO: refactor
+        Map<Integer, Source> sourceMap = getServiceFactory().getSourceService()
+                .loadSourcesByIds(null);
         Set<Species> species = this.getDaoManager().getSpeciesDAO().getSpeciesByIds(filteredSpecieIds).stream()
-                .map(SpeciesService::mapFromTO)
+                .map(to -> mapFromTO(to, sourceMap.get(to.getDataSourceId())))
                 .collect(Collectors.toSet());
         if (withSpeciesInfo) {
-            species = this.loadDataSourceInfo(species);
+            species = this.loadDataSourceInfo(species, sourceMap);
         }
         return log.exit(species);
     }
@@ -104,7 +110,7 @@ public class SpeciesService extends CommonService {
      * @param   A {@code Set} of {@code Species} that are species to be completed.
      * @return  A {@code Set} of {@code Species} that are the species with data source information.
      */
-    private Set<Species> loadDataSourceInfo(Set<Species> allSpecies) {
+    private Set<Species> loadDataSourceInfo(Set<Species> allSpecies, Map<Integer, Source> sourceMap) {
         log.entry(allSpecies);
         
         final List<SourceToSpeciesTO> sourceToSpeciesTOs = getDaoManager().getSourceToSpeciesDAO()
@@ -113,17 +119,16 @@ public class SpeciesService extends CommonService {
                         null, null, null).stream()
                 .collect(Collectors.toList());
         
-        List<Source> sources = this.getServiceFactory().getSourceService().loadAllSources(false);
-        
         Set<Species> completedSpecies = new HashSet<>();
         for (Species species : allSpecies) {
             Map<Source, Set<DataType>> forData = getDataTypesByDataSource(
-                    sourceToSpeciesTOs, sources, species.getId(), InfoType.DATA);
+                    sourceToSpeciesTOs, sourceMap, species.getId(), InfoType.DATA);
             Map<Source, Set<DataType>> forAnnotation = getDataTypesByDataSource(
-                    sourceToSpeciesTOs, sources, species.getId(), InfoType.ANNOTATION);
+                    sourceToSpeciesTOs, sourceMap, species.getId(), InfoType.ANNOTATION);
             completedSpecies.add(new Species(species.getId(), species.getName(), species.getDescription(),
                     species.getGenus(), species.getSpeciesName(), species.getGenomeVersion(),
-                    forData, forAnnotation));
+                    species.getGenomeSource(), species.getGenomeSpeciesId(), species.getParentTaxonId(),
+                    forData, forAnnotation, species.getPreferredDisplayOrder()));
         }
 
         return log.exit(completedSpecies);
@@ -143,22 +148,14 @@ public class SpeciesService extends CommonService {
      *                              data of the provided {@code sourceId}.
      */
     private Map<Source, Set<DataType>> getDataTypesByDataSource(
-            final List<SourceToSpeciesTO> sourceToSpeciesTOs, List<Source> sources, 
+            final List<SourceToSpeciesTO> sourceToSpeciesTOs, Map<Integer, Source> sourceMap, 
             Integer speciesId, InfoType infoType) {
-        log.entry(sourceToSpeciesTOs, sources, speciesId, infoType);
-        
-        final Map<Integer, Source> sourcesByIds = sources.stream()
-                .collect(Collectors.toMap(
-                        s -> s.getId(),
-                        s -> s, 
-                        (v1, v2) -> {
-                            throw log.throwing(new IllegalStateException("Two sources with the same ID"));
-                        })); 
+        log.entry(sourceToSpeciesTOs, sourceMap, speciesId, infoType);
 
         Map<Source, Set<DataType>> map = sourceToSpeciesTOs.stream()
                 .filter(to -> to.getInfoType().equals(infoType))
                 .filter(to -> to.getSpeciesId().equals(speciesId))
-                .collect(Collectors.toMap(to -> sourcesByIds.get(to.getDataSourceId()), 
+                .collect(Collectors.toMap(to -> sourceMap.get(to.getDataSourceId()), 
                         to -> new HashSet<DataType>(Arrays.asList(convertDaoDataTypeToDataType(to.getDataType()))), 
                         (v1, v2) -> {
                             Set<DataType> newSet = new HashSet<>(v1);
@@ -174,10 +171,11 @@ public class SpeciesService extends CommonService {
      * @param speciesTO The {@code SpeciesTO} to be mapped
      * @return the mapped {@code Species}
      */
-    private static Species mapFromTO(SpeciesDAO.SpeciesTO speciesTO) {
-        log.entry(speciesTO);
+    private static Species mapFromTO(SpeciesDAO.SpeciesTO speciesTO, Source genomeSource) {
+        log.entry(speciesTO, genomeSource);
         return log.exit(new Species(Integer.valueOf(speciesTO.getId()), speciesTO.getName(), 
                 speciesTO.getDescription(), speciesTO.getGenus(), speciesTO.getSpeciesName(), 
-                speciesTO.getGenomeVersion(), speciesTO.getParentTaxonId(), speciesTO.getDisplayOrder()));
+                speciesTO.getGenomeVersion(), genomeSource, speciesTO.getGenomeSpeciesId(),
+                speciesTO.getParentTaxonId(), null, null, speciesTO.getDisplayOrder()));
     }
 }

@@ -40,6 +40,7 @@ import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneNameSynonymDAO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO;
+import org.bgee.model.dao.api.gene.GeneXRefDAO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
 import org.bgee.model.dao.api.keyword.KeywordDAO;
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO;
@@ -106,7 +107,7 @@ import org.bgee.model.dao.api.species.TaxonDAO;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Feb. 2017
+ * @version Bgee 14, Apr. 2019
  * @since   Bgee 13, July 2013
  */
 public abstract class DAOManager implements AutoCloseable
@@ -950,6 +951,19 @@ public abstract class DAOManager implements AutoCloseable
         return log.exit(this.getNewGeneDAO());
     }
     /**
+     * Get a new {@link org.bgee.model.dao.api.gene.GeneXRefDAO GeneXRefDAO}, 
+     * unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  a new {@code GeneXRefDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.gene.GeneXRefDAO GeneXRefDAO
+     */
+    public GeneXRefDAO getGeneXRefDAO() {
+        log.entry();
+        this.checkClosed();
+        return log.exit(this.getNewGeneXRefDAO());
+    }
+    /**
      * Get a new {@link org.bgee.model.dao.api.gene.HierarchicalGroupDAO 
      * HierarchicalGroupDAO}, unless this {@code DAOManager} is already closed. 
      * 
@@ -1433,6 +1447,14 @@ public abstract class DAOManager implements AutoCloseable
      * @return  A new {@code GeneDAO}
      */
     protected abstract GeneDAO getNewGeneDAO();
+    /**
+     * Service provider must return a new 
+     * {@link org.bgee.model.dao.api.gene.GeneXRefDAO GeneXRefDAO} instance 
+     * when this method is called. 
+     * 
+     * @return  A new {@code GeneXRefDAO}
+     */
+    protected abstract GeneXRefDAO getNewGeneXRefDAO();
     /**
      * Service provider must return a new 
      * {@link org.bgee.model.dao.api.gene.HierarchicalGroupDAO 

@@ -9,12 +9,12 @@ import org.junit.Test;
  * It checks that the properties are loaded from the correct source
  * These tests are split in several test classes to avoid conflicts between tests due to
  * the per-thread singleton behavior.
- * 
- * @author Mathieu Seppey
- * @author Valentine Rech de Laval
- * @author Frederic Bastian
- * @version Bgee 13, Oct 2016
- * @since Bgee 13
+ *
+ * @author  Mathieu Seppey
+ * @author  Valentine Rech de Laval
+ * @author  Frederic Bastian
+ * @version Bgee 14, Mar. 2019
+ * @since   Bgee 13
  * @see BgeePropertiesParentTest
  * @see BgeePropertiesFirstTest
  * @see BgeePropertiesSecondTest
@@ -34,6 +34,9 @@ public class BgeePropertiesThirdTest extends BgeePropertiesParentTest {
         System.setProperty(BgeeProperties.MAJOR_VERSION_KEY, "100");
         System.setProperty(BgeeProperties.MINOR_VERSION_KEY, "20");
 
+        System.setProperty(BgeeProperties.BGEE_SEARCH_SERVER_URL_KEY, "search_url");
+        System.setProperty(BgeeProperties.BGEE_SEARCH_SERVER_PORT_KEY, "search_port");
+        
         //BGEE_ROOT_DIRECTORY_KEY is not set in System properties, it should be retrieve 
         //from the file. 
         //System.setProperty(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY, "/system");
@@ -52,6 +55,10 @@ public class BgeePropertiesThirdTest extends BgeePropertiesParentTest {
                 bgeeProp.getMajorVersion());
         assertEquals("Wrong property value retrieved","20",
                 bgeeProp.getMinorVersion());
+        assertEquals("Wrong property value retrieved", "search_url",
+                bgeeProp.getSearchServerURL());
+        assertEquals("Wrong property value retrieved", "search_port",
+                bgeeProp.getSearchServerPort());
         assertEquals("Wrong property value retrieved","/sysrexec",
                 bgeeProp.getTopAnatRScriptExecutable());
         assertEquals("Wrong property value retrieved","/sysrwd",

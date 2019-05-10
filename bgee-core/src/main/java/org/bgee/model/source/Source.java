@@ -4,17 +4,37 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bgee.model.NamedEntity;
+import org.bgee.model.XRef;
 import org.bgee.model.expressiondata.baseelements.DataType;
 
 /**
  * Class allowing to describe data sources. 
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, July 2016
+ * @version Bgee 13, May 2019
  * @since   Bgee 13, Mar. 2016
  */
 public class Source extends NamedEntity<Integer> {
+    private final static Logger log = LogManager.getLogger(Source.class.getName());
+
+    /**
+     * The {@code String} that is the tag to be replaced by a cross-reference ID in URLs
+     * returned by {@link #getXRefUrl()}.
+     */
+    public final static String X_REF_TAG = "[xref_id]";
+    /**
+     * The {@code String} that is the tag to be replaced by a gene ID in URLs
+     * returned by {@link #getXRefUrl()}.
+     */
+    public final static String GENE_TAG = "[gene_id]";
+    /**
+     * The {@code String} that is the tag to be replaced by a species scientific name
+     * in URLs returned by {@link #getXRefUrl()}.
+     */
+    public final static String SPECIES_SCIENTIFIC_NAME_TAG = "[species_ensembl_link]";
 
     /**
      * A {@code String} that is the URL for cross-references to data source.
@@ -189,7 +209,15 @@ public class Source extends NamedEntity<Integer> {
         this.dataTypesBySpeciesForAnnotations = dataTypesBySpeciesForAnnotations;
     }
 
-    public String getxRefUrl() {
+    /**
+     * @return  A {@code String} that is the cross-reference URL, with places where parameter values
+     *          should be set identified with tags. For instance:
+     *          'http://metazoa.ensembl.org/[species_ensembl_link]/Gene/Summary?g=[gene_id]'.
+     * @see #X_REF_TAG
+     * @see #GENE_TAG
+     * @see #buildXRefUrl(XRef)
+     */
+    public String getXRefUrl() {
         return xRefUrl;
     }
 
@@ -317,7 +345,7 @@ public class Source extends NamedEntity<Integer> {
 
     @Override
     public String toString() {
-        return super.toString() + " - X-ref URL: " + getxRefUrl() + 
+        return super.toString() + " - X-ref URL: " + getXRefUrl() + 
                 " - Experiment URL: " + getExperimentUrl() + " - Evidence URL: " + getEvidenceUrl() + 
                 " - Base URL: " + getBaseUrl() + " - Release date: " + getReleaseDate() + 
                 " - Release version: " + getReleaseVersion() + " - To display: " + getToDisplay() + 

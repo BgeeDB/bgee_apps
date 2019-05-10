@@ -27,10 +27,10 @@ import org.junit.Test;
  * See the documentation of {@link org.bgee.model.dao.mysql.MySQLITAncestor} for 
  * important information.
  * 
- * @author Valentine Rech de Laval
- * @version Bgee 13
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, Apr. 2019
  * @see org.bgee.model.dao.api.gene.GeneDAO
- * @since Bgee 13
+ * @since   Bgee 13, May 2014
  */
 
 public class MySQLGeneDAOIT extends MySQLITAncestor {
@@ -223,39 +223,43 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
     }
     
     /**
-     * 
+     * Test the select method {@link MySQLGeneDAO#getGenesByBgeeIds(Collection)}.
      */
     @Test
-    //TODO: refine tests
-    public void shouldGetGeneBySearchTerm() throws SQLException {
-    	this.useSelectDB();
-    	
-    	  MySQLGeneDAO dao = new MySQLGeneDAO(this.getMySQLDAOManager());
-    	  
-    	  List<GeneTO> genes = dao.getGeneBySearchTerm("ID1", new HashSet<>(), 1,25).getAllTOs();
-    	  assertEquals(1, genes.size());
-    	  
-    	  //Test ordering based on speciesDisplayOrder
-    	  genes = dao.getGeneBySearchTerm("gen", new HashSet<>(), 1,25).getAllTOs();
-          List<GeneTO> expectedGenes = Arrays.asList(
-                  new GeneTO(3, "ID3", "genN3", "genDesc3", 31, 0, 3, false, 1), 
-                  new GeneTO(2, "ID2", "genN2", "genDesc2", 21, 0, 2, true, 1), 
-                  new GeneTO(4, "ID4", "genN4", "genDesc4", 21, 0, 0, true, 1), 
-                  new GeneTO(1, "ID1", "genN1", "genDesc1", 11, 12, 5, true, 1)); 
-          assertEquals("Incorrect order of genes retrieved", expectedGenes, genes);
-    	  assertEquals(4, genes.size());
-    	  
-      	  genes = dao.getGeneBySearchTerm("gleich", new HashSet<>(), 1,25).getAllTOs();
-    	  assertEquals(1, genes.size());
-    	  
-    	  MySQLGeneNameSynonymDAO dao2 = new MySQLGeneNameSynonymDAO(this.getMySQLDAOManager());
-    	  Set<Integer> geneIds = new HashSet<>();
-    	  geneIds.add(genes.get(0).getId());
-    	  assertEquals(3, dao2.getGeneNameSynonyms(geneIds).getAllTOs().size());
+    public void shouldGetGenesByBgeeIds() throws SQLException {
+
+        this.useSelectDB();
+
+        MySQLGeneDAO dao = new MySQLGeneDAO(this.getMySQLDAOManager());
+
+        // Without specified Bgee geneID
+        dao.setAttributes(Arrays.asList(GeneDAO.Attribute.ID, GeneDAO.Attribute.SPECIES_ID));
+        List<GeneTO> methGenes = dao.getGenesByBgeeIds(null).getAllTOs();
+        List<GeneTO> expectedGenes = Arrays.asList(
+                new GeneTO(1, null, null, null, 11, null, null, null, null),
+                new GeneTO(2, null, null, null, 21, null, null, null, null),
+                new GeneTO(3, null, null, null, 31, null, null, null, null),
+                new GeneTO(4, null, null, null, 21, null, null, null, null));
+        //Compare
+        assertTrue("GeneTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
+
+        // With specified Bgee gene IDs
+        dao.clearAttributes();
+        dao.setAttributes(GeneDAO.Attribute.DESCRIPTION);
+        Set<Integer> bgeeGeneIds = new HashSet<>(Arrays.asList(1, 2, 3));
+        methGenes = dao.getGenesByBgeeIds(bgeeGeneIds).getAllTOs();
+        expectedGenes = Arrays.asList(
+                new GeneTO(null, null, null, "genDesc1", null, null, null, null, null),
+                new GeneTO(null, null, null, "genDesc2", null, null, null, null, null),
+                new GeneTO(null, null, null, "genDesc4", null, null, null, null, null));
+        //Compare
+        assertTrue("GeneTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
     }
 
     /**
-     * Test the update method {@link MySQLGeneDAO#updateGenes()}.
+     * Test the update method {@link MySQLGeneDAO#updateGenes(Collection, Collection)}.
      */
     @Test
     public void shouldUpdateGenes() throws SQLException {

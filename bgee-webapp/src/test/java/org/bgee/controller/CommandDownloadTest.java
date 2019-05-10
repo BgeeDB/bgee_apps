@@ -26,6 +26,7 @@ import org.bgee.model.file.DownloadFile.CategoryEnum;
 import org.bgee.model.file.SpeciesDataGroup;
 import org.bgee.model.file.SpeciesDataGroupService;
 import org.bgee.model.keyword.KeywordService;
+import org.bgee.model.source.Source;
 import org.bgee.model.species.Species;
 import org.bgee.view.DownloadDisplay;
 import org.bgee.view.ViewFactory;
@@ -98,10 +99,10 @@ public class CommandDownloadTest extends TestAncestor {
     public static List<SpeciesDataGroup> getTestGroups() {
         log.entry();
         //Species:
-        Species spe1 = new Species(9606, "human", null, "Homo", "sapiens", "hsap1", 1234);
-        Species spe2 = new Species(10090, "mouse", null, "Mus", "musculus", "mmus1", 2322);
-        Species spe3 = new Species(7955, "zebrafish", null, "Danio", "rerio", "dre1", 2311);
-        Species spe4 = new Species(7227, "fly", null, "Drosophila", "melanogaster", "dmel1", 211);
+        Species spe1 = new Species(9606, "human", null, "Homo", "sapiens", "hsap1", new Source(1), 1234, null, null, null, null);
+        Species spe2 = new Species(10090, "mouse", null, "Mus", "musculus", "mmus1", new Source(1), 2322, null, null, null, null);
+        Species spe3 = new Species(7955, "zebrafish", null, "Danio", "rerio", "dre1", new Source(1), 2311, null, null, null, null);
+        Species spe4 = new Species(7227, "fly", null, "Drosophila", "melanogaster", "dmel1", new Source(1), 211, null, null, null, null);
         
         //make all file types available for at least one species
         Set<DownloadFile> dlFileGroup1 = new HashSet<DownloadFile>();

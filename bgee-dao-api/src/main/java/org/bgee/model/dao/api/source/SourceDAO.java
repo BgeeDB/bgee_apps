@@ -16,7 +16,7 @@ import org.bgee.model.dao.api.exception.DAOException;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, July 2016
+ * @version Bgee 14, Apr. 2019
  * @see     SourceTO
  * @since   Bgee 11
  */
@@ -79,7 +79,7 @@ public interface SourceDAO extends DAO<SourceDAO.Attribute> {
     /**
      * Retrieve a data source (e.g., ArrayExpress) by its ID, and return it as a {@code SourceTO} object.
      * 
-     * @param dataSourceIds A {@code Collection} of {@code String}s representing the IDs of 
+     * @param dataSourceIds A {@code Collection} of {@code Integer}s representing the IDs of 
      *                      the data source to retrieve.
      * @param attributes    A {@code Collection} of {@code SourceDAO.Attribute}s defining the
      *                      attributes to populate in the returned {@code SourceTO}s.
@@ -88,7 +88,7 @@ public interface SourceDAO extends DAO<SourceDAO.Attribute> {
      * @throws DAOException             If an error occurred when accessing the data source.
      * @throws IllegalStateException    If retrieved more than one source.
      */
-    public SourceTOResultSet getDataSourceByIds(Collection<String> dataSourceIds,
+    public SourceTOResultSet getDataSourceByIds(Collection<Integer> dataSourceIds,
             Collection<SourceDAO.Attribute> attributes) throws DAOException, IllegalStateException;
 
     /**

@@ -46,8 +46,8 @@ public class SpeciesDataGroupServiceTest extends TestAncestor {
 
 
 		// services return values
-		Species v1 = new Species(9606, "human", null, "Homo", "sapiens", "version1", 123);
-		Species v2 = new Species(1234, "name", null, "genus", "someSpecies", "versionA", 234);
+		Species v1 = new Species(9606);
+		Species v2 = new Species(1234);
 		
         Set<Species> species = new HashSet<>();
 		species.add(v1);

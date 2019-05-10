@@ -12,17 +12,20 @@ import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneXRef;
 import org.bgee.model.species.Species;
+
+import java.util.Collection;
 
 /**
  * Parent class of several {@code Service}s needing to access common methods. 
  * Since we do not want to expose these methods to API users, we do not build this class 
  * as an "utils" that {@code Service}s could use as a dependency, but as a parent class to inherit from.
  * 
- * @author Valentine Rech de Laval
- * @author Frederic Bastian
- * @version Bgee 14 Nov. 2017
- * @since Bgee 14 Feb. 2017
+ * @author  Valentine Rech de Laval
+ * @author  Frederic Bastian
+ * @version Bgee 14, Apr. 2019
+ * @since   Bgee 14, Feb. 2017
  *
  */
 public class CommonService extends Service {
@@ -61,13 +64,13 @@ public class CommonService extends Service {
      * 
      * @param condTO        A {@code ConditionTO} that is the condition from db
      *                      to map into {@code Condition}.
-     * @param speciesId     An {@code Integer} that is the ID of the species for which
-     *                      the {@code ConditionTO}s were retrieved. Allows to avoid requesting
-     *                      this attribute from the {@code ConditionDAO} if only one species was requested.
      * @param anatEntity    The {@code AnatEntity} corresponding to the ID returned by
      *                      {@link ConditionTO#getAnatEntityId()}.
      * @param devStage      The {@code DevStage} corresponding to the ID returned by
      *                      {@link ConditionTO#getStageId()}.
+     * @param species       A {@code Species} that is the species for which the {@code ConditionTO}s 
+     *                      were retrieved. Allows to avoid requesting this attribute 
+     *                      from the {@code ConditionDAO} if only one species was requested.
      * @return              The mapped {@code Condition}.
      */
     protected static Condition mapConditionTOToCondition(ConditionTO condTO,
@@ -112,22 +115,29 @@ public class CommonService extends Service {
      * @param geneTO    A {@code GeneTO} that is the condition from data source
      *                  to map into {@code Gene}.
      * @param species   A {@code Species} that is the species of the gene.
+     * @param synonyms  A {@code Collection} of {@code String}s that are synonyms of the gene.
+     * @param xRefs     A {@code Collection} of {@code XRef}s that are cross-references of the gene.
      * @return          The mapped {@code Gene}.
      */
-    protected static Gene mapGeneTOToGene(GeneTO geneTO, Species species) {
-        log.entry(geneTO, species);
+    protected static Gene mapGeneTOToGene(GeneTO geneTO, Species species, Collection<String> synonyms,
+                                          Collection<GeneXRef> xRefs) {
+        log.entry(geneTO, species, synonyms, xRefs);
         if (geneTO == null) {
             return log.exit(null);
         }
         if (species == null) {
             throw log.throwing(new IllegalArgumentException("A Species must be provided."));
         }
+        if (geneTO.getGeneMappedToGeneIdCount() == null) {
+            throw log.throwing(new IllegalArgumentException(
+                    "The number of genes with the same Ensembl gene ID must be provided."));
+        }
         if (geneTO.getSpeciesId() != null && !geneTO.getSpeciesId().equals(species.getId())) {
             throw log.throwing(new IllegalArgumentException(
                     "Species ID of the gene does not match provided Species."));
         }
         return log.exit(new Gene(geneTO.getGeneId(), geneTO.getName(), geneTO.getDescription(),
-                species, geneTO.getGeneMappedToGeneIdCount()));
+                synonyms, xRefs, species, geneTO.getGeneMappedToGeneIdCount()));
     }
 
     /**

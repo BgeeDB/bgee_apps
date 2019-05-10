@@ -18,11 +18,11 @@ import org.junit.Test;
  * These tests are split in several test classes to avoid conflicts between tests due to
  * the per-thread singleton behavior.
  * 
- * @author Mathieu Seppey
- * @author Valentine Rech de Laval
- * @author Frederic Bastian
- * @version Bgee 13, Oct 2016
- * @since Bgee 13
+ * @author  Mathieu Seppey
+ * @author  Valentine Rech de Laval
+ * @author  Frederic Bastian
+ * @version Bgee 14, Mar. 2019
+ * @since   Bgee 13
  * @see BgeePropertiesParentTest
  * @see BgeePropertiesFirstTest
  * @see BgeePropertiesSecondTest
@@ -40,6 +40,8 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
         Properties prop = new Properties();
         prop.put(BgeeProperties.MAJOR_VERSION_KEY, "1");
         prop.put(BgeeProperties.MINOR_VERSION_KEY, "0");
+        prop.put(BgeeProperties.BGEE_SEARCH_SERVER_URL_KEY, "/injectedsphinxurl");
+        prop.put(BgeeProperties.BGEE_SEARCH_SERVER_PORT_KEY, "/injectedsphinxport");
         prop.put(BgeeProperties.TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY, "/injectedrexec");
         prop.put(BgeeProperties.TOP_ANAT_R_WORKING_DIRECTORY_KEY, "/injectedrwd");
         prop.put(BgeeProperties.TOP_ANAT_FUNCTION_FILE_KEY, "/injectedfunctionfile");
@@ -52,6 +54,10 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
                 bgeeProp.getMajorVersion());
         assertEquals("Wrong property value retrieved","0",
                 bgeeProp.getMinorVersion());
+        assertEquals("Wrong property value retrieved","/injectedsphinxurl",
+                bgeeProp.getSearchServerURL());
+        assertEquals("Wrong property value retrieved","/injectedsphinxport",
+                bgeeProp.getSearchServerPort());
         assertEquals("Wrong property value retrieved","/injectedrexec",
                 bgeeProp.getTopAnatRScriptExecutable());
         assertEquals("Wrong property value retrieved","/injectedrwd",

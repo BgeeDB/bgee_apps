@@ -313,6 +313,10 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 		urlDatasetPage.setPage(RequestParameters.PAGE_DOCUMENTATION);
 		urlDatasetPage.setAction(RequestParameters.ACTION_DOC_DATA_SETS);
 
+		RequestParameters urlGeneSearchHbb = this.getNewRequestParameters();
+		urlGeneSearchHbb.setPage(RequestParameters.PAGE_GENE);
+		urlGeneSearchHbb.setSearch("HBB");
+
 		this.writeln("<div id='bgee_news' class='panel panel-default'>");
 	    this.writeln("<div class='panel-heading'>");
 	    this.writeln("<span class='panel-title'>News"
@@ -321,6 +325,14 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	    this.writeln("</div>"); // close panel-heading
 	    
 	    this.writeln("<div class='panel-body'>");
+
+		this.writeOneNews("2019-05-08", "Update of the <a href='" + urlGenePage.getRequestURL() +
+				"'>gene search page</a>:" +
+				"<ul>" +
+				"    <li>Addition of a gene search result page (i.e. <a href='" + urlGeneSearchHbb.getRequestURL() + 
+				"' title='Search genes with \"HBB\"'>search with \"HBB\"</a>)</li>" +
+				"    <li>Improvement of the speed of autocompletion</li>" +
+				"</ul>");
 
 		this.writeOneNews("2019-04-05",
 				  "<ul>"

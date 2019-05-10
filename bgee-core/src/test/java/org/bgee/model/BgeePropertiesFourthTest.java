@@ -10,11 +10,11 @@ import org.junit.Test;
  * These tests are split in several test classes to avoid conflicts between tests due to
  * the per-thread singleton behavior.
  * 
- * @author Mathieu Seppey
- * @author Valentine Rech de Laval
- * @author Frederic Bastian
- * @version Bgee 13, Oct 2016
- * @since Bgee 13
+ * @author  Mathieu Seppey
+ * @author  Valentine Rech de Laval
+ * @author  Frederic Bastian
+ * @version Bgee 14, Mar. 2019
+ * @since   Bgee 13
  * @see BgeePropertiesParentTest
  * @see BgeePropertiesFirstTest
  * @see BgeePropertiesSecondTest
@@ -31,6 +31,8 @@ public class BgeePropertiesFourthTest extends BgeePropertiesParentTest {
         // First clear the system properties that would be used if present.
         System.clearProperty(BgeeProperties.MAJOR_VERSION_KEY);
         System.clearProperty(BgeeProperties.MINOR_VERSION_KEY);
+        System.clearProperty(BgeeProperties.BGEE_SEARCH_SERVER_URL_KEY);
+        System.clearProperty(BgeeProperties.BGEE_SEARCH_SERVER_PORT_KEY);
         System.clearProperty(BgeeProperties.TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY);
         System.clearProperty(BgeeProperties.TOP_ANAT_R_WORKING_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.TOP_ANAT_FUNCTION_FILE_KEY);
@@ -50,6 +52,12 @@ public class BgeePropertiesFourthTest extends BgeePropertiesParentTest {
         assertEquals("Wrong property value retrieved",
                 BgeeProperties.MINOR_VERSION_DEFAULT,
                 bgeeProp.getMinorVersion());
+        assertEquals("Wrong property value retrieved",
+                BgeeProperties.BGEE_SEARCH_SERVER_URL_DEFAULT,
+                bgeeProp.getSearchServerURL());
+        assertEquals("Wrong property value retrieved",
+                BgeeProperties.BGEE_SEARCH_SERVER_PORT_DEFAULT,
+                bgeeProp.getSearchServerPort());
         assertEquals("Wrong property value retrieved",
                 BgeeProperties.TOP_ANAT_R_SCRIPT_EXECUTABLE_DEFAULT,
                 bgeeProp.getTopAnatRScriptExecutable());

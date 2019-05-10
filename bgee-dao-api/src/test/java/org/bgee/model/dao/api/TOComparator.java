@@ -33,6 +33,7 @@ import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesDataGroupTO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesToDataGroupTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO;
+import org.bgee.model.dao.api.gene.GeneXRefDAO.GeneXRefTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTO;
 import org.bgee.model.dao.api.keyword.KeywordDAO.EntityToKeywordTO;
@@ -58,7 +59,7 @@ import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, Feb. 2017
+ * @version Bgee 14, Apr. 2019
  * @since   Bgee 13, July 2014
  */
 public class TOComparator {
@@ -118,6 +119,8 @@ public class TOComparator {
             return log.exit(areTOsEqual((GOTermTO) to1, (GOTermTO) to2, compareId));
         } else if (to1 instanceof GeneTO) {
             return log.exit(areTOsEqual((GeneTO) to1, (GeneTO) to2, compareId));
+        } else if (to1 instanceof GeneXRefTO) {
+            return log.exit(areTOsEqual((GeneXRefTO) to1, (GeneXRefTO) to2));
         } else if (to1 instanceof AnatEntityTO) {
             return log.exit(areTOsEqual((AnatEntityTO) to1, (AnatEntityTO) to2, compareId));
         } else if (to1 instanceof StageTO) {
@@ -460,6 +463,29 @@ public class TOComparator {
     }
 
     /**
+     * Method to compare two {@code GeneXRefTO}s, to check for complete equality of each
+     * attribute. This is because the {@code equals} method of {@code GeneXRefTO}s is solely
+     * based on their ID, not on other attributes.
+     * <p>
+     * If {@code compareId} is {@code false}, the value returned by the method {@code getId} 
+     * will not be used for comparison.
+     * 
+     * @param xRefTO1 A {@code GeneXRefTO} to be compared to {@code geneTO2}.
+     * @param xRefTO2 A {@code GeneXRefTO} to be compared to {@code geneTO1}.
+     * @return {@code true} if {@code xRefTO1} and {@code xRefTO2} have all attributes equal.
+     */
+    private static boolean areTOsEqual(GeneXRefTO xRefTO1, GeneXRefTO xRefTO2) {
+        log.entry(xRefTO1, xRefTO2);
+        if (Objects.equals(xRefTO1.getBgeeGeneId(), xRefTO2.getBgeeGeneId()) &&
+                StringUtils.equals(xRefTO1.getXRefId(), xRefTO2.getXRefId()) &&
+                StringUtils.equals(xRefTO1.getXRefName(), xRefTO2.getXRefName()) &&
+                Objects.equals(xRefTO1.getDataSourceId(), xRefTO2.getDataSourceId())) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
      * Method to compare two {@code HierarchicalGroupTO}s, to check for complete equality of each
      * attribute. This is because the {@code equals} method of 
      * {@code HierarchicalGroupTO}s is solely based on their ID, not on other attributes.
@@ -510,7 +536,8 @@ public class TOComparator {
      * Method to safely compare two {@code BigDecimal} instances
      * @param b0 A {@code BigDecimal}
      * @param b1 A {@code BigDecimal}
-     * @return true if both BigDecimal are null, or their value are equals using {@link BigDecimal#compareTo(Object)}
+     * @return  true if both BigDecimal are null, or their value are equals 
+     *          using {@link BigDecimal#compareTo(BigDecimal)}
      */
     protected static boolean areBigDecimalEquals(BigDecimal b0, BigDecimal b1) {
         return b0 == b1 || b0 != null && b1 != null && b0.compareTo(b1) == 0;
@@ -890,8 +917,6 @@ public class TOComparator {
      * 
      * @param to1       An {@code ExperimentExpressionTO} to be compared to {@code to2}.
      * @param to2       An {@code ExperimentExpressionTO} to be compared to {@code to1}.
-     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
-     *                  used for comparisons. 
      * @return      {@code true} if {@code to1} and {@code to2} have all attributes equal.
      */
     private static boolean areTOsEqual(ExperimentExpressionTO to1, ExperimentExpressionTO to2) {
@@ -1094,8 +1119,6 @@ public class TOComparator {
      * 
      * @param to1   An {@code GroupToStageTO} to be compared to {@code to2}.
      * @param to2   An {@code GroupToStageTO} to be compared to {@code to1}.
-     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
-     *                  used for comparisons. 
      * @return      {@code true} if {@code to1} and {@code to2} have all 
      *              attributes equal.
      */

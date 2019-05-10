@@ -74,8 +74,10 @@ public class JsonParentDisplayTest extends TestAncestor {
         //build data response
         LinkedHashMap<String, Object> data = new LinkedHashMap<>();
         data.put("speciesList", Arrays.asList(
-                new Species(12, "SpeciesName", "A string description of that species"), 
-                new Species(13, "SpeciesName", "A string description of that species")));
+                new Species(12, "SpeciesName", "A string description of that species",
+                        null, null, null, null, null, null, null, null, null), 
+                new Species(13, "SpeciesName", "A string description of that species",
+                        null, null, null, null, null, null, null, null, null)));
         
         //trigger response
         display.sendResponse("My msg.", data);
@@ -154,8 +156,10 @@ public class JsonParentDisplayTest extends TestAncestor {
         //build data response
         LinkedHashMap<String, Object> data = new LinkedHashMap<>();
         data.put("speciesList", Arrays.asList(
-                new Species(12, "SpeciesName", "A string description of that species"), 
-                new Species(13, "SpeciesName", "A string description of that species")));
+                new Species(12, "SpeciesName", "A string description of that species",
+                        null, null, null, null, null, null, null, null, null), 
+                new Species(13, "SpeciesName", "A string description of that species",
+                        null, null, null, null, null, null, null, null, null)));
         
         //trigger response
         display.sendResponse(HttpServletResponse.SC_NOT_FOUND, "My msg.", data);

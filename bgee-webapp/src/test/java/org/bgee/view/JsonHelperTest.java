@@ -25,6 +25,7 @@ import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.file.DownloadFile;
 import org.bgee.model.file.SpeciesDataGroup;
 import org.bgee.model.file.DownloadFile.CategoryEnum;
+import org.bgee.model.source.Source;
 import org.bgee.model.species.Species;
 import org.bgee.model.topanat.TopAnatController;
 import org.bgee.model.topanat.TopAnatParams;
@@ -56,7 +57,8 @@ public class JsonHelperTest extends TestAncestor {
      */
     @Test
     public void testSpeciesToJson() {
-        Species species = new Species(12, "SpeciesName", "A string description of that species");
+        Species species = new Species(12, "SpeciesName", "A string description of that species",
+                null, null, null, null, null, null, null, null, null);
 
         String json = new JsonHelper().toJson(species);
         String expected = "{\n  \"name\": \"SpeciesName\",\n  " +
@@ -71,7 +73,7 @@ public class JsonHelperTest extends TestAncestor {
     @Test
     public void testSpeciesDataGroupToJson() {
         SpeciesDataGroup group = new SpeciesDataGroup(1, "single spe g1", null, 
-                Arrays.asList(new Species(9606, "human", null, "Homo", "sapiens", "hsap1", null)), 
+                Arrays.asList(new Species(9606, "human", null, "Homo", "sapiens", "hsap1", new Source(1), null, null, null, null, null)), 
                 new HashSet<>(Arrays.asList(
                         new DownloadFile("my/path/fileg1_1.tsv.zip", "fileg1_1.tsv.zip", 
                         CategoryEnum.EXPR_CALLS_SIMPLE, 5000L, 1))));
@@ -81,15 +83,13 @@ public class JsonHelperTest extends TestAncestor {
         JsonHelper helper = new JsonHelper(props, null);
         String json = helper.toJson(group);
         String expected = "{\n  \"members\": [\n    {\n      \"genus\": \"Homo\",\n      "
-                + "\"speciesName\": \"sapiens\",\n      "
-                + "\"genomeVersion\": \"hsap1\",\n      \"name\": \"human\",\n      "
-                + "\"id\": 9606\n    }\n  ],\n  \"downloadFiles\": [\n    {\n      "
+                + "\"speciesName\": \"sapiens\",\n      \"genomeVersion\": \"hsap1\",\n      "
+                + "\"genomeSource\": {\n        \"id\": 1\n      },\n      \"name\": \"human\",\n"
+                + "      \"id\": 9606\n    }\n  ],\n  \"downloadFiles\": [\n    {\n      "
                 + "\"name\": \"fileg1_1.tsv.zip\",\n      \"size\": 5000,\n      "
-                + "\"speciesDataGroupId\": 1,\n      "
-                + "\"path\": \"/myrootpath/my/path/fileg1_1.tsv.zip\",\n      "
-                + "\"category\": \"expr_simple\",\n      "
-                + "\"conditionParameters\": []\n    }\n  ],\n  \"name\": \"single spe g1\","
-                + "\n  \"id\": 1\n}";
+                + "\"speciesDataGroupId\": 1,\n      \"path\": \"/myrootpath/my/path/fileg1_1.tsv.zip\",\n"
+                + "      \"category\": \"expr_simple\",\n      \"conditionParameters\": []\n    }"
+                + "\n  ],\n  \"name\": \"single spe g1\",\n  \"id\": 1\n}";
 
         assertEquals("Incorrect JSON generated from SpeciesDataGroup", expected, json);
     }
@@ -160,8 +160,10 @@ public class JsonHelperTest extends TestAncestor {
         
         LinkedHashMap<String, Object> data = new LinkedHashMap<>();
         data.put("speciesList", Arrays.asList(
-                new Species(12, "SpeciesName", "A string description of that species"), 
-                new Species(13, "SpeciesName", "A string description of that species")));
+                new Species(12, "SpeciesName", "A string description of that species",
+                        null, null, null, null, null, null, null, null, null), 
+                new Species(13, "SpeciesName", "A string description of that species",
+                        null, null, null, null, null, null, null, null, null)));
         
         LinkedHashMap<String, Object> response = new LinkedHashMap<>();
         response.put("code", 200);

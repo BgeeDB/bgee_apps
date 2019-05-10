@@ -25,7 +25,7 @@ import org.junit.Test;
  * important information.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, July 2016
+ * @version Bgee 14, Apr. 2019
  * @since   Bgee 13, Mar. 2016
  * @see     org.bgee.model.dao.api.source.SourceDAO
  */
@@ -134,14 +134,14 @@ public class MySQLSourceDAOIT extends MySQLITAncestor {
                 .collect(Collectors.toList()); 
         assertTrue("SourceTO incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(expectedSources,
-                        dao.getDataSourceByIds(Arrays.asList("2"), null).getAllTOs()));
+                        dao.getDataSourceByIds(Arrays.asList(2), null).getAllTOs()));
 
         // Test with all attributes declared. This should return same TOs that with all attributes. 
         List<SourceDAO.Attribute> attributes = Arrays.asList(SourceDAO.Attribute.values()); 
         //Compare
         assertTrue("SourceTO incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(expectedSources, 
-                        dao.getDataSourceByIds(Arrays.asList("2"), attributes).getAllTOs()));
+                        dao.getDataSourceByIds(Arrays.asList(2), attributes).getAllTOs()));
 
         // Test single attribute
         attributes = Arrays.asList(SourceDAO.Attribute.DESCRIPTION);
@@ -149,7 +149,7 @@ public class MySQLSourceDAOIT extends MySQLITAncestor {
                 new SourceTO(null, null, "Ensembl desc", null, null, null, null, null, null, null, null, null)); 
         assertTrue("SourceTO incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(expectedSources,
-                        dao.getDataSourceByIds(Arrays.asList("3"), attributes).getAllTOs()));
+                        dao.getDataSourceByIds(Arrays.asList(3), attributes).getAllTOs()));
         
         // Test single attribute with multiple species IDs
         attributes = Arrays.asList(SourceDAO.Attribute.EXPERIMENT_URL, SourceDAO.Attribute.BASE_URL,
@@ -160,10 +160,10 @@ public class MySQLSourceDAOIT extends MySQLITAncestor {
                 new SourceTO(null, null, null, null, "", null, "http://May2012.archive.ensembl.org/", 
                         null, null, null, SourceCategory.NONE, null));
         log.debug("#1# "+expectedSources);
-        log.debug("#2# "+dao.getDataSourceByIds(Arrays.asList("1", "3"), attributes).getAllTOs());
+        log.debug("#2# "+dao.getDataSourceByIds(Arrays.asList(1, 3), attributes).getAllTOs());
         assertTrue("SourceTO incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(expectedSources,
-                        dao.getDataSourceByIds(Arrays.asList("1", "3"), attributes).getAllTOs()));
+                        dao.getDataSourceByIds(Arrays.asList(1, 3), attributes).getAllTOs()));
     }
 
     /**

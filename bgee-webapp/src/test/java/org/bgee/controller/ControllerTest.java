@@ -24,6 +24,7 @@ import org.bgee.TestAncestor;
 import org.bgee.controller.user.UserService;
 import org.bgee.controller.utils.MailSender;
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.gene.GeneMatchResultService;
 import org.bgee.model.job.JobService;
 import org.bgee.view.FakeFactoryProvider;
 import org.bgee.view.ViewFactoryProvider;
@@ -35,10 +36,11 @@ import org.junit.Test;
  * It checks that the {@code FrontController} produces a correct output on the 
  * {@code HttpServletResponse} depending on the injected dependencies.
  * 
- * @author Mathieu Seppey
- * @author Frederic Bastian
- * @version Bgee 13 Nov. 2016
- * @since Bgee 13
+ * @author  Mathieu Seppey
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, Apr. 2019
+ * @since   Bgee 13, Aug. 2014
  */
 public class ControllerTest extends TestAncestor {
     private final static Logger log = LogManager.getLogger(ControllerTest.class.getName());
@@ -90,6 +92,9 @@ public class ControllerTest extends TestAncestor {
         this.mockPrintWriter = mock(PrintWriter.class);
         Properties prop = new Properties();
         prop.put(BgeeProperties.URL_MAX_LENGTH_KEY, "9999");
+        prop.put(BgeeProperties.BGEE_SEARCH_SERVER_URL_KEY, "search_url");
+        prop.put(BgeeProperties.BGEE_SEARCH_SERVER_PORT_KEY, "9999");
+
         this.testProperties = BgeeProperties.getBgeeProperties(prop);
         this.testFactoryProvider = new FakeFactoryProvider(this.testProperties);
         
@@ -122,7 +127,8 @@ public class ControllerTest extends TestAncestor {
         final List<ServiceFactory> mockFactories = new ArrayList<ServiceFactory>();
         MailSender mailSender = mock(MailSender.class);
         FrontController front = new FrontController(this.testProperties, new TestURLParameters(), 
-                new JobService(this.testProperties), new UserService(), 
+                new JobService(this.testProperties), new UserService(),
+                new GeneMatchResultService(this.testProperties),
                 () -> {
                     ServiceFactory mockFactory = mock(ServiceFactory.class); 
                     mockFactories.add(mockFactory);

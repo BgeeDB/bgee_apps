@@ -378,6 +378,9 @@ public class GeneService extends CommonService {
     private static Set<GeneXRef> getGeneXRefs(GeneTO to, Map<Integer, Set<GeneXRefTO>> xrefTOs,
             Map<Integer, Source> sourceMap, Map<Integer, Species> speciesMap) {
         log.entry(to, xrefTOs, sourceMap, speciesMap);
+        if (sourceMap == null) {
+            return log.exit(null);
+        }
         Set<GeneXRef> xrefs = xrefTOs == null ? new HashSet<>() : xrefTOs.get(to.getId()).stream()
                 .map(xrefTO -> mapGeneXRefTOToXRef(xrefTO, sourceMap, to, speciesMap))
                 .collect(Collectors.toSet());

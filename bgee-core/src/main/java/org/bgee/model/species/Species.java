@@ -40,6 +40,8 @@ public class Species extends NamedEntity<Integer> {
     private Map<Source, Set<DataType>> dataTypesByDataSourcesForAnnotation;
 
     private final Integer parentTaxonId;
+
+    private final Integer genomeSpeciesId;
     
     /**@see #getPreferredDisplayOrder() */
     private final Integer preferredDisplayOrder;
@@ -53,7 +55,7 @@ public class Species extends NamedEntity<Integer> {
      * @throws IllegalArgumentException if {@code id} is blank.
      */
     public Species(Integer id) throws IllegalArgumentException {
-        this(id, null, null, null, null, null, null, null, null, null, null);
+        this(id, null, null, null, null, null, null, null, null, null, null, null);
     }
     /**
      * Constructor of {@code Species}.
@@ -81,7 +83,8 @@ public class Species extends NamedEntity<Integer> {
      *                                              in preferred display order.
      */
     public Species(Integer id, String name, String description, String genus, String speciesName,
-            String genomeVersion, Source genomeSource, Integer parentTaxonId, Map<Source, Set<DataType>> dataTypesByDataSourcesForData, 
+            String genomeVersion, Source genomeSource, Integer genomeSpeciesId, Integer parentTaxonId,
+            Map<Source, Set<DataType>> dataTypesByDataSourcesForData, 
             Map<Source, Set<DataType>> dataTypesByDataSourcesForAnnotation, Integer preferredDisplayOrder)
                 throws IllegalArgumentException {
         super(id, name, description);
@@ -89,6 +92,12 @@ public class Species extends NamedEntity<Integer> {
         this.speciesName = speciesName;
         this.genomeVersion = genomeVersion;
         this.genomeSource = genomeSource;
+        //In the data source, '0' means that we used the correct genome
+        if (genomeSpeciesId != null && genomeSpeciesId == 0) {
+            this.genomeSpeciesId = id;
+        } else {
+            this.genomeSpeciesId = genomeSpeciesId;
+        }
         this.parentTaxonId = parentTaxonId;
         this.dataTypesByDataSourcesForData = dataTypesByDataSourcesForData == null ? 
                 null: Collections.unmodifiableMap(new HashMap<>(dataTypesByDataSourcesForData));
@@ -123,6 +132,14 @@ public class Species extends NamedEntity<Integer> {
      */
     public Source getGenomeSource() {
         return genomeSource;
+    }
+    /**
+     * @return  The {@code Integer} that is the ID of the species of the genome used.
+     *          In Bgee, when the genome of a species is not available, we sometimes use
+     *          the genome of a closely related species.
+     */
+    public Integer getGenomeSpeciesId() {
+        return genomeSpeciesId;
     }
     
     /**
@@ -201,9 +218,11 @@ public class Species extends NamedEntity<Integer> {
         builder.append("Species [").append(super.toString()).append(", genus=").append(genus)
                 .append(", speciesName=").append(speciesName)
                 .append(", genomeVersion=").append(genomeVersion)
+                .append(", genomeSource=").append(genomeSource)
+                .append(", genomeSpeciesId=").append(genomeSpeciesId)
+                .append(", parentTaxonId=").append(parentTaxonId)
                 .append(", dataTypesByDataSourcesForData=").append(dataTypesByDataSourcesForData)
                 .append(", dataTypesByDataSourcesForAnnotation=").append(dataTypesByDataSourcesForAnnotation)
-                .append(", parentTaxonId=").append(parentTaxonId)
                 .append(", preferredDisplayOrder=").append(preferredDisplayOrder).append("]");
         return builder.toString();
     }

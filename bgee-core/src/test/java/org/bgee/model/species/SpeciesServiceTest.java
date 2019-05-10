@@ -79,8 +79,8 @@ public class SpeciesServiceTest extends TestAncestor {
 		        new HashSet<>(Arrays.asList(9606, 1234)), null, null, null)).thenReturn(sToSpRS);
 
 		Set<Species> expectedSpecies = new HashSet<>(Arrays.asList(
-		        new Species(9606, "human", null, "Homo", "sapiens", "version1", new Source(1), 4312, null, null, 1), 
-		        new Species(1234, "name", null, "genus", "someSpecies", "versionA", new Source(1), 1123, null, null, 2)));
+		        new Species(9606, "human", null, "Homo", "sapiens", "version1", new Source(1), 4312, null, null, null, 1), 
+		        new Species(1234, "name", null, "genus", "someSpecies", "versionA", new Source(1), 1123, null, null, null, 2)));
 
 		
 
@@ -97,9 +97,9 @@ public class SpeciesServiceTest extends TestAncestor {
         forAnnot1234.put(new Source(2), new HashSet<DataType>(Arrays.asList(DataType.IN_SITU)));
         expectedSpecies.clear();
         expectedSpecies.add(new Species(9606, "human", null, "Homo", "sapiens", "version1", new Source(1),
-                null, forData9606, forAnnot9606, null));
+                null, null, forData9606, forAnnot9606, null));
         expectedSpecies.add(new Species(1234, "name", null, "genus", "someSpecies", "versionA", new Source(1),
-                null, new HashMap<>(), forAnnot1234, null));
+                null, null, new HashMap<>(), forAnnot1234, null));
 
 		assertEquals(expectedSpecies, speciesService.loadSpeciesInDataGroups(true));
 	}
@@ -150,8 +150,8 @@ public class SpeciesServiceTest extends TestAncestor {
 	    // actual use of the service
 	    SpeciesService service = new SpeciesService(serviceFactory);
 	    Set<Species> expected = new HashSet<>(Arrays.asList(
-	            new Species(9606, "human", null, "Homo", "sapiens", "version1", new Source(1), 4312, null, null, 1),
-	            new Species(1234, "name", null, "genus", "someSpecies", "versionA", new Source(1), 1123, null, null, 2)));
+	            new Species(9606, "human", null, "Homo", "sapiens", "version1", new Source(1), 4312, null, null, null, 1),
+	            new Species(1234, "name", null, "genus", "someSpecies", "versionA", new Source(1), 1123, null, null, null, 2)));
         assertEquals(expected, service.loadSpeciesByIds(speciesIds, false));
         
         Map<Source, Set<DataType>> forData9606 = new HashMap<>();
@@ -163,9 +163,9 @@ public class SpeciesServiceTest extends TestAncestor {
         forAnnot1234.put(new Source(2), new HashSet<DataType>(Arrays.asList(DataType.IN_SITU)));
         expected.clear();
         expected.add(new Species(9606, "human", null, "Homo", "sapiens", "version1", new Source(1),
-                null, forData9606, forAnnot9606, null));
+                null, null, forData9606, forAnnot9606, null));
         expected.add(new Species(1234, "name", null, "genus", "someSpecies", "versionA", new Source(1),
-                null, new HashMap<>(), forAnnot1234, null));
+                null, null, new HashMap<>(), forAnnot1234, null));
 
         assertEquals(expected, service.loadSpeciesByIds(speciesIds, true));
 	}

@@ -127,8 +127,8 @@ public class SpeciesService extends CommonService {
                     sourceToSpeciesTOs, sourceMap, species.getId(), InfoType.ANNOTATION);
             completedSpecies.add(new Species(species.getId(), species.getName(), species.getDescription(),
                     species.getGenus(), species.getSpeciesName(), species.getGenomeVersion(),
-                    species.getGenomeSource(), species.getParentTaxonId(), forData, forAnnotation,
-                    species.getPreferredDisplayOrder()));
+                    species.getGenomeSource(), species.getGenomeSpeciesId(), species.getParentTaxonId(),
+                    forData, forAnnotation, species.getPreferredDisplayOrder()));
         }
 
         return log.exit(completedSpecies);
@@ -175,7 +175,7 @@ public class SpeciesService extends CommonService {
         log.entry(speciesTO, genomeSource);
         return log.exit(new Species(Integer.valueOf(speciesTO.getId()), speciesTO.getName(), 
                 speciesTO.getDescription(), speciesTO.getGenus(), speciesTO.getSpeciesName(), 
-                speciesTO.getGenomeVersion(), genomeSource, speciesTO.getParentTaxonId(),
-                null, null, speciesTO.getDisplayOrder()));
+                speciesTO.getGenomeVersion(), genomeSource, speciesTO.getGenomeSpeciesId(),
+                speciesTO.getParentTaxonId(), null, null, speciesTO.getDisplayOrder()));
     }
 }

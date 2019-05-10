@@ -204,7 +204,7 @@ public class GeneMatchResultService {
         log.entry(match, term, attrIndexMap);
 
         String attrs = (String) match.attrValues.get(attrIndexMap.get("genenamesynonym"));
-        String[] split = attrs.toLowerCase().split(SPHINX_SEPARATOR);
+        String[] split = attrs.split(SPHINX_SEPARATOR);
         List<String> synonyms = Arrays.stream(split).collect(Collectors.toList());
 
         Species species = new Species(((Long) match.attrValues.get(attrIndexMap.get("speciesid"))).intValue(),

@@ -11,6 +11,7 @@ import org.sphx.api.SphinxResult;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -23,7 +24,7 @@ import static org.mockito.Mockito.when;
  * This class holds the unit tests for the {@code GeneMatchResultService} class.
  *
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Apr. 2019
+ * @version Bgee 14, May 2019
  * @see     GeneMatchResult
  * @since   Bgee 14, Apr. 2019
  */
@@ -51,7 +52,7 @@ public class GeneMatchResultServiceTest extends TestAncestor {
         sphinxResult.matches = new SphinxMatch[] {sphinxMatch1, sphinxMatch2, sphinxMatch3};
 
         String term = "ENSG";
-        when(sphinxClient.Query(term, "bgee_autocomplete")).thenReturn(sphinxResult);
+        when(sphinxClient.Query("\"" + term + "\"", "bgee_autocomplete")).thenReturn(sphinxResult);
 
         GeneMatchResultService service = new GeneMatchResultService(sphinxClient);
         List<String> autocompleteResult = service.autocomplete(term, 100);
@@ -91,7 +92,7 @@ public class GeneMatchResultServiceTest extends TestAncestor {
         sphinxResult.matches = new SphinxMatch[] {sphinxMatch1};
 
         String term = "Syn2";
-        when(sphinxClient.Query(term, "bgee_genes")).thenReturn(sphinxResult);
+        when(sphinxClient.Query("\"" + term + "\"", "bgee_genes")).thenReturn(sphinxResult);
 
         GeneMatchResultService service = new GeneMatchResultService(sphinxClient);
         GeneMatchResult geneMatchResult = service.searchByTerm(term, null, 0, 100);
@@ -100,11 +101,25 @@ public class GeneMatchResultServiceTest extends TestAncestor {
         assertNotNull(geneMatchResult.getGeneMatches());
         assertEquals(1, geneMatchResult.getGeneMatches().size());
         
-        Species species = new Species(11, "human", null,"Homo", "sapiens", null, null, null, null, null, 1);
-        Gene g = new Gene("ENSG0086", "Name1", "Desc1", Arrays.asList("Syn1", "Syn2", "Syn3"), null,
-                species, 1);
-        
-        assertEquals(new GeneMatch(g, "syn2", GeneMatch.MatchSource.SYNONYM), geneMatchResult.getGeneMatches().get(0));
+        Species expSpecies = new Species(11, "human", null, "Homo", "sapiens", null, null, null, null, null, 1);
+        Gene expGene = new Gene("ENSG0086", "Name1", "Desc1", 
+                new HashSet<>(Arrays.asList("Syn1", "Syn2", "Syn3")), null, expSpecies, 1);
+
+        assertEquals(new GeneMatch(expGene, "syn2", GeneMatch.MatchSource.SYNONYM),
+                geneMatchResult.getGeneMatches().get(0));
+        Gene actualGene = geneMatchResult.getGeneMatches().get(0).getGene();
+        Species actualSpecies = actualGene.getSpecies();
+        assertEquals(expSpecies.getId(), actualSpecies.getId());
+        assertEquals(expSpecies.getName(), actualSpecies.getName());
+        assertEquals(expSpecies.getGenus(), actualSpecies.getGenus());
+        assertEquals(expSpecies.getSpeciesName(), actualSpecies.getSpeciesName());
+        assertEquals(expSpecies.getPreferredDisplayOrder(), actualSpecies.getPreferredDisplayOrder());
+        assertEquals(expGene.getEnsemblGeneId(), actualGene.getEnsemblGeneId());
+        assertEquals(expGene.getName(), actualGene.getName());
+        assertEquals(expGene.getDescription(), actualGene.getDescription());
+        assertEquals(expGene.getSynonyms(), actualGene.getSynonyms());
+        assertEquals(expGene.getXRefs(), actualGene.getXRefs());
+        assertEquals(expGene.getGeneMappedToSameEnsemblGeneIdCount(), actualGene.getGeneMappedToSameEnsemblGeneIdCount());
     }
 
     /**

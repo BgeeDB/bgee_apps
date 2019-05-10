@@ -213,7 +213,7 @@ var general = {
             // after the last element ( the click was on the last line and thus there is no 
             // element on the next line )
             if( $nextLineFirstElement == null ){
-                this.$bgeeDataSelection.insertAfter( $currentSpecies.nextAll().andSelf().last() );
+                this.$bgeeDataSelection.insertAfter( $currentSpecies.nextAll().addBack().last() );
             }
             else{
                 this.$bgeeDataSelection.insertBefore( $nextLineFirstElement );

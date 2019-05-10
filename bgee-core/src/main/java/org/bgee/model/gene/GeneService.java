@@ -386,8 +386,12 @@ public class GeneService extends CommonService {
                 .collect(Collectors.toSet());
         //We add the source genomic database to the XRef
         Species species = speciesMap.get(to.getSpeciesId());
-        xrefs.add(new GeneXRef(to.getGeneId(), to.getName(), species.getGenomeSource(), to.getGeneId(),
+        //(but only if the genome used is indeed the genome of the species considered,
+        //and not the genome of a closely related species)
+        if (species.getId().equals(species.getGenomeSpeciesId())) {
+            xrefs.add(new GeneXRef(to.getGeneId(), to.getName(), species.getGenomeSource(), to.getGeneId(),
                 species.getScientificName()));
+        }
         return log.exit(xrefs);
     }
 }

@@ -499,8 +499,12 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 for (Source source : e.getValue().stream()
                         .sorted(Comparator.comparing(NamedEntity::getName)).collect(Collectors.toList())) {
                     String target = source.getName().toLowerCase().equals("bgee")? "" : " target='_blank'";
-                    //FIXME: replace '&' with '&amp;'?
-                    sj.add("<a href='" + urlEncode(source.getBaseUrl()) + "'" + htmlEntities(target) + ">" + 
+                    sj.add("<a href='"
+                            //XXX: We should think about how to handle this display better,
+                            //because maybe this base URL contains illegal chars :/
+                            //(to htmlentities and/or url encode)
+                            + source.getBaseUrl() + "'"
+                            + target + ">" + 
                             htmlEntities(source.getName()) + "</a>");
                 }
                 this.writeln(sj.toString());

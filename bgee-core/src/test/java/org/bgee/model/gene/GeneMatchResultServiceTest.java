@@ -100,7 +100,7 @@ public class GeneMatchResultServiceTest extends TestAncestor {
         assertNotNull(geneMatchResult.getGeneMatches());
         assertEquals(1, geneMatchResult.getGeneMatches().size());
         
-        Species species = new Species(11, "human", null,"Homo", "sapiens", null, null, 1);
+        Species species = new Species(11, "human", null,"Homo", "sapiens", null, null, null, null, null, 1);
         Gene g = new Gene("ENSG0086", "Name1", "Desc1", Arrays.asList("Syn1", "Syn2", "Syn3"), null,
                 species, 1);
         

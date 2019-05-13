@@ -8,7 +8,7 @@ use diagnostics;
 my $email_address       = $ARGV[0]  // '';
 my $alternative_display = $ARGV[1]  // '';
 my $index               = $ARGV[2]  // '';
-#Add $index to duplicate the javascript function if several e-mails to hide per page
+#Add $index to duplicate the javascript function if several different e-mails to hide per page
 die "\n\tInvalid email address as argument\n\n"  if ( $email_address eq '' || $email_address !~ /^[\w\.-]+@[\w\.-]+\.[a-z]{2,5}$/i );
 
 

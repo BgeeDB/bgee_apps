@@ -2047,22 +2047,22 @@ public class RequestParameters {
     }
 
     /**
-     * @return the search parameter
+     * @return the query parameter for a search
      */
-    public String getSearch() {
-    	return this.getFirstValue(this.getUrlParametersInstance().getParamSearch());
+    public String getQuery() {
+    	return this.getFirstValue(this.getUrlParametersInstance().getQuery());
     }
     /**
      * Convenient method to set value of the parameter returned by 
      * {@link URLParameters#getParamSpeciesId()}. Equivalent to calling 
      * {@link #addValue(URLParameters.Parameter, Object)} for this parameter.
      *
-     * @param searchTerm    A {@code String} that is the value of the {@code search}
+     * @param queryTerm    A {@code String} that is the value of the {@code query}
      *                      URL parameter to set.
      */
-    public void setSearch(String searchTerm) {
-        this.resetValues(this.getUrlParametersInstance().getParamSearch());
-        this.addValue(this.getUrlParametersInstance().getParamSearch(), searchTerm);
+    public void setQuery(String queryTerm) {
+        this.resetValues(this.getUrlParametersInstance().getQuery());
+        this.addValue(this.getUrlParametersInstance().getQuery(), queryTerm);
     }
 
     /**

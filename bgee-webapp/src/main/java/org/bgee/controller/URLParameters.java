@@ -192,12 +192,12 @@ public class URLParameters {
                     DEFAULT_FORMAT, Integer.class);
     
     /**
-     * A {@code Parameter<String>} representing a search, typically for the gene page.
+     * A {@code Parameter<String>} representing a query search, typically for the gene page.
      * Category of the parameter: controller parameter.
-     * Corresponds to the URL parameter "search".
+     * Corresponds to the URL parameter "query".
      */
-    private static final Parameter<String> SEARCH = 
-    		new Parameter<String>("search", false,false, null, false, false, 
+    private static final Parameter<String> QUERY = 
+    		new Parameter<>("query", false,false, null, false, false, 
     				DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
 
     /**
@@ -477,7 +477,7 @@ public class URLParameters {
             ACTION,
             GENE_ID,
             SPECIES_ID,
-            SEARCH,
+            QUERY,
             // Species request
             SPECIES_LIST,
             // TopAnat analyze params
@@ -619,8 +619,8 @@ public class URLParameters {
     /**
      * @return  A {@code Parameter<String>} that contains the search text.
      */
-     public Parameter<String> getParamSearch() {
-     	return SEARCH;
+     public Parameter<String> getQuery() {
+     	return QUERY;
      }    
 
     /**

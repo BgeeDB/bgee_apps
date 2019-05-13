@@ -17,7 +17,7 @@ function autocompleteTermSelected(event, ui) {
 	//fixme remove 	newLabel = newLabel.replace(/:myStrongOpeningTag:/g, '<strong class="search-match">')
 	// 		.replace(/:myStrongClosingTag:/g, '</strong>');
 	//XXX: should we use the requestParameters object?
-	window.location.href = GLOBAL_PROPS.getWebAppURLStart() + "?page=gene&search=" + encodeURIComponent(selectedTerm);
+	window.location.href = GLOBAL_PROPS.getWebAppURLStart() + "?page=gene&query=" + encodeURIComponent(selectedTerm);
 	return this;
 }
 
@@ -39,7 +39,7 @@ function autocompleteTermSelected(event, ui) {
 function autocompleteTermSource(request, responseCallback) {
 
 	 var autocompleteTermRequestParameters = "?page=search&action=auto_complete_gene_search&" +
-	 		"display_type=xml&ajax=1&search=" + encodeURIComponent(request.term);
+	 		"display_type=xml&ajax=1&query=" + encodeURIComponent(request.term);
 
 	$.ajax({
 		type: "GET",

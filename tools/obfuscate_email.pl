@@ -26,7 +26,7 @@ sub transpose_eMails_delayed {
 
     $emails =~ s{@}{ [AT] }g;
     # Break e-mail addresses for noscript tag.
-    my $userCode = sprintf('%s%s%s', "<script type=\"text/javascript\">eval(unescape('", &escapeencode($code), "'));</script><noscript>$emails</noscript>");
+    my $userCode = sprintf('%s%s%s', "<script>eval(unescape('", &escapeencode($code), "'));</script><noscript>$emails</noscript>");
 
     return $userCode;
 }

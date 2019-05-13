@@ -15,7 +15,7 @@ import org.bgee.view.*;
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, Aug. 2018
+ * @version Bgee 14, May 2019
  * @see Delimiter
  * @since   Bgee 13, July 2014
  */
@@ -63,6 +63,11 @@ public class CsvFactory extends ViewFactory {
 
     @Override
     public PrivacyPolicyDisplay getPrivacyPolicyDisplay() {
+        throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
+    }
+
+    @Override
+    public CollaborationDisplay getCollaborationDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
     }
 

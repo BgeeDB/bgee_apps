@@ -17,10 +17,6 @@ import java.util.Set;
  */
 public interface DownloadDisplay {
     
-	/**
-	 * Display the download page.
-	 */
-	 void displayDownloadHomePage();
 	
     /**
      * Display the download page of processed raw data files.

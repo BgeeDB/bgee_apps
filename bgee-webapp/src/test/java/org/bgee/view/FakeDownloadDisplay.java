@@ -28,16 +28,6 @@ public class FakeDownloadDisplay extends FakeParentDisplay implements DownloadDi
     }
 
     @Override
-    /**
-     * This method call the {@code PrintWriter}. This will be used to assess that the
-     * controller handles all parameters correctly to send the correct output to the
-     * {@code HttpServletResponse}
-     */
-    public void displayDownloadHomePage() {
-        this.out.println("Test page is good !");
-    }
-
-    @Override
     public void displayProcessedExpressionValuesDownloadPage(List<SpeciesDataGroup> groups
     		, Map<Integer, Set<String>> keywords) {
         this.out.println("TestB");

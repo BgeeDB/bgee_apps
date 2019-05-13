@@ -58,14 +58,11 @@ public class CommandDownload extends CommandParent {
         log.entry();
 
         DownloadDisplay display = this.viewFactory.getDownloadDisplay();
-        if (this.requestParameters.getAction() == null) {
-
-            display.displayDownloadHomePage();
-
-        } else if (this.requestParameters.getAction().equals(
+        if (this.requestParameters.getAction() != null && (
+                this.requestParameters.getAction().equals(
                 RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES) || 
                    this.requestParameters.getAction().equals(
-                RequestParameters.ACTION_DOWLOAD_CALL_FILES)) {
+                RequestParameters.ACTION_DOWLOAD_CALL_FILES))) {
 
             List<SpeciesDataGroup> groups = getAllSpeciesDataGroup();
             Map<Integer, Set<String>> speciesIdsToTerms = getSpeciesRelatedTerms(groups);
@@ -75,7 +72,8 @@ public class CommandDownload extends CommandParent {
             } else {
                 display.displayGeneExpressionCallDownloadPage(groups, speciesIdsToTerms);
             }
-        } else if (this.requestParameters.getAction().equals(RequestParameters.ACTION_MYSQL_DUMPS)) {
+        } else if (this.requestParameters.getAction() != null && 
+                this.requestParameters.getAction().equals(RequestParameters.ACTION_MYSQL_DUMPS)) {
             display.displayMysqlDumpsPage();
         }
         else {

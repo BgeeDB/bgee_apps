@@ -40,7 +40,7 @@ import org.bgee.view.ViewFactoryProvider.DisplayType;
  * @author  Mathieu Seppey
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Aug. 2018
+ * @version Bgee 14, May 2019
  * @since   Bgee 13, June 2014
  */
 public class FrontController extends HttpServlet {
@@ -247,6 +247,9 @@ public class FrontController extends HttpServlet {
                 
             } else if (requestParameters.isAGenePageCategory()){
                 controller = new CommandGene(response, requestParameters, this.prop, factory, serviceFactory);
+
+            } else if (requestParameters.isAMultiGenePageCategory()){
+                controller = new CommandMultiGene(response, requestParameters, this.prop, factory, serviceFactory);
 
             } else if (requestParameters.isARawDataPageCategory()){
                 controller = new CommandRawData(response, requestParameters, this.prop, factory, serviceFactory);

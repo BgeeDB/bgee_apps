@@ -16,7 +16,7 @@ import org.bgee.controller.RequestParameters;
  * @author  Mathieu Seppey
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Aug. 2018
+ * @version Bgee 14, May 2019
  * @since   Bgee 1
  * 
  * @see org.bgee.view.html.HtmlFactory
@@ -135,6 +135,14 @@ public abstract class ViewFactory {
      * 	                   response output.
      */
     public abstract GeneDisplay getGeneDisplay() throws IOException;
+
+    /**
+     *
+     * @return A {@code MultiGeneDisplay} instance of the appropriate display type.
+     * @throws IOException If an error occurs with the {@code PrintWriter} when writing the
+     * 	                   response output.
+     */
+    public abstract MultiGeneDisplay getMultiGeneDisplay() throws IOException;
 
     /**
      *

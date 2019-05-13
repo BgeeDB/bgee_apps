@@ -85,7 +85,7 @@ import org.bgee.model.expressiondata.baseelements.SummaryQuality;
  * @author  Mathieu Seppey
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Aug. 2018
+ * @version Bgee 14, May 2019
  * @since   Bgee 1
  */
 public class RequestParameters {
@@ -179,6 +179,12 @@ public class RequestParameters {
      */
     public static final String PAGE_GENE = "gene";
 
+    /**
+     * A {@code String} that is the value taken by the {@code page} parameter 
+     * (see {@link URLParameters#getParamPage()}) when a page related to multi-gene is requested.
+     */
+    public static final String PAGE_MULTI_GENE = "multi_gene";
+    
     /**
      * A {@code String} that is the value taken by the {@code page} parameter 
      * (see {@link URLParameters#getParamPage()}) when a page related to a raw data is requested.
@@ -2027,6 +2033,18 @@ public class RequestParameters {
     }
 
     /**
+     * Convenient method to retrieve values of the parameter returned by 
+     * {@link URLParameters#getParamGeneList()}. Equivalent to calling 
+     * {@link #getValues(URLParameters.Parameter)} for this parameter.
+     *
+     * @return  A {@code List} of {@code String}s that are the values of 
+     *          the {@code gene_list} URL parameter. Can be {@code null}. 
+     */
+    public List<String> getGeneList() {
+        return this.getValues(this.getUrlParametersInstance().getParamGeneList());
+    }
+    
+    /**
      * @return the species_id parameter
      */
     public Integer getSpeciesId() {
@@ -2675,6 +2693,22 @@ public class RequestParameters {
         return log.exit(false);
     }
     
+    /**
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     *
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     * category "multi_gene"
+     */
+    public boolean isAMultiGenePageCategory() {
+        log.entry();
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
+                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_MULTI_GENE)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
     /**
      * This method has a js counterpart in {@code requestparameters.js} that should be kept 
      * consistent as much as possible if the method evolves.

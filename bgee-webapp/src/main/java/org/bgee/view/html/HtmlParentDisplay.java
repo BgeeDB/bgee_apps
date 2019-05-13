@@ -749,7 +749,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     //TODO move javascript in common.js
     private String getObfuscateHelpEmail() {
-        return getObfuscateEmailLink("%48%65%6C%70");
+        return getObfuscateEmailLink("%43%6F%6E%74%61%63%74%20%75%73");
     }
 
     /**

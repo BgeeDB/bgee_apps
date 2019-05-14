@@ -80,13 +80,13 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
                                            List<String> userAnatEntityList, AnatEntitySimilarityAnalysis result) {
         log.entry(allSpecies, userSpeciesList, taxonOntology, userAnatEntityList, result);
 
-        this.startDisplay("Anatomical similarity tool");
+        this.startDisplay("Anatomical homology");
 
-        this.writeln("<h1>Anatomical similarity tool</h1>");
+        this.writeln("<h1>Anatomical homology</h1>");
 
         this.writeln("<div id='bgee_introduction'>");
 
-        this.writeln("<p>Retrieve anatomical similarities from a list of species and a list of Uberon IDs.</p>");
+        this.writeln("<p>Retrieve anatomical homologies from a list of species and a list of Uberon IDs.</p>");
 
         this.writeln("</div>");
 
@@ -181,17 +181,17 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
         
         
         StringBuilder examples = new StringBuilder();
-        examples.append("<span class='examples'>Examples: ");
+        examples.append("            <span class='examples col-sm-12'>Examples: ");
         
         urlExample.setAnatEntityList(Collections.singletonList("UBERON:0002048"));
-        examples.append(", <a href='" + urlExample.getRequestURL() + "'>Lung</a> (human, zebrafish)");
+        examples.append("<a href='" + urlExample.getRequestURL() + "'>Lung in human and zebrafish</a>");
         urlExample.setAnatEntityList(Collections.singletonList("UBERON:0000206"));
-        examples.append(", <a href='" + urlExample.getRequestURL() + "'>Pharyngeal gill</a> (human, zebrafish)");
+        examples.append(", <a href='" + urlExample.getRequestURL() + "'>Pharyngeal gill in human and zebrafish</a>");
         urlExample.setAnatEntityList(Collections.singletonList("CL:0000084"));
-        examples.append(", <a href='" + urlExample.getRequestURL() + "'>T Cell</a> (human, zebrafish)");
+        examples.append(", <a href='" + urlExample.getRequestURL() + "'>T Cell in human and zebrafish</a>");
         urlExample.setAnatEntityList(Collections.singletonList("UBERON:0001987"));
-        examples.append("<a href='" + urlExample.getRequestURL() + "'>placenta</a> (human, zebrafish)");
-        examples.append("</span>");
+        examples.append(", <a href='" + urlExample.getRequestURL() + "'>Placenta in human and zebrafish</a>");
+        examples.append("            </span>");
 
         sb.append(examples);
         
@@ -243,7 +243,7 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
         }
 
         if (!result.getAnatEntitiesWithNoSimilarities().isEmpty()) {
-            sb.append("<p>Anatomical entities without anatomical similarity: ");
+            sb.append("<p>Anatomical entities without anatomical homology: ");
             sb.append(result.getAnatEntitiesWithNoSimilarities().stream()
                     .sorted(Comparator.comparing(AnatEntity::getName))
                     .map(ae -> getAnatEntityUrl(ae, ae.getName() + " (" + ae.getId() + ")"))

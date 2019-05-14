@@ -77,7 +77,7 @@ public class CsvFactory extends ViewFactory {
 	}
 
     @Override
-    public MultiGeneDisplay getMultiGeneDisplay() {
+    public ExpressionComparisonDisplay getExpressionComparisonDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
     }
 

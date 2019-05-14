@@ -49,7 +49,7 @@ import org.bgee.model.expressiondata.baseelements.SummaryQuality;
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, Aug. 2018
+ * @version Bgee 14, May 2019
  * @since   Bgee 13, Nov. 2014
  * @see URLParameters.Parameter
  * @see	RequestParameters
@@ -495,7 +495,7 @@ public class URLParameters {
             SEARCH,
             // Species request
             SPECIES_LIST,
-            // Multi-gene request
+            // Expression comparison request
             GENE_LIST,
             // TopAnat analyze params
             FOREGROUND_LIST, FOREGROUND_FILE, BACKGROUND_LIST, BACKGROUND_FILE,

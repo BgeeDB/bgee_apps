@@ -120,9 +120,9 @@ public class HtmlFactory extends ViewFactory {
 	}
 
     @Override
-    public MultiGeneDisplay getMultiGeneDisplay() throws IOException {
+    public ExpressionComparisonDisplay getExpressionComparisonDisplay() throws IOException {
         log.entry();
-        return log.exit(new HtmlMultiGeneDisplay(response, requestParameters, prop, jsonHelper, this));
+        return log.exit(new HtmlExpressionComparisonDisplay(response, requestParameters, prop, jsonHelper, this));
     }
 
     @Override

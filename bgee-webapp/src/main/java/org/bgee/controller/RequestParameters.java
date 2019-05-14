@@ -181,9 +181,9 @@ public class RequestParameters {
 
     /**
      * A {@code String} that is the value taken by the {@code page} parameter 
-     * (see {@link URLParameters#getParamPage()}) when a page related to multi-gene is requested.
+     * (see {@link URLParameters#getParamPage()}) when a page related to expression comparison is requested.
      */
-    public static final String PAGE_MULTI_GENE = "multi_gene";
+    public static final String PAGE_EXPR_COMPARISON = "expression_comparison";
     
     /**
      * A {@code String} that is the value taken by the {@code page} parameter 
@@ -2698,12 +2698,12 @@ public class RequestParameters {
      * consistent as much as possible if the method evolves.
      *
      * @return  A {@code boolean} to tell whether the request corresponds to a page of the
-     * category "multi_gene"
+     * category "expression_comparison"
      */
-    public boolean isAMultiGenePageCategory() {
+    public boolean isAExprComparisonPageCategory() {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
-                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_MULTI_GENE)) {
+                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_EXPR_COMPARISON)) {
             return log.exit(true);
         }
         return log.exit(false);

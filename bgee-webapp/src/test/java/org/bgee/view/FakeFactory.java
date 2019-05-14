@@ -107,7 +107,7 @@ public class FakeFactory extends ViewFactory {
 	}
 
     @Override
-    public MultiGeneDisplay getMultiGeneDisplay() throws IOException {
+    public ExpressionComparisonDisplay getExpressionComparisonDisplay() throws IOException {
         return null;
     }
 

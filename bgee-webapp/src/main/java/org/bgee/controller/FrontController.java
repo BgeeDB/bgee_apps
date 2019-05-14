@@ -248,8 +248,8 @@ public class FrontController extends HttpServlet {
             } else if (requestParameters.isAGenePageCategory()){
                 controller = new CommandGene(response, requestParameters, this.prop, factory, serviceFactory);
 
-            } else if (requestParameters.isAMultiGenePageCategory()){
-                controller = new CommandMultiGene(response, requestParameters, this.prop, factory, serviceFactory);
+            } else if (requestParameters.isAExprComparisonPageCategory()){
+                controller = new CommandExpressionComparison(response, requestParameters, this.prop, factory, serviceFactory);
 
             } else if (requestParameters.isARawDataPageCategory()){
                 controller = new CommandRawData(response, requestParameters, this.prop, factory, serviceFactory);

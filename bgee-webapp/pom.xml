@@ -579,9 +579,9 @@
                     </execution>
 
                     <!-- merge files from external libraries already minified,
-                         specific to multi gene pages. -->
+                         specific to expression comparison pages. -->
                     <execution>
-                        <id>multi_gene_minified_vendor</id>
+                        <id>expr_comp_minified_vendor</id>
                         <goals>
                             <!-- Binds by default to the lifecycle phase: process-resources -->
                             <goal>minify</goal>
@@ -600,7 +600,7 @@
                                 <jsSourceFile>lib/jquery_plugins/dataTables.responsive.min.js</jsSourceFile>
                             </jsSourceFiles>
                             <!-- Files already provided minified. The suffix will then not be added  -->
-                            <jsFinalFile>vendor_multi_gene.${filter.org.bgee.webapp.javascript.version.extension}.js</jsFinalFile>
+                            <jsFinalFile>vendor_expr_comp.${filter.org.bgee.webapp.javascript.version.extension}.js</jsFinalFile>
 
                             <cssSourceDir>css/</cssSourceDir>
                             <cssTargetDir>css/lib/jquery_plugins/</cssTargetDir>
@@ -609,13 +609,13 @@
                                 <cssSourceFile>lib/jquery_plugins/responsive.dataTables.min.css</cssSourceFile>
                             </cssSourceFiles>
                             <!-- Files already provided minified. The suffix will then not be added  -->
-                            <cssFinalFile>vendor_multi_gene.${filter.org.bgee.webapp.css.version.extension}.css</cssFinalFile>
+                            <cssFinalFile>vendor_expr_comp.${filter.org.bgee.webapp.css.version.extension}.css</cssFinalFile>
                         </configuration>
                     </execution>
 
-                    <!-- merge and minify all Bgee files specific to multi-gene pages -->
+                    <!-- merge and minify all Bgee files specific to expresion comparison page -->
                     <execution>
-                        <id>minify_multi_gene_bgee</id>
+                        <id>minify_expr_comp_bgee</id>
                         <goals>
                             <!-- Binds by default to the lifecycle phase: process-resources -->
                             <goal>minify</goal>
@@ -630,9 +630,9 @@
                             <jsSourceDir>js/</jsSourceDir>
                             <jsTargetDir>js/</jsTargetDir>
                             <jsSourceFiles>
-                                <jsSourceFile>multi_gene.js</jsSourceFile>
+                                <jsSourceFile>expr_comp.js</jsSourceFile>
                             </jsSourceFiles>
-                            <jsFinalFile>script_multi_gene.js</jsFinalFile>
+                            <jsFinalFile>script_expr_comp.js</jsFinalFile>
                             <suffix>${filter.org.bgee.webapp.javascript.version.extension}</suffix>
                         </configuration>
                     </execution>

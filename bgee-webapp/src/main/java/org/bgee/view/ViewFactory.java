@@ -99,7 +99,7 @@ public abstract class ViewFactory {
      * @throws IOException  If an error occurs with the {@code PrintWriter} when writing the
      *                      response output.
      */
-    public abstract ResourceDisplay getResourceDisplay() throws IOException;
+    public abstract ResourcesDisplay getResourceDisplay() throws IOException;
     
     /**
      *                              

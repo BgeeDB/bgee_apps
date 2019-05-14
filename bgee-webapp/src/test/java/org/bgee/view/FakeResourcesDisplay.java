@@ -15,9 +15,9 @@ import org.bgee.controller.RequestParameters;
  * @since   Bgee 14 May 2019
  */
 
-public class FakeResourceDisplay extends FakeParentDisplay implements ResourceDisplay{
+public class FakeResourcesDisplay extends FakeParentDisplay implements ResourcesDisplay{
 
-    public FakeResourceDisplay(HttpServletResponse response, 
+    public FakeResourcesDisplay(HttpServletResponse response, 
             RequestParameters requestParameters, BgeeProperties prop, ViewFactory factory) 
                     throws IOException {
         super(response, requestParameters, prop, factory);

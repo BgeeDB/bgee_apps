@@ -162,11 +162,11 @@ public class FakeFactory extends ViewFactory {
     }
 
     @Override
-    public ResourceDisplay getResourceDisplay() throws IOException {
+    public ResourcesDisplay getResourceDisplay() throws IOException {
         if(prop.getUrlMaxLength() == 9999 && this.requestParameters.getFirstValue(
                 ((TestURLParameters)this.requestParameters.getUrlParametersInstance())
                 .getParamTestString()).equals("test")){
-            return new FakeResourceDisplay(this.response, this.requestParameters, prop, this);
+            return new FakeResourcesDisplay(this.response, this.requestParameters, prop, this);
         }
         return null;
     }

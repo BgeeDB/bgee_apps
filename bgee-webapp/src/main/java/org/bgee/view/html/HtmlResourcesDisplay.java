@@ -6,10 +6,9 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
-import org.bgee.view.ResourceDisplay;
+import org.bgee.view.ResourcesDisplay;
 
 /**
  * This class displays the resources for the HTML view.
@@ -18,9 +17,9 @@ import org.bgee.view.ResourceDisplay;
  * @version Bgee 14, May 2019
  * @since   Bgee 14, May 2019
  */
-public class HtmlResourceDisplay extends HtmlParentDisplay implements ResourceDisplay {
+public class HtmlResourcesDisplay extends HtmlParentDisplay implements ResourcesDisplay {
 
-    private final static Logger log = LogManager.getLogger(HtmlResourceDisplay.class.getName());
+    private final static Logger log = LogManager.getLogger(HtmlResourcesDisplay.class.getName());
     
     private final static String BGEECALL_DESCRIPTION = "Generate present/absent gene expression calls "
             + "for your own RNA-Seq libraries as long as the species are present in Bgee. "
@@ -46,7 +45,7 @@ public class HtmlResourceDisplay extends HtmlParentDisplay implements ResourceDi
      * @throws IOException      If there is an issue when trying to get or to use the
      *                          {@code PrintWriter}.
      */
-    public HtmlResourceDisplay(HttpServletResponse response,
+    public HtmlResourcesDisplay(HttpServletResponse response,
             RequestParameters requestParameters, BgeeProperties prop, HtmlFactory factory) 
                     throws IOException {
         super(response, requestParameters, prop, factory);
@@ -59,9 +58,9 @@ public class HtmlResourceDisplay extends HtmlParentDisplay implements ResourceDi
         RequestParameters urlTopAnat = this.getNewRequestParameters();
         urlTopAnat.setPage(RequestParameters.PAGE_TOP_ANAT);
         
-        this.startDisplay("R Package overview");
+        this.startDisplay("R packages");
 
-        this.writeln("<h1>R Package overview</h1>");
+        this.writeln("<h1>R packages</h1>");
 
         this.writeln("<div class='feature_list'>");
 
@@ -87,9 +86,9 @@ public class HtmlResourceDisplay extends HtmlParentDisplay implements ResourceDi
     public void displayAnnotations() {
         log.entry();
         
-        this.startDisplay("Annotation resource overview");
+        this.startDisplay("Annotation resources");
 
-        this.writeln("<h1>Annotation resource overview</h1>");
+        this.writeln("<h1>Annotation resources</h1>");
         
         this.writeln("<div class='feature_list'>");
         
@@ -135,9 +134,9 @@ public class HtmlResourceDisplay extends HtmlParentDisplay implements ResourceDi
     public void displayOntologies() {
         log.entry();
         
-        this.startDisplay("Ontology resource overview");
+        this.startDisplay("Ontology resources");
 
-        this.writeln("<h1>Ontology resource overview</h1>");
+        this.writeln("<h1>Ontology resources</h1>");
 
         this.writeln("<div class='feature_list'>");
         
@@ -202,9 +201,9 @@ public class HtmlResourceDisplay extends HtmlParentDisplay implements ResourceDi
     public void displaySourceCode() {
         log.entry();
         
-        this.startDisplay("Source code resource overview");
+        this.startDisplay("Source codes");
 
-        this.writeln("<h1>Source code resource overview</h1>");
+        this.writeln("<h1>Source codes</h1>");
 
         this.writeln("<div class='feature_list'>");
         

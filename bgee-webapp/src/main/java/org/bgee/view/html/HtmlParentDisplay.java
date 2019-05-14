@@ -34,7 +34,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     private final static Logger log = LogManager.getLogger(HtmlParentDisplay.class.getName());
 
     /**
-     * A {@code String} that is the page name of the 'annotations' resource page.
+     * A {@code String} that is the page name of the 'annotations' resources page.
      */
     protected final static String ANNOTATIONS_PAGE_NAME = "Annotations";
     /**
@@ -46,7 +46,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected final static String MYSQL_DUMPS_PAGE_NAME = "MySQL dumps";
     /**
-     * A {@code String} that is the page name of the 'Ontologies' resource page.
+     * A {@code String} that is the page name of the 'Ontologies' resources page.
      */
     protected final static String ONTOLOGIES_PAGE_NAME = "Ontologies";
     /**
@@ -54,11 +54,11 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected final static String PROCESSED_EXPR_VALUES_PAGE_NAME = "Processed expression values";
     /**
-     * A {@code String} that is the page name of the 'R packages' resource page.
+     * A {@code String} that is the page name of the 'R packages' resources page.
      */
     protected final static String R_PACKAGES_PAGE_NAME = "R Packages";
     /**
-     * A {@code String} that is the page name of the 'Source code' resource page.
+     * A {@code String} that is the page name of the 'Source code' resources page.
      */
     protected final static String SOURCE_CODE_PAGE_NAME = "Source code";
     /**
@@ -511,22 +511,22 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         urlDownloadExprCallFiles.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlDownloadExprCallFiles.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
 
-        // Request parameters for the Resource menu
-        RequestParameters urlResourceRPackages = this.getNewRequestParameters();
-        urlResourceRPackages.setPage(RequestParameters.PAGE_RESOURCE);
-        urlResourceRPackages.setAction(RequestParameters.ACTION_RESOURCE_R_PACKAGES);
+        // Request parameters for the Resources menu
+        RequestParameters urlResourcesRPackages = this.getNewRequestParameters();
+        urlResourcesRPackages.setPage(RequestParameters.PAGE_RESOURCES);
+        urlResourcesRPackages.setAction(RequestParameters.ACTION_RESOURCES_R_PACKAGES);
         
-        RequestParameters urlResourceAnnotations = this.getNewRequestParameters();
-        urlResourceAnnotations.setPage(RequestParameters.PAGE_RESOURCE);
-        urlResourceAnnotations.setAction(RequestParameters.ACTION_RESOURCE_ANNOTATIONS);
+        RequestParameters urlResourcesAnnotations = this.getNewRequestParameters();
+        urlResourcesAnnotations.setPage(RequestParameters.PAGE_RESOURCES);
+        urlResourcesAnnotations.setAction(RequestParameters.ACTION_RESOURCES_ANNOTATIONS);
         
-        RequestParameters urlResourceOntologies = this.getNewRequestParameters();
-        urlResourceOntologies.setPage(RequestParameters.PAGE_RESOURCE);
-        urlResourceOntologies.setAction(RequestParameters.ACTION_RESOURCE_ONTOLOGIES);
+        RequestParameters urlResourcesOntologies = this.getNewRequestParameters();
+        urlResourcesOntologies.setPage(RequestParameters.PAGE_RESOURCES);
+        urlResourcesOntologies.setAction(RequestParameters.ACTION_RESOURCES_ONTOLOGIES);
         
-        RequestParameters urlResourceSourceCode = this.getNewRequestParameters();
-        urlResourceSourceCode.setPage(RequestParameters.PAGE_RESOURCE);
-        urlResourceSourceCode.setAction(RequestParameters.ACTION_RESOURCE_SOURCE_CODE);
+        RequestParameters urlResourcesSourceCode = this.getNewRequestParameters();
+        urlResourcesSourceCode.setPage(RequestParameters.PAGE_RESOURCES);
+        urlResourcesSourceCode.setAction(RequestParameters.ACTION_RESOURCES_SOURCE_CODE);
         
         RequestParameters urlDocDataSets = this.getNewRequestParameters();
         urlDocDataSets.setPage(RequestParameters.PAGE_DOCUMENTATION);
@@ -625,17 +625,17 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' "
               + "aria-haspopup='true' aria-expanded='false'>Resources <span class='caret'></span></a>");
         navbar.append("<ul class='dropdown-menu'>");
-        navbar.append("<li><a href='").append(urlResourceRPackages.getRequestURL())
-                .append("' title='Overview of R packages'>")
+        navbar.append("<li><a href='").append(urlResourcesRPackages.getRequestURL())
+                .append("' title='R packages'>")
                 .append(R_PACKAGES_PAGE_NAME).append("</a></li>");
-        navbar.append("<li><a href='").append(urlResourceAnnotations.getRequestURL())
-                .append("' title='Overview of annotation resources'>")
+        navbar.append("<li><a href='").append(urlResourcesAnnotations.getRequestURL())
+                .append("' title='Annotation resources'>")
                 .append(ANNOTATIONS_PAGE_NAME).append("</a></li>");
-        navbar.append("<li><a href='").append(urlResourceOntologies.getRequestURL())
-                .append("' title='Overview of ontology resources'>")
+        navbar.append("<li><a href='").append(urlResourcesOntologies.getRequestURL())
+                .append("' title='Ontology resources'>")
                 .append(ONTOLOGIES_PAGE_NAME).append("</a></li>");
-        navbar.append("<li><a href='").append(urlResourceSourceCode.getRequestURL())
-                .append("' title='Overview of source code resources'>")
+        navbar.append("<li><a href='").append(urlResourcesSourceCode.getRequestURL())
+                .append("' title='Source codes'>")
                 .append(SOURCE_CODE_PAGE_NAME).append("</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");

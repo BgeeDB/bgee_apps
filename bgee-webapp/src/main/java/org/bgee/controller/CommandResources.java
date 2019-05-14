@@ -8,7 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.model.ServiceFactory;
-import org.bgee.view.ResourceDisplay;
+import org.bgee.view.ResourcesDisplay;
 import org.bgee.view.ViewFactory;
 
 /**
@@ -20,12 +20,12 @@ import org.bgee.view.ViewFactory;
  * @since   Bgee 14, May 2019
  **/
 
-public class CommandResource extends CommandParent {
+public class CommandResources extends CommandParent {
     
     /**
      * {@code Logger} of the class. 
      */
-    private final static Logger log = LogManager.getLogger(CommandResource.class.getName());
+    private final static Logger log = LogManager.getLogger(CommandResources.class.getName());
 
     /**
      * Constructor
@@ -39,7 +39,7 @@ public class CommandResource extends CommandParent {
      * @param viewFactory       A {@code ViewFactory} that provides the display type to be used.
      * @param serviceFactory    A {@code ServiceFactory} that provides bgee services.
      */
-    public CommandResource (HttpServletResponse response, RequestParameters requestParameters, 
+    public CommandResources (HttpServletResponse response, RequestParameters requestParameters, 
             BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory) {
         super(response, requestParameters, prop, viewFactory, serviceFactory);
     }
@@ -48,24 +48,24 @@ public class CommandResource extends CommandParent {
     public void processRequest() throws IllegalStateException, IOException, PageNotFoundException {
         log.entry();
 
-        ResourceDisplay display = this.viewFactory.getResourceDisplay();
+        ResourcesDisplay display = this.viewFactory.getResourceDisplay();
         if (this.requestParameters.getAction() != null &&
-                this.requestParameters.getAction().equals(RequestParameters.ACTION_RESOURCE_R_PACKAGES)) {
+                this.requestParameters.getAction().equals(RequestParameters.ACTION_RESOURCES_R_PACKAGES)) {
 
             display.displayRPackages();
 
         } else if (this.requestParameters.getAction() != null && 
-                this.requestParameters.getAction().equals(RequestParameters.ACTION_RESOURCE_ANNOTATIONS)) {
+                this.requestParameters.getAction().equals(RequestParameters.ACTION_RESOURCES_ANNOTATIONS)) {
 
             display.displayAnnotations();
 
         } else if (this.requestParameters.getAction() != null &&
-                this.requestParameters.getAction().equals(RequestParameters.ACTION_RESOURCE_ONTOLOGIES)) {
+                this.requestParameters.getAction().equals(RequestParameters.ACTION_RESOURCES_ONTOLOGIES)) {
 
             display.displayOntologies();
 
         } else if (this.requestParameters.getAction() != null &&
-                this.requestParameters.getAction().equals(RequestParameters.ACTION_RESOURCE_SOURCE_CODE)) {
+                this.requestParameters.getAction().equals(RequestParameters.ACTION_RESOURCES_SOURCE_CODE)) {
 
             display.displaySourceCode();
 

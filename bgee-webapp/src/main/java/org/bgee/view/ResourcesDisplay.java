@@ -8,7 +8,7 @@ package org.bgee.view;
  * @since   Bgee 14, May 2019
  */
 
-public interface ResourceDisplay {
+public interface ResourcesDisplay {
     
     /**
      * Displays the 'R Packages' page.

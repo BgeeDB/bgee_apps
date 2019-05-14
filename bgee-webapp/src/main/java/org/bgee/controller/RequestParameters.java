@@ -132,9 +132,9 @@ public class RequestParameters {
 
     /**
     * A {@code String} that is the value taken by the {@code page} parameter 
-    * (see {@link URLParameters#getParamPage()}) when a resource page is requested.
+    * (see {@link URLParameters#getParamPage()}) when a resources page is requested.
     */
-    public static final String PAGE_RESOURCE = "resource";
+    public static final String PAGE_RESOURCES = "resources";
     
     /**
      * A {@code String} that is the value taken by the {@code page} parameter 
@@ -323,28 +323,28 @@ public class RequestParameters {
     public static final String ACTION_EXPASY_RESULT = "expasy_result";
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
-     * (see {@link URLParameters#getParamAction()}) when resource page about R packages
-     * is requested. Value of the parameter page should be {@link #PAGE_RESOURCE}.
+     * (see {@link URLParameters#getParamAction()}) when resources page about R packages
+     * is requested. Value of the parameter page should be {@link #PAGE_RESOURCES}.
      */
-    public static final String ACTION_RESOURCE_R_PACKAGES = "r_packages";
+    public static final String ACTION_RESOURCES_R_PACKAGES = "r_packages";
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
-     * (see {@link URLParameters#getParamAction()}) when resource page about annotations
-     * is requested. Value of the parameter page should be {@link #PAGE_RESOURCE}.
+     * (see {@link URLParameters#getParamAction()}) when resources page about annotations
+     * is requested. Value of the parameter page should be {@link #PAGE_RESOURCES}.
      */
-    public static final String ACTION_RESOURCE_ANNOTATIONS = "annotations";
+    public static final String ACTION_RESOURCES_ANNOTATIONS = "annotations";
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
-     * (see {@link URLParameters#getParamAction()}) when resource page about ontologies
-     * is requested. Value of the parameter page should be {@link #PAGE_RESOURCE}.
+     * (see {@link URLParameters#getParamAction()}) when resources page about ontologies
+     * is requested. Value of the parameter page should be {@link #PAGE_RESOURCES}.
      */
-    public static final String ACTION_RESOURCE_ONTOLOGIES = "ontologies";
+    public static final String ACTION_RESOURCES_ONTOLOGIES = "ontologies";
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
-     * (see {@link URLParameters#getParamAction()}) when resource page about source code
-     * is requested. Value of the parameter page should be {@link #PAGE_RESOURCE}.
+     * (see {@link URLParameters#getParamAction()}) when resources page about source code
+     * is requested. Value of the parameter page should be {@link #PAGE_RESOURCES}.
      */
-    public static final String ACTION_RESOURCE_SOURCE_CODE = "source_code";
+    public static final String ACTION_RESOURCES_SOURCE_CODE = "source_code";
     /**
      * A {@code String} that is the anchor to use in the hash part of an URL 
      * to link to the single-species part, in the documentation about gene expression calls.
@@ -2528,10 +2528,10 @@ public class RequestParameters {
      * @return  A {@code boolean} to tell whether the request corresponds to a page of the
      * category "resources".
      */
-    public boolean isAResourcePageCategory() {
+    public boolean isAResourcesPageCategory() {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
-            this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_RESOURCE)) {
+            this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_RESOURCES)) {
             return log.exit(true);
         }
         return log.exit(false);

@@ -118,7 +118,7 @@ public class XmlFactory extends ViewFactory {
     }
 
     @Override
-    public ResourceDisplay getResourceDisplay() throws IOException {
+    public ResourcesDisplay getResourceDisplay() throws IOException {
         throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
     }
 }

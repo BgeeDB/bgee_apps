@@ -140,7 +140,7 @@ public class JsonFactory extends ViewFactory {
         throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
     }
     @Override
-    public ResourceDisplay getResourceDisplay() throws IOException {
+    public ResourcesDisplay getResourceDisplay() throws IOException {
         throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
     }
 }

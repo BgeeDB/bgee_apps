@@ -2134,14 +2134,20 @@ public class RequestParameters {
     public List<Integer> getSpeciesList(){
         return this.getValues(this.getUrlParametersInstance().getParamSpeciesList());
     }
+    
     /**
-     * Convenient method to retrieve values of the parameter returned by 
-     * {@link URLParameters#getParamForegroundList()}. Equivalent to calling 
-     * {@link #getValues(URLParameters.Parameter)} for this parameter.
+     * Convenient method to set value of the parameter returned by 
+     * {@link URLParameters#getParamSpeciesList()}. Equivalent to calling 
+     * {@link #addValue(URLParameters.Parameter, Object)} for this parameter.
      * 
-     * @return  A {@code List} of {@code String}s that are the values of 
-     *          the {@code fg_list} URL parameter. Can be {@code null}. 
+     * @param speciesList   A {@code List} of {@code Integer}s that is the value
+     *                      of the {@code gene_id} URL parameter to set.
      */
+    public void setSpeciesList(List<Integer> speciesList){
+        this.resetValues(this.getUrlParametersInstance().getParamSpeciesList());
+        this.addValues(this.getUrlParametersInstance().getParamSpeciesList(), speciesList);
+    }
+    
     public List<String> getForegroundList() {
         return this.getValues(this.getUrlParametersInstance().getParamForegroundList());
     }
@@ -2331,6 +2337,20 @@ public class RequestParameters {
      */
     public List<String> getAnatEntityList() {
         return this.getValues(this.getUrlParametersInstance().getParamAnatEntityList());
+    }
+    
+    /**
+     * Convenient method to set value of the parameter returned by 
+     * {@link URLParameters#getParamAnatEntityList()}. Equivalent to calling 
+     * {@link #addValue(URLParameters.Parameter, Object)} for this parameter.
+     * 
+     * @param anatEntityList    A {@code List} of {@code String}s that is the value
+     *                          of the {@code gene_id} URL parameter to set.
+     */
+    public void setAnatEntityList(List<String> anatEntityList){
+        this.resetValues(this.getUrlParametersInstance().getParamAnatEntityList());
+        this.addValues(this.getUrlParametersInstance().getParamAnatEntityList(), 
+                anatEntityList);
     }
 
     /**

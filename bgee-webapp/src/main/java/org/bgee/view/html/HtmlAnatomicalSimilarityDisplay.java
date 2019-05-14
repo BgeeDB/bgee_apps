@@ -4,6 +4,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
+import org.bgee.controller.URLParameters;
+import org.bgee.controller.URLParameters.Parameter;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarity;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityAnalysis;
@@ -15,6 +17,8 @@ import org.bgee.view.AnatomicalSimilarityDisplay;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -160,11 +164,37 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
         sb.append("            </div>");
         
         // Submit
-        sb.append("            <input id='bgee_anatsim_submit' class='col-sm-2' type='submit' value='Find'>");
+        sb.append("            <input id='bgee_anatsim_submit' class='col-sm-2' type='submit' value='Search'>");
 
         // Message
         sb.append("            <span id='bgee_anatsim_msg' class='col-sm-10'></span>");
+        
+     // Examples
+        RequestParameters urlExample = this.getNewRequestParameters();
+        urlExample.setPage(RequestParameters.PAGE_ANAT_SIM);
+        
+        // add species
+        List<Integer> speciesList = new ArrayList<>();
+        speciesList.add(9606);
+        speciesList.add(7955);
+        urlExample.setSpeciesList(speciesList);
+        
+        
+        StringBuilder examples = new StringBuilder();
+        examples.append("<span class='examples'>Examples: ");
+        
+        urlExample.setAnatEntityList(Collections.singletonList("UBERON:0002048"));
+        examples.append(", <a href='" + urlExample.getRequestURL() + "'>Lung</a> (human, zebrafish)");
+        urlExample.setAnatEntityList(Collections.singletonList("UBERON:0000206"));
+        examples.append(", <a href='" + urlExample.getRequestURL() + "'>Pharyngeal gill</a> (human, zebrafish)");
+        urlExample.setAnatEntityList(Collections.singletonList("CL:0000084"));
+        examples.append(", <a href='" + urlExample.getRequestURL() + "'>T Cell</a> (human, zebrafish)");
+        urlExample.setAnatEntityList(Collections.singletonList("UBERON:0001987"));
+        examples.append("<a href='" + urlExample.getRequestURL() + "'>placenta</a> (human, zebrafish)");
+        examples.append("</span>");
 
+        sb.append(examples);
+        
         sb.append("        </form>");
         sb.append("    </div>");
         sb.append("</div>");

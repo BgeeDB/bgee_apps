@@ -73,18 +73,18 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             "col-xs-12 col-xs-offset-0 col-sm-offset-1 col-sm-10";
 
     /**
-     * A {@code String} to be used in {@code class} attribute.
+     * A {@code String} that is the URL of the Bioconductor BgeeDB R package.
      */
     protected static final String BGEEDB_R_PACKAGE_URL = 
             "https://bioconductor.org/packages/release/bioc/html/BgeeDB.html";
   
     /**
-     * A {@code String} to be used in {@code class} attribute.
+     * A {@code String} that is the URL of the Bgee GitHub.
      */
     protected static final String BGEE_GITHUB_URL = "https://github.com/BgeeDB";
     
     /**
-     * A {@code String} to be used in {@code class} attribute.
+     * A {@code String} that is the URL of the Bgee pipeline master branch in GitHub.
      */
     protected static final String MASTER_BGEE_PIPELINE_GITHUB_URL = BGEE_GITHUB_URL + 
             "/bgee_pipeline/tree/master";

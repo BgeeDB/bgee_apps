@@ -73,7 +73,7 @@ public class CommandDownload extends CommandParent {
                 display.displayGeneExpressionCallDownloadPage(groups, speciesIdsToTerms);
             }
         } else if (this.requestParameters.getAction() != null && 
-                this.requestParameters.getAction().equals(RequestParameters.ACTION_MYSQL_DUMPS)) {
+                this.requestParameters.getAction().equals(RequestParameters.ACTION_DOWNLOAD_MYSQL_DUMPS)) {
             display.displayMysqlDumpsPage();
         }
         else {

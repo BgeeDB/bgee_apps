@@ -7,6 +7,10 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import org.bgee.controller.BgeeProperties;
+import org.bgee.controller.RequestParameters;
+import org.bgee.view.ResourceDisplay;
+
 /**
  * This class displays the resources for the HTML view.
  *
@@ -14,12 +18,7 @@ import org.apache.logging.log4j.Logger;
  * @version Bgee 14, May 2019
  * @since   Bgee 14, May 2019
  */
-
-import org.bgee.controller.BgeeProperties;
-import org.bgee.controller.RequestParameters;
-import org.bgee.view.ResourceDisplay;
-
-public class HtmlResourceDisplay extends HtmlParentDisplay implements ResourceDisplay{
+public class HtmlResourceDisplay extends HtmlParentDisplay implements ResourceDisplay {
 
     private final static Logger log = LogManager.getLogger(HtmlResourceDisplay.class.getName());
     
@@ -95,10 +94,10 @@ public class HtmlResourceDisplay extends HtmlParentDisplay implements ResourceDi
         this.writeln("<div class='feature_list'>");
         
         this.writeln(HtmlParentDisplay.getSingleFeatureLogo(ANAT_SIM_GITHUB_URL,
-                true, "Annatomical similarity annotations", 
-                "Annatomical similarity annotations",
+                true, "Anatomical similarity annotations", 
+                "Anatomical similarity annotations",
                 this.prop.getLogoImagesRootDirectory() + "github_logo.png",
-                "Annatomical similarity annotations used to define evolutionary "
+                "Anatomical similarity annotations used to define evolutionary "
                 + "relations between anatomical entities described in the Uberon "
                 + "ontology."));
         

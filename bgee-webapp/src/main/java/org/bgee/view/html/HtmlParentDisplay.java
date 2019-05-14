@@ -505,7 +505,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         
         RequestParameters urlMySQLDumps = this.getNewRequestParameters();
         urlMySQLDumps.setPage(RequestParameters.PAGE_DOWNLOAD);
-        urlMySQLDumps.setAction(RequestParameters.ACTION_MYSQL_DUMPS);
+        urlMySQLDumps.setAction(RequestParameters.ACTION_DOWNLOAD_MYSQL_DUMPS);
         
         RequestParameters urlDownloadExprCallFiles = this.getNewRequestParameters();
         urlDownloadExprCallFiles.setPage(RequestParameters.PAGE_DOWNLOAD);
@@ -514,20 +514,19 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         // Request parameters for the Resource menu
         RequestParameters urlResourceRPackages = this.getNewRequestParameters();
         urlResourceRPackages.setPage(RequestParameters.PAGE_RESOURCE);
-        urlResourceRPackages.setAction(RequestParameters.ACTION_R_PACKAGES);
+        urlResourceRPackages.setAction(RequestParameters.ACTION_RESOURCE_R_PACKAGES);
         
         RequestParameters urlResourceAnnotations = this.getNewRequestParameters();
         urlResourceAnnotations.setPage(RequestParameters.PAGE_RESOURCE);
-        urlResourceAnnotations.setAction(RequestParameters.ACTION_ANNOTATIONS);
+        urlResourceAnnotations.setAction(RequestParameters.ACTION_RESOURCE_ANNOTATIONS);
         
         RequestParameters urlResourceOntologies = this.getNewRequestParameters();
         urlResourceOntologies.setPage(RequestParameters.PAGE_RESOURCE);
-        urlResourceOntologies.setAction(RequestParameters.ACTION_ONTOLOGIES);
+        urlResourceOntologies.setAction(RequestParameters.ACTION_RESOURCE_ONTOLOGIES);
         
         RequestParameters urlResourceSourceCode = this.getNewRequestParameters();
         urlResourceSourceCode.setPage(RequestParameters.PAGE_RESOURCE);
-        urlResourceSourceCode.setAction(RequestParameters.ACTION_SOURCE_CODE);
-        
+        urlResourceSourceCode.setAction(RequestParameters.ACTION_RESOURCE_SOURCE_CODE);
         
         RequestParameters urlDocDataSets = this.getNewRequestParameters();
         urlDocDataSets.setPage(RequestParameters.PAGE_DOCUMENTATION);

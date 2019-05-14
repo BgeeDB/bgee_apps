@@ -50,22 +50,22 @@ public class CommandResource extends CommandParent {
 
         ResourceDisplay display = this.viewFactory.getResourceDisplay();
         if (this.requestParameters.getAction() != null &&
-                this.requestParameters.getAction().equals(RequestParameters.ACTION_R_PACKAGES)) {
+                this.requestParameters.getAction().equals(RequestParameters.ACTION_RESOURCE_R_PACKAGES)) {
 
             display.displayRPackages();
 
         } else if (this.requestParameters.getAction() != null && 
-                this.requestParameters.getAction().equals(RequestParameters.ACTION_ANNOTATIONS)) {
+                this.requestParameters.getAction().equals(RequestParameters.ACTION_RESOURCE_ANNOTATIONS)) {
 
             display.displayAnnotations();
 
         } else if (this.requestParameters.getAction() != null &&
-                this.requestParameters.getAction().equals(RequestParameters.ACTION_ONTOLOGIES)) {
+                this.requestParameters.getAction().equals(RequestParameters.ACTION_RESOURCE_ONTOLOGIES)) {
 
             display.displayOntologies();
 
         } else if (this.requestParameters.getAction() != null &&
-                this.requestParameters.getAction().equals(RequestParameters.ACTION_SOURCE_CODE)) {
+                this.requestParameters.getAction().equals(RequestParameters.ACTION_RESOURCE_SOURCE_CODE)) {
 
             display.displaySourceCode();
 

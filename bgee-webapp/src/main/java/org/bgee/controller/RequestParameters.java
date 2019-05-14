@@ -232,7 +232,7 @@ public class RequestParameters {
      * is requested. Value of the parameter page should be 
      * {@link #PAGE_DOWNLOAD}.
      */
-    public static final String ACTION_MYSQL_DUMPS = "mysql_dumps";
+    public static final String ACTION_DOWNLOAD_MYSQL_DUMPS = "mysql_dumps";
     
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
@@ -326,25 +326,25 @@ public class RequestParameters {
      * (see {@link URLParameters#getParamAction()}) when resource page about R packages
      * is requested. Value of the parameter page should be {@link #PAGE_RESOURCE}.
      */
-    public static final String ACTION_R_PACKAGES = "r_packages";
+    public static final String ACTION_RESOURCE_R_PACKAGES = "r_packages";
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
      * (see {@link URLParameters#getParamAction()}) when resource page about annotations
      * is requested. Value of the parameter page should be {@link #PAGE_RESOURCE}.
      */
-    public static final String ACTION_ANNOTATIONS = "annotations";
+    public static final String ACTION_RESOURCE_ANNOTATIONS = "annotations";
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
      * (see {@link URLParameters#getParamAction()}) when resource page about ontologies
      * is requested. Value of the parameter page should be {@link #PAGE_RESOURCE}.
      */
-    public static final String ACTION_ONTOLOGIES = "ontologies";
+    public static final String ACTION_RESOURCE_ONTOLOGIES = "ontologies";
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
      * (see {@link URLParameters#getParamAction()}) when resource page about source code
      * is requested. Value of the parameter page should be {@link #PAGE_RESOURCE}.
      */
-    public static final String ACTION_SOURCE_CODE = "source_code";
+    public static final String ACTION_RESOURCE_SOURCE_CODE = "source_code";
     /**
      * A {@code String} that is the anchor to use in the hash part of an URL 
      * to link to the single-species part, in the documentation about gene expression calls.

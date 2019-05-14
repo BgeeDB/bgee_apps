@@ -211,9 +211,9 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
     public void displaySourceCode() {
         log.entry();
         
-        this.startDisplay("Source codes");
+        this.startDisplay("Source code");
 
-        this.writeln("<h1>Source codes</h1>");
+        this.writeln("<h1>Source code</h1>");
 
         this.writeln("<div class='feature_list'>");
         

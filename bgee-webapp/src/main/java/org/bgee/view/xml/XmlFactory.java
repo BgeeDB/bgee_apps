@@ -90,6 +90,11 @@ public class XmlFactory extends ViewFactory {
 		return log.exit(new XmlSearchDisplay(this.response, this.requestParameters, this.prop, this));
 	}
 
+	@Override
+    public SparqlDisplay getSparqlDisplay() {
+        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
+    }
+	
     @Override
     public SourceDisplay getSourceDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
@@ -115,6 +120,11 @@ public class XmlFactory extends ViewFactory {
 
     @Override
     public FaqDisplay getFaqDisplay() {
+        throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
+    }
+
+    @Override
+    public ResourcesDisplay getResourceDisplay() throws IOException {
         throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
     }
 }

@@ -34,13 +34,33 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     private final static Logger log = LogManager.getLogger(HtmlParentDisplay.class.getName());
 
     /**
-     * A {@code String} that is the page name of the 'processed expression values' download page.
+     * A {@code String} that is the page name of the 'annotations' resources page.
      */
-    protected final static String PROCESSED_EXPR_VALUES_PAGE_NAME = "Processed expression values";
+    protected final static String ANNOTATIONS_PAGE_NAME = "Annotations";
     /**
      * A {@code String} that is the page name of the 'gene expression calls' download page.
      */
     protected final static String GENE_EXPR_CALLS_PAGE_NAME = "Gene expression calls";
+    /**
+     * A {@code String} that is the page name of the 'mysql dumps' download page.
+     */
+    protected final static String MYSQL_DUMPS_PAGE_NAME = "MySQL dumps";
+    /**
+     * A {@code String} that is the page name of the 'Ontologies' resources page.
+     */
+    protected final static String ONTOLOGIES_PAGE_NAME = "Ontologies";
+    /**
+     * A {@code String} that is the page name of the 'processed expression values' download page.
+     */
+    protected final static String PROCESSED_EXPR_VALUES_PAGE_NAME = "Processed expression values";
+    /**
+     * A {@code String} that is the page name of the 'R packages' resources page.
+     */
+    protected final static String R_PACKAGES_PAGE_NAME = "R Packages";
+    /**
+     * A {@code String} that is the page name of the 'Source code' resources page.
+     */
+    protected final static String SOURCE_CODE_PAGE_NAME = "Source code";
     /**
      * A {@code String} that is the page name of the 'gene expression calls' download page.
      */
@@ -53,15 +73,21 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             "col-xs-12 col-xs-offset-0 col-sm-offset-1 col-sm-10";
 
     /**
-     * A {@code String} to be used in {@code class} attribute.
+     * A {@code String} that is the URL of the Bioconductor BgeeDB R package.
      */
-    protected static final String BGEE_R_PACKAGE_URL = 
+    protected static final String BGEEDB_R_PACKAGE_URL = 
             "https://bioconductor.org/packages/release/bioc/html/BgeeDB.html";
-
+  
     /**
-     * A {@code String} to be used in {@code class} attribute.
+     * A {@code String} that is the URL of the Bgee GitHub.
      */
     protected static final String BGEE_GITHUB_URL = "https://github.com/BgeeDB";
+    
+    /**
+     * A {@code String} that is the URL of the Bgee pipeline master branch in GitHub.
+     */
+    protected static final String MASTER_BGEE_PIPELINE_GITHUB_URL = BGEE_GITHUB_URL + 
+            "/bgee_pipeline/tree/master";
     
     /**
      * A {@code String} that is the URL of the licence CC0 of Creative Commons.
@@ -352,8 +378,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 "data-copy='" + this.getRequestParameters().getStableRequestURL() + "' " +
                 "data-toggle='tooltip' data-placement='top' " +
                 "data-original-title='Click to copy to clipboard'>Copy permanent link</a>");
-        this.writeln("<li><a href='#TOP' id='sib_footer_gototop'>"
-                + "<span class='glyphicon glyphicon-menu-up'></span> Back to the top</a></li>");
+        this.writeln("<li>" + this.getObfuscateHelpEmail() + "</li>");
         this.writeln("</ul>");
         
         this.writeln("</div>"); // close container
@@ -383,6 +408,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 
         RequestParameters urlGeneSearch = this.getNewRequestParameters();
         urlGeneSearch.setPage(RequestParameters.PAGE_GENE);
+        
+        RequestParameters urlSparql = this.getNewRequestParameters();
+        urlSparql.setPage(RequestParameters.PAGE_SPARQL);
 
         RequestParameters urlDownload = this.getNewRequestParameters();
         urlDownload.setPage(RequestParameters.PAGE_DOWNLOAD);
@@ -391,10 +419,31 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         urlDownloadProcValueFile.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlDownloadProcValueFile.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
         
+        RequestParameters urlMySQLDumps = this.getNewRequestParameters();
+        urlMySQLDumps.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlMySQLDumps.setAction(RequestParameters.ACTION_DOWNLOAD_MYSQL_DUMPS);
+        
         RequestParameters urlDownloadExprCallFiles = this.getNewRequestParameters();
         urlDownloadExprCallFiles.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlDownloadExprCallFiles.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
 
+        // Request parameters for the Resources menu
+        RequestParameters urlResourcesRPackages = this.getNewRequestParameters();
+        urlResourcesRPackages.setPage(RequestParameters.PAGE_RESOURCES);
+        urlResourcesRPackages.setAction(RequestParameters.ACTION_RESOURCES_R_PACKAGES);
+        
+        RequestParameters urlResourcesAnnotations = this.getNewRequestParameters();
+        urlResourcesAnnotations.setPage(RequestParameters.PAGE_RESOURCES);
+        urlResourcesAnnotations.setAction(RequestParameters.ACTION_RESOURCES_ANNOTATIONS);
+        
+        RequestParameters urlResourcesOntologies = this.getNewRequestParameters();
+        urlResourcesOntologies.setPage(RequestParameters.PAGE_RESOURCES);
+        urlResourcesOntologies.setAction(RequestParameters.ACTION_RESOURCES_ONTOLOGIES);
+        
+        RequestParameters urlResourcesSourceCode = this.getNewRequestParameters();
+        urlResourcesSourceCode.setPage(RequestParameters.PAGE_RESOURCES);
+        urlResourcesSourceCode.setAction(RequestParameters.ACTION_RESOURCES_SOURCE_CODE);
+        
         RequestParameters urlDocDataSets = this.getNewRequestParameters();
         urlDocDataSets.setPage(RequestParameters.PAGE_DOCUMENTATION);
         urlDocDataSets.setAction(RequestParameters.ACTION_DOC_DATA_SETS);
@@ -406,7 +455,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         RequestParameters urlDocTopAnat = this.getNewRequestParameters();
         urlDocTopAnat.setPage(RequestParameters.PAGE_DOCUMENTATION);
         urlDocTopAnat.setAction(RequestParameters.ACTION_DOC_TOP_ANAT);
-        
+
         RequestParameters urlFaq = this.getNewRequestParameters();
         urlFaq.setPage(RequestParameters.PAGE_DOCUMENTATION);
         urlFaq.setAction(RequestParameters.ACTION_DOC_FAQ);
@@ -460,8 +509,6 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<li><a title='TopAnat: Enrichment analyses of expression localization' href='")
                 .append(urlTopAnat.getRequestURL()).append("'>").append(TOP_ANAT_PAGE_NAME)
                 .append("</a></li>");
-        navbar.append("<li><a href='" + BGEE_R_PACKAGE_URL + "' target='_blank'>"
-                + "BgeeDB R package</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
 
@@ -473,6 +520,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<ul class='dropdown-menu'>");
         navbar.append("<li><a title='Gene search' href='").append(urlGeneSearch.getRequestURL())
                 .append("'>Gene search</a></li>");
+        navbar.append("<li><a title='SPARQL endpoint' href='").append(urlSparql.getRequestURL())
+        .append("'>SPARQL endpoint</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
 
@@ -481,23 +530,39 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' "
               + "aria-haspopup='true' aria-expanded='false'>Download <span class='caret'></span></a>");
         navbar.append("<ul class='dropdown-menu'>");
-        navbar.append("<li><a href='").append(urlDownload.getRequestURL())
-                .append("'>Download overview</a></li>");
         navbar.append("<li><a href='").append(urlDownloadExprCallFiles.getRequestURL()).append("'>")
                 .append(GENE_EXPR_CALLS_PAGE_NAME).append("</a></li>");
         navbar.append("<li><a href='").append(urlDownloadProcValueFile.getRequestURL()).append("'>")
                 .append(PROCESSED_EXPR_VALUES_PAGE_NAME).append("</a></li>");
-        navbar.append("<li><a href='" + BGEE_R_PACKAGE_URL + "' target='_blank'>"
-                + "BgeeDB R package</a></li>");
-        navbar.append("<li><a href='" + BGEE_GITHUB_URL + "' target='_blank'>"
-                + "BgeeDB GitHub repository</a></li>");
+        navbar.append("<li><a href='").append(urlMySQLDumps.getRequestURL()).append("'>")
+                .append(MYSQL_DUMPS_PAGE_NAME).append("</a></li>");
+        navbar.append("</ul>");
+        navbar.append("</li>");
+        
+     // Resources menu
+        navbar.append("<li class='dropdown'>");
+        navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' "
+              + "aria-haspopup='true' aria-expanded='false'>Resources <span class='caret'></span></a>");
+        navbar.append("<ul class='dropdown-menu'>");
+        navbar.append("<li><a href='").append(urlResourcesRPackages.getRequestURL())
+                .append("' title='R packages'>")
+                .append(R_PACKAGES_PAGE_NAME).append("</a></li>");
+        navbar.append("<li><a href='").append(urlResourcesAnnotations.getRequestURL())
+                .append("' title='Annotation resources'>")
+                .append(ANNOTATIONS_PAGE_NAME).append("</a></li>");
+        navbar.append("<li><a href='").append(urlResourcesOntologies.getRequestURL())
+                .append("' title='Ontology resources'>")
+                .append(ONTOLOGIES_PAGE_NAME).append("</a></li>");
+        navbar.append("<li><a href='").append(urlResourcesSourceCode.getRequestURL())
+                .append("' title='Source codes'>")
+                .append(SOURCE_CODE_PAGE_NAME).append("</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
 
-        // Documentation
+        // Support menu
         navbar.append("<li class='dropdown'>");
         navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' "
-              + "aria-haspopup='true' aria-expanded='false'>Documentation <span class='caret'></span></a>");
+              + "aria-haspopup='true' aria-expanded='false'>Support <span class='caret'></span></a>");
         navbar.append("<ul class='dropdown-menu'>");
         navbar.append("<li><a title='See how to access to GTEx data' href='")
                 .append(urlDocDataSets.getRequestURL()).append("'>GTEx in Bgee</a></li>");
@@ -506,11 +571,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<li><a title='Gene expression call files documentation' href='")
                 .append(urlDocExprCallFiles.getRequestURL()).append("'>").append(GENE_EXPR_CALLS_PAGE_NAME)
                 .append("</a></li>");
-//        navbar.append("<li><a title='Processed expression value files documentation' href='" + 
-//            urlDocProcValueFiles.getRequestURL() + "'>" + PROCESSED_EXPR_VALUES_PAGE_NAME + "</a></li>");
-        navbar.append("<li><a href='https://bioconductor.org/packages/release/bioc/manuals/BgeeDB/man/BgeeDB.pdf'"
-                + " target='_blank'>BgeeDB R package</a></li>");
         navbar.append("<li><a href='").append(urlFaq.getRequestURL()).append("'>FAQ</a></li>");
+        navbar.append("<li>").append(this.getObfuscateHelpEmail()).append("</li>");
         navbar.append("</ul>");
         navbar.append("</li>");
         
@@ -527,10 +589,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<li><a href='https://bgeedb.wordpress.com' target='_blank'>Bgee blog</a></li>");
         navbar.append("<li><a href='").append(urlPrivacyPolicy.getRequestURL()).append("'>Bgee privacy notice</a></li>");
         navbar.append("</ul>");
-        navbar.append("</li>");
-        
-        // Help
-        navbar.append("<li>").append(this.getObfuscateHelpEmail()).append("</li>");
+        navbar.append("</li>");        
 
         navbar.append("</ul>"); // close left nav links
 
@@ -538,7 +597,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<ul class='nav navbar-nav navbar-right'>");
         
         // R package
-        navbar.append("<li><a title='See our R package' target='_blank' href='" + BGEE_R_PACKAGE_URL + "'>" +
+        navbar.append("<li><a title='Download Bgee data with the BgeeDB R package' target='_blank' href='" + BGEEDB_R_PACKAGE_URL + "'>" +
                 "<img class='social-img' alt='R logo' src='")
                 .append(this.prop.getLogoImagesRootDirectory()).append("r_logo.png'></a></li>");
 
@@ -610,7 +669,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     //TODO move javascript in common.js
     private String getObfuscateHelpEmail() {
-        return getObfuscateEmailLink("%48%65%6C%70");
+        return getObfuscateEmailLink("%43%6F%6E%74%61%63%74%20%75%73");
     }
 
     /**

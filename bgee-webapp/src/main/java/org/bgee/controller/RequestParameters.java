@@ -131,10 +131,22 @@ public class RequestParameters {
     public static final String PAGE_DOWNLOAD = "download";
 
     /**
+    * A {@code String} that is the value taken by the {@code page} parameter 
+    * (see {@link URLParameters#getParamPage()}) when a resources page is requested.
+    */
+    public static final String PAGE_RESOURCES = "resources";
+    
+    /**
      * A {@code String} that is the value taken by the {@code page} parameter 
      * (see {@link URLParameters#getParamPage()}) when a download page is requested.
      */
     public static final String PAGE_DOCUMENTATION = "doc";
+    
+    /**
+     * A {@code String} that is the value taken by the {@code page} parameter 
+     * (see {@link URLParameters#getParamPage()}) when a page related to SPARQL is requested.
+     */
+    public static final String PAGE_SPARQL = "sparql";
     
     /**
      * A {@code String} that is the value taken by the {@code page} parameter 
@@ -219,6 +231,14 @@ public class RequestParameters {
      */
     public static final String ACTION_DOWLOAD_PROC_VALUE_FILES = "proc_values";
 
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when download page about mysql dumps
+     * is requested. Value of the parameter page should be 
+     * {@link #PAGE_DOWNLOAD}.
+     */
+    public static final String ACTION_DOWNLOAD_MYSQL_DUMPS = "mysql_dumps";
+    
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
      * (see {@link URLParameters#getParamAction()}) when documentation about download files 
@@ -306,6 +326,30 @@ public class RequestParameters {
      * Value of the parameter page should be {@link #PAGE_GENE}.
      */
     public static final String ACTION_EXPASY_RESULT = "expasy_result";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when resources page about R packages
+     * is requested. Value of the parameter page should be {@link #PAGE_RESOURCES}.
+     */
+    public static final String ACTION_RESOURCES_R_PACKAGES = "r_packages";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when resources page about annotations
+     * is requested. Value of the parameter page should be {@link #PAGE_RESOURCES}.
+     */
+    public static final String ACTION_RESOURCES_ANNOTATIONS = "annotations";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when resources page about ontologies
+     * is requested. Value of the parameter page should be {@link #PAGE_RESOURCES}.
+     */
+    public static final String ACTION_RESOURCES_ONTOLOGIES = "ontologies";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when resources page about source code
+     * is requested. Value of the parameter page should be {@link #PAGE_RESOURCES}.
+     */
+    public static final String ACTION_RESOURCES_SOURCE_CODE = "source_code";
     /**
      * A {@code String} that is the anchor to use in the hash part of an URL 
      * to link to the single-species part, in the documentation about gene expression calls.
@@ -2496,6 +2540,32 @@ public class RequestParameters {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
             this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_RPACKAGE)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    
+    /**
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     * category "resources".
+     */
+    public boolean isAResourcesPageCategory() {
+        log.entry();
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
+            this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_RESOURCES)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    
+    /**
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     * category "sparql".
+     */
+    public boolean isASparqlPageCategory() {
+        log.entry();
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
+            this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_SPARQL)) {
             return log.exit(true);
         }
         return log.exit(false);

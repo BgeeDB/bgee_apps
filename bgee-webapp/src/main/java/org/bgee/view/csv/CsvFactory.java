@@ -94,6 +94,11 @@ public class CsvFactory extends ViewFactory {
 	}
 	
 	@Override
+    public SparqlDisplay getSparqlDisplay() {
+        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
+    }
+	
+	@Override
     public SourceDisplay getSourceDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
     }
@@ -121,6 +126,11 @@ public class CsvFactory extends ViewFactory {
 
     @Override
     public FaqDisplay getFaqDisplay() {
+        throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
+    }
+
+    @Override
+    public ResourcesDisplay getResourceDisplay() throws IOException {
         throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
     }
 }

@@ -165,4 +165,19 @@ public class FakeFactory extends ViewFactory {
     public FaqDisplay getFaqDisplay() throws IOException {
         return null;
     }
+
+    @Override
+    public SparqlDisplay getSparqlDisplay() throws IOException {
+        return null;
+    }
+
+    @Override
+    public ResourcesDisplay getResourceDisplay() throws IOException {
+        if(prop.getUrlMaxLength() == 9999 && this.requestParameters.getFirstValue(
+                ((TestURLParameters)this.requestParameters.getUrlParametersInstance())
+                .getParamTestString()).equals("test")){
+            return new FakeResourcesDisplay(this.response, this.requestParameters, prop, this);
+        }
+        return null;
+    }
 }

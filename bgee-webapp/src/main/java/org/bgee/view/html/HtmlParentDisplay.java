@@ -77,49 +77,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected static final String BGEEDB_R_PACKAGE_URL = 
             "https://bioconductor.org/packages/release/bioc/html/BgeeDB.html";
-    
-    /**
-     * A {@code String} to be used in {@code class} attribute.
-     */
-    protected static final String BGEECALL_R_PACKAGE_URL = 
-            "https://bioconductor.org/packages/release/workflows/html/BgeeCall.html";
-    
-    /**
-     * A {@code String} to be used in {@code class} attribute.
-     */
-    protected static final String GTEX_CLEANING_URL = 
-            "https://docs.google.com/document/d/1IuNu3WGTSIhXnJffP_yo7lK2abSgxZQDPJgG1SYF5vI/edit";
-    
-    
-    /**
-     * A {@code String} to be used in {@code class} attribute.
-     */
-    protected static final String IQRAY_GITHUB_URL = "https://github.com/BgeeDB/IQRray";
-    
-    /**
-     * A {@code String} to be used in {@code class} attribute.
-     */
-    protected static final String ANAT_SIM_GITHUB_URL = 
-            "https://github.com/BgeeDB/anatomical-similarity-annotations";
-
-    /**
-     * A {@code String} to be used in {@code class} attribute.
-     */
-    protected static final String RNASEQ_ANNOT_GITHUB_URL = 
-            "https://github.com/BgeeDB/bgee_pipeline/tree/master/source_files/RNA_Seq";
-    
-    /**
-     * A {@code String} to be used in {@code class} attribute.
-     */
-    protected static final String AFFI_ANNOT_GITHUB_URL = 
-            "https://github.com/BgeeDB/bgee_pipeline/tree/master/source_files/Affymetrix";
-    
-    /**
-     * A {@code String} to be used in {@code class} attribute.
-     */
-    protected static final String EST_ANNOT_GITHUB_URL = 
-            "https://github.com/BgeeDB/bgee_pipeline/tree/master/source_files/ESTs";
-    
+  
     /**
      * A {@code String} to be used in {@code class} attribute.
      */
@@ -128,55 +86,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     /**
      * A {@code String} to be used in {@code class} attribute.
      */
-    protected static final String BGEEDB_GITHUB_URL = 
-            "https://github.com/BgeeDB/BgeeDB_R";
-    
-    /**
-     * A {@code String} to be used in {@code class} attribute.
-     */
-    protected static final String BGEECALL_GITHUB_URL = 
-            "https://github.com/BgeeDB/BgeeCall";
-    
-    /**
-     * A {@code String} to be used in {@code class} attribute.
-     */
-    protected static final String BGEE_PIPELINE_GITHUB_URL = 
-            "https://github.com/BgeeDB/bgee_pipeline";
-    
-    /**
-     * A {@code String} to be used in {@code class} attribute.
-     */
-    protected static final String CIO_GITHUB_URL = 
-            "https://github.com/BgeeDB/confidence-information-ontology";
-    
-    /**
-     * A {@code String} to be used in {@code class} attribute.
-     */
-    protected static final String HOM_GITHUB_URL = 
-            "https://github.com/BgeeDB/homology-ontology";   
-    
-    /**
-     * A {@code String} to be used in {@code class} attribute.
-     */
-    protected static final String DEV_STAGE_ONTOLOGIES_GITHUB_URL = 
-            "https://github.com/obophenotype/developmental-stage-ontologies"; 
-    
-    /**
-     * A {@code String} to be used in {@code class} attribute.
-     */
-    protected static final String UBERON_URL = "https://uberon.github.io/"; 
-    
-    /**
-     * A {@code String} to be used in {@code class} attribute.
-     */
-    protected static final String UBERON_BGEE_PIPELINE_GITHUB_URL = 
-            "https://github.com/BgeeDB/bgee_pipeline/tree/master/pipeline/uberon"; 
-    
-    /**
-     * A {@code String} to be used in {@code class} attribute.
-     */
-    protected static final String NCBITAXON_URL = 
-            "http://www.obofoundry.org/ontology/ncbitaxon.html";
+    protected static final String MASTER_BGEE_PIPELINE_GITHUB_URL = BGEE_GITHUB_URL + 
+            "/bgee_pipeline/tree/master";
     
     /**
      * A {@code String} that is the URL of the licence CC0 of Creative Commons.

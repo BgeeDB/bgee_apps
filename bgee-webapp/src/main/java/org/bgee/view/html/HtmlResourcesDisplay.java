@@ -69,7 +69,8 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
                 this.prop.getLogoImagesRootDirectory() + "r_logo_color.png",
                 BGEEDB_DESCRIPTION));
         
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(BGEECALL_R_PACKAGE_URL,
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
+                "https://bioconductor.org/packages/release/workflows/html/BgeeCall.html",
                 true, "BgeeCall R package", "BgeeCall R package",
                 this.prop.getLogoImagesRootDirectory() + "r_logo_color.png",
                 BGEECALL_DESCRIPTION));
@@ -92,7 +93,8 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
         
         this.writeln("<div class='feature_list'>");
         
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(ANAT_SIM_GITHUB_URL,
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
+                BGEE_GITHUB_URL + "/anatomical-similarity-annotations",
                 true, "Anatomical similarity annotations", 
                 "Anatomical similarity annotations",
                 this.prop.getLogoImagesRootDirectory() + "github_logo.png",
@@ -100,24 +102,28 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
                 + "relations between anatomical entities described in the Uberon "
                 + "ontology."));
         
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(RNASEQ_ANNOT_GITHUB_URL,
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
+                MASTER_BGEE_PIPELINE_GITHUB_URL + "/source_files/RNA_Seq",
                 true, "RNA-Seq annotations", "RNA-Seq annotations",
                 this.prop.getLogoImagesRootDirectory() + "github_logo.png",
                 "Annotations of RNA-Seq experiments, libraries and platforms used to "
                 + "generate the last version of Bgee."));
         
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(AFFI_ANNOT_GITHUB_URL,
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
+                MASTER_BGEE_PIPELINE_GITHUB_URL + "/source_files/Affymetrix",
                 true, "Affymetrix annotations", "Affymetrix annotations",
                 this.prop.getLogoImagesRootDirectory() + "github_logo.png",
                 "Annotations of Affymetrix experiments, chips, chip types used to "
                 + "generate the last version of Bgee"));
         
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(EST_ANNOT_GITHUB_URL,
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
+                MASTER_BGEE_PIPELINE_GITHUB_URL + "/source_files/ESTs",
                 true, "ESTs annotations", "ESTs annotations",
                 this.prop.getLogoImagesRootDirectory() + "github_logo.png",
                 "ESTs annotations used to generate the last version of Bgee"));
         
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(GTEX_CLEANING_URL,
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
+                "https://docs.google.com/document/d/1IuNu3WGTSIhXnJffP_yo7lK2abSgxZQDPJgG1SYF5vI",
                 true, "GTEx cleaning for Bgee", "GTEx cleaning for Bgee",
                 this.prop.getLogoImagesRootDirectory() + "github_logo.png",
                 "Information on how the GTEx dataset was cleaned for Bgee"));
@@ -140,7 +146,8 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
 
         this.writeln("<div class='feature_list'>");
         
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(DEV_STAGE_ONTOLOGIES_GITHUB_URL,
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
+                "https://github.com/obophenotype/developmental-stage-ontologies",
                 true, "Developmental stage ontologies", "Developmental stage ontologies",
                 this.prop.getLogoImagesRootDirectory() + "github_logo.png",
                 "A collection of species-specific developmental stage ontologies. The custom "
@@ -150,41 +157,44 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
                 + " title = 'Link to custom version explanations' class='external_link' "
                 + "target = '_blank'>here.</a>"));
         
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(CIO_GITHUB_URL,
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
+                BGEE_GITHUB_URL + "/confidence-information-ontology",
                 true, "Confidence Information Ontology (CIO)", "Confidence Information Ontology (CIO)",
                 this.prop.getLogoImagesRootDirectory() + "github_logo.png",
                 "Ontology providing confidence information about annotation assertions "
                 + "in a more systematic manner"));
         
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(HOM_GITHUB_URL,
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
+                BGEE_GITHUB_URL + "/homology-ontology",
                 true, "Homology ontology (HOM)", "Homology ontology (HOM)",
                 this.prop.getLogoImagesRootDirectory() + "github_logo.png",
                 "Ontology providing annotations of similarity between anatomical structure"));
         
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(UBERON_URL,
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo("https://uberon.github.io/",
                 true, "Uberon ontology", "Uberon ontology",
                 this.prop.getLogoImagesRootDirectory() + "uberon_logo.png",
                 "Bgee uses the cross-species ontology Uberon covering anatomical "
                 + "structures in animals. A "
-                + "<a href='https://github.com/BgeeDB/bgee_pipeline/tree/master/generated_files/uberon' "
+                + "<a href='" + MASTER_BGEE_PIPELINE_GITHUB_URL + "/generated_files/uberon' "
                 + "title = 'Link to custom composite version of Uberon' "
                 + "class='external_link' target = '_blank'>custom version</a> is "
                 + "generated for Bgee. Steps explaining how and why this custom "
                 + "version is generated are described "
-                + "<a href='https://github.com/BgeeDB/bgee_pipeline/tree/master/pipeline/uberon#anatomical-ontology-todos-before-pipeline-run'"
+                + "<a href='" + MASTER_BGEE_PIPELINE_GITHUB_URL + "/pipeline/uberon#anatomical-ontology-todos-before-pipeline-run'"
                 + " title = 'Link to custom version explanations' class='external_link' "
                 + "target = '_blank'>here</a>. We also manually modified mapping to terms"
                 + "from external ontologies."));
         
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(NCBITAXON_URL,
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
+                "http://www.obofoundry.org/ontology/ncbitaxon.html",
                 true, "NCBITaxon ontology", "NCBITaxon ontology",
                 this.prop.getLogoImagesRootDirectory() + "obofoundry_logo.png",
                 "Bgee uses the NCBITaxon ontology. A "
-                + "<a href='https://github.com/BgeeDB/bgee_pipeline/tree/master/generated_files/species' "
+                + "<a href='" + MASTER_BGEE_PIPELINE_GITHUB_URL + "/generated_files/species' "
                 + "title = 'Link to custom ncbitaxon ontology' class='external_link' "
                 + "target = '_blank'>custom version</a> is generated for Bgee. Steps "
                 + "explaining how and why this custom version is generated are described "
-                + "<a href='https://github.com/BgeeDB/bgee_pipeline/tree/master/pipeline/species#details'"
+                + "<a href='" + MASTER_BGEE_PIPELINE_GITHUB_URL + "/pipeline/species#details'"
                 + " title = 'Link to custom version explanations' class='external_link' "
                 + "target = '_blank'>here.</a>"));
         
@@ -207,23 +217,27 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
 
         this.writeln("<div class='feature_list'>");
         
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(BGEE_PIPELINE_GITHUB_URL,
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
+                BGEE_GITHUB_URL + "/bgee_pipeline",
                 true, "Bgee pipeline", "Bgee pipeline",
                 this.prop.getLogoImagesRootDirectory() + "github_logo.png",
                 "Well documented source code of the Bgee pipeline used to generate "
                 + "databases and download files."));
         
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(BGEEDB_GITHUB_URL,
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
+                BGEE_GITHUB_URL + "/BgeeDB_R",
                 true, "BgeeDB R package", "BgeeDB R package",
                 this.prop.getLogoImagesRootDirectory() + "github_logo.png",
                 BGEEDB_DESCRIPTION));
         
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(BGEECALL_R_PACKAGE_URL,
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
+                BGEE_GITHUB_URL + "/BgeeCall",
                 true, "BgeeCall R package", "BgeeCall R package",
                 this.prop.getLogoImagesRootDirectory() + "github_logo.png",
                 BGEECALL_DESCRIPTION));
         
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(IQRAY_GITHUB_URL,
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
+                BGEE_GITHUB_URL + "/IQRray",
                 true, "IQRay", "IQRay",
                 this.prop.getLogoImagesRootDirectory() + "github_logo.png",
                 "A method for Affymetrix microarray quality control which outperforms "

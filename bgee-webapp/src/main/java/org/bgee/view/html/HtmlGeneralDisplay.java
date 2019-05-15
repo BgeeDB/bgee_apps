@@ -317,6 +317,32 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         urlGeneSearchHbb.setPage(RequestParameters.PAGE_GENE);
         urlGeneSearchHbb.setSearch("HBB");
 
+        RequestParameters urlResourcesRPackages = this.getNewRequestParameters();
+        urlResourcesRPackages.setPage(RequestParameters.PAGE_RESOURCES);
+        urlResourcesRPackages.setAction(RequestParameters.ACTION_RESOURCES_R_PACKAGES);
+
+        RequestParameters urlResourcesAnnotations = this.getNewRequestParameters();
+        urlResourcesAnnotations.setPage(RequestParameters.PAGE_RESOURCES);
+        urlResourcesAnnotations.setAction(RequestParameters.ACTION_RESOURCES_ANNOTATIONS);
+
+        RequestParameters urlResourcesOntologies = this.getNewRequestParameters();
+        urlResourcesOntologies.setPage(RequestParameters.PAGE_RESOURCES);
+        urlResourcesOntologies.setAction(RequestParameters.ACTION_RESOURCES_ONTOLOGIES);
+
+        RequestParameters urlResourcesSourceCode = this.getNewRequestParameters();
+        urlResourcesSourceCode.setPage(RequestParameters.PAGE_RESOURCES);
+        urlResourcesSourceCode.setAction(RequestParameters.ACTION_RESOURCES_SOURCE_CODE);
+
+        RequestParameters urlMySQLDumps = this.getNewRequestParameters();
+        urlMySQLDumps.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlMySQLDumps.setAction(RequestParameters.ACTION_DOWNLOAD_MYSQL_DUMPS);
+        
+        RequestParameters urlSparql = this.getNewRequestParameters();
+        urlSparql.setPage(RequestParameters.PAGE_SPARQL);
+
+        RequestParameters urlCollaborations = this.getNewRequestParameters();
+        urlCollaborations.setPage(RequestParameters.PAGE_COLLABORATIONS);
+
         this.writeln("<div id='bgee_news' class='panel panel-default'>");
         this.writeln("<div class='panel-heading'>");
         this.writeln("<span class='panel-title'>News"
@@ -325,6 +351,25 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         this.writeln("</div>"); // close panel-heading
         
         this.writeln("<div class='panel-body'>");
+
+        this.writeOneNews("2019-05",
+                "<ul>" +
+                "    <li>New resource pages: " +
+                        "<a href='" + urlResourcesRPackages.getRequestURL() + "' title='R packages'>" + 
+                        R_PACKAGES_PAGE_NAME + "</a>, " +
+                        "<a href='" + urlResourcesAnnotations.getRequestURL() + "' title='Annotations'>" + 
+                        ANNOTATIONS_PAGE_NAME + "</a>, " +
+                        "<a href='" + urlResourcesOntologies.getRequestURL() + "' title='Ontologies'>" + 
+                        ONTOLOGIES_PAGE_NAME + "</a> and " +
+                        "<a href='" + urlResourcesSourceCode.getRequestURL() + "' title='Source code'>" + 
+                        SOURCE_CODE_PAGE_NAME + "</a> pages.</li>" +
+                "    <li>New <a href='" + urlMySQLDumps.getRequestURL() + "' title='MySQL dumps'>" + 
+                        MYSQL_DUMPS_PAGE_NAME + "</a> and <a href='" + urlSparql.getRequestURL() + 
+                        "' title='Bgee SPARQL endpoint'>SPARQL endpoint</a> pages.</li>" +
+                "    <li>New <a href='" + urlCollaborations.getRequestURL() + 
+                        "' title='Bgee collaborations'>Bgee collaborations</a> page.</li>" +
+                "    <li>Update of the menu</li>" +
+                "</ul>");
 
         this.writeOneNews("2019-05-12",
                 "<ul>" +

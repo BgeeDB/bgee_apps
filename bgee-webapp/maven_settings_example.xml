@@ -54,6 +54,7 @@
       <!-- Root of the server to use. Important to generate correct links in emails -->
       <filter.org.bgee.webapp.bgeeRootDirectory>http://test.com/</filter.org.bgee.webapp.bgeeRootDirectory>
       <filter.org.bgee.webapp.bgeeStableRootDirectory>http://test.com/test14/</filter.org.bgee.webapp.bgeeStableRootDirectory>
+      <filter.org.bgee.webapp.bgeeCurrentUrl>http://test.com/</filter.org.bgee.webapp.bgeeCurrentUrl>
       <filter.org.bgee.webapp.bgeeRootDomain>.test.com</filter.org.bgee.webapp.bgeeRootDomain>
     </properties>
   </profile>
@@ -74,7 +75,7 @@
       <filter.dao.jdbc.username>username</filter.dao.jdbc.username>
       <filter.dao.jdbc.password>password</filter.dao.jdbc.password>
       <!-- Properties for running Sphinx -->
-      <filter.org.bgee.search.url>server_url</filter.org.bgee.search.url>
+      <filter.org.bgee.search.url>127.0.0.1</filter.org.bgee.search.url>
       <filter.org.bgee.search.port>9312</filter.org.bgee.search.port>
       <!-- Properties for running TopAnat -->
       <filter.org.bgee.core.topAnatRWorkingDirectory>/workingDir/</filter.org.bgee.core.topAnatRWorkingDirectory>
@@ -89,6 +90,7 @@
       <!-- Root of the server to use. Important to generate correct links in emails -->
       <filter.org.bgee.webapp.bgeeRootDirectory>http://production.com/</filter.org.bgee.webapp.bgeeRootDirectory>
       <filter.org.bgee.webapp.bgeeStableRootDirectory>http://production.com/production14/</filter.org.bgee.webapp.bgeeStableRootDirectory>
+      <filter.org.bgee.webapp.bgeeCurrentUrl>http://production.com/</filter.org.bgee.webapp.bgeeCurrentUrl>
       <filter.org.bgee.webapp.bgeeRootDomain>.production.com</filter.org.bgee.webapp.bgeeRootDomain>
     </properties>
   </profile>

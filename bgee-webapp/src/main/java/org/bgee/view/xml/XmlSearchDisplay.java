@@ -114,22 +114,16 @@ public class XmlSearchDisplay extends XmlParentDisplay implements SearchDisplay 
 
 		this.writeln("<ExpasyResult>");
 
-		this.writeln("<count>");
-		this.writeln(String.valueOf(count));
-		this.writeln("</count>");
-		
-		this.writeln("<url>");
+		this.writeln("<count>" + String.valueOf(count) + "</count>");
+
 		// TODO do we need to set getNewRequestParameters() in XmlParentDisplay as HtmlParentDisplay?
 		RequestParameters url = new RequestParameters(
 				this.getRequestParameters().getUrlParametersInstance(), this.prop, true, "&amp;");
 		url.setPage(RequestParameters.PAGE_GENE);
 		url.setQuery(searchTerm);
-		this.writeln(url.getRequestURL());
-		this.writeln("</url>");
+		this.writeln("<url>" + url.getRequestURL() + "</url>");
 
-		this.writeln("<description>");
-		this.writeln("Genes found in gene expression database Bgee");
-		this.writeln("</description>");
+		this.writeln("<description>Genes found in gene expression database Bgee</description>");
 
 		this.writeln("</ExpasyResult>");
 

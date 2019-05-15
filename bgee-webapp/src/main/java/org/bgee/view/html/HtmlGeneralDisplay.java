@@ -86,100 +86,100 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     /**
      * Display the banner with species (without any interaction).
      * 
-     * @param groups	A {@code List} of {@code SpeciesDataGroup} for which display the image.
-	 */
-	private void displaySpeciesBanner(List<SpeciesDataGroup> groups) {
-	    log.entry(groups);
-	
-	    StringBuilder homePageSpeciesSection = new StringBuilder();
-	    
-	    groups.stream().filter(sdg -> sdg.isSingleSpecies()).forEach(sdg -> {
-	        Species species = sdg.getMembers().get(0);
-	        Map<String,String> attrs = new HashMap<>();
-			attrs.put("src", this.getSpeciesImageSrc(species, true));
-	        attrs.put("alt", htmlEntities(species.getShortName()));
-	        attrs.put("class", "species_img");
-	        homePageSpeciesSection.append(getHTMLTag("img", attrs));
-	    });
-	
-	    this.writeln("<div id='bgee_species' class='row'>");
+     * @param groups    A {@code List} of {@code SpeciesDataGroup} for which display the image.
+     */
+    private void displaySpeciesBanner(List<SpeciesDataGroup> groups) {
+        log.entry(groups);
+    
+        StringBuilder homePageSpeciesSection = new StringBuilder();
+        
+        groups.stream().filter(sdg -> sdg.isSingleSpecies()).forEach(sdg -> {
+            Species species = sdg.getMembers().get(0);
+            Map<String,String> attrs = new HashMap<>();
+            attrs.put("src", this.getSpeciesImageSrc(species, true));
+            attrs.put("alt", htmlEntities(species.getShortName()));
+            attrs.put("class", "species_img");
+            homePageSpeciesSection.append(getHTMLTag("img", attrs));
+        });
+    
+        this.writeln("<div id='bgee_species' class='row'>");
         this.writeln("<div class='hidden-xs col-sm-12'>");
-	    this.writeln(homePageSpeciesSection.toString());
-	    this.writeln("</div>");
-	    this.writeln("</div>");
-	
-	    log.exit();
-	}
+        this.writeln(homePageSpeciesSection.toString());
+        this.writeln("</div>");
+        this.writeln("</div>");
+    
+        log.exit();
+    }
 
-	/**
+    /**
      * Display the Bgee hero unit.
-	 */
-	private void displayHeroUnit() {
-		log.entry();
-		
-		String archiveClass = this.prop.isArchive()? "archive": "";
+     */
+    private void displayHeroUnit() {
+        log.entry();
+        
+        String archiveClass = this.prop.isArchive()? "archive": "";
 
-		this.writeln("<div id='bgee_hero' class='row " + archiveClass + "'>");
+        this.writeln("<div id='bgee_hero' class='row " + archiveClass + "'>");
 
-	    String version = this.getWebAppVersion();
-	    if (version != null) {
-	        this.writeln("<span id='bgee_version'>version " + htmlEntities(version) + "</span>");
-	    }
+        String version = this.getWebAppVersion();
+        if (version != null) {
+            this.writeln("<span id='bgee_version'>version " + htmlEntities(version) + "</span>");
+        }
 
-	    this.writeln("<div id='bgee_hp_logo'><img src='" + this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() 
-	            + "bgee13_hp_logo.png' alt='Bgee logo'></div>");
-	
-	    this.writeln("<div class='mini_text'>Gene expression data in animals</div>");
+        this.writeln("<div id='bgee_hp_logo'><img src='" + this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() 
+                + "bgee13_hp_logo.png' alt='Bgee logo'></div>");
+    
+        this.writeln("<div class='mini_text'>Gene expression data in animals</div>");
 
-	    this.displayBgeeButtons("start_buttons");
-	
-	    this.writeln("</div>"); // close bgee_hero row
-	
-	    log.exit();
-	}
+        this.displayBgeeButtons("start_buttons");
+    
+        this.writeln("</div>"); // close bgee_hero row
+    
+        log.exit();
+    }
 
-	/**
+    /**
      * Display the buttons that allow to access quickly to different pages of the Bgee web site.
      * 
-     * @param divId	A {@code String} that is the ID of HTML 'div' element.
-	 */
-	private void displayBgeeButtons(String divId) {
-		log.entry(divId);
-		
-		RequestParameters urlTopAnat = this.getNewRequestParameters();
-	    urlTopAnat.setPage(RequestParameters.PAGE_TOP_ANAT);
-	    RequestParameters urlGeneSearch = this.getNewRequestParameters();
-	    urlGeneSearch.setPage(RequestParameters.PAGE_GENE);
-	    RequestParameters urlDownload = this.getNewRequestParameters();
-	    urlDownload.setPage(RequestParameters.PAGE_DOWNLOAD);
-	    
-	    this.writeln("<div id='" + divId + "'>");
-	    this.writeln("<a href='"+ urlTopAnat.getRequestURL() + 
-	    		"'><span class='glyphicon glyphicon-stats'></span>Expression enrichment analysis</a>");
-	    this.writeln("<a href='"+ urlGeneSearch.getRequestURL() + 
-	    		"'><span class='glyphicon glyphicon-search'></span>Gene search</a>");
-	    this.writeln("<a href='"+ urlDownload.getRequestURL() + 
-	    		"'><span class='glyphicon glyphicon-download'></span>Download</a>");
-	    this.writeln("</div>"); // close start_buttons
-	    
-	    log.exit();
-	}
+     * @param divId    A {@code String} that is the ID of HTML 'div' element.
+     */
+    private void displayBgeeButtons(String divId) {
+        log.entry(divId);
+        
+        RequestParameters urlTopAnat = this.getNewRequestParameters();
+        urlTopAnat.setPage(RequestParameters.PAGE_TOP_ANAT);
+        RequestParameters urlGeneSearch = this.getNewRequestParameters();
+        urlGeneSearch.setPage(RequestParameters.PAGE_GENE);
+        RequestParameters urlDownload = this.getNewRequestParameters();
+        urlDownload.setPage(RequestParameters.PAGE_DOWNLOAD);
+        
+        this.writeln("<div id='" + divId + "'>");
+        this.writeln("<a href='"+ urlTopAnat.getRequestURL() + 
+                "'><span class='glyphicon glyphicon-stats'></span>Expression enrichment analysis</a>");
+        this.writeln("<a href='"+ urlGeneSearch.getRequestURL() + 
+                "'><span class='glyphicon glyphicon-search'></span>Gene search</a>");
+        this.writeln("<a href='"+ urlDownload.getRequestURL() + 
+                "'><span class='glyphicon glyphicon-download'></span>Download</a>");
+        this.writeln("</div>"); // close start_buttons
+        
+        log.exit();
+    }
 
-	/**
+    /**
      * Display explanations on Bgee web site.
      */
     private void displayExplanations() {
-    	log.entry();
-    	
+        log.entry();
+        
         this.writeln("<div id='bgee_explanations' class='row home_page_section'>");
-		
+        
         this.writeln("<div class='col-sm-4'>");
         this.writeln("<h2>Gene expression data</h2>");
         this.writeln("<p>Bgee is a database to retrieve and compare gene expression patterns "
                 + "in multiple animal species, produced from multiple data types "
                 + "(RNA-Seq, Affymetrix, <em>in situ</em> hybridization, and EST data) "
-				+ "and from multiple data sets (including <a href='https://www.gtexportal.org/home/'" +
-				" title='GTEx portal' target='_blank'>GTEx data</a>).</p>");
+                + "and from multiple data sets (including <a href='https://www.gtexportal.org/home/'" +
+                " title='GTEx portal' target='_blank'>GTEx data</a>).</p>");
         this.writeln("</div>");
         
         this.writeln("<div class='col-sm-4'>");
@@ -201,31 +201,31 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         this.writeln("</div>"); // close bgee_explanations
 
         log.exit();
-	}
+    }
     
     /**
      * Display species home page section with links to download pages.
      * 
-     * @param groups	A {@code List} of {@code SpeciesDataGroup} for which display the image.
+     * @param groups    A {@code List} of {@code SpeciesDataGroup} for which display the image.
      */
     private void displayHomePageSpecies(List<SpeciesDataGroup> groups) {
-    	log.entry(groups);
-    	
-	    // Single species part
-    	String homePageSpeciesSection;
-    	try {
-    		homePageSpeciesSection = ((HtmlDownloadDisplay) this.getFactory().getDownloadDisplay())
-    				.getSingleSpeciesSection(DownloadPageType.HOME_PAGE, groups, true);
-    	} catch (IOException|ClassCastException e) {
-        	return;
-    	}
+        log.entry(groups);
+        
+        // Single species part
+        String homePageSpeciesSection;
+        try {
+            homePageSpeciesSection = ((HtmlDownloadDisplay) this.getFactory().getDownloadDisplay())
+                    .getSingleSpeciesSection(DownloadPageType.HOME_PAGE, groups, true);
+        } catch (IOException|ClassCastException e) {
+            return;
+        }
 
-    	// Black banner when a species or a group is selected.
-    	homePageSpeciesSection += this.getDownloadPageLinkBanner();
+        // Black banner when a species or a group is selected.
+        homePageSpeciesSection += this.getDownloadPageLinkBanner();
 
-    	this.writeln(homePageSpeciesSection);
-    	
-    	log.exit();
+        this.writeln(homePageSpeciesSection);
+        
+        log.exit();
     }
 
     /**
@@ -235,128 +235,128 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
      *          as a HTML 'div' element.
      */
     private String getDownloadPageLinkBanner() {
-    	log.entry();
+        log.entry();
 
-    	StringBuilder banner = new StringBuilder();
-    	// This section is empty, it will be filled by JavaScript.
-    	banner.append("<div id='bgee_data_selection' class='row'>");
-    	// Cross to close the banner
+        StringBuilder banner = new StringBuilder();
+        // This section is empty, it will be filled by JavaScript.
+        banner.append("<div id='bgee_data_selection' class='row'>");
+        // Cross to close the banner
         banner.append("<div id='bgee_data_selection_cross'>");
-    	banner.append("<img class='closing_cross' src='" + this.prop.getBgeeRootDirectory() + this.prop.getImagesRootDirectory() + "cross.png' " +
-    			"title='Close banner' alt='Cross' />");
+        banner.append("<img class='closing_cross' src='" + this.prop.getBgeeRootDirectory() + this.prop.getImagesRootDirectory() + "cross.png' " +
+                "title='Close banner' alt='Cross' />");
         banner.append("</div>");
 
-    	// Section on the right of the black banner
-    	banner.append("<h1 class='col-xs-12 col-md-4'>"
-    			+ "<span class='scientificname'></span>"
-    			+ "<span class='commonname'></span></h1>");
+        // Section on the right of the black banner
+        banner.append("<h1 class='col-xs-12 col-md-4'>"
+                + "<span class='scientificname'></span>"
+                + "<span class='commonname'></span></h1>");
 
-    	RequestParameters urlProcExprValues = this.getNewRequestParameters();
-    	urlProcExprValues.setPage(RequestParameters.PAGE_DOWNLOAD);
-    	urlProcExprValues.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
-    	RequestParameters urlGeneExprCalls = this.getNewRequestParameters();
-    	urlGeneExprCalls.setPage(RequestParameters.PAGE_DOWNLOAD);
-    	urlGeneExprCalls.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
-    	banner.append("<ul class='col-xs-12 col-md-8 row'>");
-    	banner.append("<li class='col-xs-12 col-sm-6'><img class='bullet_point' src='" + this.prop.getBgeeRootDirectory() + this.prop.getImagesRootDirectory() + "arrow.png' alt='Arrow' />" +
-    			"<a id='processed_expression_values_link' class='data_page_link' href='" +
-    			urlProcExprValues.getRequestURL() + "' title='Bgee processed expression values'>" +
-    			"See RNA-Seq and Affymetrix data</a></li>");
-    	banner.append("<li class='col-xs-12 col-sm-6'><img class='bullet_point' src='" + this.prop.getBgeeRootDirectory() + this.prop.getImagesRootDirectory() + "arrow.png' alt='Arrow' />" +
-    			"<a id='gene_expression_calls_link' class='data_page_link' href='" +
-    			urlGeneExprCalls.getRequestURL() +
-    			"' title='Bgee gene expression calls'>See gene expression calls</a></li>");
-    	banner.append("</ul>");
-    	banner.append("</div>"); // close 
+        RequestParameters urlProcExprValues = this.getNewRequestParameters();
+        urlProcExprValues.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlProcExprValues.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
+        RequestParameters urlGeneExprCalls = this.getNewRequestParameters();
+        urlGeneExprCalls.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlGeneExprCalls.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
+        banner.append("<ul class='col-xs-12 col-md-8 row'>");
+        banner.append("<li class='col-xs-12 col-sm-6'><img class='bullet_point' src='" + this.prop.getBgeeRootDirectory() + this.prop.getImagesRootDirectory() + "arrow.png' alt='Arrow' />" +
+                "<a id='processed_expression_values_link' class='data_page_link' href='" +
+                urlProcExprValues.getRequestURL() + "' title='Bgee processed expression values'>" +
+                "See RNA-Seq and Affymetrix data</a></li>");
+        banner.append("<li class='col-xs-12 col-sm-6'><img class='bullet_point' src='" + this.prop.getBgeeRootDirectory() + this.prop.getImagesRootDirectory() + "arrow.png' alt='Arrow' />" +
+                "<a id='gene_expression_calls_link' class='data_page_link' href='" +
+                urlGeneExprCalls.getRequestURL() +
+                "' title='Bgee gene expression calls'>See gene expression calls</a></li>");
+        banner.append("</ul>");
+        banner.append("</div>"); // close 
 
-    	return log.exit(banner.toString());
+        return log.exit(banner.toString());
     }
     
-	/**
-	 * Display Bgee news.
-	 */
-	private void displayNews() {
-	    log.entry();
-	    
-	    RequestParameters urlTopAnat = this.getNewRequestParameters();
-	    urlTopAnat.setPage(RequestParameters.PAGE_TOP_ANAT);
-	    
-	    RequestParameters urlDownload = this.getNewRequestParameters();
-	    urlDownload.setPage(RequestParameters.PAGE_DOWNLOAD);
-	    
-	    RequestParameters urlDownloadProcValues = this.getNewRequestParameters();
-	    urlDownloadProcValues.setPage(RequestParameters.PAGE_DOWNLOAD);
-	    urlDownloadProcValues.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
-	    
-	    RequestParameters urlDownloadCalls = this.getNewRequestParameters();
-	    urlDownloadCalls.setPage(RequestParameters.PAGE_DOWNLOAD);
-	    urlDownloadCalls.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
-	    
-	    RequestParameters urlCallDoc = this.getNewRequestParameters();
-	    urlCallDoc.setPage(RequestParameters.PAGE_DOCUMENTATION);
-	    urlCallDoc.setAction(RequestParameters.ACTION_DOC_CALL_DOWLOAD_FILES);
+    /**
+     * Display Bgee news.
+     */
+    private void displayNews() {
+        log.entry();
+        
+        RequestParameters urlTopAnat = this.getNewRequestParameters();
+        urlTopAnat.setPage(RequestParameters.PAGE_TOP_ANAT);
+        
+        RequestParameters urlDownload = this.getNewRequestParameters();
+        urlDownload.setPage(RequestParameters.PAGE_DOWNLOAD);
+        
+        RequestParameters urlDownloadProcValues = this.getNewRequestParameters();
+        urlDownloadProcValues.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDownloadProcValues.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
+        
+        RequestParameters urlDownloadCalls = this.getNewRequestParameters();
+        urlDownloadCalls.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDownloadCalls.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
+        
+        RequestParameters urlCallDoc = this.getNewRequestParameters();
+        urlCallDoc.setPage(RequestParameters.PAGE_DOCUMENTATION);
+        urlCallDoc.setAction(RequestParameters.ACTION_DOC_CALL_DOWLOAD_FILES);
         
         RequestParameters urlGenePage = this.getNewRequestParameters();
         urlGenePage.setPage(RequestParameters.PAGE_GENE);
 
-		RequestParameters urlSourcePage = this.getNewRequestParameters();
-		urlSourcePage.setPage(RequestParameters.PAGE_SOURCE);
+        RequestParameters urlSourcePage = this.getNewRequestParameters();
+        urlSourcePage.setPage(RequestParameters.PAGE_SOURCE);
 
-		RequestParameters urlPrivatePolicyPage = this.getNewRequestParameters();
-		urlPrivatePolicyPage.setPage(RequestParameters.PAGE_PRIVACY_POLICY);
+        RequestParameters urlPrivatePolicyPage = this.getNewRequestParameters();
+        urlPrivatePolicyPage.setPage(RequestParameters.PAGE_PRIVACY_POLICY);
 
-		RequestParameters urlFaqPage = this.getNewRequestParameters();
-		urlFaqPage.setPage(RequestParameters.PAGE_DOCUMENTATION);
-		urlFaqPage.setAction(RequestParameters.ACTION_DOC_FAQ);
+        RequestParameters urlFaqPage = this.getNewRequestParameters();
+        urlFaqPage.setPage(RequestParameters.PAGE_DOCUMENTATION);
+        urlFaqPage.setAction(RequestParameters.ACTION_DOC_FAQ);
 
-		RequestParameters urlDatasetPage = this.getNewRequestParameters();
-		urlDatasetPage.setPage(RequestParameters.PAGE_DOCUMENTATION);
-		urlDatasetPage.setAction(RequestParameters.ACTION_DOC_DATA_SETS);
+        RequestParameters urlDatasetPage = this.getNewRequestParameters();
+        urlDatasetPage.setPage(RequestParameters.PAGE_DOCUMENTATION);
+        urlDatasetPage.setAction(RequestParameters.ACTION_DOC_DATA_SETS);
 
-		RequestParameters urlGeneSearchHbb = this.getNewRequestParameters();
-		urlGeneSearchHbb.setPage(RequestParameters.PAGE_GENE);
-		urlGeneSearchHbb.setSearch("HBB");
+        RequestParameters urlGeneSearchHbb = this.getNewRequestParameters();
+        urlGeneSearchHbb.setPage(RequestParameters.PAGE_GENE);
+        urlGeneSearchHbb.setSearch("HBB");
 
-		this.writeln("<div id='bgee_news' class='panel panel-default'>");
-	    this.writeln("<div class='panel-heading'>");
-	    this.writeln("<span class='panel-title'>News"
-	                 + "    <span class='header_details'>(features are being added incrementally)"
-	                 + "</span></span>");
-	    this.writeln("</div>"); // close panel-heading
-	    
-	    this.writeln("<div class='panel-body'>");
+        this.writeln("<div id='bgee_news' class='panel panel-default'>");
+        this.writeln("<div class='panel-heading'>");
+        this.writeln("<span class='panel-title'>News"
+                     + "    <span class='header_details'>(features are being added incrementally)"
+                     + "</span></span>");
+        this.writeln("</div>"); // close panel-heading
+        
+        this.writeln("<div class='panel-body'>");
 
-		this.writeOneNews("2019-05-12",
-		        "<ul>" +
-		        "    <li>Update of the <a href='" + urlGenePage.getRequestURL() +
-				"    '>gene search page</a>:" +
-		        "    <ul>" +
-				"        <li>Addition of a gene search result page (i.e. <a href='" +
-		                 urlGeneSearchHbb.getRequestURL() +
-				"        ' title='Search genes with \"HBB\"'>search with \"HBB\"</a>)</li>" +
-				"        <li>Improvement of the speed of autocompletion</li>" +
-				"    </ul></li>" +
-				"    <li>Modification of gene pages to display gene name synoyms," +
-				"    and cross-references to other resources</li>" +
-				"</ul>");
+        this.writeOneNews("2019-05-12",
+                "<ul>" +
+                "    <li>Update of the <a href='" + urlGenePage.getRequestURL() +
+                "    '>gene search page</a>:" +
+                "    <ul>" +
+                "        <li>Addition of a gene search result page (i.e. <a href='" +
+                         urlGeneSearchHbb.getRequestURL() +
+                "        ' title='Search genes with \"HBB\"'>search with \"HBB\"</a>)</li>" +
+                "        <li>Improvement of the speed of autocompletion</li>" +
+                "    </ul></li>" +
+                "    <li>Modification of gene pages to display gene name synoyms," +
+                "    and cross-references to other resources</li>" +
+                "</ul>");
 
-		this.writeOneNews("2019-04-05",
-				  "<ul>"
-				+ "  <li>New <a href='" + urlPrivatePolicyPage.getRequestURL() 
-								+ "'>privacy policy page</a></li>"
-				+ "  <li>New <a href='" + urlFaqPage.getRequestURL() + "'>FAQ page</a> "
-				+ "				where we address common user queries</li>"
-				+ "  <li>New <a href='" + urlDatasetPage.getRequestURL() + "'>documentation page</a>"
-				+ " 			specific to GTEx project to learn how we integrated these data" 
-				+ " 			into Bgee</li>"
+        this.writeOneNews("2019-04-05",
+                  "<ul>"
+                + "  <li>New <a href='" + urlPrivatePolicyPage.getRequestURL() 
+                                + "'>privacy policy page</a></li>"
+                + "  <li>New <a href='" + urlFaqPage.getRequestURL() + "'>FAQ page</a> "
+                + "                where we address common user queries</li>"
+                + "  <li>New <a href='" + urlDatasetPage.getRequestURL() + "'>documentation page</a>"
+                + "             specific to GTEx project to learn how we integrated these data" 
+                + "             into Bgee</li>"
                 + "  <li>Update to Bgee 14.0 of the <a href='" + urlCallDoc.getRequestURL()+ "'>gene expression call documentation</a>"
                 + "             </li>"
                 + "  <li>Update of the <a href='" + urlSourcePage.getRequestURL()+ "'>data source page</a>"
                 + "             to provide version information</li>"
                 + "  <li>We have clarified our license; we have chosen CC0.</li>"
-				+ "  <li>Update of the menu</li>"
-				+ "</ul>");
-				
+                + "  <li>Update of the menu</li>"
+                + "</ul>");
+                
         this.writeOneNews("2018-02-14", "Release of Bgee version 14.0:"
                 + "<ul>"
                 + "  <li>Release of the production version of Bgee release 14:"
@@ -372,33 +372,33 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 + "</ul>"
                 + "You can still access to Bgee 13 at <a title='Archive site Bgee version 13' "
                 + "href='" + this.prop.getBgeeRootDirectory() + "bgee13' target='_blank'>" 
-				+ this.prop.getBgeeRootDirectory() + "bgee13</a>.");
+                + this.prop.getBgeeRootDirectory() + "bgee13</a>.");
 
-	    this.writeOneNews("2017-05-16", "Release of Bgee version 14-beta:"
-	            + "<ul>"
-	            + "  <li>12 new species, bringing the total to 29:"
-	            + "    <ul>"
-	            + "      <li>new mammal species: horse, rabbit, dog, cat, guinea pig, hedgehog;</li>"
-	            + "      <li>new Drosophila species: D. ananassae, D. mojavensis, D. pseudoobscura, D. simulans, D. virilis, D. yakuba.</li>"
-	            + "    </ul>"
-	            + "  </li>"
-	            + "  <li>All species now have RNA-Seq data.</li>"
-	            + "  <li>Addition of curated human RNA-Seq data from GTEx, removing unhealthy samples; see "
+        this.writeOneNews("2017-05-16", "Release of Bgee version 14-beta:"
+                + "<ul>"
+                + "  <li>12 new species, bringing the total to 29:"
+                + "    <ul>"
+                + "      <li>new mammal species: horse, rabbit, dog, cat, guinea pig, hedgehog;</li>"
+                + "      <li>new Drosophila species: D. ananassae, D. mojavensis, D. pseudoobscura, D. simulans, D. virilis, D. yakuba.</li>"
+                + "    </ul>"
+                + "  </li>"
+                + "  <li>All species now have RNA-Seq data.</li>"
+                + "  <li>Addition of curated human RNA-Seq data from GTEx, removing unhealthy samples; see "
                 + "      <a href='" + urlDownloadCalls.getRequestURL() + "#id1'>human data</a>.</li>"
-	            + "  <li>Improved quality annotation of calls: replacement of \"low quality\" / \"high quality\" by:"
-	            + "    <ul>"
-	            + "      <li>\"Gold\": ≥2 experiments with a high confidence calls;</li>"
-	            + "      <li>\"Silver\": 1 experiment with a high confidence call, or ≥2 experiments with low confidence calls;</li>"
-	            + "      <li>\"Bronze\": 1 experiment with a low confidence call; these are not shown by default.</li>"
-	            + "    </ul>"
-	            + "  </li>"
-	            + "  <li>Update of download pages to make it easier to chose files to retrieve; inclusion of gene ranks (as used in gene pages) in call files..</li>"
-	            + "</ul>"
-	            + "You can still access to Bgee 13 at <a title='Archive site Bgee version 13' "
-	            + "href='" + this.prop.getBgeeRootDirectory() + "bgee13' target='_blank'>"
-				+ this.prop.getBgeeRootDirectory() + "bgee13</a>.");
+                + "  <li>Improved quality annotation of calls: replacement of \"low quality\" / \"high quality\" by:"
+                + "    <ul>"
+                + "      <li>\"Gold\": ≥2 experiments with a high confidence calls;</li>"
+                + "      <li>\"Silver\": 1 experiment with a high confidence call, or ≥2 experiments with low confidence calls;</li>"
+                + "      <li>\"Bronze\": 1 experiment with a low confidence call; these are not shown by default.</li>"
+                + "    </ul>"
+                + "  </li>"
+                + "  <li>Update of download pages to make it easier to chose files to retrieve; inclusion of gene ranks (as used in gene pages) in call files..</li>"
+                + "</ul>"
+                + "You can still access to Bgee 13 at <a title='Archive site Bgee version 13' "
+                + "href='" + this.prop.getBgeeRootDirectory() + "bgee13' target='_blank'>"
+                + this.prop.getBgeeRootDirectory() + "bgee13</a>.");
 
-	    this.writeOneNews("2016-07-06", "Release of Bgee version 13.2: "
+        this.writeOneNews("2016-07-06", "Release of Bgee version 13.2: "
                 + "<ul>"
                 + "<li>Major update of our gene page and ranking algorithm: "
                   + "<ul>"
@@ -417,7 +417,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 + "and new information added to the gene pages.</li>"
                 + "</ul>");
         
-	    this.writeOneNews("2016-05-09", "Release of our new "
+        this.writeOneNews("2016-05-09", "Release of our new "
                 + "<a href='https://bioconductor.org/packages/release/bioc/html/BgeeDB.html' class='external_link' target='_blank'>"
                 + "BgeeDB R package</a>, a package for the annotation and gene expression "
                 + "data download from Bgee database into R, and TopAnat analysis (see also "
@@ -429,72 +429,72 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         this.writeOneNews("2016-03-09", "Release of our new <a href='" + urlGenePage.getRequestURL()
                           + "'>gene page</a>, allowing to discover the most relevant conditions where a gene is expressed. "
                           + "This update also includes an important revamping of our interfaces.");
-	    
-	    this.writeOneNews("2015-12-24", "Major update of <a href='" + urlTopAnat.getRequestURL()
-	                      + "' title='Perform gene expression enrichment tests with TopAnat'>TopAnat</a>. "
-	                      + "Happy Christmas!");
-	    
-	    this.writeOneNews("2015-11-24", "We are happy to release of our new exclusive tool "
-	                      + "for gene expression enrichment analyses: <a href='" + urlTopAnat.getRequestURL()
-	                      + "' title='Perform gene expression enrichment tests with TopAnat'>TopAnat</a>. "
-	                      + "This is a tool with absolutely no equivalent, developped in collaboration with "
-	                      + "the Web-Team  of the SIB Swiss Institute of Bioinformatics. Check it out!");
-	    this.writeOneNews("2015-08-26", "Update of the home page.");
-	    
-	    this.writeOneNews("2015-06-08", "Release of Bgee version 13.1: "
-	                      + "<ul>"
-	                      + "<li>Update of the website interfaces.</li>"
-	                      + "<li><a href='" + urlDownloadProcValues.getRequestURL()
-	                      + "'>New download page</a> providing processed expression values.</li>"
-	                      + "<li>Addition of mouse <i>in situ</i> data from MGI, see "
-	                      + "<a href='" + urlDownloadCalls.getRequestURL() + "#id2"
-	                      + "'>mouse data</a>.</li>"
-	                      + "<li>Differential expression data have been added for "
-	                      + "<a href='" + urlDownloadCalls.getRequestURL() + "#id3"
-	                      + "'>zebrafish</a>, <a href='" + urlDownloadCalls.getRequestURL() + "#id6"
-	                      + "'>chimpanzee</a>, <a href='" + urlDownloadCalls.getRequestURL() + "#id8"
-	                      + "'>gorilla</a>, and <a href='" + urlDownloadCalls.getRequestURL() + "#id19"
-	                      + "'>opossum</a>.</li>"
-	                      + "<li>Addition of new multi-species differential expression data, see "
-	                      + "for instance <a href='" + urlDownloadCalls.getRequestURL() + "#id9598_9544"
-	                      + "'>chimpanzee/macaque comparison</a>.</li>"
-	                      + "<li>New format to provide gene orthology information in multi-species files, "
-	                      + "see for instance <a href='" + urlCallDoc.getRequestURL() + "#oma_hog"
-	                      + "'>OMA Hierarchical orthologous groups documentation</a>.</li>"
-	                      + "<li>Removal of data incorrectly considered as normal in <i>C. elegans</i>, "
-	                      + "see <a href='" + urlDownloadCalls.getRequestURL() + "#id5"
-	                      + "'>worm data</a>.</li>"
-	                      + "<li>Improved filtering of propagated no-expression calls. As a result, "
-	                      + "complete expression calls files do not contain invalid conditions anymore.</li>"
-	                      + "<li>Filtering of invalid developmental stages for differential expression analyses.</li>"
-	                      + "</ul>");
-	    this.writeOneNews("2015-04-16", "Release of the multi-species " +
-	                      "differential expression data (across anatomy) for 6 groups, see <a href='" +
-	                      urlDownload.getRequestURL() + "' " + "title='Download overview'>" +
-	                      "download overview</a>.");
-	    this.writeOneNews("2015-03-03", "Release of the single-species " +
-	                      "differential expression data for 11 species, see <a href='" +
-	                      urlDownload.getRequestURL() + "' " + "title='Download overview'>" +
-	                      "download overview</a>.");
-	    this.writeOneNews("2014-12-19", "Release of the single-species " +
-	                      "expression data for 17 species, see <a href='" +
-	                      urlDownload.getRequestURL() + "' " + "title='Download overview'>" +
-	                      "download overview</a>.");
-	    
-	    this.writeln("</div>"); // close panel-body
-	    this.writeln("</div>"); // close panel
-	
-	    log.exit();
-	}
+        
+        this.writeOneNews("2015-12-24", "Major update of <a href='" + urlTopAnat.getRequestURL()
+                          + "' title='Perform gene expression enrichment tests with TopAnat'>TopAnat</a>. "
+                          + "Happy Christmas!");
+        
+        this.writeOneNews("2015-11-24", "We are happy to release of our new exclusive tool "
+                          + "for gene expression enrichment analyses: <a href='" + urlTopAnat.getRequestURL()
+                          + "' title='Perform gene expression enrichment tests with TopAnat'>TopAnat</a>. "
+                          + "This is a tool with absolutely no equivalent, developped in collaboration with "
+                          + "the Web-Team  of the SIB Swiss Institute of Bioinformatics. Check it out!");
+        this.writeOneNews("2015-08-26", "Update of the home page.");
+        
+        this.writeOneNews("2015-06-08", "Release of Bgee version 13.1: "
+                          + "<ul>"
+                          + "<li>Update of the website interfaces.</li>"
+                          + "<li><a href='" + urlDownloadProcValues.getRequestURL()
+                          + "'>New download page</a> providing processed expression values.</li>"
+                          + "<li>Addition of mouse <i>in situ</i> data from MGI, see "
+                          + "<a href='" + urlDownloadCalls.getRequestURL() + "#id2"
+                          + "'>mouse data</a>.</li>"
+                          + "<li>Differential expression data have been added for "
+                          + "<a href='" + urlDownloadCalls.getRequestURL() + "#id3"
+                          + "'>zebrafish</a>, <a href='" + urlDownloadCalls.getRequestURL() + "#id6"
+                          + "'>chimpanzee</a>, <a href='" + urlDownloadCalls.getRequestURL() + "#id8"
+                          + "'>gorilla</a>, and <a href='" + urlDownloadCalls.getRequestURL() + "#id19"
+                          + "'>opossum</a>.</li>"
+                          + "<li>Addition of new multi-species differential expression data, see "
+                          + "for instance <a href='" + urlDownloadCalls.getRequestURL() + "#id9598_9544"
+                          + "'>chimpanzee/macaque comparison</a>.</li>"
+                          + "<li>New format to provide gene orthology information in multi-species files, "
+                          + "see for instance <a href='" + urlCallDoc.getRequestURL() + "#oma_hog"
+                          + "'>OMA Hierarchical orthologous groups documentation</a>.</li>"
+                          + "<li>Removal of data incorrectly considered as normal in <i>C. elegans</i>, "
+                          + "see <a href='" + urlDownloadCalls.getRequestURL() + "#id5"
+                          + "'>worm data</a>.</li>"
+                          + "<li>Improved filtering of propagated no-expression calls. As a result, "
+                          + "complete expression calls files do not contain invalid conditions anymore.</li>"
+                          + "<li>Filtering of invalid developmental stages for differential expression analyses.</li>"
+                          + "</ul>");
+        this.writeOneNews("2015-04-16", "Release of the multi-species " +
+                          "differential expression data (across anatomy) for 6 groups, see <a href='" +
+                          urlDownload.getRequestURL() + "' " + "title='Download overview'>" +
+                          "download overview</a>.");
+        this.writeOneNews("2015-03-03", "Release of the single-species " +
+                          "differential expression data for 11 species, see <a href='" +
+                          urlDownload.getRequestURL() + "' " + "title='Download overview'>" +
+                          "download overview</a>.");
+        this.writeOneNews("2014-12-19", "Release of the single-species " +
+                          "expression data for 17 species, see <a href='" +
+                          urlDownload.getRequestURL() + "' " + "title='Download overview'>" +
+                          "download overview</a>.");
+        
+        this.writeln("</div>"); // close panel-body
+        this.writeln("</div>"); // close panel
+    
+        log.exit();
+    }
 
-	/**
+    /**
      * Display more information (for instance, image sources or 'view x site' link).
      */
     private void displayMoreInfo() {
-    	log.entry();
-    	
+        log.entry();
+        
         this.writeln("<div id='bgee_more_info' class='row'>");
-    	
+        
         this.writeln("<div class='col-xs-12 col-lg-9'>");
         this.writeln(getImageSources());
         this.writeln("</div>");
@@ -502,21 +502,21 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         this.writeln("<div class='col-xs-12 col-lg-3 archive_site'>");
         this.writeln("View archive sites:");
         this.writeln("<a title='Archive site Bgee version 12' href='" + 
-				this.prop.getBgeeRootDirectory() + "bgee12' target='_blank'>version 12</a>");
+                this.prop.getBgeeRootDirectory() + "bgee12' target='_blank'>version 12</a>");
         this.writeln("<a title='Archive site Bgee version 13' href='" +
-				this.prop.getBgeeRootDirectory() + "bgee13' target='_blank'>version 13</a>");
+                this.prop.getBgeeRootDirectory() + "bgee13' target='_blank'>version 13</a>");
         this.writeln("</div>");
         
         this.writeln("</div>"); // close bgee_more_info row
         
         log.exit();
-	}
+    }
 
-	/**
-	 * Display an unique news.
-	 * 
-     * @param date			A {@code String} that is the date of the news. 
-     * @param description	A {@code String} that is the description of the news.
+    /**
+     * Display an unique news.
+     * 
+     * @param date          A {@code String} that is the date of the news. 
+     * @param description   A {@code String} that is the description of the news.
      */
     private void writeOneNews(String date, String description) {
         log.entry(date, description);

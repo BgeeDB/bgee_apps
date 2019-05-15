@@ -694,6 +694,15 @@ div.bgee_download_section figure.selected {
     color: #282828;
 }
 
+/****BGEE TABLES****/
+span.expandable {
+    cursor: pointer;
+}
+
+.masked {
+    display: none;
+}
+
 /****BGEE CREATIVE COMMONS****/
 #creativecommons_title, #creativecommons p {
     font-size: 0.8em;

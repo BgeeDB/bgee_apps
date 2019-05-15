@@ -8,7 +8,8 @@
 
 $( document ).ready( function(){
 
-    $('table.expr_comp_expression.multi-sp').DataTable( {
+    var t = $('table.expr_comp.multi-sp') ;
+    $('table.expr_comp.multi-sp').DataTable( {
     	//enable ordering but apply no ordering during initialization
     	"order": [],
         responsive: {
@@ -42,19 +43,25 @@ $( document ).ready( function(){
            { responsivePriority: 1, targets: 0 }, // Anatomical entities
            { responsivePriority: 2, targets: 1 }, // Gene count with presence of expression
            { responsivePriority: 2, targets: 2 }, // Gene count with absence of expression
-           { responsivePriority: 3, targets: 3 }, // Species count with presence of expression
-           { responsivePriority: 3, targets: 4 }  // Species count with absence of expression
+           { responsivePriority: 2, targets: 3 }, // Gene count with no data
+           { responsivePriority: 3, targets: 4 }, // Species count with presence of expression
+           { responsivePriority: 3, targets: 5 }, // Species count with absence of expression
+           { responsivePriority: 3, targets: 6 }, // Species count with no data
+           { responsivePriority: 1, targets: 7 }  // Details
         ],
         columns: [ // sorting definition
            { "orderable": true }, // Anatomical entities
            { "orderable": true }, // Gene count with presence of expression
            { "orderable": true }, // Gene count with absence of expression
+           { "orderable": true }, // Gene count with no data
            { "orderable": true }, // Species count with presence of expression
-           { "orderable": true }  // Species count with absence of expression
+           { "orderable": true }, // Species count with absence of expression
+           { "orderable": true }, // Species count with no data
+           { "orderable": false } // Details
         ]
     });
 
-    $('table.expr_comp_expression.single-sp').DataTable( {
+    $('table.expr_comp.single-sp').DataTable( {
         //enable ordering but apply no ordering during initialization
         "order": [],
         responsive: {
@@ -87,14 +94,31 @@ $( document ).ready( function(){
         columnDefs: [ // Higher responsivePriority are removed first, target define the order
             { responsivePriority: 1, targets: 0 }, // Anatomical entities
             { responsivePriority: 2, targets: 1 }, // Gene count with presence of expression
-            { responsivePriority: 2, targets: 2 }  // Gene count with absence of expression
+            { responsivePriority: 2, targets: 2 }, // Gene count with absence of expression
+            { responsivePriority: 2, targets: 3 }, // Gene count with no data
+            { responsivePriority: 1, targets: 4 }  // Details
         ],
         columns: [ // sorting definition
             { "orderable": true }, // Anatomical entities
             { "orderable": true }, // Gene count with presence of expression
-            { "orderable": true }  // Gene count with absence of expression
+            { "orderable": true }, // Gene count with absence of expression
+            { "orderable": true }, // Gene count with no data
+            { "orderable": false } // Details
         ]
     });
+
+    // expand the aggregated cells
+    $('table tbody').on('click', '.expandable', function () {
+        var t = $(this).text();
+        var t2 = t.replace('+','-');
+        if (t !== t2) {
+            $(this).text(t2);
+            $(this).parent().parent().find("ul").show(250);
+        } else {
+            $(this).text(t.replace('-','+'));
+            $(this).parent().parent().find("ul").hide(250);
+        }
+    } );
 
 } );
 

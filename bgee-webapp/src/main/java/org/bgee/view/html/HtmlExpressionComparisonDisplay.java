@@ -1,5 +1,6 @@
 package org.bgee.view.html;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
@@ -13,8 +14,9 @@ import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSumm
 import org.bgee.model.expressiondata.multispecies.MultiSpeciesCondition;
 import org.bgee.model.expressiondata.multispecies.MultiSpeciesExprAnalysis;
 import org.bgee.model.gene.Gene;
-import org.bgee.view.JsonHelper;
+import org.bgee.model.species.Species;
 import org.bgee.view.ExpressionComparisonDisplay;
+import org.bgee.view.JsonHelper;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -186,16 +188,19 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
 
         sb.append("<div class='table-container'>");
         String tableClass = isMultiSpecies? "multi-sp" : "single-sp";
-        sb.append("    <table class='expr_comp_expression stripe compact " + tableClass + "'>");
+        sb.append("    <table class='expr_comp stripe compact ").append(tableClass).append("'>");
         sb.append("        <thead>");
         sb.append("            <tr>");
         sb.append("                <th>Anatomical entities</th>");
         sb.append("                <th>Genes count with presence of expression</th>");
         sb.append("                <th>Gene count with absence of expression</th>");
+        sb.append("                <th>Gene count with no data</th>");
         if (isMultiSpecies) {
             sb.append("            <th>Species count with presence of expression</th>");
             sb.append("            <th>Species count with absence of expression</th>");
+            sb.append("            <th>Species count with no data</th>");
         }
+        sb.append("                <th>See details</th>");
         sb.append("            </tr>");
         sb.append("        </thead>");
         sb.append("        <tbody>");
@@ -231,39 +236,73 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
                 .sorted(Comparator.comparing(AnatEntity::getName))
                 // FIXME see branch anat-sim
 //                .map(ae -> getAnatEntityUrl(ae, ae.getName() + " (" + ae.getId() + ")"))
-                .map(ae -> ae.getName() + " (" + ae.getId() + ")")
+                .map(ae -> "<a class='external_link' target='_blank'>" + ae.getName() + " (" + ae.getId() + ")</a>")
                 .collect(Collectors.joining(" - ")));
         row.append("    </td>");
 
         Map<SummaryCallType, Set<Gene>> callTypeToGenes = condToCounts.getValue().getCallTypeToGenes();
+        Set<Gene> expressedGenes = callTypeToGenes.get(ExpressionSummary.EXPRESSED);
+        Set<Gene> notExpressedGenes = callTypeToGenes.get(ExpressionSummary.NOT_EXPRESSED);
 
-        row.append("    <td>");
-        row.append(         callTypeToGenes.get(ExpressionSummary.EXPRESSED).size());
-        row.append("    </td>");
-
-        row.append("    <td>");
-        row.append(         callTypeToGenes.get(ExpressionSummary.NOT_EXPRESSED).size());
-        row.append("    </td>");
-
+        
+        row.append(this.getGeneCountCell(expressedGenes));
+        row.append(this.getGeneCountCell(notExpressedGenes));
+        row.append(this.getGeneCountCell(condToCounts.getValue().getGenesWithNoData()));
         if (isMultiSpecies) {
-            row.append("    <td>");
-            row.append(         getSpeciesCount(callTypeToGenes, ExpressionSummary.EXPRESSED));
-            row.append("    </td>");
-
-            row.append("    <td>");
-            row.append(         getSpeciesCount(callTypeToGenes, ExpressionSummary.NOT_EXPRESSED));
-            row.append("    </td>");
+            row.append(this.getSpeciesCountCell(expressedGenes));
+            row.append(this.getSpeciesCountCell(notExpressedGenes));
+            row.append(this.getSpeciesCountCell(condToCounts.getValue().getGenesWithNoData()));
         }
         
+        row.append("    <td><span class='expandable' title='Click to expand'>[+]</span></td>");
         row.append("</tr>");
         return log.exit(row.toString());
     }
 
-    private int getSpeciesCount(Map<SummaryCallType, Set<Gene>> callTypeToGenes, ExpressionSummary summaryCallType) {
-        log.entry(callTypeToGenes, summaryCallType);
-        return log.exit(callTypeToGenes.get(summaryCallType).stream()
-                .map(Gene::getSpecies)
-                .collect(Collectors.toSet()).size());
+    private String getGeneCountCell(Set<Gene> genes) {
+        log.entry(genes);
+
+        Function<Gene, String> f = g -> {
+            RequestParameters geneUrl = this.getNewRequestParameters();
+            geneUrl.setPage(RequestParameters.PAGE_GENE);
+            geneUrl.setGeneId(g.getEnsemblGeneId());
+            geneUrl.setSpeciesId(g.getSpecies().getId());
+            return "<a href='" + geneUrl.getRequestURL() + "'>" + htmlEntities(g.getEnsemblGeneId()) + "</a>";
+        };
+        
+        return log.exit(this.getCell(genes, "gene" + (genes.size() > 1? "s": ""),
+                f, g -> StringUtils.isBlank(g.getName())? "": htmlEntities(g.getName())));
+        
+        
+    }
+
+    private String getSpeciesCountCell(Set<Gene> genes) {
+        log.entry(genes);
+        return log.exit(this.getCell(genes.stream().map(Gene::getSpecies).collect(Collectors.toSet()),
+                "species", s -> String.valueOf(s.getId()), s -> htmlEntities(s.getScientificName())));
+    }
+    
+    private <T> String getCell(Set<T> set, String text, Function<T, String> getMainText,
+                               Function<T, String> getOptionalText) {
+        log.entry(set, text, getMainText, getOptionalText);
+
+        StringBuilder cell = new StringBuilder();
+
+        cell.append("<td>");
+        cell.append(     set.size()).append(" ").append(text);
+        cell.append("    <ul class='masked'>");
+        for (T element: set) {
+            String optional = getOptionalText.apply(element);
+            cell.append("    <li class='gene'>");
+            cell.append("        <span class='details small'>")
+                    .append(getMainText.apply(element)).append("</span>")
+                    .append(StringUtils.isBlank(optional)? "": " " + optional);
+            cell.append("    </li>");
+        }
+        cell.append("    </ul>");
+        cell.append("</td>");
+
+        return log.exit(cell.toString());
     }
 
     @Override
@@ -278,7 +317,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         } else {
             this.includeCss("lib/jquery_plugins/vendor_expr_comp.css");
         }
-//        this.includeCss("expr_comp.css");
+        this.includeCss("expr_comp.css");
 
         //we need to add the Bgee CSS files at the end, to override CSS file from external libs
         super.includeCss();

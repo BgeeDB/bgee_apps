@@ -1,0 +1,8 @@
+td {
+   vertical-align: top;
+}
+
+td > ul {
+    list-style-type: none;
+    padding-left: 0;
+}

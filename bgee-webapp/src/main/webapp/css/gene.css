@@ -158,10 +158,6 @@ span.quality {
 	text-align: center;
 }
 
-span.expandable {
-	cursor: pointer;
-}
-
 .details {
     padding-right: .5em;
     padding-left: .2em;
@@ -171,10 +167,6 @@ span.expandable {
 
 .small {
     font-size: .9em;
-}
-
-.masked {
-    display: none;
 }
 
 .dtr-modal tr > td:first-child {

@@ -370,6 +370,7 @@
                                 <cssSourceFile>gene.css</cssSourceFile>
                                 <cssSourceFile>source.css</cssSourceFile>
                                 <cssSourceFile>raw_data.css</cssSourceFile>
+                                <cssSourceFile>expr_comp.css</cssSourceFile>
                             </cssSourceFiles>
                             <suffix>${filter.org.bgee.webapp.css.version.extension}</suffix>
                         </configuration>

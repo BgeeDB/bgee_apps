@@ -79,7 +79,7 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
 
         this.writeln("<h1>Bgee SPARQL endpoint</h1>");
 
-        this.writeln("<p>Bgee has an SPARQL endpoint which is based on the " +
+        this.writeln("<p>Bgee has a SPARQL endpoint which is based on the " +
                 "<a href='" + bgeeLiteDocUrl + "' class='external_link' target='_blank' " +
                 "title='Link to Bgee lite documentation'>" + BGEE_LITE_NAME + " database</a>. " +
                 BGEE_LITE_NAME + " is a lighter version of Bgee database, " +
@@ -96,8 +96,8 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
                 + "UniProt, OMA and Bgee SPARQL endpoints.</p>");
 
         this.writeln("<h2>Programmatic access to the Bgee SPARQL endpoint</h2>");
-        this.writeln("<p>The Bgee SPARQL endpoint is accessible by using your preferable " +
-                "programming language through the URL address below:" +
+        this.writeln("<p>The Bgee SPARQL endpoint is accessible by using your prefered " +
+                "programming language through the URL address below: " +
                 "<span>http://biosoda.expasy.org:8080/rdf4j-server/repositories/bgeelight</span></p>");
 
         this.writeln("<p>For example, to retrieve all anatomic entities in human where " +

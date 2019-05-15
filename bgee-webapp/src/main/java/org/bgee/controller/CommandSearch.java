@@ -78,7 +78,7 @@ public class CommandSearch extends CommandParent {
     }
 
     private String getSearchTerm() {
-        String searchTerm = this.requestParameters.getSearch();
+        String searchTerm = this.requestParameters.getQuery();
         if (StringUtils.isBlank(searchTerm)) {
             throw log.throwing(new IllegalArgumentException("Blank search term provided."));
         }

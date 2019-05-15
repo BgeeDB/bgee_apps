@@ -300,13 +300,13 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         String bgeeGeneSearchClass= "col-xs-11 small-search-box";
         if (!isSmallBox) {
             example.append("<span class='examples'>Examples: ");
-            urlExample.setSearch("HBB");
+            urlExample.setQuery("HBB");
             example.append("<a href='").append(urlExample.getRequestURL()).append("'>HBB</a>");
-            urlExample.setSearch("Apoc1");
+            urlExample.setQuery("Apoc1");
             example.append(", <a href='").append(urlExample.getRequestURL()).append("'>Apoc1</a>");
-            urlExample.setSearch("PDE4DIP");
+            urlExample.setQuery("PDE4DIP");
             example.append(", <a href='").append(urlExample.getRequestURL()).append("'>PDE4DIP</a>");
-            urlExample.setSearch("insulin");
+            urlExample.setQuery("insulin");
             example.append(", <a href='").append(urlExample.getRequestURL()).append("'>insulin</a>");
             example.append("</span>");
 

@@ -123,7 +123,7 @@ public class XmlSearchDisplay extends XmlParentDisplay implements SearchDisplay 
 		RequestParameters url = new RequestParameters(
 				this.getRequestParameters().getUrlParametersInstance(), this.prop, true, "&amp;");
 		url.setPage(RequestParameters.PAGE_GENE);
-		url.setSearch(searchTerm);
+		url.setQuery(searchTerm);
 		this.writeln(url.getRequestURL());
 		this.writeln("</url>");
 

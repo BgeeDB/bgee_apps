@@ -207,7 +207,7 @@ public class CommandGene extends CommandParent {
         GeneDisplay display = viewFactory.getGeneDisplay();
         String geneId = requestParameters.getGeneId();
         Integer speciesId = requestParameters.getSpeciesId();
-        String search = requestParameters.getSearch();
+        String search = requestParameters.getQuery();
 
         if (StringUtils.isNotBlank(search)) {
             GeneMatchResult result = this.geneMatchResultService.searchByTerm(search, null, 0, 1000);

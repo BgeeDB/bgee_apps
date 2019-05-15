@@ -315,7 +315,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
         RequestParameters urlGeneSearchHbb = this.getNewRequestParameters();
         urlGeneSearchHbb.setPage(RequestParameters.PAGE_GENE);
-        urlGeneSearchHbb.setSearch("HBB");
+        urlGeneSearchHbb.setQuery("HBB");
 
         RequestParameters urlResourcesRPackages = this.getNewRequestParameters();
         urlResourcesRPackages.setPage(RequestParameters.PAGE_RESOURCES);

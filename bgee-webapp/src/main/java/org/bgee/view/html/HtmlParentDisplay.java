@@ -456,8 +456,6 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 .append("</a></li>");
         navbar.append("<li><a href='" + BGEE_R_PACKAGE_URL + "' target='_blank'>"
                 + "BgeeDB R package</a></li>");
-        navbar.append("<li><a href='").append(urlAnatSim.getRequestURL()).append("' >")
-                .append("Anatomical similarities</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
 
@@ -469,6 +467,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<ul class='dropdown-menu'>");
         navbar.append("<li><a title='Gene search' href='").append(urlGeneSearch.getRequestURL())
                 .append("'>Gene search</a></li>");
+        navbar.append("<li><a href='").append(urlAnatSim.getRequestURL()).append("' >")
+                .append("Anatomical similarities</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
 

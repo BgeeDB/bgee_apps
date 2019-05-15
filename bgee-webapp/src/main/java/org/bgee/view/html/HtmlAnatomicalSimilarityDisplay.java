@@ -18,6 +18,7 @@ import org.bgee.view.AnatomicalSimilarityDisplay;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -169,31 +170,26 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
         // Message
         sb.append("            <span id='bgee_anatsim_msg' class='col-sm-10'></span>");
         
-     // Examples
+        // Examples
         RequestParameters urlExample = this.getNewRequestParameters();
         urlExample.setPage(RequestParameters.PAGE_ANAT_SIM);
-        
-        // add species
-        List<Integer> speciesList = new ArrayList<>();
-        speciesList.add(9606);
-        speciesList.add(7955);
-        urlExample.setSpeciesList(speciesList);
-        
-        
-        StringBuilder examples = new StringBuilder();
-        examples.append("            <span class='examples col-sm-12'>Examples: ");
+        urlExample.setSpeciesList(Arrays.asList(9606, 7955));
+
+        sb.append("            <span class='examples col-sm-12'>Examples: ");
         
         urlExample.setAnatEntityList(Collections.singletonList("UBERON:0002048"));
-        examples.append("<a href='" + urlExample.getRequestURL() + "'>Lung in human and zebrafish</a>");
+        sb.append("<a href='").append(urlExample.getRequestURL()).append("'>Lung in human and zebrafish</a>");
+        
         urlExample.setAnatEntityList(Collections.singletonList("UBERON:0000206"));
-        examples.append(", <a href='" + urlExample.getRequestURL() + "'>Pharyngeal gill in human and zebrafish</a>");
+        sb.append(", <a href='").append(urlExample.getRequestURL()).append("'>Pharyngeal gill in human and zebrafish</a>");
+        
         urlExample.setAnatEntityList(Collections.singletonList("CL:0000084"));
-        examples.append(", <a href='" + urlExample.getRequestURL() + "'>T Cell in human and zebrafish</a>");
+        sb.append(", <a href='").append(urlExample.getRequestURL()).append("'>T Cell in human and zebrafish</a>");
+        
         urlExample.setAnatEntityList(Collections.singletonList("UBERON:0001987"));
-        examples.append(", <a href='" + urlExample.getRequestURL() + "'>Placenta in human and zebrafish</a>");
-        examples.append("            </span>");
-
-        sb.append(examples);
+        sb.append(", <a href='").append(urlExample.getRequestURL()).append("'>Placenta in human and zebrafish</a>");
+        
+        sb.append("            </span>");
         
         sb.append("        </form>");
         sb.append("    </div>");

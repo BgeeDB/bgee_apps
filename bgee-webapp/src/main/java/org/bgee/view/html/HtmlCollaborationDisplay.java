@@ -70,9 +70,7 @@ public class HtmlCollaborationDisplay extends HtmlParentDisplay implements Colla
                 ". The MySQL dump is available on <a target='_blank' title='Download the dump' href='" +
                 this.prop.getFTPRootDirectory() +"sql_lite_dump.tar.gz'>Bgee FTP</a>. " +
                 "You can see the description of " + BGEE_LITE_NAME + " in <a title='" + BGEE_LITE_NAME + 
-                " description' href='" + BGEE_GITHUB_URL +
-                // TODO replace develop by master when bgee_pipeline will be release
-                "/bgee_pipeline/tree/develop/pipeline/dblite_creation" +
+                " description' href='" + DEVELOP_BGEE_PIPELINE_GITHUB_URL + "/pipeline/dblite_creation" +
                 "#information-about-the-bgee-lite-database' target='_blank'>" +
                 "Bgee pipeline documentation</a><p>");
         
@@ -112,8 +110,7 @@ public class HtmlCollaborationDisplay extends HtmlParentDisplay implements Colla
                 "presence/absence of expression with expression level categories specific to OncoMX. " +
                 "Files are available on <a href='" + this.prop.getFTPRootDirectory() +
                 "/collaboration/oncoMX/'>Bgee FTP</a>. You can see the description of these files in " +
-                // TODO replace develop by master when bgee_pipeline will be release
-                "<a href='" + BGEE_GITHUB_URL + "/bgee_pipeline/tree/develop/pipeline/collaboration/oncoMX" +
+                "<a href='" + DEVELOP_BGEE_PIPELINE_GITHUB_URL + "/pipeline/collaboration/oncoMX" +
                 "#information-about-the-files-generated-for-oncomx' target='_blank'>" +
                 "Bgee pipeline documentation</a><p>");
 

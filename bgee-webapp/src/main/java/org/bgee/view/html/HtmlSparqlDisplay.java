@@ -15,6 +15,7 @@ import org.bgee.view.SparqlDisplay;
  * page=sparql for the HTML view.
  * 
  * @author  Julien Wollbrett
+ * @author  Valentine Rech de Laval
  * @version Bgee 14, May 2019
  * @since   Bgee 14, May 2019
  **/
@@ -69,7 +70,7 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
     public void displaySparql() {
         log.entry();
 
-        String bgeeLiteDocUrl = BGEE_GITHUB_URL + "/bgee_pipeline/tree/develop/pipeline/dblite_creation";
+        String bgeeLiteDocUrl = DEVELOP_BGEE_PIPELINE_GITHUB_URL + "/pipeline/dblite_creation";
         
         this.startDisplay("Bgee SPARQL endpoint");
 
@@ -127,9 +128,8 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
         this.writeln("<p>The Bgee SPARQL endpoint was created using an Ontology Based Data Access (OBDA) "
                 + "approach allowing to create a virtual RDF serialisation without exporting data "
                 + "from the original relational database. It queries data stored in the "
-                + "<a href='" + BGEE_GITHUB_URL + "/bgee_pipeline/tree/develop/pipeline/dblite_creation' "
-                + "class='external_link' title='Link to Bgee lite documentation' target='_blank'>"
-                + BGEE_LITE_NAME + "</a> relational database.");
+                + "<a href='" + bgeeLiteDocUrl + "' class='external_link' target='_blank' " 
+                + "title='Link to Bgee lite documentation'>" + BGEE_LITE_NAME + "</a> relational database.");
         this.writeln("The virtual RDF serialisation of the " + BGEE_LITE_NAME
                 + " is based on the <a href='https://biosoda.github.io/genex/' class='external_link' "
                 + "title ='Link to GenEx specification' target='_blank'>GenEx semantic model "

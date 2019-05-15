@@ -90,6 +90,13 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             "/bgee_pipeline/tree/master";
     
     /**
+     * A {@code String} that is the URL of the Bgee pipeline develop branch in GitHub.
+     */
+    // TODO replace develop by master when bgee_pipeline will be release
+    protected static final String DEVELOP_BGEE_PIPELINE_GITHUB_URL = BGEE_GITHUB_URL +
+            "/bgee_pipeline/tree/develop";
+
+    /**
      * A {@code String} that is the URL of the licence CC0 of Creative Commons.
      */
     protected static final String LICENCE_CC0_URL =
@@ -776,25 +783,6 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 + "RPKM values, Affymetrix probeset signal intensities)."));
         
         return log.exit(logos.toString());
-    }
-    
-    /**
-     * TODO comment
-     */
-    protected String displayHelpLink(String cat, String display) {
-        //TODO: to provide the cat, use a html5 data- attribute rather than 
-        //a formatted String for the class attribute
-        log.entry(cat, display);
-        return log.exit("<span class='help'><a href='#' class='help|" + 
-                cat + "'>" + display + "</a></span>");
-    }
-    
-    /**
-     * TODO comment
-     */
-    protected String displayHelpLink(String cat) {
-        log.entry(cat);
-        return log.exit(this.displayHelpLink(cat, "[?]"));
     }
 
     /**

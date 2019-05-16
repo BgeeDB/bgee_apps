@@ -189,6 +189,12 @@ public class RequestParameters {
 
     /**
      * A {@code String} that is the value taken by the {@code page} parameter 
+     * (see {@link URLParameters#getParamPage()}) when a page related to expression comparison is requested.
+     */
+    public static final String PAGE_EXPR_COMPARISON = "expression_comparison";
+    
+    /**
+     * A {@code String} that is the value taken by the {@code page} parameter 
      * (see {@link URLParameters#getParamPage()}) when a page related to a raw data is requested.
      */
     public static final String PAGE_RAW_DATA = "raw_data";
@@ -2058,6 +2064,18 @@ public class RequestParameters {
     }
 
     /**
+     * Convenient method to retrieve values of the parameter returned by 
+     * {@link URLParameters#getParamGeneList()}. Equivalent to calling 
+     * {@link #getValues(URLParameters.Parameter)} for this parameter.
+     *
+     * @return  A {@code List} of {@code String}s that are the values of 
+     *          the {@code gene_list} URL parameter. Can be {@code null}. 
+     */
+    public List<String> getGeneList() {
+        return this.getValues(this.getUrlParametersInstance().getParamGeneList());
+    }
+    
+    /**
      * @return the species_id parameter
      */
     public Integer getSpeciesId() {
@@ -2773,6 +2791,22 @@ public class RequestParameters {
         return log.exit(false);
     }
     
+    /**
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     *
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     * category "expression_comparison"
+     */
+    public boolean isAExprComparisonPageCategory() {
+        log.entry();
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
+                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_EXPR_COMPARISON)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
     /**
      * This method has a js counterpart in {@code requestparameters.js} that should be kept 
      * consistent as much as possible if the method evolves.

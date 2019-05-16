@@ -190,6 +190,14 @@ public class URLParameters {
      */
     private static final Parameter<String> GENE_ID = 
     		new Parameter<String>("gene_id", false,false, null, false, false, 50, DEFAULT_FORMAT, String.class);
+
+    /**
+     * A {@code Parameter<String>} that contains the gene IDs to be used.
+     * Corresponds to the URL parameter "gene_list".
+     */
+    private static final Parameter<String> GENE_LIST = new Parameter<>("gene_list",
+            false, true, DEFAULT_SEPARATORS, true, DEFAULT_IS_SECURE,
+            1000000, DEFAULT_LIST_FORMAT, String.class);
     
     /**
      * A {@code Parameter<Integer>} representing a species id, typically for the gene page.
@@ -507,6 +515,8 @@ public class URLParameters {
             SPECIES_LIST,
             // Anat. similarity analyze params
             ANAT_ENTITY_LIST,
+            // Expression comparison request
+            GENE_LIST,
             // TopAnat analyze params
             FOREGROUND_LIST, FOREGROUND_FILE, BACKGROUND_LIST, BACKGROUND_FILE,
             EXPRESSION_TYPE, SUMMARY_QUALITY, DATA_TYPE, DEV_STAGE, DECORRELATION_TYPE,
@@ -637,6 +647,14 @@ public class URLParameters {
     	return GENE_ID;
     }
    
+    /**
+     * @return  A {@code Parameter<String>} defining a gene ID list.
+     *          Corresponds to the URL parameter "gene_list".
+     */
+    public Parameter<String> getParamGeneList() {
+        return GENE_LIST;
+    }
+
     /**
      * @return  A {@code Parameter<Integer>} that contains the species id.
      */

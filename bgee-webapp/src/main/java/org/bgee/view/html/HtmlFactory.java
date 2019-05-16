@@ -120,6 +120,12 @@ public class HtmlFactory extends ViewFactory {
 	}
 
     @Override
+    public ExpressionComparisonDisplay getExpressionComparisonDisplay() throws IOException {
+        log.entry();
+        return log.exit(new HtmlExpressionComparisonDisplay(response, requestParameters, prop, jsonHelper, this));
+    }
+
+    @Override
     public RawDataDisplay getRawCallDisplay() throws IOException {
         log.entry();
         return log.exit(new HtmlRawDataDisplay(response, requestParameters, prop, jsonHelper, this));

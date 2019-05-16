@@ -930,4 +930,8 @@ public class MultiSpeciesCallService extends Service {
                 });
         return log.exit(similarityExpressionCallStream);
     }
+
+    public MultiSpeciesExprAnalysis loadMultiSpeciesExprAnalysis(Collection<String> requestedGeneIds) {
+        return null;
+    }
 }

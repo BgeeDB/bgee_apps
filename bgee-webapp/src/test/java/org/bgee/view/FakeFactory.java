@@ -107,6 +107,11 @@ public class FakeFactory extends ViewFactory {
 	}
 
     @Override
+    public ExpressionComparisonDisplay getExpressionComparisonDisplay() throws IOException {
+        return null;
+    }
+
+    @Override
     public RawDataDisplay getRawCallDisplay() throws IOException {
         return null;
     }

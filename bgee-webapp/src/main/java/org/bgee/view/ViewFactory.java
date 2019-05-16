@@ -138,6 +138,14 @@ public abstract class ViewFactory {
 
     /**
      *
+     * @return A {@code ExpressionComparisonDisplay} instance of the appropriate display type.
+     * @throws IOException If an error occurs with the {@code PrintWriter} when writing the
+     * 	                   response output.
+     */
+    public abstract ExpressionComparisonDisplay getExpressionComparisonDisplay() throws IOException;
+
+    /**
+     *
      * @return A {@code RawDataDisplay} instance of the appropriate display type.
      *
      * @throws IOException  If an error occurs with the {@code PrintWriter} when writing the

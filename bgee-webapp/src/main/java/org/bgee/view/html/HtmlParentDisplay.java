@@ -378,6 +378,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         RequestParameters urlGeneSearch = this.getNewRequestParameters();
         urlGeneSearch.setPage(RequestParameters.PAGE_GENE);
 
+        RequestParameters urlExprComp = this.getNewRequestParameters();
+        urlExprComp.setPage(RequestParameters.PAGE_EXPR_COMPARISON);
+        
         RequestParameters urlDownload = this.getNewRequestParameters();
         urlDownload.setPage(RequestParameters.PAGE_DOWNLOAD);
         
@@ -456,6 +459,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 .append("</a></li>");
         navbar.append("<li><a href='" + BGEE_R_PACKAGE_URL + "' target='_blank'>"
                 + "BgeeDB R package</a></li>");
+        navbar.append("<li><a href='").append(urlExprComp.getRequestURL())
+                .append("' title='Expression comparison'>Expression comparison</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
 

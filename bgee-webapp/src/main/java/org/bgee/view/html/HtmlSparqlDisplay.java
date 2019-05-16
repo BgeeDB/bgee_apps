@@ -84,25 +84,31 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
                 "title='Link to Bgee lite documentation'>" + BGEE_LITE_NAME + " database</a>. " +
                 BGEE_LITE_NAME + " is a lighter version of Bgee database, " +
                 "that contains most useful, and explicit information.</p>");
+
+        RequestParameters urlCollabs = this.getNewRequestParameters();
+        urlCollabs.setPage(RequestParameters.PAGE_COLLABORATIONS);
         
         this.writeln("<h2>Web interface to query the Bgee SPARQL endpoint</h2>");
-        this.writeln("<p>It is possible to run Bgee SPARQL queries using the web interface "
-                + "<a href='http://biosoda.expasy.org:8080/build_biosodafrontend/' title='Link to Bio-Query'"
-                + "   class='external_link' target='_blank'>Bio-Query</a> search created for "
-                + "the BioSODA project. Bgee specific queries are present under the category " 
-                + "<span>Bgee database queries</span>. It is possible to see the SPARQL queries " 
-                + "and edit them by clicking on the <span>Show SPARQL Query Editor</span> button. " 
-                + "Moreover, Bio-Query allows to do federated queries between "
+        this.writeln("<p>Bgee SPARQL queries can be run using the web interface "
+                + "<a href='http://biosoda.expasy.org:8080/build_biosodafrontend/' " 
+                + "title='Link to Bio-Query' class='external_link' target='_blank'>Bio-Query</a> " 
+                + "search created for the <a href='"+urlCollabs.getRequestURL()+"' " 
+                + "title='Bgee collaborations'>BioSODA project</a>. " 
+                + "Bgee specific queries are present under the category <span class='bioquery-section'>" 
+                + "Bgee database queries</span>. It is possible to see the SPARQL queries and edit them " 
+                + "by clicking on the <span class='bioquery-button'>Show SPARQL Query Editor</span> " 
+                + "button. Moreover, Bio-Query allows to do federated queries between "
                 + "UniProt, OMA and Bgee SPARQL endpoints.</p>");
 
         this.writeln("<h2>Programmatic access to the Bgee SPARQL endpoint</h2>");
         this.writeln("<p>The Bgee SPARQL endpoint is accessible by using your prefered " +
-                "programming language through the URL address below: " +
-                "<span>http://biosoda.expasy.org:8080/rdf4j-server/repositories/bgeelight</span></p>");
+                "programming language through the URL address below: </p>" +
+                "<p class='endpoint-url'>" +
+                "http://biosoda.expasy.org:8080/rdf4j-server/repositories/bgeelight</p>");
 
         this.writeln("<p>For example, to retrieve all anatomic entities in human where " +
                 "the APOC1 gene is expressed, the query is:");
-        this.writeln("<pre>" +
+        this.writeln("<pre><code>" +
                 "PREFIX orth: &lt;http://purl.org/net/orth#&gt;<br>" +
                 "PREFIX up: &lt;http://purl.uniprot.org/core/&gt;<br>" +
                 "PREFIX genex: &lt;http://purl.org/genex#&gt;<br>" +
@@ -117,7 +123,7 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
                 "    ?cond obo:RO_0002162 &lt;http://purl.uniprot.org/taxonomy/10116&gt; . <br>" +
                 "    FILTER (LCASE(?geneName) = LCASE('APOC1'))<br>" +
                 "}" +
-                "</pre>");
+                "</code></pre>");
 
         this.writeln("It's possible to download result of this query in <a href='" + SPARQL_QUERY_JSON_URL + "' "
                 + "title='SPARQL example query' class='external_link' target='_blank'>JSON format</a> "
@@ -144,7 +150,7 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
                 + "property assertions defined by a first draft of the life-sciences "
                 + "cross-reference (LSCR) ontology that is available to download at the "
                 + "<a href='https://github.com/qfo/OrthologyOntology' target='_blank' class='external_link'"
-                + "title='Link to Quest for Orthologs github'> Quest for Orthologs github</a> repository "
+                + "title='Link to Quest for Orthologs github'> Quest for Orthologs GitHub</a> repository "
                 + "<a href='https://github.com/qfo/OrthologyOntology/blob/master/lscr.ttl' "
                 + "target='_blank' class='external_link' title='link to LSCR ontology'> "
                 + "here</a>.</p>");
@@ -157,4 +163,15 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
         log.exit();
     }
 
+    @Override
+    protected void includeCss() {
+        log.entry();
+
+        this.includeCss("sparql.css");
+        
+        //we need to add the Bgee CSS files at the end, to override CSS file from external libs
+        super.includeCss();
+
+        log.exit();
+    }
 }

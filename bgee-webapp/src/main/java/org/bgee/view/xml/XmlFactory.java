@@ -79,8 +79,12 @@ public class XmlFactory extends ViewFactory {
 	}
 
     @Override
+    public RawDataDisplay getRawCallDisplay() throws IOException {
+        throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
+    }
+
+    @Override
     public SpeciesDisplay getSpeciesDisplay() {
-        log.entry();
         throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
     }
 

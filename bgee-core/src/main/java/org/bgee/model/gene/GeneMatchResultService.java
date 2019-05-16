@@ -4,6 +4,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
+import org.bgee.model.CommonService;
+import org.bgee.model.ServiceFactory;
 import org.bgee.model.species.Species;
 import org.sphx.api.SphinxClient;
 import org.sphx.api.SphinxException;
@@ -13,6 +15,7 @@ import org.sphx.api.SphinxResult;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -32,7 +35,7 @@ import static org.bgee.model.gene.GeneMatch.MatchSource.XREF;
  * @see     GeneMatchResult
  * @since   Bgee 14, Apr. 2019
  */
-public class GeneMatchResultService {
+public class GeneMatchResultService extends CommonService {
     
     /**
      * {@code Logger} of the class.
@@ -49,14 +52,15 @@ public class GeneMatchResultService {
     /**
      * Construct a new {@code GeneMatchResultService} using the provided {@code BgeeProperties}. 
      */
-    public GeneMatchResultService(BgeeProperties props) {
-        this(new SphinxClient(props.getSearchServerURL(), Integer.valueOf(props.getSearchServerPort())));
+    public GeneMatchResultService(BgeeProperties props, ServiceFactory serviceFactory) {
+        this(new SphinxClient(props.getSearchServerURL(), Integer.valueOf(props.getSearchServerPort())),
+                serviceFactory);
     }
-
     /**
      * Construct a new {@code GeneMatchResultService} using the provided {@code SphinxClient}. 
      */
-    public GeneMatchResultService(SphinxClient sphinxClient) {
+    public GeneMatchResultService(SphinxClient sphinxClient, ServiceFactory serviceFactory) {
+        super(serviceFactory);
         this.sphinxClient = sphinxClient;
     }
 
@@ -107,9 +111,12 @@ public class GeneMatchResultService {
             attrNameToIdx.put(result.attrNames[idx], idx);
         }
 
+        final Map<Integer, GeneBioType> geneBioTypeMap = Collections.unmodifiableMap(
+                loadGeneBioTypeMap(this.getDaoManager().getGeneDAO()));
+
         // build list of GeneMatch
         List<GeneMatch> geneMatches = Arrays.stream(result.matches)
-                .map(m -> getGeneMatch(m, formattedTerm, attrNameToIdx))
+                .map(m -> getGeneMatch(m, formattedTerm, attrNameToIdx, geneBioTypeMap))
                 .sorted()
                 .collect(Collectors.toList());
 
@@ -200,8 +207,9 @@ public class GeneMatchResultService {
      * @return              The {@code GeneMatch} that is the converted {@code SphinxMatch}.
      */
     private GeneMatch getGeneMatch(final SphinxMatch match, final String term,
-                                   final Map<String, Integer> attrIndexMap) {
-        log.entry(match, term, attrIndexMap);
+                                   final Map<String, Integer> attrIndexMap,
+                                   final Map<Integer, GeneBioType> geneBioTypeMap) {
+        log.entry(match, term, attrIndexMap, geneBioTypeMap);
 
         String attrs = (String) match.attrValues.get(attrIndexMap.get("genenamesynonym"));
         String[] split = attrs.split(SPHINX_SEPARATOR);
@@ -220,6 +228,8 @@ public class GeneMatchResultService {
                 synonyms,
                 null, // x-refs are null because, at that point, we don't know data source of them
                 species,
+                geneBioTypeMap.get(((Long) match.attrValues.get(attrIndexMap.get("genebiotypeid")))
+                        .intValue()),
                 ((Long) match.attrValues.get(attrIndexMap.get("genemappedtogeneidcount"))).intValue());
 
         // If the gene name, id or description match there is no term

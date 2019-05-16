@@ -1,7 +1,10 @@
 package org.bgee.model.gene;
 
 import org.bgee.model.TestAncestor;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneBioTypeTO;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneBioTypeTOResultSet;
 import org.bgee.model.species.Species;
+import org.junit.Before;
 import org.junit.Test;
 import org.sphx.api.SphinxClient;
 import org.sphx.api.SphinxException;
@@ -10,7 +13,6 @@ import org.sphx.api.SphinxResult;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
@@ -30,6 +32,12 @@ import static org.mockito.Mockito.when;
  */
 public class GeneMatchResultServiceTest extends TestAncestor {
 
+    @Before
+    public void loadCommonMocks() {
+        GeneBioTypeTOResultSet mockBioTypeRs = getMockResultSet(GeneBioTypeTOResultSet.class,
+                Arrays.asList(new GeneBioTypeTO(1, "type1"), new GeneBioTypeTO(2, "type2")));
+        when(this.geneDAO.getGeneBioTypes()).thenReturn(mockBioTypeRs);
+    }
     /**
      * Test {@link GeneMatchResultService#autocomplete(String, int)}.
      */
@@ -54,7 +62,7 @@ public class GeneMatchResultServiceTest extends TestAncestor {
         String term = "ENSG";
         when(sphinxClient.Query("\"" + term + "\"", "bgee_autocomplete")).thenReturn(sphinxResult);
 
-        GeneMatchResultService service = new GeneMatchResultService(sphinxClient);
+        GeneMatchResultService service = new GeneMatchResultService(sphinxClient, this.serviceFactory);
         List<String> autocompleteResult = service.autocomplete(term, 100);
 
         assertNotNull(autocompleteResult);
@@ -72,7 +80,7 @@ public class GeneMatchResultServiceTest extends TestAncestor {
         sphinxResult.totalFound = 1;
         sphinxResult.attrNames = new String[]{
                 "bgeegeneid", "geneid", "genename", "genedescription",
-                "genenamesynonym", "genexref", "speciesid", "genemappedtogeneidcount",
+                "genenamesynonym", "genexref", "speciesid", "genemappedtogeneidcount", "genebiotypeid",
                 "speciesgenus", "speciesname", "speciescommonname", "speciesdisplayorder"};
         SphinxMatch sphinxMatch1 = new SphinxMatch(1, 1);
         sphinxMatch1.attrValues = new ArrayList();
@@ -84,6 +92,7 @@ public class GeneMatchResultServiceTest extends TestAncestor {
         sphinxMatch1.attrValues.add("xref_1||xref:2||xref.3");  //geneXRef
         sphinxMatch1.attrValues.add(11L);           //speciesId
         sphinxMatch1.attrValues.add(1L);            //geneMappedToGeneIdCount
+        sphinxMatch1.attrValues.add(1L);            //geneBioTypeId
         sphinxMatch1.attrValues.add("Homo");        //speciesGenus
         sphinxMatch1.attrValues.add("sapiens");     //speciesName
         sphinxMatch1.attrValues.add("human");       //speciesCommonName
@@ -94,7 +103,7 @@ public class GeneMatchResultServiceTest extends TestAncestor {
         String term = "Syn2";
         when(sphinxClient.Query("\"" + term + "\"", "bgee_genes")).thenReturn(sphinxResult);
 
-        GeneMatchResultService service = new GeneMatchResultService(sphinxClient);
+        GeneMatchResultService service = new GeneMatchResultService(sphinxClient, this.serviceFactory);
         GeneMatchResult geneMatchResult = service.searchByTerm(term, null, 0, 100);
 
         assertEquals(1, geneMatchResult.getTotalMatchCount());
@@ -103,7 +112,7 @@ public class GeneMatchResultServiceTest extends TestAncestor {
         
         Species expSpecies = new Species(11, "human", null, "Homo", "sapiens", null, null, null, null, null, null, 1);
         Gene expGene = new Gene("ENSG0086", "Name1", "Desc1", 
-                new HashSet<>(Arrays.asList("Syn1", "Syn2", "Syn3")), null, expSpecies, 1);
+                new HashSet<>(Arrays.asList("Syn1", "Syn2", "Syn3")), null, expSpecies, new GeneBioType("type1"), 1);
 
         assertEquals(new GeneMatch(expGene, "syn2", GeneMatch.MatchSource.SYNONYM),
                 geneMatchResult.getGeneMatches().get(0));
@@ -134,7 +143,7 @@ public class GeneMatchResultServiceTest extends TestAncestor {
 
         when(sphinxClient.Query(term, "bgee_genes")).thenReturn(null);
 
-        GeneMatchResultService service = new GeneMatchResultService(sphinxClient);
+        GeneMatchResultService service = new GeneMatchResultService(sphinxClient, this.serviceFactory);
         GeneMatchResult geneMatchResult = service.searchByTerm(term, null, 0, 100);
 
         assertEquals(0, geneMatchResult.getTotalMatchCount());

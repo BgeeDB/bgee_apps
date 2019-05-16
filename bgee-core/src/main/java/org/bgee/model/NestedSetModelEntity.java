@@ -12,7 +12,8 @@ import org.apache.logging.log4j.Logger;
  * @version Bgee 13 Nov. 2015
  * @since Bgee 13 Nov. 2015
  */
-public abstract class NestedSetModelEntity<T> extends NamedEntity<T> implements Comparable<NestedSetModelEntity<T>> {
+public abstract class NestedSetModelEntity<T extends Comparable<T>> extends NamedEntity<T>
+implements Comparable<NestedSetModelEntity<T>> {
     private final static Logger log = LogManager.getLogger(NestedSetModelEntity.class.getName());
     
     /**

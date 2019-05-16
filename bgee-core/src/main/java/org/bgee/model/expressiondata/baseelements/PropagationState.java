@@ -1,8 +1,5 @@
 package org.bgee.model.expressiondata.baseelements;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 /**
  * An {@code Enum} describing the different methods of call propagation available, 
  * along any ontology used to capture conditions. 
@@ -38,7 +35,6 @@ public enum PropagationState {
     SELF_AND_ANCESTOR(true), SELF_AND_DESCENDANT(true), ANCESTOR_AND_DESCENDANT(false),
     SELF_OR_ANCESTOR(null), SELF_OR_DESCENDANT(null),
     ALL(true), UNKNOWN(null);
-    private final static Logger log = LogManager.getLogger(PropagationState.class.getName());
     
     private final Boolean includingObservedData;
     

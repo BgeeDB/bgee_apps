@@ -35,7 +35,8 @@ public class TaxonConstraintService extends CommonService {
      * Retrieve anatomical entity taxon constraints for a given set of species IDs.
      * 
      * @param speciesIds    A {@code Collection} of {@code Integer}s that are IDs of species 
-     *                      for which to return the {@code TaxonConstraint}s.
+     *                      for which to return the {@code TaxonConstraint}s. Can be {@code null} or empty
+     *                      to target all species.
      * @return              A {@code Stream} of {@code TaxonConstraint}s that are 
      *                      the {@code TaxonConstraint}s for the given set of species IDs.
      */

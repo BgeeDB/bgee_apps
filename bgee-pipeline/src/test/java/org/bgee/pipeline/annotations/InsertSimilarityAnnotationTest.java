@@ -66,59 +66,59 @@ public class InsertSimilarityAnnotationTest extends TestAncestor {
         SimpleDateFormat sdf = new SimpleDateFormat(SimilarityAnnotationUtils.DATE_FORMAT);
         
         expectedSummaryTOs.add(new SummarySimilarityAnnotationTO(
-                "1", 2759, false, "CIO:0000003"));
-        expectedSimAnnotToAnatEntityTOs.add(new SimAnnotToAnatEntityTO("1", "CL:0000000"));
-        expectedRawTOs.add(new RawSimilarityAnnotationTO("1", false, "ECO:0000033", 
+                1, 2759, false, "CIO:0000003"));
+        expectedSimAnnotToAnatEntityTOs.add(new SimAnnotToAnatEntityTO(1, "CL:0000000"));
+        expectedRawTOs.add(new RawSimilarityAnnotationTO(1, false, "ECO:0000033", 
                 "CIO:0000003", "DOI:10.1073/pnas.032658599", "ref title 1", 
                 "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")));
         
         expectedSummaryTOs.add(new SummarySimilarityAnnotationTO(
-                "2", 33208, false, "CIO:0000019"));
-        expectedSimAnnotToAnatEntityTOs.add(new SimAnnotToAnatEntityTO("2", "CL:0000015"));
-        expectedRawTOs.add(new RawSimilarityAnnotationTO("2", false, "ECO:0000205", 
+                2, 33208, false, "CIO:0000019"));
+        expectedSimAnnotToAnatEntityTOs.add(new SimAnnotToAnatEntityTO(2, "CL:0000015"));
+        expectedRawTOs.add(new RawSimilarityAnnotationTO(2, false, "ECO:0000205", 
                 "CIO:0000004", "DOI:10.1002/bies.950161213", "ref title 2", 
                 "supporting text 2", "bgee", "ANN", sdf.parse("2013-08-29")));
-        expectedRawTOs.add(new RawSimilarityAnnotationTO("2", false, "ECO:0000205", 
+        expectedRawTOs.add(new RawSimilarityAnnotationTO(2, false, "ECO:0000205", 
                 "CIO:0000005", "ISBN:978-0198566694", "ref title 3", 
                 "supporting text 3", "bgee", "ANN", sdf.parse("2013-08-29")));
         
         expectedSummaryTOs.add(new SummarySimilarityAnnotationTO(
-                "3", 7742, true, "CIO:0000004"));
-        expectedSimAnnotToAnatEntityTOs.add(new SimAnnotToAnatEntityTO("3", "CL:0000037"));
-        expectedRawTOs.add(new RawSimilarityAnnotationTO("3", true, "ECO:0000067", 
+                3, 7742, true, "CIO:0000004"));
+        expectedSimAnnotToAnatEntityTOs.add(new SimAnnotToAnatEntityTO(3, "CL:0000037"));
+        expectedRawTOs.add(new RawSimilarityAnnotationTO(3, true, "ECO:0000067", 
                 "CIO:0000004", "DOI:10.1146/annurev.cellbio.22.010605.093317", "ref title 4", 
                 "supporting text 4", "bgee", "ANN", sdf.parse("2013-07-01")));
         
         expectedSummaryTOs.add(new SummarySimilarityAnnotationTO(
-                "4", 7742, true, "CIO:0000004"));
-        expectedSimAnnotToAnatEntityTOs.add(new SimAnnotToAnatEntityTO("4", "CL:0000037"));
-        expectedSimAnnotToAnatEntityTOs.add(new SimAnnotToAnatEntityTO("4", "UBERON:0000001"));
-        expectedSimAnnotToAnatEntityTOs.add(new SimAnnotToAnatEntityTO("4", "UBERON:0000007"));
-        expectedRawTOs.add(new RawSimilarityAnnotationTO("4", true, "ECO:0000067", 
+                4, 7742, true, "CIO:0000004"));
+        expectedSimAnnotToAnatEntityTOs.add(new SimAnnotToAnatEntityTO(4, "CL:0000037"));
+        expectedSimAnnotToAnatEntityTOs.add(new SimAnnotToAnatEntityTO(4, "UBERON:0000001"));
+        expectedSimAnnotToAnatEntityTOs.add(new SimAnnotToAnatEntityTO(4, "UBERON:0000007"));
+        expectedRawTOs.add(new RawSimilarityAnnotationTO(4, true, "ECO:0000067", 
                 "CIO:0000004", "DOI:10.1146/annurev.cellbio.22.010605.093317", "ref title 7", 
                 "supporting text 7", "bgee", "ANN", sdf.parse("2013-07-01")));
         
         expectedSummaryTOs.add(new SummarySimilarityAnnotationTO(
-                "5", 33213, false, "CIO:0000010"));
-        expectedSimAnnotToAnatEntityTOs.add(new SimAnnotToAnatEntityTO("5", "UBERON:0001245"));
-        expectedRawTOs.add(new RawSimilarityAnnotationTO("5", false, "ECO:0000355", 
+                5, 33213, false, "CIO:0000010"));
+        expectedSimAnnotToAnatEntityTOs.add(new SimAnnotToAnatEntityTO(5, "UBERON:0001245"));
+        expectedRawTOs.add(new RawSimilarityAnnotationTO(5, false, "ECO:0000355", 
                 "CIO:0000004", "http://dpc.uba.uva.nl/ctz/vol73/nr01/art01", "ref title 16", 
                 "supporting text 16", "bgee", "ANN", sdf.parse("2013-10-08")));
-        expectedRawTOs.add(new RawSimilarityAnnotationTO("5", true, "ECO:0000033", 
+        expectedRawTOs.add(new RawSimilarityAnnotationTO(5, true, "ECO:0000033", 
                 "CIO:0000004", "http://dpc.uba.uva.nl/ctz/vol73/nr01/art01", "ref title 16", 
                 "supporting text 16", "bgee", "ANN", sdf.parse("2013-10-08")));
         
         expectedSummaryTOs.add(new SummarySimilarityAnnotationTO(
-                "6", 7776, true, "CIO:0000003"));
-        expectedSimAnnotToAnatEntityTOs.add(new SimAnnotToAnatEntityTO("6", "UBERON:0010207"));
-        expectedRawTOs.add(new RawSimilarityAnnotationTO("6", true, "ECO:0000034", 
+                6, 7776, true, "CIO:0000003"));
+        expectedSimAnnotToAnatEntityTOs.add(new SimAnnotToAnatEntityTO(6, "UBERON:0010207"));
+        expectedRawTOs.add(new RawSimilarityAnnotationTO(6, true, "ECO:0000034", 
                 "CIO:0000003", "ISBN:978-0030223693", "ref title 8", 
                 "supporting text 8", "bgee", "ANN", sdf.parse("2013-09-05")));
         
         expectedSummaryTOs.add(new SummarySimilarityAnnotationTO(
-                "7", 7778, false, "CIO:0000003"));
-        expectedSimAnnotToAnatEntityTOs.add(new SimAnnotToAnatEntityTO("7", "UBERON:0010207"));
-        expectedRawTOs.add(new RawSimilarityAnnotationTO("7", false, "ECO:0000034", 
+                7, 7778, false, "CIO:0000003"));
+        expectedSimAnnotToAnatEntityTOs.add(new SimAnnotToAnatEntityTO(7, "UBERON:0010207"));
+        expectedRawTOs.add(new RawSimilarityAnnotationTO(7, false, "ECO:0000034", 
                 "CIO:0000003", "ISBN:978-0030223693", "ref title 8", 
                 "supporting text 8", "bgee", "ANN", sdf.parse("2013-09-05")));
         
@@ -140,8 +140,10 @@ public class InsertSimilarityAnnotationTest extends TestAncestor {
                 ArgumentCaptor.forClass(Collection.class);
         verify(mockManager.mockSummarySimilarityAnnotationDAO).
             insertSimilarityAnnotationsToAnatEntityIds(annotToAnatEntityTOsArg.capture());
-        assertEquals("Incorrect annotation ID to entitiy IDs inserted", 
-                expectedSimAnnotToAnatEntityTOs, annotToAnatEntityTOsArg.getValue());
+        if (!TOComparator.areTOCollectionsEqual(expectedSimAnnotToAnatEntityTOs, annotToAnatEntityTOsArg.getValue())){
+            throw new AssertionError("Incorrect annotation ID to entitiy IDs inserted, " +
+                    "expected " + expectedSimAnnotToAnatEntityTOs + ", but was " + annotToAnatEntityTOsArg.getValue());
+        }
         
         ArgumentCaptor<Collection> rawTOsArg = ArgumentCaptor.forClass(Collection.class);
         verify(mockManager.mockRawSimilarityAnnotationDAO).

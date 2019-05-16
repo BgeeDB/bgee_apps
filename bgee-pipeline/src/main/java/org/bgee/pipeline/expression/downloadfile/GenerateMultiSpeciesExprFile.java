@@ -620,7 +620,7 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
 
         // Retrieve species names, gene names, stage names, anat. entity names, for all species
         // XXX: retrieve only for speciesIds? 
-        Map<Integer, String> speciesNamesByIds = this.checkAndGetLatinNamesBySpeciesIds(setSpecies,
+        Map<Integer, String> speciesNamesByIds = Utils.checkAndGetLatinNamesBySpeciesIds(setSpecies,
                 serviceFactorySupplier.get().getSpeciesService());
         Map<Integer, String> geneNamesByIds = 
                 BgeeDBUtils.getGeneNamesByIds(setSpecies, this.getGeneDAO());
@@ -825,7 +825,7 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
         return log.exit(calls.map(c -> {
             int i = 0;
             for (Entry<MultiSpExprFileType, ICsvDozerBeanWriter> writerFileType : writersUsed.entrySet()) {
-                Integer omaNodeId = c.getOMANodeId();
+                String omaGroupId = c.getOMAGroupId();
 //                String geneName = geneNamesByIds.containsKey(geneId)? geneNamesByIds.get(geneId) : "";
 //                String anatEntityId = c.getCondition().getAnatEntityId();
 //                String anatEntityName = anatEntityNamesByIds.get(anatEntityId);

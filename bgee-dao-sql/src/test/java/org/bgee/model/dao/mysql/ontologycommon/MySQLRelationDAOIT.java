@@ -764,7 +764,7 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
     
     /**
      * Test the method {@link MySQLRelationDAO#getTaxonRelations(Collection, Collection, Boolean,
-            Collection, Collection)}.
+            Collection, boolean, Collection)}.
      */
     @Test
     public void shouldGetTaxonRelations() throws SQLException {
@@ -795,9 +795,25 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
             new RelationTO<>(null, 511, 111, RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
             new RelationTO<>(null, 611, 111, RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
             new RelationTO<>(null, 611, 311, RelationType.ISA_PARTOF, RelationStatus.INDIRECT));
-        RelationTOResultSet<Integer> resultSet = dao.getTaxonRelations(null, null, null, null, null);
+        RelationTOResultSet<Integer> resultSet = dao.getTaxonRelations(null, null, null, null, false, null);
         assertTrue("RelationTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+
+        //All rels but only connecting LCA taxa
+        expectedRelations = Arrays.asList(
+                new RelationTO<>(null, 111, 111, RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO<>(null, 411, 411, RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO<>(null, 511, 511, RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO<>(null, 611, 611, RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                
+                new RelationTO<>(null, 611, 511, RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+                
+                new RelationTO<>(null, 411, 111, RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+                new RelationTO<>(null, 511, 111, RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+                new RelationTO<>(null, 611, 111, RelationType.ISA_PARTOF, RelationStatus.INDIRECT));
+            resultSet = dao.getTaxonRelations(null, null, null, null, true, null);
+            assertTrue("RelationTOs incorrectly retrieved",
+                    TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
 
         //Now, we stop requesting the relation type and ID
         Collection<RelationDAO.Attribute> attrs = EnumSet.complementOf(
@@ -822,7 +838,7 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
             new RelationTO<>(null, 511, 111, null, RelationStatus.INDIRECT), 
             new RelationTO<>(null, 611, 111, null, RelationStatus.INDIRECT), 
             new RelationTO<>(null, 611, 311, null, RelationStatus.INDIRECT));
-        resultSet = dao.getTaxonRelations(null, null, null, null, attrs);
+        resultSet = dao.getTaxonRelations(null, null, null, null, false, attrs);
         assertTrue("RelationTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
         
@@ -836,7 +852,7 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
             
             new RelationTO<>(null, 611, 111, null, RelationStatus.INDIRECT), 
             new RelationTO<>(null, 611, 311, null, RelationStatus.INDIRECT));
-        resultSet = dao.getTaxonRelations(Arrays.asList(111, 611), null, null, null, attrs);
+        resultSet = dao.getTaxonRelations(Arrays.asList(111, 611), null, null, null, false, attrs);
         assertTrue("RelationTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
 
@@ -852,7 +868,7 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
             new RelationTO<>(null, 411, 111, null, RelationStatus.INDIRECT), 
             new RelationTO<>(null, 511, 111, null, RelationStatus.INDIRECT), 
             new RelationTO<>(null, 611, 111, null, RelationStatus.INDIRECT));
-        resultSet = dao.getTaxonRelations(null, Arrays.asList(111, 611), null, null, attrs);
+        resultSet = dao.getTaxonRelations(null, Arrays.asList(111, 611), null, null, false, attrs);
         assertTrue("RelationTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
         
@@ -871,7 +887,25 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
             new RelationTO<>(null, 611, 111, null, RelationStatus.INDIRECT), 
             new RelationTO<>(null, 611, 311, null, RelationStatus.INDIRECT));
         resultSet = dao.getTaxonRelations(Arrays.asList(111, 611), Arrays.asList(111, 611), 
-                true, null, attrs);
+                true, null, false, attrs);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+        
+        //OR condition on sources and targets with LCA filtering
+        expectedRelations = Arrays.asList(
+                new RelationTO<>(null, 111, 111, RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO<>(null, 311, 311, RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE), 
+                
+                new RelationTO<>(null, 311, 111, RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO<>(null, 411, 311, RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+                new RelationTO<>(null, 511, 311, RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                
+                new RelationTO<>(null, 411, 111, RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+                new RelationTO<>(null, 511, 111, RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+                new RelationTO<>(null, 611, 111, RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+                new RelationTO<>(null, 611, 311, RelationType.ISA_PARTOF, RelationStatus.INDIRECT));
+        resultSet = dao.getTaxonRelations(Arrays.asList(111, 311), Arrays.asList(111, 311), 
+                true, null, true, attrs);
         assertTrue("RelationTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
         
@@ -882,7 +916,13 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
             
             new RelationTO<>(null, 611, 111, null, RelationStatus.INDIRECT));
         resultSet = dao.getTaxonRelations(Arrays.asList(111, 611), Arrays.asList(111, 611), 
-                false, null, attrs);
+                false, null, false, attrs);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+        //LCA parameter shouldn't change anything here, we keep anyway all relations connecting
+        //both sources and targets
+        resultSet = dao.getTaxonRelations(Arrays.asList(111, 611), Arrays.asList(111, 611), 
+                false, null, true, attrs);
         assertTrue("RelationTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
         
@@ -890,7 +930,7 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
         expectedRelations = Arrays.asList(
                 new RelationTO<>(null, 611, 111, null, RelationStatus.INDIRECT));
         resultSet = dao.getTaxonRelations(Arrays.asList(111, 611), Arrays.asList(111, 611), 
-                false, EnumSet.of(RelationStatus.DIRECT, RelationStatus.INDIRECT), attrs);
+                false, EnumSet.of(RelationStatus.DIRECT, RelationStatus.INDIRECT), false, attrs);
         assertTrue("RelationTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
     }

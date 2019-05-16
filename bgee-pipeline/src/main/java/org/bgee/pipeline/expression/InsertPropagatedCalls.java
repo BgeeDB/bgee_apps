@@ -63,6 +63,7 @@ import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.ConditionGraph;
+import org.bgee.model.expressiondata.ConditionGraphService;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
@@ -834,7 +835,6 @@ public class InsertPropagatedCalls extends CallService {
                         }
                         insertedCondMap.putAll(newCondMap);
 
-
                         //Now, we insert relations between globalConditions and source raw conditions,
                         //to be able to later retrieve relations between globalExpressions to expressions,
                         //without needing the table globalExpressionToExpression, that was very much too large
@@ -971,8 +971,7 @@ public class InsertPropagatedCalls extends CallService {
             
             //now we insert the conditions
             Set<ConditionTO> condTOs = newConds.entrySet().stream()
-                    //there is no exprMappedConditionId for global propagated conditions
-                    .map(e -> mapConditionToConditionTO(e.getValue(), null, e.getKey()))
+                    .map(e -> mapConditionToConditionTO(e.getValue(), e.getKey()))
                     .collect(Collectors.toSet());
             if (!condTOs.isEmpty()) {
                 condDAO.insertGlobalConditions(condTOs);
@@ -1430,7 +1429,7 @@ public class InsertPropagatedCalls extends CallService {
 
     public InsertPropagatedCalls(Supplier<ServiceFactory> serviceFactorySupplier, 
             List<Set<ConditionDAO.Attribute>> condParamCombinations, int speciesId) {
-        super(serviceFactorySupplier.get(), null);
+        super(serviceFactorySupplier.get());
         if (condParamCombinations == null || condParamCombinations.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Condition attributes should not be empty"));
         }
@@ -1490,11 +1489,11 @@ public class InsertPropagatedCalls extends CallService {
 
             // We use all existing conditions in the species, and infer all propagated conditions
             log.info("Starting condition inference...");
+            ConditionGraphService condGraphService = this.getServiceFactory().getConditionGraphService();
             Map<Set<ConditionDAO.Attribute>, ConditionGraph> conditionGraphByComb =
                     condMapByComb.entrySet().stream()
                     .map(e -> new AbstractMap.SimpleEntry<>(e.getKey(),
-                            new ConditionGraph(e.getValue().values(), true, true,
-                                    this.getServiceFactory()))
+                            condGraphService.loadConditionGraph(e.getValue().values(), true, true))
                     ).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
             log.info("Done condition inference.");
             
@@ -1657,11 +1656,14 @@ public class InsertPropagatedCalls extends CallService {
     private Map<Integer, Condition> loadRawConditionMap(Collection<Species> species) {
         log.entry(species);
 
-        return log.exit(loadConditionMapFromResultSet(
-                (attrs) -> this.conditionDAO.getRawConditionsBySpeciesIds(
-                        species.stream().map(s -> s.getId()).collect(Collectors.toSet()),
-                        attrs),
-                null, species));
+        //TODO: reimplement/adapt this method for RawDataConditin retrieval
+        throw log.throwing(new UnsupportedOperationException("To reimplement for support RawDataCondition"));
+//        return log.exit(loadConditionMapFromResultSet(
+//                (attrs) -> this.getDaoManager().getRawDataConditionDAO().getRawDataConditionsBySpeciesIds(
+//                        species.stream().map(s -> s.getId()).collect(Collectors.toSet()),
+//                        attrs),
+//                null, species,
+//                this.getServiceFactory().getAnatEntityService(), this.getServiceFactory().getDevStageService()));
     }
     private Map<Integer, Condition> generateConditionMapForCondParams(
             Set<ConditionDAO.Attribute> condParams, Map<Integer, Condition> originalCondMap) {

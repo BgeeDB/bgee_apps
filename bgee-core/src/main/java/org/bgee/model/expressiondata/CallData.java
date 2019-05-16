@@ -250,6 +250,8 @@ public abstract class CallData<T extends Enum<T> & CallType> {
                         + invalidCounts.stream().filter(c -> c.getCount() > 0).collect(Collectors.toSet())));
                 }
             }
+            //TODO: if we remove "count" from hashCode/equals of ExperimentExpressionCount,
+            //no need for this code anymore (see comment in ExperimentExpressionCount)
             List<ExperimentExpressionCount> checkCounts = new ArrayList<>(validCounts);
             for (int i = 0; i < checkCounts.size(); i++) {
                 ExperimentExpressionCount count1 = checkCounts.get(i);
@@ -351,6 +353,7 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         // hashCode/equals/toString
         //********************************************
         @Override
+        //TODO: remove ranks from hashCode/equals after reactivating unit tests?
         public int hashCode() {
             final int prime = 31;
             int result = super.hashCode();
@@ -364,6 +367,7 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         }
 
         @Override
+        //TODO: remove ranks from hashCode/equals after reactivating unit tests?
         public boolean equals(Object obj) {
             if (this == obj) {
                 return true;

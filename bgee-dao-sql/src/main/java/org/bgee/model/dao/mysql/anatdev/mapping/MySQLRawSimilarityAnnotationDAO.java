@@ -20,7 +20,8 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
  * A {@code RawSimilarityAnnotationDAO} for MySQL.
  *
  * @author Valentine Rech de Laval
- * @version Bgee 13
+ * @author Frederic Bastian
+ * @version Bgee 14 Nov 2018
  * @see org.bgee.model.dao.api.anatdev.mapping.RawSimilarityAnnotationDAO.RawSimilarityAnnotationTO
  * @since Bgee 13
  */
@@ -172,7 +173,7 @@ public class MySQLRawSimilarityAnnotationDAO extends MySQLDAO<RawSimilarityAnnot
         try (BgeePreparedStatement stmt = 
                 this.getManager().getConnection().prepareStatement(sqlExpression)) {
             for (RawSimilarityAnnotationTO rawTO: rawTOs) {
-                stmt.setInt(1, Integer.parseInt(rawTO.getSummarySimilarityAnnotationId()));
+                stmt.setInt(1, rawTO.getSummarySimilarityAnnotationId());
                 stmt.setBoolean(2, rawTO.isNegated());
                 stmt.setString(3, rawTO.getECOId());
                 stmt.setString(4, rawTO.getCIOId());
@@ -254,7 +255,8 @@ public class MySQLRawSimilarityAnnotationDAO extends MySQLDAO<RawSimilarityAnnot
         protected RawSimilarityAnnotationTO getNewTO() throws DAOException {
             log.entry();
 
-            String summarySimilarityAnnotationId = null, ecoId = null, cioId = null, 
+            Integer summarySimilarityAnnotationId = null;
+            String ecoId = null, cioId = null, 
                     referenceId = null, referenceTitle = null, supportingText = null, 
                     assignedBy = null, curator = null; 
             Boolean negated = null;
@@ -263,7 +265,7 @@ public class MySQLRawSimilarityAnnotationDAO extends MySQLDAO<RawSimilarityAnnot
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
                     if (column.getValue().equals("summarySimilarityAnnotationId")) {
-                        summarySimilarityAnnotationId = this.getCurrentResultSet().getString(
+                        summarySimilarityAnnotationId = this.getCurrentResultSet().getInt(
                                 column.getKey());
                         
                     } else if (column.getValue().equals("negated")) {

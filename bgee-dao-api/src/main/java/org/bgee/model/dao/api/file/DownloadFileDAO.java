@@ -38,7 +38,7 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
      * </ul>
      */
     //TODO: javadoc for CONDITION_PARAMETERS
-    enum Attribute implements DAO.Attribute {
+    public enum Attribute implements DAO.Attribute {
         ID, NAME, DESCRIPTION, PATH, FILE_SIZE, CATEGORY, SPECIES_DATA_GROUP_ID, CONDITION_PARAMETERS
     }
 
@@ -52,7 +52,7 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
      * @return  A {@code DownloadFileTOResultSet} containing all download files from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    DownloadFileTOResultSet getAllDownloadFiles() throws DAOException;
+    public DownloadFileTOResultSet getAllDownloadFiles() throws DAOException;
 
     /**
      * Insert the provided download files into the Bgee database, represented as
@@ -69,13 +69,13 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
     /**
      * The {@code DAOResultSet} specific to {@code DownloadFileTO}.
      */
-    interface DownloadFileTOResultSet extends DAOResultSet<DownloadFileTO> {
+    public interface DownloadFileTOResultSet extends DAOResultSet<DownloadFileTO> {
     }
 
     /**
      * {@code NamedEntityTO} representing a download file in the Bgee database.
      */
-    final class DownloadFileTO extends NamedEntityTO<Integer> {
+    public final class DownloadFileTO extends NamedEntityTO<Integer> {
 
         private static final long serialVersionUID = 19171223459721L;
 

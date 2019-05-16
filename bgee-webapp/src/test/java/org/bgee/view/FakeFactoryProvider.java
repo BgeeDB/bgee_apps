@@ -47,14 +47,13 @@ public class FakeFactoryProvider extends ViewFactoryProvider
             DisplayType displayType, 
             RequestParameters requestParameters)
     {
-                       
         if (displayType == DisplayType.XML) {
             return new FakeFactory(response, requestParameters, this.prop);
         }
         ViewFactory mockFactory = mock(ViewFactory.class);
         try {
-            when(mockFactory.getGeneralDisplay())
-            .thenReturn(mock(GeneralDisplay.class));
+            when(mockFactory.getAboutDisplay())
+            .thenReturn(mock(AboutDisplay.class));
         } catch (IOException e) {
             // Do nothing, should not occur with a mock
         }

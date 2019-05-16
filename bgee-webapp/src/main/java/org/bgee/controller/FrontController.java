@@ -26,7 +26,6 @@ import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.JobResultNotFoundException;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
-import org.bgee.model.gene.GeneMatchResultService;
 import org.bgee.model.job.JobService;
 import org.bgee.model.job.exception.TooManyJobsException;
 import org.bgee.view.ErrorDisplay;
@@ -75,10 +74,6 @@ public class FrontController extends HttpServlet {
      */
     private final UserService userService;
     /**
-     * The {@code GeneMatchResultService} instance allowing to use the search engine for a gene.
-     */
-    private final GeneMatchResultService geneMatchResultService;
-    /**
      * A {@code Supplier} of {@code ServiceFactory}s, allowing to obtain a new {@code ServiceFactory} 
      * instance at each call to the {@code doRequest} method.
      */
@@ -113,7 +108,7 @@ public class FrontController extends HttpServlet {
      *              {@code BgeeProperties}
      */
     public FrontController(Properties prop) {
-        this(BgeeProperties.getBgeeProperties(prop), null, null, null, null, null, null, null);
+        this(BgeeProperties.getBgeeProperties(prop), null, null, null, null, null, null);
     }
 
     /**
@@ -144,7 +139,7 @@ public class FrontController extends HttpServlet {
      * @param mailSender                A {@code MailSender} instance used to send mails to users.
      */
     public FrontController(BgeeProperties prop, URLParameters urlParameters, 
-            JobService jobService, UserService userService, GeneMatchResultService geneMatchResultService,
+            JobService jobService, UserService userService,
             Supplier<ServiceFactory> serviceFactoryProvider, ViewFactoryProvider viewFactoryProvider, 
             MailSender mailSender) {
         log.entry(prop, urlParameters, jobService, userService, 
@@ -155,24 +150,20 @@ public class FrontController extends HttpServlet {
         
         // If the bgee prop object is null, just get the default instance from BgeeProperties
         this.prop = prop != null? prop: BgeeProperties.getBgeeProperties();
+
+        //If serviceFactoryProvider is null, use default constructor of ServiceFactory
+        this.serviceFactoryProvider = serviceFactoryProvider != null? serviceFactoryProvider: 
+            ServiceFactory::new;
         
         this.jobService  = jobService != null? jobService: new JobService(this.prop);
         this.userService = userService != null? userService: new UserService();
-        // FIXME we need to integrate GeneMatchResultService into ServiceFactory 
-        this.geneMatchResultService  = geneMatchResultService != null? geneMatchResultService:
-                new GeneMatchResultService(this.prop);
         
         // If the viewFactoryProvider object is null, just use a new instance, 
         //injecting the properties obtained above. 
         //XXX: if viewFactoryProvider is not null, we currently don't check that it uses 
         //the same BgeeProperties instance. Maybe it's OK to allow to use different BgeeProperties instances? 
         this.viewFactoryProvider = viewFactoryProvider != null? viewFactoryProvider: new ViewFactoryProvider(this.prop);
-        
-        
-        //If serviceFactoryProvider is null, use default constructor of ServiceFactory
-        this.serviceFactoryProvider = serviceFactoryProvider != null? serviceFactoryProvider: 
-            ServiceFactory::new;
-        
+
         MailSender checkMailSender = null;
         if (mailSender != null) {
             checkMailSender = mailSender;
@@ -237,32 +228,45 @@ public class FrontController extends HttpServlet {
             CommandParent controller = null;
             if (requestParameters.isTheHomePage()) {
                 controller = new CommandHome(response, requestParameters, this.prop, factory, serviceFactory);
+                
             } else if (requestParameters.isADownloadPageCategory()) {
                 controller = new CommandDownload(response, requestParameters, this.prop, factory, serviceFactory);
+                
             } else if (requestParameters.isADocumentationPageCategory()) {
                 controller = new CommandDocumentation(response, requestParameters, this.prop, factory);
+                
             } else if (requestParameters.isAnAboutPageCategory()) {
                 controller = new CommandAbout(response, requestParameters, this.prop, factory);
+
             } else if (requestParameters.isAPrivatePolicyPageCategory()) {
                 controller = new CommandPrivacyPolicy(response, requestParameters, this.prop, factory);
+
             } else if (requestParameters.isAcollaborationsPageCategory()) {
                 controller = new CommandCollaborations(response, requestParameters, this.prop, factory);
+
             } else if (requestParameters.isATopAnatPageCategory()) {
                 controller = new CommandTopAnat(response, requestParameters, this.prop, factory, 
                         serviceFactory, this.jobService, user, this.getServletContext(), this.mailSender);
+                
             } else if (requestParameters.isAJobPageCategory()) {
                 controller = new CommandJob(response, requestParameters, this.prop, factory, 
                         serviceFactory, this.jobService, user);
+                
             } else if (requestParameters.isAGenePageCategory()){
                 controller = new CommandGene(response, requestParameters, this.prop, factory,
-                        serviceFactory, this.geneMatchResultService);      
+                        serviceFactory);
+
+            } else if (requestParameters.isARawDataPageCategory()){
+                controller = new CommandRawData(response, requestParameters, this.prop, factory, serviceFactory);
+
             } else if (requestParameters.isASourcePageCategory()){
-                controller = new CommandSource(response, requestParameters, this.prop, factory, serviceFactory);      
+                controller = new CommandSource(response, requestParameters, this.prop, factory, serviceFactory);
+                
             } else if (requestParameters.isASpeciesPageCategory()){
                 controller = new CommandSpecies(response, requestParameters, this.prop, factory, serviceFactory);      
             } else if (requestParameters.isASearchPageCategory()) {
             		controller = new CommandSearch(response, requestParameters, this.prop, factory,
-                            serviceFactory, this.geneMatchResultService);
+                            serviceFactory);
 //            } else if (requestParameters.isADAOPageCategory()) {
 //                controller = new CommandDAO(response, requestParameters, this.prop, factory, 
 //                        serviceFactory, this.jobService, user);
@@ -330,6 +334,8 @@ public class FrontController extends HttpServlet {
             }
             if (errorDisplay == null) {
                 log.error("Could not display error message to caller: {}", realException);
+                log.exit();
+                return;
             }
             
             if (realException instanceof InvalidFormatException) {

@@ -441,7 +441,7 @@ public class CommandTopAnat extends CommandParent {
     }
 
     @Override
-    public void processRequest() throws IOException, JobResultNotFoundException, PageNotFoundException, 
+    public void processRequest() throws IOException, PageNotFoundException, 
     InvalidRequestException, MissingParameterException, TooManyJobsException {
         log.entry();
         
@@ -451,6 +451,12 @@ public class CommandTopAnat extends CommandParent {
         TopAnatDisplay display = null;
         if (!this.requestParameters.isATopAnatDownloadFile()) {
             display = this.viewFactory.getTopAnatDisplay();
+        }
+        
+        if (display == null) {
+            throw log.throwing(new PageNotFoundException("Incorrect "
+                    + this.requestParameters.getUrlParametersInstance().getParamAction()
+                    + " parameter value."));
         }
         
         // Gene list validation 
@@ -691,23 +697,20 @@ public class CommandTopAnat extends CommandParent {
 
         // create byte buffer
         byte[] buffer = new byte[1024];
-        ZipOutputStream zos = new ZipOutputStream(this.response.getOutputStream());
-
-        for (TopAnatResults result: topAnatResults) {
-            File srcFile = generateFilePath.apply(result).toFile();
-            FileInputStream fis = new FileInputStream(srcFile);
-            // begin writing a new ZIP entry, positions the stream to the start of the entry data
-            zos.putNextEntry(new ZipEntry(URLEncoder.encode(generateFileName.apply(result), "UTF-8")));
-            int length;
-            while ((length = fis.read(buffer)) > 0) {
-                zos.write(buffer, 0, length);
+        try (ZipOutputStream zos = new ZipOutputStream(this.response.getOutputStream())) {
+            for (TopAnatResults result : topAnatResults) {
+                File srcFile = generateFilePath.apply(result).toFile();
+                try (FileInputStream fis = new FileInputStream(srcFile)) {
+                    // begin writing a new ZIP entry, positions the stream to the start of the entry data
+                    zos.putNextEntry(new ZipEntry(URLEncoder.encode(generateFileName.apply(result), "UTF-8")));
+                    int length;
+                    while ((length = fis.read(buffer)) > 0) {
+                        zos.write(buffer, 0, length);
+                    }
+                    zos.closeEntry();
+                }
             }
-            zos.closeEntry();
-            // close the InputStream
-            fis.close();
         }
-        // close the ZipOutputStream
-        zos.close();
         
         log.exit();
     }
@@ -823,29 +826,31 @@ public class CommandTopAnat extends CommandParent {
         //Transform speciesToGeneCount into a Map species ID -> gene count, and add
         //the invalid gene count, associated to a specific key, and make it a LinkedHashMap,
         //for sorted and predictable responses
-        LinkedHashMap<Integer, Long> responseSpeciesIdToGeneCount = Optional.of(speciesToGeneCount)
-                .map(map -> {
-                    //create a map species ID -> gene count
-                    Map<Integer, Long> newMap = map.entrySet().stream()
-                            .collect(Collectors.toMap(e -> e.getKey().getId(), e -> e.getValue()));
-                    //add an entry for undetermined genes
-                    if (!undeterminedGeneIds.isEmpty()) {
-                        newMap.put(UNDETERMINED_SPECIES_LABEL, Long.valueOf(undeterminedGeneIds.size()));
-                    }
-                    return newMap;
-                })
-                .get().entrySet().stream()
-                //sort in descending order of gene count (and in case of equality,
-                //by ascending order of key, for predictable message generation)
-                .sorted((e1, e2) -> {
-                    if (e1.getValue().equals(e2.getValue())) {
-                        return e1.getKey().compareTo(e2.getKey());
-                    }
-                    return e2.getValue().compareTo(e1.getValue());
-                }).collect(Collectors.toMap(Entry::getKey, Entry::getValue,
-                    (v1, v2) -> {throw log.throwing(new IllegalStateException("no key collision possible"));},
-                    LinkedHashMap::new));
+        LinkedHashMap<Integer, Long> responseSpeciesIdToGeneCount = null;
+        if (!speciesToGeneCount.isEmpty()) {
 
+            //create a map species ID -> gene count
+            Map<Integer, Long> newMap = speciesToGeneCount.entrySet().stream()
+                    .collect(Collectors.toMap(e -> e.getKey().getId(), Entry::getValue));
+            //add an entry for undetermined genes
+            if (!undeterminedGeneIds.isEmpty()) {
+                newMap.put(UNDETERMINED_SPECIES_LABEL, Long.valueOf(undeterminedGeneIds.size()));
+            }
+
+            responseSpeciesIdToGeneCount = newMap.entrySet().stream()
+                    //sort in descending order of gene count (and in case of equality,
+                    //by ascending order of key, for predictable message generation)
+                    .sorted((e1, e2) -> {
+                        if (e1.getValue().equals(e2.getValue())) {
+                            return e1.getKey().compareTo(e2.getKey());
+                        }
+                        return e2.getValue().compareTo(e1.getValue());
+                    }).collect(Collectors.toMap(Entry::getKey, Entry::getValue,
+                            (v1, v2) -> {throw log.throwing(new IllegalStateException("no key collision possible"));},
+                            LinkedHashMap::new));
+
+
+        }
         return log.exit(new GeneListResponse(
                 responseSpeciesIdToGeneCount,
                 //provide a TreeMap species ID -> species

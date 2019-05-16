@@ -190,6 +190,13 @@ public class RequestParameters {
      * (see {@link URLParameters#getParamPage()}) when a page related to a gene is requested.
      */
     public static final String PAGE_GENE = "gene";
+
+    /**
+     * A {@code String} that is the value taken by the {@code page} parameter 
+     * (see {@link URLParameters#getParamPage()}) when a page related to a raw data is requested.
+     */
+    public static final String PAGE_RAW_DATA = "raw_data";
+
     /**
      * A {@code String} that is the value taken by the {@code page} parameter 
      * (see {@link URLParameters#getParamPage()}) when a page related to sources is requested.
@@ -1051,7 +1058,9 @@ public class RequestParameters {
             storageFile = new File(prop.getRequestParametersStorageDirectory() 
                     + this.getFirstValue(this.getKeyParam()));
             if (storageFile.exists()) {
-                storageFile.delete();
+                if (!storageFile.delete()) {
+                    log.error("The file was not deleted before before throwing the exception");
+                }
             }
             throw new RequestParametersNotStorableException(
                     "An error occurred and it was not possible to store the parameters.");
@@ -2254,6 +2263,17 @@ public class RequestParameters {
         return this.getValues(this.getUrlParametersInstance().getParamDevStage());
     }
     /**
+     * Convenient method to retrieve values of the parameter returned by 
+     * {@link URLParameters#getParamAnatEntity()}. Equivalent to calling 
+     * {@link #getValues(URLParameters.Parameter)} for this parameter.
+     *
+     * @return  The {@code List} of {@code String}s that are the values of 
+     *          the {@code anat_entity} URL parameter. Can be {@code null}. 
+     */
+    public List<String> getAnatEntity() {
+        return this.getValues(this.getUrlParametersInstance().getParamAnatEntity());
+    }
+    /**
      * Convenient method to retrieve value of the parameter returned by 
      * {@link URLParameters#getParamDecorrelationType()}. Equivalent to calling 
      * {@link #getFirstValue(URLParameters.Parameter)} for this parameter.
@@ -2768,6 +2788,22 @@ public class RequestParameters {
         return log.exit(false);
     }
     
+    /**
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     *
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     *          category "raw_data"
+     */
+    public boolean isARawDataPageCategory() {
+        log.entry();
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
+                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_RAW_DATA)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
     /**
      * 
      * @return  A {@code boolean} to tell whether the request corresponds to a page of the

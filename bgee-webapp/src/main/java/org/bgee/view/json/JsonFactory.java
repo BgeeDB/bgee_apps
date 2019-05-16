@@ -105,6 +105,11 @@ public class JsonFactory extends ViewFactory {
 	}
 
     @Override
+    public RawDataDisplay getRawCallDisplay() throws IOException {
+        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
+    }
+
+    @Override
     public SpeciesDisplay getSpeciesDisplay() throws IOException {
         log.entry();
         return log.exit(new JsonSpeciesDisplay(this.response, this.requestParameters,

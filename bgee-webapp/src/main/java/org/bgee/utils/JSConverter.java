@@ -72,16 +72,21 @@ public abstract class JSConverter {
      * @param targetFile    The full path to the file that will be generated 
      *                      ( ! it will be overwritten it if already present )
      * 
-     * @throws IOException              If any problem happen when writing the file on the disk
+     * @throws IOException              If any problem happen when writing the file on the disk, or
+     *                                  the file already exists and could not be deleted.
      * @throws IllegalArgumentException If the provided class to generate is not supported 
      */
     protected static void generateFile(String className, File targetFile) throws IOException, 
     IllegalArgumentException {
         log.entry(className, targetFile);
         if (targetFile.exists()) {
-            targetFile.delete();
+            if (targetFile.delete()) {
+                throw log.throwing(new IOException("The previous version of the file could not be deleted"));
+            }
         }
-        targetFile.createNewFile();
+        if (!targetFile.createNewFile()) {
+            throw log.throwing(new IOException("The file already exists"));
+        }
         if(className.equals("bgeeproperties")){
             new BgeePropertiesJsConverter(new FileWriter(targetFile),
                     BgeeProperties.getBgeeProperties()).writeFile();

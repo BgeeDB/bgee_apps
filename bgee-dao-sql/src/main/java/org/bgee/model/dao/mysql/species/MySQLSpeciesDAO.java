@@ -2,6 +2,10 @@ package org.bgee.model.dao.mysql.species;
 
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -20,18 +24,30 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
  * 
  * @author Frederic Bastian
  * @author Valentine Rech de Laval
- * @version Bgee 13
+ * @version Bgee 14 Mar 2019
  * @see org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO
  * @since Bgee 01
  */
-public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute> 
-    implements SpeciesDAO {
+public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute> implements SpeciesDAO {
+    private final static Logger log = LogManager.getLogger(MySQLSpeciesDAO.class.getName());
+
     /**
-     * {@code Logger} of the class. 
+     * A {@code Map} of column name to their corresponding {@code Attribute}.
      */
-    private final static Logger log = 
-            LogManager.getLogger(MySQLSpeciesDAO.class.getName());
-    
+    private static final Map<String, SpeciesDAO.Attribute> COL_TO_ATTR_MAP;
+    static {
+        COL_TO_ATTR_MAP = new HashMap<>();
+        COL_TO_ATTR_MAP.put("speciesId", SpeciesDAO.Attribute.ID);
+        COL_TO_ATTR_MAP.put("speciesCommonName", SpeciesDAO.Attribute.COMMON_NAME);
+        COL_TO_ATTR_MAP.put("genus", SpeciesDAO.Attribute.GENUS);
+        COL_TO_ATTR_MAP.put("species", SpeciesDAO.Attribute.SPECIES_NAME);
+        COL_TO_ATTR_MAP.put("taxonId", SpeciesDAO.Attribute.PARENT_TAXON_ID);
+        COL_TO_ATTR_MAP.put("genomeFilePath", SpeciesDAO.Attribute.GENOME_FILE_PATH);
+        COL_TO_ATTR_MAP.put("genomeVersion", SpeciesDAO.Attribute.GENOME_VERSION);
+        COL_TO_ATTR_MAP.put("dataSourceId", SpeciesDAO.Attribute.DATA_SOURCE_ID);
+        COL_TO_ATTR_MAP.put("genomeSpeciesId", SpeciesDAO.Attribute.GENOME_SPECIES_ID);
+        COL_TO_ATTR_MAP.put("speciesDisplayOrder", SpeciesDAO.Attribute.DISPLAY_ORDER);
+    }
     /**
      * Constructor providing the {@code MySQLDAOManager} that this {@code MySQLDAO} 
      * will use to obtain {@code BgeeConnection}s.
@@ -43,24 +59,67 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
     }
     
     @Override
-    public SpeciesTOResultSet getAllSpecies() throws DAOException {
-        log.entry();
-        return log.exit(this.getSpeciesByIds(null));
+    public SpeciesTOResultSet getAllSpecies(Collection<SpeciesDAO.Attribute> attributes) throws DAOException {
+        log.entry(attributes);
+        return log.exit(this.getSpeciesByIds(null, attributes));
     }
     
     @Override
-    public SpeciesTOResultSet getSpeciesByIds(Set<Integer> speciesIds) throws DAOException {
-        log.entry(speciesIds);
+    public SpeciesTOResultSet getSpeciesByIds(Collection<Integer> speciesIds,
+            Collection<SpeciesDAO.Attribute> attributes) throws DAOException {
+        log.entry(speciesIds, attributes);
+        return log.exit(this.getSpeciesByIdsAndTaxonIds(speciesIds, null, attributes));
+    }
+
+    @Override
+    public SpeciesTOResultSet getSpeciesByTaxonIds(Collection<Integer> taxonIds,
+            Collection<SpeciesDAO.Attribute> attributes) throws DAOException {
+        log.entry(taxonIds, attributes);
+        return log.exit(this.getSpeciesByIdsAndTaxonIds(null, taxonIds, attributes));
+    }
+
+    private SpeciesTOResultSet getSpeciesByIdsAndTaxonIds(Collection<Integer> speciesIds,
+            Collection<Integer> taxonIds, Collection<SpeciesDAO.Attribute> attributes)
+                    throws DAOException {
+        log.entry(speciesIds, taxonIds, attributes);
+
+        Set<SpeciesDAO.Attribute> clonedAttrs = Collections.unmodifiableSet(
+                attributes == null? new HashSet<>(): new HashSet<>(attributes));
+        Set<Integer> clonedSpeIds = Collections.unmodifiableSet(
+                speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds));
+        Set<Integer> clonedTaxIds = Collections.unmodifiableSet(
+                taxonIds == null? new HashSet<>(): new HashSet<>(taxonIds));
+
+        String sql = generateSelectClause("species", COL_TO_ATTR_MAP, true, clonedAttrs);
+        //fix for issue#173
+        if (!clonedAttrs.isEmpty() && !clonedAttrs.contains(SpeciesDAO.Attribute.DISPLAY_ORDER)) {
+            sql += ", speciesDisplayOrder ";
+        }
+        sql += "FROM ";
+        if (!clonedTaxIds.isEmpty()) {
+            sql += "taxon AS t1 INNER JOIN taxon AS t2 ON t2.taxonLeftBound >= t1.taxonLeftBound "
+                 + "AND t2.taxonRightBound <= t1.taxonRightBound "
+                 + "INNER JOIN ";
+        }
+        sql += "species ";
+        if (!clonedTaxIds.isEmpty()) {
+            sql += " ON t2.taxonId = species.taxonId ";
+        }
         
-        String sql = this.generateSelectClause(this.getAttributes(), "species");
-        //Quick fix for issue#173
-        sql += ", speciesDisplayOrder ";
-        sql += "FROM species ";
-        
-        if (speciesIds != null && speciesIds.size() > 0) {
+        if (!clonedSpeIds.isEmpty()) {
             sql += " WHERE speciesId IN (" + 
                        BgeePreparedStatement.generateParameterizedQueryString(
-                               speciesIds.size()) + ")";
+                               clonedSpeIds.size()) + ")";
+        }
+        if (!clonedTaxIds.isEmpty()) {
+            if (!clonedSpeIds.isEmpty()) {
+                sql += " AND ";
+            } else {
+                sql += " WHERE ";
+            }
+            sql += "t1.taxonId IN (" +
+                    BgeePreparedStatement.generateParameterizedQueryString(
+                            clonedTaxIds.size()) + ")";
         }
         
         sql += " ORDER BY speciesDisplayOrder";
@@ -69,9 +128,15 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
         //not the actual results, so we should not close this BgeePreparedStatement.
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
-            if (speciesIds != null && speciesIds.size() > 0) {
-                stmt.setIntegers(1, speciesIds, true);
-            }  
+            int index = 1;
+            if (!clonedSpeIds.isEmpty()) {
+                stmt.setIntegers(index, clonedSpeIds, true);
+                index += clonedSpeIds.size();
+            }
+            if (!clonedTaxIds.isEmpty()) {
+                stmt.setIntegers(index, clonedTaxIds, true);
+                index += clonedTaxIds.size();
+            }
             return log.exit(new MySQLSpeciesTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
@@ -79,8 +144,14 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
     }
 
     @Override
-    public SpeciesTOResultSet getSpeciesFromDataGroups() throws DAOException {
-        String sql = this.generateSelectClause(this.getAttributes(), "species");
+    public SpeciesTOResultSet getSpeciesFromDataGroups(Collection<SpeciesDAO.Attribute> attributes)
+            throws DAOException {
+        log.entry(attributes);
+
+        Set<SpeciesDAO.Attribute> clonedAttrs = Collections.unmodifiableSet(
+                attributes == null? new HashSet<>(): new HashSet<>(attributes));
+
+        String sql = generateSelectClause("species", COL_TO_ATTR_MAP, true, clonedAttrs);
         sql += "FROM species WHERE EXISTS (SELECT 1 FROM speciesToDataGroup WHERE speciesToDataGroup.speciesId = species.speciesId)";
 
         //we don't use a try-with-resource, because we return a pointer to the results,
@@ -92,61 +163,6 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
             throw log.throwing(new DAOException(e));
         }
     }
-
-    /**
-     * Generates the SELECT clause of a MySQL query used to retrieve {@code SpeciesTO}s.
-     * 
-     * @param attributes                A {@code Set} of {@code Attribute}s defining 
-     *                                  the columns/information the query should retrieve.
-     * @return                          A {@code String} containing the SELECT clause 
-     *                                  for the requested query, ending with a whitespace.
-     */
-    private String generateSelectClause(Set<SpeciesDAO.Attribute> attributes, 
-            String speciesTableName) {
-        log.entry(attributes, speciesTableName);
-        
-        String sql = new String(); 
-        if (attributes == null || attributes.size() == 0) {
-            sql += "SELECT " + speciesTableName + ".* ";
-        } else {
-            for (SpeciesDAO.Attribute attribute: attributes) {
-                if (sql.length() == 0) {
-                    sql += "SELECT DISTINCT ";
-                } else {
-                    sql += ", ";
-                }
-                if (attribute.equals(SpeciesDAO.Attribute.ID)) {
-                    sql += speciesTableName + ".speciesId";
-                } else if (attribute.equals(SpeciesDAO.Attribute.COMMON_NAME)) {
-                    sql += speciesTableName + ".speciesCommonName";
-                } else if (attribute.equals(SpeciesDAO.Attribute.GENUS)) {
-                    sql += speciesTableName + ".genus";
-                } else if (attribute.equals(SpeciesDAO.Attribute.SPECIES_NAME)) {
-                    sql += speciesTableName + ".species";
-                } else if (attribute.equals(SpeciesDAO.Attribute.DISPLAY_ORDER)) {
-                    sql += speciesTableName + ".speciesDisplayOrder";
-                } else if (attribute.equals(SpeciesDAO.Attribute.PARENT_TAXON_ID)) {
-                    sql += speciesTableName + ".taxonId";
-                } else if (attribute.equals(SpeciesDAO.Attribute.GENOME_FILE_PATH)) {
-                    sql += speciesTableName + ".genomeFilePath";
-                } else if (attribute.equals(SpeciesDAO.Attribute.GENOME_VERSION)) {
-                    sql += speciesTableName + ".genomeVersion";
-                } else if (attribute.equals(SpeciesDAO.Attribute.DATA_SOURCE_ID)) {
-                    sql += speciesTableName + ".dataSourceId";
-                } else if (attribute.equals(SpeciesDAO.Attribute.GENOME_SPECIES_ID)) {
-                    sql += speciesTableName + ".genomeSpeciesId";
-                } else {
-                    throw log.throwing(new IllegalArgumentException(
-                            "The attribute provided (" + attribute.toString() + 
-                            ") is unknown for " + SpeciesDAO.class.getName()));
-                }
-            }
-        }
-        sql += " ";
-        
-        return log.exit(sql);
-    }
-
 
     //***************************************************************************
     // METHODS NOT PART OF THE bgee-dao-api, USED BY THE PIPELINE AND NOT MEANT 
@@ -169,7 +185,7 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
         log.entry(specieTOs);
         
         StringBuilder sql = new StringBuilder(); 
-        sql.append("INSERT INTO species" +  
+        sql.append("INSERT INTO species " +  
                    "(speciesId, genus, species, speciesCommonName, speciesDisplayOrder, taxonId, " +
                    "genomeFilePath, genomeVersion, dataSourceId, genomeSpeciesId) values ");
         for (int i = 0; i < specieTOs.size(); i++) {
@@ -248,44 +264,48 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
             String genus = null, species = null, speciesCommonName = null, 
                    genomeFilePath = null, genomeVersion = null;
             // Get results
-            for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
-                try {
-                    if (column.getValue().equals("speciesId")) {
-                        speciesId = this.getCurrentResultSet().getInt(column.getKey());
-                        
-                    } else if (column.getValue().equals("genus")) {
-                        genus = this.getCurrentResultSet().getString(column.getKey());
-                        
-                    } else if (column.getValue().equals("species")) {
-                        species = this.getCurrentResultSet().getString(column.getKey());
-                        
-                    } else if (column.getValue().equals("speciesCommonName")) {
-                        speciesCommonName = this.getCurrentResultSet().getString(column.getKey());
-                        
-                    } else if (column.getValue().equals("speciesDisplayOrder")) {
-                        displayOrder = this.getCurrentResultSet().getInt(column.getKey());
-                        
-                    } else if (column.getValue().equals("taxonId")) {
-                        taxonId = this.getCurrentResultSet().getInt(column.getKey());
-                        
-                    } else if (column.getValue().equals("genomeFilePath")) {
-                        genomeFilePath = this.getCurrentResultSet().getString(column.getKey());
-
-                    } else if (column.getValue().equals("genomeVersion")) {
-                        genomeVersion = this.getCurrentResultSet().getString(column.getKey());
-
-                    } else if (column.getValue().equals("dataSourceId")) {
-                        dataSourceId = this.getCurrentResultSet().getInt(column.getKey());
-
-                    } else if (column.getValue().equals("genomeSpeciesId")) {
-                        genomeSpeciesId = this.getCurrentResultSet().getInt(column.getKey());
-
-                    } else {
-                        throw log.throwing(new UnrecognizedColumnException(column.getValue()));
+            try {
+                for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
+                    String columnName = column.getValue();
+                    int columnIndex = column.getKey();
+                    SpeciesDAO.Attribute attr = getAttributeFromColName(columnName, COL_TO_ATTR_MAP);
+                    switch (attr) {
+                    case ID:
+                        speciesId = this.getCurrentResultSet().getInt(columnIndex);
+                        break;
+                    case GENUS:
+                        genus = this.getCurrentResultSet().getString(columnIndex);
+                        break;
+                    case SPECIES_NAME:
+                        species = this.getCurrentResultSet().getString(columnIndex);
+                        break;
+                    case COMMON_NAME:
+                        speciesCommonName = this.getCurrentResultSet().getString(columnIndex);
+                        break;
+                    case DISPLAY_ORDER:
+                        displayOrder = this.getCurrentResultSet().getInt(columnIndex);
+                        break;
+                    case PARENT_TAXON_ID:
+                        taxonId = this.getCurrentResultSet().getInt(columnIndex);
+                        break;
+                    case GENOME_FILE_PATH:
+                        genomeFilePath = this.getCurrentResultSet().getString(columnIndex);
+                        break;
+                    case GENOME_VERSION:
+                        genomeVersion = this.getCurrentResultSet().getString(columnIndex);
+                        break;
+                    case DATA_SOURCE_ID:
+                        dataSourceId = this.getCurrentResultSet().getInt(columnIndex);
+                        break;
+                    case GENOME_SPECIES_ID:
+                        genomeSpeciesId = this.getCurrentResultSet().getInt(columnIndex);
+                        break;
+                    default:
+                        log.throwing(new UnrecognizedColumnException(columnName));
                     }
-                } catch (SQLException e) {
-                    throw log.throwing(new DAOException(e));
                 }
+            } catch (SQLException e) {
+                throw log.throwing(new DAOException(e));
             }
             //Set SpeciesTO
             return log.exit(new SpeciesTO(speciesId, speciesCommonName, genus, species,
@@ -293,5 +313,4 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
                     genomeSpeciesId));
         }
     }
-
 }

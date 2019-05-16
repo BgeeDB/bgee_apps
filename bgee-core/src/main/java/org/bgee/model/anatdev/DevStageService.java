@@ -13,7 +13,6 @@ import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.anatdev.StageDAO.StageTO;
-import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO.GroupToStageTO;
 
 /**
  * A {@link Service} to obtain {@link DevStage} objects. 
@@ -22,7 +21,7 @@ import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO.GroupToStageTO;
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
  * @author  Philippe Moret
- * @version Bgee 14 Mar. 2017
+ * @version Bgee 14 Mar. 2019
  * @since   Bgee 13, Nov. 2015
  */
 public class DevStageService extends Service {
@@ -108,30 +107,6 @@ public class DevStageService extends Service {
     }
 
     /**
-     * Load developmental stage similarities from provided {@code taxonId} and {@code speciesIds}.
-     * 
-     * @param taxonId       An {@code Integer} that is the NCBI ID of the taxon for which the similarity 
-     *                      annotations should be valid, including all its ancestral taxa.
-     * @param speciesIds    A {@code Set} of {@code Integer}s that are the IDs of the species
-     *                      for which the similarity annotations should be restricted.
-     *                      If empty or {@code null} all available species are used.
-     * @return              The {@code Set} of {@link DevStageSimilarity} that are dev. stage 
-     *                      similarities from provided {@code taxonId} and {@code speciesIds}.
-     */
-    public Set<DevStageSimilarity> loadDevStageSimilarities(Integer taxonId, Set<Integer> speciesIds) {
-       log.entry(taxonId, speciesIds);
-       return log.exit(this.getDaoManager().getStageGroupingDAO().getGroupToStage(
-               taxonId, speciesIds == null? null: new HashSet<>(speciesIds)).stream()
-             .collect(Collectors.groupingBy(GroupToStageTO::getGroupId)) // group by groupId
-                  .entrySet().stream()
-                  .map(e -> new DevStageSimilarity(e.getKey(),              // map to DevStageSimilarity
-                          e.getValue().stream()
-                              .map(GroupToStageTO::getStageId)
-                              .collect(Collectors.toSet())))
-                  .collect(Collectors.toSet()));
-    }
-
-    /**
      * Maps {@link StageTO} to a {@link DevStage}.
      * 
      * @param stageTO   The {@link StageTO} to map.
@@ -147,6 +122,4 @@ public class DevStageService extends Service {
                 stageTO.getDescription(), stageTO.getLeftBound(), stageTO.getRightBound(), 
                 stageTO.getLevel(), stageTO.isTooGranular(), stageTO.isGroupingStage()));
     }
-
-
 }

@@ -155,7 +155,7 @@ public interface CallType {
          * Allowed {@code DataType}s are the same for all {@code DiffExpression} {@code CallType}s.
          * @see #getAllowedDataTypes()
          */
-        static final Set<DataType> DIFF_EXPR_DATA_TYPES = 
+        private static final Set<DataType> DIFF_EXPR_DATA_TYPES = 
                 Collections.unmodifiableSet(EnumSet.of(DataType.AFFYMETRIX, DataType.RNA_SEQ));
         
         @Override

@@ -143,9 +143,10 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
                 .append(action.getRequestURL()).append("' >");
 
         // Hidden parameter defining it's a POST form
-        // FIXME see branch anat-sim
-        //        sb.append("            <input type='hidden' name='").append(this.getRequestParameters()
-        //                .getUrlParametersInstance().getParamPostFormSubmit().getName()).append("' value='1' />");
+        sb.append("            <input type='hidden' name='")
+                .append(this.getRequestParameters()
+                        .getUrlParametersInstance().getParamPostFormSubmit().getName())
+                .append("' value='1' />");
 
         // Gene ID list
         String idsText = userEnsemblIds == null ? "" : htmlEntities(String.join("\n", userEnsemblIds));
@@ -157,12 +158,11 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
                         .getParamGeneList().getName()).append("'" +
                 "                            form='bgee_expr_comp_form' autofocus rows='10'" +
                 "                            placeholder='Enter a list of Ensembl IDs'>")
-                .append(idsText)
-                .append("</textarea>");
+                .append(idsText).append("</textarea>");
         sb.append("            </div>");
 
         // Submit
-        sb.append("            <input id='bgee_expr_comp_submit' class='col-sm-2' type='submit' value='Search'>");
+        sb.append("            <input id='bgee_expr_comp_submit' type='submit' value='Search'>");
 
         // Message
 
@@ -234,16 +234,13 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         row.append("    <td>");
         row.append(function.apply(condToCounts.getKey()).stream()
                 .sorted(Comparator.comparing(AnatEntity::getName))
-                // FIXME see branch anat-sim
-//                .map(ae -> getAnatEntityUrl(ae, ae.getName() + " (" + ae.getId() + ")"))
-                .map(ae -> "<a class='external_link' target='_blank'>" + ae.getName() + " (" + ae.getId() + ")</a>")
+                .map(ae -> getAnatEntityUrl(ae, ae.getName() + " (" + ae.getId() + ")"))
                 .collect(Collectors.joining(" - ")));
         row.append("    </td>");
 
         Map<SummaryCallType, Set<Gene>> callTypeToGenes = condToCounts.getValue().getCallTypeToGenes();
         Set<Gene> expressedGenes = callTypeToGenes.get(ExpressionSummary.EXPRESSED);
         Set<Gene> notExpressedGenes = callTypeToGenes.get(ExpressionSummary.NOT_EXPRESSED);
-
         
         row.append(this.getGeneCountCell(expressedGenes));
         row.append(this.getGeneCountCell(notExpressedGenes));
@@ -270,19 +267,25 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
             return "<a href='" + geneUrl.getRequestURL() + "'>" + htmlEntities(g.getEnsemblGeneId()) + "</a>";
         };
         
-        return log.exit(this.getCell(genes, "gene" + (genes.size() > 1? "s": ""),
+        return log.exit(this.getCell(genes.stream()
+                        .sorted(Comparator.comparing(Gene::getEnsemblGeneId))
+                        .collect(Collectors.toList()),
+                "gene" + (genes.size() > 1? "s": ""),
                 f, g -> StringUtils.isBlank(g.getName())? "": htmlEntities(g.getName())));
-        
-        
     }
 
     private String getSpeciesCountCell(Set<Gene> genes) {
         log.entry(genes);
-        return log.exit(this.getCell(genes.stream().map(Gene::getSpecies).collect(Collectors.toSet()),
-                "species", s -> String.valueOf(s.getId()), s -> htmlEntities(s.getScientificName())));
+        return log.exit(this.getCell(genes.stream()
+                        .map(Gene::getSpecies)
+                        .distinct()
+                        .sorted(Comparator.comparing(Species::getPreferredDisplayOrder))
+                        .collect(Collectors.toList()),
+                "species", s -> String.valueOf(s.getId()),
+                s -> "<em>" + htmlEntities(s.getScientificName()) + "</em>"));
     }
     
-    private <T> String getCell(Set<T> set, String text, Function<T, String> getMainText,
+    private <T> String getCell(List<T> set, String text, Function<T, String> getMainText,
                                Function<T, String> getOptionalText) {
         log.entry(set, text, getMainText, getOptionalText);
 

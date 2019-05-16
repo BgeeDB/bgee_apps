@@ -44,7 +44,7 @@ import org.bgee.view.JsonHelper;
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, Aug. 2018
+ * @version Bgee 14, May 2019
  * @since   Bgee 13, Oct. 2015
  */
 public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
@@ -245,7 +245,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         
         //table-container
         this.writeln("<div class='col-xs-12 col-md-10'>");
-        this.writeln("<div id='table-container'>");
+        this.writeln("<div class='table-container'>");
 
         this.writeln(getExpressionHTMLByAnat(
                 geneResponse.getCallsByAnatEntity(), 
@@ -394,9 +394,6 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      *                                     for each anatomical entity (so, {@code ExpressionCall}s 
      *                                     associated to a same value in the {@code Map} 
      *                                     might not be part of a same cluster).
-     * @param conditionGraph               A {@code ConditionGraph} containing information 
-     *                                     about all {@code Condition}s retrieved from 
-     *                                     the {@code ExpressionCall}s in {@code byAnatEntityId}.
      * @return                             A {@code String} that is the generated HTML.
      */
     private String getExpressionHTMLByAnat(Map<AnatEntity, List<ExpressionCall>> byAnatEntityId, 
@@ -481,15 +478,10 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         }
         
         // Anat entity ID and Anat entity cells 
-        String anatEntityUrl = "http://purl.obolibrary.org/obo/" 
-            + this.urlEncode(anatEntity.getId().replace(':', '_'));
-        sb.append("<td class='details small'><a target='_blank' href='").append(anatEntityUrl)
-            .append("' title='External link to ontology visualization'>")
-            .append(htmlEntities(anatEntity.getId()))
-            .append("</a></td><td").append(toAddToTd)
-            .append(">")
+        sb.append("<td class='details small'>")
+            .append(getAnatEntityUrl(anatEntity, anatEntity.getId()))
+            .append("</td><td").append(toAddToTd).append(">")
             .append(htmlEntities(anatEntity.getName())).append("</td>");
-        
         
         // Dev stage cell
         sb.append("<td><span class='expandable' title='click to expand'>[+] ").append(calls.size())

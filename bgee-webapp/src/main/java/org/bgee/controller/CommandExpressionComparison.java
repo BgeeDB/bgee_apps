@@ -73,6 +73,10 @@ public class CommandExpressionComparison extends CommandParent {
             display.displayExpressionComparisonHomePage();
             log.exit(); return;
         }
+        if (userGeneList.size() == 1) {
+            display.displayExpressionComparison(userGeneList, "At least two Ensembl IDs should be provided.");
+            log.exit(); return;
+        }
 
         // FIXME to be removed when mock is removed
         Set<Gene> genes = serviceFactory.getGeneService()
@@ -80,9 +84,8 @@ public class CommandExpressionComparison extends CommandParent {
         Set<Species> species = serviceFactory.getGeneService()
                 .loadGenesByEnsemblIds(userGeneList).map(Gene::getSpecies).collect(Collectors.toSet());
 
-
         if (species.isEmpty()) {
-            display.displayExpressionComparison(userGeneList);
+            display.displayExpressionComparison(userGeneList, "No gene from species presents in Bgee are detected.");
             log.exit(); return;
         }
 

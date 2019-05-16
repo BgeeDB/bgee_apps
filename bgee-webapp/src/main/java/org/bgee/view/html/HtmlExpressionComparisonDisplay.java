@@ -64,16 +64,15 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
     public void displayExpressionComparisonHomePage() {
         log.entry();
         
-        this.displayExpressionComparisonPage(null, null, null, null);
+        this.displayExpressionComparison(null, null, null, null, null);
         
         log.exit();
     }
     
+    public void displayExpressionComparison(List<String> geneList, String errorMsg) {
+        log.entry(geneList, errorMsg);
 
-    public void displayExpressionComparison(List<String> geneList) {
-        log.entry(geneList);
-
-        this.displayExpressionComparisonPage(geneList, null, null, null);
+        this.displayExpressionComparison(geneList, null, null, null, errorMsg);
 
         log.exit();
     }
@@ -83,7 +82,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         log.entry(geneList, result);
 
         Function<Condition, Set<AnatEntity>> fun = c -> Collections.singleton(c.getAnatEntity());
-        this.displayExpressionComparisonPage(geneList, result, fun, false);
+        this.displayExpressionComparison(geneList, result, fun, false, null);
 
         log.exit();
     }
@@ -93,14 +92,15 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         log.entry(geneList, result);
 
         Function<MultiSpeciesCondition, Set<AnatEntity>> fun = msc -> msc.getAnatSimilarity().getSourceAnatEntities();
-        this.displayExpressionComparisonPage(geneList, result, fun, true);
+        this.displayExpressionComparison(geneList, result, fun, true, null);
 
         log.exit();
     }
 
-    private <T> void displayExpressionComparisonPage(List<String> userEnsemblIds, MultiGeneExprAnalysis<T> result,
-                                                 Function<T, Set<AnatEntity>> function, Boolean isMultiSpecies) {
-        log.entry(userEnsemblIds, result, function, isMultiSpecies);
+    private <T> void displayExpressionComparison(List<String> userEnsemblIds, MultiGeneExprAnalysis<T> result,
+                                                 Function<T, Set<AnatEntity>> function, Boolean isMultiSpecies,
+                                                 String errorMsg) {
+        log.entry(userEnsemblIds, result, function, isMultiSpecies, errorMsg);
         
 
         this.startDisplay("Expression comparison page");
@@ -113,12 +113,8 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
 
         this.writeln("</div>");
 
-        this.writeln(this.getForm(userEnsemblIds));
+        this.writeln(this.getForm(userEnsemblIds, errorMsg));
 
-        if (userEnsemblIds != null && result == null) {
-            this.writeln("<p>All provided gene IDs are unknown.</p>");
-        }
-        
         if (result != null) {
             if (isMultiSpecies == null) {
                 throw log.throwing(new IllegalArgumentException(
@@ -132,8 +128,8 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         log.exit();
     }
 
-    private String getForm(List<String> userEnsemblIds) {
-        log.entry(userEnsemblIds);
+    private String getForm(List<String> userEnsemblIds, String errorMsg) {
+        log.entry(userEnsemblIds, errorMsg);
 
         StringBuilder sb = new StringBuilder();
 
@@ -169,7 +165,11 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         sb.append("            <input id='bgee_expr_comp_submit' class='col-sm-2' type='submit' value='Search'>");
 
         // Message
-        sb.append("            <span id='bgee_expr_comp_msg' class='col-sm-10'></span>");
+
+        String msg = StringUtils.isBlank(errorMsg) ? "" : htmlEntities(errorMsg);
+        String spanClass = StringUtils.isBlank(errorMsg) ? "" : "class='errorMessage'";
+        sb.append("            <span id='bgee_expr_comp_msg' ").append(spanClass).append(">")
+                .append(msg).append("</span>");
 
         sb.append("        </form>");
         sb.append("    </div>");
@@ -212,7 +212,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         sb.append("</div>");
 
         if (!result.getRequestedPublicGeneIdsNotFound().isEmpty()) {
-            sb.append("<p>Ensembl IDs unknown: ");
+            sb.append("<p>Unknown Ensembl IDs: ");
             sb.append(result.getRequestedPublicGeneIdsNotFound().stream()
                     .sorted()
                     .map(gId -> "'" + htmlEntities(gId) + "'")

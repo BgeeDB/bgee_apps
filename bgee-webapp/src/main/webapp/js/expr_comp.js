@@ -8,7 +8,29 @@
 
 $( document ).ready( function(){
 
-    var t = $('table.expr_comp.multi-sp') ;
+    $('#bgee_expr_comp_submit').on("click",  function(){
+        var messageElmt = "#bgee_expr_comp_msg";
+
+        var message = '';
+
+        // Check that something is written in the gene list textarea.
+        if ($("#bgee_gene_list").val().replace(' ', '').length === 0) {
+            message += "At least two Ensembl IDs should be provided. ";
+        }
+        // Check if there is an error.
+        if (message !== '') {
+            $(messageElmt).empty();
+            $(messageElmt).attr("class", 'errorMessage').text(message);
+            return false;
+        }
+
+        // Set loading img or text
+        $(messageElmt).empty();
+        $(messageElmt).text('').append($("<img />").attr("class", 'ajax_waiting')
+            .attr("src", "img/wait.gif")
+            .attr("alt", 'Loading'));
+    });
+    
     $('table.expr_comp.multi-sp').DataTable( {
     	//enable ordering but apply no ordering during initialization
     	"order": [],
@@ -119,6 +141,5 @@ $( document ).ready( function(){
             $(this).parent().parent().find("ul").hide(250);
         }
     } );
-
 } );
 

@@ -20,11 +20,12 @@ public interface ExpressionComparisonDisplay {
     public void displayExpressionComparisonHomePage();
 
     /**
-     * Displays information about a search of expression comparison with no result.
+     * Displays information about a search of expression comparison with an error.
      *
      * @param geneList  A {@code List} of {@code String}s that are the gene IDs provided by the user.
+     * @param erroMsg   A {@code String} that is the error message to be displayed.
      */
-    public void displayExpressionComparison(List<String> geneList);
+    public void displayExpressionComparison(List<String> geneList, String erroMsg);
     
     /**
      * Displays information about a search of expression comparison in a single-species.

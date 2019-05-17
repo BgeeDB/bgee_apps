@@ -5,6 +5,7 @@ import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -46,6 +47,7 @@ import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.CallFilter.DiffExpressionCallFilter;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
+import org.bgee.model.expressiondata.MultiGeneExprAnalysis.MultiGeneExprCounts;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.CallType.Expression;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
@@ -59,7 +61,6 @@ import org.bgee.model.expressiondata.baseelements.ExpressionLevelCategory;
 import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
-import org.bgee.model.expressiondata.multispecies.MultiSpeciesExprAnalysis;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
@@ -622,8 +623,72 @@ public class CallService extends CommonService {
         return log.exit(callsByAnatEntity);
     }
 
-    public SingleSpeciesExprAnalysis loadMultiSpeciesExprAnalysis(Collection<String> requestedGeneIds) {
-        return null;
+    //TODO: in a future version, this method should accept a Map<Integer, Collection<String>>,
+    //where keys are species IDs, and values are the gene IDs, any IDs. This would allow to retrieve
+    //the genes by calling GeneService.loadGenesByAnyId, knowing for which species we need to retrieve
+    //the gene associated to an ID. This would also allow to use bonobo gene IDs, as as of Bgee 14,
+    //we use chimp genome for bonobo, and their genes have the same IDs.
+    public SingleSpeciesExprAnalysis loadSingleSpeciesExprAnalysis(Collection<String> requestedGeneIds) {
+        log.entry(requestedGeneIds);
+        if (requestedGeneIds == null || requestedGeneIds.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("Some genes must be provided"));
+        }
+        Set<String> clonedGeneIds = new HashSet<>(requestedGeneIds);
+        Set<Gene> genes = this.getServiceFactory().getGeneService()
+                .loadGenesByEnsemblIds(clonedGeneIds).collect(Collectors.toSet());
+        Set<String> geneIdsFound = genes.stream().map(g -> g.getEnsemblGeneId())
+                .collect(Collectors.toSet());
+        Set<String> geneIdsNotFound = new HashSet<>(clonedGeneIds);
+        geneIdsNotFound.removeAll(geneIdsFound);
+
+        Set<Species> species = genes.stream().map(g -> g.getSpecies()).collect(Collectors.toSet());
+        if (species.size() != 1) {
+            throw log.throwing(new IllegalArgumentException(
+                    "This method is for comparing the expression of genes in a single species"));
+        }
+        GeneFilter geneFilter = new GeneFilter(species.iterator().next().getId(), geneIdsFound);
+        ExpressionCallFilter callFilter = new ExpressionCallFilter(
+                null,                              //we want both present and absent calls, of any quality
+                Collections.singleton(geneFilter), //requested genes
+                null,                              //any condition
+                null,                              //any data type
+                null, null, null                   //both observed and propagated calls
+                );
+        Set<Attribute> attributes = EnumSet.of(Attribute.GENE, Attribute.ANAT_ENTITY_ID,
+                Attribute.CALL_TYPE, Attribute.DATA_QUALITY, Attribute.OBSERVED_DATA);
+        LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes = new LinkedHashMap<>();
+        //IMPORTANT: results must be ordered by anat. entity so that we can compare expression
+        //in each anat. entity without overloading the memory.
+        orderingAttributes.put(OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
+
+
+        Stream<ExpressionCall> callStream = this.loadExpressionCalls(callFilter, attributes, orderingAttributes);
+        //We're going to group the calls per anat. entity, to be able to compare expression
+        //of all genes in anat. entities
+        Comparator<Condition> comp = Comparator.comparing(cond -> cond.getAnatEntityId());
+        Stream<List<ExpressionCall>> callsByAnatEntity = StreamSupport.stream(
+                new ElementGroupFromListSpliterator<>(callStream, ExpressionCall::getCondition, comp),
+                false);
+        Map<Condition, MultiGeneExprCounts> condToCounts = callsByAnatEntity
+        //We keep only conditions where at least one gene has observed data in it
+        .filter(list -> list.stream().anyMatch(c -> c.getDataPropagation().isIncludingObservedData()))
+        //Now we create for each Condition an Entry<Condition, MultiGeneExprCounts>
+        .map(list -> {
+            Map<SummaryCallType, Collection<Gene>> callTypeToGenes = list.stream()
+                    .collect(Collectors.toMap(
+                            c -> c.getSummaryCallType(),
+                            c -> new HashSet<>(Arrays.asList(c.getGene())),
+                            (v1, v2) -> {v1.addAll(v2); return v1;}));
+            Set<Gene> genesWithData = list.stream().map(c -> c.getGene()).collect(Collectors.toSet());
+            Set<Gene> genesWithNoData = new HashSet<>(genes);
+            genesWithNoData.removeAll(genesWithData);
+            return new AbstractMap.SimpleEntry<>(list.iterator().next().getCondition(),
+                    new MultiGeneExprCounts(callTypeToGenes, genesWithNoData));
+        })
+        //And we create the final Map condToCounts
+        .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+
+        return log.exit(new SingleSpeciesExprAnalysis(clonedGeneIds, geneIdsNotFound, genes, condToCounts));
     }
 
     //*************************************************************************

@@ -3,6 +3,7 @@ package org.bgee.model.expressiondata.multispecies;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.AbstractMap.SimpleEntry;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -34,7 +35,9 @@ import org.bgee.model.anatdev.multispemapping.DevStageSimilarityService;
 import org.bgee.model.expressiondata.Call;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
+import org.bgee.model.expressiondata.MultiGeneExprAnalysis.MultiGeneExprCounts;
 import org.bgee.model.expressiondata.baseelements.CallType;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.ConditionFilter;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
@@ -931,7 +934,67 @@ public class MultiSpeciesCallService extends Service {
         return log.exit(similarityExpressionCallStream);
     }
 
+    //TODO: in a future version, this method should accept a Map<Integer, Collection<String>>,
+    //where keys are species IDs, and values are the gene IDs, any IDs. This would allow to retrieve
+    //the genes by calling GeneService.loadGenesByAnyId, knowing for which species we need to retrieve
+    //the gene associated to an ID. This would also allow to use bonobo gene IDs, as as of Bgee 14,
+    //we use chimp genome for bonobo, and their genes have the same IDs.
+    //TODO: equivalent method accepting GeneFilters
     public MultiSpeciesExprAnalysis loadMultiSpeciesExprAnalysis(Collection<String> requestedGeneIds) {
-        return null;
+        log.entry(requestedGeneIds);
+        if (requestedGeneIds == null || requestedGeneIds.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("Some genes must be provided"));
+        }
+        Set<String> clonedGeneIds = new HashSet<>(requestedGeneIds);
+        Set<Gene> genes = this.getServiceFactory().getGeneService()
+                .loadGenesByEnsemblIds(clonedGeneIds).collect(Collectors.toSet());
+        Set<String> geneIdsFound = genes.stream().map(g -> g.getEnsemblGeneId())
+                .collect(Collectors.toSet());
+        Set<String> geneIdsNotFound = new HashSet<>(clonedGeneIds);
+        geneIdsNotFound.removeAll(geneIdsFound);
+
+        Set<Species> species = genes.stream().map(g -> g.getSpecies()).collect(Collectors.toSet());
+        if (species.size() <= 1) {
+            throw log.throwing(new IllegalArgumentException(
+                    "This method is for comparing the expression of genes between several species"));
+        }
+        Set<GeneFilter> geneFilters = genes.stream()
+                //Returns a Map<speciesId, Set<ensemblGeneId>>
+                .collect(Collectors.groupingBy(g -> g.getSpecies().getId(),
+                        Collectors.mapping(g -> g.getEnsemblGeneId(), Collectors.toSet())))
+                //Produces one GeneFilter for each Entry (= each species)
+                .entrySet().stream().map(e -> new GeneFilter(e.getKey(), e.getValue()))
+                .collect(Collectors.toSet());
+        int lcaId = this.getServiceFactory().getTaxonService().loadLeastCommonAncestor(
+                species.stream().map(s -> s.getId()).collect(Collectors.toSet())
+                ).getId();
+
+
+        Stream<SimilarityExpressionCall> callStream = this.loadSimilarityExpressionCalls(
+                lcaId, geneFilters, null, false);
+        Map<MultiSpeciesCondition, MultiGeneExprCounts> condToCounts = callStream
+                //produces a Map<MultiSpeciesCondition, List<SimilarityExpressionCall>>
+                .collect(Collectors.groupingBy(c -> c.getMultiSpeciesCondition()))
+                //streaming Entry<MultiSpeciesCondition, List<SimilarityExpressionCall>>
+                .entrySet().stream()
+                //mapping Entry<MultiSpeciesCondition, List<SimilarityExpressionCall>>
+                //to Entry<MultiSpeciesCondition, MultiGeneExprCounts>
+                .map(e -> {
+                    List<SimilarityExpressionCall> list = e.getValue();
+                    Map<SummaryCallType, Collection<Gene>> callTypeToGenes = list.stream()
+                            .collect(Collectors.toMap(
+                                    c -> c.getSummaryCallType(),
+                                    c -> new HashSet<>(Arrays.asList(c.getGene())),
+                                    (v1, v2) -> {v1.addAll(v2); return v1;}));
+                    Set<Gene> genesWithData = list.stream().map(c -> c.getGene()).collect(Collectors.toSet());
+                    Set<Gene> genesWithNoData = new HashSet<>(genes);
+                    genesWithNoData.removeAll(genesWithData);
+                    return new AbstractMap.SimpleEntry<>(e.getKey(),
+                            new MultiGeneExprCounts(callTypeToGenes, genesWithNoData));
+                })
+                //And we create the final Map condToCounts
+                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+
+        return log.exit(new MultiSpeciesExprAnalysis(clonedGeneIds, geneIdsNotFound, genes, condToCounts));
     }
 }

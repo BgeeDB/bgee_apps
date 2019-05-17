@@ -628,6 +628,7 @@ public class CallService extends CommonService {
     //the genes by calling GeneService.loadGenesByAnyId, knowing for which species we need to retrieve
     //the gene associated to an ID. This would also allow to use bonobo gene IDs, as as of Bgee 14,
     //we use chimp genome for bonobo, and their genes have the same IDs.
+    //TODO: equivalent method accepting GeneFilters
     public SingleSpeciesExprAnalysis loadSingleSpeciesExprAnalysis(Collection<String> requestedGeneIds) {
         log.entry(requestedGeneIds);
         if (requestedGeneIds == null || requestedGeneIds.isEmpty()) {

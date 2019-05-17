@@ -60,27 +60,27 @@ public class MySQLRawSimilarityAnnotationDAOIT  extends MySQLITAncestor {
         List<RawSimilarityAnnotationTO> actualResults = 
                 dao.getAllRawSimilarityAnnotations().getAllTOs();
         List<RawSimilarityAnnotationTO> expectedResults = Arrays.asList(
-                new RawSimilarityAnnotationTO("527", false, "ECO:1", "CIO:2", "ISBN:978-0030223693", 
+                new RawSimilarityAnnotationTO(527, false, "ECO:1", "CIO:2", "ISBN:978-0030223693", 
                         "Liem KF", "Text2", "bgee", "ANN", asDate(2015, Month.MARCH, 30)),
-                new RawSimilarityAnnotationTO("527", true, "ECO:2", "CIO:6", "PMID:19786082", 
+                new RawSimilarityAnnotationTO(527, true, "ECO:2", "CIO:6", "PMID:19786082", 
                         "Manley GA", "Text1", "bgee", "ANN", asDate(2015, Month.MARCH, 30)),
-                new RawSimilarityAnnotationTO("528", false, "ECO:2", "CIO:6", "PMID:19786082", 
+                new RawSimilarityAnnotationTO(528, false, "ECO:2", "CIO:6", "PMID:19786082", 
                         "Manley GA", "Text1", "bgee", "ANN", asDate(2015, Month.MARCH, 30)),
-                new RawSimilarityAnnotationTO("529", false, "ECO:2", "CIO:5", "PMID:19786082", 
+                new RawSimilarityAnnotationTO(529, false, "ECO:2", "CIO:5", "PMID:19786082", 
                         "Manley GA", "Text1", "bgee", "ANN", asDate(2015, Month.MARCH, 30)),
-                new RawSimilarityAnnotationTO("530", true, "ECO:2", "CIO:6", "PMID:19786082", 
+                new RawSimilarityAnnotationTO(530, true, "ECO:2", "CIO:6", "PMID:19786082", 
                         "Manley GA", "Text1", "bgee", "ANN", asDate(2015, Month.MARCH, 30)),
-                new RawSimilarityAnnotationTO("421", false, "ECO:2", "CIO:5", "PMID:22686855", 
+                new RawSimilarityAnnotationTO(421, false, "ECO:2", "CIO:5", "PMID:22686855", 
                         "Anthwal N", "Text3", "bgee", "ANN", asDate(2015, Month.APRIL, 01)),
-                new RawSimilarityAnnotationTO("422", false, "ECO:3", "CIO:5", "DOI:10.1017/S0022215100009087", 
+                new RawSimilarityAnnotationTO(422, false, "ECO:3", "CIO:5", "DOI:10.1017/S0022215100009087", 
                         "Gerrie J", "Text4", "bgee", "ANN", asDate(2013, Month.JULY, 04)),
-                new RawSimilarityAnnotationTO("422", false, "ECO:4", "CIO:5", "PMID:19786082", 
+                new RawSimilarityAnnotationTO(422, false, "ECO:4", "CIO:5", "PMID:19786082", 
                         "Manley GA", "Text5", "bgee", "ANN", asDate(2013, Month.JULY, 04)),
-                new RawSimilarityAnnotationTO("422", false, "ECO:5", "CIO:5", "PMID:19786082", 
+                new RawSimilarityAnnotationTO(422, false, "ECO:5", "CIO:5", "PMID:19786082", 
                         "Manley GA", "Text5", "bgee", "ANN", asDate(2013, Month.JULY, 04)),
-                new RawSimilarityAnnotationTO("422", false, "ECO:2", "CIO:5", "PMID:19786082", 
+                new RawSimilarityAnnotationTO(422, false, "ECO:2", "CIO:5", "PMID:19786082", 
                         "Manley GA", "Text5", "bgee", "ANN", asDate(2013, Month.JULY, 04)),
-                new RawSimilarityAnnotationTO("1870", false, "ECO:2", "CIO:5", "DOI:10.1017/S0022215100009087", 
+                new RawSimilarityAnnotationTO(1870, false, "ECO:2", "CIO:5", "DOI:10.1017/S0022215100009087", 
                         "Gerrie J", "Text4", "bgee", "ANN", asDate(2015, Month.APRIL, 02)));
         assertTrue("RawSimilarityAnnotationTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(actualResults, expectedResults));
@@ -127,13 +127,13 @@ public class MySQLRawSimilarityAnnotationDAOIT  extends MySQLITAncestor {
         java.sql.Date date1 = new java.sql.Date(12345);
         java.sql.Date date2 = new java.sql.Date(12349);
         Collection<RawSimilarityAnnotationTO> rawTOs = Arrays.asList(
-                new RawSimilarityAnnotationTO("1", true, 
+                new RawSimilarityAnnotationTO(1, true, 
                         "ecoId1", "cioId1", "referenceId1", "referenceTitle1", 
                         "supportingText1", "assignedBy1", "curator1", date1),
-                new RawSimilarityAnnotationTO("2", false, 
+                new RawSimilarityAnnotationTO(2, false, 
                         "ecoId2", "cioId2", "referenceId2", "referenceTitle2", 
                         "supportingText2", "assignedBy2", "curator2", date2),
-                new RawSimilarityAnnotationTO("2", false, 
+                new RawSimilarityAnnotationTO(2, false, 
                         "ecoId3", "cioId3", null, null, null, null, null, null));
 
         try {

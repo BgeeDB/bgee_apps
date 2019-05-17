@@ -41,63 +41,46 @@ public interface TaxonDAO extends DAO<TaxonDAO.Attribute> {
     public enum Attribute implements DAO.Attribute {
         ID, COMMON_NAME, SCIENTIFIC_NAME, LEFT_BOUND, RIGHT_BOUND, LEVEL, LCA;
     }
-    
+
     /**
-     * Retrieve all taxa from data source.
+     * Retrieve taxa from their NCBI taxon IDs.
      * <p>
      * The taxa are retrieved and returned as a {@code TaxonTOResultSet}. 
      * It is the responsibility of the caller to close this {@code DAOResultSet} once 
      * results are retrieved.
-     * 
-     * @return A {@code TaxonTOResultSet} containing all taxa from data source.
+     *
+     * @param taxonIds      A {@code Collection} of {@code Integer}s that are the IDs of the requested taxa.
+     *                      Can be {@code null} or empty if all taxa are requested.
+     * @param lca           A {@code boolean} specifying if {@code true} to only retrieve
+     *                      taxa that are least common ancestors of species in Bgee.
+     * @param attributes    A {@code Collection} of {@code Attribute}s that are the attributes
+     *                      to populate in the returned {@code TaxonTO}s.Can be {@code null}
+     *                      or empty of all attributes are requested.
+     * @return A {@code TaxonTOResultSet} containing the requested taxa.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public TaxonTOResultSet getAllTaxa() throws DAOException;
-    /**
-     * Retrieve taxa that are either least common ancestor or parent taxon of species in Bgee.
-     * For instance, "31414 Euarchontoglires" is the least common ancestor of human and mouse, 
-     * and "9605 Homo" the parent taxon of human. 
-     * <p>
-     * The taxa are retrieved and returned as a {@code TaxonTOResultSet}. 
-     * It is the responsibility of the caller to close this {@code DAOResultSet} once 
-     * results are retrieved.
-     * 
-     * @apiNote         This method does not accept species IDs as argument, to avoid to misinterpret it: 
-     *                  it would not return the least common ancestors of the requested species, 
-     *                  as {@link #getLeastCommonAncestor(Set, boolean)} does. 
-     *                  And because there are many ways to handle species IDs arguments: 
-     *                  do we want only taxa that are LCAs of at least 2 requested species? 
-     *                  do we want only the closest LCAs of pairs of requested species? 
-     *                  (complicated to handle in SQL). Etc. 
-     * @param attrs     A {@code Collection} of {@code TaxonDAO.Attribute}s defining the attributes 
-     *                  to populate in the returned {@code TaxonTO}s. If {@code null} or empty, 
-     *                  all attributes are populated. 
-     * @return          A {@code TaxonTOResultSet} containing least common ancestors and parent taxa 
-     *                  from data source.
-     * @throws DAOException If an error occurred when accessing the data source. 
-     */
-    public TaxonTOResultSet getAllLeastCommonAncestorAndParentTaxa(Collection<Attribute> attrs) 
-            throws DAOException;
+    public TaxonTOResultSet getTaxa(Collection<Integer> taxonIds, boolean lca,
+            Collection<Attribute> attributes) throws DAOException;
     
     /**
-     * Retrieve the LCA of the provided species. If {@code includeAncestors} is {@code true}, 
-     * all ancestors of the LCA will also be retrieved.
+     * Retrieve the LCA of the provided species, considering only species in Bgee.
      * <p>
-     * The {@code TaxonTOResultSet} returned is guaranteed to return at least 
-     * one {@code TaxonTO} (in the most extreme case: the LCA of all species in Bgee). 
-     * If {@code includeAncestors} is {@code false}, the {@code TaxonTOResultSet} returned 
-     * is guaranteed to return one and only one {@code TaxonTO}.
+     * The {@code TaxonTO} returned is guaranteed to be non-{@code null} (in the most extreme case:
+     * the LCA of all species in Bgee).
      * 
      * @param speciesIds        A {@code Collection} of {@code Integer}s that are the IDs of 
      *                          the species for which we want to retrieve the LCA.
-     * @param includeAncestors  A {@code boolean} defining whether the ancestors of the LCA 
-     *                          should also be retrieved; if {@code true}, there are retrieved.
-     * @return                  A {@code TaxonTOResultSet} allowing to obtain the requested 
-     *                          {@code TaxonTO}s.
+     *                          If {@code null} or empty, then all species in Bgee are considered
+     *                          (leading to return the LCA of all species in Bgee)
+     * @param attributes        A {@code Collection} of {@code Attribute}s that are the attributes
+     *                          to populate in the returned {@code TaxonTO}s.Can be {@code null}
+     *                          or empty of all attributes are requested.
+     * @return                  A {@code TaxonTO} that is the least common ancestor
+     *                          of the requested species. Only species in Bgee are considered.
      * @throws DAOException     If an error occurred when accessing the data source. 
      */
-    public TaxonTOResultSet getLeastCommonAncestor(Collection<Integer> speciesIds, 
-            boolean includeAncestors) throws DAOException, IllegalArgumentException;
+    public TaxonTO getLeastCommonAncestor(Collection<Integer> speciesIds,
+            Collection<Attribute> attributes) throws DAOException;
 
     /**
      * Inserts the provided taxa into the Bgee database, represented as 

@@ -49,8 +49,8 @@ import org.bgee.model.expressiondata.baseelements.SummaryQuality;
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, Mar. 2017
- * @since   Bgee 13 Nov. 2014
+ * @version Bgee 14, May 2019
+ * @since   Bgee 13, Nov. 2014
  * @see URLParameters.Parameter
  * @see	RequestParameters
  */
@@ -164,6 +164,15 @@ public class URLParameters {
      */
     private static final Parameter<Boolean> AJAX = new Parameter<Boolean>("ajax",
             false, false, null, false, false, 5, DEFAULT_FORMAT, Boolean.class);
+
+    /**
+     * A {@code Parameter<Boolean>} appended to all POST from to detect them.
+     * Category of the parameter: controller parameter.
+     * Corresponds to the URL parameter "post_form_submit".
+     */
+    private static final Parameter<Boolean> POST_FORM_SUBMIT = new Parameter<>("post_form_submit",
+            false, false, null, false, false, 5, DEFAULT_FORMAT, Boolean.class);
+    
     /**
      * A {@code Parameter<Boolean>} defining whether to display the {@code RequestParameters} 
      * corresponding to a request as part of its response.
@@ -181,6 +190,14 @@ public class URLParameters {
      */
     private static final Parameter<String> GENE_ID = 
     		new Parameter<String>("gene_id", false,false, null, false, false, 50, DEFAULT_FORMAT, String.class);
+
+    /**
+     * A {@code Parameter<String>} that contains the gene IDs to be used.
+     * Corresponds to the URL parameter "gene_list".
+     */
+    private static final Parameter<String> GENE_LIST = new Parameter<>("gene_list",
+            false, true, DEFAULT_SEPARATORS, true, DEFAULT_IS_SECURE,
+            1000000, DEFAULT_LIST_FORMAT, String.class);
     
     /**
      * A {@code Parameter<Integer>} representing a species id, typically for the gene page.
@@ -318,6 +335,13 @@ public class URLParameters {
             true, false, null, true, DEFAULT_IS_SECURE, 
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
     /**
+     * A {@code Parameter<String>} that contains the anatomical entities to be used.
+     * Corresponds to the URL parameter "stage_id".
+     */
+    private static final Parameter<String> ANAT_ENTITY = new Parameter<>("anat_entity_id",
+            true, false, null, true, DEFAULT_IS_SECURE,
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+    /**
      * A {@code Parameter<String>} that contains the decorrelation type to be used 
      * for TopAnat analysis.
      * Corresponds to the URL parameter "decorr_type".
@@ -425,7 +449,16 @@ public class URLParameters {
             "^[a-zA-Z0-9]*$", //accept only ASCII characters for SHA512 hexa representation used in the BgeeDB R package
             String.class);
 
-    //    /**
+    /**
+     * A {@code Parameter<String>} that contains the anatomical entity IDs to be used 
+     * for anatomical similarity analysis.
+     * Corresponds to the URL parameter "ae_list".
+     */
+    private static final Parameter<String> ANAT_ENTITY_LIST = new Parameter<>("ae_list",
+            false, true, DEFAULT_SEPARATORS, true, DEFAULT_IS_SECURE,
+            1000000, DEFAULT_LIST_FORMAT, String.class);
+    
+//    /**
 //     * A {@code Parameter<Boolean>} to determine whether all anatomical structures of 
 //     * an ontology should be displayed. (and not only structures with the parent manually
 //     * expanded by the user). Category of the parameter: ontology display parameter.
@@ -480,6 +513,10 @@ public class URLParameters {
             QUERY,
             // Species request
             SPECIES_LIST,
+            // Anat. similarity analyze params
+            ANAT_ENTITY_LIST,
+            // Expression comparison request
+            GENE_LIST,
             // TopAnat analyze params
             FOREGROUND_LIST, FOREGROUND_FILE, BACKGROUND_LIST, BACKGROUND_FILE,
             EXPRESSION_TYPE, SUMMARY_QUALITY, DATA_TYPE, DEV_STAGE, DECORRELATION_TYPE,
@@ -500,8 +537,9 @@ public class URLParameters {
             //webservice parameter
             API_KEY, 
             DISPLAY_REQUEST_PARAMS, 
-            AJAX
-            );
+            AJAX,
+            POST_FORM_SUBMIT
+    );
 
     /**
      * Default constructor
@@ -610,6 +648,14 @@ public class URLParameters {
     }
    
     /**
+     * @return  A {@code Parameter<String>} defining a gene ID list.
+     *          Corresponds to the URL parameter "gene_list".
+     */
+    public Parameter<String> getParamGeneList() {
+        return GENE_LIST;
+    }
+
+    /**
      * @return  A {@code Parameter<Integer>} that contains the species id.
      */
      public Parameter<Integer> getParamSpeciesId() {
@@ -638,7 +684,13 @@ public class URLParameters {
     public Parameter<Boolean> getParamAjax(){
         return AJAX;
     }
-    
+    /**
+     * @return  A {@code Parameter<Boolean>} appended to all submitted forms in POST to detect them.
+     *          Corresponds to the URL parameter "post_form_submit".
+     */
+    public Parameter<Boolean> getParamPostFormSubmit(){
+        return POST_FORM_SUBMIT;
+    }
     /**
      * @return  A {@code Parameter<Integer>} defining a species ID list.
      *          Corresponds to the URL parameter "species_list".
@@ -701,6 +753,13 @@ public class URLParameters {
      */
     public Parameter<String> getParamDevStage() {
         return DEV_STAGE;
+    }
+    /**
+     * @return  A {@code Parameter<String>} defining an anatomical entity.
+     *          Corresponds to the URL parameter "anat_entity".
+     */
+    public Parameter<String> getParamAnatEntity() {
+        return ANAT_ENTITY;
     }
     /**
      * @return  A {@code Parameter<String>} defining a decorrelation type.
@@ -800,6 +859,14 @@ public class URLParameters {
         return API_KEY;
     }
 
+
+    /**
+     * @return  A {@code Parameter<String>} defining a anatomical entity ID list.
+     *          Corresponds to the URL parameter "ae_list".
+     */
+    public Parameter<String> getParamAnatEntityList() {
+        return ANAT_ENTITY_LIST;
+    }
     /**
      * This class is designed to wrap all parameters that can be received and sent
      * through an HTTP request within the Bgee webapp. 

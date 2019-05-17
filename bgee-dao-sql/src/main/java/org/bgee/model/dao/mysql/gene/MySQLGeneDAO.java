@@ -3,7 +3,6 @@ package org.bgee.model.dao.mysql.gene;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -29,6 +28,7 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
  * @author  Valentine Rech de Laval
  * @version Bgee 14, Apr. 2019
  * @see org.bgee.model.dao.api.gene.GeneDAO.GeneTO
+ * @see org.bgee.model.dao.api.gene.GeneDAO.GeneBioTypeTO
  * @since   Bgee 13, May 2014
  */
 public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO {
@@ -43,6 +43,24 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
      * A {@code String} that is the field name for Bgee internal gene IDs.
      */
     public static final String BGEE_GENE_ID = "bgeeGeneId";
+
+    /**
+     * A {@code Map} of column name to their corresponding {@code Attribute}.
+     */
+    private static final Map<String, GeneDAO.Attribute> columnToAttributesMap;
+
+    static {
+        columnToAttributesMap = new HashMap<>();
+        columnToAttributesMap.put(BGEE_GENE_ID, GeneDAO.Attribute.ID);
+        columnToAttributesMap.put("geneId", GeneDAO.Attribute.ENSEMBL_ID);
+        columnToAttributesMap.put("geneName", GeneDAO.Attribute.NAME);
+        columnToAttributesMap.put("geneDescription", GeneDAO.Attribute.DESCRIPTION);
+        columnToAttributesMap.put("speciesId", GeneDAO.Attribute.SPECIES_ID);
+        columnToAttributesMap.put("geneBioTypeId", GeneDAO.Attribute.GENE_BIO_TYPE_ID);
+        columnToAttributesMap.put("OMAParentNodeId", GeneDAO.Attribute.OMA_PARENT_NODE_ID);
+        columnToAttributesMap.put("ensemblGene", GeneDAO.Attribute.ENSEMBL_GENE);
+        columnToAttributesMap.put("geneMappedToGeneIdCount", GeneDAO.Attribute.GENE_MAPPED_TO_SAME_GENE_ID_COUNT);
+    }
 
     /**
      * Constructor providing the {@code MySQLDAOManager} that this
@@ -76,12 +94,18 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
     }
 
     @Override
-    public GeneTOResultSet getGenesByIds(Collection<String> geneIds) throws DAOException {
-        log.entry(geneIds);
+    public GeneTOResultSet getGenesByEnsemblGeneIds(Collection<String> ensemblGeneIds) throws DAOException {
+        log.entry(ensemblGeneIds);
         Map<Integer, Set<String>> speToGeneMap = new HashMap<>();
         //sanity checks on geneIds will be performed by the getGenes method
-        speToGeneMap.put(null, geneIds == null? null: new HashSet<>(geneIds));
+        speToGeneMap.put(null, ensemblGeneIds == null? null: new HashSet<>(ensemblGeneIds));
         return log.exit(getGenes(speToGeneMap, null, null));
+    }
+    
+    @Override
+    public GeneTOResultSet getGenesByIds(Collection<Integer> geneIds) throws DAOException {
+        log.entry(geneIds);
+        return log.exit(getGenes(null, geneIds, null));
     }
 
     @Override
@@ -104,7 +128,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         if (speciesIdToGeneIds != null &&
                 speciesIdToGeneIds.containsKey(null) && speciesIdToGeneIds.size() != 1) {
             throw log.throwing(new IllegalArgumentException(
-                    "If a null species ID is provided, it should ne the only Entry in the Map."));
+                    "If a null species ID is provided, it should be the only Entry in the Map."));
         }
 
         //need a LinkedHashMap for consistent setting of the query parameters.
@@ -140,7 +164,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
                         () -> new LinkedHashMap<>()));
         Set<Integer> clonedBgeeGeneIds = bgeeGeneIds == null? new HashSet<>(): new HashSet<>(bgeeGeneIds);
 
-        String sql = this.generateSelectClause(this.getAttributes(), GENE_TABLE_NAME);
+        String sql = generateSelectClause(GENE_TABLE_NAME, columnToAttributesMap, true, this.getAttributes());
 
         sql += " FROM " + GENE_TABLE_NAME;
 
@@ -216,6 +240,20 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         }
     }
 
+    public GeneBioTypeTOResultSet getGeneBioTypes() {
+        log.entry();
+
+        String sql = "SELECT * FROM geneBioType";
+        // we don't use a try-with-resource, because we return a pointer to the results,
+        // not the actual results, so we should not close this BgeePreparedStatement.
+        try {
+            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
+            return log.exit(new MySQLGeneBioTypeTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+
     // ***************************************************************************
     // METHODS NOT PART OF THE bgee-dao-api, USED BY THE PIPELINE AND NOT MEANT
     // TO BE EXPOSED TO THE PUBLIC API.
@@ -245,14 +283,20 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         int geneUpdatedCount = 0;
         // Construct sql query according to currents attributes
         StringBuilder sql = new StringBuilder();
+        Map<GeneDAO.Attribute, String> attrToColumnMap = columnToAttributesMap.entrySet().stream()
+                .collect(Collectors.toMap(e -> e.getValue(), e -> e.getKey()));
 
         for (GeneDAO.Attribute attribute : attributesToUpdate) {
+            String col = attrToColumnMap.get(attribute);
+            if (col == null) {
+                throw log.throwing(new IllegalStateException("Unsupported Attribute: " + attribute));
+            }
             if (sql.length() == 0) {
                 sql.append("UPDATE gene SET ");
             } else {
                 sql.append(", ");
             }
-            sql.append(this.attributeToString(attribute) + " = ?");
+            sql.append(col + " = ?");
         }
         sql.append(" WHERE bgeeGeneId = ?");
 
@@ -282,98 +326,6 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
-    }
-
-    /**
-     * Generates the SELECT clause of a MySQL query used to retrieve
-     * {@code GeneTO}s.
-     *
-     * @param attributes
-     *            A {@code Set} of {@code Attribute}s defining the
-     *            columns/information the query should retrieve.
-     * @param geneTableName
-     *            A {@code String} defining the name of the gene table used.
-     * @return A {@code String} containing the SELECT clause for the requested
-     *         query.
-     * @throws IllegalArgumentException
-     *             If one {@code Attribute} of {@code attributes} is unknown.
-     */
-    private String generateSelectClause(Set<GeneDAO.Attribute> attributes, String geneTableName)
-            throws IllegalArgumentException {
-        log.entry(attributes, geneTableName);
-
-        Set<GeneDAO.Attribute> attributesToUse = new HashSet<GeneDAO.Attribute>(attributes);
-        if (attributes == null || attributes.isEmpty()) {
-            attributesToUse = EnumSet.allOf(GeneDAO.Attribute.class);
-        }
-
-        String sql = "";
-        for (GeneDAO.Attribute attribute : attributesToUse) {
-
-            if (sql.isEmpty()) {
-                sql += "SELECT ";
-                // does the attributes requested ensure that there will be no
-                // duplicated results?
-                if (!attributesToUse.contains(GeneDAO.Attribute.ID)) {
-                    sql += "DISTINCT ";
-                }
-            } else {
-                sql += ", ";
-            }
-            sql += geneTableName + "." + this.attributeToString(attribute);
-        }
-        return log.exit(sql);
-    }
-
-    /**
-     * Returns a {@code String} that correspond to the given
-     * {@code GeneDAO.Attribute}.
-     *
-     * @param attribute
-     *            An {code GeneDAO.Attribute} that is the attribute to convert
-     *            into a {@code String}.
-     * @return A {@code String} that corresponds to the given
-     *         {@code GeneDAO.Attribute}
-     * @throws IllegalArgumentException
-     *             If the {@code attribute} is unknown.
-     */
-    /*
-     * We kept this method, as opposed other DAOs, because is redundantly used
-     * in this class
-     */
-    private String attributeToString(GeneDAO.Attribute attribute) throws IllegalArgumentException {
-        log.entry(attribute);
-
-        String label = null;
-        if (attribute.equals(GeneDAO.Attribute.ID)) {
-            label = "bgeeGeneId";
-        } else if (attribute.equals(GeneDAO.Attribute.ENSEMBL_ID)) {
-            label = "geneId";
-        } else if (attribute.equals(GeneDAO.Attribute.NAME)) {
-            label = "geneName";
-        } else if (attribute.equals(GeneDAO.Attribute.DESCRIPTION)) {
-            label = "geneDescription";
-        } else if (attribute.equals(GeneDAO.Attribute.SPECIES_ID)) {
-            label = "speciesId";
-        } else if (attribute.equals(GeneDAO.Attribute.GENE_BIO_TYPE_ID)) {
-            label = "geneBioTypeId";
-        } else if (attribute.equals(GeneDAO.Attribute.OMA_PARENT_NODE_ID)) {
-            label = "OMAParentNodeId";
-        } else if (attribute.equals(GeneDAO.Attribute.ENSEMBL_GENE)) {
-            label = "ensemblGene";
-            // } else if
-            // (attribute.equals(GeneDAO.Attribute.ANCESTRAL_OMA_NODE_ID)) {
-            // label = "ancestralOMANodeId";
-            // } else if
-            // (attribute.equals(GeneDAO.Attribute.ANCESTRAL_OMA_TAXON_ID)) {
-            // label = "ancestralOMATaxonId";
-        } else if (attribute.equals(GeneDAO.Attribute.GENE_MAPPED_TO_SAME_GENE_ID_COUNT)) {
-            label = "geneMappedToGeneIdCount";
-        } else {
-            throw log.throwing(new IllegalArgumentException(
-                    "The attribute provided (" + attribute.toString() + ") is unknown for " + GeneDAO.class.getName()));
-        }
-        return log.exit(label);
     }
 
     private Map<Integer, Set<String>> convertSpeciesIdsTOMap(Collection<Integer> speciesIds) {
@@ -460,6 +412,52 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
             // Set GeneTO
             return log.exit(new GeneTO(id, geneId, geneName, geneDescription, speciesId, geneBioTypeId, OMAParentNodeId,
                     ensemblGene, geneMappedToGeneIdCount));
+        }
+    }
+
+    /**
+     * A {@code MySQLDAOResultSet} specific to {@code GeneBioTypeTO}.
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 14 Sep. 2018
+     * @since Bgee 14 Sep. 2018
+     */
+    public class MySQLGeneBioTypeTOResultSet extends MySQLDAOResultSet<GeneBioTypeTO> implements GeneBioTypeTOResultSet {
+
+        /**
+         * Delegates to
+         * {@link MySQLDAOResultSet#MySQLDAOResultSet(BgeePreparedStatement)}
+         * super constructor.
+         * 
+         * @param statement     The first {@code BgeePreparedStatement} to execute a query on.
+         */
+        private MySQLGeneBioTypeTOResultSet(BgeePreparedStatement statement) {
+            super(statement);
+        }
+
+        @Override
+        protected GeneBioTypeTO getNewTO() {
+            log.entry();
+            String name = null;
+            Integer id = null;
+            // Get results
+            for (Entry<Integer, String> column : this.getColumnLabels().entrySet()) {
+                try {
+                    if (column.getValue().equals("geneBioTypeId")) {
+                        id = this.getCurrentResultSet().getInt(column.getKey());
+
+                    } else if (column.getValue().equals("geneBioTypeName")) {
+                        name = this.getCurrentResultSet().getString(column.getKey());
+
+                    } else {
+                        throw log.throwing(new UnrecognizedColumnException(column.getValue()));
+                    }
+                } catch (SQLException e) {
+                    throw log.throwing(new DAOException(e));
+                }
+            }
+            // Set GeneBioTypeTO
+            return log.exit(new GeneBioTypeTO(id, name));
         }
     }
 }

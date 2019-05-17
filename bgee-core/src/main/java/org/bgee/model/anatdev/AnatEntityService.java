@@ -8,7 +8,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -17,8 +16,6 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
-import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SimAnnotToAnatEntityTO;
-import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 
@@ -30,7 +27,7 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
  * @author  Julien Wollbrett
- * @version Bgee 14, May 2017
+ * @version Bgee 14, Mar. 2019
  * @since   Bgee 13, Nov. 2015
 */
 public class AnatEntityService extends Service {
@@ -57,7 +54,20 @@ public class AnatEntityService extends Service {
     public AnatEntityService(ServiceFactory serviceFactory) {
         super(serviceFactory);
     }
-    
+
+    /**
+     * Retrieve {@code AnatEntity}s for the requested IDs.
+     *
+     * @param anatEntityIds     A {@code Collection} of {@code String}s that are the IDs of the anatomical entities 
+     *                          to retrieve.
+     * @param withDescription   A {@code boolean} defining whether the description of the {@code AnatEntity}s
+     *                          should be retrieved (higher memory usage).
+     * @return                  A {@code Stream} of {@code AnatEntity}s retrieved for the requested IDs.
+     */
+    public Stream<AnatEntity> loadAnatEntities(Collection<String> anatEntityIds, boolean withDescription) {
+        log.entry(anatEntityIds, withDescription);
+        return log.exit(this.loadAnatEntities(null, true, anatEntityIds, withDescription));
+    }
     /**
      * Retrieve {@code AnatEntity}s for the requested species IDs, with all descriptions loaded.
      * If several species IDs are provided, the {@code AnatEntity}s existing in any of them are retrieved. 
@@ -90,7 +100,7 @@ public class AnatEntityService extends Service {
     
     /**
      * Retrieve {@code AnatEntity}s for the requested species filtering and anatomical entity IDs.
-     * If an entity in {@code anatEntitiesIds} does not exists according to the species filtering,
+     * If an entity in {@code anatEntityIds} does not exists according to the species filtering,
      * it will not be returned.
      *
      * @param speciesIds        A {@code Collection} of {@code Integer}s that are the IDs of species
@@ -99,7 +109,7 @@ public class AnatEntityService extends Service {
      *                          whether the entities retrieved should be valid in any
      *                          of the requested species (if {@code true}), or in all
      *                          of the requested species (if {@code false} or {@code null}).
-     * @param anatEntitiesIds   A {@code Collection} of {@code String}s that are IDs of anatomical
+     * @param anatEntityIds   A {@code Collection} of {@code String}s that are IDs of anatomical
      *                          entities to retrieve. Can be {@code null} or empty.
      * @param withDescription   A {@code boolean} defining whether the description of the {@code AnatEntity}s
      *                          should be retrieved (higher memory usage).
@@ -107,15 +117,15 @@ public class AnatEntityService extends Service {
      */
     //TODO: unit test with/without description
     public Stream<AnatEntity> loadAnatEntities(Collection<Integer> speciesIds,
-            Boolean anySpecies, Collection<String> anatEntitiesIds, boolean withDescription) {
-        log.entry(speciesIds, anySpecies, anatEntitiesIds, withDescription);
-        return log.exit(this.loadAnatEntities(speciesIds, anySpecies, anatEntitiesIds,
+            Boolean anySpecies, Collection<String> anatEntityIds, boolean withDescription) {
+        log.entry(speciesIds, anySpecies, anatEntityIds, withDescription);
+        return log.exit(this.loadAnatEntities(speciesIds, anySpecies, anatEntityIds,
                 withDescription? null: EnumSet.complementOf(EnumSet.of(Attribute.DESCRIPTION))));
     }
 
     /**
      * Retrieve {@code AnatEntity}s for the requested species filtering and anatomical entity IDs. 
-     * If an entity in {@code anatEntitiesIds} does not exists according to the species filtering, 
+     * If an entity in {@code anatEntityIds} does not exists according to the species filtering, 
      * it will not be returned.
      * 
      * @param speciesIds        A {@code Collection} of {@code Integer}s that are the IDs of species 
@@ -124,7 +134,7 @@ public class AnatEntityService extends Service {
      *                          whether the entities retrieved should be valid in any 
      *                          of the requested species (if {@code true}), or in all 
      *                          of the requested species (if {@code false} or {@code null}).
-     * @param anatEntitiesIds   A {@code Collection} of {@code String}s that are IDs of anatomical
+     * @param anatEntityIds   A {@code Collection} of {@code String}s that are IDs of anatomical
      *                          entities to retrieve. Can be {@code null} or empty.
      * @param attrs             A {@code Collection} of {@code Attribute}s defining the
      *                          attributes to populate in the returned {@code AnatEntity}s.
@@ -132,12 +142,12 @@ public class AnatEntityService extends Service {
      */
     //TODO: unit test with/without description
     public Stream<AnatEntity> loadAnatEntities(Collection<Integer> speciesIds,
-            Boolean anySpecies, Collection<String> anatEntitiesIds, Collection<Attribute> attrs) {
-        log.entry(speciesIds, anySpecies, anatEntitiesIds, attrs);
+            Boolean anySpecies, Collection<String> anatEntityIds, Collection<Attribute> attrs) {
+        log.entry(speciesIds, anySpecies, anatEntityIds, attrs);
         return log.exit(this.getDaoManager().getAnatEntityDAO().getAnatEntities(
                     speciesIds, 
                     anySpecies, 
-                    anatEntitiesIds,
+                    anatEntityIds,
                     attrs == null? null: convertAttrsToDAOAttrs(attrs))
                 .stream()
                 .map(AnatEntityService::mapFromTO));
@@ -181,45 +191,7 @@ public class AnatEntityService extends Service {
                         }));
     }
 
-    /**
-     * Load anatomical entity similarities from provided {@code taxonId}, {@code speciesIds},
-     * and {@code onlyTrusted}.
-     * 
-     * @param taxonId       An {@code Integer} that is the NCBI ID of the taxon for which the similarity 
-     *                      annotations should be valid, including all its ancestral taxa.
-     * @param speciesIds    A {@code Set} of {@code Integer}s that are IDs of the species
-     *                      for which the similarity annotations should be restricted.
-     *                      If empty or {@code null} all available species are used.
-     * @param onlyTrusted   A {@code boolean} defining whether results should be restricted 
-     *                      to "trusted" annotations.
-     * @return              The {@code Set} of {@link AnatEntitySimilarity} that are anat. entity 
-     *                      similarities from provided {@code taxonId}, {@code speciesIds},
-     *                      and {@code onlyTrusted}.
-     */
-    public Set<AnatEntitySimilarity> loadAnatEntitySimilarities(Integer taxonId,
-            Set<Integer> speciesIds, boolean onlyTrusted) {
-        log.entry(taxonId, speciesIds, onlyTrusted);
-        
-        Map<String, SummarySimilarityAnnotationTO> simAnnotations = 
-                this.getDaoManager().getSummarySimilarityAnnotationDAO()
-                .getSummarySimilarityAnnotations(taxonId, onlyTrusted).stream()
-                .filter(to -> taxonId.equals(to.getTaxonId()))
-                .collect(Collectors.toMap(SummarySimilarityAnnotationTO::getId, Function.identity()));
-        
-        Set<AnatEntitySimilarity> results = this.getDaoManager().getSummarySimilarityAnnotationDAO()
-                .getSimAnnotToAnatEntity(taxonId, speciesIds).stream()
-                // group by group id
-                .collect(Collectors.groupingBy(SimAnnotToAnatEntityTO::getSummarySimilarityAnnotationId)) 
-                .entrySet().stream().map(
-                        e -> new AnatEntitySimilarity(simAnnotations.get(e.getKey()).getId(), 
-                                // collect anatEntities as a set
-                                e.getValue().stream()
-                                            .map(SimAnnotToAnatEntityTO::getAnatEntityId)
-                                            .collect(Collectors.toSet())))
-                .collect(Collectors.toSet());
-        
-        return log.exit(results);
-    }
+    
     
     /**
      * Maps a {@code AnatEntityTO} to an {@code AnatEntity} instance 
@@ -265,5 +237,4 @@ public class AnatEntityService extends Service {
                     }
                 }).collect(Collectors.toSet()));
     }
-
 }

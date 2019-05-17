@@ -163,7 +163,9 @@ implements SpeciesDataGroupDAO {
             //so we can use columnToAttributesMap. 
             sql += " ORDER BY " + columnToAttributesMap.entrySet().stream()
                     .filter(e -> e.getValue() == SpeciesDataGroupDAO.Attribute.PREFERRED_ORDER)
-                    .map(e -> e.getKey()).findFirst().get();
+                    .map(e -> e.getKey())
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException("No attribute mapping for PREFERRED_ORDER"));
             if (clonedOrderingAttrs.values().iterator().next() == DAO.Direction.DESC) {
                 sql += " DESC";
             }

@@ -9,7 +9,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -21,9 +20,7 @@ import org.bgee.model.expressiondata.baseelements.CallType.Expression;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.file.DownloadFile.CategoryEnum;
-import org.bgee.model.species.Species;
-import org.bgee.model.species.SpeciesService;
-import org.bgee.pipeline.expression.CallUser;
+import org.bgee.pipeline.MySQLDAOUser;
 
 
 /**
@@ -35,7 +32,7 @@ import org.bgee.pipeline.expression.CallUser;
  * @version Bgee 13
  * @since Bgee 13
  */
-public abstract class GenerateDownloadFile extends CallUser {
+public abstract class GenerateDownloadFile extends MySQLDAOUser {
     
     /**
      * {@code Logger} of the class.
@@ -706,47 +703,6 @@ public abstract class GenerateDownloadFile extends CallUser {
         row.put(STAGE_NAME_COLUMN_NAME, stageName);
 
         log.exit();
-    }
-
-    /**
-     * Validate and retrieve information for the provided species IDs, or for all species 
-     * if {@code speciesIds} is {@code null} or empty, and returns a {@code Map} 
-     * where keys are the species IDs, the associated values being a {@code String} that can be 
-     * conveniently used to construct download file names for the associated species. 
-     * <p>
-     * If a species ID could not be identified, an {@code IllegalArgumentException} is thrown.
-     * 
-     * @param speciesIds    A {@code Set} of {@code Integer}s that are the species IDs 
-     *                      to be checked, and for which to generate a {@code String} 
-     *                      used to construct download file names. Can be {@code null} or empty 
-     *                      to retrieve information for all species. 
-     * @return              A {@code Map} where keys are {@code Integer}s that are the species IDs, 
-     *                      the associated values being a {@code String} that is its latin name.
-     */
-    protected Map<Integer, String> checkAndGetLatinNamesBySpeciesIds(Set<Integer> speciesIds,
-            SpeciesService spService) {
-        log.entry(speciesIds);
-
-        Set<Species> species = spService.loadSpeciesByIds(speciesIds, false);
-
-        Map<Integer, String> namesByIds = species.stream()
-                .collect(Collectors.toMap(Species::getId, sp -> sp.getGenus() + " " + sp.getSpeciesName()));
-
-        if (namesByIds.size() < speciesIds.size()) {
-            //copy to avoid modifying user input, maybe the caller 
-            //will recover from the exception
-            Set<Integer> copySpeciesIds = new HashSet<>(speciesIds);
-            copySpeciesIds.removeAll(namesByIds.keySet());
-            throw log.throwing(new IllegalArgumentException("Some species IDs provided " +
-                    "do not correspond to any species: " + copySpeciesIds));
-        } else if (namesByIds.size() > speciesIds.size() && speciesIds.size() > 0) {
-            // if speciesIds is empty or null to get all species contained in database, 
-            // speciesIds.size() == 0 but this exception should not be launched
-            throw log.throwing(new IllegalStateException("An ID should always be associated " +
-                    "to only one species..."));
-        }
-        
-        return log.exit(namesByIds);
     }
 
     /**

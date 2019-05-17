@@ -9,10 +9,6 @@ import org.bgee.model.dao.api.TestAncestor;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.DiffExprCallType;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.ComparisonFactor;
-import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO.OriginOfLine;
-import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.GlobalExpressionToExpressionTO;
-import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.GlobalNoExpressionToNoExpressionTO;
-import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
 import org.junit.Test;
 
 /**
@@ -117,91 +113,5 @@ public class CallTOTest extends TestAncestor {
             //test passed, do nothing
             log.catching(e);
         }
-    }
-    
-    /**
-     * Test {@link ExpressionCallTO.OriginOfLine#convertToOriginOfLine(String)}.
-     */
-    @Test
-    public void shouldConvertToExpressionOriginOfLine() {
-        boolean hasElement = false;
-        for (OriginOfLine element: OriginOfLine.values()) {
-            hasElement = true;
-            log.trace("Testing: {}", element);
-            assertEquals("Incorrect OriginOfLine returned", element, 
-                    OriginOfLine.convertToOriginOfLine(element.getStringRepresentation()));
-            assertEquals("Incorrect OriginOfLine returned", element, 
-                    OriginOfLine.convertToOriginOfLine(element.name()));
-        }
-        assertTrue("No element for OriginOfLine", hasElement);
-        
-        //should throw an IllegalArgumentException when not matching any OriginOfLine
-        try {
-            OriginOfLine.convertToOriginOfLine("whatever");
-            //test failed
-            throw new AssertionError("convertToOriginOfLine did not throw " +
-                    "an IllegalArgumentException as expected");
-        } catch (IllegalArgumentException e) {
-            //test passed, do nothing
-            log.catching(e);
-        }
-    }
-    
-    /**
-     * Test {@link NoExpressionCallTO.OriginOfLine#convertToOriginOfLine(String)}.
-     */
-    @Test
-    public void shouldConvertToNoExpressionOriginOfLine() {
-        boolean hasElement = false;
-        for (NoExpressionCallTO.OriginOfLine element: NoExpressionCallTO.OriginOfLine.values()) {
-            hasElement = true;
-            log.trace("Testing: {}", element);
-            assertEquals("Incorrect OriginOfLine returned", element, 
-                    NoExpressionCallTO.OriginOfLine.convertToOriginOfLine(
-                            element.getStringRepresentation()));
-            assertEquals("Incorrect OriginOfLine returned", element, 
-                    NoExpressionCallTO.OriginOfLine.convertToOriginOfLine(element.name()));
-        }
-        assertTrue("No element for OriginOfLine", hasElement);
-        
-        //should throw an IllegalArgumentException when not matching any OriginOfLine
-        try {
-            NoExpressionCallTO.OriginOfLine.convertToOriginOfLine("whatever");
-            //test failed
-            throw new AssertionError("convertToOriginOfLine did not throw " +
-                    "an IllegalArgumentException as expected");
-        } catch (IllegalArgumentException e) {
-            //test passed, do nothing
-            log.catching(e);
-        }
-    }
-    
-    /**
-     * Test {@link GlobalExpressionToExpressionTO#hashCode()} and 
-     * {@link GlobalExpressionToExpressionTO#equals(Object)}.
-     */
-    @Test
-    public void testGlobalExpressionToExpressionTOHashCodeEquals() {
-        GlobalExpressionToExpressionTO to1 = 
-                new GlobalExpressionToExpressionTO(1, 2);
-        GlobalExpressionToExpressionTO to2 = 
-                new GlobalExpressionToExpressionTO(1, 2);
-        
-        assertTrue(TOComparator.areTOsEqual(to1, to2));
-    }
-    
-    /**
-     * Test {@link GlobalNoExpressionToNoExpressionTO#hashCode()} and 
-     * {@link GlobalNoExpressionToNoExpressionTO#equals(Object)}.
-     */
-    @Test
-    public void testGlobalNoExpressionToNoExpressionTOHashCodeEquals() {
-        GlobalNoExpressionToNoExpressionTO to1 = 
-                new GlobalNoExpressionToNoExpressionTO(1, 2);
-        GlobalNoExpressionToNoExpressionTO to2 = 
-                new GlobalNoExpressionToNoExpressionTO(1, 2);
-
-        assertTrue(TOComparator.areTOsEqual(to1, to2));
-        
     }
 }

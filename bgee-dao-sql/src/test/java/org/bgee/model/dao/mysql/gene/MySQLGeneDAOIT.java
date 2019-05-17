@@ -129,10 +129,10 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
     /**
      * Test the select method {@link MySQLGeneDAO#getGenesWithDataBySpeciesIds(Collection)}.
      */
-    @Test
+//    @Test
     //TODO: implement
-    public void shouldGetGenesWithDataBySpeciesIds() throws SQLException {
-    }
+//    public void shouldGetGenesWithDataBySpeciesIds() throws SQLException {
+//    }
 
     /**
      * Test the select method {@link MySQLGeneDAO#getGenesByIds(Collection)}.
@@ -146,7 +146,7 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
 
         // Without specified species IDs and gene IDs
         dao.setAttributes(Arrays.asList(GeneDAO.Attribute.ID));
-        List<GeneTO> methGenes = dao.getGenesByIds(null).getAllTOs();
+        List<GeneTO> methGenes = dao.getGenesByEnsemblGeneIds(null).getAllTOs();
         List<GeneTO> expectedGenes = Arrays.asList(
                 new GeneTO(1, "ID1", null, null, null, null, null, null, null), 
                 new GeneTO(2, "ID2", null, null, null, null, null, null, null), 
@@ -162,7 +162,7 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
         dao.setAttributes(GeneDAO.Attribute.NAME);
         Set<String> geneIds = new HashSet<String>();
         geneIds.addAll(Arrays.asList("ID1", "ID2", "ID4"));
-        methGenes = dao.getGenesByIds(geneIds).getAllTOs();
+        methGenes = dao.getGenesByEnsemblGeneIds(geneIds).getAllTOs();
         expectedGenes = Arrays.asList(
                 new GeneTO(null, null, "genN1", null, null, null, null, null, null), 
                 new GeneTO(null, null, "genN2", null, null, null, null, null, null), 

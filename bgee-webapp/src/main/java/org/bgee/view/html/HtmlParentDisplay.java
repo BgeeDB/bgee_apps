@@ -13,6 +13,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
+import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.species.Species;
 import org.bgee.view.ConcreteDisplayParent;
 import org.bgee.view.JsonHelper;
@@ -95,6 +96,11 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     // TODO replace develop by master when bgee_pipeline will be release
     protected static final String DEVELOP_BGEE_PIPELINE_GITHUB_URL = BGEE_GITHUB_URL +
             "/bgee_pipeline/tree/develop";
+
+    /**
+     * A {@code String} to be used to build the URL to OBO terms.
+     */
+    protected static final String UBERON_ID_URL = "http://purl.obolibrary.org/obo/";
 
     /**
      * A {@code String} that is the URL of the licence CC0 of Creative Commons.
@@ -419,6 +425,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         RequestParameters urlSparql = this.getNewRequestParameters();
         urlSparql.setPage(RequestParameters.PAGE_SPARQL);
 
+        RequestParameters urlExprComp = this.getNewRequestParameters();
+        urlExprComp.setPage(RequestParameters.PAGE_EXPR_COMPARISON);
+        
         RequestParameters urlDownload = this.getNewRequestParameters();
         urlDownload.setPage(RequestParameters.PAGE_DOWNLOAD);
         
@@ -475,9 +484,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 
         RequestParameters urlPrivacyPolicy = this.getNewRequestParameters();
         urlPrivacyPolicy.setPage(RequestParameters.PAGE_PRIVACY_POLICY);
-        
+
         RequestParameters urlCollaborations = this.getNewRequestParameters();
         urlCollaborations.setPage(RequestParameters.PAGE_COLLABORATIONS);
+
+        RequestParameters urlAnatSim = this.getNewRequestParameters();
+        urlAnatSim.setPage(RequestParameters.PAGE_ANAT_SIM);
 
         // Navigation bar
         StringBuilder navbar = new StringBuilder();
@@ -516,6 +528,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<li><a title='TopAnat: Enrichment analyses of expression localization' href='")
                 .append(urlTopAnat.getRequestURL()).append("'>").append(TOP_ANAT_PAGE_NAME)
                 .append("</a></li>");
+        navbar.append("<li><a href='").append(urlExprComp.getRequestURL())
+                .append("' title='Expression comparison'>Expression comparison</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
 
@@ -529,6 +543,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 .append("'>Gene search</a></li>");
         navbar.append("<li><a title='SPARQL endpoint' href='").append(urlSparql.getRequestURL())
         .append("'>SPARQL endpoint</a></li>");
+        navbar.append("<li><a href='").append(urlAnatSim.getRequestURL()).append("' >")
+                .append("Anatomical similarities</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
 
@@ -1089,5 +1105,21 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             }
         }
         return log.exit(version);
+    }
+
+    /**
+     * @param anatEntity    An {@code AnatEntity} that is the anat. entity for which build the URL.
+     * @param text          A {@code String} that is the text to be displayed for the link.
+     * @return              A {@code String} that is the URLs of the provided anat. entity.
+     */
+    protected String getAnatEntityUrl(AnatEntity anatEntity, String text) {
+        log.entry(anatEntity, text);
+        if (anatEntity == null) {
+            throw log.throwing(new IllegalArgumentException("The provided anat. entity should be not null"));
+        }
+        
+        return log.exit("<a target='_blank' href='" + UBERON_ID_URL + 
+                this.urlEncode(anatEntity.getId().replace(':', '_')) + "'>" + htmlEntities(text) +
+                "</a>");
     }
 }

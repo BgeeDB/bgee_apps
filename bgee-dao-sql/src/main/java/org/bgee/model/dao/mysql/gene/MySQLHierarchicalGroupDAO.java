@@ -51,8 +51,8 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
     }
     
     @Override
-    public HierarchicalGroupToGeneTOResultSet getGroupToGene(int taxonId, 
-            Set<Integer> speciesIds) throws DAOException, IllegalArgumentException {
+    public HierarchicalNodeToGeneTOResultSet getOMANodeToGene(Integer taxonId, 
+			Collection<Integer> speciesIds) throws DAOException, IllegalArgumentException {
         log.entry(taxonId, speciesIds);
 
         if (taxonId <= 0) {
@@ -79,10 +79,85 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
             if (hasSpecies) {
                 stmt.setIntegers(2, speciesIds, true);
             }  
-            return log.exit(new MySQLHierarchicalGroupToGeneTOResultSet(stmt));
+            return log.exit(new MySQLHierarchicalNodeToGeneTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
+    }
+    
+    @Override
+    public HierarchicalNodeTOResultSet getOMANodesFromStartingGenes(Collection<Integer> taxonIds, 
+    		Integer startingSpeciesId, Set<String> startingGeneIds) throws DAOException, IllegalArgumentException{
+    	log.entry(taxonIds, startingSpeciesId, startingGeneIds);
+    	if (taxonIds == null || taxonIds.size() == 0) {
+            throw log.throwing(new IllegalArgumentException("No taxon ID is provided"));
+        }
+    	if (startingSpeciesId == null) {
+            throw log.throwing(new IllegalArgumentException("No starting species ID is provided"));
+        }
+    	if (startingGeneIds == null || startingGeneIds.size() == 0) {
+            throw log.throwing(new IllegalArgumentException("No starting gene IDs are provided"));
+        }
+    	
+    	boolean hasGenes  = startingSpeciesId != null && startingSpeciesId > 0 && startingGeneIds != null
+    			&& startingGeneIds.size() > 0;
+    	
+        String sql = "SELECT geneToOma.OMANodeId, geneToOma.taxonId, hg.OMAGroupId "
+                + "FROM OMAHierarchicalGroup as hg "
+                + "INNER JOIN geneToOma ON geneToOma.OMANodeId = hg.OMANodeId"
+                + "INNER JOIN gene AS g ON geneToOma.bgeeGeneId = g.bgeeGeneId "
+                + "WHERE geneToOma.taxonId IN ? (" +
+                    BgeePreparedStatement.generateParameterizedQueryString(
+                    		taxonIds.size()) + ")";
+        if (hasGenes) {
+            sql += "AND g.speciesId = ?"
+            		+ "AND geneID IN (" +
+                    BgeePreparedStatement.generateParameterizedQueryString(
+                    		startingGeneIds.size()) + ")"
+                    + "ORDERED BY hg.OMAGroupId";
+        }
+        
+        try {
+            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
+            stmt.setIntegers(1, taxonIds, false);
+            if (hasGenes) {
+                stmt.setInt(2, startingSpeciesId);
+                stmt.setStrings(3, startingGeneIds, true);
+            }  
+            return log.exit(new MySQLHierarchicalNodeTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+    
+    public HierarchicalNodeToGeneTOResultSet getGenesByNodeFromNodes(Collection<Integer> omaNodesIds,
+    		Collection<Integer> speciesIds) throws DAOException, IllegalArgumentException{
+    	log.entry(omaNodesIds, speciesIds);
+    	if (omaNodesIds == null || omaNodesIds.size() == 0) {
+            throw log.throwing(new IllegalArgumentException("No OMA node ID is provided"));
+        }
+    	boolean hasSpecies  = speciesIds != null && speciesIds.size() > 0;
+    	String sql = "SELECT geneToOma.OMANodeId, geneToOma.geneId FROM geneToOma "
+                + "INNER JOIN gene AS g ON geneToOma.bgeeGeneId = g.bgeeGeneId "
+                + "WHERE geneToOma.OMANodeId IN (" +
+                    BgeePreparedStatement.generateParameterizedQueryString(
+                    		omaNodesIds.size()) + ")";
+    	if(hasSpecies){
+    		sql += "AND g.speciesId IN (" +
+                    BgeePreparedStatement.generateParameterizedQueryString(
+                    		speciesIds.size()) + ")";
+    	}
+    	try {
+            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
+            stmt.setIntegers(1, omaNodesIds, true);
+            if (hasSpecies) {
+                stmt.setIntegers(2, speciesIds, true);
+            }  
+            return log.exit(new MySQLHierarchicalNodeToGeneTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    	
     }
 
     //***************************************************************************
@@ -90,7 +165,7 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
     //TO BE EXPOSED TO THE PUBLIC API.
     //***************************************************************************
     @Override
-    public int insertHierarchicalGroups(Collection<HierarchicalGroupTO> groups)
+    public int insertHierarchicalNodes(Collection<HierarchicalNodeTO> groups)
             throws DAOException, IllegalArgumentException {
         log.entry(groups);
 
@@ -107,31 +182,31 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
                      "(OMANodeId, OMAGroupId, OMANodeLeftBound, OMANodeRightBound, taxonId) " +
                      "values (?, ?, ?, ?, ?)";
 
-        try (BgeePreparedStatement stmt = 
-                this.getManager().getConnection().prepareStatement(sql)) {
-            for (HierarchicalGroupTO group: groups) {
-                stmt.setInt(1, group.getId());
-                stmt.setString(2, group.getOMAGroupId());
-                stmt.setInt(3, group.getLeftBound());
-                stmt.setInt(4, group.getRightBound());
-                // taxonId could be null for paralogous groups
-                if (group.getTaxonId() == 0) {
-                    stmt.setNull(5, Types.INTEGER);
-                } else {
-                    stmt.setInt(5, group.getTaxonId());
-                }
-                groupInsertedCount += stmt.executeUpdate();
-                stmt.clearParameters();
-            }
-            return log.exit(groupInsertedCount);
-        } catch (SQLException e) {
-            throw log.throwing(new DAOException(e));
-        }
+    	try (BgeePreparedStatement stmt = 
+    			this.getManager().getConnection().prepareStatement(sql)) {
+    		for (HierarchicalNodeTO group: groups) {
+    			stmt.setInt(1, group.getId());
+    			stmt.setString(2, group.getOMAGroupId());
+    			stmt.setInt(3, group.getLeftBound());
+    			stmt.setInt(4, group.getRightBound());
+    			// taxonId could be null for paralogous groups
+    			if (group.getTaxonId() == 0) {
+    			    stmt.setNull(5, Types.INTEGER);
+    			} else {
+    			    stmt.setInt(5, group.getTaxonId());
+    			}
+    			groupInsertedCount += stmt.executeUpdate();
+    			stmt.clearParameters();
+    		}
+    		return log.exit(groupInsertedCount);
+    	} catch (SQLException e) {
+    		throw log.throwing(new DAOException(e));
+    	}
     }
 
     //XXX: how this was handled before?
     @Override
-    public int insertHierarchicalGroupToGene(Collection<HierarchicalGroupToGeneTO> groupToGenes)
+    public int insertHierarchicalNodeToGene(Collection<HierarchicalNodeToGeneTO> groupToGenes)
             throws DAOException, IllegalArgumentException {
         log.entry(groupToGenes);
 
@@ -148,33 +223,112 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
                      "(OMANodeId, bgeeGeneId, taxonId) " +
                      "values (?, ?, ?)";
 
-        try (BgeePreparedStatement stmt =
-                this.getManager().getConnection().prepareStatement(sql)) {
-            
-            for (HierarchicalGroupToGeneTO groupToGene: groupToGenes) {
-                System.out.println(groupToGene.getNodeId()+" -> "+groupToGene.getBgeeGeneId()+" -> "+groupToGene.getTaxonId());
-                stmt.setInt(1, groupToGene.getNodeId());
-                stmt.setInt(2, groupToGene.getBgeeGeneId());
-                stmt.setInt(3, groupToGene.getTaxonId());
-                groupToGeneInsertedCount += stmt.executeUpdate();
-                stmt.clearParameters();
-            }
-            return log.exit(groupToGeneInsertedCount);
-        } catch (SQLException e) {
-            throw log.throwing(new DAOException(e));
-        }
+    	try (BgeePreparedStatement stmt = 
+    			this.getManager().getConnection().prepareStatement(sql)) {
+    		
+    		for (HierarchicalNodeToGeneTO groupToGene: groupToGenes) {
+    			stmt.setInt(1, groupToGene.getNodeId());
+    			stmt.setInt(2, groupToGene.getBgeeGeneId());
+    			stmt.setInt(3, groupToGene.getTaxonId());
+    			groupToGeneInsertedCount += stmt.executeUpdate();
+    			stmt.clearParameters();
+    		}
+    		return log.exit(groupToGeneInsertedCount);
+    	} catch (SQLException e) {
+    		throw log.throwing(new DAOException(e));
+    	}
     }
     
     /**
-     * A {@code MySQLDAOResultSet} specific to {@code HierarchicalGroupToGeneTO}.
+    * A {@code MySQLDAOResultSet} specific to {@code HierarchicalNodeToGeneTO}.
+    * 
+    * @author Frederic Bastian
+    * @version Bgee 13 Mar. 2015
+    * @since Bgee 13
+    */
+   public class MySQLHierarchicalNodeTOResultSet 
+               extends MySQLDAOResultSet<HierarchicalNodeTO> 
+               implements HierarchicalNodeTOResultSet {
+	   /**
+        * Delegates to {@link MySQLDAOResultSet#MySQLDAOResultSet(BgeePreparedStatement)}
+        * super constructor.
+        * 
+        * @param statement The first {@code BgeePreparedStatement} to execute a query on.
+        */
+       private MySQLHierarchicalNodeTOResultSet(BgeePreparedStatement statement) {
+           super(statement);
+       }
+       
+       /**
+        * Delegates to {@link MySQLDAOResultSet#MySQLDAOResultSet(BgeePreparedStatement, 
+        * int, int, int)} super constructor.
+        * 
+        * @param statement             The first {@code BgeePreparedStatement} to execute 
+        *                              a query on.
+        * @param offsetParamIndex      An {@code int} that is the index of the parameter 
+        *                              defining the offset argument of a LIMIT clause, 
+        *                              in the SQL query hold by {@code statement}.
+        * @param rowCountParamIndex    An {@code int} that is the index of the parameter 
+        *                              specifying the maximum number of rows to return 
+        *                              in a LIMIT clause, in the SQL query 
+        *                              hold by {@code statement}.
+        * @param rowCount              An {@code int} that is the maximum number of rows to use 
+        *                              in a LIMIT clause, in the SQL query 
+        *                              hold by {@code statement}.
+        * @param filterDuplicates      A {@code boolean} defining whether equal 
+        *                              {@code TransferObject}s returned by different queries should 
+        *                              be filtered: when {@code true}, only one of them will be 
+        *                              returned. This implies that all {@code TransferObject}s 
+        *                              returned will be stored, implying potentially 
+        *                              great memory usage.
+        */
+       private MySQLHierarchicalNodeTOResultSet(BgeePreparedStatement statement, 
+               int offsetParamIndex, int rowCountParamIndex, int rowCount, 
+               boolean filterDuplicates) {
+           super(statement, offsetParamIndex, rowCountParamIndex, rowCount, filterDuplicates);
+       }
+       
+       @Override
+       protected HierarchicalNodeTO getNewTO() throws DAOException {
+           log.entry();
+
+           String hogId = null;
+           Integer taxonId = null, nodeId = null; 
+
+           for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
+               try {
+                   if (column.getValue().equals("OMAGroupId")) {
+                       hogId = this.getCurrentResultSet().getString(column.getKey());
+                       
+                   } else if (column.getValue().equals("bgeeGeneId")) {
+                	   taxonId = this.getCurrentResultSet().getInt(column.getKey());
+
+                   } else if (column.getValue().equals("OMANodeId")) {
+                	   nodeId = this.getCurrentResultSet().getInt(column.getKey());
+
+                   } else {
+                       throw log.throwing(new UnrecognizedColumnException(column.getValue()));
+                   }
+
+               } catch (SQLException e) {
+                   throw log.throwing(new DAOException(e));
+               }
+           }
+           return log.exit(new HierarchicalNodeTO(nodeId, hogId, null, null, taxonId));
+       }
+
+   }
+    
+    /**
+     * A {@code MySQLDAOResultSet} specific to {@code HierarchicalNodeToGeneTO}.
      * 
      * @author Frederic Bastian
      * @version Bgee 13 Mar. 2015
      * @since Bgee 13
      */
-    public class MySQLHierarchicalGroupToGeneTOResultSet 
-                extends MySQLDAOResultSet<HierarchicalGroupToGeneTO> 
-                implements HierarchicalGroupToGeneTOResultSet {
+    public class MySQLHierarchicalNodeToGeneTOResultSet 
+                extends MySQLDAOResultSet<HierarchicalNodeToGeneTO> 
+                implements HierarchicalNodeToGeneTOResultSet {
 
         /**
          * Delegates to {@link MySQLDAOResultSet#MySQLDAOResultSet(BgeePreparedStatement)}
@@ -182,7 +336,7 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
          * 
          * @param statement The first {@code BgeePreparedStatement} to execute a query on.
          */
-        private MySQLHierarchicalGroupToGeneTOResultSet(BgeePreparedStatement statement) {
+        private MySQLHierarchicalNodeToGeneTOResultSet(BgeePreparedStatement statement) {
             super(statement);
         }
         
@@ -209,14 +363,14 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
          *                              returned will be stored, implying potentially 
          *                              great memory usage.
          */
-        private MySQLHierarchicalGroupToGeneTOResultSet(BgeePreparedStatement statement, 
+        private MySQLHierarchicalNodeToGeneTOResultSet(BgeePreparedStatement statement, 
                 int offsetParamIndex, int rowCountParamIndex, int rowCount, 
                 boolean filterDuplicates) {
             super(statement, offsetParamIndex, rowCountParamIndex, rowCount, filterDuplicates);
         }
         
         @Override
-        protected HierarchicalGroupToGeneTO getNewTO() throws DAOException {
+        protected HierarchicalNodeToGeneTO getNewTO() throws DAOException {
             log.entry();
             Integer hogId = null, geneId = null, taxonId = null; 
 
@@ -239,7 +393,7 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
                     throw log.throwing(new DAOException(e));
                 }
             }
-            return log.exit(new HierarchicalGroupToGeneTO(hogId, geneId, taxonId));
+            return log.exit(new HierarchicalNodeToGeneTO(hogId, geneId, taxonId));
         }
     }
 

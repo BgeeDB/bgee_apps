@@ -23,7 +23,7 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
  * Parent class of all MySQL DAOs of this module.
  * 
  * @author Frederic Bastian
- * @version Bgee 13
+ * @version Bgee 14 Mar. 2019
  * @since Bgee 01
  *
  * @param <T>   The type of {@code DAO.Attribute} that can be used with this {@code DAO}, 
@@ -111,6 +111,7 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
     }
 
     @Override
+    @Deprecated
     public void setAttributes(Collection<T> attributes) {
         log.entry(attributes);
         this.clearAttributes();
@@ -128,6 +129,7 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
      */
     @SafeVarargs
     @Override
+    @Deprecated
     public final void setAttributes(T... attributes) {
         log.entry((Object[]) attributes);
         Set<T> newAttributes = new HashSet<T>();
@@ -138,12 +140,14 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
         log.exit();
     }
     @Override
+    @Deprecated
     public void clearAttributes() {
         log.entry();
         this.attributes.clear();
         log.exit();
     }
     @Override
+    @Deprecated
     public Set<T> getAttributes() {
         log.entry();
         return log.exit(new HashSet<T>(attributes));
@@ -254,7 +258,6 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
      *                                  or if several 'select_expr's are mapped to a same {@code Attribute}.
      * @see #getAttributes()
      * @see #getSelectExprFromAttribute(Enum, Map)
-     * @see #reverseColNameMap(Map)
      */
     protected String generateSelectClause(String tableName, Map<String, T> selectExprsToAttributes, 
             boolean distinct) throws IllegalArgumentException {
@@ -282,7 +285,6 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
      *                                  to an {@code Attribute} provided, 
      *                                  or if several 'select_expr's are mapped to a same {@code Attribute}.
      * @see #getSelectExprFromAttribute(Enum, Map)
-     * @see #reverseColNameMap(Map)
      */
     protected String generateSelectClause(String tableName, Map<String, T> selectExprsToAttributes, 
             boolean distinct, Set<T> attributes) throws IllegalArgumentException {
@@ -351,7 +353,7 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
      * @param speciesCount  An {@code int} that is the number of requested species.
      * @return              A {@code String} that is the SQL EXISTS clause.
      */
-    protected String getAllSpeciesExistsClause(String existsPart, int speciesCount) {
+    protected static String getAllSpeciesExistsClause(String existsPart, int speciesCount) {
         log.entry(existsPart, speciesCount);
         
         return log.exit("(EXISTS(" + existsPart + " IS NULL) OR (" 

@@ -9,6 +9,7 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.TOComparator;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.keyword.KeywordDAO;
 import org.bgee.model.dao.api.keyword.KeywordDAO.EntityToKeywordTO;
@@ -121,7 +122,7 @@ public class InsertTaxaTest extends TestAncestor {
                 new SpeciesTO(13, "my common nameB", "my genusB", "my speciesB", 1, 12, 
                         "file/pathB", "versionB", 24, 20));
         expectedSpeciesTOs.add(
-                new SpeciesTO(15, "my common nameC", "my genusC", "my speciesC", 3, 14, 
+                new SpeciesTO(15, "", "my genusC", "my speciesC", 3, 14, 
                         "file/pathC", "versionC", 2, null));
         ArgumentCaptor<Set> speciesTOsArg = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockSpeciesDAO).insertSpecies(speciesTOsArg.capture());
@@ -142,8 +143,10 @@ public class InsertTaxaTest extends TestAncestor {
                 new EntityToKeywordTO<>(13, 1), new EntityToKeywordTO<>(15, 2), 
                 new EntityToKeywordTO<>(15, 3)));
         verify(mockManager.mockKeywordDAO).insertKeywordToSpecies(speToKeywordArg.capture());
-        assertEquals("Incorrect species-keywords relations inserted", expectedSpeToKeywordTOs, 
-                speToKeywordArg.getValue());
+        if (!TOComparator.areTOCollectionsEqual(expectedSpeToKeywordTOs, speToKeywordArg.getValue())){
+            throw new AssertionError("Incorrect annotation ID to entitiy IDs inserted, " +
+                    "expected " + expectedSpeToKeywordTOs + ", but was " + speToKeywordArg.getValue());
+        }
         
         
 

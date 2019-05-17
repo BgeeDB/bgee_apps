@@ -164,6 +164,23 @@ public abstract class ViewFactory {
     public abstract GeneDisplay getGeneDisplay() throws IOException;
 
     /**
+     *
+     * @return A {@code ExpressionComparisonDisplay} instance of the appropriate display type.
+     * @throws IOException If an error occurs with the {@code PrintWriter} when writing the
+     * 	                   response output.
+     */
+    public abstract ExpressionComparisonDisplay getExpressionComparisonDisplay() throws IOException;
+
+    /**
+     *
+     * @return A {@code RawDataDisplay} instance of the appropriate display type.
+     *
+     * @throws IOException  If an error occurs with the {@code PrintWriter} when writing the
+     *                      response output.
+     */
+    public abstract RawDataDisplay getRawCallDisplay() throws IOException;
+
+    /**
      *                              
      * @return A {@code SpeciesDisplay} instance of the appropriate display type.
      * 
@@ -221,4 +238,13 @@ public abstract class ViewFactory {
      *                      response output.
      */
     public abstract FaqDisplay getFaqDisplay() throws IOException;
+
+    /**
+     *
+     * @return A {@code AnatomicalSimilarityDisplay} instance of the appropriate display type.
+     *
+     * @throws IOException  If an error occurs with the {@code PrintWriter} when writing the
+     *                      response output.
+     */
+    public abstract AnatomicalSimilarityDisplay getAnatomicalSimilarityDisplay() throws IOException;
 }

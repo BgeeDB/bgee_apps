@@ -148,42 +148,42 @@ public class AnatEntityServiceTest extends TestAncestor {
                 service.loadNonInformativeAnatEntitiesBySpeciesIds(speciesIds).collect(Collectors.toList()));
     }
     
-    /**
-     * Test the method {@link AnatEntityService#loadAnatEntitySimilarities(String, Set, boolean)}.
-     */
-    @Test
-    public void shouldLoadAnatEntitySimilarities() {
-        DAOManager managerMock = mock(DAOManager.class);
-        ServiceFactory serviceFactory = mock(ServiceFactory.class);
-        when(serviceFactory.getDAOManager()).thenReturn(managerMock);
-        SummarySimilarityAnnotationDAO dao = mock(SummarySimilarityAnnotationDAO.class);
-        when(managerMock.getSummarySimilarityAnnotationDAO()).thenReturn(dao);
-        
-        SummarySimilarityAnnotationTOResultSet resultSetSim = getMockResultSet(
-                SummarySimilarityAnnotationTOResultSet.class, 
-                Arrays.asList(new SummarySimilarityAnnotationTO("sim1", 1, false, "cio01"),
-                  new SummarySimilarityAnnotationTO("sim2", 1, false, "cio01")));
-
-        SimAnnotToAnatEntityTOResultSet resultSetSimToAnat = getMockResultSet(
-                SimAnnotToAnatEntityTOResultSet.class, 
-                Arrays.asList(new SimAnnotToAnatEntityTO("sim1", "anat1"),
-               new SimAnnotToAnatEntityTO("sim1", "anat2"),
-                new SimAnnotToAnatEntityTO("sim2", "anat3")
-        ));
-       
-        when(dao.getSummarySimilarityAnnotations(1,true)).thenReturn(resultSetSim);
-        when(dao.getSimAnnotToAnatEntity(1, null)).thenReturn(resultSetSimToAnat);
-        
-        AnatEntityService service = new AnatEntityService(serviceFactory);
-        Collection<AnatEntitySimilarity> expected = new HashSet<>(Arrays.asList(
-                new AnatEntitySimilarity("sim1", new HashSet<>(Arrays.asList("anat1","anat2"))),
-                new AnatEntitySimilarity("sim2", new HashSet<>(Arrays.asList("anat3")))
-                ));
-        
-        Collection<AnatEntitySimilarity> actual = service.loadAnatEntitySimilarities(1, null, true);
-        assertEquals(expected, actual);
-        
-    }
+//    /**
+//     * Test the method {@link AnatEntityService#loadAnatEntitySimilarities(String, Set, boolean)}.
+//     */
+//    @Test
+//    public void shouldLoadAnatEntitySimilarities() {
+//        DAOManager managerMock = mock(DAOManager.class);
+//        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+//        when(serviceFactory.getDAOManager()).thenReturn(managerMock);
+//        SummarySimilarityAnnotationDAO dao = mock(SummarySimilarityAnnotationDAO.class);
+//        when(managerMock.getSummarySimilarityAnnotationDAO()).thenReturn(dao);
+//        
+//        SummarySimilarityAnnotationTOResultSet resultSetSim = getMockResultSet(
+//                SummarySimilarityAnnotationTOResultSet.class, 
+//                Arrays.asList(new SummarySimilarityAnnotationTO("sim1", 1, false, "cio01"),
+//                  new SummarySimilarityAnnotationTO("sim2", 1, false, "cio01")));
+//
+//        SimAnnotToAnatEntityTOResultSet resultSetSimToAnat = getMockResultSet(
+//                SimAnnotToAnatEntityTOResultSet.class, 
+//                Arrays.asList(new SimAnnotToAnatEntityTO("sim1", "anat1"),
+//               new SimAnnotToAnatEntityTO("sim1", "anat2"),
+//                new SimAnnotToAnatEntityTO("sim2", "anat3")
+//        ));
+//       
+//        when(dao.getSummarySimilarityAnnotations(1,true)).thenReturn(resultSetSim);
+//        when(dao.getSimAnnotToAnatEntity(1, null)).thenReturn(resultSetSimToAnat);
+//        
+//        AnatEntityService service = new AnatEntityService(serviceFactory);
+//        Collection<AnatEntitySimilarity> expected = new HashSet<>(Arrays.asList(
+//                new AnatEntitySimilarity("sim1", new HashSet<>(Arrays.asList("anat1","anat2"))),
+//                new AnatEntitySimilarity("sim2", new HashSet<>(Arrays.asList("anat3")))
+//                ));
+//        
+//        Collection<AnatEntitySimilarity> actual = service.loadAnatEntitySimilarities(1, null, true);
+//        assertEquals(expected, actual);
+//        
+//    }
 
 
 }

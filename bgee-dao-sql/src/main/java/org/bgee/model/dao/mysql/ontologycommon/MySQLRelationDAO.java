@@ -28,7 +28,7 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType
  * 
  * @author Valentine Rech de Laval
  * @author Frederic Bastian
- * @version Bgee 13, Jan. 2016
+ * @version Bgee 14 Mar. 2019
  * @since Bgee 13
  * @see org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO
  */
@@ -39,6 +39,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
      */
     private final static Logger log = LogManager.getLogger(MySQLRelationDAO.class.getName());
 
+    private static final String NESTED_SET_MODEL_FAKE_RELATIONS_TEMP_TABLE_NAME = "tempTable";
     /**
      * Constructor providing the {@code MySQLDAOManager} that this {@code MySQLDAO} 
      * will use to obtain {@code BgeeConnection}s.
@@ -230,12 +231,70 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
     @Override
     public RelationTOResultSet<Integer> getTaxonRelations(Collection<Integer> sourceTaxIds, 
             Collection<Integer> targetTaxIds, Boolean sourceOrTarget,
-            Collection<RelationStatus> relationStatus, Collection<RelationDAO.Attribute> attributes) {
-        log.entry(sourceTaxIds, targetTaxIds, sourceOrTarget, relationStatus, attributes);
-        return log.exit(this.getNestedSetModelFakeRelations(null, null, 
-                sourceTaxIds, targetTaxIds, sourceOrTarget, relationStatus, attributes, 
-                "taxon", null, "taxonId", "taxonLeftBound", "taxonRightBound", "taxonLevel", 
-                Integer.class));
+            Collection<RelationStatus> relationStatus, boolean lca,
+            Collection<RelationDAO.Attribute> attributes) {
+        log.entry(sourceTaxIds, targetTaxIds, sourceOrTarget, relationStatus, lca, attributes);
+
+        Set<Integer> clonedSourceFilter = sourceTaxIds == null? new HashSet<>():
+            new HashSet<>(sourceTaxIds);
+        Set<Integer> clonedTargetFilter = targetTaxIds == null? new HashSet<>():
+            new HashSet<>(targetTaxIds);
+        boolean filterLca = lca && (clonedSourceFilter.isEmpty() || clonedTargetFilter.isEmpty() ||
+                Boolean.TRUE.equals(sourceOrTarget));
+
+        String sql = getNestedSetModelFakeRelationsSelectAndTableClauses(null, null,
+                attributes, "taxon", null, "taxonId", "taxonLeftBound", "taxonRightBound", "taxonLevel");
+        if (filterLca) {
+            sql += " INNER JOIN taxon AS sourceTaxon ON sourceTaxon.taxonId = "
+                   + NESTED_SET_MODEL_FAKE_RELATIONS_TEMP_TABLE_NAME
+                   + ".sourceId INNER JOIN taxon AS targetTaxon ON targetTaxon.taxonId = "
+                    + NESTED_SET_MODEL_FAKE_RELATIONS_TEMP_TABLE_NAME + ".targetId ";
+        }
+        String where = getNestedSetModelFakeRelationsWhereClause(sourceTaxIds, targetTaxIds, sourceOrTarget,
+                relationStatus);
+        if (!where.isEmpty()) {
+            sql += where;
+            if (filterLca) {
+                sql += " AND ";
+            }
+        } else if (filterLca) {
+            sql += " WHERE ";
+        }
+        if (filterLca) {
+            sql += "(sourceTaxon.bgeeSpeciesLCA = 1 ";
+            if (!clonedSourceFilter.isEmpty()) {
+                sql += "OR sourceTaxon.taxonId IN ("
+                       + BgeePreparedStatement.generateParameterizedQueryString(
+                               clonedSourceFilter.size()) + ")";
+            }
+            sql += ") AND (targetTaxon.bgeeSpeciesLCA = 1 ";
+            if (!clonedTargetFilter.isEmpty()) {
+                sql += "OR targetTaxon.taxonId IN ("
+                       + BgeePreparedStatement.generateParameterizedQueryString(
+                               clonedTargetFilter.size()) + ")";
+            }
+            sql += ")";
+        }
+
+        //*******************************
+        // PREPARE STATEMENT
+        //*******************************
+         //we don't use a try-with-resource, because we return a pointer to the results, 
+         //not the actual results, so we should not close this BgeePreparedStatement.
+         try {
+             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
+             int index = parameterizeStmtNestedSetModelFakeRelations(stmt, null, clonedSourceFilter,
+                     clonedTargetFilter, relationStatus, Integer.class);
+             if (filterLca) {
+                 stmt.setIntegers(index, clonedSourceFilter, true);
+                 index += clonedSourceFilter.size();
+                 stmt.setIntegers(index, clonedTargetFilter, true);
+                 index += clonedTargetFilter.size();
+             }
+             return log.exit(new MySQLRelationTOResultSet<Integer>(stmt, Integer.class));
+         } catch (SQLException e) {
+             throw log.throwing(new DAOException(e));
+         }
     }
 
     @Override
@@ -319,6 +378,33 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         log.entry(speciesIds, anySpecies, sourceIds, targetIds, sourceOrTarget, 
                 relationStatus, attributes, tableName, taxonConstTableName, idFieldName, 
                 leftBoundFieldName, rightBoundFieldName, levelFieldName, cls);
+
+        String sql = getNestedSetModelFakeRelationsSelectAndTableClauses(speciesIds, anySpecies,
+                attributes, tableName, taxonConstTableName, idFieldName, leftBoundFieldName,
+                rightBoundFieldName, levelFieldName);
+        sql += getNestedSetModelFakeRelationsWhereClause(sourceIds, targetIds, sourceOrTarget,
+                relationStatus);
+
+        //*******************************
+        // PREPARE STATEMENT
+        //*******************************
+         //we don't use a try-with-resource, because we return a pointer to the results, 
+         //not the actual results, so we should not close this BgeePreparedStatement.
+         try {
+             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
+             parameterizeStmtNestedSetModelFakeRelations(stmt, speciesIds, sourceIds, targetIds,
+                     relationStatus, cls);
+             return log.exit(new MySQLRelationTOResultSet<T>(stmt, cls));
+         } catch (SQLException e) {
+             throw log.throwing(new DAOException(e));
+         }
+    }
+    private static <T> String getNestedSetModelFakeRelationsSelectAndTableClauses(Collection<Integer> speciesIds,
+            Boolean anySpecies, Collection<RelationDAO.Attribute> attributes, String tableName,
+            String taxonConstTableName, String idFieldName, String leftBoundFieldName,
+            String rightBoundFieldName, String levelFieldName) {
+        log.entry(speciesIds, anySpecies, attributes, tableName, taxonConstTableName, idFieldName, leftBoundFieldName,
+                rightBoundFieldName, levelFieldName);
         //NOTE: for nested set models there is no relation table, as for, e.g., anatomical entities. 
         //So, this method will emulate the existence of such a table, 
         //so that retrieval of relations in nested set models is consistent with retrieval 
@@ -334,20 +420,6 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         boolean realAnySpecies = isSpeciesFilter && 
                 (Boolean.TRUE.equals(anySpecies) || clonedSpeIds.size() == 1);
         
-        //Sources and targets
-        Set<T> clonedSourceFilter = Optional.ofNullable(sourceIds)
-                .map(c -> new HashSet<>(c)).orElse(null);
-        boolean isSourceFilter = clonedSourceFilter != null && !clonedSourceFilter.isEmpty();
-        Set<T> clonedTargetFilter = Optional.ofNullable(targetIds)
-                .map(c -> new HashSet<>(c)).orElse(null);
-        boolean isTargetFilter = clonedTargetFilter != null && !clonedTargetFilter.isEmpty();
-        boolean isEntityFilter = isSourceFilter || isTargetFilter;
-        
-        //Relation status
-        Set<RelationStatus> clonedRelStatus = Optional.ofNullable(relationStatus)
-                .map(c -> c.isEmpty()? null: EnumSet.copyOf(c)).orElse(null);
-        boolean isRelationStatusFilter = clonedRelStatus != null && !clonedRelStatus.isEmpty();
-        
         //*******************************
         // SELECT CLAUSE
         //*******************************
@@ -355,7 +427,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         EnumSet<RelationDAO.Attribute> clonedAttrs = Optional.ofNullable(attributes)
                 .map(e -> e.isEmpty()? null: EnumSet.copyOf(e)).orElse(null);
         if (clonedAttrs == null || clonedAttrs.isEmpty()) {
-            sql = "SELECT tempTable.*";
+            sql = "SELECT " + NESTED_SET_MODEL_FAKE_RELATIONS_TEMP_TABLE_NAME + ".*";
         } else {
             for (RelationDAO.Attribute attribute: clonedAttrs) {
                 if (sql == null) {
@@ -363,7 +435,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
                 } else {
                     sql += ", ";
                 }
-                sql += this.attributeNestedSetModelRelationToString(attribute);
+                sql += attributeNestedSetModelRelationToString(attribute);
             }
         }
         
@@ -421,13 +493,37 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
                 sql += "AND " + getAllSpeciesExistsClause(existsPart, clonedSpeIds.size());
             }
         }
-        sql += ") AS tempTable ";
+        sql += ") AS " + NESTED_SET_MODEL_FAKE_RELATIONS_TEMP_TABLE_NAME + " ";
 
+        return log.exit(sql);
+    }
+    private static <T> String getNestedSetModelFakeRelationsWhereClause(
+            Collection<T> sourceIds, Collection<T> targetIds, 
+            Boolean sourceOrTarget, Collection<RelationStatus> relationStatus) {
+        log.entry(sourceIds, targetIds, sourceOrTarget, relationStatus);
         //*******************************
+        // FILTER ARGUMENTS
+        //*******************************
+        //Sources and targets
+        Set<T> clonedSourceFilter = Optional.ofNullable(sourceIds)
+                .map(c -> new HashSet<>(c)).orElse(null);
+        boolean isSourceFilter = clonedSourceFilter != null && !clonedSourceFilter.isEmpty();
+        Set<T> clonedTargetFilter = Optional.ofNullable(targetIds)
+                .map(c -> new HashSet<>(c)).orElse(null);
+        boolean isTargetFilter = clonedTargetFilter != null && !clonedTargetFilter.isEmpty();
+        boolean isEntityFilter = isSourceFilter || isTargetFilter;
+        
+        //Relation status
+        Set<RelationStatus> clonedRelStatus = Optional.ofNullable(relationStatus)
+                .map(c -> c.isEmpty()? null: EnumSet.copyOf(c)).orElse(null);
+        boolean isRelationStatusFilter = clonedRelStatus != null && !clonedRelStatus.isEmpty();
+
+      //*******************************
         // WHERE CLAUSE (species already filtered in FROM clause subquery)
         //*******************************
+        String sql = "";
         if (isEntityFilter || isRelationStatusFilter) {
-            sql += " WHERE "; 
+            sql += " WHERE (";
         }
         if (isEntityFilter) {
             
@@ -460,40 +556,61 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
             BgeePreparedStatement.generateParameterizedQueryString(clonedRelStatus.size()) + ")";
         }
 
+        if (isEntityFilter || isRelationStatusFilter) {
+            sql += " )";
+        }
+
+        return log.exit(sql);
+    }
+    private static <T> int parameterizeStmtNestedSetModelFakeRelations(BgeePreparedStatement stmt,
+            Collection<Integer> speciesIds, Collection<T> sourceIds, Collection<T> targetIds, 
+            Collection<RelationStatus> relationStatus, Class<T> cls) throws SQLException {
+        log.entry(stmt, speciesIds, sourceIds, targetIds, relationStatus, cls);
+
         //*******************************
-        // PREPARE STATEMENT
+        // FILTER ARGUMENTS
         //*******************************
-         //we don't use a try-with-resource, because we return a pointer to the results, 
-         //not the actual results, so we should not close this BgeePreparedStatement.
-         try {
-             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
-             int startIndex = 1;
-             if (isSpeciesFilter) {
-                 List<Integer> orderedSpeciesIds = clonedSpeIds.stream().collect(Collectors.toList());
-                 Collections.sort(orderedSpeciesIds);
-                 stmt.setIntegers(startIndex, orderedSpeciesIds, false);
-                 startIndex += orderedSpeciesIds.size();
-                 //we set the species IDs twice, once for the parents, 
-                 //once for the children
-                 stmt.setIntegers(startIndex, orderedSpeciesIds, false);
-                 startIndex += orderedSpeciesIds.size();
-             }
-             if (isSourceFilter) {
-                 stmt.setObjects(startIndex, clonedSourceFilter, true, cls);
-                 startIndex += clonedSourceFilter.size();
-             }
-             if (isTargetFilter) {
-                 stmt.setObjects(startIndex, clonedTargetFilter, true, cls);
-                 startIndex += clonedTargetFilter.size();
-             }
-             if (isRelationStatusFilter) {
-                 stmt.setEnumDAOFields(startIndex, clonedRelStatus, true);
-                 startIndex += clonedRelStatus.size();
-             }
-             return log.exit(new MySQLRelationTOResultSet<T>(stmt, cls));
-         } catch (SQLException e) {
-             throw log.throwing(new DAOException(e));
-         }
+        //Species
+        Set<Integer> clonedSpeIds = Optional.ofNullable(speciesIds)
+                .map(c -> new HashSet<>(c)).orElse(null);
+        boolean isSpeciesFilter = clonedSpeIds != null && !clonedSpeIds.isEmpty();
+        //Sources and targets
+        Set<T> clonedSourceFilter = Optional.ofNullable(sourceIds)
+                .map(c -> new HashSet<>(c)).orElse(null);
+        boolean isSourceFilter = clonedSourceFilter != null && !clonedSourceFilter.isEmpty();
+        Set<T> clonedTargetFilter = Optional.ofNullable(targetIds)
+                .map(c -> new HashSet<>(c)).orElse(null);
+        boolean isTargetFilter = clonedTargetFilter != null && !clonedTargetFilter.isEmpty();
+        //Relation status
+        Set<RelationStatus> clonedRelStatus = Optional.ofNullable(relationStatus)
+                .map(c -> c.isEmpty()? null: EnumSet.copyOf(c)).orElse(null);
+        boolean isRelationStatusFilter = clonedRelStatus != null && !clonedRelStatus.isEmpty();
+
+        int startIndex = 1;
+        if (isSpeciesFilter) {
+            List<Integer> orderedSpeciesIds = clonedSpeIds.stream().collect(Collectors.toList());
+            Collections.sort(orderedSpeciesIds);
+            stmt.setIntegers(startIndex, orderedSpeciesIds, false);
+            startIndex += orderedSpeciesIds.size();
+            //we set the species IDs twice, once for the parents, 
+            //once for the children
+            stmt.setIntegers(startIndex, orderedSpeciesIds, false);
+            startIndex += orderedSpeciesIds.size();
+        }
+        if (isSourceFilter) {
+            stmt.setObjects(startIndex, clonedSourceFilter, true, cls);
+            startIndex += clonedSourceFilter.size();
+        }
+        if (isTargetFilter) {
+            stmt.setObjects(startIndex, clonedTargetFilter, true, cls);
+            startIndex += clonedTargetFilter.size();
+        }
+        if (isRelationStatusFilter) {
+            stmt.setEnumDAOFields(startIndex, clonedRelStatus, true);
+            startIndex += clonedRelStatus.size();
+        }
+
+        return log.exit(startIndex);
     }
 
     /** 
@@ -540,7 +657,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
      *                    {@code RelationDAO.Attribute}
      * @throws IllegalArgumentException If the {@code attribute} is unknown.
      */
-    private String attributeNestedSetModelRelationToString(RelationDAO.Attribute attribute) 
+    private static String attributeNestedSetModelRelationToString(RelationDAO.Attribute attribute) 
             throws IllegalArgumentException {
         log.entry(attribute);
         

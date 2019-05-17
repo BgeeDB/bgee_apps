@@ -79,8 +79,17 @@ public class XmlFactory extends ViewFactory {
 	}
 
     @Override
+    public ExpressionComparisonDisplay getExpressionComparisonDisplay() {
+        throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
+    }
+
+    @Override
+    public RawDataDisplay getRawCallDisplay() throws IOException {
+        throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
+    }
+
+    @Override
     public SpeciesDisplay getSpeciesDisplay() {
-        log.entry();
         throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
     }
 
@@ -125,6 +134,11 @@ public class XmlFactory extends ViewFactory {
 
     @Override
     public ResourcesDisplay getResourceDisplay() throws IOException {
+        throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
+    }
+
+    @Override
+    public AnatomicalSimilarityDisplay getAnatomicalSimilarityDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
     }
 }

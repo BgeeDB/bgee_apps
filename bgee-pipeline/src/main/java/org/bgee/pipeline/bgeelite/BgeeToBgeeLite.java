@@ -368,7 +368,8 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
      */
     private void extractBgeeDatabase(Collection<Integer> inputSpeciesIds, String directory) {
         log.entry(inputSpeciesIds, directory);
-        SpeciesTOResultSet speciesTOs = this.getSpeciesDAO().getSpeciesByIds(new HashSet<>(inputSpeciesIds));
+        SpeciesTOResultSet speciesTOs = this.getSpeciesDAO().getSpeciesByIds(
+                new HashSet<>(inputSpeciesIds), null);
         // XXX: add check that all provided species IDs are found
         Set<Integer> speciesIds = extractSpeciesTable(speciesTOs, directory);
         extractAnatEntityTable(directory);
@@ -391,7 +392,7 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
         log.debug("Start extracting global expressions for the species {}...", speciesId);
 
         String[] header = new String[] { GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID.name(),
-                GlobalExpressionCallDAO.Attribute.CONDITION_ID.name(), GLOBAL_EXPRESSION_SUMMARY_QUALITY };
+                GlobalExpressionCallDAO.Attribute.GLOBAL_CONDITION_ID.name(), GLOBAL_EXPRESSION_SUMMARY_QUALITY };
         
         //init ordering attributes for anatEntity and devStage
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> orderingAnatStage = 
@@ -454,7 +455,7 @@ public class BgeeToBgeeLite extends MySQLDAOUser {
                     Map<String, String> headerToValue = new HashMap<>();
                     headerToValue.put(GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID.name(),
                             String.valueOf(ensemblIdToBgeeGeneId.get(call.getGene().getEnsemblGeneId())));
-                    headerToValue.put(GlobalExpressionCallDAO.Attribute.CONDITION_ID.name(),
+                    headerToValue.put(GlobalExpressionCallDAO.Attribute.GLOBAL_CONDITION_ID.name(),
                             condToConditionId.get(call.getCondition()));
                     headerToValue.put(GLOBAL_EXPRESSION_SUMMARY_QUALITY,
                             call.getSummaryQuality().getStringRepresentation());

@@ -117,6 +117,16 @@ public class FakeFactory extends ViewFactory {
 	}
 
     @Override
+    public ExpressionComparisonDisplay getExpressionComparisonDisplay() throws IOException {
+        return null;
+    }
+
+    @Override
+    public RawDataDisplay getRawCallDisplay() throws IOException {
+        return null;
+    }
+
+    @Override
     public SpeciesDisplay getSpeciesDisplay() throws IOException {
         if(prop.getUrlMaxLength() == 9999 && this.requestParameters.getFirstValue(
                 ((TestURLParameters)this.requestParameters.getUrlParametersInstance())
@@ -178,6 +188,11 @@ public class FakeFactory extends ViewFactory {
                 .getParamTestString()).equals("test")){
             return new FakeResourcesDisplay(this.response, this.requestParameters, prop, this);
         }
+        return null;
+    }
+
+    @Override
+    public AnatomicalSimilarityDisplay getAnatomicalSimilarityDisplay() throws IOException {
         return null;
     }
 }

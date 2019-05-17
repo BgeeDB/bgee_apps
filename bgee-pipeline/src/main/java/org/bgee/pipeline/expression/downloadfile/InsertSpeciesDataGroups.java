@@ -133,7 +133,6 @@ import org.bgee.pipeline.MySQLDAOUser;
 //        // into Map<String, String>.
 //        // We could use the flatMap function, but we want to perform sanity checks.
 //        InsertSpeciesDataGroups insert = new InsertSpeciesDataGroups(
-//                
 //                //LinkedHashMap<String, Set<Integer>> groupToSpecies
 //                CommandRunner.parseMapArgument(args[0]).entrySet().stream()
 //                .collect(Collectors.toMap(e -> e.getKey(), e -> new HashSet<Integer>(e.getValue()
@@ -371,6 +370,20 @@ import org.bgee.pipeline.MySQLDAOUser;
 //        }
 //        
 //        if (!this.singleSpCatToFilePattern.keySet().equals(
+//                this.groupToCaterories.entrySet().stream()
+//                .filter(e -> this.groupToSpecies.get(e.getKey()).size() == 1)
+//                .flatMap(e -> e.getValue().stream())
+//                .collect(Collectors.toSet()))) {
+//            throw log.throwing(new IllegalArgumentException("Different categories between "
+//                    + "mappings singleSpCategory-filePattern [" + this.singleSpCatToFilePattern.keySet()
+//                    + "] and group-category with one species ["
+//                    + this.groupToCaterories.values().stream().filter(e -> e.size() == 1)
+//                    .flatMap(e -> e.stream())
+//                    .collect(Collectors.toSet()) + "]"));
+//        }
+
+        // FIXME enable sanity checks on multi-species files
+//        if (!this.multiSpCatToFilePattern.keySet().equals(
 //                this.groupToCaterories.entrySet().stream()
 //                .filter(e -> this.groupToSpecies.get(e.getKey()).size() == 1)
 //                .flatMap(e -> e.getValue().stream())

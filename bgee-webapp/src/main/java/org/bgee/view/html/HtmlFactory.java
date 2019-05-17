@@ -127,6 +127,12 @@ public class HtmlFactory extends ViewFactory {
 	}
 
     @Override
+    public ExpressionComparisonDisplay getExpressionComparisonDisplay() throws IOException {
+        log.entry();
+        return log.exit(new HtmlExpressionComparisonDisplay(response, requestParameters, prop, jsonHelper, this));
+    }
+
+    @Override
     public RawDataDisplay getRawCallDisplay() throws IOException {
         log.entry();
         return log.exit(new HtmlRawDataDisplay(response, requestParameters, prop, jsonHelper, this));
@@ -166,14 +172,23 @@ public class HtmlFactory extends ViewFactory {
         log.entry();
         return log.exit(new HtmlFaqDisplay(this.response, this.requestParameters, this.prop, this));
     }
+
     @Override
     public SparqlDisplay getSparqlDisplay() throws IOException {
         log.entry();
         return log.exit(new HtmlSparqlDisplay(this.response, this.requestParameters, this.prop, this));
     }
+
     @Override
     public ResourcesDisplay getResourceDisplay() throws IOException {
         log.entry();
         return log.exit(new HtmlResourcesDisplay(this.response, this.requestParameters, this.prop, this));
+    }
+
+    @Override
+    public AnatomicalSimilarityDisplay getAnatomicalSimilarityDisplay() throws IOException {
+        log.entry();
+        return log.exit(new HtmlAnatomicalSimilarityDisplay(
+                this.response, this.requestParameters, this.prop, this));
     }
 }

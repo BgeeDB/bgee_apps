@@ -59,6 +59,7 @@ import org.bgee.model.expressiondata.baseelements.ExpressionLevelCategory;
 import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.expressiondata.multispecies.MultiSpeciesExprAnalysis;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
@@ -621,6 +622,9 @@ public class CallService extends CommonService {
         return log.exit(callsByAnatEntity);
     }
 
+    public SingleSpeciesExprAnalysis loadMultiSpeciesExprAnalysis(Collection<String> requestedGeneIds) {
+        return null;
+    }
 
     //*************************************************************************
     // METHODS PERFORMING THE QUERIES TO THE DAOs

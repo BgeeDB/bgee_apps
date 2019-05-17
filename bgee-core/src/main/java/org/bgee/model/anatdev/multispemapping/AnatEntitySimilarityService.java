@@ -343,7 +343,8 @@ public class AnatEntitySimilarityService extends Service {
         Set<String> anatEntityIdsNotInSimilarities = new HashSet<>(clonedAnatEntityIds);
         anatEntityIdsNotInSimilarities.removeAll(anatEntityIdsInSimilarities);
         //Retrieve the anat. entities not part of similarities
-        Set<AnatEntity> anatEntitiesNotInSimilarities = this.getServiceFactory().getAnatEntityService()
+        Set<AnatEntity> anatEntitiesNotInSimilarities = anatEntityIdsNotInSimilarities.isEmpty()?
+                new HashSet<>(): this.getServiceFactory().getAnatEntityService()
                 .loadAnatEntities(anatEntityIdsNotInSimilarities, false)
                 .collect(Collectors.toSet());
         //Identify the requested IDs that were not found in the database

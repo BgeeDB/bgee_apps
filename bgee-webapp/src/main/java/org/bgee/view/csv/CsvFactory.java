@@ -82,6 +82,11 @@ public class CsvFactory extends ViewFactory {
 	}
 
     @Override
+    public ExpressionComparisonDisplay getExpressionComparisonDisplay() {
+        throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
+    }
+
+    @Override
     public RawDataDisplay getRawCallDisplay() throws IOException {
         throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
     }
@@ -136,6 +141,11 @@ public class CsvFactory extends ViewFactory {
 
     @Override
     public ResourcesDisplay getResourceDisplay() throws IOException {
+        throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
+    }
+
+    @Override
+    public AnatomicalSimilarityDisplay getAnatomicalSimilarityDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
     }
 }

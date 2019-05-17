@@ -370,6 +370,8 @@
                                 <cssSourceFile>gene.css</cssSourceFile>
                                 <cssSourceFile>source.css</cssSourceFile>
                                 <cssSourceFile>raw_data.css</cssSourceFile>
+                                <cssSourceFile>anat_sim.css</cssSourceFile>
+                                <cssSourceFile>expr_comp.css</cssSourceFile>
                             </cssSourceFiles>
                             <suffix>${filter.org.bgee.webapp.css.version.extension}</suffix>
                         </configuration>
@@ -419,7 +421,6 @@
                             <cssFinalFile>font-awesome.${filter.org.bgee.webapp.css.version.extension}.css</cssFinalFile>
                         </configuration>
                     </execution>
-
 
                     <!-- merge files from external libraries already minified,
                          specific to gene pages. -->
@@ -575,6 +576,123 @@
                             </cssSourceFiles>
                             <cssFinalFile>topanat.css</cssFinalFile>
                             <suffix>${filter.org.bgee.webapp.css.version.extension}</suffix> -->
+                        </configuration>
+                    </execution>
+
+                    <!-- merge files from external libraries already minified,
+                         specific to anatomical similarity pages. -->
+                    <execution>
+                        <id>anat_sim_minified_vendor</id>
+                        <goals>
+                            <!-- Binds by default to the lifecycle phase: process-resources -->
+                            <goal>minify</goal>
+                        </goals>
+                        <configuration>
+                            <webappTargetDir>${minify.webappTargetDir}</webappTargetDir>
+                            <skipMinify>true</skipMinify>
+                            <!-- We always skip the merge and minify if requested -->
+                            <skipMerge>${skip.minify.plugin}</skipMerge>
+                            <jsEngine>CLOSURE</jsEngine>
+
+                            <jsSourceDir>js/</jsSourceDir>
+                            <jsTargetDir>js/lib/jquery_plugins/</jsTargetDir>
+                            <jsSourceFiles>
+                                <jsSourceFile>lib/jquery_plugins/jquery.dataTables.min.js</jsSourceFile>
+                                <jsSourceFile>lib/jquery_plugins/dataTables.responsive.min.js</jsSourceFile>
+                            </jsSourceFiles>
+                            <!-- Files already provided minified. The suffix will then not be added  -->
+                            <jsFinalFile>vendor_anat_sim.${filter.org.bgee.webapp.javascript.version.extension}.js</jsFinalFile>
+                            <cssSourceDir>css/</cssSourceDir>
+                            <cssTargetDir>css/lib/jquery_plugins/</cssTargetDir>
+                            <cssSourceFiles>
+                                <cssSourceFile>lib/jquery_plugins/jquery.dataTables.min.css</cssSourceFile>
+                                <cssSourceFile>lib/jquery_plugins/responsive.dataTables.min.css</cssSourceFile>
+                            </cssSourceFiles>
+                            <!-- Files already provided minified. The suffix will then not be added  -->
+                            <cssFinalFile>vendor_anat_sim.${filter.org.bgee.webapp.css.version.extension}.css</cssFinalFile>
+                        </configuration>
+                    </execution>
+
+                    <!-- merge and minify all Bgee files specific to anatomical similarity pages -->
+                    <execution>
+                        <id>minify_anat_sim_bgee</id>
+                        <goals>
+                            <!-- Binds by default to the lifecycle phase: process-resources -->
+                            <goal>minify</goal>
+                        </goals>
+                        <configuration>
+                            <webappTargetDir>${minify.webappTargetDir}</webappTargetDir>
+                            <!-- We always skip the merge and minify if requested -->
+                            <skipMinify>${skip.minify.plugin}</skipMinify>
+                            <skipMerge>${skip.minify.plugin}</skipMerge>
+                            <jsEngine>CLOSURE</jsEngine>
+
+                            <jsSourceDir>js/</jsSourceDir>
+                            <jsTargetDir>js/</jsTargetDir>
+                            <jsSourceFiles>
+                                <jsSourceFile>anat_sim.js</jsSourceFile>
+                            </jsSourceFiles>
+                            <jsFinalFile>script_anat_sim.js</jsFinalFile>
+                            <suffix>${filter.org.bgee.webapp.javascript.version.extension}</suffix>
+                        </configuration>
+                    </execution>
+
+                    <!-- merge files from external libraries already minified,
+                         specific to expression comparison pages. -->
+                    <execution>
+                        <id>expr_comp_minified_vendor</id>
+                        <goals>
+                            <!-- Binds by default to the lifecycle phase: process-resources -->
+                            <goal>minify</goal>
+                        </goals>
+                        <configuration>
+                            <webappTargetDir>${minify.webappTargetDir}</webappTargetDir>
+                            <skipMinify>true</skipMinify>
+                            <!-- We always skip the merge and minify if requested -->
+                            <skipMerge>${skip.minify.plugin}</skipMerge>
+                            <jsEngine>CLOSURE</jsEngine>
+
+                            <jsSourceDir>js/</jsSourceDir>
+                            <jsTargetDir>js/lib/jquery_plugins/</jsTargetDir>
+                            <jsSourceFiles>
+                                <jsSourceFile>lib/jquery_plugins/jquery.dataTables.min.js</jsSourceFile>
+                                <jsSourceFile>lib/jquery_plugins/dataTables.responsive.min.js</jsSourceFile>
+                            </jsSourceFiles>
+                            <!-- Files already provided minified. The suffix will then not be added  -->
+                            <jsFinalFile>vendor_expr_comp.${filter.org.bgee.webapp.javascript.version.extension}.js</jsFinalFile>
+
+                            <cssSourceDir>css/</cssSourceDir>
+                            <cssTargetDir>css/lib/jquery_plugins/</cssTargetDir>
+                            <cssSourceFiles>
+                                <cssSourceFile>lib/jquery_plugins/jquery.dataTables.min.css</cssSourceFile>
+                                <cssSourceFile>lib/jquery_plugins/responsive.dataTables.min.css</cssSourceFile>
+                            </cssSourceFiles>
+                            <!-- Files already provided minified. The suffix will then not be added  -->
+                            <cssFinalFile>vendor_expr_comp.${filter.org.bgee.webapp.css.version.extension}.css</cssFinalFile>
+                        </configuration>
+                    </execution>
+
+                    <!-- merge and minify all Bgee files specific to expresion comparison page -->
+                    <execution>
+                        <id>minify_expr_comp_bgee</id>
+                        <goals>
+                            <!-- Binds by default to the lifecycle phase: process-resources -->
+                            <goal>minify</goal>
+                        </goals>
+                        <configuration>
+                            <webappTargetDir>${minify.webappTargetDir}</webappTargetDir>
+                            <!-- We always skip the merge and minify if requested -->
+                            <skipMinify>${skip.minify.plugin}</skipMinify>
+                            <skipMerge>${skip.minify.plugin}</skipMerge>
+                            <jsEngine>CLOSURE</jsEngine>
+
+                            <jsSourceDir>js/</jsSourceDir>
+                            <jsTargetDir>js/</jsTargetDir>
+                            <jsSourceFiles>
+                                <jsSourceFile>expr_comp.js</jsSourceFile>
+                            </jsSourceFiles>
+                            <jsFinalFile>script_expr_comp.js</jsFinalFile>
+                            <suffix>${filter.org.bgee.webapp.javascript.version.extension}</suffix>
                         </configuration>
                     </execution>
                 </executions>

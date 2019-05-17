@@ -105,6 +105,11 @@ public class JsonFactory extends ViewFactory {
 	}
 
     @Override
+    public ExpressionComparisonDisplay getExpressionComparisonDisplay() {
+        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
+    }
+
+    @Override
     public RawDataDisplay getRawCallDisplay() throws IOException {
         throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
     }
@@ -149,8 +154,14 @@ public class JsonFactory extends ViewFactory {
     public FaqDisplay getFaqDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
     }
+
     @Override
     public ResourcesDisplay getResourceDisplay() throws IOException {
+        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
+    }
+
+    @Override
+    public AnatomicalSimilarityDisplay getAnatomicalSimilarityDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
     }
 }

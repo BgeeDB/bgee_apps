@@ -51,13 +51,57 @@ public abstract class MultiGeneExprAnalysis<T> {
         public Map<SummaryCallType, Set<Gene>> getCallTypeToGenes() {
             return callTypeToGenes;
         }
-
         public Set<Gene> getGenesWithNoData() {
             return genesWithNoData;
         }
 
         private Map<SummaryCallType, Set<Gene>> callTypeToGenes;
         private Set<Gene> genesWithNoData;
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((callTypeToGenes == null) ? 0 : callTypeToGenes.hashCode());
+            result = prime * result + ((genesWithNoData == null) ? 0 : genesWithNoData.hashCode());
+            return result;
+        }
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            MultiGeneExprCounts other = (MultiGeneExprCounts) obj;
+            if (callTypeToGenes == null) {
+                if (other.callTypeToGenes != null) {
+                    return false;
+                }
+            } else if (!callTypeToGenes.equals(other.callTypeToGenes)) {
+                return false;
+            }
+            if (genesWithNoData == null) {
+                if (other.genesWithNoData != null) {
+                    return false;
+                }
+            } else if (!genesWithNoData.equals(other.genesWithNoData)) {
+                return false;
+            }
+            return true;
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("MultiGeneExprCounts [callTypeToGenes=").append(callTypeToGenes)
+                   .append(", genesWithNoData=") .append(genesWithNoData)
+                   .append("]");
+            return builder.toString();
+        }
     }
 
     //***************************************

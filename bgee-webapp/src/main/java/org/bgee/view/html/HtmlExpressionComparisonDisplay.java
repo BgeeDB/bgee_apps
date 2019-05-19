@@ -266,8 +266,9 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
             geneUrl.setSpeciesId(g.getSpecies().getId());
             return "<a href='" + geneUrl.getRequestURL() + "'>" + htmlEntities(g.getEnsemblGeneId()) + "</a>";
         };
-        
-        return log.exit(this.getCell(genes.stream()
+
+        //Need a compiler hint of generic type for my Java version
+        return log.exit(this.<Gene>getCell(genes.stream()
                         .sorted(Comparator.comparing(Gene::getEnsemblGeneId))
                         .collect(Collectors.toList()),
                 "gene" + (genes.size() > 1? "s": ""),
@@ -276,7 +277,8 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
 
     private String getSpeciesCountCell(Set<Gene> genes) {
         log.entry(genes);
-        return log.exit(this.getCell(genes.stream()
+        //Need a compiler hint of generic type for my Java version
+        return log.exit(this.<Species>getCell(genes.stream()
                         .map(Gene::getSpecies)
                         .distinct()
                         .sorted(Comparator.comparing(Species::getPreferredDisplayOrder))

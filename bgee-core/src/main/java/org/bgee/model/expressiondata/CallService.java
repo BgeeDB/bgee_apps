@@ -623,6 +623,12 @@ public class CallService extends CommonService {
         return log.exit(callsByAnatEntity);
     }
 
+    //XXX: should the loadSingleSpeciesExprAnalysis methods moved to a new service?
+    //Maybe a dedicated service for gene expression comparisons, bith single and multi-species?
+    //The fact that a partial mock using 'spy' was used for unit testing is a code smell.
+    //XXX: Actually I don't think we need SingleSpeciesExprAnalysis and MultiSpeciesExprAnalysis,
+    //MultiGeneExprAnalysis seems enough with generic type. Which is a stronger case
+    //to use a separate, dedicated service.
     public SingleSpeciesExprAnalysis loadSingleSpeciesExprAnalysis(Collection<Gene> requestedGenes) {
         log.entry(requestedGenes);
         if (requestedGenes == null || requestedGenes.isEmpty()) {
@@ -673,7 +679,8 @@ public class CallService extends CommonService {
                 false);
         Map<Condition, MultiGeneExprCounts> condToCounts = callsByAnatEntity
         //We keep only conditions where at least one gene has observed data in it
-        .filter(list -> list.stream().anyMatch(c -> c.getDataPropagation().isIncludingObservedData()))
+        .filter(list -> list.stream()
+                .anyMatch(c -> Boolean.TRUE.equals(c.getDataPropagation().isIncludingObservedData())))
         //Now we create for each Condition an Entry<Condition, MultiGeneExprCounts>
         .map(list -> {
             Map<ExpressionSummary, Collection<Gene>> callTypeToGenes = list.stream()

@@ -939,6 +939,10 @@ public class MultiSpeciesCallService extends CommonService {
     }
 
     //TODO: equivalent method accepting ExpressionCallFilter
+    //XXX: Maybe we need a DataPropagation attribute in SimilarityExpressionCall,
+    //otherwise here we can retrieve calls in conditions with no observed data for any of the genes
+    //(as opposed to the single species analysis, where only conditions with observed data
+    //for at least one gene are retrieved)
     public MultiSpeciesExprAnalysis loadMultiSpeciesExprAnalysis(Collection<Gene> requestedGenes) {
         log.entry(requestedGenes);
         if (requestedGenes == null || requestedGenes.isEmpty()) {

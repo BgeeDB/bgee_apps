@@ -80,7 +80,7 @@ extends DataFilter<ConditionFilter> {
 
         public ExpressionCallFilter(
                 Map<SummaryCallType.ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter,
-                Set<GeneFilter> geneFilters, Collection<ConditionFilter> conditionFilters, Collection<DataType> dataTypeFilter,
+                Collection<GeneFilter> geneFilters, Collection<ConditionFilter> conditionFilters, Collection<DataType> dataTypeFilter,
                 Map<CallType.Expression, Boolean> callObservedData,
                 Boolean anatEntityObservedData, Boolean devStageObservedData)
                         throws IllegalArgumentException {
@@ -303,7 +303,7 @@ extends DataFilter<ConditionFilter> {
          */
         public DiffExpressionCallFilter(
                 Map<SummaryCallType.DiffExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter,
-                Set<GeneFilter> geneFilters, Collection<ConditionFilter> conditionFilters, 
+                Collection<GeneFilter> geneFilters, Collection<ConditionFilter> conditionFilters,
             Collection<DataType> dataTypeFilter) throws IllegalArgumentException {
             super(summaryCallTypeQualityFilter, geneFilters, conditionFilters, dataTypeFilter,
                     SummaryCallType.DiffExpressionSummary.class);
@@ -408,7 +408,7 @@ extends DataFilter<ConditionFilter> {
     //use in it super.checkEmptyFilters(), and call it in their constructor (this cannot be done
     //in this constructor, as subclasses might need to set their own attributes before calling checkEmptyFilters)
     protected CallFilter(Map<U, SummaryQuality> summaryCallTypeQualityFilter,
-            Set<GeneFilter> geneFilters, Collection<ConditionFilter> conditionFilters,
+            Collection<GeneFilter> geneFilters, Collection<ConditionFilter> conditionFilters,
             Collection<DataType> dataTypeFilter, Class<U> callTypeCls) throws IllegalArgumentException {
         super(geneFilters, conditionFilters);
 

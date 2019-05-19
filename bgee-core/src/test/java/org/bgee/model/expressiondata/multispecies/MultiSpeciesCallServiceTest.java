@@ -9,6 +9,7 @@ import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityService;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityTaxonSummary;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
+import org.bgee.model.expressiondata.MultiGeneExprAnalysis.MultiGeneExprCounts;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.ConditionFilter;
@@ -37,7 +38,9 @@ import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 /**
@@ -367,5 +370,70 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
             + c.getMultiSpeciesCondition().getAnatSimilarity().getAllAnatEntities().stream()
             .map(ae -> ae.getName()).collect(Collectors.joining(", "))));
         }
+    }
+
+    /**
+     * Test the method {@link MultiSpeciesCallService#loadMultiSpeciesExprAnalysis(Collection)}
+     */
+    @Test
+    public void shouldLoadMultiSpeciesExprAnalysis() {
+        Species spe1 = new Species(1);
+        Species spe2 = new Species(2);
+        GeneBioType biotype = new GeneBioType("type1");
+        Gene g1 = new Gene("1", spe1, biotype);
+        Gene g2 = new Gene("2", spe2, biotype);
+        Taxon lca = new Taxon(1, "tax1", "desc", "scientific name", 1, true);
+        when(this.taxonService.loadLeastCommonAncestor(new HashSet<>(Arrays.asList(spe1.getId(), spe2.getId()))))
+        .thenReturn(lca);
+        Set<GeneFilter> geneFilters = new HashSet<>(Arrays.asList(
+                new GeneFilter(spe1.getId(), Arrays.asList(g1.getEnsemblGeneId())),
+                new GeneFilter(spe2.getId(), Arrays.asList(g2.getEnsemblGeneId()))));
+
+        MultiSpeciesCondition cond1 = new MultiSpeciesCondition(
+                new AnatEntitySimilarity(Arrays.asList(new AnatEntity("1")), null, lca,
+                        Arrays.asList(new AnatEntitySimilarityTaxonSummary(lca, true, true))),
+                null);
+        MultiSpeciesCondition cond2 = new MultiSpeciesCondition(
+                new AnatEntitySimilarity(Arrays.asList(new AnatEntity("2")), null, lca,
+                        Arrays.asList(new AnatEntitySimilarityTaxonSummary(lca, true, true))),
+                null);
+        MultiSpeciesCondition cond3 = new MultiSpeciesCondition(
+                new AnatEntitySimilarity(Arrays.asList(new AnatEntity("3")), null, lca,
+                        Arrays.asList(new AnatEntitySimilarityTaxonSummary(lca, true, true))),
+                null);
+        MultiSpeciesCallService spyCallService = spy(new MultiSpeciesCallService(this.serviceFactory));
+        doReturn(Stream.of(
+                //The 2 genes are expressed in the same structure, observed data for only one of them,
+                //should be used
+                new SimilarityExpressionCall(g1, cond1, null, ExpressionSummary.EXPRESSED),
+                new SimilarityExpressionCall(g2, cond1, null, ExpressionSummary.EXPRESSED),
+                //1 gene expressed, 1 gene not expressed, all observed data
+                new SimilarityExpressionCall(g1, cond2, null, ExpressionSummary.EXPRESSED),
+                new SimilarityExpressionCall(g2, cond2, null, ExpressionSummary.NOT_EXPRESSED),
+                //Only one gene with data
+                new SimilarityExpressionCall(g1, cond3, null, ExpressionSummary.EXPRESSED)))
+        .when(spyCallService).loadSimilarityExpressionCalls(lca.getId(), geneFilters, null, false);
+
+        Map<MultiSpeciesCondition, MultiGeneExprCounts> condToCounts = new HashMap<>();
+        //Counts in acond1
+        Map<ExpressionSummary, Collection<Gene>> callTypeToGenes = new HashMap<>();
+        callTypeToGenes.put(ExpressionSummary.EXPRESSED, Arrays.asList(g1, g2));
+        MultiGeneExprCounts count = new MultiGeneExprCounts(callTypeToGenes, null);
+        condToCounts.put(cond1, count);
+        //counts in cond2
+        callTypeToGenes = new HashMap<>();
+        callTypeToGenes.put(ExpressionSummary.EXPRESSED, Arrays.asList(g1));
+        callTypeToGenes.put(ExpressionSummary.NOT_EXPRESSED, Arrays.asList(g2));
+        count = new MultiGeneExprCounts(callTypeToGenes, null);
+        condToCounts.put(cond2, count);
+        //counts in cond3
+        callTypeToGenes = new HashMap<>();
+        callTypeToGenes.put(ExpressionSummary.EXPRESSED, Arrays.asList(g1));
+        count = new MultiGeneExprCounts(callTypeToGenes, Arrays.asList(g2));
+        condToCounts.put(cond3, count);
+        MultiSpeciesExprAnalysis expectedResult = new MultiSpeciesExprAnalysis(Arrays.asList(g1, g2),
+                condToCounts);
+
+        assertEquals(expectedResult, spyCallService.loadMultiSpeciesExprAnalysis(Arrays.asList(g1, g2)));
     }
 }

@@ -15,6 +15,7 @@ import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.DevStageService;
 import org.bgee.model.anatdev.TaxonConstraintService;
+import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityService;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.TransferObject;
@@ -194,6 +195,7 @@ public abstract class TestAncestor {
     protected TaxonService taxonService;
     protected SourceService sourceService;
     protected TaxonConstraintService taxonConstraintService;
+    protected AnatEntitySimilarityService anatEntitySimilarityService;
     //DAOs
     protected DAOManager manager;
     protected GlobalExpressionCallDAO globalExprCallDAO;
@@ -232,6 +234,7 @@ public abstract class TestAncestor {
         this.taxonService = mock(TaxonService.class);
         this.sourceService = mock(SourceService.class);
         this.taxonConstraintService = mock(TaxonConstraintService.class);
+        this.anatEntitySimilarityService = mock(AnatEntitySimilarityService.class);
         //DAOs
         this.manager = mock(DAOManager.class);
         this.globalExprCallDAO = mock(GlobalExpressionCallDAO.class);
@@ -257,6 +260,7 @@ public abstract class TestAncestor {
         when(this.serviceFactory.getTaxonService()).thenReturn(this.taxonService);
         when(this.serviceFactory.getSourceService()).thenReturn(this.sourceService);
         when(this.serviceFactory.getTaxonConstraintService()).thenReturn(this.taxonConstraintService);
+        when(this.serviceFactory.getAnatEntitySimilarityService()).thenReturn(this.anatEntitySimilarityService);
         //DAOs
         when(this.serviceFactory.getDAOManager()).thenReturn(this.manager);
         when(this.manager.getGlobalExpressionCallDAO()).thenReturn(this.globalExprCallDAO);

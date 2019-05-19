@@ -1,8 +1,11 @@
 package org.bgee.model.expressiondata;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyCollectionOf;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -54,6 +57,8 @@ import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService.Attribute;
+import org.bgee.model.expressiondata.CallService.OrderingAttribute;
+import org.bgee.model.expressiondata.MultiGeneExprAnalysis.MultiGeneExprCounts;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.CallType.Expression;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
@@ -1790,6 +1795,96 @@ public class CallServiceTest extends TestAncestor {
         verify(this.globalExprCallDAO, times(5)).getMinMaxRanksPerAnatEntity(
                 Arrays.asList(allObservedPresentCallDAOFilter),
                 allCondParams);
+    }
+
+    /**
+     * Test the method {@link CallService#loadSingleSpeciesExprAnalysis(Collection)}
+     */
+    @Test
+    public void shouldLoadSingleSpeciesExprAnalysis() {
+        Species spe1 = new Species(1);
+        GeneBioType biotype = new GeneBioType("type1");
+        Gene g1 = new Gene("1", spe1, biotype);
+        Gene g2 = new Gene("2", spe1, biotype);
+        Set<Attribute> attributes = EnumSet.of(Attribute.GENE, Attribute.ANAT_ENTITY_ID,
+                Attribute.CALL_TYPE, Attribute.DATA_QUALITY, Attribute.OBSERVED_DATA);
+        LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes = new LinkedHashMap<>();
+        //IMPORTANT: results must be ordered by anat. entity so that we can compare expression
+        //in each anat. entity without overloading the memory.
+        orderingAttributes.put(OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
+        Collection<GeneFilter> geneFilters = Arrays.asList(new GeneFilter(spe1.getId(),
+                Arrays.asList(g1.getEnsemblGeneId(), g2.getEnsemblGeneId())));
+        ExpressionCallFilter callFilter = new ExpressionCallFilter(
+                null,                              //we want both present and absent calls, of any quality
+                geneFilters,                       //requested genes
+                null,                              //any condition
+                null,                              //any data type
+                null, null, null                   //both observed and propagated calls
+                );
+
+        Condition cond1 = new Condition(new AnatEntity("1"), null, spe1);
+        Condition cond2 = new Condition(new AnatEntity("2"), null, spe1);
+        Condition cond3 = new Condition(new AnatEntity("3"), null, spe1);
+        Condition cond4 = new Condition(new AnatEntity("4"), null, spe1);
+        CallService spyCallService = spy(new CallService(this.serviceFactory));
+        doReturn(Stream.of(
+                //The 2 genes are expressed in the same structure, observed data for only one of them,
+                //should be used
+                new ExpressionCall(g1, cond1,
+                new DataPropagation(PropagationState.SELF, null, true),
+                ExpressionSummary.EXPRESSED, SummaryQuality.SILVER,
+                null, null),
+                new ExpressionCall(g2, cond1,
+                new DataPropagation(PropagationState.DESCENDANT, null, false),
+                ExpressionSummary.EXPRESSED, SummaryQuality.SILVER,
+                null, null),
+                //1 gene expressed, 1 gene not expressed, all observed data
+                new ExpressionCall(g1, cond2,
+                new DataPropagation(PropagationState.SELF, null, true),
+                ExpressionSummary.EXPRESSED, SummaryQuality.SILVER,
+                null, null),
+                new ExpressionCall(g2, cond2,
+                new DataPropagation(PropagationState.SELF, null, true),
+                ExpressionSummary.NOT_EXPRESSED, SummaryQuality.SILVER,
+                null, null),
+                //Only one gene with data
+                new ExpressionCall(g1, cond3,
+                new DataPropagation(PropagationState.SELF, null, true),
+                ExpressionSummary.EXPRESSED, SummaryQuality.SILVER,
+                null, null),
+                //The 2 genes are expressed, but no observed data for none of them,
+                //should be discarded
+                new ExpressionCall(g1, cond4,
+                new DataPropagation(PropagationState.DESCENDANT, null, false),
+                ExpressionSummary.EXPRESSED, SummaryQuality.SILVER,
+                null, null),
+                new ExpressionCall(g2, cond4,
+                new DataPropagation(PropagationState.DESCENDANT, null, false),
+                ExpressionSummary.EXPRESSED, SummaryQuality.SILVER,
+                null, null)))
+        .when(spyCallService).loadExpressionCalls(callFilter, attributes, orderingAttributes);
+
+        Map<Condition, MultiGeneExprCounts> condToCounts = new HashMap<>();
+        //Counts in acond1
+        Map<ExpressionSummary, Collection<Gene>> callTypeToGenes = new HashMap<>();
+        callTypeToGenes.put(ExpressionSummary.EXPRESSED, Arrays.asList(g1, g2));
+        MultiGeneExprCounts count = new MultiGeneExprCounts(callTypeToGenes, null);
+        condToCounts.put(cond1, count);
+        //counts in cond2
+        callTypeToGenes = new HashMap<>();
+        callTypeToGenes.put(ExpressionSummary.EXPRESSED, Arrays.asList(g1));
+        callTypeToGenes.put(ExpressionSummary.NOT_EXPRESSED, Arrays.asList(g2));
+        count = new MultiGeneExprCounts(callTypeToGenes, null);
+        condToCounts.put(cond2, count);
+        //counts in cond3
+        callTypeToGenes = new HashMap<>();
+        callTypeToGenes.put(ExpressionSummary.EXPRESSED, Arrays.asList(g1));
+        count = new MultiGeneExprCounts(callTypeToGenes, Arrays.asList(g2));
+        condToCounts.put(cond3, count);
+        SingleSpeciesExprAnalysis expectedResult = new SingleSpeciesExprAnalysis(Arrays.asList(g1, g2),
+                condToCounts);
+
+        assertEquals(expectedResult, spyCallService.loadSingleSpeciesExprAnalysis(Arrays.asList(g1, g2)));
     }
 
     private static void assertCallsEquals(Collection<ExpressionCall> expectedCalls,

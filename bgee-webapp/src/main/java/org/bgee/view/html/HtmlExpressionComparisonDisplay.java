@@ -10,7 +10,6 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.MultiGeneExprAnalysis;
 import org.bgee.model.expressiondata.SingleSpeciesExprAnalysis;
-import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.multispecies.MultiSpeciesCondition;
 import org.bgee.model.expressiondata.multispecies.MultiSpeciesExprAnalysis;
@@ -240,7 +239,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
                 .collect(Collectors.joining(" - ")));
         row.append("    </td>");
 
-        Map<SummaryCallType, Set<Gene>> callTypeToGenes = condToCounts.getValue().getCallTypeToGenes();
+        Map<ExpressionSummary, Set<Gene>> callTypeToGenes = condToCounts.getValue().getCallTypeToGenes();
         Set<Gene> expressedGenes = callTypeToGenes.get(ExpressionSummary.EXPRESSED);
         Set<Gene> notExpressedGenes = callTypeToGenes.get(ExpressionSummary.NOT_EXPRESSED);
         

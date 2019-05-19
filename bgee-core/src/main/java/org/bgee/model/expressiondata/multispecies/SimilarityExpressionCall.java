@@ -1,7 +1,7 @@
 package org.bgee.model.expressiondata.multispecies;
 
 import org.bgee.model.expressiondata.Call.ExpressionCall;
-import org.bgee.model.expressiondata.baseelements.SummaryCallType;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.gene.Gene;
 
 import java.util.Collection;
@@ -26,10 +26,10 @@ public class SimilarityExpressionCall {
     private final Gene gene;
 
     /**
-     * A {@code SummaryCallType} representing the type of expression call
+     * An {@code ExpressionSummary} representing the type of expression call
      * in this similarity expression call.
      */
-    private final SummaryCallType summaryCallType;
+    private final ExpressionSummary summaryCallType;
 
     /**
      * A {@code MultiSpeciesCondition} representing the condition associated to
@@ -44,7 +44,7 @@ public class SimilarityExpressionCall {
     private final Set<ExpressionCall> calls;
 
     public SimilarityExpressionCall(Gene gene, MultiSpeciesCondition multiSpeciesCondition,
-                                    Collection<ExpressionCall> calls, SummaryCallType summaryCallType) {
+                                    Collection<ExpressionCall> calls, ExpressionSummary summaryCallType) {
         this.gene = gene;
         this.multiSpeciesCondition = multiSpeciesCondition;
         this.summaryCallType = summaryCallType;
@@ -59,7 +59,7 @@ public class SimilarityExpressionCall {
         return multiSpeciesCondition;
     }
 
-    public SummaryCallType getSummaryCallType() {
+    public ExpressionSummary getSummaryCallType() {
         return summaryCallType;
     }
 

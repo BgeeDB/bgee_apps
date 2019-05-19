@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.bgee.model.expressiondata.baseelements.SummaryCallType;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.gene.Gene;
 
 /**
@@ -34,7 +34,10 @@ public abstract class MultiGeneExprAnalysis<T> {
     //***************************************
     public static final class MultiGeneExprCounts {
 
-        public MultiGeneExprCounts(Map<SummaryCallType, Collection<Gene>> callTypeToGenes, Collection<Gene> genesWithNoData) {
+        private Map<ExpressionSummary, Set<Gene>> callTypeToGenes;
+        private Set<Gene> genesWithNoData;
+
+        public MultiGeneExprCounts(Map<ExpressionSummary, Collection<Gene>> callTypeToGenes, Collection<Gene> genesWithNoData) {
 
             this.callTypeToGenes = Collections.unmodifiableMap(
                     callTypeToGenes == null? new HashMap<>():
@@ -48,15 +51,13 @@ public abstract class MultiGeneExprAnalysis<T> {
                     genesWithNoData == null? new HashSet<>(): new HashSet<>(genesWithNoData));
         }
 
-        public Map<SummaryCallType, Set<Gene>> getCallTypeToGenes() {
+        public Map<ExpressionSummary, Set<Gene>> getCallTypeToGenes() {
             return callTypeToGenes;
         }
         public Set<Gene> getGenesWithNoData() {
             return genesWithNoData;
         }
 
-        private Map<SummaryCallType, Set<Gene>> callTypeToGenes;
-        private Set<Gene> genesWithNoData;
         @Override
         public int hashCode() {
             final int prime = 31;

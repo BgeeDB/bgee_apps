@@ -676,7 +676,7 @@ public class CallService extends CommonService {
         .filter(list -> list.stream().anyMatch(c -> c.getDataPropagation().isIncludingObservedData()))
         //Now we create for each Condition an Entry<Condition, MultiGeneExprCounts>
         .map(list -> {
-            Map<SummaryCallType, Collection<Gene>> callTypeToGenes = list.stream()
+            Map<ExpressionSummary, Collection<Gene>> callTypeToGenes = list.stream()
                     .collect(Collectors.toMap(
                             c -> c.getSummaryCallType(),
                             c -> new HashSet<>(Arrays.asList(c.getGene())),

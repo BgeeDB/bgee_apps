@@ -968,7 +968,7 @@ public class MultiSpeciesCallService extends CommonService {
                 //to Entry<MultiSpeciesCondition, MultiGeneExprCounts>
                 .map(e -> {
                     List<SimilarityExpressionCall> list = e.getValue();
-                    Map<SummaryCallType, Collection<Gene>> callTypeToGenes = list.stream()
+                    Map<ExpressionSummary, Collection<Gene>> callTypeToGenes = list.stream()
                             .collect(Collectors.toMap(
                                     c -> c.getSummaryCallType(),
                                     c -> new HashSet<>(Arrays.asList(c.getGene())),
